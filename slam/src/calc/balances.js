@@ -163,7 +163,25 @@ export function cardMap(doc, month) {
 export const ACCOUNT_GROUPS = [
   ['bank', 'Bank and cash', ['checking', 'savings', 'cash']],
   ['card', 'Credit cards', ['credit-card']],
-  ['invest', 'Investments', ['brokerage', 'investment', 'crypto', 'other']],
-  ['retire', 'Retirement, HSA, and 529', ['401k', 'trad-ira', 'roth-ira', 'retirement', 'hsa', '529', 'cash-value-life']],
+  ['invest', 'Investments', ['brokerage', 'crypto', 'other', 'unset']],
+  ['retire', 'Retirement, HSA, and 529', ['401k', 'trad-ira', 'roth-ira', 'hsa', '529', 'cash-value-life']],
   ['own', 'Things you own', ['home', 'vehicle', 'other-asset']]
 ];
+
+
+// One account's or debt's balance going into the month: the start typed for the month (on any day it
+// was read), else the latest dated balance before the month. The same start the cash bridge uses.
+const prevDay = (date) => new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
+const typedValue = (v) => !!v && v.amount !== null && v.amount !== undefined;
+export function monthStartOf(doc, key, month) {
+  const b = ((doc.balances || {})[month] || {})[key];
+  if (b && typedValue(b.start)) return { date: b.startOn || month + '-01', amount: b.start.amount, status: b.start.status, from: 'start' };
+  return balanceAt(doc, key, prevDay(month + '-01'));
+}
+
+// And at the end of the month: the end typed for the month, else the latest dated balance in it.
+export function monthEndOf(doc, key, month) {
+  const b = ((doc.balances || {})[month] || {})[key];
+  if (b && typedValue(b.end)) return { date: b.endOn || lastDayOf(month), amount: b.end.amount, status: b.end.status, from: 'end' };
+  return balanceAt(doc, key, lastDayOf(month));
+}

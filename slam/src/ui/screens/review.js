@@ -7,10 +7,13 @@
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
+import { minimumAmount, linkedLine } from '../../calc/debts.js';
 import { valueInput } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { findCategory } from '../../store/edits.js';
-import { coveredByParents, coveredNote } from '../components/parents-plan.js';
+import { coverageNote } from '../components/coverage.js';
+import { incomeFillCard } from '../components/income-month.js';
+import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
 import { closedMonthTable } from '../components/budget-table.js';
 import { monthRows } from '../../calc/history.js';
@@ -106,7 +109,7 @@ function categoryRow(ctx, summary, r) {
   if (r.isDebt) {
     const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
     return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
-      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(d.minimum.amount) + ' minimum')))),
+      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(minimumAmount(ctx.doc, d)) + (linkedLine(ctx.doc, d) ? ' (the ' + linkedLine(ctx.doc, d).name + ' line)' : ' minimum'))))),
       h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
   }
   const cat = ctx.doc.categories.find((c) => c.id === r.id);
@@ -114,7 +117,8 @@ function categoryRow(ctx, summary, r) {
   return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
     live.map((line) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
-      coveredByParents(ctx.doc, line) ? coveredNote() : actualCell(ctx, summary, line))));
+      // A premium line follows health coverage (S-117): its summary, never a question.
+      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id) : actualCell(ctx, summary, line))));
 }
 
 // Month end: close the month (the checklist first), with the bridge in one line.
@@ -158,6 +162,8 @@ export function renderReview(ctx, summary) {
     h('h1', {}, 'Review'),
     justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
+      // Income first (S-118), then the spending lines still empty.
+      incomeFillCard(ctx, summary),
       gapsCard(ctx, summary),
       h('div', { class: 'card', id: 'rv-rows' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Already filled from the log or answered. Tap a category to see its lines.'),
         reviewRows(summary).map((r) => categoryRow(ctx, summary, r))),

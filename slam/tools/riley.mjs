@@ -18,7 +18,7 @@ import { createStore } from '../src/store/store.js';
 import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { makeValue } from '../src/store/value.js';
 import { makeDate } from '../src/store/schema.js';
-import { addIncome, addDebt, addDeduction, findLine, setField, setTransactionLine } from '../src/store/edits.js';
+import { addIncome, addDebt, addDeduction, findLine, setField, setTransactionLine, setDebtLine } from '../src/store/edits.js';
 import { addAccount, setBalance, setAccountField, setDeductionAccount, setAlternative } from '../src/store/accounts.js';
 import { addEntry, editEntry, mergeImport, confirmMatch } from '../src/store/log.js';
 import { confirmScheduled, saveForecast } from '../src/store/cashflow.js';
@@ -106,7 +106,7 @@ upd('Setup', (d) => {
   addAccount(d, { id: 'visa', name: 'Visa', type: 'credit-card', debtId: 'debt-visa' });
   const one = (n) => makeValue(n, { cadence: 'one-off' });
   // Net worth (S-115): a 401(k) from the paycheck, a Roth IRA at an outside broker, and a used car with
-  // a loan. The loan's payment is the Car payment line, so its minimum stays blank (not counted twice).
+  // a loan. The loan is paid by the Car payment line (S-116): the line's estimate is its minimum.
   addAccount(d, { id: 'k401', name: '401(k)', type: '401k', institution: 'Northwind plan' });
   addAccount(d, { id: 'roth', name: 'Roth IRA', type: 'roth-ira', institution: 'Vanguard' });
   addAccount(d, { id: 'car', name: 'Car', type: 'vehicle' });
@@ -136,6 +136,7 @@ upd('Setup', (d) => {
   L('retirement').estimate = makeValue(400);
   Object.assign(L('other-goals'), { name: 'Car repair fund', estimate: makeValue(50) });
   for (const id of VISA_LINES) L(id).accountId = 'visa';
+  setDebtLine(d, 'debt-car', 'car-payment');
   d.cashflow.cushion = one(100);
   setBalance(d, '2025-10', 'chk', 'start', one(START.chk));
   setBalance(d, '2025-10', 'sav', 'start', one(START.sav));

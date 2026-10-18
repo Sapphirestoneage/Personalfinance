@@ -49,6 +49,9 @@ function entryMore(ctx, t) {
     t.amount > 0 ? h('label', { class: 'row' }, 'Someone owes me back', h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6em', 'data-key': 'owed:' + t.id, value: t.owed ? String(t.owed) : '',
       onchange: (e) => { const a = parseAmount(e.target.value); ctx.update('Owed back', (d) => editEntry(d, t.id, { owed: a || null })); } })) : null,
     t.amount > 0 ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!t.oneOff, 'data-key': 'oneoff:' + t.id, onchange: (e) => ctx.update('One-off', (d) => editEntry(d, t.id, { oneOff: e.target.checked })) }), 'One-off (kept out of the monthly budget)') : null,
+    // Paid ahead (S-119): a payment that covers several months (a yearly line covers 12 unless this says otherwise).
+    t.amount > 0 && t.lineId && (t.kind === 'spend' || t.kind === 'fee') ? h('label', { class: 'row' }, 'Covers', h('select', { 'data-key': 'cover:' + t.id, onchange: (e) => ctx.update('Covers', (d) => editEntry(d, t.id, { coverMonths: e.target.value ? Number(e.target.value) : null })) },
+      options([['', 'The line\'s own period'], ...[2, 3, 6, 12, 24].map((n) => [String(n), n + ' months'])], t.coverMonths ? String(t.coverMonths) : ''))) : null,
     t.kind === 'reimbursement' ? h('label', { class: 'row' }, 'Pays back', h('select', { 'data-key': 'settles:' + t.id, onchange: (e) => ctx.update('Pays back', (d) => editEntry(d, t.id, { settles: e.target.value || null })) },
       options([['', 'Nothing in particular'], ...purchases.map((x) => [x.id, dayLabel(x.date) + ' ' + (x.description || x.note || 'purchase') + ', owed ' + money(x.owed, true)])], t.settles || ''))) : null);
 }

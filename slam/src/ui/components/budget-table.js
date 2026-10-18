@@ -8,6 +8,7 @@ import { statusChip } from './status.js';
 import { inUnit } from '../../calc/lenses.js';
 import { parseAmount } from './value-input.js';
 import { sourceLink } from './how.js';
+import { incomeTableRows } from './income-month.js';
 
 // Columns: amounts, then % of income (take-home) and % of spending for the
 // basis (actual, else estimate), then happiness. 'wide' columns hide on phones;
@@ -117,7 +118,8 @@ export function budgetTable(ctx, summary) {
     onclick: () => { ui.sort = { key, dir: ui.sort.key === key ? -ui.sort.dir : (key === 'name' ? 1 : -1) }; ctx.rerender(); }
   }, label, ui.sort.key === key ? (ui.sort.dir > 0 ? ' ▴' : ' ▾') : '')));
 
-  const body = [];
+  // Income before expenses (S-118).
+  const body = [...incomeTableRows(summary, COLUMNS)];
   for (const r of rows) {
     const open = ui.expanded.has('cat:' + r.id);
     const canOpen = r.lines.length > 0;

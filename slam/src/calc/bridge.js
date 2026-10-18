@@ -18,6 +18,7 @@ import { modelForMonth } from './plan.js';
 import { budgetTotals } from './totals.js';
 import { balancesFor } from './balances.js';
 import { counted } from './log.js';
+import { incomeMonth } from './income-month.js';
 
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
@@ -39,12 +40,15 @@ function budgetSide(doc, income, month) {
       id, name: l.name, actual: l.actual, savings: !!(cats[l.categoryId] && cats[l.categoryId].savings),
       yearly: !!(lineDoc[id] && lineDoc[id].line.dueMonth && lineDoc[id].line.dueMonth.amount !== null), debtId: id.startsWith('debt:') ? id.slice(5) : null
     }));
-    return { closed: true, takeHome: rec.snapshot.takeHome, surplus: rec.snapshot.takeHome === null ? null : r2(rec.snapshot.takeHome - spending - saved), spending: r2(spending), savings: r2(saved), lines, oneOffs: [] };
+    // Income (S-118): the month's actual income as saved at close; a month saved before it, from the log.
+    const im = rec.snapshot.income || incomeMonth(doc, income, month);
+    const basis = im.tracked ? im.actual : rec.snapshot.takeHome;
+    return { closed: true, takeHome: rec.snapshot.takeHome, incomeBasis: basis, incomeTracked: im.tracked, surplus: basis === null ? null : r2(basis - spending - saved), spending: r2(spending), savings: r2(saved), lines, oneOffs: [] };
   }
   const model = modelForMonth(doc, month);
-  const totals = budgetTotals(model, income, doc);
+  const totals = budgetTotals(model, income, doc, undefined, month);
   const lines = model.categories.flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name, actual: l.actual, savings: c.savings, yearly: l.actualFrom === 'share', debtId: l.debtId || null })));
-  return { closed: false, takeHome: totals.takeHome, surplus: totals.surplus, spending: totals.spending, savings: totals.savings, lines, oneOffs: model.oneOffs.filter((o) => o.which === 'actual') };
+  return { closed: false, takeHome: totals.takeHome, incomeBasis: totals.incomeBasis, incomeTracked: totals.incomeTracked, surplus: totals.surplus, spending: totals.spending, savings: totals.savings, lines, oneOffs: model.oneOffs.filter((o) => o.which === 'actual') };
 }
 
 export function bridgeFor(doc, income, month) {
@@ -95,19 +99,23 @@ export function bridgeFor(doc, income, month) {
   const oneOffEntries = inMonth.filter((t) => t.oneOff && COUNTS.has(t.kind));
   const oneOff = b.oneOffs.reduce((a, o) => a + o.amount, 0) + oneOffEntries.reduce((a, t) => a + t.amount, 0);
   step('one-off', 'One-off spending (the budget lists it apart)', -oneOff, [...b.oneOffs.map((o) => o.name + ' ' + money(o.amount)), ...oneOffEntries.map((t) => (t.description || t.note || 'entry') + ' ' + money(t.amount))].join(', '), { to: 'log' });
-  // Income that landed different from the budget's take-home (only when paychecks are in the log).
+  // Income in the log that the surplus did not use (S-118): none when the month's income comes from the
+  // log; when income was not tracked, what landed vs the budget's take-home.
   const pay = inMonth.filter((t) => t.kind === 'income');
-  if (pay.length && b.takeHome !== null) {
+  if (pay.length && b.incomeBasis !== null) {
     const got = -pay.reduce((a, t) => a + t.amount, 0);
-    step('income', got >= b.takeHome ? 'More income landed than the budget\'s take-home' : 'Less income landed than the budget\'s take-home', got - b.takeHome,
-      pay.length + ' deposit' + (pay.length === 1 ? '' : 's') + ' ' + money(got) + ' vs take-home ' + money(b.takeHome), { to: 'log' });
+    const vs = b.incomeTracked ? 'the income counted' : 'take-home';
+    step('income', got >= b.incomeBasis ? 'More income landed than ' + vs : 'Less income landed than ' + vs, got - b.incomeBasis,
+      pay.length + ' deposit' + (pay.length === 1 ? '' : 's') + ' ' + money(got) + ' vs ' + vs + ' ' + money(b.incomeBasis), { to: 'log' });
   }
   const explained = b.surplus === null ? null : r2(b.surplus + steps.reduce((a, s) => a + s.amount, 0));
   const actual = bal.cashStart !== null && bal.cashEnd !== null ? r2(bal.cashEnd - bal.cashStart) : null;
   const cardsMissing = missing.filter((m) => cards.some((c) => c.id === m.id));
   const unexplained = explained !== null && actual !== null && !cardsMissing.length ? r2(actual - explained) : null;
   const out = {
-    month, closed: b.closed, takeHome: b.takeHome, surplus: b.surplus, savings: b.savings, steps, explained,
+    month, closed: b.closed, takeHome: b.takeHome, incomeBasis: b.incomeBasis, incomeTracked: b.incomeTracked, surplus: b.surplus, savings: b.savings, steps, explained,
+    // Each budget line's actual this month (a loan's payment, S-116).
+    lineActuals: Object.fromEntries(b.lines.map((l) => [l.id, l.actual])),
     cashStart: bal.cashStart, cashEnd: bal.cashEnd, actual, unexplained, missing,
     within: within(doc),
     ties: unexplained === null ? null : Math.abs(unexplained) < within(doc)
@@ -140,7 +148,7 @@ function topSentence(s) {
   if (s.key === 'yearly' && s.paid && s.paid.length) return s.paid.map((p) => 'The ' + p.name.toLowerCase() + ' bill (' + whole(p.paid) + ')').join(' and ') + ' came due this month.';
   if (s.key === 'cards') return s.amount >= 0 ? 'Card balances went up ' + whole(s.amount) + '.' : 'Card balances went down ' + whole(s.amount) + '.';
   if (s.key === 'set-aside') return whole(s.amount) + ' was set aside and is still in your accounts.';
-  if (s.key === 'income') return s.amount >= 0 ? whole(s.amount) + ' more income landed than the take-home.' : whole(s.amount) + ' less income landed than the take-home.';
+  if (s.key === 'income') return whole(s.amount) + (s.amount >= 0 ? ' more' : ' less') + ' income landed than ' + (s.label.endsWith('take-home') ? 'the take-home' : 'the income counted') + '.';
   if (s.key === 'owed') return whole(s.amount) + ' is still owed back to you.';
   if (s.key === 'one-off') return 'One-off spending was ' + whole(s.amount) + '.';
   return s.label + ': ' + whole(s.amount) + '.';

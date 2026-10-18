@@ -4,6 +4,7 @@
 // Every number comes from calc (reviewSummary); estimates are only ever read here.
 
 import { h, options } from '../dom.js';
+import { incomePlanCard } from './income-month.js';
 import { money, signedMoney, pct, monthLabel } from '../format.js';
 import { makeValue } from '../../store/value.js';
 import { parseAmount } from './value-input.js';
@@ -186,5 +187,5 @@ export function reviewCards(ctx, summary) {
       } }, '+ Add category'),
       getPlan(doc, nextMonthKey(pm)) ? h('span', { class: 'small muted' }, monthLabel(nextMonthKey(pm)) + ' already has a plan.')
         : h('button', { class: 'btn primary', onclick: () => { ctx.update('Copy plan forward', (d) => copyPlanForward(d, pm)); ctx.ui.reviewMonth = pm; ctx.ui.planMonth = nextMonthKey(pm); ctx.rerender(); } }, 'Start ' + monthLabel(nextMonthKey(pm)) + ' from this plan')) : null);
-  return [top, h('div', { class: 'card', style: 'grid-column:1 / -1' }, groups), bottom];
+  return [top, incomePlanCard(ctx, summary, pm, rv.exists), h('div', { class: 'card', style: 'grid-column:1 / -1' }, groups), bottom];
 }

@@ -84,9 +84,10 @@ test('review rows: one line per category, from the October household', async () 
   assert.deepEqual(pick(rows.transport), [100, 1, 0, 1, 0, 0, 5]);
   // Personal and fun: the concert 120 less 60 owed back = 60 from 1 entry; the couch is a one-off, not counted.
   assert.deepEqual(pick(rows.fun), [60, 1, 1, 0, 0, 0, 5]);
-  // Debt payments: the Visa minimum, 40, from 1 debt.
+  // Debt payments: the Visa minimum, 40, and the Visa's computed interest (S-116), blank until its APR
+  // is typed (empty is not zero): 40 from 2 lines.
   assert.equal(rows.debt.isDebt, true);
-  assert.deepEqual([rows.debt.actual, rows.debt.lines], [40, 1]);
+  assert.deepEqual([rows.debt.actual, rows.debt.lines], [40, 2]);
 });
 
 test('a first number typed in the Rough pass is "roughly"; a later one keeps the status', async () => {

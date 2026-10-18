@@ -8,7 +8,7 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 4. Too many questions up front felt overwhelming. RULE: the first pass asks very little. Detail is always optional and comes later. Every question has an "I don't have this / doesn't apply" answer.
 5. The app grew to 67 rooms, then 4 screens became junk drawers. RULE: the menu follows the monthly loop (Today, Plan, Track, Review, Insights, Setup). Every section lives in exactly one place. Insights is read-only. One-time setup is never mixed with weekly use.
 6. Prompts kept adding features, then features got cut, then restored. RULE: respect the OUT OF SCOPE list. If you think something is missing, write it in PARKING_LOT.md.
-7. Charts were buried behind long paths. RULE: the main budget screen shows the key visuals without clicking anywhere, and every chart is at most one tap away.
+7. Charts were buried behind long paths. RULE: every chart is at most one tap from Today; Today itself shows numbers, not charts.
 8. There was no clear next step. RULE: always show a "Next" card: one big #1, plus #2 and #3 smaller.
 9. Data lived only in localStorage with no backup. RULE: versioned JSON export and import from day one, with an automatic snapshot before any import.
 10. Styling was inconsistent across screens. RULE: one design token file, used everywhere.
@@ -24,3 +24,4 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 20. Month-end meant typing everything from memory. RULE: the log owns the money and actuals are computed from it. Month-end only fills gaps.
 21. Single-user shortcuts would have blocked sharing later. RULE: every record has an id, timestamps, author, and version, nothing is hard-deleted, storage goes through one async interface, and visibility is decided in one map.
 22. A house or car felt like wealth but couldn't fund a life. RULE: show two net worths, total and FI, and what each locked-in asset costs to hold next to its alternative, without verdicts.
+23. Annual bills made net worth look like it crashed the month they were paid. RULE: what's paid ahead is an asset that runs down monthly; cash shows the payment, net worth shows the cost as it's used.

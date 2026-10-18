@@ -7,7 +7,7 @@ import { PLAN_DECISIONS } from './plans.js';
 import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES, COVERAGE_HOW
 } from './schema.js';
 
 // A date with a status (S-086).
@@ -43,7 +43,15 @@ export function validateHousehold(doc) {
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
-  if (doc.household && doc.household.parentsPlan !== undefined && typeof doc.household.parentsPlan !== 'boolean') errs.push('household.parentsPlan must be true or false');
+  if (doc.coverage) {
+    const c = doc.coverage;
+    if (c.how !== null && !COVERAGE_HOW.includes(c.how)) errs.push('coverage.how: unknown ' + c.how);
+    if (c.premiumFrom !== null && !['paycheck', 'direct'].includes(c.premiumFrom)) errs.push('coverage.premiumFrom must be paycheck, direct, or empty');
+    if (c.premiumIncomeId && !(doc.income || []).some((i) => i.id === c.premiumIncomeId)) errs.push('coverage.premiumIncomeId: unknown income ' + c.premiumIncomeId);
+    for (const k of ['premium', 'deductible', 'outOfPocketMax']) errs.push(...valueErrors(c[k], 'coverage.' + k));
+    if (c.hsa !== null && typeof c.hsa !== 'boolean') errs.push('coverage.hsa must be yes, no, or empty');
+    if (c.hsaFrom !== null && !['paycheck', 'direct'].includes(c.hsaFrom)) errs.push('coverage.hsaFrom must be paycheck, direct, or empty');
+  }
   const tagIds = new Set();
   (doc.tags || []).forEach((t, i) => {
     if (!t.id || tagIds.has(t.id)) errs.push('tags[' + i + ']: missing or duplicate id');
@@ -80,6 +88,9 @@ export function validateHousehold(doc) {
     oneOf(errs, DEBT_TYPES, d.type, w + '.type');
     for (const k of ['balance', 'apr', 'minimum', 'dueDay']) errs.push(...valueErrors(d[k], w + '.' + k));
     if (d.payWith !== undefined) oneOf(errs, ['minimum', 'statement'], d.payWith, w + '.payWith');
+    if (d.promoApr !== undefined) errs.push(...valueErrors(d.promoApr, w + '.promoApr'));
+    if (d.promoEnds !== undefined && d.promoEnds !== null && !/^\d{4}-\d{2}-\d{2}$/.test(d.promoEnds)) errs.push(w + '.promoEnds must be YYYY-MM-DD or empty');
+    if (d.lineId && !(doc.categories || []).some((c) => (c.lines || []).some((l) => l.id === d.lineId))) errs.push(w + '.lineId: unknown line ' + d.lineId);
   });
   (doc.categories || []).forEach((c, i) => {
     const w = 'categories[' + i + '] ' + c.id;
@@ -199,6 +210,7 @@ export function validateHousehold(doc) {
     if (t.lineId && !lineIds.has(t.lineId)) errs.push(w + '.lineId: unknown line ' + t.lineId);
     (t.possible || []).forEach((id) => { if (!txIds.has(id)) errs.push(w + '.possible: unknown entry ' + id); });
     if (t.owed !== undefined && !(typeof t.owed === 'number' && t.owed > 0 && t.owed <= Math.abs(t.amount))) errs.push(w + '.owed must be more than 0 and no more than the amount');
+    if (t.coverMonths !== undefined && !(Number.isInteger(t.coverMonths) && t.coverMonths >= 2 && t.coverMonths <= 60)) errs.push(w + '.coverMonths must be 2 to 60');
     if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
@@ -211,6 +223,13 @@ export function validateHousehold(doc) {
     if (e.to) errs.push(...valueErrors(e.to, w + '.to'));
     if (e.from) errs.push(...valueErrors(e.from, w + '.from'));
   });
+  for (const [k, src] of Object.entries(doc.incomeActuals || {})) {
+    if (!/^\d{4}-\d{2}$/.test(k)) errs.push('incomeActuals key ' + k + ' must be YYYY-MM');
+    for (const [id, v] of Object.entries(src)) {
+      if (!(doc.income || []).some((i) => i.id === id)) errs.push('incomeActuals.' + k + ': unknown income ' + id);
+      errs.push(...valueErrors(v, 'incomeActuals.' + k + '.' + id));
+    }
+  }
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
     if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
     if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');

@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate, newCoverage } from './schema.js';
 import { normalizeValue, isBlank, makeValue } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 import { toMonthly } from '../calc/normalize.js';
@@ -52,10 +52,54 @@ const STEPS = {
   10: (doc) => ({ ...doc, schemaVersion: 11 }),
   // Version 11 to 12 (S-113): a home or vehicle gets its alternative costs (blank) and coach notes
   // (empty) in normalizing; the return assumption is 5% a year until the coach sets one. No amount changes.
-  11: (doc) => ({ ...doc, schemaVersion: 12 })
+  11: (doc) => ({ ...doc, schemaVersion: 12 }),
+  // Version 12 to 13 (S-116): the old "Investment" and "Retirement" account types become "Type not set"
+  // (tier 2 and tier 3, counting toward FI; balances kept); debts get a paying line (null), a promo APR
+  // (blank) and promo end (null) in normalizing. A debt with no minimum is linked to the one budget line
+  // of a matching type that has an amount (a car loan to the Car payment line). No amount changes.
+  12: (doc) => ({
+    ...doc, schemaVersion: 13,
+    accounts: (doc.accounts || []).map((a) => (a.type === 'investment' ? { ...a, type: 'unset', tier: 2 } : a.type === 'retirement' ? { ...a, type: 'unset', tier: 3 } : a)),
+    debts: (doc.debts || []).map((d) => ({ ...d, lineId: d.lineId === undefined ? autoLink(doc, d) : d.lineId }))
+  }),
+  // Version 13 to 14 (S-117): health coverage moves to doc.coverage. A parent's plan (household.parentsPlan)
+  // becomes how = parent. A premium line with an amount becomes the premium paid directly (the same
+  // amount and cadence); an income with a health deduction and no premium line amount becomes the premium
+  // from that paycheck. Nothing else is guessed. No amount changes.
+  13: (doc) => {
+    const { parentsPlan, ...household } = doc.household || {};
+    return { ...doc, schemaVersion: 14, household, coverage: doc.coverage || coverageFrom(doc, !!parentsPlan) };
+  },
+  // Version 14 to 15 (S-118): typed income actuals (none yet) and a month's plan for side income (none
+  // yet). A closed month saved before this has no income in its snapshot; its income is read from the log.
+  14: (doc) => ({ ...doc, schemaVersion: 15, incomeActuals: doc.incomeActuals || {} })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+
+// S-117: the coverage answers an older file already holds.
+function coverageFrom(doc, onParentsPlan) {
+  const c = newCoverage();
+  const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
+  const premiumLine = (doc.categories || []).flatMap((x) => x.lines || []).find((l) => (l.type || DEFAULT_LINE_TYPES[l.id]) === 'health-insurance' && l.state !== 'archived' && has(l.estimate));
+  const fromPay = (doc.income || []).find((i) => (i.deductions || []).some((d) => d.kind === 'health'));
+  if (onParentsPlan) c.how = 'parent';
+  if (premiumLine) { c.premiumFrom = 'direct'; c.premium = { ...premiumLine.estimate }; }
+  else if (fromPay) { c.premiumFrom = 'paycheck'; c.premiumIncomeId = fromPay.id; }
+  return c;
+}
+
+// S-116: the one line of a matching type with an amount, for a debt with no minimum of its own.
+const LINK_TYPES = { 'car-loan': ['car-payment'], mortgage: ['rent'], 'student-loan': ['loan'], 'personal-loan': ['loan'] };
+function autoLink(doc, d) {
+  const min = d.minimum;
+  if (min && min.amount !== null && min.amount !== undefined) return null;
+  const types = LINK_TYPES[d.type] || [];
+  const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
+  const hits = (doc.categories || []).filter((c) => !c.savings && c.id !== 'debt').flatMap((c) => c.lines || [])
+    .filter((l) => types.includes(l.type || DEFAULT_LINE_TYPES[l.id]) && l.state !== 'archived' && (has(l.estimate) || has(l.actual)));
+  return hits.length === 1 ? hits[0].id : null;
+}
 
 function logOwnsActuals(doc) {
   const out = { ...doc, schemaVersion: 8 };
@@ -90,6 +134,7 @@ function logOwnsActuals(doc) {
     return keep(l, doc.currentMonth, l.actual) ? l : { ...l, actual: null };
   }) }));
   const lineById = Object.fromEntries((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => [l.id, l])));
+  out.incomeActuals = Object.fromEntries(Object.entries(doc.incomeActuals || {}).map(([k, src]) => [k, Object.fromEntries(Object.entries(src).map(([id, v]) => [id, normalizeValue(v)]))]));
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([month, lines]) => [month,
     Object.fromEntries(Object.entries(lines).filter(([id, v]) => !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)))]).filter(([, lines]) => Object.keys(lines).length));
   out.transactions = txs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -181,6 +226,8 @@ export function normalizeHousehold(doc) {
   out.id = doc.id || base.id;
   out.profile = { ...base.profile, ...(doc.profile || {}) };
   out.household = { ...base.household, ...(doc.household || {}) };
+  const cv = doc.coverage || {};
+  out.coverage = { ...newCoverage(), ...cv, premium: normalizeValue(cv.premium), deductible: { ...normalizeValue(cv.deductible), cadence: (cv.deductible && cv.deductible.cadence) || 'year' }, outOfPocketMax: { ...normalizeValue(cv.outOfPocketMax), cadence: (cv.outOfPocketMax && cv.outOfPocketMax.cadence) || 'year' } };
   out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
   // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
   const { yourShare, ...rm } = out.household.roommates || {};
@@ -204,7 +251,11 @@ export function normalizeHousehold(doc) {
     if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });
-  out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
+  out.debts = (doc.debts || []).map((d) => {
+    const debt = withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay', 'promoApr']);
+    debt.promoApr = { ...debt.promoApr, cadence: 'one-off' };
+    return debt;
+  });
   const cf = doc.cashflow || {};
   out.cashflow = { ...newCashflow(), ...cf, cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' }, moves: cf.moves || {}, forecasts: cf.forecasts || {},
     checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } })) };
@@ -230,6 +281,7 @@ export function normalizeHousehold(doc) {
   const nv = (v) => normalizeValue(v);
   out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
     createdFrom: p.createdFrom || 'manual',
+    ...(p.income ? { income: Object.fromEntries(Object.entries(p.income).map(([k, v]) => [k, nv(v)])) } : {}),
     lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
       ...meta(e),
       amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',

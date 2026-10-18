@@ -4,6 +4,7 @@
 // "Basis" = the actual when one exists, otherwise the estimate (and we say so).
 
 import { sumKnown, ratio, minus } from './money.js';
+import { incomeMonth } from './income-month.js';
 import { toMonthly } from './normalize.js';
 
 export const FAT_CATEGORIES = ['food', 'housing', 'transport'];
@@ -48,7 +49,8 @@ function addUp(parts, test) {
   return parts.filter(test).reduce((a, p) => a + p.amount, 0);
 }
 
-export function budgetTotals(model, income, doc, housingBand = 0.35) {
+// month: the month the model is for (the month being worked on unless given).
+export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc.currentMonth) {
   const cats = model.categories.map((c) => ({ cat: c, basis: basisFor(c) }));
   const spending = cats.filter((x) => !x.cat.savings);
   const saving = cats.filter((x) => x.cat.savings);
@@ -57,6 +59,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const savingsBasis = sumKnown(saving.map((x) => x.basis.amount)).total;
   const outflow = sumKnown([spendingBasis, savingsBasis]).total;
   const takeHome = income.takeHome;
+  const incomeMonthOf = incomeMonth(doc, income, month);
   const spendParts = spending.flatMap((x) => x.basis.parts);
   const allParts = cats.flatMap((x) => x.basis.parts);
 
@@ -99,7 +102,12 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     spendingShare: ratio(spendingBasis, takeHome),
     savings: savingsBasis,
     outflow,
-    surplus: minus(takeHome, outflow),
+    // Surplus (S-118): actual income from the log when the month's income is tracked, else the
+    // budgeted take-home ("income not tracked this month"), less spending and savings.
+    income: incomeMonthOf,
+    incomeTracked: incomeMonthOf.tracked,
+    incomeBasis: incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome,
+    surplus: minus(incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome, outflow),
     // The estimate column as a whole budget, and what it would leave.
     estimateOutflow: sumKnown([answeredTotal(spending, 'estimate'), sumKnown(saving.map((x) => x.cat.estimate.amount)).total]).total,
     basisUsesEstimate: cats.filter((x) => x.basis.from === 'estimate').map((x) => x.cat.name),

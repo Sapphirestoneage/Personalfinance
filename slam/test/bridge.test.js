@@ -8,8 +8,9 @@
 // emergency fund 200 (typed, moved to savings by a transfer); shopping 60: a
 // 120 concert from checking, 60 of it owed back by a friend; a 250 couch is a
 // one-off; Debt payments 40 (the Visa minimum).
-// Spending 1,500 + 400 + 100 + 60 + 40 = 2,100; savings 200; surplus 4,000 - 2,300 = 1,700.
-// Income in the log: 2,000 + 2,000 + a 300 bonus = 4,300. The Visa was paid 450 from checking.
+// Spending 1,500 + 400 + 100 + 60 + 40 = 2,100; savings 200.
+// Income in the log, all from the job: 2,000 + 2,000 + a 300 bonus = 4,300 (S-118: the month's income is
+// tracked, so the surplus uses it): surplus 4,300 - 2,300 = 2,000. The Visa was paid 450 from checking.
 // Checking end: 2,000 + 4,300 - 100 - 1,200 - 200 - 120 - 250 - 450 - 1,500 rent = 2,480.
 // Savings end 5,200. Visa end 500 + 300 - 450 = 350.
 
@@ -32,21 +33,21 @@ test('a month that ties: every step by hand', () => {
   assert.deepEqual(validateHousehold(d), []);
   const s = buildSummary(d, refs);
   const br = bridgeFor(d, s.income, '2026-10');
-  assert.equal(br.surplus, 1700);
+  assert.equal(br.surplus, 2000);
+  // No income step (S-118): the surplus already uses the 4,300 that landed.
   assert.deepEqual(stepsOf(br), {
     yearly: -1100,     // share 100 in the budget - 1,200 paid
     'set-aside': 200,  // emergency fund 200, no entry paid it out
     cards: -150,       // Visa 500 -> 350
     'card-min': 40,    // the Visa minimum in Debt payments
     owed: -60,         // the friend's half of the concert
-    'one-off': -250,   // the couch
-    income: 300        // 4,300 landed vs 4,000 take-home
+    'one-off': -250    // the couch
   });
-  // 1,700 - 1,100 + 200 - 150 + 40 - 60 - 250 + 300 = 680
+  // 2,000 - 1,100 + 200 - 150 + 40 - 60 - 250 = 680
   assert.equal(br.explained, 680);
   // cash 2,000 + 5,000 = 7,000 -> 2,480 + 5,200 = 7,680: +680
   assert.deepEqual([br.cashStart, br.cashEnd, br.actual, br.unexplained, br.ties], [7000, 7680, 680, 0, true]);
-  assert.equal(br.reading, 'Your budget showed $1,700 left, but cash went up $680. The car insurance bill ($1,200) came due this month.');
+  assert.equal(br.reading, 'Your budget showed $2,000 left, but cash went up $680. The car insurance bill ($1,200) came due this month.');
   // $0 steps are hidden: no reimbursements were received for earlier months
   assert.equal(br.steps.some((x) => x.key === 'received'), false);
 });
@@ -56,7 +57,7 @@ test('a month that does not tie: $60 of ATM cash not mapped', () => {
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-10');
   // The ATM 60 is not in the budget (no line), so explained stays 680; cash 7,620 - 7,000 = 620
   assert.deepEqual([br.explained, br.actual, br.unexplained, br.ties], [680, 620, -60, false]);
-  assert.equal(br.reading, 'Your budget showed $1,700 left, but cash went up $620. The car insurance bill ($1,200) came due this month. $60 is not explained yet.');
+  assert.equal(br.reading, 'Your budget showed $2,000 left, but cash went up $620. The car insurance bill ($1,200) came due this month. $60 is not explained yet.');
 });
 
 test('explained + not explained yet = the actual change in cash', () => {
@@ -71,7 +72,7 @@ test('a missing balance: it says which one and stops at explained', () => {
   const d = october({ noSavingsEnd: true });
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-10');
   assert.deepEqual([br.explained, br.actual, br.unexplained], [680, null, null]);
-  assert.equal(br.reading, 'Your budget showed $1,700 left. The change in cash needs Savings end balance.');
+  assert.equal(br.reading, 'Your budget showed $2,000 left. The change in cash needs Savings end balance.');
 });
 
 test('after close the bridge reads the locked snapshot and gives the same answer', () => {
@@ -80,7 +81,8 @@ test('after close the bridge reads the locked snapshot and gives the same answer
   closeMonth(d, closeMonthSnapshot(s), '2026-11-01T09:00:00Z');
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-10');
   assert.equal(br.closed, true);
-  assert.deepEqual([br.surplus, br.explained, br.actual, br.unexplained], [1700, 680, 680, 0]);
+  // The month's income (4,300 from the log) is saved with it, so the surplus stays 2,000.
+  assert.deepEqual([br.surplus, br.explained, br.actual, br.unexplained], [2000, 680, 680, 0]);
   // The friend pays back 60 in November: received for an earlier month, +60
   const concert = d.transactions.find((t) => t.owed);
   const back = addEntry(d, { date: '2026-11-04', amount: -60, kind: 'reimbursement', account: 'chk', merchant: 'Venmo' });

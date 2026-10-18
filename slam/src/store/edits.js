@@ -119,6 +119,37 @@ export function addDebt(doc, fields) {
   return d;
 }
 
+// S-116: the budget line that pays a debt (null to unlink). One line pays one debt; the debt's own
+// minimum is kept but not used while linked (the line's estimate is the minimum).
+export function setDebtLine(doc, debtId, lineId) {
+  const debt = doc.debts.find((x) => x.id === debtId);
+  if (!debt) throw new Error('No debt ' + debtId);
+  if (lineId && !findLine(doc, lineId)) throw new Error('No line ' + lineId);
+  if (lineId && doc.debts.some((x) => x.id !== debtId && x.lineId === lineId)) throw new Error('That line already pays another debt');
+  debt.lineId = lineId || null;
+}
+
+// S-118: a source's income for a month with no log entries: an amount, 'none' (none this month), or
+// null (back to empty). Refused when the log already has its entries (the log owns the money).
+export function setIncomeActual(doc, month, incomeId, value) {
+  if (!(doc.income || []).some((i) => i.id === incomeId)) throw new Error('No income ' + incomeId);
+  const n = (doc.transactions || []).filter((t) => t.kind === 'income' && t.incomeId === incomeId && t.date.startsWith(month) && !t.deleted).length;
+  if (n && value !== null) throw new Error('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.');
+  doc.incomeActuals = doc.incomeActuals || {};
+  const m = doc.incomeActuals[month] = doc.incomeActuals[month] || {};
+  if (value === null) delete m[incomeId];
+  else if (value === 'none') m[incomeId] = { amount: 0, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: 'None this month' };
+  else m[incomeId] = { ...value, cadence: 'month' };
+  if (!Object.keys(m).length) delete doc.incomeActuals[month];
+}
+
+// S-116: a card's promo APR ends on a day (YYYY-MM-DD), or null.
+export function setPromoEnds(doc, debtId, date) {
+  const debt = doc.debts.find((x) => x.id === debtId);
+  if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('A date is YYYY-MM-DD');
+  debt.promoEnds = date;
+}
+
 // One total instead of categories: the total lives on an "Everything else"
 // category. Category estimates entered later are carved out of it by calc,
 // so the client's original total is never overwritten.

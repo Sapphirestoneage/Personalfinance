@@ -315,7 +315,8 @@ async function questions(browser, view, size) {
 
 // d. Month-end balances for 5 accounts, on Riley: October's ends for checking, savings, the Visa, the
 // 401(k), and the Roth IRA, in Setup, Accounts. Then (not counted) October's net worth bridge shows them:
-// 3,000 + 400 + 17,100 + 11,300 + the car 8,400 (September's value) - 300 - the loan 3,237.64 = 36,662.36;
+// 3,000 + 400 + 17,100 + 11,300 + the car 8,400 (September's value) + paid ahead at October's end (S-119:
+// insurance 960 - 8 x 80 = 320, registration 180 - 4 x 15 = 120) - 300 - the loan 3,237.64 = 37,102.36;
 // FI 3,000 + 400 + 17,100 + 11,300 - 300 = 31,500.
 async function balances(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
@@ -335,7 +336,7 @@ async function balances(browser, view, size) {
   await page.evaluate(() => { location.hash = 'insights'; });
   await page.click('[data-key="tab-networth"]');
   await page.selectOption('[data-key="nw-month"]', '2026-10');
-  check(J, 'October net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(36662.36)), money(36662.36));
+  check(J, 'October net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(37102.36)), money(37102.36));
   await page.click('[data-key="nw-which-fi"]');
   check(J, 'October FI net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(31500)), money(31500));
   await page.close();

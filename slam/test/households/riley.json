@@ -1,5 +1,5 @@
 {
- "schemaVersion": 12,
+ "schemaVersion": 15,
  "id": "hh-odl4gz9",
  "createdAt": "2025-10-01T09:00:00.000Z",
  "updatedAt": "2026-10-17T18:00:00.000Z",
@@ -18,7 +18,6 @@
    "ages": []
   },
   "livingWith": "alone",
-  "parentsPlan": false,
   "family": {
    "count": null
   },
@@ -3303,6 +3302,16 @@
    },
    "payFrom": null,
    "payWith": "statement",
+   "lineId": null,
+   "promoApr": {
+    "amount": null,
+    "cadence": "one-off",
+    "status": null,
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": null,
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3348,6 +3357,16 @@
    },
    "payFrom": null,
    "payWith": "minimum",
+   "lineId": "car-payment",
+   "promoApr": {
+    "amount": null,
+    "cadence": "one-off",
+    "status": null,
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": null,
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3511,11 +3530,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -3631,6 +3650,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2025-10",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 62.91,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3062.91,
+     "empty": [],
+     "logged": 3062.91
     },
     "review": {
      "month": "2025-10",
@@ -4293,20 +4356,49 @@
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3062.91,
-        "diff": -437.09
+        "diff": -187.09
        }
       ],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 62.91,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 2980.27,
       "plan": 3139,
       "estimate": 3139,
-      "surplus": -130.26999999999998,
+      "surplus": -567.3600000000001,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3062.91,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -4314,11 +4406,11 @@
       "explained": 18.79,
       "actual": 18.79,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -437.09
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $130 over, but cash went up $19. $437 less income landed than the take-home."
+      "reading": "Your budget showed $567 over, but cash went up $19. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2025-10",
@@ -4447,7 +4539,7 @@
      },
      "readings": [
       "Personal and fun came in $106 under plan.",
-      "Income came in $437 less than planned.",
+      "Income came in $187 less than planned.",
       "1.1x off this month."
      ]
     }
@@ -4608,11 +4700,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -4728,6 +4820,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2025-11",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 78.93,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3078.93,
+     "empty": [],
+     "logged": 3078.93
     },
     "review": {
      "month": "2025-11",
@@ -5397,20 +5533,49 @@
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3078.93,
-        "diff": -421.07
+        "diff": -171.07
        }
       ],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 78.93,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 2992.64,
       "plan": 3139,
       "estimate": 3139,
-      "surplus": -142.63999999999987,
+      "surplus": -563.71,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3078.93,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -5418,11 +5583,11 @@
       "explained": -178.75,
       "actual": -178.75,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -421.07
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $143 over, but cash went down $179. $421 less income landed than the take-home."
+      "reading": "Your budget showed $564 over, but cash went down $179. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2025-11",
@@ -5565,7 +5730,7 @@
      },
      "readings": [
       "Personal and fun came in $92 under plan.",
-      "Income came in $421 less than planned.",
+      "Income came in $171 less than planned.",
       "1.1x off this month, same as 1.1x."
      ]
     }
@@ -5726,11 +5891,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -5846,6 +6011,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2025-12",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 140,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3140,
+     "empty": [],
+     "logged": 3140
     },
     "review": {
      "month": "2025-12",
@@ -6519,25 +6728,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3140,
-        "diff": -360
+        "diff": -110
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 140,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 3425.8000000000006,
       "plan": 3549,
       "estimate": 3189,
-      "surplus": -575.8000000000006,
+      "surplus": -935.8000000000006,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3140,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -6549,7 +6787,7 @@
        "short": "Card balances",
        "amount": 424.92
       },
-      "reading": "Your budget showed $576 over, but cash went down $131. Card balances went up $425."
+      "reading": "Your budget showed $936 over, but cash went down $131. Card balances went up $425."
      },
      "forecast": {
       "month": "2025-12",
@@ -6713,7 +6951,6 @@
      "readings": [
       "Personal and fun came in $77 under plan.",
       "Groceries was $52 over.",
-      "Income came in $360 less than planned.",
       "1.07x off this month, up from 1.05x."
      ]
     }
@@ -6874,11 +7111,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -6994,6 +7231,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-01",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 4500,
+       "planNote": "3 paychecks this month",
+       "paydays": 3,
+       "actual": 4500,
+       "from": "log",
+       "status": "computed",
+       "count": 3
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 264.22,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 4750,
+     "actual": 4764.22,
+     "empty": [],
+     "logged": 4764.22
     },
     "review": {
      "month": "2026-01",
@@ -7650,26 +7931,55 @@
       "culprits": []
      },
      "income": {
-      "better": [
+      "better": [],
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 4750,
         "actual": 4764.22,
-        "diff": 1264.22
+        "diff": 14.22
        }
       ],
-      "onPlan": [],
       "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 4500,
+       "planNote": "3 paychecks this month",
+       "actual": 4500,
+       "from": "log",
+       "count": 3
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 264.22,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 2978.77,
       "plan": 3239,
       "estimate": 3239,
-      "surplus": -128.76999999999998,
+      "surplus": 1135.4500000000003,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 4750,
+       "actual": 4764.22,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -7677,11 +7987,11 @@
       "explained": 1082.86,
       "actual": 1082.86,
       "top": {
-       "label": "More income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": 1264.22
+       "label": "Card balances went down (paid more than was charged)",
+       "short": "Card balances",
+       "amount": -432.59
       },
-      "reading": "Your budget showed $129 over, but cash went up $1,083. $1,264 more income landed than the take-home."
+      "reading": "Your budget showed $1,135 left, but cash went up $1,083. Card balances went down $433."
      },
      "forecast": {
       "month": "2026-01",
@@ -7824,7 +8134,6 @@
      },
      "readings": [
       "Food came in $131 under plan.",
-      "Income came in $1,264 more than planned.",
       "1.09x off this month, up from 1.07x."
      ]
     }
@@ -7985,11 +8294,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -8105,6 +8414,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-02",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 110,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3110,
+     "empty": [],
+     "logged": 3110
     },
     "review": {
      "month": "2026-02",
@@ -8769,25 +9122,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3110,
-        "diff": -390
+        "diff": -140
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 110,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 2959.45,
       "plan": 3239,
       "estimate": 3239,
-      "surplus": -109.44999999999982,
+      "surplus": -499.4499999999998,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3110,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -8795,11 +9177,11 @@
       "explained": -148.91,
       "actual": -148.91,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -390
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $109 over, but cash went down $149. $390 less income landed than the take-home."
+      "reading": "Your budget showed $499 over, but cash went down $149. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2026-02",
@@ -8942,7 +9324,6 @@
      },
      "readings": [
       "Food came in $131 under plan.",
-      "Income came in $390 less than planned.",
       "1.1x off this month, same as 1.1x."
      ]
     }
@@ -9103,11 +9484,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -9223,6 +9604,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-03",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 220,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3220,
+     "empty": [],
+     "logged": 3220
     },
     "review": {
      "month": "2026-03",
@@ -9889,25 +10314,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3220,
-        "diff": -280
+        "diff": -30
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 220,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 3021.8899999999994,
       "plan": 3199,
       "estimate": 3239,
-      "surplus": -171.88999999999942,
+      "surplus": -451.8899999999994,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3220,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -9919,7 +10373,7 @@
        "short": "Yearly costs",
        "amount": -865
       },
-      "reading": "Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month."
+      "reading": "Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month."
      },
      "forecast": {
       "month": "2026-03",
@@ -10063,7 +10517,6 @@
      "readings": [
       "Food came in $136 under plan.",
       "Shopping was $57 over.",
-      "Income came in $280 less than planned.",
       "1.07x off this month, down from 1.09x."
      ]
     }
@@ -10224,11 +10677,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -10344,6 +10797,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-04",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 145.06,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3145.06,
+     "empty": [],
+     "logged": 3145.06
     },
     "review": {
      "month": "2026-04",
@@ -11010,25 +11507,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3145.06,
-        "diff": -354.94
+        "diff": -104.94
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 145.06,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 3038.23,
       "plan": 3239,
       "estimate": 3239,
-      "surplus": -188.23000000000002,
+      "surplus": -543.1700000000001,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3145.06,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -11036,11 +11562,11 @@
       "explained": -157.59,
       "actual": -157.59,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -354.94
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $188 over, but cash went down $158. $355 less income landed than the take-home."
+      "reading": "Your budget showed $543 over, but cash went down $158. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2026-04",
@@ -11184,7 +11710,6 @@
      "readings": [
       "Food came in $113 under plan.",
       "Utilities was $11 over.",
-      "Income came in $355 less than planned.",
       "1.1x off this month, same as 1.1x."
      ]
     }
@@ -11350,11 +11875,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -11470,6 +11995,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-05",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 206.6,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3206.6,
+     "empty": [],
+     "logged": 3206.6
     },
     "review": {
      "month": "2026-05",
@@ -12136,25 +12705,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3206.6,
-        "diff": -293.4
+        "diff": -43.4
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 206.6,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 3023.89,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -173.88999999999987,
+      "surplus": -467.28999999999996,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3206.6,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -12162,11 +12760,11 @@
       "explained": -97.84,
       "actual": -97.84,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -293.4
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $174 over, but cash went down $98. $293 less income landed than the take-home."
+      "reading": "Your budget showed $467 over, but cash went down $98. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2026-05",
@@ -12312,7 +12910,6 @@
      "readings": [
       "Food came in $169 under plan.",
       "Entertainment was $39 over.",
-      "Income came in $293 less than planned.",
       "1.08x off this month, up from 1.07x."
      ]
     }
@@ -12473,11 +13070,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -12593,6 +13190,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-06",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 150,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3150,
+     "empty": [],
+     "logged": 3150
     },
     "review": {
      "month": "2026-06",
@@ -13250,25 +13891,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3150,
-        "diff": -350
+        "diff": -100
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 150,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 2876.35,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -26.34999999999991,
+      "surplus": -376.3499999999999,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3150,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": false,
@@ -13276,11 +13946,11 @@
       "explained": -132.22,
       "actual": -192.22,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -350
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $26 over, but cash went down $192. $350 less income landed than the take-home. $60 is not explained yet."
+      "reading": "Your budget showed $376 over, but cash went down $192. $250 was set aside and is still in your accounts. $60 is not explained yet."
      },
      "forecast": {
       "month": "2026-06",
@@ -13426,7 +14096,6 @@
      },
      "readings": [
       "Food came in $196 under plan.",
-      "Income came in $350 less than planned.",
       "1.13x off this month, up from 1.08x."
      ]
     }
@@ -13587,11 +14256,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -13707,6 +14376,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-07",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 4500,
+       "planNote": "3 paychecks this month",
+       "paydays": 3,
+       "actual": 4500,
+       "from": "log",
+       "status": "computed",
+       "count": 3
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 228.53,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 4750,
+     "actual": 4728.53,
+     "empty": [],
+     "logged": 4728.53
     },
     "review": {
      "month": "2026-07",
@@ -14370,26 +15083,55 @@
       ]
      },
      "income": {
-      "better": [
+      "better": [],
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 4750,
         "actual": 4728.53,
-        "diff": 1228.53
+        "diff": -21.47
        }
       ],
-      "onPlan": [],
       "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 4500,
+       "planNote": "3 paychecks this month",
+       "actual": 4500,
+       "from": "log",
+       "count": 3
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 228.53,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 2897.1499999999996,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -47.149999999999636,
+      "surplus": 1181.38,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 4750,
+       "actual": 4728.53,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -14397,11 +15139,11 @@
       "explained": 1394.42,
       "actual": 1394.42,
       "top": {
-       "label": "More income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": 1228.53
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $47 over, but cash went up $1,394. $1,229 more income landed than the take-home."
+      "reading": "Your budget showed $1,181 left, but cash went up $1,394. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2026-07",
@@ -14548,7 +15290,6 @@
      },
      "readings": [
       "Food came in $185 under plan.",
-      "Income came in $1,229 more than planned.",
       "1.12x off this month, down from 1.13x."
      ]
     }
@@ -14709,11 +15450,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -14829,6 +15570,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-08",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 194.01,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3194.01,
+     "empty": [],
+     "logged": 3194.01
     },
     "review": {
      "month": "2026-08",
@@ -15493,25 +16278,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3194.01,
-        "diff": -305.99
+        "diff": -55.99
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 194.01,
+       "from": "log",
+       "count": 2
+      }
+     ],
      "totals": {
       "spent": 2944.12,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -94.11999999999989,
+      "surplus": -400.1099999999997,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3194.01,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -15519,11 +16333,11 @@
       "explained": 23.52,
       "actual": 23.52,
       "top": {
-       "label": "Less income landed than the budget's take-home",
-       "short": "Income vs take-home",
-       "amount": -305.99
+       "label": "Set aside (counted in the budget, still in your accounts)",
+       "short": "Set aside",
+       "amount": 250
       },
-      "reading": "Your budget showed $94 over, but cash went up $24. $306 less income landed than the take-home."
+      "reading": "Your budget showed $400 over, but cash went up $24. $250 was set aside and is still in your accounts."
      },
      "forecast": {
       "month": "2026-08",
@@ -15662,7 +16476,6 @@
      },
      "readings": [
       "Food came in $155 under plan.",
-      "Income came in $306 less than planned.",
       "1.11x off this month, down from 1.12x."
      ]
     }
@@ -15823,11 +16636,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -15943,6 +16756,50 @@
       "estimate": 50,
       "actual": 50
      }
+    },
+    "income": {
+     "month": "2026-09",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Northwind Labs",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "paydays": 2,
+       "actual": 3000,
+       "from": "log",
+       "status": "computed",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "label": "Dog walking",
+       "type": "side",
+       "scheduled": false,
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "paydays": null,
+       "actual": 122.18,
+       "from": "log",
+       "status": "computed",
+       "count": 1
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": true,
+     "estimate": 3500,
+     "plan": 3250,
+     "actual": 3122.18,
+     "empty": [],
+     "logged": 3122.18
     },
     "review": {
      "month": "2026-09",
@@ -16617,25 +17474,54 @@
      },
      "income": {
       "better": [],
-      "onPlan": [],
-      "worse": [
+      "onPlan": [
        {
         "id": "income",
         "name": "Income",
-        "plan": 3500,
+        "plan": 3250,
         "actual": 3122.18,
-        "diff": -377.82
+        "diff": -127.82
        }
       ],
+      "worse": [],
       "notCompared": []
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Northwind Labs",
+       "estimate": 3250,
+       "plan": 3000,
+       "planNote": "2 paychecks this month",
+       "actual": 3000,
+       "from": "log",
+       "count": 2
+      },
+      {
+       "id": "side",
+       "name": "Dog walking",
+       "estimate": 250,
+       "plan": 250,
+       "planNote": "",
+       "actual": 122.18,
+       "from": "log",
+       "count": 1
+      }
+     ],
      "totals": {
       "spent": 5198.51,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -2348.51,
+      "surplus": -2726.3300000000004,
       "savingsRate": 0.2549019607843137,
-      "takeHome": 3500
+      "takeHome": 3500,
+      "income": {
+       "estimate": 3500,
+       "plan": 3250,
+       "actual": 3122.18,
+       "tracked": true,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -16647,7 +17533,7 @@
        "short": "Card balances",
        "amount": 2249.61
       },
-      "reading": "Your budget showed $2,349 over, but cash went down $97. Card balances went up $2,250."
+      "reading": "Your budget showed $2,726 over, but cash went down $97. Card balances went up $2,250."
      },
      "forecast": {
       "month": "2026-09",
@@ -16787,7 +17673,6 @@
      "readings": [
       "Food came in $113 under plan.",
       "Utilities was $11 over.",
-      "Income came in $378 less than planned.",
       "1.6x off this month, up from 1.1x."
      ]
     }
@@ -23087,113 +23972,145 @@
    "date": "2025-11-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2980.27,
-   "surplus": -130.26999999999998,
+   "surplus": -567.3600000000001,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2025-12-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2992.64,
-   "surplus": -142.63999999999987,
+   "surplus": -563.71,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00005346449957231136,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-01-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 3425.8000000000006,
-   "surplus": -575.8000000000006,
+   "surplus": -935.8000000000006,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.08517718489112032,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-02-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2978.77,
-   "surplus": -128.76999999999998,
+   "surplus": 1135.4500000000003,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-03-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2959.45,
-   "surplus": -109.44999999999982,
+   "surplus": -499.4499999999998,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0013853925560492353,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-04-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 3021.8899999999994,
-   "surplus": -171.88999999999942,
+   "surplus": -451.8899999999994,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00009927561890073913,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-05-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 3038.23,
-   "surplus": -188.23000000000002,
+   "surplus": -543.1700000000001,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0036402773983536287,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-06-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 3023.89,
-   "surplus": -173.88999999999987,
+   "surplus": -467.28999999999996,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.002404187983028477,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-07-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2876.35,
-   "surplus": -26.34999999999991,
+   "surplus": -376.3499999999999,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-08-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2897.1499999999996,
-   "surplus": -47.149999999999636,
+   "surplus": 1181.38,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.001159760454239477,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-09-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 2944.12,
-   "surplus": -94.11999999999989,
+   "surplus": -400.1099999999997,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0022757224569650847,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-10-01T08:00:00.000Z",
    "takeHome": 3500,
    "spending": 5198.51,
-   "surplus": -2348.51,
+   "surplus": -2726.3300000000004,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.41446876124120174,
-   "completion": 0.6746376811594198
+   "completion": 0.7217054263565886
   }
  ],
  "blindRounds": [],
  "monthActuals": {},
+ "incomeActuals": {},
+ "coverage": {
+  "how": null,
+  "premiumFrom": null,
+  "premiumIncomeId": null,
+  "premium": {
+   "amount": null,
+   "cadence": "month",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "deductible": {
+   "amount": null,
+   "cadence": "year",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "outOfPocketMax": {
+   "amount": null,
+   "cadence": "year",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "hsa": null,
+  "hsaFrom": null
+ },
  "accounts": [
   {
    "id": "chk",

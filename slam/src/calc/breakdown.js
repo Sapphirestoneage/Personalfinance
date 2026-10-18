@@ -3,6 +3,7 @@
 import { linkedCardBalance } from './balances.js';
 import { toMonthly } from './normalize.js';
 import { sumKnown } from './money.js';
+import { minimumAmount } from './debts.js';
 
 // Ideas for sub-categories not already a line in the category (any case).
 export function lineIdeas(doc, refs) {
@@ -22,7 +23,7 @@ export function debtsByType(doc) {
     if (d.state === 'archived') continue;
     const g = groups[d.type] = groups[d.type] || { type: d.type, count: 0, minimums: [], balances: [] };
     g.count += 1;
-    g.minimums.push(toMonthly(d.minimum, 'monthly'));
+    g.minimums.push(minimumAmount(doc, d));
     // A card linked to an account reads its balance from there (S-084).
     const linked = linkedCardBalance(doc, d.id);
     g.balances.push(linked ? linked.amount : d.balance.amount);

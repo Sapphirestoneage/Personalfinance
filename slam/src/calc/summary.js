@@ -178,6 +178,7 @@ export function sinceLast(doc, summary) {
   return out;
 }
 
+// The month's income (S-118) is saved with it: estimate, plan, and actual per source.
 export function closeMonthSnapshot(summary) {
-  return monthSnapshot(summary.model, summary.income);
+  return { ...monthSnapshot(summary.model, summary.income), income: summary.totals.income };
 }

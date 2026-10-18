@@ -90,11 +90,11 @@ export function assetsDebtsCard(ctx) {
   });
 }
 
-const KIND = { cash: 'Cash', invested: 'Investments and retirement', valued: 'Things you own' };
+const KIND = { cash: 'Cash', invested: 'Investments and retirement', valued: 'Things you own', prepaid: 'Paid ahead' };
 export function compositionCard(ctx) {
   const nw = netWorthAt(ctx.doc, todayIso());
   const kinds = nw.byKind.filter((k) => nw.assets.some((a) => a.kind === k.kind));
-  const tiers = [[1, 'Tier 1: cash now'], [2, 'Through tier 2: can sell within days'], [3, 'Through tier 3: with retirement'], [4, 'All, with things you own']];
+  const tiers = [[1, 'Tier 1: cash now'], [2, 'Through tier 2: can sell within days'], [3, 'Through tier 3: with retirement'], [4, 'All, with things you own and paid ahead']];
   return card(ctx, {
     id: 'nw-mix', title: 'What it is made of',
     svg: kinds.length ? hbars({ rows: [...kinds.map((k) => ({ label: KIND[k.kind], values: [{ v: k.amount, color: 'var(--good)', tip: money(k.amount) }] })), ...nw.debtsByType.map((t) => ({ label: 'Owed: ' + DEBT_LABEL(t.type), values: [{ v: t.amount, color: 'var(--bad)', tip: money(t.amount) }] }))], width: chartWidth(true), fmt: money }) : null,

@@ -12,8 +12,11 @@ import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf
 import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
 import { jumpLink } from './jump.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
+import { paidAheadSchedules, scheduleAt } from '../../calc/paid-ahead.js';
 
-export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
+// "Type not set" is never picked; it only shows on an account that still has it (S-116).
+export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.filter((t) => t !== 'unset').map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
+const typeOptionsFor = (a) => (a.type === 'unset' ? [['unset', ACCOUNT_TYPE_INFO.unset.label], ...ACCOUNT_TYPE_OPTIONS] : ACCOUNT_TYPE_OPTIONS);
 const TIER_OPTIONS = [['1', '1: cash now'], ['2', '2: can sell within days'], ['3', '3: retirement, with a penalty or rules'], ['4', '4: not liquid (a home, a car)']];
 // The quick ones get a button; every other type is one pick away (S-110).
 const QUICK_TYPES = ['checking', 'savings', 'credit-card'];
@@ -47,7 +50,7 @@ function accountRow(ctx, month, r, stored) {
       h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
         onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
       h('div', { class: 'row' },
-        h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
+        h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(typeOptionsFor(a), a.type)),
         a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
           options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => {
             const other = doc.accounts.find((o) => o.id !== a.id && o.debtId === x.id && o.state !== 'archived');
@@ -131,6 +134,7 @@ export function accountsCard(ctx, month, opts = {}) {
     b.rows.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)),
       b.rows.some((r) => r.card) ? h('span', {}, '. Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd))) : null) : h('p', { class: 'muted small' }, 'No accounts yet.'),
     cardsBlock(ctx, month),
+    paidAheadBlock(ctx),
     h('div', { class: 'row' }, QUICK_TYPES.map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
       h('select', { class: 'add-select', 'aria-label': 'Add another kind of account', 'data-key': 'add-acct-type', onchange: (e) => { if (e.target.value) add(e.target.value); } },
         options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t))], ''))),
@@ -157,6 +161,19 @@ function cardsBlock(ctx, month) {
       h('span', { class: 'small' }, 'Card debts with no account yet: ' + m.noAccount.map((d) => d.label).join(', ') + '.'),
       h('button', { class: 'btn small', 'data-key': 'add-card-accounts', onclick: () => ctx.update('Add card accounts', (d) => addCardAccounts(d)) },
         'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
+}
+
+// Paid ahead (S-119): computed from the log, never typed. Each yearly bill paid, with its schedule.
+function paidAheadBlock(ctx) {
+  const today = todayIso();
+  const list = paidAheadSchedules(ctx.doc).map((x) => ({ ...x, left: scheduleAt(x, today) })).filter((x) => x.left > 0);
+  if (!list.length) return null;
+  return h('div', { 'data-key': 'paid-ahead' },
+    h('h3', { 'data-key': 'acct-group:paid-ahead' }, 'Paid ahead (computed)'),
+    h('p', { class: 'muted xs' }, 'A yearly bill paid for months still to come. It counts in net worth (not FI) and runs down by its monthly share until it is used up.'),
+    h('ul', { class: 'plain' }, list.map((x) => h('li', { class: 'small', 'data-key': 'paid-ahead:' + x.id },
+      h('span', { style: 'flex:1 1 200px' }, x.name, h('div', { class: 'xs muted' }, money(x.paid, true) + ' paid ' + dayLabel(x.date) + ' for ' + x.months + ' months: ' + money(x.share, true) + ' a month through ' + monthLabel(x.through))),
+      h('b', { class: 'num' }, money(x.left, true) + ' left')))));
 }
 
 // One line at the top of Setup, Accounts (S-114): the two net worths, which live in Insights, Net worth.

@@ -25,6 +25,7 @@
 import { observations, balanceAt } from './balances.js';
 import { kindOf } from './balances.js';
 import { DEFAULT_OWN_RETURN } from '../store/schema.js';
+import { minimumAmount } from './debts.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
@@ -75,7 +76,7 @@ export function owningCosts(doc, summary, date) {
     const balance = debt ? (owed ? owed.amount : null) : 0;
     const apr = debt && typed(debt.apr) ? debt.apr.amount : null;
     const interest = !debt ? 0 : balance === null || apr === null ? null : r2((balance * apr) / 100 / 12);
-    const payment = debt && typed(debt.minimum) ? debt.minimum.amount : null;
+    const payment = debt ? minimumAmount(doc, debt) : null;
     const equity = value === null || balance === null ? null : r2(value - balance);
     const ownsLines = firstOf(a.type) === a;
     const parts = [];

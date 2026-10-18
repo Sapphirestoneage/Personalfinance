@@ -5,8 +5,9 @@
 
 import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
-import { parentsPlan, PARENTS_PLAN_LINE_TYPES } from './coverage.js';
+import { premiumFor, PREMIUM_LINE_TYPES } from './coverage.js';
 import { actualsFromTransactions } from './tx-analysis.js';
+import { linkedLine, cardInterest } from './debts.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -26,11 +27,22 @@ export function primaryPayFrequency(doc) {
   return inc ? inc.payFrequency : null;
 }
 
-// A line a parent's plan pays for counts as "doesn't apply": 0, and complete.
-function coveredRow(line, freq) {
-  const zero = { ...line, estimate: NOT_FOR_ME, actual: NOT_FOR_ME };
-  return { ...lineRow(zero, freq, null), covered: 'parents-plan' };
+// A premium line is owned by health coverage (S-117). Covered (a parent's plan, from the paycheck, or no
+// coverage): "doesn't apply", 0, and complete. Paid directly: the premium is the estimate, and the actual
+// is the log (or a typed actual), else the premium. Not answered yet: blank.
+function premiumRow(line, freq, src, prem) {
+  if (prem.amount === 0 && prem.status === 'not-for-me') {
+    const zero = { ...line, estimate: NOT_FOR_ME, actual: NOT_FOR_ME };
+    return { ...lineRow(zero, freq, null), covered: prem.from === 'parent' ? 'parents-plan' : prem.from };
+  }
+  const row = lineRow({ ...line, estimate: prem.from === 'direct' ? prem.value : BLANK }, freq, src);
+  if (prem.from === 'direct' && row.actual === null && prem.amount !== null) {
+    row.actual = prem.amount;
+    row.status = { ...row.status, actual: 'computed' };
+  }
+  return { ...row, covered: null, fromCoverage: true };
 }
+const BLANK = { amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' };
 
 // A line with a due month is a yearly cost (S-086). Its monthly actual is its
 // share (the month's plan, else the estimate); the payment itself is in the log
@@ -77,17 +89,18 @@ function lineRow(line, freq, src) {
   };
 }
 
+// Debt payments: each debt's minimum, except a debt a budget line pays (the line is the payment,
+// S-116), plus each tracked card's computed interest (never typed).
 function debtRows(doc) {
-  return doc.debts.filter((d) => d.state !== 'archived').map((d) => {
+  const live = doc.debts.filter((d) => d.state !== 'archived');
+  const row = (fields) => ({ type: 'loan', kind: 'fixed', need: true, savings: false, path: 'personal', tag: 'planned', joy: null, stress: null, computed: true, owedOutstanding: 0, oneOffs: [], ...fields });
+  const mins = live.filter((d) => !linkedLine(doc, d)).map((d) => {
     const min = toMonthly(d.minimum, 'monthly');
-    return {
-      id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
-      path: 'personal', tag: 'planned', joy: null, stress: null, state: d.state, computed: true,
-      estimate: min, actual: min,
-      status: { estimate: 'computed', actual: 'computed' },
-      sourceStatus: d.minimum.status, owedOutstanding: 0, oneOffs: []
-    };
+    return row({ id: 'debt:' + d.id, debtId: d.id, name: d.label, state: d.state, estimate: min, actual: min, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: d.minimum.status });
   });
+  const interest = live.map((d) => ({ d, i: cardInterest(doc, d, doc.currentMonth) })).filter((x) => x.i).map(({ d, i }) =>
+    row({ id: 'interest:' + d.id, debtId: null, interestOf: d.id, name: 'Interest (computed): ' + d.label, state: d.state, estimate: i.amount, actual: i.amount, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: 'computed', why: i.why }));
+  return [...mins, ...interest];
 }
 
 // Category-level answer first (the client's own words), then the sum of its lines.
@@ -107,7 +120,7 @@ function resolveTop(cat, lines, key, freq) {
 
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
-  const plan = parentsPlan(doc);
+  const prem = premiumFor(doc, freq);
   // The month's log, once, for every line (S-087).
   const src = { log: actualsFromTransactions(doc.transactions || [], doc.currentMonth), plan: (doc.plans || {})[doc.currentMonth] || null };
   const cats = [];
@@ -116,7 +129,7 @@ export function budgetModel(doc) {
     const isDebt = cat.id === 'debt';
     // A line added in review for a later month is not part of this month (S-076).
     const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth))
-      .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq, src)));
+      .map((l) => (PREMIUM_LINE_TYPES.includes(l.type) ? premiumRow(l, freq, src, prem) : lineRow(l, freq, src)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,
@@ -156,12 +169,13 @@ export function budgetModel(doc) {
 // budget number ever reads it.
 export function columnModel(doc, key, fallback = null) {
   const freq = primaryPayFrequency(doc);
-  const plan = parentsPlan(doc);
+  const prem = premiumFor(doc, freq);
   const valueOf = (x) => (hasAnswer(x[key]) || !fallback ? x[key] || NOT_FOR_ME : x[fallback] || NOT_FOR_ME);
   const lineOf = (l) => {
-    const covered = plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type);
-    const v = covered ? NOT_FOR_ME : valueOf(l);
-    return { id: l.id, name: l.name, [key]: covered ? null : toMonthly(v, freq), status: { [key]: v.status } };
+    // A premium line follows health coverage (S-117), whatever the column.
+    if (PREMIUM_LINE_TYPES.includes(l.type)) return { id: l.id, name: l.name, [key]: prem.status === 'not-for-me' ? null : prem.amount, status: { [key]: prem.status } };
+    const v = valueOf(l);
+    return { id: l.id, name: l.name, [key]: toMonthly(v, freq), status: { [key]: v.status } };
   };
   return doc.categories.filter((c) => c.state !== 'archived').map((cat) => {
     const base = { id: cat.id, name: cat.name, type: cat.id === 'debt' ? 'debt' : (cat.type || 'other'), savings: !!cat.savings, isDebt: cat.id === 'debt', isEverything: cat.id === 'everything' };

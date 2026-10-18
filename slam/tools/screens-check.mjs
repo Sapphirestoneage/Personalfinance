@@ -42,7 +42,7 @@ async function buildBridgeDoc() {
   findLine(d, 'rent').line.actual = makeValue(1500);
   findLine(d, 'emergency-fund').line.actual = makeValue(200);
   Object.assign(findLine(d, 'car-insurance').line, { estimate: makeValue(1200, { cadence: 'year' }), dueMonth: one(10), dueDay: one(14) });
-  for (const [date, amount, more] of [['2026-10-01', -2000, { kind: 'income' }], ['2026-10-15', -2000, { kind: 'income' }], ['2026-10-20', -300, { kind: 'income' }],
+  for (const [date, amount, more] of [['2026-10-01', -2000, { kind: 'income', incomeId: 'job' }], ['2026-10-15', -2000, { kind: 'income', incomeId: 'job' }], ['2026-10-20', -300, { kind: 'income', incomeId: 'job' }],
     ['2026-10-05', 300, { lineId: 'groceries', account: 'visa' }], ['2026-10-06', 100, { lineId: 'groceries' }], ['2026-10-14', 1200, { lineId: 'car-insurance' }],
     ['2026-10-25', 450, { kind: 'card-payment' }], ['2026-10-28', 60, { merchant: 'ATM withdrawal' }]]) addEntry(d, { date, amount, account: 'chk', ...more });
   editEntry(d, addEntry(d, { date: '2026-10-10', amount: 120, lineId: 'shopping', account: 'chk', merchant: 'Ticketmaster' }).id, { owed: 60 });
@@ -98,7 +98,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Spending tile', tiles.Spending, money(exp.spending));
   check(name, 'Surplus tile', tiles[exp.surplus < 0 ? 'Shortfall' : 'Surplus'], signedMoney(exp.surplus));
   check(name, 'Savings rate tile', tiles['Savings rate'], pct(exp.savingsRate));
-  check(name, 'No charts on Today but the cash strip', String(await page.$$eval('#main .chart svg', (x) => x.filter((svg) => !svg.closest('#cash-strip')).length)), '0');
+  // Lesson 7 (S-116): Today shows numbers, not charts.
+  check(name, 'No charts on Today', String(await page.$$eval('#main .chart svg', (x) => x.length)), '0');
   await insights(page, 'where');
   check(name, 'Housing share (gauges)', String((await page.$eval('#chart-gauges .reading', (p) => p.textContent)).startsWith('Housing is ' + pct(exp.housingShare) + ' of take-home')), 'true');
   await insights(page, 'compared');
@@ -365,12 +366,12 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
   await page.waitForTimeout(150);
-  check('riley', 'March review readings', await settled(page, '#months-review [data-key="review-readings"]', 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.'), 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.');
+  check('riley', 'March review readings', await settled(page, '#months-review [data-key="review-readings"]', 'Food came in $136 under plan. Shopping was $57 over. 1.07x off this month, down from 1.09x.'), 'Food came in $136 under plan. Shopping was $57 over. 1.07x off this month, down from 1.09x.');
   check('riley', 'March bridge ties', await settled(page, '#months-review [data-key="review-bridge"]', 'Ties'), 'Ties');
   await insights(page, 'cash');
   await page.selectOption('[data-key="bridge-month"]', '2026-03');
   await page.waitForTimeout(150);
-  check('riley', 'March bridge reading', await settled(page, '#chart-bridge .reading', 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.'), 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  check('riley', 'March bridge reading', await settled(page, '#chart-bridge .reading', 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.'), 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.');
   await insights(page, 'time');
   check('riley', 'March 80/20', await settled(page, '#chart-pareto .reading', '13% of your entries (3 of 23) made up 80% of your spending.'), '13% of your entries (3 of 23) made up 80% of your spending.');
   await page.click('[data-key="pareto-level-lines"]');
@@ -386,17 +387,35 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'June not explained', await settled(page, '#chart-bridge [data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
   // Net worth (S-115, by hand in test/networth-households.test.js). Today every balance is September's end:
   // FI 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323; the car 8,400 - its loan 3,237.64 = 5,162.36
-  // locked in; net worth 34,485.36.
+  // and paid ahead (S-119, test/paid-ahead.test.js) 400 + 135 = 535 locked in: 5,697.36; net worth 35,020.36.
   await insights(page, 'networth');
-  check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(34485.36)), money(34485.36));
+  check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(35020.36)), money(35020.36));
   check('riley', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
-  check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5162.36)), money(5162.36));
+  check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5697.36)), money(5697.36));
   await page.selectOption('[data-key="nw-month"]', '2026-03');
-  const marNW = 'Net worth rose $321. $342 more went out than came in, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
+  // With the insurance paid ahead (S-119): up 1,200.81, saved -451.89 + 15 + 975 = 538.11 (test/networth-households.test.js).
+  const marNW = 'Net worth rose $1,201. $538 you saved, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
   check('riley', 'March net worth bridge', await settled(page, '#chart-nw-bridge .reading', marNW), marNW);
   const carRead = 'The car costs about $316 a month you\'ll never get back (not counting maintenance, parking and tolls). Your trips by Uber, transit and a rental would be about $350.';
   check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
+  // The auto loan is paid by the Car payment line (S-116, by hand in test/debts.test.js): October's 340,
+  // on the loan going into October (September's end, 3,237.64): 16.19 interest, 323.81 principal.
+  // Paid ahead in Setup, Accounts: the car insurance first, 400 left today.
+  await setup(page, 'accounts');
+  check('riley', 'Paid ahead in Setup', await settled(page, '[data-key="paid-ahead"] li b', '$400.00 left'), '$400.00 left');
+  await setup(page, 'debts');
+  check('riley', 'Loan minimum from its line', await settled(page, '[data-key="debt-min-from:debt-car"]', 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.'), 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.');
+  check('riley', 'Loan payment split', await settled(page, '[data-key="debt-split:debt-car"]', 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).'), 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).');
+  check('riley', 'Visa interest', await settled(page, '[data-key="debt-interest:debt-visa"]', 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.'), 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.');
+  await insights(page, 'networth');
   check('riley', 'Net worth charts drawn', String(await page.$$eval('#chart-nw-time svg, #chart-nw-assets-debts svg, #chart-nw-mix svg, #chart-nw-bridge svg', (x) => x.length)), '4');
+  // Income from the log (S-118): October so far, the Oct 9 paycheck 1,500 and dog walking 130 (Oct 12).
+  await go(page, 'review');
+  check('riley', 'October paycheck from the log', await settled(page, '[data-key="income-actual:job"]', '$1,500.00'), '$1,500.00');
+  check('riley', 'October dog walking from the log', await settled(page, '[data-key="income-actual:side"]', '$130.00'), '$130.00');
+  // November's plan: paydays Nov 6 and Nov 20, 2 x 1,500 = 3,000, and dog walking 250: 3,250.
+  await plan(page, 'plan');
+  check('riley', 'November planned income', await settled(page, '[data-key="plan-income-total"]', '$3,250'), '$3,250');
   await go(page, 'track');
   await page.waitForSelector('#chart-cf-paylater');
   check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
@@ -406,6 +425,33 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await insights(page, 'time');
   for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
   check('riley', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
+// Health coverage in one place (S-117): answered once in Setup; Review shows the one-line summary.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('coverage (phone width)');
+  await page.fill('[data-key="new-client"]', 'Coverage check');
+  await page.press('[data-key="new-client"]', 'Enter');
+  await page.waitForSelector('#first-session');
+  await setup(page, 'coverage');
+  await page.selectOption('[data-key="coverage-how"]', 'marketplace');
+  await page.selectOption('[data-key="coverage-premium-from"]', 'direct');
+  const box = page.locator('[data-path=\'["coverage","premium"]\']');
+  await box.fill('320');
+  await box.press('Tab');
+  const want = 'Marketplace or ACA. Premium $320 a month, paid directly.';
+  check('coverage', 'Summary in Setup', await settled(page, '[data-key="coverage-line"]', want), want);
+  // Review, Health: the premium line is the summary, not a question.
+  await go(page, 'review');
+  await page.click('[data-key="rv-cat:health"]');
+  check('coverage', 'Summary in Review', await settled(page, '[data-key="coverage-summary-rv:premiums-text"]', want), want);
+  check('coverage', 'No premium question in Review', String(await page.$$eval('[data-path=\'["line","premiums","actual"]\']', (x) => x.length)), '0');
+  check('coverage', 'Console errors', String(errors.length), '0');
   await page.close();
 }
 // Dana (S-115): a condo with a mortgage, at phone width on October 17, 2026. By hand in test/networth-households.test.js.

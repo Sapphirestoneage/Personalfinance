@@ -12,6 +12,7 @@
 
 import { balanceAt, liabilities, lastDayOf, kindOf } from './balances.js';
 import { tierOf, countsForFI, typeInfo } from '../store/schema.js';
+import { paidAheadAt } from './paid-ahead.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const sum = (xs) => r2(xs.reduce((a, x) => a + x, 0));
@@ -30,12 +31,15 @@ export const EXPLAIN = {
 };
 
 // get(key) gives one account's or debt's balance; by default the latest dated one on the day.
-export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date)) {
+// paDate: the day Paid ahead is read on (S-119); the bridge reads a month's start on the day before it.
+export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), paDate = date) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && kindOf(a) !== 'owed');
   const assets = accts.map((a) => {
     const b = get(a.id);
     return { id: a.id, name: a.name, type: a.type, kind: kindOf(a), tier: tierOf(a), fi: countsForFI(a), amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null, from: b ? b.from : null };
   });
+  // Paid ahead (S-119): computed from the log, one row per line; tier 4, not counted toward FI.
+  for (const p of paidAheadAt(doc, paDate)) assets.push({ id: 'paid-ahead:' + p.lineId, name: 'Paid ahead: ' + p.name, type: 'paid-ahead', kind: 'prepaid', tier: 4, fi: false, amount: p.amount, status: 'computed', asOf: paDate, from: 'computed', computed: true });
   // Each debt secured by an asset belongs to the first asset that names it.
   const securedBy = {};
   for (const a of accts) if (a.securedDebtId && !securedBy[a.securedDebtId]) securedBy[a.securedDebtId] = a;
@@ -67,7 +71,7 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date)) 
     assetsTotal: total(assets), debtsTotal: total(debts),
     byTier: { 1: tierSum(1), 2: tierSum(2), 3: tierSum(3), 4: tierSum(4) },
     debtsByType: types.map((t) => ({ type: t, amount: total(debts.filter((d) => d.debtType === t)), count: debts.filter((d) => d.debtType === t).length })),
-    byKind: ['cash', 'invested', 'valued'].map((k) => ({ kind: k, amount: total(assets.filter((a) => a.kind === k)) })),
+    byKind: ['cash', 'invested', 'valued', 'prepaid'].map((k) => ({ kind: k, amount: total(assets.filter((a) => a.kind === k)) })),
     missing: [...assets.filter((a) => a.amount === null).map((a) => a.name), ...debts.filter((d) => d.amount === null).map((d) => d.name)]
   };
 }
@@ -128,4 +132,4 @@ export function milestones(series) {
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
-export const typeLabel = (type) => typeInfo({ type }).label;
+export const typeLabel = (type) => (type === 'paid-ahead' ? 'Paid ahead' : typeInfo({ type }).label);

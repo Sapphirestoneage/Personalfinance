@@ -3,9 +3,9 @@
 //   a car: worth 9,000 at the start, 8,850 at the end;
 //   an auto loan on the car (no account): 6,000 owed at the start, 5,780 at the end; its 250 payment
 //     is in Debt payments and was paid from checking (so checking ends 2,480 - 250 = 2,230).
-// The cash bridge: surplus 4,000 - (2,100 + 250) - 200 = 1,450; steps as in bridge.test.js
-// (yearly -1,100, set aside +200, cards -150, card minimum +40, owed -60, one-off -250, income +300);
-// explained 1,450 - 1,100 + 200 - 150 + 40 - 60 - 250 + 300 = 430; cash 7,000 -> 2,230 + 5,200 = 7,430, ties.
+// The cash bridge: surplus 4,300 (the income in the log, S-118) - (2,100 + 250) - 200 = 1,750; steps as
+// in bridge.test.js (yearly -1,100, set aside +200, cards -150, card minimum +40, owed -60, one-off -250);
+// explained 1,750 - 1,100 + 200 - 150 + 40 - 60 - 250 = 430; cash 7,000 -> 2,230 + 5,200 = 7,430, ties.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,23 +57,26 @@ test('a month that ties: every line by hand, total and FI', () => {
   assert.equal(bridgeFor(d, inc, M).unexplained, 0);
   const b = netWorthBridge(d, inc, M);
   // Start: checking 2,000 + savings 5,000 + Roth 6,000 + car 9,000 = 22,000; Visa 500 + loan 6,000 = 6,500; 15,500.
-  // End: 2,230 + 5,200 + 6,500 + 8,850 = 22,780; Visa 350 + loan 5,780 = 6,130; 16,650. Up 1,150.
-  assert.deepEqual([b.total.start, b.total.actual, b.total.change], [15500, 16650, 1150]);
+  // End: 2,230 + 5,200 + 6,500 + 8,850 = 22,780, plus the car insurance paid ahead (S-119): 1,200 paid
+  // on October 14 for 12 months, 100 a month, so 1,200 - 100 = 1,100 left at October's end: 23,880.
+  // Visa 350 + loan 5,780 = 6,130; 17,750. Up 2,250.
+  assert.deepEqual([b.total.start, b.total.actual, b.total.change], [15500, 17750, 2250]);
   assert.deepEqual(lines(b.total), {
-    surplus: 1450,
-    timing: -1110,      // yearly -1,100, owed -60, one-off -250, income +300
+    surplus: 1750,
+    timing: -310,       // yearly -1,100 + paid ahead +1,100 = 0 (the bill's line is gone), owed -60, one-off -250
     saved: 500,         // the savings line 200 + the Roth from the paycheck 300
     'paid-down': 260,   // the Visa minimum 40 + the loan 6,000 -> 5,780 = 220
     market: 200,        // Roth 6,500 - 6,000 - 300 contributed
     value: -150         // car 9,000 -> 8,850
   });
-  // 15,500 + 1,450 - 1,110 + 500 + 260 + 200 - 150 = 16,650: explained, nothing left over.
-  assert.deepEqual([b.total.explained, b.total.unexplained, b.total.ties], [16650, 0, true]);
-  assert.equal(b.reading, 'Net worth rose $1,150. $840 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own.');
-  // FI leaves out the car and its loan. Start: 2,000 + 5,000 + 6,000 - 500 = 12,500. End: 2,230 + 5,200 + 6,500 - 350 = 13,580.
+  // 15,500 + 1,750 - 310 + 500 + 260 + 200 - 150 = 17,750: explained, nothing left over.
+  assert.deepEqual([b.total.explained, b.total.unexplained, b.total.ties], [17750, 0, true]);
+  // Saved: 1,750 - 310 + 500 = 1,940.
+  assert.equal(b.reading, 'Net worth rose $2,250. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own.');
+  // FI leaves out the car, its loan, and what is paid ahead (the cash went out: FI tells that story). Start: 2,000 + 5,000 + 6,000 - 500 = 12,500. End: 2,230 + 5,200 + 6,500 - 350 = 13,580.
   assert.deepEqual([b.fi.start, b.fi.actual, b.fi.change], [12500, 13580, 1080]);
-  // Lines: the loan's 220 and the car's -150 are gone: 1,450 - 1,110 + 500 + 40 + 200 = 1,080.
-  assert.deepEqual(lines(b.fi), { surplus: 1450, timing: -1110, saved: 500, 'paid-down': 40, market: 200 });
+  // Lines: the loan's 220 and the car's -150 are gone: 1,750 - 1,410 + 500 + 40 + 200 = 1,080.
+  assert.deepEqual(lines(b.fi), { surplus: 1750, timing: -1410, saved: 500, 'paid-down': 40, market: 200 });
   assert.deepEqual([b.fi.explained, b.fi.unexplained], [13580, 0]);
   // The waterfall: start, six lines, explained, end (nothing unexplained to draw).
   assert.deepEqual(netWorthBridgeRows(b.total).map((r) => r.label), ['Start', 'Surplus', 'Timing', 'Saved', 'Debt paid', 'Market', 'Values', 'Explained', 'End']);
@@ -82,20 +85,20 @@ test('a month that ties: every line by hand, total and FI', () => {
 test('a month with $60 not explained (the ATM cash), the same in the total and FI', () => {
   const d = household({ atm: true });
   const b = netWorthBridge(d, buildSummary(d, refs).income, M);
-  // Checking ends 60 lower (2,170): actual 16,590; explained still 16,650; not explained -60, as in the cash bridge.
-  assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained, b.total.ties], [16590, 16650, -60, false]);
+  // Checking ends 60 lower (2,170): actual 17,690; explained still 17,750; not explained -60, as in the cash bridge.
+  assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained, b.total.ties], [17690, 17750, -60, false]);
   assert.deepEqual([b.fi.unexplained, b.parts.cash], [-60, -60]);
-  assert.equal(b.reading, 'Net worth rose $1,090. $840 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own. $60 is not explained yet.');
+  assert.equal(b.reading, 'Net worth rose $2,190. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own. $60 is not explained yet.');
   assert.equal(netWorthBridgeRows(b.total).find((r) => r.kind === 'unexplained').label, 'Not explained yet');
 });
 
 test('an investment not updated this month: no market line, and its contributions wait', () => {
   const d = household({ staleRoth: true });
   const b = netWorthBridge(d, buildSummary(d, refs).income, M);
-  // The Roth stays at its start, 6,000: end 22,280 - 6,130 = 16,150. No market line: explained
-  // 15,500 + 1,450 - 1,110 + 500 + 260 - 150 = 16,450, so -300 (the 300 contributed) is not explained yet.
+  // The Roth stays at its start, 6,000: end 22,280 + 1,100 paid ahead - 6,130 = 17,250. No market line:
+  // explained 15,500 + 1,750 - 310 + 500 + 260 - 150 = 17,550, so -300 (the 300 contributed) is not explained yet.
   assert.equal(lines(b.total).market, undefined);
-  assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained], [16150, 16450, -300]);
+  assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained], [17250, 17550, -300]);
   assert.deepEqual(b.total.stale.map((x) => [x.name, x.contributions]), [['Roth IRA', 300]]);
   assert.equal(b.parts.stale, -300);
   assert.match(b.reading, /\$300 is not explained yet \(Roth IRA not updated this month\)\.$/);

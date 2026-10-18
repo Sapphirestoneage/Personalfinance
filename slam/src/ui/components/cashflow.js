@@ -6,12 +6,13 @@
 import { h, options } from '../dom.js';
 import { money, todayIso, dayLabel } from '../format.js';
 import { valueInput, parseAmount } from './value-input.js';
-import { dayLine } from '../charts/svg.js';
 import { quickEntryButton } from './quick-entry.js';
 import { jumpLink, emptyState } from './jump.js';
 import { howButton, howPanel, sourceLink } from './how.js';
 import { explain } from '../../calc/explain.js';
 import { liabilities } from '../../calc/balances.js';
+import { PREMIUM_LINE_TYPES, premiumFor } from '../../calc/coverage.js';
+import { linkedLine } from '../../calc/debts.js';
 import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
@@ -57,9 +58,10 @@ export function billsCard(ctx) {
   const bills = [];
   for (const c of doc.categories) {
     if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
-    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l))) bills.push({ c, l, annual: ANNUAL(c, l) });
+    // A premium is a bill only when it is paid directly (S-117); a loan's line is its bill (S-116).
+    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l)) && !(PREMIUM_LINE_TYPES.includes(l.type) && premiumFor(doc).from !== 'direct')) bills.push({ c, l, annual: ANNUAL(c, l) });
   }
-  const debts = doc.debts.filter((x) => x.state !== 'archived');
+  const debts = doc.debts.filter((x) => x.state !== 'archived' && !linkedLine(doc, x));
   return h('div', { class: 'card', id: 'bills-card' },
     h('p', { class: 'muted small' }, 'Optional. These put bills on the calendar. Anything without a date is spread across the month.'),
     bills.length ? bills.map(({ l, annual }) => h('div', { class: 'qa' },
@@ -129,22 +131,17 @@ export function checkBalancesCard(ctx) {
       } }, 'Save balance')));
 }
 
-// Today's compact strip: the next 30 days, today, the lowest point,
-// the next payday, and safe to spend.
+// Today's compact strip, numbers only: today, the lowest point in the next 30 days, and safe to spend.
 export function budgetCashStrip(ctx, summary) {
   const cal = calendarFor(ctx, summary, 30);
   if (!cal.lowest || cal.unknownStart.length === ctx.doc.accounts.filter((a) => a.state !== 'archived').length) {
     return h('div', { class: 'card cash-strip' }, h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
       emptyState(ctx, 'Add a checking balance to see cash by day and what is safe to spend.', 'balances', 'Add a balance'));
   }
-  const days = cal.days.filter((x) => x.date >= cal.today);
-  const iPay = cal.nextPayday ? days.findIndex((x) => x.date === cal.nextPayday) : -1;
-  const iLow = days.findIndex((x) => x.date === cal.lowest.date);
-  const markers = [iPay >= 0 ? { i: iPay, label: 'Payday' } : null, iLow >= 0 ? { i: iLow, label: 'Lowest' } : null].filter(Boolean);
-  const w = Math.min(560, Math.max(260, document.documentElement.clientWidth - 70));
   return h('div', { class: 'card cash-strip', id: 'cash-strip' },
     h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
-    h('div', { class: 'chart', html: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: w, height: 90, fmt: money, todayIndex: 0, cushion: cal.cushion || null, markers, compact: true, label: 'Cash for the next 30 days' }) }),
+    // Numbers only on Today (lesson 7, S-116): the chart of these 30 days is the calendar on Track, one tap away.
+    h('p', { class: 'xs' }, jumpLink(ctx, 'calendar', 'See cash by day (the calendar)', 'today-calendar')),
     h('div', { class: 'strip three' },
       // Jump to source (S-108): today's cash opens the balance check, the lowest point the calendar,
       // and safe to spend how it was worked out.
