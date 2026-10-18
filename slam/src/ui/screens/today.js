@@ -4,13 +4,13 @@
 // and Quick entry, and four headline tiles. No other charts: they live in Insights.
 
 import { h } from '../dom.js';
-import { money, pct, signedMoney } from '../format.js';
+import { money, pct, signedMoney, todayIso, dayLabel } from '../format.js';
 import { statusChip } from '../components/status.js';
 import { nextCard } from '../components/cards.js';
 import { budgetCashStrip } from '../components/cashflow.js';
 import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
-import { firstSession } from '../../calc/loop.js';
+import { firstSession, staleBalances, loopStep, loopStrip } from '../../calc/loop.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
@@ -46,12 +46,21 @@ function firstSessionCard(ctx, summary) {
       i.done ? null : jumpLink(ctx, i.where, 'Do it', 'first-go-' + i.key)))));
 }
 
+// At month end, balances that have not been updated join the Next card (S-114).
+function staleExtra(ctx, summary) {
+  const today = todayIso();
+  if (loopStep(loopStrip(ctx.doc, summary, today), today) !== 'review') return null;
+  const stale = staleBalances(ctx.doc, today);
+  if (!stale.length) return null;
+  return { label: '2. Update balances: ' + stale.map((x) => x.name).join(', '), why: stale.map((x) => (x.last ? 'not since ' + dayLabel(x.last) : 'never')).join(', '), where: 'balances' };
+}
+
 export function renderToday(ctx, summary) {
   return h('div', {},
     h('h1', {}, 'Today'),
     loopStripCard(ctx, summary),
     firstSessionCard(ctx, summary),
-    nextCard(ctx, summary),
+    nextCard(ctx, summary, staleExtra(ctx, summary)),
     budgetCashStrip(ctx, summary),
     headlineTiles(ctx, summary));
 }

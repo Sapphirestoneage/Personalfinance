@@ -8,7 +8,7 @@ export const SCREENS = [['today', 'Today'], ['plan', 'Plan'], ['track', 'Track']
 // Old addresses (bookmarks, earlier links) still open the screen that took their place.
 export const OLD_HASHES = { budget: 'today', fill: 'plan', analyze: 'insights' };
 
-export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['you', 'You']];
+export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['networth', 'Net worth'], ['you', 'You']];
 export const SETUP_SECTIONS = [
   ['basics', 'Basics'], ['income', 'Income and paychecks'], ['accounts', 'Accounts'], ['debts', 'Debts'], ['bills', 'Bills and due dates'],
   ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Cushion and coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
@@ -56,6 +56,7 @@ export function whereFor(doc, path) {
   if (a === 'income') return ['setup:income', []];
   if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
   if (a === 'balances') return ['balances', []];
+  if (a === 'accounts') return ['balances', ['acct-more:' + id]];
   if (a === 'transactions') return ['log', []];
   if (a === 'cashflow') return ['setup:coach', []];
   if (a === 'nextStage') return ['future:next', []];
@@ -96,7 +97,11 @@ export const CHARTS = [
   ['chart-tx-findings', 'What the transactions show', 'insights:cash'],
   ['chart-draftt', 'DRAFTT', 'insights:you'], ['chart-joy', 'Joy vs spend', 'insights:you'], ['chart-stress', 'Satisfaction and stress', 'insights:you'],
   ['chart-mistake', 'Mistake cost', 'insights:you'], ['chart-statement', 'Personal income statement', 'insights:you'], ['extras', 'Also worth knowing', 'insights:you'],
-  ['chart-cf-whatif', 'What if a bill moved?', 'setup:bills']
+  ['chart-cf-whatif', 'What if a bill moved?', 'setup:bills'],
+  ['nw-tiles', 'Net worth (everything)', 'insights:networth'], ['nw-tiles', 'FI net worth (what can fund your life)', 'insights:networth'],
+  ['nw-tiles', 'Locked in things you use', 'insights:networth'], ['chart-nw-time', 'Both net worths, month by month', 'insights:networth'],
+  ['chart-nw-assets-debts', 'What you have and what you owe, by month', 'insights:networth'], ['chart-nw-mix', 'What it is made of (liquidity tiers)', 'insights:networth'],
+  ['chart-nw-bridge', 'Net worth bridge', 'insights:networth'], ['chart-nw-milestones', 'Milestones', 'insights:networth']
 ];
 
 // The name of what a field path points at, for the breadcrumb (S-108).

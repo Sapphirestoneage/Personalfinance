@@ -7,11 +7,14 @@ import { money, pct, times, signedMoney, STATUS_LABELS } from '../format.js';
 import { statusChip } from './status.js';
 import { sourceLink } from './how.js';
 
-export function nextCard(ctx, summary) {
+// extra: one more item from outside the picture (S-114: balances not updated at month end), { label, why, where }.
+export function nextCard(ctx, summary, extra) {
   const [first, ...rest] = summary.next;
+  const extraRow = extra ? h('button', { 'data-key': 'next-extra', onclick: () => ctx.jump(extra.where) }, extra.label + ' ', h('span', { class: 'muted xs' }, extra.why)) : null;
   if (!first) {
     return h('div', { class: 'card next-1' }, h('h3', {}, 'Next'),
       h('p', { class: 'big' }, 'The picture is filled in.'),
+      extraRow ? h('div', { class: 'next-list' }, extraRow) : null,
       h('div', { class: 'empty-state row' }, h('span', { class: 'small muted' }, 'Talk through the biggest culprits, then close the month when it ends.'),
         h('button', { class: 'btn small', 'data-key': 'next-culprits', onclick: () => ctx.jump('insights:compared') }, 'See the culprits')));
   }
@@ -21,8 +24,8 @@ export function nextCard(ctx, summary) {
     h('div', { class: 'spread' },
       h('div', {}, h('div', { class: 'big' }, '1. ' + first.label), h('div', { class: 'muted small' }, why(first))),
       h('button', { class: 'btn primary', onclick: () => ctx.goToField(first.path) }, 'Go')),
-    rest.length ? h('div', { class: 'next-list' }, rest.map((it, i) => h('button', { onclick: () => ctx.goToField(it.path) },
-      (i + 2) + '. ' + it.label + ' ', h('span', { class: 'muted xs' }, why(it))))) : null,
+    rest.length || extraRow ? h('div', { class: 'next-list' }, extraRow, rest.slice(0, extraRow ? 1 : 2).map((it, i) => h('button', { onclick: () => ctx.goToField(it.path) },
+      (i + (extraRow ? 3 : 2)) + '. ' + it.label + ' ', h('span', { class: 'muted xs' }, why(it))))) : null,
     summary.smallStuff.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Small stuff, under $100 a year (' + summary.smallStuff.length + ')'),
       h('ul', { class: 'plain' }, summary.smallStuff.map((it) => h('li', { class: 'small' }, it.label, statusChip(it.status))))) : null);
 }

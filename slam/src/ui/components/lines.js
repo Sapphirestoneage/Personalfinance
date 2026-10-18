@@ -8,7 +8,7 @@ import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag } f
 import { nameEdit } from './name-edit.js';
 import { lineTypeSelect } from './type-select.js';
 import { DEBT_TYPE_OPTIONS } from './debt-quick.js';
-import { linkedCardBalance } from '../../calc/balances.js';
+import { linkedCardBalance, observations } from '../../calc/balances.js';
 
 export const STATES = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const TAG_IDEAS = ['Subscription', 'Travel', 'Gifts', 'Work', 'Self-care', 'Kids', 'Pets', 'Date night'];
@@ -79,6 +79,8 @@ export function lineDetail(ctx, cat, line, catHasAnswer) {
 
 export function debtCard(ctx, debt) {
   const linked = linkedCardBalance(ctx.doc, debt.id);
+  const obs = observations(ctx.doc, debt.id);
+  const dated = obs.length ? obs[obs.length - 1] : null;
   const p = (k) => ['debts', debt.id, k];
   const set = (k) => (e) => ctx.update('Debt ' + k, (d) => { d.debts.find((x) => x.id === debt.id)[k] = e.target.value; });
   return h('div', { class: 'card' },
@@ -90,7 +92,9 @@ export function debtCard(ctx, debt) {
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
     linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Setup, Accounts).')
-      : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
+      // Dated balances (S-110) own the balance once there is one; it is never asked twice.
+      : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dated.date + ', from the month balances (Setup, Accounts).')
+        : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
 }

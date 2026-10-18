@@ -58,7 +58,7 @@ async function go(page, screen) {
   const bottom = page.locator('.bottom-bar > a[href="#' + screen + '"]');
   if (await bottom.count()) return bottom.click();
   await page.click('[data-key="more"]');
-  await page.click('.more-menu a[href="#' + screen + '"]');
+  await page.click('.more-menu a[data-nav="' + screen + '"]');
 }
 async function insights(page, tab) { await go(page, 'insights'); await page.click('[data-key="tab-' + tab + '"]'); await page.waitForSelector('#tab-' + tab); }
 async function setup(page, section) { await go(page, 'setup'); await page.click('[data-key="setup-' + section + '"]'); await page.waitForSelector('#setup-' + section); }
@@ -217,9 +217,13 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await startBox.press('Tab');
   await page.waitForTimeout(100);
   check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
-  // Accounts (S-103): with only a checking start of 2,500 typed, you have 2,500, owe 0 on cards, net 2,500.
-  check('loop', 'Accounts: you have', await page.$eval('[data-key="acct-have"] .value', (b) => b.textContent), money(2500));
-  check('loop', 'Accounts: net', await page.$eval('[data-key="acct-net"] .value', (b) => b.textContent), money(2500));
+  // Net worth (S-111): with only a checking start of 2,500 typed, both net worths are 2,500 and nothing is locked in.
+  // Setup shows the one-line summary; the tiles live in Insights, Net worth (S-114).
+  check('loop', 'Setup net worth line', await settled(page, '[data-key="nw-line-total"]', money(2500)), money(2500));
+  await insights(page, 'networth');
+  check('loop', 'Net worth (everything)', await settled(page, '[data-key="nw-total"] .value', money(2500)), money(2500));
+  check('loop', 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(2500)), money(2500));
+  check('loop', 'Locked in', await settled(page, '[data-key="nw-locked"] .value', money(0)), money(0));
   // Next stage and Eras are parked (S-105): checked with Future tools on.
   await setup(page, 'future');
   await page.check('[data-key="future-tools"]');
@@ -380,6 +384,19 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.selectOption('[data-key="bridge-month"]', '2026-06');
   await page.waitForTimeout(150);
   check('riley', 'June not explained', await settled(page, '#chart-bridge [data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
+  // Net worth (S-115, by hand in test/networth-households.test.js). Today every balance is September's end:
+  // FI 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323; the car 8,400 - its loan 3,237.64 = 5,162.36
+  // locked in; net worth 34,485.36.
+  await insights(page, 'networth');
+  check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(34485.36)), money(34485.36));
+  check('riley', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
+  check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5162.36)), money(5162.36));
+  await page.selectOption('[data-key="nw-month"]', '2026-03');
+  const marNW = 'Net worth rose $321. $342 more went out than came in, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
+  check('riley', 'March net worth bridge', await settled(page, '#chart-nw-bridge .reading', marNW), marNW);
+  const carRead = 'The car costs about $316 a month you\'ll never get back (not counting maintenance, parking and tolls). Your trips by Uber, transit and a rental would be about $350.';
+  check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
+  check('riley', 'Net worth charts drawn', String(await page.$$eval('#chart-nw-time svg, #chart-nw-assets-debts svg, #chart-nw-mix svg, #chart-nw-bridge svg', (x) => x.length)), '4');
   await go(page, 'track');
   await page.waitForSelector('#chart-cf-paylater');
   check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
@@ -389,6 +406,36 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await insights(page, 'time');
   for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
   check('riley', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
+// Dana (S-115): a condo with a mortgage, at phone width on October 17, 2026. By hand in test/networth-households.test.js.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('dana (phone width, October 17, 2026)');
+  await page.getByText('Dana, 34').click();
+  await page.waitForSelector('#headline');
+  // Today: September's ends. FI 2,315 + 4,800 + 11,170 - 10,720 = 7,565; net worth 74,332.79.
+  await insights(page, 'networth');
+  check('dana', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(74332.79)), money(74332.79));
+  check('dana', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(7565)), money(7565));
+  check('dana', 'Milestones', await settled(page, '[data-key="nw-milestone-list"]', 'FI net worth crossed $0March 2026'), 'FI net worth crossed $0March 2026');
+  const condoRead = 'Owning costs you about $1,950 a month you\'ll never get back. Renting a similar place would be about $1,900.';
+  check('dana', 'Condo next to renting', await settled(page, '#owning-condo .reading', condoRead), condoRead);
+  await page.selectOption('[data-key="nw-month"]', '2026-02');
+  check('dana', 'February not explained', await settled(page, '#chart-nw-bridge [data-key="nwb-unexplained"]', signedMoney(-85)), signedMoney(-85));
+  // March's review: both net worths and the card for FI net worth crossing $0.
+  await go(page, 'review');
+  await page.waitForSelector('#months-review');
+  await page.selectOption('[data-key="months-pick"]', '2026-03');
+  check('dana', 'March celebrate card', await settled(page, '[data-key="celebrate-fi-zero"] b', 'FI net worth crossed $0 in March 2026.'), 'FI net worth crossed $0 in March 2026.');
+  check('dana', 'March FI net worth', await settled(page, '[data-key="review-nw-fi"]', money(425)), money(425));
+  check('dana', 'March net worth', await settled(page, '[data-key="review-nw-total"]', money(64262.76)), money(64262.76));
+  check('dana', 'Console errors', String(errors.length), '0');
   await page.close();
 }
 // Jump to source, search, and the breadcrumb (S-108), on Riley at phone width.
@@ -413,7 +460,12 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="search"]', 'eras');
   await page.waitForTimeout(150);
   check('search', 'No parked results', String(await page.$$eval('.search-head', (hs) => hs.some((x) => x.textContent === 'Future'))), 'false');
-  await page.press('[data-key="search"]', 'Escape');
+  // A net worth number (S-114): "fi net" finds FI net worth; Enter opens how it was worked out.
+  await page.fill('[data-key="search"]', 'fi net');
+  check('search', 'FI net worth found', await settled(page, '.search-head', 'Net worth'), 'Net worth');
+  await page.press('[data-key="search"]', 'Enter');
+  await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
+  check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
   await go(page, 'today');
   await page.waitForSelector('[data-key="how:surplus"]');
@@ -489,7 +541,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   const theirs = migrate(JSON.parse(readFileSync(new globalThis.URL('../test/households/riley.json', import.meta.url), 'utf8')));
   theirs.sync = { versions: versionsOf(theirs), at: '2026-10-17T18:00:00.000Z' };
   const shop = theirs.categories.flatMap((c) => c.lines).find((l) => l.id === 'shopping');
-  Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: 2 });
+  Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: (shop.version || 1) + 1 });
   await page.click('[data-key="client-name"]');
   await page.click('[data-key="menu-clients"]');
   await page.setInputFiles('#import-file', { name: 'riley.json', mimeType: 'application/json', buffer: Buffer.from(exportHousehold(theirs, '2026-10-17T19:00:00.000Z')) });

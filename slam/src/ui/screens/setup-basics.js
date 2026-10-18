@@ -10,6 +10,8 @@ import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 import { makeValue } from '../../store/value.js';
 import { taxWalkView } from '../components/tax-walk.js';
+import { setDeductionAccount } from '../../store/accounts.js';
+import { kindOf } from '../../calc/balances.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -97,6 +99,8 @@ function payTable(ctx, row) {
 
 // Paycheck deductions: retirement as a % of gross or an amount, plus health,
 // HSA or FSA, transportation, Roth, and other. Amounts come from calc.
+const INTO_ACCOUNT = ['retirement', 'roth', 'hsa'];
+
 function deductionsBlock(ctx, inc, row) {
   const setD = (id, k) => (d, v) => { d.income.find((x) => x.id === inc.id).deductions.find((x) => x.id === id)[k] = v; };
   const rows = row ? row.deductions : [];
@@ -120,6 +124,10 @@ function deductionsBlock(ctx, inc, row) {
             setD(d.id, 'percent')(doc, v);
           } })
           : question(ctx, 'Amount', null, [...path, 'amount'], d.amount),
+        // Retirement, Roth, and HSA money goes into an account (S-110): it counts as money moved into it.
+        INTO_ACCOUNT.includes(d.kind) ? h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Goes into'),
+          h('select', { 'data-key': JSON.stringify(path) + ':account', onchange: (e) => ctx.update('Deduction goes into', (doc) => setDeductionAccount(doc, inc.id, d.id, e.target.value || null)) },
+            options([['', 'Not linked to an account'], ...ctx.doc.accounts.filter((a) => a.state !== 'archived' && kindOf(a) === 'invested').map((a) => [a.id, a.name])], d.accountId || ''))) : null,
         d.kind === 'other' ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: d.pretax, 'data-key': JSON.stringify(path) + ':pretax',
           onchange: (e) => ctx.update('Before tax', (doc) => setD(d.id, 'pretax')(doc, e.target.checked)) }), 'Taken out before tax') : null,
         r.monthly !== null && r.monthly !== undefined

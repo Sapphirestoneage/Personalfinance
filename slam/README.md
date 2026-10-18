@@ -66,7 +66,7 @@ Track imports CSV files exported from Chase (credit card or checking),
 American Express, Capital One, or any file with date, description, and amount
 columns. Nothing leaves the browser. Each file goes into an account; its rows are matched
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
-`node tools/riley.mjs` rebuilds Riley's year and files (fixed seed).
+`node tools/riley.mjs` rebuilds Riley's year and files (fixed seed); `node tools/dana.mjs` rebuilds Dana's.
 
 ## Folder layout
 
@@ -93,10 +93,11 @@ bottom bar has Today, Plan, Track, Review, and More (Insights, Setup, Clients).
    the cash calendar, CSV import and matching, and checking a balance.
 4. **Review**: fill gaps, close the month (the checklist, with the bridge in one line), mistakes this
    month, and past months (each closed month's saved review and its lines, with late entries).
-5. **Insights**: read only. Every chart and lens once, in five tabs: Where it goes, Compared (estimate
+5. **Insights**: read only. Every chart and lens once, in six tabs: Where it goes, Compared (estimate
    vs actual vs plan, accuracy, gut check, culprits), Over time (trends, months, 80/20), Cash (the
-   bridge, the forecast check, merchants and habits), and You (DRAFTT, joy, satisfaction and stress,
-   mistakes, the income statement). The only inputs are range, focus, and unit pickers.
+   bridge, the forecast check, merchants and habits), Net worth (below), and You (DRAFTT, joy,
+   satisfaction and stress, mistakes, the income statement). The only inputs are range, focus, unit,
+   and month pickers.
 6. **Setup**: one-time setup in short sections: Basics, Income and paychecks, Accounts, Debts, Bills
    and due dates, Categories and lines, Tags, Cushion and coach settings, Coach notes, and Future
    tools (parked).
@@ -104,8 +105,22 @@ bottom bar has Today, Plan, Track, Review, and More (Insights, Setup, Clients).
    for a client already here is merged record by record; changes made on both copies wait for the
    coach to pick), and the demo households.
 
+**Net worth (the balance sheet).** Every account sits on one balance sheet: cash, cards, investments,
+retirement, and things you own (a home, a vehicle), each with dated balances. Setup, Accounts lists them
+by type with the latest balance and its date; Review's checklist asks for every month-end balance (cash
+and cards required, the rest optional and marked stale). Two net worths: **Net worth (everything)**, and
+**FI net worth (what can fund your life)**, which leaves out a home or car and the debt it secures; the
+difference is **Locked in things you use**. Insights, Net worth shows both over time, what you have and
+owe by month, what it is made of (by type and by how fast it becomes cash), the net worth bridge for any
+month (surplus, timing, saved, debt paid down, market, values: it ties to the balances, and anything
+not explained is drawn apart), what each home and vehicle costs to hold next to its alternative (rent;
+rideshare, transit, a rental), with no verdict, and milestones (like FI net worth crossing $0, which
+also gets a card in that month's review). Contributions are never typed: they come from transfers in the
+log and paycheck deductions linked to an account. Dana's demo owns a condo; Riley's has a 401(k), a Roth
+IRA, and a car with a loan.
+
 **Finding things.** Type in the search box (or press "/") to find a line, category, merchant, entry,
-account, debt, chart, setting, or month and jump to it. A dotted number is a link: it opens where the
+net worth number, account (with its latest balance), debt, chart, setting, or month and jump to it. A dotted number is a link: it opens where the
 number comes from, or, for a computed number, how it was worked out. The breadcrumb under the header
 says where you are.
 
@@ -133,13 +148,14 @@ The estimate is the client's own words; estimate vs actual measures how well the
 
 ## How easy is it? (tools, S-109)
 
-- `node tools/journeys.mjs` walks three journeys on a phone and a desktop and counts the taps: a first
-  session (under 60), a month (under 120, each quick entry 6 or fewer), and five questions from Today.
+- `node tools/journeys.mjs` walks four journeys on a phone and a desktop and counts the taps: a first
+  session (under 60), a month (under 120, each quick entry 6 or fewer), six questions from Today (the
+  sixth, "what's my FI net worth", in 2), and month-end balances for 5 accounts (under 20).
   It checks every number at the end against numbers worked out by hand. The latest table is in AUDIT.md.
 - `node tools/layout-check.mjs` (it also runs at the end of `tools/screens-check.mjs`) fails when a
   screen is taller than 6 phone screens (Review's fill gaps: 2 for Riley), a heading appears twice, an
   input sits in Insights, a setup input sits on Track, or a screen has more than 12 sections.
-- `node tools/gallery.mjs` takes every screen and Insights tab, phone and desktop, light and dark, for
+- `node tools/gallery.mjs` takes every screen and Insights tab (Net worth included), phone and desktop, light and dark, for
   Riley and Maya, and writes `tools/gallery/gallery.html`. Open it in a browser and scroll: one
   screenshot per screen, like a slide deck, each with a caption.
 

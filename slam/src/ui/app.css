@@ -349,3 +349,6 @@ button.client-name { background: none; border: none; padding: var(--space-1) 0; 
 /* Jumps land below the sticky header. */
 main [id] { scroll-margin-top: 150px; }
 @media (max-width: 759px) { .topbar .brand { display: none; } }
+/* Net worth (S-114) */
+.card.celebrate, li.celebrate { border-color: var(--good); }
+.card.celebrate { background: var(--accent-soft); }

@@ -100,8 +100,9 @@ test('Riley loads, validates, and has the year as the loop ran it', () => {
 test('March: the log after matching, and nothing counted twice', () => {
   const d = riley();
   const mar = counted(d.transactions).filter((t) => t.date.startsWith('2026-03'));
-  // 10 checking entries + 20 Visa rows (3 merged into logged entries, the coffee confirmed) = 30
-  assert.equal(mar.length, 30);
+  // 10 checking entries + 20 Visa rows (3 merged into logged entries, the coffee confirmed) = 30,
+  // + the Roth IRA side of the Mar 28 move (S-115) = 31
+  assert.equal(mar.length, 31);
   const merged = mar.filter((t) => t.mergedFrom).map((t) => [t.date, t.merchant, t.amount, t.mergedFrom.date, t.mergedFrom.amount]).sort();
   assert.deepEqual(merged, [
     ['2026-03-02', 'TRADER JOE S', 82.4, '2026-03-02', 82.4],

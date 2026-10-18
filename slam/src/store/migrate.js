@@ -46,7 +46,13 @@ const STEPS = {
   8: (doc) => ({ ...doc, estimateLog: doc.estimateLog || [], schemaVersion: 9 }),
   // Version 9 to 10 (S-096): every record gets an id (existing ids kept), createdAt and updatedAt
   // from the file's last saved time, createdBy and updatedBy "coach", and version 1. Nothing else changes.
-  9: (doc) => ({ ...doc, schemaVersion: 10, sync: doc.sync || { versions: {}, at: null } })
+  9: (doc) => ({ ...doc, schemaVersion: 10, sync: doc.sync || { versions: {}, at: null } }),
+  // Version 10 to 11 (S-110): every account gets a liquidity tier and countsForFI from its type
+  // (in normalizing, below); deductions can name an account. No amount changes.
+  10: (doc) => ({ ...doc, schemaVersion: 11 }),
+  // Version 11 to 12 (S-113): a home or vehicle gets its alternative costs (blank) and coach notes
+  // (empty) in normalizing; the return assumption is 5% a year until the coach sets one. No amount changes.
+  11: (doc) => ({ ...doc, schemaVersion: 12 })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
@@ -242,7 +248,13 @@ export function normalizeHousehold(doc) {
     ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
   }));
   out.nextStage = doc.nextStage ? normalizeNextStage(doc.nextStage) : null;
-  out.accounts = (doc.accounts || []).map((a) => ({ ...newAccount({ id: a.id }), ...a }));
+  out.accounts = (doc.accounts || []).map((a) => {
+    const acct = { ...newAccount({ id: a.id, type: a.type }), ...a };
+    if (acct.purchasePrice) acct.purchasePrice = { ...normalizeValue(acct.purchasePrice), cadence: 'one-off' };
+    if (acct.purchaseDate) acct.purchaseDate = { ...makeDate(), ...acct.purchaseDate };
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (acct[k]) acct[k] = { ...normalizeValue(acct[k]), cadence: acct[k].cadence || 'month' };
+    return acct;
+  });
   out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
     ...meta(b || {}),
     start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' },

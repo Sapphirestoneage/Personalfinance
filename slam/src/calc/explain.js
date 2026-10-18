@@ -3,7 +3,8 @@
 // number can never disagree. No new math: every amount here is one calc made.
 // `where` is a place in the app (ui/nav.js) or a field path, so each input links to its source.
 
-export function explain(summary, which, cal) {
+// nw: a net worth at a day (networth.js), for the three net worths.
+export function explain(summary, which, cal, nw) {
   const t = summary.totals;
   const inc = summary.income;
   if (which === 'takeHome') {
@@ -56,6 +57,25 @@ export function explain(summary, which, cal) {
       ],
       result: { label: 'Safe to spend', amount: cal.safeToSpend },
       note: 'The lower of today\'s checking and the lowest point ahead less the cushion, never below $0.'
+    };
+  }
+  if (nw && (which === 'nwTotal' || which === 'nwFI')) {
+    const fi = which === 'nwFI';
+    const assets = nw.assets.filter((a) => !fi || a.fi).map((a) => ({ label: a.name, amount: a.amount, where: 'balances', asOf: a.asOf }));
+    const debts = nw.debts.filter((d) => !fi || d.counts).map((d) => ({ label: 'Less ' + d.name, amount: d.amount === null ? null : -d.amount, where: d.debtType === 'credit-card' ? 'balances' : 'balances', asOf: d.asOf }));
+    return {
+      title: fi ? 'FI net worth' : 'Net worth',
+      steps: [...assets, ...debts],
+      result: { label: fi ? 'FI net worth' : 'Net worth', amount: fi ? nw.fi : nw.total },
+      note: fi ? 'Assets that count toward FI, less every debt not tied to a home or car that does not count.' : 'Every account, less everything owed. Each at its latest balance.'
+    };
+  }
+  if (nw && which === 'nwLocked') {
+    return {
+      title: 'Locked in things you use',
+      steps: nw.lockedRows.map((r) => ({ label: r.name + (r.debtNames.length ? ', less ' + r.debtNames.join(', ') : ''), amount: r.equity, where: 'balances' })),
+      result: { label: 'Locked in', amount: nw.locked },
+      note: 'Each thing that does not count toward FI: its value less the debt it secures.'
     };
   }
   return null;

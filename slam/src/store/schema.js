@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 12;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -20,7 +20,43 @@ export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 // Investment, retirement, and HSA accounts (S-103) hold money that is not spent day to day: never cash on hand.
-export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'investment', 'retirement', 'hsa', 'other'];
+// S-110 adds every kind of asset, so the balance sheet has one place for all of them.
+export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'investment', 'retirement', 'hsa', 'other',
+  '401k', 'trad-ira', 'roth-ira', 'brokerage', '529', 'crypto', 'cash-value-life', 'home', 'vehicle', 'other-asset'];
+// What each type is (S-110). kind: cash (counted in the cash bridge), invested (it can rise or fall with
+// a market), valued (a thing you own and use: its value is entered), or owed (a card).
+// tier: how fast it becomes cash. 1 cash now, 2 sell within days, 3 retirement with a penalty or rules,
+// 4 not liquid. fi: whether it counts toward FI net worth by default (the coach can change it per account).
+export const ACCOUNT_TYPE_INFO = {
+  checking: { label: 'Checking', kind: 'cash', tier: 1, fi: true },
+  savings: { label: 'Savings', kind: 'cash', tier: 1, fi: true },
+  cash: { label: 'Cash', kind: 'cash', tier: 1, fi: true },
+  'credit-card': { label: 'Credit card', kind: 'owed', tier: null, fi: true },
+  brokerage: { label: 'Brokerage', kind: 'invested', tier: 2, fi: true },
+  investment: { label: 'Investment', kind: 'invested', tier: 2, fi: true },
+  crypto: { label: 'Crypto', kind: 'invested', tier: 2, fi: true },
+  other: { label: 'Other money account', kind: 'invested', tier: 2, fi: true },
+  '401k': { label: '401(k), 403(b), or 457', kind: 'invested', tier: 3, fi: true },
+  'trad-ira': { label: 'Traditional IRA', kind: 'invested', tier: 3, fi: true },
+  'roth-ira': { label: 'Roth IRA', kind: 'invested', tier: 3, fi: true },
+  retirement: { label: 'Retirement', kind: 'invested', tier: 3, fi: true },
+  hsa: { label: 'HSA', kind: 'invested', tier: 3, fi: true },
+  529: { label: '529 college savings', kind: 'invested', tier: 3, fi: true },
+  'cash-value-life': { label: 'Cash value life insurance', kind: 'invested', tier: 3, fi: true },
+  home: { label: 'Home', kind: 'valued', tier: 4, fi: false },
+  vehicle: { label: 'Vehicle', kind: 'valued', tier: 4, fi: false },
+  'other-asset': { label: 'Other thing you own', kind: 'valued', tier: 4, fi: false }
+};
+export const LIQUIDITY_TIERS = [1, 2, 3, 4];
+// The return the equity in a home could earn elsewhere, a year after inflation (S-113): an assumption.
+// Not stored until the coach changes it (settings.ownReturn).
+export const DEFAULT_OWN_RETURN = 0.05;
+// An account's tier and FI flag, falling back to its type's default when not stored.
+export const typeInfo = (a) => ACCOUNT_TYPE_INFO[a.type] || ACCOUNT_TYPE_INFO.other;
+export const tierOf = (a) => (a.tier === undefined ? typeInfo(a).tier : a.tier);
+export const countsForFI = (a) => (a.countsForFI === undefined ? typeInfo(a).fi : a.countsForFI);
+// A home or a vehicle can name the debt it secures (a mortgage, an auto loan), and its purchase.
+export const SECURED_TYPES = ['home', 'vehicle'];
 // Cash on hand counts these; cards are money owed, shown separately.
 export const CASH_ACCOUNT_TYPES = ['checking', 'savings', 'cash'];
 export const ACCOUNT_STATES = ['active', 'archived'];
@@ -166,7 +202,9 @@ export function newDeduction(fields = {}) {
     mode: fields.mode || (kind === 'retirement' || kind === 'roth' ? 'percent' : 'amount'),
     percent: fields.percent === undefined ? null : fields.percent,
     amount: makeValue(null, { cadence: 'paycheck' }),
-    pretax: fields.pretax === undefined ? true : fields.pretax
+    pretax: fields.pretax === undefined ? true : fields.pretax,
+    // The account it goes into (S-110), so a 401(k) or Roth deduction counts as money moved into it.
+    accountId: fields.accountId || null
   };
 }
 
@@ -218,16 +256,41 @@ export function newEras() {
   return { list: [] };
 }
 
-// A bank account, card, or cash. A card links to its debt (doc.debts), which
-// keeps the APR, minimum, and due day; the account keeps the balances (S-084).
+// Any account (S-084, S-110): money, an investment, a card, or a thing you own. A card links to its
+// debt (doc.debts), which keeps the APR, minimum, and due day; the account keeps the balances.
+// A home or vehicle keeps its value; the debt it secures keeps what is owed (one owner each).
 export function newAccount(fields = {}) {
+  const type = fields.type || 'checking';
+  const info = ACCOUNT_TYPE_INFO[type] || ACCOUNT_TYPE_INFO.other;
   return {
     id: fields.id || newId('acct'),
     name: fields.name || 'Account',
-    type: fields.type || 'checking',
+    type,
     institution: fields.institution || '',
     state: fields.state || 'active',
-    debtId: fields.debtId || null
+    debtId: fields.debtId || null,
+    tier: fields.tier === undefined ? info.tier : fields.tier,
+    countsForFI: fields.countsForFI === undefined ? info.fi : fields.countsForFI,
+    ...(SECURED_TYPES.includes(type) ? securedFields(fields) : {}),
+    ...(info.kind === 'valued' ? ownedFields(type, fields) : {})
+  };
+}
+
+// A thing you own (S-113): the coach's notes (coach-only), and the alternative to owning it, a month:
+// rent for a similar home; rideshare, transit, and an occasional rental for a vehicle.
+export const ALTERNATIVES = { home: ['rentAlt'], vehicle: ['rideshareAlt', 'transitAlt', 'rentalAlt'] };
+export function ownedFields(type, fields = {}) {
+  const out = { notes: fields.notes || '' };
+  for (const k of ALTERNATIVES[type] || []) out[k] = fields[k] || makeValue(null, { cadence: 'month' });
+  return out;
+}
+
+// Purchase price and date (optional), and the debt the home or vehicle secures.
+export function securedFields(fields = {}) {
+  return {
+    purchasePrice: fields.purchasePrice || makeValue(null, { cadence: 'one-off' }),
+    purchaseDate: fields.purchaseDate || makeDate(),
+    securedDebtId: fields.securedDebtId || null
   };
 }
 

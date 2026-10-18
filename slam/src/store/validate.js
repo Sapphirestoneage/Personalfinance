@@ -7,7 +7,7 @@ import { PLAN_DECISIONS } from './plans.js';
 import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES
 } from './schema.js';
 
 // A date with a status (S-086).
@@ -71,6 +71,7 @@ export function validateHousehold(doc) {
       oneOf(errs, ['percent', 'amount'], d.mode, dw + '.mode');
       if (d.percent !== null && !(typeof d.percent === 'number' && d.percent >= 0 && d.percent <= 100)) errs.push(dw + '.percent must be 0 to 100 or empty');
       errs.push(...valueErrors(d.amount, dw + '.amount'));
+      if (d.accountId && !(doc.accounts || []).some((a) => a.id === d.accountId)) errs.push(dw + '.accountId: unknown account ' + d.accountId);
     });
   });
   (doc.debts || []).forEach((d, i) => {
@@ -118,21 +119,35 @@ export function validateHousehold(doc) {
     oneOf(errs, ACCOUNT_TYPES, a.type, w + '.type');
     oneOf(errs, ACCOUNT_STATES, a.state, w + '.state');
     if (a.debtId && !(doc.debts || []).some((d) => d.id === a.debtId)) errs.push(w + '.debtId: unknown debt ' + a.debtId);
+    // S-110: liquidity tier (none for a card), counts toward FI, and what a home or vehicle secures.
+    // Absent means the type's default (calc reads tierOf and countsForFI with that fallback).
+    if (a.tier !== undefined && (a.type === 'credit-card' ? a.tier !== null : !LIQUIDITY_TIERS.includes(a.tier))) errs.push(w + '.tier must be 1 to 4' + (a.type === 'credit-card' ? ' (none for a card)' : ''));
+    if (a.countsForFI !== undefined && typeof a.countsForFI !== 'boolean') errs.push(w + '.countsForFI must be true or false');
+    if (SECURED_TYPES.includes(a.type)) {
+      if (a.securedDebtId && !(doc.debts || []).some((d) => d.id === a.securedDebtId)) errs.push(w + '.securedDebtId: unknown debt ' + a.securedDebtId);
+      if (a.purchasePrice) errs.push(...valueErrors(a.purchasePrice, w + '.purchasePrice'));
+      if (a.purchaseDate) errs.push(...dateErrors(a.purchaseDate, w + '.purchaseDate'));
+    }
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (a[k] !== undefined) errs.push(...valueErrors(a[k], w + '.' + k));
+    if (a.notes !== undefined && typeof a.notes !== 'string') errs.push(w + '.notes must be text');
   });
+  // A debt with no account of its own keeps its dated balances under its own id (S-110).
+  const balanceIds = new Set([...acctIds, ...(doc.debts || []).map((d) => d.id)]);
   for (const [m, accts] of Object.entries(doc.balances || {})) {
     if (!/^\d{4}-\d{2}$/.test(m)) errs.push('balances key ' + m + ' must be YYYY-MM');
     for (const [id, b] of Object.entries(accts)) {
-      if (!acctIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
+      if (!balanceIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
       errs.push(...valueErrors(b.start, 'balances.' + m + '.' + id + '.start'), ...valueErrors(b.end, 'balances.' + m + '.' + id + '.end'));
       for (const k of ['startOn', 'endOn']) if (b[k] !== undefined && !(typeof b[k] === 'string' && b[k].slice(0, 7) === m && /^\d{4}-\d{2}-\d{2}$/.test(b[k]))) errs.push('balances.' + m + '.' + id + '.' + k + ' must be a day in ' + m);
     }
   }
+  if (doc.settings && doc.settings.ownReturn !== undefined && !(typeof doc.settings.ownReturn === 'number' && doc.settings.ownReturn >= 0 && doc.settings.ownReturn <= 0.2)) errs.push('settings.ownReturn must be 0% to 20% a year');
   if (doc.cashflow) {
     const cf = doc.cashflow;
     errs.push(...valueErrors(cf.cushion, 'cashflow.cushion'));
     for (const [k, mv] of Object.entries(cf.moves || {})) if (mv.to !== null && !/^\d{4}-\d{2}-\d{2}$/.test(mv.to || '')) errs.push('cashflow.moves.' + k + ': the new date must be YYYY-MM-DD, or none to skip');
     (cf.checks || []).forEach((c, i) => {
-      if (!acctIds.has(c.accountId)) errs.push('cashflow.checks[' + i + ']: unknown account ' + c.accountId);
+      if (!balanceIds.has(c.accountId)) errs.push('cashflow.checks[' + i + ']: unknown account ' + c.accountId);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(c.date || '')) errs.push('cashflow.checks[' + i + ']: needs a date');
       errs.push(...valueErrors(c.amount, 'cashflow.checks[' + i + '].amount'));
     });

@@ -11,6 +11,7 @@ import { quickEntryButton } from './quick-entry.js';
 import { jumpLink, emptyState } from './jump.js';
 import { howButton, howPanel, sourceLink } from './how.js';
 import { explain } from '../../calc/explain.js';
+import { liabilities } from '../../calc/balances.js';
 import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
@@ -109,8 +110,9 @@ export function waitingCard(ctx, summary) {
 }
 
 // A real balance on any day resets the projection from that day.
+// Every account and every debt with no account of its own can be checked on any day (S-110).
 export function checkBalancesCard(ctx) {
-  const live = ctx.doc.accounts.filter((a) => a.state !== 'archived');
+  const live = [...ctx.doc.accounts.filter((a) => a.state !== 'archived'), ...liabilities(ctx.doc).filter((l) => !l.account).map((l) => ({ id: l.key, name: l.name }))];
   if (!live.length) return null;
   const st = ctx.ui.check = ctx.ui.check || { account: live[0].id, date: todayIso(), amount: '' };
   return h('details', { class: 'card', id: 'check-balances' }, h('summary', {}, 'Check balances'),

@@ -170,9 +170,10 @@ function render() {
   }
 }
 
+// An id with a colon is a place inside a screen (nav.js), like insights:networth.
 function navLinks(list, cls) {
-  return list.map(([id, label]) => h('a', { href: '#' + id, class: cls || null, 'aria-current': ui.screen === id ? 'page' : null, 'data-nav': id,
-    onclick: (e) => { e.preventDefault(); if (id !== 'clients' && !store.doc) return ctx.toast('Open or create a client first'); ctx.go(id); } }, label));
+  return list.map(([id, label]) => h('a', { href: '#' + id.split(':')[0], class: cls || null, 'aria-current': !id.includes(':') && ui.screen === id ? 'page' : null, 'data-nav': id,
+    onclick: (e) => { e.preventDefault(); if (id !== 'clients' && !store.doc) return ctx.toast('Open or create a client first'); if (id.includes(':')) ctx.jump(id); else ctx.go(id); } }, label));
 }
 
 function topbar() {
@@ -221,7 +222,8 @@ function crumbs() {
 // Phones (S-106): Today, Plan, Track, Review, and More (Insights, Setup, Clients, and Future when on).
 function bottomBar() {
   const asClient = displayRole() === 'client';
-  const more = [['insights', 'Insights'], ['setup', 'Setup'], ...(futureOn() ? [['future', 'Future']] : []), ...(asClient ? [] : [['clients', 'Clients']])];
+  // Net worth is one tap from More (S-114): "what's my FI net worth" in two taps from Today.
+  const more = [['insights', 'Insights'], ['insights:networth', 'Net worth'], ['setup', 'Setup'], ...(futureOn() ? [['future', 'Future']] : []), ...(asClient ? [] : [['clients', 'Clients']])];
   const inMore = more.some(([id]) => id === ui.screen);
   return h('nav', { class: 'bottom-bar', 'aria-label': 'Screens' },
     navLinks(SCREENS.slice(0, 4)),

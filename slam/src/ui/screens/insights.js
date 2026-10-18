@@ -1,5 +1,5 @@
 // Insights (S-106): read only. Every chart and lens appears exactly once, in
-// five tabs. The only inputs are range, focus, and unit pickers (marked
+// six tabs (Net worth added by S-114). The only inputs are range, focus, and unit pickers (marked
 // data-picker); anything that edits lives on its own screen, linked from the chart.
 
 import { h } from '../dom.js';
@@ -13,6 +13,8 @@ import { estimateCard, paretoCard } from '../charts/months-charts.js';
 import { bridgeCards } from '../charts/bridge-charts.js';
 import { forecastCard } from '../charts/cash-charts.js';
 import { transactionCards } from '../charts/tx-charts.js';
+import { netWorthTiles, netWorthOverTimeCard, assetsDebtsCard, compositionCard, netWorthBridgeCard, milestonesCard } from '../charts/networth-charts.js';
+import { owningCards } from '../charts/owning-charts.js';
 
 function lensToggle(ctx) {
   const opts = [['dollars', 'Dollars'], ['percent', '% of take-home'], ['hours', 'Hours of work']];
@@ -46,6 +48,7 @@ const TABS = {
     culpritsCard(ctx, s), proofCard(s), c.completionCard(ctx, s), roughCard(ctx, s)],
   time: (ctx, s) => [c.varianceByMonthCard(ctx, s), ...trendCards(ctx, s), estimateCard(ctx, s, ctx.ui.trendFocus), paretoCard(ctx, s, paretoAnchor(ctx))],
   cash: (ctx, s) => [...bridgeCards(ctx, s), forecastCard(ctx), ...transactionCards(ctx, s)],
+  networth: (ctx, s) => [netWorthTiles(ctx, s), netWorthOverTimeCard(ctx, s), assetsDebtsCard(ctx), compositionCard(ctx), netWorthBridgeCard(ctx, s), ...owningCards(ctx, s), milestonesCard(ctx)],
   you: (ctx, s) => [c.draftCard(ctx, s), c.joyCard(ctx, s), c.stressCard(ctx, s), c.mistakeCard(ctx, s), c.incomeStatementCard(ctx, s), extrasCard(s, ctx.future)]
 };
 
