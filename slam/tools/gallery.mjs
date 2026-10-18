@@ -37,6 +37,7 @@ const SHOTS = [
   ['insights-compared', 'Insights: Compared', 'insights', 'tab-compared'],
   ['insights-time', 'Insights: Over time', 'insights', 'tab-time'],
   ['insights-cash', 'Insights: Cash', 'insights', 'tab-cash'],
+  ['insights-networth', 'Insights: Net worth: both net worths, the bridge, owning next to the alternative', 'insights', 'tab-networth'],
   ['insights-you', 'Insights: You', 'insights', 'tab-you'],
   ['setup', 'Setup: Basics (one section open at a time)', 'setup', 'setup-basics']
 ];

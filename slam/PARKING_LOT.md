@@ -59,3 +59,10 @@ theming beyond the tokens.
 - A full rent vs buy calculator.
 - A car calculator: buy vs lease vs keep vs go car-free.
 - A house hack calculator.
+
+## Net worth follow-ups (parked 2026-10-18, S-115)
+
+- A loan whose payment is a budget line (Riley's Car payment): link the debt to that line, so its
+  payment shows on the debt without a second minimum, instead of leaving the minimum blank.
+- Card interest that is not in the budget shows up as "not explained yet" in the bridge; a line for it
+  (or the APR on the card's balance) could explain it.

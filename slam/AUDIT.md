@@ -164,3 +164,60 @@ Insights sits under More.
 | 8 | Always a Next card | Pass. On Today, with the first-session checklist above it until done. |
 | 14 | Completion separate from progress | Pass. One completion card, in Insights, Compared. |
 | 18 | Every closed month has a bridge | Pass. Insights, Cash shows the bridge for any month (the month picker); Review shows it in one line with a link. |
+
+# Net worth audit (2026-10-18)
+
+The balance sheet joins the income statement and the cash bridge (S-110 to S-115): every account on
+one balance sheet, two net worths, a net worth bridge that ties, and what owning a home or vehicle
+really costs next to its alternative.
+
+## Tests
+
+- `node --test`: every unit test passes. New: `test/all-accounts.test.js`, `test/networth.test.js`,
+  `test/networth-bridge.test.js`, `test/owning.test.js`, and `test/networth-households.test.js` (Riley
+  and Dana by hand: both net worths and the locked-in part for two month ends each, the full bridge for
+  two months each (Riley's June and Dana's February each with an amount not explained), Dana's month
+  FI net worth crosses $0 (March 2026), and owning vs the alternative for Riley's car and Dana's condo).
+- Properties: the bridge ties for every month of every household file; FI net worth never includes an
+  asset that does not count or the debt it secures; contributions are never typed (they come from the
+  log and the paycheck, and typing a balance does not change them); migrating Riley's file from before
+  net worth (`test/fixtures/riley-schema9.json`) changes no number in it.
+- `node tools/screens-check.mjs`: Riley's and Dana's net worth tiles, bridge readings, owning cards,
+  milestones, and Dana's March review card (FI net worth crossed $0) match the hand numbers; search
+  finds FI net worth and opens how it was worked out. The layout check runs with it.
+- `node tools/journeys.mjs`: four journeys, below.
+
+## Journeys (taps)
+
+| Journey | Step | Phone taps | Desktop taps | Limit |
+| --- | --- | --- | --- | --- |
+| a. First session | **Total** | **32** | **32** | under 60 |
+| b. A month | **Total** | **81** | **80** | under 120 |
+| c. Six questions | Log a $12 lunch | 3 | 3 | 6 |
+|  | Safe to spend | 0 | 0 | 0 |
+|  | Why cash dropped last month (the bridge) | 3 | 2 | 3 |
+|  | What went over plan last month | 1 | 1 | 3 |
+|  | Close the month (open the checklist) | 2 | 2 | 3 |
+|  | What's my FI net worth | 2 | 2 | 2 |
+| c. Six questions | **Total** | **11** | **10** |  |
+| d. Month-end balances | Month-end balances for 5 accounts (Setup, Accounts) | 8 | 7 |  |
+| d. Month-end balances | **Total** | **8** | **7** | under 20 |
+
+Journeys a and b are step by step in the loop menu audit above; their numbers did not change.
+
+## The Net worth tab at phone width
+
+Riley 5.2 phone screens, Dana 5.3, Maya 2.5 (limit 6): three tiles, both net worths over time, what you
+have and owe by month, what it is made of, the bridge, one card per home or vehicle, and milestones.
+Only pickers (the month, and which net worth). Today has no new tile; its Next card points to stale
+balances in the review week.
+
+## Lessons
+
+| # | Rule | Result |
+| --- | --- | --- |
+| 11 | Hand-computed test households | Pass. Dana is new; Riley gained a 401(k), a Roth IRA, a car, and its loan; every expected number is worked out in the test comments. |
+| 13 | Every amount normalized to a month | Pass. A paycheck deduction into a 401(k) counts at its monthly amount (150 x 26 / 12 = 325 for Riley). |
+| 15 | Averages labeled "Guess" with a source | Pass. Home maintenance (1% of the value a year) and vehicle depreciation without values (15% a year) are labeled Guess with their source; the 5% return on equity is labeled an assumption the coach can change. |
+| 18 | Every month has a bridge, nothing hidden | Pass, extended. The net worth bridge ties by construction; what is not explained is drawn apart and named (an investment not updated this month is named). |
+| 22 | Two net worths, and each locked-in asset's cost next to its alternative, no verdicts | Pass. Both net worths everywhere they appear; the owning cards say what it costs and what the alternative would cost, and stop there. |

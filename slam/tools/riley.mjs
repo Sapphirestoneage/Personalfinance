@@ -18,8 +18,8 @@ import { createStore } from '../src/store/store.js';
 import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { makeValue } from '../src/store/value.js';
 import { makeDate } from '../src/store/schema.js';
-import { addIncome, addDebt, findLine, setField, setTransactionLine } from '../src/store/edits.js';
-import { addAccount, setBalance } from '../src/store/accounts.js';
+import { addIncome, addDebt, addDeduction, findLine, setField, setTransactionLine } from '../src/store/edits.js';
+import { addAccount, setBalance, setAccountField, setDeductionAccount, setAlternative } from '../src/store/accounts.js';
 import { addEntry, editEntry, mergeImport, confirmMatch } from '../src/store/log.js';
 import { confirmScheduled, saveForecast } from '../src/store/cashflow.js';
 import { startPlan, copyPlanForward, setPlanAmount } from '../src/store/plans.js';
@@ -62,6 +62,26 @@ const TODAY = '2026-10-17';
 const START = { chk: 2900, sav: 700, visa: 412.37 };
 const VISA_LINES = ['groceries', 'eating-out', 'gas', 'shopping', 'entertainment', 'gifts'];
 
+// Net worth (S-115), typed by the coach at each month end, October 2025 to September 2026. Made up by
+// hand, not by a formula:
+//   401(k): 12,000 at the start; each month + 325 from the paycheck (150 x 26 / 12) + the market:
+//     +180, +240, -310, +150, -420, +275, +390, +60, -150, +330, -85, +205.
+//   Roth IRA: 6,000 at the start; each month + the 400 moved from checking on the 28th + the market:
+//     +90, +120, -160, +70, -210, +140, +195, +30, -75, +165, -40, +100.
+//   The car (a used car, "roughly"): 9,600 at the start, 100 less each month.
+//   The auto loan: 7,000 at the start, 6% a year, paid by the 340 car payment line on the 15th. Each
+//     month the interest (balance x 0.5%, to the cent) is added and 340 comes off.
+const NW_START = { k401: 12000, roth: 6000, car: 9600, 'debt-car': 7000 };
+const NW_ENDS = {
+  k401: [12505, 13070, 13085, 13560, 13465, 14065, 14780, 15165, 15340, 15995, 16235, 16765],
+  roth: [6490, 7010, 7250, 7720, 7910, 8450, 9045, 9475, 9800, 10365, 10725, 11225],
+  car: [9500, 9400, 9300, 9200, 9100, 9000, 8900, 8800, 8700, 8600, 8500, 8400],
+  // 7,000 + 35.00 - 340 = 6,695.00; + 33.48 = 6,388.48; + 31.94 = 6,080.42; + 30.40 = 5,770.82;
+  // + 28.85 = 5,459.67; + 27.30 = 5,146.97; + 25.73 = 4,832.70; + 24.16 = 4,516.86; + 22.58 = 4,199.44;
+  // + 21.00 = 3,880.44; + 19.40 = 3,559.84; + 17.80 = 3,237.64 (each less 340).
+  'debt-car': [6695, 6388.48, 6080.42, 5770.82, 5459.67, 5146.97, 4832.70, 4516.86, 4199.44, 3880.44, 3559.84, 3237.64]
+};
+
 let now = new Date('2025-10-01T09:00:00Z');
 const at = (iso) => { now = new Date(iso.length === 10 ? iso + 'T12:00:00Z' : iso); };
 const store = createStore(createStorage(memoryBackend()), () => now);
@@ -84,8 +104,22 @@ upd('Setup', (d) => {
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking', institution: 'Harbor Credit Union' });
   addAccount(d, { id: 'sav', name: 'Savings', type: 'savings', institution: 'Harbor Credit Union' });
   addAccount(d, { id: 'visa', name: 'Visa', type: 'credit-card', debtId: 'debt-visa' });
-  const L = (id) => findLine(d, id).line;
   const one = (n) => makeValue(n, { cadence: 'one-off' });
+  // Net worth (S-115): a 401(k) from the paycheck, a Roth IRA at an outside broker, and a used car with
+  // a loan. The loan's payment is the Car payment line, so its minimum stays blank (not counted twice).
+  addAccount(d, { id: 'k401', name: '401(k)', type: '401k', institution: 'Northwind plan' });
+  addAccount(d, { id: 'roth', name: 'Roth IRA', type: 'roth-ira', institution: 'Vanguard' });
+  addAccount(d, { id: 'car', name: 'Car', type: 'vehicle' });
+  const loan = addDebt(d, { id: 'debt-car', label: 'Auto loan', type: 'car-loan' });
+  loan.apr = one(6);
+  setAccountField(d, 'car', 'securedDebtId', loan.id);
+  setAlternative(d, 'car', 'rideshareAlt', makeValue(200));
+  setAlternative(d, 'car', 'transitAlt', makeValue(100));
+  setAlternative(d, 'car', 'rentalAlt', makeValue(50));
+  const k = addDeduction(d, 'job', 'retirement');
+  Object.assign(k, { mode: 'amount', amount: makeValue(150, { cadence: 'paycheck' }) });
+  setDeductionAccount(d, 'job', k.id, 'k401');
+  const L = (id) => findLine(d, id).line;
   Object.assign(L('rent'), { name: 'Rent', estimate: makeValue(1750), dueDay: one(1) });
   L('utilities').estimate = makeValue(84);
   Object.assign(L('groceries'), { estimate: makeValue(350), joy: 6 });
@@ -106,6 +140,7 @@ upd('Setup', (d) => {
   setBalance(d, '2025-10', 'chk', 'start', one(START.chk));
   setBalance(d, '2025-10', 'sav', 'start', one(START.sav));
   setBalance(d, '2025-10', 'visa', 'start', one(START.visa));
+  for (const [id, v] of Object.entries(NW_START)) setBalance(d, '2025-10', id, 'start', makeValue(v, { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' }));
   startPlan(d, '2025-10', 'estimates', planStartValues(d, null, 'estimates', null, '2025-10'));
 });
 
@@ -123,7 +158,7 @@ function applyEvents(month, events, csvAccounts) {
   const ordered = events.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   for (const ev of ordered) {
     at(ev.date);
-    bank[ev.acct] = cents(bank[ev.acct] + (ev.acct === 'visa' ? ev.amt : -ev.amt));
+    if (ev.acct in bank) bank[ev.acct] = cents(bank[ev.acct] + (ev.acct === 'visa' ? ev.amt : -ev.amt));
     if (ev.acct === 'chk' && bank.chk < lowChecking.amount) lowChecking = { amount: bank.chk, date: ev.date };
     if (ev.how === 'scheduled') {
       const key = ev.key + ':' + ev.date;
@@ -166,6 +201,8 @@ function monthEnd(month, typed, planTweaks) {
   at(lastDay(month) + 'T20:00:00Z');
   for (const [lineId, amount, note] of typed) upd('Actual', (d) => setField(d, ['line', lineId, 'actual'], makeValue(amount, { note: note || '' })));
   upd('End balances', (d) => { for (const a of ['chk', 'sav', 'visa']) setBalance(d, month, a, 'end', makeValue(bank[a], { cadence: 'one-off' })); });
+  const i = CLOSED.indexOf(month);
+  upd('Other balances', (d) => { for (const [id, list] of Object.entries(NW_ENDS)) setBalance(d, month, id, 'end', makeValue(list[i], { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' })); });
   ends[month] = { ...bank };
   const next = nextKey(month);
   upd('Plan ' + next, (d) => { copyPlanForward(d, month); for (const [k, v] of planTweaks || []) setPlanAmount(d, next, k, makeValue(v)); });
@@ -214,7 +251,9 @@ function checkingEvents(month, o = {}) {
     { date: day(month, 25), acct: 'chk', amt: statement(month), how: 'scheduled', key: 'debt:debt-visa', desc: 'VISA ONLINE PAYMENT' },
     { date: day(month, 26), acct: 'visa', amt: -statement(month), how: 'csv', desc: 'PAYMENT THANK YOU' },
     // A Roth IRA at an outside broker: the money leaves Riley's accounts, so it is logged.
-    { date: day(month, 28), acct: 'chk', amt: 400, how: o.csv ? 'both' : 'manual', desc: 'VANGUARD ROTH IRA', merchant: 'Vanguard', lineId: 'retirement' }
+    { date: day(month, 28), acct: 'chk', amt: 400, how: o.csv ? 'both' : 'manual', desc: 'VANGUARD ROTH IRA', merchant: 'Vanguard', lineId: 'retirement' },
+    // Its other side, logged on the Roth IRA (S-115): money in, so the bridge counts it as a contribution.
+    { date: day(month, 28), acct: 'roth', amt: -400, how: 'manual', kind: 'transfer', note: 'From checking' }
   ];
   for (const p of paydays(month)) ev.push({ date: p, acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job', desc: 'PAYROLL NORTHWIND' });
   if (o.utilities !== undefined) ev.push({ date: day(month, 8), acct: 'chk', amt: o.utilities, how: o.csv ? 'csv' : 'bank', desc: 'PGE ELECTRIC BILL', lineId: 'utilities' });

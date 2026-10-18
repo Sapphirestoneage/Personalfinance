@@ -24,7 +24,8 @@ export const DEMO_HOUSEHOLDS = [
   ['tasha', 'Tasha, 29, Texas, gross pay only'],
   ['sam', 'Sam, 24, between jobs, one total'],
   ['jordan', 'Jordan, 31, with two imported CSV files'],
-  ['riley', 'Riley, 31, a year of the monthly loop']
+  ['riley', 'Riley, 31, a year of the monthly loop'],
+  ['dana', 'Dana, 34, owns a condo']
 ];
 
 // Demo households that come with sample bank files to import.

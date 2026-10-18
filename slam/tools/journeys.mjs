@@ -5,7 +5,8 @@
 //   b. A month (under 120 taps, each quick entry 6 or fewer): make the plan, 20
 //      quick entries, confirm 3 scheduled items, import a CSV that matches 5 of
 //      them, enter balances, fill 2 gaps, open the checklist, close, read the review.
-//   c. Five questions from Today, each with a tap limit.
+//   c. Six questions from Today, each with a tap limit (the sixth: FI net worth, in 2).
+//   d. Month-end balances for 5 accounts (under 20 taps), on Riley.
 // Each journey reports taps per step and fails if a number is wrong or a limit is passed.
 //
 // What counts as a tap: a click or touch on the screen (a link, button, chip, checkbox,
@@ -245,7 +246,7 @@ async function month(browser, view, size) {
   await page.close();
 }
 
-// c. Five questions from Today, on Riley (October 17, 2026; numbers by hand in test/riley.test.js).
+// c. Six questions from Today, on Riley (October 17, 2026; numbers by hand in test/riley.test.js).
 async function questions(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -253,7 +254,7 @@ async function questions(browser, view, size) {
   await page.getByText('Riley, 31').click();
   await page.waitForSelector('#headline');
   const t = counter(page, view === 'phone');
-  const J = 'c. Five questions, ' + view;
+  const J = 'c. Six questions, ' + view;
   const home = async () => { await page.evaluate(() => { location.hash = 'today'; }); await page.waitForSelector('#headline'); t.at = t.n; };
 
   // 1. Log a $12 lunch.
@@ -300,7 +301,43 @@ async function questions(browser, view, size) {
   await page.waitForSelector('#checklist');
   check(J, 'Checklist open', String(await page.$$eval('#checklist', (x) => x.length)), '1');
   t.step('Close the month (open the checklist)', 3);
-  report('c. Five questions', view, t, null);
+  await home();
+
+  // 6. What's my FI net worth (S-115): Insights, Net worth (under More on a phone). Today it is
+  // September's ends: 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323 (test/networth-households.test.js).
+  if (view === 'phone') { await t.tap('[data-key="more"]'); await t.tap('.more-menu a[data-nav="insights:networth"]'); }
+  else { await t.go('insights'); await t.tap('[data-key="tab-networth"]'); }
+  check(J, 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
+  t.step('What\'s my FI net worth', 2);
+  report('c. Six questions', view, t, null);
+  await page.close();
+}
+
+// d. Month-end balances for 5 accounts, on Riley: October's ends for checking, savings, the Visa, the
+// 401(k), and the Roth IRA, in Setup, Accounts. Then (not counted) October's net worth bridge shows them:
+// 3,000 + 400 + 17,100 + 11,300 + the car 8,400 (September's value) - 300 - the loan 3,237.64 = 36,662.36;
+// FI 3,000 + 400 + 17,100 + 11,300 - 300 = 31,500.
+async function balances(browser, view, size) {
+  const page = await browser.newPage({ viewport: size });
+  await page.clock.setFixedTime(new Date('2026-10-31T12:00:00'));
+  await page.goto(URL + '#clients');
+  await page.getByText('Riley, 31').click();
+  await page.waitForSelector('#headline');
+  const t = counter(page, view === 'phone');
+  const J = 'd. Month-end balances, ' + view;
+  await t.go('setup');
+  await t.tap('[data-key="setup-accounts"]');
+  for (const [id, v] of [['chk', '3000'], ['sav', '400'], ['visa', '300'], ['k401', '17100'], ['roth', '11300']]) {
+    await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
+  }
+  t.step('Month-end balances for 5 accounts');
+  report('d. Month-end balances', view, t, 20);
+  await page.evaluate(() => { location.hash = 'insights'; });
+  await page.click('[data-key="tab-networth"]');
+  await page.selectOption('[data-key="nw-month"]', '2026-10');
+  check(J, 'October net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(36662.36)), money(36662.36));
+  await page.click('[data-key="nw-which-fi"]');
+  check(J, 'October FI net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(31500)), money(31500));
   await page.close();
 }
 
@@ -309,6 +346,7 @@ for (const [view, size] of VIEWS) {
   await firstSession(browser, view, size);
   await month(browser, view, size);
   await questions(browser, view, size);
+  await balances(browser, view, size);
 }
 await browser.close();
 // The table for AUDIT.md.

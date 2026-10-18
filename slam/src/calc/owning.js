@@ -3,6 +3,8 @@
 // first; a Guess (with its source) only fills a number that is missing; anything else missing is
 // named, never counted as 0.
 //
+// Every budget amount is a typical month: the line's estimate, else its actual.
+//
 // Home, a month:
 //   never back = mortgage interest (the linked debt: balance x APR / 12) + property tax (Housing lines
 //   of type Taxes) + home insurance (lines of type Home & Renters Insurance) + maintenance (Housing
@@ -33,12 +35,15 @@ export const GUESS = {
 };
 const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
 
-// The budget lines of some types (in categories of some types), at the budget's own amount
-// (the actual, else the estimate, a month). Null when there are none.
+// A typical month: the estimate, else the budget's own amount (the actual). A month still in
+// progress has only part of its actual (S-115).
+const monthly = (x) => (x.estimate !== null && x.estimate !== undefined ? x.estimate : x.basis);
+
+// The budget lines of some types (in categories of some types), a typical month. Null when there are none.
 function fromBudget(summary, lineTypes, catTypes) {
   const rows = summary.rows.filter((r) => !catTypes || catTypes.includes(r.type));
-  const lines = rows.flatMap((r) => r.lines.filter((l) => lineTypes.includes(l.lineType || l.type) && l.basis !== null));
-  return lines.length ? { amount: add(lines.map((l) => l.basis)), lines: lines.map((l) => l.name) } : null;
+  const lines = rows.flatMap((r) => r.lines.filter((l) => lineTypes.includes(l.lineType || l.type) && monthly(l) !== null));
+  return lines.length ? { amount: add(lines.map(monthly)), lines: lines.map((l) => l.name) } : null;
 }
 
 // Depreciation from dated values: the fall from the earliest value in the last 12 months to the
@@ -111,7 +116,7 @@ export function owningCosts(doc, summary, date) {
       debt: debt ? { id: debt.id, name: debt.label, balance, apr, interest, payment, principal: payment === null || interest === null ? null : r2(payment - interest) } : null,
       equity, rate, parts, neverBack, missing: parts.filter((p) => p.amount === null).map((p) => p.label),
       // What the home costs to hold: every Housing line, plus the mortgage payment (it sits in Debt payments).
-      hold: housing ? { lines: housing.basis, payment, total: housing.basis === null || (debt && payment === null) ? null : r2(housing.basis + (payment || 0)) } : null,
+      hold: housing ? { lines: monthly(housing), payment, total: monthly(housing) === null || (debt && payment === null) ? null : r2(monthly(housing) + (payment || 0)) } : null,
       alternative,
       notes: a.notes || ''
     };

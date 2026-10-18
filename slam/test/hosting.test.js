@@ -57,8 +57,8 @@ test('every record in every household carries id, timestamps, author, and versio
 });
 
 test('migration stamps older files from their last saved time, as the coach, version 1; ids are kept', () => {
-  // riley.json is a schema 9 file saved 2026-10-17T18:00:00.000Z.
-  const raw = JSON.parse(readFileSync(join(here, 'test/households/riley.json'), 'utf8'));
+  // fixtures/riley-schema9.json is Riley's file as saved before net worth (S-115): schema 9, saved 2026-10-17T18:00:00.000Z.
+  const raw = JSON.parse(readFileSync(join(here, 'test/fixtures/riley-schema9.json'), 'utf8'));
   assert.equal(raw.schemaVersion, 9);
   const doc = migrate(raw);
   const e = entry(doc, 'tx-0yb9sdc');
@@ -132,7 +132,7 @@ test('deleting leaves a marker; the live view, calc, and screens never count it'
 });
 
 test('Riley: a deleted log entry never reaches the calendar or the month totals', () => {
-  const doc = loadHousehold('riley');
+  const doc = migrate(JSON.parse(readFileSync(join(here, 'test/fixtures/riley-schema9.json'), 'utf8')));
   // Mark the Oct 15 Chipotle 13.75 deleted by hand, as a file from another copy would.
   const full = JSON.parse(JSON.stringify(doc));
   Object.assign(entry(full, 'tx-mcjhuru'), { deleted: true, deletedAt: '2026-10-17T19:00:00.000Z', deletedBy: 'client', version: 2 });
@@ -341,7 +341,7 @@ test('merge: pure function, no shared history yet and the same version on both s
 // The coach's copy, meanwhile: Oct 7 Shell 46.00 to 48.00 (only the coach), and the Oct 4 edit above.
 test('Riley: merging the second copy, by hand', async () => {
   const coach = storeAt('2026-10-17T18:00:00.000Z');
-  const raw = readFileSync(join(here, 'test/households/riley.json'), 'utf8');
+  const raw = readFileSync(join(here, 'test/fixtures/riley-schema9.json'), 'utf8');
   const { id } = await coach.importText(raw);
   const file = coach.exportCurrent();
   const riley = storeAt('2026-10-17T19:00:00.000Z');
