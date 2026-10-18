@@ -175,3 +175,11 @@ test('Luis: typed interest counts until his cards have month balances, then comp
   assert.deepEqual(debtLines(d).filter(([id]) => id.startsWith('interest:')), []);
   assert.equal(buildSummary(d, refs).rows.find((r) => r.id === 'bills').actual, 50);
 });
+
+test('months to a promo end, by hand (S-125)', async () => {
+  const { promoMonthsLeft } = await import('../src/calc/debts.js');
+  // October 2026 to May 31, 2027: (2027 - 2026) x 12 + (5 - 10) = 12 - 5 = 7.
+  assert.equal(promoMonthsLeft({ promoEnds: '2027-05-31' }, '2026-10'), 7);
+  // Ends this month: 0; ended in August: (2026 - 2026) x 12 + (8 - 10) = -2; no end date: null.
+  assert.deepEqual([promoMonthsLeft({ promoEnds: '2026-10-31' }, '2026-10'), promoMonthsLeft({ promoEnds: '2026-08-31' }, '2026-10'), promoMonthsLeft({ promoEnds: null }, '2026-10')], [0, -2, null]);
+});

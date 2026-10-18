@@ -102,3 +102,12 @@ export function interestHandoff(doc, month) {
   const rows = cards.map((d) => ({ d, i: cardInterest(doc, d, month) }));
   return { rows, computed: rows.length > 0 && rows.every((x) => x.i !== null) };
 }
+
+// Months from a working month to the month a promo ends (S-125): October 2026 to May 31, 2027 is
+//   (2027 - 2026) x 12 + (5 - 10) = 7. Below 0 once it has ended; null with no end date.
+export function promoMonthsLeft(debt, month) {
+  if (!debt.promoEnds || !month) return null;
+  const [y1, m1] = month.split('-').map(Number);
+  const [y2, m2] = debt.promoEnds.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
