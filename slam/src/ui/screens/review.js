@@ -11,7 +11,8 @@ import { minimumAmount, linkedLine } from '../../calc/debts.js';
 import { valueInput } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { findCategory } from '../../store/edits.js';
-import { coveredByParents, coveredNote } from '../components/parents-plan.js';
+import { coverageNote } from '../components/coverage.js';
+import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
 import { closedMonthTable } from '../components/budget-table.js';
 import { monthRows } from '../../calc/history.js';
@@ -115,7 +116,8 @@ function categoryRow(ctx, summary, r) {
   return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
     live.map((line) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
-      coveredByParents(ctx.doc, line) ? coveredNote() : actualCell(ctx, summary, line))));
+      // A premium line follows health coverage (S-117): its summary, never a question.
+      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id) : actualCell(ctx, summary, line))));
 }
 
 // Month end: close the month (the checklist first), with the bridge in one line.

@@ -9,8 +9,8 @@ import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
 import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
-import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
-import { parentsPlan } from '../../calc/coverage.js';
+import { coverageNote } from '../components/coverage.js';
+import { parentsPlan, PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { jumpLink } from '../components/jump.js';
@@ -167,12 +167,13 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'sub-lines', id: isRough ? 'est-' + r.id : null },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])), isRough ? h('button', { class: 'btn small ghost more-ctl', 'data-key': 'rough-more:' + r.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'less' : 'more') : null)),
-        open && cat.type === 'health' ? parentsPlanToggle(ctx) : null,
+        open && cat.type === 'health' ? coverageNote(ctx, 'coverage-summary-plan') : null,
         live.map((l) => {
           const nm = isRough ? h('div', {}, l.name, open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
             : h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
               l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
-          return coveredByParents(doc, l) ? h('div', { class: 'qa' }, h('div', { class: 'q' }, nm), coveredNote())
+          // A premium line is owned by health coverage (S-117): its summary, never a question.
+          return PREMIUM_LINE_TYPES.includes(l.type) ? h('div', { class: 'qa' }, h('div', { class: 'q' }, nm), h('span', { class: 'small muted' }, money(r.lines.find((x) => x.id === l.id) ? r.lines.find((x) => x.id === l.id)[key] : null), ' from health coverage'))
             : question(ctx, nm, null, ['line', l.id, key], l[key], { label: l.name, parts: true, ...lineMore(l) });
         }),
         !open ? null : ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
@@ -189,7 +190,7 @@ export function renderEstimates(ctx, summary, key) {
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null },
       question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true, ...compact }),
-      open && r.type === 'health' ? parentsPlanToggle(ctx) : null,
+      open && r.type === 'health' ? coverageNote(ctx, 'coverage-summary-plan') : null,
       open && isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
       open && isRough ? extrasFor(ctx, summary, r) : null);
   }));

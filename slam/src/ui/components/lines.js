@@ -6,6 +6,8 @@ import { money } from '../format.js';
 import { question } from './value-input.js';
 import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag, setDebtLine, setPromoEnds } from '../../store/edits.js';
 import { linkedLine, linkCandidates, splitPayment, cardInterest } from '../../calc/debts.js';
+import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+import { coverageNote } from './coverage.js';
 import { nameEdit } from './name-edit.js';
 import { lineTypeSelect } from './type-select.js';
 import { DEBT_TYPE_OPTIONS } from './debt-quick.js';
@@ -74,7 +76,9 @@ export function lineDetail(ctx, cat, line, catHasAnswer) {
     lineSelect(ctx, line, 'stress', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Stress, 1 to 10: how much does this drain you?'),
     lineSelect(ctx, line, 'state', STATES, 'State'),
     // Dreams are typed in Eras, Your dream life (S-097).
-    catHasAnswer ? h('p', { class: 'muted xs' }, 'The estimate for this category was given as one number in Your estimates (Plan).')
+    // A premium line is owned by health coverage (S-117): never asked here.
+    PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-line')
+      : catHasAnswer ? h('p', { class: 'muted xs' }, 'The estimate for this category was given as one number in Your estimates (Plan).')
       : question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }));
 }
 

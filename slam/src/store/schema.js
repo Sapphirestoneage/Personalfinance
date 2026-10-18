@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -333,6 +333,19 @@ export function monthKey(date) {
   return date.toISOString().slice(0, 7);
 }
 
+// Health coverage (S-117). how: employer, parent, marketplace, public (Medicaid or Medicare), school,
+// none, not-sure, or null (not asked). premiumFrom: paycheck (then premiumIncomeId names the income and
+// the amount is that income's health deduction) or direct (then premium is the amount). Deductible and
+// out-of-pocket max are optional, a year. hsa: true, false, or null; hsaFrom: paycheck or direct.
+export const COVERAGE_HOW = ['employer', 'parent', 'marketplace', 'public', 'school', 'none', 'not-sure'];
+export function newCoverage() {
+  return {
+    how: null, premiumFrom: null, premiumIncomeId: null, premium: makeValue(),
+    deductible: makeValue(null, { cadence: 'year' }), outOfPocketMax: makeValue(null, { cadence: 'year' }),
+    hsa: null, hsaFrom: null
+  };
+}
+
 export function newHousehold(name, now = new Date()) {
   const iso = now.toISOString();
   return {
@@ -347,8 +360,6 @@ export function newHousehold(name, now = new Date()) {
       dependents: { count: null, ages: [] },
       // Who the client lives with: 'alone', 'partner', 'roommates', or 'family' (null = not asked yet).
       livingWith: null,
-      // On a parent's health plan (only counts while 25 or younger, S-073).
-      parentsPlan: false,
       family: { count: null },
       roommates: { count: null, totalRent: makeValue() }
     },
@@ -365,6 +376,8 @@ export function newHousehold(name, now = new Date()) {
     blindRounds: [],
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
+    // Health coverage (S-117): the one place every coverage fact is kept.
+    coverage: newCoverage(),
     // Accounts and their month balances: balances['YYYY-MM'][accountId] = { start, end } (S-084).
     accounts: [],
     balances: {},

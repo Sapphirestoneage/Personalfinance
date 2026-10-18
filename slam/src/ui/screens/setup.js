@@ -16,7 +16,7 @@ import { debtCard, tagRow, tagManager, lineDetail, catName } from '../components
 import { debtTypeTotals } from '../components/debt-quick.js';
 import { statusChip } from '../components/status.js';
 import { nameEdit } from '../components/name-edit.js';
-import { parentsPlanToggle } from '../components/parents-plan.js';
+import { coverageSection, coverageNote } from '../components/coverage.js';
 import { categoryTypeSelect, typeHint } from '../components/type-select.js';
 import { lineTypeLabel } from '../../store/types.js';
 import { addLine, addDebt, addCategory, findLine, renameLine } from '../../store/edits.js';
@@ -55,7 +55,7 @@ function categoryEditor(ctx, summary, cat) {
   return h('div', { class: 'card', id: 'cat-' + cat.id },
     bar,
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), categoryTypeSelect(ctx, cat)),
-    cat.type === 'health' ? parentsPlanToggle(ctx) : null,
+    cat.type === 'health' ? coverageNote(ctx, 'coverage-summary-cat') : null,
     live.map((line) => {
       const open = ctx.ui.expanded.has('line:' + line.id);
       return h('div', { class: 'qa' },
@@ -114,6 +114,7 @@ function coachSection(ctx) {
 
 const SECTIONS = {
   basics: (ctx, s) => renderProfile(ctx, s),
+  coverage: (ctx, s) => coverageSection(ctx, s),
   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
   accounts: (ctx) => h('div', {}, netWorthCard(ctx), accountsCard(ctx, ctx.doc.currentMonth)),
   debts: debtsSection,

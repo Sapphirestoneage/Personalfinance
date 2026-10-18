@@ -6,7 +6,8 @@
 //   - Insights has a data input (only pickers marked data-picker are allowed);
 //   - Track has a setup input (accounts, paydays, bill dates, the cushion...);
 //   - a screen has more than 12 sections;
-//   - Today has a chart, or lacks a one-tap link to any Insights tab (lesson 7).
+//   - Today has a chart, or lacks a one-tap link to any Insights tab (lesson 7);
+//   - a health coverage question appears anywhere but Setup, Health coverage (S-117).
 // It prints the inventory (height, sections, charts, inputs, buttons) before
 // the S-106 menu (tools/inventory-before.json) and now.
 //
@@ -20,7 +21,7 @@ import { readFileSync } from 'node:fs';
 const PHONE = { width: 390, height: 844 };
 const HOUSEHOLDS = [['maya', 'Maya, 26'], ['luis', 'Luis, 33'], ['tasha', 'Tasha, 29'], ['sam', 'Sam, 24'], ['jordan', 'Jordan, 31'], ['riley', 'Riley, 31'], ['dana', 'Dana, 34']];
 const TABS = ['where', 'compared', 'time', 'cash', 'networth', 'you'];
-const SECTIONS = ['basics', 'income', 'accounts', 'debts', 'bills', 'categories', 'tags', 'coach', 'notes', 'future'];
+const SECTIONS = ['basics', 'coverage', 'income', 'accounts', 'debts', 'bills', 'categories', 'tags', 'coach', 'notes', 'future'];
 // Every state a person can land on: [label, hash, data-key to click after].
 export const STATES = [
   ['Today', 'today'], ['Plan: next month', 'plan', 'plan-view-plan'], ['Plan: estimates', 'plan', 'plan-view-estimates'], ['Track', 'track'], ['Review', 'review'],
@@ -50,7 +51,9 @@ async function measure(page) {
       headings: [...m.querySelectorAll('h2, .card > h3, .card > .spread > h3')].filter(vis).map((x) => x.textContent.trim()),
       dataInputs: inputs.filter((e) => !e.hasAttribute('data-picker')).map((e) => e.getAttribute('data-key') || e.getAttribute('aria-label') || e.tagName),
       setupInputs: inputs.filter((e) => setupKey.test(e.getAttribute('data-key') || '') || setupPath.test(e.getAttribute('data-path') || '')).map((e) => e.getAttribute('data-key')),
-      fillGaps: fg ? +(fg.getBoundingClientRect().height / innerHeight).toFixed(2) : null
+      fillGaps: fg ? +(fg.getBoundingClientRect().height / innerHeight).toFixed(2) : null,
+      // Health coverage questions (S-117): the coverage inputs, the old parent's plan box, a premium line's amount.
+      coverageInputs: inputs.filter((e) => /^(coverage-|parents-plan)/.test(e.getAttribute('data-key') || '') || /^\["coverage"|^\["line","premiums","(estimate|actual)"/.test(e.getAttribute('data-path') || '')).map((e) => e.getAttribute('data-key') || e.getAttribute('data-path'))
     };
   }, [SETUP_KEY, SETUP_PATH]);
 }
@@ -95,6 +98,7 @@ export async function layoutCheck(browser, url) {
         const missing = TABS.filter((t) => !links.includes(t));
         if (missing.length) fail(id + ', Today: no one-tap link to Insights ' + missing.join(', '));
       }
+      if (st[0] !== 'Setup: coverage' && x.coverageInputs.length) fail(id + ', ' + st[0] + ': a health coverage question outside Setup, Health coverage: ' + x.coverageInputs.join(', '));
       if (st[1] === 'review' && id === 'riley' && x.fillGaps > LIMIT_FILL_GAPS_RILEY) fail('riley, fill gaps: ' + x.fillGaps + ' phone screens (limit ' + LIMIT_FILL_GAPS_RILEY + ')');
       // The same section can be visited twice (Plan has two views); a heading counts once per state.
       for (const t of new Set(x.headings)) (seen[t] = seen[t] || []).push(st[0]);

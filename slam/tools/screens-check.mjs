@@ -416,6 +416,33 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// Health coverage in one place (S-117): answered once in Setup; Review shows the one-line summary.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('coverage (phone width)');
+  await page.fill('[data-key="new-client"]', 'Coverage check');
+  await page.press('[data-key="new-client"]', 'Enter');
+  await page.waitForSelector('#first-session');
+  await setup(page, 'coverage');
+  await page.selectOption('[data-key="coverage-how"]', 'marketplace');
+  await page.selectOption('[data-key="coverage-premium-from"]', 'direct');
+  const box = page.locator('[data-path=\'["coverage","premium"]\']');
+  await box.fill('320');
+  await box.press('Tab');
+  const want = 'Marketplace or ACA. Premium $320 a month, paid directly.';
+  check('coverage', 'Summary in Setup', await settled(page, '[data-key="coverage-line"]', want), want);
+  // Review, Health: the premium line is the summary, not a question.
+  await go(page, 'review');
+  await page.click('[data-key="rv-cat:health"]');
+  check('coverage', 'Summary in Review', await settled(page, '[data-key="coverage-summary-rv:premiums-text"]', want), want);
+  check('coverage', 'No premium question in Review', String(await page.$$eval('[data-path=\'["line","premiums","actual"]\']', (x) => x.length)), '0');
+  check('coverage', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
 // Dana (S-115): a condo with a mortgage, at phone width on October 17, 2026. By hand in test/networth-households.test.js.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });

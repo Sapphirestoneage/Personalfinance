@@ -7,7 +7,7 @@ import { PLAN_DECISIONS } from './plans.js';
 import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES, COVERAGE_HOW
 } from './schema.js';
 
 // A date with a status (S-086).
@@ -43,7 +43,15 @@ export function validateHousehold(doc) {
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
-  if (doc.household && doc.household.parentsPlan !== undefined && typeof doc.household.parentsPlan !== 'boolean') errs.push('household.parentsPlan must be true or false');
+  if (doc.coverage) {
+    const c = doc.coverage;
+    if (c.how !== null && !COVERAGE_HOW.includes(c.how)) errs.push('coverage.how: unknown ' + c.how);
+    if (c.premiumFrom !== null && !['paycheck', 'direct'].includes(c.premiumFrom)) errs.push('coverage.premiumFrom must be paycheck, direct, or empty');
+    if (c.premiumIncomeId && !(doc.income || []).some((i) => i.id === c.premiumIncomeId)) errs.push('coverage.premiumIncomeId: unknown income ' + c.premiumIncomeId);
+    for (const k of ['premium', 'deductible', 'outOfPocketMax']) errs.push(...valueErrors(c[k], 'coverage.' + k));
+    if (c.hsa !== null && typeof c.hsa !== 'boolean') errs.push('coverage.hsa must be yes, no, or empty');
+    if (c.hsaFrom !== null && !['paycheck', 'direct'].includes(c.hsaFrom)) errs.push('coverage.hsaFrom must be paycheck, direct, or empty');
+  }
   const tagIds = new Set();
   (doc.tags || []).forEach((t, i) => {
     if (!t.id || tagIds.has(t.id)) errs.push('tags[' + i + ']: missing or duplicate id');

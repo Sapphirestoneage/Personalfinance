@@ -11,6 +11,8 @@ import { jumpLink, emptyState } from './jump.js';
 import { howButton, howPanel, sourceLink } from './how.js';
 import { explain } from '../../calc/explain.js';
 import { liabilities } from '../../calc/balances.js';
+import { PREMIUM_LINE_TYPES, premiumFor } from '../../calc/coverage.js';
+import { linkedLine } from '../../calc/debts.js';
 import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
@@ -56,9 +58,10 @@ export function billsCard(ctx) {
   const bills = [];
   for (const c of doc.categories) {
     if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
-    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l))) bills.push({ c, l, annual: ANNUAL(c, l) });
+    // A premium is a bill only when it is paid directly (S-117); a loan's line is its bill (S-116).
+    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l)) && !(PREMIUM_LINE_TYPES.includes(l.type) && premiumFor(doc).from !== 'direct')) bills.push({ c, l, annual: ANNUAL(c, l) });
   }
-  const debts = doc.debts.filter((x) => x.state !== 'archived');
+  const debts = doc.debts.filter((x) => x.state !== 'archived' && !linkedLine(doc, x));
   return h('div', { class: 'card', id: 'bills-card' },
     h('p', { class: 'muted small' }, 'Optional. These put bills on the calendar. Anything without a date is spread across the month.'),
     bills.length ? bills.map(({ l, annual }) => h('div', { class: 'qa' },

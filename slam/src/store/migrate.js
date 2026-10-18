@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate, newCoverage } from './schema.js';
 import { normalizeValue, isBlank, makeValue } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 import { toMonthly } from '../calc/normalize.js';
@@ -61,10 +61,30 @@ const STEPS = {
     ...doc, schemaVersion: 13,
     accounts: (doc.accounts || []).map((a) => (a.type === 'investment' ? { ...a, type: 'unset', tier: 2 } : a.type === 'retirement' ? { ...a, type: 'unset', tier: 3 } : a)),
     debts: (doc.debts || []).map((d) => ({ ...d, lineId: d.lineId === undefined ? autoLink(doc, d) : d.lineId }))
-  })
+  }),
+  // Version 13 to 14 (S-117): health coverage moves to doc.coverage. A parent's plan (household.parentsPlan)
+  // becomes how = parent. A premium line with an amount becomes the premium paid directly (the same
+  // amount and cadence); an income with a health deduction and no premium line amount becomes the premium
+  // from that paycheck. Nothing else is guessed. No amount changes.
+  13: (doc) => {
+    const { parentsPlan, ...household } = doc.household || {};
+    return { ...doc, schemaVersion: 14, household, coverage: doc.coverage || coverageFrom(doc, !!parentsPlan) };
+  }
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+
+// S-117: the coverage answers an older file already holds.
+function coverageFrom(doc, onParentsPlan) {
+  const c = newCoverage();
+  const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
+  const premiumLine = (doc.categories || []).flatMap((x) => x.lines || []).find((l) => (l.type || DEFAULT_LINE_TYPES[l.id]) === 'health-insurance' && l.state !== 'archived' && has(l.estimate));
+  const fromPay = (doc.income || []).find((i) => (i.deductions || []).some((d) => d.kind === 'health'));
+  if (onParentsPlan) c.how = 'parent';
+  if (premiumLine) { c.premiumFrom = 'direct'; c.premium = { ...premiumLine.estimate }; }
+  else if (fromPay) { c.premiumFrom = 'paycheck'; c.premiumIncomeId = fromPay.id; }
+  return c;
+}
 
 // S-116: the one line of a matching type with an amount, for a debt with no minimum of its own.
 const LINK_TYPES = { 'car-loan': ['car-payment'], mortgage: ['rent'], 'student-loan': ['loan'], 'personal-loan': ['loan'] };
@@ -202,6 +222,8 @@ export function normalizeHousehold(doc) {
   out.id = doc.id || base.id;
   out.profile = { ...base.profile, ...(doc.profile || {}) };
   out.household = { ...base.household, ...(doc.household || {}) };
+  const cv = doc.coverage || {};
+  out.coverage = { ...newCoverage(), ...cv, premium: normalizeValue(cv.premium), deductible: { ...normalizeValue(cv.deductible), cadence: (cv.deductible && cv.deductible.cadence) || 'year' }, outOfPocketMax: { ...normalizeValue(cv.outOfPocketMax), cadence: (cv.outOfPocketMax && cv.outOfPocketMax.cadence) || 'year' } };
   out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
   // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
   const { yourShare, ...rm } = out.household.roommates || {};
