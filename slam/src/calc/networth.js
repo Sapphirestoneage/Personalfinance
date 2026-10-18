@@ -29,17 +29,18 @@ export const EXPLAIN = {
   locked: 'The part of your net worth in things you live in and use, like a home or a car. It counts, but it cannot pay a bill.'
 };
 
-export function netWorthAt(doc, date) {
+// get(key) gives one account's or debt's balance; by default the latest dated one on the day.
+export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date)) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && kindOf(a) !== 'owed');
   const assets = accts.map((a) => {
-    const b = balanceAt(doc, a.id, date);
+    const b = get(a.id);
     return { id: a.id, name: a.name, type: a.type, kind: kindOf(a), tier: tierOf(a), fi: countsForFI(a), amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null, from: b ? b.from : null };
   });
   // Each debt secured by an asset belongs to the first asset that names it.
   const securedBy = {};
   for (const a of accts) if (a.securedDebtId && !securedBy[a.securedDebtId]) securedBy[a.securedDebtId] = a;
   const debts = liabilities(doc).map((l) => {
-    const b = balanceAt(doc, l.key, date);
+    const b = get(l.key);
     const by = l.debtId ? securedBy[l.debtId] || null : null;
     return { key: l.key, name: l.name, debtType: l.debtType, debtId: l.debtId, amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null,
       securedBy: by ? by.id : null, counts: !(by && !countsForFI(by)) };

@@ -107,7 +107,7 @@ export function bridgeFor(doc, income, month) {
   const cardsMissing = missing.filter((m) => cards.some((c) => c.id === m.id));
   const unexplained = explained !== null && actual !== null && !cardsMissing.length ? r2(actual - explained) : null;
   const out = {
-    month, closed: b.closed, takeHome: b.takeHome, surplus: b.surplus, steps, explained,
+    month, closed: b.closed, takeHome: b.takeHome, surplus: b.surplus, savings: b.savings, steps, explained,
     cashStart: bal.cashStart, cashEnd: bal.cashEnd, actual, unexplained, missing,
     within: within(doc),
     ties: unexplained === null ? null : Math.abs(unexplained) < within(doc)
