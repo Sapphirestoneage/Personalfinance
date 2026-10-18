@@ -1,10 +1,9 @@
-// Fill in, pass 5 Cash flow: accounts and balances, import a bank or card CSV, review and fix the
+// Fill in, pass 6 Cash flow: import a bank or card CSV, review and fix the
 // mapping (remembered per merchant), and see what the transactions reveal.
 // Line actuals come from the log on their own (S-087); there is no confirm step. Lives inside Fill in so the
 // app keeps four screens.
 
 import { h, options } from '../dom.js';
-import { accountsCard } from '../components/accounts.js';
 import { scheduleCard, waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
@@ -157,7 +156,8 @@ export function renderTransactions(ctx, summary) {
   const months = [...new Set([...(tx ? tx.months : []), ctx.doc.currentMonth])].sort();
   const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : ctx.doc.currentMonth;
   return h('div', {},
-    accountsCard(ctx, ctx.doc.currentMonth),
+    // Accounts and their balances live in their own pass (S-103).
+    h('p', { class: 'small muted' }, 'Accounts and balances are in ', h('a', { href: '#fill', 'data-key': 'go-accounts', onclick: (e) => { e.preventDefault(); ctx.go('fill', { pass: 'accounts' }); } }, '5 Accounts'), '.'),
     waitingCard(ctx, summary),
     scheduleCard(ctx),
     checkBalancesCard(ctx),

@@ -8,7 +8,7 @@ import { waterfall } from './svg.js';
 import { card, chartWidth } from './catalog.js';
 import { bridgeFor } from '../../calc/bridge.js';
 
-const LINKS = { actual: ['Fill in, Actual', 'actual', null], balances: ['Accounts and balances', 'cashflow', 'accounts-card'], log: ['The log', 'cashflow', null] };
+const LINKS = { actual: ['Fill in, Actual', 'actual', null], balances: ['Accounts and balances', 'accounts', 'accounts-card'], log: ['The log', 'cashflow', null] };
 
 export function linkTo(ctx, to) {
   const [label, pass, anchor] = LINKS[to] || LINKS.log;

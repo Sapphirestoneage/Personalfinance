@@ -9,7 +9,7 @@ import { card, chartWidth } from './catalog.js';
 
 export function transactionCards(ctx, s) {
   const tx = s.transactions;
-  if (!tx) return [card(ctx, { id: 'tx-none', title: 'Transactions', reading: 'Import a bank or card CSV in Fill in, pass 5 Cash flow, to see these.' })];
+  if (!tx) return [card(ctx, { id: 'tx-none', title: 'Transactions', reading: 'Import a bank or card CSV in Fill in, pass 6 Cash flow, to see these.' })];
   const u = ctx.ui.units['tx-top'] || 'dollars';
   const top = tx.top;
   const w = tx.weekdays;

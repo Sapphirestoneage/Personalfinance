@@ -1,4 +1,4 @@
-// Fill in, pass 6 Next stage: one drastic change (a new job, school, a move)
+// Fill in, pass 7 Next stage: one drastic change (a new job, school, a move)
 // that costs money in the short term but is better on other measures.
 // Results are on Analyze, under Next stage.
 

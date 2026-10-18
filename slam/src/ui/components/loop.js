@@ -14,7 +14,7 @@ function goTo(ctx, where) {
   const scroll = (id) => setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView(); }, 60);
   if (where === 'plan') { ctx.go('analyze'); scroll('sec-plan'); return; }
   if (where === 'bridge') { ctx.go('analyze'); scroll('chart-bridge'); return; }
-  if (where === 'balances') { ctx.go('fill', { pass: 'cashflow' }); scroll('accounts-card'); return; }
+  if (where === 'balances') { ctx.go('fill', { pass: 'accounts' }); scroll('accounts-card'); return; }
   ctx.go('fill', { pass: where });
 }
 

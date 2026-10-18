@@ -8,9 +8,10 @@ import { money, monthLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
 import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts } from '../../store/accounts.js';
-import { balancesFor, cardMap } from '../../calc/balances.js';
+import { balancesFor, cardMap, accountsOverview, ACCOUNT_GROUPS } from '../../calc/balances.js';
 
-export const ACCOUNT_TYPE_OPTIONS = [['checking', 'Checking'], ['savings', 'Savings'], ['credit-card', 'Credit card'], ['cash', 'Cash'], ['other', 'Other']];
+export const ACCOUNT_TYPE_OPTIONS = [['checking', 'Checking'], ['savings', 'Savings'], ['credit-card', 'Credit card'], ['cash', 'Cash'],
+  ['investment', 'Investment (brokerage)'], ['retirement', 'Retirement (401(k), IRA)'], ['hsa', 'HSA'], ['other', 'Other']];
 
 // A balance box writes through setBalance (the month and account may be new).
 function balanceInput(ctx, month, acct, which, stored, label) {
@@ -28,6 +29,31 @@ function balanceDate(ctx, month, a, which) {
       onchange: (e) => ctx.update('Balance date', (d) => setBalanceDate(d, month, a.id, which, !e.target.value || e.target.value === plain ? null : e.target.value)) }));
 }
 
+// One account: name, bank, type, the debt a card pays down, and its start and end balances with their days.
+function accountRow(ctx, month, r, stored) {
+  const doc = ctx.doc;
+  const a = doc.accounts.find((x) => x.id === r.id);
+  const linked = a.debtId ? doc.debts.find((d) => d.id === a.debtId) : null;
+  return h('div', { class: 'qa account-row' },
+    h('div', { class: 'q' },
+      h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
+      h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
+        onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
+      h('div', { class: 'row' },
+        h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
+        a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
+          options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => {
+            const other = doc.accounts.find((o) => o.id !== a.id && o.debtId === x.id && o.state !== 'archived');
+            return [x.id, 'Debt: ' + x.label + (other ? ' (on ' + other.name + ')' : '')];
+          })], a.debtId || '')) : null,
+        h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
+      linked ? h('div', { class: 'hint' }, 'APR, minimum, and due day stay on the debt "' + linked.label + '".') : null),
+    h('div', { class: 'balance-pair' },
+      h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, a, 'start', stored(a.id, 'start'), a.name + ' start'), balanceDate(ctx, month, a, 'start'),
+        r.start.from === 'carried' ? h('div', { class: 'xs muted', 'data-key': 'carried:' + a.id }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
+      h('div', {}, h('div', { class: 'xs muted' }, 'End balance'), balanceInput(ctx, month, a, 'end', stored(a.id, 'end'), a.name + ' end'), balanceDate(ctx, month, a, 'end'))));
+}
+
 export function accountsCard(ctx, month, opts = {}) {
   const doc = ctx.doc;
   const b = balancesFor(doc, month);
@@ -35,37 +61,20 @@ export function accountsCard(ctx, month, opts = {}) {
   const archived = doc.accounts.filter((a) => a.state === 'archived');
   return h('div', { class: 'card', id: 'accounts-card' },
     h('h2', {}, opts.title || 'Accounts and balances, ' + monthLabel(month)),
-    h('p', { class: 'muted small' }, 'Checking, savings, cash, and cards. A card\'s balance is what is owed. A start you leave blank is last month\'s end.'),
-    b.rows.map((r) => {
-      const a = doc.accounts.find((x) => x.id === r.id);
-      const linked = a.debtId ? doc.debts.find((d) => d.id === a.debtId) : null;
-      return h('div', { class: 'qa account-row' },
-        h('div', { class: 'q' },
-          h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
-          h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
-            onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
-          h('div', { class: 'row' },
-            h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
-            a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
-              options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => {
-                const other = doc.accounts.find((o) => o.id !== a.id && o.debtId === x.id && o.state !== 'archived');
-                return [x.id, 'Debt: ' + x.label + (other ? ' (on ' + other.name + ')' : '')];
-              })], a.debtId || '')) : null,
-            h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
-          linked ? h('div', { class: 'hint' }, 'APR, minimum, and due day stay on the debt "' + linked.label + '".') : null),
-        h('div', { class: 'balance-pair' },
-          h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, a, 'start', stored(a.id, 'start'), a.name + ' start'), balanceDate(ctx, month, a, 'start'),
-            r.start.from === 'carried' ? h('div', { class: 'xs muted', 'data-key': 'carried:' + a.id }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
-          h('div', {}, h('div', { class: 'xs muted' }, 'End balance'), balanceInput(ctx, month, a, 'end', stored(a.id, 'end'), a.name + ' end'), balanceDate(ctx, month, a, 'end'))));
+    h('p', { class: 'muted small' }, 'Bank accounts, cash, credit cards, investments, and anything else that holds money. A card\'s balance is what is owed. A start you leave blank is last month\'s end.'),
+    // Grouped (S-103): bank and cash, cards, investments and retirement, other; empty groups are left out.
+    ACCOUNT_GROUPS.map(([gid, glabel, types]) => {
+      const rows = b.rows.filter((r) => types.includes(r.type));
+      return rows.length ? [h('h3', { 'data-key': 'acct-group:' + gid }, glabel), rows.map((r) => accountRow(ctx, month, r, stored))] : null;
     }),
     b.rows.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)),
       b.rows.some((r) => r.card) ? h('span', {}, '. Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd))) : null) : h('p', { class: 'muted small' }, 'No accounts yet.'),
     cardsBlock(ctx, month),
-    h('div', { class: 'row' }, ACCOUNT_TYPE_OPTIONS.slice(0, 4).map(([type, label]) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => {
+    h('div', { class: 'row' }, ACCOUNT_TYPE_OPTIONS.map(([type, label]) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => {
       let id;
-      ctx.update('Add account', (d) => { id = addAccount(d, { name: label, type }).id; });
+      ctx.update('Add account', (d) => { id = addAccount(d, { name: label.replace(/ \(.*\)$/, ''), type }).id; });
       if (id) { ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
-    } }, '+ ' + label))),
+    } }, '+ ' + label.replace(/ \(.*\)$/, '')))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
 }
@@ -93,11 +102,11 @@ function cardsBlock(ctx, month) {
 
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.
 export function cashOnHandNote(ctx, coh) {
-  const go = (e) => { e.preventDefault(); ctx.go('fill', { pass: 'cashflow' }); setTimeout(() => { const el = document.getElementById('accounts-card'); if (el) el.scrollIntoView(); }, 60); };
+  const go = (e) => { e.preventDefault(); ctx.go('fill', { pass: 'accounts' }); setTimeout(() => { const el = document.getElementById('accounts-card'); if (el) el.scrollIntoView(); }, 60); };
   if (coh.amount === null) {
-    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#fill', onclick: go }, 'Enter balances in Cash flow'));
+    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#fill', onclick: go }, 'Enter balances in Accounts'));
   }
   return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: ', h('b', { class: 'num' }, money(coh.amount)),
     ' from your balances (' + coh.parts.filter((p) => p.amount !== null).map((p) => p.name + ' ' + money(p.amount)).join(', ') + ')' + (coh.missing.length ? '; missing ' + coh.missing.join(', ') : '') + '. ',
-    h('a', { href: '#fill', onclick: go }, 'Change in Cash flow'));
+    h('a', { href: '#fill', onclick: go }, 'Change in Accounts'));
 }

@@ -1,5 +1,5 @@
 // Screen 2, Fill in: the guided passes in the order used on calls.
-// Gut, Basics, Rough, Actual (then Cash flow, Next stage, Eras). Every pass is skippable.
+// Gut, Basics, Rough, Actual (then Accounts, Cash flow, Next stage, Eras). Every pass is skippable.
 // The dream life moved to Eras (S-097).
 
 import { h } from '../dom.js';
@@ -21,7 +21,8 @@ export function passForPath(path) {
   if ((a === 'categories' || a === 'line') && (c === 'dream' || c === 'dreamLong')) return 'eras';
   if (a === 'categories') return 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
-  if (a === 'transactions' || a === 'balances') return 'cashflow';
+  if (a === 'balances') return 'accounts';
+  if (a === 'transactions') return 'cashflow';
   if (a === 'nextStage') return 'next';
   if (a === 'eras') return 'eras';
   return 'rough';

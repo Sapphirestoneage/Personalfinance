@@ -20,14 +20,14 @@ function dreamCard(ctx, s) {
     svg: dl.any ? hbars({ rows: rows.map((r) => ({ label: r.name, values: SER.map(([k, n, color]) => ({ v: r[k], name: n, color, tip: r.name + ' ' + n.toLowerCase() + ': ' + money(r[k]) })) })), width: chartWidth(false), fmt: money }) : null,
     legendItems: dl.any ? SER.map(([, n, c]) => [n, c]) : null,
     extra: dreamCompare(ctx, dl, { id: 'dream-compare-analyze' }),
-    reading: dl.any ? dl.readings.long || dl.readings.short : 'Type your dream life at the top of Fill in, pass 7 Eras, to see it next to today.'
+    reading: dl.any ? dl.readings.long || dl.readings.short : 'Type your dream life at the top of Fill in, pass 8 Eras, to see it next to today.'
   });
 }
 
 export function eraCards(ctx, s) {
   const t = s.eras;
   const dream = dreamCard(ctx, s);
-  if (!t.eras.length) return [dream, card(ctx, { id: 'eras-none', title: 'Eras', reading: 'Add eras (school abroad, a sabbatical, nomading...) in Fill in, pass 7, to see life in chapters.' })];
+  if (!t.eras.length) return [dream, card(ctx, { id: 'eras-none', title: 'Eras', reading: 'Add eras (school abroad, a sabbatical, nomading...) in Fill in, pass 8, to see life in chapters.' })];
   const every = Math.max(1, Math.ceil(t.path.length / 6));
   const n = t.path.length;
   // A label every few months, and the last month unless it would crowd the one before.

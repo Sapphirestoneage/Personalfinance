@@ -1,4 +1,4 @@
-// Fill in, pass 7 Eras: it opens with Your dream life (S-097: the dream entry
+// Fill in, pass 8 Eras: it opens with Your dream life (S-097: the dream entry
 // moved here from the budget as it was, then today vs each dream), then
 // potential budgets as life chapters (school abroad, geo arbitrage, a
 // sabbatical...) laid end to end like blocks after regular life. Numbers come
