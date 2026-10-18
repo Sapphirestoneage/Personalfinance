@@ -56,6 +56,7 @@ export function whereFor(doc, path) {
   if (a === 'income') return ['setup:income', []];
   if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
   if (a === 'balances') return ['balances', []];
+  if (a === 'accounts') return ['balances', ['acct-more:' + id]];
   if (a === 'transactions') return ['log', []];
   if (a === 'cashflow') return ['setup:coach', []];
   if (a === 'nextStage') return ['future:next', []];

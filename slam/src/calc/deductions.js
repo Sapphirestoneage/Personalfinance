@@ -37,7 +37,7 @@ export function deductionRows(inc, grossMonthly) {
     else monthly = toMonthly(d.amount, freq);
     const t = treatment(d);
     return {
-      id: d.id, kind: d.kind, label: d.label || (DEDUCTION_KINDS[d.kind] || DEDUCTION_KINDS.other).label,
+      id: d.id, kind: d.kind, label: d.label || (DEDUCTION_KINDS[d.kind] || DEDUCTION_KINDS.other).label, accountId: d.accountId || null,
       mode: d.mode, percent: d.mode === 'percent' ? d.percent : null,
       monthly, annual: monthly === null ? null : monthly * 12, perPaycheck: monthly === null || !n ? null : (monthly * 12) / n,
       status: d.mode === 'percent' ? (monthly === null ? null : 'computed') : d.amount.status,

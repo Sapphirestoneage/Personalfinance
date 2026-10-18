@@ -194,11 +194,13 @@ test('accounts: what you have and what you owe, by group, blanks named', async (
   setBalance(d, '2026-10', 'amex', 'end', one(300));
   setBalance(d, '2026-10', 'fid', 'end', one(10000));
   let o = accountsOverview(d, '2026-10');
-  assert.deepEqual(o.groups.map((g) => [g.id, g.total]), [['bank', 3000], ['card', 300], ['invest', null], ['other', 0]]);
+  // S-110 groups: investments (Fidelity 10,000) apart from retirement (the 401(k), blank), and things you own (none, $0).
+  assert.deepEqual(o.groups.map((g) => [g.id, g.total]), [['bank', 3000], ['card', 300], ['invest', 10000], ['retire', null], ['own', 0]]);
   assert.deepEqual([o.have, o.owe, o.net, o.missing], [null, 300, null, ['401(k)']]);
   setBalance(d, '2026-10', 'k401', 'start', one(20000));
   o = accountsOverview(d, '2026-10');
-  assert.deepEqual([o.groups[2].total, o.have, o.owe, o.net, o.missing], [30000, 33000, 300, 32700, []]);
+  // Have: 3,000 + 10,000 + 20,000 + 0 = 33,000; net 33,000 - 300 = 32,700.
+  assert.deepEqual([o.groups[3].total, o.have, o.owe, o.net, o.missing], [20000, 33000, 300, 32700, []]);
   assert.equal(o.groups[0].rows.find((r) => r.id === 'sav').which, 'start');
   assert.deepEqual(validateHousehold(migrate(d)), []);
   // Investments are never cash on hand: cash is checking 1,000 + savings 2,000 only.

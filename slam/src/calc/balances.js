@@ -3,7 +3,7 @@
 // savings + cash, each at its latest month end, or at the start of the month
 // being worked on when it has no end yet. Cards are what is owed, kept apart.
 
-import { CASH_ACCOUNT_TYPES } from '../store/schema.js';
+import { CASH_ACCOUNT_TYPES, typeInfo } from '../store/schema.js';
 import { sumKnown, minus } from './money.js';
 import { weakestStatus } from './model.js';
 
@@ -31,9 +31,12 @@ export function isCashAccount(a) {
   return CASH_ACCOUNT_TYPES.includes(a.type);
 }
 
-// Every active account's balances for one month, cash and cards apart.
+// Every active account's balances for one month, cash and cards apart. Cash and cards are needed
+// at month-end (the cash bridge counts them); investments and things you own are optional, and
+// show when they were last updated instead (S-110).
 export function balancesFor(doc, month) {
-  const rows = (doc.accounts || []).filter((a) => a.state !== 'archived').map((a) => ({ id: a.id, name: a.name, type: a.type, cash: isCashAccount(a), card: a.type === 'credit-card', ...monthBalance(doc, month, a.id) }));
+  const rows = (doc.accounts || []).filter((a) => a.state !== 'archived').map((a) => ({ id: a.id, name: a.name, type: a.type, cash: isCashAccount(a), card: a.type === 'credit-card',
+    required: isCashAccount(a) || a.type === 'credit-card', ...monthBalance(doc, month, a.id) }));
   const cash = rows.filter((r) => r.cash);
   const cards = rows.filter((r) => r.card);
   const total = (list, k) => (list.length && list.every((r) => r[k].amount !== null) ? Math.round(sumKnown(list.map((r) => r[k].amount)).total * 100) / 100 : null);
@@ -41,9 +44,61 @@ export function balancesFor(doc, month) {
     month, rows,
     cashStart: total(cash, 'start'), cashEnd: total(cash, 'end'),
     cardsStart: cards.length ? total(cards, 'start') : 0, cardsEnd: cards.length ? total(cards, 'end') : 0,
-    missing: rows.flatMap((r) => [r.start.amount === null ? { id: r.id, name: r.name, which: 'start' } : null, r.end.amount === null ? { id: r.id, name: r.name, which: 'end' } : null]).filter(Boolean)
+    required: rows.filter((r) => r.required),
+    missing: rows.filter((r) => r.required).flatMap((r) => [r.start.amount === null ? { id: r.id, name: r.name, which: 'start' } : null, r.end.amount === null ? { id: r.id, name: r.name, which: 'end' } : null]).filter(Boolean),
+    // Optional ones with no end this month: when each was last updated (a date, or null for never).
+    stale: rows.filter((r) => !r.required && r.end.amount === null).map((r) => ({ id: r.id, name: r.name, last: lastUpdated(doc, r.id, lastDayOf(month)) }))
   };
 }
+
+export function lastDayOf(month) {
+  const [y, m] = month.split('-').map(Number);
+  return month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
+}
+
+// What is owed (S-110): each card account (its balance is what is owed), and each debt with no card
+// account of its own. key = where its balances are kept: the card account's id, else the debt's id.
+export function liabilities(doc) {
+  const cards = (doc.accounts || []).filter((a) => a.state !== 'archived' && a.type === 'credit-card');
+  const linked = new Set(cards.map((a) => a.debtId).filter(Boolean));
+  return [
+    ...cards.map((a) => ({ key: a.id, name: a.name, debtType: 'credit-card', debtId: a.debtId || null, account: a, debt: (doc.debts || []).find((d) => d.id === a.debtId) || null })),
+    ...(doc.debts || []).filter((d) => d.state !== 'archived' && !linked.has(d.id)).map((d) => ({ key: d.id, name: d.label, debtType: d.type, debtId: d.id, account: null, debt: d }))
+  ];
+}
+
+// Every dated balance of one account or debt (S-110): each month's start (its day, else the 1st), each
+// month's end (its day, else the last day), and every balance checked on a day. Oldest first.
+export function observations(doc, key) {
+  const out = [];
+  for (const [m, accts] of Object.entries(doc.balances || {})) {
+    const b = accts[key];
+    if (!b) continue;
+    if (typed(b.start)) out.push({ date: b.startOn || m + '-01', amount: b.start.amount, status: b.start.status, from: 'start', order: 0 });
+    if (typed(b.end)) out.push({ date: b.endOn || lastDayOf(m), amount: b.end.amount, status: b.end.status, from: 'end', order: 2 });
+  }
+  for (const c of ((doc.cashflow || {}).checks || [])) if (c.accountId === key && typed(c.amount)) out.push({ date: c.date, amount: c.amount.amount, status: c.amount.status, from: 'check', order: 1 });
+  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.order - b.order));
+}
+
+// The balance on a day: the latest dated balance on or before it (S-110). A debt with no dated balance
+// uses the balance on the debt itself, as given in Setup, Debts. Null when there is none.
+export function balanceAt(doc, key, date) {
+  const obs = observations(doc, key).filter((o) => o.date <= date);
+  if (obs.length) return obs[obs.length - 1];
+  const debt = (doc.debts || []).find((d) => d.id === key);
+  if (debt && typed(debt.balance)) return { date: debt.balance.asOf || null, amount: debt.balance.amount, status: debt.balance.status, from: 'debt' };
+  return null;
+}
+
+// The day an account or debt was last given a balance, on or before a day (null for never).
+export function lastUpdated(doc, key, date) {
+  const b = balanceAt(doc, key, date);
+  return b ? b.date : null;
+}
+
+// The kind of an account (cash, invested, valued, owed), from its type (S-110).
+export const kindOf = (a) => typeInfo(a).kind;
 
 // Cash on hand for Next stage and Eras: one number, read from the balances.
 export function cashOnHand(doc) {
@@ -110,8 +165,9 @@ export function cardMap(doc, month) {
 export const ACCOUNT_GROUPS = [
   ['bank', 'Bank and cash', ['checking', 'savings', 'cash']],
   ['card', 'Credit cards', ['credit-card']],
-  ['invest', 'Investments and retirement', ['investment', 'retirement', 'hsa']],
-  ['other', 'Other', ['other']]
+  ['invest', 'Investments', ['brokerage', 'investment', 'crypto', 'other']],
+  ['retire', 'Retirement, HSA, and 529', ['401k', 'trad-ira', 'roth-ira', 'retirement', 'hsa', '529', 'cash-value-life']],
+  ['own', 'Things you own', ['home', 'vehicle', 'other-asset']]
 ];
 export function accountsOverview(doc, month) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
@@ -127,7 +183,7 @@ export function accountsOverview(doc, month) {
     return { id, label, rows, total, missing: rows.filter((r) => r.amount === null).map((r) => r.name) };
   });
   const by = Object.fromEntries(groups.map((g) => [g.id, g]));
-  const parts = ['bank', 'invest', 'other'].map((k) => by[k].total);
+  const parts = ['bank', 'invest', 'retire', 'own'].map((k) => by[k].total);
   const have = parts.includes(null) ? null : Math.round(parts.reduce((x, y) => x + y, 0) * 100) / 100;
   const owe = by.card.total;
   return { month, groups, have, owe, net: minus(have, owe), missing: groups.flatMap((g) => g.missing), count: accts.length };
