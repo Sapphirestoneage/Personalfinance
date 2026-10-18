@@ -106,9 +106,14 @@ export function firstSession(doc, summary) {
     { key: 'basics', label: 'Basics: birth year, state, situation, who you live with', done: p.birthYear !== null && p.birthYear !== undefined && !!p.state && doc.situation.length > 0 && !!doc.household.livingWith, where: 'setup:basics' },
     { key: 'income', label: 'Income: at least one paycheck', done: live(doc.income).some((i) => i.takeHome.status !== null || i.gross.status !== null || (i.hourlyRate && i.hourlyRate.status !== null)), where: 'estimates' },
     { key: 'rough', label: 'Rough estimates for every category', done: rows.length > 0 && rows.every((r) => r.status.estimate !== null), where: 'estimates' },
-    { key: 'accounts', label: 'Accounts: at least one', done: live(doc.accounts).length > 0, where: 'setup:accounts' }
+    { key: 'accounts', label: 'Accounts: at least one', done: live(doc.accounts).length > 0, where: 'setup:accounts' },
+    // Optional (S-130): a yearly bill paid before the first month, typed once as an opening Paid ahead.
+    // Answered by an amount or "doesn't apply" on any line; never needed for the session to be done.
+    { key: 'paid-ahead', label: 'Any yearly bills already paid?', optional: true, where: 'setup:bills',
+      done: doc.categories.some((c) => c.lines.some((l) => l.openingAhead && l.openingAhead.status !== null)) }
   ];
-  return { items, left: items.filter((i) => !i.done).length, done: items.every((i) => i.done) };
+  const needed = items.filter((i) => !i.optional);
+  return { items, left: needed.filter((i) => !i.done).length, done: needed.every((i) => i.done) };
 }
 
 function nextKey(key) {

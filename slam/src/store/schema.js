@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -124,6 +124,9 @@ export function newLine(fields = {}) {
     owedBack: makeValue(), owedBackReceived: false,
     // Split with someone (S-122): a mark the client sets; the amount is still what they pay.
     shared: false,
+    // Opening Paid ahead (S-130): for a yearly or irregular bill paid before the client's first month, what
+    // is left of it and for how many more months, as of that first month. Blank when there is none.
+    openingAhead: makeValue(null, { cadence: 'one-off' }), openingAheadMonths: makeValue(null, { cadence: 'one-off' }),
     // Cash flow (S-086): an optional due day (1 to 31); with a due month (1 to 12) it is
     // once a year. The account it is paid from (null = the first checking account).
     dueDay: makeValue(null, { cadence: 'one-off' }), dueMonth: makeValue(null, { cadence: 'one-off' }), accountId: null,

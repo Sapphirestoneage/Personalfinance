@@ -77,7 +77,10 @@ const STEPS = {
   // entry, a month's actual, a plan amount) move to Bills and subscriptions with their ids, amounts,
   // tags, and types; empty ones go, and so does the category (its own estimate was 0 or blank in every
   // file). Totals do not change; Bills and subscriptions holds what Fees held.
-  15: (doc) => ({ ...doc, schemaVersion: 16, categories: withoutFees(doc) })
+  15: (doc) => ({ ...doc, schemaVersion: 16, categories: withoutFees(doc) }),
+  // Version 16 to 17 (S-130): an opening Paid ahead on each line, blank (no line had one before).
+  16: (doc) => ({ ...doc, schemaVersion: 17, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
+    ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { newHousehold } from '../src/store/schema.js';
 import { migrate } from '../src/store/migrate.js';
 import { makeValue } from '../src/store/value.js';
-import { addIncome, findCategory } from '../src/store/edits.js';
+import { addIncome, findCategory, findLine } from '../src/store/edits.js';
 import { addAccount } from '../src/store/accounts.js';
 import { loopStep, firstSession } from '../src/calc/loop.js';
 import { buildSummary } from '../src/calc/summary.js';
@@ -34,7 +34,8 @@ test('the first session: five things, each done by an answer, not a number', () 
   const d = migrate(newHousehold('First'));
   const fs = () => firstSession(d, buildSummary(d, refs));
   // A new client: nothing answered. Filing status has a default, so it is not one of the five.
-  assert.deepEqual(fs().items.map((i) => [i.key, i.done]), [['gut', false], ['basics', false], ['income', false], ['rough', false], ['accounts', false]]);
+  // A sixth item is optional (S-130): yearly bills already paid. It never counts toward "left" or done.
+  assert.deepEqual(fs().items.map((i) => [i.key, i.done, !!i.optional]), [['gut', false, false], ['basics', false, false], ['income', false, false], ['rough', false, false], ['accounts', false, false], ['paid-ahead', false, true]]);
   assert.equal(fs().left, 5);
 
   d.gut = makeValue(3000);
@@ -43,7 +44,7 @@ test('the first session: five things, each done by an answer, not a number', () 
   // Basics needs who you live with too.
   assert.equal(fs().items[1].done, false);
   d.household.livingWith = 'alone';
-  assert.deepEqual(fs().items.map((i) => i.done), [true, true, false, false, false]);
+  assert.deepEqual(fs().items.map((i) => i.done), [true, true, false, false, false, false]);
 
   addIncome(d, { type: 'w2', label: 'Job' });
   // An income with nothing typed is not done (blank is not zero).
@@ -63,8 +64,11 @@ test('the first session: five things, each done by an answer, not a number', () 
   assert.equal(fs().items[3].done, true);
 
   addAccount(d, { name: 'Checking', type: 'checking' });
-  assert.equal(fs().done, true);
-  assert.equal(fs().left, 0);
+  // Done with the optional item still open.
+  assert.deepEqual([fs().done, fs().left, fs().items[5].done], [true, 0, false]);
+  // An opening Paid ahead answers it.
+  findLine(d, 'car-insurance').line.openingAhead = makeValue(400, { cadence: 'one-off', status: 'roughly' });
+  assert.equal(fs().items[5].done, true);
 });
 
 test('review rows: one line per category, from the October household', async () => {

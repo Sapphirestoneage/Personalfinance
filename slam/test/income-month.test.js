@@ -60,11 +60,15 @@ test('Riley, January: 3 paychecks, planned as 3, and both bridges tie', () => {
   // and 5,770.82: 28,485.39. Lines: saved 650 + the 401(k) 325 = 975; paid down 35 + 6,080.42 - 5,770.82
   // (= 309.60: the 340 car payment less 30.40 interest) = 344.60; market 401(k) 13,560 - 13,085 - 325 = 150,
   // Roth 7,720 - 7,250 - 400 = 70; the car 9,300 -> 9,200.
+  // Opening Paid ahead (S-130): the car insurance paid before October 2025 is 160 at December's end and 80 at
+  // January's (400 less 80 a month). Net worth adds it: start 25,815.34 + 160 = 25,975.34; end 28,485.39 + 80 =
+  // 28,565.39. Timing: the yearly shares 95, less the 80 of it used: 15.
   const nb = netWorthBridge(d, inc, '2026-01');
-  assert.deepEqual(lines(nb.total), { surplus: 1135.45, timing: 95, saved: 975, 'paid-down': 344.6, market: 220, value: -100 });
-  // 25,815.34 + 1,135.45 + 95 + 975 + 344.60 + 220 - 100 = 28,485.39: ties.
-  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [25815.34, 28485.39, 28485.39, 0]);
-  assert.equal(nb.reading, 'Net worth rose $2,670. $2,205 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.');
+  assert.deepEqual(lines(nb.total), { surplus: 1135.45, timing: 15, saved: 975, 'paid-down': 344.6, market: 220, value: -100 });
+  // 25,975.34 + 1,135.45 + 15 + 975 + 344.60 + 220 - 100 = 28,565.39: ties.
+  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [25975.34, 28565.39, 28565.39, 0]);
+  // Rose 28,565.39 - 25,975.34 = 2,590.05; saved 1,135.45 + 15 + 975 = 2,125.45.
+  assert.equal(nb.reading, 'Net worth rose $2,590. $2,125 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.');
 });
 
 test('W-2 income is never typed twice: the plan and the actual come from the paycheck and the log', () => {

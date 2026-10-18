@@ -47,9 +47,9 @@ function firstSessionCard(ctx, summary) {
   const fs = firstSession(ctx.doc, summary);
   if (fs.done) return null;
   return h('div', { class: 'card', id: 'first-session' },
-    h('h2', { style: 'margin-top:0' }, 'First session (' + (fs.items.length - fs.left) + ' of ' + fs.items.length + ')'),
+    h('h2', { style: 'margin-top:0' }, 'First session (' + (fs.items.filter((i) => !i.optional).length - fs.left) + ' of ' + fs.items.filter((i) => !i.optional).length + ')'),
     h('ul', { class: 'plain' }, fs.items.map((i) => h('li', { class: 'small', 'data-key': 'first-' + i.key },
-      h('span', {}, h('span', { class: 'chip ' + (i.done ? 'st-known' : 'st-dont-know') }, i.done ? 'Done' : 'To do'), ' ', i.label),
+      h('span', {}, h('span', { class: 'chip ' + (i.done ? 'st-known' : i.optional ? 'st-roughly' : 'st-dont-know') }, i.done ? 'Done' : i.optional ? 'Optional' : 'To do'), ' ', i.label),
       i.done ? null : jumpLink(ctx, i.where, 'Do it', 'first-go-' + i.key)))));
 }
 

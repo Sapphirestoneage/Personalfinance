@@ -72,6 +72,7 @@ export function whereFor(doc, path) {
   if (a === 'line' && c === 'actual') return ['actual', ['rv-cat:' + catOf(id)]];
   if (a === 'line' && c === 'estimate') return ['estimates', []];
   if (a === 'line' && (c === 'dueDay' || c === 'dueMonth')) return ['setup:bills', []];
+  if (a === 'line' && (c === 'openingAhead' || c === 'openingAheadMonths')) return ['setup:bills', ['opening:' + id]];
   if (a === 'line') return ['setup:categories', ['line:' + id]];
   return ['estimates', []];
 }

@@ -19,17 +19,40 @@ const refs = loadRefs();
 test('Riley: one schedule per yearly bill paid, each ending at $0', () => {
   const d = loadHousehold('riley');
   const s = paidAheadSchedules(d);
+  // The opening amount (S-130): 400 left of the car insurance paid before October 2025, 5 months left:
+  // 400 / 5 = 80 a month, October 2025 through February 2026, all of it on September 30, 2025.
   // Car insurance: 960 / 12 = 80 a month, March 2026 through February 2027. Registration: 180 / 12 = 15,
   // July 2026 through June 2027.
   assert.deepEqual(s.map((x) => [x.name, x.paid, x.date, x.months, x.share, x.from, x.through]),
-    [['Car insurance', 960, '2026-03-14', 12, 80, '2026-03', '2027-02'], ['Car registration', 180, '2026-07-10', 12, 15, '2026-07', '2027-06']]);
+    [['Car insurance', 400, '2025-09-30', 5, 80, '2025-10', '2026-02'], ['Car insurance', 960, '2026-03-14', 12, 80, '2026-03', '2027-02'], ['Car registration', 180, '2026-07-10', 12, 15, '2026-07', '2027-06']]);
+  // Opening month ends: 400 - 80 = 320 (October), 240, 160, 80, 0 (February 2026).
+  assert.deepEqual(s[0].ends.map((e) => e.amount), [320, 240, 160, 80, 0]);
+  assert.deepEqual([scheduleAt(s[0], '2025-09-29'), scheduleAt(s[0], '2025-09-30'), scheduleAt(s[0], '2025-10-01'), scheduleAt(s[0], '2025-10-31'), scheduleAt(s[0], '2026-02-28'), scheduleAt(s[0], '2026-03-01')], [0, 400, 400, 320, 0, 0]);
   // Month ends: 960 - 80 = 880 (March), 800 (April), ... 80 (January 2027), 0 (February 2027).
-  assert.deepEqual(s[0].ends.map((e) => e.amount), [880, 800, 720, 640, 560, 480, 400, 320, 240, 160, 80, 0]);
+  assert.deepEqual(s[1].ends.map((e) => e.amount), [880, 800, 720, 640, 560, 480, 400, 320, 240, 160, 80, 0]);
   // On the day it was paid: all 960; the 1st of April: March's end, 880; today (October 17): September's end,
-  // 960 - 7 x 80 = 400. Registration today: 180 - 3 x 15 = 135. Together 535.
-  assert.deepEqual([scheduleAt(s[0], '2026-03-14'), scheduleAt(s[0], '2026-03-13'), scheduleAt(s[0], '2026-04-01'), scheduleAt(s[0], '2026-10-17')], [960, 0, 880, 400]);
+  // 960 - 7 x 80 = 400. Registration today: 180 - 3 x 15 = 135. Together 535 (the opening is used up).
+  assert.deepEqual([scheduleAt(s[1], '2026-03-14'), scheduleAt(s[1], '2026-03-13'), scheduleAt(s[1], '2026-04-01'), scheduleAt(s[1], '2026-10-17')], [960, 0, 880, 400]);
   assert.equal(paidAheadTotal(d, '2026-10-17'), 535);
 });
+
+test('Riley: net worth October 2025 to February 2026, before and after the opening Paid ahead (S-130)', () => {
+  const d = loadHousehold('riley');
+  // Before, by hand from the month ends (checking + savings + 401(k) + Roth + car, less the Visa and the loan):
+  //   October 31:  2,668.79 + 950 + 12,505 + 6,490 + 9,500 = 32,113.79 - 618.52 - 6,695 = 24,800.27
+  //   November 30: 2,240.04 + 1,200 + 13,070 + 7,010 + 9,400 = 32,920.04 - 623.48 - 6,388.48 = 25,908.08
+  //   December 31: 1,859.16 + 1,450 + 13,085 + 7,250 + 9,300 = 32,944.16 - 1,048.40 - 6,080.42 = 25,815.34
+  //   January 31:  2,692.02 + 1,700 + 13,560 + 7,720 + 9,200 = 34,872.02 - 615.81 - 5,770.82 = 28,485.39
+  //   February 28: 3,793.11 + 450 + 13,465 + 7,910 + 9,100 = 34,718.11 - 586.35 - 5,459.67 = 28,672.09
+  // After: + the opening amount at each month end, 320, 240, 160, 80, 0:
+  //   25,120.27; 26,148.08; 25,975.34; 28,565.39; 28,672.09. FI net worth does not count it (unchanged).
+  const ends = ['2025-10-31', '2025-11-30', '2025-12-31', '2026-01-31', '2026-02-28'];
+  assert.deepEqual(ends.map((x) => paidAheadTotal(d, x)), [320, 240, 160, 80, 0]);
+  assert.deepEqual(ends.map((x) => netWorthAt(d, x).total), [25120.27, 26148.08, 25975.34, 28565.39, 28672.09]);
+  assert.deepEqual(ends.map((x) => r2(netWorthAt(d, x).total - paidAheadTotal(d, x))), [24800.27, 25908.08, 25815.34, 28485.39, 28672.09]);
+});
+
+const r2 = (x) => Math.round(x * 100) / 100;
 
 test('Riley: net worth for February, March, and April, before and after Paid ahead', () => {
   const d = loadHousehold('riley');
