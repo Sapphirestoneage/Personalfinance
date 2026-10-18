@@ -97,11 +97,12 @@ export function loopStep(strip, today) {
 export function firstSession(doc, summary) {
   const live = (xs) => xs.filter((x) => x.state !== 'archived');
   const p = doc.profile;
-  const rows = summary.rows.filter((r) => !r.isDebt && (doc.settings.singleTotal ? r.isEverything : !r.isEverything));
+  // Debt payments and Savings (what is left over, S-123) are computed, never asked.
+  const rows = summary.rows.filter((r) => !r.isDebt && r.id !== 'savings' && (doc.settings.singleTotal ? r.isEverything : !r.isEverything));
   const items = [
     { key: 'gut', label: 'Gut number', done: doc.gut.status !== null, where: 'gut' },
     { key: 'basics', label: 'Basics: birth year, state, situation, who you live with', done: p.birthYear !== null && p.birthYear !== undefined && !!p.state && doc.situation.length > 0 && !!doc.household.livingWith, where: 'setup:basics' },
-    { key: 'income', label: 'Income: at least one paycheck', done: live(doc.income).some((i) => i.takeHome.status !== null || i.gross.status !== null || (i.hourlyRate && i.hourlyRate.status !== null)), where: 'setup:income' },
+    { key: 'income', label: 'Income: at least one paycheck', done: live(doc.income).some((i) => i.takeHome.status !== null || i.gross.status !== null || (i.hourlyRate && i.hourlyRate.status !== null)), where: 'estimates' },
     { key: 'rough', label: 'Rough estimates for every category', done: rows.length > 0 && rows.every((r) => r.status.estimate !== null), where: 'estimates' },
     { key: 'accounts', label: 'Accounts: at least one', done: live(doc.accounts).length > 0, where: 'setup:accounts' }
   ];

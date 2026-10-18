@@ -3,7 +3,7 @@
   "source": "PLACEHOLDER shaped like the BLS Consumer Expenditure Survey (https://www.bls.gov/cex/tables.htm, 'Size of consumer unit' table). The figures are rounded monthly amounts typed from memory of the national averages and are NOT verified. Eli to confirm or replace.",
   "placeholder": true,
   "unit": "dollars per month, national average, used as is (no cost-of-living scaling)",
-  "note": "No guesses are offered for Debt payments (comes from debts), Savings (a choice, not a cost), or Fees (should be zero).",
+  "note": "No guesses are offered for Debt payments (comes from debts) or Savings (what is left over, S-123).",
   "byHouseholdSize": {
     "1": { "housing": 1500, "food": 550, "transport": 650, "health": 400, "bills": 150, "fun": 300, "annual": 100, "giving": 120 },
     "2": { "housing": 2000, "food": 850, "transport": 1100, "health": 600, "bills": 200, "fun": 450, "annual": 150, "giving": 180 },

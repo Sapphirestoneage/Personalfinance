@@ -8,7 +8,8 @@ import { findCategory, setLineType } from '../../store/edits.js';
 export function categoryTypeSelect(ctx, cat, opts = {}) {
   return h('label', { class: 'field type-field' }, h('span', { class: 'lbl' }, opts.label || 'Counts as'),
     h('select', { 'data-key': 'cat:' + cat.id + ':type', onchange: (e) => ctx.update('Counts as', (d) => { findCategory(d, cat.id).type = e.target.value; }) },
-      options(CATEGORY_TYPES, cat.type)));
+      // No Fees to pick (S-123); an older category already counted as Fees keeps it.
+      options(CATEGORY_TYPES.filter(([id]) => id !== 'fees' || cat.type === 'fees'), cat.type)));
 }
 
 export function lineTypeSelect(ctx, line, opts = {}) {

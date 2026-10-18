@@ -51,14 +51,15 @@ test('the first session: five things, each done by an answer, not a number', () 
   d.income[0].takeHome = makeValue(2000);
   assert.equal(fs().items[2].done, true);
 
-  // Rough: all 10 categories other than Debt payments (computed) need an answer.
-  // Nine answered, one left blank: not done.
-  const ids = ['housing', 'food', 'transport', 'health', 'bills', 'fun', 'annual', 'fees', 'giving', 'savings'];
-  for (const id of ids.slice(0, 9)) findCategory(d, id).estimate = makeValue(100);
+  // Rough: the 8 categories other than Debt payments and Savings (both computed, S-123) need an answer.
+  // Seven answered, one left blank: not done.
+  const ids = ['housing', 'food', 'transport', 'health', 'bills', 'fun', 'annual', 'giving'];
+  for (const id of ids.slice(0, 7)) findCategory(d, id).estimate = makeValue(100);
   assert.equal(fs().items[3].done, false);
   // "Doesn't apply" is an answer, and so is a typed 0.
-  findCategory(d, 'savings').estimate = makeValue(0);
   findCategory(d, 'giving').estimate = makeValue(null, { status: 'not-for-me' });
+  assert.equal(fs().items[3].done, true);
+  findCategory(d, 'fun').estimate = makeValue(0);
   assert.equal(fs().items[3].done, true);
 
   addAccount(d, { name: 'Checking', type: 'checking' });

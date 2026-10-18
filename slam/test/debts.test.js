@@ -150,9 +150,10 @@ test('migration: old Investment and Retirement types become "Type not set"; a lo
 test('Luis: typed interest counts until his cards have month balances, then computed interest takes over', () => {
   const d = loadHousehold('luis');
   const s0 = buildSummary(d, refs);
-  // No month balances: no computed lines; the typed "Interest charged" 45 counts (Fees 45 + ATM 5 = 50).
+  // No month balances: no computed lines; the typed "Interest charged" 45 counts (Bills: interest 45 + ATM 5 = 50, the
+  // two lines Fees held before S-123; spending 3,765 and surplus 635 as in luis.expected.js).
   assert.deepEqual(debtLines(d).map(([id]) => id), ['debt:debt-car', 'debt:debt-chase', 'debt:debt-discover', 'debt:debt-affirm']);
-  assert.deepEqual([s0.rows.find((r) => r.id === 'fees').actual, s0.totals.spending, s0.totals.surplus], [50, 3885, 515]);
+  assert.deepEqual([s0.rows.find((r) => r.id === 'bills').actual, s0.totals.spending, s0.totals.surplus], [50, 3765, 635]);
   // One month of balances (S-120): a card account for each card, with the statements going into September:
   // Chase 4,000 at 24.99% and Discover 1,200 at 22.9%, both paying the minimum.
   addAccount(d, { id: 'chase', name: 'Chase', type: 'credit-card', debtId: 'debt-chase' });
@@ -162,15 +163,15 @@ test('Luis: typed interest counts until his cards have month balances, then comp
   // Chase 4,000 x 24.99% / 12 = 83.30; Discover 1,200 x 22.9% / 12 = 22.90: 106.20 of computed interest.
   assert.deepEqual(debtLines(d).filter(([id]) => id.startsWith('interest:')), [['interest:debt-chase', 83.3], ['interest:debt-discover', 22.9]]);
   const s = buildSummary(d, refs);
-  // The typed line is replaced, never counted with them: Fees is the ATM 5 alone.
-  const typed = s.rows.find((r) => r.id === 'fees').lines.find((l) => l.id === 'fee-interest');
+  // The typed line is replaced, never counted with them: Bills is the ATM 5 alone.
+  const typed = s.rows.find((r) => r.id === 'bills').lines.find((l) => l.id === 'fee-interest');
   assert.deepEqual([typed.actual, typed.covered], [0, 'computed-interest']);
-  // Debt payments 685 + 106.20 = 791.20. Spending 3,885 - 45 + 106.20 = 3,946.20; surplus 4,600 - 3,946.20 - 200 = 453.80.
+  // Debt payments 685 + 106.20 = 791.20. Spending 3,765 - 45 + 106.20 = 3,826.20; surplus 4,600 - 3,826.20 - 200 = 573.80.
   const c = (x) => Math.round(x * 100) / 100;
-  assert.deepEqual([c(s.rows.find((r) => r.id === 'debt').actual), s.rows.find((r) => r.id === 'fees').actual, c(s.totals.spending), c(s.totals.surplus)], [791.2, 5, 3946.2, 453.8]);
+  assert.deepEqual([c(s.rows.find((r) => r.id === 'debt').actual), s.rows.find((r) => r.id === 'bills').actual, c(s.totals.spending), c(s.totals.surplus)], [791.2, 5, 3826.2, 573.8]);
   // Only one card with balances: the typed line still counts, and no computed line does (never both).
   d.balances['2026-09'].discover = undefined;
   delete d.balances['2026-09'].discover;
   assert.deepEqual(debtLines(d).filter(([id]) => id.startsWith('interest:')), []);
-  assert.equal(buildSummary(d, refs).rows.find((r) => r.id === 'fees').actual, 50);
+  assert.equal(buildSummary(d, refs).rows.find((r) => r.id === 'bills').actual, 50);
 });

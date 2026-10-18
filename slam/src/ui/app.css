@@ -361,3 +361,10 @@ main [id] { scroll-margin-top: 150px; }
 .card.celebrate, li.celebrate { border-color: var(--good); }
 .card.celebrate { background: var(--accent-soft); }
 input.quick-lines { flex: 1 1 260px; min-width: 0; }
+
+/* Remove a sub-category (S-123): a small x beside its name. */
+.btn.remove-line { margin-left: .4em; padding: 0 .45em; min-height: 24px; line-height: 1; color: var(--text-muted); }
+.btn.remove-line:hover, .btn.remove-line:focus-visible { color: var(--bad); }
+
+/* Your estimates (S-123): Personal and fun, Giving, Saving, and Debt payments each a section of their own. */
+.est-sections .est-section { border-top: 2px solid var(--border); margin-top: 6px; padding-top: 2px; }

@@ -149,3 +149,15 @@ test('re-mapping a merchant is remembered and applied to its other transactions'
   assert.equal(doc.merchantMemory['AFFIRM PAYMENT'], 'shopping');
   assert.ok(doc.transactions.filter((t) => t.merchant === 'AFFIRM PAYMENT').every((t) => t.lineId === 'shopping'));
 });
+
+test('a fee line is made in Bills the first time an import maps to it (S-123)', async () => {
+  const { october } = await import('./fixtures/october.js');
+  const { mergeImport } = await import('../src/store/log.js');
+  const { findLine } = await import('../src/store/edits.js');
+  const d = october();
+  assert.equal(findLine(d, 'fee-late'), null);
+  mergeImport(d, { rows: [{ status: 'new', tx: { id: 'tx-late', date: '2026-10-05', amount: 39, merchant: 'LATE FEE', lineId: 'fee-late', account: 'chk', kind: 'spend' } }] });
+  const hit = findLine(d, 'fee-late');
+  // In Bills and subscriptions, named "Late fees", and the entry points to it.
+  assert.deepEqual([hit.category.id, hit.line.name, d.transactions.find((t) => t.id === 'tx-late').lineId], ['bills', 'Late fees', 'fee-late']);
+});

@@ -70,10 +70,12 @@ function report(journey, view, t, limit) {
   results.push({ journey, view, total: t.n, limit, steps: t.steps });
 }
 
-// a. First session. By hand: take-home 1,200 a paycheck, every two weeks = 1,200 x 26 / 12 = 2,600 a month.
-// Estimates a month: Housing (the rent) 1,000, Food 400, Transportation 150, Health 100, Bills 80,
-// Personal and fun 200, Annual 50, Fees 0, Giving 20 = spending 2,000; Savings 200.
-// Surplus 2,600 - 2,000 - 200 = +400. Savings rate 200 / 2,600 = 7.7%, shown 8%. Checking starts at 2,500.
+// a. First session. By hand: take-home 1,200 a paycheck, every two weeks = 1,200 x 26 / 12 = 2,600 a month,
+// typed in Your estimates (S-123). Estimates a month: Housing (the rent) 1,000, Food 400, Transportation 150,
+// Health 100, Bills 80, Personal and fun 200, Annual 50, Giving 20 = spending 2,000. No Fees (S-123).
+// Savings is what is left over, never typed: 2,600 - 2,000 = 600. With no actuals yet, the month counts
+// the estimate, so surplus 2,600 - 2,000 - 600 = 0, and the savings rate is 600 / 2,600 = 23.1%, shown 23%.
+// Checking starts at 2,500.
 async function firstSession(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -96,18 +98,18 @@ async function firstSession(browser, view, size) {
   t.step('Basics');
   await t.go('today');
   await t.tap('[data-key="first-go-income"]');
-  await t.tap('[data-path=\'["income"]\']');
-  await page.waitForSelector('#income input.amount');
-  await t.type('#income input.amount', '1200');
-  t.step('One income (take-home a paycheck)');
+  await t.tap('[data-key="est-add-income"]');
+  await page.waitForSelector('#sec-income input.amount');
+  await t.type('#sec-income input.amount', '1200');
+  t.step('One income (take-home a paycheck, in Your estimates)');
   await t.go('today');
   await t.tap('[data-key="first-go-rough"]');
   await t.type('[data-path=\'["categories","housing","estimate"]\']', '1000');
   t.step('Rent (the Housing estimate)');
-  for (const [id, a] of [['food', 400], ['transport', 150], ['health', 100], ['bills', 80], ['fun', 200], ['annual', 50], ['fees', 0], ['giving', 20], ['savings', 200]]) {
+  for (const [id, a] of [['food', 400], ['transport', 150], ['health', 100], ['bills', 80], ['fun', 200], ['annual', 50], ['giving', 20]]) {
     await t.type('[data-path=\'["categories","' + id + '","estimate"]\']', String(a));
   }
-  t.step('Rough estimates, the other 9 categories');
+  t.step('Rough estimates, the other 7 categories');
   await t.go('today');
   await t.tap('[data-key="first-go-accounts"]');
   await t.tap('[data-key="add-acct-checking"]');
@@ -120,8 +122,8 @@ async function firstSession(browser, view, size) {
   check(J, 'First session done', String(await page.$$eval('#first-session', (x) => x.length)), '0');
   check(J, 'Take-home', await text(page, '[data-key="how:takeHome"]'), money(2600));
   check(J, 'Spending', await text(page, '[data-key="how:spending"]'), money(2000));
-  check(J, 'Surplus', await text(page, '[data-key="how:surplus"]'), signedMoney(400));
-  check(J, 'Savings rate', await text(page, '[data-key="how:savingsRate"]'), pct(200 / 2600));
+  check(J, 'Surplus', await text(page, '[data-key="how:surplus"]'), signedMoney(0));
+  check(J, 'Savings rate', await text(page, '[data-key="how:savingsRate"]'), pct(600 / 2600));
   check(J, 'Cash today', await text(page, '[data-key="cash-today"]'), money(2500));
   report('a. First session', view, t, 60);
   await page.close();

@@ -24,6 +24,10 @@ export function coverageSection(ctx, summary) {
   const fromPay = c.premiumFrom === 'paycheck' ? healthDeds.find((x) => x.income.id === c.premiumIncomeId) : null;
   return h('div', { class: 'card', id: 'coverage-card' },
     h('p', { class: 'small', 'data-key': 'coverage-line' }, coverageSummary(ctx.doc, ctx.payFrequency)),
+    // Under 26 (S-123): a parent's plan is one tap. It is the same answer as "A parent's plan" below.
+    p.eligible || (p.age === null && c.how === 'parent') ? h('label', { class: 'check', 'data-key': 'coverage-parent-toggle' },
+      h('input', { type: 'checkbox', checked: c.how === 'parent', onchange: (e) => ctx.update('On a parent\'s plan', (d) => { d.coverage.how = e.target.checked ? 'parent' : null; }) }),
+      'On a parent\'s plan' + (p.age === null ? '' : ' (you are ' + p.age + ' this year; it counts through ' + PARENTS_PLAN_MAX_AGE + ')')) : null,
     pick(ctx, 'coverage-how', 'How are you covered?', c.how, [['', 'Pick one'], ...COVERAGE_HOW.map((k) => [k, HOW_LABELS[k]])], (cv, v) => { cv.how = v; }),
     c.how === 'parent' ? h('p', { class: 'xs muted' }, p.age === null ? 'A parent\'s plan counts through age ' + PARENTS_PLAN_MAX_AGE + ': add a birth year in Basics.'
       : p.on ? 'Premiums are $0 while you are ' + PARENTS_PLAN_MAX_AGE + ' or younger (' + p.age + ' this year).' : 'Aged off at ' + p.age + ' this year: the premium below counts again.') : null,
@@ -36,5 +40,5 @@ export function coverageSection(ctx, summary) {
     c.how === 'none' ? null : question(ctx, 'Out-of-pocket max (optional)', null, ['coverage', 'outOfPocketMax'], c.outOfPocketMax, { label: 'Out-of-pocket max' }),
     pick(ctx, 'coverage-hsa', 'An HSA or FSA?', c.hsa === null ? null : c.hsa ? 'yes' : 'no', [['', 'Not answered yet'], ['yes', 'Yes'], ['no', 'No']], (cv, v) => { cv.hsa = v === null ? null : v === 'yes'; if (v !== 'yes') cv.hsaFrom = null; }),
     c.hsa ? pick(ctx, 'coverage-hsa-from', 'Contributions come from', c.hsaFrom, [['', 'Not answered yet'], ['paycheck', 'A paycheck (a deduction in Setup, Income)'], ['direct', 'Paid in directly']], (cv, v) => { cv.hsaFrom = v; }) : null,
-    h('p', { class: 'xs muted' }, 'Out of pocket, prescriptions, and therapy stay lines in the budget.'));
+    h('p', { class: 'xs muted' }, 'Gym, out of pocket, prescriptions, and therapy are lines under Health in the budget.'));
 }

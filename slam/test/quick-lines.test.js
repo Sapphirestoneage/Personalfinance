@@ -27,3 +27,17 @@ test('they become lines, "roughly", with a type from the name, in one step', () 
   assert.equal(added[1].type, 'subscriptions');
   assert.deepEqual(validateHousehold(d), []);
 });
+
+test('Removing a sub-category archives it (S-123): out of the totals, kept for past months', async () => {
+  const { october } = await import('./fixtures/october.js');
+  const { addLines, removeLine, findLine } = await import('../src/store/edits.js');
+  const { budgetModel } = await import('../src/calc/model.js');
+  const d = october();
+  const [extra] = addLines(d, 'bills', [{ name: 'New line', amount: 12, shared: false }]);
+  const lineIds = () => budgetModel(d).categories.find((c) => c.id === 'bills').lines.map((l) => l.id);
+  assert.ok(lineIds().includes(extra.id));
+  removeLine(d, extra.id);
+  // Gone from the budget, still in the file (state archived).
+  assert.equal(lineIds().includes(extra.id), false);
+  assert.equal(findLine(d, extra.id).line.state, 'archived');
+});

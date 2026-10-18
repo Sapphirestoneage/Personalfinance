@@ -1,9 +1,9 @@
 // Small structural changes to a household draft (used inside store.update).
 // No math here: just finding things and adding or moving them.
 
-import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID } from './schema.js';
+import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID, FEE_LINES } from './schema.js';
 import { newId } from './ids.js';
-import { guessLineType } from './types.js';
+import { guessLineType, DEFAULT_LINE_TYPES } from './types.js';
 import { makeValue } from './value.js';
 
 export function findCategory(doc, catId) {
@@ -21,6 +21,23 @@ export function findLine(doc, lineId) {
 export function addLine(doc, catId, name) {
   const cat = findCategory(doc, catId);
   const line = newLine({ name, type: guessLineType(name, cat.type), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
+  cat.lines.push(line);
+  return line;
+}
+
+// Remove a sub-category (S-123). It is archived, not erased: past months, the log, and a linked debt
+// still find it, and it leaves every list and total from now on. Undo brings it back.
+export function removeLine(doc, lineId) {
+  const hit = findLine(doc, lineId);
+  if (!hit) throw new Error('No line ' + lineId);
+  hit.line.state = 'archived';
+  for (const d of doc.debts || []) if (d.lineId === lineId) d.lineId = null;
+}
+
+// A fee line made on first use (S-123), in Bills and subscriptions (else the first spending category).
+export function feeLine(doc, id) {
+  const cat = findCategory(doc, 'bills') || doc.categories.find((c) => !c.savings && c.id !== 'debt' && c.id !== EVERYTHING_CATEGORY_ID);
+  const line = newLine({ id, name: FEE_LINES[id], type: DEFAULT_LINE_TYPES[id], kind: 'variable', need: false, tag: 'planned' });
   cat.lines.push(line);
   return line;
 }
@@ -233,6 +250,7 @@ export function startBlindRound(doc, dateIso) {
 export function addTransactions(doc, txs) {
   const have = new Set(doc.transactions.map((t) => t.id));
   const fresh = txs.filter((t) => !have.has(t.id)).map((t) => ({ source: 'import', note: '', ...t }));
+  for (const t of fresh) if (t.lineId && FEE_LINES[t.lineId] && !findLine(doc, t.lineId)) feeLine(doc, t.lineId);
   doc.transactions.push(...fresh);
   doc.transactions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return fresh.length;

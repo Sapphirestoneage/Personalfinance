@@ -4,6 +4,8 @@
 
 import { newId } from './ids.js';
 import { merchantKey } from '../calc/tx-import.js';
+import { FEE_LINES } from './schema.js';
+import { findLine, feeLine } from './edits.js';
 
 export const ENTRY_KINDS = ['spend', 'transfer', 'card-payment', 'refund', 'reimbursement', 'income', 'fee'];
 export const ENTRY_SOURCES = ['manual', 'scheduled', 'import'];
@@ -56,6 +58,8 @@ export function mergeImport(doc, match) {
     const tx = { ...r.tx, source: 'import', note: r.tx.note || '' };
     if (r.status === 'matched') { mergeInto(doc, tx, r.entryId); out.merged += 1; continue; }
     if (r.status === 'possible') { tx.possible = r.candidates.slice(); out.waiting += 1; }
+    // A fee line is made the first time an entry is mapped to it (S-123).
+    if (tx.lineId && FEE_LINES[tx.lineId] && !findLine(doc, tx.lineId)) feeLine(doc, tx.lineId);
     doc.transactions.push(tx);
     out.added += 1;
   }

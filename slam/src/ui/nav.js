@@ -53,6 +53,8 @@ export function whereFor(doc, path) {
   if (a === 'gut') return ['gut', []];
   if (a === 'profile') return ['setup:basics', []];
   if (a === 'household') return ['setup:basics', id === 'filingStatus' || id === 'livingWith' ? [] : ['basics-more']];
+  // Take-home is asked in Your estimates (S-123), except for hourly pay (worked out in Setup).
+  if (a === 'income' && c === 'takeHome' && (doc.income.find((i) => i.id === id) || {}).payBasis !== 'hourly') return ['estimates', []];
   if (a === 'income') return ['setup:income', []];
   if (a === 'coverage') return ['setup:coverage', []];
   // A premium line is owned by health coverage (S-117).

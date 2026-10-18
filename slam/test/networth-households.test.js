@@ -239,13 +239,25 @@ test('the bridge ties for every month of Riley and Dana, with no surprise not-ex
 test('migration changes no existing number (Riley\'s file from before net worth)', () => {
   const raw = JSON.parse(readFileSync(new URL('./fixtures/riley-schema9.json', import.meta.url), 'utf8'));
   const doc = migrate(raw);
-  // Every number in the old file is still there, at the same place.
+  // Every number in the old file is still there, at the same place. Lists of things with ids are matched by id
+  // (S-123 took Fees out of the category list; any line of it with an answer or an entry is in Bills).
+  const byId = (list, x) => (Array.isArray(list) ? list.find((y) => y && y.id === x.id) : undefined);
   const walk = (a, b, path) => {
     if (typeof a === 'number') return assert.equal(b, a, path);
     if (!a || typeof a !== 'object') return;
-    for (const k of Object.keys(a)) if (k !== 'schemaVersion') walk(a[k], b === undefined || b === null ? undefined : b[k], path + '.' + k);
+    for (const k of Object.keys(a)) {
+      if (k === 'schemaVersion') continue;
+      const next = b === undefined || b === null ? undefined : Array.isArray(a) && a[k] && a[k].id ? byId(b, a[k]) : b[k];
+      walk(a[k], next, path + '.' + (a[k] && a[k].id ? a[k].id : k));
+    }
   };
-  walk(raw, doc, 'doc');
+  const fees = raw.categories.find((c) => c.id === 'fees');
+  const bills = doc.categories.find((c) => c.id === 'bills');
+  walk({ ...raw, categories: raw.categories.filter((c) => c !== fees) }, { ...doc, categories: doc.categories.map((c) => (c === bills ? { ...c, lines: c.lines.filter((l) => !fees.lines.some((f) => f.id === l.id)) } : c)) }, 'doc');
+  for (const l of fees.lines) {
+    const moved = bills.lines.find((x) => x.id === l.id);
+    if (moved) walk(l, moved, 'fees.' + l.id);
+  }
   // And the new fields hold no amounts: tiers and FI from the type, no balances added.
   assert.deepEqual(doc.accounts.map((a) => [a.id, a.tier, a.countsForFI]), [['chk', 1, true], ['sav', 1, true], ['visa', null, true]]);
   assert.deepEqual(Object.keys(doc.balances).sort(), Object.keys(raw.balances).sort());

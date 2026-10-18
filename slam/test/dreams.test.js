@@ -69,19 +69,20 @@ test('compat: files before long-term dreams load with them blank, short-term dre
 // MAYA, by hand (maya.json; take-home 3,900; every category has an actual, so today = actual).
 // Short-term dream by category (from lines): housing 1,600 + 80 + 40 = 1,720; food 280 + 150 + 0 = 430;
 //   transport 132; debt 300 (the minimum); health 40 + 120 = 160; bills 30; fun 80 (shopping; the concert
-//   has no dream and no estimate); annual 1,200 a year = 100; fees 0; giving 100; savings 400.
+//   has no dream and no estimate); annual 1,200 a year = 100; giving 100; savings 400. Bills holds the late fee too
+//   (moved from Fees in S-123), dream 0: bills 30 + 0 = 30.
 // Long-term dream, added for this test: Housing 2,300 (one number for the category), Eating out 250,
 //   Shopping 200. A line or category with no long-term answer follows its short-term dream:
 //   housing 2,300; food 280 + 250 + 0 = 530; fun 200; the rest as short term.
-// Today (actual): housing 1,750; food 840; transport 132; debt 300; health 145; bills 68; fun 370;
-//   annual 120; fees 39; giving 50; savings 150 (shown, never added in).
+// Today (actual): housing 1,750; food 840; transport 132; debt 300; health 145; bills 68 + 39 = 107; fun 370;
+//   annual 120; giving 50; savings 150 (shown, never added in).
 // Spending (no savings):
-//   today 1,750 + 840 + 132 + 300 + 145 + 68 + 370 + 120 + 39 + 50 = 3,814
-//   short 1,720 + 430 + 132 + 300 + 160 + 30 + 80 + 100 + 0 + 100 = 3,052 -> 762 less than today
-//   long  2,300 + 530 + 132 + 300 + 160 + 30 + 200 + 100 + 0 + 100 = 3,852 -> 38 more than today
-// Long minus today by category: housing +550, food -310, transport 0, debt 0, health +15, bills -38,
-//   fun -170, annual -20, fees -39, giving +50 (sum +38). Biggest increases: Housing, then Giving.
-// Short minus today: housing -30, food -410, health +15, bills -38, fun -290, annual -20, fees -39,
+//   today 1,750 + 840 + 132 + 300 + 145 + 107 + 370 + 120 + 50 = 3,814
+//   short 1,720 + 430 + 132 + 300 + 160 + 30 + 80 + 100 + 100 = 3,052 -> 762 less than today
+//   long  2,300 + 530 + 132 + 300 + 160 + 30 + 200 + 100 + 100 = 3,852 -> 38 more than today
+// Long minus today by category: housing +550, food -310, transport 0, debt 0, health +15, bills -77,
+//   fun -170, annual -20, giving +50 (sum +38). Biggest increases: Housing, then Giving.
+// Short minus today: housing -30, food -410, health +15, bills -77, fun -290, annual -20,
 //   giving +50 (sum -762). Biggest decreases: Food, then Personal and fun.
 // % of take-home: housing today 1,750 / 3,900 = 0.448718; short 1,720 / 3,900 = 0.441026; long 2,300 / 3,900 = 0.589744.
 // THE PAY THIS DREAM NEEDS (worked out for the long-term dream): today's savings share
@@ -100,8 +101,8 @@ test('Maya: today vs short-term vs long-term dream, by hand', () => {
   const row = (id) => dl.rows.find((r) => r.id === id);
   const want = {
     housing: [1750, 1720, 2300], food: [840, 430, 530], transport: [132, 132, 132], debt: [300, 300, 300],
-    health: [145, 160, 160], bills: [68, 30, 30], fun: [370, 80, 200], annual: [120, 100, 100],
-    fees: [39, 0, 0], giving: [50, 100, 100], savings: [150, 400, 400]
+    health: [145, 160, 160], bills: [107, 30, 30], fun: [370, 80, 200], annual: [120, 100, 100],
+    giving: [50, 100, 100], savings: [150, 400, 400]
   };
   for (const [id, [t, s, l]] of Object.entries(want)) {
     money(row(id).today, t, id + ' today');
@@ -190,7 +191,9 @@ test('old files load unchanged: dreams stay stored, show in Eras, and the budget
     const raw = JSON.parse(readFileSync(new URL('./households/' + name + '.json', import.meta.url), 'utf8'));
     const d = loadHousehold(name);
     // The stored dream answers are kept exactly as they were.
-    for (const c of raw.categories) {
+    // Fees is gone (S-123): its lines moved to Bills. Its own category answers go with it (the only dream there
+    // was Luis's 0, which adds nothing to his dream totals).
+    for (const c of raw.categories.filter((x) => x.id !== 'fees')) {
       const m = d.categories.find((x) => x.id === c.id);
       if (c.dream) assert.equal(m.dream.amount, c.dream.amount === undefined ? c.dream : c.dream.amount, name + ' ' + c.id);
     }

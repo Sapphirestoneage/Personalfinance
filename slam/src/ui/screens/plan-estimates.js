@@ -7,11 +7,11 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber } from '../../store/edits.js';
+import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber, removeLine, addIncome } from '../../store/edits.js';
 import { parseQuickLines } from '../../calc/quick-lines.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageNote } from '../components/coverage.js';
-import { parentsPlan, PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+import { parentsPlan, premiumFor, coverageSummary, PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { jumpLink } from '../components/jump.js';
@@ -21,6 +21,50 @@ import { setPlanAmount } from '../../store/plans.js';
 import { nextMonthKey } from '../../store/months.js';
 
 const parentsPlanOn = (doc) => parentsPlan(doc).on;
+
+// Income comes first in Your estimates (S-123): take-home per paycheck is asked here, and only here.
+// The pay schedule, gross, and paystub details stay in Setup, Income and paychecks.
+function incomeCard(ctx, summary) {
+  const incomes = ctx.doc.income.filter((i) => i.state !== 'archived');
+  const rowOf = (inc) => summary.income.sources.find((x) => x.id === inc.id) || null;
+  return h('div', { class: 'card', id: 'sec-income' }, h('div', { class: 'spread' }, h('h3', {}, 'Take-home pay'), jumpLink(ctx, 'setup:income', 'Pay details in Setup', 'est-income-go')),
+    incomes.length ? incomes.map((inc) => {
+      const row = rowOf(inc);
+      const derived = row && (row.takeHomeStatus === 'guess' || row.takeHomeStatus === 'computed') && inc.takeHome.amount === null;
+      return derived || inc.payBasis === 'hourly' || inc.type === 'unemployment'
+        ? h('div', { class: 'qa', 'data-key': 'est-income:' + inc.id }, h('div', { class: 'q' }, 'Take-home, ' + inc.label, h('div', { class: 'hint' }, 'Worked out from the paycheck details in Setup.')),
+          h('span', { class: 'row' }, statusChip(row ? row.takeHomeStatus : null), ' ', h('b', { class: 'num' }, money(row ? row.takeHomeMonthly : null)), ' a month'))
+        : question(ctx, 'Take-home, ' + inc.label, 'Net pay, each paycheck (' + inc.payFrequency + ').',
+          ['income', inc.id, 'takeHome'], inc.takeHome, { label: 'Take-home, ' + inc.label, compact: true, typed: 'roughly' });
+    }) : h('p', { class: 'small' }, 'No income yet. ',
+      h('button', { class: 'btn small', 'data-key': 'est-add-income', onclick: () => ctx.update('Add income', (d) => { addIncome(d, { type: 'w2', label: 'Paycheck' }); }) }, '+ Add a paycheck')));
+}
+
+// Saving is what is left over (S-123): take-home less your spending estimates, shown, never typed. A
+// savings estimate typed before S-123 stays a question (null here), so it can still be changed.
+function savingRow(ctx, summary, r) {
+  if (r.estimateFrom !== 'computed' && !(r.estimate === null && r.status.estimate === null)) return null;
+  const t = summary.totals;
+  return h('div', { class: 'qa', 'data-key': 'rough-saving' },
+    h('div', { class: 'q' }, 'What is left over', h('div', { class: 'hint' }, r.estimate === null
+      ? 'Take-home less your spending estimates. Shows once take-home and a spending estimate are in.'
+      : 'Take-home ' + money(t.takeHome) + ' less your spending estimates ' + money(t.estimateTotal) + '. Never typed.')),
+    h('span', { class: 'row' }, r.estimate === null ? null : statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate))));
+}
+
+// Health insurance is its own row, apart from Health (gym, therapy, out of pocket). Health coverage in
+// Setup owns it (S-117), so here it is the premium and one line, with a link. Under 26 the link asks
+// about a parent's plan.
+function insuranceRow(ctx) {
+  const doc = ctx.doc;
+  const prem = premiumFor(doc, ctx.payFrequency);
+  const p = parentsPlan(doc);
+  const ask = !doc.coverage.how && p.eligible ? 'Under 26: on a parent\'s plan? Set it in Setup' : 'Change in Setup';
+  return h('div', { class: 'qa', 'data-key': 'rough-insurance' },
+    h('div', { class: 'q' }, 'Health insurance', h('div', { class: 'hint', 'data-key': 'coverage-summary-plan-text' }, coverageSummary(doc, ctx.payFrequency))),
+    h('span', { class: 'row' }, prem.amount === null ? null : statusChip('computed'), ' ', h('b', { class: 'num' }, prem.amount === null ? '' : money(prem.amount)),
+      jumpLink(ctx, 'setup:coverage', doc.coverage.how ? 'Change in Setup' : ask, 'coverage-summary-plan-go')));
+}
 
 // Several sub-categories at once (S-122): "claude 216 spotify 21 youtube 27", with "split" after an
 // amount for one split with someone. Parsed in calc/quick-lines.js.
@@ -141,7 +185,22 @@ export function renderEstimates(ctx, summary, key) {
 
   // Debt payments is computed from Setup, so it comes last, after Savings (Eli, S-121).
   const ordered = [...rows.filter((r) => !r.isEverything && !r.isDebt), ...rows.filter((r) => r.isDebt)];
-  const list = h('div', { class: 'card' }, ordered.map((r) => {
+  const one = (r) => (r.type === 'health' && isRough ? [insuranceRow(ctx), rowFor(r)] : rowFor(r));
+  // Rough (S-123): income first, then spending, and Personal and fun, Giving, and Saving each in a section
+  // of its own. Debt payments (computed from Setup) stays last (S-121).
+  const SECTIONS = [['fun', 'Personal and fun'], ['giving', 'Giving'], ['savings', 'Saving']];
+  const sectionOf = (r) => (r.isDebt ? 'debt' : r.savings ? 'savings' : r.type === 'fun' || r.type === 'giving' ? r.type : 'spending');
+  const list = !isRough ? h('div', { class: 'card' }, ordered.map(one))
+    : [incomeCard(ctx, summary), h('div', { class: 'card est-sections' },
+      h('div', { id: 'sec-spending' }, h('h3', {}, 'Spending'), ordered.filter((r) => sectionOf(r) === 'spending').map(one)),
+      ...SECTIONS.map(([id, title]) => {
+        const these = ordered.filter((r) => sectionOf(r) === id);
+        // A section of one row named like the section needs no second title.
+        const titled = these.length > 1 || these[0] && these[0].name !== title;
+        return these.length ? h('div', { class: 'est-section', id: 'sec-' + id }, titled ? h('h3', {}, title) : null, these.map((r) => (r.id === 'savings' ? savingRow(ctx, summary, r) || one(r) : one(r)))) : null;
+      }),
+      h('div', { class: 'est-section', id: 'sec-debt' }, ordered.filter((r) => r.isDebt).map(one)))];
+  function rowFor(r) {
     if (r.isDebt) {
       // Debts are set up once in Setup, Debts (S-106); here they are one line that adds up.
       return h('div', { class: 'qa', 'data-key': 'rough-debts' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from the debts in Setup. Never asked twice.')),
@@ -165,7 +224,7 @@ export function renderEstimates(ctx, summary, key) {
         statusPicker(cat.estimate.status, (st) => ctx.update(r.name, (d) => { findCategory(d, r.id).estimate = makeValue(null, { status: st }); }), JSON.stringify(['categories', r.id, 'estimate'])));
     }
     const hint = isRough
-      ? (r.pctTakeHome.estimate !== null ? pct(r.pctTakeHome.estimate) + ' of take-home.' : null)
+      ? [r.type === 'health' ? 'Gym, therapy, out of pocket.' : null, r.pctTakeHome.estimate !== null ? pct(r.pctTakeHome.estimate) + ' of take-home.' : null].filter(Boolean).join(' ') || null
       : [r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null,
         key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
     // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
@@ -174,7 +233,7 @@ export function renderEstimates(ctx, summary, key) {
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
       // Given line by line: each line is asked here (never a second category number).
-      const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth));
+      const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth) && !(isRough && PREMIUM_LINE_TYPES.includes(l.type)));
       // The client's own first number, kept as they said it (older files kept it as a note).
       const first = !isRough || !cat.split ? '' : cat.estimate.amount !== null ? 'First guess ' + money(toMonthly(cat.estimate, ctx.payFrequency)) + ' a month.'
         : cat.estimate.note && cat.estimate.note.startsWith('First guess') ? cat.estimate.note.replace(' / month', ' a month') + '.' : '';
@@ -186,12 +245,13 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'sub-lines', id: isRough ? 'est-' + r.id : null },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])), isRough ? h('button', { class: 'btn small ghost more-ctl', 'data-key': 'rough-more:' + r.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'less' : 'more') : null)),
-        open && cat.type === 'health' ? coverageNote(ctx, 'coverage-summary-plan') : null,
+        open && cat.type === 'health' && !isRough ? coverageNote(ctx, 'coverage-summary-plan') : null,
         live.map((l) => {
           const lineOpen = ctx.ui.expanded.has('rough-line:' + l.id);
           // The name is editable once the line is open ("more"), so a closed row stays one line tall.
           const nm = isRough ? h('div', {}, lineOpen ? nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name') : h('span', { 'data-key': 'line-name:' + l.id }, l.name),
             l.shared ? h('span', { class: 'tag-chip', 'data-key': 'split-tag:' + l.id }, 'split') : null,
+            h('button', { class: 'btn small ghost remove-line', 'data-key': 'remove-line:' + l.id, title: 'Remove ' + l.name, 'aria-label': 'Remove ' + l.name, onclick: (e) => { e.stopPropagation(); ctx.update('Remove ' + l.name, (d) => removeLine(d, l.id)); } }, '\u00d7'),
             lineOpen ? h('label', { class: 'check xs' }, h('input', { type: 'checkbox', checked: !!l.shared, 'data-key': 'split:' + l.id, onchange: (e) => ctx.update('Split with someone', (d) => { findLine(d, l.id).line.shared = e.target.checked; }) }), 'Split with someone') : null,
             open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
             : h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
@@ -215,10 +275,10 @@ export function renderEstimates(ctx, summary, key) {
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null },
       question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true, ...compact }),
-      open && r.type === 'health' ? coverageNote(ctx, 'coverage-summary-plan') : null,
+      open && r.type === 'health' && !isRough ? coverageNote(ctx, 'coverage-summary-plan') : null,
       open && isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
       open && isRough ? extrasFor(ctx, summary, r) : null);
-  }));
+  }
 
   // Categories are added and renamed in Setup, Categories and lines (S-106); the dream entry keeps its own button.
   const add = isRough ? h('p', { class: 'small' }, jumpLink(ctx, 'setup:categories', 'Add or change categories in Setup')) : h('button', { class: 'btn', onclick: () => {
