@@ -19,7 +19,8 @@ export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
-export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'other'];
+// Investment, retirement, and HSA accounts (S-103) hold money that is not spent day to day: never cash on hand.
+export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'investment', 'retirement', 'hsa', 'other'];
 // Cash on hand counts these; cards are money owed, shown separately.
 export const CASH_ACCOUNT_TYPES = ['checking', 'savings', 'cash'];
 export const ACCOUNT_STATES = ['active', 'archived'];

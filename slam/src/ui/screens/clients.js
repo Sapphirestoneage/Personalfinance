@@ -60,7 +60,7 @@ function mergeCard(ctx) {
         h('input', { type: 'radio', name: 'pick-' + c.key, 'data-key': 'pick:' + side + ':' + c.key, checked: (picks[c.key] || 'local') === side, onchange: () => { picks[c.key] = side; } }),
         h('span', { 'data-key': 'side:' + side + ':' + c.key }, (side === 'local' ? 'This copy: ' : 'The file: ') + brief(c[side].rec, c[side === 'local' ? 'incoming' : 'local'].rec) + ' (' + stampOf(c[side]) + ')')))))),
     h('div', { class: 'row' },
-      h('button', { class: 'btn primary', 'data-key': 'finish-merge', onclick: () => ctx.store.resolveImport(picks).then(() => { ctx.ui.mergePicks = null; ctx.toast('Merged'); ctx.go('budget'); }) }, 'Finish merge'),
+      h('button', { class: 'btn primary', 'data-key': 'finish-merge', onclick: () => ctx.store.resolveImport(picks).then(() => { ctx.ui.mergePicks = null; ctx.toast('Merged'); ctx.go('today'); }) }, 'Finish merge'),
       h('button', { class: 'btn', onclick: () => { ctx.store.cancelImport(); ctx.rerender(); } }, 'Cancel')));
 }
 
@@ -72,7 +72,7 @@ export function renderClients(ctx) {
     const name = nameBox.value.trim();
     if (!name) return ctx.toast('Type a name first');
     store.create(name);
-    ctx.go('fill', { pass: 'gut' });
+    ctx.go('today');
   };
   nameBox.addEventListener('keydown', (e) => { if (e.key === 'Enter') create(); });
 
@@ -85,7 +85,7 @@ export function renderClients(ctx) {
         const res = await store.importText(await file.text());
         if (res.merged && res.conflicts.length) { ctx.ui.mergePicks = {}; ctx.toast(res.conflicts.length + ' change' + (res.conflicts.length === 1 ? '' : 's') + ' made on both copies: pick which to keep.'); ctx.rerender(); return; }
         ctx.toast(res.merged ? 'Merged: ' + res.added + ' added, ' + res.fromIncoming + ' taken from the file, ' + res.fromLocal + ' kept from here. Backup ' + res.backupId + '.' : 'Imported. A backup of everything was saved first (' + res.backupId + ').');
-        ctx.go('budget');
+        ctx.go('today');
       } catch (err) { ctx.toast(err.message); }
     }
   });
@@ -103,7 +103,7 @@ export function renderClients(ctx) {
       list.length ? h('ul', { class: 'plain' }, list.map((c) => h('li', {},
         h('span', {}, h('b', {}, c.name), ' ', h('span', { class: 'muted xs' }, 'updated ' + new Date(c.updatedAt).toLocaleDateString())),
         h('span', { class: 'row' },
-          h('button', { class: 'btn small primary', onclick: () => store.open(c.id).then(() => ctx.go('budget')) }, store.doc && store.doc.id === c.id ? 'Open (current)' : 'Open'),
+          h('button', { class: 'btn small primary', onclick: () => store.open(c.id).then(() => ctx.go('today')) }, store.doc && store.doc.id === c.id ? 'Open (current)' : 'Open'),
           h('button', { class: 'btn small', onclick: () => store.open(c.id).then(() => exportClient(ctx)) }, 'Export'),
           h('button', { class: 'btn small danger', onclick: () => {
             if (confirm('Remove ' + c.name + ' from the list? The file is kept, marked deleted, and a backup is taken first.')) store.backupAll('Before deleting ' + c.name).then(() => store.remove(c.id)).then(() => ctx.rerender());
@@ -131,7 +131,7 @@ export function renderClients(ctx) {
             const res = importCSV(await loadDemoCSV(file), { account, rulesData: ctx.refs.merchantRules, memory: store.doc.merchantMemory });
             store.update('Import ' + file, (d) => mergeImport(d, matchImport(d.transactions, res.transactions)));
           }
-          ctx.go('budget');
+          ctx.go('today');
         } catch (e) { ctx.toast(e.message); }
       } }, label)))));
 }

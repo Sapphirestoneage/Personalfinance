@@ -1,4 +1,4 @@
-// Analyze, Next stage: what the change would take, now vs next, stay vs
+// Future, Next stage: what the change would take, now vs next, stay vs
 // change over time, and the other measures. Numbers from src/calc/next-stage.js.
 
 import { h } from '../dom.js';
@@ -15,7 +15,7 @@ function yearsMonths(m) {
 
 export function nextStageCards(ctx, s) {
   const n = s.nextStage;
-  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 6, to see what it would take.' })];
+  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change above to see what it would take.' })];
   const C = n.cases;
   // The best case is stored as cases.dream, the old name kept so files load unchanged (S-097).
   const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Best case']];
@@ -38,7 +38,7 @@ export function nextStageCards(ctx, s) {
         row('Each month after', (x) => [signedMoney(x.next.surplus), x.next.surplus < 0 ? 'bad' : 'good']),
         row('Catches up on money', (x) => [x.path ? (x.path.breakEven ? yearsMonths(x.path.breakEven) : 'not in 10 years') : '\u00b7'])))),
     reading: (C.disaster.cashNeeded === null || C.likely.cashNeeded === null)
-      ? 'Fill in take-home after the change (and during the switch) to see the cash needed.'
+      ? 'Add take-home after the change (and during the switch) to see the cash needed.'
       : 'Likely needs ' + money(C.likely.cashNeeded) + '; plan for the disaster case of ' + money(C.disaster.cashNeeded) +
         (hasCash ? (C.disaster.cash.covers ? ', which the cash on hand covers.' : ', ' + money(-C.disaster.cash.gap) + ' more than the cash on hand.') : '.') +
         (n.cutNeeded > 0 ? ' Likely runs ' + money(n.cutNeeded) + ' short a month' + (n.ownWordsCovers ? '; getting back to your own estimates covers it.' : '.') : '')
@@ -53,7 +53,7 @@ export function nextStageCards(ctx, s) {
     legendItems: [['Now', 'var(--chart-1)'], ['After the change', 'var(--chart-3)']],
     reading: n.next.perHour !== null && n.now.perHour !== null
       ? 'Take-home per hour worked: ' + money(n.now.perHour, true) + ' now, ' + money(n.next.perHour, true) + ' after.'
-      : 'Add hours worked now (Basics) and after the change to compare pay per hour.'
+      : 'Add hours worked now (Setup, Income) and after the change to compare pay per hour.'
   });
 
   let path = null;

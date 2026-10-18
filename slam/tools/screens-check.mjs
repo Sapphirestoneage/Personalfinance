@@ -1,6 +1,6 @@
 // Phase 5 screen tie-out. Loads each test household in a real browser and
-// checks that the numbers the Budget and Analyze screens SHOW match the
-// hand-computed expected files. Not part of `node --test` (it needs a browser).
+// checks that the numbers Today, Plan, Track, Review, Insights, and Setup SHOW
+// match the hand-computed expected files (the menu follows the loop, S-106). Not part of `node --test` (it needs a browser).
 //
 // Run from the slam folder:
 //   python3 -m http.server 8765 &
@@ -50,6 +50,27 @@ async function buildBridgeDoc() {
   return exportHousehold(d, '2026-11-01T00:00:00Z');
 }
 
+// Open a screen at any width: the top links on wide screens, the bottom bar (or More) on phones.
+async function go(page, screen) {
+  await page.waitForSelector('a[href="#' + screen + '"]', { state: 'attached', timeout: 3000 }).catch(() => null);
+  const top = page.locator('header nav a[href="#' + screen + '"]');
+  if (await top.count() && await top.isVisible()) return top.click();
+  const bottom = page.locator('.bottom-bar > a[href="#' + screen + '"]');
+  if (await bottom.count()) return bottom.click();
+  await page.click('[data-key="more"]');
+  await page.click('.more-menu a[href="#' + screen + '"]');
+}
+async function insights(page, tab) { await go(page, 'insights'); await page.click('[data-key="tab-' + tab + '"]'); await page.waitForSelector('#tab-' + tab); }
+async function setup(page, section) { await go(page, 'setup'); await page.click('[data-key="setup-' + section + '"]'); await page.waitForSelector('#setup-' + section); }
+async function plan(page, view) { await go(page, 'plan'); await page.click('[data-key="plan-view-' + view + '"]'); await page.waitForTimeout(100); }
+const tilesOf = (page, sel) => page.$$eval(sel + ' .tile', (ts) => Object.fromEntries(ts.map((t) => [t.querySelector('.label').textContent.trim(), t.querySelector('.value').textContent.trim()])));
+
+// The text of an element once it settles on what is expected (or what it is after 3 seconds).
+async function settled(page, sel, want) {
+  await page.waitForFunction(([q, w]) => { const e = document.querySelector(q); return e && e.textContent === w; }, [sel, want], { timeout: 3000 }).catch(() => null);
+  return page.$eval(sel, (e) => e.textContent).catch(() => 'missing');
+}
+
 function check(name, label, shown, expected) {
   const ok = shown === expected;
   if (!ok) failures += 1;
@@ -65,16 +86,23 @@ for (const [name, button] of Object.entries(DEMOS)) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(URL + '#clients');
   await page.getByText(button).click();
-  await page.waitForSelector('.strip');
+  await page.waitForSelector('#headline');
   console.log(name);
 
-  const tiles = await page.$$eval('.tile', (ts) => Object.fromEntries(ts.map((t) => [t.querySelector('.label').textContent.trim(), t.querySelector('.value').textContent.trim()])));
+  // The menu follows the monthly loop (S-106); Clients opens from the client name.
+  check(name, 'Menu', (await page.$$eval('header nav a', (as) => as.map((a) => a.textContent))).join(', '), 'Today, Plan, Track, Review, Insights, Setup');
+  // Today: at most four headline tiles.
+  const tiles = await tilesOf(page, '#headline');
+  check(name, 'Headline tiles', Object.keys(tiles).join(', '), 'Take-home, Spending, ' + (exp.surplus < 0 ? 'Shortfall' : 'Surplus') + ', Savings rate');
   check(name, 'Take-home tile', tiles['Take-home'], money(exp.takeHome));
   check(name, 'Spending tile', tiles.Spending, money(exp.spending));
   check(name, 'Surplus tile', tiles[exp.surplus < 0 ? 'Shortfall' : 'Surplus'], signedMoney(exp.surplus));
   check(name, 'Savings rate tile', tiles['Savings rate'], pct(exp.savingsRate));
-  check(name, 'Housing tile', tiles.Housing, pct(exp.housingShare));
-  check(name, 'Blind spot tile', tiles['Blind spot'], pct(exp.blindSpot));
+  check(name, 'No charts on Today but the cash strip', String(await page.$$eval('#main .chart svg', (x) => x.filter((svg) => !svg.closest('#cash-strip')).length)), '0');
+  await insights(page, 'where');
+  check(name, 'Housing share (gauges)', String((await page.$eval('#chart-gauges .reading', (p) => p.textContent)).startsWith('Housing is ' + pct(exp.housingShare) + ' of take-home')), 'true');
+  await insights(page, 'compared');
+  check(name, 'Blind spot tile', (await tilesOf(page, '#tab-compared'))['Blind spot'], pct(exp.blindSpot));
 
   // Columns are found by their header, since the Plan column comes and goes. No dream column (S-097).
   const heads = await page.$$eval('table.budget thead th', (ths) => ths.map((th) => th.textContent.replace(/[▴▾]/g, '').trim()));
@@ -114,25 +142,22 @@ for (const [name, button] of Object.entries(DEMOS)) {
   });
   check(name, 'Culprits', culprits.join(', '), exp.culprits.map(([n, gap]) => n + '|' + money(gap)).join(', '));
 
-  const comp = await page.$$eval('.card', (cards) => {
-    const c = cards.find((x) => x.querySelector('h3') && x.querySelector('h3').textContent === 'How filled in is the picture');
-    return c ? c.querySelector('b').textContent : null;
-  });
-  check(name, 'Completion', comp, pct(exp.completion));
+  check(name, 'Completion', await page.$eval('#chart-completion b', (b) => b.textContent), pct(exp.completion));
 
   const proof = await page.$$eval('.card.flag h3', (hs) => hs.length > 0);
   check(name, 'Proof of cash flag shown', String(proof), String(exp.proofOfCash.flagged));
 
-  await page.click('nav a[href="#analyze"]');
-  await page.waitForSelector('#chart-gut');
   const gutReading = await page.$eval('#chart-gut .reading', (p) => p.textContent);
   check(name, 'Gut check reading', gutReading.includes(times(exp.gut.ratio)) ? 'mentions ' + times(exp.gut.ratio) : gutReading, 'mentions ' + times(exp.gut.ratio));
   if (exp.incomeStatement) {
+    await insights(page, 'you');
     const net = await page.$$eval('#chart-statement tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'Income statement net', net[net.length - 2], signedMoney(exp.incomeStatement.net));
   }
-  if (exp.stress) check(name, 'Stress reading', await page.$eval('#chart-stress .reading', (p) => p.textContent), exp.stress.reading);
   if (exp.review) {
+    // Next month's plan lives on Plan (S-106), not in Insights.
+    await plan(page, 'plan');
+    await page.waitForSelector('#sec-plan');
     // Review and plan: the live totals and the reading for the month reviewed.
     const rv = await page.$$eval('.review-top .tile', (ts) => ts.map((t) => t.querySelector('.value').textContent.trim()));
     check(name, 'Review plan total', rv[0], money(exp.review.plan));
@@ -142,6 +167,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
     check(name, 'Review checklist', await page.$eval('.review-count', (b) => b.textContent), exp.review.checklist[0] + ' of ' + exp.review.checklist[1] + ' lines reviewed');
     check(name, 'Review reading', await page.$eval('[data-key="review-reading"]', (p) => p.textContent), exp.review.reading);
   }
+  await insights(page, 'you');
+  if (exp.stress) check(name, 'Stress reading', await page.$eval('#chart-stress .reading', (p) => p.textContent), exp.stress.reading);
   if (exp.draftt) {
     // DRAFTT is descriptive (S-072): the reading names proportions, never a verdict.
     const dr = await page.$eval('#chart-draftt .reading', (p) => p.textContent);
@@ -151,11 +178,11 @@ for (const [name, button] of Object.entries(DEMOS)) {
     const totalRow = await page.$$eval('#chart-draftt tr.cat td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'DRAFTT total % of base', totalRow[2], pct(exp.draftt.totalShare));
   }
-  // The Fill in passes (S-097): no Dream pass; the dream life opens Eras.
-  await page.click('nav a[href="#fill"]');
-  await page.waitForFunction(() => { const b = document.querySelector('.passes button'); return b && b.textContent === '1 Gut'; });
-  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage, 7 Eras');
-  await page.getByRole('button', { name: '7 Eras' }).click();
+  // Next stage and Eras are parked (S-105): no Future screen until the switch in Setup is on.
+  check(name, 'No Future screen while parked', String(await page.$$eval('a[href="#future"]', (x) => x.length)), '0');
+  await setup(page, 'future');
+  await page.check('[data-key="future-tools"]');
+  await go(page, 'future');
   await page.waitForSelector('#dream-entry');
   if (name === 'maya') {
     // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
@@ -182,15 +209,22 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   console.log('loop (phone width)');
   await page.fill('[data-key="new-client"]', 'Loop check');
   await page.press('[data-key="new-client"]', 'Enter');
-  await page.waitForSelector('.passes');
-  await page.getByRole('button', { name: '5 Cash flow' }).click();
+  await page.waitForSelector('#first-session');
+  await setup(page, 'accounts');
   await page.click('[data-key="add-acct-checking"]');
   const startBox = page.locator('#accounts-card input.amount').first();
   await startBox.fill('2500');
   await startBox.press('Tab');
   await page.waitForTimeout(100);
   check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
-  await page.getByRole('button', { name: '6 Next stage' }).click();
+  // Accounts (S-103): with only a checking start of 2,500 typed, you have 2,500, owe 0 on cards, net 2,500.
+  check('loop', 'Accounts: you have', await page.$eval('[data-key="acct-have"] .value', (b) => b.textContent), money(2500));
+  check('loop', 'Accounts: net', await page.$eval('[data-key="acct-net"] .value', (b) => b.textContent), money(2500));
+  // Next stage and Eras are parked (S-105): checked with Future tools on.
+  await setup(page, 'future');
+  await page.check('[data-key="future-tools"]');
+  await go(page, 'future');
+  await page.click('[data-key="future-tab-next"]');
   await page.waitForTimeout(100);
   const startNs = page.getByRole('button', { name: 'Plan a next stage' });
   if (await startNs.count()) await startNs.click();
@@ -199,14 +233,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Next stage reads cash from balances', note.includes(money(2500)) ? 'reads ' + money(2500) : note, 'reads ' + money(2500));
   // The third lens is Best case (S-097), in the order Disaster, Likely, Best case.
   check('loop', 'Next stage lenses', (await page.$$eval('table.lenses thead th', (ths) => ths.map((t) => t.textContent).filter(Boolean))).join(', '), 'Disaster, Likely, Best case');
-  check('loop', 'No Dream on Next stage', String(/dream/i.test(await page.$eval('#main', (m) => m.textContent))), 'false');
-  await page.getByRole('button', { name: '7 Eras' }).click();
+  check('loop', 'No Dream on Next stage', String(await page.$eval('#main', (m) => [...m.children[0].children].filter((c) => !c.matches('.passes, p, h1')).some((c) => /dream/i.test(c.textContent)))), 'false');
+  await page.click('[data-key="future-tab-eras"]');
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
 
-  // Quick entry from the Budget screen, then a bank file that matches it (S-085).
-  await page.click('nav a[href="#budget"]');
+  // Quick entry from Today, then a bank file on Track that matches it (S-085).
+  await go(page, 'today');
   await page.click('[data-key="open-quick-entry"]');
   await page.fill('[data-key="qe-amount"]', '54.20');
   await page.fill('[data-key="qe-search"]', 'groc');
@@ -214,33 +248,34 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="qe-merchant"]', "Trader Joe's");
   await page.fill('[data-key="qe-date"]', YM + '-03');
   await page.click('[data-key="qe-save"]');
-  await page.waitForSelector('.toast');
-  check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
-  await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '5 Cash flow' }).click();
+  check('loop', 'Quick entry saved', await settled(page, '.toast', 'Logged $54.20 to Groceries'), 'Logged $54.20 to Groceries');
+  await go(page, 'track');
   const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
   await page.waitForSelector('[data-key="match-summary"]');
   check('loop', 'Import match summary', (await page.$eval('[data-key="match-summary"] b', (b) => b.textContent)), 'Matched 1, new 1, possible matches 0 to confirm.');
   await page.click('[data-key="tx-add"]');
   await page.waitForTimeout(150);
-  const srcs = await page.$$eval('.src-chip', (cs) => cs.map((c) => c.textContent));
-  check('loop', 'Log sources after merge', srcs.join(', '), 'Bank, merged, Bank');
+  // Latest first (S-109): Whole Foods on the 5th from the bank, then Trader Joe's (the bank's date, the 4th) merged with the quick entry.
+  const srcs = await page.$$eval('#log-card li', (ls) => ls.map((l) => l.querySelector('b').textContent + ' (' + l.querySelector('.src-chip').textContent + ')'));
+  check('loop', 'Log sources after merge', srcs.join('; '), 'WHOLE FOODS MKT (Bank); TRADER JOE S #552 (Bank, merged)');
   // Cash by day (S-086). By hand: checking starts at 2,500; Trader Joe's 54.20 and Whole Foods 80.10
   // are in the log; no income or plan yet. Today 2,500 - 54.20 - 80.10 = 2,365.70, also the lowest
   // point and safe to spend (no payday ahead).
-  await page.click('nav a[href="#budget"]');
+  await go(page, 'today');
   await page.waitForSelector('#cash-strip');
   check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2365.7));
   check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2365.7));
   check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2365.7));
-  await page.click('nav a[href="#analyze"]');
+  await go(page, 'track');
   await page.waitForSelector('#chart-cf-chart svg');
   check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
   check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
-  await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '4 Actual' }).click();
+  await go(page, 'review');
+  // Filled categories are one row each until tapped (S-106).
+  check('loop', 'Food summary row', await settled(page, '[data-key="rv-cat:food"]', '\u25b8 Food: ' + money(134.3) + ' from 2 entries'), '\u25b8 Food: ' + money(134.3) + ' from 2 entries');
+  await page.click('[data-key="rv-cat:food"]');
   await page.waitForSelector('[data-key="from-log:groceries"]');
   check('loop', 'Groceries from the log', await page.$eval('[data-key="from-log:groceries"]', (b) => b.textContent), money(134.3, true));
   await page.click('[data-key="from-log:groceries"]');
@@ -260,41 +295,43 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   const doc = await buildBridgeDoc();
   await page.setInputFiles('#import-file', { name: 'bridge.json', mimeType: 'application/json', buffer: Buffer.from(doc) });
   await page.waitForTimeout(300);
-  await page.click('nav a[href="#analyze"]');
+  await insights(page, 'cash');
   await page.waitForSelector('#chart-bridge');
-  check('bridge', 'Explained', await page.$eval('[data-key="bridge-explained"]', (b) => b.textContent), signedMoney(680));
-  check('bridge', 'Actual change', await page.$eval('[data-key="bridge-actual"]', (b) => b.textContent), signedMoney(620));
-  check('bridge', 'Not explained yet', await page.$eval('[data-key="bridge-unexplained"]', (b) => b.textContent), signedMoney(-60));
+  check('bridge', 'Explained', await settled(page, '[data-key="bridge-explained"]', signedMoney(680)), signedMoney(680));
+  check('bridge', 'Actual change', await settled(page, '[data-key="bridge-actual"]', signedMoney(620)), signedMoney(620));
+  check('bridge', 'Not explained yet', await settled(page, '[data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
   check('bridge', 'Waterfall drawn', String(await page.$$eval('#chart-bridge svg rect', (r) => r.length >= 8)), 'true');
   // The loop (S-089). By hand: 10 entries (3 paychecks, 2 groceries, Geico, the card payment, ATM, the concert, the couch),
   // the yearly car insurance confirmed by its entry, every balance in (3 accounts x start and end), the bridge off by 60.
-  await page.click('nav a[href="#budget"]');
+  await go(page, 'today');
   await page.waitForSelector('#loop-strip');
-  check('loop strip', 'Review step', await page.$eval('[data-key="loop-review"] .small', (d) => d.textContent), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
-  check('loop strip', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
+  check('loop strip', 'Review step', await settled(page, '[data-key="loop-review"] .small', '0 lines still empty, 6 of 6 balances in, bridge off by $60'), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
+  check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28, scheduled 1 of 1 confirmed'), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
   page.on('dialog', (dl) => dl.accept());
+  await go(page, 'review');
   await page.click('[data-key="open-checklist"]');
   await page.waitForSelector('#checklist');
   const want = "Closed with 3 open items: off by $60, 1 reimbursement owed, next month's plan not started";
-  check('checklist', 'Summary', await page.$eval('[data-key="close-summary"]', (p) => p.textContent), want + '.');
-  check('checklist', 'Close button', await page.$eval('[data-key="close-month"]', (b) => b.textContent), 'Close with 3 open items');
+  check('checklist', 'Summary', await settled(page, '[data-key="close-summary"]', want + '.'), want + '.');
+  check('checklist', 'Close button', await settled(page, '[data-key="close-month"]', 'Close with 3 open items'), 'Close with 3 open items');
   await page.click('[data-key="close-month"]');
   await page.waitForSelector('#just-closed');
-  check('review', 'Open at close', await page.$eval('#just-closed [data-key="review-open"]', (b) => b.textContent), want);
-  check('review', 'Bridge tile', await page.$eval('#just-closed [data-key="review-bridge"]', (b) => b.textContent), 'Off by $60');
+  check('review', 'Open at close', await settled(page, '#just-closed [data-key="review-open"]', want), want);
+  check('review', 'Bridge tile', await settled(page, '#just-closed [data-key="review-bridge"]', 'Off by $60'), 'Off by $60');
   // 460 logged (groceries 400 + shopping 60) of 1,960 (+ rent 1,500 typed) = 23%
-  check('review', 'Tracking', await page.$eval('#just-closed [data-key="review-tracking"]', (b) => b.textContent), '23% ($460 logged, $1,500 typed)');
-  await page.click('nav a[href="#analyze"]');
-  await page.waitForSelector('#months-review');
-  check('months', 'Estimate history chart', String(await page.$$eval('#chart-estimate-history svg path', (p) => p.length > 0)), 'true');
-  check('months', '80/20 reading', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '50% of your entries (3 of 6) made up 80% of your spending.');
+  check('review', 'Tracking', await settled(page, '#just-closed [data-key="review-tracking"]', '23% ($460 logged, $1,500 typed)'), '23% ($460 logged, $1,500 typed)');
+  await insights(page, 'time');
+  check('months', 'Estimate, plan, actual by month drawn', String(await page.$$eval('#chart-trend-series svg path', (p) => p.length > 0)), 'true');
+  check('months', '80/20 reading', await settled(page, '#chart-pareto .reading', '50% of your entries (3 of 6) made up 80% of your spending.'), '50% of your entries (3 of 6) made up 80% of your spending.');
   check('months', '80/20 chart', String(await page.$$eval('#chart-pareto svg rect', (r) => r.length === 6)), 'true');
   // Trends (S-092): every card drawn, and two of the one-line stats by hand.
   await page.waitForSelector('#chart-trend-heat');
   for (const id of ['trend-series', 'trend-charges', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('trends', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length === 1)), 'true');
   check('trends', 'Card float', await page.$eval('#stat-float .reading', (p) => p.textContent), "Oct '26 charged $300, paid $450.");
   check('trends', 'Not explained yet', await page.$eval('#stat-unexplained .reading', (p) => p.textContent), '-$60 over 1 bridged month; ATM cash $60; Venmo or Zelle with no line $0.');
-  check('months', 'Saved review shown', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), want);
+  await go(page, 'review');
+  await page.waitForSelector('#months-review');
+  check('months', 'Saved review shown', await settled(page, '#months-review [data-key="review-open"]', want), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
@@ -312,31 +349,87 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // scheduled in October: rent, two paychecks, car payment, phone, Visa = 6, of which 3 are done so far.
   await page.getByText('Riley, 31').click();
   await page.waitForSelector('#cash-strip');
-  check('riley', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(3291.03));
-  check('riley', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(60));
+  check('riley', 'Cash today', await settled(page, '[data-key="cash-today"]', money(3291.03)), money(3291.03));
+  check('riley', 'Lowest point', await settled(page, '[data-key="cash-lowest"]', money(60)), money(60));
   // Safe to spend (S-095): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0 and a message.
-  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
-  check('riley', 'Shortfall message', await page.$eval('[data-key="safe-short"]', (p) => p.textContent), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
+  check('riley', 'Safe to spend', await settled(page, '[data-key="safe-to-spend"]', money(0)), money(0));
+  check('riley', 'Shortfall message', await settled(page, '[data-key="safe-short"]', "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5."), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
   check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
-  check('riley', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
-  await page.click('nav a[href="#analyze"]');
+  check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15, scheduled 3 of 6 confirmed'), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
+  // Past months are on Review; the bridge history and the 80/20 are in Insights (S-106).
+  await go(page, 'review');
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
   await page.waitForTimeout(150);
-  check('riley', 'March review readings', await page.$eval('#months-review [data-key="review-readings"]', (p) => p.textContent), 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.');
-  check('riley', 'March bridge ties', await page.$eval('#months-review [data-key="review-bridge"]', (b) => b.textContent), 'Ties');
-  check('riley', 'March bridge reading', await page.$eval('#chart-months-bridge .reading', (p) => p.textContent), 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
-  check('riley', 'March 80/20', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '13% of your entries (3 of 23) made up 80% of your spending.');
+  check('riley', 'March review readings', await settled(page, '#months-review [data-key="review-readings"]', 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.'), 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.');
+  check('riley', 'March bridge ties', await settled(page, '#months-review [data-key="review-bridge"]', 'Ties'), 'Ties');
+  await insights(page, 'cash');
+  await page.selectOption('[data-key="bridge-month"]', '2026-03');
+  await page.waitForTimeout(150);
+  check('riley', 'March bridge reading', await settled(page, '#chart-bridge .reading', 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.'), 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  await insights(page, 'time');
+  check('riley', 'March 80/20', await settled(page, '#chart-pareto .reading', '13% of your entries (3 of 23) made up 80% of your spending.'), '13% of your entries (3 of 23) made up 80% of your spending.');
   await page.click('[data-key="pareto-level-lines"]');
   await page.waitForTimeout(100);
-  check('riley', 'March 80/20 lines', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '4 lines, Rent, Car payment, Groceries, and Shopping, made up 80%.');
+  check('riley', 'March 80/20 lines', await settled(page, '#chart-pareto .reading', '4 lines, Rent, Car payment, Groceries, and Shopping, made up 80%.'), '4 lines, Rent, Car payment, Groceries, and Shopping, made up 80%.');
+  await go(page, 'review');
   await page.selectOption('[data-key="months-pick"]', '2026-06');
   await page.waitForTimeout(150);
-  check('riley', 'June open items', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
-  check('riley', 'June not explained', await page.$eval('#chart-months-bridge [data-key="bridge-unexplained"]', (b) => b.textContent), signedMoney(-60));
+  check('riley', 'June open items', await settled(page, '#months-review [data-key="review-open"]', 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches'), 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
+  await insights(page, 'cash');
+  await page.selectOption('[data-key="bridge-month"]', '2026-06');
+  await page.waitForTimeout(150);
+  check('riley', 'June not explained', await settled(page, '#chart-bridge [data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
+  await go(page, 'track');
+  await page.waitForSelector('#chart-cf-paylater');
   check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
-  for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom', 'estimate-history', 'cf-chart', 'bridge']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
+  check('riley', 'cf-chart drawn', String(await page.$$eval('#chart-cf-chart svg', (x) => x.length >= 1)), 'true');
+  await insights(page, 'cash');
+  check('riley', 'bridge drawn', String(await page.$$eval('#chart-bridge svg', (x) => x.length >= 1)), 'true');
+  await insights(page, 'time');
+  for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
   check('riley', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
+// Jump to source, search, and the breadcrumb (S-108), on Riley at phone width.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('search and sources (phone width)');
+  await page.getByText('Riley, 31').click();
+  await page.waitForSelector('#headline');
+  // "/" opens search; "groceries" finds the line; Enter opens it on Review with Food open.
+  await page.keyboard.press('/');
+  await page.keyboard.type('groceries');
+  check('search', 'First result', await settled(page, '.search-hit', 'GroceriesFood'), 'GroceriesFood');
+  await page.keyboard.press('Enter');
+  check('search', 'Breadcrumb', await settled(page, '[data-key="crumbs"]', 'Riley > Review > October 2026 > Groceries'), 'Riley > Review > October 2026 > Groceries');
+  check('search', 'Food opened', await page.$eval('[data-key="rv-cat:food"]', (b) => b.getAttribute('aria-expanded')), 'true');
+  // Parked tools stay out of search while Future tools are off.
+  await page.fill('[data-key="search"]', 'eras');
+  await page.waitForTimeout(150);
+  check('search', 'No parked results', String(await page.$$eval('.search-head', (hs) => hs.some((x) => x.textContent === 'Future'))), 'false');
+  await page.press('[data-key="search"]', 'Escape');
+  // How a computed number was worked out: the panel ends on the same number as the tile.
+  await go(page, 'today');
+  await page.waitForSelector('[data-key="how:surplus"]');
+  const surplusTile = await page.$eval('[data-key="how:surplus"]', (b) => b.textContent);
+  await page.click('[data-key="how:surplus"]');
+  await page.waitForSelector('#how-panel');
+  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), surplusTile.replace(/\.\d\d$/, ''));
+  // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
+  await page.click('[data-key="how:safeToSpend"]');
+  check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));
+  // A number in the Insights table opens its source: Food's actual opens its row on Review.
+  await insights(page, 'compared');
+  await page.locator('tr.cat', { hasText: 'Food' }).locator('td:not(.wide) a.src-link').first().click();
+  await page.waitForSelector('[data-key="rv-cat:food"][aria-expanded="true"]', { timeout: 3000 }).catch(() => null);
+  check('sources', 'Food actual opens Review', String(await page.$$eval('[data-key="rv-cat:food"][aria-expanded="true"]', (x) => x.length)), '1');
+  check('search', 'Console errors', String(errors.length), '0');
   await page.close();
 }
 // View as client and the merge conflict screen (S-096), on Riley at phone width.
@@ -351,36 +444,36 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.getByText('Riley, 31').click();
   await page.waitForSelector('#cash-strip');
   // The coach writes a note, tags Shopping as a mistake (not shared), and sees the coach-only settings.
-  await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '2 Basics' }).click();
+  await setup(page, 'notes');
   await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
   await page.press('[data-key="coach-notes"]', 'Tab');
   await page.waitForTimeout(150);
-  await page.getByRole('button', { name: '5 Cash flow' }).click();
-  await page.waitForSelector('#tx-file', { state: 'attached' });
+  await setup(page, 'coach');
   check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
-  await page.click('nav a[href="#analyze"]');
-  await page.waitForSelector('#chart-mistake');
+  check('client view', 'Coach sees materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '1');
+  await go(page, 'review');
+  await page.waitForSelector('#mistakes');
   await page.check('[data-key="mistake:shopping"]');
   await page.waitForSelector('[data-key="mistake-share:shopping"]');
   check('client view', 'Coach sees the mistake tag', String(await page.isChecked('[data-key="mistake:shopping"]')), 'true');
-  check('client view', 'Coach sees materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '1');
   // View as client: every coach-only thing is hidden, coach wording swapped.
   await page.click('[data-key="view-as-client"]');
   await page.waitForTimeout(150);
   check('client view', 'Toggle wording', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'Back to the coach view');
-  check('client view', 'No Clients tab', String(await page.$$eval('nav a[href="#clients"]', (x) => x.length)), '0');
+  check('client view', 'No Clients link', String(await page.$$eval('a[href="#clients"], [data-key="client-name"]', (x) => x.length)), '0');
+  await page.click('[data-key="more"]');
+  check('client view', 'No Clients in More', String(await page.$$eval('.more-menu a[href="#clients"]', (x) => x.length)), '0');
+  await page.click('[data-key="more"]');
   check('client view', 'Mistake tag hidden', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');
   check('client view', 'No share box', String(await page.$$eval('[data-key="mistake-share:shopping"]', (x) => x.length)), '0');
-  check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
+  await insights(page, 'compared');
   check('client view', 'Completion wording', String((await page.$eval('#chart-completion .reading', (p) => p.textContent)).endsWith('not how you are doing.')), 'true');
-  await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '2 Basics' }).click();
+  await setup(page, 'notes');
   check('client view', 'No coach notes', String(await page.$$eval('[data-key="coach-notes"]', (x) => x.length)), '0');
-  await page.getByRole('button', { name: '5 Cash flow' }).click();
-  await page.waitForSelector('#tx-file', { state: 'attached' });
+  await setup(page, 'coach');
   check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
-  await page.click('nav a[href="#budget"]');
+  check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
+  await go(page, 'today');
   await page.waitForSelector('#cash-strip');
   // The calendar still uses the cushion: the same $0 and message as the coach sees.
   check('client view', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
@@ -397,7 +490,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   theirs.sync = { versions: versionsOf(theirs), at: '2026-10-17T18:00:00.000Z' };
   const shop = theirs.categories.flatMap((c) => c.lines).find((l) => l.id === 'shopping');
   Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: 2 });
-  await page.click('nav a[href="#clients"]');
+  await page.click('[data-key="client-name"]');
+  await page.click('[data-key="menu-clients"]');
   await page.setInputFiles('#import-file', { name: 'riley.json', mimeType: 'application/json', buffer: Buffer.from(exportHousehold(theirs, '2026-10-17T19:00:00.000Z')) });
   await page.waitForSelector('#merge-conflicts');
   check('merge', 'Conflict heading', await page.$eval('#merge-conflicts h2', (x) => x.textContent), 'Merging Riley (demo, a year of the loop): 1 to pick');
@@ -408,12 +502,16 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.check('[data-key="pick:incoming:line:shopping"]');
   await page.click('[data-key="finish-merge"]');
   await page.waitForSelector('#cash-strip');
-  await page.click('nav a[href="#analyze"]');
-  await page.waitForSelector('#chart-mistake');
+  await go(page, 'review');
+  await page.waitForSelector('#mistakes');
   check('merge', 'Picked the file', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');
   check('merge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// The layout check runs with the screen check (S-109): heights, one copy of each heading, read-only Insights, no setup on Track.
+console.log('layout (phone width)');
+const { layoutCheck } = await import('./layout-check.mjs');
+failures += (await layoutCheck(browser, URL)).failures;
 await browser.close();
 console.log(failures ? failures + ' FAILED' : 'All screen numbers match the expected files.');
 process.exit(failures ? 1 : 0);

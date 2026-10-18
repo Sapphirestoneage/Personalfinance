@@ -19,6 +19,14 @@ export function addAccount(doc, fields = {}) {
   return acct;
 }
 
+// One card account for each card debt that has none yet, named and linked to it (S-102). Returns how many.
+export function addCardAccounts(doc) {
+  const taken = new Set(doc.accounts.filter((a) => a.state !== 'archived').map((a) => a.debtId).filter(Boolean));
+  const free = doc.debts.filter((d) => d.type === 'credit-card' && d.state !== 'archived' && !taken.has(d.id));
+  for (const d of free) doc.accounts.push(newAccount({ name: d.label, type: 'credit-card', debtId: d.id }));
+  return free.length;
+}
+
 export function findAccount(doc, id) {
   return doc.accounts.find((a) => a.id === id) || null;
 }
@@ -29,6 +37,17 @@ export function setAccountField(doc, id, field, value) {
   if (!['name', 'type', 'institution', 'state', 'debtId'].includes(field)) throw new Error('Unknown account field ' + field);
   if (field === 'name' && !String(value || '').trim()) throw new Error('An account needs a name');
   a[field] = field === 'debtId' ? value || null : value;
+}
+
+// The day a balance was read (S-100), 'YYYY-MM-DD', or null for the month's first or last day.
+export function setBalanceDate(doc, month, accountId, which, date) {
+  if (!findAccount(doc, accountId)) throw new Error('No account ' + accountId);
+  if (which !== 'start' && which !== 'end') throw new Error('A balance is a start or an end');
+  if (date !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && date.slice(0, 7) === month)) throw new Error('Pick a day in ' + month);
+  doc.balances[month] = doc.balances[month] || {};
+  doc.balances[month][accountId] = doc.balances[month][accountId] || newBalance();
+  if (date === null) delete doc.balances[month][accountId][which + 'On'];
+  else doc.balances[month][accountId][which + 'On'] = date;
 }
 
 // which: 'start' or 'end'. value is a Value (from the input).

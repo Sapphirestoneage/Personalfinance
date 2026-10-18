@@ -1,16 +1,19 @@
-// Budget screen cards: Next, Biggest culprits, Gut check, Proof of cash,
-// Completion, Rough and unknown, and the small extras. Text and layout only.
+// Cards: Next (Today), Biggest culprits, Proof of cash, and Rough and unknown
+// (Insights, Compared), and the small extras (Insights, You). Text and layout only.
+// The gut check and completion are charts in Insights (S-106: one copy each).
 
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, STATUS_LABELS } from '../format.js';
 import { statusChip } from './status.js';
+import { sourceLink } from './how.js';
 
 export function nextCard(ctx, summary) {
   const [first, ...rest] = summary.next;
   if (!first) {
     return h('div', { class: 'card next-1' }, h('h3', {}, 'Next'),
       h('p', { class: 'big' }, 'The picture is filled in.'),
-      h('p', { class: 'muted small' }, 'Talk through the biggest culprits, then close the month when it ends.'));
+      h('div', { class: 'empty-state row' }, h('span', { class: 'small muted' }, 'Talk through the biggest culprits, then close the month when it ends.'),
+        h('button', { class: 'btn small', 'data-key': 'next-culprits', onclick: () => ctx.jump('insights:compared') }, 'See the culprits')));
   }
   const why = (it) => (it.status === null ? 'Not answered yet' : STATUS_LABELS[it.status]) + (it.weight >= 3 ? ', a heavy number' : '');
   return h('div', { class: 'card next-1' },
@@ -24,28 +27,16 @@ export function nextCard(ctx, summary) {
       h('ul', { class: 'plain' }, summary.smallStuff.map((it) => h('li', { class: 'small' }, it.label, statusChip(it.status))))) : null);
 }
 
-export function culpritsCard(summary) {
+export function culpritsCard(ctx, summary) {
   const c = summary.culprits;
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card', id: 'culprits' },
     h('h3', {}, 'Biggest culprits'),
     c.length ? h('div', {},
       h('p', { class: 'muted small' }, 'Over your own estimate. Back to your own words means cutting this much:'),
       h('ul', { class: 'plain' }, c.map((x) => h('li', {},
-        h('span', {}, h('b', {}, x.name), ' ', h('span', { class: 'muted small' }, money(x.actual) + ' vs your ' + money(x.estimate) + (x.ratio !== null ? ' (' + times(x.ratio) + ')' : ''))),
+        h('span', {}, h('b', {}, x.name), ' ', h('span', { class: 'muted small' }, sourceLink(ctx, money(x.actual), { where: 'actual', open: 'rv-cat:' + x.id }), ' vs your ', sourceLink(ctx, money(x.estimate), { path: ['categories', x.id, 'estimate'] }), '' + (x.ratio !== null ? ' (' + times(x.ratio) + ')' : ''))),
         h('span', { class: 'num' }, 'cut ', h('b', {}, money(x.cutMonthly)), ' / mo (' + money(x.cutYearly) + ' / yr)'))))
     ) : h('p', { class: 'muted small' }, summary.blindSpot.pct === null ? 'Shows up once there are actuals to compare.' : 'Nothing came in over the estimate.'));
-}
-
-export function gutCard(summary) {
-  const g = summary.gutCheck;
-  const row = (label, v, note) => h('li', {}, h('span', {}, label, note ? h('span', { class: 'muted xs' }, ' ' + note) : null), h('b', { class: 'num' }, money(v)));
-  return h('div', { class: 'card' },
-    h('h3', {}, 'Gut check'),
-    h('ul', { class: 'plain' },
-      row('Gut number', g.gut),
-      row('Sum of estimates', g.estimates),
-      row('Actual', g.actual, g.actualUsesEstimateFor.length ? '(estimates for ' + g.actualUsesEstimateFor.length + ' categories)' : null)),
-    g.actualVsGutRatio !== null ? h('p', { class: 'reading' }, 'Actual spending is ' + times(g.actualVsGutRatio) + ' your gut number (' + signedMoney(g.actualVsGut) + ' a month).') : null);
 }
 
 export function proofCard(summary) {
@@ -58,25 +49,18 @@ export function proofCard(summary) {
     h('p', { class: 'small muted' }, p.diff < 0 ? 'Is money building up in the account, or is some spending missing? Which one is right?' : 'Is savings or a card balance covering the gap? Which one is right?'));
 }
 
-export function completionCard(ctx, summary) {
-  const c = summary.completion;
-  return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, 'How filled in is the picture'), h('b', { class: 'num' }, pct(c.pct))),
-    h('div', { class: 'meter', role: 'progressbar', 'aria-valuenow': Math.round(c.pct * 100), 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('span', { style: 'width:' + (c.pct * 100).toFixed(1) + '%' })),
-    h('p', { class: 'muted xs' }, c.answered + ' of ' + c.count + ' questions answered, heavy numbers weighted more. ' + ctx.say('completion-note')));
-}
-
 export function roughCard(ctx, summary) {
   const r = summary.rough;
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card', id: 'rough-list' },
     h('h3', {}, 'Rough and unknown (' + r.length + ')'),
     r.length ? h('ul', { class: 'plain' }, r.map((x) => h('li', {},
-      h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); ctx.goToField(x.path); } }, x.label),
+      h('a', { href: '#', 'data-key': 'rough-go:' + x.label, onclick: (e) => { e.preventDefault(); ctx.goToField(x.path); } }, x.label),
       h('span', {}, x.amount !== null ? h('span', { class: 'num small' }, money(x.amount) + ' ') : null, statusChip(x.status)))))
       : h('p', { class: 'muted small' }, 'Nothing marked roughly, will email, or don\'t know.'));
 }
 
-export function extrasCard(summary) {
+// Next stage is a parked Future tool (S-105): named here only when Future tools are on.
+export function extrasCard(summary, future) {
   const t = summary.totals;
   const items = [];
   if (t.owedBack > 0) items.push(['Owed back to you (not yet received)', money(t.owedBack)]);
@@ -84,7 +68,7 @@ export function extrasCard(summary) {
   if (summary.moveOut && summary.moveOut.guess) {
     items.push(['If you moved out of the family home', 'about ' + money(summary.moveOut.guess.amount) + ' a month for housing (Guess) vs ' + money(summary.moveOut.now) + ' now']);
   }
-  if (summary.nextStage && summary.nextStage.cashNeeded !== null) {
+  if (future && summary.nextStage && summary.nextStage.cashNeeded !== null) {
     const n = summary.nextStage;
     items.push(['Next stage: ' + n.name, money(n.cashNeeded) + ' to make the switch' + (n.monthsToSaveWhole !== null ? ', about ' + n.monthsToSaveWhole + ' months of today\'s surplus' : '')]);
   }
@@ -95,7 +79,7 @@ export function extrasCard(summary) {
     items.push(['Since ' + new Date(s.date).toLocaleDateString(), 'surplus ' + signedMoney(s.surplus) + ', spending ' + signedMoney(s.spending)]);
   }
   if (!items.length) return null;
-  return h('div', { class: 'card' }, h('h3', {}, 'Also worth knowing'),
+  return h('div', { class: 'card', id: 'extras' }, h('h3', {}, 'Also worth knowing'),
     h('ul', { class: 'plain' }, items.map(([a, b]) => h('li', { class: 'small' }, h('span', {}, a), h('b', { class: 'num' }, b)))));
 }
 

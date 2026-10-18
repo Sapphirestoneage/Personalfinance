@@ -8,16 +8,22 @@ export function marginalRate(taxable, brackets) {
   return null;
 }
 
-export function bracketTax(taxable, brackets) {
-  let tax = 0;
+// Taxable income cut into its brackets: how much falls in each, and the tax on that part.
+export function bracketSlices(taxable, brackets) {
+  const out = [];
   let lower = 0;
   for (const [upTo, rate] of brackets) {
     const top = upTo === null ? Infinity : upTo;
     if (taxable <= lower) break;
-    tax += (Math.min(taxable, top) - lower) * rate;
+    const amount = Math.min(taxable, top) - lower;
+    out.push({ rate, from: lower, to: upTo, amount, tax: amount * rate });
     lower = top;
   }
-  return tax;
+  return out;
+}
+
+export function bracketTax(taxable, brackets) {
+  return bracketSlices(taxable, brackets).reduce((a, x) => a + x.tax, 0);
 }
 
 // Annual figures in, annual figures out. stdDeduction is what is left of the
@@ -26,13 +32,14 @@ export function bracketTax(taxable, brackets) {
 // that lowers income tax; ficaFree = the part that also lowers FICA.
 export function estimateAnnualTax({ gross, deductions = 0, incomeTaxFree = 0, ficaFree = 0, type, filingStatus, stdDeduction }, tax) {
   const brackets = tax.brackets[filingStatus] || tax.brackets.single;
-  const out = { incomeTax: 0, fica: 0, socialSecurity: 0, medicare: 0, seTax: 0, stdUsed: 0, taxable: 0, bracket: null, withheld: type === 'w2' };
+  const out = { incomeTax: 0, fica: 0, socialSecurity: 0, medicare: 0, seTax: 0, stdUsed: 0, taxable: 0, bracket: null, slices: [], agi: 0, ficaBase: 0, withheld: type === 'w2' };
   // Family support is a gift to the client, not taxable income.
   if (type === 'not-taxable' || type === 'family') return finish(out, gross, deductions);
 
   let agi = gross - incomeTaxFree;
   if (type === 'w2') {
     const ficaBase = gross - ficaFree;
+    out.ficaBase = ficaBase;
     out.socialSecurity = Math.min(ficaBase, tax.fica.socialSecurityWageBase) * tax.fica.socialSecurityRate;
     out.medicare = ficaBase * tax.fica.medicareRate;
     out.fica = out.socialSecurity + out.medicare;
@@ -42,8 +49,10 @@ export function estimateAnnualTax({ gross, deductions = 0, incomeTaxFree = 0, fi
     agi -= out.seTax / 2;
   }
   out.stdUsed = Math.min(Math.max(agi, 0), stdDeduction);
+  out.agi = agi;
   out.taxable = Math.max(0, agi - stdDeduction);
-  out.incomeTax = bracketTax(out.taxable, brackets);
+  out.slices = bracketSlices(out.taxable, brackets);
+  out.incomeTax = out.slices.reduce((a, x) => a + x.tax, 0);
   out.bracket = marginalRate(out.taxable, brackets);
   return finish(out, gross, deductions);
 }

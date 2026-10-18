@@ -1,39 +1,33 @@
 // The monthly loop on screen (S-089): the Plan, Track, Review strip at the top
-// of the Budget screen, the month-end checklist that opens from "Close month",
-// and the month in review card (shown right after closing, and in Analyze,
-// Months, from the saved snapshot). Numbers come from calc/loop.js.
+// of Today (the step for now highlighted, S-106), the month-end checklist that
+// opens from "Close month" on Review, and the month in review card (right after
+// closing, and for any closed month on Review, from the saved snapshot).
+// Numbers come from calc/loop.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney, pct, monthLabel, dayLabel, todayIso } from '../format.js';
-import { loopStrip, monthEndChecklist, monthReview } from '../../calc/loop.js';
+import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../calc/loop.js';
 import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
 import { forecastFor } from '../../calc/calendar.js';
 import { saveForecast } from '../../store/cashflow.js';
 
-function goTo(ctx, where) {
-  const scroll = (id) => setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView(); }, 60);
-  if (where === 'plan') { ctx.go('analyze'); scroll('sec-plan'); return; }
-  if (where === 'bridge') { ctx.go('analyze'); scroll('chart-bridge'); return; }
-  if (where === 'balances') { ctx.go('fill', { pass: 'cashflow' }); scroll('accounts-card'); return; }
-  ctx.go('fill', { pass: where });
-}
-
-const link = (ctx, where, text) => h('a', { href: '#', 'data-key': 'go-' + where, onclick: (e) => { e.preventDefault(); goTo(ctx, where); } }, text);
+const link = (ctx, where, text) => h('a', { href: '#', 'data-key': 'go-' + where, onclick: (e) => { e.preventDefault(); ctx.jump(where); } }, text);
 
 export function loopStripCard(ctx, summary) {
   const s = loopStrip(ctx.doc, summary, todayIso());
-  const step = (n, title, state, where, label) => h('div', { class: 'loop-step', 'data-key': 'loop-' + title.toLowerCase() },
+  const now = loopStep(s, todayIso());
+  const step = (n, title, state, where, label) => h('div', { class: 'loop-step' + (now === title.toLowerCase() ? ' current' : ''), 'data-key': 'loop-' + title.toLowerCase(), 'aria-current': now === title.toLowerCase() ? 'step' : null },
     h('div', { class: 'loop-n' }, n), h('div', {}, h('b', {}, title), h('div', { class: 'small' }, state), link(ctx, where, label)));
   const r = s.review;
   const reviewState = [r.empty + ' line' + (r.empty === 1 ? '' : 's') + ' still empty', r.balancesTotal ? (r.balancesTotal - r.balancesMissing) + ' of ' + r.balancesTotal + ' balances in' : 'no accounts', r.ties === null ? 'bridge needs balances' : r.ties ? 'bridge ties' : 'bridge off by ' + money(Math.abs(r.unexplained))].join(', ');
   const t = s.track;
   return h('div', { class: 'card loop', id: 'loop-strip' },
     h('div', { class: 'spread' }, h('b', {}, monthLabel(s.month) + ': plan, track, review'),
-      ctx.doc.months.some((m) => m.key < s.month) && !(ctx.doc.plans || {})[s.month] ? h('button', { class: 'btn small primary', 'data-key': 'start-plan', onclick: () => goTo(ctx, 'plan') }, 'Start next month\'s plan') : null),
+      ctx.doc.months.some((m) => m.key < s.month) && !(ctx.doc.plans || {})[s.month] ? h('button', { class: 'btn small primary', 'data-key': 'start-plan', onclick: () => ctx.jump('plan') }, 'Start next month\'s plan') : null),
     h('div', { class: 'loop-steps' },
-      step('1', 'Plan', 'Plan: ' + s.plan.state, 'plan', 'Review and plan'),
-      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : '') + ', scheduled ' + t.confirmed + ' of ' + t.scheduled + ' confirmed', 'cashflow', 'Cash flow'),
-      step('3', 'Review', reviewState, 'actual', 'Fill in, Actual')));
+      step('1', 'Plan', 'Plan: ' + s.plan.state, 'plan', 'Next month\'s plan'),
+      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : '') + ', scheduled ' + t.confirmed + ' of ' + t.scheduled + ' confirmed', 'track', 'Track'),
+      step('3', 'Review', reviewState, 'actual', 'Fill gaps')));
 }
 
 // The month-end checklist, then close (open items are allowed and recorded).

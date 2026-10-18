@@ -93,7 +93,7 @@ function nextStageCase(ns, income, totals, culprits) {
     cutNeeded, ownWords, ownWordsCovers: cutNeeded > 0 ? ownWords >= cutNeeded : null,
     later: laterTakeHome === null ? null : { takeHome: laterTakeHome, afterMonths: laterAfter, surplus: laterSurplus },
     path: stayVsChange({ nowSurplus, oneOffs, tMonths, transitionGap, nextSurplus, laterSurplus, laterAfter }),
-    // Hours come from Basics (now) and the next-stage hours, so they are never asked twice.
+    // Hours come from the income (now) and the next-stage hours, so they are never asked twice.
     metrics: [{ id: 'hours', label: 'Hours worked a week', now: nowHours, next: nextHours, better: 'lower', computed: true }, ...(ns.metrics || [])].map((m) => {
       const change = m.now === null || m.next === null ? null : m.next - m.now;
       return { ...m, change, better: change === null || change === 0 ? null : (m.better === 'lower' ? change < 0 : change > 0) };

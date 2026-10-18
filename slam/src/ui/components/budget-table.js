@@ -7,6 +7,7 @@ import { money, pct, signedMoney, signedPct, times, inLens } from '../format.js'
 import { statusChip } from './status.js';
 import { inUnit } from '../../calc/lenses.js';
 import { parseAmount } from './value-input.js';
+import { sourceLink } from './how.js';
 
 // Columns: amounts, then % of income (take-home) and % of spending for the
 // basis (actual, else estimate), then happiness. 'wide' columns hide on phones;
@@ -58,14 +59,23 @@ function joyText(hp, isLine) {
   return h('span', { title: rating + ', ' + per + st }, pct(hp.share), isLine ? h('div', { class: 'xs muted' }, rating + ', ' + per + st) : null);
 }
 
-function cells(row, unit, summary, isLine, savings) {
+// Jump to source (S-108): an estimate opens Your estimates, a plan the plan, an actual its row on Review.
+function sources(row, isLine, catId, isDebt) {
+  if (isDebt) return { estimate: { where: 'setup:debts' }, plan: { where: 'plan', open: 'plan-cat:debt' }, actual: { where: 'setup:debts' } };
+  if (isLine) return { estimate: { path: ['line', row.id, 'estimate'] }, plan: { where: 'plan', open: 'plan-cat:' + catId }, actual: { path: ['line', row.id, 'actual'] } };
+  return { estimate: { path: ['categories', row.id, 'estimate'] }, plan: { where: 'plan', open: 'plan-cat:' + row.id }, actual: { where: 'actual', open: 'rv-cat:' + row.id } };
+}
+
+function cells(ctx, row, unit, summary, isLine, savings, catId, isDebt) {
   const L = (x) => inLens(inUnit(x, unit, summary.totals, summary.income), unit);
   const g = row.gaps;
   const plan = !!summary.plan;
+  const src = sources(row, isLine, catId, isDebt);
+  const link = (x, col) => (x === null || x === undefined ? L(x) : sourceLink(ctx, L(x), src[col]));
   return [
-    h('td', { class: 'num wide' }, isLine && row.estimate === null && row.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : L(row.estimate)),
-    plan ? h('td', { class: 'num wide' }, L(row.plan)) : null,
-    h('td', { class: 'num' }, L(row.actual), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
+    h('td', { class: 'num wide' }, isLine && row.estimate === null && row.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : link(row.estimate, 'estimate')),
+    plan ? h('td', { class: 'num wide' }, link(row.plan, 'plan')) : null,
+    h('td', { class: 'num' }, link(row.actual, 'actual'), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
     h('td', { class: 'num' }, pct(row.pct.income.basis)),
     h('td', { class: 'num wide' }, pct(row.pct.spending.basis)),
     h('td', { class: 'num' }, joyText(row.happiness && row.stressInfo ? { ...row.happiness, stressRating: row.stressInfo.stress } : row.happiness, isLine)),
@@ -117,14 +127,14 @@ export function budgetTable(ctx, summary) {
         ctx.rerender();
       } }, (open ? '▾ ' : '▸ ') + r.name) : r.name,
       r.basisFrom === 'estimate' ? h('span', { class: 'muted xs' }, ' (no actual yet)') : null),
-      cells(r, unit, summary, false, r.savings)));
+      cells(ctx, r, unit, summary, false, r.savings, r.id, r.isDebt)));
     if (open) body.push(narrowDetail(r, summary, COLUMNS.length));
     if (open) {
       for (const l of r.lines) {
         body.push(h('tr', { class: 'line' },
           h('td', {}, h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); if (!l.computed) ctx.goToField(['line', l.id, 'actual']); } }, l.name),
             l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null),
-          cells(l, unit, summary, true, r.savings)));
+          cells(ctx, l, unit, summary, true, r.savings, r.id, r.isDebt)));
         body.push(narrowDetail(l, summary, COLUMNS.length));
       }
     }

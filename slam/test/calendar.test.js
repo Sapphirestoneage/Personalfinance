@@ -227,3 +227,27 @@ test('semimonthly pays on its two days; a version 6 file loads with blank dates'
   assert.deepEqual([d.income[0].nextPayDate.date, d.cashflow.cushion.amount, d.cashflow.checks.length], [null, null, 0]);
   assert.equal(addDays('2026-12-31', 1), '2027-01-01');
 });
+
+// A balance with the day it was read (S-100). By hand: checking runs 1,000 - 1,200 rent = -200 on Oct 1,
+// - 80 groceries = -280 from Oct 4. The bank showed 500 on Oct 6 (typed as October's end balance, read Oct 6):
+// the calendar takes 500 that day, and Oct 7 and 8 have no checking entries, so Oct 8 is 500 too.
+// Without the date, the end balance belongs to Oct 31 (after today), so Oct 8 stays -280.
+test('a balance read on a given day resets the calendar on that day', async () => {
+  const { setBalanceDate } = await import('../src/store/accounts.js');
+  const doc = household();
+  const inc = logged(doc);
+  setBalance(doc, '2026-10', 'chk', 'end', one(500));
+  const plain = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+  money(cashOn(plain, '2026-10-08'), -280, 'Oct 8, end balance on Oct 31');
+  setBalanceDate(doc, '2026-10', 'chk', 'end', '2026-10-06');
+  const dated = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+  money(cashOn(dated, '2026-10-05'), -280, 'Oct 5, before the reading');
+  money(cashOn(dated, '2026-10-06'), 500, 'Oct 6, the reading');
+  money(cashOn(dated, '2026-10-08'), 500, 'Oct 8');
+  assert.deepEqual(validateHousehold(doc), []);
+  // The date survives a save and load; picking the plain day again clears it.
+  assert.equal(migrate(JSON.parse(JSON.stringify(doc))).balances['2026-10'].chk.endOn, '2026-10-06');
+  setBalanceDate(doc, '2026-10', 'chk', 'end', null);
+  assert.equal('endOn' in doc.balances['2026-10'].chk, false);
+  assert.throws(() => setBalanceDate(doc, '2026-10', 'chk', 'end', '2026-11-02'), /Pick a day in 2026-10/);
+});

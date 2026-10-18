@@ -6,7 +6,7 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 2. I couldn't tell what was done, rough, unknown, or computed. RULE: every value carries a status: known, roughly, will-email, dont-know, not-for-me, guess (app-supplied average), computed. Status is always visible.
 3. Each room ran its own math and they disagreed. RULE: all math lives in one library of pure functions (src/calc/). Screens never calculate.
 4. Too many questions up front felt overwhelming. RULE: the first pass asks very little. Detail is always optional and comes later. Every question has an "I don't have this / doesn't apply" answer.
-5. The app grew to 67 rooms and the sidebar became chaos. RULE: the Budget gets at most 4 screens. Anything else goes in PARKING_LOT.md, not in the code.
+5. The app grew to 67 rooms, then 4 screens became junk drawers. RULE: the menu follows the monthly loop (Today, Plan, Track, Review, Insights, Setup). Every section lives in exactly one place. Insights is read-only. One-time setup is never mixed with weekly use.
 6. Prompts kept adding features, then features got cut, then restored. RULE: respect the OUT OF SCOPE list. If you think something is missing, write it in PARKING_LOT.md.
 7. Charts were buried behind long paths. RULE: the main budget screen shows the key visuals without clicking anywhere, and every chart is at most one tap away.
 8. There was no clear next step. RULE: always show a "Next" card: one big #1, plus #2 and #3 smaller.

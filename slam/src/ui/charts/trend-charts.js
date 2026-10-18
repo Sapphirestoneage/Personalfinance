@@ -1,10 +1,10 @@
-// Analyze, Trends (S-092): a range picker (last 3, 6, 12 months, all) and a
+// Insights, Over time, Trends (S-092): a range picker (last 3, 6, 12 months, all) and a
 // focus picker (a category, a line, or a merchant). Every number comes from
 // src/calc/trends.js; each chart has a one-line, descriptive reading.
 
 import { h, options } from '../dom.js';
 import { money, pct, signedMoney, monthLabel, dayLabel, todayIso } from '../format.js';
-import { lines, scatter, waterfall, heatGrid, spark, columns } from './svg.js';
+import { lines, scatter, waterfall, heatGrid, columns } from './svg.js';
 import { card, chartWidth } from './catalog.js';
 import * as tr from '../../calc/trends.js';
 
@@ -16,7 +16,7 @@ function pickers(ctx, s, months, focusKey) {
   const merchants = tr.merchantsIn(ctx.doc, months).slice(0, 25);
   return h('div', { class: 'card', id: 'trend-pickers' }, h('div', { class: 'row' },
     h('div', { class: 'toggle', role: 'group', 'aria-label': 'Range' }, RANGES.map(([id, label]) => h('button', { 'aria-pressed': (ctx.ui.trendRange || '12') === id ? 'true' : 'false', 'data-key': 'trend-range-' + id, onclick: () => { ctx.ui.trendRange = id; ctx.rerender(); } }, label))),
-    h('select', { 'aria-label': 'Focus', 'data-key': 'trend-focus', onchange: (e) => { ctx.ui.trendFocus = e.target.value; ctx.rerender(); } },
+    h('select', { 'aria-label': 'Focus', 'data-key': 'trend-focus', 'data-picker': 'focus', onchange: (e) => { ctx.ui.trendFocus = e.target.value; ctx.rerender(); } },
       h('optgroup', { label: 'Categories' }, options(cats.map((c) => ['cat:' + c.id, c.name]), focusKey)),
       h('optgroup', { label: 'Lines' }, options(cats.flatMap((c) => c.lines.map((l) => ['line:' + l.id, c.name + ' / ' + l.name])), focusKey)),
       merchants.length ? h('optgroup', { label: 'Merchants' }, options(merchants.map((m) => ['m:' + m, m]), focusKey)) : null)));
@@ -71,21 +71,15 @@ function chargesCard(ctx, months, catId, name) {
   });
 }
 
+// Categories by month, once (S-106: the sparkline copy of the same grid is gone).
 function gridCards(ctx, s, months) {
   const g = tr.categoryGrid(ctx.doc, s.history, months);
-  const same = ctx.ui.sparkSame !== false;
   const top = g.rows.map((r) => ({ name: r.name, total: r.values.reduce((a, v) => a + (v || 0), 0) })).sort((a, b) => b.total - a.total)[0];
   return [
     card(ctx, {
       id: 'trend-heat', title: 'Categories by month',
       svg: g.rows.length ? heatGrid({ rows: g.rows.map((r) => ({ label: r.name, values: r.values })), cols: months.map(short), width: chartWidth(true), fmt: money, max: g.max }) : null,
       reading: top ? top.name + ' is the darkest row: ' + money(top.total) + ' over these months.' : 'No actuals in this range.'
-    }),
-    card(ctx, {
-      id: 'trend-sparks', title: 'Every category at a glance',
-      extra: h('div', {}, h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: same, 'data-key': 'spark-same', onchange: (e) => { ctx.ui.sparkSame = e.target.checked; ctx.rerender(); } }), 'Same scale for all'),
-        h('div', { class: 'sparks' }, g.rows.map((r) => h('div', { class: 'spark-row xs' }, h('span', {}, r.name), h('span', { html: spark({ values: r.values, width: Math.max(80, Math.min(220, chartWidth(true) - 170)), max: same ? g.max : null, label: r.name }) }), h('b', { class: 'num' }, money(r.values.filter((v) => v !== null).slice(-1)[0] ?? null)))))),
-      reading: same ? 'One scale for every row, so big categories look big.' : 'Each row on its own scale, so every swing shows.'
     })
   ];
 }
@@ -126,8 +120,9 @@ function periodCards(ctx, s, months) {
   ];
 }
 
+// The one-line stats share one card (S-106); each keeps its own id.
 function statCard(ctx, id, title, text) {
-  return h('div', { class: 'card stat', id: 'stat-' + id }, h('b', {}, title), h('p', { class: 'reading', style: 'margin:4px 0 0' }, text));
+  return h('div', { class: 'stat', id: 'stat-' + id }, h('b', {}, title), h('p', { class: 'reading', style: 'margin:2px 0 8px' }, text));
 }
 
 function statCards(ctx, s, months) {
@@ -141,7 +136,6 @@ function statCards(ctx, s, months) {
   const fl = tr.cardFloat(doc, months);
   const inc = tr.incomeStability(doc, months);
   const hab = tr.annualizedHabits(doc, months);
-  const fc = tr.forecastAccuracy(doc, months);
   const tk = tr.trackingByMonth(doc, months);
   const lastOf = (xs) => xs[xs.length - 1];
   return [
@@ -154,7 +148,6 @@ function statCards(ctx, s, months) {
     statCard(ctx, 'float', 'Card float', fl.some((x) => x.charged || x.paid) ? fl.filter((x) => x.charged || x.paid).slice(-4).map((x) => short(x.month) + ' charged ' + money(x.charged) + ', paid ' + money(x.paid)).join('; ') + '.' : 'No card charges in the log.'),
     statCard(ctx, 'income', 'Income stability', inc ? '1099 and side income: low ' + money(inc.low) + ', average ' + money(inc.average) + ', high ' + money(inc.high) + ' a month.' : 'No 1099 or side income in the log.'),
     statCard(ctx, 'habits', 'Annualized habits', hab.length ? hab.map((x) => x.merchant + ' ' + money(x.yearly) + ' a year (' + x.count + ' charges of about ' + money(x.average, true) + ')').join('; ') + '.' : 'No small, frequent charges.'),
-    statCard(ctx, 'forecast', 'Forecast accuracy', fc.length ? fc.slice(-4).map((x) => short(x.month) + ' predicted ' + money(x.predicted) + (x.actual === null ? '' : ', ended ' + money(x.actual))).join('; ') + '.' : 'No saved forecasts yet.'),
     statCard(ctx, 'tracking', 'Tracking completeness', tk.length ? tk.slice(-6).map((x) => short(x.month) + ' ' + pct(x.share)).join(', ') + ' of spending from the log.' + (lastOf(tk) ? '' : '') : 'Needs closed months with a review.')
   ];
 }
@@ -173,6 +166,6 @@ export function trendCards(ctx, s) {
     out.push(seriesCard(ctx, tr.monthlySeries(ctx.doc, s.history, { kind: kind === 'cat' ? 'category' : 'line', id }, months), name));
     if (kind === 'cat') out.push(chargesCard(ctx, months, id, name));
   }
-  out.push(...gridCards(ctx, s, months), ...periodCards(ctx, s, months), ...statCards(ctx, s, months));
+  out.push(...gridCards(ctx, s, months), ...periodCards(ctx, s, months), h('div', { class: 'card', id: 'trend-stats', style: 'grid-column:1 / -1' }, h('h3', {}, 'In one line each'), statCards(ctx, s, months)));
   return out;
 }

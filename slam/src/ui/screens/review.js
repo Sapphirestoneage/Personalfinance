@@ -1,182 +1,168 @@
-// Analyze, Review and plan (S-076): a month's actuals next to the following
-// month's plan, line by line, with % of income, % of spending, and happiness.
-// Adjust the plan, keep / cut / change, tick each line off, carry it forward.
-// Every number comes from calc (reviewSummary); estimates are only ever read here.
+// Review (S-106): fill gaps (the Actual pass, S-087), close the month (the
+// checklist and the bridge in one line), mistakes, and past months. A line with
+// log entries this month has its actual from the log (with "see entries"); a
+// yearly line shows its monthly share; anything still empty is listed first
+// with three answers: add an entry, type an amount, or none this month.
+// Line details, tags, and debts are set up in Setup.
 
 import { h, options } from '../dom.js';
-import { money, signedMoney, pct, monthLabel } from '../format.js';
+import { money } from '../format.js';
+import { valueInput } from '../components/value-input.js';
+import { statusChip } from '../components/status.js';
+import { findCategory } from '../../store/edits.js';
+import { coveredByParents, coveredNote } from '../components/parents-plan.js';
+import { checklistCard, reviewCard } from '../components/loop.js';
+import { closedMonthTable } from '../components/budget-table.js';
+import { monthRows } from '../../calc/history.js';
+import { bridgeFor } from '../../calc/bridge.js';
+import { mistakePicker } from '../charts/catalog.js';
+import { jumpLink } from '../components/jump.js';
+import { monthLabel } from '../format.js';
+import { openQuickEntry } from '../components/quick-entry.js';
+import { gapLines, reviewRows } from '../../calc/loop.js';
+import { logEntriesFor, removeTransaction } from '../../store/edits.js';
+import { editEntry } from '../../store/log.js';
 import { makeValue } from '../../store/value.js';
 import { parseAmount } from '../components/value-input.js';
-import { nameEdit } from '../components/name-edit.js';
-import { reviewSummary, planStartValues, prevMonthKey } from '../../calc/plan.js';
-import { startPlan, setPlanAmount, setPlanDecision, setPlanReviewed, setPlanStop, addPlanLine, addPlanCategory, planLineByLine, copyPlanForward, getPlan } from '../../store/plans.js';
-import { nextMonthKey } from '../../store/months.js';
-import { findCategory, renameLine } from '../../store/edits.js';
+import { dayLabel, todayIso } from '../format.js';
 
-// Start options (S-097): the dream life lives in Eras, so a plan never starts from it.
-const SOURCES = [['last-plan', "Last month's plan"], ['actuals', "This month's actuals"], ['estimates', 'Estimates']];
-const COLS = [
-  ['name', 'Line'], ['actual', 'Actual'], ['pctIncome', '% of income'], ['pctSpending', '% of spending'], ['happy', 'Happiness'],
-  ['estimate', 'Estimate'], ['plan', 'Plan'], ['decision', 'Keep / cut / change'], ['reviewed', 'Reviewed']
-];
-const narrow = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 759px)').matches;
-const QUICK = [['drain', -1, 'Look at first (stress)'], ['pctIncome', -1, 'Biggest % of income'], ['per100', 1, 'Lowest joy per $100'], ['gap', -1, 'Biggest gap from estimate']];
+const modelLine = (summary, id) => summary.model.categories.flatMap((c) => c.lines).find((l) => l.id === id) || null;
 
-function sortValue(r, key) {
-  if (key === 'pctIncome') return r.pctIncome.actual;
-  if (key === 'pctSpending') return r.pctSpending.actual;
-  if (key === 'happy') return r.happiness ? r.happiness.share : null;
-  if (key === 'per100') return r.happiness ? r.happiness.per100 : null;
-  if (key === 'drain') return r.stress ? r.stress.drain : null;
-  if (key === 'gap') return r.gapFromEstimate === null ? null : Math.abs(r.gapFromEstimate);
-  if (key === 'decision') return r.decision || '';
-  if (key === 'reviewed') return r.reviewed ? 1 : 0;
-  return r[key];
-}
-
-function sorted(rows, sort) {
-  if (!sort || !sort.key) return rows;
-  return rows.slice().sort((a, b) => {
-    const x = sortValue(a, sort.key);
-    const y = sortValue(b, sort.key);
-    if (x === y) return 0;
-    if (x === null || x === undefined) return 1;
-    if (y === null || y === undefined) return -1;
-    return (x < y ? -1 : 1) * sort.dir;
-  });
-}
-
-function joyCell(hp, st) {
-  const stress = st ? h('div', { class: 'xs muted' }, 'stress ' + st.stress + '/10' + (st.lean ? ', ' + { more: 'more of', less: 'less of', even: 'about even' }[st.lean] : '')) : null;
-  if (!hp) return h('span', {}, h('span', { class: 'xs muted' }, 'not rated'), stress);
-  const per = hp.per100 !== null ? hp.per100.toFixed(2) + ' per $100' : hp.noCost ? 'no cost' : 'no amount';
-  return h('span', {}, pct(hp.share), h('div', { class: 'xs muted' }, hp.rating + '/10, ' + per), stress);
-}
-
-function planInput(ctx, pm, r, sfx = '') {
-  if (r.computed) return h('span', { class: 'num' }, money(r.plan), h('div', { class: 'xs muted' }, 'from debts'));
-  return h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6.5em', value: r.plan === null ? '' : String(Math.round(r.plan * 100) / 100), placeholder: '$',
-    'aria-label': r.name + ' plan for ' + monthLabel(pm), 'data-key': 'plan:' + pm + ':' + r.key + sfx,
-    onchange: (e) => {
-      const a = parseAmount(e.target.value);
-      if (a === undefined) { e.target.value = r.plan === null ? '' : r.plan; return; }
-      ctx.update('Plan ' + r.name, (d) => setPlanAmount(d, pm, r.key, makeValue(a, { cadence: 'month' })));
-    } });
-}
-
-function decisionCell(ctx, pm, r, sfx = '') {
-  if (r.computed) return h('span', { class: 'xs muted' }, 'computed');
-  if (r.decision === 'new') return h('span', { class: 'chip' }, 'New');
-  const btn = (d, label) => h('button', { 'aria-pressed': r.decision === d ? 'true' : 'false', 'data-key': 'plan-dec:' + pm + ':' + r.key + ':' + d + sfx,
-    onclick: () => ctx.update(label + ' ' + r.name, (doc) => setPlanDecision(doc, pm, r.key, d)) }, label);
-  return h('div', {},
-    h('div', { class: 'toggle', role: 'group', 'aria-label': 'Decision for ' + r.name }, btn('keep', 'Keep'), btn('cut', 'Cut'), btn('change', 'Change')),
-    r.decision === 'cut' && !r.key.startsWith('cat:') ? h('label', { class: 'check xs' }, h('input', { type: 'checkbox', checked: r.stop, 'data-key': 'plan-stop:' + pm + ':' + r.key + sfx,
-      onchange: (e) => ctx.update('Stop tracking ' + r.name, (doc) => setPlanStop(doc, pm, r.key, e.target.checked)) }), 'Stop tracking from ' + monthLabel(pm)) : null);
-}
-
-function nameCell(ctx, r, sfx = '') {
-  return r.key.startsWith('cat:') || r.computed ? r.name
-    : nameEdit(ctx, r.name, 'line:' + r.key + ':name' + sfx, (d, v) => renameLine(d, r.key, v), 'Line name');
-}
-
-function reviewedBox(ctx, pm, r, sfx = '') {
-  return r.computed ? null : h('input', { type: 'checkbox', checked: r.reviewed, 'aria-label': 'Reviewed ' + r.name, 'data-key': 'plan-rev:' + pm + ':' + r.key + sfx,
-    onchange: (e) => ctx.update(e.target.checked ? 'Reviewed ' + r.name : 'Not reviewed ' + r.name, (doc) => setPlanReviewed(doc, pm, r.key, e.target.checked)) });
-}
-
-function row(ctx, pm, r) {
-  return h('tr', { class: r.reviewed ? 'line done' : 'line' },
-    h('td', {}, nameCell(ctx, r)),
-    h('td', { class: 'num' }, money(r.actual)),
-    h('td', { class: 'num' }, pct(r.pctIncome.actual)),
-    h('td', { class: 'num' }, r.savings ? h('span', { class: 'xs muted' }, 'saving') : pct(r.pctSpending.actual)),
-    h('td', { class: 'num' }, joyCell(r.happiness, r.stress)),
-    h('td', { class: 'num' }, r.estimate === null && r.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : money(r.estimate)),
-    h('td', { class: 'num' }, planInput(ctx, pm, r), r.plan !== null ? h('div', { class: 'xs muted' }, pct(r.pctIncome.plan) + ' of income') : null),
-    h('td', {}, decisionCell(ctx, pm, r)),
-    h('td', {}, reviewedBox(ctx, pm, r)));
-}
-
-// On a phone: one card per line, the same facts and controls stacked.
-function lineCard(ctx, pm, r) {
-  const sfx = ':card';
-  return h('div', { class: 'review-card' + (r.reviewed ? ' done' : '') },
-    h('div', { class: 'spread' }, h('div', { class: 'review-card-name' }, nameCell(ctx, r, sfx)),
-      r.computed ? null : h('label', { class: 'check xs' }, reviewedBox(ctx, pm, r, sfx), 'Reviewed')),
-    h('div', { class: 'small' }, 'Actual ', h('b', { class: 'num' }, money(r.actual)), ', ', pct(r.pctIncome.actual), ' of income',
-      r.savings ? ', saving' : ', ' + pct(r.pctSpending.actual) + ' of spending'),
-    h('div', { class: 'small' }, 'Happiness ', joyCell(r.happiness, r.stress)),
-    h('div', { class: 'small muted' }, r.estimate === null && r.addedInReview ? 'Estimate: added in review' : 'Estimate ' + money(r.estimate)),
-    h('div', { class: 'review-card-plan' }, h('span', { class: 'small' }, 'Plan'), planInput(ctx, pm, r, sfx),
-      r.plan !== null ? h('span', { class: 'xs muted' }, pct(r.pctIncome.plan) + ' of income') : null),
-    decisionCell(ctx, pm, r, sfx));
-}
-
-function groupTable(ctx, rv, g) {
-  const pm = rv.planMonth;
-  const sort = ctx.ui.reviewSort || { key: null, dir: -1 };
-  const rows = sorted(ctx.ui.reviewFilter ? g.rows.filter((r) => !r.reviewed && !r.computed) : g.rows, sort);
-  if (!rows.length && ctx.ui.reviewFilter) return null;
-  const head = h('tr', {}, COLS.map(([k, l]) => h('th', { scope: 'col', 'aria-sort': sort.key === k ? (sort.dir > 0 ? 'ascending' : 'descending') : null,
-    onclick: () => { ctx.ui.reviewSort = { key: k, dir: sort.key === k ? -sort.dir : (k === 'name' ? 1 : -1) }; ctx.rerender(); } }, l)));
-  return h('div', { class: 'review-group' },
-    h('div', { class: 'spread' },
-      h('h3', { style: 'margin:0' }, g.isDebt ? g.name : nameEdit(ctx, g.name, 'cat:' + g.id + ':name', (d, v) => { findCategory(d, g.id).name = v; }, 'Category name')),
-      h('span', { class: 'small muted num' }, 'actual ' + money(g.actual) + ', plan ' + money(g.plan))),
-    h('div', { class: 'table-wrap review-wide' }, h('table', { class: 'budget review' }, h('thead', {}, head), h('tbody', {}, rows.map((r) => row(ctx, pm, r))))),
-    h('div', { class: 'review-narrow' }, rows.map((r) => lineCard(ctx, pm, r))),
-    g.isDebt || !rv.exists ? null : h('div', { class: 'row' },
-      g.byCategory ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Plan line by line', (d) => planLineByLine(d, pm, g.id)) }, 'Plan line by line') : null,
-      g.byCategory ? null : h('button', { class: 'btn small ghost', onclick: () => {
-        let id;
-        ctx.update('Add line', (d) => { id = addPlanLine(d, pm, g.id, 'New line').id; });
-        if (id) { ctx.ui.focusKey = 'line:' + id + ':name' + (narrow() ? ':card' : ''); ctx.rerender(); }
-      } }, '+ Add line')));
-}
-
-export function reviewCards(ctx, summary) {
+// Entries for one line this month: amount editable, removable.
+function entriesList(ctx, line) {
   const doc = ctx.doc;
-  const months = [...new Set([...summary.history.allKeys, doc.currentMonth])].sort();
-  const rm = ctx.ui.reviewMonth && months.includes(ctx.ui.reviewMonth) ? ctx.ui.reviewMonth : doc.currentMonth;
-  const planMonths = Array.from({ length: 12 }, (_, i) => i).reduce((acc) => [...acc, nextMonthKey(acc[acc.length - 1])], [rm]).slice(1);
-  const pm = ctx.ui.planMonth && ctx.ui.planMonth > rm ? ctx.ui.planMonth : nextMonthKey(rm);
-  const rv = reviewSummary(doc, summary, rm, pm);
-  const t = rv.totals;
-  const start = (src) => {
-    const values = planStartValues(doc, summary.history, src, rm, pm);
-    ctx.update('Start ' + monthLabel(pm) + ' plan', (d) => startPlan(d, pm, src, values));
-  };
-  const tile = (label, value, sub) => h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value num' }, value), sub ? h('div', { class: 'sub' }, sub) : null);
-  const top = h('div', { class: 'card review-top', style: 'grid-column:1 / -1' },
-    h('div', { class: 'row' },
-      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Reviewing'), h('select', { 'data-key': 'review-month', onchange: (e) => { ctx.ui.reviewMonth = e.target.value; ctx.ui.planMonth = null; ctx.rerender(); } }, options(months.map((k) => [k, monthLabel(k)]), rm))),
-      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Plan for'), h('select', { 'data-key': 'plan-month', onchange: (e) => { ctx.ui.planMonth = e.target.value; ctx.rerender(); } }, options(planMonths.map((k) => [k, monthLabel(k)]), pm)))),
-    rv.exists ? null : h('div', {},
-      h('p', { class: 'small' }, 'Start the ' + monthLabel(pm) + ' plan from:'),
-      h('div', { class: 'row' }, SOURCES.filter(([k]) => k !== 'last-plan' || getPlan(doc, prevMonthKey(pm))).map(([k, l]) => h('button', { class: 'btn small', 'data-key': 'plan-start:' + k, onclick: () => start(k) }, l))),
-      h('p', { class: 'xs muted' }, 'The plan is separate from the estimates; nothing here changes them.')),
-    rv.exists ? h('div', { class: 'strip' },
-      tile(monthLabel(pm) + ' plan', money(t.plan), 'a month, spending and saving'),
-      tile('Plan vs take-home', signedMoney(t.planLeft), t.planLeft === null ? '' : t.planLeft >= 0 ? 'left over' : 'shortfall'),
-      tile('Plan vs ' + monthLabel(rm) + ' actual', signedMoney(t.frees), 'freed up'),
-      tile('Plan % of income', pct(t.planPctIncome), 'of take-home'),
-      tile('Happiness spend', pct(t.happyPlan), t.happyChange === null ? 'rated 7 or above' : (t.happyChange >= 0 ? '+' : '') + (t.happyChange * 100).toFixed(1) + ' pts vs ' + pct(t.happyNow))) : null,
-    rv.exists ? h('div', { class: 'spread' },
-      h('b', { class: 'review-count' }, rv.checklist.reviewed + ' of ' + rv.checklist.total + ' lines reviewed'),
-      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!ctx.ui.reviewFilter, 'data-key': 'review-filter', onchange: (e) => { ctx.ui.reviewFilter = e.target.checked; ctx.rerender(); } }), 'Only not yet reviewed')) : null,
-    rv.exists ? h('div', { class: 'row' }, h('span', { class: 'xs muted' }, 'Sort:'), QUICK.map(([k, dir, l]) => h('button', { class: 'tag-chip', 'aria-pressed': ctx.ui.reviewSort && ctx.ui.reviewSort.key === k ? 'true' : 'false',
-      onclick: () => { ctx.ui.reviewSort = { key: k, dir }; ctx.rerender(); } }, l))) : null);
-  const groups = rv.groups.map((g) => groupTable(ctx, rv, g)).filter(Boolean);
-  const bottom = h('div', { class: 'card', style: 'grid-column:1 / -1' },
-    h('p', { class: 'reading', 'data-key': 'review-reading' }, rv.reading),
-    rv.exists ? h('div', { class: 'row' },
-      h('button', { class: 'btn', onclick: () => {
-        let id;
-        ctx.update('Add category', (d) => { id = addPlanCategory(d, 'New category').id; });
-        if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
-      } }, '+ Add category'),
-      getPlan(doc, nextMonthKey(pm)) ? h('span', { class: 'small muted' }, monthLabel(nextMonthKey(pm)) + ' already has a plan.')
-        : h('button', { class: 'btn primary', onclick: () => { ctx.update('Copy plan forward', (d) => copyPlanForward(d, pm)); ctx.ui.reviewMonth = pm; ctx.ui.planMonth = nextMonthKey(pm); ctx.rerender(); } }, 'Start ' + monthLabel(nextMonthKey(pm)) + ' from this plan')) : null);
-  return [top, h('div', { class: 'card', style: 'grid-column:1 / -1' }, groups), bottom];
+  const list = logEntriesFor(doc, line.id, doc.currentMonth);
+  return h('ul', { class: 'plain entries' }, list.map((t) => h('li', { class: 'small' },
+    h('span', {}, dayLabel(t.date) + (t.description ? ', ' + t.description : '') + (t.note ? ' (' + t.note + ')' : ''), h('span', { class: 'src-chip' }, { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' }[t.source || 'import'])),
+    h('span', { class: 'row' },
+      h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6.5em', 'aria-label': 'Entry amount', 'data-key': 'entry-amt:' + t.id, value: String(t.amount),
+        onchange: (e) => { const a = parseAmount(e.target.value); if (a === null || a === undefined) { e.target.value = t.amount; return; } ctx.update('Edit entry', (d) => editEntry(d, t.id, { amount: a })); } }),
+      h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove entry', onclick: () => ctx.update('Remove entry', (d) => removeTransaction(d, t.id)) }, 'Remove')))));
+}
+
+// One line's actual: from the log, a yearly share, or typed (with none this month).
+function actualCell(ctx, summary, line) {
+  const m = modelLine(summary, line.id);
+  const open = ctx.ui.expanded.has('entries:' + line.id);
+  const toggle = () => { if (open) ctx.ui.expanded.delete('entries:' + line.id); else ctx.ui.expanded.add('entries:' + line.id); ctx.rerender(); };
+  const add = h('button', { class: 'btn small ghost', 'data-key': 'add-entry:' + line.id, onclick: () => openQuickEntry(ctx, { lineId: line.id }) }, '+ Add entry');
+  if (m && m.actualFrom === 'share') {
+    return h('div', { class: 'value-input' }, h('b', { class: 'num' }, money(m.actual)), statusChip('computed'), h('span', { class: 'xs muted' }, 'monthly share of a yearly cost' + (m.logCount ? '; paid this month, see the bridge' : '')), add);
+  }
+  if (m && m.actualFrom === 'log') {
+    const n = m.logCount;
+    return h('div', { style: 'flex-basis:100%' }, h('div', { class: 'value-input' },
+      h('b', { class: 'num', 'data-key': 'from-log:' + line.id, title: 'This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.',
+        onclick: () => ctx.toast('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.') }, money(m.actual, true)),
+      statusChip('computed'), h('span', { class: 'xs muted' }, 'from your log, ' + n + (n === 1 ? ' entry' : ' entries')),
+      h('button', { class: 'btn small ghost', 'data-key': 'see-entries:' + line.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'Hide entries' : 'See entries'), add),
+    open ? entriesList(ctx, line) : null);
+  }
+  return h('div', { class: 'value-input' }, valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
+    line.actual.status === null ? noneButton(ctx, line) : null, add);
+}
+
+function noneButton(ctx, line) {
+  return h('button', { class: 'btn small ghost', 'data-key': 'none:' + line.id, onclick: () => ctx.commit(['line', line.id, 'actual'], makeValue(0, { note: 'None this month', asOf: todayIso() }), 'None this month') }, 'None this month');
+}
+
+// Lines in the plan or with an estimate that have nothing yet this month: on top.
+function gapsCard(ctx, summary) {
+  // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate (calc/loop.js).
+  const gaps = gapLines(summary).map((g) => ({ c: summary.model.categories.find((x) => x.id === g.catId), l: modelLine(summary, g.id) }));
+  const done = summary.model.categories.flatMap((c) => c.lines).filter((l) => l.actualFrom === 'log').length;
+  return h('div', { class: 'card' + (gaps.length ? ' flag' : ''), id: 'gaps-card' },
+    h('h3', {}, gaps.length ? 'Still empty (' + gaps.length + ')' : 'Nothing left to fill'),
+    gaps.length ? h('p', { class: 'muted small' }, done + ' line' + (done === 1 ? ' is' : 's are') + ' already filled from the log. For each line below: add an entry, type an amount, or none this month.')
+      : h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, 'Every line with a plan or an estimate has an actual. Close the month when it ends.'),
+        h('button', { class: 'btn small', 'data-key': 'gaps-close', onclick: () => { ctx.ui.closing = true; ctx.ui.anchor = 'checklist'; ctx.rerender(); } }, 'Close the month')),
+    gaps.map(({ c, l }) => {
+      const line = ctx.doc.categories.find((x) => x.id === c.id).lines.find((x) => x.id === l.id);
+      return h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, c.name + (l.estimate !== null ? ', estimate ' + money(l.estimate) : ''))),
+        h('div', { class: 'row' }, h('button', { class: 'btn small primary', 'data-key': 'gap-entry:' + l.id, onclick: () => openQuickEntry(ctx, { lineId: l.id }) }, 'Add an entry'),
+          h('button', { class: 'btn small', 'data-key': 'gap-type:' + l.id, onclick: () => { ctx.ui.focusPath = ['line', l.id, 'actual']; ctx.rerender(); } }, 'Type an amount'), noneButton(ctx, line)));
+    }));
+}
+
+// One summary row per category ("Food: $412 from 18 entries", S-106) that opens on a tap
+// to each line's actual: from the log, a yearly share, or typed. Names, types, and
+// details are changed in Setup, Categories and lines.
+function summaryText(r) {
+  const rest = [];
+  if (r.typed) rest.push(r.typed + ' typed');
+  if (r.shares) rest.push(r.shares + ' yearly share' + (r.shares === 1 ? '' : 's'));
+  if (r.empty) rest.push(r.empty + ' still empty');
+  return r.name + ': ' + (r.actual === null ? 'nothing yet' : money(r.actual)) +
+    (r.entries ? ' from ' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies') : '') + (rest.length ? ', ' + rest.join(', ') : '');
+}
+
+function categoryRow(ctx, summary, r) {
+  const key = 'rv-cat:' + r.id;
+  const open = ctx.ui.expanded.has(key);
+  const toggle = () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); };
+  const head = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: toggle },
+    h('span', {}, (open ? '\u25be ' : '\u25b8 ') + summaryText(r)));
+  if (!open) return h('div', { class: 'rv-cat', id: 'rv-cat-' + r.id }, head);
+  if (r.isDebt) {
+    const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
+    return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
+      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(d.minimum.amount) + ' minimum')))),
+      h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
+  }
+  const cat = ctx.doc.categories.find((c) => c.id === r.id);
+  const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
+  return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
+    live.map((line) => h('div', { class: 'qa' },
+      h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
+      coveredByParents(ctx.doc, line) ? coveredNote() : actualCell(ctx, summary, line))));
+}
+
+// Month end: close the month (the checklist first), with the bridge in one line.
+function monthEnd(ctx, summary) {
+  const doc = ctx.doc;
+  const br = bridgeFor(doc, summary.income, doc.currentMonth);
+  const state = br.surplus === null ? 'needs take-home and spending' : br.actual === null ? 'needs start and end balances' : br.ties ? 'ties' : 'off by ' + money(Math.abs(br.unexplained), true);
+  return h('section', { id: 'month-end' }, h('h2', {}, 'Close the month'),
+    h('div', { class: 'card spread' },
+      h('span', { class: 'small' }, 'Budget to cash, ' + monthLabel(doc.currentMonth) + ': ', h('b', { 'data-key': 'bridge-line' }, state), ' ',
+        h('a', { href: '#insights', 'data-key': 'go-bridge', onclick: (e) => { e.preventDefault(); ctx.jump('bridge', { ui: { bridgeMonth: doc.currentMonth } }); } }, 'See the bridge')),
+      h('button', { class: 'btn small primary', 'data-key': 'open-checklist', onclick: () => { ctx.ui.closing = true; ctx.rerender(); } }, 'Close ' + monthLabel(doc.currentMonth))),
+    ctx.ui.closing ? checklistCard(ctx, summary) : null);
+}
+
+function mistakesSection(ctx, summary) {
+  return h('section', { id: 'mistakes' }, h('h2', {}, 'Mistakes this month'), h('div', { class: 'card' }, mistakePicker(ctx, summary)));
+}
+
+// Closed months: the saved review (never recomputed), and the lines with late entries.
+function pastMonths(ctx, summary) {
+  const closed = ctx.doc.months.slice().reverse();
+  if (!closed.length) {
+    return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'), h('div', { class: 'card empty-state row' }, h('span', { class: 'small' }, 'Close a month to see its review here.'),
+      h('button', { class: 'btn small', 'data-key': 'past-close', onclick: () => { ctx.ui.closing = true; ctx.ui.anchor = 'checklist'; ctx.rerender(); } }, 'Close ' + monthLabel(ctx.doc.currentMonth))));
+  }
+  const key = closed.some((m) => m.key === ctx.ui.monthsPick) ? ctx.ui.monthsPick : closed[0].key;
+  const rec = closed.find((m) => m.key === key);
+  return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'),
+    h('div', { class: 'card' }, h('label', { class: 'row' }, h('b', {}, 'Closed month'),
+      h('select', { 'data-key': 'months-pick', onchange: (e) => { ctx.ui.monthsPick = e.target.value; ctx.rerender(); } }, options(closed.map((m) => [m.key, monthLabel(m.key)]), key)))),
+    reviewCard(ctx, rec, { id: 'months-review' }),
+    h('details', { class: 'card', id: 'closed-lines' }, h('summary', {}, 'Lines in ' + monthLabel(key) + ', and late entries'),
+      closedMonthTable(ctx, monthRows(ctx.doc, summary.history, key), key)));
+}
+
+export function renderReview(ctx, summary) {
+  const doc = ctx.doc;
+  const justClosed = ctx.ui.justClosed ? doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
+  return h('div', {},
+    h('h1', {}, 'Review'),
+    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
+    h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
+      gapsCard(ctx, summary),
+      h('div', { class: 'card', id: 'rv-rows' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Already filled from the log or answered. Tap a category to see its lines.'),
+        reviewRows(summary).map((r) => categoryRow(ctx, summary, r))),
+      findCategory(doc, 'everything') && doc.settings.singleTotal ? h('p', { class: 'muted small' }, 'Categories with no estimate of their own sit inside the one total. Their actuals draw it down.') : null),
+    monthEnd(ctx, summary),
+    mistakesSection(ctx, summary),
+    pastMonths(ctx, summary));
 }

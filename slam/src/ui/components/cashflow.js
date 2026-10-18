@@ -1,6 +1,6 @@
 // Cash flow on screen (S-086): the inputs the calendar needs (pay dates, due
-// days, accounts, the cushion), scheduled items waiting on "It happened", a
-// real balance check, and the compact 30-day strip on the Budget screen.
+// days, the cushion; all in Setup, S-106), scheduled items waiting on "It
+// happened" and a real balance check (Track), and the compact 30-day strip on Today.
 // Every number comes from calc/calendar.js; this file only lays it out.
 
 import { h, options } from '../dom.js';
@@ -8,16 +8,21 @@ import { money, todayIso, dayLabel } from '../format.js';
 import { valueInput, parseAmount } from './value-input.js';
 import { dayLine } from '../charts/svg.js';
 import { quickEntryButton } from './quick-entry.js';
+import { jumpLink, emptyState } from './jump.js';
+import { howButton, howPanel, sourceLink } from './how.js';
+import { explain } from '../../calc/explain.js';
 import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
 
 // One calendar per render and horizon, from today.
+// Keyed on the document itself (every edit makes a new one), not its timestamp: two edits in
+// the same millisecond would otherwise show the older calendar.
 export function calendarFor(ctx, summary, horizon = 30) {
-  const key = summary.householdId + ':' + ctx.doc.updatedAt + ':' + horizon + ':' + todayIso();
-  ctx.ui.calCache = ctx.ui.calCache || {};
-  if (!ctx.ui.calCache[key]) ctx.ui.calCache = { [key]: cashCalendar(ctx.doc, summary.income, { today: todayIso(), horizon }) };
-  return ctx.ui.calCache[key];
+  const key = horizon + ':' + todayIso();
+  const c = ctx.ui.calCache;
+  if (!c || c.doc !== ctx.doc || c.key !== key) ctx.ui.calCache = { doc: ctx.doc, key, cal: cashCalendar(ctx.doc, summary.income, { today: todayIso(), horizon }) };
+  return ctx.ui.calCache.cal;
 }
 
 function accountSelect(ctx, key, value, onPick, label) {
@@ -28,20 +33,12 @@ function accountSelect(ctx, key, value, onPick, label) {
 
 const ANNUAL = (cat, line) => cat.type === 'annual' || line.estimate.cadence === 'year';
 
-// Paydays, bill dates, debt payments, and the cushion. Only what is missing is asked.
-export function scheduleCard(ctx) {
-  const doc = ctx.doc;
-  const dayBox = (line, field, max, label) => valueInput({ ...ctx, preview: null }, ['line', line.id, field], line[field], { label, cadence: false, placeholder: max === 12 ? 'month' : 'day' });
-  const incomes = doc.income.filter((i) => i.state !== 'archived');
-  const bills = [];
-  for (const c of doc.categories) {
-    if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
-    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l))) bills.push({ c, l, annual: ANNUAL(c, l) });
-  }
-  return h('div', { class: 'card', id: 'schedule-card' },
-    h('h2', {}, 'Paydays and bill dates'),
-    h('p', { class: 'muted small' }, 'Optional. These put paychecks and bills on the calendar. Anything without a date is spread across the month. Each lands in checking unless you pick another account.'),
-    h('h3', {}, 'Paydays'),
+// Paydays (Setup, Income and paychecks): put paychecks on the calendar.
+export function paydaysCard(ctx) {
+  const incomes = ctx.doc.income.filter((i) => i.state !== 'archived');
+  return h('div', { class: 'card', id: 'paydays-card' },
+    h('h2', {}, 'Paydays'),
+    h('p', { class: 'muted small' }, 'Optional. These put paychecks on the calendar. Each lands in checking unless you pick another account.'),
     incomes.length ? incomes.map((inc) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, inc.label), h('div', { class: 'hint' }, inc.payFrequency === 'semimonthly' ? 'Paid twice a month on these days' : 'Next pay date; the rest follow every ' + ({ weekly: 'week', biweekly: 'two weeks', monthly: 'month' }[inc.payFrequency] || 'pay period') + (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null ? ', for ' + inc.benefitWeeksLeft + ' more weeks' : ''))),
       h('div', { class: 'row' },
@@ -49,23 +46,39 @@ export function scheduleCard(ctx) {
           ? [0, 1].map((i) => h('input', { type: 'number', min: 1, max: 31, class: 'day-box', 'aria-label': inc.label + ' pay day ' + (i + 1), 'data-key': 'payday:' + inc.id + ':' + i, value: String((inc.payDays || [1, 15])[i]),
             onchange: (e) => { const days = [...(inc.payDays || [1, 15])]; days[i] = Math.min(31, Math.max(1, Math.round(Number(e.target.value) || 1))); ctx.update('Pay days', (d) => setPayDays(d, inc.id, days)); } }))
           : h('input', { type: 'date', 'aria-label': inc.label + ' next pay date', 'data-key': 'nextpay:' + inc.id, value: inc.nextPayDate.date || '', onchange: (e) => ctx.update('Next pay date', (d) => setNextPayDate(d, inc.id, e.target.value)) }),
-        accountSelect(ctx, 'acct-inc:' + inc.id, inc.accountId, (v) => ctx.update('Pay goes to', (d) => setItemAccount(d, 'income', inc.id, v)), inc.label + ' account')))) : h('p', { class: 'muted small' }, 'No income yet (Basics).'),
-    h('h3', {}, 'Bills'),
+        accountSelect(ctx, 'acct-inc:' + inc.id, inc.accountId, (v) => ctx.update('Pay goes to', (d) => setItemAccount(d, 'income', inc.id, v)), inc.label + ' account')))) : h('p', { class: 'muted small' }, 'Add an income above first.'));
+}
+
+// Bills and debt payments (Setup, Bills and due dates): when each lands and from which account.
+export function billsCard(ctx) {
+  const doc = ctx.doc;
+  const dayBox = (line, field, max, label) => valueInput({ ...ctx, preview: null }, ['line', line.id, field], line[field], { label, cadence: false, placeholder: max === 12 ? 'month' : 'day' });
+  const bills = [];
+  for (const c of doc.categories) {
+    if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
+    for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l))) bills.push({ c, l, annual: ANNUAL(c, l) });
+  }
+  const debts = doc.debts.filter((x) => x.state !== 'archived');
+  return h('div', { class: 'card', id: 'bills-card' },
+    h('p', { class: 'muted small' }, 'Optional. These put bills on the calendar. Anything without a date is spread across the month.'),
     bills.length ? bills.map(({ l, annual }) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: due month (1 to 12) and day' : 'Due day of the month (1 to 31)')),
       h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null, dayBox(l, 'dueDay', 31, l.name + ' due day'),
-        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account')))) : h('p', { class: 'muted small' }, 'No fixed or yearly lines yet.'),
-    doc.debts.filter((x) => x.state !== 'archived').length ? h('h3', {}, 'Debt payments') : null,
-    doc.debts.filter((x) => x.state !== 'archived').map((debt) => h('div', { class: 'qa' },
-      h('div', { class: 'q' }, h('div', {}, debt.label), h('div', { class: 'hint' }, 'Due day ' + (debt.dueDay.amount || 'not set yet (Actual pass)'))),
+        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account')))) : emptyState(ctx, 'No fixed or yearly lines yet. Mark a line fixed to give it a due date.', 'setup:categories', 'Categories and lines', 'bills-empty'),
+    debts.length ? h('h3', {}, 'Debt payments') : null,
+    debts.map((debt) => h('div', { class: 'qa' },
+      h('div', { class: 'q' }, h('div', {}, debt.label), h('div', { class: 'hint' }, 'Due day ' + (debt.dueDay.amount || 'not set yet (Debts)'))),
       h('div', { class: 'row' },
         debt.type === 'credit-card' ? h('select', { 'aria-label': debt.label + ' pays', 'data-key': 'paywith:' + debt.id, onchange: (e) => ctx.update('Card payment', (d) => setDebtPayWith(d, debt.id, e.target.value)) },
           options([['minimum', 'Pays the minimum'], ['statement', 'Pays the statement balance']], debt.payWith || 'minimum')) : null,
-        accountSelect(ctx, 'acct-debt:' + debt.id, debt.payFrom, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'debt', debt.id, v)), debt.label + ' account')))),
-    // The cushion is the coach's setting (S-096): the calendar uses it in both views, only the coach edits it.
-    ctx.role === 'client' ? null : h('h3', {}, 'Cushion'),
-    ctx.role === 'client' ? null : h('div', { class: 'qa', 'data-key': 'cushion-row' }, h('div', { class: 'q' }, h('div', {}, 'Keep at least this much in cash'), h('div', { class: 'hint' }, 'Days under it are shaded. Blank means $0.')),
-      valueInput({ ...ctx, preview: null }, ['cashflow', 'cushion'], doc.cashflow.cushion, { label: 'Cushion', cadence: false })));
+        accountSelect(ctx, 'acct-debt:' + debt.id, debt.payFrom, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'debt', debt.id, v)), debt.label + ' account')))));
+}
+
+// The cushion is the coach's setting (S-096): the calendar uses it in both views, only the coach edits it.
+export function cushionRow(ctx) {
+  if (ctx.role === 'client') return null;
+  return h('div', { class: 'qa', 'data-key': 'cushion-row' }, h('div', { class: 'q' }, h('div', {}, 'Cushion: keep at least this much in checking'), h('div', { class: 'hint' }, 'Days under it are shaded on the calendar. Blank means $0.')),
+    valueInput({ ...ctx, preview: null }, ['cashflow', 'cushion'], ctx.doc.cashflow.cushion, { label: 'Cushion', cadence: false }));
 }
 
 // Scheduled items on or before today: It happened (with the amount, editable) or Didn't happen / moved.
@@ -114,14 +127,13 @@ export function checkBalancesCard(ctx) {
       } }, 'Save balance')));
 }
 
-// The Budget screen's compact strip: the next 30 days, today, the lowest point,
+// Today's compact strip: the next 30 days, today, the lowest point,
 // the next payday, and safe to spend.
 export function budgetCashStrip(ctx, summary) {
   const cal = calendarFor(ctx, summary, 30);
-  const go = () => { ctx.go('analyze'); setTimeout(() => { const el = document.getElementById('sec-cashflow'); if (el) el.scrollIntoView(); }, 60); };
   if (!cal.lowest || cal.unknownStart.length === ctx.doc.accounts.filter((a) => a.state !== 'archived').length) {
     return h('div', { class: 'card cash-strip' }, h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
-      h('p', { class: 'muted small' }, 'Add an account balance in Fill in, Cash flow, to see cash by day.'));
+      emptyState(ctx, 'Add a checking balance to see cash by day and what is safe to spend.', 'balances', 'Add a balance'));
   }
   const days = cal.days.filter((x) => x.date >= cal.today);
   const iPay = cal.nextPayday ? days.findIndex((x) => x.date === cal.nextPayday) : -1;
@@ -132,11 +144,14 @@ export function budgetCashStrip(ctx, summary) {
     h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
     h('div', { class: 'chart', html: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: w, height: 90, fmt: money, todayIndex: 0, cushion: cal.cushion || null, markers, compact: true, label: 'Cash for the next 30 days' }) }),
     h('div', { class: 'strip three' },
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, money(cal.todayCash))),
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, money(cal.lowest.amount)), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, money(cal.safeToSpend)),
+      // Jump to source (S-108): today's cash opens the balance check, the lowest point the calendar,
+      // and safe to spend how it was worked out.
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, sourceLink(ctx, money(cal.todayCash), { where: 'checks' }, 'src-cash-today'))),
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, sourceLink(ctx, money(cal.lowest.amount), { where: 'calendar' }, 'src-cash-lowest')), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, howButton(ctx, 'safeToSpend', money(cal.safeToSpend))),
         h('div', { class: 'sub' }, 'through ' + dayLabel(cal.end)))),
+    ctx.ui.how === 'safeToSpend' ? howPanel(ctx, explain(summary, 'safeToSpend', cal)) : null,
     cal.shortfall ? h('p', { class: 'small warn', 'data-key': 'safe-short' }, safeReading(cal)) : null,
-    h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); go(); } }, 'See the calendar')));
+    h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', jumpLink(ctx, 'calendar', 'See the calendar')));
 }
 

@@ -161,6 +161,8 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
         : c.lines.map((l) => rowOf(l.id, l.name, lineOf(l)));
     groups.push({ id: c.id, name: c.name, type: c.type, savings: c.savings, isDebt: c.isDebt, byCategory, rows, actual: act.cats[c.id] === undefined ? null : act.cats[c.id], plan: pc ? pc.amount : null, estimate: c.estimate.amount });
   }
+  // Lines ticked off per category (S-106: a collapsed category says how far its review is).
+  for (const g of groups) g.reviewed = g.rows.filter((r) => r.reviewed).length;
   const plannable = groups.filter((g) => !g.isDebt).flatMap((g) => g.rows);
   const reviewed = plannable.filter((r) => r.reviewed).length;
   const catOf = Object.fromEntries(pm.categories.flatMap((c) => c.lines.map((l) => [l.id, c.id])));
