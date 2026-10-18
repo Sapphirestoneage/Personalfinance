@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -48,6 +48,9 @@ export const ACCOUNT_TYPE_INFO = {
   'other-asset': { label: 'Other thing you own', kind: 'valued', tier: 4, fi: false }
 };
 export const LIQUIDITY_TIERS = [1, 2, 3, 4];
+// The return the equity in a home could earn elsewhere, a year after inflation (S-113): an assumption.
+// Not stored until the coach changes it (settings.ownReturn).
+export const DEFAULT_OWN_RETURN = 0.05;
 // An account's tier and FI flag, falling back to its type's default when not stored.
 export const typeInfo = (a) => ACCOUNT_TYPE_INFO[a.type] || ACCOUNT_TYPE_INFO.other;
 export const tierOf = (a) => (a.tier === undefined ? typeInfo(a).tier : a.tier);
@@ -268,8 +271,18 @@ export function newAccount(fields = {}) {
     debtId: fields.debtId || null,
     tier: fields.tier === undefined ? info.tier : fields.tier,
     countsForFI: fields.countsForFI === undefined ? info.fi : fields.countsForFI,
-    ...(SECURED_TYPES.includes(type) ? securedFields(fields) : {})
+    ...(SECURED_TYPES.includes(type) ? securedFields(fields) : {}),
+    ...(info.kind === 'valued' ? ownedFields(type, fields) : {})
   };
+}
+
+// A thing you own (S-113): the coach's notes (coach-only), and the alternative to owning it, a month:
+// rent for a similar home; rideshare, transit, and an occasional rental for a vehicle.
+export const ALTERNATIVES = { home: ['rentAlt'], vehicle: ['rideshareAlt', 'transitAlt', 'rentalAlt'] };
+export function ownedFields(type, fields = {}) {
+  const out = { notes: fields.notes || '' };
+  for (const k of ALTERNATIVES[type] || []) out[k] = fields[k] || makeValue(null, { cadence: 'month' });
+  return out;
 }
 
 // Purchase price and date (optional), and the debt the home or vehicle secures.

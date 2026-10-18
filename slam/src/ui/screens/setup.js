@@ -10,6 +10,8 @@ import { accountsCard, netWorthCard } from '../components/accounts.js';
 import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
 import { whatIfCard } from '../charts/cash-charts.js';
 import { materialityInput } from '../charts/bridge-charts.js';
+import { setOwnReturn } from '../../store/accounts.js';
+import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
 import { debtCard, tagRow, tagManager, lineDetail, catName } from '../components/lines.js';
 import { debtTypeTotals } from '../components/debt-quick.js';
 import { statusChip } from '../components/status.js';
@@ -100,7 +102,14 @@ function coachSection(ctx) {
   return h('div', { class: 'card', id: 'coach-settings' },
     cushionRow(ctx),
     h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, 'Bridge: counts as tied when within'), h('div', { class: 'hint' }, 'The budget-to-cash bridge ties when the part not explained is this small. Default $25.')),
-      materialityInput(ctx)));
+      materialityInput(ctx)),
+    h('div', { class: 'qa', 'data-key': 'own-return-row' }, h('div', { class: 'q' }, h('div', {}, 'Assumption: what a home\'s equity could earn elsewhere'), h('div', { class: 'hint' }, 'A year, after inflation. Used in "Owning vs the alternative". Default 5%.')),
+      h('input', { type: 'text', inputmode: 'decimal', style: 'width:5em', 'data-key': 'own-return', value: String(Math.round(((ctx.doc.settings.ownReturn === undefined ? DEFAULT_OWN_RETURN : ctx.doc.settings.ownReturn)) * 1000) / 10),
+        onchange: (e) => {
+          const n = Number(e.target.value.trim().replace('%', ''));
+          if (!Number.isFinite(n)) return ctx.toast('That needs a percent, 0 to 20');
+          ctx.update('Return assumption', (d) => setOwnReturn(d, n / 100));
+        } }), h('span', { class: 'small' }, '%')));
 }
 
 const SECTIONS = {

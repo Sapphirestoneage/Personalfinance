@@ -8,7 +8,8 @@ export const COACH_ONLY = {
   'plans.*.lines.*.note': 'Internal decision notes in the monthly plan.',
   'line.tag=mistake': 'A mistake tag, until the coach shares it (line.mistakeShared).',
   'cashflow.cushion': 'The coach\'s cushion setting (the calendar still uses it).',
-  'settings.materiality': 'The coach\'s materiality: how close the bridge must be to "tie".'
+  'settings.materiality': 'The coach\'s materiality: how close the bridge must be to "tie".',
+  'accounts.*.notes': 'The coach\'s notes on a home, a vehicle, or another thing the client owns (S-113).'
 };
 
 // Every record type in records.js, and whether the client sees it.
@@ -29,6 +30,7 @@ export function viewFor(doc, role) {
   if (!doc || role === 'coach') return doc;
   const d = clone(doc);
   d.coachNotes = '';
+  for (const a of d.accounts || []) if (a.notes) a.notes = '';
   for (const p of Object.values(d.plans || {})) for (const e of Object.values(p.lines || {})) if (e && e.note) e.note = '';
   for (const c of d.categories || []) for (const l of c.lines || []) if (l.tag === 'mistake' && !l.mistakeShared) l.tag = 'planned';
   return d;

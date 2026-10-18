@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { newHousehold, newAccount, ACCOUNT_TYPE_INFO, tierOf, countsForFI } from '../src/store/schema.js';
+import { newHousehold, newAccount, ACCOUNT_TYPE_INFO, tierOf, countsForFI, SCHEMA_VERSION } from '../src/store/schema.js';
 import { makeValue } from '../src/store/value.js';
 import { migrate } from '../src/store/migrate.js';
 import { validateHousehold } from '../src/store/validate.js';
@@ -64,7 +64,7 @@ test('migration changes no number: every file loads with the same balances and d
   for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
     const raw = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
     const d = migrate(raw);
-    assert.equal(d.schemaVersion, 11, f);
+    assert.equal(d.schemaVersion, SCHEMA_VERSION, f);
     // Every typed balance is exactly what the file had.
     for (const [m, accts] of Object.entries(raw.balances || {})) {
       for (const [id, b] of Object.entries(accts)) {

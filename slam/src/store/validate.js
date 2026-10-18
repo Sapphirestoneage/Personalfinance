@@ -128,6 +128,8 @@ export function validateHousehold(doc) {
       if (a.purchasePrice) errs.push(...valueErrors(a.purchasePrice, w + '.purchasePrice'));
       if (a.purchaseDate) errs.push(...dateErrors(a.purchaseDate, w + '.purchaseDate'));
     }
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (a[k] !== undefined) errs.push(...valueErrors(a[k], w + '.' + k));
+    if (a.notes !== undefined && typeof a.notes !== 'string') errs.push(w + '.notes must be text');
   });
   // A debt with no account of its own keeps its dated balances under its own id (S-110).
   const balanceIds = new Set([...acctIds, ...(doc.debts || []).map((d) => d.id)]);
@@ -139,6 +141,7 @@ export function validateHousehold(doc) {
       for (const k of ['startOn', 'endOn']) if (b[k] !== undefined && !(typeof b[k] === 'string' && b[k].slice(0, 7) === m && /^\d{4}-\d{2}-\d{2}$/.test(b[k]))) errs.push('balances.' + m + '.' + id + '.' + k + ' must be a day in ' + m);
     }
   }
+  if (doc.settings && doc.settings.ownReturn !== undefined && !(typeof doc.settings.ownReturn === 'number' && doc.settings.ownReturn >= 0 && doc.settings.ownReturn <= 0.2)) errs.push('settings.ownReturn must be 0% to 20% a year');
   if (doc.cashflow) {
     const cf = doc.cashflow;
     errs.push(...valueErrors(cf.cushion, 'cashflow.cushion'));

@@ -7,10 +7,10 @@ import { h, options } from '../dom.js';
 import { money, monthLabel, todayIso } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
-import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts, setPurchase } from '../../store/accounts.js';
+import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts, setPurchase, setAlternative, setAccountNotes } from '../../store/accounts.js';
 import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf } from '../../calc/balances.js';
 import { netWorthAt, LABELS as NW_LABELS, EXPLAIN as NW_EXPLAIN } from '../../calc/networth.js';
-import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES } from '../../store/schema.js';
+import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
 
 export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
 const TIER_OPTIONS = [['1', '1: cash now'], ['2', '2: can sell within days'], ['3', '3: retirement, with a penalty or rules'], ['4', '4: not liquid (a home, a car)']];
@@ -66,7 +66,7 @@ function accountDetails(ctx, a) {
   const open = ctx.ui.expanded.has(key);
   const secured = a.securedDebtId ? ctx.doc.debts.find((d) => d.id === a.securedDebtId) : null;
   const toggle = h('button', { class: 'btn small ghost', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); } },
-    (open ? 'Fewer details' : 'Details') + ': tier ' + a.tier + ', ' + (a.countsForFI ? 'counts' : 'does not count') + ' toward FI' + (secured ? ', secures ' + secured.label : ''));
+    (open ? 'Fewer details' : 'Details') + ': tier ' + a.tier + ', ' + (a.countsForFI ? 'counts' : 'does not count') + ' toward FI' + (secured ? ', ' + secured.label : ''));
   if (!open) return toggle;
   const sub = { ...ctx, preview: null };
   return h('div', { class: 'acct-details' }, toggle,
@@ -82,8 +82,15 @@ function accountDetails(ctx, a) {
       h('div', { class: 'row' }, h('span', { class: 'small' }, 'Bought for (optional)'),
         valueInput({ ...sub, commit: (path, value) => ctx.update('Purchase price', (d) => setPurchase(d, a.id, 'price', value)) }, ['accounts', a.id, 'purchasePrice'], a.purchasePrice, { label: a.name + ' purchase price', cadence: false }),
         h('input', { type: 'date', 'aria-label': a.name + ' purchase date', 'data-key': 'acct:' + a.id + ':bought', value: a.purchaseDate.date || '',
-          onchange: (e) => ctx.update('Purchase date', (d) => setPurchase(d, a.id, 'date', e.target.value || null)) }))) : null);
+          onchange: (e) => ctx.update('Purchase date', (d) => setPurchase(d, a.id, 'date', e.target.value || null)) }))) : null,
+    // The alternative to owning it, a month (S-113), for "Owning vs the alternative" in Insights.
+    ALTERNATIVES[a.type] ? h('div', {}, h('div', { class: 'field-label' }, a.type === 'home' ? 'The alternative: renting a similar place' : 'The alternative: your trips without it'),
+      ALTERNATIVES[a.type].map((k) => h('div', { class: 'row' }, h('span', { class: 'small' }, ALT_LABELS[k]),
+        valueInput({ ...sub, commit: (path, value) => ctx.update(ALT_LABELS[k], (d) => setAlternative(d, a.id, k, value)) }, ['accounts', a.id, k], a[k], { label: a.name + ' ' + ALT_LABELS[k].toLowerCase(), cadence: false, placeholder: '$ / month' })))) : null,
+    a.notes !== undefined && ctx.role !== 'client' ? h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Coach notes (only you see these)'),
+      h('textarea', { 'data-key': 'acct:' + a.id + ':notes', value: a.notes, onchange: (e) => ctx.update('Notes', (d) => setAccountNotes(d, a.id, e.target.value)) })) : null);
 }
+const ALT_LABELS = { rentAlt: 'Rent a month', rideshareAlt: 'Rideshare a month', transitAlt: 'Transit a month', rentalAlt: 'An occasional rental, a month' };
 
 // A debt with no card account keeps its own dated balances (S-110): what is owed at the start and end.
 function debtRow(ctx, month, l, stored) {

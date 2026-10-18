@@ -31,7 +31,7 @@ function tableRows(model, totals) {
     const lines = c.lines.map((l) => {
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
-        id: l.id, name: l.name, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
+        id: l.id, name: l.name, type: l.type, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
         estimate: l.estimate, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
         gaps: gaps(l.estimate, l.actual), accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.actual, lb, th),
@@ -40,7 +40,7 @@ function tableRows(model, totals) {
       };
     });
     return {
-      id: c.id, name: c.name, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
+      id: c.id, name: c.name, type: c.type, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
       estimate: c.estimate.amount, actual: c.actual.amount, partial: c.actual.partial,
       estimateFrom: c.estimate.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
       basis: basis.amount, basisFrom: basis.from,

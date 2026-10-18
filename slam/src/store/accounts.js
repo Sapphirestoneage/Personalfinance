@@ -3,7 +3,7 @@
 // A month's start that was never typed is carried from last month's end by
 // calc (balances.js), so it is never stored twice.
 
-import { newAccount, newBalance, ACCOUNT_TYPE_INFO, LIQUIDITY_TIERS, SECURED_TYPES, securedFields } from './schema.js';
+import { newAccount, newBalance, ACCOUNT_TYPE_INFO, LIQUIDITY_TIERS, SECURED_TYPES, securedFields, ownedFields, ALTERNATIVES } from './schema.js';
 
 export function addAccount(doc, fields = {}) {
   const acct = newAccount(fields);
@@ -48,6 +48,9 @@ export function setAccountField(doc, id, field, value) {
     a.countsForFI = info.fi;
     if (SECURED_TYPES.includes(value)) Object.assign(a, securedFields(a));
     else { delete a.purchasePrice; delete a.purchaseDate; delete a.securedDebtId; }
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (!(ALTERNATIVES[value] || []).includes(k)) delete a[k];
+    if (info.kind === 'valued') Object.assign(a, ownedFields(value, a));
+    else delete a.notes;
     return;
   }
   a[field] = field === 'debtId' || field === 'securedDebtId' ? value || null : value;
@@ -96,4 +99,24 @@ export function setBalance(doc, month, accountId, which, value) {
   doc.balances[month] = doc.balances[month] || {};
   doc.balances[month][accountId] = doc.balances[month][accountId] || newBalance();
   doc.balances[month][accountId][which] = { ...value, cadence: 'one-off' };
+}
+
+// The alternative to owning (S-113): rent for a similar home, or rideshare, transit, and a rental a month.
+export function setAlternative(doc, id, key, value) {
+  const a = findAccount(doc, id);
+  if (!a || !(ALTERNATIVES[a.type] || []).includes(key)) throw new Error('No alternative ' + key + ' for this account');
+  a[key] = { ...value, cadence: value.cadence || 'month' };
+}
+
+// The coach's notes on a thing the client owns (coach-only, S-113).
+export function setAccountNotes(doc, id, text) {
+  const a = findAccount(doc, id);
+  if (!a || a.notes === undefined) throw new Error('Notes are for a home, a vehicle, or another thing you own');
+  a.notes = String(text || '');
+}
+
+// The return the equity could earn elsewhere, a year (an assumption, 0% to 20%).
+export function setOwnReturn(doc, rate) {
+  if (!(typeof rate === 'number' && rate >= 0 && rate <= 0.2)) throw new Error('Use a return from 0% to 20% a year');
+  doc.settings.ownReturn = rate;
 }

@@ -204,7 +204,7 @@ test('the storage interface is async: list, load, save, and a change subscriptio
 test('every record type is in the visibility map, and the coach-only list is the agreed one', () => {
   const kinds = [...new Set(Object.keys(flatten(loadHousehold('riley'))).map((k) => k.split(':')[0]))];
   for (const k of kinds) assert.ok(RECORDS[k], k + ' is in the map');
-  assert.deepEqual(Object.keys(COACH_ONLY), ['coachNotes', 'plans.*.lines.*.note', 'line.tag=mistake', 'cashflow.cushion', 'settings.materiality']);
+  assert.deepEqual(Object.keys(COACH_ONLY), ['coachNotes', 'plans.*.lines.*.note', 'line.tag=mistake', 'cashflow.cushion', 'settings.materiality', 'accounts.*.notes']);
   for (const f of Object.keys(COACH_ONLY)) { assert.equal(canSee(f, 'client'), false, f); assert.equal(canSee(f, 'coach'), true, f); }
   assert.equal(canSee('transactions', 'client'), true);
 });

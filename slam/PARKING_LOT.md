@@ -53,3 +53,9 @@ theming beyond the tokens.
 ## Future tools (parked 2026-10-18, S-105)
 
 - Future tools (dream life, Eras, Next stage) are parked behind a setting. Open question for later: merge Next stage into Eras as one era with Disaster, Likely, and Best case.
+
+## Owning calculators (parked 2026-10-18, S-113)
+
+- A full rent vs buy calculator.
+- A car calculator: buy vs lease vs keep vs go car-free.
+- A house hack calculator.
