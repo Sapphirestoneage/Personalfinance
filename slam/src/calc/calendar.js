@@ -16,7 +16,7 @@ import { isCashAccount } from './balances.js';
 // The calendar's cash is checking only (S-094): savings is not spending money day to day.
 const inCalendar = (a) => a.type === 'checking';
 import { toMonthly } from './normalize.js';
-import { linkedLine } from './debts.js';
+import { linkedLine, cardInterest } from './debts.js';
 
 const DAY = 86400000;
 const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
@@ -238,6 +238,18 @@ export function cashCalendar(doc, income, opts) {
   const months = monthsBetween(firstMonth, monthOf(end));
   const allItems = [];
   const spreads = {};
+  // Card interest (S-127): charged to the card on its due day (the last day without one). It moves what
+  // is owed, never checking, so it shows "on the card" and is never waiting to be confirmed.
+  const interestOn = {};
+  for (const m of months) {
+    for (const debt of doc.debts || []) {
+      const card = accts.find((a) => a.debtId === debt.id && a.type === 'credit-card');
+      const ci = card ? cardInterest(doc, debt, m) : null;
+      if (!ci || !ci.amount) continue;
+      const d = dateIn(m, amountOfValue(debt.dueDay) || 31);
+      (interestOn[d] = interestOn[d] || []).push({ type: 'scheduled', key: 'interest:' + debt.id + ':' + d, kind: 'interest', name: debt.label + ' interest (computed)', card: card.id, amount: ci.amount });
+    }
+  }
   for (const m of months) {
     const s = scheduledItems(doc, m, income);
     confirmItems(s.items, entries);
@@ -283,6 +295,7 @@ export function cashCalendar(doc, income, opts) {
         add({ type: 'scheduled', key: it.key, kind: it.kind, name: it.name }, it.account, it.dir === 'in' ? it.amount : -it.amount);
         if (it.kind === 'debt' && it.card && it.card !== it.account) add({ type: 'scheduled', key: it.key, kind: 'debt', name: it.name + ' (paid)', mirror: true }, it.card, it.amount);
       }
+      for (const it of interestOn[d] || []) add({ type: it.type, key: it.key, kind: it.kind, name: it.name }, it.card, -it.amount);
       const sp = spreads[m];
       if (sp) for (const u of sp.units) if (u.perDay > 0 && d >= sp.from) add({ type: 'spread', kind: 'spread', name: u.name }, u.account, -u.perDay);
     }

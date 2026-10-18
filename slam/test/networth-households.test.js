@@ -139,10 +139,11 @@ test('Dana: both net worths at the start and end of the year, and at two month e
   // By tier: cash 5,315; through tier 3 + the 401(k): 13,785; all + the condo and car: 314,585.
   assert.deepEqual(mar.byTier, { 1: 5315, 2: 5315, 3: 13785, 4: 314585 });
   assert.deepEqual(mar.debtsByType.map((t) => [t.type, t.amount]), [['credit-card', 13360], ['mortgage', 236962.24]]);
-  // September 30, 2026: 2,315 + 4,800 + 11,170 = 18,285 - 10,720 = FI 7,565. The condo 289,000 -
-  // 233,832.21 = 55,167.79; the car 11,600. Net worth 7,565 + 55,167.79 + 11,600 = 74,332.79.
+  // September 30, 2026: 2,315 + 4,800 + 11,170 = 18,285 - the Visa 11,736.78 (its promo ended in May, S-127:
+  // tools/dana.mjs) = FI 6,548.22. The condo 289,000 - 233,832.21 = 55,167.79; the car 11,600.
+  // Net worth 6,548.22 + 55,167.79 + 11,600 = 73,316.01 (1,016.78 of interest lower: 259.90 + 256.15 + 252.32 + 248.41).
   const end = netWorthAt(d, '2026-09-30');
-  assert.deepEqual([end.total, end.fi, end.locked], [74332.79, 7565, 66767.79]);
+  assert.deepEqual([end.total, end.fi, end.locked], [73316.01, 6548.22, 66767.79]);
 });
 
 test('Dana: FI net worth crosses $0 in March', () => {

@@ -85,14 +85,17 @@ test('W-2 income is never typed twice: the plan and the actual come from the pay
 test('income not tracked: the surplus uses take-home, and says so; typed or none counts as tracked', () => {
   const d = loadHousehold('dana');
   const t = () => buildSummary(d, refs).totals;
-  // Dana has no income entries: take-home 4,000 - spending 3,510 - savings 300 = 190, not tracked.
-  assert.deepEqual([t().incomeTracked, t().incomeBasis, t().surplus], [false, 4000, 190]);
-  // A typed 3,900 for October (no entries): tracked; 3,900 - 3,510 - 300 = 90.
+  // Dana has no income entries. Spending is 3,510 plus October's Visa interest, now that her promo ended in
+  // May (S-127): 11,736.78 x 24.99 / 1,200 = 244.42 (tools/dana.mjs), so 3,754.42.
+  // Take-home 4,000 - 3,754.42 - savings 300 = -54.42, not tracked.
+  const c = (x) => Math.round(x * 100) / 100;
+  assert.deepEqual([t().incomeTracked, t().incomeBasis, c(t().surplus)], [false, 4000, -54.42]);
+  // A typed 3,900 for October (no entries): tracked; 3,900 - 3,754.42 - 300 = -154.42.
   setIncomeActual(d, '2026-10', 'job', makeValue(3900));
-  assert.deepEqual([t().incomeTracked, t().surplus], [true, 90]);
-  // None this month: 0 - 3,810 = -3,810.
+  assert.deepEqual([t().incomeTracked, c(t().surplus)], [true, -154.42]);
+  // None this month: 0 - 3,754.42 - 300 = -4,054.42.
   setIncomeActual(d, '2026-10', 'job', 'none');
-  assert.deepEqual([t().income.sources[0].from, t().surplus], ['none', -3810]);
+  assert.deepEqual([t().income.sources[0].from, c(t().surplus)], ['none', -4054.42]);
 });
 
 test('an income entry with no source counts, and is a month-end checklist item', () => {

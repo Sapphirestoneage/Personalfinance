@@ -475,10 +475,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   console.log('dana (phone width, October 17, 2026)');
   await page.getByText('Dana, 34').click();
   await page.waitForSelector('#headline');
-  // Today: September's ends. FI 2,315 + 4,800 + 11,170 - 10,720 = 7,565; net worth 74,332.79.
+  // Today: September's ends. The Visa's promo ended in May (S-127), so it is 11,736.78 (tools/dana.mjs).
+  // FI 2,315 + 4,800 + 11,170 - 11,736.78 = 6,548.22; net worth 6,548.22 + 55,167.79 + 11,600 = 73,316.01.
   await insights(page, 'networth');
-  check('dana', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(74332.79)), money(74332.79));
-  check('dana', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(7565)), money(7565));
+  check('dana', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(73316.01)), money(73316.01));
+  check('dana', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(6548.22)), money(6548.22));
   check('dana', 'Milestones', await settled(page, '[data-key="nw-milestone-list"]', 'FI net worth crossed $0March 2026'), 'FI net worth crossed $0March 2026');
   const condoRead = 'Owning costs you about $1,950 a month you\'ll never get back. Renting a similar place would be about $1,900.';
   check('dana', 'Condo next to renting', await settled(page, '#owning-condo .reading', condoRead), condoRead);
@@ -491,6 +492,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('dana', 'March celebrate card', await settled(page, '[data-key="celebrate-fi-zero"] b', 'FI net worth crossed $0 in March 2026.'), 'FI net worth crossed $0 in March 2026.');
   check('dana', 'March FI net worth', await settled(page, '[data-key="review-nw-fi"]', money(425)), money(425));
   check('dana', 'March net worth', await settled(page, '[data-key="review-nw-total"]', money(64262.76)), money(64262.76));
+  // June's review: the promo ended; interest 12,480 x 24.99 / 1,200 = 259.896, $259.90 (S-127).
+  await page.selectOption('[data-key="months-pick"]', '2026-06');
+  const promoLine = 'Your 0% promo ended. Interest this month: $259.90.';
+  check('dana', 'June promo reading', await settled(page, '[data-key="review-readings"]', promoLine).then((t) => (t || '').slice(0, promoLine.length)), promoLine);
   check('dana', 'Console errors', String(errors.length), '0');
   await page.close();
 }

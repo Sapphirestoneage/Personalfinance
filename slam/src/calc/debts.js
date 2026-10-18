@@ -18,7 +18,7 @@
 // Missing APR or balance: the line is blank (empty is not zero).
 
 import { toMonthly } from './normalize.js';
-import { monthStartOf, lastDayOf } from './balances.js';
+import { monthStartOf, lastDayOf, balanceAt } from './balances.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
@@ -110,4 +110,26 @@ export function promoMonthsLeft(debt, month) {
   const [y1, m1] = month.split('-').map(Number);
   const [y2, m2] = debt.promoEnds.split('-').map(Number);
   return (y2 - y1) * 12 + (m2 - m1);
+}
+
+// The first month at the card's own APR after a promo (S-127): the month whose last day is past the
+// promo's end, when the month before was still at the promo rate. Dana's 0% ends May 31, 2026, so
+// June 2026 is that month. Returns each such card with its computed interest for the month.
+export function promoEnded(doc, month) {
+  const [y, m] = month.split('-').map(Number);
+  const prev = m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0');
+  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && !aprFor(d, month).promo && aprFor(d, prev).promo)
+    .map((d) => ({ debt: d, promoApr: d.promoApr.amount, interest: cardInterest(doc, d, month) }));
+}
+
+// Promos ending within 60 days of a day (S-127), for the Next card: the end date and what is still on
+// the card (its latest balance on that day). Dana on April 1, 2026: May 31 is 60 days away, and the
+// Visa's latest balance is March's end, 13,360.
+export function promoWarnings(doc, today) {
+  const DAY = 86400000;
+  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && typed(d.promoApr)).map((d) => {
+    const days = Math.round((Date.parse(d.promoEnds + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / DAY);
+    const b = balanceAt(doc, cardKey(doc, d), today);
+    return { debt: d, ends: d.promoEnds, days, balance: b ? b.amount : null };
+  }).filter((x) => x.days >= 0 && x.days <= 60);
 }

@@ -12,10 +12,12 @@ import { happySpendShare } from './happiness.js';
 import { ratio, minus } from './money.js';
 import { paretoLevels } from './pareto.js';
 import { incomeMonth } from './income-month.js';
+import { promoEnded } from './debts.js';
 
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100 + 0);
 const monthOf = (d) => d.slice(0, 7);
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
+const exactMoney = (x) => '$' + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const lastDay = (m) => { const [y, mm] = m.split('-').map(Number); return m + '-' + String(new Date(Date.UTC(y, mm, 0)).getUTCDate()).padStart(2, '0'); };
 
 // The plan for a month: not started, started, or reviewed (every line ticked off).
@@ -225,7 +227,9 @@ export function monthReview(doc, summary, today) {
     mistakes: t.mistakeMonthly,
     happyShare: happy,
     accuracy: { now: accThis, last: lastAcc, lastMonth: lastClosed ? lastClosed.key : null },
-    openItems: { count: checklist.open, summary: checklist.summary, items: checklist.items.filter((i) => i.open).map((i) => i.short) }
+    openItems: { count: checklist.open, summary: checklist.summary, items: checklist.items.filter((i) => i.open).map((i) => i.short) },
+    // The first month after a card's promo (S-127): its interest at the card's own APR.
+    promoEnded: promoEnded(doc, month).map((x) => ({ name: x.debt.label, promoApr: x.promoApr, interest: x.interest ? x.interest.amount : null }))
   };
   out.readings = reviewReadings(out);
   return out;
@@ -241,6 +245,7 @@ function reviewPareto(doc, summary, month) {
 // Factual sentences, no verdicts.
 export function reviewReadings(r) {
   const out = [];
+  for (const p of r.promoEnded || []) out.push('Your ' + p.promoApr + '% promo ended. Interest this month: ' + (p.interest === null ? 'not known yet (needs the balance)' : exactMoney(p.interest)) + '.');
   const bc = r.vsPlan.categories.better[0];
   const wl = r.vsPlan.lines.worse[0];
   if (bc) out.push(bc.name + ' came in ' + whole(bc.diff) + ' under plan.');

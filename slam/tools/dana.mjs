@@ -1,5 +1,6 @@
 // Builds Dana's test year (made up, no real data): a 34-year-old who owns a condo with a mortgage,
-// has a 401(k) from the paycheck, a car with no loan, and a Visa on a 0% balance transfer. October
+// has a 401(k) from the paycheck, a car with no loan, and a Visa on a 0% balance transfer that ends
+// May 31, 2026 (S-127), after which the card's 24.99% applies. October
 // 2025 to September 2026 closed, October 2026 open. Every month's actuals are typed (no log), so the
 // budget is the same each month; only the balances move. test/dana.test.js checks it by hand.
 //
@@ -38,7 +39,19 @@ const one = (n, opts = {}) => makeValue(n, { cadence: 'one-off', ...opts });
 //   Take-home 4,000 a month. Spending 1,560 in lines + the mortgage 1,700 + the Visa minimum 250 = 3,510;
 //   the emergency fund 300 (stays in savings). Each month checking gets 4,000, pays the 1,560 and the
 //   1,700, pays the Visa 440 (the 250 minimum and 190 more), and moves 300 to savings: checking stays
-//   2,400, savings goes up 300, the Visa (0% for now) goes down 440.
+//   2,400, savings goes up 300, the Visa goes down 440 while it is at 0% (through May 2026).
+//   From June 2026 the Visa charges 24.99% a year on the balance going into the month (interest =
+//   balance x 24.99 / 1,200, to the cent), still paid 440 a month, so it goes down 440 - interest:
+//     June:      12,480.00 x 24.99 = 311,875.20 (12,480 x 25 = 312,000 less 12,480 x 0.01 = 124.80);
+//                / 1,200 = 259.896 -> 259.90. End 12,480.00 + 259.90 - 440 = 12,299.90.
+//     July:      12,299.90 x 24.99 = 307,497.50 - 122.999 = 307,374.501; / 1,200 = 256.1454 -> 256.15.
+//                End 12,299.90 + 256.15 - 440 = 12,116.05.
+//     August:    12,116.05 x 24.99 = 302,901.25 - 121.1605 = 302,780.0895; / 1,200 = 252.3167 -> 252.32.
+//                End 12,116.05 + 252.32 - 440 = 11,928.37.
+//     September: 11,928.37 x 24.99 = 298,209.25 - 119.2837 = 298,089.9663; / 1,200 = 248.4083 -> 248.41.
+//                End 11,928.37 + 248.41 - 440 = 11,736.78.
+//     October (open): 11,736.78 x 24.99 = 293,419.50 - 117.3678 = 293,302.1322; / 1,200 = 244.4184 -> 244.42.
+//   The interest goes on the card, never through checking, so checking and savings do not change.
 //   February: 85 of cash taken out and never written down, so checking ends 2,315 (and stays there).
 //   401(k): 6,000 at the start; each month + 400 from the paycheck + the market:
 //     +60, +90, -120, +80, -150, +110, +140, +40, -60, +120, -30, +90.
@@ -50,7 +63,7 @@ const START = { chk: 2400, sav: 1200, visa: 16000, k401: 6000, condo: 285000, ca
 const ENDS = {
   chk: [2400, 2400, 2400, 2400, 2315, 2315, 2315, 2315, 2315, 2315, 2315, 2315],
   sav: [1500, 1800, 2100, 2400, 2700, 3000, 3300, 3600, 3900, 4200, 4500, 4800],
-  visa: [15560, 15120, 14680, 14240, 13800, 13360, 12920, 12480, 12040, 11600, 11160, 10720],
+  visa: [15560, 15120, 14680, 14240, 13800, 13360, 12920, 12480, 12299.90, 12116.05, 11928.37, 11736.78],
   k401: [6460, 6950, 7230, 7710, 7960, 8470, 9010, 9450, 9790, 10310, 10680, 11170],
   // 240,000 + 1,200.00 - 1,700 = 239,500.00; + 1,197.50 = 238,997.50; + 1,194.99 = 238,492.49;
   // + 1,192.46 = 237,984.95; + 1,189.92 = 237,474.87; + 1,187.37 = 236,962.24; + 1,184.81 = 236,447.05;
@@ -76,8 +89,8 @@ upd('Setup', (d) => {
   job.takeHome = makeValue(4000, { cadence: 'paycheck' });
   job.nextPayDate = makeDate('2025-10-31');
   const visa = addDebt(d, { id: 'debt-visa', label: 'Visa', type: 'credit-card' });
-  // A balance transfer: 24.99% on the card, 0% until January 31, 2027 (S-116), so no interest this year.
-  Object.assign(visa, { minimum: makeValue(250), apr: one(24.99), promoApr: one(0), promoEnds: '2027-01-31', dueDay: one(20) });
+  // A balance transfer: 24.99% on the card, 0% until May 31, 2026 (S-116, S-127).
+  Object.assign(visa, { minimum: makeValue(250), apr: one(24.99), promoApr: one(0), promoEnds: '2026-05-31', dueDay: one(20) });
   const mort = addDebt(d, { id: 'debt-mort', label: 'Mortgage', type: 'mortgage' });
   Object.assign(mort, { minimum: makeValue(1700), apr: one(6), dueDay: one(1) });
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking', institution: 'Aspen Bank' });

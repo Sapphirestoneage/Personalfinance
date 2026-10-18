@@ -5,7 +5,7 @@
 // every chart is one tap away, in Insights or on Track.
 
 import { h } from '../dom.js';
-import { money, pct, signedMoney, todayIso, dayLabel } from '../format.js';
+import { money, pct, signedMoney, todayIso, dayLabel, dateLabel } from '../format.js';
 import { statusChip } from '../components/status.js';
 import { nextCard } from '../components/cards.js';
 import { budgetCashStrip } from '../components/cashflow.js';
@@ -13,6 +13,7 @@ import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
 import { INSIGHT_TABS } from '../nav.js';
 import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
+import { promoWarnings } from '../../calc/debts.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
@@ -62,9 +63,16 @@ function typeExtras(ctx) {
   return accountTypeNudges(ctx.doc).map((x) => ({ key: 'type:' + x.id, label: x.label, why: x.why, where: 'balances' }));
 }
 
+// A promo ending within 60 days (S-127): "Your 0% promo on Visa ends May 31, 2026. $13,360 still on it."
+function promoExtras(ctx) {
+  return promoWarnings(ctx.doc, todayIso()).map((x) => ({ key: 'promo:' + x.debt.id,
+    label: 'Your ' + x.debt.promoApr.amount + '% promo on ' + x.debt.label + ' ends ' + dateLabel(x.ends) + '.' + (x.balance === null ? '' : ' ' + money(x.balance, !Number.isInteger(x.balance)) + ' still on it.'),
+    why: x.days === 0 ? 'today' : x.days + (x.days === 1 ? ' day' : ' days') + ' left', where: 'setup:debts' }));
+}
+
 // The Next card's extra items, numbered after the first.
 function extras(ctx, summary) {
-  return [staleExtra(ctx, summary), ...typeExtras(ctx)].filter(Boolean).map((x, i) => ({ ...x, label: (i + 2) + '. ' + x.label }));
+  return [...promoExtras(ctx), staleExtra(ctx, summary), ...typeExtras(ctx)].filter(Boolean).map((x, i) => ({ ...x, label: (i + 2) + '. ' + x.label }));
 }
 
 export function renderToday(ctx, summary) {
