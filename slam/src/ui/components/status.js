@@ -15,8 +15,9 @@ export function statusPicker(status, onChange, key) {
   if (status === 'guess') list.push(['guess', 'Guess']);
   if (status === 'computed') list.push(['computed', 'Computed']);
   const sel = h('select', {
-    class: 'chip st-' + (status || 'blank'), 'aria-label': 'Status', 'data-key': key ? key + ':status' : null,
+    class: 'chip st-' + (status || 'blank'), 'aria-label': 'Status, tap to change', title: 'Tap to change', 'data-key': key ? key + ':status' : null,
     onchange: (e) => onChange(e.target.value || null)
   }, options(list, status || ''));
-  return sel;
+  // A caret says it can be changed (S-121).
+  return h('span', { class: 'chip-pick' }, sel);
 }

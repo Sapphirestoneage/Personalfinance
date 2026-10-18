@@ -122,7 +122,9 @@ export function renderEstimates(ctx, summary, key) {
     question(ctx, 'One total for everything', ev.carved ? 'Split so far: ' + money(ev.carved) + '. Left in the total: ' + money(ev.estimate) + (ev.overSplit ? '. The split is bigger than the total.' : '') : 'Split into categories below any time; the total is kept.',
       ['categories', 'everything', key], findCategory(doc, 'everything')[key])) : null;
 
-  const list = h('div', { class: 'card' }, rows.filter((r) => !r.isEverything).map((r) => {
+  // Debt payments is computed from Setup, so it comes last, after Savings (Eli, S-121).
+  const ordered = [...rows.filter((r) => !r.isEverything && !r.isDebt), ...rows.filter((r) => r.isDebt)];
+  const list = h('div', { class: 'card' }, ordered.map((r) => {
     if (r.isDebt) {
       // Debts are set up once in Setup, Debts (S-106); here they are one line that adds up.
       return h('div', { class: 'qa', 'data-key': 'rough-debts' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from the debts in Setup. Never asked twice.')),
