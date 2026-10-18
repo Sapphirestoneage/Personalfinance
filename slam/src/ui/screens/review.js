@@ -118,7 +118,10 @@ function categoryRow(ctx, summary, r) {
     live.map((line) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
       // A premium line follows health coverage (S-117): its summary, never a question.
-      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id) : actualCell(ctx, summary, line))));
+      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id)
+        // A typed interest line once every card's interest is computed (S-120).
+        : (modelLine(summary, line.id) || {}).covered === 'computed-interest' ? h('span', { class: 'small muted', 'data-key': 'interest-replaced:' + line.id }, 'Replaced by computed interest (Debt payments)')
+          : actualCell(ctx, summary, line))));
 }
 
 // Month end: close the month (the checklist first), with the bridge in one line.

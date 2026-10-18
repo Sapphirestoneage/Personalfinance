@@ -7,7 +7,7 @@ import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
 import { premiumFor, PREMIUM_LINE_TYPES } from './coverage.js';
 import { actualsFromTransactions } from './tx-analysis.js';
-import { linkedLine, cardInterest } from './debts.js';
+import { linkedLine, interestHandoff } from './debts.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -98,7 +98,8 @@ function debtRows(doc) {
     const min = toMonthly(d.minimum, 'monthly');
     return row({ id: 'debt:' + d.id, debtId: d.id, name: d.label, state: d.state, estimate: min, actual: min, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: d.minimum.status });
   });
-  const interest = live.map((d) => ({ d, i: cardInterest(doc, d, doc.currentMonth) })).filter((x) => x.i).map(({ d, i }) =>
+  const ho = interestHandoff(doc, doc.currentMonth);
+  const interest = (ho.computed ? ho.rows : []).map(({ d, i }) =>
     row({ id: 'interest:' + d.id, debtId: null, interestOf: d.id, name: 'Interest (computed): ' + d.label, state: d.state, estimate: i.amount, actual: i.amount, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: 'computed', why: i.why }));
   return [...mins, ...interest];
 }
@@ -121,6 +122,7 @@ function resolveTop(cat, lines, key, freq) {
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
   const prem = premiumFor(doc, freq);
+  const handoff = interestHandoff(doc, doc.currentMonth).computed;
   // The month's log, once, for every line (S-087).
   const src = { log: actualsFromTransactions(doc.transactions || [], doc.currentMonth), plan: (doc.plans || {})[doc.currentMonth] || null };
   const cats = [];
@@ -129,7 +131,10 @@ export function budgetModel(doc) {
     const isDebt = cat.id === 'debt';
     // A line added in review for a later month is not part of this month (S-076).
     const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth))
-      .map((l) => (PREMIUM_LINE_TYPES.includes(l.type) ? premiumRow(l, freq, src, prem) : lineRow(l, freq, src)));
+      .map((l) => (PREMIUM_LINE_TYPES.includes(l.type) ? premiumRow(l, freq, src, prem)
+        // A typed interest line, once every card's interest is computed (S-120): replaced, never counted twice.
+        : l.type === 'interest' && handoff ? { ...lineRow({ ...l, estimate: NOT_FOR_ME, actual: NOT_FOR_ME }, freq, null), covered: 'computed-interest' }
+          : lineRow(l, freq, src)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,

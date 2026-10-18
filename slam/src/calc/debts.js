@@ -92,3 +92,13 @@ export function cardInterest(doc, debt, month) {
   const amount = r2((start.amount * apr) / 100 / 12);
   return { amount, why: (promo ? 'Promo ' + apr + '% until ' + debt.promoEnds : apr + '% a year') + ' on ' + start.amount, apr, promo, balance: start.amount };
 }
+
+// Typed interest hands off to computed (S-120). A typed interest line (Luis's "Interest charged") counts
+// until the cards have month balances. From the first month every live card has them, the computed
+// lines count and the typed line is replaced (shown as "replaced by computed interest"). Never both in
+// one month: while any card still has no month balances, the typed line counts and no computed line does.
+export function interestHandoff(doc, month) {
+  const cards = (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived');
+  const rows = cards.map((d) => ({ d, i: cardInterest(doc, d, month) }));
+  return { rows, computed: rows.length > 0 && rows.every((x) => x.i !== null) };
+}

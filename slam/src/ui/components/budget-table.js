@@ -135,7 +135,8 @@ export function budgetTable(ctx, summary) {
       for (const l of r.lines) {
         body.push(h('tr', { class: 'line' },
           h('td', {}, h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); if (!l.computed) ctx.goToField(['line', l.id, 'actual']); } }, l.name),
-            l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null),
+            l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null,
+            l.covered === 'computed-interest' ? h('span', { class: 'xs muted' }, ' (replaced by computed interest)') : null),
           cells(ctx, l, unit, summary, true, r.savings, r.id, r.isDebt)));
         body.push(narrowDetail(l, summary, COLUMNS.length));
       }
