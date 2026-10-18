@@ -1,7 +1,7 @@
 // Accounts and their balances for one month (S-084): name, type, start, end.
 // A start that was not typed shows last month's end, "carried from last
-// month", and typing a number replaces it. Used in Fill in, Cash flow, and at
-// month-end. Numbers come from calc/balances.js; this file only lays them out.
+// month", and typing a number replaces it. Set up once and updated at
+// month-end (Setup, Accounts). Numbers come from calc/balances.js; this file only lays them out.
 
 import { h, options } from '../dom.js';
 import { money, monthLabel } from '../format.js';
@@ -100,7 +100,7 @@ function cardsBlock(ctx, month) {
         'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
-// What you have against what you owe (S-103), at the top of the accounts in Profile.
+// What you have against what you owe (S-103), at the top of Setup, Accounts.
 export function accountsOverviewCard(ctx) {
   const o = accountsOverview(ctx.doc, ctx.doc.currentMonth);
   if (!o.count) return null;
@@ -119,11 +119,11 @@ export function accountsOverviewCard(ctx) {
 
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.
 export function cashOnHandNote(ctx, coh) {
-  const go = (e) => { e.preventDefault(); ctx.go('fill', { pass: 'profile' }); setTimeout(() => { const el = document.getElementById('accounts-card'); if (el) el.scrollIntoView(); }, 60); };
+  const go = (e) => { e.preventDefault(); ctx.jump('balances'); };
   if (coh.amount === null) {
-    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#fill', onclick: go }, 'Enter balances in Profile'));
+    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#setup', onclick: go }, 'Enter balances in Setup'));
   }
   return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: ', h('b', { class: 'num' }, money(coh.amount)),
     ' from your balances (' + coh.parts.filter((p) => p.amount !== null).map((p) => p.name + ' ' + money(p.amount)).join(', ') + ')' + (coh.missing.length ? '; missing ' + coh.missing.join(', ') : '') + '. ',
-    h('a', { href: '#fill', onclick: go }, 'Change in Profile'));
+    h('a', { href: '#setup', onclick: go }, 'Change in Setup'));
 }

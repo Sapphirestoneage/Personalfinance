@@ -4,11 +4,11 @@
 // fields keep working either way, nothing here is deleted.
 
 import { h } from '../dom.js';
-import { renderEras } from './fill-eras.js';
-import { renderNextStage } from './fill-next-stage.js';
+import { renderEras } from './future-eras.js';
+import { renderNextStage } from './future-next-stage.js';
 import { eraCards } from '../charts/era-charts.js';
 import { nextStageCards } from '../charts/next-charts.js';
-import { runningBar } from './fill.js';
+import { runningBar } from './plan.js';
 
 const TABS = [['eras', 'Dream life and Eras'], ['next', 'Next stage']];
 

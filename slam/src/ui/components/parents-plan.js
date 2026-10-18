@@ -7,7 +7,7 @@ import { parentsPlan, PARENTS_PLAN_MAX_AGE, PARENTS_PLAN_LINE_TYPES } from '../.
 export function parentsPlanToggle(ctx) {
   const p = parentsPlan(ctx.doc);
   if (p.agedOut) return h('p', { class: 'small muted' }, 'Aged off a parent\'s health plan (' + p.age + ' this year), so premiums count again.');
-  if (p.age === null) return h('p', { class: 'xs muted' }, 'On a parent\'s health insurance? Add a birth year in Profile (offered through age ' + PARENTS_PLAN_MAX_AGE + ').');
+  if (p.age === null) return h('p', { class: 'xs muted' }, 'On a parent\'s health insurance? Add a birth year in Setup, Basics (offered through age ' + PARENTS_PLAN_MAX_AGE + ').');
   if (!p.eligible) return null;
   return h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: p.chosen, 'data-key': 'parents-plan',
     onchange: (e) => ctx.update(e.target.checked ? 'On a parent\'s plan' : 'Own health plan', (d) => { d.household.parentsPlan = e.target.checked; }) }),

@@ -288,3 +288,34 @@ table.review .toggle button { padding: 4px 8px; }
 .tax-walk svg { max-width: 100%; height: auto; display: block; margin: var(--space-2) 0; }
 table.budget.tax-steps { max-width: 520px; margin: var(--space-2) 0; }
 table.budget.tax-steps td:first-child { position: static; min-width: 0; }
+
+/* The menu follows the monthly loop (S-106): top links on wide screens, a bottom bar on phones. */
+a.client-name { color: var(--text); text-decoration: none; }
+a.client-name:hover { text-decoration: underline; }
+.bottom-bar { display: none; }
+@media (max-width: 759px) {
+  .topbar .nav { display: none; }
+  .bottom-bar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; background: var(--surface);
+    border-top: 1px solid var(--border); padding: var(--space-1) var(--space-1) calc(var(--space-1) + env(safe-area-inset-bottom));
+  }
+  .bottom-bar > a, .bottom-bar > .more-btn {
+    flex: 1; min-height: var(--tap); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);
+    text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: var(--text-sm); background: none; border: none; cursor: pointer;
+  }
+  .bottom-bar > [aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+  .more-menu {
+    position: absolute; right: var(--space-2); bottom: calc(100% + var(--space-1)); background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-md); display: flex; flex-direction: column; min-width: 160px; padding: var(--space-1);
+  }
+  .more-menu a { padding: var(--space-3); text-decoration: none; color: var(--text); font-weight: 600; border-radius: var(--radius-sm); }
+  .more-menu a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+  .running { bottom: calc(var(--tap) + var(--space-2)); }
+  main { padding-bottom: 150px; }
+}
+.strip.four { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 760px) { .strip.four { grid-template-columns: repeat(4, 1fr); } }
+.loop-step.current { border-color: var(--accent); background: var(--accent-soft); }
+.empty-state { justify-content: space-between; padding: var(--space-2) 0; }
+.empty-state + .empty-state { border-top: 1px solid var(--border); }
+.change-in { margin: var(--space-2) 0 0; }

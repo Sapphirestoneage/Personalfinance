@@ -1,5 +1,6 @@
 // SLAM app shell: loads reference data, opens the store, routes between the
-// four screens, and re-renders after every change. Undo and redo live here.
+// screens of the monthly loop (S-106: Today, Plan, Track, Review, Insights,
+// Setup, plus Clients), and re-renders after every change. Undo and redo live here.
 
 import { createStore } from '../store/store.js';
 import { createStorage, localStorageBackend } from '../store/storage.js';
@@ -10,33 +11,31 @@ import { buildSummary } from '../calc/summary.js';
 import { primaryPayFrequency } from '../calc/model.js';
 import { loadRefs } from './refs.js';
 import { h } from './dom.js';
+import { SCREENS, OLD_HASHES, destination, whereFor } from './nav.js';
 import { renderClients } from './screens/clients.js';
-import { renderFill, passForPath } from './screens/fill.js';
-import { renderBudget } from './screens/budget.js';
-import { renderAnalyze } from './screens/analyze.js';
-import { renderTransactions } from './screens/fill-transactions.js';
-import { transactionCards } from './charts/tx-charts.js';
+import { renderToday } from './screens/today.js';
+import { renderPlan } from './screens/plan.js';
+import { renderTrack } from './screens/track.js';
+import { renderReview } from './screens/review.js';
+import { renderInsights } from './screens/insights.js';
+import { renderSetup } from './screens/setup.js';
 import { renderFuture } from './screens/future.js';
-import { reviewCards } from './screens/review.js';
 import { quickEntrySheet } from './components/quick-entry.js';
-import { cashflowCards } from './charts/cash-charts.js';
-import { monthsCards } from './charts/months-charts.js';
-import { trendCards } from './charts/trend-charts.js';
 
-const BASE_SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
-// Future tools (S-105): parked behind a setting on this device, off by default.
-const futureOn = () => storage.getSetting('futureTools') === 'on';
-const screensNow = () => (futureOn() ? [...BASE_SCREENS, ['future', 'Future']] : BASE_SCREENS);
 const root = document.getElementById('app');
 const storage = createStorage(localStorageBackend());
 const store = createStore(storage);
 let refs = null;
 let renderQueued = false;
+// Future tools (S-105): parked behind a setting on this device, off by default.
+const futureOn = () => storage.getSetting('futureTools') === 'on';
+const screensNow = () => (futureOn() ? [...SCREENS, ['future', 'Future']] : SCREENS);
+const known = (id) => id === 'clients' || screensNow().some(([k]) => k === id);
 
 const ui = {
-  screen: 'clients', pass: 'gut', focusPath: null, focusKey: null, dreamTerm: 'short', expanded: new Set(), sort: { key: null, dir: -1 },
-  lens: 'dollars', monthView: 'current', blind: false, units: {}, previewHandler: null, toast: null,
-  section: null
+  screen: 'clients', focusPath: null, focusKey: null, dreamTerm: 'short', expanded: new Set(), sort: { key: null, dir: -1 },
+  lens: 'dollars', blind: false, units: {}, previewHandler: null, toast: null,
+  anchor: null, more: false
 };
 
 function summaryOf(doc) { return doc ? buildSummary(doc, refs) : null; }
@@ -60,9 +59,17 @@ const ctx = {
   go(screen, opts = {}) {
     Object.assign(ui, opts);
     ui.screen = screen;
+    ui.more = false;
     if (location.hash !== '#' + screen) history.pushState(null, '', '#' + screen);
     queueRender();
     window.scrollTo(0, 0);
+  },
+  // A named place (nav.js): its screen, the tab or section to open, and what to scroll to.
+  jump(where, extra = {}) {
+    if (where.startsWith('future') && !futureOn()) return ctx.toast('That is a parked Future tool. Turn it on in Setup.');
+    const [screen, opts, anchor] = destination(where);
+    ui.anchor = extra.anchor || anchor;
+    ctx.go(screen, { ...opts, ...extra.ui });
   },
   get future() { return futureOn(); },
   setFuture(on) {
@@ -70,19 +77,12 @@ const ctx = {
     ctx.toast(on ? 'Future tools are on: see the Future screen' : 'Future tools are parked');
   },
   goToField(path) {
-    const pass = passForPath(path);
-    if (pass === 'eras' || pass === 'next') {
-      if (!futureOn()) return ctx.toast('That is a parked Future tool. Turn it on in Setup.');
-      if (path.includes('dreamLong')) ui.dreamTerm = 'long';
-      else if (path.includes('dream')) ui.dreamTerm = 'short';
-      ui.focusPath = path;
-      return ctx.go('future', { futureTab: pass });
-    }
-    ui.pass = pass;
+    const [where, open] = whereFor(store.doc, path);
+    for (const k of open) ui.expanded.add(k);
     if (path.includes('dreamLong')) ui.dreamTerm = 'long';
     else if (path.includes('dream')) ui.dreamTerm = 'short';
     ui.focusPath = path;
-    ctx.go('fill');
+    ctx.jump(where);
   },
   update(label, fn) {
     try { store.update(label, fn); } catch (e) { ctx.toast(e.message); }
@@ -102,10 +102,7 @@ const ctx = {
     queueRender();
     setTimeout(() => { if (ui.toast === msg) { ui.toast = null; queueRender(); } }, 2600);
   },
-  rerender: () => queueRender(),
-  // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze. Next stage and Eras are parked (S-105).
-  fillExtras: [{ id: 'cashflow', label: '5 Cash flow', render: renderTransactions }],
-  analyzeExtras: [['cashflow', 'Cash flow', (c, s) => cashflowCards(c, s)], ['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)], ['months', 'Months', (c, s) => monthsCards(c, s)], ['trends', 'Trends', (c, s) => trendCards(c, s)]]
+  rerender: () => queueRender()
 };
 
 store.subscribe((doc, label) => {
@@ -128,17 +125,18 @@ function render() {
   const scroll = window.scrollY;
 
   if (!store.doc && ui.screen !== 'clients') ui.screen = 'clients';
-  if (ui.screen === 'future' && !futureOn()) ui.screen = 'budget';
+  if (!known(ui.screen)) ui.screen = 'today';
   // The client list is the coach's; a client never sees it.
-  if (displayRole() === 'client' && ui.screen === 'clients') ui.screen = store.doc ? 'budget' : 'clients';
+  if (displayRole() === 'client' && ui.screen === 'clients') ui.screen = store.doc ? 'today' : 'clients';
   if (!store.doc && displayRole() === 'client') setDisplayRole('coach');
   document.documentElement.setAttribute('data-view', displayRole());
   const summary = summaryOf(viewed());
   ui.previewHandler = null;
-  const screen = { clients: renderClients, fill: renderFill, budget: renderBudget, analyze: renderAnalyze, future: renderFuture }[ui.screen];
+  const screen = { clients: renderClients, today: renderToday, plan: renderPlan, track: renderTrack, review: renderReview, insights: renderInsights, setup: renderSetup, future: renderFuture }[ui.screen];
   const body = screen(ctx, summary);
 
-  const parts = [topbar(), h('main', { id: 'main' }, body)];
+  const parts = [topbar(), h('main', { id: 'main', 'data-screen': ui.screen }, body)];
+  if (store.doc) parts.push(bottomBar());
   // Quick entry floats over any screen (S-085); it is a sheet, not a fifth screen.
   const qe = quickEntrySheet(ctx);
   if (qe) parts.push(qe);
@@ -146,6 +144,11 @@ function render() {
   root.replaceChildren(...parts);
   window.scrollTo(0, scroll);
 
+  if (ui.anchor) {
+    const el = document.getElementById(ui.anchor);
+    ui.anchor = null;
+    if (el) el.scrollIntoView({ block: 'start' });
+  }
   if (ui.focusKey) {
     const el = root.querySelector('[data-key="' + CSS.escape(ui.focusKey) + '"]');
     ui.focusKey = null;
@@ -163,23 +166,40 @@ function render() {
   }
 }
 
+function navLinks(list, cls) {
+  return list.map(([id, label]) => h('a', { href: '#' + id, class: cls || null, 'aria-current': ui.screen === id ? 'page' : null, 'data-nav': id,
+    onclick: (e) => { e.preventDefault(); if (id !== 'clients' && !store.doc) return ctx.toast('Open or create a client first'); ctx.go(id); } }, label));
+}
+
 function topbar() {
   const doc = store.doc;
   const asClient = displayRole() === 'client';
-  const screens = asClient ? screensNow().filter(([id]) => id !== 'clients') : screensNow();
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-inner' },
     h('span', { class: 'brand' }, 'SLAM'),
-    h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
-    h('nav', { class: 'nav', 'aria-label': 'Screens' }, screens.map(([id, label]) =>
-      h('a', { href: '#' + id, 'aria-current': ui.screen === id ? 'page' : null,
-        onclick: (e) => { e.preventDefault(); if (id !== 'clients' && !doc) return ctx.toast('Open or create a client first'); ctx.go(id); } }, label))),
+    // Clients are reached from the client name (S-106); a client never sees the list.
+    doc && !asClient
+      ? h('a', { href: '#clients', class: 'client-name', 'data-key': 'client-name', title: 'All clients', onclick: (e) => { e.preventDefault(); ctx.go('clients'); } }, doc.profile.name)
+      : h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
+    doc ? h('nav', { class: 'nav', 'aria-label': 'Screens' }, navLinks(screensNow())) : null,
     h('div', { class: 'row' },
       doc ? h('button', { class: 'btn small' + (asClient ? ' primary' : ''), 'data-key': 'view-as-client', 'aria-pressed': asClient ? 'true' : 'false',
         title: asClient ? 'You are seeing what the client sees. Changes are still saved as the coach.' : 'See the budget the way the client sees it',
         onclick: () => { setDisplayRole(asClient ? 'coach' : 'client'); queueRender(); } }, say('view-toggle', displayRole())) : null,
-      h('button', { class: 'btn small icon-btn', title: store.canUndo() ? 'Undo: ' + store.undoLabel() : 'Nothing to undo', 'aria-label': 'Undo', disabled: !store.canUndo(), onclick: () => store.undo() }, '↶'),
-      h('button', { class: 'btn small icon-btn', title: store.canRedo() ? 'Redo: ' + store.redoLabel() : 'Nothing to redo', 'aria-label': 'Redo', disabled: !store.canRedo(), onclick: () => store.redo() }, '↷'),
-      h('button', { class: 'btn small icon-btn', title: 'Light or dark', 'aria-label': 'Switch light or dark', onclick: cycleTheme }, '◐'))));
+      h('button', { class: 'btn small icon-btn', title: store.canUndo() ? 'Undo: ' + store.undoLabel() : 'Nothing to undo', 'aria-label': 'Undo', disabled: !store.canUndo(), onclick: () => store.undo() }, '\u21b6'),
+      h('button', { class: 'btn small icon-btn', title: store.canRedo() ? 'Redo: ' + store.redoLabel() : 'Nothing to redo', 'aria-label': 'Redo', disabled: !store.canRedo(), onclick: () => store.redo() }, '\u21b7'),
+      h('button', { class: 'btn small icon-btn', title: 'Light or dark', 'aria-label': 'Switch light or dark', onclick: cycleTheme }, '\u25d0'))));
+}
+
+// Phones (S-106): Today, Plan, Track, Review, and More (Insights, Setup, Clients, and Future when on).
+function bottomBar() {
+  const asClient = displayRole() === 'client';
+  const more = [['insights', 'Insights'], ['setup', 'Setup'], ...(futureOn() ? [['future', 'Future']] : []), ...(asClient ? [] : [['clients', 'Clients']])];
+  const inMore = more.some(([id]) => id === ui.screen);
+  return h('nav', { class: 'bottom-bar', 'aria-label': 'Screens' },
+    navLinks(SCREENS.slice(0, 4)),
+    h('button', { class: 'more-btn', 'data-key': 'more', 'aria-expanded': ui.more ? 'true' : 'false', 'aria-current': inMore ? 'page' : null,
+      onclick: () => { ui.more = !ui.more; queueRender(); } }, 'More'),
+    ui.more ? h('div', { class: 'more-menu' }, navLinks(more)) : null);
 }
 
 function cycleTheme() {
@@ -208,9 +228,11 @@ document.addEventListener('keydown', (e) => {
 let resizeTimer = null;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(queueRender, 150); });
 
+const fromHash = () => { const s = location.hash.slice(1); return OLD_HASHES[s] || s; };
+
 window.addEventListener('popstate', () => {
-  const s = location.hash.slice(1);
-  if (screensNow().some(([id]) => id === s)) { ui.screen = s; queueRender(); }
+  const s = fromHash();
+  if (known(s)) { ui.screen = s; queueRender(); }
 });
 
 async function boot() {
@@ -224,8 +246,8 @@ async function boot() {
   await store.load();
   const last = storage.getSetting('lastOpen');
   if (last && store.list().some((c) => c.id === last)) await store.open(last);
-  const s = location.hash.slice(1);
-  ui.screen = screensNow().some(([id]) => id === s) && store.doc ? s : (store.doc ? 'budget' : 'clients');
+  const s = fromHash();
+  ui.screen = known(s) && store.doc ? s : (store.doc ? 'today' : 'clients');
   render();
 }
 

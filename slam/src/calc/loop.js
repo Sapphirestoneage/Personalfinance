@@ -54,6 +54,33 @@ export function loopStrip(doc, summary, today) {
   };
 }
 
+// Which step of the loop is now (S-106), for the strip on Today: Review from the month's
+// third-to-last day (or once the month is over), Plan while the month has no plan and
+// nothing logged, otherwise Track.
+export function loopStep(strip, today) {
+  const end = lastDay(strip.month);
+  const reviewFrom = strip.month + '-' + String(Number(end.slice(8)) - 2).padStart(2, '0');
+  if (today >= reviewFrom) return 'review';
+  if (strip.plan.state === 'not started' && strip.track.entries === 0) return 'plan';
+  return 'track';
+}
+
+// The first session (S-106): five things, each done once, shown on Today until all are done.
+// "Done" is a question answered, never a number typed: a blank is not done, a typed 0 is.
+export function firstSession(doc, summary) {
+  const live = (xs) => xs.filter((x) => x.state !== 'archived');
+  const p = doc.profile;
+  const rows = summary.rows.filter((r) => !r.isDebt && (doc.settings.singleTotal ? r.isEverything : !r.isEverything));
+  const items = [
+    { key: 'gut', label: 'Gut number', done: doc.gut.status !== null, where: 'gut' },
+    { key: 'basics', label: 'Basics: birth year, state, situation, who you live with', done: p.birthYear !== null && p.birthYear !== undefined && !!p.state && doc.situation.length > 0 && !!doc.household.livingWith, where: 'setup:basics' },
+    { key: 'income', label: 'Income: at least one paycheck', done: live(doc.income).some((i) => i.takeHome.status !== null || i.gross.status !== null || (i.hourlyRate && i.hourlyRate.status !== null)), where: 'setup:income' },
+    { key: 'rough', label: 'Rough estimates for every category', done: rows.length > 0 && rows.every((r) => r.status.estimate !== null), where: 'estimates' },
+    { key: 'accounts', label: 'Accounts: at least one', done: live(doc.accounts).length > 0, where: 'setup:accounts' }
+  ];
+  return { items, left: items.filter((i) => !i.done).length, done: items.every((i) => i.done) };
+}
+
 function nextKey(key) {
   let [y, m] = key.split('-').map(Number);
   m += 1;

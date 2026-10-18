@@ -1,11 +1,11 @@
-// Analyze, Eras: your dream life next to today (S-097), then the blocks, cash month by month through every era next to
+// Future, Eras: your dream life next to today (S-097), then the blocks, cash month by month through every era next to
 // staying in regular life, and each era's money. Numbers from src/calc/eras.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
 import { lines, hbars } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import { eraStrip, eraColor, dreamCompare } from '../screens/fill-eras.js';
+import { eraStrip, eraColor, dreamCompare } from '../screens/future-eras.js';
 
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const short = (key) => SHORT[Number(key.slice(5)) - 1] + ' ' + key.slice(2, 4);
@@ -41,7 +41,7 @@ export function eraCards(ctx, s) {
     ], xs, width: chartWidth(false), fmt: money, label: cashLabel + ' by month' }),
     legendItems: [['With the eras', 'var(--series-actual)'], ['Regular life (dashed)', 'var(--chart-axis)']],
     extra: eraStrip(ctx, s),
-    reading: t.costVsRegular === null ? 'Fill in take-home and spending to follow the cash.'
+    reading: t.costVsRegular === null ? 'Add take-home and spending to follow the cash.'
       : 'By ' + monthLabel(t.endKey) + ', ' + (t.cashKnown ? 'cash is ' + money(t.cashEnd) : 'cash has changed by ' + signedMoney(t.cashEnd)) + ', against ' + money(t.regularEnd) + ' in regular life: ' +
         (t.costVsRegular > 0 ? 'the eras cost ' + money(t.costVsRegular) + '.' : 'the eras come out ' + money(-t.costVsRegular) + ' ahead.') +
         (t.eras.some((e) => e.runsOut) ? ' Cash runs out in ' + t.eras.filter((e) => e.runsOut).map((e) => e.name).join(' and ') + '.' : '')

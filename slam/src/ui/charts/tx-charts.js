@@ -1,15 +1,17 @@
-// Analyze, Transactions: top 5 merchants and their share, spending by
-// weekday with the weekend split, small-and-frequent vs big-and-rare, and
-// the subscriptions list with yearly cost. Data from src/calc/tx-analysis.js.
+// Insights, Cash (S-106): top 5 merchants and their share, spending by
+// weekday with the weekend split, small-and-frequent vs big-and-rare, the
+// subscriptions list with yearly cost, and what the transactions show (moved
+// from the Cash flow pass). Data from src/calc/tx-analysis.js.
 
 import { h } from '../dom.js';
 import { money, pct } from '../format.js';
 import { hbars, heatRow, scatter } from './svg.js';
 import { card, chartWidth } from './catalog.js';
+import { emptyState } from '../components/jump.js';
 
 export function transactionCards(ctx, s) {
   const tx = s.transactions;
-  if (!tx) return [card(ctx, { id: 'tx-none', title: 'Transactions', reading: 'Import a bank or card CSV in Fill in, pass 5 Cash flow, to see these.' })];
+  if (!tx) return [h('div', { class: 'card', id: 'chart-tx-none' }, emptyState(ctx, 'Log a few entries or import a bank CSV to see merchants and habits.', 'import', 'Import a CSV'))];
   const u = ctx.ui.units['tx-top'] || 'dollars';
   const top = tx.top;
   const w = tx.weekdays;
@@ -39,6 +41,23 @@ export function transactionCards(ctx, s) {
         h('span', {}, x.merchant, x.fromTrial ? h('span', { class: 'xs warn' }, ' (started as a free trial)') : null),
         h('b', { class: 'num' }, money(x.amount, true) + ' / mo, ' + money(x.yearly, true) + ' / yr')))) : null,
       reading: d.subscriptions.length ? d.subscriptions.length + ' subscriptions cost ' + money(d.subscriptionsYearly) + ' a year.' : 'No monthly subscriptions found yet (needs two months of data).'
-    })
+    }),
+    findingsCard(ctx, s)
   ];
+}
+
+function findingsCard(ctx, s) {
+  const d = s.transactions.detections;
+  const li = (a, b) => h('li', { class: 'small' }, h('span', {}, a), h('b', { class: 'num' }, b));
+  return card(ctx, {
+    id: 'tx-findings', title: 'What the transactions show',
+    extra: h('ul', { class: 'plain' },
+      li('Subscriptions (' + d.subscriptions.length + ')', money(d.subscriptionsYearly) + ' a year'),
+      d.priceCreep.map((p) => li('Price went up: ' + p.merchant + ' ' + money(p.from, true) + ' to ' + money(p.to, true), '+' + money(p.yearly, true) + ' a year')),
+      d.trials.map((t) => li('Free trial turned paid: ' + t.merchant + ' on ' + t.paidDate, money(t.amount, true) + ' a month')),
+      d.duplicates.map((x) => li('Likely duplicate: ' + x.merchant + ' on ' + x.date, money(x.amount, true))),
+      d.fees.length ? li('Fees (' + d.fees.length + ')', money(d.feesTotal, true)) : null,
+      d.bnpl.length ? li('Buy now, pay later payments (' + d.bnpl.length + ')', money(d.bnplTotal, true)) : null),
+    reading: 'Likely duplicates are resolved in the log on Track.'
+  });
 }

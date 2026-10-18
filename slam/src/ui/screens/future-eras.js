@@ -12,7 +12,7 @@ import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { nameEdit } from '../components/name-edit.js';
 import { addEra, moveEra, removeEra } from '../../store/edits.js';
-import { renderEstimates } from './fill-estimates.js';
+import { renderEstimates } from './plan-estimates.js';
 import { pct } from '../format.js';
 
 const findEra = (d, id) => d.eras.list.find((e) => e.id === id);

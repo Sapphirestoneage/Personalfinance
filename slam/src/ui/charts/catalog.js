@@ -10,6 +10,7 @@ import { findLine } from '../../store/edits.js';
 import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } from './svg.js';
 import { drafttReading } from '../../calc/lenses.js';
 import { stressReading } from '../../calc/happiness.js';
+import { changeIn } from '../components/jump.js';
 
 // --series-dream is the third series color; it draws the plan here (the dream life has its own card in Eras).
 const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', plan: 'var(--series-dream)', actual: 'var(--series-actual)' };
@@ -171,14 +172,14 @@ export function gutCard(ctx, s) {
 // Over time
 export function trendCard(ctx, s) {
   const cats = cd.trendCategories(s);
-  if (!cats.length) return card(ctx, { id: 'trend', title: 'Estimate vs actual over time', reading: 'Shows up once a second month has actuals (pick another month in Fill in, Actual).' });
+  if (!cats.length) return card(ctx, { id: 'trend', title: 'Estimate vs actual over time', reading: 'Shows up once a second month has actuals (pick another month in Plan, Start of month).' });
   const pick = ctx.ui.trendCat && cats.some((c) => c.id === ctx.ui.trendCat) ? ctx.ui.trendCat : (s.culprits[0] && cats.some((c) => c.id === s.culprits[0].id) ? s.culprits[0].id : cats[0].id);
   const d = cd.trendData(s, pick);
   const xs = d.points.map((p) => monthLabel(p.key).slice(0, 3) + (p.current ? ' (now)' : ''));
   const trend = s.history.trends[pick];
   return card(ctx, {
     id: 'trend', title: 'Estimate vs actual over time',
-    extra: h('select', { 'aria-label': 'Category', 'data-key': 'trend-cat', onchange: (e) => { ctx.ui.trendCat = e.target.value; ctx.rerender(); } },
+    extra: h('select', { 'aria-label': 'Category', 'data-key': 'trend-cat', 'data-picker': 'focus', onchange: (e) => { ctx.ui.trendCat = e.target.value; ctx.rerender(); } },
       cats.map((c) => h('option', { value: c.id, selected: c.id === pick }, c.name))),
     svg: lines({ series: [
       { name: 'Estimate', color: SERIES.estimate, values: d.points.map((p) => p.estimate), dashed: true },
@@ -190,7 +191,7 @@ export function trendCard(ctx, s) {
 
 export function varianceByMonthCard(ctx, s) {
   const d = cd.varianceByMonth(s);
-  if (!d.length) return card(ctx, { id: 'vbm', title: 'Variance by month', reading: 'Shows up once a second month has actuals (pick another month in Fill in, Actual).' });
+  if (!d.length) return card(ctx, { id: 'vbm', title: 'Variance by month', reading: 'Shows up once a second month has actuals (pick another month in Plan, Start of month).' });
   const last = d[d.length - 1];
   return card(ctx, {
     id: 'vbm', title: 'Variance by month',
@@ -292,21 +293,20 @@ export function joyCard(ctx, s) {
   return card(ctx, {
     id: 'joy', title: 'Joy vs spend',
     svg: d.points.length ? scatter({ points: d.points.map((p) => ({ x: p.spend, y: p.joy, label: p.name, color: slotColor(slots, catId(p.category)), tip: p.name + ': ' + money(p.spend) + ', joy ' + p.joy })), width: chartWidth(true), xFmt: money, yFmt: (v) => String(Math.round(v)), xLabel: 'Monthly spend', yLabel: 'Joy', splitX: d.splitSpend, splitY: d.splitJoy, yMax: 10 }) : null,
-    reading: low.length ? 'Lowest joy per dollar: ' + low.map((x) => x.name).join(', ') + '. Bottom right (high spend, low joy) is where to cut first.' : 'Rate joy on a few lines (Fill in, Actual, Details) to see this.'
+    reading: low.length ? 'Lowest joy per dollar: ' + low.map((x) => x.name).join(', ') + '. Bottom right (high spend, low joy) is where to cut first.' : 'Rate joy on a few lines (Setup, Categories and lines, Details) to see this.'
   });
 }
 
-// Mistakes are self-selected here (S-069): tick what was a mistake (a late fee,
+// Mistakes are self-selected on Review (S-069, S-106): tick what was a mistake (a late fee,
 // a ticket, an impulse buy). Nothing is a mistake until the client says so.
 // A mistake the coach tags stays coach-only until the coach shares it (S-096);
 // one the client ticks is theirs, so it is shared from the start.
-export function mistakeCard(ctx, s) {
+export function mistakePicker(ctx, s) {
   const asClient = ctx.role === 'client';
   const shared = (id) => { const f = findLine(ctx.doc, id); return !!(f && f.line.mistakeShared); };
-  const m = cd.mistakeData(s);
   const lines = s.rows.filter((r) => !r.savings && !r.isDebt).flatMap((r) => r.lines.filter((l) => !l.computed && l.basis !== null && l.basis > 0).map((l) => ({ ...l, category: r.name })))
     .sort((a, b) => (b.tag === 'mistake') - (a.tag === 'mistake'));
-  const pick = h('div', { class: 'mistake-pick' },
+  return h('div', { class: 'mistake-pick' },
     h('div', { class: 'field-label' }, 'Which of these were mistakes?'),
     lines.length ? lines.map((l) => h('label', { class: 'check spread' },
       h('span', {}, h('input', { type: 'checkbox', checked: l.tag === 'mistake', 'data-key': 'mistake:' + l.id,
@@ -319,11 +319,16 @@ export function mistakeCard(ctx, s) {
         !asClient && l.tag === 'mistake' ? h('label', { class: 'xs check-inline' }, h('input', { type: 'checkbox', checked: shared(l.id), 'data-key': 'mistake-share:' + l.id,
           onchange: (e) => ctx.update(e.target.checked ? 'Share the mistake tag' : 'Keep the mistake tag to the coach', (d) => { findLine(d, l.id).line.mistakeShared = e.target.checked; }) }), ' Shared with client') : null),
       h('span', { class: 'num small' }, money(l.basis)))) : h('p', { class: 'small muted' }, 'No spending lines with amounts yet.'));
+}
+
+// The cost, read-only (Insights, S-106); which lines were mistakes is ticked on Review.
+export function mistakeCard(ctx, s) {
+  const m = cd.mistakeData(s);
   return card(ctx, {
     id: 'mistake', title: 'Mistake cost',
     svg: m.monthly > 0 ? hbars({ rows: [{ label: 'A month', values: [{ v: m.monthly, color: 'var(--bad)', tip: money(m.monthly) }] }, { label: 'A year', values: [{ v: m.yearly, color: 'var(--bad)', tip: money(m.yearly) }] }], width: chartWidth(true), fmt: money }) : null,
-    extra: pick,
-    reading: m.monthly > 0 ? 'What you marked as mistakes costs ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing marked as a mistake. Tick any line above that was one.'
+    extra: changeIn(ctx, 'mistakes', 'Review'),
+    reading: m.monthly > 0 ? 'What you marked as mistakes costs ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing marked as a mistake. Tick the lines that were mistakes on Review.'
   });
 }
 
@@ -356,7 +361,7 @@ export function tagsCard(ctx, s) {
       h('tbody', {}, rows.map((t) => h('tr', {}, h('td', {}, '#' + t.name, h('div', { class: 'xs muted' }, t.lines.join(', '))),
         h('td', { class: 'num' }, String(t.count)), h('td', { class: 'num' }, exact(t.estimate)),
         h('td', { class: 'num' }, exact(t.actual) + (t.actualMissing && t.actual !== null ? ' (partial)' : ''))))))) : null,
-    reading: !s.tags.length ? 'No tags yet. Add them on any line in the Actual pass (Subscription, Travel, anything you like).'
+    reading: !s.tags.length ? 'No tags yet. Add them on any line in Setup, Categories and lines (Subscription, Travel, anything you like).'
       : !rows.length ? 'Tags are made but not on any line yet.'
         : top ? '#' + top.name + ' is the biggest tag this month at ' + money(top.actual) + '. A line can carry more than one tag, so tags can overlap.' : 'No actuals on tagged lines yet.'
   });
@@ -365,7 +370,8 @@ export function tagsCard(ctx, s) {
 export function completionCard(ctx, s) {
   return card(ctx, {
     id: 'completion', title: 'How filled in is the picture',
-    extra: h('div', { class: 'chart', style: 'width:auto', html: ring({ value: s.completion.pct }) }),
+    extra: h('div', { class: 'row' }, h('div', { class: 'chart', style: 'width:auto', html: ring({ value: s.completion.pct }) }),
+      h('span', { class: 'small' }, h('b', { class: 'num' }, pct(s.completion.pct)), ' filled in, heavy numbers weighted more')),
     reading: s.completion.answered + ' of ' + s.completion.count + ' questions answered. ' + ctx.say('completion-note')
   });
 }

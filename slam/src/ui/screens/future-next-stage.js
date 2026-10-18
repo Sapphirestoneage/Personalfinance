@@ -1,6 +1,6 @@
 // Future, Next stage (parked, S-105): one drastic change (a new job, school, a move)
 // that costs money in the short term but is better on other measures.
-// Results are on Analyze, under Next stage.
+// Results are in the charts under it on the Future screen.
 
 import { cashOnHandNote } from '../components/accounts.js';
 import { cashOnHand } from '../../calc/balances.js';

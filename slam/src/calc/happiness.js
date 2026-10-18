@@ -60,7 +60,7 @@ export function stressOf(lines) {
 export function stressReading(s) {
   const money = (x) => '$' + Math.round(x).toLocaleString('en-US');
   const list = (xs) => (xs.length < 3 ? xs.join(' and ') : xs.slice(0, -1).join(', ') + ', and ' + xs[xs.length - 1]);
-  if (!s.ratedCount) return 'Rate stress next to joy or purpose on any line (Actual pass, Details) to see what to keep more of and what to look at first.';
+  if (!s.ratedCount) return 'Rate stress next to joy or purpose on any line (Setup, Categories and lines, Details) to see what to keep more of and what to look at first.';
   const out = [];
   const [first, ...rest] = s.lookFirst;
   if (first) out.push('Look at ' + first.name + ' first: ' + money(first.amount) + ' a month that drains more than it gives (stress ' + first.stress + ', joy or purpose ' + first.joy + ').' + (rest.length ? ' Then ' + list(rest.slice(0, 2).map((x) => x.name)) + '.' : ''));

@@ -1,15 +1,16 @@
-// Analyze, Cash flow (S-086): the full calendar chart (past and future on one
-// line, today marked, paydays and big bills labeled, days under the cushion
-// shaded), the list by date, pay-later flags, a month grid, this month so far,
-// and one what-if: move a bill's due day. Data from src/calc/calendar.js.
+// The cash calendar (S-086), on Track (S-106): the full calendar chart (past and
+// future on one line, today marked, paydays and big bills labeled, days under the
+// cushion shaded), pay-later flags, the list by date, a month grid, and this month
+// so far. The forecast check is in Insights, Cash; the what-if (move a bill's due
+// day) is in Setup, Bills and due dates. Data from src/calc/calendar.js.
 
 import { h, options } from '../dom.js';
 import { money, dayLabel, monthLabel, todayIso } from '../format.js';
 import { dayLine, hbars } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import { calendarFor, waitingCard, checkBalancesCard } from '../components/cashflow.js';
+import { calendarFor } from '../components/cashflow.js';
+import { emptyState } from '../components/jump.js';
 import { quickEntryButton } from '../components/quick-entry.js';
-import { bridgeCards } from './bridge-charts.js';
 import { cashCalendar, calendarReading, safeReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
 import { findLine } from '../../store/edits.js';
 import { makeValue } from '../../store/value.js';
@@ -113,10 +114,10 @@ function soFarCard(ctx, cal) {
 }
 
 // The one what-if: move a bill's due day and see the line change. Saving changes the due day itself.
-function whatIfCard(ctx, summary, cal) {
+export function whatIfCard(ctx, summary, cal) {
   const bills = [];
   for (const c of ctx.doc.categories) for (const l of c.lines) if (l.state !== 'archived' && l.dueDay && l.dueDay.amount) bills.push(l);
-  if (!bills.length) return card(ctx, { id: 'cf-whatif', title: 'What if a bill moved?', reading: 'Give a bill a due day (Fill in, Cash flow) to try moving it.' });
+  if (!bills.length) return card(ctx, { id: 'cf-whatif', title: 'What if a bill moved?', reading: 'Give a bill a due day above to try moving it.' });
   const st = ctx.ui.whatIf = ctx.ui.whatIf && bills.some((b) => b.id === ctx.ui.whatIf.lineId) ? ctx.ui.whatIf : { lineId: bills[0].id, day: bills[0].dueDay.amount };
   const line = bills.find((b) => b.id === st.lineId);
   const draft = JSON.parse(JSON.stringify(ctx.doc));
@@ -134,7 +135,7 @@ function whatIfCard(ctx, summary, cal) {
   });
 }
 
-function forecastCard(ctx) {
+export function forecastCard(ctx) {
   const months = Object.keys(ctx.doc.cashflow.forecasts || {}).sort().slice(-6);
   const rows = months.map((m) => forecastCheck(ctx.doc, m));
   return card(ctx, {
@@ -146,6 +147,6 @@ function forecastCard(ctx) {
 
 export function cashflowCards(ctx, s) {
   const cal = calendarFor(ctx, s, ctx.ui.cfHorizon || 30);
-  if (!ctx.doc.accounts.some((a) => a.state !== 'archived')) return [card(ctx, { id: 'cf-none', title: 'Cash flow', reading: 'Add accounts and balances in Fill in, Cash flow, to see cash by day.' })];
-  return [chartCard(ctx, cal, 'cf-chart', 'Cash by day'), ...bridgeCards(ctx, s), waitingCard(ctx, s), payLaterCard(ctx, cal), listCard(ctx, cal), gridCard(ctx, cal), soFarCard(ctx, cal), whatIfCard(ctx, s, cal), forecastCard(ctx), checkBalancesCard(ctx)].filter(Boolean);
+  if (!ctx.doc.accounts.some((a) => a.state !== 'archived')) return [h('div', { class: 'card', id: 'chart-cf-none' }, emptyState(ctx, 'Add a checking account and its balance to see cash by day.', 'balances', 'Add an account'))];
+  return [chartCard(ctx, cal, 'cf-chart', 'Cash by day'), payLaterCard(ctx, cal), listCard(ctx, cal), gridCard(ctx, cal), soFarCard(ctx, cal)].filter(Boolean);
 }

@@ -4,7 +4,7 @@
 // show what the client would see.
 
 export const COACH_ONLY = {
-  coachNotes: 'The coach\'s notes about the client (Fill in, Basics).',
+  coachNotes: 'The coach\'s notes about the client (Setup, Coach notes).',
   'plans.*.lines.*.note': 'Internal decision notes in the monthly plan.',
   'line.tag=mistake': 'A mistake tag, until the coach shares it (line.mistakeShared).',
   'cashflow.cushion': 'The coach\'s cushion setting (the calendar still uses it).',

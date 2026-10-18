@@ -1,6 +1,5 @@
-// Fill in, pass 2 Profile: profile, situation, household, accounts, coach notes (S-104).
-// Income is asked in Rough (what each paycheck brings home) and worked out in Actual
-// (gross, deductions, taxes, the paycheck check): incomeSection, below.
+// Setup, Basics and Income (S-106): profile, situation, household; then each
+// income source (take-home, gross, deductions, taxes, the paycheck check).
 // Only the fields that apply are shown (no roommates = no roommate fields; family only when living with family).
 
 import { h, options } from '../dom.js';
@@ -11,7 +10,6 @@ import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 import { makeValue } from '../../store/value.js';
 import { taxWalkView } from '../components/tax-walk.js';
-import { accountsCard, accountsOverviewCard } from '../components/accounts.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -350,35 +348,16 @@ export function renderProfile(ctx, summary) {
         hh.livingWith === 'roommates' ? textField(ctx, 'How many roommates', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } }) : null,
         hh.livingWith === 'family' ? textField(ctx, 'People in the home besides you', ['household', 'family', 'count'], hh.family.count, { numeric: true, width: '6em', set: (d, v) => { d.household.family.count = v; } }) : null),
       hh.livingWith === 'roommates' && rm.count > 0 ? h('div', {},
-        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share is the Rent line in the Actual pass.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null,
-      hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes on the Housing lines in the Actual pass. If you pay nothing, mark Housing "Doesn\'t apply" in the Rough pass.') : null),
-
-    accountsOverviewCard(ctx),
-    accountsCard(ctx, doc.currentMonth),
-    coachNotesCard(ctx),
-    futureToolsCard(ctx));
+        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share goes in Housing.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null,
+      hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes in Housing. If you pay nothing, mark Housing "Doesn\'t apply" in Your estimates (Plan).') : null));
 }
 
 // Future tools (S-105): the dream life, Eras, and Next stage are parked. One switch brings them back.
 export function futureToolsCard(ctx) {
-  return h('div', { class: 'card', id: 'future-tools' }, h('h2', {}, 'Future tools (parked)'),
+  return h('div', { class: 'card', id: 'future-tools' },
     h('p', { class: 'muted small' }, 'The dream life, Eras, and Next stage answer "what could life look like". They are parked so the monthly loop stays simple. Nothing is deleted.'),
     h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: ctx.future, 'data-key': 'future-tools',
       onchange: (e) => ctx.setFuture(e.target.checked) }), 'Show the Future screen (this device, every client)'));
-}
-
-// Income in two passes (S-104), one number each: Rough asks what each paycheck brings home (the
-// same take-home the Actual paycheck check uses); Actual works the paycheck out in full.
-function roughIncomeCard(ctx, inc, row) {
-  const p = (k) => ['income', inc.id, k];
-  const paid = ((FREQS.find(([k]) => k === inc.payFrequency) || [0, inc.payFrequency])[1] || '').toLowerCase();
-  if (inc.type === 'unemployment') {
-    return h('div', { class: 'qa', 'data-key': 'rough-income:' + inc.id }, h('div', { class: 'q' }, h('div', {}, inc.label), h('div', { class: 'hint' }, 'Benefits: the amount and withholding are in Actual.')),
-      h('b', { class: 'num' }, row && row.takeHomeMonthly !== null ? money(row.takeHomeMonthly) + ' a month' : '\u00b7'));
-  }
-  // The same take-home that Actual checks against the paystub: one number, asked here first.
-  return question(ctx, h('div', {}, inc.label, h('div', { class: 'hint' }, 'Take-home a paycheck, paid ' + paid + '. Gross, deductions, and taxes are in Actual.')),
-    null, p('takeHome'), inc.takeHome, { label: inc.label + ' take-home' });
 }
 
 function addIncomeButton(ctx) {
@@ -388,25 +367,20 @@ function addIncomeButton(ctx) {
   }) }, '+ Add income source');
 }
 
-export function incomeSection(ctx, summary, mode) {
+// Income and paychecks (Setup, S-106): each source's take-home first, then the paycheck in full.
+export function incomeSection(ctx, summary) {
   const doc = ctx.doc;
   const rowOf = (inc) => summary.income.sources.find((s) => s.id === inc.id);
-  if (mode === 'rough') {
-    return h('div', { class: 'card', id: 'rough-income' }, h('h2', {}, 'Income: about how much comes in?'),
-      doc.income.length ? null : h('p', { class: 'muted small' }, 'No income yet. Add each source of money coming in.'),
-      doc.income.filter((i) => i.state !== 'archived').map((inc) => roughIncomeCard(ctx, inc, rowOf(inc))),
-      addIncomeButton(ctx));
-  }
-  return h('div', { id: 'actual-income' }, h('h2', {}, 'Income: the paycheck in full'),
-    doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),
+  return h('div', { id: 'income' }, h('h2', {}, 'Income'),
+    doc.income.length ? null : h('p', { class: 'small' }, 'Add each source of money coming in, starting with the main paycheck.'),
     doc.income.map((inc) => incomeCard(ctx, inc, rowOf(inc))),
     addIncomeButton(ctx));
 }
 
 // The coach's own notes about the client (S-096): coach-only, so the client view leaves the card out.
-function coachNotesCard(ctx) {
+export function coachNotesCard(ctx) {
   if (ctx.role === 'client') return null;
-  return h('div', { class: 'card', id: 'coach-notes' }, h('h2', {}, 'Coach notes'),
+  return h('div', { class: 'card', id: 'coach-notes' },
     h('p', { class: 'muted small' }, 'Only you see these. The client view hides them.'),
     h('textarea', { 'data-key': 'coach-notes', 'aria-label': 'Coach notes', value: ctx.doc.coachNotes || '',
       onchange: (e) => ctx.update('Coach notes', (d) => { d.coachNotes = e.target.value; }) }));

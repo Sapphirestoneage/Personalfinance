@@ -1,4 +1,4 @@
-// Analyze: the budget-to-cash bridge for one month (S-088). The waterfall runs
+// Insights, Cash: the budget-to-cash bridge for one month (S-088). The waterfall runs
 // from the budget surplus to the change in cash; every step lists its amount,
 // where it came from, and a link to it. Data from src/calc/bridge.js.
 
@@ -7,12 +7,13 @@ import { money, signedMoney, monthLabel } from '../format.js';
 import { waterfall } from './svg.js';
 import { card, chartWidth } from './catalog.js';
 import { bridgeFor } from '../../calc/bridge.js';
+import { jumpLink } from '../components/jump.js';
 
-const LINKS = { actual: ['Fill in, Actual', 'actual', null], balances: ['Accounts and balances', 'profile', 'accounts-card'], log: ['The log', 'cashflow', null] };
+const LINKS = { actual: ['Review, fill gaps', 'actual'], balances: ['Setup, Accounts', 'balances'], log: ['The log on Track', 'log'] };
 
 export function linkTo(ctx, to) {
-  const [label, pass, anchor] = LINKS[to] || LINKS.log;
-  return h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); ctx.go('fill', { pass }); if (anchor) setTimeout(() => { const el = document.getElementById(anchor); if (el) el.scrollIntoView(); }, 60); } }, label);
+  const [label, where] = LINKS[to] || LINKS.log;
+  return jumpLink(ctx, where, label, 'bridge-link-' + where);
 }
 
 // Months that can be bridged: any with a balance, plus the month being worked on.
@@ -31,7 +32,8 @@ export function bridgeRows(br) {
 }
 
 // How close counts as "ties" is the coach's setting (S-096), so the client view does not show it.
-function materialityInput(ctx) {
+// It lives in Setup, Cushion and coach settings (S-106).
+export function materialityInput(ctx) {
   if (ctx.role === 'client') return null;
   const v = ctx.doc.settings.materiality;
   return h('label', { class: 'field small' }, h('span', { class: 'lbl' }, 'Ties when within (coach only)'),
@@ -47,7 +49,7 @@ function materialityInput(ctx) {
 export function bridgeCard(ctx, s, month, opts = {}) {
   const br = bridgeFor(ctx.doc, s.income, month);
   const months = bridgeMonths(ctx.doc);
-  const picker = opts.picker === false ? null : h('select', { 'aria-label': 'Month', 'data-key': 'bridge-month', onchange: (e) => { ctx.ui.bridgeMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month));
+  const picker = opts.picker === false ? null : h('select', { 'aria-label': 'Month', 'data-key': 'bridge-month', 'data-picker': 'range', onchange: (e) => { ctx.ui.bridgeMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month));
   if (br.surplus === null) return card(ctx, { id: 'bridge', title: 'Budget to cash', extra: picker, reading: br.reading });
   const list = h('ul', { class: 'plain', 'data-key': 'bridge-steps' },
     h('li', { class: 'small' }, h('span', {}, 'Budget surplus', h('div', { class: 'xs muted' }, 'Take-home ' + money(br.takeHome) + ' less spending and savings')), h('b', { class: 'num' }, signedMoney(br.surplus))),
@@ -59,7 +61,7 @@ export function bridgeCard(ctx, s, month, opts = {}) {
   return card(ctx, {
     id: opts.id || 'bridge', title: opts.title || 'Budget to cash, ' + monthLabel(month),
     svg: waterfall({ rows: bridgeRows(br), width: chartWidth(opts.half !== false), fmt: money, label: 'From budget surplus to change in cash' }),
-    extra: h('div', {}, picker, list, opts.id ? null : materialityInput(ctx)),
+    extra: h('div', {}, picker, list),
     reading: br.reading
   });
 }

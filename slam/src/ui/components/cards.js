@@ -1,5 +1,6 @@
-// Budget screen cards: Next, Biggest culprits, Gut check, Proof of cash,
-// Completion, Rough and unknown, and the small extras. Text and layout only.
+// Cards: Next (Today), Biggest culprits, Proof of cash, and Rough and unknown
+// (Insights, Compared), and the small extras (Insights, You). Text and layout only.
+// The gut check and completion are charts in Insights (S-106: one copy each).
 
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, STATUS_LABELS } from '../format.js';
@@ -36,18 +37,6 @@ export function culpritsCard(summary) {
     ) : h('p', { class: 'muted small' }, summary.blindSpot.pct === null ? 'Shows up once there are actuals to compare.' : 'Nothing came in over the estimate.'));
 }
 
-export function gutCard(summary) {
-  const g = summary.gutCheck;
-  const row = (label, v, note) => h('li', {}, h('span', {}, label, note ? h('span', { class: 'muted xs' }, ' ' + note) : null), h('b', { class: 'num' }, money(v)));
-  return h('div', { class: 'card' },
-    h('h3', {}, 'Gut check'),
-    h('ul', { class: 'plain' },
-      row('Gut number', g.gut),
-      row('Sum of estimates', g.estimates),
-      row('Actual', g.actual, g.actualUsesEstimateFor.length ? '(estimates for ' + g.actualUsesEstimateFor.length + ' categories)' : null)),
-    g.actualVsGutRatio !== null ? h('p', { class: 'reading' }, 'Actual spending is ' + times(g.actualVsGutRatio) + ' your gut number (' + signedMoney(g.actualVsGut) + ' a month).') : null);
-}
-
 export function proofCard(summary) {
   const p = summary.proofOfCash;
   if (!p.available || !p.flagged) return null;
@@ -58,20 +47,12 @@ export function proofCard(summary) {
     h('p', { class: 'small muted' }, p.diff < 0 ? 'Is money building up in the account, or is some spending missing? Which one is right?' : 'Is savings or a card balance covering the gap? Which one is right?'));
 }
 
-export function completionCard(ctx, summary) {
-  const c = summary.completion;
-  return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, 'How filled in is the picture'), h('b', { class: 'num' }, pct(c.pct))),
-    h('div', { class: 'meter', role: 'progressbar', 'aria-valuenow': Math.round(c.pct * 100), 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('span', { style: 'width:' + (c.pct * 100).toFixed(1) + '%' })),
-    h('p', { class: 'muted xs' }, c.answered + ' of ' + c.count + ' questions answered, heavy numbers weighted more. ' + ctx.say('completion-note')));
-}
-
 export function roughCard(ctx, summary) {
   const r = summary.rough;
   return h('div', { class: 'card' },
     h('h3', {}, 'Rough and unknown (' + r.length + ')'),
     r.length ? h('ul', { class: 'plain' }, r.map((x) => h('li', {},
-      h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); ctx.goToField(x.path); } }, x.label),
+      h('a', { href: '#', 'data-key': 'rough-go:' + x.label, onclick: (e) => { e.preventDefault(); ctx.goToField(x.path); } }, x.label),
       h('span', {}, x.amount !== null ? h('span', { class: 'num small' }, money(x.amount) + ' ') : null, statusChip(x.status)))))
       : h('p', { class: 'muted small' }, 'Nothing marked roughly, will email, or don\'t know.'));
 }

@@ -1,10 +1,14 @@
-// Fill in, pass 5 Cash flow: import a bank or card CSV, review and fix the
-// mapping (remembered per merchant), and see what the transactions reveal.
-// Line actuals come from the log on their own (S-087); there is no confirm step. Lives inside Fill in so the
-// app keeps four screens.
+// Track (S-106): weekly use only, no setup. In loop order: today's scheduled
+// items to confirm, Quick entry, the log for this month, the cash calendar,
+// then import a bank or card CSV (matched to what was logged), and a real
+// balance check. Accounts, paydays, bill dates, and the cushion live in Setup;
+// when one is missing, a one-line prompt links there.
+// Line actuals come from the log on their own (S-087); there is no confirm step.
 
 import { h, options } from '../dom.js';
-import { scheduleCard, waitingCard, checkBalancesCard } from '../components/cashflow.js';
+import { waitingCard, checkBalancesCard } from '../components/cashflow.js';
+import { cashflowCards } from '../charts/cash-charts.js';
+import { emptyState } from '../components/jump.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { setTransactionLine, setTransactionKind, removeTransaction } from '../../store/edits.js';
@@ -77,7 +81,7 @@ function importCard(ctx) {
     ctx.rerender();
   } });
   const p = st.pending;
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card', id: 'import-card' },
     h('h2', {}, 'Import transactions'),
     h('p', { class: 'muted small' }, 'Download a CSV from the bank or card website. Supported: ' + Object.values(FORMATS).map((f) => f.label).join(', ') + '. Nothing is sent anywhere.'),
     h('div', { class: 'grid two' },
@@ -101,7 +105,7 @@ function importCard(ctx) {
         h('button', { class: 'btn', onclick: () => { st.pending = null; ctx.rerender(); } }, 'Cancel'))) : null);
 }
 
-function reviewCard(ctx, summary, month) {
+function logCard(ctx, summary, month, months) {
   const doc = ctx.doc;
   const ui = ctx.ui;
   const lines = lineOptions(doc);
@@ -113,8 +117,9 @@ function reviewCard(ctx, summary, month) {
   const inMonth = doc.transactions.filter((t) => t.date.startsWith(month));
   const needs = inMonth.filter((t) => !isPending(t) && !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
   const list = (showAll ? inMonth : needs).slice(0, 300);
-  return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'The log, ' + monthLabel(month)), quickEntryButton(ctx)),
+  return h('div', { class: 'card', id: 'log-card' },
+    h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'The log'),
+      h('select', { 'aria-label': 'Month', 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))),
     h('p', { class: 'muted small' }, 'Everything logged this month: quick entries, confirmed bills and paychecks, and bank imports. Pick a line for anything that needs one.'),
     h('div', { class: 'spread' },
       h('div', { class: 'toggle' },
@@ -137,34 +142,29 @@ function reviewCard(ctx, summary, month) {
       : h('p', { class: 'muted small' }, showAll ? 'No transactions this month.' : 'Everything this month has a line.'));
 }
 
-function findingsCard(summary) {
-  const d = summary.transactions.detections;
-  const li = (a, b) => h('li', { class: 'small' }, h('span', {}, a), h('b', { class: 'num' }, b));
-  return h('div', { class: 'card' },
-    h('h2', {}, 'What the transactions show'),
-    h('ul', { class: 'plain' },
-      li('Subscriptions (' + d.subscriptions.length + ')', money(d.subscriptionsYearly) + ' a year'),
-      d.priceCreep.map((p) => li('Price went up: ' + p.merchant + ' ' + money(p.from, true) + ' to ' + money(p.to, true), '+' + money(p.yearly, true) + ' a year')),
-      d.trials.map((t) => li('Free trial turned paid: ' + t.merchant + ' on ' + t.paidDate, money(t.amount, true) + ' a month')),
-      d.duplicates.map((x) => li('Likely duplicate: ' + x.merchant + ' on ' + x.date, money(x.amount, true))),
-      d.fees.length ? li('Fees (' + d.fees.length + ')', money(d.feesTotal, true)) : null,
-      d.bnpl.length ? li('Buy now, pay later payments (' + d.bnpl.length + ')', money(d.bnplTotal, true)) : null));
+// What is missing for the calendar, as one-line prompts that link to Setup.
+function setupPrompts(ctx) {
+  const doc = ctx.doc;
+  const live = (xs) => xs.filter((x) => x.state !== 'archived');
+  const out = [];
+  if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the calendar knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
+  const noPayday = live(doc.income).filter((i) => i.payFrequency !== 'semimonthly' && !i.nextPayDate.date);
+  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the calendar knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
+  return out.length ? h('div', { class: 'card prompts' }, out) : null;
 }
 
-export function renderTransactions(ctx, summary) {
+export function renderTrack(ctx, summary) {
   const tx = summary.transactions;
   const months = [...new Set([...(tx ? tx.months : []), ctx.doc.currentMonth])].sort();
   const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : ctx.doc.currentMonth;
   return h('div', {},
-    // Accounts and their balances live in their own pass (S-103).
-    h('p', { class: 'small muted' }, 'Accounts and balances are in ', h('a', { href: '#fill', 'data-key': 'go-accounts', onclick: (e) => { e.preventDefault(); ctx.go('fill', { pass: 'profile' }); } }, '2 Profile'), '.'),
+    h('h1', {}, 'Track'),
+    setupPrompts(ctx),
     waitingCard(ctx, summary),
-    scheduleCard(ctx),
-    checkBalancesCard(ctx),
-    h('div', { class: 'row', style: 'margin:12px 0' }, h('b', {}, 'Month'),
-      h('select', { 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))),
-    reviewCard(ctx, summary, month),
-    possibleCard(ctx),
+    h('div', { class: 'card spread', id: 'quick-entry-card' }, h('span', {}, 'Spent something? Log it in a few taps.'), quickEntryButton(ctx)),
+    logCard(ctx, summary, month, months),
+    h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'), h('div', { class: 'grid' }, cashflowCards(ctx, summary))),
     importCard(ctx),
-    tx ? findingsCard(summary) : h('p', { class: 'muted' }, 'Nothing logged yet. Use Quick entry, or import a bank CSV.'));
+    possibleCard(ctx),
+    checkBalancesCard(ctx));
 }

@@ -1,4 +1,4 @@
-// Fill in, pass 3 Rough, and Your dream life at the top of Eras (S-097): one number per top-level category.
+// Plan, Your estimates (the Rough pass), and Your dream life at the top of Eras (S-097): one number per top-level category.
 // Rough also offers: one total instead, labeled guesses, last month's actual,
 // the personal correction, and a blind-guess round for revisit sessions.
 
@@ -7,13 +7,13 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
+import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
 import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
 import { parentsPlan } from '../../calc/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
-import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
+import { jumpLink } from '../components/jump.js';
 import { lastActual } from '../../calc/history.js';
 import { toMonthly } from '../../calc/normalize.js';
 import { setPlanAmount } from '../../store/plans.js';
@@ -122,26 +122,10 @@ export function renderEstimates(ctx, summary, key) {
       ['categories', 'everything', key], findCategory(doc, 'everything')[key])) : null;
 
   const list = h('div', { class: 'card' }, rows.filter((r) => !r.isEverything).map((r) => {
-    if (r.isDebt && isRough) {
-      // Rough debts: one row per debt, by who or where it is owed.
-      return h('div', { class: 'sub-lines' },
-        h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'One row per debt: per card, bank, person, or line of credit. Adds up here and in the Actual pass.')),
-          h('span', {}, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)))),
-        doc.debts.filter((x) => x.state !== 'archived').map((x) => debtQuick(ctx, x)),
-        debtTypeTotals(summary),
-        h('div', { class: 'row' },
-          h('button', { class: 'btn small ghost', onclick: () => {
-            let id;
-            ctx.update('Add debt', (d) => { id = addDebt(d, { label: 'Debt ' + (d.debts.length + 1) }).id; });
-            if (id) { ctx.ui.focusKey = 'debt:' + id + ':label'; ctx.rerender(); }
-          } }, '+ Add a debt'),
-          doc.debts.length ? null : h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: doc.noDebts, 'data-key': 'rough-no-debts',
-            onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts')));
-    }
     if (r.isDebt) {
-      return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Comes from the debts list. Never asked twice.')),
-        h('span', {}, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)),
-          doc.debts.length || doc.noDebts ? null : h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['debts']) }, 'Add debts')));
+      // Debts are set up once in Setup, Debts (S-106); here they are one line that adds up.
+      return h('div', { class: 'qa', 'data-key': 'rough-debts' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from the debts in Setup. Never asked twice.')),
+        h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)), jumpLink(ctx, 'setup:debts', doc.debts.length ? 'Change in Setup' : 'Add debts in Setup', 'rough-debts-go')));
     }
     const cat = findCategory(doc, r.id);
     // A category not yet typed asks what it counts as, so FAT and guesses add up right.
@@ -196,11 +180,12 @@ export function renderEstimates(ctx, summary, key) {
       isRough ? extrasFor(ctx, summary, r) : null);
   }));
 
-  const add = h('button', { class: 'btn', onclick: () => {
+  // Categories are added and renamed in Setup, Categories and lines (S-106); the dream entry keeps its own button.
+  const add = isRough ? h('p', { class: 'small' }, jumpLink(ctx, 'setup:categories', 'Add or change categories in Setup')) : h('button', { class: 'btn', onclick: () => {
     let id;
     ctx.update('Add category', (d) => { id = addCategory(d, 'New category').id; });
     if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
   } }, '+ Add category');
   return h('div', {}, header, isRough ? blindResult(summary) : null, total, list, add,
-    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "Break down" turns a category into sub-categories that carry into the Actual pass. Mark any guess "Roughly".'));
+    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "Break down" turns a category into sub-categories that carry into Review. Mark any guess "Roughly".'));
 }

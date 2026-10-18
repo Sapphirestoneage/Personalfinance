@@ -33,7 +33,7 @@ function loadMonth(doc, key) {
 export function switchMonth(doc, key) {
   if (!/^\d{4}-\d{2}$/.test(key)) throw new Error('Pick a month and a year');
   if (key === doc.currentMonth) return;
-  if (doc.months.some((m) => m.key === key)) throw new Error(key + ' is closed. View it from the month picker on the Budget screen.');
+  if (doc.months.some((m) => m.key === key)) throw new Error(key + ' is closed. View it in Past months on Review.');
   stashCurrent(doc);
   loadMonth(doc, key);
 }
