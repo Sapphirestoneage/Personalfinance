@@ -16,11 +16,13 @@ import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, c
 import { makeValue } from '../../store/value.js';
 
 // One calendar per render and horizon, from today.
+// Keyed on the document itself (every edit makes a new one), not its timestamp: two edits in
+// the same millisecond would otherwise show the older calendar.
 export function calendarFor(ctx, summary, horizon = 30) {
-  const key = summary.householdId + ':' + ctx.doc.updatedAt + ':' + horizon + ':' + todayIso();
-  ctx.ui.calCache = ctx.ui.calCache || {};
-  if (!ctx.ui.calCache[key]) ctx.ui.calCache = { [key]: cashCalendar(ctx.doc, summary.income, { today: todayIso(), horizon }) };
-  return ctx.ui.calCache[key];
+  const key = horizon + ':' + todayIso();
+  const c = ctx.ui.calCache;
+  if (!c || c.doc !== ctx.doc || c.key !== key) ctx.ui.calCache = { doc: ctx.doc, key, cal: cashCalendar(ctx.doc, summary.income, { today: todayIso(), horizon }) };
+  return ctx.ui.calCache.cal;
 }
 
 function accountSelect(ctx, key, value, onPick, label) {

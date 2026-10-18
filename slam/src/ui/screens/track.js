@@ -117,7 +117,10 @@ function logCard(ctx, summary, month, months) {
   const remember = ui.txRemember !== false;
   const inMonth = doc.transactions.filter((t) => t.date.startsWith(month));
   const needs = inMonth.filter((t) => !isPending(t) && !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
-  const list = (showAll ? inMonth : needs).slice(0, 300);
+  // The latest entries first; the rest of a long month is one tap away (S-109).
+  const all = (showAll ? inMonth : needs).slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const LATEST = 12;
+  const list = ctx.ui.logAll ? all.slice(0, 300) : all.slice(0, LATEST);
   const needIds = new Set(needs.map((t) => t.id));
   const needsLine = (t) => needIds.has(t.id);
   const editing = (t) => ctx.ui.expanded.has('entry:' + t.id);
@@ -151,7 +154,9 @@ function logCard(ctx, summary, month, months) {
       editing(t) ? entryMore(ctx, t) : null,
       h('button', { class: 'btn small ghost more-ctl', 'data-key': 'edit-entry:' + t.id, 'aria-expanded': editing(t) ? 'true' : 'false', onclick: () => toggleEdit(t) }, editing(t) ? 'Done' : 'Edit'))))
       : showAll ? h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, 'Nothing logged this month yet. Log the first thing you spend.'), quickEntryButton(ctx, 'Log an entry'))
-        : h('p', { class: 'muted small' }, 'Everything this month has a line.'));
+        : h('p', { class: 'muted small' }, 'Everything this month has a line.'),
+    all.length > LATEST ? h('button', { class: 'btn small ghost', 'data-key': 'log-all', onclick: () => { ctx.ui.logAll = !ctx.ui.logAll; ctx.rerender(); } },
+      ctx.ui.logAll ? 'Show the latest ' + LATEST : 'Show all ' + all.length) : null);
 }
 
 // What is missing for the calendar, as one-line prompts that link to Setup.

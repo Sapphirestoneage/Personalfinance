@@ -348,3 +348,4 @@ button.client-name { background: none; border: none; padding: var(--space-1) 0; 
 @media (max-width: 759px) { .search { order: 4; flex-basis: 100%; max-width: none; } .search-results { min-width: 0; } }
 /* Jumps land below the sticky header. */
 main [id] { scroll-margin-top: 150px; }
+@media (max-width: 759px) { .topbar .brand { display: none; } }

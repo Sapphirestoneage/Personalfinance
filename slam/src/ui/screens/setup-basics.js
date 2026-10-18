@@ -287,6 +287,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
   }[inc.type];
   const isWork = inc.type !== 'unemployment' && inc.type !== 'not-taxable' && inc.type !== 'family';
   const hourly = isWork && inc.payBasis === 'hourly';
+  const open = ctx.ui.expanded.has('inc-more:' + inc.id);
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, inc.label), countButton(ctx, inc)),
     archivedNote(ctx, inc),
@@ -302,15 +303,21 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
       : row && row.takeHomeStatus === 'computed'
         ? h('p', { class: 'small' }, statusChip('computed'), ' Take-home from the paystub lines: ', h('b', { class: 'num' }, money(row.takeHomePerPaycheck, true)), ' a paycheck, ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' a month.')
         : null,
-    hourly
-      ? question(ctx, 'Hourly rate', 'Before tax. Gross pay is worked out from this and the hours below', p('hourlyRate'), inc.hourlyRate, { cadence: false, placeholder: '$ / hour' })
-      : question(ctx, 'Gross pay (optional)', 'Before tax. Only needed if take-home is unknown, or for the income statement', p('gross'), inc.gross),
-    isWork ? textField(ctx, hourly ? 'Hours worked per week (needed for hourly pay)' : 'Hours worked per week (optional, for per-hour pay and the hours-of-work lens)', p('hoursPerWeek'), inc.hoursPerWeek, { numeric: true, width: '6em', set: set('hoursPerWeek') }) : null,
+    hourly ? question(ctx, 'Hourly rate', 'Before tax. Gross pay is worked out from this and the hours below', p('hourlyRate'), inc.hourlyRate, { cadence: false, placeholder: '$ / hour' }) : null,
+    hourly ? textField(ctx, 'Hours worked per week (needed for hourly pay)', p('hoursPerWeek'), inc.hoursPerWeek, { numeric: true, width: '6em', set: set('hoursPerWeek') }) : null,
     hourly && (inc.hourlyRate.amount === null || !inc.hoursPerWeek) ? h('p', { class: 'small warn' }, 'Add the hourly rate and the hours per week to work out gross pay.') : null,
-    isWork ? deductionsBlock(ctx, inc, row) : null,
-    inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
-    hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
-    row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null);
+    // The paycheck in full (gross, deductions, taxes, the check against the paystub) is one tap away (S-109).
+    h('button', { class: 'btn small ghost', 'data-key': 'inc-more:' + inc.id, 'aria-expanded': open ? 'true' : 'false', onclick: () => {
+      if (open) ctx.ui.expanded.delete('inc-more:' + inc.id); else ctx.ui.expanded.add('inc-more:' + inc.id);
+      ctx.rerender();
+    } }, open ? 'Fewer paycheck details' : 'Paycheck details: gross, deductions, taxes'),
+    open ? h('div', {},
+      hourly ? null : question(ctx, 'Gross pay (optional)', 'Before tax. Only needed if take-home is unknown, or for the income statement', p('gross'), inc.gross),
+      isWork && !hourly ? textField(ctx, 'Hours worked per week (optional, for per-hour pay and the hours-of-work lens)', p('hoursPerWeek'), inc.hoursPerWeek, { numeric: true, width: '6em', set: set('hoursPerWeek') }) : null,
+      isWork ? deductionsBlock(ctx, inc, row) : null,
+      inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
+      hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
+      row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null) : null);
 }
 
 // Basics (S-106): six things open (name, birth year, state, situation, who you live with,

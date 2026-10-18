@@ -130,3 +130,43 @@ client would see. See HOSTING.md for what a hosted version would add.
 ## Estimates are never overwritten
 
 The estimate is the client's own words; estimate vs actual measures how well they knew themselves. The app never writes over it. Adjustments (last month's actual, the personal correction, decisions in review) go into a monthly plan (`doc.plans`), which the table in Insights, Compared shows as its own Plan column with actual vs plan gaps.
+
+## How easy is it? (tools, S-109)
+
+- `node tools/journeys.mjs` walks three journeys on a phone and a desktop and counts the taps: a first
+  session (under 60), a month (under 120, each quick entry 6 or fewer), and five questions from Today.
+  It checks every number at the end against numbers worked out by hand. The latest table is in AUDIT.md.
+- `node tools/layout-check.mjs` (it also runs at the end of `tools/screens-check.mjs`) fails when a
+  screen is taller than 6 phone screens (Review's fill gaps: 2 for Riley), a heading appears twice, an
+  input sits in Insights, a setup input sits on Track, or a screen has more than 12 sections.
+- `node tools/gallery.mjs` takes every screen and Insights tab, phone and desktop, light and dark, for
+  Riley and Maya, and writes `tools/gallery/gallery.html`. Open it in a browser and scroll: one
+  screenshot per screen, like a slide deck, each with a caption.
+
+**How to approve the gallery.** The approved screenshots live in `tools/gallery-approved/`. After a
+change, run `node tools/gallery.mjs`: anything that looks different from the approved set is saved in
+`tools/gallery/` and marked "Changed since approved" in red. Look at each one. If it is right, run
+`node tools/gallery.mjs --approve` and commit `tools/gallery-approved/`. If not, fix it first.
+
+## The 5-task test
+
+Hand this to a real person (not the coach who built the budget). Open Riley's demo (Clients, "Riley,
+31"), go to Today, and read each task out loud. Do not explain the screens. Time each task and write
+down every pause or wrong turn.
+
+1. Log a $12 lunch.
+2. How much is safe to spend right now?
+3. Why did cash drop last month?
+4. What went over plan last month?
+5. Start closing the month.
+
+| Task | Time (seconds) | Hesitations or wrong turns | Done? |
+| --- | --- | --- | --- |
+| 1. Log a $12 lunch | | | |
+| 2. Safe to spend | | | |
+| 3. Why cash dropped last month | | | |
+| 4. What went over plan last month | | | |
+| 5. Start closing the month | | | |
+
+The tap counts for the same five tasks are in AUDIT.md (the journeys); this test is for what taps
+cannot show: where a person looks first, and what they expect a word to mean.

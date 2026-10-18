@@ -87,3 +87,80 @@ estimate history, and every Trends card were screenshotted at 390px in light and
 waterfall amounts, crowded month labels on line charts and the heatmap, a sparkline layout that wrapped,
 the year-long calendar squeezed into a phone (it now starts at this month, with "Back to" for the rest),
 and a by-date table too wide for a phone (now a list).
+
+# The loop menu audit (2026-10-18)
+
+The menu follows the monthly loop (S-105 to S-109): Today, Plan, Track, Review, Insights, Setup, with
+Clients from the client name and the future tools parked. The earlier "four screens" sections above
+describe the app before this.
+
+## Tests
+
+- `node --test`: every unit test passes, including the new ones for the loop step, the first-session
+  checklist, the Review summary rows, the "roughly" default, and how a number was worked out.
+- `node tools/screens-check.mjs`: every on-screen number matches the hand-computed files, and the
+  layout check (`tools/layout-check.mjs`) runs with it.
+- `node tools/journeys.mjs`: three journeys on a phone and a desktop, taps counted, numbers checked
+  by hand at the end.
+
+## Journeys (taps)
+
+What counts as a tap: a click or touch on the screen; a dropdown is 2 (open, pick); typing and the
+keyboard's own keys are not taps. Riley is on October 17, 2026 for the five questions.
+
+| Journey | Step | Phone taps | Desktop taps | Limit |
+| --- | --- | --- | --- | --- |
+| a. First session | New client | 1 | 1 |  |
+|  | Gut number | 2 | 2 |  |
+|  | Basics | 8 | 8 |  |
+|  | One income (take-home a paycheck) | 4 | 4 |  |
+|  | Rent (the Housing estimate) | 3 | 3 |  |
+|  | Rough estimates, the other 9 categories | 9 | 9 |  |
+|  | One account (checking and its balance) | 4 | 4 |  |
+|  | See Today | 1 | 1 |  |
+| a. First session | **Total** | **32** | **32** | under 60 |
+| b. A month | Make the plan (November, from the estimates) | 3 | 3 |  |
+|  | 20 quick entries (most taps for one: 4) | 62 | 62 |  |
+|  | Confirm 3 scheduled items | 3 | 3 |  |
+|  | Import a CSV that matches 5 entries | 3 | 3 |  |
+|  | Enter balances (checking at month end) | 4 | 3 |  |
+|  | Fill 2 gaps (none this month) | 3 | 3 |  |
+|  | Open the checklist | 1 | 1 |  |
+|  | Close the month | 2 | 2 |  |
+|  | Read the review | 0 | 0 |  |
+| b. A month | **Total** | **81** | **80** | under 120 |
+| c. Five questions | Log a $12 lunch | 3 | 3 | 6 |
+|  | Safe to spend | 0 | 0 | 0 |
+|  | Why cash dropped last month (the bridge) | 3 | 2 | 3 |
+|  | What went over plan last month | 1 | 1 | 3 |
+|  | Close the month (open the checklist) | 2 | 2 | 3 |
+| c. Five questions | **Total** | **9** | **8** |  |
+
+Each quick entry in journey b took 3 taps (4 the first time a line is not in the recent chips: one more
+to search). Question 2 (safe to spend) is on Today with no tap. Question 3 is 3 taps on a phone because
+Insights sits under More.
+
+## Inventory, Riley at phone width (390 x 844)
+
+| Before (screen) | Height (screens) | Sections | Charts | Inputs | After (screen) | Height | Sections | Charts | Inputs |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Budget | 7.2 | 15 | 5 | 3 | Today | 2.2 | 4 | 1 | 0 |
+| Fill in, 1 Gut | 1.0 | 1 | 0 | 3 | Plan, next month | 3.0 | 5 | 0 | 4 |
+| Fill in, 3 Rough | 8.7 | 3 | 0 | 120 | Plan, your estimates | 5.1 | 3 | 0 | 25 |
+| Fill in, 5 Cash flow | 7.4 | 5 | 0 | 71 | Track | 5.4 | 10 | 2 | 9 |
+| Fill in, 4 Actual | 18.5 | 16 | 0 | 174 | Review (fill gaps 1.6) | 5.4 | 7 | 0 | 11 |
+| Analyze | 40.9 | 64 | 34 | 128 | Insights, five tabs | 3.3 to 5.9 each | 6 to 11 | 3 to 8 | 0 or 1 picker |
+| Fill in, 2 Profile | 4.6 | 6 | 0 | 39 | Setup, ten sections | 1.0 to 3.2 each | 1 to 3 | 0 or 1 | 0 to 35 |
+| Fill in, 6 Next stage and 7 Eras | 1.0 and 3.8 | 1 and 5 | 0 | 0 and 40 | Future (parked, off) | | | | |
+
+`tools/layout-check.mjs` prints the full list for Riley and Maya, before and after, on every run.
+
+## Lessons
+
+| # | Rule | Result |
+| --- | --- | --- |
+| 5 | The menu follows the loop; each section in one place; Insights read-only; setup apart from weekly use | Pass. The layout check fails on a heading or chart title seen twice, a data input in Insights, or a setup input on Track; none found on any of the six households. |
+| 7 | Key visuals without clicking; every chart one tap away | Changed by request: Today shows the cash strip and four numbers only. Charts are in Insights, one tap on a desktop (two on a phone, under More), each tab one more. See the questions in the final message. |
+| 8 | Always a Next card | Pass. On Today, with the first-session checklist above it until done. |
+| 14 | Completion separate from progress | Pass. One completion card, in Insights, Compared. |
+| 18 | Every closed month has a bridge | Pass. Insights, Cash shows the bridge for any month (the month picker); Review shows it in one line with a link. |

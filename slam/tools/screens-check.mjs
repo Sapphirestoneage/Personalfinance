@@ -256,8 +256,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Import match summary', (await page.$eval('[data-key="match-summary"] b', (b) => b.textContent)), 'Matched 1, new 1, possible matches 0 to confirm.');
   await page.click('[data-key="tx-add"]');
   await page.waitForTimeout(150);
-  const srcs = await page.$$eval('.src-chip', (cs) => cs.map((c) => c.textContent));
-  check('loop', 'Log sources after merge', srcs.join(', '), 'Bank, merged, Bank');
+  // Latest first (S-109): Whole Foods on the 5th from the bank, then Trader Joe's (the bank's date, the 4th) merged with the quick entry.
+  const srcs = await page.$$eval('#log-card li', (ls) => ls.map((l) => l.querySelector('b').textContent + ' (' + l.querySelector('.src-chip').textContent + ')'));
+  check('loop', 'Log sources after merge', srcs.join('; '), 'WHOLE FOODS MKT (Bank); TRADER JOE S #552 (Bank, merged)');
   // Cash by day (S-086). By hand: checking starts at 2,500; Trader Joe's 54.20 and Whole Foods 80.10
   // are in the log; no income or plan yet. Today 2,500 - 54.20 - 80.10 = 2,365.70, also the lowest
   // point and safe to spend (no payday ahead).
@@ -507,6 +508,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('merge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// The layout check runs with the screen check (S-109): heights, one copy of each heading, read-only Insights, no setup on Track.
+console.log('layout (phone width)');
+const { layoutCheck } = await import('./layout-check.mjs');
+failures += (await layoutCheck(browser, URL)).failures;
 await browser.close();
 console.log(failures ? failures + ' FAILED' : 'All screen numbers match the expected files.');
 process.exit(failures ? 1 : 0);
