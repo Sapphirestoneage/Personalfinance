@@ -135,9 +135,9 @@ export function debtCard(ctx, debt, summary) {
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     payingLine(ctx, debt, summary),
     linkedLine(ctx.doc, debt) ? null : question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
-    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Setup, Accounts).')
+    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the card "' + linked.name + '" (What is owed, below).')
       // Dated balances (S-110) own the balance once there is one; it is never asked twice.
-      : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dateLabel(dated.date) + ', from the month balances (Setup, Accounts).')
+      : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dateLabel(dated.date) + ', from the month balances (What is owed, below).')
         : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     cardPromo(ctx, debt),

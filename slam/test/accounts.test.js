@@ -192,3 +192,12 @@ test('investments are never cash on hand', () => {
   // What you have and owe is the net worth now (S-111, test/networth.test.js). Cash is checking 1,000 + savings 2,000 only.
   assert.equal(cashOnHand(migrate(d)).amount, 3000);
 });
+
+test('a card or loan balance opens Credit and debt; a bank balance opens Accounts (S-126)', async () => {
+  const { whereFor } = await import('../src/ui/nav.js');
+  const { october } = await import('./fixtures/october.js');
+  const d = october();
+  // The October household has checking "chk" and the card "visa" (an account of type credit-card).
+  assert.deepEqual(whereFor(d, ['balances', '2026-10', 'chk', 'end'])[0], 'balances');
+  assert.deepEqual(whereFor(d, ['balances', '2026-10', 'visa', 'end'])[0], 'setup:debts');
+});

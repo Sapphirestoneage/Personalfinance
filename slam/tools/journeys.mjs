@@ -316,7 +316,7 @@ async function questions(browser, view, size) {
 }
 
 // d. Month-end balances for 5 accounts, on Riley: October's ends for checking, savings, the Visa, the
-// 401(k), and the Roth IRA, in Setup, Accounts. Then (not counted) October's net worth bridge shows them:
+// 401(k), and the Roth IRA, in Setup, Accounts (the Visa in Setup, Credit and debt). Then (not counted) October's net worth bridge shows them:
 // 3,000 + 400 + 17,100 + 11,300 + the car 8,400 (September's value) + paid ahead at October's end (S-119:
 // insurance 960 - 8 x 80 = 320, registration 180 - 4 x 15 = 120) - 300 - the loan 3,237.64 = 37,102.36;
 // FI 3,000 + 400 + 17,100 + 11,300 - 300 = 31,500.
@@ -330,9 +330,12 @@ async function balances(browser, view, size) {
   const J = 'd. Month-end balances, ' + view;
   await t.go('setup');
   await t.tap('[data-key="setup-accounts"]');
-  for (const [id, v] of [['chk', '3000'], ['sav', '400'], ['visa', '300'], ['k401', '17100'], ['roth', '11300']]) {
+  for (const [id, v] of [['chk', '3000'], ['sav', '400'], ['k401', '17100'], ['roth', '11300']]) {
     await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
   }
+  // The Visa's balance is what is owed, in Setup, Credit and debt (S-126).
+  await t.tap('[data-key="setup-debts"]');
+  await t.type('[data-path=\'["balances","2026-10","visa","end"]\']', '300');
   t.step('Month-end balances for 5 accounts');
   report('d. Month-end balances', view, t, 20);
   await page.evaluate(() => { location.hash = 'insights'; });

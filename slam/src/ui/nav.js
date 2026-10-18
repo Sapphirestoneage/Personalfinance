@@ -10,7 +10,7 @@ export const OLD_HASHES = { budget: 'today', fill: 'plan', analyze: 'insights' }
 
 export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['networth', 'Net worth'], ['you', 'You']];
 export const SETUP_SECTIONS = [
-  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['accounts', 'Accounts'], ['debts', 'Debts'], ['bills', 'Bills and due dates'],
+  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['accounts', 'Accounts'], ['debts', 'Credit and debt'], ['bills', 'Bills and due dates'],
   ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Cushion and coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
 ];
 
@@ -60,7 +60,8 @@ export function whereFor(doc, path) {
   // A premium line is owned by health coverage (S-117).
   if (a === 'line' && (doc.categories.flatMap((x) => x.lines).find((l) => l.id === id) || {}).type === 'health-insurance') return ['setup:coverage', []];
   if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
-  if (a === 'balances') return ['balances', []];
+  // A card's or loan's month balance lives in Setup, Credit and debt (S-126).
+  if (a === 'balances') return (doc.accounts || []).some((x) => x.id === c && x.type === 'credit-card') || (doc.debts || []).some((x) => x.id === c) ? ['setup:debts', []] : ['balances', []];
   if (a === 'accounts') return ['balances', ['acct-more:' + id]];
   if (a === 'transactions') return ['log', []];
   if (a === 'cashflow') return ['setup:coach', []];

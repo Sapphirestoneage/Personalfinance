@@ -66,3 +66,9 @@ theming beyond the tokens.
   payment shows on the debt without a second minimum, instead of leaving the minimum blank.
 - Card interest that is not in the budget shows up as "not explained yet" in the bridge; a line for it
   (or the APR on the card's balance) could explain it.
+
+## Credit tracker (parked 2026-10-18, S-126)
+
+- A card importer: pick the card by name and its details (APR, annual fee, promo terms, sign-up bonus)
+  fill in, each one editable. Needs a reference file in data/, versioned by year.
+- Annual fee and sign-up bonus (spend needed, by when, earned or not) on a card's debt.

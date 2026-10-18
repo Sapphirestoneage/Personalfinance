@@ -19,7 +19,7 @@ export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.filter((t) => t !== 'unset').m
 const typeOptionsFor = (a) => (a.type === 'unset' ? [['unset', ACCOUNT_TYPE_INFO.unset.label], ...ACCOUNT_TYPE_OPTIONS] : ACCOUNT_TYPE_OPTIONS);
 const TIER_OPTIONS = [['1', '1: cash now'], ['2', '2: can sell within days'], ['3', '3: retirement, with a penalty or rules'], ['4', '4: not liquid (a home, a car)']];
 // The quick ones get a button; every other type is one pick away (S-110).
-const QUICK_TYPES = ['checking', 'savings', 'credit-card'];
+const QUICK_TYPES = ['checking', 'savings'];
 
 // A balance box writes through setBalance (the month and account may be new).
 function balanceInput(ctx, month, acct, which, stored, label) {
@@ -47,7 +47,7 @@ function accountRow(ctx, month, r, stored) {
     h('div', { class: 'q' },
       h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
       latestLine(ctx, a.id),
-      h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
+      h('input', { type: 'text', class: 'institution', list: 'institutions', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
         onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
       h('div', { class: 'row' },
         h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(typeOptionsFor(a), a.type)),
@@ -102,44 +102,87 @@ function debtRow(ctx, month, l, stored) {
   const r = monthBalance(ctx.doc, month, l.key);
   const fake = { id: l.key, name: l.name };
   return h('div', { class: 'qa account-row', 'data-key': 'debt-row:' + l.key },
-    h('div', { class: 'q' }, h('div', {}, l.name), latestLine(ctx, l.key), h('div', { class: 'hint' }, 'What is owed. APR and payment are in Setup, Debts.')),
+    h('div', { class: 'q' }, h('div', {}, l.name), latestLine(ctx, l.key), h('div', { class: 'hint' }, 'What is owed. APR and payment are on the debt above.')),
     h('div', { class: 'balance-pair' },
       h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, fake, 'start', stored(l.key, 'start'), l.name + ' start'), balanceDate(ctx, month, fake, 'start'),
         r.start.from === 'carried' ? h('div', { class: 'xs muted' }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
       h('div', {}, h('div', { class: 'xs muted' }, 'End balance'), balanceInput(ctx, month, fake, 'end', stored(l.key, 'end'), l.name + ' end'), balanceDate(ctx, month, fake, 'end'))));
 }
 
+const blankBalance = { amount: null, cadence: 'one-off', status: null, source: 'client', asOf: null, note: '' };
+const storedFor = (doc, month) => (id, which) => (((doc.balances[month] || {})[id] || {})[which]) || blankBalance;
+
+// Banks and card companies already named (S-126): picked from a list, never typed twice.
+function institutionList(doc) {
+  const names = [...new Set(doc.accounts.map((a) => (a.institution || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y));
+  return h('datalist', { id: 'institutions' }, names.map((n) => h('option', { value: n })));
+}
+
+// Accounts (S-126): what you have, not what you owe. Cards and loans are in Setup, Credit and debt.
+// Grouped by type (bank and cash, investments, retirement, things you own) or by institution, where
+// each bank has its own "+ Add" so its name is never typed again.
 export function accountsCard(ctx, month, opts = {}) {
   const doc = ctx.doc;
   const b = balancesFor(doc, month);
-  const stored = (id, which) => (((doc.balances[month] || {})[id] || {})[which]) || { amount: null, cadence: 'one-off', status: null, source: 'client', asOf: null, note: '' };
+  const stored = storedFor(doc, month);
   const archived = doc.accounts.filter((a) => a.state === 'archived');
-  const add = (type) => {
+  const add = (type, institution) => {
     let id;
-    ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type }).id; });
+    ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type, institution: institution || '' }).id; });
     if (id) { ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
   };
+  const mine = b.rows.filter((r) => r.type !== 'credit-card');
+  const byBank = ctx.ui.acctGroup === 'institution';
+  const instOf = (r) => ((doc.accounts.find((a) => a.id === r.id) || {}).institution || '').trim();
+  const groups = byBank
+    ? [...new Set(mine.map(instOf))].sort((x, y) => (!x) - (!y) || x.localeCompare(y)).map((name) => ['inst:' + (name || 'none'), name || 'No bank named', mine.filter((r) => instOf(r) === name), name])
+    : ACCOUNT_GROUPS.filter(([gid]) => gid !== 'card').map(([gid, glabel, types]) => [gid, glabel, mine.filter((r) => types.includes(r.type)), null]);
   return h('div', { class: 'card', id: 'accounts-card' },
-    h('h2', {}, opts.title || 'Accounts and balances, ' + monthLabel(month)),
-    h('p', { class: 'muted small' }, 'Every account: bank, cash, cards, investments, retirement, and the things you own. A card\'s or loan\'s balance is what is owed. A start you leave blank is last month\'s end.'),
-    // Grouped (S-103): bank and cash, cards, investments and retirement, other; empty groups are left out.
-    ACCOUNT_GROUPS.map(([gid, glabel, types]) => {
-      const rows = b.rows.filter((r) => types.includes(r.type));
-      return rows.length ? [h('h3', { 'data-key': 'acct-group:' + gid }, glabel), rows.map((r) => accountRow(ctx, month, r, stored))] : null;
-    }),
-    (() => {
-      const debts = liabilities(doc).filter((l) => !l.account);
-      return debts.length ? [h('h3', { 'data-key': 'acct-group:debts' }, 'Loans and other debts'), debts.map((l) => debtRow(ctx, month, l, stored))] : null;
-    })(),
-    b.rows.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)),
-      b.rows.some((r) => r.card) ? h('span', {}, '. Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd))) : null) : h('p', { class: 'muted small' }, 'No accounts yet.'),
-    cardsBlock(ctx, month),
+    h('div', { class: 'spread' }, h('h2', {}, opts.title || 'Accounts and balances, ' + monthLabel(month)),
+      h('div', { class: 'toggle', role: 'group', 'aria-label': 'Group accounts' },
+        h('button', { 'aria-pressed': byBank ? 'false' : 'true', 'data-key': 'acct-by-type', onclick: () => { ctx.ui.acctGroup = 'type'; ctx.rerender(); } }, 'By type'),
+        h('button', { 'aria-pressed': byBank ? 'true' : 'false', 'data-key': 'acct-by-institution', onclick: () => { ctx.ui.acctGroup = 'institution'; ctx.rerender(); } }, 'By bank'))),
+    h('p', { class: 'muted small' }, 'What you have: bank, cash, investments, retirement, and the things you own. Cards and loans are in ',
+      jumpLink(ctx, 'setup:debts', 'Credit and debt', 'acct-to-credit'), '. A start you leave blank is last month\'s end.'),
+    institutionList(doc),
+    groups.map(([gid, glabel, rows, inst]) => (rows.length ? [h('div', { class: 'spread' }, h('h3', { 'data-key': 'acct-group:' + gid }, glabel),
+      inst !== null && inst ? h('select', { class: 'add-select', 'aria-label': 'Add an account at ' + inst, 'data-key': 'add-at:' + inst, onchange: (e) => { if (e.target.value) add(e.target.value, inst); } },
+        options([['', '+ Add at ' + inst], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => t !== 'credit-card')], '')) : null),
+    rows.map((r) => accountRow(ctx, month, r, stored))] : null)),
+    mine.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)), '.') : h('p', { class: 'muted small' }, 'No accounts yet.'),
     paidAheadBlock(ctx),
     h('div', { class: 'row' }, QUICK_TYPES.map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
       h('select', { class: 'add-select', 'aria-label': 'Add another kind of account', 'data-key': 'add-acct-type', onchange: (e) => { if (e.target.value) add(e.target.value); } },
-        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t))], ''))),
+        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card')], ''))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
+}
+
+// Credit and debt balances (S-126): every card's and loan's start and end for the month, what is owed.
+// Shown in Setup, Credit and debt, under the debts themselves.
+export function owedCard(ctx, month) {
+  const doc = ctx.doc;
+  const b = balancesFor(doc, month);
+  const stored = storedFor(doc, month);
+  const cards = b.rows.filter((r) => r.type === 'credit-card');
+  const loans = liabilities(doc).filter((l) => !l.account);
+  if (!cards.length && !loans.length && !cardMap(doc, month).noAccount.length) return null;
+  // Folded until there is a month balance to show (one tap opens it), so a long debt list stays short.
+  const keys = [...cards.map((r) => r.id), ...loans.map((l) => l.key)];
+  const any = Object.values(doc.balances || {}).some((m) => keys.some((k) => m && m[k]));
+  if (!any && !ctx.ui.expanded.has('owed-open')) {
+    return h('div', { class: 'card', id: 'owed-card' }, h('button', { class: 'btn small', 'data-key': 'owed-open', onclick: () => { ctx.ui.expanded.add('owed-open'); ctx.rerender(); } },
+      'Month balances for ' + keys.length + (keys.length === 1 ? ' card or loan' : ' cards and loans') + ' (optional)'),
+      h('p', { class: 'xs muted' }, 'What is owed at the start and end of each month, for the net worth bridge and card interest.'), cardsBlock(ctx, month));
+  }
+  return h('div', { class: 'card', id: 'owed-card' },
+    h('h2', {}, 'What is owed, ' + monthLabel(month)),
+    h('p', { class: 'muted small' }, 'A card\'s or loan\'s balance is what is owed. A start you leave blank is last month\'s end.'),
+    institutionList(doc),
+    cards.length ? [h('h3', { 'data-key': 'acct-group:card' }, 'Credit cards'), cards.map((r) => accountRow(ctx, month, r, stored))] : null,
+    loans.length ? [h('h3', { 'data-key': 'acct-group:debts' }, 'Loans and other debts'), loans.map((l) => debtRow(ctx, month, l, stored))] : null,
+    cards.length ? h('p', { class: 'small' }, 'Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd)), '.') : null,
+    cardsBlock(ctx, month));
 }
 
 // Every credit card, both ways (S-102): which debt each card pays down, what it owes, what is
@@ -148,7 +191,7 @@ function cardsBlock(ctx, month) {
   const m = cardMap(ctx.doc, month);
   if (!m.rows.length && !m.noAccount.length) return null;
   return h('div', { class: 'cards-map', 'data-key': 'cards-map' },
-    h('h3', {}, 'Credit cards'),
+    h('h3', {}, 'How each card is used'),
     m.rows.length ? h('ul', { class: 'plain' }, m.rows.map((r) => h('li', { class: 'small', 'data-key': 'card:' + r.id },
       h('div', { style: 'flex:1 1 100%' },
         h('b', {}, r.name + (r.institution ? ' (' + r.institution + ')' : '')), ' ',
