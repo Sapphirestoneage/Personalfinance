@@ -76,7 +76,8 @@ upd('Setup', (d) => {
   job.takeHome = makeValue(4000, { cadence: 'paycheck' });
   job.nextPayDate = makeDate('2025-10-31');
   const visa = addDebt(d, { id: 'debt-visa', label: 'Visa', type: 'credit-card' });
-  Object.assign(visa, { minimum: makeValue(250), apr: one(0), dueDay: one(20) });
+  // A balance transfer: 24.99% on the card, 0% until January 31, 2027 (S-116), so no interest this year.
+  Object.assign(visa, { minimum: makeValue(250), apr: one(24.99), promoApr: one(0), promoEnds: '2027-01-31', dueDay: one(20) });
   const mort = addDebt(d, { id: 'debt-mort', label: 'Mortgage', type: 'mortgage' });
   Object.assign(mort, { minimum: makeValue(1700), apr: one(6), dueDay: one(1) });
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking', institution: 'Aspen Bank' });

@@ -253,3 +253,13 @@ export function reviewReadings(r) {
 }
 
 export { lastDay };
+
+// Accounts that need a specific type (S-116): "Type not set" (the old Investment and Retirement types)
+// and "Other money account". Never guessed between a 401(k), an IRA, and a Roth.
+export function accountTypeNudges(doc) {
+  return (doc.accounts || []).filter((a) => a.state !== 'archived' && (a.type === 'unset' || a.type === 'other')).map((a) => ({
+    id: a.id, name: a.name,
+    label: a.type === 'unset' ? 'Pick what kind of account this is: ' + a.name : 'Pick a specific type for ' + a.name,
+    why: a.type === 'unset' ? 'Its type is not set' : 'It is an "other money account"'
+  }));
+}

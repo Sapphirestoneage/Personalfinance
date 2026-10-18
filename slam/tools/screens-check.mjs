@@ -98,7 +98,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Spending tile', tiles.Spending, money(exp.spending));
   check(name, 'Surplus tile', tiles[exp.surplus < 0 ? 'Shortfall' : 'Surplus'], signedMoney(exp.surplus));
   check(name, 'Savings rate tile', tiles['Savings rate'], pct(exp.savingsRate));
-  check(name, 'No charts on Today but the cash strip', String(await page.$$eval('#main .chart svg', (x) => x.filter((svg) => !svg.closest('#cash-strip')).length)), '0');
+  // Lesson 7 (S-116): Today shows numbers, not charts.
+  check(name, 'No charts on Today', String(await page.$$eval('#main .chart svg', (x) => x.length)), '0');
   await insights(page, 'where');
   check(name, 'Housing share (gauges)', String((await page.$eval('#chart-gauges .reading', (p) => p.textContent)).startsWith('Housing is ' + pct(exp.housingShare) + ' of take-home')), 'true');
   await insights(page, 'compared');
@@ -396,6 +397,13 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'March net worth bridge', await settled(page, '#chart-nw-bridge .reading', marNW), marNW);
   const carRead = 'The car costs about $316 a month you\'ll never get back (not counting maintenance, parking and tolls). Your trips by Uber, transit and a rental would be about $350.';
   check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
+  // The auto loan is paid by the Car payment line (S-116, by hand in test/debts.test.js): October's 340,
+  // on the loan going into October (September's end, 3,237.64): 16.19 interest, 323.81 principal.
+  await setup(page, 'debts');
+  check('riley', 'Loan minimum from its line', await settled(page, '[data-key="debt-min-from:debt-car"]', 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.'), 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.');
+  check('riley', 'Loan payment split', await settled(page, '[data-key="debt-split:debt-car"]', 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).'), 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).');
+  check('riley', 'Visa interest', await settled(page, '[data-key="debt-interest:debt-visa"]', 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.'), 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.');
+  await insights(page, 'networth');
   check('riley', 'Net worth charts drawn', String(await page.$$eval('#chart-nw-time svg, #chart-nw-assets-debts svg, #chart-nw-mix svg, #chart-nw-bridge svg', (x) => x.length)), '4');
   await go(page, 'track');
   await page.waitForSelector('#chart-cf-paylater');

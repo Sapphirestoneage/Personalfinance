@@ -3,6 +3,7 @@
 // This is about the data, never about how the client is doing.
 
 import { guessFor } from './guesses.js';
+import { linkedLine } from './debts.js';
 
 export const WEIGHTS = { heavy: 3, medium: 2, light: 1 };
 const COMPLETE = new Set(['known', 'roughly', 'not-for-me', 'computed']);
@@ -49,7 +50,8 @@ export function questionItems(doc, model, income) {
   } else {
     for (const d of doc.debts) {
       if (d.state === 'archived') continue;
-      add('min:' + d.id, d.label + ': minimum payment', ['debts', d.id, 'minimum'], WEIGHTS.heavy, d.minimum.status, d.minimum.amount);
+      // A debt a budget line pays reads its minimum from that line (S-116): asked once, on the line.
+      if (!linkedLine(doc, d)) add('min:' + d.id, d.label + ': minimum payment', ['debts', d.id, 'minimum'], WEIGHTS.heavy, d.minimum.status, d.minimum.amount);
       // A card linked to an account keeps its balance there (S-084), so it is not asked here.
       if (!(doc.accounts || []).some((a) => a.debtId === d.id && a.state !== 'archived')) add('bal:' + d.id, d.label + ': balance', ['debts', d.id, 'balance'], WEIGHTS.light, d.balance.status, null);
       add('apr:' + d.id, d.label + ': APR', ['debts', d.id, 'apr'], WEIGHTS.light, d.apr.status, null);
@@ -114,7 +116,7 @@ export function roughList(doc) {
   }
   for (const d of doc.debts) {
     if (d.state === 'archived') continue;
-    for (const k of ['balance', 'apr', 'minimum']) check(d.label + ': ' + k, ['debts', d.id, k], d[k]);
+    for (const k of ['balance', 'apr', 'minimum']) if (!(k === 'minimum' && linkedLine(doc, d))) check(d.label + ': ' + k, ['debts', d.id, k], d[k]);
   }
   return out;
 }

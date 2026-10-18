@@ -8,9 +8,11 @@ import { statusChip } from './status.js';
 import { sourceLink } from './how.js';
 
 // extra: one more item from outside the picture (S-114: balances not updated at month end), { label, why, where }.
-export function nextCard(ctx, summary, extra) {
+// extras: items from outside the picture (stale balances, accounts with no specific type), each { key, label, why, where }.
+export function nextCard(ctx, summary, extras = []) {
   const [first, ...rest] = summary.next;
-  const extraRow = extra ? h('button', { 'data-key': 'next-extra', onclick: () => ctx.jump(extra.where) }, extra.label + ' ', h('span', { class: 'muted xs' }, extra.why)) : null;
+  const list = (extras || []).filter(Boolean);
+  const extraRow = list.length ? list.map((x) => h('button', { 'data-key': 'next-extra' + (x.key ? ':' + x.key : ''), onclick: () => ctx.jump(x.where) }, x.label + ' ', h('span', { class: 'muted xs' }, x.why))) : null;
   if (!first) {
     return h('div', { class: 'card next-1' }, h('h3', {}, 'Next'),
       h('p', { class: 'big' }, 'The picture is filled in.'),
@@ -24,8 +26,8 @@ export function nextCard(ctx, summary, extra) {
     h('div', { class: 'spread' },
       h('div', {}, h('div', { class: 'big' }, '1. ' + first.label), h('div', { class: 'muted small' }, why(first))),
       h('button', { class: 'btn primary', onclick: () => ctx.goToField(first.path) }, 'Go')),
-    rest.length || extraRow ? h('div', { class: 'next-list' }, extraRow, rest.slice(0, extraRow ? 1 : 2).map((it, i) => h('button', { onclick: () => ctx.goToField(it.path) },
-      (i + (extraRow ? 3 : 2)) + '. ' + it.label + ' ', h('span', { class: 'muted xs' }, why(it))))) : null,
+    rest.length || extraRow ? h('div', { class: 'next-list' }, extraRow, rest.slice(0, Math.max(0, 2 - list.length)).map((it, i) => h('button', { onclick: () => ctx.goToField(it.path) },
+      (i + 2 + list.length) + '. ' + it.label + ' ', h('span', { class: 'muted xs' }, why(it))))) : null,
     summary.smallStuff.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Small stuff, under $100 a year (' + summary.smallStuff.length + ')'),
       h('ul', { class: 'plain' }, summary.smallStuff.map((it) => h('li', { class: 'small' }, it.label, statusChip(it.status))))) : null);
 }

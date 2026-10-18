@@ -4,7 +4,8 @@
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
 import { question } from './value-input.js';
-import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
+import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag, setDebtLine, setPromoEnds } from '../../store/edits.js';
+import { linkedLine, linkCandidates, splitPayment, cardInterest } from '../../calc/debts.js';
 import { nameEdit } from './name-edit.js';
 import { lineTypeSelect } from './type-select.js';
 import { DEBT_TYPE_OPTIONS } from './debt-quick.js';
@@ -77,7 +78,36 @@ export function lineDetail(ctx, cat, line, catHasAnswer) {
       : question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }));
 }
 
-export function debtCard(ctx, debt) {
+// S-116: the line that pays a loan, the payment split into interest and principal, and a card's interest.
+function payingLine(ctx, debt, summary) {
+  if (debt.type === 'credit-card') return null;
+  const line = linkedLine(ctx.doc, debt);
+  const cands = linkCandidates(ctx.doc, debt);
+  const pick = h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Paid by a budget line'),
+    h('select', { 'data-key': 'debt-line:' + debt.id, onchange: (e) => ctx.update('Paid by', (d) => setDebtLine(d, debt.id, e.target.value || null)) },
+      options([['', 'No: its own minimum, in Debt payments'], ...cands.map((c) => [c.id, c.name + ' (' + c.category + ')'])], line ? line.id : '')));
+  if (!line) return h('div', {}, pick, h('p', { class: 'muted xs' }, 'Pick the line if the payment is already in the budget (a Car payment line, say), so it is counted once.'));
+  const row = summary ? summary.rows.flatMap((r) => r.lines).find((l) => l.id === line.id) : null;
+  const payment = row ? (row.actual !== null ? row.actual : row.estimate) : null;
+  const sp = splitPayment(ctx.doc, debt, ctx.doc.currentMonth, payment);
+  return h('div', {}, pick,
+    h('p', { class: 'small', 'data-key': 'debt-min-from:' + debt.id }, 'Minimum: ' + money(row ? row.estimate : null) + ' a month, the estimate on the ' + line.name + ' line. Asked once, on the line.'),
+    h('p', { class: 'small', 'data-key': 'debt-split:' + debt.id }, sp.interest === null || payment === null
+      ? 'Interest and principal this month need the APR and the balance going into the month.'
+      : 'This month: ' + money(payment, true) + ' paid, ' + money(sp.interest, true) + ' interest (spent) and ' + money(sp.principal, true) + ' principal (pays down the balance).'));
+}
+
+function cardPromo(ctx, debt) {
+  if (debt.type !== 'credit-card') return null;
+  const ci = cardInterest(ctx.doc, debt, ctx.doc.currentMonth);
+  return h('div', {},
+    question(ctx, 'Promo APR (%), if any', 'A 0% balance transfer, say', ['debts', debt.id, 'promoApr'], debt.promoApr, { cadence: false, placeholder: '%' }),
+    h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Promo ends'),
+      h('input', { type: 'date', value: debt.promoEnds || '', 'data-key': 'debt-promo-ends:' + debt.id, onchange: (e) => ctx.update('Promo ends', (d) => setPromoEnds(d, debt.id, e.target.value || null)) })),
+    ci ? h('p', { class: 'small', 'data-key': 'debt-interest:' + debt.id }, 'Interest (computed) this month: ' + (ci.amount === null ? 'not yet. ' + ci.why : money(ci.amount, true) + '. ' + ci.why + '.') + ' It is in Debt payments, never typed.') : null);
+}
+
+export function debtCard(ctx, debt, summary) {
   const linked = linkedCardBalance(ctx.doc, debt.id);
   const obs = observations(ctx.doc, debt.id);
   const dated = obs.length ? obs[obs.length - 1] : null;
@@ -90,12 +120,14 @@ export function debtCard(ctx, debt) {
       h('div', { class: 'field' }, debt.state === 'archived'
         ? h('p', { class: 'small warn' }, 'Not counting (paid off or set aside). ', h('button', { class: 'btn small', onclick: () => ctx.update('Count debt again', (d) => { d.debts.find((x) => x.id === debt.id).state = 'active'; }) }, 'Count it again'))
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
-    question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
+    payingLine(ctx, debt, summary),
+    linkedLine(ctx.doc, debt) ? null : question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
     linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Setup, Accounts).')
       // Dated balances (S-110) own the balance once there is one; it is never asked twice.
       : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dated.date + ', from the month balances (Setup, Accounts).')
         : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
-    question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
+    cardPromo(ctx, debt),
+    linkedLine(ctx.doc, debt) ? null : question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
 }
 

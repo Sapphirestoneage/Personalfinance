@@ -52,10 +52,31 @@ const STEPS = {
   10: (doc) => ({ ...doc, schemaVersion: 11 }),
   // Version 11 to 12 (S-113): a home or vehicle gets its alternative costs (blank) and coach notes
   // (empty) in normalizing; the return assumption is 5% a year until the coach sets one. No amount changes.
-  11: (doc) => ({ ...doc, schemaVersion: 12 })
+  11: (doc) => ({ ...doc, schemaVersion: 12 }),
+  // Version 12 to 13 (S-116): the old "Investment" and "Retirement" account types become "Type not set"
+  // (tier 2 and tier 3, counting toward FI; balances kept); debts get a paying line (null), a promo APR
+  // (blank) and promo end (null) in normalizing. A debt with no minimum is linked to the one budget line
+  // of a matching type that has an amount (a car loan to the Car payment line). No amount changes.
+  12: (doc) => ({
+    ...doc, schemaVersion: 13,
+    accounts: (doc.accounts || []).map((a) => (a.type === 'investment' ? { ...a, type: 'unset', tier: 2 } : a.type === 'retirement' ? { ...a, type: 'unset', tier: 3 } : a)),
+    debts: (doc.debts || []).map((d) => ({ ...d, lineId: d.lineId === undefined ? autoLink(doc, d) : d.lineId }))
+  })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+
+// S-116: the one line of a matching type with an amount, for a debt with no minimum of its own.
+const LINK_TYPES = { 'car-loan': ['car-payment'], mortgage: ['rent'], 'student-loan': ['loan'], 'personal-loan': ['loan'] };
+function autoLink(doc, d) {
+  const min = d.minimum;
+  if (min && min.amount !== null && min.amount !== undefined) return null;
+  const types = LINK_TYPES[d.type] || [];
+  const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
+  const hits = (doc.categories || []).filter((c) => !c.savings && c.id !== 'debt').flatMap((c) => c.lines || [])
+    .filter((l) => types.includes(l.type || DEFAULT_LINE_TYPES[l.id]) && l.state !== 'archived' && (has(l.estimate) || has(l.actual)));
+  return hits.length === 1 ? hits[0].id : null;
+}
 
 function logOwnsActuals(doc) {
   const out = { ...doc, schemaVersion: 8 };
@@ -204,7 +225,11 @@ export function normalizeHousehold(doc) {
     if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });
-  out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
+  out.debts = (doc.debts || []).map((d) => {
+    const debt = withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay', 'promoApr']);
+    debt.promoApr = { ...debt.promoApr, cadence: 'one-off' };
+    return debt;
+  });
   const cf = doc.cashflow || {};
   out.cashflow = { ...newCashflow(), ...cf, cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' }, moves: cf.moves || {}, forecasts: cf.forecasts || {},
     checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } })) };

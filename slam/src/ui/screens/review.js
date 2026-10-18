@@ -7,6 +7,7 @@
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
+import { minimumAmount, linkedLine } from '../../calc/debts.js';
 import { valueInput } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { findCategory } from '../../store/edits.js';
@@ -106,7 +107,7 @@ function categoryRow(ctx, summary, r) {
   if (r.isDebt) {
     const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
     return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
-      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(d.minimum.amount) + ' minimum')))),
+      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(minimumAmount(ctx.doc, d)) + (linkedLine(ctx.doc, d) ? ' (the ' + linkedLine(ctx.doc, d).name + ' line)' : ' minimum'))))),
       h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
   }
   const cat = ctx.doc.categories.find((c) => c.id === r.id);

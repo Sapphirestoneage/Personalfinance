@@ -13,7 +13,9 @@ import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
 import { jumpLink } from './jump.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
 
-export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
+// "Type not set" is never picked; it only shows on an account that still has it (S-116).
+export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.filter((t) => t !== 'unset').map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
+const typeOptionsFor = (a) => (a.type === 'unset' ? [['unset', ACCOUNT_TYPE_INFO.unset.label], ...ACCOUNT_TYPE_OPTIONS] : ACCOUNT_TYPE_OPTIONS);
 const TIER_OPTIONS = [['1', '1: cash now'], ['2', '2: can sell within days'], ['3', '3: retirement, with a penalty or rules'], ['4', '4: not liquid (a home, a car)']];
 // The quick ones get a button; every other type is one pick away (S-110).
 const QUICK_TYPES = ['checking', 'savings', 'credit-card'];
@@ -47,7 +49,7 @@ function accountRow(ctx, month, r, stored) {
       h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
         onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
       h('div', { class: 'row' },
-        h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
+        h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(typeOptionsFor(a), a.type)),
         a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
           options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => {
             const other = doc.accounts.find((o) => o.id !== a.id && o.debtId === x.id && o.state !== 'archived');

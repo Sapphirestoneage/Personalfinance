@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -21,7 +21,7 @@ export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 // Investment, retirement, and HSA accounts (S-103) hold money that is not spent day to day: never cash on hand.
 // S-110 adds every kind of asset, so the balance sheet has one place for all of them.
-export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'investment', 'retirement', 'hsa', 'other',
+export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'unset', 'hsa', 'other',
   '401k', 'trad-ira', 'roth-ira', 'brokerage', '529', 'crypto', 'cash-value-life', 'home', 'vehicle', 'other-asset'];
 // What each type is (S-110). kind: cash (counted in the cash bridge), invested (it can rise or fall with
 // a market), valued (a thing you own and use: its value is entered), or owed (a card).
@@ -33,13 +33,13 @@ export const ACCOUNT_TYPE_INFO = {
   cash: { label: 'Cash', kind: 'cash', tier: 1, fi: true },
   'credit-card': { label: 'Credit card', kind: 'owed', tier: null, fi: true },
   brokerage: { label: 'Brokerage', kind: 'invested', tier: 2, fi: true },
-  investment: { label: 'Investment', kind: 'invested', tier: 2, fi: true },
+  // Type not set (S-116): the old "Investment" and "Retirement" types, until the coach picks one.
+  unset: { label: 'Type not set', kind: 'invested', tier: 2, fi: true },
   crypto: { label: 'Crypto', kind: 'invested', tier: 2, fi: true },
   other: { label: 'Other money account', kind: 'invested', tier: 2, fi: true },
   '401k': { label: '401(k), 403(b), or 457', kind: 'invested', tier: 3, fi: true },
   'trad-ira': { label: 'Traditional IRA', kind: 'invested', tier: 3, fi: true },
   'roth-ira': { label: 'Roth IRA', kind: 'invested', tier: 3, fi: true },
-  retirement: { label: 'Retirement', kind: 'invested', tier: 3, fi: true },
   hsa: { label: 'HSA', kind: 'invested', tier: 3, fi: true },
   529: { label: '529 college savings', kind: 'invested', tier: 3, fi: true },
   'cash-value-life': { label: 'Cash value life insurance', kind: 'invested', tier: 3, fi: true },
@@ -246,6 +246,8 @@ export function newDebt(fields = {}) {
     balance: makeValue(), apr: makeValue(), minimum: makeValue(), dueDay: makeValue(),
     // Cash flow (S-086): paid from this account (null = checking), the minimum or the statement balance.
     payFrom: null, payWith: 'minimum',
+    // S-116: the budget line that pays it (its estimate is the minimum), and a card's promo APR until a date.
+    lineId: null, promoApr: makeValue(null, { cadence: 'one-off' }), promoEnds: null,
     state: 'active'
   };
 }

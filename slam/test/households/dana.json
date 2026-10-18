@@ -1,5 +1,5 @@
 {
- "schemaVersion": 12,
+ "schemaVersion": 13,
  "id": "hh-lugw37i",
  "createdAt": "2025-10-01T09:00:00.000Z",
  "updatedAt": "2026-10-17T18:00:00.000Z",
@@ -3231,7 +3231,7 @@
     "note": ""
    },
    "apr": {
-    "amount": 0,
+    "amount": 24.99,
     "cadence": "one-off",
     "status": "known",
     "source": "client",
@@ -3256,6 +3256,16 @@
    },
    "payFrom": null,
    "payWith": "minimum",
+   "lineId": null,
+   "promoApr": {
+    "amount": 0,
+    "cadence": "one-off",
+    "status": "known",
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": "2027-01-31",
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3301,6 +3311,16 @@
    },
    "payFrom": null,
    "payWith": "minimum",
+   "lineId": null,
+   "promoApr": {
+    "amount": null,
+    "cadence": "one-off",
+    "status": null,
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": null,
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3475,6 +3495,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -4540,6 +4566,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -5603,6 +5635,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -6668,6 +6706,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -7731,6 +7775,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -8797,6 +8847,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -9860,6 +9916,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -10925,6 +10987,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -11988,6 +12056,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -13053,6 +13127,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -14117,6 +14197,12 @@
       "estimate": 1700,
       "actual": 1700
      },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
+     },
      "premiums": {
       "name": "Premiums",
       "categoryId": "health",
@@ -15180,6 +15266,12 @@
       "categoryId": "debt",
       "estimate": 1700,
       "actual": 1700
+     },
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
+      "categoryId": "debt",
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",

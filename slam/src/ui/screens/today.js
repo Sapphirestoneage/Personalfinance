@@ -1,7 +1,8 @@
 // Today (S-106): where the month stands, and what to do next. The Plan, Track,
 // Review strip (the step for now highlighted), the first-session checklist
 // until it is done, the Next card, the next 30 days of cash with safe to spend
-// and Quick entry, and four headline tiles. No other charts: they live in Insights.
+// and Quick entry, four headline tiles, and a link to each chart tab. Numbers only (lesson 7, S-116):
+// every chart is one tap away, in Insights or on Track.
 
 import { h } from '../dom.js';
 import { money, pct, signedMoney, todayIso, dayLabel } from '../format.js';
@@ -10,7 +11,8 @@ import { nextCard } from '../components/cards.js';
 import { budgetCashStrip } from '../components/cashflow.js';
 import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
-import { firstSession, staleBalances, loopStep, loopStrip } from '../../calc/loop.js';
+import { INSIGHT_TABS } from '../nav.js';
+import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
@@ -52,7 +54,17 @@ function staleExtra(ctx, summary) {
   if (loopStep(loopStrip(ctx.doc, summary, today), today) !== 'review') return null;
   const stale = staleBalances(ctx.doc, today);
   if (!stale.length) return null;
-  return { label: '2. Update balances: ' + stale.map((x) => x.name).join(', '), why: stale.map((x) => (x.last ? 'not since ' + dayLabel(x.last) : 'never')).join(', '), where: 'balances' };
+  return { key: 'stale', label: 'Update balances: ' + stale.map((x) => x.name).join(', '), why: stale.map((x) => (x.last ? 'not since ' + dayLabel(x.last) : 'never')).join(', '), where: 'balances' };
+}
+
+// Accounts with no specific type (S-116): one item per account.
+function typeExtras(ctx) {
+  return accountTypeNudges(ctx.doc).map((x) => ({ key: 'type:' + x.id, label: x.label, why: x.why, where: 'balances' }));
+}
+
+// The Next card's extra items, numbered after the first.
+function extras(ctx, summary) {
+  return [staleExtra(ctx, summary), ...typeExtras(ctx)].filter(Boolean).map((x, i) => ({ ...x, label: (i + 2) + '. ' + x.label }));
 }
 
 export function renderToday(ctx, summary) {
@@ -60,7 +72,14 @@ export function renderToday(ctx, summary) {
     h('h1', {}, 'Today'),
     loopStripCard(ctx, summary),
     firstSessionCard(ctx, summary),
-    nextCard(ctx, summary, staleExtra(ctx, summary)),
+    nextCard(ctx, summary, extras(ctx, summary)),
     budgetCashStrip(ctx, summary),
-    headlineTiles(ctx, summary));
+    headlineTiles(ctx, summary),
+    chartLinks(ctx));
+}
+
+// Every chart one tap from Today (lesson 7): one link per Insights tab.
+function chartLinks(ctx) {
+  return h('div', { class: 'card', id: 'today-charts' }, h('h3', {}, 'Charts'),
+    h('div', { class: 'row' }, INSIGHT_TABS.map(([id, name]) => h('button', { class: 'btn small', 'data-key': 'today-chart:' + id, onclick: () => ctx.jump('insights:' + id) }, name))));
 }

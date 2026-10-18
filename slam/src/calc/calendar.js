@@ -16,6 +16,7 @@ import { isCashAccount } from './balances.js';
 // The calendar's cash is checking only (S-094): savings is not spending money day to day.
 const inCalendar = (a) => a.type === 'checking';
 import { toMonthly } from './normalize.js';
+import { linkedLine } from './debts.js';
 
 const DAY = 86400000;
 const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
@@ -130,7 +131,8 @@ export function scheduledItems(doc, month, income) {
   // Debt payments from checking on the debt's due day: the minimum, or the card's
   // statement balance (last month's end) when the coach picked that and it is known.
   for (const debt of doc.debts) {
-    if (debt.state === 'archived') continue;
+    // A debt a budget line pays is scheduled as that line (S-116).
+    if (debt.state === 'archived' || linkedLine(doc, debt)) continue;
     const day = amountOfValue(debt.dueDay);
     if (!day) continue;
     const card = (doc.accounts || []).find((a) => a.debtId === debt.id && a.state !== 'archived');

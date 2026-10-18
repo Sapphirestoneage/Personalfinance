@@ -108,6 +108,8 @@ export function bridgeFor(doc, income, month) {
   const unexplained = explained !== null && actual !== null && !cardsMissing.length ? r2(actual - explained) : null;
   const out = {
     month, closed: b.closed, takeHome: b.takeHome, surplus: b.surplus, savings: b.savings, steps, explained,
+    // Each budget line's actual this month (a loan's payment, S-116).
+    lineActuals: Object.fromEntries(b.lines.map((l) => [l.id, l.actual])),
     cashStart: bal.cashStart, cashEnd: bal.cashEnd, actual, unexplained, missing,
     within: within(doc),
     ties: unexplained === null ? null : Math.abs(unexplained) < within(doc)

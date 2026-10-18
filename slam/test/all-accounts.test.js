@@ -36,7 +36,8 @@ test('each new type has its tier and FI default; a home and a vehicle carry thei
   assert.equal(newAccount({ type: 'brokerage' }).securedDebtId, undefined, 'only a home or vehicle has one');
   // Absent fields fall back to the type (an account made before S-110 and never normalized).
   assert.deepEqual([tierOf({ type: 'roth-ira' }), countsForFI({ type: 'vehicle' })], [3, false]);
-  assert.equal(Object.keys(ACCOUNT_TYPE_INFO).length, 18);
+  // 18 types before S-116; "Investment" and "Retirement" became one "Type not set": 17.
+  assert.equal(Object.keys(ACCOUNT_TYPE_INFO).length, 17);
 });
 
 test('changing a type brings its defaults; the coach can change the tier and FI flag', () => {

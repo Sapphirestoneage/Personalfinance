@@ -1,5 +1,5 @@
 {
- "schemaVersion": 12,
+ "schemaVersion": 13,
  "id": "hh-odl4gz9",
  "createdAt": "2025-10-01T09:00:00.000Z",
  "updatedAt": "2026-10-17T18:00:00.000Z",
@@ -3303,6 +3303,16 @@
    },
    "payFrom": null,
    "payWith": "statement",
+   "lineId": null,
+   "promoApr": {
+    "amount": null,
+    "cadence": "one-off",
+    "status": null,
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": null,
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3348,6 +3358,16 @@
    },
    "payFrom": null,
    "payWith": "minimum",
+   "lineId": "car-payment",
+   "promoApr": {
+    "amount": null,
+    "cadence": "one-off",
+    "status": null,
+    "source": "client",
+    "asOf": null,
+    "note": ""
+   },
+   "promoEnds": null,
    "state": "active",
    "createdAt": "2025-10-01T09:00:00.000Z",
    "updatedAt": "2025-10-01T09:00:00.000Z",
@@ -3511,11 +3531,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -4608,11 +4628,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -5726,11 +5746,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -6874,11 +6894,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -7985,11 +8005,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -9103,11 +9123,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -10224,11 +10244,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -11350,11 +11370,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -12473,11 +12493,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -13587,11 +13607,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -14709,11 +14729,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -15823,11 +15843,11 @@
       "estimate": 35,
       "actual": 35
      },
-     "debt:debt-car": {
-      "name": "Auto loan",
+     "interest:debt-visa": {
+      "name": "Interest (computed): Visa",
       "categoryId": "debt",
-      "estimate": null,
-      "actual": null
+      "estimate": 0,
+      "actual": 0
      },
      "premiums": {
       "name": "Premiums",
@@ -23090,7 +23110,7 @@
    "surplus": -130.26999999999998,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2025-12-01T08:00:00.000Z",
@@ -23099,7 +23119,7 @@
    "surplus": -142.63999999999987,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00005346449957231136,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-01-01T08:00:00.000Z",
@@ -23108,7 +23128,7 @@
    "surplus": -575.8000000000006,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.08517718489112032,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-02-01T08:00:00.000Z",
@@ -23117,7 +23137,7 @@
    "surplus": -128.76999999999998,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-03-01T08:00:00.000Z",
@@ -23126,7 +23146,7 @@
    "surplus": -109.44999999999982,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0013853925560492353,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-04-01T08:00:00.000Z",
@@ -23135,7 +23155,7 @@
    "surplus": -171.88999999999942,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00009927561890073913,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-05-01T08:00:00.000Z",
@@ -23144,7 +23164,7 @@
    "surplus": -188.23000000000002,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0036402773983536287,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-06-01T08:00:00.000Z",
@@ -23153,7 +23173,7 @@
    "surplus": -173.88999999999987,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.002404187983028477,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-07-01T08:00:00.000Z",
@@ -23162,7 +23182,7 @@
    "surplus": -26.34999999999991,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-08-01T08:00:00.000Z",
@@ -23171,7 +23191,7 @@
    "surplus": -47.149999999999636,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.001159760454239477,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-09-01T08:00:00.000Z",
@@ -23180,7 +23200,7 @@
    "surplus": -94.11999999999989,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0022757224569650847,
-   "completion": 0.6659420289855068
+   "completion": 0.7124031007751933
   },
   {
    "date": "2026-10-01T08:00:00.000Z",
@@ -23189,7 +23209,7 @@
    "surplus": -2348.51,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.41446876124120174,
-   "completion": 0.6746376811594198
+   "completion": 0.7217054263565886
   }
  ],
  "blindRounds": [],

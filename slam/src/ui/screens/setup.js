@@ -29,7 +29,7 @@ function debtsSection(ctx, summary) {
       h('label', { class: 'check', 'data-path': JSON.stringify(['debts']) }, h('input', { type: 'checkbox', checked: doc.noDebts && !doc.debts.length, disabled: doc.debts.length > 0, 'data-key': 'no-debts',
         'data-path': JSON.stringify(['debts']), onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts (counts as complete)'),
       debtTypeTotals(summary)),
-    doc.debts.map((d) => debtCard(ctx, d)),
+    doc.debts.map((d) => debtCard(ctx, d, summary)),
     h('button', { class: 'btn', 'data-key': 'add-debt', onclick: () => ctx.update('Add debt', (d) => { addDebt(d, { label: 'Debt ' + (d.debts.length + 1) }); }) }, '+ Add debt'));
 }
 

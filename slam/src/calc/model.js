@@ -7,6 +7,7 @@ import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
 import { parentsPlan, PARENTS_PLAN_LINE_TYPES } from './coverage.js';
 import { actualsFromTransactions } from './tx-analysis.js';
+import { linkedLine, cardInterest } from './debts.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -77,17 +78,18 @@ function lineRow(line, freq, src) {
   };
 }
 
+// Debt payments: each debt's minimum, except a debt a budget line pays (the line is the payment,
+// S-116), plus each tracked card's computed interest (never typed).
 function debtRows(doc) {
-  return doc.debts.filter((d) => d.state !== 'archived').map((d) => {
+  const live = doc.debts.filter((d) => d.state !== 'archived');
+  const row = (fields) => ({ type: 'loan', kind: 'fixed', need: true, savings: false, path: 'personal', tag: 'planned', joy: null, stress: null, computed: true, owedOutstanding: 0, oneOffs: [], ...fields });
+  const mins = live.filter((d) => !linkedLine(doc, d)).map((d) => {
     const min = toMonthly(d.minimum, 'monthly');
-    return {
-      id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
-      path: 'personal', tag: 'planned', joy: null, stress: null, state: d.state, computed: true,
-      estimate: min, actual: min,
-      status: { estimate: 'computed', actual: 'computed' },
-      sourceStatus: d.minimum.status, owedOutstanding: 0, oneOffs: []
-    };
+    return row({ id: 'debt:' + d.id, debtId: d.id, name: d.label, state: d.state, estimate: min, actual: min, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: d.minimum.status });
   });
+  const interest = live.map((d) => ({ d, i: cardInterest(doc, d, doc.currentMonth) })).filter((x) => x.i).map(({ d, i }) =>
+    row({ id: 'interest:' + d.id, debtId: null, interestOf: d.id, name: 'Interest (computed): ' + d.label, state: d.state, estimate: i.amount, actual: i.amount, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: 'computed', why: i.why }));
+  return [...mins, ...interest];
 }
 
 // Category-level answer first (the client's own words), then the sum of its lines.

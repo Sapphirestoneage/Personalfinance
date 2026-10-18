@@ -80,6 +80,9 @@ export function validateHousehold(doc) {
     oneOf(errs, DEBT_TYPES, d.type, w + '.type');
     for (const k of ['balance', 'apr', 'minimum', 'dueDay']) errs.push(...valueErrors(d[k], w + '.' + k));
     if (d.payWith !== undefined) oneOf(errs, ['minimum', 'statement'], d.payWith, w + '.payWith');
+    if (d.promoApr !== undefined) errs.push(...valueErrors(d.promoApr, w + '.promoApr'));
+    if (d.promoEnds !== undefined && d.promoEnds !== null && !/^\d{4}-\d{2}-\d{2}$/.test(d.promoEnds)) errs.push(w + '.promoEnds must be YYYY-MM-DD or empty');
+    if (d.lineId && !(doc.categories || []).some((c) => (c.lines || []).some((l) => l.id === d.lineId))) errs.push(w + '.lineId: unknown line ' + d.lineId);
   });
   (doc.categories || []).forEach((c, i) => {
     const w = 'categories[' + i + '] ' + c.id;

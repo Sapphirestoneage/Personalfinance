@@ -5,7 +5,8 @@
 //   - a section heading or chart title appears more than once in the app;
 //   - Insights has a data input (only pickers marked data-picker are allowed);
 //   - Track has a setup input (accounts, paydays, bill dates, the cushion...);
-//   - a screen has more than 12 sections.
+//   - a screen has more than 12 sections;
+//   - Today has a chart, or lacks a one-tap link to any Insights tab (lesson 7).
 // It prints the inventory (height, sections, charts, inputs, buttons) before
 // the S-106 menu (tools/inventory-before.json) and now.
 //
@@ -87,6 +88,13 @@ export async function layoutCheck(browser, url) {
       if (x.sections > LIMIT_SECTIONS) fail(id + ', ' + st[0] + ': ' + x.sections + ' sections (limit ' + LIMIT_SECTIONS + ')');
       if (st[1] === 'insights' && x.dataInputs.length) fail(id + ', ' + st[0] + ': data inputs in Insights: ' + x.dataInputs.join(', '));
       if (st[1] === 'track' && x.setupInputs.length) fail(id + ', ' + st[0] + ': setup inputs on Track: ' + x.setupInputs.join(', '));
+      // Lesson 7 (S-116): Today shows numbers, not charts, and links to every chart tab in one tap.
+      if (st[1] === 'today') {
+        if (x.charts) fail(id + ', Today: ' + x.charts + ' charts (Today shows numbers, not charts)');
+        const links = await page.$$eval('[data-key^="today-chart:"]', (bs) => bs.map((b) => b.getAttribute('data-key').slice(12)));
+        const missing = TABS.filter((t) => !links.includes(t));
+        if (missing.length) fail(id + ', Today: no one-tap link to Insights ' + missing.join(', '));
+      }
       if (st[1] === 'review' && id === 'riley' && x.fillGaps > LIMIT_FILL_GAPS_RILEY) fail('riley, fill gaps: ' + x.fillGaps + ' phone screens (limit ' + LIMIT_FILL_GAPS_RILEY + ')');
       // The same section can be visited twice (Plan has two views); a heading counts once per state.
       for (const t of new Set(x.headings)) (seen[t] = seen[t] || []).push(st[0]);

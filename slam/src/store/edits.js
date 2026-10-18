@@ -119,6 +119,23 @@ export function addDebt(doc, fields) {
   return d;
 }
 
+// S-116: the budget line that pays a debt (null to unlink). One line pays one debt; the debt's own
+// minimum is kept but not used while linked (the line's estimate is the minimum).
+export function setDebtLine(doc, debtId, lineId) {
+  const debt = doc.debts.find((x) => x.id === debtId);
+  if (!debt) throw new Error('No debt ' + debtId);
+  if (lineId && !findLine(doc, lineId)) throw new Error('No line ' + lineId);
+  if (lineId && doc.debts.some((x) => x.id !== debtId && x.lineId === lineId)) throw new Error('That line already pays another debt');
+  debt.lineId = lineId || null;
+}
+
+// S-116: a card's promo APR ends on a day (YYYY-MM-DD), or null.
+export function setPromoEnds(doc, debtId, date) {
+  const debt = doc.debts.find((x) => x.id === debtId);
+  if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('A date is YYYY-MM-DD');
+  debt.promoEnds = date;
+}
+
 // One total instead of categories: the total lives on an "Everything else"
 // category. Category estimates entered later are carved out of it by calc,
 // so the client's original total is never overwritten.

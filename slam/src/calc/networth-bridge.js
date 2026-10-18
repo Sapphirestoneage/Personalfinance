@@ -30,34 +30,20 @@
 // the same amount as the total's.
 
 import { bridgeFor } from './bridge.js';
-import { balanceAt, liabilities, lastDayOf, kindOf } from './balances.js';
+import { balanceAt, liabilities, lastDayOf, kindOf, monthStartOf, monthEndOf } from './balances.js';
 import { contributionsFor } from './contributions.js';
 import { netWorthAt } from './networth.js';
 import { counted } from './log.js';
 import { countsForFI } from '../store/schema.js';
+import { linkedLine, splitPayment } from './debts.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
 const TIMING = ['yearly', 'owed', 'received', 'one-off', 'income'];
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
-const prevDay = (date) => new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
 
-const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
-
-// One account's or debt's balance going into the month: the start typed for the month (on any day it
-// was read), else the latest dated balance before the month. The same start the cash bridge uses.
-export function monthStartOf(doc, key, month) {
-  const b = ((doc.balances || {})[month] || {})[key];
-  if (b && typed(b.start)) return { date: b.startOn || month + '-01', amount: b.start.amount, status: b.start.status, from: 'start' };
-  return balanceAt(doc, key, prevDay(month + '-01'));
-}
-
-// And at the end of the month: the end typed for the month, else the latest dated balance in it.
-export function monthEndOf(doc, key, month) {
-  const b = ((doc.balances || {})[month] || {})[key];
-  if (b && typed(b.end)) return { date: b.endOn || lastDayOf(month), amount: b.end.amount, status: b.end.status, from: 'end' };
-  return balanceAt(doc, key, lastDayOf(month));
-}
+// monthStartOf and monthEndOf live with the other balance helpers (balances.js).
+export { monthStartOf, monthEndOf };
 
 // Updated this month: an end typed for it, or a balance checked during it.
 function span(doc, key, month) {
@@ -80,7 +66,11 @@ export function netWorthBridge(doc, income, month) {
   const valued = accts.filter((a) => kindOf(a) === 'valued').map((a) => ({ a, ...span(doc, a.id, month) }));
   const debts = liabilities(doc).filter((l) => !l.account).map((l) => {
     const by = securedBy[l.debtId] || null;
-    return { l, ...span(doc, l.key, month), fi: !(by && !countsForFI(by)) };
+    // A loan a budget line pays (S-116): the line's actual is the payment, split into interest and principal.
+    const debt = (doc.debts || []).find((x) => x.id === l.debtId);
+    const line = debt ? linkedLine(doc, debt) : null;
+    const split = line ? { line: line.name, ...splitPayment(doc, debt, month, br.lineActuals[line.id] === undefined ? null : br.lineActuals[line.id]) } : null;
+    return { l, ...span(doc, l.key, month), fi: !(by && !countsForFI(by)), split };
   });
   // Savings-line entries out of your accounts this month (the budget counted them as savings).
   const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
@@ -97,7 +87,7 @@ export function netWorthBridge(doc, income, month) {
     const known = (x) => x.start !== null && x.end !== null;
     const market = inv.filter((x) => known(x) && x.updated).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start - x.c.total), start: x.start, end: x.end, contributions: x.c.total }));
     const value = val.filter((x) => known(x) && x.end !== x.start).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start), start: x.start, end: x.end }));
-    const paid = dbt.filter((x) => known(x) && x.end < x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.start - x.end) }));
+    const paid = dbt.filter((x) => known(x) && x.end < x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.start - x.end), split: x.split }));
     const added = dbt.filter((x) => known(x) && x.end > x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.end - x.start) }));
     const deductions = add(inv.map((x) => x.c.deductions));
     // FI only: money moved into accounts that do not count leaves FI net worth.
@@ -111,7 +101,7 @@ export function netWorthBridge(doc, income, month) {
     if (saved) line('saved', 'Saved and invested (moved into your own accounts, not spent)', saved, 'Savings lines ' + money(br.savings || 0) + (deductions ? ', from the paycheck ' + money(deductions) : ''), { to: 'actual' });
     if (movedOut.length) line('moved-out', 'Moved into accounts that do not count toward FI', add(movedOut.map((x) => x.amount)), movedOut.map((x) => x.name + ' ' + money(-x.amount)).join(', '), { to: 'balances' });
     const down = r2(cardMin + add(paid.map((x) => x.amount)));
-    if (down) line('paid-down', 'Debt paid down (the principal; interest stays spent)', down, [cardMin ? 'Card payments ' + money(cardMin) : null, ...paid.map((x) => x.name + ' ' + money(x.amount))].filter(Boolean).join(', '), { to: 'balances' });
+    if (down) line('paid-down', 'Debt paid down (the principal; interest stays spent)', down, [cardMin ? 'Card payments ' + money(cardMin) : null, ...paid.map((x) => x.name + ' ' + money(x.amount) + splitText(x))].filter(Boolean).join(', '), { to: 'balances' });
     const m = add(market.map((x) => x.amount));
     if (market.length && m) line('market', 'Market change on investments', m, market.map((x) => x.name + ' ' + signed(x.amount)).join(', '), { to: 'balances' });
     const v = add(value.map((x) => x.amount));
@@ -150,6 +140,13 @@ function money(x) {
   return '$' + v.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 });
 }
 const signed = (x) => (x < 0 ? '-' : '+') + money(x);
+// "(Car payment $340: interest $27.30, principal $312.70)", and what the balance did beyond it.
+function splitText(x) {
+  const sp = x.split;
+  if (!sp || sp.payment === null || sp.interest === null) return '';
+  const extra = r2(x.amount - sp.principal);
+  return ' (' + sp.line + ' ' + money(sp.payment) + ': interest ' + money(sp.interest) + ', principal ' + money(sp.principal) + (Math.abs(extra) >= 0.01 ? '; the balance moved ' + money(Math.abs(extra)) + (extra > 0 ? ' more' : ' less') : '') + ')';
+}
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 
 // One plain sentence or two, no judgment. "Net worth rose $1,240. $650 you saved, $410 the market added, $180 of debt paid down."
