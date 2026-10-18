@@ -243,7 +243,9 @@ export function normalizeHousehold(doc) {
   out.accounts = (doc.accounts || []).map((a) => ({ ...newAccount({ id: a.id }), ...a }));
   out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
     ...meta(b || {}),
-    start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' }
+    start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' },
+    // The day each was read (S-100), only when one was picked.
+    ...(b && b.startOn ? { startOn: b.startOn } : {}), ...(b && b.endOn ? { endOn: b.endOn } : {})
   }]))]));
   out.schemaVersion = SCHEMA_VERSION;
   // Any record still without bookkeeping gets it now (S-096).

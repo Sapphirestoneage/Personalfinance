@@ -7,7 +7,7 @@ import { h, options } from '../dom.js';
 import { money, monthLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
-import { addAccount, setBalance, setAccountField } from '../../store/accounts.js';
+import { addAccount, setBalance, setAccountField, setBalanceDate } from '../../store/accounts.js';
 import { balancesFor } from '../../calc/balances.js';
 
 export const ACCOUNT_TYPE_OPTIONS = [['checking', 'Checking'], ['savings', 'Savings'], ['credit-card', 'Credit card'], ['cash', 'Cash'], ['other', 'Other']];
@@ -16,6 +16,16 @@ export const ACCOUNT_TYPE_OPTIONS = [['checking', 'Checking'], ['savings', 'Savi
 function balanceInput(ctx, month, acct, which, stored, label) {
   const sub = { ...ctx, preview: null, commit: (path, value, l) => ctx.update(l || label, (d) => setBalance(d, month, acct.id, which, value)) };
   return valueInput(sub, ['balances', month, acct.id, which], stored, { label, cadence: false });
+}
+
+// The day a balance was read (S-100): the month's first or last day unless another is picked.
+function balanceDate(ctx, month, a, which) {
+  const b = (ctx.doc.balances[month] || {})[a.id] || {};
+  const last = month + '-' + String(new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate()).padStart(2, '0');
+  const plain = which === 'start' ? month + '-01' : last;
+  return h('label', { class: 'xs muted balance-date' }, 'on ',
+    h('input', { type: 'date', min: month + '-01', max: last, value: b[which + 'On'] || plain, 'data-key': 'acct:' + a.id + ':' + which + 'On', 'aria-label': a.name + ' ' + which + ' balance date',
+      onchange: (e) => ctx.update('Balance date', (d) => setBalanceDate(d, month, a.id, which, !e.target.value || e.target.value === plain ? null : e.target.value)) }));
 }
 
 export function accountsCard(ctx, month, opts = {}) {
@@ -32,6 +42,8 @@ export function accountsCard(ctx, month, opts = {}) {
       return h('div', { class: 'qa account-row' },
         h('div', { class: 'q' },
           h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
+          h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
+            onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
           h('div', { class: 'row' },
             h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
             a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
@@ -39,9 +51,9 @@ export function accountsCard(ctx, month, opts = {}) {
             h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
           linked ? h('div', { class: 'hint' }, 'APR, minimum, and due day stay on the debt "' + linked.label + '".') : null),
         h('div', { class: 'balance-pair' },
-          h('div', {}, h('div', { class: 'xs muted' }, 'Start of ' + monthLabel(month)), balanceInput(ctx, month, a, 'start', stored(a.id, 'start'), a.name + ' start'),
+          h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, a, 'start', stored(a.id, 'start'), a.name + ' start'), balanceDate(ctx, month, a, 'start'),
             r.start.from === 'carried' ? h('div', { class: 'xs muted', 'data-key': 'carried:' + a.id }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
-          h('div', {}, h('div', { class: 'xs muted' }, 'End of ' + monthLabel(month)), balanceInput(ctx, month, a, 'end', stored(a.id, 'end'), a.name + ' end'))));
+          h('div', {}, h('div', { class: 'xs muted' }, 'End balance'), balanceInput(ctx, month, a, 'end', stored(a.id, 'end'), a.name + ' end'), balanceDate(ctx, month, a, 'end'))));
     }),
     b.rows.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)),
       b.rows.some((r) => r.card) ? h('span', {}, '. Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd))) : null) : h('p', { class: 'muted small' }, 'No accounts yet.'),

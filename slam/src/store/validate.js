@@ -123,6 +123,7 @@ export function validateHousehold(doc) {
     for (const [id, b] of Object.entries(accts)) {
       if (!acctIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
       errs.push(...valueErrors(b.start, 'balances.' + m + '.' + id + '.start'), ...valueErrors(b.end, 'balances.' + m + '.' + id + '.end'));
+      for (const k of ['startOn', 'endOn']) if (b[k] !== undefined && !(typeof b[k] === 'string' && b[k].slice(0, 7) === m && /^\d{4}-\d{2}-\d{2}$/.test(b[k]))) errs.push('balances.' + m + '.' + id + '.' + k + ' must be a day in ' + m);
     }
   }
   if (doc.cashflow) {

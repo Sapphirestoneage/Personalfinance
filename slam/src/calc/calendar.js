@@ -251,8 +251,9 @@ export function cashCalendar(doc, income, opts) {
   for (let d = start; d <= end; d = addDays(d, 1)) {
     const m = monthOf(d);
     const items = [];
-    if (d.slice(8) === '01' && d !== start) {
-      for (const a of accts) { const s = ((doc.balances[m] || {})[a.id] || {}).start; if (s && s.amount !== null) bal[a.id] = s.amount; }
+    // A month's start balance applies on the day it was read (S-100), the 1st unless another day was picked.
+    if (d !== start) {
+      for (const a of accts) { const b = (doc.balances[m] || {})[a.id] || {}; if (d === (b.startOn || dateIn(m, 1)) && b.start && b.start.amount !== null) bal[a.id] = b.start.amount; }
     }
     const add = (it, accountId, flow) => {
       const a = byId[accountId] || byId[def];
@@ -273,7 +274,7 @@ export function cashCalendar(doc, income, opts) {
       if (sp) for (const u of sp.units) if (u.perDay > 0 && d >= sp.from) add({ type: 'spread', kind: 'spread', name: u.name }, u.account, -u.perDay);
     }
     // Real numbers reset the projection: a typed month end, then any balance check that day.
-    if (d === dateIn(m, 31)) for (const a of accts) { const e = ((doc.balances[m] || {})[a.id] || {}).end; if (e && e.amount !== null && d <= today) bal[a.id] = e.amount; }
+    for (const a of accts) { const b = (doc.balances[m] || {})[a.id] || {}; if (d === (b.endOn || dateIn(m, 31)) && b.end && b.end.amount !== null && d <= today) bal[a.id] = b.end.amount; }
     for (const c of checks) if (c.date === d) bal[c.accountId] = c.amount.amount;
     const cash = accts.filter(inCalendar).reduce((a, x) => a + bal[x.id], 0);
     const cards = accts.filter((x) => x.type === 'credit-card').reduce((a, x) => a + bal[x.id], 0);

@@ -31,6 +31,17 @@ export function setAccountField(doc, id, field, value) {
   a[field] = field === 'debtId' ? value || null : value;
 }
 
+// The day a balance was read (S-100), 'YYYY-MM-DD', or null for the month's first or last day.
+export function setBalanceDate(doc, month, accountId, which, date) {
+  if (!findAccount(doc, accountId)) throw new Error('No account ' + accountId);
+  if (which !== 'start' && which !== 'end') throw new Error('A balance is a start or an end');
+  if (date !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && date.slice(0, 7) === month)) throw new Error('Pick a day in ' + month);
+  doc.balances[month] = doc.balances[month] || {};
+  doc.balances[month][accountId] = doc.balances[month][accountId] || newBalance();
+  if (date === null) delete doc.balances[month][accountId][which + 'On'];
+  else doc.balances[month][accountId][which + 'On'] = date;
+}
+
 // which: 'start' or 'end'. value is a Value (from the input).
 export function setBalance(doc, month, accountId, which, value) {
   if (!findAccount(doc, accountId)) throw new Error('No account ' + accountId);

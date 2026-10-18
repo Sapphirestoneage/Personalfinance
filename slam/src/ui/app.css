@@ -240,6 +240,9 @@ table.review .toggle button { padding: 4px 8px; }
 /* Accounts and balances (S-084) */
 .account-row .balance-pair { display: grid; grid-template-columns: 1fr; gap: var(--space-2); flex: 1 1 260px; }
 @media (min-width: 760px) { .account-row .balance-pair { grid-template-columns: 1fr 1fr; } }
+.account-row .institution { margin: var(--space-1) 0; max-width: 260px; }
+.account-row .balance-date { display: block; margin-top: var(--space-1); }
+.account-row .balance-date input { font-size: var(--text-xs); padding: 2px var(--space-2); }
 
 /* Quick entry sheet (S-085): a bottom sheet on phones, a centered panel on wide screens */
 .sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
