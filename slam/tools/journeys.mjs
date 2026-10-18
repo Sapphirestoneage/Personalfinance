@@ -244,6 +244,9 @@ async function month(browser, view, size) {
   check(J, 'Spent', tiles[0], money(2252.9));
   check(J, 'Surplus', tiles[1], signedMoney(1747.1));
   check(J, 'Bridge', tiles[2], 'Ties');
+  // The headline numbers first (S-129); "See the full review" opens the rest.
+  await t.tap('#just-closed [data-key="review-full"]');
+  await page.waitForSelector('#just-closed [data-key="review-tracking"]');
   check(J, 'Tracking', await text(page, '#just-closed [data-key="review-tracking"]'), '100% (' + money(2252.9) + ' logged, ' + money(0) + ' typed)');
   check(J, 'Open at close', await text(page, '#just-closed [data-key="review-open"]'), 'Closed with nothing open');
   t.step('Read the review');
@@ -295,6 +298,8 @@ async function questions(browser, view, size) {
   await t.go('review');
   await page.waitForSelector('#months-review');
   check(J, 'Review month', await text(page, '#months-review h2'), 'September 2026 in review');
+  await t.tap('#months-review [data-key="review-full"]');
+  await page.waitForSelector('#months-review [data-key="review-vs-plan"]');
   const worse = await page.$$eval('#months-review [data-key="review-vs-plan"] > div:last-child h4', (x) => x.map((e) => e.textContent));
   check(J, 'Worse than planned shown', String(/^Worse than planned \(\d+\)$/.test(worse[0] || '')), 'true');
   t.step('What went over plan last month', 3);

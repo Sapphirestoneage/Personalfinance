@@ -321,6 +321,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('checklist', 'Close button', await settled(page, '[data-key="close-month"]', 'Close with 3 open items'), 'Close with 3 open items');
   await page.click('[data-key="close-month"]');
   await page.waitForSelector('#just-closed');
+  // The headline numbers first (S-129); the full review is one tap.
+  await page.click('#just-closed [data-key="review-full"]');
   check('review', 'Open at close', await settled(page, '#just-closed [data-key="review-open"]', want), want);
   check('review', 'Bridge tile', await settled(page, '#just-closed [data-key="review-bridge"]', 'Off by $60'), 'Off by $60');
   // 460 logged (groceries 400 + shopping 60) of 1,960 (+ rent 1,500 typed) = 23%
@@ -336,6 +338,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('trends', 'Not explained yet', await page.$eval('#stat-unexplained .reading', (p) => p.textContent), '-$60 over 1 bridged month; ATM cash $60; Venmo or Zelle with no line $0.');
   await go(page, 'review');
   await page.waitForSelector('#months-review');
+  await page.click('#months-review [data-key="review-full"]').catch(() => null);
   check('months', 'Saved review shown', await settled(page, '#months-review [data-key="review-open"]', want), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
@@ -380,6 +383,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'review');
   await page.selectOption('[data-key="months-pick"]', '2026-06');
   await page.waitForTimeout(150);
+  await page.click('#months-review [data-key="review-full"]');
   check('riley', 'June open items', await settled(page, '#months-review [data-key="review-open"]', 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches'), 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
   await insights(page, 'cash');
   await page.selectOption('[data-key="bridge-month"]', '2026-06');
@@ -489,6 +493,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'review');
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
+  // Month in review shows its headline numbers first (S-129); the net worth tiles are in the full review.
+  // The change: March 31's 64,262.76 - February 28's 61,600.13 = 2,662.63.
+  check('dana', 'March net worth change (headline)', await settled(page, '[data-key="review-nw-change"]', signedMoney(2662.63)), signedMoney(2662.63));
+  await page.click('[data-key="review-full"]');
   check('dana', 'March celebrate card', await settled(page, '[data-key="celebrate-fi-zero"] b', 'FI net worth crossed $0 in March 2026.'), 'FI net worth crossed $0 in March 2026.');
   check('dana', 'March FI net worth', await settled(page, '[data-key="review-nw-fi"]', money(425)), money(425));
   check('dana', 'March net worth', await settled(page, '[data-key="review-nw-total"]', money(64262.76)), money(64262.76));

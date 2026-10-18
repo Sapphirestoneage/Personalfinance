@@ -1,7 +1,7 @@
 // Layout check (S-109): runs with tools/screens-check.mjs (and on its own).
 // For every screen and Insights tab on every test household, at phone width
 // (390 x 844), it fails when:
-//   - a screen is taller than 6 phone screens (Review's fill gaps: 2 for Riley);
+//   - a screen is taller than 6 phone screens (Review: 5, S-129; Review's fill gaps: 2 for Riley);
 //   - a section heading or chart title appears more than once in the app;
 //   - Insights has a data input (only pickers marked data-picker are allowed);
 //   - Track has a setup input (accounts, paydays, bill dates, the cushion...);
@@ -29,6 +29,8 @@ export const STATES = [
   ...SECTIONS.map((s) => ['Setup: ' + s, 'setup', 'setup-' + s])
 ];
 const LIMIT_SCREENS = 6;
+// Review is lighter (S-129): Month in review shows its headline numbers until opened.
+const LIMIT_BY_STATE = { Review: 5 };
 const LIMIT_SECTIONS = 12;
 const LIMIT_FILL_GAPS_RILEY = 2;
 // Inputs that belong to Setup (one-time setup); none may sit on Track.
@@ -87,7 +89,8 @@ export async function layoutCheck(browser, url) {
       await visit(page, st);
       const x = await measure(page);
       after[id][st[0]] = x;
-      if (x.height > LIMIT_SCREENS) fail(id + ', ' + st[0] + ': ' + x.height + ' phone screens tall (limit ' + LIMIT_SCREENS + ')');
+      const limit = LIMIT_BY_STATE[st[0]] || LIMIT_SCREENS;
+      if (x.height > limit) fail(id + ', ' + st[0] + ': ' + x.height + ' phone screens tall (limit ' + limit + ')');
       if (x.sections > LIMIT_SECTIONS) fail(id + ', ' + st[0] + ': ' + x.sections + ' sections (limit ' + LIMIT_SECTIONS + ')');
       if (st[1] === 'insights' && x.dataInputs.length) fail(id + ', ' + st[0] + ': data inputs in Insights: ' + x.dataInputs.join(', '));
       if (st[1] === 'track' && x.setupInputs.length) fail(id + ', ' + st[0] + ': setup inputs on Track: ' + x.setupInputs.join(', '));

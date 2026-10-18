@@ -155,7 +155,7 @@ function pastMonths(ctx, summary) {
   return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'),
     h('div', { class: 'card' }, h('label', { class: 'row' }, h('b', {}, 'Closed month'),
       h('select', { 'data-key': 'months-pick', onchange: (e) => { ctx.ui.monthsPick = e.target.value; ctx.rerender(); } }, options(closed.map((m) => [m.key, monthLabel(m.key)]), key)))),
-    reviewCard(ctx, rec, { id: 'months-review', summary }),
+    reviewCard(ctx, rec, { id: 'months-review', summary, compact: true }),
     h('details', { class: 'card', id: 'closed-lines' }, h('summary', {}, 'Lines in ' + monthLabel(key) + ', and late entries'),
       closedMonthTable(ctx, monthRows(ctx.doc, summary.history, key), key)));
 }
@@ -165,7 +165,7 @@ export function renderReview(ctx, summary) {
   const justClosed = ctx.ui.justClosed ? doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
   return h('div', {},
     h('h1', {}, 'Review'),
-    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
+    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, compact: true, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
       // Income first (S-118), then the spending lines still empty.
       incomeFillCard(ctx, summary),
