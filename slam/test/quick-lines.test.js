@@ -41,3 +41,21 @@ test('Removing a sub-category archives it (S-123): out of the totals, kept for p
   assert.equal(lineIds().includes(extra.id), false);
   assert.equal(findLine(d, extra.id).line.state, 'archived');
 });
+
+test('a split line: with how many people, your share, and the whole bill (S-134)', async () => {
+  const { splitOf } = await import('../src/calc/split.js');
+  const { makeValue } = await import('../src/store/value.js');
+  const one = (n) => makeValue(n, { cadence: 'one-off' });
+  const line = { shared: true, splitPeople: one(3), splitShare: makeValue(null, { cadence: 'one-off' }) };
+  // 21 a month with 3 others: an even share is 100 / 4 = 25%; the whole bill 21 / 0.25 = 84.
+  assert.deepEqual(splitOf(line, 21), { people: 3, share: 25, shareFrom: 'even', yours: 21, whole: 84 });
+  // With 2 others: 100 / 3 = 33.333..., 33.33%; 21 / 0.3333 = 63.006..., 63.01.
+  line.splitPeople = one(2);
+  assert.deepEqual([splitOf(line, 21).share, splitOf(line, 21).whole], [33.33, 63.01]);
+  // A typed share wins: 40% of a bill you pay 21 of: 21 / 0.4 = 52.50.
+  line.splitShare = one(40);
+  assert.deepEqual([splitOf(line, 21).share, splitOf(line, 21).shareFrom, splitOf(line, 21).whole], [40, 'typed', 52.5]);
+  // Not split: nothing. No people and no share: blank, never 0.
+  assert.equal(splitOf({ shared: false }, 21), null);
+  assert.deepEqual(splitOf({ shared: true, splitPeople: makeValue(null), splitShare: makeValue(null) }, 21), { people: null, share: null, shareFrom: null, yours: 21, whole: null });
+});

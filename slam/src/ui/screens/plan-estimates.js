@@ -4,7 +4,8 @@
 
 import { h } from '../dom.js';
 import { money, pct, monthLabel, signedMoney } from '../format.js';
-import { question } from '../components/value-input.js';
+import { question, valueInput } from '../components/value-input.js';
+import { splitOf } from '../../calc/split.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
 import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber, removeLine, addIncome } from '../../store/edits.js';
@@ -59,6 +60,19 @@ function surplusFoot(ctx, summary) {
   return h('div', { class: 'qa', 'data-key': 'rough-unallocated' },
     h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus.')),
     h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated))));
+}
+
+// A split line (S-134): with how many other people, and your share (blank = even). The line's amount is
+// your part; the whole bill is worked out from it (calc/split.js).
+function splitBox(ctx, l, r) {
+  const row = r.lines.find((x) => x.id === l.id);
+  const sp = splitOf(l, row ? row.estimate : null);
+  const box = (field, label, placeholder) => valueInput({ ...ctx, preview: null }, ['line', l.id, field], l[field], { label, cadence: false, placeholder, compact: true });
+  return h('div', { class: 'split-box', 'data-key': 'split-box:' + l.id },
+    h('div', { class: 'row xs' }, h('span', {}, 'With'), box('splitPeople', l.name + ': how many other people', 'people'), h('span', {}, 'others. Your share'),
+      box('splitShare', l.name + ': your share, percent', sp && sp.shareFrom === 'even' ? String(sp.share) : '%'), h('span', {}, '%')),
+    sp && sp.share !== null ? h('div', { class: 'xs muted', 'data-key': 'split-hint:' + l.id },
+      (sp.shareFrom === 'even' ? 'An even split: ' : 'Your share: ') + sp.share + '%' + (sp.whole !== null ? '. The whole bill is about ' + money(sp.whole, true) + ' a month; you pay ' + money(sp.yours, true) + '.' : '.')) : null);
 }
 
 // Health insurance is its own row, apart from Health (gym, therapy, out of pocket). Health coverage in
@@ -263,6 +277,7 @@ export function renderEstimates(ctx, summary, key) {
             l.shared ? h('span', { class: 'tag-chip', 'data-key': 'split-tag:' + l.id }, 'split') : null,
             h('button', { class: 'btn small ghost remove-line', 'data-key': 'remove-line:' + l.id, title: 'Remove ' + l.name, 'aria-label': 'Remove ' + l.name, onclick: (e) => { e.stopPropagation(); ctx.update('Remove ' + l.name, (d) => removeLine(d, l.id)); } }, '\u00d7'),
             lineOpen ? h('label', { class: 'check xs' }, h('input', { type: 'checkbox', checked: !!l.shared, 'data-key': 'split:' + l.id, onchange: (e) => ctx.update('Split with someone', (d) => { findLine(d, l.id).line.shared = e.target.checked; }) }), 'Split with someone') : null,
+            lineOpen && l.shared ? splitBox(ctx, l, r) : null,
             open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
             : h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
               l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
