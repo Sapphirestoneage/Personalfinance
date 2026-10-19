@@ -99,7 +99,7 @@ function debtRows(doc) {
     return row({ id: 'debt:' + d.id, debtId: d.id, name: d.label, state: d.state, estimate: min, actual: min, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: d.minimum.status });
   });
   const ho = interestHandoff(doc, doc.currentMonth);
-  const interest = (ho.computed ? ho.rows : []).map(({ d, i }) =>
+  const interest = (ho.show ? ho.rows : []).map(({ d, i }) =>
     row({ id: 'interest:' + d.id, debtId: null, interestOf: d.id, name: 'Interest (computed): ' + d.label, state: d.state, estimate: i.amount, actual: i.amount, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: 'computed', why: i.why }));
   return [...mins, ...interest];
 }

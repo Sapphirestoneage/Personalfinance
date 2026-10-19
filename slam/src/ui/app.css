@@ -371,3 +371,9 @@ input.quick-lines { flex: 1 1 260px; min-width: 0; }
 
 /* Your estimates (S-123): Personal and fun, Giving, Saving, and Debt payments each a section of their own. */
 .est-sections .est-section { border-top: 2px solid var(--border); margin-top: 6px; padding-top: 2px; }
+
+/* Card interest a month (S-133): one bar per card. */
+.ibar-row { display: grid; grid-template-columns: minmax(6em, 10em) 1fr auto; gap: .6em; align-items: center; margin: .35em 0; }
+.ibar-track { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.ibar-fill { display: block; height: 100%; background: var(--accent); transition: width .15s ease; }
+.ibar-amt { min-width: 5.5em; text-align: right; }

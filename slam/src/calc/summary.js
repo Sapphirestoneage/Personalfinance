@@ -4,6 +4,7 @@
 import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
+import { interestHandoff } from './debts.js';
 import { eraTimeline } from './eras.js';
 import { dreamLife } from './dream-life.js';
 import { budgetModel } from './model.js';
@@ -73,6 +74,8 @@ export function buildSummary(full, refs) {
     income, model, totals,
     rows: tableRows(model, totals),
     allocation: surplusAllocation(model, totals),
+    // Each card's interest this month (S-133), for the chart on Credit and debt.
+    cardInterest: interestHandoff(doc, doc.currentMonth).rows.map(({ d, i }) => ({ id: d.id, name: d.label, amount: i ? i.amount : null, apr: i ? i.apr : null, balance: i ? i.balance : null, promo: i ? i.promo : false, why: i ? i.why : null })),
     oneOffs: model.oneOffs,
     blindSpot: blind,
     culprits: culprits(model),

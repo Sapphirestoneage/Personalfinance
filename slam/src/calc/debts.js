@@ -9,18 +9,19 @@
 //   principal = payment - interest
 // A linked debt has no row of its own in Debt payments (the line is the payment).
 //
-// Card interest: each credit card whose balance is kept by month (dated balances) gets a computed
-// line under Debt payments, "Interest (computed)", never typed:
-//   interest = the balance going into the month (the last statement) x APR / 12
+// Card interest: each credit card gets a computed line under Debt payments, "Interest (computed)",
+// never typed, as soon as its details are in (S-133):
+//   interest = the balance going into the month x APR / 12
+//   the balance going in: the last month's end when the card has month balances, else its own balance
 //   0 when the card is paid in full each month (the statement balance, so no interest is charged),
 //   and the promo APR (often 0%) until the promo's end date.
-// A card with only a one-time balance (no month balances) has no line: there is no statement to use.
 // Missing APR or balance: the line is blank (empty is not zero).
 
 import { toMonthly } from './normalize.js';
 import { monthStartOf, lastDayOf, balanceAt } from './balances.js';
 
-const r2 = (x) => Math.round(x * 100) / 100 + 0;
+// To the cent, half up, on the decimal value (87.465 is 87.47 even when floating point holds 87.46499...).
+const r2 = (x) => Math.round(Number(x.toPrecision(12)) * 100) / 100 + 0;
 const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
 
 // The budget line types that can pay each kind of debt.
@@ -80,27 +81,30 @@ const cardKey = (doc, debt) => {
 };
 const tracked = (doc, key) => Object.keys(doc.balances || {}).some((m) => (doc.balances[m] || {})[key]);
 
-// One card's interest for a month, or null when the card has no month balances (no line at all).
+// One card's interest for a month (null for anything that is not a live card).
 export function cardInterest(doc, debt, month) {
   if (debt.type !== 'credit-card' || debt.state === 'archived') return null;
   const key = cardKey(doc, debt);
-  if (!tracked(doc, key)) return null;
   const { apr, promo } = aprFor(debt, month);
   if (debt.payWith === 'statement') return { amount: 0, why: 'Paid in full each month: no interest', apr, promo, balance: null };
-  const start = monthStartOf(doc, key, month);
+  // No month balances yet: the card's own balance stands in for the one going into the month.
+  const start = tracked(doc, key) ? monthStartOf(doc, key, month) : typed(debt.balance) ? { amount: debt.balance.amount } : null;
   if (apr === null || !start) return { amount: null, why: apr === null ? 'Needs the APR' : 'Needs the balance going into the month', apr, promo, balance: start ? start.amount : null };
   const amount = r2((start.amount * apr) / 100 / 12);
   return { amount, why: (promo ? 'Promo ' + apr + '% until ' + debt.promoEnds : apr + '% a year') + ' on ' + start.amount, apr, promo, balance: start.amount };
 }
 
-// Typed interest hands off to computed (S-120). A typed interest line (Luis's "Interest charged") counts
-// until the cards have month balances. From the first month every live card has them, the computed
-// lines count and the typed line is replaced (shown as "replaced by computed interest"). Never both in
-// one month: while any card still has no month balances, the typed line counts and no computed line does.
+// Typed interest hands off to computed (S-120, S-133). A typed interest line (Luis's "Interest charged")
+// counts only while no card's interest can be computed. As soon as any card has its APR and a balance,
+// the computed lines count and the typed line is replaced (shown as "replaced by computed interest").
+// Never both in one month. A card still missing a detail shows a blank line (empty is not zero), unless
+// a typed interest line is what counts (no card can compute yet).
 export function interestHandoff(doc, month) {
   const cards = (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived');
   const rows = cards.map((d) => ({ d, i: cardInterest(doc, d, month) }));
-  return { rows, computed: rows.length > 0 && rows.every((x) => x.i !== null) };
+  const computed = rows.some((x) => x.i && x.i.amount !== null);
+  const typedLine = allLines(doc).some((x) => x.line.type === 'interest' && x.line.state !== 'archived');
+  return { rows, computed, show: computed || !typedLine };
 }
 
 // Months from a working month to the month a promo ends (S-125): October 2026 to May 31, 2027 is

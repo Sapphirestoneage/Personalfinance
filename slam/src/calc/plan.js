@@ -64,7 +64,8 @@ export function planView(doc, month) {
   const cats = pm.categories.filter((c) => !c.notForMe).map((c) => {
     if (c.isDebt) return { id: c.id, name: c.name, savings: false, isDebt: true, byCategory: true, amount: c.estimate.amount, lines: {} };
     const ce = plan.lines['cat:' + c.id];
-    const lines = Object.fromEntries(c.lines.map((l) => [l.id, plan.lines[l.id] ? toMonthly(plan.lines[l.id].amount, freq) : null]));
+    // A typed interest line replaced by computed interest (S-133) plans nothing: Debt payments has it.
+    const lines = Object.fromEntries(c.lines.map((l) => [l.id, plan.lines[l.id] && l.covered !== 'computed-interest' ? toMonthly(plan.lines[l.id].amount, freq) : null]));
     const amount = ce ? toMonthly(ce.amount, freq) : sumKnown(Object.values(lines)).total;
     return { id: c.id, name: c.name, savings: c.savings, isDebt: false, byCategory: !!ce, amount, lines };
   });
@@ -93,6 +94,8 @@ export function planStartValues(doc, history, source, reviewMonth, planMonth) {
     for (const c of pm.categories) {
       if (c.isDebt || c.notForMe) continue;
       for (const l of c.lines) {
+        // A typed interest line replaced by computed interest (S-133) is not planned: Debt payments has it.
+        if (l.covered === 'computed-interest') continue;
         if (a.lines[l.id] === null || a.lines[l.id] === undefined) continue;
         const stored = live(c).lines.find((x) => x.id === l.id);
         const v = a.closed ? null : (saved ? saved[l.id] : stored && stored.actual);
