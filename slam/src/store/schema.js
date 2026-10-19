@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 18;
+export const SCHEMA_VERSION = 19;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -256,6 +256,8 @@ export function newDebt(fields = {}) {
     payFrom: null, payWith: 'minimum',
     // S-116: the budget line that pays it (its estimate is the minimum), and a card's promo APR until a date.
     lineId: null, promoApr: makeValue(null, { cadence: 'one-off' }), promoEnds: null,
+    // S-137: a card's or line of credit's limit (blank for a loan, or not given yet).
+    creditLimit: makeValue(null, { cadence: 'one-off' }),
     state: 'active'
   };
 }

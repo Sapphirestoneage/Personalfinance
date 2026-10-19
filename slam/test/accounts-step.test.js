@@ -44,3 +44,28 @@ test('updating twice in a month keeps both readings in the history; the latest i
   updateBalance(d, a.id, '2026-10-31', one(950));
   assert.deepEqual([d.balances['2026-10'][a.id].end.amount, d.balances['2026-10'][a.id].endOn], [950, undefined]);
 });
+
+test('Credit and debt (S-137), Riley on October 17: the Visa and the car loan, with and without a limit', async () => {
+  const { creditStatus } = await import('../src/calc/balances.js');
+  const d = loadHousehold('riley');
+  // September's ends (tools/riley.mjs): the Visa 2,818.03 (the card account), the car loan 3,237.64. Both read
+  // September 30, 17 days ago: up to date. Owed 2,818.03 + 3,237.64 = 6,055.67. No limit yet: nothing available.
+  const s = creditStatus(d, '2026-10-17');
+  assert.deepEqual(s.rows.map((r) => [r.key, r.owed, r.days, r.revolving, r.available]), [['visa', 2818.03, 17, true, null], ['debt-car', 3237.64, 17, false, null]]);
+  assert.deepEqual([s.owed, s.done, s.available], [6055.67, true, null]);
+  // A 10,000 limit on the Visa: 10,000 - 2,818.03 = 7,181.97 available; 2,818.03 / 10,000 = 28.18% used.
+  d.debts.find((x) => x.id === 'debt-visa').creditLimit = one(10000);
+  const t = creditStatus(d, '2026-10-17');
+  assert.deepEqual([t.rows[0].available, t.rows[0].used, t.limit, t.available, t.used], [7181.97, 0.281803, 10000, 7181.97, 0.281803]);
+  // A card paid off (0 owed) is still credit: all 10,000 available, 0% used.
+  updateBalance(d, 'visa', '2026-10-17', one(0));
+  assert.deepEqual([creditStatus(d, '2026-10-17').rows[0].owed, creditStatus(d, '2026-10-17').rows[0].available, creditStatus(d, '2026-10-17').rows[0].used], [0, 10000, 0]);
+});
+
+test('no cards or loans: done only when "No debts" is answered', async () => {
+  const { creditStatus } = await import('../src/calc/balances.js');
+  const d = migrate(newHousehold('None'));
+  assert.equal(creditStatus(d, '2026-10-19').done, false);
+  d.noDebts = true;
+  assert.deepEqual([creditStatus(d, '2026-10-19').done, creditStatus(d, '2026-10-19').owed], [true, null]);
+});

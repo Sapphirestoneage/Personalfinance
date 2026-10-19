@@ -411,7 +411,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'accounts');
   await page.click('#other-accounts > summary');
   check('riley', 'Paid ahead on Accounts', await settled(page, '[data-key="paid-ahead"] li b', '$400.00 left'), '$400.00 left');
-  await setup(page, 'debts');
+  // Credit and debt, on the Accounts tab (S-137): open the section, then the car loan and the Visa.
+  if (await page.locator('[data-key="credit-review"]').count()) await page.click('[data-key="credit-review"]');
+  await page.click('[data-key="credit-open:debt-car"]');
+  await page.click('[data-key="credit-open:visa"]');
   check('riley', 'Loan minimum from its line', await settled(page, '[data-key="debt-min-from:debt-car"]', 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.'), 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.');
   check('riley', 'Loan payment split', await settled(page, '[data-key="debt-split:debt-car"]', 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).'), 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).');
   check('riley', 'Visa interest', await settled(page, '[data-key="debt-interest:debt-visa"]', 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.'), 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.');

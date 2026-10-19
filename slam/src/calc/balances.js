@@ -82,7 +82,7 @@ export function observations(doc, key) {
 }
 
 // The balance on a day: the latest dated balance on or before it (S-110). A debt with no dated balance
-// uses the balance on the debt itself, as given in Setup, Debts. Null when there is none.
+// uses the balance on the debt itself, as given on the debt (Accounts, Credit and debt). Null when there is none.
 export function balanceAt(doc, key, date) {
   const obs = observations(doc, key).filter((o) => o.date <= date);
   if (obs.length) return obs[obs.length - 1];
@@ -203,5 +203,39 @@ export function accountsStatus(doc, today) {
     cashTotal: known.length ? Math.round(known.reduce((s, x) => s + x.latest.amount, 0) * 100) / 100 : null,
     stale: cash.filter((x) => !x.fresh).map((x) => x.name),
     done: cash.length > 0 && cash.every((x) => x.fresh)
+  };
+}
+
+// Credit and debt (S-137): every card and loan, with what is owed now. A card or line of credit is credit
+// you have even when nothing is owed; with a limit it shows what is available and how much is used:
+//   available = limit - owed; used = owed / limit
+// A balance is up to date when it was read in the last 30 days (a loan's own balance, with no day, is not).
+// Done when every card and loan is up to date (there may be none: "no debts" is an answer).
+const REVOLVING = ['credit-card', 'line-of-credit'];
+export function creditStatus(doc, today) {
+  const DAY = 86400000;
+  const rows = liabilities(doc).map((l) => {
+    const latest = balanceAt(doc, l.key, today);
+    const days = latest && latest.date ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY) : null;
+    const limit = l.debt && typed(l.debt.creditLimit) ? l.debt.creditLimit.amount : null;
+    const owed = latest ? latest.amount : null;
+    const revolving = REVOLVING.includes(l.debtType);
+    return {
+      key: l.key, name: l.name, debtType: l.debtType, debtId: l.debtId, revolving, latest, owed, days, fresh: days !== null && days <= FRESH_DAYS,
+      limit, available: limit === null || owed === null ? null : Math.round((limit - owed) * 100) / 100, used: limit && owed !== null ? owed / limit : null,
+      history: observations(doc, l.key)
+    };
+  });
+  const sum = (xs) => (xs.length ? Math.round(xs.reduce((a, x) => a + x, 0) * 100) / 100 : null);
+  const cards = rows.filter((r) => r.revolving);
+  const limits = cards.filter((r) => r.limit !== null && r.owed !== null);
+  return {
+    rows,
+    owed: sum(rows.filter((r) => r.owed !== null).map((r) => r.owed)),
+    limit: sum(limits.map((r) => r.limit)),
+    available: sum(limits.map((r) => r.available)),
+    used: limits.length ? sum(limits.map((r) => r.owed)) / sum(limits.map((r) => r.limit)) : null,
+    stale: rows.filter((r) => !r.fresh).map((r) => r.name),
+    done: rows.every((r) => r.fresh) && (rows.length > 0 || !!doc.noDebts)
   };
 }

@@ -11,7 +11,7 @@ export const OLD_HASHES = { budget: 'today', fill: 'plan', analyze: 'insights' }
 
 export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['networth', 'Net worth'], ['you', 'You']];
 export const SETUP_SECTIONS = [
-  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['debts', 'Credit and debt'], ['bills', 'Bills and due dates'],
+  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['bills', 'Bills and due dates'],
   ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Cushion and coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
 ];
 
@@ -42,6 +42,9 @@ for (const [id] of INSIGHT_TABS) DESTS['insights:' + id] = ['insights', { insigh
 for (const [id] of SETUP_SECTIONS) DESTS['setup:' + id] = ['setup', { setupSection: id }, null];
 // Setup, Accounts moved to its own screen (S-136): old links land there.
 DESTS['setup:accounts'] = DESTS.accounts;
+// Credit and debt moved to the Accounts tab too (S-137).
+DESTS.credit = ['accounts', {}, 'credit-card'];
+DESTS['setup:debts'] = DESTS.credit;
 DESTS['future:eras'] = ['future', { futureTab: 'eras' }, null];
 DESTS['future:next'] = ['future', { futureTab: 'next' }, null];
 
@@ -50,6 +53,9 @@ export function destination(where) {
 }
 
 // A field path to its one home. Returns [destination, ui to open on the way (expanded keys)].
+// A debt's row on the Accounts tab is keyed by its card account when it has one (S-137).
+const creditKey = (doc, debtId) => ((doc.accounts || []).find((a) => a.debtId === debtId && a.state !== 'archived') || {}).id || debtId;
+
 export function whereFor(doc, path) {
   const [a, id, c] = path;
   const catOf = (lineId) => (doc.categories.find((x) => x.lines.some((l) => l.id === lineId)) || {}).id;
@@ -63,9 +69,9 @@ export function whereFor(doc, path) {
   if (a === 'coverage') return ['setup:coverage', []];
   // A premium line is owned by health coverage (S-117).
   if (a === 'line' && (doc.categories.flatMap((x) => x.lines).find((l) => l.id === id) || {}).type === 'health-insurance') return ['setup:coverage', []];
-  if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
-  // A card's or loan's month balance lives in Setup, Credit and debt (S-126).
-  if (a === 'balances') return (doc.accounts || []).some((x) => x.id === c && x.type === 'credit-card') || (doc.debts || []).some((x) => x.id === c) ? ['setup:debts', []] : ['balances', []];
+  if (a === 'debts' || a === 'noDebts') return ['credit', id ? ['credit-open:' + creditKey(doc, id), 'credit-review'] : ['credit-review']];
+  // A card's or loan's balance lives in Credit and debt, on the Accounts tab (S-126, S-137).
+  if (a === 'balances') return (doc.accounts || []).some((x) => x.id === c && x.type === 'credit-card') || (doc.debts || []).some((x) => x.id === c) ? ['credit', ['credit-review']] : ['balances', ['accounts-review']];
   if (a === 'accounts') return ['balances', ['acct-more:' + id, 'acct-open:' + id, 'other-accounts']];
   if (a === 'transactions') return ['log', []];
   if (a === 'cashflow') return ['setup:coach', []];

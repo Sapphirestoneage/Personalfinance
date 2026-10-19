@@ -1,4 +1,4 @@
-// Debt types and the by-type totals shown in Setup, Debts (S-106: the Rough pass
+// Debt types and the by-type totals shown with the debts (S-106: the Rough pass
 // no longer asks debts a second time).
 
 import { h, options } from '../dom.js';

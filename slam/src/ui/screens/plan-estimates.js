@@ -228,9 +228,9 @@ export function renderEstimates(ctx, summary, key) {
       h('div', { class: 'est-section', id: 'sec-debt' }, ordered.filter((r) => r.isDebt).map(one)))];
   function rowFor(r) {
     if (r.isDebt) {
-      // Debts are set up once in Setup, Debts (S-106); here they are one line that adds up.
-      return h('div', { class: 'qa', 'data-key': 'rough-debts' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from the debts in Setup. Never asked twice.')),
-        h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)), jumpLink(ctx, 'setup:debts', doc.debts.length ? 'Change in Setup' : 'Add debts in Setup', 'rough-debts-go')));
+      // Debts are set up once in Accounts, Credit and debt (S-106, S-137); here they are one line that adds up.
+      return h('div', { class: 'qa', 'data-key': 'rough-debts' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from Credit and debt in Accounts. Never asked twice.')),
+        h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)), jumpLink(ctx, 'setup:debts', doc.debts.length ? 'Change in Accounts' : 'Add debts in Accounts', 'rough-debts-go')));
     }
     const cat = findCategory(doc, r.id);
     // Rough (S-106): one amount box per row; the rest opens on a tap of the row or "more".

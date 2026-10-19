@@ -6,41 +6,18 @@
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';
 import { renderProfile, incomeSection, coachNotesCard, futureToolsCard } from './setup-basics.js';
-import { owedCard } from '../components/accounts.js';
 import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
 import { whatIfCard } from '../charts/cash-charts.js';
 import { materialityInput } from '../charts/bridge-charts.js';
-import { setOwnReturn, addAccount } from '../../store/accounts.js';
+import { setOwnReturn } from '../../store/accounts.js';
 import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
-import { debtCard, tagRow, tagManager, lineDetail, catName } from '../components/lines.js';
-import { debtTypeTotals } from '../components/debt-quick.js';
-import { interestChart } from '../charts/interest-chart.js';
+import { tagRow, tagManager, lineDetail, catName } from '../components/lines.js';
 import { statusChip } from '../components/status.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageSection, coverageNote } from '../components/coverage.js';
 import { categoryTypeSelect, typeHint } from '../components/type-select.js';
 import { lineTypeLabel } from '../../store/types.js';
-import { addLine, addDebt, addCategory, findLine, renameLine } from '../../store/edits.js';
-
-function debtsSection(ctx, summary) {
-  const doc = ctx.doc;
-  return h('div', { id: 'debts-setup' },
-    h('div', { class: 'card' },
-      h('p', { class: 'muted small' }, 'One per card, loan, or person owed. The minimums add up to Debt payments in the budget.'),
-      h('label', { class: 'check', 'data-path': JSON.stringify(['debts']) }, h('input', { type: 'checkbox', checked: doc.noDebts && !doc.debts.length, disabled: doc.debts.length > 0, 'data-key': 'no-debts',
-        'data-path': JSON.stringify(['debts']), onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts (counts as complete)'),
-      debtTypeTotals(summary)),
-    interestChart(ctx, summary),
-    doc.debts.map((d) => debtCard(ctx, d, summary)),
-    // A card is made with its account (S-126): the debt keeps APR, minimum, and promo; the account keeps balances.
-    h('div', { class: 'row' },
-      h('button', { class: 'btn', 'data-key': 'add-card', onclick: () => ctx.update('Add credit card', (d) => {
-        const debt = addDebt(d, { label: 'Credit card ' + (d.debts.filter((x) => x.type === 'credit-card').length + 1), type: 'credit-card' });
-        addAccount(d, { name: debt.label, type: 'credit-card', debtId: debt.id });
-      }) }, '+ Credit card'),
-      h('button', { class: 'btn', 'data-key': 'add-debt', onclick: () => ctx.update('Add debt', (d) => { addDebt(d, { label: 'Loan ' + (d.debts.length + 1), type: 'student-loan' }); }) }, '+ Loan or other debt')),
-    owedCard(ctx, doc.currentMonth));
-}
+import { addLine, addCategory, findLine, renameLine } from '../../store/edits.js';
 
 // Every category and its lines: names, types, details (fixed or variable, need, path, joy, stress, state), and tags.
 function categoryEditor(ctx, summary, cat) {
@@ -125,7 +102,6 @@ const SECTIONS = {
   basics: (ctx, s) => renderProfile(ctx, s),
   coverage: (ctx, s) => coverageSection(ctx, s),
   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
-  debts: debtsSection,
   bills: (ctx, s) => h('div', {}, billsCard(ctx), whatIfCard(ctx, s, calendarFor(ctx, s, ctx.ui.cfHorizon || 30))),
   categories: categoriesSection,
   tags: tagsSection,
