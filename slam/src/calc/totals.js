@@ -108,6 +108,8 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
     incomeTracked: incomeMonthOf.tracked,
     incomeBasis: incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome,
     surplus: minus(incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome, outflow),
+    // The month's gap as a share of what came in (S-135): surplus / income (or take-home).
+    surplusRate: ratio(minus(incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome, outflow), incomeMonthOf.tracked ? incomeMonthOf.actual : takeHome),
     // The estimate column as a whole budget, and what it would leave.
     estimateOutflow: sumKnown([answeredTotal(spending, 'estimate'), sumKnown(saving.map((x) => x.cat.estimate.amount)).total]).total,
     basisUsesEstimate: cats.filter((x) => x.basis.from === 'estimate').map((x) => x.cat.name),
@@ -149,4 +151,28 @@ export function rentShare(doc) {
   const yours = line ? toMonthly(line.estimate, 'monthly') : null;
   const even = total === null || !(rm.count > 0) ? null : Math.round((total / (rm.count + 1)) * 100) / 100;
   return { total, line, lineId: line ? line.id : null, yours, even };
+}
+
+// Surplus first, then allocate it (S-132). Surplus = take-home - every spending estimate (Debt payments
+// included). It can go four ways: spending (already counted), saving, investing, or extra on debt. The
+// last three are the Savings lines, grouped by type; what is not allocated yet stays surplus.
+//   allocated = the Savings estimates; not allocated yet = surplus - allocated
+// Blank (null) until take-home and at least one spending estimate are in (empty is not zero).
+const ALLOCATE = { 'emergency-fund': 'saving', 'savings-goal': 'saving', retirement: 'investing', investing: 'investing', 'extra-debt': 'debt' };
+export function surplusAllocation(model, totals) {
+  const lines = model.categories.filter((c) => c.savings).flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name, to: ALLOCATE[l.type] || 'saving', amount: l.estimate })));
+  const sum = (to) => sumKnown(lines.filter((l) => l.to === to).map((l) => l.amount)).total;
+  const spending = totals.estimateTotal;
+  const surplus = totals.takeHome === null || spending === null ? null : Math.round((totals.takeHome - spending) * 100) / 100;
+  const allocated = totals.savingsEstimate;
+  const unallocated = surplus === null ? null : allocated === null ? surplus : Math.round((surplus - allocated) * 100) / 100;
+  return {
+    surplus, spending, takeHome: totals.takeHome,
+    groups: { saving: sum('saving'), investing: sum('investing'), debt: sum('debt') }, lines,
+    // Nothing allocated yet (blank): all of the surplus is still to allocate.
+    allocated, unallocated,
+    // The gap, as a share of take-home (S-135): surplus rate = surplus / take-home; left over rate = not
+    // allocated yet / take-home.
+    surplusRate: ratio(surplus, totals.takeHome), unallocatedRate: ratio(unallocated, totals.takeHome)
+  };
 }

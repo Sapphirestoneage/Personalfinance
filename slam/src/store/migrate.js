@@ -80,7 +80,10 @@ const STEPS = {
   15: (doc) => ({ ...doc, schemaVersion: 16, categories: withoutFees(doc) }),
   // Version 16 to 17 (S-130): an opening Paid ahead on each line, blank (no line had one before).
   16: (doc) => ({ ...doc, schemaVersion: 17, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
-    ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) })
+    ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) }),
+  // Version 17 to 18 (S-134): a split line's people and share, blank on every line (no line had them).
+  17: (doc) => ({ ...doc, schemaVersion: 18, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
+    ...l, splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }), splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' }) })) })) })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);

@@ -4,10 +4,11 @@
 import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
+import { interestHandoff } from './debts.js';
 import { eraTimeline } from './eras.js';
 import { dreamLife } from './dream-life.js';
-import { budgetModel, withComputedSavings } from './model.js';
-import { budgetTotals } from './totals.js';
+import { budgetModel } from './model.js';
+import { budgetTotals, surplusAllocation } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
@@ -59,7 +60,7 @@ export function buildSummary(full, refs) {
   // The store hands calc the live view already; a full file with deleted records is trimmed here too (S-096).
   const doc = hasDeleted(full) ? liveView(full) : full;
   const income = incomeSummary(doc, refs.tax);
-  const model = withComputedSavings(budgetModel(doc), income.takeHome);
+  const model = budgetModel(doc);
   const totals = budgetTotals(model, income, doc, refs.benchmarks.housingBand);
   const history = monthHistory(doc);
   const items = questionItems(doc, model, income);
@@ -72,6 +73,9 @@ export function buildSummary(full, refs) {
     profile: { ...doc.profile, householdSize: householdSize(doc) },
     income, model, totals,
     rows: tableRows(model, totals),
+    allocation: surplusAllocation(model, totals),
+    // Each card's interest this month (S-133), for the chart on Credit and debt.
+    cardInterest: interestHandoff(doc, doc.currentMonth).rows.map(({ d, i }) => ({ id: d.id, name: d.label, amount: i ? i.amount : null, apr: i ? i.apr : null, balance: i ? i.balance : null, promo: i ? i.promo : false, why: i ? i.why : null })),
     oneOffs: model.oneOffs,
     blindSpot: blind,
     culprits: culprits(model),

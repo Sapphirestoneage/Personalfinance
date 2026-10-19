@@ -57,6 +57,7 @@ export const LINE_TYPES = [
   ['retirement', 'Retirement', ['retire', 'ira', '401']],
   ['investing', 'Investing', ['invest', 'brokerage', 'stocks']],
   ['savings-goal', 'Savings Goal', ['goal', 'saving', 'fund']],
+  ['extra-debt', 'Extra on Debt', ['extra', 'pay down', 'payoff', 'pay off']],
   ['loan', 'Loan Payment', ['loan']],
   ['other', 'Other', []]
 ];
@@ -74,7 +75,7 @@ export function categoryTypeLabel(id) {
 
 // The type a typed name most likely means: the longest keyword found wins.
 // Nothing found is "other" (the coach can pick).
-const SAVINGS_LINE_TYPES = ['emergency-fund', 'retirement', 'investing', 'savings-goal'];
+const SAVINGS_LINE_TYPES = ['emergency-fund', 'retirement', 'investing', 'savings-goal', 'extra-debt'];
 
 export function guessLineType(name, categoryType) {
   const n = String(name || '').toLowerCase();

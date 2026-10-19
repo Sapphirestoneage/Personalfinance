@@ -14,6 +14,7 @@ import { setOwnReturn, addAccount } from '../../store/accounts.js';
 import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
 import { debtCard, tagRow, tagManager, lineDetail, catName } from '../components/lines.js';
 import { debtTypeTotals } from '../components/debt-quick.js';
+import { interestChart } from '../charts/interest-chart.js';
 import { statusChip } from '../components/status.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageSection, coverageNote } from '../components/coverage.js';
@@ -29,6 +30,7 @@ function debtsSection(ctx, summary) {
       h('label', { class: 'check', 'data-path': JSON.stringify(['debts']) }, h('input', { type: 'checkbox', checked: doc.noDebts && !doc.debts.length, disabled: doc.debts.length > 0, 'data-key': 'no-debts',
         'data-path': JSON.stringify(['debts']), onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts (counts as complete)'),
       debtTypeTotals(summary)),
+    interestChart(ctx, summary),
     doc.debts.map((d) => debtCard(ctx, d, summary)),
     // A card is made with its account (S-126): the debt keeps APR, minimum, and promo; the account keeps balances.
     h('div', { class: 'row' },

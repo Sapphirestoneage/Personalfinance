@@ -37,7 +37,8 @@ export function headlineTiles(ctx, summary) {
       tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
       tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
       o ? tile('So far this month', hb('soFar', signedMoney(o.soFar)), h('span', {}, 'Expected by month end ', hb('expected', signedMoney(o.expected))), o.soFar < 0 ? 'bad' : 'good')
-        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
+        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
+          h('span', { 'data-key': 'surplus-rate' }, (t.surplusRate === null ? '' : pct(t.surplusRate) + ' of take-home') + (since && since.surplus !== null ? (t.surplusRate === null ? '' : ', ') + signedMoney(since.surplus) + ' since last time' : '')),
           t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
       tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), 'incl. pre-tax')),
     open ? howPanel(ctx, explain(summary, open, o)) : null);
