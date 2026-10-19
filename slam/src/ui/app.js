@@ -21,6 +21,7 @@ import { renderTrack } from './screens/track.js';
 import { renderReview } from './screens/review.js';
 import { renderInsights } from './screens/insights.js';
 import { renderSetup } from './screens/setup.js';
+import { renderAccounts } from './screens/accounts.js';
 import { renderFuture } from './screens/future.js';
 import { quickEntrySheet } from './components/quick-entry.js';
 
@@ -136,7 +137,7 @@ function render() {
   document.documentElement.setAttribute('data-view', displayRole());
   const summary = summaryOf(viewed());
   ui.previewHandler = null;
-  const screen = { clients: renderClients, today: renderToday, plan: renderPlan, track: renderTrack, review: renderReview, insights: renderInsights, setup: renderSetup, future: renderFuture }[ui.screen];
+  const screen = { clients: renderClients, today: renderToday, accounts: renderAccounts, plan: renderPlan, track: renderTrack, review: renderReview, insights: renderInsights, setup: renderSetup, future: renderFuture }[ui.screen];
   const body = screen(ctx, summary);
 
   const parts = [topbar(), store.doc && ui.screen !== 'clients' ? crumbs() : null, h('main', { id: 'main', 'data-screen': ui.screen }, body)].filter(Boolean);
@@ -219,11 +220,11 @@ function crumbs() {
     i === 1 && steps.length > 2 ? h('a', { href: '#' + ui.screen, onclick: (e) => { e.preventDefault(); ctx.go(ui.screen); } }, x) : h('span', { 'aria-current': i === steps.length - 1 ? 'page' : null }, x)])));
 }
 
-// Phones (S-106): Today, Plan, Track, Review, and More (Insights, Setup, Clients, and Future when on).
+// Phones (S-106, S-136): Today, Accounts, Plan, Track, and More (Review, Insights, Setup, Clients, and Future when on).
 function bottomBar() {
   const asClient = displayRole() === 'client';
   // Net worth is one tap from More (S-114): "what's my FI net worth" in two taps from Today.
-  const more = [['insights', 'Insights'], ['insights:networth', 'Net worth'], ['setup', 'Setup'], ...(futureOn() ? [['future', 'Future']] : []), ...(asClient ? [] : [['clients', 'Clients']])];
+  const more = [...SCREENS.slice(4).filter(([id]) => id !== 'insights' && id !== 'setup'), ['insights', 'Insights'], ['insights:networth', 'Net worth'], ['setup', 'Setup'], ...(futureOn() ? [['future', 'Future']] : []), ...(asClient ? [] : [['clients', 'Clients']])];
   const inMore = more.some(([id]) => id === ui.screen);
   return h('nav', { class: 'bottom-bar', 'aria-label': 'Screens' },
     navLinks(SCREENS.slice(0, 4)),

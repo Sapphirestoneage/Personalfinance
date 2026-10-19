@@ -377,3 +377,8 @@ input.quick-lines { flex: 1 1 260px; min-width: 0; }
 .ibar-track { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
 .ibar-fill { display: block; height: 100%; background: var(--accent); transition: width .15s ease; }
 .ibar-amt { min-width: 5.5em; text-align: right; }
+
+/* Accounts tab (S-136): an account's name opens its details. */
+button.acct-name { background: none; border: 0; color: inherit; font: inherit; font-weight: 600; padding: 0; min-height: 0; cursor: pointer; text-align: left; }
+.acct-cash.stale .hint { color: var(--warn); }
+.acct-detail { padding: 4px 0 12px 16px; border-left: 2px solid var(--border); margin: 4px 0 12px; }

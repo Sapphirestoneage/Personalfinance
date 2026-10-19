@@ -6,7 +6,7 @@
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';
 import { renderProfile, incomeSection, coachNotesCard, futureToolsCard } from './setup-basics.js';
-import { accountsCard, netWorthCard, owedCard } from '../components/accounts.js';
+import { owedCard } from '../components/accounts.js';
 import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
 import { whatIfCard } from '../charts/cash-charts.js';
 import { materialityInput } from '../charts/bridge-charts.js';
@@ -125,7 +125,6 @@ const SECTIONS = {
   basics: (ctx, s) => renderProfile(ctx, s),
   coverage: (ctx, s) => coverageSection(ctx, s),
   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
-  accounts: (ctx) => h('div', {}, netWorthCard(ctx), accountsCard(ctx, ctx.doc.currentMonth)),
   debts: debtsSection,
   bills: (ctx, s) => h('div', {}, billsCard(ctx), whatIfCard(ctx, s, calendarFor(ctx, s, ctx.ui.cfHorizon || 30))),
   categories: categoriesSection,

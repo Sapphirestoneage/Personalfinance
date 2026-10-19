@@ -80,3 +80,11 @@ theming beyond the tokens.
   insurance, protections), annual fee, and sign-up bonus progress.
 - Later: "what cards and credits do you have, and how can they upgrade your life", e.g. credits going unused,
   which card to use where, whether the annual fee pays for itself. Pairs with the card importer above.
+
+## The foundation, in order (decided 2026-10-19, S-136)
+
+1. Accounts: cash (done in S-136). 2. Revolving: credit cards and lines of credit as one debt record each,
+with balance, limit and utilization, APR, promo, statement and due days, minimum, paid from which account.
+3. Installment debts: student, auto, mortgage, personal; payoff schedule; secured asset. 4. Investments and
+things you own. 5. Income: each paycheck lands in an account. 6. Expenses: bills paid from an account or
+card, then categories and the budget. Cards and loans move their month balances onto the debt (one record).

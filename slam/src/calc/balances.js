@@ -185,3 +185,23 @@ export function monthEndOf(doc, key, month) {
   if (b && typedValue(b.end)) return { date: b.endOn || lastDayOf(month), amount: b.end.amount, status: b.end.status, from: 'end' };
   return balanceAt(doc, key, lastDayOf(month));
 }
+
+// The Accounts step (S-136): cash accounts (checking, savings, cash), each with its latest balance and how
+// old it is. A balance is up to date when it was read in the last 30 days. The step is done when there is
+// at least one cash account and every one is up to date; the screen then folds it to one line.
+export const FRESH_DAYS = 30;
+export function accountsStatus(doc, today) {
+  const DAY = 86400000;
+  const cash = (doc.accounts || []).filter((a) => a.state !== 'archived' && CASH_ACCOUNT_TYPES.includes(a.type)).map((a) => {
+    const latest = balanceAt(doc, a.id, today);
+    const days = latest && latest.date ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY) : null;
+    return { id: a.id, name: a.name, type: a.type, institution: a.institution || '', latest, days, fresh: days !== null && days <= FRESH_DAYS, history: observations(doc, a.id) };
+  });
+  const known = cash.filter((x) => x.latest);
+  return {
+    cash,
+    cashTotal: known.length ? Math.round(known.reduce((s, x) => s + x.latest.amount, 0) * 100) / 100 : null,
+    stale: cash.filter((x) => !x.fresh).map((x) => x.name),
+    done: cash.length > 0 && cash.every((x) => x.fresh)
+  };
+}

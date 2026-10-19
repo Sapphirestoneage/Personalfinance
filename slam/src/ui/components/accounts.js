@@ -131,7 +131,9 @@ export function accountsCard(ctx, month, opts = {}) {
     ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type, institution: institution || '' }).id; });
     if (id) { ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
   };
-  const mine = b.rows.filter((r) => r.type !== 'credit-card');
+  // opts.skip: types shown elsewhere (the Accounts tab shows cash on its own, S-136).
+  const skip = opts.skip || [];
+  const mine = b.rows.filter((r) => r.type !== 'credit-card' && !skip.includes(r.type));
   const byBank = ctx.ui.acctGroup === 'institution';
   const instOf = (r) => ((doc.accounts.find((a) => a.id === r.id) || {}).institution || '').trim();
   const groups = byBank
@@ -151,9 +153,9 @@ export function accountsCard(ctx, month, opts = {}) {
     rows.map((r) => accountRow(ctx, month, r, stored))] : null)),
     mine.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)), '.') : h('p', { class: 'muted small' }, 'No accounts yet.'),
     paidAheadBlock(ctx),
-    h('div', { class: 'row' }, QUICK_TYPES.map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
+    h('div', { class: 'row' }, QUICK_TYPES.filter((t) => !skip.includes(t)).map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
       h('select', { class: 'add-select', 'aria-label': 'Add another kind of account', 'data-key': 'add-acct-type', onchange: (e) => { if (e.target.value) add(e.target.value); } },
-        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card')], ''))),
+        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card' && !skip.includes(t))], ''))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
 }

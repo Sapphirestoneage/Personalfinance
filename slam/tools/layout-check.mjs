@@ -21,10 +21,10 @@ import { readFileSync } from 'node:fs';
 const PHONE = { width: 390, height: 844 };
 const HOUSEHOLDS = [['maya', 'Maya, 26'], ['luis', 'Luis, 33'], ['tasha', 'Tasha, 29'], ['sam', 'Sam, 24'], ['jordan', 'Jordan, 31'], ['riley', 'Riley, 31'], ['dana', 'Dana, 34']];
 const TABS = ['where', 'compared', 'time', 'cash', 'networth', 'you'];
-const SECTIONS = ['basics', 'coverage', 'income', 'accounts', 'debts', 'bills', 'categories', 'tags', 'coach', 'notes', 'future'];
+const SECTIONS = ['basics', 'coverage', 'income', 'debts', 'bills', 'categories', 'tags', 'coach', 'notes', 'future'];
 // Every state a person can land on: [label, hash, data-key to click after].
 export const STATES = [
-  ['Today', 'today'], ['Plan: next month', 'plan', 'plan-view-plan'], ['Plan: estimates', 'plan', 'plan-view-estimates'], ['Track', 'track'], ['Review', 'review'],
+  ['Today', 'today'], ['Accounts', 'accounts'], ['Plan: next month', 'plan', 'plan-view-plan'], ['Plan: estimates', 'plan', 'plan-view-estimates'], ['Track', 'track'], ['Review', 'review'],
   ...TABS.map((t) => ['Insights: ' + t, 'insights', 'tab-' + t]),
   ...SECTIONS.map((s) => ['Setup: ' + s, 'setup', 'setup-' + s])
 ];

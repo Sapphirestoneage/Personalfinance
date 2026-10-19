@@ -115,8 +115,8 @@ async function firstSession(browser, view, size) {
   await t.go('today');
   await t.tap('[data-key="first-go-accounts"]');
   await t.tap('[data-key="add-acct-checking"]');
-  await page.waitForSelector('#accounts-card input.amount');
-  await t.type('#accounts-card input.amount', '2500');
+  await page.waitForSelector('#cash-card input.amount');
+  await t.type('#cash-card input.amount', '2500');
   t.step('One account (checking and its balance)');
   await t.go('today');
   await page.waitForSelector('#headline');
@@ -223,8 +223,9 @@ async function month(browser, view, size) {
   check(J, 'Import', await text(page, '[data-key="match-summary"] b'), 'Matched 5, new 0, possible matches 0 to confirm.');
   await t.tap('[data-key="tx-add"]');
   t.step('Import a CSV that matches 5 entries');
-  await t.go('setup');
-  await t.tap('[data-key="setup-accounts"]');
+  await t.go('accounts');
+  // The Accounts step folds once every cash balance is up to date (S-136): Review opens it.
+  if (await page.locator('[data-key="accounts-review"]').count()) await t.tap('[data-key="accounts-review"]');
   await t.type('[data-path=\'["balances","2026-10","chk","end"]\']', '4747.10');
   t.step('Enter balances (checking at month end)');
   await t.go('review');
@@ -336,12 +337,15 @@ async function balances(browser, view, size) {
   await page.waitForSelector('#headline');
   const t = counter(page, view === 'phone');
   const J = 'd. Month-end balances, ' + view;
-  await t.go('setup');
-  await t.tap('[data-key="setup-accounts"]');
-  for (const [id, v] of [['chk', '3000'], ['sav', '400'], ['k401', '17100'], ['roth', '11300']]) {
-    await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
-  }
+  // Cash on the Accounts tab (S-136): September's readings are 31 days old on October 31, so the step is open.
+  await t.go('accounts');
+  if (await page.locator('[data-key="accounts-review"]').count()) await t.tap('[data-key="accounts-review"]');
+  for (const [id, v] of [['chk', '3000'], ['sav', '400']]) await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
+  // Investments sit below, folded until their step.
+  await t.tap('#other-accounts > summary');
+  for (const [id, v] of [['k401', '17100'], ['roth', '11300']]) await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
   // The Visa's balance is what is owed, in Setup, Credit and debt (S-126).
+  await t.go('setup');
   await t.tap('[data-key="setup-debts"]');
   await t.type('[data-path=\'["balances","2026-10","visa","end"]\']', '300');
   t.step('Month-end balances for 5 accounts');
