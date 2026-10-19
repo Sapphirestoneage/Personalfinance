@@ -50,7 +50,8 @@ function surplusHead(ctx, summary) {
     h('div', { class: 'q' }, 'Surplus', h('div', { class: 'hint' }, a.surplus === null
       ? 'Take-home less your spending estimates. Shows once take-home and a spending estimate are in.'
       : 'Take-home ' + money(a.takeHome) + ' less spending ' + money(a.spending) + '. It can go to saving, investing, or extra on debt.')),
-    h('span', { class: 'row' }, a.surplus === null ? null : statusChip('computed'), ' ', h('b', { class: 'num', 'data-key': 'surplus-amount' }, signedMoney(a.surplus))));
+    h('span', { class: 'row' }, a.surplus === null ? null : statusChip('computed'), ' ', h('b', { class: 'num', 'data-key': 'surplus-amount' }, signedMoney(a.surplus)),
+      a.surplusRate === null ? null : h('span', { class: 'xs muted', 'data-key': 'surplus-rate-est' }, pct(a.surplusRate) + ' of take-home')));
 }
 
 function surplusFoot(ctx, summary) {
@@ -59,7 +60,8 @@ function surplusFoot(ctx, summary) {
   const parts = [['Saving', a.groups.saving], ['Investing', a.groups.investing], ['Extra on debt', a.groups.debt]].filter(([, x]) => x);
   return h('div', { class: 'qa', 'data-key': 'rough-unallocated' },
     h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus.')),
-    h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated))));
+    h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated)),
+      a.unallocatedRate === null ? null : h('span', { class: 'xs muted', 'data-key': 'unallocated-rate' }, pct(a.unallocatedRate) + ' of take-home')));
 }
 
 // A split line (S-134): with how many other people, and your share (blank = even). The line's amount is

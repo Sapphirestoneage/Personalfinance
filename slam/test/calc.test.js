@@ -349,6 +349,11 @@ test('Surplus first, then allocate it (S-132), by hand', async () => {
   // 1,086.54 - 300 = 786.54.
   const a = buildSummary(d, refs).allocation;
   assert.deepEqual([a.surplus, a.allocated, a.unallocated, a.groups], [1086.54, 300, 786.54, { saving: null, investing: null, debt: null }]);
+  // The gap as a share of take-home (S-135): surplus rate 1,086.54 / 4,600 = 0.23620435; left over rate
+  // 786.54 / 4,600 = 0.17098696.
+  assert.ok(Math.abs(a.surplusRate - 0.23620435) < 1e-7 && Math.abs(a.unallocatedRate - 0.17098696) < 1e-7);
+  // The month (Luis's September): surplus 571.54 / take-home 4,600 = 0.12424783.
+  assert.ok(Math.abs(buildSummary(d, refs).totals.surplusRate - 0.12424783) < 1e-7);
   // Broken into lines: emergency fund 200, "Extra on debt" 150 (its type from the name). 200 + 150 = 350
   // allocated; 1,086.54 - 350 = 736.54 not allocated yet.
   d.categories.find((c) => c.id === 'savings').split = true;
