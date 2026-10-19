@@ -5,10 +5,9 @@
 import { h } from '../dom.js';
 import { money, pct, monthLabel, signedMoney } from '../format.js';
 import { question, valueInput } from '../components/value-input.js';
-import { splitOf } from '../../calc/split.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber, removeLine, addIncome } from '../../store/edits.js';
+import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber, removeLine, addIncome, setSplitPays } from '../../store/edits.js';
 import { parseQuickLines } from '../../calc/quick-lines.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageNote } from '../components/coverage.js';
@@ -59,22 +58,32 @@ function surplusFoot(ctx, summary) {
   if (a.surplus === null) return null;
   const parts = [['Saving', a.groups.saving], ['Investing', a.groups.investing], ['Extra on debt', a.groups.debt]].filter(([, x]) => x);
   return h('div', { class: 'qa', 'data-key': 'rough-unallocated' },
-    h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus.')),
+    h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus' +
+      (a.boost === null ? '.' : ' and is not in your savings rate. Allocate it to saving to raise your savings rate from ' + pct(a.savingsRate) + ' to ' + pct(a.possibleSavingsRate) + '.'))),
     h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated)),
       a.unallocatedRate === null ? null : h('span', { class: 'xs muted', 'data-key': 'unallocated-rate' }, pct(a.unallocatedRate) + ' of take-home')));
 }
 
-// A split line (S-134): with how many other people, and your share (blank = even). The line's amount is
-// your part; the whole bill is worked out from it (calc/split.js).
+// A split line (S-134): with how many other people, and your share (blank = even). Who pays the bill
+// (S-138): only your part (the amount is your part), or the whole bill on your card (the amount is the
+// whole bill; the others pay you back). The numbers come from calc/split.js through the line's row.
 function splitBox(ctx, l, r) {
   const row = r.lines.find((x) => x.id === l.id);
-  const sp = splitOf(l, row ? row.estimate : null);
+  const sp = row ? row.split : null;
   const box = (field, label, placeholder) => valueInput({ ...ctx, preview: null }, ['line', l.id, field], l[field], { label, cadence: false, placeholder, compact: true });
+  const whole = l.splitPays === 'whole';
+  const hint = !sp || sp.share === null ? (whole ? 'The amount is the whole bill. Add how many people to see your part.' : null)
+    : (sp.shareFrom === 'even' ? 'An even split: ' : 'Your share: ') + sp.share + '%' + (whole
+      ? (sp.whole !== null ? '. You pay the whole ' + money(sp.whole, true) + ' a month; your part is ' + money(sp.yours, true) + ' and the others pay you back ' + money(sp.paidBack, true) + '.' : '.')
+      : (sp.whole !== null ? '. The whole bill is about ' + money(sp.whole, true) + ' a month; you pay ' + money(sp.yours, true) + '.' : '.'));
   return h('div', { class: 'split-box', 'data-key': 'split-box:' + l.id },
+    h('label', { class: 'row xs' }, h('span', {}, 'Who pays the bill'),
+      h('select', { 'data-key': 'split-pays:' + l.id, 'aria-label': l.name + ': who pays the bill', onchange: (e) => ctx.update('Who pays ' + l.name, (d) => setSplitPays(d, l.id, e.target.value)) },
+        h('option', { value: 'part', selected: !whole }, 'I pay only my part'),
+        h('option', { value: 'whole', selected: whole }, 'I pay the whole bill, they pay me back'))),
     h('div', { class: 'row xs' }, h('span', {}, 'With'), box('splitPeople', l.name + ': how many other people', 'people'), h('span', {}, 'others. Your share'),
       box('splitShare', l.name + ': your share, percent', sp && sp.shareFrom === 'even' ? String(sp.share) : '%'), h('span', {}, '%')),
-    sp && sp.share !== null ? h('div', { class: 'xs muted', 'data-key': 'split-hint:' + l.id },
-      (sp.shareFrom === 'even' ? 'An even split: ' : 'Your share: ') + sp.share + '%' + (sp.whole !== null ? '. The whole bill is about ' + money(sp.whole, true) + ' a month; you pay ' + money(sp.yours, true) + '.' : '.')) : null);
+    hint ? h('div', { class: 'xs muted', 'data-key': 'split-hint:' + l.id }, hint) : null);
 }
 
 // Health insurance is its own row, apart from Health (gym, therapy, out of pocket). Health coverage in

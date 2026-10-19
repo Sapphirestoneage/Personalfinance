@@ -85,7 +85,9 @@ const STEPS = {
   17: (doc) => ({ ...doc, schemaVersion: 18, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
     ...l, splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }), splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' }) })) })) }),
   // Version 18 to 19 (S-137): a credit limit on each debt, blank (none had one).
-  18: (doc) => ({ ...doc, schemaVersion: 19, debts: (doc.debts || []).map((d) => ({ ...d, creditLimit: d.creditLimit || makeValue(null, { cadence: 'one-off' }) })) })
+  18: (doc) => ({ ...doc, schemaVersion: 19, debts: (doc.debts || []).map((d) => ({ ...d, creditLimit: d.creditLimit || makeValue(null, { cadence: 'one-off' }) })) }),
+  // Version 19 to 20 (S-138): who pays a split bill, 'part' on every line (what every split meant before).
+  19: (doc) => ({ ...doc, schemaVersion: 20, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({ ...l, splitPays: l.splitPays || 'part' })) })) })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);

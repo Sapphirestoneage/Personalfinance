@@ -472,6 +472,17 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   const names = await page.$$eval('#est-bills [data-key^="line-name:"]', (xs) => xs.map((x) => x.textContent));
   check('coverage', 'Quick lines added', String(['Claude', 'Spotify', 'Youtube'].every((n) => names.includes(n))), 'true');
   check('coverage', 'Split mark shown', String(await page.$$eval('#est-bills [data-key^="split-tag:"]', (x) => x.length)), '1');
+  // Who pays the bill (S-138): Spotify's 21 is the whole bill on your card, with 3 others. Share 100 / 4
+  // = 25%; your part 21 x 0.25 = 5.25; paid back 21 - 5.25 = 15.75.
+  const spot = await page.$$eval('#est-bills [data-key^="line-name:"]', (xs) => xs.find((x) => x.textContent === 'Spotify').getAttribute('data-key').slice('line-name:'.length));
+  await page.click('[data-key=\'["line","' + spot + '","estimate"]:more\']');
+  await page.selectOption('[data-key="split-pays:' + spot + '"]', 'whole');
+  await page.waitForTimeout(200);
+  const people = page.locator('[data-path=\'["line","' + spot + '","splitPeople"]\']');
+  await people.fill('3');
+  await people.press('Tab');
+  const paidBack = 'An even split: 25%. You pay the whole $21.00 a month; your part is $5.25 and the others pay you back $15.75.';
+  check('coverage', 'Split paid in full', await settled(page, '[data-key="split-hint:' + spot + '"]', paidBack), paidBack);
   check('coverage', 'Console errors', String(errors.length), '0');
   await page.close();
 }

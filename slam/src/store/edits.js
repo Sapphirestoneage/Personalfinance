@@ -34,6 +34,12 @@ export function removeLine(doc, lineId) {
   for (const d of doc.debts || []) if (d.lineId === lineId) d.lineId = null;
 }
 
+// Who pays a split bill (S-138): 'part' (you pay your part) or 'whole' (you pay it all; they pay you back).
+export function setSplitPays(doc, lineId, pays) {
+  if (!['part', 'whole'].includes(pays)) throw new Error('Pay your part or the whole bill');
+  findLine(doc, lineId).line.splitPays = pays;
+}
+
 // A fee line made on first use (S-123), in Bills and subscriptions (else the first spending category).
 export function feeLine(doc, id) {
   const cat = findCategory(doc, 'bills') || doc.categories.find((c) => !c.savings && c.id !== 'debt' && c.id !== EVERYTHING_CATEGORY_ID);

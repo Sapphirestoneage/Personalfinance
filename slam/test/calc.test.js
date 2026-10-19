@@ -352,6 +352,10 @@ test('Surplus first, then allocate it (S-132), by hand', async () => {
   // The gap as a share of take-home (S-135): surplus rate 1,086.54 / 4,600 = 0.23620435; left over rate
   // 786.54 / 4,600 = 0.17098696.
   assert.ok(Math.abs(a.surplusRate - 0.23620435) < 1e-7 && Math.abs(a.unallocatedRate - 0.17098696) < 1e-7);
+  // Only what is allocated counts as saving (S-138). Planned savings rate (300 + pre-tax 200) / (4,600 + 200)
+  // = 500 / 4,800 = 0.10416667; the 786.54 not allocated yet would add 786.54 / 4,800 = 0.16386250, for
+  // (300 + 786.54 + 200) / 4,800 = 1,286.54 / 4,800 = 0.26802917.
+  assert.ok(Math.abs(a.savingsRate - 0.10416667) < 1e-7 && Math.abs(a.boost - 0.1638625) < 1e-7 && Math.abs(a.possibleSavingsRate - 0.26802917) < 1e-7);
   // The month (Luis's September): surplus 571.54 / take-home 4,600 = 0.12424783.
   assert.ok(Math.abs(buildSummary(d, refs).totals.surplusRate - 0.12424783) < 1e-7);
   // Broken into lines: emergency fund 200, "Extra on debt" 150 (its type from the name). 200 + 150 = 350
