@@ -3,6 +3,7 @@
 // A month's start that was never typed is carried from last month's end by
 // calc (balances.js), so it is never stored twice.
 
+import { addBalanceCheck } from './cashflow.js';
 import { newAccount, newBalance, ACCOUNT_TYPE_INFO, LIQUIDITY_TIERS, SECURED_TYPES, securedFields, ownedFields, ALTERNATIVES } from './schema.js';
 
 export function addAccount(doc, fields = {}) {
@@ -119,4 +120,20 @@ export function setAccountNotes(doc, id, text) {
 export function setOwnReturn(doc, rate) {
   if (!(typeof rate === 'number' && rate >= 0 && rate <= 0.2)) throw new Error('Use a return from 0% to 20% a year');
   doc.settings.ownReturn = rate;
+}
+
+// Update a balance (S-136): what the account holds on a day. It becomes that month's end, read on that day,
+// so the month's numbers (bridge, net worth) keep working; an earlier reading in the same month is kept as a
+// balance check, so the history loses nothing. value is a Value (from the input).
+export function updateBalance(doc, accountId, date, value) {
+  if (!hasBalances(doc, accountId)) throw new Error('No account ' + accountId);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('A date is YYYY-MM-DD');
+  const month = date.slice(0, 7);
+  const [y, m] = month.split('-').map(Number);
+  const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
+  const b = ((doc.balances || {})[month] || {})[accountId];
+  const prev = b && b.end && b.end.amount !== null && b.end.amount !== undefined ? { date: b.endOn || last, amount: b.end } : null;
+  if (prev && prev.date < date) addBalanceCheck(doc, accountId, prev.date, prev.amount);
+  setBalance(doc, month, accountId, 'end', value);
+  setBalanceDate(doc, month, accountId, 'end', date === last ? null : date);
 }

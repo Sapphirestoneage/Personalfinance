@@ -199,5 +199,6 @@ test('a card or loan balance opens Credit and debt; a bank balance opens Account
   const d = october();
   // The October household has checking "chk" and the card "visa" (an account of type credit-card).
   assert.deepEqual(whereFor(d, ['balances', '2026-10', 'chk', 'end'])[0], 'balances');
-  assert.deepEqual(whereFor(d, ['balances', '2026-10', 'visa', 'end'])[0], 'setup:debts');
+  // Both live on the Accounts tab now (S-137): cash, and Credit and debt.
+  assert.deepEqual(whereFor(d, ['balances', '2026-10', 'visa', 'end'])[0], 'credit');
 });

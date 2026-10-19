@@ -7,8 +7,8 @@ import { h, options } from '../dom.js';
 import { money, monthLabel, todayIso, dayLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
-import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts, setPurchase, setAlternative, setAccountNotes } from '../../store/accounts.js';
-import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf, balanceAt } from '../../calc/balances.js';
+import { addAccount, setBalance, setAccountField, setBalanceDate, setPurchase, setAlternative, setAccountNotes } from '../../store/accounts.js';
+import { balancesFor, ACCOUNT_GROUPS, kindOf, balanceAt } from '../../calc/balances.js';
 import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
 import { jumpLink } from './jump.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
@@ -97,18 +97,6 @@ function accountDetails(ctx, a) {
 }
 const ALT_LABELS = { rentAlt: 'Rent a month', rideshareAlt: 'Rideshare a month', transitAlt: 'Transit a month', rentalAlt: 'An occasional rental, a month' };
 
-// A debt with no card account keeps its own dated balances (S-110): what is owed at the start and end.
-function debtRow(ctx, month, l, stored) {
-  const r = monthBalance(ctx.doc, month, l.key);
-  const fake = { id: l.key, name: l.name };
-  return h('div', { class: 'qa account-row', 'data-key': 'debt-row:' + l.key },
-    h('div', { class: 'q' }, h('div', {}, l.name), latestLine(ctx, l.key), h('div', { class: 'hint' }, 'What is owed. APR and payment are on the debt above.')),
-    h('div', { class: 'balance-pair' },
-      h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, fake, 'start', stored(l.key, 'start'), l.name + ' start'), balanceDate(ctx, month, fake, 'start'),
-        r.start.from === 'carried' ? h('div', { class: 'xs muted' }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
-      h('div', {}, h('div', { class: 'xs muted' }, 'End balance'), balanceInput(ctx, month, fake, 'end', stored(l.key, 'end'), l.name + ' end'), balanceDate(ctx, month, fake, 'end'))));
-}
-
 const blankBalance = { amount: null, cadence: 'one-off', status: null, source: 'client', asOf: null, note: '' };
 const storedFor = (doc, month) => (id, which) => (((doc.balances[month] || {})[id] || {})[which]) || blankBalance;
 
@@ -118,7 +106,7 @@ function institutionList(doc) {
   return h('datalist', { id: 'institutions' }, names.map((n) => h('option', { value: n })));
 }
 
-// Accounts (S-126): what you have, not what you owe. Cards and loans are in Setup, Credit and debt.
+// Accounts (S-126): what you have, not what you owe. Cards and loans are in Credit and debt, on the Accounts tab.
 // Grouped by type (bank and cash, investments, retirement, things you own) or by institution, where
 // each bank has its own "+ Add" so its name is never typed again.
 export function accountsCard(ctx, month, opts = {}) {
@@ -131,7 +119,9 @@ export function accountsCard(ctx, month, opts = {}) {
     ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type, institution: institution || '' }).id; });
     if (id) { ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
   };
-  const mine = b.rows.filter((r) => r.type !== 'credit-card');
+  // opts.skip: types shown elsewhere (the Accounts tab shows cash on its own, S-136).
+  const skip = opts.skip || [];
+  const mine = b.rows.filter((r) => r.type !== 'credit-card' && !skip.includes(r.type));
   const byBank = ctx.ui.acctGroup === 'institution';
   const instOf = (r) => ((doc.accounts.find((a) => a.id === r.id) || {}).institution || '').trim();
   const groups = byBank
@@ -151,59 +141,11 @@ export function accountsCard(ctx, month, opts = {}) {
     rows.map((r) => accountRow(ctx, month, r, stored))] : null)),
     mine.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)), '.') : h('p', { class: 'muted small' }, 'No accounts yet.'),
     paidAheadBlock(ctx),
-    h('div', { class: 'row' }, QUICK_TYPES.map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
+    h('div', { class: 'row' }, QUICK_TYPES.filter((t) => !skip.includes(t)).map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
       h('select', { class: 'add-select', 'aria-label': 'Add another kind of account', 'data-key': 'add-acct-type', onchange: (e) => { if (e.target.value) add(e.target.value); } },
-        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card')], ''))),
+        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card' && !skip.includes(t))], ''))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
-}
-
-// Credit and debt balances (S-126): every card's and loan's start and end for the month, what is owed.
-// Shown in Setup, Credit and debt, under the debts themselves.
-export function owedCard(ctx, month) {
-  const doc = ctx.doc;
-  const b = balancesFor(doc, month);
-  const stored = storedFor(doc, month);
-  const cards = b.rows.filter((r) => r.type === 'credit-card');
-  const loans = liabilities(doc).filter((l) => !l.account);
-  if (!cards.length && !loans.length && !cardMap(doc, month).noAccount.length) return null;
-  // Folded until there is a month balance to show (one tap opens it), so a long debt list stays short.
-  const keys = [...cards.map((r) => r.id), ...loans.map((l) => l.key)];
-  const any = Object.values(doc.balances || {}).some((m) => keys.some((k) => m && m[k]));
-  if (!any && !ctx.ui.expanded.has('owed-open')) {
-    return h('div', { class: 'card', id: 'owed-card' }, h('button', { class: 'btn small', 'data-key': 'owed-open', onclick: () => { ctx.ui.expanded.add('owed-open'); ctx.rerender(); } },
-      'Month balances for ' + keys.length + (keys.length === 1 ? ' card or loan' : ' cards and loans') + ' (optional)'),
-      h('p', { class: 'xs muted' }, 'What is owed at the start and end of each month, for the net worth bridge and card interest.'), cardsBlock(ctx, month));
-  }
-  return h('div', { class: 'card', id: 'owed-card' },
-    h('h2', {}, 'What is owed, ' + monthLabel(month)),
-    h('p', { class: 'muted small' }, 'A card\'s or loan\'s balance is what is owed. A start you leave blank is last month\'s end.'),
-    institutionList(doc),
-    cards.length ? [h('h3', { 'data-key': 'acct-group:card' }, 'Credit cards'), cards.map((r) => accountRow(ctx, month, r, stored))] : null,
-    loans.length ? [h('h3', { 'data-key': 'acct-group:debts' }, 'Loans and other debts'), loans.map((l) => debtRow(ctx, month, l, stored))] : null,
-    cards.length ? h('p', { class: 'small' }, 'Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd)), '.') : null,
-    cardsBlock(ctx, month));
-}
-
-// Every credit card, both ways (S-102): which debt each card pays down, what it owes, what is
-// set to be paid on it, and what was logged on it; card debts with no account get one tap.
-function cardsBlock(ctx, month) {
-  const m = cardMap(ctx.doc, month);
-  if (!m.rows.length && !m.noAccount.length) return null;
-  return h('div', { class: 'cards-map', 'data-key': 'cards-map' },
-    h('h3', {}, 'How each card is used'),
-    m.rows.length ? h('ul', { class: 'plain' }, m.rows.map((r) => h('li', { class: 'small', 'data-key': 'card:' + r.id },
-      h('div', { style: 'flex:1 1 100%' },
-        h('b', {}, r.name + (r.institution ? ' (' + r.institution + ')' : '')), ' ',
-        r.debt ? h('span', {}, 'pays down the debt "' + r.debt.label + '"') : h('span', { class: 'warn' }, 'is not linked to a debt yet: pick one above'),
-        r.owed !== null ? h('span', { class: 'muted' }, '. Owes ' + money(r.owed, true) + ' at the end of the month') : null, '.'),
-      h('div', { class: 'xs muted', style: 'flex:1 1 100%' },
-        (r.paidOn.length ? 'Paid on it: ' + r.paidOn.join(', ') + '. ' : 'No bills set to be paid on it. ') +
-        (r.loggedCount ? 'Logged on it this month: ' + r.loggedCount + (r.loggedCount === 1 ? ' entry, ' : ' entries, ') + money(r.loggedAmount, true) + '.' : 'Nothing logged on it this month.'))))) : null,
-    m.noAccount.length ? h('div', { class: 'row' },
-      h('span', { class: 'small' }, 'Card debts with no account yet: ' + m.noAccount.map((d) => d.label).join(', ') + '.'),
-      h('button', { class: 'btn small', 'data-key': 'add-card-accounts', onclick: () => ctx.update('Add card accounts', (d) => addCardAccounts(d)) },
-        'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
 // Paid ahead (S-119): computed from the log, never typed. Each yearly bill paid, with its schedule.

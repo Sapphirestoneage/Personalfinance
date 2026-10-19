@@ -111,7 +111,7 @@ function categoryRow(ctx, summary, r) {
     const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
     return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
       h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(minimumAmount(ctx.doc, d)) + (linkedLine(ctx.doc, d) ? ' (the ' + linkedLine(ctx.doc, d).name + ' line)' : ' minimum'))))),
-      h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
+      h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Accounts')));
   }
   const cat = ctx.doc.categories.find((c) => c.id === r.id);
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));

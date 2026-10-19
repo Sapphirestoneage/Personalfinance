@@ -83,7 +83,9 @@ const STEPS = {
     ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) }),
   // Version 17 to 18 (S-134): a split line's people and share, blank on every line (no line had them).
   17: (doc) => ({ ...doc, schemaVersion: 18, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
-    ...l, splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }), splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' }) })) })) })
+    ...l, splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }), splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' }) })) })) }),
+  // Version 18 to 19 (S-137): a credit limit on each debt, blank (none had one).
+  18: (doc) => ({ ...doc, schemaVersion: 19, debts: (doc.debts || []).map((d) => ({ ...d, creditLimit: d.creditLimit || makeValue(null, { cadence: 'one-off' }) })) })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);

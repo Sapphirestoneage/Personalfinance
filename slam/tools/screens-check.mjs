@@ -90,7 +90,7 @@ for (const [name, button] of Object.entries(DEMOS)) {
   console.log(name);
 
   // The menu follows the monthly loop (S-106); Clients opens from the client name.
-  check(name, 'Menu', (await page.$$eval('header nav a', (as) => as.map((a) => a.textContent))).join(', '), 'Today, Plan, Track, Review, Insights, Setup');
+  check(name, 'Menu', (await page.$$eval('header nav a', (as) => as.map((a) => a.textContent))).join(', '), 'Today, Accounts, Plan, Track, Review, Insights, Setup');
   // Today: at most four headline tiles.
   const tiles = await tilesOf(page, '#headline');
   check(name, 'Headline tiles', Object.keys(tiles).join(', '), 'Take-home, Spending, ' + (exp.surplus < 0 ? 'Shortfall' : 'Surplus') + ', Savings rate');
@@ -211,16 +211,18 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="new-client"]', 'Loop check');
   await page.press('[data-key="new-client"]', 'Enter');
   await page.waitForSelector('#first-session');
-  await setup(page, 'accounts');
+  // The Accounts tab (S-136): a checking account with today's balance, 2,500. That completes the step, so
+  // the Cash card folds to one line.
+  await go(page, 'accounts');
   await page.click('[data-key="add-acct-checking"]');
-  const startBox = page.locator('#accounts-card input.amount').first();
+  const startBox = page.locator('#cash-card input.amount').first();
   await startBox.fill('2500');
   await startBox.press('Tab');
   await page.waitForTimeout(100);
-  check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
+  check('loop', 'Cash step done', await settled(page, '[data-key="cash-done"] span', 'Done Cash: 1 account, $2,500.00, all updated in the last 30 days.'), 'Done Cash: 1 account, $2,500.00, all updated in the last 30 days.');
   // Net worth (S-111): with only a checking start of 2,500 typed, both net worths are 2,500 and nothing is locked in.
-  // Setup shows the one-line summary; the tiles live in Insights, Net worth (S-114).
-  check('loop', 'Setup net worth line', await settled(page, '[data-key="nw-line-total"]', money(2500)), money(2500));
+  // The Accounts tab shows the one-line summary; the tiles live in Insights, Net worth (S-114).
+  check('loop', 'Accounts net worth line', await settled(page, '[data-key="nw-line-total"]', money(2500)), money(2500));
   await insights(page, 'networth');
   check('loop', 'Net worth (everything)', await settled(page, '[data-key="nw-total"] .value', money(2500)), money(2500));
   check('loop', 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(2500)), money(2500));
@@ -264,14 +266,15 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // Latest first (S-109): Whole Foods on the 5th from the bank, then Trader Joe's (the bank's date, the 4th) merged with the quick entry.
   const srcs = await page.$$eval('#log-card li', (ls) => ls.map((l) => l.querySelector('b').textContent + ' (' + l.querySelector('.src-chip').textContent + ')'));
   check('loop', 'Log sources after merge', srcs.join('; '), 'WHOLE FOODS MKT (Bank); TRADER JOE S #552 (Bank, merged)');
-  // Cash by day (S-086). By hand: checking starts at 2,500; Trader Joe's 54.20 and Whole Foods 80.10
-  // are in the log; no income or plan yet. Today 2,500 - 54.20 - 80.10 = 2,365.70, also the lowest
-  // point and safe to spend (no payday ahead).
+  // Cash by day (S-086, S-136). By hand: checking's balance, 2,500, was read today on the Accounts tab, so it
+  // already holds what was spent up to today (Trader Joe's 54.20 and Whole Foods 80.10 are in the log, dated
+  // the 4th and the 5th). No income or plan yet, so nothing moves ahead: today 2,500, also the lowest point and
+  // safe to spend.
   await go(page, 'today');
   await page.waitForSelector('#cash-strip');
-  check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2365.7));
-  check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2365.7));
-  check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2365.7));
+  check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2500));
+  check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2500));
+  check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2500));
   await go(page, 'track');
   await page.waitForSelector('#chart-cf-chart svg');
   check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
@@ -404,10 +407,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
   // The auto loan is paid by the Car payment line (S-116, by hand in test/debts.test.js): October's 340,
   // on the loan going into October (September's end, 3,237.64): 16.19 interest, 323.81 principal.
-  // Paid ahead in Setup, Accounts: the car insurance first, 400 left today.
-  await setup(page, 'accounts');
-  check('riley', 'Paid ahead in Setup', await settled(page, '[data-key="paid-ahead"] li b', '$400.00 left'), '$400.00 left');
-  await setup(page, 'debts');
+  // Paid ahead, with investments and things you own on the Accounts tab (S-136): the car insurance, 400 left today.
+  await go(page, 'accounts');
+  await page.click('#other-accounts > summary');
+  check('riley', 'Paid ahead on Accounts', await settled(page, '[data-key="paid-ahead"] li b', '$400.00 left'), '$400.00 left');
+  // Credit and debt, on the Accounts tab (S-137): open the section, then the car loan and the Visa.
+  if (await page.locator('[data-key="credit-review"]').count()) await page.click('[data-key="credit-review"]');
+  await page.click('[data-key="credit-open:debt-car"]');
+  await page.click('[data-key="credit-open:visa"]');
   check('riley', 'Loan minimum from its line', await settled(page, '[data-key="debt-min-from:debt-car"]', 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.'), 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.');
   check('riley', 'Loan payment split', await settled(page, '[data-key="debt-split:debt-car"]', 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).'), 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).');
   check('riley', 'Visa interest', await settled(page, '[data-key="debt-interest:debt-visa"]', 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.'), 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.');

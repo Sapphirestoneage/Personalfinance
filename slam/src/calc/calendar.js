@@ -264,11 +264,14 @@ export function cashCalendar(doc, income, opts) {
   // Starting balances: each account's start for the first month (typed or carried); unknown counts as 0 and is named.
   const bal = {};
   const unknownStart = [];
+  const checksOf = (id) => (cf.checks || []).filter((c) => c.accountId === id && c.amount && c.amount.amount !== null);
   for (const a of accts) {
     const b = ((doc.balances[firstMonth] || {})[a.id]) || {};
     const prevEnd = (((doc.balances[monthOf(addDays(start, -1))]) || {})[a.id] || {}).end;
     const s = b.start && b.start.amount !== null ? b.start.amount : prevEnd && prevEnd.amount !== null ? prevEnd.amount : null;
-    if (s === null) unknownStart.push(a.name);
+    // A balance read later in the month (S-136, Update on the Accounts tab) is known from its day on.
+    const readLater = (b.end && b.end.amount !== null) || checksOf(a.id).some((c) => monthOf(c.date) === firstMonth);
+    if (s === null && !readLater) unknownStart.push(a.name);
     bal[a.id] = s === null ? 0 : s;
   }
   const checks = (cf.checks || []).filter((c) => byId[c.accountId] && c.amount && c.amount.amount !== null);
