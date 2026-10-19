@@ -40,7 +40,9 @@ export function headlineTiles(ctx, summary) {
         : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
           h('span', { 'data-key': 'surplus-rate' }, (t.surplusRate === null ? '' : pct(t.surplusRate) + ' of take-home') + (since && since.surplus !== null ? (t.surplusRate === null ? '' : ', ') + signedMoney(since.surplus) + ' since last time' : '')),
           t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
-      tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), 'incl. pre-tax')),
+      // Only what is allocated counts (S-138); the surplus not allocated yet is shown as a boost.
+      tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), h('span', { 'data-key': 'savings-boost' }, 'incl. pre-tax' +
+        (summary.allocation.boost === null ? '' : '. Up to +' + pct(summary.allocation.boost) + ' if you allocate your surplus')))),
     open ? howPanel(ctx, explain(summary, open, o)) : null);
 }
 

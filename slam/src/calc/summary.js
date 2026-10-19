@@ -37,7 +37,7 @@ function tableRows(model, totals) {
         gaps: gaps(l.estimate, l.actual), accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.actual, lb, th),
         pctSpending: c.savings ? null : ratio(lb, totals.spending),
-        owedOutstanding: l.owedOutstanding,
+        owedOutstanding: l.owedOutstanding, split: l.split || null,
         covered: l.covered || null
       };
     });

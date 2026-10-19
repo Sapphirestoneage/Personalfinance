@@ -8,6 +8,7 @@ import { sumKnown } from './money.js';
 import { premiumFor, PREMIUM_LINE_TYPES } from './coverage.js';
 import { actualsFromTransactions } from './tx-analysis.js';
 import { linkedLine, interestHandoff } from './debts.js';
+import { splitOf, countedAmount } from './split.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -56,7 +57,7 @@ export function isYearlyLine(line) {
 function actualOf(line, freq, src) {
   if (src && isYearlyLine(line)) {
     const p = src.plan && src.plan.lines[line.id] ? toMonthly(src.plan.lines[line.id].amount, freq) : null;
-    const share = p !== null ? p : toMonthly(line.estimate, freq);
+    const share = p !== null ? p : countedAmount(line, toMonthly(line.estimate, freq));
     if (share !== null) return { amount: share, status: 'computed', from: 'share', count: src.log.counts[line.id] || 0 };
   }
   if (src && src.log.counts[line.id]) return { amount: src.log.byLine[line.id], status: 'computed', from: 'log', count: src.log.counts[line.id] };
@@ -73,7 +74,8 @@ function lineRow(line, freq, src) {
     if (isOneOff(line[k])) oneOffs.push({ which: k, amount: line[k].amount });
   }
   const owed = line.path === 'reimbursable' ? toMonthly(line.owedBack, freq) : null;
-  let actual = a.amount;
+  // A split you pay in full counts only your part (S-138, calc/split.js).
+  let actual = a.from === 'typed' ? countedAmount(line, a.amount) : a.amount;
   // Reimbursable (typed actuals): counts fully until marked received, then only your share counts.
   // From the log, reimbursements are entries that already reduce the line.
   if (a.from === 'typed' && actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
@@ -81,7 +83,8 @@ function lineRow(line, freq, src) {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
     addedFor: line.addedFor || null,
     path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, stress: line.stress === undefined ? null : line.stress, state: line.state, computed: false,
-    estimate: toMonthly(line.estimate, freq), actual,
+    estimate: countedAmount(line, toMonthly(line.estimate, freq)), actual,
+    split: splitOf(line, toMonthly(line.estimate, freq)),
     status: { estimate: line.estimate.status, actual: a.status },
     actualFrom: a.from, logCount: a.count, yearly: isYearlyLine(line),
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
@@ -180,7 +183,7 @@ export function columnModel(doc, key, fallback = null) {
     // A premium line follows health coverage (S-117), whatever the column.
     if (PREMIUM_LINE_TYPES.includes(l.type)) return { id: l.id, name: l.name, [key]: prem.status === 'not-for-me' ? null : prem.amount, status: { [key]: prem.status } };
     const v = valueOf(l);
-    return { id: l.id, name: l.name, [key]: toMonthly(v, freq), status: { [key]: v.status } };
+    return { id: l.id, name: l.name, [key]: countedAmount(l, toMonthly(v, freq)), status: { [key]: v.status } };
   };
   return doc.categories.filter((c) => c.state !== 'archived').map((cat) => {
     const base = { id: cat.id, name: cat.name, type: cat.id === 'debt' ? 'debt' : (cat.type || 'other'), savings: !!cat.savings, isDebt: cat.id === 'debt', isEverything: cat.id === 'everything' };

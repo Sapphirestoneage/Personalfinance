@@ -48,7 +48,7 @@ test('a split line: with how many people, your share, and the whole bill (S-134)
   const one = (n) => makeValue(n, { cadence: 'one-off' });
   const line = { shared: true, splitPeople: one(3), splitShare: makeValue(null, { cadence: 'one-off' }) };
   // 21 a month with 3 others: an even share is 100 / 4 = 25%; the whole bill 21 / 0.25 = 84.
-  assert.deepEqual(splitOf(line, 21), { people: 3, share: 25, shareFrom: 'even', yours: 21, whole: 84 });
+  assert.deepEqual(splitOf(line, 21), { pays: 'part', people: 3, share: 25, shareFrom: 'even', yours: 21, whole: 84, paidBack: null });
   // With 2 others: 100 / 3 = 33.333..., 33.33%; 21 / 0.3333 = 63.006..., 63.01.
   line.splitPeople = one(2);
   assert.deepEqual([splitOf(line, 21).share, splitOf(line, 21).whole], [33.33, 63.01]);
@@ -57,5 +57,32 @@ test('a split line: with how many people, your share, and the whole bill (S-134)
   assert.deepEqual([splitOf(line, 21).share, splitOf(line, 21).shareFrom, splitOf(line, 21).whole], [40, 'typed', 52.5]);
   // Not split: nothing. No people and no share: blank, never 0.
   assert.equal(splitOf({ shared: false }, 21), null);
-  assert.deepEqual(splitOf({ shared: true, splitPeople: makeValue(null), splitShare: makeValue(null) }, 21), { people: null, share: null, shareFrom: null, yours: 21, whole: null });
+  assert.deepEqual(splitOf({ shared: true, splitPeople: makeValue(null), splitShare: makeValue(null) }, 21), { pays: 'part', people: null, share: null, shareFrom: null, yours: 21, whole: null, paidBack: null });
+});
+
+test('a split you pay in full: your part counts, the rest is paid back (S-138)', async () => {
+  const { splitOf } = await import('../src/calc/split.js');
+  const { makeValue } = await import('../src/store/value.js');
+  const { loadHousehold, loadRefs } = await import('./helpers.js');
+  const { buildSummary } = await import('../src/calc/summary.js');
+  const one = (n) => makeValue(n, { cadence: 'one-off' });
+  const line = { shared: true, splitPays: 'whole', splitPeople: one(3), splitShare: makeValue(null, { cadence: 'one-off' }) };
+  // The whole 84 on your card, 3 others: share 25%, your part 84 x 0.25 = 21, paid back 84 - 21 = 63.
+  assert.deepEqual(splitOf(line, 84), { pays: 'whole', people: 3, share: 25, shareFrom: 'even', yours: 21, whole: 84, paidBack: 63 });
+  // 100 with 2 others: share 33.33%, your part 100 x 0.3333 = 33.33, paid back 100 - 33.33 = 66.67.
+  line.splitPeople = one(2);
+  assert.deepEqual([splitOf(line, 100).yours, splitOf(line, 100).paidBack], [33.33, 66.67]);
+  // No people and no share yet: all of it is yours (you owe the whole bill); nothing paid back yet.
+  line.splitPeople = one(null);
+  assert.deepEqual([splitOf(line, 84).yours, splitOf(line, 84).paidBack], [84, null]);
+  // In the budget (Luis): utilities 160 typed as the whole bill, split with 1 other: share 50%, your part
+  // 160 x 0.5 = 80. Spending basis 3,828.46 - 160 + 80 = 3,748.46; surplus 571.54 + 80 = 651.54.
+  const d = loadHousehold('luis');
+  const u = d.categories.find((c) => c.id === 'housing').lines.find((l) => l.id === 'utilities');
+  Object.assign(u, { shared: true, splitPays: 'whole', splitPeople: one(1) });
+  const t = buildSummary(d, loadRefs()).totals;
+  assert.deepEqual([t.spending, t.surplus], [3748.46, 651.54]);
+  // You pay only your part: the 160 is your part and counts in full, as before.
+  u.splitPays = 'part';
+  assert.deepEqual([buildSummary(d, loadRefs()).totals.spending], [3828.46]);
 });

@@ -121,6 +121,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
     needsPct: ratio(needs, takeHome), wantsPct: ratio(wants, takeHome), savingsPct: ratio(savings, takeHome),
     // Retirement taken out of the paycheck counts as saving.
     savingsRate: ratio(savings + income.retirementDeductions, takeHome === null ? null : takeHome + income.retirementDeductions),
+    retirementDeductions: income.retirementDeductions,
     housing: housingBasis,
     housingShare: ratio(housingBasis, takeHome),
     housingBand,
@@ -166,6 +167,7 @@ export function surplusAllocation(model, totals) {
   const surplus = totals.takeHome === null || spending === null ? null : Math.round((totals.takeHome - spending) * 100) / 100;
   const allocated = totals.savingsEstimate;
   const unallocated = surplus === null ? null : allocated === null ? surplus : Math.round((surplus - allocated) * 100) / 100;
+  const base = totals.takeHome === null ? null : totals.takeHome + totals.retirementDeductions;
   return {
     surplus, spending, takeHome: totals.takeHome,
     groups: { saving: sum('saving'), investing: sum('investing'), debt: sum('debt') }, lines,
@@ -173,6 +175,14 @@ export function surplusAllocation(model, totals) {
     allocated, unallocated,
     // The gap, as a share of take-home (S-135): surplus rate = surplus / take-home; left over rate = not
     // allocated yet / take-home.
-    surplusRate: ratio(surplus, totals.takeHome), unallocatedRate: ratio(unallocated, totals.takeHome)
+    surplusRate: ratio(surplus, totals.takeHome), unallocatedRate: ratio(unallocated, totals.takeHome),
+    // Only what is allocated counts as saving (S-138). The planned savings rate is the allocations plus
+    // pre-tax retirement, over take-home plus pre-tax retirement; the boost is what the rest of the
+    // surplus would add if it went to saving too:
+    //   boost = not allocated yet / (take-home + pre-tax retirement), only while some is left over.
+    savingsRate: ratio((allocated === null ? 0 : allocated) + totals.retirementDeductions, base),
+    boost: unallocated !== null && unallocated > 0 ? ratio(unallocated, base) : null,
+    //   possible savings rate = (allocated + not allocated yet + pre-tax retirement) / the same base
+    possibleSavingsRate: unallocated !== null && unallocated > 0 ? ratio((allocated === null ? 0 : allocated) + unallocated + totals.retirementDeductions, base) : null
   };
 }
