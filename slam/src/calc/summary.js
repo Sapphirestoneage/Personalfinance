@@ -6,8 +6,8 @@ import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
 import { eraTimeline } from './eras.js';
 import { dreamLife } from './dream-life.js';
-import { budgetModel, withComputedSavings } from './model.js';
-import { budgetTotals } from './totals.js';
+import { budgetModel } from './model.js';
+import { budgetTotals, surplusAllocation } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
@@ -59,7 +59,7 @@ export function buildSummary(full, refs) {
   // The store hands calc the live view already; a full file with deleted records is trimmed here too (S-096).
   const doc = hasDeleted(full) ? liveView(full) : full;
   const income = incomeSummary(doc, refs.tax);
-  const model = withComputedSavings(budgetModel(doc), income.takeHome);
+  const model = budgetModel(doc);
   const totals = budgetTotals(model, income, doc, refs.benchmarks.housingBand);
   const history = monthHistory(doc);
   const items = questionItems(doc, model, income);
@@ -72,6 +72,7 @@ export function buildSummary(full, refs) {
     profile: { ...doc.profile, householdSize: householdSize(doc) },
     income, model, totals,
     rows: tableRows(model, totals),
+    allocation: surplusAllocation(model, totals),
     oneOffs: model.oneOffs,
     blindSpot: blind,
     culprits: culprits(model),

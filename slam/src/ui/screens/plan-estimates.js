@@ -3,7 +3,7 @@
 // the personal correction, and a blind-guess round for revisit sessions.
 
 import { h } from '../dom.js';
-import { money, pct, monthLabel } from '../format.js';
+import { money, pct, monthLabel, signedMoney } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
@@ -40,16 +40,25 @@ function incomeCard(ctx, summary) {
       h('button', { class: 'btn small', 'data-key': 'est-add-income', onclick: () => ctx.update('Add income', (d) => { addIncome(d, { type: 'w2', label: 'Paycheck' }); }) }, '+ Add a paycheck')));
 }
 
-// Saving is what is left over (S-123): take-home less your spending estimates, shown, never typed. A
-// savings estimate typed before S-123 stays a question (null here), so it can still be changed.
-function savingRow(ctx, summary, r) {
-  if (r.estimateFrom !== 'computed' && !(r.estimate === null && r.status.estimate === null)) return null;
-  const t = summary.totals;
-  return h('div', { class: 'qa', 'data-key': 'rough-saving' },
-    h('div', { class: 'q' }, 'What is left over', h('div', { class: 'hint' }, r.estimate === null
+// Surplus first, then allocate it (S-132): the surplus (take-home less spending), the Savings lines
+// that allocate it (saving, investing, extra on debt), and what is not allocated yet. Numbers from
+// calc/totals.js surplusAllocation; only the allocations are typed.
+function surplusHead(ctx, summary) {
+  const a = summary.allocation;
+  return h('div', { class: 'qa', 'data-key': 'rough-surplus' },
+    h('div', { class: 'q' }, 'Surplus', h('div', { class: 'hint' }, a.surplus === null
       ? 'Take-home less your spending estimates. Shows once take-home and a spending estimate are in.'
-      : 'Take-home ' + money(t.takeHome) + ' less your spending estimates ' + money(t.estimateTotal) + '. Never typed.')),
-    h('span', { class: 'row' }, r.estimate === null ? null : statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate))));
+      : 'Take-home ' + money(a.takeHome) + ' less spending ' + money(a.spending) + '. It can go to saving, investing, or extra on debt.')),
+    h('span', { class: 'row' }, a.surplus === null ? null : statusChip('computed'), ' ', h('b', { class: 'num', 'data-key': 'surplus-amount' }, signedMoney(a.surplus))));
+}
+
+function surplusFoot(ctx, summary) {
+  const a = summary.allocation;
+  if (a.surplus === null) return null;
+  const parts = [['Saving', a.groups.saving], ['Investing', a.groups.investing], ['Extra on debt', a.groups.debt]].filter(([, x]) => x);
+  return h('div', { class: 'qa', 'data-key': 'rough-unallocated' },
+    h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus.')),
+    h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated))));
 }
 
 // Health insurance is its own row, apart from Health (gym, therapy, out of pocket). Health coverage in
@@ -188,7 +197,7 @@ export function renderEstimates(ctx, summary, key) {
   const one = (r) => (r.type === 'health' && isRough ? [insuranceRow(ctx), rowFor(r)] : rowFor(r));
   // Rough (S-123): income first, then spending, and Personal and fun, Giving, and Saving each in a section
   // of its own. Debt payments (computed from Setup) stays last (S-121).
-  const SECTIONS = [['fun', 'Personal and fun'], ['giving', 'Giving'], ['savings', 'Saving']];
+  const SECTIONS = [['fun', 'Personal and fun'], ['giving', 'Giving'], ['savings', 'Surplus']];
   const sectionOf = (r) => (r.isDebt ? 'debt' : r.savings ? 'savings' : r.type === 'fun' || r.type === 'giving' ? r.type : 'spending');
   const list = !isRough ? h('div', { class: 'card' }, ordered.map(one))
     : [incomeCard(ctx, summary), h('div', { class: 'card est-sections' },
@@ -196,8 +205,9 @@ export function renderEstimates(ctx, summary, key) {
       ...SECTIONS.map(([id, title]) => {
         const these = ordered.filter((r) => sectionOf(r) === id);
         // A section of one row named like the section needs no second title.
-        const titled = these.length > 1 || these[0] && these[0].name !== title;
-        return these.length ? h('div', { class: 'est-section', id: 'sec-' + id }, titled ? h('h3', {}, title) : null, these.map((r) => (r.id === 'savings' ? savingRow(ctx, summary, r) || one(r) : one(r)))) : null;
+        const titled = id !== 'savings' && (these.length > 1 || these[0] && these[0].name !== title);
+        return these.length ? h('div', { class: 'est-section', id: 'sec-' + id }, titled ? h('h3', {}, title) : null,
+          id === 'savings' ? [surplusHead(ctx, summary), these.map(one), surplusFoot(ctx, summary)] : these.map(one)) : null;
       }),
       h('div', { class: 'est-section', id: 'sec-debt' }, ordered.filter((r) => r.isDebt).map(one)))];
   function rowFor(r) {

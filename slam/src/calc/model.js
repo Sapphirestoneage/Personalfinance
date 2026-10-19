@@ -215,23 +215,3 @@ function carveEverything(cats) {
   ev.estimate.amount = Math.max(0, ev.estimate.amount - carved);
 }
 
-// Savings is what is left over (S-123): never asked in Your estimates. While the Savings category
-// has no estimate of its own (blank, or "don't know"), its estimate is
-//   take-home - every spending estimate - any other savings category's own estimate, never below 0
-// (a shortfall shows as left over below 0, not as negative saving). Blank until take-home and at least
-// one spending estimate (not debt) are known. A savings estimate typed before S-123 is kept as typed,
-// and "doesn't apply" stays.
-export function withComputedSavings(model, takeHome) {
-  const sav = model.categories.find((c) => c.id === 'savings');
-  if (!sav || sav.estimate.amount !== null || sav.estimate.status === 'not-for-me') return model;
-  const known = model.categories.filter((c) => !c.savings && c.estimate.amount !== null);
-  const otherSaved = model.categories.filter((c) => c.savings && c.id !== 'savings' && c.estimate.amount !== null).map((c) => c.estimate.amount);
-  const left = takeHome === null || takeHome === undefined || !known.some((c) => !c.isDebt) ? null
-    : Math.max(0, takeHome - sumKnown(known.map((c) => c.estimate.amount)).total - otherSaved.reduce((a, x) => a + x, 0));
-  return {
-    ...model,
-    categories: model.categories.map((c) => (c.id === 'savings'
-      ? { ...c, estimate: { ...c.estimate, amount: left, from: 'computed', status: left === null ? c.estimate.status : 'computed' }, computedSavings: left !== null }
-      : c))
-  };
-}

@@ -335,3 +335,23 @@ test('Total rent, then your share (S-123): an even split while your share is bla
   findLine(d, 'rent').line.estimate = makeValue(1100);
   assert.equal(rentShare(d).yours, 1100);
 });
+
+test('Surplus first, then allocate it (S-132), by hand', async () => {
+  const { loadHousehold } = await import('./helpers.js');
+  const { addLines } = await import('../src/store/edits.js');
+  const refs = loadRefs();
+  const d = loadHousehold('luis');
+  // Luis: take-home 4,600; spending estimates 3,405 (luis.expected.js). Surplus 4,600 - 3,405 = 1,195.
+  // Savings is one number, 300 (no lines typed), so nothing is grouped yet; allocated 300; not allocated
+  // 1,195 - 300 = 895.
+  const a = buildSummary(d, refs).allocation;
+  assert.deepEqual([a.surplus, a.allocated, a.unallocated, a.groups], [1195, 300, 895, { saving: null, investing: null, debt: null }]);
+  // Broken into lines: emergency fund 200, "Extra on debt" 150 (its type from the name). 200 + 150 = 350
+  // allocated; 1,195 - 350 = 845 not allocated yet.
+  d.categories.find((c) => c.id === 'savings').split = true;
+  const [extra] = addLines(d, 'savings', [{ name: 'Extra on debt', amount: 150, shared: false }]);
+  assert.equal(extra.type, 'extra-debt');
+  d.categories.find((c) => c.id === 'savings').lines.find((l) => l.id === 'emergency-fund').estimate = makeValue(200);
+  const b = buildSummary(d, refs).allocation;
+  assert.deepEqual([b.surplus, b.allocated, b.unallocated, b.groups.saving, b.groups.debt], [1195, 350, 845, 200, 150]);
+});

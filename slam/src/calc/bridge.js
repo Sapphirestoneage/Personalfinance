@@ -15,7 +15,6 @@
 //   not explained yet = actual - explained
 
 import { modelForMonth } from './plan.js';
-import { withComputedSavings } from './model.js';
 import { budgetTotals } from './totals.js';
 import { balancesFor } from './balances.js';
 import { counted } from './log.js';
@@ -46,7 +45,7 @@ function budgetSide(doc, income, month) {
     const basis = im.tracked ? im.actual : rec.snapshot.takeHome;
     return { closed: true, takeHome: rec.snapshot.takeHome, incomeBasis: basis, incomeTracked: im.tracked, surplus: basis === null ? null : r2(basis - spending - saved), spending: r2(spending), savings: r2(saved), lines, oneOffs: [] };
   }
-  const model = withComputedSavings(modelForMonth(doc, month), income.takeHome);
+  const model = modelForMonth(doc, month);
   const totals = budgetTotals(model, income, doc, undefined, month);
   const lines = model.categories.flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name, actual: l.actual, savings: c.savings, yearly: l.actualFrom === 'share', debtId: l.debtId || null })));
   return { closed: false, takeHome: totals.takeHome, incomeBasis: totals.incomeBasis, incomeTracked: totals.incomeTracked, surplus: totals.surplus, spending: totals.spending, savings: totals.savings, lines, oneOffs: model.oneOffs.filter((o) => o.which === 'actual') };
