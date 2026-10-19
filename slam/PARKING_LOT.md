@@ -72,3 +72,11 @@ theming beyond the tokens.
 - A card importer: pick the card by name and its details (APR, annual fee, promo terms, sign-up bonus)
   fill in, each one editable. Needs a reference file in data/, versioned by year.
 - Annual fee and sign-up bonus (spend needed, by when, earned or not) on a card's debt.
+
+## Card profiles: benefits and lifestyle hacks (parked 2026-10-19)
+
+- A card is a debt: its balance, APR, and payment live on the debt. Next to it, a card profile holds what
+  the card gives you: rewards and multipliers, credits (travel, dining, streaming), perks (lounge access,
+  insurance, protections), annual fee, and sign-up bonus progress.
+- Later: "what cards and credits do you have, and how can they upgrade your life", e.g. credits going unused,
+  which card to use where, whether the annual fee pays for itself. Pairs with the card importer above.
