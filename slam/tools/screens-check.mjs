@@ -220,6 +220,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await startBox.press('Tab');
   await page.waitForTimeout(100);
   check('loop', 'Cash step done', await settled(page, '[data-key="cash-done"] span', 'Done Cash: 1 account, $2,500.00, all updated in the last 30 days.'), 'Done Cash: 1 account, $2,500.00, all updated in the last 30 days.');
+  // Every kind is in the Investments picker (S-139): the cash kinds first, saying where they go.
+  const kinds = await page.$$eval('#other-accounts [data-key="add-acct-type"] option', (xs) => xs.slice(1, 5).map((x) => x.textContent).join(', '));
+  check('loop', 'Cash kinds in the picker', kinds, 'Checking (goes in Cash), Savings (goes in Cash), High-yield savings (goes in Cash), Cash (goes in Cash)');
   // Net worth (S-111): with only a checking start of 2,500 typed, both net worths are 2,500 and nothing is locked in.
   // The Accounts tab shows the one-line summary; the tiles live in Insights, Net worth (S-114).
   check('loop', 'Accounts net worth line', await settled(page, '[data-key="nw-line-total"]', money(2500)), money(2500));

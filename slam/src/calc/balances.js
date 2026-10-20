@@ -161,7 +161,7 @@ export function cardMap(doc, month) {
 
 // The account groups in Setup, Accounts (S-103, S-110). What you have and owe is the net worth (networth.js).
 export const ACCOUNT_GROUPS = [
-  ['bank', 'Bank and cash', ['checking', 'savings', 'cash']],
+  ['bank', 'Bank and cash', ['checking', 'savings', 'hysa', 'cash']],
   ['card', 'Credit cards', ['credit-card']],
   ['invest', 'Investments', ['brokerage', 'crypto', 'other', 'unset']],
   ['retire', 'Retirement, HSA, and 529', ['401k', 'trad-ira', 'roth-ira', 'hsa', '529', 'cash-value-life']],

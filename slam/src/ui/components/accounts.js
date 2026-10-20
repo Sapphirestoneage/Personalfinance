@@ -47,8 +47,7 @@ function accountRow(ctx, month, r, stored) {
     h('div', { class: 'q' },
       h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
       latestLine(ctx, a.id),
-      h('input', { type: 'text', class: 'institution', list: 'institutions', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
-        onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
+      bankInput(ctx, a, 'Bank or card company', 'Bank or card company'),
       h('div', { class: 'row' },
         h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(typeOptionsFor(a), a.type)),
         a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
@@ -101,9 +100,15 @@ const blankBalance = { amount: null, cadence: 'one-off', status: null, source: '
 const storedFor = (doc, month) => (id, which) => (((doc.balances[month] || {})[id] || {})[which]) || blankBalance;
 
 // Banks and card companies already named (S-126): picked from a list, never typed twice.
-function institutionList(doc) {
-  const names = [...new Set(doc.accounts.map((a) => (a.institution || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y));
-  return h('datalist', { id: 'institutions' }, names.map((n) => h('option', { value: n })));
+// The bank box (S-139): no native datalist, whose popup re-filters on every key on Android and makes the
+// cursor stutter. While the box is empty, banks already typed for other accounts are one tap away.
+export function bankInput(ctx, a, label, placeholder) {
+  const names = [...new Set(ctx.doc.accounts.map((x) => (x.institution || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y));
+  const set = (v) => ctx.update(label, (d) => setAccountField(d, a.id, 'institution', v));
+  return h('span', { class: 'bank-input' },
+    h('input', { type: 'text', class: 'institution', autocomplete: 'off', placeholder, 'aria-label': a.name + ' ' + label.toLowerCase(), 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
+      onchange: (e) => set(e.target.value.trim()) }),
+    !a.institution && names.length ? h('span', { class: 'row xs' }, names.map((n) => h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':bank:' + n, onclick: () => set(n) }, n))) : null);
 }
 
 // Accounts (S-126): what you have, not what you owe. Cards and loans are in Credit and debt, on the Accounts tab.
@@ -114,13 +119,16 @@ export function accountsCard(ctx, month, opts = {}) {
   const b = balancesFor(doc, month);
   const stored = storedFor(doc, month);
   const archived = doc.accounts.filter((a) => a.state === 'archived');
+  // opts.skip: types shown elsewhere (the Accounts tab shows cash on its own, S-136).
+  const skip = opts.skip || [];
   const add = (type, institution) => {
     let id;
     ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type, institution: institution || '' }).id; });
-    if (id) { ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
+    if (!id) return;
+    // A cash kind picked here lands in the Cash card, opened on it (S-139).
+    if (skip.includes(type)) { ctx.ui.expanded.add('accounts-review'); ctx.ui.expanded.add('acct-open:' + id); ctx.toast('Added to Cash'); }
+    ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender();
   };
-  // opts.skip: types shown elsewhere (the Accounts tab shows cash on its own, S-136).
-  const skip = opts.skip || [];
   const mine = b.rows.filter((r) => r.type !== 'credit-card' && !skip.includes(r.type));
   const byBank = ctx.ui.acctGroup === 'institution';
   const instOf = (r) => ((doc.accounts.find((a) => a.id === r.id) || {}).institution || '').trim();
@@ -134,7 +142,6 @@ export function accountsCard(ctx, month, opts = {}) {
         h('button', { 'aria-pressed': byBank ? 'true' : 'false', 'data-key': 'acct-by-institution', onclick: () => { ctx.ui.acctGroup = 'institution'; ctx.rerender(); } }, 'By bank'))),
     h('p', { class: 'muted small' }, 'What you have: bank, cash, investments, retirement, and the things you own. Cards and loans are in ',
       jumpLink(ctx, 'setup:debts', 'Credit and debt', 'acct-to-credit'), '. A start you leave blank is last month\'s end.'),
-    institutionList(doc),
     groups.map(([gid, glabel, rows, inst]) => (rows.length ? [h('div', { class: 'spread' }, h('h3', { 'data-key': 'acct-group:' + gid }, glabel),
       inst !== null && inst ? h('select', { class: 'add-select', 'aria-label': 'Add an account at ' + inst, 'data-key': 'add-at:' + inst, onchange: (e) => { if (e.target.value) add(e.target.value, inst); } },
         options([['', '+ Add at ' + inst], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => t !== 'credit-card')], '')) : null),
@@ -143,7 +150,10 @@ export function accountsCard(ctx, month, opts = {}) {
     paidAheadBlock(ctx),
     h('div', { class: 'row' }, QUICK_TYPES.filter((t) => !skip.includes(t)).map((type) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => add(type) }, '+ ' + ACCOUNT_TYPE_INFO[type].label)),
       h('select', { class: 'add-select', 'aria-label': 'Add another kind of account', 'data-key': 'add-acct-type', onchange: (e) => { if (e.target.value) add(e.target.value); } },
-        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => !QUICK_TYPES.includes(t) && t !== 'credit-card' && !skip.includes(t))], ''))),
+        // Every kind is in the list (S-139); a kind shown elsewhere says where it goes.
+        options([['', '+ Another kind'], ...ACCOUNT_TYPE_OPTIONS.filter(([t]) => (!QUICK_TYPES.includes(t) || skip.includes(t)) && t !== 'credit-card')
+          .map(([t, label]) => [t, skip.includes(t) ? label + ' (goes in Cash)' : label])
+          .sort(([a], [b]) => skip.includes(b) - skip.includes(a))], ''))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
 }
