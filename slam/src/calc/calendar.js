@@ -308,7 +308,7 @@ export function cashCalendar(doc, income, opts) {
     const cash = accts.filter(inCalendar).reduce((a, x) => a + bal[x.id], 0);
     const cards = accts.filter((x) => x.type === 'credit-card').reduce((a, x) => a + bal[x.id], 0);
     // Savings is shown as its own line, never added into cash (S-095).
-    const savings = accts.filter((x) => x.type === 'savings').reduce((a, x) => a + bal[x.id], 0);
+    const savings = accts.filter((x) => x.type === 'savings' || x.type === 'hysa').reduce((a, x) => a + bal[x.id], 0);
     const cashItems = items.filter((i) => i.cash && !i.mirror);
     days.push({
       date: d, past: d < today, today: d === today, cash: r2(cash), savings: r2(savings), cards: r2(cards), perAccount: Object.fromEntries(Object.entries(bal).map(([k, v]) => [k, r2(v)])), items,

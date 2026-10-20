@@ -26,6 +26,7 @@ const one = (a, opts = {}) => makeValue(a, { cadence: 'one-off', ...opts });
 test('each new type has its tier and FI default; a home and a vehicle carry their purchase and secured debt', () => {
   const t = (type) => { const a = newAccount({ type }); return [a.tier, a.countsForFI]; };
   assert.deepEqual(t('checking'), [1, true]);
+  assert.deepEqual(t('hysa'), [1, true]);
   assert.deepEqual(t('brokerage'), [2, true]);
   assert.deepEqual(t('crypto'), [2, true]);
   for (const type of ['401k', 'trad-ira', 'roth-ira', 'hsa', '529', 'cash-value-life']) assert.deepEqual(t(type), [3, true], type);
@@ -36,8 +37,9 @@ test('each new type has its tier and FI default; a home and a vehicle carry thei
   assert.equal(newAccount({ type: 'brokerage' }).securedDebtId, undefined, 'only a home or vehicle has one');
   // Absent fields fall back to the type (an account made before S-110 and never normalized).
   assert.deepEqual([tierOf({ type: 'roth-ira' }), countsForFI({ type: 'vehicle' })], [3, false]);
-  // 18 types before S-116; "Investment" and "Retirement" became one "Type not set": 17.
-  assert.equal(Object.keys(ACCOUNT_TYPE_INFO).length, 17);
+  // 18 types before S-116; "Investment" and "Retirement" became one "Type not set": 17. High-yield
+  // savings (S-139): 18.
+  assert.equal(Object.keys(ACCOUNT_TYPE_INFO).length, 18);
 });
 
 test('changing a type brings its defaults; the coach can change the tier and FI flag', () => {

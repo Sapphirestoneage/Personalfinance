@@ -11,7 +11,7 @@ import { money, pct, todayIso, dayLabel, dateLabel } from '../format.js';
 import { valueInput } from '../components/value-input.js';
 import { nameEdit } from '../components/name-edit.js';
 import { jumpLink } from '../components/jump.js';
-import { accountsCard } from '../components/accounts.js';
+import { accountsCard, bankInput } from '../components/accounts.js';
 import { accountsStatus, creditStatus, FRESH_DAYS, lastDayOf } from '../../calc/balances.js';
 import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
 import { addAccount, updateBalance, setAccountField } from '../../store/accounts.js';
@@ -104,8 +104,7 @@ function detail(ctx, x) {
   return h('div', { class: 'acct-detail', 'data-key': 'acct-detail:' + x.id },
     h('div', { class: 'row' },
       nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name'),
-      h('input', { type: 'text', class: 'institution', list: 'institutions', placeholder: 'Bank', 'aria-label': a.name + ' bank', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
-        onchange: (e) => ctx.update('Bank', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
+      bankInput(ctx, a, 'Bank', 'Bank'),
       h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(CASH_OPTIONS, a.type)),
       h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
     h('h4', {}, 'Balance history'),
@@ -138,7 +137,6 @@ export function renderAccounts(ctx, summary) {
     ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type }).id; });
     if (id) { ctx.ui.expanded.add('acct-open:' + id); ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
   };
-  const names = [...new Set(doc.accounts.map((a) => (a.institution || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y));
   const cashCard = st.done && !reviewing
     ? h('div', { class: 'card spread', id: 'cash-card', 'data-key': 'cash-done' },
       h('span', {}, h('span', { class: 'chip st-known' }, 'Done'), ' Cash: ' + st.cash.length + (st.cash.length === 1 ? ' account, ' : ' accounts, ') + money(st.cashTotal, true) + ', all updated in the last ' + FRESH_DAYS + ' days.'),
@@ -146,9 +144,8 @@ export function renderAccounts(ctx, summary) {
     : h('div', { class: 'card', id: 'cash-card' },
       h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'Cash'),
         st.cashTotal !== null ? h('b', { class: 'num', 'data-key': 'cash-total' }, money(st.cashTotal, true)) : null),
-      h('p', { class: 'muted small' }, 'Checking, savings, and cash on hand. Type each balance as of today; the history builds by itself.' +
+      h('p', { class: 'muted small' }, 'Checking, savings (high-yield too), and cash on hand. Type each balance as of today; the history builds by itself.' +
         (st.stale.length && st.cash.length ? ' Out of date: ' + st.stale.join(', ') + '.' : '')),
-      h('datalist', { id: 'institutions' }, names.map((n) => h('option', { value: n }))),
       st.cash.map((x) => cashRow(ctx, x, today)),
       h('div', { class: 'row' }, CASH_ACCOUNT_TYPES.map((t) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + t, onclick: () => add(t) }, '+ ' + ACCOUNT_TYPE_INFO[t].label)),
         st.done ? h('button', { class: 'btn small ghost', 'data-key': 'accounts-fold', onclick: () => { ctx.ui.expanded.delete('accounts-review'); ctx.rerender(); } }, 'Done') : null));

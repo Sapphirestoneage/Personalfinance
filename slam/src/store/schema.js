@@ -21,7 +21,7 @@ export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 // Investment, retirement, and HSA accounts (S-103) hold money that is not spent day to day: never cash on hand.
 // S-110 adds every kind of asset, so the balance sheet has one place for all of them.
-export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'unset', 'hsa', 'other',
+export const ACCOUNT_TYPES = ['checking', 'savings', 'hysa', 'credit-card', 'cash', 'unset', 'hsa', 'other',
   '401k', 'trad-ira', 'roth-ira', 'brokerage', '529', 'crypto', 'cash-value-life', 'home', 'vehicle', 'other-asset'];
 // What each type is (S-110). kind: cash (counted in the cash bridge), invested (it can rise or fall with
 // a market), valued (a thing you own and use: its value is entered), or owed (a card).
@@ -30,6 +30,8 @@ export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'uns
 export const ACCOUNT_TYPE_INFO = {
   checking: { label: 'Checking', kind: 'cash', tier: 1, fi: true },
   savings: { label: 'Savings', kind: 'cash', tier: 1, fi: true },
+  // High-yield savings (S-139): savings that pays more interest, shown as its own kind.
+  hysa: { label: 'High-yield savings', kind: 'cash', tier: 1, fi: true },
   cash: { label: 'Cash', kind: 'cash', tier: 1, fi: true },
   'credit-card': { label: 'Credit card', kind: 'owed', tier: null, fi: true },
   brokerage: { label: 'Brokerage', kind: 'invested', tier: 2, fi: true },
@@ -58,7 +60,7 @@ export const countsForFI = (a) => (a.countsForFI === undefined ? typeInfo(a).fi 
 // A home or a vehicle can name the debt it secures (a mortgage, an auto loan), and its purchase.
 export const SECURED_TYPES = ['home', 'vehicle'];
 // Cash on hand counts these; cards are money owed, shown separately.
-export const CASH_ACCOUNT_TYPES = ['checking', 'savings', 'cash'];
+export const CASH_ACCOUNT_TYPES = ['checking', 'savings', 'hysa', 'cash'];
 export const ACCOUNT_STATES = ['active', 'archived'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
