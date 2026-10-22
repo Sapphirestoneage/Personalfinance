@@ -72,8 +72,8 @@ a { color: var(--accent); }
 .tile-label { font-size: var(--text-sm); color: var(--text-muted); display: flex; gap: var(--space-2); align-items: center; justify-content: space-between; }
 .tile-value { font-size: var(--text-xxl); font-weight: 700; font-family: var(--font-num); line-height: 1.1; text-decoration: none; color: var(--text); }
 .tile-value.missing-text { font-size: var(--text-md); font-family: var(--font-ui); font-weight: 600; color: var(--st-dont-know); }
-.tile-sub { font-size: var(--text-sm); }
-.tile-note { font-size: var(--text-xs); color: var(--text-muted); }
+.tile-sub { font-size: var(--text-sm); margin: 0; }
+.tile-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .backstop { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border-left: 3px solid var(--st-computed); background: var(--surface-2); border-radius: var(--radius-sm); font-size: var(--text-sm); }
 details.from { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1); }
 details.from summary { cursor: pointer; min-height: 24px; }
