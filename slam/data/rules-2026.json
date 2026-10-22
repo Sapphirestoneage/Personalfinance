@@ -1,0 +1,1309 @@
+{
+  "year": 2026,
+  "source": "Account_Shells.xlsx, Rules Registry tab (exported 2026-10-22), plus Phase 1 additions marked by their own source",
+  "verifiedWords": {
+    "yes": "checked against the named source",
+    "law": "set in statute, not indexed yearly",
+    "verify": "not checked yet; verify before quoting",
+    "app": "a SLAM design setting, not a tax rule"
+  },
+  "rules": [
+    {
+      "id": "K401_DEF",
+      "rule": "401(k)/403(b)/457(b)/TSP employee deferral",
+      "value": 24500,
+      "unit": "$",
+      "appliesTo": "401(k), Roth 401(k), 403(b), 457(b), TSP, Solo 401(k)",
+      "notes": "Shared across all 401(k)/403(b) plans you're in that year; 457(b) has its own separate limit",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "K401_CU50",
+      "rule": "Catch-up, age 50+",
+      "value": 8000,
+      "unit": "$",
+      "appliesTo": "401(k), 403(b), 457(b), TSP",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "K401_CU6063",
+      "rule": "Super catch-up, ages 60-63",
+      "value": 11250,
+      "unit": "$",
+      "appliesTo": "401(k), 403(b), 457(b), TSP",
+      "notes": "Replaces the 50+ catch-up in those years",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_CU_WAGE",
+      "rule": "Roth catch-up wage threshold",
+      "value": 150000,
+      "unit": "$",
+      "appliesTo": "401(k), 403(b), 457(b)",
+      "notes": "If prior-year FICA wages from that employer exceed this, catch-ups must be Roth (SECURE 2.0, starting 2026)",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "ADD_415C",
+      "rule": "Total annual additions (employee + employer + after-tax)",
+      "value": 72000,
+      "unit": "$",
+      "appliesTo": "401(k), Solo 401(k), SEP",
+      "notes": "Caps the mega backdoor; catch-ups sit on top",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "COMP_401A17",
+      "rule": "Compensation limit for contributions",
+      "value": 360000,
+      "unit": "$",
+      "appliesTo": "All employer plans, SEP",
+      "notes": "",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "HCE",
+      "rule": "Highly compensated employee threshold",
+      "value": 160000,
+      "unit": "$",
+      "appliesTo": "401(k)",
+      "notes": "Can limit HCE deferrals if plan fails testing",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "SIMPLE_DEF",
+      "rule": "SIMPLE IRA / SIMPLE 401(k) deferral",
+      "value": 17000,
+      "unit": "$",
+      "appliesTo": "SIMPLE IRA",
+      "notes": "$18,100 for certain applicable plans",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SIMPLE_CU50",
+      "rule": "SIMPLE catch-up, age 50+",
+      "value": 4000,
+      "unit": "$",
+      "appliesTo": "SIMPLE IRA",
+      "notes": "$3,850 for certain applicable plans",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SIMPLE_CU6063",
+      "rule": "SIMPLE super catch-up, ages 60-63",
+      "value": 5250,
+      "unit": "$",
+      "appliesTo": "SIMPLE IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SEP_MAX",
+      "rule": "SEP IRA maximum",
+      "value": 72000,
+      "unit": "$",
+      "appliesTo": "SEP IRA",
+      "notes": "Up to 25% of compensation (about 20% of net SE earnings for self-employed)",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "LOAN_401K",
+      "rule": "401(k) loan maximum",
+      "value": 50000,
+      "unit": "$",
+      "appliesTo": "401(k), 403(b), 457(b)",
+      "notes": "Lesser of $50,000 or 50% of vested balance; plan must allow it",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "IRA_LIMIT",
+      "rule": "IRA contribution limit (traditional + Roth combined)",
+      "value": 7500,
+      "unit": "$",
+      "appliesTo": "Traditional IRA, Roth IRA, Spousal IRA",
+      "notes": "One limit shared across all your IRAs; capped at earned income",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "IRA_CU50",
+      "rule": "IRA catch-up, age 50+",
+      "value": 1100,
+      "unit": "$",
+      "appliesTo": "Traditional IRA, Roth IRA",
+      "notes": "Now indexed",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_PO_S_LO",
+      "rule": "Roth IRA phase-out start, single/HOH",
+      "value": 153000,
+      "unit": "$ MAGI",
+      "appliesTo": "Roth IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_PO_S_HI",
+      "rule": "Roth IRA phase-out end, single/HOH",
+      "value": 168000,
+      "unit": "$ MAGI",
+      "appliesTo": "Roth IRA",
+      "notes": "Above this: no direct Roth contribution (use backdoor)",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_PO_J_LO",
+      "rule": "Roth IRA phase-out start, married filing jointly",
+      "value": 242000,
+      "unit": "$ MAGI",
+      "appliesTo": "Roth IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_PO_J_HI",
+      "rule": "Roth IRA phase-out end, married filing jointly",
+      "value": 252000,
+      "unit": "$ MAGI",
+      "appliesTo": "Roth IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "ROTH_PO_MFS",
+      "rule": "Roth IRA phase-out, married filing separately",
+      "value": 10000,
+      "unit": "$ MAGI",
+      "appliesTo": "Roth IRA",
+      "notes": "Phase-out runs $0 to $10,000 (not indexed)",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_S_LO",
+      "rule": "Traditional IRA deduction phase-out start, single covered by workplace plan",
+      "value": 81000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA",
+      "notes": "Only applies if you're covered by a workplace plan",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_S_HI",
+      "rule": "Traditional IRA deduction phase-out end, single covered",
+      "value": 91000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA",
+      "notes": "Above this the contribution is nondeductible (basis on Form 8606)",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_J_LO",
+      "rule": "Deduction phase-out start, MFJ, contributing spouse covered",
+      "value": 129000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_J_HI",
+      "rule": "Deduction phase-out end, MFJ, contributing spouse covered",
+      "value": 149000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_SP_LO",
+      "rule": "Deduction phase-out start, not covered but spouse is",
+      "value": 242000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA, Spousal IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "TIRA_DED_SP_HI",
+      "rule": "Deduction phase-out end, not covered but spouse is",
+      "value": 252000,
+      "unit": "$ MAGI",
+      "appliesTo": "Traditional IRA, Spousal IRA",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SAVER_S",
+      "rule": "Saver's Credit income limit, single/MFS",
+      "value": 40250,
+      "unit": "$ AGI",
+      "appliesTo": "Retirement contributions",
+      "notes": "Credit of 10-50% on up to $2,000 contributed",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SAVER_H",
+      "rule": "Saver's Credit income limit, head of household",
+      "value": 60375,
+      "unit": "$ AGI",
+      "appliesTo": "Retirement contributions",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "SAVER_J",
+      "rule": "Saver's Credit income limit, MFJ",
+      "value": 80500,
+      "unit": "$ AGI",
+      "appliesTo": "Retirement contributions",
+      "notes": "",
+      "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
+      "verified": "yes"
+    },
+    {
+      "id": "RMD_AGE",
+      "rule": "Required minimum distribution start age",
+      "value": 73,
+      "unit": "age",
+      "appliesTo": "Traditional IRA, 401(k), SEP, SIMPLE, inherited (varies)",
+      "notes": "Rises to 75 for people born 1960 or later; Roth IRA and (since 2024) Roth 401(k) have no lifetime RMDs",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "EARLY_AGE",
+      "rule": "Penalty-free withdrawal age",
+      "value": 59.5,
+      "unit": "age",
+      "appliesTo": "IRAs, employer plans",
+      "notes": "10% penalty before this unless an exception applies",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "RULE_55",
+      "rule": "Rule of 55 separation age",
+      "value": 55,
+      "unit": "age",
+      "appliesTo": "401(k), 403(b) of the employer you left",
+      "notes": "Age 50 for qualifying public safety; lost if rolled into an IRA",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "ROTH_5YR",
+      "rule": "Roth five-year rule",
+      "value": 5,
+      "unit": "years",
+      "appliesTo": "Roth IRA, Roth 401(k), conversions",
+      "notes": "Separate clocks: one for earnings, one per conversion",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "INHERIT_10YR",
+      "rule": "Inherited IRA 10-year rule",
+      "value": 10,
+      "unit": "years",
+      "appliesTo": "Inherited IRA",
+      "notes": "Most non-spouse heirs must empty within 10 years; some must also take annual RMDs",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "HSA_SELF",
+      "rule": "HSA limit, self-only coverage",
+      "value": 4400,
+      "unit": "$",
+      "appliesTo": "HSA",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HSA_FAM",
+      "rule": "HSA limit, family coverage",
+      "value": 8750,
+      "unit": "$",
+      "appliesTo": "HSA",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HSA_CU55",
+      "rule": "HSA catch-up, age 55+",
+      "value": 1000,
+      "unit": "$",
+      "appliesTo": "HSA",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HDHP_MIN_S",
+      "rule": "HDHP minimum deductible, self",
+      "value": 1700,
+      "unit": "$",
+      "appliesTo": "HSA eligibility",
+      "notes": "Bronze and catastrophic plans also count as HSA-eligible starting 2026 (OBBBA)",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HDHP_MIN_F",
+      "rule": "HDHP minimum deductible, family",
+      "value": 3400,
+      "unit": "$",
+      "appliesTo": "HSA eligibility",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HDHP_OOP_S",
+      "rule": "HDHP out-of-pocket max, self",
+      "value": 8500,
+      "unit": "$",
+      "appliesTo": "HSA eligibility",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HDHP_OOP_F",
+      "rule": "HDHP out-of-pocket max, family",
+      "value": 17000,
+      "unit": "$",
+      "appliesTo": "HSA eligibility",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-19 via Lockton",
+      "verified": "yes"
+    },
+    {
+      "id": "HSA_PEN",
+      "rule": "HSA non-medical withdrawal penalty before 65",
+      "value": 0.2,
+      "unit": "%",
+      "appliesTo": "HSA",
+      "notes": "After 65: taxed like a traditional IRA, no penalty",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "FSA_LIMIT",
+      "rule": "Health FSA limit",
+      "value": 3400,
+      "unit": "$",
+      "appliesTo": "Health FSA, Limited-purpose FSA",
+      "notes": "",
+      "source": "IRS / OBBBA via GoodRx FSA limits 2026",
+      "verified": "yes"
+    },
+    {
+      "id": "FSA_CARRY",
+      "rule": "Health FSA carryover (if plan allows)",
+      "value": 680,
+      "unit": "$",
+      "appliesTo": "Health FSA",
+      "notes": "Plan offers carryover OR a grace period, not both",
+      "source": "IRS / OBBBA via GoodRx FSA limits 2026",
+      "verified": "yes"
+    },
+    {
+      "id": "DCFSA",
+      "rule": "Dependent care FSA limit per household",
+      "value": 7500,
+      "unit": "$",
+      "appliesTo": "Dependent care FSA",
+      "notes": "$3,750 if married filing separately; up from $5,000 (OBBBA)",
+      "source": "IRS / OBBBA via GoodRx FSA limits 2026",
+      "verified": "yes"
+    },
+    {
+      "id": "GIFT_EXCL",
+      "rule": "Gift tax annual exclusion (per recipient)",
+      "value": 19000,
+      "unit": "$",
+      "appliesTo": "529, UTMA, ABLE, gifts",
+      "notes": "529 allows 5-year front-loading (5x)",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "ABLE_LIMIT",
+      "rule": "ABLE annual contribution limit",
+      "value": 19000,
+      "unit": "$",
+      "appliesTo": "ABLE",
+      "notes": "Equals gift exclusion; ABLE-to-Work lets working beneficiaries add more (made permanent by OBBBA); disability onset age rises to 46 in 2026",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "K12_529",
+      "rule": "529 K-12 tuition withdrawal limit",
+      "value": 20000,
+      "unit": "$ per year",
+      "appliesTo": "529",
+      "notes": "Up from $10,000 starting 2026 (OBBBA); expanded K-12 expense list; some states may not conform",
+      "source": "OBBBA via Chase",
+      "verified": "yes"
+    },
+    {
+      "id": "R529_ROTH",
+      "rule": "529-to-Roth lifetime rollover cap",
+      "value": 35000,
+      "unit": "$",
+      "appliesTo": "529",
+      "notes": "Account open 15+ years, contributions from last 5 years excluded, counts against annual IRA limit, beneficiary needs earned income",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "COVERDELL",
+      "rule": "Coverdell ESA annual limit per beneficiary",
+      "value": 2000,
+      "unit": "$",
+      "appliesTo": "Coverdell ESA",
+      "notes": "Income phase-out $95k-$110k single, $190k-$220k MFJ (not indexed)",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "TRUMP_LIMIT",
+      "rule": "Trump account annual contribution limit",
+      "value": 5000,
+      "unit": "$",
+      "appliesTo": "Trump account",
+      "notes": "2026-2027, then indexed; pilot and charitable/government deposits don't count",
+      "source": "IRS Notice 2025-68 via BDO",
+      "verified": "yes"
+    },
+    {
+      "id": "TRUMP_EMPLOYER",
+      "rule": "Trump account employer contribution (per employee)",
+      "value": 2500,
+      "unit": "$",
+      "appliesTo": "Trump account",
+      "notes": "Tax-free to employee; counts toward $5,000",
+      "source": "IRS Notice 2025-68 via BDO",
+      "verified": "yes"
+    },
+    {
+      "id": "TRUMP_PILOT",
+      "rule": "Trump account federal pilot deposit",
+      "value": 1000,
+      "unit": "$",
+      "appliesTo": "Trump account",
+      "notes": "Children born 2025-2028; deposits start no earlier than July 4, 2026",
+      "source": "IRS Notice 2025-68 via BDO",
+      "verified": "yes"
+    },
+    {
+      "id": "STD_S",
+      "rule": "Standard deduction, single",
+      "value": 16100,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "STD_J",
+      "rule": "Standard deduction, married filing jointly",
+      "value": 32200,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "LTCG0_S",
+      "rule": "0% long-term capital gains bracket top, single",
+      "value": 49450,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "Room for tax-gain harvesting",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "LTCG0_J",
+      "rule": "0% long-term capital gains bracket top, MFJ",
+      "value": 98900,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "LTCG0_H",
+      "rule": "0% long-term capital gains bracket top, head of household",
+      "value": 66200,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "LTCG15_S",
+      "rule": "15% bracket top, single",
+      "value": 545500,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "20% above this",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "LTCG15_J",
+      "rule": "15% bracket top, MFJ",
+      "value": 613700,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "IRS Rev. Proc. 2025-32 via Kiplinger",
+      "verified": "yes"
+    },
+    {
+      "id": "SS_WAGE",
+      "rule": "Social Security wage base",
+      "value": 184500,
+      "unit": "$",
+      "appliesTo": "Tax engine, self-employed",
+      "notes": "12.4% SS tax stops above this; 2.9% Medicare doesn't",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "SE_FACTOR",
+      "rule": "Net earnings factor for SE tax",
+      "value": 0.9235,
+      "unit": "x",
+      "appliesTo": "Self-employed",
+      "notes": "SE tax = net profit x 92.35% x 15.3%; half deductible",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "IRMAA1",
+      "rule": "Medicare IRMAA first threshold, single MAGI",
+      "value": 109000,
+      "unit": "$",
+      "appliesTo": "Decumulation",
+      "notes": "Based on MAGI two years earlier",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "SS_EARN_TEST",
+      "rule": "Social Security earnings test (under full retirement age)",
+      "value": 24480,
+      "unit": "$",
+      "appliesTo": "Social Security",
+      "notes": "$1 withheld per $2 above",
+      "source": "IRS Notice 2025-67 via financewonk.com 2026 limits table",
+      "verified": "yes"
+    },
+    {
+      "id": "STUDENT_INT",
+      "rule": "Student loan interest deduction maximum",
+      "value": 2500,
+      "unit": "$",
+      "appliesTo": "Federal and private student loans",
+      "notes": "Phases out at higher MAGI (verify 2026 range)",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "MORT_CAP",
+      "rule": "Mortgage interest deduction debt cap",
+      "value": 750000,
+      "unit": "$ of debt",
+      "appliesTo": "Mortgage, HELOC",
+      "notes": "Made permanent by OBBBA; HELOC interest only if used to buy/build/improve the home; only helps if you itemize",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "ESPP_CAP",
+      "rule": "ESPP purchase limit",
+      "value": 25000,
+      "unit": "$ per year (at grant value)",
+      "appliesTo": "ESPP",
+      "notes": "Qualified ESPPs only",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "ISO_CAP",
+      "rule": "ISO first-exercisable limit",
+      "value": 100000,
+      "unit": "$ per year",
+      "appliesTo": "Stock options",
+      "notes": "Excess becomes NSO; ISO exercise can trigger AMT",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "SEC121",
+      "rule": "Home sale gain exclusion",
+      "value": 250000,
+      "unit": "$ ($500,000 MFJ)",
+      "appliesTo": "Home",
+      "notes": "Owned and lived in 2 of last 5 years",
+      "source": "Statute (not annually indexed); verify before quoting",
+      "verified": "law"
+    },
+    {
+      "id": "FED_BRK_S",
+      "rule": "Federal income tax brackets, single",
+      "value": [
+        [
+          12400,
+          0.1
+        ],
+        [
+          50400,
+          0.12
+        ],
+        [
+          105700,
+          0.22
+        ],
+        [
+          201775,
+          0.24
+        ],
+        [
+          256225,
+          0.32
+        ],
+        [
+          640600,
+          0.35
+        ],
+        [
+          null,
+          0.37
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine",
+      "notes": "Top of each bracket in taxable income, and its rate",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "FED_BRK_J",
+      "rule": "Federal income tax brackets, married filing jointly",
+      "value": [
+        [
+          24800,
+          0.1
+        ],
+        [
+          100800,
+          0.12
+        ],
+        [
+          211400,
+          0.22
+        ],
+        [
+          403550,
+          0.24
+        ],
+        [
+          512450,
+          0.32
+        ],
+        [
+          768700,
+          0.35
+        ],
+        [
+          null,
+          0.37
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "FED_BRK_MFS",
+      "rule": "Federal income tax brackets, married filing separately",
+      "value": [
+        [
+          12400,
+          0.1
+        ],
+        [
+          50400,
+          0.12
+        ],
+        [
+          105700,
+          0.22
+        ],
+        [
+          201775,
+          0.24
+        ],
+        [
+          256225,
+          0.32
+        ],
+        [
+          384350,
+          0.35
+        ],
+        [
+          null,
+          0.37
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "FED_BRK_H",
+      "rule": "Federal income tax brackets, head of household",
+      "value": [
+        [
+          17700,
+          0.1
+        ],
+        [
+          67450,
+          0.12
+        ],
+        [
+          105700,
+          0.22
+        ],
+        [
+          201750,
+          0.24
+        ],
+        [
+          256200,
+          0.32
+        ],
+        [
+          640600,
+          0.35
+        ],
+        [
+          null,
+          0.37
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "STD_MFS",
+      "rule": "Standard deduction, married filing separately",
+      "value": 16100,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "STD_H",
+      "rule": "Standard deduction, head of household",
+      "value": 24150,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "",
+      "source": "slam/data/tax-constants.json (S-008): IRS Rev. Proc. 2025-32",
+      "verified": "verify"
+    },
+    {
+      "id": "LTCG0_MFS",
+      "rule": "0% long-term capital gains bracket top, MFS",
+      "value": 49450,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "Same as single for 2026",
+      "source": "From memory of Rev. Proc. 2025-32; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "LTCG15_MFS",
+      "rule": "15% bracket top, MFS",
+      "value": 306850,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "From memory of Rev. Proc. 2025-32; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "LTCG15_H",
+      "rule": "15% bracket top, head of household",
+      "value": 579600,
+      "unit": "$ taxable income",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "From memory of Rev. Proc. 2025-32; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "FICA_SS_RATE",
+      "rule": "Social Security tax rate, employee share",
+      "value": 0.062,
+      "unit": "rate",
+      "appliesTo": "Tax engine",
+      "notes": "Up to SS_WAGE",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "FICA_MED_RATE",
+      "rule": "Medicare tax rate, employee share",
+      "value": 0.0145,
+      "unit": "rate",
+      "appliesTo": "Tax engine",
+      "notes": "No wage cap",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "SE_SS_RATE",
+      "rule": "Self-employment Social Security rate",
+      "value": 0.124,
+      "unit": "rate",
+      "appliesTo": "Self-employed",
+      "notes": "Up to SS_WAGE less W-2 wages",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "SE_MED_RATE",
+      "rule": "Self-employment Medicare rate",
+      "value": 0.029,
+      "unit": "rate",
+      "appliesTo": "Self-employed",
+      "notes": "",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "SE_DEDUCT_SHARE",
+      "rule": "Share of SE tax deductible above the line",
+      "value": 0.5,
+      "unit": "rate",
+      "appliesTo": "Self-employed",
+      "notes": "",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "ADD_MED_RATE",
+      "rule": "Additional Medicare tax rate",
+      "value": 0.009,
+      "unit": "rate",
+      "appliesTo": "Tax engine",
+      "notes": "On wages and SE income above ADD_MED_S / ADD_MED_J",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "ADD_MED_S",
+      "rule": "Additional Medicare threshold, single / HOH",
+      "value": 200000,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "Not indexed",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "ADD_MED_J",
+      "rule": "Additional Medicare threshold, MFJ",
+      "value": 250000,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "Not indexed; 125,000 for MFS",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "NY_BRK_S",
+      "rule": "New York State income tax brackets, single",
+      "value": [
+        [
+          8500,
+          0.039
+        ],
+        [
+          11700,
+          0.044
+        ],
+        [
+          13900,
+          0.0515
+        ],
+        [
+          80650,
+          0.054
+        ],
+        [
+          215400,
+          0.059
+        ],
+        [
+          1077550,
+          0.0685
+        ],
+        [
+          5000000,
+          0.0965
+        ],
+        [
+          25000000,
+          0.103
+        ],
+        [
+          null,
+          0.109
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Lower five rates cut for 2026 by the FY2026 NY budget; thresholds as 2025. High-income benefit recapture is not modeled.",
+      "source": "From memory of the FY2026 NY budget; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "NY_BRK_J",
+      "rule": "New York State income tax brackets, married filing jointly",
+      "value": [
+        [
+          17150,
+          0.039
+        ],
+        [
+          23600,
+          0.044
+        ],
+        [
+          27900,
+          0.0515
+        ],
+        [
+          161550,
+          0.054
+        ],
+        [
+          323200,
+          0.059
+        ],
+        [
+          2155350,
+          0.0685
+        ],
+        [
+          5000000,
+          0.0965
+        ],
+        [
+          25000000,
+          0.103
+        ],
+        [
+          null,
+          0.109
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Same caveats as NY_BRK_S",
+      "source": "From memory of the FY2026 NY budget; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "NY_BRK_H",
+      "rule": "New York State income tax brackets, head of household",
+      "value": [
+        [
+          12800,
+          0.039
+        ],
+        [
+          17650,
+          0.044
+        ],
+        [
+          20900,
+          0.0515
+        ],
+        [
+          107650,
+          0.054
+        ],
+        [
+          269300,
+          0.059
+        ],
+        [
+          1616450,
+          0.0685
+        ],
+        [
+          5000000,
+          0.0965
+        ],
+        [
+          25000000,
+          0.103
+        ],
+        [
+          null,
+          0.109
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Same caveats as NY_BRK_S",
+      "source": "From memory of the FY2026 NY budget; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "NY_STD_S",
+      "rule": "New York standard deduction, single (not a dependent)",
+      "value": 8000,
+      "unit": "$",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Not indexed",
+      "source": "NY Tax Law 614",
+      "verified": "law"
+    },
+    {
+      "id": "NY_STD_J",
+      "rule": "New York standard deduction, MFJ",
+      "value": 16050,
+      "unit": "$",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Not indexed",
+      "source": "NY Tax Law 614",
+      "verified": "law"
+    },
+    {
+      "id": "NY_STD_H",
+      "rule": "New York standard deduction, head of household",
+      "value": 11200,
+      "unit": "$",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Not indexed",
+      "source": "NY Tax Law 614",
+      "verified": "law"
+    },
+    {
+      "id": "EST_Q1",
+      "rule": "Estimated tax due date, first quarter",
+      "value": "04-15",
+      "unit": "month-day",
+      "appliesTo": "Tax engine",
+      "notes": "Same year. Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS Form 1040-ES",
+      "verified": "law"
+    },
+    {
+      "id": "EST_Q2",
+      "rule": "Estimated tax due date, second quarter",
+      "value": "06-15",
+      "unit": "month-day",
+      "appliesTo": "Tax engine",
+      "notes": "Same year",
+      "source": "IRS Form 1040-ES",
+      "verified": "law"
+    },
+    {
+      "id": "EST_Q3",
+      "rule": "Estimated tax due date, third quarter",
+      "value": "09-15",
+      "unit": "month-day",
+      "appliesTo": "Tax engine",
+      "notes": "Same year",
+      "source": "IRS Form 1040-ES",
+      "verified": "law"
+    },
+    {
+      "id": "EST_Q4",
+      "rule": "Estimated tax due date, fourth quarter",
+      "value": "01-15",
+      "unit": "month-day",
+      "appliesTo": "Tax engine",
+      "notes": "January of the following year",
+      "source": "IRS Form 1040-ES",
+      "verified": "law"
+    },
+    {
+      "id": "EARLY_PENALTY",
+      "rule": "Early withdrawal penalty on retirement money",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "IRAs, employer plans, Roth conversions within 5 years",
+      "notes": "Before EARLY_AGE unless an exception applies",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "APP_UTIL_WARN",
+      "rule": "Card utilization that raises a flag",
+      "value": 0.3,
+      "unit": "rate",
+      "appliesTo": "Flags",
+      "notes": "Per card and overall",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_RUNWAY_WARN",
+      "rule": "Cash runway that raises a flag",
+      "value": 3,
+      "unit": "months",
+      "appliesTo": "Flags",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_INCOME_END_DAYS",
+      "rule": "Look-ahead for an income stream ending",
+      "value": 90,
+      "unit": "days",
+      "appliesTo": "Flags",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_RULE_OF_5",
+      "rule": "Rule of 5: months of expenses = age divided by this",
+      "value": 5,
+      "unit": "divisor",
+      "appliesTo": "Emergency fund",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_LEAN_MULTIPLE",
+      "rule": "Lean FI = yearly FAT spending times this",
+      "value": 25,
+      "unit": "x",
+      "appliesTo": "FI engine",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_COAST_AGE",
+      "rule": "Default age Coast FI grows to when no goal age is entered",
+      "value": 65,
+      "unit": "age",
+      "appliesTo": "FI engine",
+      "notes": "Shown as rough",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_HEALTH_PARENT_AGE",
+      "rule": "Age a parent plan ends",
+      "value": 26,
+      "unit": "age",
+      "appliesTo": "Flags",
+      "notes": "ACA dependent coverage rule",
+      "source": "ACA (42 USC 300gg-14)",
+      "verified": "law"
+    },
+    {
+      "id": "APP_CARD_MIN_PCT",
+      "rule": "Estimated card minimum: this share of the balance plus a month of interest",
+      "value": 0.01,
+      "unit": "rate",
+      "appliesTo": "Debt engine",
+      "notes": "Used only when the real minimum is missing; result is rough",
+      "source": "Common issuer formula; check the statement",
+      "verified": "verify"
+    },
+    {
+      "id": "APP_CARD_MIN_FLOOR",
+      "rule": "Estimated card minimum floor",
+      "value": 25,
+      "unit": "$",
+      "appliesTo": "Debt engine",
+      "notes": "Used only when the real minimum is missing",
+      "source": "Common issuer floor; check the statement",
+      "verified": "verify"
+    },
+    {
+      "id": "APP_GUESS_SWING",
+      "rule": "How far a rough number is moved to rank the still-guessing list",
+      "value": 0.2,
+      "unit": "rate",
+      "appliesTo": "Ledger",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_PROJ_MONTHS",
+      "rule": "Months the projection runs month by month before going yearly",
+      "value": 24,
+      "unit": "months",
+      "appliesTo": "Projection",
+      "notes": "",
+      "source": "SLAM design (Phase 1 brief)",
+      "verified": "app"
+    }
+  ]
+}
