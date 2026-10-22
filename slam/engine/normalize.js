@@ -33,7 +33,8 @@ export function fromProfile(p) {
   const asOf = p._meta.asOf;
   const source = 'profile v' + p._meta.version + (p._meta.name ? ' (' + p._meta.name + ')' : '');
   // A Fact from the profile: the record's kind applies to every number in it,
-  // except a blank, which is missing.
+  // except a blank, which is missing. A debt may name a field's own kind in
+  // `kinds` ({ apr: 'rough' }) when one number is less sure than the rest.
   const F = (value, kind, note) => fact(value === undefined ? null : value, { kind: value === null || value === undefined ? 'missing' : kind === 'missing' ? 'missing' : kind || 'known', asOf, source, note });
   const H = p.household;
   const people = H.people.map((x) => ({ id: x.id, name: x.name, birthDate: F(x.birthDate, x.kind) }));
@@ -99,7 +100,7 @@ export function fromProfile(p) {
 
   const debts = (p.debts || []).map((d) => {
     const out = { id: d.id, family: 'debt', type: d.type, name: F(d.lender || d.label || PRESETS[d.type]?.label || d.type, d.lender ? 'known' : 'rough'), balance: F(d.balance, d.kind) };
-    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest', 'limit', 'minimum', 'dueDay', 'federal', 'plan', 'stress', 'reasonsToKeep', 'business', 'reportsToPersonalCredit']) if (k in d) out[k] = F(d[k], d.kind);
+    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest', 'limit', 'minimum', 'dueDay', 'federal', 'plan', 'stress', 'reasonsToKeep', 'business', 'reportsToPersonalCredit']) if (k in d) out[k] = F(d[k], (d.kinds && d.kinds[k]) || d.kind);
     if (d.payoff) out.payoffDate = F(d.payoff.length === 7 ? monthEnd(d.payoff) : d.payoff, d.kind);
     for (const k of DEBT_NEEDS[d.type] || DEBT_NEEDS.default) if (!(k in out)) out[k] = F(null);
     // A card says whether it is a business card and whether it reports to personal

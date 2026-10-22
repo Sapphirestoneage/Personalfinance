@@ -45,6 +45,51 @@ export function editFact(spine, path, action, { value, kind = 'known', today }) 
   return setAt(spine, path, next);
 }
 
+// ---------------------------------------------------------------- card rate
+// The Ledger's one "Interest rate" panel for a card (S-161). Typed text in:
+// { apr, hasIntro, introRate, introEnds }. A blank APR is allowed: the house
+// default fills it in as rough (engine/defaults.js). A blank intro rate is 0.
+export function parseCardRate({ apr, hasIntro, introRate, introEnds }) {
+  const out = { apr: null, intro: null };
+  if (String(apr ?? '').trim() !== '') {
+    const p = parseInput('rate', apr);
+    if (!p.ok) return { ok: false, message: (hasIntro ? 'Rate after intro: ' : 'Interest rate: ') + p.message };
+    out.apr = p.value;
+  }
+  if (hasIntro) {
+    const r = String(introRate ?? '').trim() === '' ? { ok: true, value: 0 } : parseInput('rate', introRate);
+    if (!r.ok) return { ok: false, message: 'Intro rate: ' + r.message };
+    const e = parseInput('date', introEnds);
+    if (!e.ok) return { ok: false, message: 'Intro ends: pick a date' };
+    out.intro = { rate: r.value, ends: e.value };
+  }
+  return { ok: true, value: out };
+}
+
+// set: { apr, intro } from parseCardRate, kept as known or rough; with no
+// intro, intro fields that exist become not for me. confirm: every rate field
+// in use becomes known. notForMe: the card charges no interest.
+export function editCardRate(spine, cardId, action, { value, kind = 'known', today }) {
+  const base = 'debts.' + cardId;
+  const card = getAt(spine, base);
+  if (!card || card.type !== 'credit_card') throw new Error('No card ' + cardId);
+  const stamp = { asOf: today, source: 'ledger' };
+  const put = (s, k, f) => setAt(s, base + '.' + k, { ...f, ...stamp });
+  let s = spine;
+  if (action === 'set') {
+    s = put(s, 'apr', value.apr === null ? { value: null, kind: 'missing' } : { value: value.apr, kind });
+    if (value.intro) {
+      s = put(s, 'promoApr', { value: value.intro.rate, kind });
+      s = put(s, 'promoEnds', { value: value.intro.ends, kind });
+    } else for (const k of ['promoApr', 'promoEnds']) if (card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
+  } else if (action === 'confirm') {
+    for (const k of ['apr', 'promoApr', 'promoEnds']) if (card[k] && card[k].value !== null) s = put(s, k, { value: card[k].value, kind: 'known' });
+  } else if (action === 'notForMe') {
+    for (const k of ['apr', 'promoApr', 'promoEnds']) if (k === 'apr' || card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
+  } else throw new Error('Unknown edit ' + action);
+  return s;
+}
+
 // ---------------------------------------------------------------- history
 export const MAX_STEPS = 200;
 

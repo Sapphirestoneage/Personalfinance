@@ -8,13 +8,14 @@ import { loadHousehold } from '../engine/normalize.js';
 import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { cashflow } from '../engine/cashflow.js';
+import { applyDefaults } from '../engine/defaults.js';
 import { readJson, exists, loadRules } from './spine-helpers.js';
 
 const skip = !(exists('fixtures/eli.local.json') && exists('fixtures/eli.golden.local.json')) && 'the local profile or its golden values are not on this machine';
 const R = loadRules();
 
 test('Eli golden values', { skip }, async (t) => {
-  const spine = loadHousehold(readJson('fixtures/eli.local.json'));
+  const spine = applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R);
   const X = readJson('fixtures/eli.golden.local.json');
   assert.equal(spine.meta.asOf, X.asOf);
   assert.ok(validate(spine).ok);
@@ -34,6 +35,14 @@ test('Eli golden values', { skip }, async (t) => {
   await t.test('promo balances due by the promo end', () => {
     assert.equal(s.debt.promo.total.value, X.promoTotal);
     assert.ok(s.debt.promo.items.every((x) => x.promoEnds === X.promoEnds));
+  });
+
+  await t.test('each promo balance goes to its rate after the intro the day after it ends', () => {
+    for (const [id, [rate, day, kind]] of Object.entries(X.promoAfter)) {
+      const it = s.debt.promo.items.find((x) => x.id === id);
+      assert.deepEqual([it.aprAfter, it.switchDate, it.aprAfterKind], [rate, day, kind], id);
+    }
+    for (const id of X.defaultRateCards) assert.equal(spine.debts.find((d) => d.id === id).apr.kind, 'rough', id);
   });
 
   await t.test('avalanche order of cards: highest rate first, then the 0% cards', () => {

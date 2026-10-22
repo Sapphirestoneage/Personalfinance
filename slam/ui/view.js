@@ -25,6 +25,12 @@ export const words = (s) => String(s).replace(/_/g, ' ');
 // A stored value, worded by its field type.
 export function showValue(value, type) {
   if (value === null || value === undefined) return '';
+  // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".
+  if (type === 'cardRate') {
+    const after = value.apr === null ? 'not given' : showValue(value.apr, 'rate');
+    if (!value.intro) return after;
+    return (value.intro.rate === null ? 'intro rate not given' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given)') + ', then ' + after;
+  }
   if (type === 'money') return money(value, !Number.isInteger(value));
   if (type === 'rate') return pct(value, Math.abs(value * 100 - Math.round(value * 100)) > 1e-9 ? 2 : 0);
   if (type === 'bool') return value ? 'Yes' : 'No';

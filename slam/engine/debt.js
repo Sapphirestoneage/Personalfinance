@@ -1,7 +1,7 @@
 // Debt engine: minimums, utilization, promo deadlines, and payoff orders
 // (avalanche, snowball, stress-weighted) with payoff dates and interest.
 
-import { valueOf, tracker, round2, monthKey, monthStart, addMonths } from './spine.js';
+import { valueOf, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays } from './spine.js';
 import { REVOLVING } from './schema.js';
 
 const v = valueOf;
@@ -9,10 +9,12 @@ const P = (d, k) => 'debts.' + d.id + '.' + k;
 
 // The rate charged on a date: the promo rate while the promo runs, then the APR.
 // Returns { rate, path } where rate is null when the APR is missing.
+// The intro rate runs through its end date; the day after, the APR (the rate
+// after the intro) applies. An APR marked not for me charges no interest.
 export function rateOn(debt, iso) {
   const ends = v(debt.promoEnds), promo = v(debt.promoApr);
   if (ends && promo !== null && iso <= ends) return { rate: promo, path: P(debt, 'promoApr'), promo: true };
-  return { rate: v(debt.apr), path: P(debt, 'apr'), promo: false };
+  return { rate: debt.apr && debt.apr.kind === 'notForMe' ? 0 : v(debt.apr), path: P(debt, 'apr'), promo: false };
 }
 
 // The monthly minimum. A known minimum is used as is. A card with no minimum
@@ -127,7 +129,9 @@ export function promoDeadlines(spine, asOf) {
     const n = paymentsBefore(asOf, ends);
     const need = n ? b / n : b;
     total += b; monthly += need;
-    items.push({ id: d.id, name: v(d.name), balance: b, promoEnds: ends, paymentsLeft: n, monthlyNeeded: round2(need), deferredInterest: v(d.deferredInterest), aprAfter: v(d.apr) });
+    // The rate after the intro starts the day after it ends.
+    t.useFact(P(d, 'apr'), d.apr);
+    items.push({ id: d.id, name: v(d.name), balance: b, promoEnds: ends, switchDate: addDays(ends, 1), paymentsLeft: n, monthlyNeeded: round2(need), deferredInterest: v(d.deferredInterest), aprAfter: rateOn(d, addDays(ends, 1)).rate, aprAfterKind: d.apr ? d.apr.kind : 'missing' });
   }
   items.sort((a, b) => (a.promoEnds < b.promoEnds ? -1 : a.promoEnds > b.promoEnds ? 1 : 0));
   const by = items.length ? items.reduce((m, x) => (x.promoEnds < m ? x.promoEnds : m), items[0].promoEnds) : null;
@@ -179,7 +183,17 @@ export function accrueMonth(s, iso, asOf, t) {
     added += s.startBal * v(s.d.apr) * paymentsBefore(asOf, v(s.d.promoEnds)) / 12;
     s.deferredDone = true;
   }
-  added += (s.bal + added) * (rate ?? 0) / 12;
+  // An intro that ends inside this month: intro rate up to its end date, the
+  // rate after it from the next day, split by days.
+  let monthRate = rate ?? 0;
+  const ends = v(s.d.promoEnds), ym = iso.slice(0, 7);
+  if (promo && ends && ends.slice(0, 7) === ym && ends < monthEnd(ym)) {
+    const after = rateOn(s.d, addDays(ends, 1));
+    if (after.rate === null && t) t.addMissing(after.path);
+    const dim = +monthEnd(ym).slice(8), on = +ends.slice(8);
+    monthRate = (monthRate * on + (after.rate ?? 0) * (dim - on)) / dim;
+  }
+  added += (s.bal + added) * monthRate / 12;
   s.bal += added; s.interest += added;
   return added;
 }

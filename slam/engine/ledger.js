@@ -2,7 +2,7 @@
 // the "still guessing" list (rough and missing fields, ordered by how much
 // they change the results). No DOM here.
 
-import { listFacts, getAt, setAt, addMonths, result } from './spine.js';
+import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
 import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
@@ -30,8 +30,50 @@ export function typeFor(spine, path) {
   return 'text';
 }
 
+// A card's APR, intro rate and intro end are one Ledger row, "Interest rate"
+// (S-161). The row sits at the APR's path; its value is { apr, intro }.
+const CARD_RATE = ['apr', 'promoApr', 'promoEnds'];
+const isCard = (spine, id) => { const d = getAt(spine, 'debts.' + id); return !!d && d.type === 'credit_card'; };
+
+export function hasIntro(card) {
+  const on = (f) => !!f && f.kind !== 'notForMe';
+  return on(card.promoEnds) && (valueOf(card.promoEnds) !== null || on(card.promoApr));
+}
+
+// Kinds of several Facts as one chip: missing wins, then not for me (on the
+// APR), then rough, then known.
+function combinedKind(facts) {
+  if (facts.some((f) => !f || f.kind === 'missing')) return 'missing';
+  if (facts[0].kind === 'notForMe') return 'notForMe';
+  if (facts.some((f) => f.kind === 'rough')) return 'rough';
+  return facts.every((f) => f.kind === 'computed') ? 'computed' : 'known';
+}
+
+export function cardRateRow(spine, card) {
+  const path = 'debts.' + card.id + '.apr';
+  const intro = hasIntro(card);
+  const parts = intro ? [card.apr, card.promoApr, card.promoEnds] : [card.apr];
+  const kind = combinedKind(parts);
+  const value = card.apr.kind === 'notForMe' ? null : { apr: valueOf(card.apr), intro: intro ? { rate: valueOf(card.promoApr), ends: valueOf(card.promoEnds) } : null };
+  return { path, label: labelFor(spine, path), group: 'D', type: 'cardRate', fact: { value: value && (value.apr !== null || value.intro) ? value : null, kind }, members: CARD_RATE.map((k) => 'debts.' + card.id + '.' + k) };
+}
+
+// The Ledger row a field lives on (a card's intro fields live on its rate row).
+export function rowPathFor(spine, path) {
+  const s = path.split('.');
+  return s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2]) ? 'debts.' + s[1] + '.apr' : path;
+}
+
 export function ledgerRows(spine) {
-  const rows = listFacts(spine).map(({ path, fact }) => ({ path, label: labelFor(spine, path), group: groupFor(path), type: typeFor(spine, path), fact }));
+  const rows = [];
+  for (const { path, fact } of listFacts(spine)) {
+    const s = path.split('.');
+    if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) {
+      if (s[2] === 'apr') rows.push(cardRateRow(spine, getAt(spine, 'debts.' + s[1])));
+      continue;
+    }
+    rows.push({ path, label: labelFor(spine, path), group: groupFor(path), type: typeFor(spine, path), fact });
+  }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));
 }
 

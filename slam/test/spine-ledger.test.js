@@ -4,7 +4,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { loadHousehold } from '../engine/normalize.js';
 import { validate } from '../engine/schema.js';
 import { ledgerRows, stillGuessing, typeFor } from '../engine/ledger.js';
-import { parseInput, editFact, createHistory, commit, undo, redo, canUndo, canRedo } from '../engine/edits.js';
+import { parseInput, editFact, parseCardRate, editCardRate, createHistory, commit, undo, redo, canUndo, canRedo } from '../engine/edits.js';
+import { cardRateRow, rowPathFor } from '../engine/ledger.js';
+import { applyDefaults } from '../engine/defaults.js';
+import { fact } from '../engine/spine.js';
 import { getAt, listFacts } from '../engine/spine.js';
 import { labelFor } from '../engine/labels.js';
 import { readJson, loadRules, SLAM } from './spine-helpers.js';
@@ -17,10 +20,14 @@ test('ledger: every Fact is a row, in a DAITE group, with a label and type', () 
   const groups = ledgerRows(s);
   assert.deepEqual(groups.map((g) => g.id), ['D', 'A', 'I', 'T', 'E', 'G']);
   const rows = groups.flatMap((g) => g.rows);
-  assert.equal(rows.length, listFacts(s).length);
+  // A card's APR, intro rate and intro end share one row.
+  const cardIntro = listFacts(s).filter((x) => /^debts\.[^.]+\.(promoApr|promoEnds)$/.test(x.path) && getAt(s, x.path.split('.').slice(0, 2).join('.')).type === 'credit_card');
+  assert.equal(rows.length, listFacts(s).length - cardIntro.length);
   const find = (p) => rows.find((r) => r.path === p);
   assert.equal(find('debts.visa.apr').group, 'D');
-  assert.equal(find('debts.visa.apr').type, 'rate');
+  assert.equal(find('debts.visa.apr').type, 'cardRate');
+  assert.equal(find('debts.sl.apr').type, 'rate', 'a loan keeps its plain APR row');
+  assert.equal(find('debts.store.promoEnds'), undefined);
   assert.equal(find('accounts.hysa.balance').group, 'A');
   assert.equal(find('income.salary.amount').group, 'I');
   assert.equal(find('income.salary.withholding.federal').group, 'T');
@@ -96,4 +103,55 @@ test('views do no money math', () => {
     assert.ok(!/\.value\s*[-+*/]\s*[\w(]/.test(src), 'ui/' + f + ' computes with a result value');
     assert.ok(!/from '\.\.\/engine\/(cashflow|tax|debt|fi|emergency|projection|networth)\.js'/.test(src), 'ui/' + f + ' should read numbers through summary.js or ledger.js');
   }
+});
+
+// ------------------------------------------------------------------ card interest rate (S-160, S-161)
+test('card rate row: one value with the intro, and the kind of its parts', () => {
+  const s = demo();
+  const store = cardRateRow(s, s.debts.find((d) => d.id === 'store'));
+  assert.deepEqual(store.fact.value, { apr: 0.2999, intro: { rate: 0, ends: '2027-02-28' } });
+  assert.equal(store.fact.kind, 'known');
+  assert.equal(store.label, 'Store card: interest rate');
+  const visa = cardRateRow(s, s.debts.find((d) => d.id === 'visa'));
+  assert.deepEqual(visa.fact.value, { apr: 0.22, intro: null });
+  assert.equal(rowPathFor(s, 'debts.store.promoEnds'), 'debts.store.apr');
+  assert.equal(rowPathFor(s, 'debts.sl.apr'), 'debts.sl.apr');
+});
+
+test('the default card APR fills a blank as rough, and leaves real rates alone', () => {
+  const s = demo();
+  s.debts.find((d) => d.id === 'visa').apr = fact(null);
+  delete s.debts.find((d) => d.id === 'ink').apr;
+  const out = applyDefaults(s, R);
+  for (const id of ['visa', 'ink']) {
+    const a = getAt(out, 'debts.' + id + '.apr');
+    assert.deepEqual([a.value, a.kind, a.source], [0.25, 'rough', 'DEFAULT_CARD_APR'], id);
+  }
+  assert.equal(getAt(out, 'debts.store.apr').value, 0.2999);
+  assert.equal(getAt(out, 'debts.sl.apr').value, 0.05, 'loans are not touched');
+  assert.equal(R.meta('DEFAULT_CARD_APR', 2026).verified, 'assumption');
+  assert.ok(validate(out).ok);
+});
+
+test('parse the card rate panel', () => {
+  assert.deepEqual(parseCardRate({ apr: '25', hasIntro: false }).value, { apr: 0.25, intro: null });
+  assert.deepEqual(parseCardRate({ apr: '', hasIntro: true, introRate: '', introEnds: '2027-03-31' }).value, { apr: null, intro: { rate: 0, ends: '2027-03-31' } });
+  assert.equal(parseCardRate({ apr: '24.99', hasIntro: true, introRate: '0', introEnds: '' }).ok, false);
+  assert.match(parseCardRate({ apr: 'x', hasIntro: true, introRate: '0', introEnds: '2027-03-31' }).message, /^Rate after intro/);
+});
+
+test('edit a card rate: add an intro, take it away, a blank APR becomes the rough default', () => {
+  let s = demo();
+  s = editCardRate(s, 'visa', 'set', { value: { apr: null, intro: { rate: 0, ends: '2027-03-31' } }, kind: 'known', today: '2026-10-23' });
+  s = applyDefaults(s, R);
+  assert.deepEqual(cardRateRow(s, getAt(s, 'debts.visa')).fact.value, { apr: 0.25, intro: { rate: 0, ends: '2027-03-31' } });
+  assert.equal(cardRateRow(s, getAt(s, 'debts.visa')).fact.kind, 'rough', 'the default after the intro is rough');
+  s = editCardRate(s, 'visa', 'confirm', { today: '2026-10-23' });
+  assert.equal(cardRateRow(s, getAt(s, 'debts.visa')).fact.kind, 'known');
+  s = editCardRate(s, 'visa', 'set', { value: { apr: 0.2, intro: null }, kind: 'rough', today: '2026-10-23' });
+  assert.equal(getAt(s, 'debts.visa.promoEnds').kind, 'notForMe');
+  assert.deepEqual(cardRateRow(s, getAt(s, 'debts.visa')).fact.value, { apr: 0.2, intro: null });
+  s = editCardRate(s, 'visa', 'notForMe', { today: '2026-10-23' });
+  assert.equal(cardRateRow(s, getAt(s, 'debts.visa')).fact.kind, 'notForMe');
+  assert.ok(validate(s).ok);
 });

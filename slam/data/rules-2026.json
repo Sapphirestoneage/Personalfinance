@@ -5,7 +5,8 @@
     "yes": "checked against the named source",
     "law": "set in statute, not indexed yearly",
     "verify": "not checked yet; verify before quoting",
-    "app": "a SLAM design setting, not a tax rule"
+    "app": "a SLAM design setting, not a tax rule",
+    "assumption": "a house assumption, used until a real number is entered"
   },
   "rules": [
     {
@@ -1421,6 +1422,16 @@
       "notes": "",
       "source": "SLAM design (Phase 1 brief)",
       "verified": "app"
+    },
+    {
+      "id": "DEFAULT_CARD_APR",
+      "rule": "Card interest rate used when a card has no APR, or an intro rate has no rate after it",
+      "value": 0.25,
+      "unit": "rate",
+      "appliesTo": "Credit cards",
+      "notes": "Filled in at load and after each Ledger edit, stored as rough so it shows yellow",
+      "source": "Eli house assumption",
+      "verified": "assumption"
     }
   ]
 }

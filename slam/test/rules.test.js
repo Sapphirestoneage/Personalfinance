@@ -9,7 +9,7 @@ test('the registry loads and every rule has the eight fields', () => {
   assert.equal(reg.year, 2026);
   for (const r of reg.rules) {
     for (const k of ['id', 'rule', 'value', 'unit', 'appliesTo', 'notes', 'source', 'verified']) assert.ok(k in r, r.id + ' lacks ' + k);
-    assert.ok(['yes', 'law', 'verify', 'app'].includes(r.verified), r.id + ' verified word');
+    assert.ok(['yes', 'law', 'verify', 'app', 'assumption'].includes(r.verified), r.id + ' verified word');
   }
 });
 

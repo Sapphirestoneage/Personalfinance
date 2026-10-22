@@ -20,6 +20,8 @@ const FIELD = {
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
 const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City' };
 const words = (k) => FIELD[k] || k.replace(/([A-Z])/g, ' $1').toLowerCase();
+// On a credit card the three rate fields read as one interest rate (S-161).
+const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
 const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
 
 export function labelFor(spine, path) {
@@ -43,7 +45,7 @@ export function labelFor(spine, path) {
     case 'accounts': case 'debts': {
       const x = item(s[0], s[1]);
       const name = x ? valueOf(x.name) || s[1] : s[1];
-      return name + ': ' + words(s[2]);
+      return name + ': ' + ((x && x.type === 'credit_card' && CARD_FIELD[s[2]]) || words(s[2]));
     }
     case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label : s[1]) + ': ' + words(s[2]); }
     case 'assumptions': return ASSUME[s[1]] || words(s[1]);

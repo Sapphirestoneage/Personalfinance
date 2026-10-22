@@ -2,8 +2,9 @@
 // it, or mark it not for me. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
-import { ledgerRows, stillGuessing } from '../engine/ledger.js';
-import { parseInput, inputText, editFact, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
+import { ledgerRows, stillGuessing, rowPathFor } from '../engine/ledger.js';
+import { parseInput, inputText, editFact, parseCardRate, editCardRate, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
+import { applyDefaults } from '../engine/defaults.js';
 import { getAt } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
 import { h, chip, showValue, money, words, shortDate } from './view.js';
@@ -16,7 +17,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 const app = document.getElementById('app');
 
 function apply(next, label) {
-  hist = commit(hist, next, label);
+  // House defaults (a card's default APR) refill any blank after every edit.
+  hist = commit(hist, applyDefaults(next, rules), label);
   source = 'saved';
   save(hist.present);
   guess = null;
@@ -29,7 +31,64 @@ function step(fn) {
   if (hist !== before) { save(hist.present); source = 'saved'; guess = null; render(); }
 }
 
+// One panel for a card's interest rate (S-161): the APR, a switch for an intro
+// rate, and when it is on, the intro rate and its end date; the APR then reads
+// "Rate after intro". The switch shows and hides fields in place, so nothing
+// typed is lost.
+function cardRateEditor(row) {
+  const cardId = row.path.split('.')[1];
+  const cur = row.fact.value || { apr: null, intro: null };
+  const startOn = !!cur.intro;
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const fallback = showValue(rules.get('DEFAULT_CARD_APR', +hist.present.meta.asOf.slice(0, 4)), 'rate');
+  const apr = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  apr.value = inputText('rate', cur.apr);
+  const aprLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startOn ? 'Rate after intro' : 'Interest rate (APR)');
+  const afterNote = h('span', {}, startOn ? 'Starts the day after the intro ends. ' : '');
+  const aprHint = h('p', { class: 'edit-hint' }, afterNote, 'As a percent: 25 means 25%. Left blank, the house assumption of ' + fallback + ' is used and marked rough.');
+  const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  introRate.value = cur.intro ? inputText('rate', cur.intro.rate) : '0';
+  const introEnds = h('input', { id: 'intro-ends', type: 'date' });
+  introEnds.value = (cur.intro && cur.intro.ends) || '';
+  const introBox = h('div', { class: 'intro-fields', hidden: !startOn },
+    h('label', { for: 'intro-rate', class: 'edit-label' }, 'Intro rate'), introRate,
+    h('label', { for: 'intro-ends', class: 'edit-label' }, 'Intro ends'), introEnds);
+  const state = h('span', { class: 'switch-state' }, startOn ? 'Yes' : 'No');
+  const sw = h('button', {
+    type: 'button', class: 'switch', role: 'switch', id: 'intro-switch', 'aria-checked': String(startOn), 'aria-labelledby': 'intro-switch-label',
+    onclick: () => {
+      const on = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', String(on));
+      state.textContent = on ? 'Yes' : 'No';
+      introBox.hidden = !on;
+      aprLabel.textContent = on ? 'Rate after intro' : 'Interest rate (APR)';
+      afterNote.textContent = on ? 'Starts the day after the intro ends. ' : '';
+      if (on) introRate.focus();
+    }
+  }, h('span', { class: 'switch-track', 'aria-hidden': 'true' }, h('span', { class: 'switch-knob' })), state);
+  const doSet = (kind) => {
+    const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value });
+    if (!p.ok) { msg.textContent = p.message; return; }
+    open = null;
+    apply(editCardRate(hist.present, cardId, 'set', { value: p.value, kind, today: today() }), row.label);
+  };
+  const act = (action) => { open = null; apply(editCardRate(hist.present, cardId, action, { today: today() }), row.label); };
+  return h('div', { class: 'editor' },
+    aprLabel, apr, aprHint,
+    h('div', { class: 'switch-row' }, h('span', { id: 'intro-switch-label', class: 'edit-label' }, 'Has an intro rate?'), sw),
+    introBox,
+    msg,
+    h('div', { class: 'edit-actions' },
+      h('button', { class: 'btn primary', onclick: () => doSet('known') }, 'Save'),
+      h('button', { class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
+      h('button', { class: 'btn ghost', onclick: () => { open = null; render(); } }, 'Cancel')
+    ));
+}
+
 function editor(row) {
+  if (row.type === 'cardRate') return cardRateEditor(row);
   const f = getAt(hist.present, row.path);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   let input;
@@ -96,6 +155,7 @@ function guessList() {
 }
 
 function openField(path) {
+  path = rowPathFor(hist.present, path);
   open = path;
   render();
   const el = document.getElementById('f-' + path);
@@ -149,7 +209,7 @@ async function start() {
   rules = loaded.rules; source = loaded.source; hist = createHistory(loaded.spine); guess = null; open = null;
   render();
   const p = decodeURIComponent(location.hash.slice(1));
-  if (p && getAt(hist.present, p)) openField(p);
+  if (p && getAt(hist.present, rowPathFor(hist.present, p))) openField(p);
 }
 
 start().catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Ledger could not load: ' + err.message)); });

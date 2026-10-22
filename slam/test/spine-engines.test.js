@@ -5,7 +5,7 @@ import { fact } from '../engine/spine.js';
 import { validate } from '../engine/schema.js';
 import { monthlyAmount, paidBetween, cashflow } from '../engine/cashflow.js';
 import { computeTax, taxForYear, nextEstimatedDate } from '../engine/tax.js';
-import { minimumPayment, utilization, creditScoreNote, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
+import { minimumPayment, rateOn, utilization, creditScoreNote, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
 import { balanceSheet } from '../engine/networth.js';
 import { emergency } from '../engine/emergency.js';
 import { fiReport, yearsToTarget } from '../engine/fi.js';
@@ -368,6 +368,28 @@ test('projection: monthly for 24 months, then yearly to life expectancy, with da
   assert.ok(p.events.some((e) => e.kind === 'debtPaidOff' && e.ym === '2026-12'));
   assert.ok(p.events.some((e) => e.kind === 'incomeEnds'));
   assert.ok(p.months[5].tax !== 0, 'April 2027 settles the 2026 tax');
+});
+
+test('debt: an intro ending mid-month switches to the rate after it the next day', () => {
+  const s = mini({ debts: [card('m', 1200, { promoEnds: '2026-11-15', apr: 0.24, min: 0 })] });
+  const p = payoffPlan(s, R, { asOf: '2026-10-22', maxMonths: 1 });
+  // November: 15 days at 0%, 15 days at 24%: 1,200 x 12% / 12 = 12.
+  near(p.debts[0].interest, 12);
+});
+
+test('flags: the promo flag names the rate after the intro and the day it starts', () => {
+  const s = household();
+  s.accounts[0].balance = K(9000);
+  s.debts = [card('p', 700, { promoEnds: '2027-03-31', apr: 0.24, min: 25, limit: 7000 })];
+  s.debts[0].apr = RO(0.24);
+  const f = summarize(s, R).flags.find((x) => x.id === 'promo-deadlines');
+  assert.match(f.detail, /\$700 on p goes to 24% \(rough\) on April 1, 2027 if not paid/);
+});
+
+test('debt: an APR marked not for me charges nothing', () => {
+  const c = card('n', 100, {});
+  c.apr = fact(null, { kind: 'notForMe' });
+  assert.equal(rateOn(c, '2026-11-01').rate, 0);
 });
 
 test('projection: a 0% promo starts charging the APR after it ends', () => {

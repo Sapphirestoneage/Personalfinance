@@ -11,6 +11,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export const longDate = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
 const pctWords = (x) => Math.round(x * 100) + '%';
 const pct1 = (x) => (Math.round(x * 1000) / 10).toFixed(1) + '%';
+const rateWords = (x) => String(Math.round(x * 10000) / 100) + '%';
 const months1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
 
 // s: the summary from summary.js (cashflow, sheet, debt, emergency, fi, tax).
@@ -64,7 +65,9 @@ export function buildFlags(spine, rules, s) {
   // Promo balances and the monthly amount that clears them in time.
   const pr = s.debt.promo;
   if (pr.items.length) {
-    const lines = pr.items.map((x) => money(x.balance) + ' on ' + x.name + ' until ' + longDate(x.promoEnds) + ' (' + money(x.monthlyNeeded, true) + ' a month over ' + x.paymentsLeft + ' payments' + (x.deferredInterest === true ? '; interest is deferred, so any balance left then can be charged interest from the start' : x.deferredInterest === null ? '; whether interest is deferred is not entered' : '') + ')');
+    // "$700 on a card goes to 24% on April 1, 2027 if not paid": the rate after the intro, from the day after it ends.
+    const after = (x) => x.aprAfter === null ? 'goes to its regular rate (not entered) on ' + longDate(x.switchDate) + ' if not paid' : 'goes to ' + rateWords(x.aprAfter) + (x.aprAfterKind === 'rough' ? ' (rough)' : '') + ' on ' + longDate(x.switchDate) + ' if not paid';
+    const lines = pr.items.map((x) => money(x.balance) + ' on ' + x.name + ' ' + after(x) + ' (' + money(x.monthlyNeeded, true) + ' a month over ' + x.paymentsLeft + ' payments clears it' + (x.deferredInterest === true ? '; interest is deferred, so any balance left then can be charged interest from the start' : x.deferredInterest === null ? '; whether interest is deferred is not entered' : '') + ')');
     add({ id: 'promo-deadlines', level: 'act', title: money(pr.total.value) + ' in promo balances due by ' + longDate(pr.items[pr.items.length - 1].promoEnds), detail: 'Clearing them in time takes about ' + money(pr.monthly.value, true) + ' a month: ' + lines.join('; ') + '.', from: pr.total.from });
   }
 

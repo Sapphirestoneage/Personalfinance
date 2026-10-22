@@ -5,6 +5,7 @@
 import { fetchRules } from '../engine/rules.js';
 import { loadHousehold } from '../engine/normalize.js';
 import { validate } from '../engine/schema.js';
+import { applyDefaults } from '../engine/defaults.js';
 
 const KEY = 'slam-spine:v1';
 const base = new URL('../', import.meta.url);
@@ -23,10 +24,10 @@ async function fetchJson(rel) {
 export async function loadAll() {
   const rules = await fetchRules(new URL('data/', base));
   const saved = readSaved();
-  if (saved && validate(saved).ok) return { rules, spine: saved, source: 'saved' };
+  if (saved && validate(saved).ok) return { rules, spine: applyDefaults(saved, rules), source: 'saved' };
   const local = await fetchJson('fixtures/eli.local.json');
-  if (local) return { rules, spine: loadHousehold(local), source: 'local' };
-  return { rules, spine: loadHousehold(await fetchJson('fixtures/demo.json')), source: 'demo' };
+  if (local) return { rules, spine: applyDefaults(loadHousehold(local), rules), source: 'local' };
+  return { rules, spine: applyDefaults(loadHousehold(await fetchJson('fixtures/demo.json')), rules), source: 'demo' };
 }
 
 export function save(spine) {
