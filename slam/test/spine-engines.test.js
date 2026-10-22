@@ -5,7 +5,7 @@ import { fact } from '../engine/spine.js';
 import { validate } from '../engine/schema.js';
 import { monthlyAmount, paidBetween, cashflow } from '../engine/cashflow.js';
 import { computeTax, taxForYear, nextEstimatedDate } from '../engine/tax.js';
-import { minimumPayment, utilization, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
+import { minimumPayment, utilization, creditScoreNote, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
 import { balanceSheet } from '../engine/networth.js';
 import { emergency } from '../engine/emergency.js';
 import { fiReport, yearsToTarget } from '../engine/fi.js';
@@ -44,7 +44,7 @@ function mini(over = {}) {
 }
 const stream = (id, type, amount, cadence, o = {}) => ({ id, type, label: o.label || id, personId: 'p', amount: o.kind === 'missing' ? M() : K(amount), cadence, start: o.start ?? null, end: o.end ?? null, withholding: { federal: o.fed === undefined ? K(0) : o.fed === null ? M() : K(o.fed), state: o.st === undefined ? K(0) : o.st === null ? M() : K(o.st) }, ...(o.likelihood !== undefined ? { likelihood: RO(o.likelihood) } : {}) });
 const expense = (id, amount, o = {}) => ({ id, label: id, amount: K(amount), cadence: o.cadence || 'monthly', start: o.start ?? null, end: o.end ?? null, fixed: null, need: null, fat: o.fat ?? null });
-const card = (id, balance, o = {}) => ({ id, family: 'debt', type: 'credit_card', name: K(id), balance: K(balance), apr: o.apr === null ? M() : K(o.apr ?? 0.2), limit: o.limit === null ? M() : K(o.limit ?? 5000), minimum: o.min === undefined ? M() : K(o.min), ...(o.promoEnds ? { promoApr: K(0), promoEnds: K(o.promoEnds), deferredInterest: K(o.deferred ?? false) } : {}), ...(o.stress ? { stress: K(o.stress) } : {}) });
+const card = (id, balance, o = {}) => ({ id, family: 'debt', type: 'credit_card', name: K(id), balance: K(balance), apr: o.apr === null ? M() : K(o.apr ?? 0.2), limit: o.limit === null ? M() : K(o.limit ?? 5000), minimum: o.min === undefined ? M() : K(o.min), ...(o.promoEnds ? { promoApr: K(0), promoEnds: K(o.promoEnds), deferredInterest: K(o.deferred ?? false) } : {}), ...(o.stress ? { stress: K(o.stress) } : {}), business: K(o.business ?? false), reportsToPersonalCredit: o.reports === null ? M() : K(o.reports ?? !(o.business ?? false)) });
 
 // ------------------------------------------------------------------ cashflow
 test('cashflow: a weekly stream is a rate; partial months prorate by day', () => {
@@ -207,15 +207,39 @@ test('debt: a known minimum is used; a card with none gets a rough estimate', ()
   assert.equal(minimumPayment(card('d', 10, { apr: 0 }), R, '2026-11-01').value, 10, 'never above the balance');
 });
 
-test('debt: utilization per card; overall is null while any limit is missing', () => {
-  const s = mini({ debts: [card('a', 1000, { limit: 2000 }), card('b', 500, { limit: null })] });
-  const u = utilization(s);
+test('debt: utilization per card, personal (cards reporting to personal credit) and overall', () => {
+  const s1 = mini({ debts: [card('p1', 1000, { limit: 2000 }), card('p2', 500, { limit: 3000 }), card('biz', 4000, { limit: 5000, business: true })] });
+  const u = utilization(s1);
   assert.equal(u.items[0].util.value, 0.5);
+  assert.equal(u.items[2].util.value, 0.8);
+  assert.equal(u.items[2].reports, false, 'a business card defaults to not reporting');
+  assert.equal(u.personal.value, 1500 / 5000);
+  assert.deepEqual([u.personal.balance, u.personal.limit], [1500, 5000]);
+  assert.equal(u.overall.value, 5500 / 10000);
+});
+
+test('debt: a missing limit or reporting answer leaves that total null and names the field', () => {
+  const s1 = mini({ debts: [card('a', 1000, { limit: 2000 }), card('b', 500, { limit: null })] });
+  const u = utilization(s1);
   assert.equal(u.items[1].util.value, null);
+  assert.equal(u.personal.value, null);
   assert.equal(u.overall.value, null);
   assert.deepEqual(u.overall.missing, ['debts.b.limit']);
-  const s2 = mini({ debts: [card('a', 1000, { limit: 2000 }), card('b', 500, { limit: 3000 })] });
-  assert.equal(utilization(s2).overall.value, 0.3);
+  const s2 = mini({ debts: [card('a', 1000, { limit: 2000 }), card('c', 0, { limit: 1000, reports: null })] });
+  const u2 = utilization(s2);
+  assert.equal(u2.personal.value, null);
+  assert.deepEqual(u2.personal.missing, ['debts.c.reportsToPersonalCredit']);
+  assert.equal(u2.overall.value, 1000 / 3000, 'overall does not need the reporting answer');
+});
+
+test('debt: the credit score note lists personal cards over 30% and pays off the smallest', () => {
+  const s1 = mini({ debts: [card('big', 900, { limit: 1000 }), card('small', 400, { limit: 1000 }), card('low', 100, { limit: 4000 }), card('biz', 5000, { limit: 5000, business: true })] });
+  const n = creditScoreNote(s1, R, '2026-10-22');
+  assert.deepEqual(n.cards.map((c) => c.id), ['big', 'small'], 'highest first; business card not listed');
+  assert.equal(n.smallest.id, 'small');
+  near(n.personalAfter.value, (1400 - 400) / 6000);
+  const none = creditScoreNote(mini({ debts: [card('low', 100, { limit: 4000 })] }), R, '2026-10-22');
+  assert.deepEqual([none.cards, none.smallest, none.personalAfter.value], [[], null, null]);
 });
 
 test('debt: promo deadlines, payments left and the monthly amount', () => {
@@ -378,6 +402,19 @@ test('flags: each alert fires from data and stays quiet otherwise', () => {
   quiet.accounts[0].balance = K(9000);
   const q = summarize(quiet, R).flags.map((f) => f.id);
   assert.deepEqual(q, [], 'a calm household raises nothing: ' + q.join(', '));
+});
+
+test('flags: the 30% flag uses personal cards; a business card that does not report is not flagged', () => {
+  const s1 = household();
+  s1.accounts[0].balance = K(9000);
+  s1.debts = [card('p', 1800, { limit: 2000, min: 50 }), card('q', 200, { limit: 3000, min: 25 }), card('biz', 4500, { limit: 5000, min: 100, business: true })];
+  const f = summarize(s1, R).flags;
+  const ids = f.map((x) => x.id);
+  assert.ok(ids.includes('utilization-p'));
+  assert.ok(ids.includes('utilization-personal'), 'personal 2,000 / 5,000 = 40%');
+  assert.ok(!ids.includes('utilization-biz'));
+  assert.ok(!ids.includes('utilization-q'));
+  assert.match(f.find((x) => x.id === 'utilization-personal').detail, /All cards, business ones included: 65.0%/);
 });
 
 test('flags: no em dashes and no instructions in flag text', () => {

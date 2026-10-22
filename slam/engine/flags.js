@@ -10,6 +10,7 @@ const v = valueOf;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const longDate = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
 const pctWords = (x) => Math.round(x * 100) + '%';
+const pct1 = (x) => (Math.round(x * 1000) / 10).toFixed(1) + '%';
 const months1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
 
 // s: the summary from summary.js (cashflow, sheet, debt, emergency, fi, tax).
@@ -43,14 +44,22 @@ export function buildFlags(spine, rules, s) {
     add({ id: 'unemployment-withholding-' + st.id, level: 'act', title: st.label + ' has no federal tax withheld', detail, from: ['income.' + st.id + '.withholding.federal', ...tax.balanceDue.missing], rules: [next.rule, ...tax.balanceDue.rules] });
   }
 
-  // Card utilization, per card and overall.
+  // Card utilization (S-158): per card, for cards that report to personal
+  // credit (or may: unknown counts), and the personal total. Business cards
+  // that do not report, and the overall total, are shown but not flagged.
   const warn = rules.get('APP_UTIL_WARN', year);
   for (const c of s.debt.utilization.items) {
-    if (c.util.value === null || c.util.value <= warn) continue;
-    add({ id: 'utilization-' + c.id, level: 'watch', title: c.name + ' is at ' + pctWords(c.util.value) + ' of its limit', detail: money(c.balance) + ' of ' + money(c.limit) + '. Over ' + pctWords(warn) + ' of a limit counts against a credit score.', from: c.util.from, rules: ['APP_UTIL_WARN'] });
+    if (c.reports === false || c.util.value === null || c.util.value <= warn) continue;
+    add({ id: 'utilization-' + c.id, level: 'watch', title: c.name + ' is at ' + pctWords(c.util.value) + ' of its limit', detail: money(c.balance) + ' of ' + money(c.limit) + '. Over ' + pctWords(warn) + ' of a limit counts against a credit score' + (c.reports === null ? ', if this card reports to personal credit (not entered yet)' : '') + '.', from: c.util.from, rules: ['APP_UTIL_WARN'] });
   }
-  const ov = s.debt.utilization.overall;
-  if (ov.value !== null && ov.value > warn) add({ id: 'utilization-overall', level: 'watch', title: 'Cards overall are at ' + pctWords(ov.value) + ' of their limits', detail: 'Over ' + pctWords(warn) + ' overall counts against a credit score.', from: ov.from, rules: ['APP_UTIL_WARN'] });
+  const pu = s.debt.utilization.personal, ov = s.debt.utilization.overall, cs = s.debt.creditScore;
+  if (pu.value !== null && pu.value > warn) {
+    add({
+      id: 'utilization-personal', level: 'watch', title: 'Personal cards are at ' + pct1(pu.value) + ' of their limits',
+      detail: money(pu.balance) + ' of ' + money(pu.limit) + ' on the cards that report to personal credit; over ' + pctWords(warn) + ' counts against a credit score.' + (ov.value !== null ? ' All cards, business ones included: ' + pct1(ov.value) + '.' : '') + (cs.smallest && cs.personalAfter.value !== null ? ' Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + '), the smallest balance over ' + pctWords(warn) + ', would bring personal utilization to ' + pct1(cs.personalAfter.value) + '.' : ''),
+      from: pu.from, rules: ['APP_UTIL_WARN']
+    });
+  }
 
   // Promo balances and the monthly amount that clears them in time.
   const pr = s.debt.promo;
@@ -129,7 +138,7 @@ export function buildFlags(spine, rules, s) {
     ['tax', year + ' tax', tax.balanceDue, tax.missingText],
     ['takehome', 'Monthly take-home', s.cashflow.income.takeHome],
     ['surplus', 'Monthly surplus', s.cashflow.surplus],
-    ['utilization', 'Overall card utilization', s.debt.utilization.overall],
+    ['utilization', 'Personal card utilization', s.debt.utilization.personal],
     ['networth', 'Net worth', s.sheet.netWorth],
     ['fi', 'FI percent', fi.fiPercent],
     ['runway', 'Cash runway', em.tiers.full.runway]

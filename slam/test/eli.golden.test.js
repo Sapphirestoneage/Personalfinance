@@ -42,8 +42,21 @@ test('Eli golden values', { skip }, async (t) => {
     assert.deepEqual(o.slice(X.avalancheFirst.length).sort(), [...X.zeroPromoCards].sort());
   });
 
-  await t.test('utilization of the card with a known limit', () => {
-    for (const [id, u] of Object.entries(X.utilization)) assert.equal(s.debt.utilization.items.find((x) => x.id === id).util.value, u);
+  await t.test('utilization per card, personal and overall', () => {
+    const r1 = (x) => Math.round(x * 1000) / 10;
+    for (const [id, u] of Object.entries(X.utilization)) assert.equal(s.debt.utilization.items.find((x) => x.id === id).util.value, u, id);
+    for (const [key, want] of [['personal', X.personalUtilization], ['overall', X.overallUtilization]]) {
+      const got = s.debt.utilization[key];
+      assert.deepEqual([got.balance, got.limit, r1(got.value)], [want.balance, want.limit, want.percentRounded], key);
+    }
+  });
+
+  await t.test('credit score note: personal cards over 30% highest first, and the smallest paid off', () => {
+    const cs = s.debt.creditScore;
+    assert.deepEqual(cs.cards.map((c) => c.id), X.creditScore.order);
+    assert.equal(cs.smallest.id, X.creditScore.smallest);
+    assert.equal(Math.round(cs.personalAfter.value * 1000) / 10, X.creditScore.afterPercentRounded);
+    assert.deepEqual(s.debt.avalancheCards.slice(0, X.avalancheFirst.length), X.avalancheFirst, 'the payoff order is unchanged by the note');
   });
 
   await t.test('cash, assets, debts, net worth', () => {

@@ -571,6 +571,18 @@
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"
+      },
+      "business": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "reportsToPersonalCredit": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
       }
     },
     {
@@ -644,6 +656,71 @@
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"
+      },
+      "business": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "reportsToPersonalCredit": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "ink",
+      "family": "debt",
+      "type": "credit_card",
+      "name": {
+        "value": "Business card",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 0,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "apr": {
+        "value": 0.21,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "limit": {
+        "value": 10000,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "minimum": {
+        "value": 0,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "dueDay": {
+        "value": 20,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "business": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "reportsToPersonalCredit": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "rough"
       }
     },
     {

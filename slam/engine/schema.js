@@ -57,7 +57,8 @@ export const FAMILIES = {
   debt: {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',
-      statementCloseDay: 'int', secured: 'bool', payoffDate: 'date', federal: 'bool', plan: 'text', stress: 'int', reasonsToKeep: 'list'
+      statementCloseDay: 'int', secured: 'bool', payoffDate: 'date', federal: 'bool', plan: 'text', stress: 'int', reasonsToKeep: 'list',
+      business: 'bool', reportsToPersonalCredit: 'bool'
     }
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
@@ -258,6 +259,8 @@ export function validate(spine) {
         checkFact(p + '.' + k, a[k], fields[k]);
       }
       if (a.stress && a.stress.value !== null && (a.stress.value < 1 || a.stress.value > 10)) err(p + '.stress', '1 to 10');
+      // A card says whether it is a business card and whether it reports to personal credit (S-157).
+      if (a.type === 'credit_card') for (const k of ['business', 'reportsToPersonalCredit']) if (!a[k]) err(p + '.' + k, 'a card carries this (kind missing when unknown)');
       for (const [k, need] of [['contributions', ['year', 'amount']], ['conversions', ['year', 'amount', 'taxable']]]) {
         const v = a[k] && a[k].value;
         if (Array.isArray(v)) v.forEach((x, i) => need.forEach((n) => { if (typeof x[n] !== 'number') err(p + '.' + k + '[' + i + '].' + n, 'needs a number'); }));

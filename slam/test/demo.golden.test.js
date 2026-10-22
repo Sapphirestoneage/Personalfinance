@@ -60,8 +60,13 @@ test('demo golden values as of 2026-10-22', async (t) => {
 
   await t.test('cards: utilization, promo deadline, orders', () => {
     const u = Object.fromEntries(s.debt.utilization.items.map((x) => [x.id, x.util.value]));
-    assert.deepEqual(u, { visa: 0.3, store: 0.6 });
-    near(s.debt.utilization.overall.value, 4200 / 12000);
+    assert.deepEqual(u, { visa: 0.3, store: 0.6, ink: 0 });
+    near(s.debt.utilization.personal.value, (3000 + 1200) / (10000 + 2000)); // 35%: the business card does not report
+    near(s.debt.utilization.overall.value, 4200 / (10000 + 2000 + 10000)); // 19.1%
+    const cs = s.debt.creditScore;
+    assert.deepEqual(cs.cards.map((c) => c.id), ['store']); // Visa is at exactly 30%, not over
+    assert.equal(cs.smallest.id, 'store');
+    near(cs.personalAfter.value, 3000 / 12000); // 25%
     assert.equal(s.debt.promo.total.value, 1200);
     assert.equal(s.debt.promo.items[0].paymentsLeft, 4); // Nov, Dec, Jan, Feb
     near(s.debt.promo.monthly.value, 300);
@@ -96,6 +101,6 @@ test('demo golden values as of 2026-10-22', async (t) => {
 
   await t.test('flags', () => {
     const ids = s.flags.map((f) => f.id).sort();
-    assert.deepEqual(ids, ['promo-deadlines', 'utilization-overall', 'utilization-store']);
+    assert.deepEqual(ids, ['promo-deadlines', 'utilization-personal', 'utilization-store']);
   });
 });

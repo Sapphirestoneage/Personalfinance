@@ -4,7 +4,7 @@
 import { summarize } from '../engine/summary.js';
 import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
-import { h, chip, money, pct, shortDate, ledgerHref } from './view.js';
+import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
 const app = document.getElementById('app');
 const months = (x) => (x === null ? '' : x.toFixed(1));
@@ -35,10 +35,32 @@ function tile(spine, { id, label, result, shown, missingText, lines = [], extra 
     ...provenance(spine, result));
 }
 
+// Utilization in words: "Personal cards 35.0% ($4,200 of $12,000)."
+function utilLine(r, label) {
+  return r.value === null ? label + ': not enough to figure yet.' : label + ' ' + pct(r.value, 1) + ' (' + money(r.balance) + ' of ' + money(r.limit) + ').';
+}
+
+// The payoff order by rate, with the 0% promos named as a group (S-159).
+function payoffLine(items) {
+  if (items.length < 2) return null;
+  const rated = items.filter((x) => !x.promo).map((x) => x.name + (x.rate === null ? ' (APR missing)' : ' (' + showValue(x.rate, 'rate') + ')'));
+  const promos = items.filter((x) => x.promo);
+  const ends = promos.length ? promos[promos.length - 1].promoEnds : null;
+  return 'Payoff order, highest rate first: ' + rated.join(', ') + (promos.length ? (rated.length ? ', then ' : '') + 'the 0% promos due by ' + shortDate(ends) + ': ' + promos.map((x) => x.name).join(', ') : '') + '.';
+}
+
+// The credit score note, kept apart from the payoff order (S-159).
+function creditNote(cs) {
+  if (!cs.cards.length) return null;
+  return h('div', { class: 'backstop' },
+    h('strong', {}, 'Credit score note'),
+    h('p', { class: 'tile-sub' }, 'Personal cards over ' + pct(cs.warn) + ' of their limit, highest first: ' + cs.cards.map((c) => c.name + ' ' + pct(c.util)).join(', ') + '.'),
+    cs.smallest && cs.personalAfter.value !== null ? h('p', { class: 'tile-sub' }, 'Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + ') would bring personal utilization to ' + pct(cs.personalAfter.value, 1) + '.') : null);
+}
+
 function render(spine, rules, source) {
   const s = summarize(spine, rules);
-  const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo;
-  const names = (ids) => ids.map((id) => spine.debts.find((d) => d.id === id)).map((d) => (d.name && d.name.value) || d.id);
+  const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
   const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
 
   const backstop = h('div', { class: 'backstop' },
@@ -63,8 +85,10 @@ function render(spine, rules, source) {
       id: 'cards', label: 'Credit cards', result: sh.cards, shown: money(sh.cards.value),
       lines: [
         pr.items.length ? money(pr.total.value) + ' in promo balances due by ' + shortDate(promoBy) + '; about ' + money(pr.monthly.value, true) + ' a month clears them in time.' : 'No promo balances.',
-        s.debt.avalancheCards.length > 1 ? 'Highest rate first: ' + names(s.debt.avalancheCards).join(', ') + '.' : null
-      ]
+        utilLine(ut.personal, 'Personal cards') + ' ' + utilLine(ut.overall, 'All cards, business included'),
+        payoffLine(s.debt.avalancheCardsDetail)
+      ],
+      extra: creditNote(s.debt.creditScore)
     }),
     tile(spine, {
       id: 'fi', label: 'Financial independence', result: fi.fiPercent, shown: pct(fi.fiPercent.value, 1),

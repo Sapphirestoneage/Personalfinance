@@ -49,7 +49,7 @@ const METRICS = [
   ['yearsToFi', (s) => s.fi.yearsToFi, 1],
   ['taxDue', (s) => s.tax.balanceDue, 500],
   ['promoMonthly', (s) => s.debt.promo.monthly, 100],
-  ['utilization', (s) => s.debt.utilization.overall, 0.05],
+  ['utilization', (s) => s.debt.utilization.personal, 0.05],
   ['outlook', (s) => s.outlook, 1000]
 ];
 

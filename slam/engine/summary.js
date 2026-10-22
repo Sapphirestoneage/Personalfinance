@@ -3,7 +3,7 @@
 
 import { cashflow } from './cashflow.js';
 import { balanceSheet } from './networth.js';
-import { utilization, promoDeadlines, order, payoffPlan } from './debt.js';
+import { utilization, creditScoreNote, promoDeadlines, order, orderDetail, payoffPlan } from './debt.js';
 import { emergency } from './emergency.js';
 import { fiReport } from './fi.js';
 import { taxForYear } from './tax.js';
@@ -13,12 +13,17 @@ export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true }
   const ym = asOf.slice(0, 7);
   const cf = cashflow(spine, rules, ym);
   const sheet = balanceSheet(spine);
+  const util = utilization(spine);
   const debt = {
-    utilization: utilization(spine),
+    utilization: util,
+    // Two separate readings, never merged (S-159): the payoff order by rate,
+    // and the credit score note by personal utilization.
+    creditScore: creditScoreNote(spine, rules, asOf, util),
     promo: promoDeadlines(spine, asOf),
     avalanche: order(spine, 'avalanche', asOf),
     avalancheCards: order(spine, 'avalanche', asOf, { cardsOnly: true })
   };
+  debt.avalancheCardsDetail = orderDetail(spine, debt.avalancheCards, asOf);
   const s = {
     asOf, ym, cashflow: cf, sheet, debt,
     emergency: emergency(spine, rules, cf, sheet, asOf),

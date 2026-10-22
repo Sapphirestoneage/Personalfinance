@@ -98,10 +98,22 @@ export function fromProfile(p) {
   }
 
   const debts = (p.debts || []).map((d) => {
-    const out = { id: d.id, family: 'debt', type: d.type, name: F(d.lender || PRESETS[d.type]?.label || d.type, d.lender ? 'known' : 'rough'), balance: F(d.balance, d.kind) };
-    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest', 'limit', 'minimum', 'dueDay', 'federal', 'plan', 'stress', 'reasonsToKeep']) if (k in d) out[k] = F(d[k], d.kind);
+    const out = { id: d.id, family: 'debt', type: d.type, name: F(d.lender || d.label || PRESETS[d.type]?.label || d.type, d.lender ? 'known' : 'rough'), balance: F(d.balance, d.kind) };
+    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest', 'limit', 'minimum', 'dueDay', 'federal', 'plan', 'stress', 'reasonsToKeep', 'business', 'reportsToPersonalCredit']) if (k in d) out[k] = F(d[k], d.kind);
     if (d.payoff) out.payoffDate = F(d.payoff.length === 7 ? monthEnd(d.payoff) : d.payoff, d.kind);
     for (const k of DEBT_NEEDS[d.type] || DEBT_NEEDS.default) if (!(k in out)) out[k] = F(null);
+    // A card says whether it is a business card and whether it reports to personal
+    // credit (S-157). Unsaid, a personal card reports and a business card does not;
+    // the business default is rough because some issuers do report.
+    if (d.type === 'credit_card') {
+      if (!out.business) out.business = F(null);
+      if (!out.reportsToPersonalCredit) {
+        const b = out.business.value;
+        out.reportsToPersonalCredit = b === null ? F(null)
+          : b ? fact(false, { kind: 'rough', asOf, source, note: 'business cards usually do not report; confirm with the issuer' })
+            : fact(true, { kind: out.business.kind, asOf, source, note: 'personal cards report' });
+      }
+    }
     // A promo balance needs to say whether interest is deferred (it changes the deadline's cost).
     if (out.promoEnds && !('deferredInterest' in out)) out.deferredInterest = F(null);
     if (d.notes) out.notes = d.notes;

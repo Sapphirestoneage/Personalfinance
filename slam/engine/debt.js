@@ -47,22 +47,61 @@ export function debtTotals(spine) {
   return { total: all.out(sum), cards: cards.out(cardSum) };
 }
 
-// Utilization per revolving account and overall. Overall needs every limit:
-// with one missing it is null (a partial figure would mislead) and names them.
+// Utilization three ways (S-158): per card; personal, the cards that report to
+// personal credit; and overall, every revolving account, business cards
+// included. A total needs every limit (and, for personal, every card's
+// reporting answer): with one missing it is null and names it, because a
+// partial figure would read as a real one.
 export function utilization(spine) {
   const items = [];
-  const overall = tracker();
-  let bal = 0, lim = 0;
+  const all = tracker(), pers = tracker();
+  let bal = 0, lim = 0, pBal = 0, pLim = 0;
   for (const d of (spine.debts || []).filter((x) => REVOLVING.includes(x.type))) {
     const t = tracker();
     const b = t.useFact(P(d, 'balance'), d.balance), l = t.useFact(P(d, 'limit'), d.limit);
-    overall.useFact(P(d, 'balance'), d.balance); overall.useFact(P(d, 'limit'), d.limit);
+    all.useFact(P(d, 'balance'), d.balance); all.useFact(P(d, 'limit'), d.limit);
     if (b !== null) bal += b;
     if (l !== null) lim += l;
-    items.push({ id: d.id, name: v(d.name), balance: b, limit: l, util: t.out(b !== null && l ? b / l : null) });
+    // A card must say whether it reports; a HELOC counts as personal only when it says so.
+    const reports = d.type === 'credit_card' || d.reportsToPersonalCredit ? pers.useFact(P(d, 'reportsToPersonalCredit'), d.reportsToPersonalCredit) : false;
+    if (reports === true) {
+      pers.useFact(P(d, 'balance'), d.balance); pers.useFact(P(d, 'limit'), d.limit);
+      if (b !== null) pBal += b;
+      if (l !== null) pLim += l;
+    }
+    items.push({ id: d.id, name: v(d.name), balance: b, limit: l, business: v(d.business), reports, util: t.out(b !== null && l ? b / l : null) });
   }
-  const snap = overall.snapshot();
-  return { items, overall: overall.out(snap.missing.length || !lim ? null : bal / lim) };
+  const total = (tr, b, l) => tr.out(tr.snapshot().missing.length || !l ? null : b / l, { balance: b, limit: l });
+  return { items, personal: total(pers, pBal, pLim), overall: total(all, bal, lim) };
+}
+
+// The credit score note (S-159), kept apart from the payoff order: personal
+// cards over APP_UTIL_WARN, highest first, and what personal utilization would
+// be with the smallest of those balances paid off.
+export function creditScoreNote(spine, rules, asOf, util = utilization(spine)) {
+  const warn = rules.get('APP_UTIL_WARN', +asOf.slice(0, 4));
+  const over = util.items.filter((c) => c.reports === true && c.util.value !== null && c.util.value > warn).sort((a, b) => b.util.value - a.util.value);
+  const smallest = over.length ? over.reduce((m, c) => (c.balance < m.balance ? c : m), over[0]) : null;
+  const t = tracker();
+  t.absorb(util.personal);
+  if (smallest) t.absorb(smallest.util);
+  const p = util.personal;
+  return {
+    warn,
+    cards: over.map((c) => ({ id: c.id, name: c.name, balance: c.balance, limit: c.limit, util: c.util.value })),
+    smallest: smallest && { id: smallest.id, name: smallest.name, balance: smallest.balance },
+    personalNow: p,
+    personalAfter: t.out(smallest && p.value !== null ? (p.balance - smallest.balance) / p.limit : null)
+  };
+}
+
+// An order with what drives it: today's rate and, for a promo, when it ends.
+export function orderDetail(spine, ids, asOf) {
+  return ids.map((id) => {
+    const d = spine.debts.find((x) => x.id === id);
+    const r = rateOn(d, asOf);
+    return { id, name: v(d.name), rate: r.rate, promo: r.promo, promoEnds: r.promo ? v(d.promoEnds) : null };
+  });
 }
 
 // Payments left before a promo ends: one a month, from the month after asOf

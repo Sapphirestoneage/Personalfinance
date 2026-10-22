@@ -73,7 +73,7 @@ the rules that limit it.
 | hsaFsa | coverageLevel, annualLimit, investedPortion, unreimbursedReceipts, rolloverRule, planEligible, monthsEligible, employerSeed | hsa, health_fsa, lp_fsa, dc_fsa |
 | education | beneficiary, stateTaxDeduction, annualLimit, ageOfControl, stateDeduction, openDate, childBirthYear | k529, coverdell, utma, custodial_roth, able, trump |
 | taxable | costBasis, unrealizedGain, expectedReturn, employerStockShare | brokerage, joint_brokerage, crypto, espp, rsu |
-| debt | apr, promoApr, promoEnds, deferredInterest, limit, minimum, dueDay, statementCloseDay, secured, payoffDate, federal, plan, stress (1 to 10), reasonsToKeep | credit_card, student_loan, private_student_loan, mortgage, heloc, auto_loan, personal_loan, bnpl, payday, medical, irs_plan, k401_loan, family_iou |
+| debt | apr, promoApr, promoEnds, deferredInterest, limit, minimum, dueDay, statementCloseDay, secured, payoffDate, federal, plan, stress (1 to 10), reasonsToKeep, business, reportsToPersonalCredit (both required on a credit card) | credit_card, student_loan, private_student_loan, mortgage, heloc, auto_loan, personal_loan, bnpl, payday, medical, irs_plan, k401_loan, family_iou |
 | otherAssets | appreciationRate, linkedDebt, incomeProduced | home, rental, car, business, pension, cash_value_life, annuity |
 
 `validate(spine) -> { ok, errors: [{ path, message }] }`.
@@ -117,12 +117,12 @@ All pure: spine and rules in, plain objects out. `asOf` defaults to `spine.meta.
 | projection | `project(spine, rules, { asOf, mode: 'expected', endYm })` | `{ months: [row x APP_PROJ_MONTHS], years: [row per calendar year], events, firstShortfall, from, rough, missing, rules, kind }`; row: `{ ym, age, gross, takeHome, expenses, debtPaid, interest, tax, saved, surplus, cash, invested, otherAssets, debt, netWorth }` |
 | fi | `fiReport(spine, rules, cf, sheet, asOf)` | `{ fiNumber, goal, goalSource, implied, goalBelowImplied, fiPercent, leanFi, coastFi, coastAge, coastReached, annualSaving, yearsToFi, neverAtThisRate }` |
 | | `yearsToTarget(P, C, F, r)` | years or null |
-| debt | `minimumPayment(debt, rules, iso, balance)`, `utilization(spine)`, `promoDeadlines(spine, asOf)`, `order(spine, strategy, asOf, { cardsOnly })`, `payoffPlan(spine, rules, { strategy, extra, asOf, cardsOnly })`, `minimumsTotal(spine, rules, iso)`, `debtTotals(spine)` | strategies: avalanche, snowball, stress |
+| debt | `utilization(spine)` returns `{ items: [{ id, name, balance, limit, business, reports, util }], personal, overall }` (each total a Result with balance and limit); `creditScoreNote(spine, rules, asOf, util)` returns `{ warn, cards, smallest, personalNow, personalAfter }`; `orderDetail(spine, ids, asOf)`; `minimumPayment(debt, rules, iso, balance)`, `promoDeadlines(spine, asOf)`, `order(spine, strategy, asOf, { cardsOnly })`, `payoffPlan(spine, rules, { strategy, extra, asOf, cardsOnly })`, `minimumsTotal(spine, rules, iso)`, `debtTotals(spine)` | strategies: avalanche, snowball, stress |
 | emergency | `emergency(spine, rules, cf, sheet, asOf)` | `{ age, targetMonths, targetDollars, gap, tiers: { full: { burn, runway }, fatOnly: { burn, runway } }, runwayWarnMonths, backstop }` |
 | | `rothBackstop(spine, rules, asOf, age)` | `{ contributions, conversions: [{ accountId, year, amount, clockOpens, penaltyFree, penaltyRate }], conversionsTotal, countedAsCash: false }` |
 | networth | `balanceSheet(spine)` | `{ cash, invested, assets, debts, cards, netWorth, byFamily }` |
 | flags | `buildFlags(spine, rules, summary)` | `[{ id, level: act\|watch\|info, title, detail, from, rules }]` |
-| summary | `summarize(spine, rules, { asOf, flags })` | `{ asOf, ym, cashflow, sheet, debt: { utilization, promo, avalanche, avalancheCards }, emergency, fi, tax, flags }`; `payoffOrders(spine, rules, summary)` |
+| summary | `summarize(spine, rules, { asOf, flags })` | `{ asOf, ym, cashflow, sheet, debt: { utilization, creditScore, promo, avalanche, avalancheCards, avalancheCardsDetail }, emergency, fi, tax, flags }`; `payoffOrders(spine, rules, summary)` |
 | labels | `labelFor(spine, path)`, `groupFor(path)`, `GROUPS` | words for a field; its DAITE group |
 | ledger | `ledgerRows(spine)`, `stillGuessing(spine, rules)`, `typeFor(spine, path)` | rows by group; `{ swing, items: [{ path, label, kind, group, blocks, score, moves }] }` |
 | edits | `parseInput(type, text)`, `inputText(type, value)`, `editFact(spine, path, 'set'\|'confirm'\|'notForMe'\|'clear', { value, kind, today })`, `createHistory`, `commit`, `undo`, `redo` | a new spine; a new history |
