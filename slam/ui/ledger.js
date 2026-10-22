@@ -13,23 +13,44 @@ const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook:
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
 
 let rules, hist, source, open = null, showAll = false, guess = null;
+// dirty: something was typed in the open editor and not saved yet (S-164).
+// lastSaved: the line under the header that says what was just saved.
+let dirty = false, lastSaved = null;
 const today = () => new Date().toISOString().slice(0, 10);
 const app = document.getElementById('app');
 
-function apply(next, label) {
+function apply(next, label, shown = null) {
   // House defaults (a card's default APR) refill any blank after every edit.
   hist = commit(hist, applyDefaults(next, rules), label);
   source = 'saved';
-  save(hist.present);
+  const ok = save(hist.present);
+  dirty = false;
+  lastSaved = ok ? 'Saved in this browser: ' + label + (shown ? ' is ' + shown : '') + '.' : 'Could not save in this browser (storage is blocked), so this edit lasts only until the page closes.';
   guess = null;
   render();
 }
 
-function step(fn) {
+function step(fn, verb) {
   const before = hist;
   hist = fn(hist);
-  if (hist !== before) { save(hist.present); source = 'saved'; guess = null; render(); }
+  if (hist !== before) { save(hist.present); source = 'saved'; guess = null; dirty = false; lastSaved = verb; render(); }
 }
+
+// Leaving an editor with unsaved typing is refused with a message, never silent.
+function canLeave() {
+  if (!open || !dirty) return true;
+  const msg = document.querySelector('.row.open .edit-msg');
+  if (msg) msg.textContent = 'Not saved yet. Choose Save, Save as a guess, or Cancel.';
+  const i = document.getElementById('edit-input');
+  if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); }
+  return false;
+}
+
+// An editor is a form: Enter saves (as known), typing marks it unsaved.
+function editorForm(onSubmit, ...kids) {
+  return h('form', { class: 'editor', novalidate: true, onsubmit: (e) => { e.preventDefault(); onSubmit(); }, oninput: () => { dirty = true; }, onchange: () => { dirty = true; } }, ...kids);
+}
+const cancel = () => { open = null; dirty = false; render(); };
 
 // One panel for a card's interest rate (S-161): the APR, a switch for an intro
 // rate, and when it is on, the intro rate and its end date; the APR then reads
@@ -63,6 +84,7 @@ function cardRateEditor(row) {
       introBox.hidden = !on;
       aprLabel.textContent = on ? 'Rate after intro' : 'Interest rate (APR)';
       afterNote.textContent = on ? 'Starts the day after the intro ends. ' : '';
+      dirty = true;
       if (on) introRate.focus();
     }
   }, h('span', { class: 'switch-track', 'aria-hidden': 'true' }, h('span', { class: 'switch-knob' })), state);
@@ -70,20 +92,20 @@ function cardRateEditor(row) {
     const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value });
     if (!p.ok) { msg.textContent = p.message; return; }
     open = null;
-    apply(editCardRate(hist.present, cardId, 'set', { value: p.value, kind, today: today() }), row.label);
+    apply(editCardRate(hist.present, cardId, 'set', { value: p.value, kind, today: today() }), row.label, showValue({ apr: p.value.apr ?? rules.get('DEFAULT_CARD_APR', +hist.present.meta.asOf.slice(0, 4)), intro: p.value.intro }, 'cardRate') + (kind === 'rough' ? ' (a guess)' : ''));
   };
-  const act = (action) => { open = null; apply(editCardRate(hist.present, cardId, action, { today: today() }), row.label); };
-  return h('div', { class: 'editor' },
+  const act = (action) => { open = null; apply(editCardRate(hist.present, cardId, action, { today: today() }), row.label, action === 'notForMe' ? 'not for me' : 'confirmed'); };
+  return editorForm(() => doSet('known'),
     aprLabel, apr, aprHint,
     h('div', { class: 'switch-row' }, h('span', { id: 'intro-switch-label', class: 'edit-label' }, 'Has an intro rate?'), sw),
     introBox,
     msg,
     h('div', { class: 'edit-actions' },
-      h('button', { class: 'btn primary', onclick: () => doSet('known') }, 'Save'),
-      h('button', { class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
-      h('button', { class: 'btn ghost', onclick: () => { open = null; render(); } }, 'Cancel')
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
     ));
 }
 
@@ -108,19 +130,19 @@ function editor(row) {
     const p = parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
     open = null;
-    apply(editFact(hist.present, row.path, 'set', { value: p.value, kind, today: today() }), row.label);
+    apply(editFact(hist.present, row.path, 'set', { value: p.value, kind, today: today() }), row.label, showValue(p.value, row.type) + (kind === 'rough' ? ' (a guess)' : ''));
   };
-  return h('div', { class: 'editor' },
+  return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.label),
     input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     h('div', { class: 'edit-actions' },
-      h('button', { class: 'btn primary', onclick: () => doSet('known') }, 'Save'),
-      h('button', { class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      f.value !== null && f.kind !== 'known' && h('button', { class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), row.label); } }, 'Confirm'),
-      f.kind !== 'notForMe' && h('button', { class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label); } }, 'Not for me'),
-      h('button', { class: 'btn ghost', onclick: () => { open = null; render(); } }, 'Cancel')
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), row.label, 'confirmed'); } }, 'Confirm'),
+      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
     ));
 }
 
@@ -129,7 +151,7 @@ function rowEl(row) {
   const shown = f.kind === 'notForMe' ? 'Does not apply' : f.value === null ? 'Not given yet' : showValue(f.value, row.type);
   const isOpen = open === row.path;
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
-    h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { open = isOpen ? null : row.path; render(); } },
+    h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
       h('span', { class: 'row-label' }, row.label),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
       chip(f.kind)),
@@ -156,6 +178,8 @@ function guessList() {
 
 function openField(path) {
   path = rowPathFor(hist.present, path);
+  if (open !== path && !canLeave()) return;
+  if (open !== path) dirty = false;
   open = path;
   render();
   const el = document.getElementById('f-' + path);
@@ -172,9 +196,10 @@ function render() {
         h('h1', {}, 'Ledger'),
         h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' },
-        h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo) }, 'Undo'),
-        h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo) }, 'Redo'),
+        h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, 'Undo'),
+        h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo'),
         h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
+    h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),
     ...groups.map((g) => {
       const red = g.rows.filter((r) => r.fact.kind === 'missing').length, yellow = g.rows.filter((r) => r.fact.kind === 'rough').length;
@@ -200,8 +225,11 @@ document.addEventListener('keydown', (e) => {
   if (!hist || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
   if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
   e.preventDefault();
-  step(e.shiftKey ? redo : undo);
+  if (e.shiftKey) step(redo, 'Redone: ' + redoLabel(hist) + '.');
+  else step(undo, 'Undone: ' + undoLabel(hist) + '.');
 });
+// Closing or leaving the page with unsaved typing asks first.
+window.addEventListener('beforeunload', (e) => { if (open && dirty) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('hashchange', () => { const p = decodeURIComponent(location.hash.slice(1)); if (p && hist) openField(p); });
 
 async function start() {
