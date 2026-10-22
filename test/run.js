@@ -10166,12 +10166,19 @@ section('No CSS variable is used without being defined');
   const mr3Css = fs.existsSync(path.join(ROOT, 'money-rooms-v3/ui/tokens.css')) ? fs.readFileSync(path.join(ROOT, 'money-rooms-v3/ui/tokens.css'), 'utf8') : '';
   const mr3Defs = new Set((mr3Css.match(/^\s*(--[a-z0-9-]+)\s*:/gim) || []).map(m => m.trim().replace(/\s*:$/, '')));
 
+  /* SLAM (slam/README.md) has its own tokens in slam/src/ui/tokens.css; its
+     Phase 1 pages in slam/ui/ resolve against those (slam/DECISIONS.md S-156). */
+  const slamCss = fs.existsSync(path.join(ROOT, 'slam/src/ui/tokens.css')) ? fs.readFileSync(path.join(ROOT, 'slam/src/ui/tokens.css'), 'utf8') : '';
+  /* SLAM's token file puts several declarations on one line, so this is not anchored. */
+  const slamDefs = new Set((slamCss.match(/(--[a-z0-9-]+)\s*:/gi) || []).map(m => m.replace(/\s*:$/, '')));
+
   const orphans = [];
   files.forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     const local = new Set((src.match(/(--[a-z0-9-]+)\s*:/gi) || [])
       .map(m => m.replace(/\s*:$/, '')));
     if (f.indexOf('money-rooms-v3/') === 0) mr3Defs.forEach(t => local.add(t));
+    if (f.indexOf('slam/') === 0) slamDefs.forEach(t => local.add(t));
     /* Two things are NOT orphans and must not be reported as such, or the
        check cries wolf and gets ignored:
          · `var(--x, 1.35)` — a fallback IS a definition at the use site.

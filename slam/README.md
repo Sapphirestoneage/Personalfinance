@@ -68,6 +68,51 @@ columns. Nothing leaves the browser. Each file goes into an account; its rows ar
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
 `node tools/riley.mjs` rebuilds Riley's year and files (fixed seed); `node tools/dana.mjs` rebuilds Dana's.
 
+## Phase 1: the household spine (Ledger and Dashboard)
+
+Two pages beside the Budget, built on one household record (the spine) and
+pure engines. Start the server as above, then open:
+
+- http://localhost:8000/ledger.html : every field, grouped Debt, Assets,
+  Income, Taxes, Expenses. Green is known, yellow is rough, red is missing.
+  Tap a field to edit it, confirm it, or mark it not for me. Undo and Redo
+  (or Ctrl+Z, Ctrl+Shift+Z) work for every edit. "Still guessing" at the top
+  lists every rough and missing field, the ones that move the results most first.
+- http://localhost:8000/dashboard.html : net worth, cash runway (with the
+  Roth basis backstop on its own line), surplus, savings rate, cards and the
+  promo deadline, FI number and percent, the year's tax balance due, and the
+  flags. Every number links to the Ledger fields it came from.
+
+### Loading your own profile
+
+1. Copy your profile file to `slam/fixtures/eli.local.json` (any name ending
+   in `.local.json` in that folder is ignored by git; the pages look for
+   this exact name).
+2. Serve the folder and open the Ledger. The header says
+   "Your profile file". Without the file the pages load the made-up demo
+   household (`fixtures/demo.json`).
+3. Edits are saved in this browser only. "Go back to the file" at the bottom
+   of the Ledger drops them. The file itself is never rewritten.
+
+The file can be a profile (the shape of `eli.profile.json`, read by
+`engine/normalize.js`) or a spine (`slam-spine/1`, the shape of
+`fixtures/demo.json`). Both are checked by `engine/schema.js`.
+
+### Where things are
+
+| Path | What it is |
+| --- | --- |
+| `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits |
+| `ui/` | the Ledger and Dashboard views (formatting only) |
+| `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
+| `CONTRACTS.md` | the spine shape and every engine signature |
+| `BOARD.md`, `QUESTIONS.md` | what is done and next; open questions for Eli |
+
+`node --test` runs the spine tests with the rest; `test/eli.golden.test.js`
+reads its expected values from `fixtures/eli.golden.local.json` (also
+gitignored) and skips itself when either file is not there.
+
 ## Folder layout
 
 | Folder | What lives there |
