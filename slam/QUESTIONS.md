@@ -20,3 +20,4 @@ household file; the numbers are in the session report and in the Ledger.
 13. **Car value**: no yearly change is entered, so the projection holds it flat. A depreciation rate would go in the car's `appreciationRate`.
 14. **Lean FI**: counts every FAT-tagged expense, including eating out (tagged food but a want). Should Lean count needs only? (S-150)
 15. **Student loan**: the balance is from August and the repayment plan is blank. Is the minimum on a standard or income-driven plan?
+16. **As-of date after edits**: the engines use the household's as-of date, so this month's numbers stay put while you edit. Should an edit in the Ledger move the as-of date to today instead? (S-153)

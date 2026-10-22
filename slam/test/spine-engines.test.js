@@ -19,6 +19,8 @@ const K = (x) => fact(x, { kind: 'known', asOf: '2026-10-22', source: 'test' });
 const RO = (x) => fact(x, { kind: 'rough', asOf: '2026-10-22', source: 'test' });
 const M = () => fact(null, { asOf: '2026-10-22', source: 'test' });
 const near = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, a + ' is not ' + b);
+// En and em dashes, built from char codes so this file holds neither.
+const DASHES = new RegExp("[" + String.fromCharCode(0x2013, 0x2014) + "]");
 
 // A one-person household; pass pieces to replace.
 function mini(over = {}) {
@@ -382,7 +384,7 @@ test('flags: no em dashes and no instructions in flag text', () => {
   const s = household();
   s.debts[0].limit = K(1500);
   for (const f of buildFlags(s, R, summarize(s, R, { flags: false }))) {
-    assert.ok(!/—/.test(f.title + f.detail));
+    assert.ok(!DASHES.test(f.title + f.detail));
     assert.ok(!/\byou should\b/i.test(f.detail));
   }
 });
