@@ -23,6 +23,12 @@ the 2026 W-2 wages and withholding (the tax bill), card minimums and limits
 (surplus, runway, utilization), and the 1099 contract's amount and likelihood
 (next year's outlook).
 
+## Future rounds
+
+Backlog only; not built.
+
+- **Excess cash flag**: cash above the Rule-of-5 target that isn't assigned to a goal or sinking fund is flagged. Option "I keep extra on purpose" moves it to a "Peace of mind" category with a SWAN amount; it then appears only as yellow in monthly/annual reviews, showing opportunity cost (cash APY vs likely real return, in dollars per year and FI days). Never red.
+
 ## Out of scope until later
 
 Monte Carlo, withdrawal sequencing, Social Security, scenario blocks (the
