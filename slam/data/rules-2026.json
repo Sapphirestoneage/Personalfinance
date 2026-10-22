@@ -1196,6 +1196,123 @@
       "verified": "law"
     },
     {
+      "id": "ADD_MED_MFS",
+      "rule": "Additional Medicare threshold, MFS",
+      "value": 125000,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "Not indexed",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "ADD_MED_H",
+      "rule": "Additional Medicare threshold, head of household",
+      "value": 200000,
+      "unit": "$",
+      "appliesTo": "Tax engine",
+      "notes": "Not indexed; same as single",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "SE_MIN",
+      "rule": "Net SE earnings below which no SE tax is due",
+      "value": 400,
+      "unit": "$",
+      "appliesTo": "Self-employed",
+      "notes": "Compared after the 92.35% factor",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "LTCG_RATE_0",
+      "rule": "Long-term gains rate in the 0% band",
+      "value": 0,
+      "unit": "rate",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "LTCG_RATE_15",
+      "rule": "Long-term gains rate in the 15% band",
+      "value": 0.15,
+      "unit": "rate",
+      "appliesTo": "Taxable brokerage",
+      "notes": "",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "LTCG_RATE_20",
+      "rule": "Long-term gains rate above the 15% band",
+      "value": 0.2,
+      "unit": "rate",
+      "appliesTo": "Taxable brokerage",
+      "notes": "Net investment income tax (3.8%) not modeled",
+      "source": "Statute (not annually indexed)",
+      "verified": "law"
+    },
+    {
+      "id": "NY_BRK_MFS",
+      "rule": "New York State income tax brackets, married filing separately",
+      "value": [
+        [
+          8500,
+          0.039
+        ],
+        [
+          11700,
+          0.044
+        ],
+        [
+          13900,
+          0.0515
+        ],
+        [
+          80650,
+          0.054
+        ],
+        [
+          215400,
+          0.059
+        ],
+        [
+          1077550,
+          0.0685
+        ],
+        [
+          5000000,
+          0.0965
+        ],
+        [
+          25000000,
+          0.103
+        ],
+        [
+          null,
+          0.109
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Same as single",
+      "source": "From memory of the FY2026 NY budget; not checked",
+      "verified": "verify"
+    },
+    {
+      "id": "NY_STD_MFS",
+      "rule": "New York standard deduction, MFS",
+      "value": 8000,
+      "unit": "$",
+      "appliesTo": "Tax engine (NY)",
+      "notes": "Not indexed",
+      "source": "NY Tax Law 614",
+      "verified": "law"
+    },
+    {
       "id": "APP_UTIL_WARN",
       "rule": "Card utilization that raises a flag",
       "value": 0.3,

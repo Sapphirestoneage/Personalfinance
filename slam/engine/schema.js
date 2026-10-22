@@ -19,6 +19,7 @@ export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pe
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
 export const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 export const FAT = ['food', 'accommodation', 'transportation'];
+export const TAX_YEAR_FIELDS = ['estimatedPaidFederal', 'estimatedPaidState', 'capitalGainsLong', 'qualifiedDividends', 'otherIncome'];
 
 // ---------------------------------------------------------------- families
 // Field types: money, rate, date, int, text, bool, choice:<a|b>, list.
@@ -272,6 +273,19 @@ export function validate(spine) {
     if (!['fi', 'savings', 'payoff', 'other'].includes(g.type)) err(p + '.type', 'fi, savings, payoff or other');
     for (const k of ['target', 'annualSpending', 'fiNumber']) if (k in g) checkFact(p + '.' + k, g[k], 'money');
     optDate(p + '.by', g.by);
+  }
+
+  // tax years: the year's own entries (estimated payments made, gains, dividends)
+  const tys = spine.taxYears || [];
+  uniqueIds('taxYears', tys);
+  for (const ty of tys) {
+    const p = 'taxYears.' + ty.id;
+    if (!Number.isInteger(ty.year) || String(ty.year) !== ty.id) err(p + '.year', 'a whole year matching the id');
+    for (const k of Object.keys(ty)) {
+      if (k === 'id' || k === 'year') continue;
+      if (!TAX_YEAR_FIELDS.includes(k)) err(p + '.' + k, 'not a tax year field');
+      else checkFact(p + '.' + k, ty[k], 'money');
+    }
   }
 
   // assumptions

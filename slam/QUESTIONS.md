@@ -12,3 +12,11 @@ household file; the numbers are in the session report and in the Ledger.
 5. **State withholding on unemployment**: federal withholding is 0; the NY withholding is not given. Was NY tax withheld?
 6. **Card limits, minimums and due days**: only one card's limit is known. Overall utilization and the exact monthly surplus need the other limits and all the minimums. Until then minimums are estimated (1% of balance plus a month of interest, at least $25) and marked rough.
 7. **Rates after the two 0% promos end**: neither card has its regular APR entered, and one does not say whether interest is deferred.
+8. **1099 contract expenses**: the tax engine treats 1099 gross as profit. Will the contract have business expenses (mileage, software, a home office)? They would lower SE and income tax. (S-147)
+9. **Runway and the Rule of 5 base**: both use expenses plus minimum payments. The brief says "months of expenses"; the months match either way, the dollar target differs. Which do you want? (S-150)
+10. **Health plan type after the parent plan ends**: HSA eligibility depends on it. HDHP, bronze, catastrophic or other?
+11. **2026 estimated payments**: set to 0 as a rough answer. Have you paid any?
+12. **Projection default**: income is weighted by likelihood (the 1099 contract at its likelihood). Would you rather see the committed view (only certain income) first? (S-148)
+13. **Car value**: no yearly change is entered, so the projection holds it flat. A depreciation rate would go in the car's `appreciationRate`.
+14. **Lean FI**: counts every FAT-tagged expense, including eating out (tagged food but a want). Should Lean count needs only? (S-150)
+15. **Student loan**: the balance is from August and the repayment plan is blank. Is the minimum on a standard or income-driven plan?

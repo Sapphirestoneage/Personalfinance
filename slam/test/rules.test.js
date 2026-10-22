@@ -49,8 +49,9 @@ test('statusRuleId maps filing status to a rule id', () => {
 test('every rule id referenced in code exists', () => {
   const R = loadRules();
   const dirs = ['engine', 'ui'];
-  const direct = /\b(?:get|cite|meta|has|rule)\(\s*'([A-Z][A-Z0-9_]+)'/g;
-  const prefixed = /statusRuleId\(\s*'([A-Z][A-Z0-9_]+)'/g;
+  // get('X'), rule(rules, 'X'), g('X') and statusRuleId('X', ...), id('X') forms.
+  const direct = /\b(?:get|cite|meta|has|rule|g)\(\s*(?:[A-Za-z_.]+\s*,\s*)?'([A-Z][A-Z0-9_]+)'/g;
+  const prefixed = /\b(?:statusRuleId|id)\(\s*'([A-Z][A-Z0-9_]+)'/g;
   let seen = 0;
   for (const d of dirs) {
     let files = [];
@@ -63,5 +64,5 @@ test('every rule id referenced in code exists', () => {
       }
     }
   }
-  return seen;
+  assert.ok(seen > 20, 'the scan found the rule references in the engines (' + seen + ')');
 });

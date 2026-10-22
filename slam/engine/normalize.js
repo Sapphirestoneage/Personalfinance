@@ -137,6 +137,13 @@ export function fromProfile(p) {
       nycResident: F(H.nycResident.value, H.nycResident.kind),
       situation, healthCoverage
     },
-    income, expenses, accounts, debts, goals, assumptions
+    income, expenses, accounts, debts, goals, assumptions,
+    // The as-of year's tax entries. Nothing in the profile says estimates were
+    // paid, so none is the rough starting answer.
+    taxYears: [{
+      id: asOf.slice(0, 4), year: +asOf.slice(0, 4),
+      estimatedPaidFederal: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' }),
+      estimatedPaidState: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' })
+    }]
   };
 }

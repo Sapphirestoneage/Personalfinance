@@ -156,16 +156,16 @@
       },
       "withholding": {
         "federal": {
-          "value": null,
+          "value": 660,
           "asOf": "2026-10-01",
           "source": "demo (made up)",
-          "kind": "missing"
+          "kind": "rough"
         },
         "state": {
-          "value": null,
+          "value": 165,
           "asOf": "2026-10-01",
           "source": "demo (made up)",
-          "kind": "missing"
+          "kind": "rough"
         }
       }
     }
@@ -749,5 +749,23 @@
       "source": "demo (made up)",
       "kind": "known"
     }
-  }
+  },
+  "taxYears": [
+    {
+      "id": "2026",
+      "year": 2026,
+      "estimatedPaidFederal": {
+        "value": 0,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "estimatedPaidState": {
+        "value": 0,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
+    }
+  ]
 }

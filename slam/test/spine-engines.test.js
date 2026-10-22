@@ -1,0 +1,388 @@
+// Unit tests for the Phase 1 engines on tiny hand-worked households.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { fact } from '../engine/spine.js';
+import { validate } from '../engine/schema.js';
+import { monthlyAmount, paidBetween, cashflow } from '../engine/cashflow.js';
+import { computeTax, taxForYear, nextEstimatedDate } from '../engine/tax.js';
+import { minimumPayment, utilization, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
+import { balanceSheet } from '../engine/networth.js';
+import { emergency } from '../engine/emergency.js';
+import { fiReport, yearsToTarget } from '../engine/fi.js';
+import { project } from '../engine/projection.js';
+import { buildFlags } from '../engine/flags.js';
+import { summarize } from '../engine/summary.js';
+import { loadRules } from './spine-helpers.js';
+
+const R = loadRules();
+const K = (x) => fact(x, { kind: 'known', asOf: '2026-10-22', source: 'test' });
+const RO = (x) => fact(x, { kind: 'rough', asOf: '2026-10-22', source: 'test' });
+const M = () => fact(null, { asOf: '2026-10-22', source: 'test' });
+const near = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, a + ' is not ' + b);
+
+// A one-person household; pass pieces to replace.
+function mini(over = {}) {
+  const s = {
+    schema: 'slam-spine/1',
+    meta: { name: 'Test', asOf: '2026-10-22', demo: true },
+    household: {
+      people: [{ id: 'p', name: 'Pat', birthDate: K('1996-01-01') }],
+      filingStatus: K('single'), state: K('NY'), county: K('Albany'), nycResident: K(false),
+      situation: [{ id: 'now', from: null, value: K('employed') }],
+      healthCoverage: [{ id: 'now', from: null, value: K('employer') }]
+    },
+    income: [], expenses: [], accounts: [], debts: [], goals: [],
+    assumptions: { inflation: K(0.03), realReturn: K(0.05), withdrawalRate: K(0.04), lifeExpectancy: K(90) },
+    taxYears: [{ id: '2026', year: 2026, estimatedPaidFederal: K(0), estimatedPaidState: K(0) }],
+    ...over
+  };
+  const r = validate(s);
+  assert.ok(r.ok, r.errors.map((e) => e.path + ' ' + e.message).join('\n'));
+  return s;
+}
+const stream = (id, type, amount, cadence, o = {}) => ({ id, type, label: o.label || id, personId: 'p', amount: o.kind === 'missing' ? M() : K(amount), cadence, start: o.start ?? null, end: o.end ?? null, withholding: { federal: o.fed === undefined ? K(0) : o.fed === null ? M() : K(o.fed), state: o.st === undefined ? K(0) : o.st === null ? M() : K(o.st) }, ...(o.likelihood !== undefined ? { likelihood: RO(o.likelihood) } : {}) });
+const expense = (id, amount, o = {}) => ({ id, label: id, amount: K(amount), cadence: o.cadence || 'monthly', start: o.start ?? null, end: o.end ?? null, fixed: null, need: null, fat: o.fat ?? null });
+const card = (id, balance, o = {}) => ({ id, family: 'debt', type: 'credit_card', name: K(id), balance: K(balance), apr: o.apr === null ? M() : K(o.apr ?? 0.2), limit: o.limit === null ? M() : K(o.limit ?? 5000), minimum: o.min === undefined ? M() : K(o.min), ...(o.promoEnds ? { promoApr: K(0), promoEnds: K(o.promoEnds), deferredInterest: K(o.deferred ?? false) } : {}), ...(o.stress ? { stress: K(o.stress) } : {}) });
+
+// ------------------------------------------------------------------ cashflow
+test('cashflow: a weekly stream is a rate; partial months prorate by day', () => {
+  near(monthlyAmount(700, 'weekly', null, null, '2026-10'), 700 * 52 / 12);
+  near(monthlyAmount(1200, 'monthly', '2026-10-16', null, '2026-10'), 1200 * 16 / 31);
+  assert.equal(monthlyAmount(1200, 'monthly', '2026-11-01', null, '2026-10'), 0);
+  near(monthlyAmount(6000, 'total', '2026-01-01', '2026-06-30', '2026-03'), 6000 * 31 / 181);
+  assert.equal(monthlyAmount(500, 'once', '2026-10-05', null, '2026-10'), 500);
+  assert.equal(monthlyAmount(null, 'monthly', null, null, '2026-10'), null);
+});
+
+test('cashflow: weekly pay dates are counted for a year total (26 weeks = 26 payments)', () => {
+  assert.equal(paidBetween(500, 'weekly', '2026-07-01', '2026-12-23', '2026-01-01', '2026-12-31'), 500 * 26);
+  assert.equal(paidBetween(500, 'weekly', '2026-07-01', '2026-12-23', '2027-01-01', '2027-12-31'), 0);
+  near(paidBetween(1000, 'monthly', '2026-01-01', null, '2026-01-01', '2026-12-31'), 12000);
+});
+
+test('cashflow: gross, take-home with FICA and payroll saving, surplus and both savings rates', () => {
+  const s = mini({
+    income: [stream('job', 'w2', 5000, 'monthly', { fed: 500, st: 200 })],
+    expenses: [expense('rent', 2000, { fat: 'accommodation' }), expense('food', 500, { fat: 'food' }), expense('fun', 300)],
+    accounts: [
+      { id: 'k', family: 'employerRetirement', type: 'k401', name: K('401k'), balance: K(1000), monthlyContribution: K(400) },
+      { id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(1000), monthlyContribution: K(100) }
+    ],
+    debts: [{ id: 'l', family: 'debt', type: 'auto_loan', name: K('Car'), balance: K(5000), apr: K(0.05), minimum: K(250) }]
+  });
+  const c = cashflow(s, R, '2026-10');
+  assert.equal(c.income.gross.value, 5000);
+  near(c.income.fica.value, 5000 * 0.0765);
+  near(c.income.takeHome.value, 5000 - 700 - 382.5 - 400);
+  assert.equal(c.expenses.total.value, 2800);
+  assert.equal(c.expenses.fat.value, 2500);
+  assert.equal(c.debtMinimums.total.value, 250);
+  near(c.surplus.value, 3517.5 - 2800 - 250 - 100);
+  near(c.savingsRate.gross.value, (367.5 + 400 + 100) / 5000);
+  near(c.savingsRate.net.value, (367.5 + 100) / 3517.5);
+  assert.equal(c.surplus.kind, 'computed');
+  assert.ok(c.income.fica.rules.includes('FICA_SS_RATE'));
+});
+
+test('cashflow: dated changes month by month (income ends, an expense starts)', () => {
+  const s = mini({
+    income: [stream('ui', 'unemployment', 1000, 'monthly', { end: '2026-12-31' }), stream('gig', '1099', 3000, 'monthly', { start: '2027-01-01' })],
+    expenses: [expense('rent', 1000), expense('health', 800, { start: '2027-03-01' })]
+  });
+  assert.equal(cashflow(s, R, '2026-12').income.gross.value, 1000);
+  assert.equal(cashflow(s, R, '2027-01').income.gross.value, 3000);
+  assert.equal(cashflow(s, R, '2027-02').expenses.total.value, 1000);
+  assert.equal(cashflow(s, R, '2027-03').expenses.total.value, 1800);
+});
+
+test('cashflow: maybe money counts only in expected mode, weighted', () => {
+  const s = mini({ income: [stream('job', '1099', 1000, 'monthly'), stream('maybe', 'maybeMoney', 1000, 'monthly', { likelihood: 0.5 })] });
+  assert.equal(cashflow(s, R, '2026-10').income.gross.value, 1000);
+  assert.equal(cashflow(s, R, '2026-10', { mode: 'expected' }).income.gross.value, 1500);
+});
+
+test('cashflow: a missing withholding leaves take-home incomplete and names it', () => {
+  const s = mini({ income: [stream('ui', 'unemployment', 1000, 'monthly', { st: null })] });
+  const c = cashflow(s, R, '2026-10');
+  assert.equal(c.income.takeHome.value, 1000);
+  assert.equal(c.income.takeHome.kind, 'incomplete');
+  assert.deepEqual(c.income.takeHome.missing, ['income.ui.withholding.state']);
+});
+
+// ------------------------------------------------------------------ tax
+const T = (o) => computeTax({ filingStatus: 'single', state: 'NY', wages: 0, seNet: 0, unemployment: 0, otherOrdinary: 0, conversions: 0, ltcg: 0, qualifiedDividends: 0, withheldFederal: 0, withheldState: 0, ...o }, R, 2026).lines;
+
+test('tax: W-2 wages through the 2026 single brackets and the standard deduction', () => {
+  const l = T({ wages: 60000, ficaWages: 60000 });
+  assert.equal(l.taxable.value, 60000 - 16100);
+  near(l.federalIncomeTax.value, 1240 + (43900 - 12400) * 0.12);
+  near(l.fica.value, 60000 * 0.0765);
+  assert.equal(l.seTax.value, 0);
+  assert.equal(l.marginalFederal.value, 0.12);
+  assert.ok(l.standardDeduction.rules.includes('STD_S'));
+});
+
+test('tax: SE tax is net x 0.9235 x 15.3% and half of it is deductible', () => {
+  const l = T({ seNet: 40000 });
+  near(l.seTax.value, 40000 * 0.9235 * 0.153);
+  near(l.seDeduction.value, 40000 * 0.9235 * 0.153 / 2);
+  near(l.agi.value, 40000 - 40000 * 0.9235 * 0.153 / 2);
+  assert.ok(l.seTax.rules.includes('SE_FACTOR'));
+});
+
+test('tax: SE earnings under the floor pay no SE tax', () => {
+  assert.equal(T({ seNet: 400 }).seTax.value, 0);
+});
+
+test('tax: unemployment is taxable with no SE tax and no FICA', () => {
+  const l = T({ unemployment: 20000 });
+  assert.equal(l.seTax.value, 0);
+  assert.equal(l.fica.value, 0);
+  near(l.federalIncomeTax.value, (20000 - 16100) * 0.10);
+});
+
+test('tax: long-term gains stack on top of ordinary income across the 0% line', () => {
+  // Ordinary taxable 40,000; gains 20,000; 0% top 49,450: 9,450 at 0%, 10,550 at 15%.
+  const l = T({ wages: 56100, ficaWages: 56100, ltcg: 20000 });
+  assert.equal(l.taxable.value, 60000);
+  near(l.gainsTax.value, 10550 * 0.15);
+  near(l.ordinaryTax.value, 1240 + 27600 * 0.12);
+});
+
+test('tax: a Roth conversion is ordinary income', () => {
+  const a = T({ conversions: 30000 });
+  near(a.federalIncomeTax.value, 1240 + (13900 - 12400) * 0.12);
+});
+
+test('tax: New York State tax on NY AGI less the NY standard deduction', () => {
+  const l = T({ wages: 50000, ficaWages: 50000 });
+  near(l.stateTaxable.value, 42000);
+  near(l.stateTax.value, 8500 * 0.039 + 3200 * 0.044 + 2200 * 0.0515 + (42000 - 13900) * 0.054);
+  assert.ok(l.stateTax.rules.includes('NY_BRK_S'));
+});
+
+test('tax: owed, withheld, balance due, marginal and effective rates', () => {
+  const l = T({ wages: 50000, ficaWages: 50000, withheldFederal: 3000, withheldState: 2000, estimatedFederal: 100 });
+  near(l.balanceDue.value, l.total.value - 5100);
+  near(l.marginal.value, 0.12 + 0.054);
+  near(l.effective.value, l.total.value / 50000);
+});
+
+test('tax: the next estimated payment date', () => {
+  assert.equal(nextEstimatedDate('2026-10-22', R).date, '2027-01-15');
+  assert.equal(nextEstimatedDate('2026-10-22', R).taxYear, 2026);
+  assert.equal(nextEstimatedDate('2027-01-16', R).date, '2027-04-15');
+  assert.equal(nextEstimatedDate('2026-06-15', R).date, '2026-06-15');
+});
+
+test('tax: a missing W-2 amount gives no number and says what is missing', () => {
+  const s = mini({ income: [stream('job', 'w2', null, 'total', { kind: 'missing', start: '2026-01-01', end: '2026-06-30', fed: null, st: null })] });
+  const t = taxForYear(s, R, 2026);
+  assert.equal(t.owed.value, null);
+  assert.equal(t.balanceDue.value, null);
+  assert.equal(t.missingText, 'missing: 2026 W-2 wages and withholding');
+  assert.ok(t.balanceDue.missing.includes('income.job.amount'));
+});
+
+test('tax: a year from the spine, with withholding and a 1099', () => {
+  const s = mini({ income: [stream('job', 'w2', 4000, 'monthly', { fed: 300, st: 150 }), stream('gig', '1099', 500, 'monthly')] });
+  const t = taxForYear(s, R, 2026);
+  const l = T({ wages: 48000, ficaWages: 48000, seNet: 6000, withheldFederal: 3600, withheldState: 1800 });
+  near(t.balanceDue.value, l.balanceDue.value);
+  assert.equal(t.balanceDue.kind, 'computed');
+  assert.equal(t.missingText, null);
+});
+
+// ------------------------------------------------------------------ debt
+test('debt: a known minimum is used; a card with none gets a rough estimate', () => {
+  const known = minimumPayment(card('a', 1000, { min: 40 }), R, '2026-11-01');
+  assert.equal(known.value, 40);
+  const est = minimumPayment(card('b', 2000, { apr: 0.24 }), R, '2026-11-01');
+  near(est.value, 2000 * 0.01 + 2000 * 0.24 / 12);
+  assert.equal(est.estimated, true);
+  assert.ok(est.rough.includes('debts.b.minimum'));
+  assert.equal(minimumPayment(card('c', 300, { apr: 0 }), R, '2026-11-01').value, 25, 'floor');
+  assert.equal(minimumPayment(card('d', 10, { apr: 0 }), R, '2026-11-01').value, 10, 'never above the balance');
+});
+
+test('debt: utilization per card; overall is null while any limit is missing', () => {
+  const s = mini({ debts: [card('a', 1000, { limit: 2000 }), card('b', 500, { limit: null })] });
+  const u = utilization(s);
+  assert.equal(u.items[0].util.value, 0.5);
+  assert.equal(u.items[1].util.value, null);
+  assert.equal(u.overall.value, null);
+  assert.deepEqual(u.overall.missing, ['debts.b.limit']);
+  const s2 = mini({ debts: [card('a', 1000, { limit: 2000 }), card('b', 500, { limit: 3000 })] });
+  assert.equal(utilization(s2).overall.value, 0.3);
+});
+
+test('debt: promo deadlines, payments left and the monthly amount', () => {
+  assert.equal(paymentsBefore('2026-10-22', '2027-05-31'), 7);
+  const s = mini({ debts: [card('a', 7000, { promoEnds: '2027-05-31' }), card('b', 700, { promoEnds: '2027-05-31' }), card('c', 100)] });
+  const p = promoDeadlines(s, '2026-10-22');
+  assert.equal(p.total.value, 7700);
+  near(p.monthly.value, 1100);
+  assert.equal(p.items.length, 2);
+});
+
+test('debt: avalanche, snowball and stress orders', () => {
+  const s = mini({ debts: [card('lo', 500, { apr: 0.1, stress: 9 }), card('hi', 3000, { apr: 0.25, stress: 2 }), card('promo', 100, { promoEnds: '2027-05-31', apr: 0.3, stress: 5 })] });
+  assert.deepEqual(order(s, 'avalanche', '2026-10-22'), ['hi', 'lo', 'promo']);
+  assert.deepEqual(order(s, 'snowball', '2026-10-22'), ['promo', 'lo', 'hi']);
+  assert.deepEqual(order(s, 'stress', '2026-10-22'), ['lo', 'promo', 'hi']);
+});
+
+test('debt: payoff dates and interest for a single loan', () => {
+  const s = mini({ debts: [{ id: 'l', family: 'debt', type: 'personal_loan', name: K('Loan'), balance: K(1200), apr: K(0.12), minimum: K(100) }] });
+  const p = payoffPlan(s, R, { strategy: 'avalanche', asOf: '2026-10-22' });
+  // 1% a month on a falling balance: 13 payments.
+  assert.equal(p.months, 13);
+  assert.equal(p.debts[0].payoffYm, '2027-11');
+  assert.ok(p.totalInterest.value > 80 && p.totalInterest.value < 90);
+  const fast = payoffPlan(s, R, { strategy: 'avalanche', asOf: '2026-10-22', extra: 500 });
+  assert.equal(fast.months, 3);
+});
+
+test('debt: a deferred-interest promo left unpaid charges interest from the start', () => {
+  const s = mini({ debts: [card('d', 1200, { promoEnds: '2026-12-31', deferred: true, apr: 0.3, min: 50 })] });
+  const p = payoffPlan(s, R, { asOf: '2026-10-22' });
+  // 2 promo payments, then 1,200 x 30% x 2 / 12 = 60 at once, plus ordinary interest.
+  assert.ok(p.totalInterest.value > 60);
+});
+
+// ------------------------------------------------------------------ balance sheet, emergency, FI
+function household() {
+  return mini({
+    household: { ...mini().household, people: [{ id: 'p', name: 'Pat', birthDate: K('1991-06-01') }] },
+    income: [stream('job', 'w2', 6000, 'monthly', { fed: 600, st: 300 })],
+    expenses: [expense('rent', 1500, { fat: 'accommodation' }), expense('food', 500, { fat: 'food' }), expense('fun', 500)],
+    accounts: [
+      { id: 'c', family: 'cash', type: 'checking', name: K('Checking'), balance: K(5000) },
+      { id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(20000), contributions: K([{ year: 2020, amount: 6000 }, { year: 2021, amount: 6000 }]), conversions: K([{ year: 2025, amount: 4000, taxable: 4000 }]) },
+      { id: 'b', family: 'taxable', type: 'brokerage', name: K('Brokerage'), balance: K(30000) },
+      { id: 'h', family: 'otherAssets', type: 'car', name: K('Car'), balance: RO(9000) }
+    ],
+    debts: [card('v', 1000, { apr: 0.2, min: 100, limit: 5000 })],
+    goals: [{ id: 'fi', type: 'fi', label: 'FI', annualSpending: K(36000) }]
+  });
+}
+
+test('balance sheet: cash, invested, assets, debts, net worth', () => {
+  const b = balanceSheet(household());
+  assert.equal(b.cash.value, 5000);
+  assert.equal(b.invested.value, 50000);
+  assert.equal(b.assets.value, 64000);
+  assert.equal(b.debts.value, 1000);
+  assert.equal(b.netWorth.value, 63000);
+  assert.equal(b.netWorth.kind, 'rough', 'the car value is rough');
+});
+
+test('emergency: Rule of 5, runway tiers and the Roth backstop kept out of cash', () => {
+  const s = household();
+  const cf = cashflow(s, R, '2026-10');
+  const e = emergency(s, R, cf, balanceSheet(s), '2026-10-22');
+  assert.equal(e.age, 35);
+  assert.equal(e.targetMonths.value, 7);
+  near(e.tiers.full.runway.value, 5000 / 2600);
+  near(e.tiers.fatOnly.runway.value, 5000 / 2100);
+  assert.equal(e.targetDollars.value, 7 * 2600);
+  assert.equal(e.backstop.contributions.value, 12000);
+  assert.equal(e.backstop.conversions[0].clockOpens, '2030-01-01');
+  assert.equal(e.backstop.conversions[0].penaltyRate, 0.1);
+  assert.equal(e.backstop.countedAsCash, false);
+});
+
+test('FI: goal spending / rate, percent, implied, lean, coast and years', () => {
+  const s = household();
+  const cf = cashflow(s, R, '2026-10');
+  const f = fiReport(s, R, cf, balanceSheet(s), '2026-10-22');
+  assert.equal(f.fiNumber.value, 900000);
+  assert.equal(f.goalSource, 'spending');
+  near(f.fiPercent.value, 50000 / 900000);
+  assert.equal(f.implied.value, 2500 * 12 / 0.04);
+  assert.equal(f.goalBelowImplied.value, false);
+  assert.equal(f.leanFi.value, 2000 * 12 * 25);
+  near(f.coastFi.value, 900000 / Math.pow(1.05, 65 - 35), 0.05);
+  assert.ok(f.coastFi.rough.includes('assumptions.coastAge'), 'default coast age is rough');
+  assert.ok(f.yearsToFi.value > 10 && f.yearsToFi.value < 30);
+});
+
+test('FI: years to a target, closed form', () => {
+  assert.equal(yearsToTarget(100, 0, 50, 0.05), 0);
+  near(yearsToTarget(0, 1000, 10000, 0), 10);
+  near(yearsToTarget(1000, 0, 2000, 0.05), Math.log(2) / Math.log(1.05));
+  assert.equal(yearsToTarget(100, -50, 1000, 0.05), null);
+});
+
+test('FI: a direct FI number goal wins over goal spending', () => {
+  const s = household();
+  s.goals[0].fiNumber = K(500000);
+  const f = fiReport(s, R, cashflow(s, R, '2026-10'), balanceSheet(s), '2026-10-22');
+  assert.equal(f.fiNumber.value, 500000);
+  assert.equal(f.goalBelowImplied.value, true);
+});
+
+// ------------------------------------------------------------------ projection
+test('projection: monthly for 24 months, then yearly to life expectancy, with dated changes', () => {
+  const s = mini({
+    income: [stream('ui', 'unemployment', 3000, 'monthly', { end: '2026-12-31' }), stream('gig', '1099', 4000, 'monthly', { start: '2027-01-01' })],
+    expenses: [expense('rent', 2000), expense('health', 500, { start: '2027-06-01' })],
+    accounts: [{ id: 'c', family: 'cash', type: 'checking', name: K('Checking'), balance: K(1000) }],
+    debts: [{ id: 'car', family: 'debt', type: 'auto_loan', name: K('Car'), balance: K(1000), apr: K(0), minimum: K(500), payoffDate: K('2026-12-31') }]
+  });
+  const p = project(s, R, { mode: 'committed' });
+  assert.equal(p.months.length, 24);
+  assert.equal(p.months[0].ym, '2026-11');
+  assert.equal(p.months[0].gross, 3000);
+  assert.equal(p.months[2].gross, 4000);
+  assert.equal(p.months[1].debt, 0, 'car loan paid off in December');
+  assert.equal(p.months[2].debtPaid, 0);
+  assert.equal(p.months[7].expenses, 2500, 'health cost from June 2027');
+  assert.equal(p.years.at(-1).year, 1996 + 90);
+  assert.ok(p.events.some((e) => e.kind === 'debtPaidOff' && e.ym === '2026-12'));
+  assert.ok(p.events.some((e) => e.kind === 'incomeEnds'));
+  assert.ok(p.months[5].tax !== 0, 'April 2027 settles the 2026 tax');
+});
+
+test('projection: a 0% promo starts charging the APR after it ends', () => {
+  const s = mini({ debts: [card('p', 1000, { promoEnds: '2026-12-31', apr: 0.24, min: 25 })] });
+  const p = project(s, R, { mode: 'committed', endYm: '2027-03' });
+  assert.equal(p.months[0].interest, 0);
+  assert.equal(p.months[1].interest, 0);
+  assert.ok(p.months[2].interest > 0);
+});
+
+// ------------------------------------------------------------------ flags
+test('flags: each alert fires from data and stays quiet otherwise', () => {
+  const s = mini({
+    household: {
+      ...mini().household,
+      people: [{ id: 'p', name: 'Pat', birthDate: K('2000-12-01') }],
+      healthCoverage: [{ id: 'now', from: null, value: K('parent_plan') }, { id: 'next', from: '2026-12-01', value: K('own_plan'), planType: M() }]
+    },
+    income: [stream('ui', 'unemployment', 3000, 'monthly', { start: '2026-07-01', end: '2027-01-09' }), stream('gig', '1099', 4000, 'monthly', { start: '2027-01-01', likelihood: 0.7 })],
+    expenses: [expense('rent', 2500), expense('health', 650, { start: '2026-12-01' })],
+    accounts: [
+      { id: 'c', family: 'cash', type: 'checking', name: K('Checking'), balance: K(1000) },
+      { id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(9000), basis: K(5000), conversions: K([{ year: 2026, amount: 4000, taxable: 4000 }]) }
+    ],
+    debts: [card('cc', 5000, { limit: 5000, promoEnds: '2027-04-30' }), card('x', 100, { limit: null })],
+    goals: [{ id: 'fi', type: 'fi', label: 'FI', fiNumber: K(100000) }]
+  });
+  const ids = summarize(s, R).flags.map((f) => f.id);
+  for (const id of ['roth-conversion-r', 'unemployment-withholding-ui', 'utilization-cc', 'promo-deadlines', 'income-ends-ui', 'runway', 'fi-goal-gap', 'health-26-p', 'missing-utilization']) assert.ok(ids.includes(id), 'expected ' + id + ' in ' + ids.join(', '));
+
+  const quiet = household();
+  quiet.accounts[0].balance = K(9000);
+  const q = summarize(quiet, R).flags.map((f) => f.id);
+  assert.deepEqual(q, [], 'a calm household raises nothing: ' + q.join(', '));
+});
+
+test('flags: no em dashes and no instructions in flag text', () => {
+  const s = household();
+  s.debts[0].limit = K(1500);
+  for (const f of buildFlags(s, R, summarize(s, R, { flags: false }))) {
+    assert.ok(!/—/.test(f.title + f.detail));
+    assert.ok(!/\byou should\b/i.test(f.detail));
+  }
+});
