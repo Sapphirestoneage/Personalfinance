@@ -155,3 +155,18 @@ test('edit a card rate: add an intro, take it away, a blank APR becomes the roug
   assert.equal(cardRateRow(s, getAt(s, 'debts.visa')).fact.kind, 'notForMe');
   assert.ok(validate(s).ok);
 });
+
+test('the default due day fills every debt with no due day as rough, never a statement close day', () => {
+  const s = demo();
+  s.debts.find((d) => d.id === 'visa').dueDay = fact(null);
+  s.debts.push({ id: 'iou', family: 'debt', type: 'family_iou', name: fact('Loan from a friend'), balance: fact(300), apr: fact(0), minimum: fact(null) });
+  const out = applyDefaults(s, R);
+  for (const id of ['visa', 'sl']) {
+    const d = getAt(out, 'debts.' + id + '.dueDay');
+    assert.deepEqual([d.value, d.kind, d.source], [1, 'rough', 'DEFAULT_DUE_DAY'], id);
+  }
+  assert.equal(getAt(out, 'debts.store.dueDay').value, 3, 'a real due day stays');
+  assert.equal(getAt(out, 'debts.iou.dueDay'), undefined, 'an IOU with no payment gets no due day');
+  assert.ok(out.debts.every((d) => !d.statementCloseDay), 'no statement close day is invented');
+  assert.equal(R.meta('DEFAULT_DUE_DAY', 2026).verified, 'assumption');
+});

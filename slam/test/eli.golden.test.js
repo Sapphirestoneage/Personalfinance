@@ -45,6 +45,13 @@ test('Eli golden values', { skip }, async (t) => {
     for (const id of X.defaultRateCards) assert.equal(spine.debts.find((d) => d.id === id).apr.kind, 'rough', id);
   });
 
+  await t.test('every card and loan with no due day is on the 1st, rough', () => {
+    for (const id of X.defaultDueDay) {
+      const d = spine.debts.find((x) => x.id === id).dueDay;
+      assert.deepEqual([d.value, d.kind], [1, 'rough'], id);
+    }
+  });
+
   await t.test('avalanche order of cards: highest rate first, then the 0% cards', () => {
     const o = s.debt.avalancheCards;
     assert.deepEqual(o.slice(0, X.avalancheFirst.length), X.avalancheFirst);

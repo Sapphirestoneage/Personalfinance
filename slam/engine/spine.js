@@ -83,6 +83,8 @@ export function addMonths(ym, n) {
   return yy + '-' + String(mm).padStart(2, '0');
 }
 export const monthStart = (ym) => ym + '-01';
+// The date a day-of-month falls on in month ym, moved to the last day when the month is short.
+export const dayIn = (ym, day) => ym + '-' + String(Math.min(day, daysInMonth(+ym.slice(0, 4), +ym.slice(5, 7)))).padStart(2, '0');
 export const monthEnd = (ym) => ym + '-' + String(daysInMonth(+ym.slice(0, 4), +ym.slice(5, 7))).padStart(2, '0');
 
 // Whole years of age on a date.

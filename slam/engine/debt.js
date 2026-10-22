@@ -1,7 +1,7 @@
 // Debt engine: minimums, utilization, promo deadlines, and payoff orders
 // (avalanche, snowball, stress-weighted) with payoff dates and interest.
 
-import { valueOf, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays } from './spine.js';
+import { valueOf, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, dayIn } from './spine.js';
 import { REVOLVING } from './schema.js';
 
 const v = valueOf;
@@ -238,7 +238,14 @@ export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, as
   };
 }
 
-// Minimums due in a month across all debts with a balance.
+// When a debt's payment falls in month ym: its due day (the house default fills
+// a blank one, engine/defaults.js), or null when there is none.
+export function dueDateIn(debt, ym) {
+  const day = v(debt.dueDay);
+  return day === null ? null : dayIn(ym, day);
+}
+
+// Minimums due in a month across all debts with a balance, each on its due day.
 export function minimumsTotal(spine, rules, iso) {
   const t = tracker();
   let sum = 0;
@@ -249,7 +256,7 @@ export function minimumsTotal(spine, rules, iso) {
     const m = minimumPayment(d, rules, iso);
     t.absorb({ ...m, value: undefined });
     if (m.value !== null) sum += m.value;
-    items.push({ id: d.id, name: v(d.name), amount: m.value, estimated: !!m.estimated });
+    items.push({ id: d.id, name: v(d.name), amount: m.value, estimated: !!m.estimated, dueDate: dueDateIn(d, iso.slice(0, 7)) });
   }
   return { total: t.out(round2(sum)), items };
 }

@@ -1432,6 +1432,16 @@
       "notes": "Filled in at load and after each Ledger edit, stored as rough so it shows yellow",
       "source": "Eli house assumption",
       "verified": "assumption"
+    },
+    {
+      "id": "DEFAULT_DUE_DAY",
+      "rule": "Day of the month a debt payment is due when none is entered",
+      "value": 1,
+      "unit": "day of month",
+      "appliesTo": "Every debt type: credit cards, auto, student, personal and other loans, mortgages, HELOCs, BNPL, IOUs with a payment",
+      "notes": "Filled in at load and after each Ledger edit, stored as rough. A card statement close day is never filled in.",
+      "source": "Eli house assumption",
+      "verified": "assumption"
     }
   ]
 }

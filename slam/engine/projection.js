@@ -13,7 +13,7 @@
 import { valueOf, tracker, round2, monthKey, monthStart, addMonths, ageOn } from './spine.js';
 import { INVESTED_FAMILIES } from './schema.js';
 import { cashflow } from './cashflow.js';
-import { minimumPayment, accrueMonth } from './debt.js';
+import { minimumPayment, accrueMonth, dueDateIn } from './debt.js';
 import { taxForYear } from './tax.js';
 
 const v = valueOf;
@@ -67,6 +67,7 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
     t.absorb({ ...cf.expenses.total, value: undefined });
 
     let debtPaid = 0, interest = 0;
+    const payments = [];
     for (const s of debts) {
       if (s.bal <= 0.005) continue;
       interest += accrueMonth(s, iso, asOf, t);
@@ -75,6 +76,7 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
       if (m.estimated) t.addRough('debts.' + s.d.id + '.minimum');
       const pay = Math.min(s.bal, m.value ?? 0);
       s.bal -= pay; debtPaid += pay;
+      if (pay > 0) payments.push({ id: s.d.id, date: dueDateIn(s.d, ym), amount: round2(pay) });
       if (s.bal <= 0.005 && !s.paidYm) { s.bal = 0; s.paidYm = ym; events.push({ ym, kind: 'debtPaidOff', label: (v(s.d.name) || s.d.id) + ' paid off', path: 'debts.' + s.d.id + '.balance' }); }
     }
 
@@ -96,7 +98,8 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
       debtPaid: round2(debtPaid), interest: round2(interest), tax: round2(tax), saved: round2(saved), surplus: round2(surplus),
       cash: round2(cash), invested: round2(invested), otherAssets: round2(other), debt: round2(debt), netWorth: round2(cash + invested + other - debt)
     };
-    if (months.length < monthsShown) months.push(row);
+    // Monthly rows list each minimum on its due day (date null when none is entered).
+    if (months.length < monthsShown) months.push({ ...row, payments: payments.sort((a, b) => String(a.date).localeCompare(String(b.date))) });
     const y = ym.slice(0, 4);
     yearAcc.year = +y;
     for (const k of ['gross', 'takeHome', 'expenses', 'debtPaid', 'interest', 'tax', 'saved', 'surplus']) yearAcc[k] += row[k];

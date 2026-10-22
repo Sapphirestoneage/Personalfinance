@@ -392,6 +392,16 @@ test('debt: an APR marked not for me charges nothing', () => {
   assert.equal(rateOn(c, '2026-11-01').rate, 0);
 });
 
+test('debt: each minimum lands on its due day, the last day in a short month', () => {
+  const c = card('a', 1000, { min: 40 });
+  c.dueDay = K(31);
+  const s = mini({ debts: [c, { id: 'l', family: 'debt', type: 'auto_loan', name: K('Car'), balance: K(2000), apr: K(0), minimum: K(500), dueDay: K(15) }] });
+  const feb = cashflow(s, R, '2027-02').debtMinimums.items;
+  assert.deepEqual(feb.map((x) => [x.id, x.dueDate]), [['a', '2027-02-28'], ['l', '2027-02-15']]);
+  const p = project(s, R, { mode: 'committed', endYm: '2026-12' });
+  assert.deepEqual(p.months[0].payments.map((x) => [x.id, x.date, x.amount]), [['l', '2026-11-15', 500], ['a', '2026-11-30', 40]]);
+});
+
 test('projection: a 0% promo starts charging the APR after it ends', () => {
   const s = mini({ debts: [card('p', 1000, { promoEnds: '2026-12-31', apr: 0.24, min: 25 })] });
   const p = project(s, R, { mode: 'committed', endYm: '2027-03' });
