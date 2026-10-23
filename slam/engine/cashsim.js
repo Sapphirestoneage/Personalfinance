@@ -118,15 +118,22 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   const shares = payrollShares(spine, cf);
   for (const s of spine.income || []) {
     let st = cf.income.streams.find((x) => x.id === s.id), sh = shares;
+    // One of its paydays moved onto or after the as-of date (the calendar): it pays that day even if the line ended.
+    const movedIn = Object.entries(cal.overrides || {}).some(([k, o]) => k.startsWith(s.id + '|') && o && !o.skip && o.date && o.date >= asOf);
     // A line that starts after this month: its own first month's cash flow says what each paycheck keeps.
     if ((!st || !st.included) && s.start && monthKey(s.start) > ym && s.start <= end) {
       const later = cashflow(spine, rules, monthKey(s.start), { mode: 'expected' });
       st = later.income.streams.find((x) => x.id === s.id); sh = payrollShares(spine, later);
     }
+    // A line that ended in an earlier month with a payday moved into the run: its last month's cash flow says what that
+    // paycheck keeps.
+    if ((!st || !st.included) && movedIn && s.end && monthKey(s.end) < ym) {
+      const earlier = cashflow(spine, rules, monthKey(s.end), { mode: 'expected' });
+      st = earlier.income.streams.find((x) => x.id === s.id); sh = payrollShares(spine, earlier);
+    }
     const base = 'income.' + s.id, path = base + '.amount';
     // A line that ended before this tax year (a one-time line on its own day), or starts after the run, pays nothing in
     // it and does not set its tax; one whose payday was moved into the run still pays that day.
-    const movedIn = Object.entries(cal.overrides || {}).some(([k, o]) => k.startsWith(s.id + '|') && o && !o.skip && o.date && o.date >= asOf);
     const last = s.cadence === 'once' ? s.start : s.end;
     if (!movedIn && ((last && last < year + '-01-01') || (s.start && s.start > end))) continue;
     const amt = t.useFact(path, s.amount);

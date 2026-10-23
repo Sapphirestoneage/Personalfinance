@@ -48,6 +48,9 @@ export const paydaysOf = (spine, s, from, to) => {
   const at = (d) => ov[s.id + '|' + d] || {};
   const key = 'sched:' + s.id + '|';
   const logged = new Map((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith(key) && x.date).map((x) => [x.importKey.slice(key.length), x.date]));
+  // A paycheck the day-by-day run matched to a logged or imported deposit (engine/cashsim.js claims), when the caller
+  // passed the run's claims along (spine.payClaims, a Map of '<line>|<date>' to the day it came).
+  if (spine.payClaims) for (const [k, d] of spine.payClaims) if (k.startsWith(s.id + '|') && !logged.has(k.slice(s.id.length + 1))) logged.set(k.slice(s.id.length + 1), d);
   return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => logged.get(d) || at(d).date || d).filter((d) => d >= from && d <= to))].sort();
 };
 // Whether the owner has a W-2 or tips line that pays (payroll saving needs pay to come out of).
@@ -63,7 +66,9 @@ function payShare(spine, pid, ym, keep) {
   const runs = earningFor(spine, pid).filter((s) => activeDays(s.start, s.end, ym) > 0);
   if (!runs.length) return 0;
   const all = runs.flatMap((s) => payDatesOf(s, monthStart(ym), monthEnd(ym)));
-  if (!all.length) return null;
+  // No payday this month: unknown only for a weekly or biweekly line with no first pay date, else none (a line that
+  // ends before its payday in the month pays nothing that month).
+  if (!all.length) return runs.some((s) => (s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start) ? null : 0;
   return runs.flatMap((s) => paydaysOf(spine, s, monthStart(ym), monthEnd(ym))).filter(keep).length / all.length;
 }
 // Months of the owner's pay in a year before asOf: payroll saving is in for paydays before asOf (a payday on asOf is

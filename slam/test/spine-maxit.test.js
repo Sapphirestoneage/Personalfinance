@@ -991,3 +991,43 @@ test('round 6 (S-217): a couple\'s Roth phase-out after the higher earner fills;
   const ex = explainMetric(st.cap.metric, { spine: g, rules: R });
   assert.deepEqual([st.cap.metric, ex.value, ex.terms.map((x) => x.value)], ['earned:2026:sam+casey', 67200, [1200, 66000]]);
 });
+
+test('round 7 (S-218): the lower earner\'s Roth money stays within their reduced limit; two pay lines hold what each paycheck lands; early deposits and moved last paydays', () => {
+  const d = demo(), c = couple(d);
+  const rent = (amt) => ({ id: 'rent', type: 'rental', label: 'Rent', personId: 'casey', amount: F(amt / 12), cadence: 'monthly', start: '2024-01-01', end: null, withholding: { federal: F(0), state: F(0) } });
+  const base = (pay, other, accts) => ({ ...c, income: [{ ...c.income[0], amount: F(pay / 12) }, ...other], accounts: [...c.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth'), ...accts] });
+  // MFJ, modified AGI $247,000 (half the way through the $242,000 to $252,000 phase-out), Casey earns $8,000, Sam
+  // nothing and already has $3,750 in a Roth. Sam's limit is half the couple's pay left after Casey's year, so Casey may
+  // add only what keeps that at $3,750 or more: $8,000 - $7,480.01 = $519.99 (half of $7,480.01, rounded up to $10, is
+  // $3,750).
+  const b = base(8000, [rent(239000)], [acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 0 }]) }), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 3750 }]) })]);
+  const mb = maxIt(b, R);
+  assert.deepEqual([mb.pools.map((p) => [p.key, p.fill]), mb.totals.lump], [[['ira:casey', 519.99], ['ira:sam', 0]], 519.99]);
+  // A child's IRA never counts as Casey's, even in the couple's lists: Sam's row names only Casey's own IRA, and the
+  // phase-out cut still runs on Casey's Roth ($3,750 + $3,630 = $7,380).
+  const k3 = { ...c, income: [{ ...c.income[0], amount: F(2000 / 12) }, w2('samjob', 'sam', 750), rent(236000)], accounts: [...c.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth'), acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 0 }]) }), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 0 }]) }), acct('kid', 'traditional_ira', 'ira', { owner: F('child') })] };
+  const m3 = maxIt(k3, R);
+  assert.deepEqual([m3.totals.lump, row(m3, 'sr:2026').sharedWith], [7380, ['cr']]);
+  // Weekly tips beside the salary: the 401(k) is held to what all 12 paychecks land ($12,081.54), not the smallest
+  // paycheck times 12; the cash check moves each paycheck's own amount, the same total.
+  const t4 = { ...d, income: [...d.income, { ...w2('tips', 'casey', 400), type: 'tips', label: 'Bar tips', cadence: 'weekly', start: '2026-01-02' }] };
+  const s4 = maxItSim(t4, R), m4 = maxIt(t4, R, { sim: s4 }), k4 = row(m4, 'k401:2026');
+  assert.deepEqual([k4.paychecks.count, k4.paychecks.holdsTotal, k4.paychecks.shortLines, m4.pools.find((p) => p.key === 'deferral:casey').fill, maxItCash(t4, R, m4, { sim: s4, rows: [k4] }).total], [12, 12081.54, ['Bar tips'], 12081.54, 12081.54]);
+  // As of December 12, the December 15 paycheck came in early on the 11th (a bank import the run matched): $6,000 is in,
+  // nothing is still to come, $18,500 of room, and no paycheck is left.
+  const e5 = logSpend({ ...d, meta: { ...d.meta, asOf: '2026-12-12' } }, { amount: 4211, date: '2026-12-11', kind: 'income', source: 'import', importKey: 'bank:2026-12-11:payroll', merchant: 'HUDSON VALLEY HEALTH PAYROLL' }).spine;
+  const k5 = row(maxIt(e5, R, { sim: maxItSim(e5, R) }), 'k401:2026');
+  assert.deepEqual([k5.fillable, k5.room, k5.still.value, k5.contributed.value], [false, 18500, 0, 6000]);
+  // A twice-a-month salary that ended September 30, with its September 30 payday moved to October 23: the run pays it
+  // ($1,690.50 lands), the calendar shows that amount, and the 401(k) has that one paycheck.
+  const x6 = moveOccurrence({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, cadence: 'semimonthly', amount: F(3000), end: '2026-09-30' } : x)) }, 'salary|2026-09-30', '2026-10-23');
+  const k6 = row(maxIt(x6, R, { sim: maxItSim(x6, R) }), 'k401:2026');
+  assert.deepEqual([k6.fillable, k6.paychecks.dates, k6.paychecks.landed], [true, ['2026-10-23'], 1690.5]);
+  assert.deepEqual(calendar(x6, R, { start: '2026-10', months: 1 }).months[0].events.filter((e) => e.kind === 'pay' && e.date).map((e) => [e.date, e.amount]), [['2026-10-23', 1690.5]]);
+  // The salary ends November 10, before its November 15 payday: nothing more comes out of pay, and the calendar shows
+  // no November 15 paycheck (as the run has none).
+  const x7 = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-11-10' } : x)) };
+  const k7 = row(maxIt(x7, R, { sim: maxItSim(x7, R) }), 'k401:2026');
+  assert.deepEqual([k7.still.value, k7.toFill], [0, 19500]);
+  assert.ok(!calendar(x7, R, { start: '2026-11', months: 1 }).months[0].events.some((e) => e.kind === 'pay' && e.date === '2026-11-15'));
+});

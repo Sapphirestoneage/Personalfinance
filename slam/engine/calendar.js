@@ -45,7 +45,8 @@ export function payDatesIn(start, cadence, end, ym) {
 }
 
 // One month of events.
-function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims = [] }) {
+// lates: what the day-by-day run puts on a payday or bill moved in from another month ('<source>|<date>' to dollars).
+function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims = [], lates = new Map() }) {
   const year = +ym.slice(0, 4);
   const t = tracker();
   const cf = cashflow(spine, rules, ym, { mode, taxCache, schedule });
@@ -104,9 +105,10 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
       // The run's own rule for the two days (cashcal.js paydays), so each pay's key matches the run's occurrence.
       const [d1, d2] = C.paydays('semimonthly', dayIn(ym, day), monthStart(ym), monthEnd(ym));
       const half = { gross: common.gross === null ? null : round2(common.gross / 2), withheld: common.withheld === null ? null : round2(common.withheld / 2), fica: common.fica === null ? null : round2(common.fica / 2), saved: round2(common.saved / 2) };
-      add({ ...common, ...half, date: d1, amount: perPay(2), rough: amountRough || dayRough });
-      add({ ...common, ...half, date: d2, amount: perPay(2), rough: amountRough || dayRough, note: ['the second pay of the month', lands].filter(Boolean).join('; ') });
-    } else add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: [s.cadence === 'monthly' ? null : 'counted as its monthly share', lands].filter(Boolean).join('; ') || null });
+      // A payday after the line's end does not come (as in the run).
+      if (!(s.end && d1 > s.end)) add({ ...common, ...half, date: d1, amount: perPay(2), rough: amountRough || dayRough });
+      if (!(s.end && d2 > s.end)) add({ ...common, ...half, date: d2, amount: perPay(2), rough: amountRough || dayRough, note: ['the second pay of the month', lands].filter(Boolean).join('; ') });
+    } else if (!(s.end && dayIn(ym, day) > s.end)) add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: [s.cadence === 'monthly' ? null : 'counted as its monthly share', lands].filter(Boolean).join('; ') || null });
   }
 
   // ------------------------------------------------------------ bills and subscriptions
@@ -222,7 +224,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (!src) continue;
     const isIncome = !!(spine.income || []).find((x) => x.id === sourceId);
     const base = (isIncome ? 'income.' : 'expenses.') + sourceId;
-    kept.push({ amount: typeof ov.amount === 'number' ? round2(ov.amount) : null, direction: isIncome ? 'in' : 'out', rough: true, note: 'moved from ' + orig + '; amount as of that day', path: base + '.amount', counted: true, id: (isIncome ? 'pay:' : 'bill:') + sourceId, sourceId, repeats: true, movable: true, kind: isIncome ? 'pay' : 'bill', label: src.label, date: ov.date, key, origDate: orig, moved: true });
+    kept.push({ amount: typeof ov.amount === 'number' ? round2(ov.amount) : lates.has(key) ? round2(lates.get(key)) : null, direction: isIncome ? 'in' : 'out', rough: true, note: 'moved from ' + orig + '; amount as of that day', path: base + '.amount', counted: true, id: (isIncome ? 'pay:' : 'bill:') + sourceId, sourceId, repeats: true, movable: true, kind: isIncome ? 'pay' : 'bill', label: src.label, date: ov.date, key, origDate: orig, moved: true });
   }
   for (const m of cal.maybe || []) {
     if (!m.date || !inMonth(m.date)) continue;
@@ -302,11 +304,12 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
   // The day-by-day cash line from the simulation (S-203), as far as the last month asked for.
   const span = (+last.slice(0, 4) - +asOfYm.slice(0, 4)) * 12 + (+last.slice(5) - +asOfYm.slice(5)) + 1;
   const sim = last >= asOfYm ? cashsim(spine, rules, { asOf, months: span, maybeMode }) : null;
+  const lates = new Map(sim ? sim.model.extras.filter((x) => x.late).map((x) => [x.late, x.cents / 100]) : []);
   const sheet = balanceSheet(spine);
   const out = [];
   const all = tracker();
   for (let ym = start, i = 0; i < months; ym = addMonths(ym, 1), i++) {
-    const { events, cf, tracker: t } = monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule: null, claims: sim ? sim.claims : [] });
+    const { events, cf, tracker: t } = monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule: null, claims: sim ? sim.claims : [], lates });
     all.absorb({ value: 0, ...t.snapshot() });
     // Card interest the run charges on each statement day (S-209): on the card, not checking, so it is shown, not added.
     if (sim) for (const d of sim.daily) if (d.date.slice(0, 7) === ym) for (const x of d.events) if (x.kind === 'interest' && x.amount) {

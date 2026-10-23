@@ -22,7 +22,7 @@ import { loadAll, save, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal } from './view.js';
-import { maxHref } from './maxit-panel.js';
+import { maxHref, maxItFor } from './maxit-panel.js';
 import { pickedWindow, windowBar } from './window.js';
 import { debtTab } from './debt-tab.js';
 import { fooGhosts } from '../engine/plan.js';
@@ -454,7 +454,7 @@ function render() {
   const mathCtx = () => ({ spine, rules, s: summarize(spine, rules, { flags: false }) });
   const ms = c.sim ? milestones(spine, rules, c.sim, c.months) : [];
   // FOO ghost chips (S-208): the plan's allocation for the month, dashed, tagged Plan, never counted.
-  for (const g of fooGhosts(spine, rules, mathCtx().s, c.months.map((m) => m.ym))) { const m = c.months.find((x) => x.ym === g.date.slice(0, 7)); if (!m) continue; let d = m.days.find((x) => x.date === g.date); if (!d) { d = { date: g.date, day: +g.date.slice(8, 10), events: [], in: 0, out: 0 }; m.days.push(d); m.days.sort((a, b) => (a.date < b.date ? -1 : 1)); } d.events.push(g); m.events.push(g); }
+  for (const g of fooGhosts(spine, rules, mathCtx().s, c.months.map((m) => m.ym), { sim: maxItFor(spine, rules).sim })) { const m = c.months.find((x) => x.ym === g.date.slice(0, 7)); if (!m) continue; let d = m.days.find((x) => x.date === g.date); if (!d) { d = { date: g.date, day: +g.date.slice(8, 10), events: [], in: 0, out: 0 }; m.days.push(d); m.days.sort((a, b) => (a.date < b.date ? -1 : 1)); } d.events.push(g); m.events.push(g); }
   const go = (n) => { state.ym = addMonths(state.ym, n); state.open = null; keep(KEY, state.ym); render(); window.scrollTo({ top: 0 }); };
   const focusId = document.activeElement && document.activeElement.id;
   const caret = focusId === 'cal-search' ? document.activeElement.selectionStart : null;

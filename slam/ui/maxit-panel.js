@@ -133,7 +133,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   return h('div', { class: 'max-year card-tile' }, head,
     main.big ? h('p', { class: 'max-big' }, main.big) : h('p', { class: 'missing-row' }, main.sub, main.blank ? [' ', h('a', { href: ledgerHref(main.blank.path) }, 'Fill it in')] : null),
     main.big ? h('p', { class: 'tile-sub' }, main.sub) : null,
-    p && p.tooBig ? h('p', { class: 'tool-result bad' }, 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.') : null,
+    p && p.tooBig ? h('p', { class: 'tool-result bad' }, p.multi ? 'More than some paychecks hold: the ' + p.shortLines.join(' and ') + ' paychecks hold as little as about ' + cash(p.landed) + (p.holdsTotal !== null ? '; together the paychecks to ' + longDay(r.deadline.date) + ' hold about ' + cash(p.holdsTotal) : '') + ', so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll.' : 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.') : null,
     r.overWords ? h('p', { class: 'tool-result bad' }, r.overWords) : null,
     r.overSoonWords ? h('p', { class: 'tool-result bad' }, r.overSoonWords) : null,
     r.aboveCap ? h('p', { class: 'tile-sub' }, cash(r.aboveCap) + ' is above the New York deduction cap: that part is not deductible (it can stay in the 529).') : null,
