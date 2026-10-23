@@ -27,10 +27,12 @@ const monthsSoFar = (asOf) => +asOf.slice(5, 7);
 
 export const STEP_LABELS = {
   taxOnIt: 'Tax on the windfall itself', taxBill: 'The year\'s tax bill', cashFloor: 'Cash up to the stage 1 floor', promos: 'Promo balances before their deadline',
-  cards: 'Cards charging interest now', cushion: 'Cash up to the Rule of 5 target', roth: 'Roth IRA room this year', left: 'Not assigned yet'
+  employerMatch: 'The employer match left on the table', cards: 'Cards charging interest now', cushion: 'Cash up to the Rule of 5 target', roth: 'Roth IRA room this year', left: 'Not assigned yet'
 };
 
-export function windfall(spine, rules, s, { amount, taxed = true } = {}) {
+// source: where the money came from ('w2', '1099', 'other'); a 1099 lump sum owes self-employment tax too (answer 24).
+// monthly: the same order run on the monthly surplus (E008): flow steps (the match, the Roth room) read as amounts a month.
+export function windfall(spine, rules, s, { amount, taxed = true, source = 'other', monthly = false } = {}) {
   const asOf = s.asOf, year = +asOf.slice(0, 4);
   const R = (id) => rules.get(id, year);
   const order = R('WINDFALL_ORDER');
@@ -65,9 +67,12 @@ export function windfall(spine, rules, s, { amount, taxed = true } = {}) {
       if (!fed) { for (const p of s.tax.balanceDue.missing) t.addMissing(p); return { need: null, why: 'The marginal rate needs ' + (s.tax.missingText || 'the filing details').replace(/^missing: /, '') + '.', path: s.tax.balanceDue.missing[0] || 'household.filingStatus' }; }
       for (const r of [...(fed.rules || []), ...((st && st.rules) || [])]) t.rule(rules, r, year);
       t.absorb({ ...s.tax.marginal, value: undefined });
-      const rate = (fed.value || 0) + ((st && st.value) || 0);
+      // A 1099 lump sum owes self-employment tax on top (answer 24): the year's marginal SE rate, else the statutory rate on the SE base.
+      let se = 0, seWords = '';
+      if (source === '1099') { const seLine = L.marginalSe && L.marginalSe.value !== null ? L.marginalSe : null; if (seLine) { se = seLine.value; t.absorb({ ...seLine, value: undefined }); } else { se = t.rule(rules, 'SE_FACTOR', year) * (t.rule(rules, 'SE_SS_RATE', year) + t.rule(rules, 'SE_MED_RATE', year)); t.addRough('income'); } seWords = ' + ' + pct(se) + ' self-employment tax'; }
+      const rate = (fed.value || 0) + ((st && st.value) || 0) + se;
       const floor = L.marginalFederal && L.marginalFederal.value !== null ? '' : ' (a floor: the year\'s tax cannot be figured yet)';
-      return { need: amount * rate, why: 'Nothing withholds tax from it, so ' + pct(rate) + ' (' + pct(fed.value || 0) + ' federal' + (st && st.value ? ' + ' + pct(st.value) + ' state' : '') + ', your marginal rate' + floor + ') is held back for the ' + year + ' return.', path: 'household.filingStatus', rate };
+      return { need: amount * rate, why: 'Nothing withholds tax from it, so ' + pct(rate) + ' (' + pct(fed.value || 0) + ' federal' + (st && st.value ? ' + ' + pct(st.value) + ' state' : '') + seWords + ', your marginal rate' + floor + ') is held back for the ' + year + ' return.', path: 'household.filingStatus', rate };
     });
     else if (id === 'taxBill') run(id, (t) => {
       const due = s.tax.balanceDue.value;
@@ -113,6 +118,27 @@ export function windfall(spine, rules, s, { amount, taxed = true } = {}) {
       const after = round2(pr.monthly.value - out.reduce((a, x) => a + x.pay / Math.max(1, x.paymentsLeft), 0));
       return { need, items: out, why: 'Clearing them takes ' + money(pr.monthly.value, true) + ' a month and the monthly surplus is ' + (surplus === null ? 'not known yet' : money(surplus)) + '. Paying ' + out.map((x) => money(x.pay) + ' off ' + x.name + (x.deferredInterest === true ? ' (deferred interest)' : '')).join(' and ') + ' now brings that to ' + money(Math.max(0, after), true) + ' a month, which the surplus covers.', path: out[0].path };
     });
+    else if (id === 'employerMatch') run(id, (t) => {
+      const accts = (spine.accounts || []).filter((a) => a.family === 'employerRetirement' && a.matchRate && a.matchRate.kind !== 'notForMe');
+      if (!accts.length) return { need: 0, why: 'No workplace account has an employer match entered, so this step is skipped.' };
+      const w2 = s.cashflow.income.streams.filter((x) => x.type === 'w2' && x.included !== false);
+      t.absorb({ ...s.cashflow.income.gross, value: undefined });
+      if (!w2.length || w2.some((x) => x.gross === null)) { for (const x of w2) if (x.gross === null) t.addMissing('income.' + x.id + '.amount'); return { need: null, why: 'Needs the W-2 gross pay the match is figured on.', path: w2.length ? 'income.' + w2[0].id + '.amount' : 'income' }; }
+      const grossYear = w2.reduce((a, x) => a + x.gross, 0) * 12;
+      const monthsLeft = 12 - monthsSoFar(asOf) + 1;
+      let gap = 0, left = 0, miss = null; const parts = [];
+      for (const a of accts) {
+        const base = 'accounts.' + a.id;
+        const rateM = t.useFact(base + '.matchRate', a.matchRate), cap = t.useFact(base + '.matchCap', a.matchCap), c = t.useFact(base + '.monthlyContribution', a.monthlyContribution);
+        if (rateM === null || cap === null || c === null) { miss = miss || base + (cap === null ? '.matchCap' : c === null ? '.monthlyContribution' : '.matchRate'); continue; }
+        const short = Math.max(0, cap * grossYear / 12 - c);
+        gap += short; left += short * rateM;
+        parts.push((v(a.name) || a.id) + ': ' + money(c) + ' a month in against ' + money(cap * grossYear / 12) + ' to capture the full match' + (short > 0 ? ' (' + money(short) + ' a month short, ' + money(short * rateM) + ' of match lost)' : ''));
+      }
+      if (miss) return { need: null, why: 'Needs the match rate, the cap and the monthly contribution on the account.', path: miss };
+      const need = monthly ? gap : gap * monthsLeft;
+      return { need, why: (gap > 0 ? money(need) + (monthly ? ' a month' : ' for the rest of the year') + ' raised in pre-tax deferral captures ' + money(left * (monthly ? 1 : monthsLeft)) + ' of match that is otherwise lost. ' : 'The full match is captured. ') + parts.join('; ') + '.', path: 'accounts.' + accts[0].id + '.monthlyContribution', items: parts.map((x) => ({ label: x })) };
+    });
     else if (id === 'cards') run(id, (t) => {
       const list = s.debt.avalancheCardsDetail.filter((x) => !x.promo && x.rate !== null && x.rate > 0);
       const out = [];
@@ -156,7 +182,16 @@ export function windfall(spine, rules, s, { amount, taxed = true } = {}) {
         else if (agi !== null && agi >= lo) { room = round2(room * (hi - agi) / (hi - lo)); phase = ' Income of ' + money(agi) + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the room is reduced.'; t.addRough(base + '.contributions'); }
         else if (agi === null) { phase = ' Whether income is under the ' + money(lo) + ' phase-out cannot be checked until the year\'s tax can be figured.'; t.addRough(base + '.contributions'); }
       }
-      return { need: room, why: 'The ' + year + ' limit is ' + money(limit) + (age !== null && age >= 50 ? ' (with the age 50 catch-up)' : '') + '; ' + soFarWords + ', so ' + money(room) + ' of room is left.' + phase + ' A contribution for ' + year + ' can be made until the return is due, and needs earned income to cover it.', path: base + '.contributions', limit, soFar };
+      // Capped at known earned income (answer 25): W-2, 1099 and tips this year; while any of it is missing the step reads missing.
+      const earners = s.cashflow.income.streams.filter((x) => ['w2', '1099', 'tips'].includes(x.type) && x.included !== false);
+      const earnedKnown = earners.length && earners.every((x) => x.gross !== null);
+      if (!earnedKnown) { for (const x of earners) if (x.gross === null) t.addMissing('income.' + x.id + '.amount'); if (!earners.length) t.addMissing('income'); return { need: null, why: 'Missing: earned income. A Roth contribution needs earned income to cover it, and the year\'s W-2, 1099 or tips amount is not known.', path: earners.length ? 'income.' + earners[0].id + '.amount' : 'income' }; }
+      const earned = round2(earners.reduce((a, x) => a + x.gross, 0) * 12);
+      const roomBefore = room;
+      room = Math.max(0, Math.min(room, earned - soFar));
+      const capWords = room < roomBefore ? ' Capped at earned income (' + money(earned) + ' a year less what is in).' : '';
+      if (monthly) room = round2(room / Math.max(1, 12 - monthsSoFar(asOf) + 1));
+      return { need: room, why: 'The ' + year + ' limit is ' + money(limit) + (age !== null && age >= 50 ? ' (with the age 50 catch-up)' : '') + '; ' + soFarWords + ', so ' + money(room) + ' of room is left.' + phase + capWords + (monthly ? ' Spread over the months left this year.' : ' A contribution for ' + year + ' can be made until the return is due.'), path: base + '.contributions', limit, soFar };
     });
     else if (id === 'left') run(id, () => ({ need: Math.max(0, remaining), why: remaining > 0.005 ? money(remaining) + ' has no job yet. It stays as cash until it is given one: invest it, start a sinking fund, or add it to a goal.' : 'Every dollar is assigned.', path: null }));
     const last = steps[steps.length - 1];
@@ -165,7 +200,7 @@ export function windfall(spine, rules, s, { amount, taxed = true } = {}) {
   const assigned = round2(steps.filter((x) => x.id !== 'left').reduce((a, x) => a + (x.amount || 0), 0));
   const snap = all.snapshot();
   const leftStep = steps.find((x) => x.id === 'left');
-  return { amount, taxed, asOf, steps, assigned, left: round2(leftStep ? leftStep.amount : Math.max(0, remaining)), order, ...snap, kind: snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed' };
+  return { amount, taxed, source, monthly, asOf, steps, assigned, left: round2(leftStep ? leftStep.amount : Math.max(0, remaining)), order, ...snap, kind: snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed' };
 }
 
 export { monthKey };

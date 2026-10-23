@@ -21,6 +21,7 @@ import { expenseRow } from './ledger.js';
 import { monthlyAmount } from './cashflow.js';
 import { minimumTrap, solvePayoff } from './debtview.js';
 import { canISpend } from './spending.js';
+import { solvers as solveAgain, outlook as outlookAgain } from './plan.js';
 
 const v = valueOf;
 export const UNITS = ['usd', 'usd/month', 'usd/year', 'months', 'years', 'ratio', 'age', 'count'];
@@ -117,7 +118,7 @@ def({ id: 'cliffCosts', label: 'Costs once certain income stops', unit: 'usd/mon
   explain: ({ s }) => { const c = s.cliff; if (!c) return out(null, []); return out({ value: Math.round(c.costs * 100) / 100, kind: c.spending.kind === 'computed' && c.minimums.kind === 'computed' ? 'computed' : 'rough', rules: [], rough: [], missing: [] }, [{ label: 'Spending', value: c.spending.value, unit: 'usd/month', kind: c.spending.kind, role: 'plus', group: 'E' }, { label: 'Minimum payments', value: c.minimums.value, unit: 'usd/month', kind: c.minimums.kind, role: 'plus', group: 'D' }, { label: 'Tax set-aside', value: c.setAside.value, unit: 'usd/month', kind: c.setAside.kind, role: 'plus', group: 'T' }]); } });
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || planMetric(id);
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
 function expenseCostMetric(id) {
@@ -147,6 +148,7 @@ const WINDFALL_FORMULAS = {
   taxBill: 'Tax bill step = the year\'s balance due - money already set aside, capped at what is left of the windfall',
   cashFloor: 'Cash floor step = (stage 1 months x monthly spending and minimums, rounded up) - cash, capped at what is left',
   promos: 'Promo step = what, paid now, brings the monthly amount that clears the promos down to the monthly surplus, capped at what is left',
+  employerMatch: 'Employer match step = for each workplace account with a match, (the match cap x W-2 gross a month - what goes in a month) for the months left this year, capped at what is left; skipped when no account has a match',
   cards: 'Cards step = every card balance charging interest today, highest rate first, capped at what is left',
   cushion: 'Cushion step = the Rule of 5 target - (cash + the floor step), capped at what is left',
   roth: 'Roth step = this year\'s IRA limit - put in so far, reduced by the income phase-out, capped at what is left',
@@ -311,6 +313,36 @@ function compareMetric(id) {
   return null;
 }
 const monthWordsShort = (ym) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
+
+// The Plan page (S-208): one family, "plan:<what>[:<id>]", read from ctx.plan (foo, wage, draftt, floor, goals, alloc), ctx.solvers and ctx.outlook.
+const PLAN_SCREENS = ['plan'];
+function planMetric(id) {
+  if (!id || !id.startsWith('plan:')) return null;
+  const parts = id.split(':');
+  const what = parts[1], key = parts.slice(2).join(':');
+  if (what === 'foo') return { id, label: 'FOO rung: what it still needs', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'What the rung needs = the gap the rung names (a balance to clear, cash to reach a target, or an amount a month), from the engine that owns it; the month it completes = today + the months the rungs before it take + this gap / the monthly surplus',
+    explain: ({ plan }) => { const r = plan && plan.foo.rungs.find((x) => x.id === key); return r ? out(resOf(r, r.need), [term(r.label + (r.flow ? ' (a month)' : ''), r.need, 'usd', r.kind === 'missing' ? 'missing' : 'computed', 'arg', r.path ? { path: r.path } : {}), term('Monthly surplus', plan.foo.surplus, 'usd/month', 'computed', 'arg'), term('Months to fill it', r.months, 'months', r.months === null ? 'missing' : 'computed', 'arg')]) : out(null, []); },
+    recompute: (t) => t[0].value };
+  if (what === 'pay') { const [date, streamId] = key.split(':'); return { id, label: 'Free after this paycheck', unit: 'usd', op: 'sum', screens: PLAN_SCREENS, formula: 'Free = the paycheck - the tax set aside on a 1099 deposit - every envelope due before the next paycheck - everyday spending until then',
+    explain: ({ plan }) => { const p = plan && plan.alloc.paychecks.find((x) => x.date === date && String(x.streamId) === streamId); return p ? out({ value: p.free, kind: 'computed', from: [], rough: [], missing: [], rules: [] }, [term('The paycheck ' + p.label + ' on ' + p.date, p.amount, 'usd', 'computed', 'plus', p.path ? { path: p.path } : {}), ...(p.is1099 ? [term('Tax set aside (' + Math.round(p.setAsideRate * 10000) / 100 + '%)', p.setAside, 'usd', p.setAsideMissing ? 'rough' : 'computed', 'minus')] : []), ...p.envelopes.map((e) => term(e.label + ' on ' + e.date, e.amount, 'usd', 'computed', 'minus')), term('Everyday spending until the next paycheck', p.everyday, 'usd', 'computed', 'minus')]) : out(null, []); } }; }
+  if (what === 'solve') return { id, label: 'What it takes to reach FI by the age', unit: key === 'savingsRate' || key === 'return' ? 'ratio' : 'usd/month', op: 'custom', screens: PLAN_SCREENS, formula: { savingsRate: 'Savings rate needed = the saving a year that reaches the FI number by the age (found by halving on years-to-target) / gross a year', spending: 'Spending level needed = take-home - minimums - the saving a month that reaches the FI number by the age', income: 'Take-home needed = spending + minimums + the saving a month that reaches the FI number by the age', return: 'Real return needed = the return at which the saving as it is reaches the FI number by the age (found by halving)' }[key] || 'A solver',
+    explain: ({ solvers: x }) => { const r = x && x.rows.find((y) => y.id === key); return r && r.value !== null ? out({ value: r.value, kind: x.kind, from: x.from, rough: x.rough, missing: x.missing, rules: x.rules }, [term('FI number', x.fiNumber, 'usd', 'computed', 'arg', { metric: 'fiNumber' }), term('Invested today', x.invested, 'usd', 'computed', 'arg', { metric: 'invested' }), term('Years to the age', x.years, 'years', 'computed', 'arg'), term('Real return assumed', x.realReturn, 'ratio', 'known', 'arg', { path: 'assumptions.realReturn' }), term('Target age', x.targetAge, 'age', 'known', 'arg')]) : out(null, []); },
+    recompute: (t, ctx) => { const x = solveAgain(ctx.spine, ctx.rules, ctx.s, { byAge: ctx.solvers ? ctx.solvers.targetAge : null }); const r = x.rows.find((y) => y.id === key); return r ? r.value : null; } };
+  if (what === 'wage') return { id, label: 'Real hourly wage', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Real hourly wage = (take-home a month - the costs of working a month) / ((hours worked + commute hours a week) x weeks in a month)',
+    explain: ({ spine, rules, plan }) => (plan && plan.wage.wage !== null ? out(resOf(plan.wage, plan.wage.wage), [term('Take-home a month', plan.wage.takeHome, 'usd/month', 'computed', 'arg', { metric: 'takeHome' }), term('Costs of working a month', plan.wage.costMonthly, 'usd/month', 'computed', 'arg'), field(spine, 'household.workHoursPerWeek', plan.wage.hoursWeek, 'count', 'arg'), term('Commute hours a week', plan.wage.commuteWeek, 'count', plan.wage.rough.includes('household.commuteHoursPerWeek') ? 'rough' : 'known', 'arg', { path: 'household.commuteHoursPerWeek' }), ruleTerm(rules, 'APP_WEEKS_PER_MONTH', +spine.meta.asOf.slice(0, 4), 'arg', 'Weeks in a month', 'count')]) : out(null, [])),
+    recompute: (t) => (t.some((x) => x.value === null) ? null : Math.round((t[0].value - t[1].value) / ((t[2].value + t[3].value) * t[4].value) * 100) / 100) };
+  if (what === 'draftt') return { id, label: 'DRAFTT letter as a share of the base', unit: 'ratio', op: 'ratio', screens: PLAN_SCREENS, formula: 'Share = the letter\'s amount a month / (take-home + pre-tax retirement)',
+    explain: ({ plan }) => { const r = plan && plan.draftt.rows.find((x) => x.key === key); return r ? out({ value: r.share, kind: plan.draftt.kind, from: plan.draftt.from, rough: plan.draftt.rough, missing: plan.draftt.missing, rules: plan.draftt.rules }, [term(r.label + ' a month', r.amount, 'usd/month', 'computed', 'num'), term('Take-home plus pre-tax retirement', plan.draftt.base.amount, 'usd/month', 'computed', 'den')]) : out(null, []); } };
+  if (what === 'floor') return { id, label: 'The fixed floor a month', unit: 'usd/month', op: 'sum', blockOnMissing: true, screens: PLAN_SCREENS, formula: 'Fixed floor = every line marked fixed, a month, added up + every debt at its minimum',
+    explain: ({ spine, plan }) => (plan ? out(resOf(plan.floor, plan.floor.floor), [...plan.floor.items.map((i) => field(spine, i.path, i.amount, 'usd/month', 'plus', i.label + ' (a month)')), term('Debt minimums', plan.floor.minimums, 'usd/month', plan.floor.minimums === null ? 'missing' : 'computed', 'plus', { metric: 'debtMinimums' })]) : out(null, [])) };
+  if (what === 'goal') return { id, label: 'Goal: still to go', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'To go = the target - what the linked account holds (zero when nothing is linked), never below zero',
+    explain: ({ spine, plan }) => { const g = plan && plan.goals.rows.find((x) => x.id === key); return g ? out(resOf(g, g.toGo), [field(spine, g.path, g.target, 'usd', 'plus', g.label + ' target'), term('In ' + (g.linkedAccount ? labelFor(spine, 'accounts.' + g.linkedAccount + '.name') || g.linkedAccount : 'no linked account'), g.held ?? 0, 'usd', g.linkedAccount ? 'known' : 'computed', 'minus', g.linkedAccount ? { path: 'accounts.' + g.linkedAccount + '.balance' } : {})]) : out(null, []); },
+    recompute: (t) => (t[0].value === null ? null : Math.max(0, Math.round((t[0].value - (t[1].value ?? 0)) * 100) / 100)) };
+  if (what === 'outlook') return { id, label: 'Outlook: the typical lowest day', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Typical lowest day = the median of the lowest day over every run, each run the same window with every amount wobbled and days shifted (a fixed seed, so it repeats)',
+    explain: ({ outlook: o }) => (o ? out({ value: o.low.typical, kind: o.kind, from: [], rough: [], missing: [], rules: o.rules }, [term('Runs', o.runs, 'count', 'known', 'arg', { rule: 'APP_OUTLOOK_RUNS' }), term('Wobble on every amount', o.wobble, 'ratio', 'known', 'arg', { rule: 'APP_OUTLOOK_WOBBLE' }), term('Lowest day in a bad run (tenth percentile)', o.low.bad, 'usd', 'computed', 'arg'), term('Lowest day in a good run (ninetieth)', o.low.good, 'usd', 'computed', 'arg')]) : out(null, [])),
+    recompute: (t, ctx) => (ctx.outlook && ctx.sim ? outlookAgain(ctx.spine, ctx.rules, ctx.sim, { runs: ctx.outlook.runs, wobble: ctx.outlook.wobble }).low.typical : null) };
+  return null;
+}
 
 // The metric(s) behind each Dashboard tile and flag.
 export const DASHBOARD_MATH = {

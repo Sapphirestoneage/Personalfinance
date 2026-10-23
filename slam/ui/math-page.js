@@ -3,6 +3,7 @@
 // the rules registry, with today's numbers for the loaded household. Nothing
 // here is written by hand, so it cannot drift from the engines.
 
+import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { METRICS, explainMetric, showNumber } from '../engine/math.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
@@ -11,6 +12,7 @@ import { pickedScenario, scenarioText } from './scenario.js';
 import { h, chip, ledgerHref, shortDate } from './view.js';
 
 const app = document.getElementById('app');
+mountPage({ app });
 const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
 const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Windfall') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : h('span', {}, 'this page');
 

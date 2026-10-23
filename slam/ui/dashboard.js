@@ -1,6 +1,7 @@
 // The Dashboard: the one-pager out. Every number comes from engine/summary.js
 // and links to the Ledger fields it was built from. Formatting only.
 
+import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
 import { mathButton } from './math-panel.js';
@@ -14,6 +15,7 @@ import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
 const app = document.getElementById('app');
+mountPage({ app });
 const monthLabel = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -150,7 +152,7 @@ function render(base, rules, source) {
 
   app.replaceChildren(
     // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('div', { class: 'tiles' }, tiles),

@@ -195,6 +195,21 @@
     <div class="edit-actions"><button type="button" class="btn primary">Apply what is ticked</button><button type="button" class="btn ghost">Discard</button></div>
     <div class="tablewrap"><table class="data-table"><thead><tr><th>Tag</th><th class="num">Planned</th><th class="num">Logged</th><th class="num">Difference</th></tr></thead><tbody><tr class="tight"><td>Food</td><td class="num">$700</td><td class="num">$765</td><td class="num">+$65 over</td></tr><tr><td>Housing</td><td class="num">$1,950</td><td class="num">$1,950</td><td class="num">on the plan</td></tr></tbody></table></div>
   </section>
+  <section class="card" aria-labelledby="p2f-h">
+    <h2 id="p2f-h">Plan page and shared pieces (Phase 2, Batch F)</h2>
+    <p class="muted">Every page now starts with a skip link (visible when it has focus), ends with the build stamp, and shows an error banner instead of failing silently. On a phone the Save row of any editor stays pinned at the bottom. An amount can carry a second price tag in hours of life.</p>
+    <p><a class="skip" href="#app" style="position: static; display: inline-block">Skip to the content</a> &nbsp; <span class="hours-tag">(2.3 h)</span></p>
+    <div class="error-banner" role="alert"><strong>Something went wrong. </strong><span class="error-text">A number could not be read.</span> <button type="button" class="btn small">Reload the page</button> <button type="button" class="btn ghost small">Hide</button></div>
+    <footer class="build-stamp" style="margin-top: 8px">SLAM Phase 2, Batch F, 2026-10-23. Numbers are yours; nothing leaves this browser.</footer>
+    <p class="muted">The FOO ladder: a tick for a done rung, a filled number for the current one; each rung says what it needs and the month it completes. The DRAFTT letters are bars with a reference mark on housing, no verdict.</p>
+    <ol class="ladder"><li class="done"><span><strong>Deductibles covered</strong><span class="rung-why">Cash covers the biggest deductible ($2,500).</span></span><span class="rung-when">done</span></li><li class="current"><span><strong>High-interest debt gone</strong><span class="rung-why">Visa $3,000 at or above 10%.</span></span><span class="rung-when">$3,000, about Mar 2027</span></li><li><span><strong>Emergency reserves</strong><span class="rung-why">$10,861 to the Rule of 5 target.</span></span><span class="rung-when">$10,861, about Jul 2028</span></li></ol>
+    <ul class="letters"><li><span class="letter">A</span><span class="lbar" role="img" aria-label="Accommodation 41%"><span class="lfill" style="width: 100%"></span><span class="lref" style="left: 85%"></span></span><span class="lamt">$1,950 (41.4%)</span></li><li><span class="letter">F</span><span class="lbar" role="img" aria-label="Food 15%"><span class="lfill" style="width: 36%"></span></span><span class="lamt">$700 (14.9%)</span></li></ul>
+    <p class="muted">Saved scenarios and the history are lists with a restore button each; a diff is a list of fields with before and after. Import shows its diff before it applies.</p>
+    <ul class="restore-list"><li><strong>Before the move</strong><span class="when">Oct 23, 2026</span><button type="button" class="btn small">Load it</button><button type="button" class="btn ghost small">Forget it</button></li><li><span>Rent set to $1,900</span><button type="button" class="btn small">Restore to before this</button></li></ul>
+    <ul class="diff-list"><li><span class="d-path">Rent: amount</span><span>1800 to 1900</span></li><li><span class="d-path">Gym: amount</span><span>removed (was 50)</span></li></ul>
+    <div class="file-row"><label class="edit-label" for="d-import">Import a household file</label><input id="d-import" type="file"><button type="button" class="btn">Read it</button></div>
+    <ul class="ev-list"><li class="ev ev-foo"><span class="sw viz-0" aria-hidden="true"></span><span class="ev-name">Plan: $686 to high-interest debt gone<span class="pill">plan</span></span><span class="ev-amt">-$686</span></li></ul>
+  </section>
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>

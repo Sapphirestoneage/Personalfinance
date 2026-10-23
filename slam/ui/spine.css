@@ -445,6 +445,8 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .ev-small.ev-done { opacity: 0.7; }
 .ev-small .pill { font-size: 9px; }
 .pill-maybe { border-style: dashed; }
+.ev-foo { border: 1.5px dashed var(--border-strong, var(--border)); border-radius: var(--radius-sm); padding: 2px var(--space-1); }
+.ev-foo .ev-name { color: var(--text-muted); }
 /* The drag handle: a visible grip that moves the item; the words beside it tap to edit. */
 .grip { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid var(--btn-line); background: var(--surface); color: var(--text-muted); font-size: 12px; line-height: 1; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; flex: none; }
 .grip::after { content: ""; position: absolute; inset: -11px; }
@@ -477,7 +479,8 @@ details.pay-fold > summary::-webkit-details-marker { display: none; }
 .data-table td.num, .data-table th.num { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .data-table tr.tight td { background: var(--warn-soft); }
 .data-table tr.under td { background: var(--bad-soft); }
-.tablewrap { overflow-x: auto; }
+.tablewrap { overflow-x: auto; max-width: 100%; min-width: 0; }
+details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-x: hidden; }
 /* The year strip. */
 .year-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-1); margin: 0 0 var(--space-3); }
 @media (min-width: 640px) { .year-strip { grid-template-columns: repeat(12, 1fr); } }
@@ -607,3 +610,48 @@ details.pay-fold > summary::-webkit-details-marker { display: none; }
 .verdict.yes { color: var(--st-known); background: var(--good-soft); }
 .verdict.tight { color: var(--st-dont-know); background: var(--warn-soft); }
 .verdict.no { color: var(--bad); background: var(--bad-soft); }
+
+/* ---------------------------------------------------------------- shared page pieces (S-208) */
+/* The skip link: off screen until it has focus. */
+.skip { position: absolute; left: -9999px; top: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--accent); color: var(--accent-text); border-radius: var(--radius-sm); z-index: 100; font-weight: 700; }
+.skip:focus { left: var(--space-2); outline: 3px solid var(--focus); }
+.error-banner { margin: 0 auto var(--space-3); max-width: 1120px; padding: var(--space-2) var(--space-3); border: 1.5px solid var(--bad); border-left-width: 6px; border-radius: var(--radius-sm); background: var(--bad-soft); color: var(--text); }
+.build-stamp { margin: var(--space-5, 32px) auto 0; max-width: 1120px; padding: var(--space-3) var(--space-4); font-size: var(--text-xs); color: var(--text-muted); border-top: 1px solid var(--border); }
+.headline { font-size: var(--text-lg); font-weight: 700; margin: 0 0 var(--space-2); }
+/* On a phone the Save row of any editor stays pinned at the bottom of the screen while the form scrolls. */
+@media (max-width: 639px) { .editor .edit-actions { position: sticky; bottom: 0; background: var(--surface); padding: var(--space-2) 0; border-top: 1px solid var(--border); z-index: 2; } }
+/* The hours tag beside an amount (L001). */
+.hours-tag { font-size: var(--text-xs); color: var(--text-muted); font-family: var(--font-ui); margin-left: var(--space-1); white-space: nowrap; }
+/* The FOO ladder. */
+.ladder { list-style: none; margin: 0 0 var(--space-2); padding: 0; counter-reset: rung; }
+.ladder li { display: grid; grid-template-columns: 28px 1fr auto; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); align-items: start; font-size: var(--text-sm); }
+.ladder li::before { counter-increment: rung; content: counter(rung); display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1.5px solid var(--btn-line); font-size: var(--text-xs); font-weight: 700; }
+.ladder li.done::before { background: var(--good-soft); border-color: var(--st-known); color: var(--st-known); content: "\2713"; }
+.ladder li.current::before { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.ladder .rung-when { font-family: var(--font-num); text-align: right; }
+@media (max-width: 639px) { .ladder li { grid-template-columns: 28px 1fr; } .ladder .rung-when { grid-column: 2; text-align: left; } }
+.ladder .rung-why { color: var(--text-muted); display: block; }
+/* DRAFTT letters: a bar per letter with the reference mark on housing. */
+.letters { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: grid; gap: var(--space-2); }
+.letters li { display: grid; grid-template-columns: 36px 1fr auto; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-sm); }
+.letters .letter { font-weight: 800; font-size: var(--text-lg); font-family: var(--font-num); }
+.letters .lbar { position: relative; height: 10px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); overflow: visible; }
+.letters .lbar .lfill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--viz-1); }
+.letters .lbar .lref { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text-muted); }
+.letters .lamt { font-family: var(--font-num); white-space: nowrap; }
+/* Scenarios and history. */
+.restore-list { list-style: none; margin: 0; padding: 0; }
+.restore-list li { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--border); font-size: var(--text-sm); }
+.restore-list .when { font-family: var(--font-num); color: var(--text-muted); }
+.diff-list { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); }
+.diff-list li { padding: var(--space-1) 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.diff-list .d-path { font-family: var(--font-num); }
+.file-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.file-row input[type="file"] { min-height: var(--tap); }
+/* The one-pager. */
+.onepager { max-width: 760px; margin: 0 auto; }
+.onepager .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.onepager .op-cell { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
+.onepager .op-cell .op-v { font-family: var(--font-num); font-weight: 700; font-size: var(--text-lg); display: block; }
+.onepager .op-cell .op-k { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+@media print { .page-links, .top-actions, .btn, .skip, .build-stamp, .saved-line, .math, .window-bar { display: none !important; } body { background: #fff; color: #000; } .card, .op-cell { break-inside: avoid; border-color: #999; } }

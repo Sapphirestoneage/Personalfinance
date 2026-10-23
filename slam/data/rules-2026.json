@@ -1601,6 +1601,7 @@
         "taxBill",
         "cashFloor",
         "promos",
+        "employerMatch",
         "cards",
         "cushion",
         "roth",
@@ -1608,7 +1609,7 @@
       ],
       "unit": "order",
       "appliesTo": "Windfall",
-      "notes": "Tax on the money itself (when it is still owed), the year's tax bill, cash up to the stage 1 floor, promo balances the surplus cannot clear in time, cards charging interest now (highest rate first), cash up to the Rule of 5 target, the year's Roth IRA room, then what is left. Change the order here, not in code.",
+      "notes": "Tax on the money itself (when it is still owed), the year's tax bill, cash up to the stage 1 floor, promo balances the surplus cannot clear in time, the employer match left on the table this year (answer 23: before the cards, skipped and said so when no stream has a match), cards charging interest now (highest rate first), cash up to the Rule of 5 target, the year's Roth IRA room, then what is left. Change the order here, not in code.",
       "source": "SLAM house assumption (Phase 2, S-201)",
       "verified": "assumption"
     },
@@ -1841,6 +1842,86 @@
       "notes": "52 / 12",
       "source": "Arithmetic",
       "verified": "yes"
+    },
+    {
+      "id": "FOO_RUNGS",
+      "rule": "The Financial Order of Operations, rung by rung",
+      "value": [
+        "deductibles",
+        "employerMatch",
+        "highInterest",
+        "reserves",
+        "rothHsa",
+        "maxRetirement",
+        "hyper",
+        "prepaid",
+        "lowInterest"
+      ],
+      "unit": "order",
+      "appliesTo": "Plan page: the FOO ladder",
+      "notes": "Deductibles covered, the employer match, high-interest debt, emergency reserves (the Rule of 5 target), Roth and HSA room, retirement maxed, hyper-accumulation (a savings rate), prepaid future expenses (goals), low-interest debt. Change the order here, not in code.",
+      "source": "The Money Guy Financial Order of Operations, as the spec (E007) adopts it",
+      "verified": "assumption"
+    },
+    {
+      "id": "FOO_HYPER_RATE",
+      "rule": "Hyper-accumulation: the gross savings rate the FOO aims for",
+      "value": 0.25,
+      "unit": "rate",
+      "appliesTo": "Plan page: FOO rung 7",
+      "notes": "",
+      "source": "The Money Guy Financial Order of Operations (25%)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_HOUSING_REF",
+      "rule": "Housing reference line as a share of take-home, shown beside the DRAFTT housing letter (no verdict)",
+      "value": 0.35,
+      "unit": "rate",
+      "appliesTo": "Plan page: DRAFTT scorecard",
+      "notes": "Answer L002: a reference, not a target or a colour",
+      "source": "SLAM house assumption (L002)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_OUTLOOK_RUNS",
+      "rule": "Runs in the outlook (many runs with wobble on amounts and days)",
+      "value": 200,
+      "unit": "count",
+      "appliesTo": "Plan page: outlook",
+      "notes": "",
+      "source": "SLAM house assumption (v44 default)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_OUTLOOK_WOBBLE",
+      "rule": "Wobble on every amount in the outlook runs, as a share",
+      "value": 0.15,
+      "unit": "rate",
+      "appliesTo": "Plan page: outlook",
+      "notes": "15% either way, days shift up to two",
+      "source": "SLAM house assumption (v44 default)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_SHOCK_MONTHS",
+      "rule": "Months of income lost in the income shock when the form does not say",
+      "value": 3,
+      "unit": "months",
+      "appliesTo": "Plan page: income shock",
+      "notes": "",
+      "source": "SLAM house assumption (v44 default)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_HISTORY_POINTS",
+      "rule": "Restore points shown in the undo history",
+      "value": 25,
+      "unit": "count",
+      "appliesTo": "Plan page: history",
+      "notes": "The history itself keeps 200 steps",
+      "source": "Spec batch 2 (25 restore points)",
+      "verified": "assumption"
     }
   ]
 }

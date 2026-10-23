@@ -4,6 +4,7 @@
 // answer are kept in this browser only; nothing is written to the household.
 // Formatting only: the engine is engine/windfall.js.
 
+import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { windfall } from '../engine/windfall.js';
 import { mathButton } from './math-panel.js';
@@ -14,13 +15,14 @@ import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, ledgerHref } from './view.js';
 
 const app = document.getElementById('app');
+mountPage({ app });
 const KEY = 'slam-windfall:v1';
 // One data color per step, in the fixed order (DESIGN.md 8); the tax steps share one, the cash steps share one.
 const COLOR = { taxOnIt: 'viz-4', taxBill: 'viz-4', cashFloor: 'viz-3', promos: 'viz-2', cards: 'viz-2', cushion: 'viz-3', roth: 'viz-5', left: 'viz-0' };
 const LEGEND = [['viz-4', 'Tax'], ['viz-3', 'Cash'], ['viz-2', 'Debt'], ['viz-5', 'Roth IRA'], ['viz-0', 'Not assigned yet']];
 
 let base, rules, source;
-let ask = (() => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v.amount === 'number') return { amount: v.amount, taxed: v.taxed !== false }; } catch { /* storage blocked */ } return { amount: null, taxed: true }; })();
+let ask = (() => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v.amount === 'number') return { amount: v.amount, taxed: v.taxed !== false, source: ['w2', '1099', 'other'].includes(v.source) ? v.source : 'other' }; } catch { /* storage blocked */ } return { amount: null, taxed: true, source: 'other' }; })();
 const keep = () => { try { localStorage.setItem(KEY, JSON.stringify(ask)); } catch { /* storage blocked: lasts until the page closes */ } };
 
 function form() {
@@ -31,11 +33,17 @@ function form() {
   const taxBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Is tax already taken out of it?'),
     choice('yes', 'Yes, or none is owed', 'A bonus with tax withheld, a gift, an inheritance, a tax refund, a sale of your own things'),
     choice('no', 'No, tax is still owed on it', 'Contract or 1099 pay, a prize, a bonus paid with nothing withheld'));
+  // Where it came from (answer 24): 1099 money owes self-employment tax on top.
+  const src = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-source', value: val, checked: ask.source === val }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
+  const srcBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Where did it come from?'),
+    src('other', 'A gift, a refund, a sale, an inheritance', 'No payroll tax on it'),
+    src('w2', 'My job (a bonus or back pay)', 'Payroll tax came off it already'),
+    src('1099', 'Contract or 1099 work', 'Self-employment tax is owed on top of income tax'));
   return h('form', { class: 'editor windfall-form', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
     const p = parseInput('money', amount.value);
     if (!p.ok || p.value <= 0) { msg.textContent = 'How much: ' + (p.ok ? 'more than $0' : p.message); amount.focus(); return; }
-    ask = { amount: p.value, taxed: taxBox.querySelector('input:checked').value === 'yes' };
+    ask = { amount: p.value, taxed: taxBox.querySelector('input:checked').value === 'yes', source: srcBox.querySelector('input:checked').value };
     keep();
     render();
     document.getElementById('wf-result')?.scrollIntoView({ block: 'start' });
@@ -43,7 +51,7 @@ function form() {
     h('label', { for: 'wf-amount', class: 'edit-label' }, 'How much is coming in?'),
     h('div', { class: 'amount-row' }, h('span', { class: 'unit', 'aria-hidden': 'true' }, '$'), amount),
     h('p', { class: 'edit-hint' }, 'A lump sum: a bonus, a gift, a tax refund, contract pay, a sale. Nothing here changes the Ledger.'),
-    taxBox, msg,
+    taxBox, srcBox, msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Show where it goes')));
 }
 
@@ -82,7 +90,7 @@ function render() {
   const spine = withScenario(base, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   app.replaceChildren(
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Windfall'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),

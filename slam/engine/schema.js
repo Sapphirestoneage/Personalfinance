@@ -49,7 +49,7 @@ export const FAMILIES = {
   fixedTerm: { label: 'Fixed-term', fields: { rate: 'rate', maturityDate: 'date', earlyWithdrawalPenalty: 'text' } },
   employerRetirement: {
     label: 'Employer retirement', fields: {
-      rothShare: 'rate', matchFormula: 'text', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
+      rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
       priorYearFicaWages: 'money', allowsAfterTax: 'bool', allowsLoans: 'bool', employerType: 'choice:private|nonprofit|government|federal|self'
     }
   },
@@ -216,6 +216,9 @@ export function validate(spine) {
   checkFact('household.householdSize', h.householdSize, 'int', false);
   // Hours worked a week, for hours of life (S-206).
   checkFact('household.workHoursPerWeek', h.workHoursPerWeek, 'int', false);
+  // Batch F (S-208): the biggest insurance deductible (FOO rung 1), the commute (real hourly wage).
+  checkFact('household.deductible', h.deductible, 'money', false);
+  checkFact('household.commuteHoursPerWeek', h.commuteHoursPerWeek, 'int', false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
@@ -297,6 +300,8 @@ export function validate(spine) {
     checkFact(p + '.reviewed', e.reviewed, 'date', false);
     // A free trial that converts on a day (S-206).
     checkFact(p + '.trialEnds', e.trialEnds, 'date', false);
+    // A cost of working (S-208): comes off the real hourly wage.
+    checkFact(p + '.workRelated', e.workRelated, 'bool', false);
     if (e.payDay && e.payDay.value !== null && (e.payDay.value < 1 || e.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
     // Shared with other people (S-175).
     checkFact(p + '.shared', e.shared, 'bool', false);
@@ -340,6 +345,13 @@ export function validate(spine) {
     if (!['fi', 'savings', 'payoff', 'other'].includes(g.type)) err(p + '.type', 'fi, savings, payoff or other');
     for (const k of ['target', 'annualSpending', 'fiNumber']) if (k in g) checkFact(p + '.' + k, g[k], 'money');
     optDate(p + '.by', g.by);
+    // F009 (S-208): priority, the account it lives in, a sinking fund with a monthly set-aside, spent on a date, repeating yearly.
+    checkFact(p + '.priority', g.priority, 'int', false);
+    checkFact(p + '.linkedAccount', g.linkedAccount, 'link', false);
+    checkFact(p + '.sinkingFund', g.sinkingFund, 'bool', false);
+    checkFact(p + '.monthly', g.monthly, 'money', false);
+    checkFact(p + '.spendOn', g.spendOn, 'date', false);
+    checkFact(p + '.repeatYearly', g.repeatYearly, 'bool', false);
   }
 
   // tax years: the year's own entries (estimated payments made, gains, dividends)

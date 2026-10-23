@@ -9,6 +9,7 @@
 // this browser (the same saved household the Ledger edits) and can be undone.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
+import { mountPage } from './page.js';
 import { calendar, weekdayOf, rangeCashTerms } from '../engine/calendar.js';
 import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents } from '../engine/calendar-views.js';
 import { summarize } from '../engine/summary.js';
@@ -21,8 +22,10 @@ import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 import { pickedWindow, windowBar } from './window.js';
 import { debtTab } from './debt-tab.js';
+import { fooGhosts } from '../engine/plan.js';
 
 const app = document.getElementById('app');
+mountPage({ app });
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const longMonth = (ym) => MONTH_NAMES[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
@@ -30,7 +33,7 @@ const addMonths = (ym, n) => { const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
-const CAT = { pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
+const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', maybe: 'maybe' };
 const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
@@ -347,11 +350,13 @@ function render() {
   const today = todayIso();
   const mathCtx = () => ({ spine, rules, s: summarize(spine, rules, { flags: false }) });
   const ms = c.sim ? milestones(spine, rules, c.sim, c.months) : [];
+  // FOO ghost chips (S-208): the plan's allocation for the month, dashed, tagged Plan, never counted.
+  for (const g of fooGhosts(spine, rules, mathCtx().s, c.months.map((m) => m.ym))) { const m = c.months.find((x) => x.ym === g.date.slice(0, 7)); if (!m) continue; let d = m.days.find((x) => x.date === g.date); if (!d) { d = { date: g.date, day: +g.date.slice(8, 10), events: [], in: 0, out: 0 }; m.days.push(d); m.days.sort((a, b) => (a.date < b.date ? -1 : 1)); } d.events.push(g); m.events.push(g); }
   const go = (n) => { state.ym = addMonths(state.ym, n); state.open = null; keep(KEY, state.ym); render(); window.scrollTo({ top: 0 }); };
   const focusId = document.activeElement && document.activeElement.id;
   const caret = focusId === 'cal-search' ? document.activeElement.selectionStart : null;
   app.replaceChildren(...[
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Cash flow calendar'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(c.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'))),

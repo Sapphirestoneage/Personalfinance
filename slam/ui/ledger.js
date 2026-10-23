@@ -4,6 +4,7 @@
 // confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
+import { mountPage } from './page.js';
 import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
@@ -33,6 +34,7 @@ let dirty = false, lastSaved = null;
 // Today in the person's own time zone, not UTC (an evening edit is today's).
 const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const app = document.getElementById('app');
+mountPage({ app });
 
 function apply(next, label, shown = null) {
   // House defaults (a card's default APR) refill any blank after every edit.
@@ -871,7 +873,7 @@ function render() {
   // Empty slots (no picker, no banner) are left out, never drawn as text.
   app.replaceChildren(...[
     // Going somewhere is a link; doing something is a button (CLAUDE.md affordances 1 and 4).
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {},
         h('h1', {}, 'Ledger'),

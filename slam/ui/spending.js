@@ -5,10 +5,12 @@
 // Every number comes from engine/spending.js, engine/cashsim.js and the
 // summary; every number has Show the math. Formatting only.
 
+import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
 import { estimatedVsActual } from '../engine/compare.js';
+import { realHourlyWage, hoursOf } from '../engine/plan.js';
 import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS } from '../engine/feed.js';
 import { logSpend, removeLog, checkIn, setSweep, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
@@ -21,6 +23,7 @@ import { pickedWindow, windowBar } from './window.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 
 const app = document.getElementById('app');
+mountPage({ app });
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const TAGS = [...FAT, 'other'];
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
@@ -29,6 +32,11 @@ const pc = (f) => Math.round(f * 1000) / 10 + '%';
 
 let hist, rules, source, lastSaved = null, merchantRules = { kindRules: {}, rules: [] };
 let window_ = pickedWindow();
+const HOURS_KEY = 'slam-hours:v1';
+let showHours = (() => { try { return localStorage.getItem(HOURS_KEY) === 'on'; } catch { return false; } })();
+let wage = null;
+// A second price tag: the amount as hours of life, when the toggle is on and the wage is known.
+const hoursTag = (amount) => (showHours && wage && amount !== null && amount !== undefined ? h('span', { class: 'hours-tag' }, '(' + hoursOf(amount, wage) + ' h)') : null);
 // What the page's forms hold between renders.
 const form = { csv: '', csvFormat: 'auto', csvWith: 'cash', proposals: null, picks: null, importWords: '', amount: '', tag: 'other', paidWith: 'cash', merchant: '', expenseId: '', date: todayIso(), dropped: new Set(), towardDebt: false, askAmount: '', askWith: 'cash', checkDate: todayIso(), sweepOn: null, sweepTo: '', sweepKeep: '' };
 
@@ -52,7 +60,7 @@ function safeCard(vw, ctx) {
   return h('section', { class: 'card', 'aria-labelledby': 'safe-h' },
     h('h2', { id: 'safe-h' }, 'Safe to spend'),
     s.today === null ? h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.') : [
-      h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today)), h('span', { class: 'muted' }, s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
+      h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today), hoursTag(s.today)), h('span', { class: 'muted' }, s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
       h('p', { class: 'tile-sub' }, kindChip(s.kind), ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + ').' + (s.excludesCushion ? ' The cushion is not spending money.' : '')),
       mathButton(['spend:safeToday', ...(s.daysUntil ? ['spend:safePerDay'] : [])], ctx)]);
 }
@@ -117,7 +125,7 @@ function tagsCard(vw, ctx) {
       h('tbody', {}, t.rows.map((r) => h('tr', { class: r.hot ? 'tight' : '' },
         h('td', {}, r.label, ' ', r.hot ? h('span', { class: 'hot-chip' }, 'running hot') : r.over ? h('span', { class: 'hot-chip' }, 'over') : r.budget !== null && r.budget > 0 ? h('span', { class: 'hot-chip fine' }, 'on track') : null),
         h('td', {}, budgetCell(r)),
-        h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left)),
+        h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left), r.left === null ? null : hoursTag(r.left)),
         h('td', { class: 'num' }, r.pace === null ? '' : money(r.pace)),
         h('td', { class: 'num' }, money(r.lastMonthSameDay))))))),
     h('p', { class: 'tile-note' }, kindChip(t.kind), ' Budgets are the spine\'s lines a month by tag; spent is the log. A missing line amount makes the tag\'s budget a missing row, not a smaller number.'),
@@ -143,7 +151,7 @@ function donutCard(vw, spine, rerender, ctx) {
   const cutCtx = () => ({ ...ctx(), cut });
   return h('section', { class: 'card', 'aria-labelledby': 'donut-h' },
     h('h2', { id: 'donut-h' }, 'Where the money goes'),
-    h('div', { class: 'donut-wrap' }, ring, h('ul', { class: 'donut-list', 'aria-label': 'The slices' }, d.slices.map((x, i) => h('li', {}, h('span', { class: 'sw ' + VIZ[i % VIZ.length], 'aria-hidden': 'true' }), x.label, h('span', { class: 'd-amt' }, money(x.amount) + (x.share !== null ? ' (' + Math.round(x.share * 100) + '%)' : '')))))),
+    h('div', { class: 'donut-wrap' }, ring, h('ul', { class: 'donut-list', 'aria-label': 'The slices' }, d.slices.map((x, i) => h('li', {}, h('span', { class: 'sw ' + VIZ[i % VIZ.length], 'aria-hidden': 'true' }), x.label, h('span', { class: 'd-amt' }, money(x.amount) + (x.share !== null ? ' (' + Math.round(x.share * 100) + '%)' : ''), hoursTag(x.amount)))))),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' ', d.total === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay; shares are of what is planned.') : 'Of ' + money(d.total) + ' take-home a month.' + (d.short ? ' ' + money(d.short) + ' more leaves than comes in.' : '')),
     h('details', { class: 'flow-list', open: form.dropped.size > 0 }, h('summary', {}, 'The lines: tap one to drop it and see what that saves'),
       h('p', { class: 'muted' }, 'A dropped line is a what-if on this page only; the Ledger is untouched.'),
@@ -159,7 +167,7 @@ function autopsyCard(vw, ctx) {
     h('h2', { id: 'autopsy-h' }, 'Bill autopsy ', h('span', { class: 'count' }, money(a.yearlyTotal) + ' a year')),
     h('p', { class: 'muted' }, 'Every recurring item ranked by what it costs a year. A subscription not reviewed in a year is stale: open it in the Ledger and set the day you looked.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Item'), h('th', { class: 'num' }, 'A month'), h('th', { class: 'num' }, 'A year'), h('th', {}, 'Reviewed'))),
-      h('tbody', {}, a.rows.map((r) => h('tr', { class: r.stale && r.subscription ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, r.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null), h('td', { class: 'num' }, money(r.monthly)), h('td', { class: 'num' }, money(r.yearly)), h('td', {}, r.reviewed ? shortDate(r.reviewed) : r.subscription ? h('span', { class: 'missing-row' }, 'never') : '')))))),
+      h('tbody', {}, a.rows.map((r) => h('tr', { class: r.stale && r.subscription ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, r.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null), h('td', { class: 'num' }, money(r.monthly), hoursTag(r.monthly)), h('td', { class: 'num' }, money(r.yearly), hoursTag(r.yearly)), h('td', {}, r.reviewed ? shortDate(r.reviewed) : r.subscription ? h('span', { class: 'missing-row' }, 'never') : '')))))),
     mathButton(a.rows.slice(0, 5).map((r) => 'spend:autopsy:' + r.id), ctx, 0, 'Show the math for the top five'));
 }
 
@@ -291,17 +299,19 @@ function render() {
   const c = { sim };
   const today = todayIso();
   const vw = spendingView(spine, rules, sim, s, { today });
+  wage = realHourlyWage(spine, rules, s).wage;
   const tiers = burnTiers(spine, rules, s.cashflow, { extra: spine.debtPlan && spine.debtPlan.extra && spine.debtPlan.extra.value !== null ? spine.debtPlan.extra.value : 0 });
   const ctx = () => ({ spine, rules, s, sim, spend: vw, tiers });
   const focusId = document.activeElement && document.activeElement.id;
   app.replaceChildren(...[
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Spending'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     staleBanner(vw.stale),
     windowBar(window_, (n) => { window_ = n; render(); }),
+    h('div', { class: 'window-bar', role: 'group', 'aria-label': 'Hours of life' }, h('button', { type: 'button', class: 'btn', 'aria-pressed': String(showHours), onclick: () => { showHours = !showHours; try { localStorage.setItem(HOURS_KEY, showHours ? 'on' : 'off'); } catch { /* storage blocked */ } render(); } }, showHours ? 'Hours of life: on' : 'Show amounts as hours of life'), h('span', { class: 'muted' }, wage ? 'at ' + money(wage, true) + ' of take-home an hour' : showHours ? 'needs hours worked a week (Plan page)' : '')),
     safeCard(vw, ctx),
     loggerCard(vw, spine, ctx),
     tagsCard(vw, ctx),

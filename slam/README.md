@@ -196,13 +196,29 @@ lands twice. Estimated vs actual then reads the plan against the log per line
 and per tag over the window, income logged against planned, and the savings
 rate from the real ledger; the Dashboard carries this month's reading.
 
+### The Plan page (Batch F, S-208)
+
+`plan.html` holds the longer view: the Financial Order of Operations as a
+nine-rung ladder funded by the surplus with a completion month per rung (and
+dashed plan chips on the calendar); the surplus run through the Windfall
+order (one function, now with the employer match before the cards, the
+self-employment tax on 1099 money and the Roth cap at earned income); the
+paycheck allocator; the solvers (what savings rate, spending, income or
+return reaches FI by an age); the real hourly wage and a toggle that shows
+amounts as hours of life on the Spending page; DRAFTT as shares with a
+housing reference and no verdict; the fixed floor and an income shock; goals
+and sinking funds; the outlook over many runs; life-event templates; saved
+scenarios with a diff; the undo history; export and import; and a printable
+one-pager. Every page carries a skip link, an error banner, the build stamp,
+and on a phone the Save row stays pinned.
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, feed, compare, windfall |
-| `ui/` | the Ledger, Dashboard, Calendar (with its Debt tab), Spending and Windfall views (formatting only) |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, feed, compare, plan, windfall |
+| `ui/` | the Ledger, Dashboard, Calendar (with its Debt tab), Spending, Plan, Windfall and one-pager views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |
 | `BOARD.md`, `QUESTIONS.md` | what is done and next; open questions for Eli |
