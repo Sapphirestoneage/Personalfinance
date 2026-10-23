@@ -14,7 +14,7 @@
         "birthDate": {
           "value": "2003-04-12",
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         }
       }
@@ -22,25 +22,25 @@
     "filingStatus": {
       "value": "single",
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     },
     "state": {
       "value": "NY",
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     },
     "county": {
       "value": "Bronx",
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     },
     "nycResident": {
       "value": true,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     },
     "situation": [
@@ -50,7 +50,7 @@
         "value": {
           "value": "employed",
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         }
       }
@@ -63,13 +63,13 @@
         "value": {
           "value": "parent_plan",
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         },
         "planType": {
           "value": "other",
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         }
       }
@@ -84,7 +84,7 @@
       "amount": {
         "value": 1480,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "biweekly",
@@ -94,13 +94,13 @@
         "federal": {
           "value": 95,
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         },
         "state": {
           "value": 45,
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         }
       }
@@ -113,7 +113,7 @@
       "amount": {
         "value": 350,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "rough"
       },
       "cadence": "monthly",
@@ -123,13 +123,13 @@
         "federal": {
           "value": 0,
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         },
         "state": {
           "value": 0,
           "asOf": "2026-10-22",
-          "source": "golden (made up)",
+          "source": "checker (made up)",
           "kind": "known"
         }
       }
@@ -142,7 +142,7 @@
       "amount": {
         "value": 1900,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -152,26 +152,26 @@
       "need": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": "accommodation",
       "shared": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "sharedWith": {
         "value": 2,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "whoPays": {
         "value": "part",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -181,7 +181,7 @@
       "amount": {
         "value": 160,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -191,26 +191,26 @@
       "need": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": "accommodation",
       "shared": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "sharedWith": {
         "value": 2,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "whoPays": {
         "value": "part",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -220,7 +220,7 @@
       "amount": {
         "value": 380,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -230,7 +230,7 @@
       "need": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": "food"
@@ -241,7 +241,7 @@
       "amount": {
         "value": 260,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -251,7 +251,7 @@
       "need": {
         "value": false,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": "food"
@@ -262,7 +262,7 @@
       "amount": {
         "value": 132,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -272,7 +272,7 @@
       "need": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": "transportation"
@@ -283,7 +283,7 @@
       "amount": {
         "value": 85,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -293,7 +293,7 @@
       "need": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": null
@@ -304,7 +304,7 @@
       "amount": {
         "value": 35,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "cadence": "monthly",
@@ -314,7 +314,7 @@
       "need": {
         "value": false,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": null
@@ -325,7 +325,7 @@
       "amount": {
         "value": 300,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "rough"
       },
       "cadence": "monthly",
@@ -335,7 +335,7 @@
       "need": {
         "value": false,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "fat": null
@@ -349,19 +349,19 @@
       "name": {
         "value": "Checking",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 340,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "role": {
         "value": "spending",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -372,13 +372,13 @@
       "name": {
         "value": "Savings",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 25,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     }
@@ -391,55 +391,55 @@
       "name": {
         "value": "Visa (with cash advances)",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 4800,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "apr": {
         "value": 0.2899,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "limit": {
         "value": 5000,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "minimum": {
         "value": null,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "missing"
       },
       "dueDay": {
         "value": null,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "missing"
       },
       "stress": {
         "value": 8,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "business": {
         "value": false,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "reportsToPersonalCredit": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -450,55 +450,55 @@
       "name": {
         "value": "Store card",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 1350,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "apr": {
         "value": 0.3199,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "limit": {
         "value": 1500,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "minimum": {
         "value": 45,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "dueDay": {
         "value": 15,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "stress": {
         "value": 6,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "business": {
         "value": false,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "reportsToPersonalCredit": {
         "value": true,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -509,37 +509,37 @@
       "name": {
         "value": "Payday loan",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 600,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "apr": {
         "value": 3.9,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "minimum": {
         "value": 675,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "dueDay": {
         "value": 6,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "stress": {
         "value": 10,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -550,37 +550,37 @@
       "name": {
         "value": "Buy now pay later (sneakers and a phone)",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 420,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "apr": {
         "value": 0,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "minimum": {
         "value": 105,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "dueDay": {
         "value": 20,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "stress": {
         "value": 3,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     },
@@ -591,37 +591,37 @@
       "name": {
         "value": "Owed to Mom",
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "balance": {
         "value": 1200,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "apr": {
         "value": null,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "notForMe"
       },
       "minimum": {
         "value": 50,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "dueDay": {
         "value": 1,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "stress": {
         "value": 7,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     }
@@ -631,31 +631,31 @@
     "inflation": {
       "value": 0.03,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "rough"
     },
     "realReturn": {
       "value": 0.05,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "rough"
     },
     "withdrawalRate": {
       "value": 0.04,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     },
     "lifeExpectancy": {
       "value": 90,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "rough"
     },
     "coastAge": {
       "value": 65,
       "asOf": "2026-10-22",
-      "source": "golden (made up)",
+      "source": "checker (made up)",
       "kind": "known"
     }
   },
@@ -666,19 +666,19 @@
       "estimatedPaidFederal": {
         "value": 0,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "estimatedPaidState": {
         "value": 0,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       },
       "setAside": {
         "value": 0,
         "asOf": "2026-10-22",
-        "source": "golden (made up)",
+        "source": "checker (made up)",
         "kind": "known"
       }
     }

@@ -7,54 +7,15 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../../engine/schema.js';
+import { K, RO, M, NFM, person, house, stream, expense, cash, acct, card, loan, assumptions, taxYear, spine } from './spine-builders.js';
 
 const OUT = fileURLToPath(new URL('./households/', import.meta.url));
-const AS_OF = '2026-10-22';
-const SRC = 'golden (made up)';
-const F = (value, kind = 'known') => ({ value, asOf: AS_OF, source: SRC, kind: value === null ? (kind === 'notForMe' ? 'notForMe' : 'missing') : kind });
-const K = (v) => F(v, 'known');
-const RO = (v) => F(v, 'rough');
-const M = () => F(null);
-const NFM = () => F(null, 'notForMe');
 
-const person = (id, name, birth) => ({ id, name, birthDate: K(birth) });
-const house = ({ people, filing = 'single', state = 'NY', county = 'Albany', nyc = false, situation = 'employed', coverage = 'employer', planType = 'other', expenseDefaults, payers }) => ({
-  people,
-  filingStatus: K(filing), state: K(state), county: K(county), nycResident: K(nyc),
-  ...(expenseDefaults ? { expenseDefaults } : {}), ...(payers ? { payers } : {}),
-  situation: [{ id: 'now', from: null, value: K(situation) }],
-  healthCoverage: [{ id: 'now', from: null, personId: people[0].id, value: K(coverage), planType: K(planType) }]
-});
-const stream = (id, type, label, amount, cadence, { start = null, end = null, fed = 0, st = 0, personId = 'p1', likelihood, businessExpenses, kind = 'known' } = {}) => ({
-  id, type, label, personId, amount: F(amount, kind), cadence, start, end,
-  ...(likelihood !== undefined ? { likelihood: RO(likelihood) } : {}),
-  ...(businessExpenses !== undefined ? { businessExpenses: K(businessExpenses) } : {}),
-  withholding: { federal: K(fed), state: K(st) }
-});
-const expense = (id, label, amount, { fat = null, need = true, cadence = 'monthly', start = null, end = null, kind = 'known', shared, coveredBy, fixed = null } = {}) => ({
-  id, label, amount: F(amount, kind), cadence, start, end, fixed, need: K(need), fat,
-  ...(shared ? { shared: K(true), sharedWith: K(shared), whoPays: K('part') } : {}),
-  ...(coveredBy ? { covered: K(true), coveredBy: K(coveredBy) } : {})
-});
-const cash = (id, type, name, balance, { apy, role } = {}) => ({ id, family: 'cash', type, name: K(name), balance: K(balance), ...(apy !== undefined ? { apy: K(apy) } : {}), ...(role ? { role: K(role) } : {}) });
-const acct = (id, family, type, name, balance, extra = {}) => ({ id, family, type, name: K(name), balance: K(balance), ...extra });
-const card = (id, name, balance, apr, limit, { min, due, stress, business = false, reports = true, promoApr, promoEnds, deferred, payPolicy } = {}) => ({
-  id, family: 'debt', type: 'credit_card', name: K(name), balance: K(balance), apr: K(apr), limit: K(limit),
-  minimum: min === undefined ? M() : K(min), dueDay: due === undefined ? M() : K(due),
-  ...(stress ? { stress: K(stress) } : {}),
-  ...(promoApr !== undefined ? { promoApr: K(promoApr), promoEnds: K(promoEnds), deferredInterest: K(!!deferred) } : {}),
-  ...(payPolicy ? { payPolicy: K(payPolicy) } : {}),
-  business: K(business), reportsToPersonalCredit: K(reports)
-});
-const loan = (id, type, name, balance, apr, min, { due, extra = {} } = {}) => ({ id, family: 'debt', type, name: K(name), balance: K(balance), apr: apr === null ? NFM() : K(apr), minimum: K(min), ...(due !== undefined ? { dueDay: K(due) } : {}), ...extra });
-const assumptions = (over = {}) => ({ inflation: RO(0.03), realReturn: RO(0.05), withdrawalRate: K(0.04), lifeExpectancy: RO(90), coastAge: K(65), ...over });
-const taxYear = (over = {}) => ({ id: '2026', year: 2026, estimatedPaidFederal: K(0), estimatedPaidState: K(0), setAside: K(0), ...over });
-const spine = (id, name, body) => ({ schema: 'slam-spine/1', meta: { name: name + ' (golden, made up)', asOf: AS_OF, demo: true, from: 'tests/golden/households/' + id + '.json' }, ...body });
-
+const G = (id, name, body) => { const x = spine(id, name, body); x.meta.name = name + ' (golden, made up)'; return x; };
 const H = {};
 
 // 1. June Okafor, 35: between jobs on unemployment with no tax withholding.
-H['jobless-june'] = spine('jobless-june', 'June Okafor', {
+H['jobless-june'] = G('jobless-june', 'June Okafor', {
   household: house({ people: [person('p1', 'June Okafor', '1991-06-15')], county: 'Monroe', situation: 'between_jobs', coverage: 'marketplace', planType: 'bronze' }),
   income: [
     stream('oldjob', 'w2', 'Salary at Finger Lakes Logistics (ended)', 5500, 'monthly', { start: '2024-01-01', end: '2026-08-31', fed: 380, st: 200 }),
@@ -79,7 +40,7 @@ H['jobless-june'] = spine('jobless-june', 'June Okafor', {
 });
 
 // 2. Wes Delgado, 38: W-2 earner with a 401(k) match, card paid in full each month.
-H['w2-wes'] = spine('w2-wes', 'Wes Delgado', {
+H['w2-wes'] = G('w2-wes', 'Wes Delgado', {
   household: house({ people: [person('p1', 'Wes Delgado', '1988-02-20')], county: 'Erie' }),
   income: [stream('salary', 'w2', 'Salary at Lakeshore Software', 3200, 'biweekly', { start: '2020-05-01', fed: 410, st: 160 })],
   expenses: [
@@ -101,7 +62,7 @@ H['w2-wes'] = spine('w2-wes', 'Wes Delgado', {
 });
 
 // 3. Fay Nakamura, 40: 1099 freelancer paying quarterly estimates, with a solo 401(k).
-H['freelance-fay'] = spine('freelance-fay', 'Fay Nakamura', {
+H['freelance-fay'] = G('freelance-fay', 'Fay Nakamura', {
   household: house({ people: [person('p1', 'Fay Nakamura', '1985-11-03')], county: 'Kings', nyc: true, situation: 'self_employed', coverage: 'marketplace', planType: 'other' }),
   income: [stream('design', '1099', 'Freelance design clients', 7500, 'monthly', { start: '2022-03-01', businessExpenses: 900 })],
   expenses: [
@@ -122,7 +83,7 @@ H['freelance-fay'] = spine('freelance-fay', 'Fay Nakamura', {
 });
 
 // 4. Carlos Reyes, 23: cards, a payday loan, buy now pay later, money owed to family; negative net worth.
-H['card-carlos'] = spine('card-carlos', 'Carlos Reyes', {
+H['card-carlos'] = G('card-carlos', 'Carlos Reyes', {
   household: house({ people: [person('p1', 'Carlos Reyes', '2003-04-12')], county: 'Bronx', nyc: true, coverage: 'parent_plan' }),
   income: [
     stream('retail', 'w2', 'Retail job (hourly)', 1480, 'biweekly', { start: '2025-06-16', fed: 95, st: 45 }),
@@ -147,7 +108,7 @@ H['card-carlos'] = spine('card-carlos', 'Carlos Reyes', {
 });
 
 // 5. Sam Lindqvist, 24: a student with federal loans in deferment, help from parents.
-H['student-sam'] = spine('student-sam', 'Sam Lindqvist', {
+H['student-sam'] = G('student-sam', 'Sam Lindqvist', {
   household: house({ people: [person('p1', 'Sam Lindqvist', '2002-09-30')], county: 'Tompkins', situation: 'student', coverage: 'parent_plan' }),
   income: [
     stream('campus', 'w2', 'Campus library job', 900, 'monthly', { start: '2025-09-01', fed: 40, st: 20 }),
@@ -173,7 +134,7 @@ H['student-sam'] = spine('student-sam', 'Sam Lindqvist', {
 });
 
 // 6. Cat Morales, 36: head of household with a car loan that pays off in 2027.
-H['carloan-cat'] = spine('carloan-cat', 'Cat Morales', {
+H['carloan-cat'] = G('carloan-cat', 'Cat Morales', {
   household: house({ people: [person('p1', 'Cat Morales', '1990-07-08'), person('p2', 'Mia Morales', '2018-03-14')], filing: 'hoh', county: 'Onondaga' }),
   income: [stream('salary', 'w2', 'Salary at Salt City Dental', 6200, 'monthly', { start: '2021-09-01', fed: 520, st: 250 })],
   expenses: [
@@ -198,7 +159,7 @@ H['carloan-cat'] = spine('carloan-cat', 'Cat Morales', {
 });
 
 // 7. Nina and Lev Petrov, 47 and 45: close to FI, married filing jointly, a small mortgage.
-H['near-fi-nina'] = spine('near-fi-nina', 'Nina and Lev Petrov', {
+H['near-fi-nina'] = G('near-fi-nina', 'Nina and Lev Petrov', {
   household: house({ people: [person('p1', 'Nina Petrov', '1979-01-25'), person('p2', 'Lev Petrov', '1981-05-02')], filing: 'mfj', county: 'Westchester' }),
   income: [
     stream('nina', 'w2', 'Nina: salary at Hudson Biotech', 9000, 'monthly', { start: '2015-03-01', fed: 900, st: 420 }),
