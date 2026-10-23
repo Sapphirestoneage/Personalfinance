@@ -2,6 +2,7 @@
 // documents (households are small; S-003 does the same for the Budget).
 
 import { getAt, setAt, isFact } from './spine.js';
+import { PRESETS, INCOME_TYPES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
 // ("25" or "25%" is 0.25). Returns { ok, value } or { ok: false, message }.
@@ -114,3 +115,84 @@ export const canUndo = (h) => h.past.length > 0;
 export const canRedo = (h) => h.future.length > 0;
 export const undoLabel = (h) => (h.past.length ? h.past[h.past.length - 1].label : null);
 export const redoLabel = (h) => (h.future.length ? h.future[0].label : null);
+
+// ---------------------------------------------------------------- add, remove, many at once (S-169)
+// Fields a new item starts with, as missing Facts, by family or collection.
+const STARTING_FIELDS = {
+  cash: ['institution', 'balance', 'apy'], fixedTerm: ['institution', 'balance', 'rate', 'maturityDate'],
+  employerRetirement: ['institution', 'balance', 'monthlyContribution'], ira: ['institution', 'balance', 'monthlyContribution'],
+  hsaFsa: ['institution', 'balance', 'monthlyContribution'], education: ['institution', 'balance', 'beneficiary'],
+  taxable: ['institution', 'balance', 'costBasis'], otherAssets: ['balance', 'appreciationRate'],
+  debt: ['institution', 'balance', 'apr', 'minimum']
+};
+
+function newId(list, label) {
+  const base = String(label || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'item';
+  const taken = new Set((list || []).map((x) => x.id));
+  let id = base, n = 2;
+  while (taken.has(id)) id = base + '-' + n++;
+  return id;
+}
+
+// addItem(spine, { collection, type, label, cadence, fat }, today) -> { spine, id, firstPath }
+// A new account, debt, income stream, expense or goal, with its starting
+// fields missing (red) so the Ledger asks for them. House defaults run after.
+export function addItem(spine, { collection, type, label, cadence = 'monthly', fat = null }, today) {
+  const stamp = { asOf: today, source: 'ledger' };
+  const M = () => ({ value: null, kind: 'missing', ...stamp });
+  const K = (value) => ({ value, kind: 'known', ...stamp });
+  const list = spine[collection] || [];
+  const id = newId(list, label);
+  let item, first;
+  if (collection === 'accounts' || collection === 'debts') {
+    const preset = PRESETS[type];
+    if (!preset || (collection === 'debts') !== (preset.family === 'debt')) throw new Error('Not a ' + collection + ' type: ' + type);
+    item = { id, family: preset.family, type, name: K(label || preset.label) };
+    for (const k of STARTING_FIELDS[preset.family] || ['balance']) item[k] = M();
+    if (type === 'roth_ira') item.basis = M();
+    if (type === 'credit_card') Object.assign(item, { limit: M(), business: M(), reportsToPersonalCredit: M() });
+    first = collection + '.' + id + '.balance';
+  } else if (collection === 'income') {
+    if (!INCOME_TYPES.includes(type)) throw new Error('Not an income type: ' + type);
+    const noWithholding = type === '1099';
+    item = { id, type, label: label || type, personId: spine.household.people[0].id, amount: M(), cadence, start: null, end: null,
+      withholding: { federal: noWithholding ? K(0) : M(), state: noWithholding ? K(0) : M() } };
+    if (type === 'maybeMoney') item.likelihood = M();
+    first = 'income.' + id + '.amount';
+  } else if (collection === 'expenses') {
+    item = { id, label: label || 'New expense', amount: M(), cadence, start: null, end: null, fixed: null, need: null, fat };
+    first = 'expenses.' + id + '.amount';
+  } else if (collection === 'goals') {
+    item = { id, type: type || 'savings', label: label || 'New goal' };
+    if (item.type === 'fi') item.fiNumber = M(); else item.target = M();
+    first = 'goals.' + id + (item.type === 'fi' ? '.fiNumber' : '.target');
+  } else throw new Error('Cannot add to ' + collection);
+  return { spine: { ...spine, [collection]: [...list, item] }, id, firstPath: first };
+}
+
+// Remove one item (undo brings it back).
+export function removeItem(spine, collection, id) {
+  if (!(spine[collection] || []).some((x) => x.id === id)) throw new Error('No ' + collection + ' item ' + id);
+  return { ...spine, [collection]: spine[collection].filter((x) => x.id !== id) };
+}
+
+// Many fields at once: confirm (those with a value become known), rough (those
+// with a value become rough), notForMe. rows: [{ path, type }] from the Ledger.
+export function bulkEdit(spine, rows, action, today) {
+  let s = spine;
+  for (const r of rows) {
+    if (r.type === 'cardRate') {
+      const cardId = r.path.split('.')[1];
+      if (action === 'rough') {
+        for (const k of ['apr', 'promoApr', 'promoEnds']) { const f = getAt(s, 'debts.' + cardId + '.' + k); if (f && f.value !== null) s = setAt(s, 'debts.' + cardId + '.' + k, { ...f, kind: 'rough', asOf: today, source: 'ledger' }); }
+      } else s = editCardRate(s, cardId, action, { today });
+      continue;
+    }
+    const f = getAt(s, r.path);
+    if (!isFact(f)) continue;
+    if (action === 'notForMe') s = editFact(s, r.path, 'notForMe', { today });
+    else if (f.value !== null && action === 'confirm') s = editFact(s, r.path, 'confirm', { today });
+    else if (f.value !== null && action === 'rough') s = editFact(s, r.path, 'set', { value: f.value, kind: 'rough', today });
+  }
+  return s;
+}

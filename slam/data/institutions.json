@@ -1,0 +1,11 @@
+{
+  "note": "Names the Ledger looks for at the start of an account or card name to group it by institution when no institution is entered. Display grouping only; nothing is stored. The first match wins; aliases map to one display name.",
+  "source": "SLAM design (Ledger tree, S-169)",
+  "names": [
+    "American Express", "Amex", "Capital One", "Chase", "Citi", "Citibank", "Discover", "Wells Fargo", "Bank of America", "Barclays",
+    "U.S. Bank", "US Bank", "Synchrony", "Apple", "Goldman Sachs", "Navy Federal", "PenFed", "USAA", "Ally", "Marcus", "SoFi",
+    "Sallie Mae", "Nelnet", "MOHELA", "Aidvantage", "EdFinancial", "Vanguard", "Fidelity", "Schwab", "Charles Schwab", "E*TRADE",
+    "Robinhood", "Betterment", "Wealthfront", "TD Bank", "PNC", "Citizens", "Truist", "HSBC", "Santander", "Toyota Financial", "Honda Financial"
+  ],
+  "aliases": { "American Express": "Amex", "Citibank": "Citi", "US Bank": "U.S. Bank", "Charles Schwab": "Schwab" }
+}

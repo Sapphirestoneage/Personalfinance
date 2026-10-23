@@ -170,3 +170,59 @@ test('the default due day fills every debt with no due day as rough, never a sta
   assert.ok(out.debts.every((d) => !d.statementCloseDay), 'no statement close day is invented');
   assert.equal(R.meta('DEFAULT_DUE_DAY', 2026).verified, 'assumption');
 });
+
+// ------------------------------------------------------------------ the tree, adding, removing, many at once (S-169)
+import { ledgerTree, institutionOf } from '../engine/ledger-tree.js';
+import { addItem, removeItem, bulkEdit } from '../engine/edits.js';
+const INST = readJson('data/institutions.json');
+
+test('tree: debt by kind then institution then card; assets by family then type; every field once', () => {
+  const s = applyDefaults(demo(), R);
+  s.debts.find((d) => d.id === 'visa').name = fact('Chase Freedom');
+  const tree = ledgerTree(s, INST);
+  const debt = tree.find((g) => g.key === 'D');
+  const cards = debt.children.find((n) => n.key === 'D:credit_card');
+  assert.equal(cards.label, 'Credit cards');
+  assert.ok(cards.children.some((n) => n.label === 'Chase' && n.children[0].label === 'Chase Freedom'));
+  const assets = tree.find((g) => g.key === 'A');
+  const ira = assets.children.find((n) => n.label === 'IRA');
+  assert.equal(ira.children[0].label, 'Roth IRA');
+  assert.equal(ira.children[0].children[0].key, 'accounts.roth');
+  const flat = ledgerRows(s).flatMap((g) => g.rows).map((r) => r.path).sort();
+  const inTree = tree.flatMap((g) => g.allRows).map((r) => r.path).sort();
+  assert.deepEqual(inTree, flat, 'the tree shows every field exactly once');
+  assert.equal(institutionOf({ name: fact('American Express Gold') }, INST), 'Amex');
+});
+
+test('add an account, a card, income, an expense and a goal; each is valid and asks for its numbers', () => {
+  let s = demo();
+  for (const spec of [
+    { collection: 'accounts', type: 'roth_ira', label: 'Second Roth' },
+    { collection: 'debts', type: 'credit_card', label: 'Discover it' },
+    { collection: 'income', type: '1099', label: 'Weekend gig', cadence: 'weekly' },
+    { collection: 'expenses', label: 'Gym', fat: null },
+    { collection: 'goals', type: 'savings', label: 'Trip' }
+  ]) {
+    const made = addItem(s, spec, '2026-10-23');
+    s = applyDefaults(made.spine, R);
+    assert.equal(getAt(s, made.firstPath).kind, 'missing', spec.label + ' starts with its number missing');
+  }
+  const r = validate(s);
+  assert.ok(r.ok, r.errors.map((e) => e.path + ' ' + e.message).join('\n'));
+  assert.equal(getAt(s, 'debts.discover-it.apr').kind, 'rough', 'house defaults fill the new card');
+  const fewer = removeItem(s, 'debts', 'discover-it');
+  assert.equal(fewer.debts.some((d) => d.id === 'discover-it'), false);
+});
+
+test('bulk: confirm, mark rough, not for me across several fields', () => {
+  const s = applyDefaults(demo(), R);
+  const rows = [{ path: 'expenses.groceries.amount', type: 'money' }, { path: 'expenses.dining.amount', type: 'money' }, { path: 'debts.store.apr', type: 'cardRate' }];
+  const c = bulkEdit(s, rows, 'confirm', '2026-10-23');
+  assert.deepEqual(rows.slice(0, 2).map((r) => getAt(c, r.path).kind), ['known', 'known']);
+  const r2 = bulkEdit(s, rows, 'rough', '2026-10-23');
+  assert.equal(getAt(r2, 'debts.store.apr').kind, 'rough');
+  assert.equal(getAt(r2, 'debts.store.promoEnds').kind, 'rough');
+  const n = bulkEdit(s, rows.slice(0, 1), 'notForMe', '2026-10-23');
+  assert.equal(getAt(n, 'expenses.groceries.amount').kind, 'notForMe');
+  assert.ok(validate(r2).ok);
+});

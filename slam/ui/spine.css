@@ -127,3 +127,28 @@ details.done > summary { cursor: pointer; min-height: var(--tap); display: flex;
 .fold { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap); border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; padding: 0; text-align: left; }
 .fold-mark { font-family: var(--font-num); color: var(--text-muted); width: 1em; display: inline-block; text-align: center; }
 button.dot { border: 1px solid currentColor; font: inherit; font-size: var(--text-xs); font-weight: 600; cursor: pointer; min-height: 28px; }
+
+/* The Ledger tree (S-169): group > section > institution > item > fields. */
+.tree { list-style: none; margin: 0; padding: 0; }
+.tree .tree { padding-left: var(--space-3); border-left: 2px solid var(--border); margin-left: var(--space-2); }
+.node { margin: var(--space-2) 0; }
+.node-head, .item-head { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.node-head h3, .node-head h4 { margin: 0; font-size: var(--text-md); }
+.node-head h4 { font-size: var(--text-sm); color: var(--text-muted); }
+.item { border-top: 1px solid var(--border); padding: var(--space-1) 0; }
+.item-fold { flex: 1 1 auto; justify-content: flex-start; font-weight: 600; }
+.item-name { flex: 1 1 auto; }
+.item-main { font-family: var(--font-num); font-size: var(--text-sm); font-weight: 400; color: var(--text-muted); }
+.item .rows { padding-left: var(--space-4); }
+.item-actions { padding-left: var(--space-4); }
+.btn.small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+.btn.add { margin: var(--space-2) 0; border-style: dashed; }
+.add-form { max-width: 420px; }
+.add-form select, .add-form input { min-height: var(--tap); padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+/* Select mode: a checkbox on every field and a bar of actions that stays in view. */
+.row-pick { cursor: pointer; grid-template-columns: auto 1fr auto; grid-template-areas: "box label chip" "box value value"; }
+.row-pick input { grid-area: box; width: 22px; height: 22px; margin: 0 var(--space-2) 0 0; }
+.row.picked { background: var(--accent-soft); }
+@media (min-width: 640px) { .row-pick { grid-template-columns: auto 1fr minmax(120px, auto) 92px; grid-template-areas: "box label value chip"; } }
+.bulk-bar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-3); background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius-md); box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15); }
+.bulk-count { font-weight: 700; margin-right: var(--space-2); }

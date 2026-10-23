@@ -1,9 +1,13 @@
-// The Ledger: scan every field, grouped by DAITE; tap one to edit it, confirm
-// it, or mark it not for me. Every edit can be undone. The list at the top is
+// The Ledger: every field, grouped by DAITE and then by kind, institution and
+// account (S-169); tap one to edit it, confirm it, or mark it not for me; add
+// and remove accounts, debts, income, expenses and goals; select several to
+// confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
 import { ledgerRows, stillGuessing, rowPathFor } from '../engine/ledger.js';
-import { parseInput, inputText, editFact, parseCardRate, editCardRate, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
+import { ledgerTree } from '../engine/ledger-tree.js';
+import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
+import { parseInput, inputText, editFact, parseCardRate, editCardRate, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { getAt } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
@@ -12,7 +16,9 @@ import { h, chip, showValue, money, words, shortDate } from './view.js';
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
 
-let rules, hist, source, open = null, showAll = false, guess = null;
+let rules, hist, source, inst, open = null, showAll = false, guess = null;
+// The tree (S-169): which items are open, which add form is open, and select mode.
+let openItems = new Set(), adding = null, selecting = false, selected = new Set();
 // dirty: something was typed in the open editor and not saved yet (S-164).
 // lastSaved: the line under the header that says what was just saved.
 let dirty = false, lastSaved = null;
@@ -149,10 +155,20 @@ function editor(row) {
 function rowEl(row) {
   const f = row.fact;
   const shown = f.kind === 'notForMe' ? 'Does not apply' : f.value === null ? 'Not given yet' : showValue(f.value, row.type);
-  const isOpen = open === row.path;
+  const isOpen = open === row.path && !selecting;
+  const label = row.field || row.label;
+  if (selecting) {
+    const on = selected.has(row.path);
+    return h('li', { class: 'row kind-' + f.kind + (on ? ' picked' : ''), id: 'f-' + row.path },
+      h('label', { class: 'row-main row-pick' },
+        h('input', { type: 'checkbox', checked: on, onchange: () => { if (on) selected.delete(row.path); else selected.add(row.path); render(); } }),
+        h('span', { class: 'row-label' }, label),
+        h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
+        chip(f.kind)));
+  }
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
     h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
-      h('span', { class: 'row-label' }, row.label),
+      h('span', { class: 'row-label' }, label),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
       chip(f.kind)),
     isOpen && editor(row));
@@ -181,6 +197,8 @@ function openField(path) {
   if (open !== path && !canLeave()) return;
   if (open !== path) dirty = false;
   open = path;
+  selecting = false;
+  for (const key of itemKeysFor(path)) openItems.add(key);
   render();
   const el = document.getElementById('f-' + path);
   if (el) { el.scrollIntoView({ block: 'center' }); const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
@@ -201,14 +219,28 @@ const setView = (patch) => { if (!canLeave()) return; view = { ...view, ...patch
 const onlyKind = (k) => setView({ kinds: [k], folded: [] });
 const shows = (row) => view.kinds.includes(row.fact.kind) && (!view.q || (row.label + ' ' + row.path).toLowerCase().includes(view.q.toLowerCase()));
 
-function filterBar(groups) {
-  const all = groups.flatMap((g) => g.rows);
+const filtering = () => view.q !== '' || view.kinds.length !== KIND_ORDER.length;
+
+// The tree keys of the item (and its parents) that hold a field.
+function itemKeysFor(path) {
+  const keys = [];
+  const walk = (n, trail) => {
+    if (n.item) { if (n.rows.some((r) => r.path === path)) keys.push(...trail, n.key); return; }
+    for (const c of n.children) walk(c, [...trail, n.key]);
+  };
+  for (const g of ledgerTree(hist.present, inst)) walk(g, []);
+  return keys;
+}
+
+function filterBar(tree) {
+  const all = tree.flatMap((g) => g.allRows);
   const n = (k) => all.filter((r) => r.fact.kind === k).length;
   const showing = all.filter(shows).length;
   const toggle = (k) => setView({ kinds: view.kinds.includes(k) ? view.kinds.filter((x) => x !== k) : [...view.kinds, k] });
   const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Find a field (press /)', autocomplete: 'off', 'aria-label': 'Find a field' });
   search.value = view.q;
   search.addEventListener('input', () => { view = { ...view, q: search.value }; render(); });
+  const itemKeys = tree.flatMap(function keys(nd) { return nd.item ? [nd.key] : nd.children.flatMap(keys); });
   return h('section', { class: 'card filters', 'aria-label': 'Show fields' },
     h('div', { class: 'filter-row' },
       h('span', { class: 'filter-label' }, 'Show:'),
@@ -217,29 +249,123 @@ function filterBar(groups) {
       h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed') }) }, 'Hide known'),
       h('button', { type: 'button', class: 'btn', onclick: () => onlyKind('missing') }, 'Only missing'),
       h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: [...KIND_ORDER], q: '' }) }, 'Show everything'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: () => setView({ folded: view.folded.length ? [] : groups.map((g) => g.id) }) }, view.folded.length ? 'Open all groups' : 'Fold all groups')),
+      h('button', { type: 'button', class: 'btn ghost', onclick: () => { if (!canLeave()) return; if (openItems.size) openItems = new Set(); else openItems = new Set(itemKeys); render(); } }, openItems.size ? 'Close all items' : 'Open all items'),
+      h('button', { type: 'button', class: 'btn' + (selecting ? ' primary' : ''), 'aria-pressed': String(selecting), onclick: () => { if (!canLeave()) return; selecting = !selecting; selected = new Set(); open = null; render(); } }, selecting ? 'Done selecting' : 'Select several')),
     search,
     h('p', { class: 'muted', role: 'status' }, 'Showing ' + showing + ' of ' + all.length + ' fields.'),
-    h('nav', { class: 'jump', 'aria-label': 'Jump to a group' }, groups.map((g) => h('a', { href: '#group-' + g.id, onclick: (e) => { e.preventDefault(); if (view.folded.includes(g.id)) setView({ folded: view.folded.filter((x) => x !== g.id) }); document.getElementById('group-' + g.id)?.scrollIntoView({ block: 'start' }); } }, g.label))));
+    h('nav', { class: 'jump', 'aria-label': 'Jump to a group' }, tree.map((g) => h('a', { href: '#group-' + g.key, onclick: (e) => { e.preventDefault(); if (view.folded.includes(g.key)) setView({ folded: view.folded.filter((x) => x !== g.key) }); document.getElementById('group-' + g.key)?.scrollIntoView({ block: 'start' }); } }, g.label))));
+}
+
+// The counts are buttons: tapping "8 missing" shows only missing fields (S-168).
+const countBtns = (c) => h('span', { class: 'group-counts' },
+  c.missing ? h('button', { type: 'button', class: 'dot dot-missing', onclick: (e) => { e.stopPropagation(); onlyKind('missing'); }, title: 'Show only missing fields' }, c.missing + ' missing') : null,
+  c.rough ? h('button', { type: 'button', class: 'dot dot-rough', onclick: (e) => { e.stopPropagation(); onlyKind('rough'); }, title: 'Show only rough fields' }, c.rough + ' rough') : null);
+
+const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
+const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
+
+// An add form, built once when opened (S-169): a type when there is a choice,
+// a name, how often for money that repeats.
+function addForm(n) {
+  const { collection, types = [], fat } = n.add;
+  const typeSel = types.length > 1 ? h('select', { id: 'add-type-' + n.key, 'aria-label': 'Kind' }, types.map((t) => h('option', { value: t }, collection === 'income' ? words(t) : collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t].label))) : null;
+  const name = h('input', { type: 'text', id: 'add-name', placeholder: collection === 'expenses' ? 'What it is for' : 'Name, for example Chase Freedom', autocomplete: 'off', 'aria-label': 'Name' });
+  const cad = collection === 'income' || collection === 'expenses' ? h('select', { 'aria-label': 'How often' }, CADENCES.filter((c) => c !== 'total').map((c) => h('option', { value: c, selected: c === 'monthly' }, words(c)))) : null;
+  const fatSel = collection === 'expenses' && fat === null && n.key === 'E' ? h('select', { 'aria-label': 'Kind of spending' }, h('option', { value: '' }, 'Not food, housing or transportation'), FAT.map((t) => h('option', { value: t }, words(t)))) : null;
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  return h('form', { class: 'editor add-form', onsubmit: (e) => {
+    e.preventDefault();
+    const label = name.value.trim();
+    if (!label) { msg.textContent = 'Give it a name'; name.focus(); return; }
+    const type = typeSel ? typeSel.value : types[0];
+    const made = addItem(hist.present, { collection, type, label, cadence: cad ? cad.value : 'monthly', fat: fatSel ? fatSel.value || null : fat ?? null }, today());
+    adding = null;
+    apply(made.spine, 'Added ' + label);
+    openField(made.firstPath);
+  } }, typeSel, name, cad, fatSel, msg,
+  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { adding = null; render(); } }, 'Cancel')));
+}
+
+function addButton(n) {
+  if (!n.add || selecting) return null;
+  if (adding === n.key) return addForm(n);
+  const what = n.add.types && n.add.types.length === 1 && PRESETS[n.add.types[0]] ? 'a ' + PRESETS[n.add.types[0]].label.toLowerCase() : ADD_WORDS[n.add.collection];
+  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; render(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
+}
+
+// One item: a header with its headline value that opens and closes it, its
+// fields, and Remove (undo brings it back).
+function itemEl(it) {
+  const rows = it.rows.filter(shows);
+  if (filtering() && !rows.length) return null;
+  const isOpen = openItems.has(it.key) || (filtering() && rows.length > 0) || it.single;
+  const main = it.summary && it.rows.find((r) => r.path === it.summary);
+  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type)) : '';
+  if (it.single) return rows.map(rowEl).map((li) => { li.querySelector('.row-label').textContent = it.label; return li; });
+  const toggle = () => { if (!canLeave()) return; if (openItems.has(it.key)) openItems.delete(it.key); else openItems.add(it.key); render(); };
+  const remove = it.collection ? h('button', { type: 'button', class: 'btn ghost small', onclick: (e) => {
+    const box = h('span', { class: 'confirm' }, 'Remove ' + it.label + '? ',
+      h('button', { type: 'button', class: 'btn danger', onclick: () => { open = null; openItems.delete(it.key); apply(removeItem(hist.present, it.collection, it.id), 'Removed ' + it.label); } }, 'Remove'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: () => render() }, 'Keep'));
+    e.currentTarget.replaceWith(box);
+  } }, 'Remove') : null;
+  const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select these') : null;
+  return h('li', { class: 'item' + (isOpen ? ' open' : ''), id: 'item-' + it.key },
+    h('div', { class: 'item-head' },
+      h('button', { type: 'button', class: 'fold item-fold', 'aria-expanded': String(isOpen), onclick: toggle },
+        h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, isOpen ? '-' : '+'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
+      countBtns(it.counts), pickAll),
+    isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
+    isOpen && !selecting ? h('div', { class: 'item-actions' }, remove) : null);
+}
+
+// A section or sub-section: its label and counts, its add button, its children.
+function nodeEl(n, depth) {
+  if (n.item) return itemEl(n);
+  const kids = n.children.flatMap((c) => [nodeEl(c, depth + 1)]).flat().filter(Boolean);
+  if (filtering() && !kids.length) return null;
+  const folded = view.folded.includes(n.key);
+  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== n.key) : [...view.folded, n.key] });
+  const Tag = depth === 1 ? 'h3' : 'h4';
+  const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const rows = n.allRows.filter(shows); const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select all here') : null;
+  return h('li', { class: 'node depth-' + depth, id: 'node-' + n.key },
+    h('div', { class: 'node-head' },
+      h(Tag, {}, h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold }, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-'), n.label)),
+      countBtns(n.counts), pickAll),
+    folded ? null : h('ul', { class: 'tree' }, kids),
+    folded ? null : addButton(n));
 }
 
 function groupEl(g) {
-  const red = g.rows.filter((r) => r.fact.kind === 'missing').length, yellow = g.rows.filter((r) => r.fact.kind === 'rough').length;
-  const rows = g.rows.filter(shows);
-  const folded = view.folded.includes(g.id);
-  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== g.id) : [...view.folded, g.id] });
-  // The counts are buttons: tapping "8 missing" shows only missing fields (S-168).
-  const countBtn = (k, count, cls) => count ? h('button', { type: 'button', class: 'dot ' + cls, onclick: () => onlyKind(k), title: 'Show only ' + KIND_LABEL[k].toLowerCase() + ' fields' }, count + ' ' + KIND_LABEL[k].toLowerCase()) : null;
-  return h('section', { class: 'card group', id: 'group-' + g.id, 'aria-labelledby': 'h-' + g.id },
-    h('h2', { id: 'h-' + g.id },
-      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.id), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-')),
-      h('span', { class: 'group-counts' }, countBtn('missing', red, 'dot-missing'), countBtn('rough', yellow, 'dot-rough'))),
-    folded ? null : rows.length ? h('ul', { class: 'rows' }, rows.map(rowEl)) : h('p', { class: 'muted' }, 'No fields here match what is shown.'));
+  const kids = g.children.flatMap((c) => [nodeEl(c, 1)]).flat().filter(Boolean);
+  if (filtering() && !kids.length) return null;
+  const folded = view.folded.includes(g.key);
+  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== g.key) : [...view.folded, g.key] });
+  return h('section', { class: 'card group', id: 'group-' + g.key, 'aria-labelledby': 'h-' + g.key },
+    h('h2', { id: 'h-' + g.key },
+      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.key), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-')),
+      countBtns(g.counts)),
+    folded ? null : h('ul', { class: 'tree' }, kids.length ? kids : h('li', { class: 'muted' }, 'Nothing here yet.')),
+    folded ? null : addButton(g));
+}
+
+// Select mode's action bar: what to do with every picked field at once.
+function bulkBar(tree) {
+  if (!selecting) return null;
+  const rows = tree.flatMap((g) => g.allRows).filter((r) => selected.has(r.path));
+  const run = (action, word) => { if (!rows.length) return; const n = rows.length; apply(bulkEdit(hist.present, rows, action, today()), word + ' ' + n + ' field' + (n === 1 ? '' : 's')); selected = new Set(); };
+  return h('div', { class: 'bulk-bar', role: 'region', 'aria-label': 'Selected fields' },
+    h('span', { class: 'bulk-count' }, rows.length + ' selected'),
+    h('button', { type: 'button', class: 'btn primary', disabled: !rows.length, onclick: () => run('confirm', 'Confirmed') }, 'Confirm'),
+    h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('rough', 'Marked rough:') }, 'Mark rough'),
+    h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('notForMe', 'Not for me:') }, 'Not for me'),
+    h('button', { type: 'button', class: 'btn ghost', onclick: () => { selected = new Set(tree.flatMap((g) => g.allRows).filter(shows).map((r) => r.path)); render(); } }, 'Select all shown'),
+    h('button', { type: 'button', class: 'btn ghost', onclick: () => { selected = new Set(); render(); } }, 'Clear'));
 }
 
 function render() {
   const spine = hist.present;
-  const groups = ledgerRows(spine);
+  const tree = ledgerTree(spine, inst);
   const focusId = document.activeElement && document.activeElement.id;
   const caret = focusId === 'ledger-search' ? document.activeElement.selectionStart : null;
   app.replaceChildren(
@@ -253,8 +379,9 @@ function render() {
         h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),
-    filterBar(groups),
-    ...groups.map(groupEl),
+    filterBar(tree),
+    ...tree.map(groupEl).filter(Boolean),
+    bulkBar(tree),
     h('footer', { class: 'foot' },
       h('a', { class: 'btn ghost', href: '#' }, 'Back to top'),
       source === 'saved' && h('button', { class: 'btn ghost', onclick: resetAsk }, 'Go back to the file (drop edits saved in this browser)'))
@@ -289,7 +416,7 @@ window.addEventListener('hashchange', () => { const p = decodeURIComponent(locat
 
 async function start() {
   const loaded = await loadAll();
-  rules = loaded.rules; source = loaded.source; hist = createHistory(loaded.spine); guess = null; open = null;
+  rules = loaded.rules; source = loaded.source; inst = loaded.institutions; hist = createHistory(loaded.spine); guess = null; open = null;
   if (loaded.problem) lastSaved = loaded.problem;
   render();
   const p = decodeURIComponent(location.hash.slice(1));
