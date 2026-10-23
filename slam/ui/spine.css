@@ -253,3 +253,16 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 @media (min-width: 640px) { .row-main { grid-template-columns: 1fr minmax(120px, auto) 92px 20px; grid-template-areas: "label value chip chev"; } }
 .disabled-why { font-size: var(--text-xs); color: var(--text-muted); align-self: center; }
 @media (prefers-reduced-motion: reduce) { .btn, .seg-btn, .filter-chip, button.dot, .choice-card, .row-main, .row-main::after { transition: none; } }
+
+/* Subscriptions (S-191): a review list under Still guessing. */
+.subs-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.sub { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-left: 4px solid var(--good); border-radius: var(--radius-sm); background: var(--surface-2); }
+.sub.sub-look { border-left-color: var(--warn); }
+.sub-main { display: flex; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; font-weight: 600; }
+.sub-cost { font-family: var(--font-num); }
+.sub-when { margin: 0; font-size: var(--text-sm); color: var(--text-muted); display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.sub .btn { justify-self: start; }
+.check-row { display: flex; align-items: center; gap: var(--space-3); min-height: var(--tap); padding: var(--space-2) var(--space-3); border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; max-width: 480px; }
+.check-row:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.check-row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.check-row > span { display: flex; flex-direction: column; }

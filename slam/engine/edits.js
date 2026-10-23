@@ -102,12 +102,23 @@ export function putFact(spine, path, value, kind, today) {
 // is not copied onto the expense, so the expense keeps following the default.
 // coveredBy: a name when someone else covers it (counts $0), null when not; a
 // name not on the household's list is added to it.
-export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known', label = null }, today) {
+export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known', label = null, subscription = undefined }, today) {
   const base = 'expenses.' + id;
   const e = getAt(spine, base);
   if (!e) throw new Error('No expense ' + id);
   const F = (value, k = kind) => ({ value, kind: value === null ? 'missing' : k, asOf: today, source: 'ledger' });
   let s = setAt(spine, base + '.amount', F(amount));
+  // A subscription (S-191) asks when it next charges and when it was last
+  // reviewed; unmarking it drops all three.
+  if (subscription !== undefined) {
+    const next = { ...getAt(s, base) };
+    if (subscription) {
+      next.subscription = F(true, 'known');
+      if (!next.renews) next.renews = { value: null, kind: 'missing', asOf: today, source: 'ledger' };
+      if (!next.reviewed) next.reviewed = { value: null, kind: 'missing', asOf: today, source: 'ledger' };
+    } else { delete next.subscription; delete next.renews; delete next.reviewed; }
+    s = setAt(s, base, next);
+  }
   // A new name keeps the id, so links and history still point at it.
   if (label && label.trim() && label.trim() !== e.label) s = setAt(s, base, { ...getAt(s, base), label: label.trim() });
   if (cadence && cadence !== e.cadence) s = setAt(s, base + '.cadence', cadence);

@@ -306,6 +306,29 @@ export function buildFlags(spine, rules, s) {
     });
   }
 
+  // ------------------------------------------------------------ subscriptions (S-191)
+  // Yellow while one charges within SUB_RENEW_SOON_DAYS or has not been
+  // reviewed in SUB_REVIEW_DAYS; green when every one has had a recent look.
+  const sub = s.subs;
+  if (sub && sub.items.length) {
+    const look = sub.toLook;
+    const stage = look.length ? 'yellow' : 'green';
+    const soon = sub.items.filter((i) => i.soon);
+    const due = sub.items.filter((i) => i.due);
+    const first = look[0];
+    add({
+      id: 'subscriptions', stage,
+      title: sub.items.length + ' subscription' + (sub.items.length === 1 ? '' : 's') + ': ' + money(sub.monthly.value) + ' a month (' + money(sub.yearly) + ' a year)',
+      detail: [soon.length ? 'Charging soon: ' + listWords(soon.map((i) => i.label + ' on ' + longDate(i.renews) + (i.monthly !== null ? ' (' + money(i.monthly) + ' a month)' : ''))) + '.' : null,
+        due.length ? 'Not reviewed in ' + sub.reviewDays + ' days: ' + listWords(due.map((i) => i.label)) + '.' : null,
+        stage === 'green' ? 'Every subscription was reviewed in the last ' + sub.reviewDays + ' days.' : null].filter(Boolean).join(' '),
+      next: first ? goal(asOf, 'Next: look at ' + first.label + (first.soon ? ' before it charges on ' + longDate(first.renews) : '') + ' and mark it reviewed', { path: 'expenses.' + first.id + '.reviewed' }) : null,
+      green: stage === 'green' ? null : goal(asOf, 'Stage 3: every subscription reviewed in the last ' + sub.reviewDays + ' days, none charging unseen'),
+      from: sub.items.flatMap((i) => ['expenses.' + i.id + '.amount', 'expenses.' + i.id + '.renews', 'expenses.' + i.id + '.reviewed']),
+      rules: ['SUB_REVIEW_DAYS', 'SUB_RENEW_SOON_DAYS']
+    });
+  }
+
   // ------------------------------------------------------------ inputs of each headline number
   // red: an input is missing. yellow: an input is rough. green: every input known.
   const inputs = [

@@ -9,6 +9,7 @@ import { summarize } from './summary.js';
 import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
+import { isSubscription } from './subscriptions.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool,
 // choice:a|b (pick one), suggest:a|b (pick one or type another), list.
@@ -24,7 +25,7 @@ export function typeFor(spine, path) {
     return 'text';
   }
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : 'money';
-  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : 'money';
+  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
@@ -80,7 +81,7 @@ export function expenseRow(spine, e) {
   const cover = coverOf(e);
   return {
     path, label: labelFor(spine, path), group: 'E', type: 'expense',
-    fact: { value: amount === null && e.amount.kind !== 'notForMe' && !cover.covered ? null : { amount, cadence: e.cadence, covered: cover.covered, coveredBy: cover.by, shared: !cover.covered && sh.shared, people: sh.people, share: sh.share, whoPays: sh.whoPays, fromDefault: sh.fromDefault, yourMonthly: cover.covered ? 0 : sh.shared ? yourCost(monthly, sh.share) : monthly }, kind: e.amount.kind === 'notForMe' ? 'notForMe' : kind },
+    fact: { value: amount === null && e.amount.kind !== 'notForMe' && !cover.covered ? null : { amount, cadence: e.cadence, covered: cover.covered, coveredBy: cover.by, shared: !cover.covered && sh.shared, people: sh.people, share: sh.share, whoPays: sh.whoPays, fromDefault: sh.fromDefault, yourMonthly: cover.covered ? 0 : sh.shared ? yourCost(monthly, sh.share) : monthly, subscription: isSubscription(e) }, kind: e.amount.kind === 'notForMe' ? 'notForMe' : kind },
     members: [path, ...SHARE_FIELDS.map((k) => 'expenses.' + e.id + '.' + k)]
   };
 }
@@ -98,7 +99,7 @@ export function rowPathFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'expenses' && s[2] === 'payDay') return 'expenses.' + s[1] + '.paidFrom';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
-  if (s[0] === 'expenses' && SHARE_FIELDS.includes(s[2])) return 'expenses.' + s[1] + '.amount';
+  if (s[0] === 'expenses' && (SHARE_FIELDS.includes(s[2]) || s[2] === 'subscription')) return 'expenses.' + s[1] + '.amount';
   return path;
 }
 
@@ -110,11 +111,11 @@ export function ledgerRows(spine) {
       if (s[2] === 'apr') rows.push(cardRateRow(spine, getAt(spine, 'debts.' + s[1])));
       continue;
     }
-    if (s[0] === 'expenses' && (s[2] === 'amount' || SHARE_FIELDS.includes(s[2]))) {
+    if (s[0] === 'expenses' && (s[2] === 'amount' || s[2] === 'subscription' || SHARE_FIELDS.includes(s[2]))) {
       if (s[2] === 'amount') rows.push(expenseRow(spine, getAt(spine, 'expenses.' + s[1])));
       continue;
     }
-    // An expense's account and day are one row: "Chase checking, on the 5th" (S-189).
+    // An expense's account and day are one row: "Main checking, on the 5th" (S-189).
     if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay')) {
       if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
       continue;

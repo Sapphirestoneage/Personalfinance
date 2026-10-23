@@ -54,6 +54,8 @@ def({ id: 'takeHome', label: 'Take-home this month', unit: 'usd/month', op: 'sum
   explain: ({ s }) => { const c = s.cashflow; return out(c.income.takeHome, [metric('gross', 'Gross income', c.income.gross, 'usd/month'), { label: 'Tax withheld', value: c.income.withheld.value, unit: 'usd/month', kind: c.income.withheld.kind, role: 'minus', group: 'T' }, { label: 'Social Security and Medicare', value: c.income.fica.value, unit: 'usd/month', kind: c.income.fica.kind, role: 'minus', group: 'T' }, { label: 'Saved from pay before take-home', value: c.saving.payroll.value, unit: 'usd/month', kind: c.saving.payroll.kind, role: 'minus', group: 'A' }]); } });
 def({ id: 'expenses', label: 'Spending this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-surplus', 'dashboard#tile-fi'], formula: 'Spending = each expense this month (your share of a shared bill; $0 when someone else covers it)',
   explain: ({ spine, s }) => out(s.cashflow.expenses.total, s.cashflow.expenses.items.map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'plus', i.label + (i.covered ? ' (covered: $0 to you)' : i.shared ? ' (your share of ' + money(i.full) + ')' : '')))) });
+def({ id: 'subscriptions', label: 'Subscriptions a month', unit: 'usd/month', op: 'sum', screens: ['flag:subscriptions'], formula: 'Subscriptions = each subscription\'s cost to you a month',
+  explain: ({ spine, s }) => out(s.subs.monthly, s.subs.items.map((i) => field(spine, 'expenses.' + i.id + '.amount', i.monthly, 'usd/month', 'plus', i.label))) });
 def({ id: 'leanSpending', label: 'Lean spending this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-fi'], formula: 'Lean spending = food, housing and transportation that are needs (a want such as eating out is left out)',
   explain: ({ spine, s }) => out(s.cashflow.expenses.lean, s.cashflow.expenses.items.filter((i) => i.fat && i.need !== false && !i.covered).map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'plus', i.label))) });
 def({ id: 'minimums', label: 'Minimum payments this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-surplus', 'dashboard#tile-runway'], formula: 'Minimum payments = each debt\'s minimum this month (a rough default when none is entered)',
@@ -166,6 +168,7 @@ export function flagMath(flag) {
   if (id === 'input-fi') return ['fiPercent'];
   if (id === 'input-runway') return ['runway'];
   if (id.startsWith('health-26-')) return ['expenses'];
+  if (id === 'subscriptions') return ['subscriptions'];
   return [];
 }
 

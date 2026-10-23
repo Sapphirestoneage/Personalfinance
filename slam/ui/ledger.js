@@ -8,6 +8,7 @@ import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } 
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
+import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
 import { editPayment, duplicateItem } from '../engine/edits.js';
@@ -164,6 +165,8 @@ function expenseEditor(row) {
   const mode = { get value() { return (modeBox.querySelector('input:checked') || { value: 'me' }).value; } };
   const name = h('input', { id: 'exp-name', type: 'text', autocomplete: 'off' });
   name.value = e.label;
+  // A subscription (S-191): marked here; its next charge and last review are its own rows.
+  const subBox = h('input', { type: 'checkbox', id: 'exp-sub', checked: isSubscription(e) });
   // A phone: one tap fills a standard plan for one line, saved as a guess.
   const std = isPhone(e) ? rules.get('DEFAULT_PHONE_PLAN_1', +hist.present.meta.asOf.slice(0, 4)) : null;
   let usedStd = false;
@@ -257,12 +260,13 @@ function expenseEditor(row) {
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
-    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
+    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
     modeBox,
     amountLabel, h('div', { class: 'amount-row' }, amount, often), amountHint, stdBtn,
+    h('label', { class: 'check-row', for: 'exp-sub' }, subBox, h('span', {}, h('strong', {}, 'This is a subscription'), h('span', { class: 'choice-sub' }, 'It renews on its own, so it gets a regular look'))),
     sharedBox, coveredBox, yours, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -458,6 +462,25 @@ function rowEl(row) {
       chip(f.kind)),
     computed && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: hist.present, rules, s: summarize(hist.present, rules, { flags: false }) })) : null,
     isOpen && editor(row));
+}
+
+// Subscriptions to look at (S-191): soonest charge first, each with Reviewed
+// today. Figured once per version of the household, not on every tap.
+let subsFor = null, subsNow = null;
+function subsCard() {
+  if (subsFor !== hist.present) { subsNow = summarize(hist.present, rules, { flags: false }).subs; subsFor = hist.present; }
+  const sub = subsNow;
+  if (!sub.items.length) return (hist.present.expenses || []).length ? h('section', { class: 'card subs', 'aria-labelledby': 'subs-h' }, h('h2', { id: 'subs-h' }, 'Subscriptions'), h('p', { class: 'muted' }, 'None marked yet. Open an expense and tick "This is a subscription" to keep an eye on it.')) : null;
+  const when = (i) => i.renews ? 'Next charge ' + shortDate(i.renews) + (i.daysToCharge === 0 ? ' (today)' : ' (in ' + i.daysToCharge + ' day' + (i.daysToCharge === 1 ? '' : 's') + ')') : 'Next charge not given';
+  return h('section', { class: 'card subs', 'aria-labelledby': 'subs-h' },
+    h('h2', { id: 'subs-h' }, 'Subscriptions ', h('span', { class: 'count' }, String(sub.items.length))),
+    h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year. ' + (sub.toLook.length ? sub.toLook.length + ' to look at: charging within ' + sub.soonDays + ' days or not reviewed in ' + sub.reviewDays + '.' : 'All reviewed recently.')),
+    h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub' + (i.soon || i.due ? ' sub-look' : '') },
+      h('div', { class: 'sub-main' },
+        h('a', { href: '#expenses.' + i.id + '.amount', onclick: (ev) => { ev.preventDefault(); openField('expenses.' + i.id + '.amount'); } }, i.label),
+        h('span', { class: 'sub-cost' }, i.monthly === null ? 'amount not given' : money(i.monthly, true) + ' a month')),
+      h('p', { class: 'sub-when' }, when(i), ' · ', i.reviewed ? 'Reviewed ' + shortDate(i.reviewed) : 'Never reviewed', i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
+      h('button', { type: 'button', class: 'btn small', onclick: () => apply(putFact(hist.present, 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ': last reviewed', 'today') }, 'Reviewed today')))));
 }
 
 function guessList() {
@@ -703,6 +726,7 @@ function render() {
         h('a', { class: 'btn', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),
+    subsCard(),
     filterBar(tree),
     ...tree.map(groupEl).filter(Boolean),
     bulkBar(tree),

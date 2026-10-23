@@ -1562,6 +1562,26 @@
       "notes": "A single-line unlimited plan at a major carrier with taxes and fees, roughly $65 to $80 in 2026; prepaid plans cost less. For a phone someone else covers, it is what it would cost you. Stored as rough",
       "source": "Eli house assumption",
       "verified": "assumption"
+    },
+    {
+      "id": "SUB_REVIEW_DAYS",
+      "rule": "Days after which a subscription is due another look",
+      "value": 90,
+      "unit": "days",
+      "appliesTo": "Subscriptions",
+      "notes": "A subscription not reviewed in this many days turns its flag yellow",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "SUB_RENEW_SOON_DAYS",
+      "rule": "Days before a subscription charges that it is flagged",
+      "value": 14,
+      "unit": "days",
+      "appliesTo": "Subscriptions",
+      "notes": "Time to cancel before the next charge",
+      "source": "Eli house assumption",
+      "verified": "assumption"
     }
   ]
 }

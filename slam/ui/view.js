@@ -33,9 +33,10 @@ export function showValue(value, type) {
   if (type === 'expense') {
     const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';
     const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
-    if (value.covered) return base + ', covered by ' + (value.coveredBy || 'someone else') + ' ($0 to you)';
-    if (value.shared) return base + ', shared by ' + (value.people || '?') + (value.yourMonthly !== null ? ': you pay ' + money(value.yourMonthly) + ' a month' : '');
-    return base;
+    const sub = value.subscription ? ' · subscription' : '';
+    if (value.covered) return base + ', covered by ' + (value.coveredBy || 'someone else') + ' ($0 to you)' + sub;
+    if (value.shared) return base + ', shared by ' + (value.people || '?') + (value.yourMonthly !== null ? ': you pay ' + money(value.yourMonthly) + ' a month' : '') + sub;
+    return base + sub;
   }
   // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".
   if (type === 'cardRate') {

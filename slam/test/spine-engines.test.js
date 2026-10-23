@@ -667,3 +667,36 @@ test('house defaults: 0.01% APY on cash that is not high-yield; a standard plan 
   assert.equal(d.expenses[1].amount.value, null, 'only a phone gets the standard plan');
   assert.ok(isPhone({ label: 'Cell plan' }) && !isPhone({ label: 'Microphone fund' }));
 });
+
+// ------------------------------------------------------------------ subscriptions (S-191)
+import { nextCharge } from '../engine/subscriptions.js';
+import { editExpense } from '../engine/edits.js';
+
+test('subscriptions: cost a month and a year, next charge, and a yellow flag until reviewed', () => {
+  const s0 = mini({ income: [stream('job', 'w2', 4000, 'monthly', { fed: 400, st: 150 })], expenses: [expense('stream', 15), expense('gym', 40), expense('rent', 1000)] });
+  let s = editExpense(s0, 'stream', { amount: 15, cadence: 'monthly', subscription: true }, '2026-10-22');
+  s = editExpense(s, 'gym', { amount: 40, cadence: 'monthly', subscription: true }, '2026-10-22');
+  assert.equal(s.expenses[0].renews.kind, 'missing', 'it asks when it next charges');
+  s = setAt(s, 'expenses.stream.renews', K('2026-09-30'));
+  const sum = summarize(s, R);
+  assert.equal(sum.subs.items.length, 2);
+  assert.equal(sum.subs.monthly.value, 55);
+  assert.equal(sum.subs.yearly, 660);
+  const st = sum.subs.items.find((i) => i.id === 'stream');
+  assert.equal(st.renews, '2026-10-30', 'a past date rolls forward by a month');
+  assert.ok(st.soon, 'charging within 14 days');
+  const f = sum.flags.find((x) => x.id === 'subscriptions');
+  assert.equal(f.stage, 'yellow');
+  assert.match(f.title, /2 subscriptions: \$55 a month \(\$660 a year\)/);
+  assert.match(f.detail, /Charging soon: stream on October 30, 2026/);
+  // Reviewed today and charging later: green.
+  let r = setAt(s, 'expenses.stream.reviewed', K('2026-10-22'));
+  r = setAt(r, 'expenses.gym.reviewed', K('2026-10-20'));
+  r = setAt(r, 'expenses.stream.renews', K('2026-11-30'));
+  assert.equal(summarize(r, R).flags.find((x) => x.id === 'subscriptions').stage, 'green');
+  // Unmarking drops its dates.
+  const un = editExpense(r, 'gym', { amount: 40, cadence: 'monthly', subscription: false }, '2026-10-22');
+  assert.equal(un.expenses[1].renews, undefined);
+  assert.equal(nextCharge('2026-01-31', 'yearly', '2026-10-22'), '2027-01-31');
+  assert.ok(validate(r).ok);
+});

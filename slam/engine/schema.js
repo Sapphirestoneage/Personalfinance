@@ -276,6 +276,10 @@ export function validate(spine) {
     // Paid from an account or card, on a day of the month (S-189).
     checkFact(p + '.paidFrom', e.paidFrom, 'link', false);
     checkFact(p + '.payDay', e.payDay, 'int', false);
+    // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
+    checkFact(p + '.subscription', e.subscription, 'bool', false);
+    checkFact(p + '.renews', e.renews, 'date', false);
+    checkFact(p + '.reviewed', e.reviewed, 'date', false);
     if (e.payDay && e.payDay.value !== null && (e.payDay.value < 1 || e.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
     // Shared with other people (S-175).
     checkFact(p + '.shared', e.shared, 'bool', false);

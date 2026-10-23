@@ -8,6 +8,7 @@ import { emergency } from './emergency.js';
 import { fiReport } from './fi.js';
 import { taxForYear } from './tax.js';
 import { buildFlags } from './flags.js';
+import { subscriptions } from './subscriptions.js';
 import { monthKey, addMonths, addDays, valueOf } from './spine.js';
 
 // The income cliff (S-174): the first month within STAGE_CLIFF_MONTHS where
@@ -54,6 +55,7 @@ export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true }
     tax: taxForYear(spine, rules, +asOf.slice(0, 4), { asOf }),
     cliff: incomeCliff(spine, rules, asOf)
   };
+  s.subs = subscriptions(spine, rules, cf, asOf);
   if (flags) s.flags = buildFlags(spine, rules, s);
   return s;
 }

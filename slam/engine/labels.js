@@ -17,7 +17,7 @@ const FIELD = {
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
-  paidFrom: 'paid from', payDay: 'day paid', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
+  paidFrom: 'paid from', payDay: 'day paid', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
   need: 'a need (not a want)', covered: 'paid by someone else',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };
