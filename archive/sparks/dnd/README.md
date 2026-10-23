@@ -1,5 +1,7 @@
 # Dungeons & Dividends
 
+> Archived on 2026-10-23, unchanged. The current build is SLAM, in `slam/` at the repository root. The story of every generation is in [../../README.md](../../README.md).
+
 A personal-finance RPG character sheet. Answer eighteen questions and get your
 class. Add five numbers and get your Level, your Hit Points and your Armour
 Class.

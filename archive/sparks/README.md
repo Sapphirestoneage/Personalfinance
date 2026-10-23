@@ -1,5 +1,7 @@
 # SPARKS / SLAF
 
+> Archived on 2026-10-23, unchanged. The current build is SLAM, in `slam/` at the repository root. The story of every generation is in [../README.md](../README.md).
+
 A suite of small, self-contained personal-finance tools — "rooms" — that all
 read from and write to one canonical household model.
 

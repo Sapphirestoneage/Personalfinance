@@ -1,5 +1,7 @@
 # Money Rooms v3 (Coach Edition)
 
+> Archived on 2026-10-23, unchanged. The current build is SLAM, in `slam/` at the repository root. The story of every generation is in [../README.md](../README.md).
+
 Financial planning software a coach drives live in client sessions. Plain
 HTML, CSS and ES modules; no build step. D3 is vendored. Everything a client
 types stays in that browser's localStorage under `mr3:` keys; JSON export and

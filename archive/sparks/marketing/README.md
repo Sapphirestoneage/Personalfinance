@@ -1,5 +1,7 @@
 # Marketing Scoreboard
 
+> Archived on 2026-10-23, unchanged. The current build is SLAM, in `slam/` at the repository root. The story of every generation is in [../../README.md](../../README.md).
+
 What gets measured gets managed. A content log, a small CRM, and the numbers
 between them: posts and their results, people and their touches, weekly
 targets with pace, the funnel, and who to contact today. Its own app, built

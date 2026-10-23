@@ -1,0 +1,84 @@
+# The retired generations (archive/README.md) keep their test suites, and the
+# suites still run: whenever something under archive/ changes, and on demand
+# from the Actions tab. They are not part of the Pages gate for the current
+# build; that is test.yml. Each suite is served from the folder it was built
+# in, so the paths inside the tests did not have to change.
+name: archive
+on:
+  push:
+    paths:
+      - 'archive/**'
+      - '.github/workflows/archive.yml'
+  pull_request:
+    paths:
+      - 'archive/**'
+      - '.github/workflows/archive.yml'
+  workflow_dispatch:
+jobs:
+  sparks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: SPARKS unit, Solar System, D&D, Coach, Marketing, export, spreadsheet
+        working-directory: archive/sparks
+        run: |
+          node test/run.js
+          node test/solar.js
+          node dnd/test/run.js
+          node coach/test/run.js
+          node marketing/test/run.js
+          node test/export.js
+          node test/xlsx.js
+      - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
+        working-directory: archive/sparks/tests
+        run: |
+          npm ci
+          npm test
+  sparks-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: SPARKS browser gates (served from archive/sparks)
+        run: |
+          npm install --no-save playwright@1.49.0
+          npx playwright install --with-deps chromium
+          export NODE_PATH="$PWD/node_modules"
+          cd archive/sparks
+          python3 -m http.server 8765 >/dev/null 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/index.html >/dev/null && break; sleep 1; done
+          node test/render.js
+          node test/features.js
+          node test/sidebar.js
+          node test/forms.js
+          node test/anchors.js
+          node test/flow.js
+          node test/opening.js
+          node test/statement.js
+          node test/onefact.js
+          node test/xss.js
+          node test/comeback.js
+          node test/alignment.js
+  money-rooms-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Money Rooms v3 unit tests
+        run: node archive/money-rooms-v3/tests/run.js
+      - name: Money Rooms v3 browser sweep (serves its own copy of the site)
+        run: |
+          npm install --no-save playwright@1.49.0
+          npx playwright install --with-deps chromium
+          export NODE_PATH="$PWD/node_modules"
+          node archive/money-rooms-v3/tests/ui.js

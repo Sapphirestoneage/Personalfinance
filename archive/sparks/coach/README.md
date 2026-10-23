@@ -1,5 +1,7 @@
 # Coach Mode
 
+> Archived on 2026-10-23, unchanged. The current build is SLAM, in `slam/` at the repository root. The story of every generation is in [../../README.md](../../README.md).
+
 A money coach's console: a roster of clients, a live session down a path of
 stops, and a view the client sees. Its own app, built in parallel with Money
 Rooms (SPARKS) the way `dnd/` is: nothing in `rooms/`, `shared/`, `engines/`

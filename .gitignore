@@ -1,28 +1,23 @@
-# The suite itself has no dependencies and no build step — nothing here is
-# required to run it. This is only what `npm install playwright` leaves behind
-# when you run the browser tests (test/forms.js, test/alignment.js), which is
-# a local dev tool, not part of the app. See README, "No dependencies".
+# Nothing here is needed to run the app: SLAM is static files with no build step.
+# node_modules/ is what the dev tools (Playwright, the linter, the formatter) leave behind.
 node_modules/
+# package.json and the lock file are ignored until the root gets an npm test (cleanup step 5);
+# archive/sparks/tests/.gitignore un-ignores its own, which the Lane 2 harness needs.
 package.json
 package-lock.json
 
-# Coach Mode (D-339): a client's numbers never enter this public repository.
-# Sealed client backups, all-client backups and session recaps are made on
-# the coach's device and stay there. test/coach-checks.js also fails if any
-# tracked file carries the coach export signature.
+# Client data never enters this public repository. These patterns cover the export
+# filenames every generation has used, so a saved file cannot be committed by accident.
+# Coach Mode (archive/sparks/coach, D-339)
 money-rooms-coach-*
 money-rooms-recap-*
 *.coach.json
-
-# Marketing Scoreboard (D-340): contacts and results never enter this public
-# repository. Saves are made on the owner's device and stay there.
+# Marketing Scoreboard (archive/sparks/marketing, D-340)
 scoreboard-*
 *.mkt.json
-
-# Money Rooms v3 (D-341): a client's numbers never enter this public
-# repository. Exports are made on the coach's device and stay there.
+# Money Rooms v3 (archive/money-rooms-v3, D-341)
 /clients
 *.client.json
 money-rooms-*.json
-money-rooms-v3/screenshots/.tmp-*
-money-rooms-v3/screenshots/level-stage/
+archive/money-rooms-v3/screenshots/.tmp-*
+archive/money-rooms-v3/screenshots/level-stage/
