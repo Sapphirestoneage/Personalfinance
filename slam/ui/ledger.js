@@ -186,10 +186,62 @@ function openField(path) {
   if (el) { el.scrollIntoView({ block: 'center' }); const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
 }
 
+// ---------------------------------------------------------------- view filters (S-168)
+// Which kinds show, a search, and folded groups. A per-browser convenience:
+// kept in localStorage when it can be, and the page works without it.
+const VIEW_KEY = 'slam-ledger-view:v1';
+const KIND_ORDER = ['missing', 'rough', 'known', 'computed', 'notForMe'];
+const KIND_LABEL = { missing: 'Missing', rough: 'Rough', known: 'Known', computed: 'Computed', notForMe: 'Not for me' };
+let view = (() => {
+  try { const v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null'); if (v && Array.isArray(v.kinds)) return { kinds: v.kinds, q: '', folded: v.folded || [] }; } catch { /* storage blocked */ }
+  return { kinds: [...KIND_ORDER], q: '', folded: [] };
+})();
+const keepView = () => { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ kinds: view.kinds, folded: view.folded })); } catch { /* storage blocked */ } };
+const setView = (patch) => { if (!canLeave()) return; view = { ...view, ...patch }; keepView(); render(); };
+const onlyKind = (k) => setView({ kinds: [k], folded: [] });
+const shows = (row) => view.kinds.includes(row.fact.kind) && (!view.q || (row.label + ' ' + row.path).toLowerCase().includes(view.q.toLowerCase()));
+
+function filterBar(groups) {
+  const all = groups.flatMap((g) => g.rows);
+  const n = (k) => all.filter((r) => r.fact.kind === k).length;
+  const showing = all.filter(shows).length;
+  const toggle = (k) => setView({ kinds: view.kinds.includes(k) ? view.kinds.filter((x) => x !== k) : [...view.kinds, k] });
+  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Find a field (press /)', autocomplete: 'off', 'aria-label': 'Find a field' });
+  search.value = view.q;
+  search.addEventListener('input', () => { view = { ...view, q: search.value }; render(); });
+  return h('section', { class: 'card filters', 'aria-label': 'Show fields' },
+    h('div', { class: 'filter-row' },
+      h('span', { class: 'filter-label' }, 'Show:'),
+      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k, 'aria-pressed': String(view.kinds.includes(k)), onclick: () => toggle(k), title: (view.kinds.includes(k) ? 'Hide ' : 'Show ') + KIND_LABEL[k].toLowerCase() + ' fields' }, KIND_LABEL[k] + ' ' + n(k)))),
+    h('div', { class: 'filter-row' },
+      h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed') }) }, 'Hide known'),
+      h('button', { type: 'button', class: 'btn', onclick: () => onlyKind('missing') }, 'Only missing'),
+      h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: [...KIND_ORDER], q: '' }) }, 'Show everything'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: () => setView({ folded: view.folded.length ? [] : groups.map((g) => g.id) }) }, view.folded.length ? 'Open all groups' : 'Fold all groups')),
+    search,
+    h('p', { class: 'muted', role: 'status' }, 'Showing ' + showing + ' of ' + all.length + ' fields.'),
+    h('nav', { class: 'jump', 'aria-label': 'Jump to a group' }, groups.map((g) => h('a', { href: '#group-' + g.id, onclick: (e) => { e.preventDefault(); if (view.folded.includes(g.id)) setView({ folded: view.folded.filter((x) => x !== g.id) }); document.getElementById('group-' + g.id)?.scrollIntoView({ block: 'start' }); } }, g.label))));
+}
+
+function groupEl(g) {
+  const red = g.rows.filter((r) => r.fact.kind === 'missing').length, yellow = g.rows.filter((r) => r.fact.kind === 'rough').length;
+  const rows = g.rows.filter(shows);
+  const folded = view.folded.includes(g.id);
+  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== g.id) : [...view.folded, g.id] });
+  // The counts are buttons: tapping "8 missing" shows only missing fields (S-168).
+  const countBtn = (k, count, cls) => count ? h('button', { type: 'button', class: 'dot ' + cls, onclick: () => onlyKind(k), title: 'Show only ' + KIND_LABEL[k].toLowerCase() + ' fields' }, count + ' ' + KIND_LABEL[k].toLowerCase()) : null;
+  return h('section', { class: 'card group', id: 'group-' + g.id, 'aria-labelledby': 'h-' + g.id },
+    h('h2', { id: 'h-' + g.id },
+      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.id), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-')),
+      h('span', { class: 'group-counts' }, countBtn('missing', red, 'dot-missing'), countBtn('rough', yellow, 'dot-rough'))),
+    folded ? null : rows.length ? h('ul', { class: 'rows' }, rows.map(rowEl)) : h('p', { class: 'muted' }, 'No fields here match what is shown.'));
+}
+
 function render() {
   const spine = hist.present;
   const groups = ledgerRows(spine);
   const focusId = document.activeElement && document.activeElement.id;
+  const caret = focusId === 'ledger-search' ? document.activeElement.selectionStart : null;
   app.replaceChildren(
     h('header', { class: 'top' },
       h('div', {},
@@ -201,17 +253,14 @@ function render() {
         h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),
-    ...groups.map((g) => {
-      const red = g.rows.filter((r) => r.fact.kind === 'missing').length, yellow = g.rows.filter((r) => r.fact.kind === 'rough').length;
-      return h('section', { class: 'card group', id: 'group-' + g.id, 'aria-labelledby': 'h-' + g.id },
-        h('h2', { id: 'h-' + g.id }, h('span', { class: 'daite' }, g.id), ' ', g.label,
-          h('span', { class: 'group-counts' }, red ? h('span', { class: 'dot dot-missing' }, red + ' missing') : null, yellow ? h('span', { class: 'dot dot-rough' }, yellow + ' rough') : null)),
-        h('ul', { class: 'rows' }, g.rows.map(rowEl)));
-    }),
+    filterBar(groups),
+    ...groups.map(groupEl),
     h('footer', { class: 'foot' },
+      h('a', { class: 'btn ghost', href: '#' }, 'Back to top'),
       source === 'saved' && h('button', { class: 'btn ghost', onclick: resetAsk }, 'Go back to the file (drop edits saved in this browser)'))
   );
   if (focusId === 'edit-input') { const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
+  if (focusId === 'ledger-search') { const i = document.getElementById('ledger-search'); if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(caret, caret); } }
 }
 
 function resetAsk(e) {
@@ -221,6 +270,12 @@ function resetAsk(e) {
   e.currentTarget.replaceWith(box);
 }
 
+// "/" jumps to the field search (S-168).
+document.addEventListener('keydown', (e) => {
+  if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
+  const i = document.getElementById('ledger-search');
+  if (i) { e.preventDefault(); i.focus(); }
+});
 document.addEventListener('keydown', (e) => {
   if (!hist || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
   if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
