@@ -6,6 +6,8 @@
 
 import { ledgerRows, stillGuessing, rowPathFor, previewCost } from '../engine/ledger.js';
 import { payersOf, shareOf } from '../engine/sharing.js';
+import { mathButton } from './math-panel.js';
+import { summarize } from '../engine/summary.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
@@ -288,11 +290,14 @@ function rowEl(row) {
         h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
         chip(f.kind)));
   }
+  // A computed value in the Ledger (an expense's cost to you) shows its math (S-177).
+  const computed = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
     h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
       h('span', { class: 'row-label' }, label),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
       chip(f.kind)),
+    computed && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: hist.present, rules, s: summarize(hist.present, rules, { flags: false }) })) : null,
     isOpen && editor(row));
 }
 
@@ -508,6 +513,7 @@ function render() {
       h('nav', { class: 'top-actions' },
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, 'Undo'),
         h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo'),
+        h('a', { class: 'btn', href: 'math.html' }, 'All formulas'),
         h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),

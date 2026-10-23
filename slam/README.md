@@ -81,7 +81,10 @@ pure engines. Start the server as above, then open:
 - http://localhost:8000/dashboard.html : net worth, cash runway (with the
   Roth basis backstop on its own line), surplus, savings rate, cards and the
   promo deadline, FI number and percent, the year's tax balance due, and the
-  flags. Every number links to the Ledger fields it came from.
+  flags. Every number has a Show the math button: the formula, the numbers
+  plugged in, and every input as a link.
+- http://localhost:8000/math.html : how every number is figured, built from
+  the engines when the page loads, with every rule and its source.
 
 ### Loading your own profile
 

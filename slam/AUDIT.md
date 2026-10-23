@@ -1,3 +1,37 @@
+# Phase 1 spine self-audit (2026-10-22)
+
+Run with every test pass (`test/spine-audit.test.js`), on the demo household, the
+demo with shared housing, a covered bill and a blank amount, and the local profile
+when it is on the machine. Personal numbers are not written here; this file is public.
+
+## Results
+
+| Check | Result |
+| --- | --- |
+| a. Every displayed number has provenance | Pass. All 7 Dashboard tiles map to metrics in `engine/math.js` (32 metrics, plus one per card and one per expense), each with a formula in words, a unit, how its inputs combine, the screens that show it, its inputs and its rules. Every flag maps to at least one metric. One formula was not written as "X = ..." and was fixed. |
+| b. Recompute to the cent | Pass after a fix. Totals used to add unrounded parts while panels show rounded ones, so a recompute could be a cent off; spending, gross income and the promo monthly amount now add their displayed parts. A sum with no known input now reads missing instead of $0. |
+| c. Units | Pass. Every metric and input declares a unit; sums add one unit only; ratios pair units on purpose (dollars over dollars a month is months; a monthly amount over a rate is annualized with x 12, declared); the gross savings rate divides by gross and the net one by take-home. |
+| d. Missing never shows as $0 | Pass. A missing input reads "missing" in every panel; a number built over one is incomplete, never complete; a number that cannot be figured reads missing. |
+| e. The monthly spending figure | Fixed. The Dashboard showed a higher figure than the owner's Ledger edits should give. Cause: the edits were not stored. Enter did nothing in an editor and tapping away discarded typing (S-164), and checks run in the owner's browser pane cleared saved edits twice. The owner's figures are now in the local profile, a covered bill counts $0 (S-171, S-176), and the spending panel lists every line with a link to its field. The exact earlier state could not be recovered, because it was cleared. |
+
+## Fixes made in this pass
+
+- One debt schedule for cash flow and the projection: loans stop when paid; promos move to their rate after (S-170).
+- A tax set-aside line for income nobody withholds tax from, and for Roth conversions (S-172).
+- Need or want, and covered by, are fields; needs are missing until tagged (S-171).
+- Lean FI on the same withdrawal rate; years to FI from the projection (S-173).
+- The income cliff flag (S-174); shared expenses and a clearer expense panel (S-175, S-176).
+- Show the math on every Dashboard number, every flag and every computed Ledger value; `math.html` built from the engines (S-177).
+
+## Still uncertain
+
+- New York 2026 brackets and a few federal brackets are from memory (rules marked verify).
+- While an input is missing, the tax set-aside uses the marginal rate on the income known so far, which is a floor.
+- W-2 under-withholding is not detected; only income with no federal withholding gets a set-aside.
+- The projection works in today's dollars while debts keep their stated rates.
+- Phase 1 has no charts, so the chart part of "show the math" has nothing to attach to yet.
+
+
 # Phase 5 self-audit (2026-10-15)
 
 ## Tests

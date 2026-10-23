@@ -2,6 +2,8 @@
 // and links to the Ledger fields it was built from. Formatting only.
 
 import { summarize } from '../engine/summary.js';
+import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
+import { mathButton } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
@@ -18,11 +20,15 @@ function provenance(spine, r) {
   const note = missing.length
     ? h('p', { class: 'tile-note' }, chip(r.value === null ? 'missing' : 'incomplete'), ' Needs: ', ...missing.flatMap((p, i) => [i ? ', ' : '', link(p)]))
     : rough.length ? h('p', { class: 'tile-note' }, chip('rough'), ' Built on ' + rough.length + ' rough number' + (rough.length === 1 ? '' : 's')) : null;
-  return [note, from.length ? h('details', { class: 'from' }, h('summary', {}, 'Built from ' + from.length + ' field' + (from.length === 1 ? '' : 's')), h('ul', {}, from.map((p) => h('li', {}, link(p))))) : null];
+  return [note, mathCtx && MATH_FOR._m.get(r) ? mathButton(MATH_FOR._m.get(r), mathCtx) : null];
 }
 
 // One tile: a label, the big number (a link to its first field), lines under it.
+// Which metrics each tile's "Show the math" opens (engine/math.js DASHBOARD_MATH).
+let mathCtx = null;
+const MATH_FOR = { _m: new Map() };
 function tile(spine, { id, label, result, shown, missingText, lines = [], extra = null }) {
+  MATH_FOR._m.set(result, DASHBOARD_MATH['tile-' + id]);
   const first = (result.from || [])[0];
   const value = result.value === null
     ? h('p', { class: 'tile-value missing-text' }, missingText || 'Not enough to figure yet')
@@ -60,6 +66,7 @@ function creditNote(cs) {
 
 function render(spine, rules, source) {
   const s = summarize(spine, rules);
+  mathCtx = { spine, rules, s };
   const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
   const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
 
@@ -115,7 +122,7 @@ function render(spine, rules, source) {
   app.replaceChildren(
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
-      h('nav', { class: 'top-actions' }, h('a', { class: 'btn primary', href: 'ledger.html' }, 'Ledger'))),
+      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Ledger'))),
     h('div', { class: 'tiles' }, tiles),
     flagsSection(spine, s.flags)
   );
@@ -132,7 +139,7 @@ function flagItem(spine, f) {
     h('p', { class: 'flag-detail' }, f.detail),
     goalLine(f.next, 'goal-next'),
     f.next && f.green && f.green.text.slice(9) !== f.next.text.slice(6) ? goalLine(f.green, 'goal-green') : null,
-    f.from.length ? h('details', { class: 'from' }, h('summary', {}, 'From ' + f.from.length + ' field' + (f.from.length === 1 ? '' : 's')), h('ul', {}, [...new Set(f.from)].map((p) => h('li', {}, h('a', { href: ledgerHref(p) }, labelFor(spine, p)))))) : null);
+    flagMath(f).length ? mathButton(flagMath(f), mathCtx) : null);
 }
 
 // Red first, then yellow; green folded into "Done" with a count.

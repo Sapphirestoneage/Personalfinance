@@ -10,6 +10,14 @@
 - [x] Golden tests: Eli (local only) and the demo household
 - [x] Docs: README section, CONTRACTS.md, DECISIONS.md S-140 to S-155, QUESTIONS.md
 
+## Done since: owner requests and an independent review (2026-10-22)
+
+- [x] Card interest rate row, default APR, default due day, default minimum, business and personal utilization, credit score note
+- [x] Flag stages with next goals; the income cliff flag
+- [x] Ledger: saving fixed, filters, a tree by kind, institution and account, add and remove, select several, shared and covered expenses
+- [x] Debt schedule, tax set-aside, needs and wants, one withdrawal rate, years to FI from the projection
+- [x] Show the math, math.html and the self-audit (AUDIT.md)
+
 ## Next: Phase 2
 
 1. **Windfall room**: where a lump sum goes (promo balances before their deadline, the cushion, the Roth, the tax bill), read from the spine and the engines.

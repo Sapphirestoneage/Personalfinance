@@ -73,7 +73,7 @@ a { color: var(--accent); }
 .tile-value { font-size: var(--text-xxl); font-weight: 700; font-family: var(--font-num); line-height: 1.1; text-decoration: none; color: var(--text); }
 .tile-value.missing-text { font-size: var(--text-md); font-family: var(--font-ui); font-weight: 600; color: var(--st-dont-know); }
 .tile-sub { font-size: var(--text-sm); margin: 0; }
-.tile-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.tile-note { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--text-muted); line-height: 1.7; }
 .backstop { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border-left: 3px solid var(--st-computed); background: var(--surface-2); border-radius: var(--radius-sm); font-size: var(--text-sm); }
 details.from { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1); }
 details.from summary { cursor: pointer; min-height: 24px; }
@@ -167,3 +167,27 @@ button.dot { border: 1px solid currentColor; font: inherit; font-size: var(--tex
 .edit-preview:empty { display: none; }
 .section-default { margin: var(--space-1) 0 0 var(--space-4); font-size: var(--text-sm); color: var(--text-muted); }
 .section-default-form { margin-left: var(--space-4); max-width: 420px; }
+
+/* Show the math (S-177): a real button, and a panel of formula, numbers and inputs. */
+.math { margin-top: var(--space-2); }
+.math-btn { gap: var(--space-2); border-width: 2px; font-weight: 600; }
+.math-btn[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.math-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-weight: 700; font-family: var(--font-num); }
+.math-panel { margin-top: var(--space-2); padding: var(--space-3); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface-2); display: grid; gap: var(--space-3); }
+.math-panel .math-panel { background: var(--surface); }
+.math-metric { display: grid; gap: var(--space-1); }
+.math-head, .math-formula, .math-plugged, .math-note, .math-why, .math-rules, .math-more { margin: 0; font-size: var(--text-sm); }
+.math-plugged code { font-family: var(--font-num); font-size: var(--text-sm); white-space: normal; word-break: break-word; }
+.math-why { color: var(--st-roughly); }
+.math-why.missing { color: var(--st-dont-know); }
+.math-group { border-top: 1px solid var(--border); padding-top: var(--space-1); }
+.math-group-head { margin: 0; font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); display: flex; justify-content: space-between; }
+.math-terms { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.math-term { font-size: var(--text-sm); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.math-value { margin-left: auto; font-family: var(--font-num); }
+.math-term .math { flex-basis: 100%; }
+.metric h2 .unit { font-size: var(--text-xs); color: var(--text-muted); font-weight: 400; }
+.rule-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.rule { border-top: 1px solid var(--border); padding-top: var(--space-2); }
+.rule-head, .rule-body { margin: 0; font-size: var(--text-sm); }
+.rule:target, .metric:target { outline: 3px solid var(--focus); outline-offset: 2px; }

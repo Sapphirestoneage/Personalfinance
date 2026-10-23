@@ -81,7 +81,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     const m = monthlyAmount(amt, s.cadence, s.start, s.end, ym);
     const w = weight ?? 1;
     const sg = m === null ? null : m * w;
-    if (sg !== null) gross += sg;
+    if (sg !== null) gross += round2(sg);
     th.useFact(base + '.amount', s.amount);
     // Withholding Facts are in the stream's own cadence.
     let sw = 0;
@@ -144,7 +144,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     for (const p of sh.rough || []) ex.addRough(p);
     for (const p of sh.missing || []) ex.addMissing(p);
     const m = full === null || !sh.shared ? full : sh.share === null ? null : full * sh.share;
-    if (m !== null) total += m;
+    if (m !== null) total += round2(m);
     const isNeed = v(e.need);
     if (e.fat) { fat.useFact(path, e.amount); if (m !== null) fatSum += m; }
     if (isNeed === true) { anyNeed = true; need.useFact(path, e.amount); need.useFact(base + '.need', e.need); if (m !== null) needSum += m; }

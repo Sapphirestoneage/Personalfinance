@@ -138,7 +138,7 @@ export function promoDeadlines(spine, asOf) {
     if (!b) continue;
     const n = paymentsBefore(asOf, ends);
     const need = n ? b / n : b;
-    total += b; monthly += need;
+    total += b; monthly += round2(need);
     // The rate after the intro starts the day after it ends.
     t.useFact(P(d, 'apr'), d.apr);
     items.push({ id: d.id, name: v(d.name), balance: b, promoEnds: ends, switchDate: addDays(ends, 1), paymentsLeft: n, monthlyNeeded: round2(need), deferredInterest: v(d.deferredInterest), aprAfter: rateOn(d, addDays(ends, 1)).rate, aprAfterKind: d.apr ? d.apr.kind : 'missing' });
