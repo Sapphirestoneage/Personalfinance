@@ -69,8 +69,10 @@ on that date. Nothing here is hidden behind a nicer word.
     every file as new on Windows. Both pass on Linux and in CI. The archived `statement.js` browser
     gate also fails a phone-height check by 23 pixels on the cleanup machine while passing in CI,
     which points at font metrics rather than the app.
-15. **The Lane 2 harness rewrites tracked files** (`archive/sparks/tests/reports/*.json`,
-    `archive/sparks/docs/lane2-findings.md`) every run. Restore them with git after running it.
+15. **Two archived suites rewrite tracked files** every run: the Lane 2 harness
+    (`archive/sparks/tests/reports/*.json`, `archive/sparks/docs/lane2-findings.md`) and the Money
+    Rooms v3 browser sweep (`archive/money-rooms-v3/screenshots/level-2/leah-onepager.pdf`). Restore
+    them with git after running either.
 16. **The archived SLAM self-audit has one wrong row.** `slam/AUDIT.md` (lesson 3, 2026-10-15) says a
     scan of the UI found only layout math; the 2026-10-23 audit found fourteen finance computations,
     which step 3 of the cleanup moved into the engines. The row is kept as written because the file is
