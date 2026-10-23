@@ -78,7 +78,8 @@ export function fromProfile(p) {
     if (cadence === 'yearly' && s.start && s.end && (Date.parse(s.end) - Date.parse(s.start)) / 864e5 < 364) cadence = 'total';
     const noWithholding = s.type === '1099';
     const out = {
-      id: s.id || slug(s.label, incomeIds), type: s.type, label: s.label, personId,
+      // A line names whose it is when the profile says so (personId or person); else the first person's (S-211).
+      id: s.id || slug(s.label, incomeIds), type: s.type, label: s.label, personId: people.some((x) => x.id === (s.personId || s.person)) ? (s.personId || s.person) : personId,
       amount: F(s.amount, K(s, 'amount')),
       cadence, start: s.start || null, end: s.end || null,
       withholding: {

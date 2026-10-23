@@ -346,6 +346,9 @@ function incomeEditor(row) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const name = h('input', { id: 'inc-name', type: 'text', autocomplete: 'off' });
   name.value = x.label;
+  // Whose pay it is, when two people share the household (S-211): it decides whose 401(k), IRA and HSA it counts for.
+  const ps = hist.present.household.people || [];
+  const whose = ps.length > 1 ? h('select', { id: 'inc-whose' }, ps.map((p) => h('option', { value: p.id, selected: (x.personId || ps[0].id) === p.id }, p.name || p.id))) : null;
   const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
   amount.value = inputText('money', valueOf(x.amount));
   const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
@@ -377,13 +380,14 @@ function incomeEditor(row) {
     }
     const label = name.value.trim() || x.label;
     try {
-      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, kind, label }, today());
+      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, personId: whose ? whose.value : undefined, kind, label }, today());
       open = null;
       apply(next, label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay }, 'income') + (kind === 'rough' ? ' (a guess)' : ''));
     } catch (err) { msg.textContent = err.message; }
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'inc-name', class: 'edit-label' }, 'Name'), name,
+    whose ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whose, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
     h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
     h('p', { class: 'edit-hint' }, 'Gross pay, before anything is taken out. Tax withheld has its own rows under Taxes.'),
     dayBox, dates.box, msg,
@@ -536,7 +540,7 @@ function editor(row) {
     input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
     input.value = inputText(row.type, f.value);
   }
-  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? 'A list, for example [{"year": 2026, "amount": 4000}]' : null;
+  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? (row.path.endsWith('.contributions') ? 'A list, for example [{"year": 2026, "amount": 4000}]. Add "kind": "rollover", "conversion", "from529" or "employer" when it was one; How much to max it? records one entry at a time in plain words.' : 'A list, for example [{"year": 2026, "amount": 4000}]') : null;
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
@@ -667,7 +671,10 @@ function openField(path) {
   if (open !== path) dirty = false;
   open = path;
   selecting = false;
-  for (const key of itemKeysFor(path)) openItems.add(key);
+  const trail = itemKeysFor(path);
+  for (const key of trail) openItems.add(key);
+  // A link always lands: a folded group or section on the way opens.
+  if (trail.some((k) => view.folded.includes(k))) { view = { ...view, folded: view.folded.filter((k) => !trail.includes(k)) }; keepView(); }
   render();
   // A link always lands: when the filter hides the field, show everything.
   if (!document.getElementById('f-' + path)) { view = { ...view, kinds: [...KIND_ORDER], q: '' }; keepView(); render(); }

@@ -80,8 +80,8 @@ const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.item
   'compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected', ...h.ctx.compare.lines.slice(0, 3).map((r) => 'compare:line:' + r.id), ...h.ctx.compare.tags.map((r) => 'compare:tag:' + r.tag),
   ...h.ctx.plan.foo.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), ...h.ctx.plan.alloc.paychecks.slice(0, 2).map((p) => 'plan:pay:' + p.date + ':' + p.streamId), ...h.ctx.solvers.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id),
   ...(h.ctx.plan.wage.wage !== null ? ['plan:wage'] : []), ...h.ctx.plan.draftt.rows.map((r) => 'plan:draftt:' + r.key), 'plan:floor', ...h.ctx.plan.goals.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), 'plan:outlook',
-  ...h.ctx.maxit.rows.filter((r) => r.applies).flatMap((r) => { const k = 'maxit:' + r.accountId + ':' + r.year + ':'; const cash = r.fillable && r.room > 0 && r.perMonth ? h.ctx.maxitCash(r.id) : null; return [k + 'room', ...(r.cap && r.cap.metric ? [r.cap.metric] : []), ...(r.lump !== null ? [k + 'lump'] : []), ...(r.perMonth !== null ? [k + 'month'] : []), ...(r.fillable && r.paychecks && r.paychecks.perPaycheck !== null ? [k + 'paycheck'] : []), ...(cash ? [k + 'low', ...(cash.measurable ? [k + 'payoff'] : [])] : [])]; }),
-  ...(h.ctx.maxit.pools.length ? ['maxit:all:month', 'maxit:all:lump', 'maxit:all:low', ...(h.ctx.maxitCash('all').measurable ? ['maxit:all:payoff'] : [])] : [])];
+  ...h.ctx.maxit.rows.filter((r) => r.applies).flatMap((r) => { const k = 'maxit:' + r.accountId + ':' + r.year + ':'; const cash = r.fillable && r.lump > 0 && (r.perMonth || (r.paychecks && r.paychecks.extra)) ? h.ctx.maxitCash(r.id) : null; return [k + 'room', ...(r.cap && r.cap.metric ? [r.cap.metric] : []), ...(r.lump !== null ? [k + 'lump'] : []), ...(r.perMonth !== null ? [k + 'month'] : []), ...(r.fillable && r.paychecks && r.paychecks.perPaycheck !== null ? [k + 'paycheck'] : []), ...(cash ? [k + 'low', ...(cash.measurable ? [k + 'payoff'] : [])] : [])]; }),
+  ...(h.ctx.maxit.pools.length ? ['maxit:all:month', 'maxit:all:lump', ...(h.ctx.maxit.totals.lump > 0 ? ['maxit:all:low', ...(h.ctx.maxitCash('all').measurable ? ['maxit:all:payoff'] : [])] : [])] : [])];
 
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');
@@ -205,13 +205,13 @@ test('h. the Roth step with the W-2 ended and a blank 1099: earned income is the
   assert.equal(ei.value, 33000);
   assert.equal(ei.kind, 'computed');
   const roth = h.windfall.steps.find((x) => x.id === 'roth');
-  assert.equal(roth.need, 4500, '$7,500 less about $3,000 put in so far');
+  assert.equal(roth.need, 3900, '$7,500 less about $3,000 put in so far and $600 still set to go in by December');
   assert.ok(!roth.missing.includes('income'));
   const e = explainMetric('windfall:roth', h.ctx);
   // The step links the Roth row's room, and the room links the year's earned income (the cap).
-  const link = e.terms.find((t) => /^maxit:[^:]+:2026:room$/.test(t.metric || ''));
-  assert.ok(link, 'the step names the 2026 Roth room');
-  assert.ok(explainMetric(link.metric, h.ctx).terms.some((t) => /^earned:2026/.test(t.metric || '')));
+  const link = e.terms.find((t) => /^maxit:[^:]+:2026:lump$/.test(t.metric || ''));
+  assert.ok(link, 'the step names the 2026 Roth new money');
+  assert.ok(explainMetric(link.metric.replace(/lump$/, 'room'), h.ctx).terms.some((t) => /^earned:2026/.test(t.metric || '')));
   // 2027: the 1099 runs from January with no amount, so earned income is missing and names that line.
   const next = earnedIncome(h.spine, R, 2027);
   assert.equal(next.value, null);

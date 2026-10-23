@@ -51,6 +51,10 @@ test('a profile-shaped household turns into a spine', () => {
   assert.equal(s.accounts.find((a) => a.type === 'car').family, 'otherAssets');
   assert.equal(s.household.situation[1].from, '2027-01-01');
   assert.equal(s.goals[0].type, 'fi');
+  // Every line is the first person's unless it names someone in the household (S-211).
+  assert.deepEqual(s.income.map((x) => x.personId), ['a', 'a']);
+  const two = fromProfile({ ...p, household: { ...p.household, people: [...p.household.people, { id: 'b', name: 'B', birthDate: '1991-01-01', kind: 'known' }] }, income: [{ ...p.income[0], personId: 'b' }, { ...p.income[1], person: 'nobody' }] });
+  assert.deepEqual(two.income.map((x) => x.personId), ['b', 'a']);
 });
 
 test('the validator catches a zero that should be missing, bad kinds and bad families', () => {

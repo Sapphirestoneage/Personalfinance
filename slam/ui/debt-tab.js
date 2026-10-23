@@ -4,6 +4,7 @@
 
 import { debtView, solvePayoff, whichCard, balanceTransfer } from '../engine/debtview.js';
 import { parseInput } from '../engine/edits.js';
+import { labelFor } from '../engine/labels.js';
 import { mathButton } from './math-panel.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 
@@ -195,7 +196,7 @@ function loansCard(d, ctx) {
         const kv = [];
         const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
         for (const id of l.missingRules) row('Missing rule', h('span', { class: 'missing-row' }, id + ' is not in the rules registry'), 'words');
-        row('Income-driven payment', l.payment === null ? h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : p === 'income' ? 'income' : p.split('.').pop()).join(', ') || 'a rule')) : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
+        row('Income-driven payment', l.payment === null ? h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : labelFor(ctx().spine, p)).join(', ') || 'a rule')) : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
         if (l.payment !== null) row('How', 'income ' + money(l.agi) + (l.agiSource === 'cashflow' ? ' (a year of this month\'s gross, rough)' : ' (this year\'s AGI)') + ', poverty line ' + money(l.povertyLine) + ' for ' + l.householdSize + (l.householdSize === 1 ? ' person' : ' people') + ', discretionary ' + money(l.discretionary), 'words');
         row('Forgiveness', l.forgivenessYears === null ? h('span', { class: 'missing-row' }, 'Missing: the forgiveness rule') : 'whatever is left after ' + l.forgivenessYears + ' years of payments, about ' + shortDate(l.forgivenessDate), 'words');
         if (l.pslf) row('Public service', l.pslf.payments === null ? h('span', { class: 'missing-row' }, 'Missing: the PSLF rule') : l.pslf.payments + ' qualifying payments, about ' + shortDate(l.pslf.date), 'words');

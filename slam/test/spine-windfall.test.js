@@ -60,15 +60,16 @@ test('demo, $40,000 not yet taxed: tax on it first at the marginal rate, the Rot
   const tax = step(w, 'taxOnIt');
   near(tax.rate, 0.22 + 0.054, 'federal 22% plus NY 5.4%');
   near(tax.amount, 40000 * 0.274);
-  // Roth: 7,500 limit less 300 a month for 10 months so far (a guess), under the phase-out.
+  // Roth: 7,500 limit less 300 a month for 10 months so far (a guess), under the phase-out, less the $300 a month
+  // still set to go in for November and December (S-211): $3,900 of new money.
   const roth = step(w, 'roth');
-  near(roth.need, 7500 - 3000);
+  near(roth.need, 7500 - 3000 - 600);
   assert.equal(roth.kind, 'rough', 'the contributions so far are a guess from the monthly amount');
   assert.ok(roth.rough.includes('accounts.roth.contributions'));
   assert.ok(roth.rules.includes('IRA_LIMIT') && roth.rules.includes('ROTH_PO_S_LO'));
   near(step(w, 'cushion').amount, 22861 - 12000, 'the cushion is filled in full');
   const left = step(w, 'left');
-  near(left.amount, 40000 - tax.amount - sum.tax.balanceDue.value - 3000 - (22861 - 12000) - 4500);
+  near(left.amount, 40000 - tax.amount - sum.tax.balanceDue.value - 3000 - (22861 - 12000) - 3900);
   near(w.assigned + w.left, 40000, 'nothing is lost');
   assert.match(left.why, /no job yet/);
 });

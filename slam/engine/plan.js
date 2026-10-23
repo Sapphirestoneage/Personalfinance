@@ -10,7 +10,7 @@ import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetwee
 import { yearsToTarget } from './fi.js';
 import { payoffPlan, rateOn } from './debt.js';
 import { windfall } from './windfall.js';
-import { maxIt, longDay, poolsOf } from './maxit.js';
+import { maxIt, longDay, steadyMonth } from './maxit.js';
 import { paychecks } from './calendar-views.js';
 import { FAT, PRESETS } from './schema.js';
 import { upgradeSpine } from './normalize.js';
@@ -72,27 +72,36 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     else if (id === 'highInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r >= hi && b > 0; }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' at or above ' + Math.round(hi * 100) + '%.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
     else if (id === 'reserves') { const gap = s.emergency.gap; t.absorb({ ...gap, value: undefined }); push(id, t, { need: gap.value, why: gap.value === null ? 'The Rule of 5 target needs a birth date and monthly spending.' : gap.value > 0 ? money(gap.value) + ' to the Rule of 5 target (' + money(s.emergency.targetDollars.value) + ').' : 'Cash reaches the Rule of 5 target.', path: gap.missing[0] || s.sheet.cash.from[0] || null }); }
     // Roth and HSA room, and retirement maxed (S-211): both read "How much to max it?" (engine/maxit.js), each shared
-    // limit once, for every tax year still open: what a month fills the room by each deadline, less what already goes
-    // in each month (the surplus already pays that).
+    // limit once, for every tax year still open: the new money a month that fills the room by each deadline, on top of
+    // what already goes in (the surplus already pays that). A limit whose deadline passes before the surplus reaches
+    // the rung is sized by its steady month instead (a whole year's room less what already goes in, a twelfth).
     else if (id === 'rothHsa' || id === 'maxRetirement') {
-      const want = id === 'rothHsa' ? /^(ira|hsa):/ : /^(deferral|k457b|employer):/;
+      const want = id === 'rothHsa' ? /^(ira|hsa|hsa55):/ : /^(deferral|k457b|employer):/;
       const m = mx();
-      const pools = m.pools.filter((p) => want.test(p.key));
+      const start = sameDayLater(asOf, monthsSoFar);
       const mine = m.rows.filter((r) => r.pools.some((k) => want.test(k)));
       for (const r of mine) t.absorb({ ...r, value: undefined });
       const miss = mine.filter((r) => r.applies && r.room === null && !r.passed);
       const shut = mine.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
       const off = mine.filter((r) => !r.applies);
-      const start = sameDayLater(asOf, monthsSoFar);
-      const inPool = (key) => round2((spine.accounts || []).filter((a) => poolsOf(spine, a).some((q) => q.key === key) && a.monthlyContribution && v(a.monthlyContribution)).reduce((x, a) => x + v(a.monthlyContribution), 0));
-      if (!pools.length && !miss.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.why).join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
+      const over = mine.filter((r) => r.over);
+      const pools = m.pools.filter((p) => want.test(p.key));
+      const open = pools.filter((p) => p.deadline >= start), closed = pools.filter((p) => p.deadline < start);
+      // A limit whose deadline passes first: its steady month, once per pool (a later year still open sizes it instead).
+      const later = closed.filter((p, i) => !open.some((o) => o.key === p.key) && closed.findIndex((c) => c.key === p.key) === i).map((p) => ({ ...p, perMonth: steadyMonth(spine, p), steady: true }));
+      if (!pools.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.why).join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
       else {
-        const seen = new Set();
-        let need = 0;
-        const parts = pools.map((p) => { const now = seen.has(p.key) ? 0 : inPool(p.key); seen.add(p.key); const more = Math.max(0, round2((p.perMonth || 0) - now)); need += more; return p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.row.deadline.date) + (now ? ', ' + money(more) + ' more than the ' + money(now) + ' already going in' : '') + (p.row.deadline.date < start ? ' (it closes before the surplus reaches this rung, about ' + longDay(start) + ')' : ''); });
-        const why = (miss.length ? miss.map((r) => r.name + ' ' + r.year + ': ' + r.missingLabel).join('; ') + '. ' : '') + parts.join('; ') + (parts.length ? '.' : '') + (shut.length ? ' ' + shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : '');
-        const first = miss[0] || (pools[0] && pools[0].row);
-        push(id, t, { need: miss.length ? null : round2(need), flow: true, why: why.trim(), path: (miss[0] && miss[0].ei && miss[0].ei.missing[0]) || (first ? 'accounts.' + first.accountId + '.contributions' : null), done: miss.length ? null : need <= 0 });
+        const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '');
+        const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
+        const why = [
+          miss.length ? miss.map((r) => r.name + ' ' + r.year + ': ' + r.missingLabel).join('; ') + '.' : '',
+          over.length ? over.map((r) => r.name + ' ' + r.year + ': over the limit by ' + money(r.over)).join('; ') + '.' : '',
+          [...open, ...later].map(line).join('; ') + (open.length || later.length ? '.' : ''),
+          closed.length ? closed.map((p) => p.row.name + ' ' + p.year + ' closes on ' + longDay(p.deadline) + ', before the surplus reaches this rung (about ' + longDay(start) + ')').join('; ') + '.' : '',
+          shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : ''
+        ].filter(Boolean).join(' ');
+        const first = miss[0] || over[0] || (pools[0] && pools[0].row);
+        push(id, t, { need: miss.length ? null : need, flow: true, why: why.trim(), path: (miss[0] && miss[0].ei && miss[0].ei.missing[0]) || (first ? 'accounts.' + first.accountId + '.contributions' : null), done: miss.length ? null : over.length ? false : need <= 0 });
       }
     }
     else if (id === 'hyper') { const rate = t.rule(rules, 'FOO_HYPER_RATE', year); const g = s.cashflow.savingsRate.gross; t.absorb({ ...g, value: undefined }); const gross = s.cashflow.income.gross.value; push(id, t, { need: g.value === null || gross === null ? null : Math.max(0, (rate - g.value) * gross), flow: true, why: g.value === null ? 'Needs the gross savings rate.' : g.value >= rate ? 'Saving ' + Math.round(g.value * 100) + '% of gross, past the ' + Math.round(rate * 100) + '% mark.' : 'Saving ' + Math.round(g.value * 100) + '% of gross; ' + money(Math.max(0, (rate - g.value) * gross)) + ' a month more reaches ' + Math.round(rate * 100) + '%.', path: g.missing[0] || s.cashflow.income.gross.from[0] || null }); }

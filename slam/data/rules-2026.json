@@ -14,8 +14,8 @@
       "rule": "401(k)/403(b)/457(b)/TSP employee deferral",
       "value": 24500,
       "unit": "$",
-      "appliesTo": "401(k), Roth 401(k), 403(b), 457(b), TSP, Solo 401(k)",
-      "notes": "Shared across all 401(k)/403(b) plans you're in that year; 457(b) has its own separate limit",
+      "appliesTo": "401(k), Roth 401(k), 403(b), 457(b), TSP, Solo 401(k), SIMPLE IRA",
+      "notes": "Shared across all 401(k)/403(b)/TSP/SIMPLE IRA deferrals you make that year, in every plan (IRC 402(g)(3)); a SIMPLE IRA also has its own lower limit; 457(b) has its own separate limit",
       "source": "IRS IR-2025 (401k limit increases to $24,500 for 2026)",
       "verified": "yes"
     },

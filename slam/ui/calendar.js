@@ -67,13 +67,14 @@ const pills = (e, small = false) => (e.pills || []).filter((p) => !small || SMAL
 const amt = (e) => (e.amount === null ? null : (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount, !Number.isInteger(e.amount)));
 
 // One event: the grip (drag), the swatch, the name (a button that opens its editor, or a link), pills, the amount, the note.
+// Where an event's name links: an account's deadline opens its "How much to max it?" panel (S-211), the rest their field.
+const evHref = (e) => (e.kind === 'maxDeadline' && e.accountId ? maxHref(e.accountId) : e.path ? ledgerHref(e.path) : null);
+
 function eventEl(e, { small = false } = {}) {
   const editable = !!e.key;
   const name = editable
     ? h('button', { type: 'button', class: 'ev-tap', 'aria-pressed': String(state.open === e.key), onclick: () => { state.open = state.open === e.key ? null : e.key; render(); } }, e.label)
-    // An account's deadline opens its "How much to max it?" panel (S-211).
-    : e.kind === 'maxDeadline' ? h('a', { href: maxHref(e.accountId) }, e.label)
-      : e.path ? h('a', { href: ledgerHref(e.path) }, e.label) : h('span', {}, e.label);
+    : evHref(e) ? h('a', { href: evHref(e) }, e.label) : h('span', {}, e.label);
   const li = h('li', { class: 'ev ev-' + e.kind + (e.rough ? ' ev-rough' : '') + (small ? ' ev-small' : '') + ((e.pills || []).includes('done') ? ' ev-done' : ''), 'data-key': e.key || null, 'data-drag': e.movable && !e.locked ? 'event' : null },
     e.movable && !e.locked ? h('span', { class: 'grip', title: 'Drag to another day', 'aria-hidden': 'true' }, '⋮⋮') : null,
     h('span', { class: 'sw ' + (CAT[e.kind] || 'viz-0'), 'aria-hidden': 'true' }),
@@ -262,7 +263,7 @@ function undated(m) {
 function listTwin(m) {
   const all = [...m.days.flatMap((d) => d.events), ...m.undated];
   return h('details', { class: 'flow-list card' }, h('summary', {}, 'Every item in ' + longMonth(m.ym) + ' as a list, with links to the Ledger (' + all.length + ')'),
-    h('ul', {}, all.map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', e.path ? h('a', { href: ledgerHref(e.path) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? 'in ' : e.direction === 'out' ? 'out ' : '') + money(e.amount, !Number.isInteger(e.amount)) : '', e.rough ? ' (rough)' : '', e.note ? ' (' + e.note + ')' : ''))));
+    h('ul', {}, all.map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', evHref(e) ? h('a', { href: evHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? 'in ' : e.direction === 'out' ? 'out ' : '') + money(e.amount, !Number.isInteger(e.amount)) : '', e.rough ? ' (rough)' : '', e.note ? ' (' + e.note + ')' : ''))));
 }
 
 // ---------------------------------------------------------------- tabs
@@ -392,14 +393,14 @@ function milestonesCard(c, spine) {
   const ms = milestones(spine, rules, c.sim, c.months);
   return h('section', { class: 'card', 'aria-labelledby': 'ms-h' },
     h('h2', { id: 'ms-h' }, 'Milestones ', h('span', { class: 'count' }, String(ms.length))),
-    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), x.kind === 'maxDeadline' ? h('a', { href: maxHref(x.accountId) }, x.label) : x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + window_ + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + window_ + '-month window. A longer window may show when a card clears.'));
+    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), evHref(x) ? h('a', { href: evHref(x) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + window_ + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + window_ + '-month window. A longer window may show when a card clears.'));
 }
 
 function searchCard(c) {
   const box = h('input', { class: 'search-box', type: 'search', id: 'cal-search', placeholder: 'Find an item by name (press /)', 'aria-label': 'Find an item', autocomplete: 'off' });
   box.value = state.q;
   box.addEventListener('input', () => { state.q = box.value; const hits = searchEvents(c.months, state.q); list.replaceChildren(...results(hits)); });
-  const results = (hits) => (state.q && !hits.length ? [h('li', { class: 'muted' }, 'Nothing matches.')] : hits.slice(0, 30).map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', e.path ? h('a', { href: ledgerHref(e.path) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount) : '', e.key ? [' ', h('button', { type: 'button', class: 'ev-tap', onclick: () => { state.open = e.key; state.ym = e.ym; state.tab = 'month'; render(); } }, 'open')] : null)));
+  const results = (hits) => (state.q && !hits.length ? [h('li', { class: 'muted' }, 'Nothing matches.')] : hits.slice(0, 30).map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', evHref(e) ? h('a', { href: evHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount) : '', e.key ? [' ', h('button', { type: 'button', class: 'ev-tap', onclick: () => { state.open = e.key; state.ym = e.ym; state.tab = 'month'; render(); } }, 'open')] : null)));
   const list = h('ul', { class: 'flow-list' }, ...results(searchEvents(c.months, state.q)));
   return h('section', { class: 'card', 'aria-label': 'Search' }, box, list);
 }

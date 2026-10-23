@@ -12,7 +12,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { makeRules } from '../engine/rules.js';
-import { putFact, addContribution } from '../engine/edits.js';
+import { putFact, addContribution, editIncome } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { fooLadder } from '../engine/plan.js';
 import { calendar } from '../engine/calendar.js';
@@ -79,25 +79,37 @@ test('the room for every account type on the demo, by hand', () => {
   const s = every();
   const mx = maxIt(s, R, { sim: maxItSim(s, R) });
   // 401(k): $24,500 less about $5,000 in ($500 a month for 10 months of pay) = $19,500. It fills only through pay, and the
-  // salary pays on the 15th: 2 paychecks (Nov 15, Dec 15) = $9,750 each, more than a paycheck holds; its months are the 2 that hold one.
+  // salary pays on the 15th: 2 paychecks (Nov 15, Dec 15). The $500 already coming out of each puts in $1,000 more, so the
+  // new money is $18,500, $9,250 a paycheck: set the deferral to $9,750, more than a paycheck holds.
   const k = row(mx, 'k401:2026');
-  assert.deepEqual([k.limit.value, k.contributed.value, k.room, k.perMonth, k.months.count], [24500, 5000, 19500, 9750, 2]);
-  assert.deepEqual([k.paychecks.count, k.paychecks.perPaycheck, k.paychecks.tooBig], [2, 9750, true]);
+  assert.deepEqual([k.limit.value, k.contributed.value, k.room, k.still.value, k.lump, k.perMonth, k.months.count], [24500, 5000, 19500, 1000, 18500, 9250, 2]);
+  assert.deepEqual([k.paychecks.count, k.paychecks.extra, k.paychecks.current, k.paychecks.perPaycheck, k.paychecks.tooBig], [2, 9250, 500, 9750, true]);
   assert.deepEqual(k.paychecks.dates, ['2026-11-15', '2026-12-15']);
   assert.equal(k.kind, 'rough', 'what is in is a guess from the monthly amount');
-  // The IRAs share one $7,500 limit: the Roth's about $3,000 ($300 x 10) plus the traditional's $1,000 (the $5,000 rollover does not count) = $4,000 in, $3,500 left on both.
-  for (const id of ['roth:2026', 'trad:2026']) assert.deepEqual([row(mx, id).room, row(mx, id).perMonth, row(mx, id).months.count], [3500, 583.34, 6], id);
+  // The IRAs share one $7,500 limit: the Roth's about $3,000 ($300 x 10) plus the traditional's $1,000 (the $5,000 rollover
+  // does not count) = $4,000 in, $3,500 left on both. The Roth's $300 still goes in for November and December ($600), so
+  // the new money is $2,900, over 6 months $483.33 up to $483.34, the last one $483.30.
+  for (const id of ['roth:2026', 'trad:2026']) assert.deepEqual([row(mx, id).room, row(mx, id).lump, row(mx, id).perMonth, row(mx, id).months.count, row(mx, id).months.last], [3500, 2900, 483.34, 6, 483.3], id);
   assert.deepEqual(row(mx, 'roth:2026').sharedWith, ['trad']);
-  // HSA, self-only: $4,400 less $1,000 (10 months of $100 from pay) and the $500 from the employer = $2,900; / 6 months = $483.33 up to $483.34.
+  // HSA, self-only: $4,400 less $1,000 (10 months of $100 from pay) and the $500 from the employer = $2,900; $100 from the
+  // November and December paychecks still goes in, so $2,700 of new money, / 6 months = $450.
   const h = row(mx, 'hsa:2026');
-  assert.deepEqual([h.limit.value, h.contributed.value, h.room, h.perMonth], [4400, 1500, 2900, 483.34]);
+  assert.deepEqual([h.limit.value, h.contributed.value, h.room, h.still.value, h.perMonth], [4400, 1500, 2900, 200, 450]);
   // SEP: 20% of net self-employment earnings. Tutoring $6,000; SE tax $6,000 x 0.9235 x 15.3% = $847.77, half $423.89; $5,576.11 x 20% = $1,115.22.
   const sep = row(mx, 'sep:2026');
   assert.deepEqual([sep.limit.value, sep.room, sep.months.count, sep.perMonth], [1115.22, 1115.22, 12, 92.94]);
   // 529 in New York: the $5,000 single deduction cap, by December 31: 3 months, $1,666.67.
   assert.deepEqual([row(mx, 'kid:2026').room, row(mx, 'kid:2026').perMonth], [5000, 1666.67]);
-  // Totals count the shared IRA room once: 19,500 + 3,500 + 2,900 + 1,115.22 + 5,000.
-  assert.equal(mx.totals.lump, 32015.22);
+  // Totals count the shared IRA room once: 19,500 + 3,500 + 2,900 + 1,115.22 + 5,000 of room; new money 18,500 + 2,900 +
+  // 2,700 + 1,115.22 + 5,000. A month: $9,250 + $483.34 + $450 + $92.94 + $1,666.67 to December 31, then less as deadlines pass.
+  // The 401(k) counts only what its paychecks hold: $4,111 lands from each (after the $500 deferral and the $100 to
+  // the HSA), so 2 x $4,111 of its $18,500.
+  assert.equal(k.paychecks.landed, 4111);
+  assert.deepEqual(mx.totals.short, ['k401:2026']);
+  assert.deepEqual([mx.totals.room, mx.totals.lump], [32015.22, 2 * 4111 + 2900 + 2700 + 1115.22 + 5000]);
+  assert.deepEqual(mx.totals.steps, [{ until: '2026-12-31', perMonth: 4111 + 483.34 + 450 + 92.94 + 1666.67 }, { until: '2027-04-15', perMonth: 1026.28 }, { until: '2027-10-15', perMonth: 92.94 }]);
+  // Without the day-by-day run nothing says what lands, so the whole $18,500 counts.
+  assert.equal(maxIt(s, R).totals.lump, 30215.22);
   assert.equal(mx.totals.groups, 5);
 });
 
@@ -154,8 +166,10 @@ test('from January 1 to the IRA and HSA deadline, two tax years side by side, as
   assert.match(mx.window.words, /April 15, 2027/);
   // 2026: $7,500 less the Roth's 12 months of $300 and the traditional's $1,000 = $2,900, over 3 months (Feb 10, Mar 10, Apr 10).
   assert.deepEqual([row(mx, 'roth:2026').room, row(mx, 'roth:2026').months.count, row(mx, 'roth:2026').perMonth], [2900, 3, 966.67]);
-  // 2027: $7,500 less 2 months of $300 = $6,900, over 15 months to April 15, 2028.
-  assert.deepEqual([row(mx, 'roth:2027').room, row(mx, 'roth:2027').months.count, row(mx, 'roth:2027').perMonth], [6900, 15, 460]);
+  // 2027: $7,500 less 2 months of $300 = $6,900; March to December still put in $3,000, so $3,900 of new money over 15
+  // months to April 15, 2028 = $260. The $300 a month from January on counts for 2027, never twice.
+  assert.deepEqual([row(mx, 'roth:2027').room, row(mx, 'roth:2027').still.value, row(mx, 'roth:2027').months.count, row(mx, 'roth:2027').perMonth], [6900, 3000, 15, 260]);
+  assert.equal(row(mx, 'roth:2026').still.value, 0, 'nothing more of the $300 a month counts for 2026');
   // After April 15 only one year is open again.
   assert.equal(maxIt(s, R, { asOf: '2027-04-16' }).window.both, false);
 });
@@ -188,11 +202,12 @@ test('the cash check: the per-month amounts through the day-by-day run, the floo
   assert.equal(all.breaks, true);
   assert.ok(all.newShortfalls > 0);
   assert.match(all.words, /breaks the cash floor/);
-  // Only the part above what already goes in leaves checking: the Roth's $583.34 or $750 a month less the $300 already moving.
+  // Only new money leaves checking (the $300 a month is in the run already): the Roth's $3,900, $650 a month for 6 months.
   const roth = maxItCash(s, R, mx, { sim, rows: mx.rows.filter((r) => r.id === 'roth:2026') });
-  assert.equal(roth.total, (750 - 300) * 6);
-  // A richer household keeps the floor on the Roth alone; the 401(k) pushes the store card's payoff.
-  let rich = putFact(demo(), 'accounts.chk.balance', 20000, 'known', T);
+  assert.equal(roth.total, 3900);
+  assert.equal(roth.flows.length, 6);
+  // A richer household keeps the floor on the Roth alone; the 401(k) (what its paychecks hold) pushes the store card's payoff.
+  let rich = putFact(demo(), 'accounts.chk.balance', 10000, 'known', T);
   rich = applyDefaults(putFact(rich, 'debtPlan.extra', 400, 'known', T), R);
   const rsim = maxItSim(rich, R);
   const rmx = maxIt(rich, R, { sim: rsim });
@@ -253,15 +268,20 @@ test('the FOO rungs and the Windfall Roth step read the same rows', () => {
   const sum = summarize(s, R, { flags: false });
   const mx = maxIt(s, R);
   const foo = fooLadder(s, R, sum).rungs;
-  // Roth and HSA: what each pool needs a month above what already goes in: the IRAs $583.34 less the Roth's $300,
-  // the HSA $483.34 less its $100 = $666.68.
-  assert.equal(foo.find((r) => r.id === 'rothHsa').need, 666.68);
-  // Retirement maxed: the 401(k) $9,750 a month less the $500 already from pay, and the SEP's $92.94 = $9,342.94.
-  assert.equal(foo.find((r) => r.id === 'maxRetirement').need, 9342.94);
-  assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\) 2026: \$9,750 a month to December 31, 2026, \$9,250 more than the \$500 already going in/);
-  // The Windfall's Roth step takes the same room, and in the monthly order the same amount a month.
+  // The surplus reaches these rungs about November 22, 2028, after the 2026 deadlines, so each limit is sized by its
+  // steady month: a whole year's room less what already goes in, a twelfth. Roth and HSA: the IRAs ($7,500 - 12 x $300)
+  // / 12 = $325 and the HSA ($4,400 - 12 x $100 - $500) / 12 = $225. Retirement: the 401(k) ($24,500 - 12 x $500) / 12
+  // = $1,541.67 and the SEP $1,115.22 / 12 = $92.94.
+  assert.equal(foo.find((r) => r.id === 'rothHsa').need, 550);
+  assert.equal(foo.find((r) => r.id === 'maxRetirement').need, 1634.61);
+  assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\): about \$1,542 a month in a whole year at 2026 limits/);
+  assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\) 2026 closes on December 31, 2026, before the surplus reaches this rung/);
+  // Open today: the rung reads the new money a month to each deadline.
+  const now = fooLadder({ ...s, debts: [] }, R, summarize({ ...s, debts: [] }, R, { flags: false })).rungs.find((r) => r.id === 'rothHsa');
+  assert.ok(now.need > 0);
+  // The Windfall's Roth step takes the same new money, and in the monthly order the same amount a month.
   const w = windfall(s, R, sum, { amount: 50000, taxed: true }).steps.find((x) => x.id === 'roth');
-  assert.equal(w.need, row(mx, 'roth:2026').room);
+  assert.equal(w.need, row(mx, 'roth:2026').lump);
   const m = windfall(s, R, sum, { amount: 0, taxed: true, monthly: true }).steps.find((x) => x.id === 'roth');
   assert.equal(m.need, row(mx, 'roth:2026').perMonth);
   assert.match(m.why, /a month for 6 months, to April 15, 2027/);
@@ -308,8 +328,9 @@ test('shared limits: a Solo 401(k) with a W-2 401(k), a SEP with a Solo 401(k), 
   const solo = row(mx, 'solo:2026');
   assert.deepEqual([solo.room, solo.parts['employer:casey'], solo.parts['deferral:casey'], solo.deadline.date], [5576.11, 1115.22, 4460.89, '2027-10-15']);
   assert.deepEqual(row(mx, 'k401:2026').sharedWith, ['solo']);
-  // The deferral limit is counted once (the 401(k)'s $19,500) plus the Solo's employer part and the Roth: $25,115.22.
-  assert.equal(mx.totals.lump, 19500 + 1115.22 + 4500);
+  // The deferral limit is counted once (the 401(k)'s $19,500 room) plus the Solo's employer part and the Roth; the new
+  // money takes off the $1,000 and $600 still set to go in: $18,500 + $1,115.22 + $3,900.
+  assert.deepEqual([mx.totals.room, mx.totals.lump], [19500 + 1115.22 + 4500, 18500 + 1115.22 + 3900]);
   // After December 31 the employee deferral can no longer be elected for 2026: the employer part is the room.
   const late = row(maxIt(s, R, { asOf: '2027-01-10' }), 'solo:2026');
   assert.deepEqual([late.room, late.cap.electGone], [1115.22, true]);
@@ -385,7 +406,7 @@ test('over the limit says so; a passed deadline says the year closed, with no am
   const s = { ...demo(), accounts: demo().accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 8000 }]) } : a)) };
   const r = row(maxIt(s, R), 'roth:2026');
   assert.deepEqual([r.room, r.over], [0, 500]);
-  assert.match(r.why, /Over the limit by \$500: an excess contribution/);
+  assert.match(r.why, /Over the 2026 limit by \$500: an excess contribution/);
   const april = maxItDeadlines(demo(), R, '2026-04-01', '2026-04-30');
   assert.deepEqual(april.map((e) => [e.date, e.passed, e.amount]), [['2026-04-15', true, null]]);
   assert.match(april[0].note, /^The 2025 year closed on this day/);
@@ -403,4 +424,148 @@ test('recording what went in: one entry for the year; a rollover is kept but doe
   assert.equal(row(maxIt(b, R), 'roth:2026').room, 6000);
   assert.throws(() => addContribution(s, 'roth', { year: 2026, amount: 0 }, T), /above \$0/);
   assert.throws(() => addContribution(s, 'nope', { year: 2026, amount: 10 }, T), /No account nope/);
+});
+
+// A W-2 line for a test household, and a married couple.
+const w2 = (id, pid, amt, extra = {}) => ({ id, type: 'w2', label: id, personId: pid, amount: F(amt), cadence: 'monthly', start: '2024-01-01', end: null, withholding: { federal: F(0), state: F(0) }, ...extra });
+const couple = (s, name = 'Sam') => ({ ...s, household: { ...s.household, filingStatus: F('mfj'), people: [...s.household.people, { id: 'sam', name, birthDate: F('1995-05-05') }] } });
+
+test('married filing jointly: the spouse who earns more is held to their own pay; the Roth phase-out starts from the lesser of the limit and pay', () => {
+  // Casey earns $400 a month ($4,800), Sam $250 ($3,000). Casey's Roth: $4,800, Casey's own pay. Sam's IRA counts the
+  // couple's $7,800, but together only $7,800 can go in: $4,800 + $3,000.
+  let s = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
+  s = couple(s);
+  s = { ...s, income: [{ ...s.income[0], amount: F(400) }, { ...s.income[1], amount: F(0) }, w2('samjob', 'sam', 250)], accounts: [...s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined } : a)), acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
+  const mx = maxIt(s, R);
+  assert.deepEqual([row(mx, 'roth:2026').room, row(mx, 'roth:2026').cap.joint], [4800, false]);
+  assert.deepEqual([row(mx, 'st:2026').room, row(mx, 'st:2026').cap.value, row(mx, 'st:2026').cap.joint], [7500, 7800, true]);
+  assert.deepEqual(mx.pools.filter((p) => p.key.startsWith('ira')).map((p) => [p.key, p.room]), [['ira:casey', 4800], ['ira:sam', 3000]]);
+  // $7,500 in Casey's Roth is $2,700 over Casey's own pay.
+  const o = { ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 7500 }]) } : a)) };
+  assert.equal(row(maxIt(o, R), 'roth:2026').over, 2700);
+  // Two people with the filing status blank: whether the couple's pay counts is missing, never $0.
+  const blank = putFact(s, 'household.filingStatus', null, 'missing', T);
+  assert.deepEqual([row(maxIt(blank, R), 'st:2026').room, row(maxIt(blank, R), 'st:2026').missingLabel], [null, 'missing: the filing status']);
+  // Worksheet 2-2 line 6: $4,800 of pay and $160,500 of modified AGI (with $155,700 of unemployment), single: half of
+  // $4,800, $2,400 (not half of $7,500).
+  let w = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
+  w = { ...w, income: [{ ...w.income[0], amount: F(400) }, { ...w.income[1], amount: F(0) }, { id: 'ui', type: 'unemployment', label: 'UI', personId: 'casey', amount: F(155700), cadence: 'yearly', start: '2024-01-01', end: null, withholding: { federal: F(0), state: F(0) } }], accounts: w.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined } : a)) };
+  const r = row(maxIt(w, R), 'roth:2026');
+  assert.deepEqual([r.phase.magi, r.phase.base, r.phase.limit, r.room], [160500, 4800, 2400, 2400]);
+});
+
+test('over the limit by kind: a SIMPLE against its own limit and the shared one, a Solo 401(k) and a SEP on one total, a deferral, a 529, a Roth past its phase-out', () => {
+  const d = demo();
+  const simple = (k401, simpleIn) => row(maxIt({ ...d, accounts: [...d.accounts.map((a) => (a.id === 'k401' ? { ...a, contributions: F([{ year: 2026, amount: k401 }]) } : a)), acct('simple', 'simple_ira', 'ira', { contributions: F([{ year: 2026, amount: simpleIn }]) })] }, R), 'simple:2026');
+  // $15,000 + $10,000 is $500 past the shared $24,500; the SIMPLE's own $10,000 is under its $17,000.
+  assert.equal(simple(15000, 10000).over, 500);
+  assert.equal(simple(18000, 0).over, null, 'the 401(k) alone under $24,500 is no SIMPLE excess');
+  assert.equal(simple(0, 18000).over, 1000, '$18,000 is $1,000 past the SIMPLE\'s own limit');
+  // A SEP with $1,000 in leaves a Solo 401(k) on the same $5,576.11 of earnings $4,576.11 (one 100% of earnings).
+  const sep = maxIt({ ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement'), acct('sep', 'sep_ira', 'ira', { contributions: F([{ year: 2026, amount: 1000 }]) })] }, R);
+  assert.deepEqual([row(sep, 'solo:2026').room, row(sep, 'solo:2026').cap.sepIn, row(sep, 'sep:2026').room], [4576.11, 1000, 115.22]);
+  // $5,000 of Solo deferrals leaves a SEP $576.11 of the same earnings.
+  const solo = maxIt({ ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 5000 }]) }), acct('sep', 'sep_ira', 'ira')] }, R);
+  assert.deepEqual([row(solo, 'sep:2026').room, row(solo, 'solo:2026').room], [576.11, 576.11]);
+  // A 401(k) at $25,000 is an excess deferral, paid back by April 15 of the next year.
+  const k = row(maxIt({ ...d, accounts: d.accounts.map((a) => (a.id === 'k401' ? { ...a, contributions: F([{ year: 2026, amount: 25000 }]) } : a)) }, R), 'k401:2026');
+  assert.equal(k.over, 500);
+  assert.match(k.overWords, /an excess deferral\. Have the plan pay it back, with what it earned, by April 15, 2027, or it is taxed twice\./);
+  // A 529 past the New York deduction cap is not an excess: that part is not deductible.
+  const kid = row(maxIt({ ...d, accounts: [...d.accounts, acct('kid', 'k529', 'education', { contributions: F([{ year: 2026, amount: 8000 }]) })] }, R), 'kid:2026');
+  assert.deepEqual([kid.over, kid.aboveCap], [null, 3000]);
+  // A Roth at $4,000 when the phase-out leaves $3,220: $780 over.
+  const hi = putFact({ ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 4000 }]) } : a)) }, 'income.salary.amount', 13500, 'known', T);
+  assert.deepEqual([row(maxIt(hi, R), 'roth:2026').phase.limit, row(maxIt(hi, R), 'roth:2026').over], [3220, 780]);
+  // The FOO rung names the excess and is not done.
+  const over = { ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 8000 }]) } : a)) };
+  const f = fooLadder(over, R, summarize(over, R, { flags: false })).rungs.find((x) => x.id === 'rothHsa');
+  assert.equal(f.done, false);
+  assert.match(f.why, /Roth IRA 2026: over the limit by \$500/);
+  assert.equal(f.need, 325, 'the steady month never counts money over the limit as room');
+});
+
+test('a family HSA: one family limit, each spouse\'s own age 55 catch-up on top, filled first by their own money', () => {
+  const hsa = (cBirth, sBirth, cIn, sIn, cCov = 'family', sCov = 'family') => {
+    let s = couple(demo());
+    s = { ...s, household: { ...s.household, people: [{ ...s.household.people[0], birthDate: F(cBirth) }, { ...s.household.people[1], birthDate: F(sBirth) }] }, accounts: [...s.accounts, acct('h1', 'hsa', 'hsaFsa', { coverageLevel: F(cCov), contributions: F([{ year: 2026, amount: cIn }]) }), acct('h2', 'hsa', 'hsaFsa', { coverageLevel: F(sCov), owner: F('partner'), contributions: F([{ year: 2026, amount: sIn }]) })] };
+    const mx = maxIt(s, R);
+    return { c: row(mx, 'h1:2026'), s: row(mx, 'h2:2026'), pools: mx.pools.filter((p) => p.key.startsWith('hsa')).map((p) => [p.key, p.room]) };
+  };
+  // Both 55 or older, nothing in: $8,750 + $1,000 + $1,000.
+  const both = hsa('1965-01-01', '1966-01-01', 0, 0);
+  assert.deepEqual([both.c.room, both.s.room], [9750, 9750]);
+  assert.deepEqual(both.pools, [['hsa:family', 8750], ['hsa55:casey', 1000], ['hsa55:sam', 1000]]);
+  // $5,375 each: full, and legal.
+  const full = hsa('1965-01-01', '1966-01-01', 5375, 5375);
+  assert.deepEqual([full.c.room, full.c.over, full.s.room, full.s.over], [0, null, 0, null]);
+  // Casey (under 55) put in $9,750: $1,000 over; Sam (55) still has a catch-up of $1,000 and no excess.
+  const one = hsa('1994-01-01', '1966-01-01', 9750, 0);
+  assert.deepEqual([one.c.over, one.s.room, one.s.over], [1000, 1000, null]);
+  // Self-only on one, family on the other: both are family, $8,750 less $2,000 and $6,000.
+  const mixed = hsa('1994-01-01', '1995-01-01', 2000, 6000, 'self', 'family');
+  assert.deepEqual([mixed.c.room, mixed.s.room, mixed.pools], [750, 750, [['hsa:family', 750]]]);
+});
+
+test('whose pay: a plan filled from pay needs its owner\'s pay line; once it is theirs, its paydays are theirs', () => {
+  // Jordan's pay was entered under Casey, so Jordan's 401(k) cannot know its paydays: missing, not "cannot be filled".
+  let s = couple(demo(), 'Jordan');
+  s = { ...s, income: [...s.income, w2('jjob', 'casey', 2500, { cadence: 'semimonthly' })], accounts: [...s.accounts, acct('jk', 'k401', 'employerRetirement', { owner: F('partner'), monthlyContribution: F(250) }), acct('jh', 'hsa', 'hsaFsa', { owner: F('partner'), coverageLevel: F('self'), monthlyContribution: F(150) })] };
+  const mx = maxIt(s, R);
+  assert.deepEqual([row(mx, 'jk:2026').room, row(mx, 'jk:2026').missingLabel], [null, 'missing: whose pay is Jordan\'s']);
+  // An HSA with no pay of its owner's is funded from take-home: 10 months of $150.
+  assert.equal(row(mx, 'jh:2026').contributed.value, 1500);
+  // Saying whose pay it is: Jordan's semimonthly pay (the 15th and the last day). 9.5 months of $250 are in by October 22
+  // (October 15 has passed, October 31 has not); 5 paychecks are left; $250 x 2.5 months still comes out, so $21,500 of
+  // new money, $4,300 a paycheck on top of the $125 that comes out of each now: set it to $4,425.
+  const fixed = maxIt(editIncome(s, 'jjob', { amount: 2500, cadence: 'semimonthly', personId: 'sam' }, T), R);
+  const jk = row(fixed, 'jk:2026');
+  assert.deepEqual([jk.contributed.value, jk.room, jk.still.value, jk.paychecks.count, jk.paychecks.perPaycheck], [2375, 22125, 625, 5, 4425]);
+  assert.equal(row(fixed, 'k401:2026').paychecks.count, 2, 'Casey\'s 401(k) reads only Casey\'s paydays');
+  assert.throws(() => editIncome(s, 'jjob', { amount: 2500, cadence: 'semimonthly', personId: 'nobody' }, T), /No such person/);
+});
+
+test('paydays and dates: a payday on the as-of date is still to come; a month part paid counts its share; a biweekly line with no first pay date is missing', () => {
+  // October 15 is payday: 9 months are in, 3 paychecks left ($6,666.67, $6,666.67, $6,666.66), and it adds up to $24,500.
+  const r = row(maxIt(demo(), R, { asOf: '2026-10-15' }), 'k401:2026');
+  assert.deepEqual([r.contributed.value, r.still.value, r.paychecks.count, r.paychecks.perPaycheck, r.paychecks.last], [4500, 1500, 3, 6666.67, 6666.66]);
+  assert.equal(Math.round((r.contributed.value + r.paychecks.perPaycheck * 2 + r.paychecks.last) * 100) / 100, 24500);
+  // Paid twice a month, on October 20: one of October's two paydays is in.
+  const d = demo();
+  const semi = row(maxIt({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, cadence: 'semimonthly', amount: F(3000) } : x)) }, R, { asOf: '2026-10-20' }), 'k401:2026');
+  assert.deepEqual([semi.contributed.value, semi.still.value], [4750, 1250]);
+  assert.match(semi.contributed.parts[0].words, /9\.5 months of pay/);
+  // Every two weeks with no first pay date: the paydays are missing, named, and the row can still be filled.
+  const bi = row(maxIt({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, cadence: 'biweekly', start: null } : x)) }, R), 'k401:2026');
+  assert.deepEqual([bi.fillable, bi.paychecks.blank.what, bi.paychecks.blank.path, bi.kind], [true, 'first pay date', 'income.salary.payDay', 'incomplete']);
+});
+
+test('missing never borrows a number: an earlier year with no rules file, a 529 with no state; a rollover alone leaves the guess', () => {
+  // On March 1, 2026 the 2025 IRA year is open, but there are no 2025 limits: missing, not 2026's larger ones.
+  const mx = maxIt(demo(), R, { asOf: '2026-03-01' });
+  assert.deepEqual([row(mx, 'roth:2025').room, row(mx, 'roth:2025').missingLabel], [null, 'missing: the 2025 limits (the rules file starts at 2026)']);
+  // A 529 with the state blank is missing (it may be New York), and its December 31 chip says so.
+  const d = demo();
+  const kid = putFact({ ...d, accounts: [...d.accounts, acct('kid', 'k529', 'education')] }, 'household.state', null, 'missing', T);
+  const k = row(maxIt(kid, R), 'kid:2026');
+  assert.deepEqual([k.applies, k.room, k.missingLabel], [true, null, 'missing: the state (only New York\'s 529 deduction is a limit to fill)']);
+  assert.ok(maxItDeadlines(kid, R, '2026-12-01', '2026-12-31').some((e) => e.accountId === 'kid' && e.missing));
+  // A $50,000 rollover recorded for 2026 and nothing else: the $300 a month guess still stands.
+  const roll = row(maxIt({ ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 50000, kind: 'rollover' }]) } : a)) }, R), 'roth:2026');
+  assert.equal(roll.room, 4500);
+  // A Solo 401(k)'s passed election day says the employer part is still open, not that the year closed.
+  const solo = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] };
+  const elect = maxItDeadlines(solo, R, '2026-12-01', '2027-10-31', { asOf: '2027-01-10' }).find((e) => e.accountId === 'solo' && e.passed);
+  assert.match(elect.note, /^The day to elect the 2026 employee deferral has passed; the employer part stays open to October 15, 2027/);
+});
+
+test('the cash check per tax year adds up to the Plan card\'s: from January to April each year moves only its own new money', () => {
+  const d = demo();
+  const asOf = '2027-02-10';
+  const sim = maxItSim(d, R, { asOf });
+  const mx = maxIt(d, R, { asOf, sim });
+  const one = (id) => maxItCash(d, R, mx, { sim, rows: mx.rows.filter((r) => r.id === id) }).total;
+  const all = maxItCash(d, R, mx, { sim }).flows.filter((f) => f.pool.startsWith('ira')).reduce((s, f) => s + f.amount, 0);
+  // 2026: $7,500 less 12 x $300 = $3,900; 2027: $7,500 less February's $600 and March to December's $3,000 = $3,900.
+  assert.deepEqual([one('roth:2026'), one('roth:2027'), Math.round(all * 100) / 100], [3900, 3900, 7800]);
 });

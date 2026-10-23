@@ -185,7 +185,7 @@ function checkDate(d, what) {
 // when it starts and ends (blank is open-ended), and the day of the month it
 // is paid (payDay, for monthly and less often; weekly and biweekly pay dates
 // follow the start date). A new name keeps the id.
-export function editIncome(spine, id, { amount, cadence, start = undefined, end = undefined, payDay = undefined, kind = 'known', label = null }, today) {
+export function editIncome(spine, id, { amount, cadence, start = undefined, end = undefined, payDay = undefined, personId = undefined, kind = 'known', label = null }, today) {
   const base = 'income.' + id;
   const x = getAt(spine, base);
   if (!x) throw new Error('No income ' + id);
@@ -199,6 +199,11 @@ export function editIncome(spine, id, { amount, cadence, start = undefined, end 
   if (next.cadence === 'total' && !next.end) throw new Error('A total needs the date it runs to');
   if (next.start && next.end && next.end < next.start) throw new Error('It ends before it starts');
   if (label && label.trim() && label.trim() !== x.label) next.label = label.trim();
+  // Whose pay it is (S-211): one of the household's people.
+  if (personId !== undefined) {
+    if (!(spine.household.people || []).some((p) => p.id === personId)) throw new Error('No such person');
+    next.personId = personId;
+  }
   if (payDay !== undefined) {
     if (payDay === null) delete next.payDay;
     else {

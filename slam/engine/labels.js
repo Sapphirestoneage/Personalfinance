@@ -17,7 +17,7 @@ const FIELD = {
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
-  paidFrom: 'paid from', payDay: 'day paid', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
+  paidFrom: 'paid from', payDay: 'day paid', personId: 'whose pay', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
   need: 'a need (not a want)', covered: 'paid by someone else', everydayCard: 'everyday card (paid in full, held flat)', payLast: 'paid last',
   trialEnds: 'free trial ends', workHoursPerWeek: 'hours worked a week', workRelated: 'a cost of working', deductible: 'biggest insurance deductible', commuteHoursPerWeek: 'commute hours a week',
   matchRate: 'employer match (share of what you put in)', matchCap: 'match up to (share of gross)',

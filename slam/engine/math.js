@@ -23,7 +23,7 @@ import { minimumTrap, solvePayoff } from './debtview.js';
 import { canISpend } from './spending.js';
 import { solvers as solveAgain, outlook as outlookAgain } from './plan.js';
 import { earnedIncome } from './tax.js';
-import { maxItRow, canMaxIt } from './maxit.js';
+import { maxItRow, canMaxIt, ownerOf } from './maxit.js';
 
 const v = valueOf;
 export const UNITS = ['usd', 'usd/month', 'usd/year', 'months', 'years', 'ratio', 'age', 'count'];
@@ -128,12 +128,12 @@ export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(i
 // ctx.maxit (engine/maxit.js maxIt) and ctx.maxitCash(rowId | 'all') (maxItCash).
 const MAXIT_SCREENS = ['ledger', 'plan'];
 const MAXIT_FORMULAS = {
-  room: 'Room left = the year\'s limit (+ the catch-up for your age on December 31; for an IRA no more than earned income, for a Roth no more than the phase-out limit; for a SEP or a Solo 401(k) a share of self-employment earnings) - what is already in for the year across every account that shares the limit; never below zero',
-  lump: 'Lump sum today = the room left (for every account, each shared limit counted once)',
-  month: 'A month = the room left / the months from today to the deadline (one contribution a month; for a payroll-only account, the months that hold a paycheck), rounded up to the cent',
-  paycheck: 'A paycheck = the room left / the owner\'s paychecks from today to the deadline (real pay dates from the day-by-day run), rounded up to the cent',
-  low: 'Lowest day of cash with it = the lowest day of cash across every account in the day-by-day run with the extra contributions taken out on their dates (only the part above what already goes in)',
-  payoff: 'Payoff moved = the latest card or loan payoff date with the contributions - the same date without them, in days (inside the run)'
+  room: 'Room left = the year\'s limit (+ the catch-up for your age on December 31; for an IRA no more than earned income, for a Roth no more than the phase-out limit; for a SEP or a Solo 401(k) a share of self-employment earnings; with family HSA coverage one family limit and each spouse\'s own catch-up) - what is already in for the year across every account that shares the limit; never below zero',
+  lump: 'Lump sum today = the room left - what the monthly amounts already set up still put in for the year (on paydays to December 31, or each month to December); the new money',
+  month: 'A month = the lump sum (the new money) / the months from today to the deadline (one contribution a month; for a payroll-only account, the months that hold a paycheck), rounded up to the cent; the last one is what is left',
+  paycheck: 'A paycheck = the lump sum (the new money) / the owner\'s paychecks from today to the deadline (real pay dates from the day-by-day run), rounded up to the cent; for a payroll-only account, plus what already comes out of each paycheck for it (the deferral to set)',
+  low: 'Lowest day of cash with it = the lowest day of cash across every account in the day-by-day run with the new money taken out on its dates',
+  payoff: 'Payoff moved = the latest card or loan payoff date with the new money - the same date without it, in days (inside the run)'
 };
 function maxitMetric(id) {
   if (!id || !id.startsWith('maxit:')) return null;
@@ -146,65 +146,101 @@ function maxitMetric(id) {
   // A page without the whole max-it result (the Windfall room) still opens one account's numbers.
   const rowOf = (ctx) => { if (ctx.maxit) return ctx.maxit.rows.find((r) => r.accountId === acct && r.year === year) || null; const a = (ctx.spine.accounts || []).find((x) => x.id === acct); return a && canMaxIt(ctx.rules, a, year) ? maxItRow(ctx.spine, ctx.rules, a, year, { asOf: ctx.s ? ctx.s.asOf : ctx.spine.meta.asOf }) : null; };
   const base = { id, unit: what === 'month' ? 'usd/month' : what === 'payoff' ? 'count' : 'usd', screens: MAXIT_SCREENS, formula: MAXIT_FORMULAS[what] };
-  const roomRes = (r) => ({ value: r.room, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules });
+  const res = (r, value) => ({ value, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules });
+  const roomRes = (r) => res(r, r.room);
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
+  const k = (t, key) => t.filter((x) => x.key === key);
+  const one = (t, key) => (k(t, key).length ? k(t, key)[0].value : null);
+  const sum = (list) => list.reduce((a, x) => a + (x.value || 0), 0);
+  const lastNote = (r, last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? { note: 'The last one is ' + money(last) + ', what is left, so they add up to ' + money(r.toFill) + '.' } : {});
   if (what === 'room') return { ...base, label: 'Room left for the year', op: 'custom',
     explain: (ctx) => {
       const r = rowOf(ctx);
       if (!r || !r.applies) return out(null, []);
       const L = r.limit || {}, cap = r.cap || {};
       const rule = (rid) => (rid ? ctx.rules.meta(rid, r.year).rule + ' (rule ' + rid + ')' : 'The limit');
+      const ruleKind = (rid) => (rid && ctx.rules.meta(rid, r.year).fallback ? 'rough' : 'known');
       const terms = [];
-      if (r.type === 'sep_ira') terms.push(term('Share of net self-employment earnings (rule SE_EMPLOYER_SHARE)', L.share ?? null, 'ratio', 'known', 'arg', { key: 'share', rule: 'SE_EMPLOYER_SHARE' }), term(r.year + ' self-employment earnings (1099 profit less half the SE tax)', L.se ?? null, 'usd', L.se === null || L.se === undefined ? 'missing' : cap.kind || 'computed', 'arg', { key: 'se', metric: cap.metric }), term('SEP maximum (rule SEP_MAX)', L.max ?? null, 'usd', 'known', 'arg', { key: 'max', rule: 'SEP_MAX' }));
-      else if (r.type === 'solo_k401') { if (r.cap) terms.push(term('Employee deferral room' + (cap.electGone ? ' (not counted: it had to be elected by December 31)' : ''), cap.employeeCounted, 'usd', 'computed', 'arg', { key: 'employee' }), term('Employer part (' + Math.round((cap.share || 0) * 100) + '% of self-employment earnings, less ' + money(cap.employerIn || 0) + ' already in)', cap.employer, 'usd', 'computed', 'arg', { key: 'employer', rule: 'SE_EMPLOYER_SHARE' }), term('Total additions limit with the catch-up (rule ADD_415C)', cap.total, 'usd', 'known', 'arg', { key: 'total', rule: 'ADD_415C' }), term(r.year + ' self-employment earnings', cap.value, 'usd', cap.kind || 'computed', 'arg', { key: 'se', metric: cap.metric })); }
-      else if (L.baseRule) terms.push(term(rule(L.baseRule), L.base, 'usd', L.base === null ? 'missing' : 'known', 'arg', { key: 'base', rule: L.baseRule }));
-      if (L.catchUpRule && r.type !== 'solo_k401') terms.push(term('Catch-up at age ' + L.age + ' (rule ' + L.catchUpRule + ')', L.catchUp, 'usd', 'known', 'arg', { key: 'catch', rule: L.catchUpRule }));
+      if (r.type === 'sep_ira') terms.push(term('Share of net self-employment earnings (rule SE_EMPLOYER_SHARE)', L.share ?? null, 'ratio', 'known', 'arg', { key: 'share', rule: 'SE_EMPLOYER_SHARE' }), term(r.year + ' self-employment earnings (1099 profit less half the SE tax)', L.se ?? null, 'usd', L.se === null || L.se === undefined ? 'missing' : cap.kind || 'computed', 'arg', { key: 'se', metric: cap.metric }), term('SEP maximum (rule SEP_MAX)', L.max ?? null, 'usd', ruleKind('SEP_MAX'), 'arg', { key: 'max', rule: 'SEP_MAX' }));
+      else if (r.type === 'solo_k401') { if (r.cap) terms.push(term('Employee deferral room' + (cap.electGone ? ' (not counted: it had to be elected by December 31)' : ''), cap.employeeCounted, 'usd', 'computed', 'arg', { key: 'employee' }), term('Employer part (' + Math.round((cap.share || 0) * 100) + '% of self-employment earnings, less ' + money(cap.employerIn || 0) + ' already in)', cap.employer, 'usd', 'computed', 'arg', { key: 'employer', rule: 'SE_EMPLOYER_SHARE' }), term('Total additions limit with the catch-up (rule ADD_415C)', cap.total, 'usd', ruleKind('ADD_415C'), 'arg', { key: 'total', rule: 'ADD_415C' }), term(r.year + ' self-employment earnings', cap.value, 'usd', cap.kind || 'computed', 'arg', { key: 'se', metric: cap.metric }), term('Already in this Solo 401(k) for ' + r.year + ' (employee and employer)', cap.soloAll ?? 0, 'usd', 'computed', 'arg', { key: 'soloAll' }), term('Already in a SEP on the same earnings', cap.sepIn || 0, 'usd', 'computed', 'arg', { key: 'sepIn' })); }
+      else if (L.baseRule) terms.push(term(rule(L.baseRule), L.base, 'usd', L.base === null ? 'missing' : ruleKind(L.baseRule), 'arg', { key: 'base', rule: L.baseRule }));
+      if (L.catchUpRule && r.type !== 'solo_k401') terms.push(term('Catch-up at age ' + L.age + ' (rule ' + L.catchUpRule + ')', L.catchUp, 'usd', ruleKind(L.catchUpRule), 'arg', { key: 'catch', rule: L.catchUpRule, owner: r.person }));
       if (L.months !== undefined) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthsEligible', L.months, 'count', 'arg', 'Months eligible of 12'), key: 'months' });
+      if (r.family) for (const sp of r.family.spouses.filter((x) => x.id !== r.person && x.catch)) terms.push(term(sp.name + '\'s own age 55 catch-up (rule HSA_CU55)', sp.catch, 'usd', 'known', 'arg', { key: 'catch', rule: 'HSA_CU55', owner: sp.id }));
       if (r.type === 'simple_ira' && r.cap) terms.push(term('The 401(k) deferral limit it shares (rule K401_DEF, with the catch-up)', cap.value, 'usd', 'known', 'arg', { key: 'deferralLimit', rule: 'K401_DEF' }));
+      if (r.type === 'sep_ira' && L.se !== null && L.se !== undefined) terms.push(term('Total additions limit, no more than the earnings (rule ADD_415C)', Math.min(ctx.rules.get('ADD_415C', r.year), L.se), 'usd', 'computed', 'arg', { key: 'total415', rule: 'ADD_415C' }));
       if (r.phase) terms.push(term('Roth limit at modified AGI' + (r.phase.magi !== undefined ? ' of ' + money(r.phase.magi) : ''), r.phase.limit, 'usd', r.phase.unknown ? 'rough' : 'computed', 'arg', { key: 'rothLimit', rule: 'ROTH_PO_MIN' }));
-      if (r.cap && ['traditional_ira', 'roth_ira', 'spousal_ira'].includes(r.type)) terms.push({ ...metric(cap.joint ? 'earned:' + r.year : cap.metric, cap.label + ' (the cap)', { value: cap.value, kind: cap.kind }, 'usd', 'arg'), key: 'cap' });
+      if (r.cap && ['traditional_ira', 'roth_ira', 'spousal_ira'].includes(r.type)) terms.push({ ...metric(cap.metric, cap.label + ' (the cap)', { value: cap.value, kind: cap.kind }, 'usd', 'arg'), key: 'cap' });
       // Room that waits on earned income names it, blank, as the cap.
       if (r.room === null && r.eiMetric) terms.push({ ...metric(r.eiMetric, r.ei.label + ' (the cap)', { value: null, kind: 'missing' }, 'usd', 'arg'), key: 'cap' });
-      const types = Object.fromEntries((ctx.spine.accounts || []).map((a) => [a.id, a.type]));
+      const acc = Object.fromEntries((ctx.spine.accounts || []).map((a) => [a.id, a]));
       for (const p of (r.contributed || { parts: [] }).parts) {
-        const own = p.id === r.accountId, roth = types[p.id] === 'roth_ira';
+        const a = acc[p.id] || {};
+        const own = p.id === r.accountId, roth = a.type === 'roth_ira', owner = (ownerOf(ctx.spine, a) || {}).id;
         const label = (r.contributed.parts.length > 1 ? p.name + ': ' : '') + 'in for ' + r.year + (p.estimated ? ' (a guess)' : '');
-        terms.push(p.path ? { ...field(ctx.spine, p.path, p.value, 'usd', 'minus', label), key: 'in', own, roth, kind: p.kind === 'missing' ? 'missing' : p.kind || 'known', value: p.kind === 'missing' ? null : p.value } : term(label, p.value, 'usd', 'known', 'minus', { key: 'in', own, roth }));
+        terms.push(p.path ? { ...field(ctx.spine, p.path, p.value, 'usd', 'minus', label), key: 'in', own, roth, owner, kind: p.kind === 'missing' ? 'missing' : p.kind || 'known', value: p.kind === 'missing' ? null : p.value } : term(label, p.value, 'usd', 'known', 'minus', { key: 'in', own, roth, owner }));
       }
+      if (r.type === 'sep_ira') { const solos = (ctx.spine.accounts || []).filter((a) => a.type === 'solo_k401' && (ownerOf(ctx.spine, a) || {}).id === r.person); if (solos.length) terms.push(term('Solo 401(k) deferrals for ' + r.year + ' (they count toward the same total)', cap.soloEmp || 0, 'usd', 'computed', 'arg', { key: 'soloEmp' })); }
       return out(roomRes(r), terms, [], r.missingLabel ? { note: r.missingLabel.charAt(0).toUpperCase() + r.missingLabel.slice(1) + '.' } : {});
     },
-    recompute: (t) => {
-      const k = (key) => t.filter((x) => x.key === key);
-      const one = (key) => (k(key).length ? k(key)[0].value : null);
-      const sum = (list) => list.reduce((a, x) => a + (x.value || 0), 0);
-      if (k('in').some((x) => x.value === null && x.kind === 'missing')) { /* a blank monthly amount counts nothing in */ }
-      const inAll = sum(k('in')), inOwn = sum(k('in').filter((x) => x.own)), inRoth = sum(k('in').filter((x) => x.roth));
-      const r2 = (x) => Math.round(x * 100) / 100;
-      if (k('employee').length) { const se = one('se'); if (se === null) return null; return r2(Math.max(0, Math.min(one('employee') + one('employer'), one('total') - inOwn, se - inOwn))); }
-      if (k('share').length) { if (one('se') === null) return null; const lim = Math.min(one('max'), r2(one('share') * one('se'))); return r2(Math.max(0, Math.min(one('max') - inOwn, lim - inAll))); }
-      if (one('base') === null) return null;
-      let limit = one('base') + (one('catch') || 0);
-      if (one('months') !== null && one('months') < 12) limit = r2(limit * Math.max(0, one('months')) / 12);
-      if (k('deferralLimit').length) return r2(Math.max(0, Math.min(limit - inOwn, one('deferralLimit') - inAll)));
+    recompute: (t, ctx) => {
+      const inAll = sum(k(t, 'in')), inOwn = sum(k(t, 'in').filter((x) => x.own)), inRoth = sum(k(t, 'in').filter((x) => x.roth));
+      if (k(t, 'employee').length) { const se = one(t, 'se'); if (se === null) return null; const used = (one(t, 'soloAll') || 0) + (one(t, 'sepIn') || 0); return r2(Math.max(0, Math.min(one(t, 'employee') + one(t, 'employer'), one(t, 'total') - used, se - used))); }
+      if (k(t, 'share').length) { if (one(t, 'se') === null) return null; const lim = Math.min(one(t, 'max'), r2(one(t, 'share') * one(t, 'se'))); return r2(Math.max(0, Math.min(one(t, 'max') - inOwn, lim - inAll, (one(t, 'total415') ?? Infinity) - inAll - (one(t, 'soloEmp') || 0)))); }
+      if (one(t, 'base') === null) return null;
+      let limit = one(t, 'base');
+      const months = one(t, 'months');
+      const r = ctx && ctx.spine ? rowOf(ctx) : null;
+      // Family HSA coverage: one family limit, and each spouse's own catch-up filled first by that spouse's money.
+      if (r && r.family) {
+        const fam = months !== null && months < 12 ? r2(limit * Math.max(0, months) / 12) : limit;
+        const owners = [...new Set([...k(t, 'in').map((x) => x.owner), ...k(t, 'catch').map((x) => x.owner)])];
+        const inOf = (o) => sum(k(t, 'in').filter((x) => x.owner === o)), cuOf = (o) => sum(k(t, 'catch').filter((x) => x.owner === o));
+        const used = owners.reduce((s, o) => s + Math.max(0, inOf(o) - cuOf(o)), 0);
+        return r2(Math.max(0, fam - used) + Math.max(0, cuOf(r.person) - inOf(r.person)));
+      }
+      limit += one(t, 'catch') || 0;
+      if (months !== null && months < 12) limit = r2(limit * Math.max(0, months) / 12);
+      if (k(t, 'deferralLimit').length) return r2(Math.max(0, Math.min(limit - inOwn, one(t, 'deferralLimit') - inAll)));
       let ceiling = limit;
-      if (k('cap').length) { if (one('cap') === null) return null; ceiling = Math.min(ceiling, one('cap')); }
-      if (k('rothLimit').length) return r2(Math.max(0, Math.min(one('rothLimit') - inRoth, ceiling - inAll)));
+      if (k(t, 'cap').length) { if (one(t, 'cap') === null) return null; ceiling = Math.min(ceiling, one(t, 'cap')); }
+      if (k(t, 'rothLimit').length) return r2(Math.max(0, Math.min(one(t, 'rothLimit') - inRoth, ceiling - inAll)));
       return r2(Math.max(0, ceiling - inAll));
     } };
-  if (what === 'lump' && !all) return { ...base, label: 'Lump sum today', op: 'sum',
-    explain: (ctx) => { const r = rowOf(ctx); return r && r.applies && r.lump !== null ? out(roomRes(r), [metric('maxit:' + acct + ':' + year + ':room', 'Room left for ' + year, roomRes(r), 'usd')]) : out(null, []); } };
-  if (what === 'month' && !all) return { ...base, label: 'A month to the deadline', op: 'custom',
-    explain: (ctx) => { const r = rowOf(ctx); return r && r.applies && r.perMonth !== null ? out({ ...roomRes(r), value: r.perMonth }, [metric('maxit:' + acct + ':' + year + ':room', 'Room left for ' + year, roomRes(r), 'usd', 'arg'), term((r.deadline.payrollOnly ? 'Months with a paycheck from today to ' : 'Months from today to ') + r.deadline.date + ' (' + r.months.dates.join(', ') + ')', r.months.count, 'count', 'computed', 'arg', { rule: r.deadline.rule })]) : out(null, []); },
-    recompute: (t) => (!t.length || t[0].value === null || !t[1].value ? null : Math.ceil(Math.round(t[0].value / t[1].value * 1000) / 10) / 100) };
+  // The lump sum: each pool's room less what the pool's monthly amounts still put in for the year.
+  if (what === 'lump' && !all) return { ...base, label: 'Lump sum today (new money)', op: 'custom',
+    explain: (ctx) => {
+      const r = rowOf(ctx);
+      if (!r || !r.applies || r.lump === null) return out(null, []);
+      const keys = Object.keys(r.parts);
+      const terms = [];
+      for (const key of keys) {
+        terms.push(keys.length > 1 ? term('Room in ' + POOL_WORDS(key), r.parts[key], 'usd', r.kind === 'missing' ? 'missing' : 'computed', 'arg', { key: 'part', pool: key }) : { ...metric('maxit:' + acct + ':' + year + ':room', 'Room left for ' + year, roomRes(r), 'usd', 'arg'), key: 'part', pool: key });
+        for (const s of r.still.parts.filter((x) => x.pool === key)) terms.push({ ...field(ctx.spine, s.path, s.value, 'usd', 'minus', (s.name ? s.name + ': ' : '') + s.words), key: 'still', pool: key });
+      }
+      return out(res(r, r.lump), terms);
+    },
+    recompute: (t) => { const pools = [...new Set(k(t, 'part').map((x) => x.pool))]; if (k(t, 'part').some((x) => x.value === null)) return null; return r2(pools.reduce((s, p) => s + Math.max(0, sum(k(t, 'part').filter((x) => x.pool === p)) - sum(k(t, 'still').filter((x) => x.pool === p))), 0)); } };
+  if (what === 'month' && !all) return { ...base, label: 'A month to the deadline (new money)', op: 'custom',
+    explain: (ctx) => { const r = rowOf(ctx); return r && r.applies && r.perMonth !== null ? out(res(r, r.perMonth), [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term((r.deadline.payrollOnly ? 'Months with a paycheck from today to ' : 'Months from today to ') + r.deadline.date + ' (' + r.months.dates.join(', ') + ')', r.months.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })], [], lastNote(r, r.months.last, r.perMonth)) : out(null, []); },
+    recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : c2(one(t, 'lump') / one(t, 'count'))) };
   if (what === 'paycheck') return { ...base, label: 'A paycheck to the deadline', op: 'custom',
-    explain: (ctx) => { const r = rowOf(ctx); const p = r && r.paychecks; return p && p.perPaycheck !== null && r.fillable ? out({ ...roomRes(r), value: p.perPaycheck }, [metric('maxit:' + acct + ':' + year + ':room', 'Room left for ' + year, roomRes(r), 'usd', 'arg'), term('Paychecks from ' + (p.streams.join(' and ') || 'pay') + ' to ' + r.deadline.date + ' (' + p.dates.join(', ') + ')', p.count, 'count', 'computed', 'arg', { rule: r.deadline.rule }), term('What a paycheck holds: what lands plus what already comes out of it for this account', p.holds, 'usd', p.holds === null ? 'missing' : 'computed', 'arg')]) : out(null, []); },
-    recompute: (t) => (!t.length || t[0].value === null || !t[1].value ? null : Math.ceil(Math.round(t[0].value / t[1].value * 1000) / 10) / 100) };
+    explain: (ctx) => {
+      const r = rowOf(ctx); const p = r && r.paychecks;
+      if (!p || p.perPaycheck === null || !r.fillable) return out(null, []);
+      const terms = [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term('Paychecks from ' + (p.streams.join(' and ') || 'pay') + ' to ' + r.deadline.date + ' (' + p.dates.join(', ') + ')', p.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })];
+      if (r.deadline.payrollOnly) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthlyContribution', p.current, 'usd', 'plus', 'What already comes out of each paycheck for it (the monthly amount x 12 / ' + p.perYear + ' paychecks a year)'), key: 'now' }, term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
+      return out(res(r, p.perPaycheck), terms, [], lastNote(r, p.last, p.perPaycheck));
+    },
+    recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };
   // Every account together: each shared limit (a pool) once, filled by the row that holds most of it.
-  const poolTerms = (mx, field_) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + p.key.split(':')[0] + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + ')', p[field_], field_ === 'perMonth' ? 'usd/month' : 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':' + (field_ === 'perMonth' ? 'month' : 'room') }));
-  if (what === 'lump' && all) return { ...base, label: 'Every account, the room left', op: 'sum',
-    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.lump, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'room')) : out(null, []); } };
+  const poolTerms = (mx, f) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + POOL_WORDS(p.key) + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + (f === 'fill' && p.still ? ', ' + money(p.room) + ' of room less ' + money(p.still) + ' already set to go in' : '') + (p.capped ? ', only what a paycheck holds' : '') + ')', p[f], f === 'perMonth' ? 'usd/month' : 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':' + (f === 'perMonth' ? 'month' : 'lump') }));
+  if (what === 'lump' && all) return { ...base, label: 'Every account, the new money', op: 'sum',
+    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.lump, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'fill')) : out(null, []); } };
   if (what === 'month' && all) return { ...base, label: 'Every account, a month to its deadline', op: 'sum',
-    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'perMonth')) : out(null, []); } };
-  // The cash check: the lowest day of cash, and the payoff date moved, with the contributions in the run.
+    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'perMonth'), [], mx.totals.steps.length > 1 ? { note: 'The total changes as deadlines pass: ' + mx.totals.steps.map((s) => money(s.perMonth) + ' a month to ' + s.until).join(', then ') + '.' } : {}) : out(null, []); } };
+  // The cash check: the lowest day of cash, and the payoff date moved, with the new money in the run.
   const cashOf = (ctx) => (ctx.maxitCash ? ctx.maxitCash(all ? 'all' : acct + ':' + year) : null);
   if (what === 'low') return { ...base, label: 'Lowest day of cash with it', op: 'custom',
     explain: (ctx) => { const c = cashOf(ctx); if (!c || !c.after.low) return out(null, []); return out({ value: c.after.low.cash, kind: c.kind, from: c.from, rough: c.rough, missing: c.missing, rules: c.rules }, [term('Lowest day of cash without it, ' + c.before.low.date, c.before.low.cash, 'usd', 'computed', 'arg'), term('Taken out of checking by the deadline (' + c.flows.length + ' payment' + (c.flows.length === 1 ? '' : 's') + ')', c.total, 'usd', 'computed', 'arg'), term('Lowest day with it, ' + c.after.low.date, c.after.low.cash, 'usd', 'computed', 'arg', { key: 'after' }), term('The cash floor (stage 1: one month of spending and minimums)', c.floor, 'usd', c.floor === null ? 'missing' : 'computed', 'arg', { rule: 'STAGE_RUNWAY_RED_MONTHS' }), term('More pulled from the cushion with it', c.pulled, 'usd', 'computed', 'arg'), term('Payments that fall short with it (' + c.newShortfalls + ')', c.shortMore, 'usd', 'computed', 'arg')], [], { note: c.words }); },
@@ -214,6 +250,8 @@ function maxitMetric(id) {
     recompute: (t) => { const d = t.filter((x) => x.key === 'days' && x.value !== null).map((x) => x.value); return d.length ? Math.max(0, ...d) : null; } };
   return null;
 }
+// A pool in words, for Show the math.
+const POOL_WORDS = (key) => ({ ira: 'the IRA limit', deferral: 'the 401(k) deferral limit', employer: 'the employer share', k457b: 'the 457(b) limit', hsa: 'the HSA limit', hsa55: 'the age 55 catch-up', ny529: 'the New York 529 deduction' }[key.split(':')[0]] || key);
 
 // A year's earned income ("earned:<year>", S-210; "earned:<year>:<person>", S-211), what IRA room is capped at: each
 // W-2, tips and 1099 line for the part of the year it runs, less pre-tax saving
@@ -287,7 +325,7 @@ function windfallMetric(id) {
       if (stepId === 'promos') terms.push(metric('promoMonthly', 'Monthly amount that clears the promos', s.debt.promo.monthly, 'usd/month', 'arg'), metric('surplus', 'Monthly surplus', s.cashflow.surplus, 'usd/month', 'arg'), ...st.items.map((x) => field(spine, x.path, x.balance, 'usd', 'arg', x.name + ' balance (' + x.paymentsLeft + ' payments left)')));
       if (stepId === 'cards') terms.push(...st.items.map((x) => field(spine, x.path, x.pay, 'usd', 'arg', x.name + ' at ' + (Math.round(x.rate * 10000) / 100) + '%')));
       if (stepId === 'cushion') terms.push(metric('ruleOf5Dollars', 'Rule of 5 target', s.emergency.targetDollars, 'usd', 'arg'), metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'The floor step', value: w.steps.find((x) => x.id === 'cashFloor').amount ?? 0, unit: 'usd', kind: 'computed', role: 'arg', metric: 'windfall:cashFloor', group: null });
-      if (stepId === 'roth' && st.rows) for (const r of st.rows) terms.push(metric('maxit:' + r.accountId + ':' + r.year + ':' + (w.monthly ? 'month' : 'room'), (w.monthly ? 'A month for ' + r.year + ', to ' : 'Room left for ' + r.year + ', to ') + r.deadline.date, { value: w.monthly ? r.perMonth : r.room, kind: r.kind }, 'usd', 'arg'));
+      if (stepId === 'roth' && st.rows) for (const r of st.rows) terms.push(metric('maxit:' + r.accountId + ':' + r.year + ':' + (w.monthly ? 'month' : 'lump'), (w.monthly ? 'New money a month for ' + r.year + ', to ' : 'New money for ' + r.year + ' (the room less what is already set to go in), to ') + r.deadline.date, { value: w.monthly ? r.perMonth : r.lump, kind: r.kind }, 'usd', 'arg'));
       return out(r, terms);
     },
     recompute: (t) => (t[0].value === null ? null : Math.round(Math.max(0, Math.min(t[0].value, Math.max(0, t[1].value))) * 100) / 100) };

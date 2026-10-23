@@ -113,7 +113,7 @@ export function previewCost(amount, cadence, shared, people, share) {
 export function rowPathFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'expenses' && s[2] === 'payDay') return 'expenses.' + s[1] + '.paidFrom';
-  if (s[0] === 'income' && s[2] === 'payDay') return 'income.' + s[1] + '.amount';
+  if (s[0] === 'income' && (s[2] === 'payDay' || s[2] === 'personId')) return 'income.' + s[1] + '.amount';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
   if (s[0] === 'expenses' && (SHARE_FIELDS.includes(s[2]) || s[2] === 'subscription')) return 'expenses.' + s[1] + '.amount';
   return path;
