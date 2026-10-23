@@ -1,5 +1,7 @@
 # Calendar parity matrix (Phase 2, Batch 0)
 
+**Batch G (S-209, 2026-10-23): the retirement is held.** The matrix below was built from the spec and shows nothing "old Budget only". Before deleting, a second audit read the Budget calendar's own code and found more than the spec named. Most of it is now in SLAM; what is not is listed in "The gap audit" at the end, with the question for Eli each one waits on. The retirement itself is ready as `docs/phase2/batch-g-retire.patch`. Rows that read "in cashcal.js" are in SLAM through the vendored v44 engine (`slam/engine/vendor/cashcal.js`, Batch A).
+
 Every feature in `money-rooms-v3/reference/cashflow-calendar-spec.md` sections 3, 4
 and 7, one row each, with where it lives today and which batch of the Phase 2 plan
 carries it. Written 2026-10-23 before Batch A; the status column is updated at the
@@ -196,3 +198,169 @@ After Batch F (2026-10-23): in SLAM 99, old Budget only 0, in cashcal.js 40, mis
 The brief counted 87 features in sections 3, 4 and 7; this list has 129 there because
 each return value, each burn tier, each pill set and each self-test assertion is its own
 row, plus 14 from the brief's own additions. Rows marked "done" need no batch.
+
+## The gap audit (Batch G, S-209, 2026-10-23)
+
+The matrix above came from the spec. Before deleting the Budget calendar, a workflow read its own code (`slam/src/calc/calendar.js`, its views and the screens that showed them) and listed every capability, then checked each against SLAM, and a second reader tried to refute each verdict. This is where each one stands on the branch now. "Still Budget only" means some part of it is not in SLAM yet; the note says which part and the question it waits on.
+
+| Status | Capabilities |
+| --- | --- |
+| in SLAM before Batch G | 30 |
+| ported in Batch G | 69 |
+| same outcome, SLAM design | 17 |
+| in the retirement patch | 2 |
+| not a capability | 1 |
+| still Budget only | 28 |
+| Total | 147 |
+
+What is still Budget only, by question: question 29 (4), question 30 (13), question 31 (2), question 32 (5), question 33 (2), question 34 (1), question 35 (1), question 37 (1).
+
+| # | What the Budget calendar did | Now | Note |
+| --- | --- | --- | --- |
+| 1 | Cash by day: one line of checking cash for every day, past and future | ported in Batch G | cash line with the recorded past (check-ins and the log) and the run ahead |
+| 2 | Horizon choice: 30, 60 or 90 days ahead | in SLAM before Batch G |  |
+| 3 | Calendar cash counts checking accounts only | ported in Batch G | checking is every checking account together |
+| 4 | Savings total per day, shown on its own line and never added to cash | ported in Batch G | savings as its own line, never added |
+| 5 | Card balances owed per day | same outcome, SLAM design | debt per day is one figure on the grid; each card is on the Debt tab |
+| 6 | Balance per account per day | same outcome, SLAM design | checking and savings per day in the list; each card on the Debt tab |
+| 7 | Card sign flip: money on a credit card moves what is owed the other way | in SLAM before Batch G |  |
+| 8 | Default account for anything with no account | ported in Batch G | the log reaches the run; no checking balance is never a number |
+| 9 | Each scheduled item lands in its own chosen account | still Budget only | paychecks land in their own account now; bills and card or loan payments from a second account: question 29 |
+| 10 | Starting balance per account for the first month | same outcome, SLAM design | one as-of balance per account, re-anchored at a check-in: question 33 |
+| 11 | Accounts with no starting balance are named, counted from $0 | ported in Batch G | named on the calendar and Spending; the check-in offers every cash account |
+| 12 | A typed month start balance resets the account on the day it was read | same outcome, SLAM design | question 33 |
+| 13 | A typed month end balance resets the account on its day | same outcome, SLAM design | question 33 |
+| 14 | Balance checks reset an account to a real number on a day | same outcome, SLAM design | question 33 |
+| 15 | Past days and today show the real log entries | ported in Batch G | past line from the log; by date shows where each movement came from |
+| 16 | Which log entries count on the calendar | ported in Batch G | a happened entry replaces its occurrence |
+| 17 | Money in and money out per day, checking only | ported in Batch G | a bill on a card is not checking money out on its day |
+| 18 | Past, today and future flags per day | ported in Batch G | happened and waiting |
+| 19 | Paychecks scheduled from each income | ported in Batch G | paid into its own account |
+| 20 | Pay date rules per pay frequency | still Budget only | two named semimonthly days: question 34 |
+| 21 | Unemployment benefits stop when the weeks left run out | in SLAM before Batch G |  |
+| 22 | Due days past a month's end land on its last day | in SLAM before Batch G |  |
+| 23 | Monthly bills scheduled on their due day | in SLAM before Batch G |  |
+| 24 | Yearly bills: due once a year in their due month | ported in Batch G | once a year at the whole amount |
+| 25 | Scheduled items with an unknown amount are listed but never move cash | ported in Batch G | named, moves nothing |
+| 26 | Debt payments scheduled on the debt's due day | still Budget only | question 29 |
+| 27 | Pay the statement balance option for cards | in SLAM before Batch G |  |
+| 28 | A debt paid by a budget line is scheduled as that line, not twice | still Budget only | question 35 |
+| 29 | Future scheduled items hit their account on their day | still Budget only | paychecks ported; bills from a second account: question 29 |
+| 30 | List of scheduled items with their states | still Budget only | card and loan payments as items: question 30 |
+| 31 | Spread across the month: unscheduled spending lines spread evenly over the days left | same outcome, SLAM design | question 36 |
+| 32 | Spread for a category planned as one number | still Budget only | question 37 |
+| 33 | Logged entries shrink the spread | ported in Batch G | logged spending moves cash only past the plan; the even spread stays: question 36 |
+| 34 | Spread timing across months | same outcome, SLAM design | question 36 |
+| 35 | What is never spread | ported in Batch G | zero, negative and does-not-apply lines are not spread |
+| 36 | A card payment from checking also lowers what the card owes | ported in Batch G | a carried statement is owed until checking pays it |
+| 37 | A stable key for each scheduled item | still Budget only | semimonthly keys now match; card and loan payments: question 30 |
+| 38 | Move a scheduled item to another day | still Budget only | paychecks and bills ported (a move from before the as-of date reaches the run); card and loan payments: question 30 |
+| 39 | Skip a scheduled item this month | still Budget only | ported for paychecks and bills; card and loan payments: question 30 |
+| 40 | Confirm a scheduled item by an explicit link ('It happened') | still Budget only | ported for paychecks and bills; card and loan payments: question 30 |
+| 41 | Auto-confirm a scheduled item from a matching log entry | still Budget only | ported for paychecks and bills; card and loan payments: question 30 |
+| 42 | Waiting: due items not yet confirmed count against today | ported in Batch G | the waiting card |
+| 43 | Safe to spend | ported in Batch G | capped at the lowest point ahead |
+| 44 | Shortfall: how far under the cushion, and on which day | ported in Batch G | the shortfall and its day |
+| 45 | Pay-later flag: a bill that is really paid by the next paycheck | in SLAM before Batch G |  |
+| 46 | Safe-to-spend sentence | ported in Batch G | the sentence |
+| 47 | Calendar reading sentences | ported in Batch G | the month in words |
+| 48 | Month-end cash forecast made on the 1st | still Budget only | question 32 |
+| 49 | Forecast check: predicted against actual month end | still Budget only | question 32 |
+| 50 | Card interest charged to the card on its due day | ported in Batch G | interest on its statement day; a card paid in full: question 38 |
+| 51 | Today's cash | ported in Batch G | checking on the as-of day |
+| 52 | The lowest point ahead | in SLAM before Batch G |  |
+| 53 | Number of days below zero ahead | ported in Batch G | days below zero |
+| 54 | Number of days below the cushion ahead | ported in Batch G | days under the floor |
+| 55 | Next payday and the list of paydays ahead | in SLAM before Batch G |  |
+| 56 | Cushion: the amount to keep in checking | still Budget only | question 31 |
+| 57 | This month so far, by category: plan against logged, and what is left | in SLAM before Batch G |  |
+| 58 | Month outlook: net so far | in SLAM before Batch G |  |
+| 59 | Month outlook: expected by month end | ported in Batch G | card-paid bills count; a passed month says check in |
+| 60 | Month outlook itemized lists | ported in Batch G | what is still to come, listed |
+| 61 | Month outlook only for the open month | ported in Batch G | says check in once the month has moved on |
+| 62 | Month outlook names incomes with no pay date instead of guessing | ported in Batch G | no pay date and guessed pay days named |
+| 63 | Empty state when there is no account: one card saying 'Add a checking account and its balance to see cash by day.' with an 'Add an account' button that jumps to Balances | ported in Batch G | one card with a button |
+| 64 | 'Cash by day' line chart: checking cash day by day, past and future on one line, with a 'Today' line | ported in Batch G | Cash by day |
+| 65 | Savings drawn as its own second line on the cash chart, never added into cash | ported in Batch G | savings apart |
+| 66 | Cushion line on the chart, and days under the cushion shaded | ported in Batch G | floor and days under it |
+| 67 | Payday and big-bill markers on the cash line | ported in Batch G | paydays and big bills |
+| 68 | Hover any day on the cash line to see that day's balance | ported in Batch G | every day has a hover and a list row |
+| 69 | Horizon control: 30 / 60 / 90 days ahead | in SLAM before Batch G |  |
+| 70 | 'Back to YYYY-MM' checkbox to show the whole history on the chart | ported in Batch G | Back to the first check-in |
+| 71 | Items on a credit card show 'on the card' instead of moving cash, including computed card interest | ported in Batch G | on the card |
+| 72 | 'Spread across the month' row: the rest of the plan per day | same outcome, SLAM design | question 36 |
+| 73 | Month grid: '<Month>, day by day' calendar of money in and out | in SLAM before Batch G |  |
+| 74 | 'This month so far' bars: plan versus logged per category, with left/over | in SLAM before Batch G |  |
+| 75 | What-if: move a bill's due day and preview the cash line | same outcome, SLAM design | bill timing tries every day and keeps the best |
+| 76 | 'Save the new due day' button from the what-if | ported in Batch G | Save the new due day |
+| 77 | Forecast check: each month's predicted end cash against the real end balance | still Budget only | question 32 |
+| 78 | '+ Quick entry' button on the cash chart card | ported in Batch G | Log a spend and Check in on the calendar |
+| 79 | Lowest-point reading under the cash chart | ported in Batch G | waits for a balance |
+| 80 | Safe-to-spend reading (or the shortfall and its day) | in SLAM before Batch G |  |
+| 81 | Missing starting balance named, not guessed | ported in Batch G | named, with the field that fills it |
+| 82 | Pay-later flags card: 'Bills that land before the paycheck that covers them' | ported in Batch G | always says, and counts past four |
+| 83 | 'By date' list: every money movement by day with the cash left after it | ported in Batch G | by date with checking after each movement |
+| 84 | Source tag on each list row: Logged / Bank / Scheduled / Waiting | ported in Batch G | scheduled, happened, logged, maybe |
+| 85 | 'So far' number for the open month | in SLAM before Batch G |  |
+| 86 | 'Expected by month end' number for the open month | in SLAM before Batch G |  |
+| 87 | Outlook line placements: full line under the budget table, short line on Review | ported in Batch G | Spending and the Dashboard |
+| 88 | 'No pay date yet for <income>' note on the outlook line | ported in Batch G | expected waits on it, named |
+| 89 | Today screen "Cash, next 30 days" strip card (numbers only, with a + Quick entry button in its header) | ported in Batch G | a Dashboard tile |
+| 90 | Today tile: cash in checking today, which links to the balance check | ported in Batch G | with a check-in link |
+| 91 | Today tile: lowest point in the next 30 days, with its date, linked to the calendar | ported in Batch G | on the tile and the chart |
+| 92 | Today tile: Safe to spend, through a stated date | ported in Batch G | through its date |
+| 93 | "How this was worked out" panel for Safe to spend, each input linked to where it is entered | ported in Batch G | inputs link to their fields and rule |
+| 94 | Shortfall warning when nothing is safe to spend | in SLAM before Batch G |  |
+| 95 | Plain-language cash reading under the tiles: the lowest point, and whether it falls the day before payday | ported in Batch G | on the tile and the chart |
+| 96 | Pay-later flags: a bill that lands before the paycheck that really covers it | in SLAM before Batch G |  |
+| 97 | Links from Today into the full cash calendar | ported in Batch G | to the month of the low |
+| 98 | Strip empty state: prompt to add a checking balance when no account has a known balance | ported in Batch G | one card with a button |
+| 99 | Track "Scheduled, on or before today (N)" waiting card listing paychecks, bills and debt payments not yet confirmed | ported in Batch G | the waiting card |
+| 100 | Editable, prefilled amount on each waiting item | still Budget only | ported (Open it, then Log this amount); card and loan payments: question 30 |
+| 101 | "It happened": confirm a scheduled item into the log | still Budget only | ported; card and loan payments: question 30 |
+| 102 | "Didn't happen / moved": move one occurrence to a new date | still Budget only | ported; card and loan payments: question 30 |
+| 103 | "Skip this month": drop one scheduled occurrence | still Budget only | ported; card and loan payments: question 30 |
+| 104 | "Undo move": put a moved item back on its planned date | ported in Batch G | Back to its day |
+| 105 | Waiting items clear themselves when a matching log entry already exists | still Budget only | ported with an amount check; card and loan payments: question 30 |
+| 106 | Unconfirmed waiting items count as if they happened today in today's cash and the projection | same outcome, SLAM design | after the as-of date the run has them on their days; before it the balance holds them |
+| 107 | Waiting-card edits survive re-renders, and every action is undoable | ported in Batch G | Undo and Redo |
+| 108 | Track "Check balances" card: type a real bank balance for any account or account-less debt on any day | still Budget only | every cash account ported; debts on their own dates: question 33 |
+| 109 | A balance check resets the cash projection from that day | same outcome, SLAM design | question 33 |
+| 110 | A balance check becomes part of the account's or debt's dated balance history | same outcome, SLAM design | question 33 |
+| 111 | One cached cash calendar per document version, horizon and day | not a capability | a speed cache, not something a person sees |
+| 112 | Calendar horizon: a fixed 30 days on Today and the waiting card, and 30/60/90 days chosen on Track and shared with Setup's bill what-if | same outcome, SLAM design | the window selector; the Dashboard runs a month and a paycheck |
+| 113 | Today: "Cash, next 30 days" card showing today's checking balance (Today tile) | ported in Batch G | Dashboard tile |
+| 114 | Today: Lowest point tile (lowest projected checking balance in the next 30 days, with its date) | ported in Batch G | tile and chart |
+| 115 | Today: Safe to spend tile ("through <date>") | ported in Batch G | null with no balance |
+| 116 | Safe to spend "how it was worked out" panel | ported in Batch G | inputs linked |
+| 117 | Today: shortfall warning when nothing is safe to spend | in SLAM before Batch G |  |
+| 118 | Today: plain-language cash reading plus links to the calendar | ported in Batch G | tile and chart |
+| 119 | Today: empty-state prompt to add a checking balance | ported in Batch G | stops at the prompt |
+| 120 | Today: "So far this month" headline tile (replaced Surplus while the month is open) | ported in Batch G | on the Dashboard tile |
+| 121 | Today: "Expected by month end" number under the So far tile | ported in Batch G | expected waits on a missing pay date, named |
+| 122 | "So far this month" explain panel | in SLAM before Batch G |  |
+| 123 | "Expected by month end" explain panel | ported in Batch G | one term per item |
+| 124 | Review: short So far / Expected line under the month-end bar | same outcome, SLAM design | Spending and the Dashboard are its homes |
+| 125 | Budget table: long So far / Expected outlook line (Insights, Compared) | in SLAM before Batch G |  |
+| 126 | Loop strip, Track step: "scheduled X of Y confirmed" count | ported in Batch G | happened count |
+| 127 | Month-end checklist item: scheduled items still waiting | ported in Batch G | the waiting card |
+| 128 | Predicted end cash saved for the new month at month close (feeds the review's Forecast check line) | still Budget only | question 32 |
+| 129 | Insights, Cash tab: Forecast check card | still Budget only | question 32 |
+| 130 | Setup, Bills and due dates: "What if a bill moved?" simulator, with Save the new due day | same outcome, SLAM design | bill timing |
+| 131 | Track: "Scheduled, on or before today (N)" list of overdue scheduled items | ported in Batch G | the waiting card |
+| 132 | "Didn't happen / moved": move a scheduled item to a new date | still Budget only | question 30 |
+| 133 | Track: Check balances (type a real bank balance for any account on any day) | still Budget only | question 33 |
+| 134 | Track: "Cash by day" calendar chart | in SLAM before Batch G |  |
+| 135 | Calendar horizon toggle: 30 / 60 / 90 days ahead | in SLAM before Batch G |  |
+| 136 | Calendar "Back to <first month>" whole-history toggle | in SLAM before Batch G |  |
+| 137 | Track: "Bills that land before the paycheck that covers them" (pay-later flags) | in SLAM before Batch G |  |
+| 138 | Track: "By date" list of every cash movement with running balance | ported in Batch G | by date |
+| 139 | Track: month grid ("<Month>, day by day") | in SLAM before Batch G |  |
+| 140 | Track: "This month so far" plan vs logged per category | in SLAM before Batch G |  |
+| 141 | Rest of the plan spread across the remaining days, shrinking as entries are logged | same outcome, SLAM design | question 36 |
+| 142 | Automatic tick-off of scheduled items by matching log or bank entries | still Budget only | ported for paychecks and bills; card and loan payments: question 30 |
+| 143 | Projected schedule of paychecks, bills and debt payments | in SLAM before Batch G |  |
+| 144 | Computed credit-card interest shown on the card's due day | in SLAM before Batch G |  |
+| 145 | Setup cash-flow inputs had a visible effect (due days, paid-from accounts, card pays minimum/statement, cushion) | still Budget only | due days now in the SLAM Ledger (patch); paid-from: question 29; cushion: question 31 |
+| 146 | Find-by-name search results for the cash calendar cards | in the retirement patch | the find-by-name entries point at the cards that open SLAM |
+| 147 | Riley example household ("Riley, 31, a year of the monthly loop") carries saved monthly forecasts | in the retirement patch | Riley keeps its saved forecasts while the Budget calendar stays |

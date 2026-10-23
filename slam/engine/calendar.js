@@ -24,6 +24,7 @@ import { nextCharge, isSubscription } from './subscriptions.js';
 import { shareOf, coverOf } from './sharing.js';
 import { balanceSheet } from './networth.js';
 import { money } from '../src/ui/format.js';
+import * as C from './vendor/cashcal.js';
 
 const STEP = { weekly: 7, biweekly: 14 };
 const roughFact = (f) => !f || f.kind !== 'known';
@@ -41,7 +42,7 @@ export function payDatesIn(start, cadence, end, ym) {
 }
 
 // One month of events.
-function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
+function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims = [] }) {
   const year = +ym.slice(0, 4);
   const t = tracker();
   const cf = cashflow(spine, rules, ym, { mode, taxCache, schedule });
@@ -57,6 +58,15 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
   const w2Gross = cf.income.streams.filter((x) => x.included && x.type === 'w2').reduce((x, y) => x + (y.gross || 0), 0);
   const payroll = cf.saving.payroll.value || 0;
   for (const st of cf.income.streams) {
+    if (st.included && (st.gross === null || st.gross === undefined)) {
+      // A paycheck with no amount is still on its day, named, and moves nothing (S-209): empty is not zero.
+      const s = (spine.income || []).find((x) => x.id === st.id);
+      if (!s) continue;
+      t.useFact('income.' + s.id + '.amount', s.amount);
+      const pd = s.payDay ? v(s.payDay) : null;
+      add({ kind: 'pay', id: 'pay:' + s.id, sourceId: s.id, label: s.label, direction: 'in', amount: null, date: pd && s.cadence === 'monthly' ? dayIn(ym, pd) : null, repeats: true, note: 'amount not entered, so it moves nothing', path: 'income.' + s.id + '.amount' });
+      continue;
+    }
     if (!st.included || !st.gross) continue;
     const s = (spine.income || []).find((x) => x.id === st.id);
     const base = 'income.' + s.id;
@@ -84,10 +94,11 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     if (day === null) { add({ ...common, date: null, amount: net, rough: amountRough, note: s.cadence === 'total' ? 'a total spread over its months' : 'day paid not entered' }); continue; }
     const dayRough = roughFact(s.payDay);
     if (s.cadence === 'semimonthly') {
-      const d2 = Math.min(day + 15, daysInMonth(year, +ym.slice(5, 7)));
+      // The run's own rule for the two days (cashcal.js paydays), so each pay's key matches the run's occurrence.
+      const [d1, d2] = C.paydays('semimonthly', dayIn(ym, day), monthStart(ym), monthEnd(ym));
       const half = { gross: common.gross === null ? null : round2(common.gross / 2), withheld: common.withheld === null ? null : round2(common.withheld / 2), fica: common.fica === null ? null : round2(common.fica / 2), saved: round2(common.saved / 2) };
-      add({ ...common, ...half, date: dayIn(ym, day), amount: perPay(2), rough: amountRough || dayRough });
-      add({ ...common, ...half, date: dayIn(ym, d2), amount: perPay(2), rough: amountRough || dayRough, note: 'the second pay of the month, 15 days after the first' });
+      add({ ...common, ...half, date: d1, amount: perPay(2), rough: amountRough || dayRough });
+      add({ ...common, ...half, date: d2, amount: perPay(2), rough: amountRough || dayRough, note: 'the second pay of the month' });
     } else add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: s.cadence === 'monthly' ? null : 'counted as its monthly share' });
   }
 
@@ -100,22 +111,42 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     const sh = shareOf(spine, e);
     const amountRough = roughFact(e.amount) || (sh.rough || []).length > 0;
     const yours = it.amount;
+    // Paid on a card (S-209): it counts in the month's plan, but checking does not move on its day.
+    const payer = e.paidFrom ? v(e.paidFrom) : null;
+    const card = payer ? (spine.debts || []).find((x) => x.id === payer && x.type === 'credit_card') : null;
+    const onCard = card ? { card: card.id, cardNote: 'on ' + (v(card.name) || card.id) + ': checking pays it through the card payment' } : {};
     if (isSubscription(e)) {
       // A subscription charges its whole amount on its day (a yearly one once a year).
       const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;
       const charge = v(e.amount) === null ? null : (sh.shared && sh.share !== null ? v(e.amount) * sh.share : v(e.amount));
       const next = renews ? nextCharge(renews, e.cadence, first) : null;
-      if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path });
+      if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path, note: onCard.cardNote || null, ...onCard });
       else if (!renews) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, kind: 'subscription', label: e.label, date: null, amount: yours, direction: 'out', rough: true, note: 'next charge date not entered', path });
       // A charge in another month: nothing this month; the monthly share is in the month-end cash from the projection.
       continue;
     }
+    // A yearly bill with a date lands once a year, in its month, at the whole amount, as the run has it (S-209).
+    if (e.cadence === 'yearly' && e.start) {
+      if (e.start.slice(5, 7) === ym.slice(5, 7) && (!e.end || dayIn(ym, +e.start.slice(8, 10)) <= e.end)) {
+        const whole = v(e.amount) === null ? null : v(e.amount) * (sh.shared && sh.share !== null ? sh.share : 1);
+        add({ id: 'bill:' + e.id, sourceId: e.id, repeats: true, yearly: true, movable: true, kind: 'bill', label: e.label, date: dayIn(ym, +e.start.slice(8, 10)), amount: whole, direction: 'out', rough: amountRough, path, note: ['once a year, the whole amount', onCard.cardNote || null].filter(Boolean).join('; '), ...onCard });
+      }
+      continue;
+    }
     const day = e.payDay ? t.useFact(base + '.payDay', e.payDay) : null;
     if (day === null) { add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', kind: 'bill', label: e.label, date: null, amount: yours, direction: 'out', rough: amountRough, note: 'day paid not entered', path: base + '.paidFrom' }); continue; }
-    add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', movable: true, kind: 'bill', label: e.label, date: dayIn(ym, day), amount: yours, direction: 'out', rough: amountRough || roughFact(e.payDay), path: base + '.paidFrom', note: e.cadence === 'monthly' ? null : 'counted as its monthly share' });
+    add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', movable: true, kind: 'bill', label: e.label, date: dayIn(ym, day), amount: yours, direction: 'out', rough: amountRough || roughFact(e.payDay), path: base + '.paidFrom', note: [e.cadence === 'monthly' ? null : 'counted as its monthly share', onCard.cardNote || null].filter(Boolean).join('; ') || null, ...onCard });
   }
 
   // ------------------------------------------------------------ debt minimums on their due days
+  // A debt with no monthly payment entered is still on its due day, named, and moves nothing (S-209).
+  for (const p of cf.debtMinimums.total.missing || []) {
+    const id = /^debts\.([^.]+)\.minimum$/.exec(p);
+    const d0 = id ? (spine.debts || []).find((x) => x.id === id[1]) : null;
+    if (!d0) continue;
+    const due = d0.dueDay ? v(d0.dueDay) : null;
+    add({ id: 'debt:' + d0.id, sourceId: null, repeats: true, kind: 'debt', label: (v(d0.name) || d0.id) + ' minimum', date: due ? dayIn(ym, due) : null, amount: null, direction: 'out', note: 'monthly payment not entered, so it moves nothing', path: p });
+  }
   for (const m of cf.debtMinimums.items) {
     if (m.amount === null || m.amount <= 0) continue;
     const d = (spine.debts || []).find((x) => x.id === m.id);
@@ -188,10 +219,17 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     if (!m.date || !inMonth(m.date)) continue;
     kept.push({ amount: round2(m.amount), direction: m.direction === 'out' ? 'out' : 'in', rough: true, note: Math.round((typeof m.likelihood === 'number' ? m.likelihood : 0.5) * 100) + '% likely; counted at that weight in the cash line', path: null, counted: false, id: 'maybe:' + m.id, sourceId: 'maybe:' + m.id, maybeId: m.id, kind: 'maybe', label: m.label, date: m.date, key: 'maybe:' + m.id + '|' + m.date, origDate: m.date, movable: true, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5 });
   }
+  // Occurrences logged as happened from the calendar (S-209): one log entry each, keyed to the occurrence.
+  // A typed entry the run matched to an occurrence (engine/cashsim.js logIntoRun) counts the same way.
+  const loggedKeys = new Map((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith('sched:')).map((x) => [x.importKey.slice(6), x]));
+  for (const c of claims) { const lg = (spine.log || []).find((x) => x.id === c.logId); if (lg && !loggedKeys.has(c.key)) loggedKeys.set(c.key, lg); }
   for (const e of kept) {
     e.day = e.date ? +e.date.slice(8, 10) : null;
     e.locked = !!(e.key && cal.locks && cal.locks[e.key]);
-    e.pills = [...(e.kind === 'subscription' ? ['sub'] : []), ...(e.plan ? ['plan'] : []), ...(e.repeats ? ['repeat'] : []), ...(e.locked ? ['locked'] : []), ...(e.date && e.date < asOf ? ['done'] : []), ...(e.kind === 'maybe' ? ['maybe'] : [])];
+    const lg = e.key ? loggedKeys.get(e.key) : null;
+    e.logged = lg ? { id: lg.id, amount: lg.amount, date: lg.date } : null;
+    e.confirmable = !!(e.key && (e.kind === 'pay' || e.kind === 'bill' || e.kind === 'subscription'));
+    e.pills = [...(e.kind === 'subscription' ? ['sub'] : []), ...(e.yearly ? ['yearly'] : []), ...(e.plan ? ['plan'] : []), ...(e.repeats ? ['repeat'] : []), ...(e.locked ? ['locked'] : []), ...(e.logged ? ['logged'] : e.date && e.date < asOf ? ['done'] : []), ...(e.kind === 'maybe' ? ['maybe'] : [])];
   }
   return { events: kept, cf, tracker: t, first, last };
 }
@@ -227,7 +265,7 @@ export function rangeCashTerms(sim, from, to) {
   const groups = {};
   for (const d of days) for (const e of d.events) {
     if (e.account !== pid.id || e.kind === 'shortfall' || e.kind === 'statement' || e.amount === null) continue;
-    const k = e.kind === 'income' || e.kind === 'maybe-in' ? 'Pay and money in' : e.kind === 'everyday' ? 'Everyday spending, spread by day' : e.kind === 'card-payment' || e.kind === 'extra-payment' ? 'Card payments' : e.kind === 'loan-payment' || e.kind === 'paylater' ? 'Loan and plan payments' : e.kind === 'transfer' ? 'Saving and the tax set-aside' : e.kind === 'auto-cover' ? 'Topped up from the cushion' : e.kind === 'sweep' ? 'Month-end sweep' : 'Bills';
+    const k = e.kind === 'income' || e.kind === 'maybe-in' ? 'Pay and money in' : e.kind === 'everyday' ? 'Everyday spending, spread by day' : e.kind === 'card-payment' || e.kind === 'extra-payment' ? 'Card payments' : e.kind === 'loan-payment' || e.kind === 'paylater' ? 'Loan and plan payments' : e.kind === 'transfer' ? 'Saving and the tax set-aside' : e.kind === 'auto-cover' ? 'Topped up from the cushion' : e.kind === 'sweep' ? 'Month-end sweep' : e.kind === 'log' ? 'From the log (what the spread did not already take)' : 'Bills';
     groups[k] = (groups[k] || 0) + e.amount;
   }
   return { start: round2(start), startDate: before ? before.date : sim.start, end: days[days.length - 1].primary, endDate: days[days.length - 1].date, groups: Object.entries(groups).map(([label, amount]) => ({ label, amount: round2(amount) })) };
@@ -246,11 +284,16 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
   const out = [];
   const all = tracker();
   for (let ym = start, i = 0; i < months; ym = addMonths(ym, 1), i++) {
-    const { events, cf, tracker: t } = monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule: null });
+    const { events, cf, tracker: t } = monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule: null, claims: sim ? sim.claims : [] });
     all.absorb({ value: 0, ...t.snapshot() });
+    // Card interest the run charges on each statement day (S-209): on the card, not checking, so it is shown, not added.
+    if (sim) for (const d of sim.daily) if (d.date.slice(0, 7) === ym) for (const x of d.events) if (x.kind === 'interest' && x.amount) {
+      const debt = (spine.debts || []).find((y) => y.id === x.card);
+      events.push({ id: 'interest:' + x.card + ':' + d.date, kind: 'interest', label: (debt ? v(debt.name) || debt.id : x.card) + ' interest', date: d.date, day: +d.date.slice(8, 10), amount: Math.abs(x.amount), direction: 'out', counted: false, card: x.card, rough: sim.kind !== 'computed', note: 'figured by the run at the statement close; it goes on the card, not out of checking', path: debt ? 'debts.' + debt.id + '.apr' : null, pills: [] });
+    }
     const dated = events.filter((e) => e.date).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.kind.localeCompare(b.kind)));
     const days = [];
-    for (const e of dated) { let d = days.find((x) => x.date === e.date); if (!d) { d = { date: e.date, day: e.day, events: [], in: 0, out: 0 }; days.push(d); } d.events.push(e); if (e.amount !== null && e.counted) d[e.direction === 'in' ? 'in' : e.direction === 'out' ? 'out' : 'skip'] += e.amount; }
+    for (const e of dated) { let d = days.find((x) => x.date === e.date); if (!d) { d = { date: e.date, day: e.day, events: [], in: 0, out: 0 }; days.push(d); } d.events.push(e); if (e.amount !== null && e.counted && !e.card) d[e.direction === 'in' ? 'in' : e.direction === 'out' ? 'out' : 'skip'] += e.amount; }
     for (const d of days) { d.in = round2(d.in); d.out = round2(d.out); delete d.skip; }
     const sum = (dir) => round2(events.filter((e) => e.direction === dir && e.amount !== null && e.counted).reduce((x, e) => x + e.amount, 0));
     const inn = sum('in'), outt = sum('out');
@@ -258,6 +301,7 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     const line = cashLineFor(sim, ym);
     const lastDay = line.length ? line[line.length - 1] : null;
     if (ym < asOfYm) cash = { value: null, kind: 'missing', note: 'a month before the as-of date: the simulation does not look back', path: null, when: 'past', today: null };
+    else if (sim && !sim.checking.known) cash = { value: null, total: null, kind: 'missing', note: 'Checking has no balance yet, so the month-end cash is not figured.', path: sim.checking.path, when: 'ahead', today: null };
     else cash = { value: lastDay ? lastDay.primary : null, total: lastDay ? lastDay.cash : null, kind: lastDay ? sim.kind : 'missing', note: lastDay ? 'checking at the end of ' + (ym === asOfYm ? 'this month' : 'the month') + ', from the day-by-day simulation (' + maybeMode + ' maybe money, the floor guard ' + (sim.floor.guard ? 'on' : 'off') + ')' : 'no day of this month is in the simulation', path: sheet.cash.from[0] || null, when: ym === asOfYm ? 'now' : 'end', today: ym === asOfYm ? sheet.cash.value : null };
     if (sim) all.absorb({ value: 0, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules });
     const snap = t.snapshot();
@@ -265,6 +309,8 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     out.push({
       ym, days, undated: events.filter((e) => !e.date), events, in: inn, out: outt, net: round2(inn - outt), cash, line, low,
       monthCash: monthCashTerms(sim, ym),
+      // Scheduled items marked happened (S-209, the Budget's "scheduled X of Y confirmed").
+      confirm: { scheduled: events.filter((e) => e.confirmable).length, happened: events.filter((e) => e.confirmable && e.logged).length },
       surplus: cf.surplus, kind: snap.missing.length ? 'incomplete' : snap.rough.length || events.some((e) => e.rough) ? 'rough' : 'computed', rough: snap.rough, missing: snap.missing
     });
   }

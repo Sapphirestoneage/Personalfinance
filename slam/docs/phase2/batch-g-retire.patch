@@ -1,0 +1,2095 @@
+diff --git a/slam/src/calc/calendar.js b/slam/src/calc/calendar.js
+deleted file mode 100644
+index 2cb1142..0000000
+--- a/slam/src/calc/calendar.js
++++ /dev/null
+@@ -1,456 +0,0 @@
+-// The cash flow calendar (S-086): cash day by day, past and future, on one
+-// line. Past days (up to today) show the log; future days show what is
+-// scheduled: paychecks from each income's next pay date and frequency, bills
+-// on their due days, card and loan payments on the debt's due day, and the
+-// rest of each month's plan spread evenly over the days left ("spread across
+-// the month"), shrinking as real entries for those lines come in.
+-// A typed month start, month end, or balance check resets an account to that
+-// real number. Cash here is checking only (S-094); cards are what is owed.
+-// Short range only (days). Eras is the long view (months and years).
+-
+-import { modelForMonth, planView } from './plan.js';
+-import { counted } from './log.js';
+-import { amountClose } from './log.js';
+-import { isCashAccount } from './balances.js';
+-
+-// The calendar's cash is checking only (S-094): savings is not spending money day to day.
+-const inCalendar = (a) => a.type === 'checking';
+-import { toMonthly } from './normalize.js';
+-import { linkedLine, cardInterest } from './debts.js';
+-
+-const DAY = 86400000;
+-const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
+-const STEP_DAYS = { weekly: 7, biweekly: 14 };
+-const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+-const r2 = (x) => Math.round(x * 100) / 100 + 0;
+-
+-export function addDays(iso, n) {
+-  return new Date(Date.parse(iso + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
+-}
+-export function daysBetween(a, b) {
+-  return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / DAY);
+-}
+-export function daysInMonth(month) {
+-  const [y, m] = month.split('-').map(Number);
+-  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+-}
+-const monthOf = (iso) => iso.slice(0, 7);
+-const dateIn = (month, day) => month + '-' + String(Math.min(day, daysInMonth(month))).padStart(2, '0');
+-function monthsBetween(a, b) {
+-  const out = [];
+-  for (let m = a; m <= b; m = addDays(dateIn(m, 28), 7).slice(0, 7)) out.push(m);
+-  return out;
+-}
+-
+-// The account a scheduled item or an entry with no account lands in: the first checking account.
+-export function defaultAccount(doc) {
+-  const live = (doc.accounts || []).filter((a) => a.state !== 'archived');
+-  const a = live.find((x) => x.type === 'checking') || live.find(isCashAccount) || live[0];
+-  return a ? a.id : null;
+-}
+-
+-const amountOfValue = (v) => (v && v.amount !== null && v.amount !== undefined && v.status !== 'not-for-me' ? v.amount : null);
+-
+-// One month's planned amount per line (monthly), from the plan, else the estimate.
+-function lineAmounts(doc, month) {
+-  const model = modelForMonth(doc, month);
+-  const plan = planView(doc, month);
+-  const units = [];
+-  const byLine = {};
+-  for (const c of model.categories) {
+-    if (c.savings || c.isDebt || c.notForMe) continue;
+-    const pc = plan ? plan.cats[c.id] : null;
+-    const catLevel = pc ? pc.byCategory : c.estimate.from === 'category';
+-    for (const l of c.lines) {
+-      const planned = pc && !pc.byCategory ? pc.lines[l.id] : null;
+-      byLine[l.id] = planned !== null && planned !== undefined ? planned : l.estimate;
+-    }
+-    units.push({ catId: c.id, name: c.name, catLevel, amount: catLevel ? (pc ? pc.amount : c.estimate.amount) : null, lines: c.lines.map((l) => ({ id: l.id, name: l.name, kind: l.kind })) });
+-  }
+-  return { units, byLine };
+-}
+-
+-// The paydays of one income in a month, from its pay schedule (S-117: a biweekly month can have 3).
+-// Null when the schedule is not known yet (no next pay date).
+-export function payDates(inc, month) {
+-  const first = month + '-01';
+-  const last = dateIn(month, 31);
+-  const dates = [];
+-  if (inc.payFrequency === 'semimonthly') {
+-    const days = inc.payDays && inc.payDays.length === 2 ? inc.payDays : [1, 15];
+-    for (const d of days) dates.push(dateIn(month, d));
+-    return dates.sort();
+-  }
+-  const d0 = inc.nextPayDate && inc.nextPayDate.date;
+-  if (!d0) return null;
+-  if (inc.payFrequency === 'monthly') dates.push(dateIn(month, Number(d0.slice(8))));
+-  else {
+-    const step = STEP_DAYS[inc.payFrequency];
+-    if (!step) return null;
+-    let d = addDays(d0, -step * Math.ceil(Math.max(0, daysBetween(first, d0)) / step));
+-    while (d < first) d = addDays(d, step);
+-    for (; d <= last; d = addDays(d, step)) dates.push(d);
+-  }
+-  // Unemployment stops when the weeks left run out, counted from the next pay date.
+-  if (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null && inc.benefitWeeksLeft !== undefined) {
+-    const end = addDays(d0, inc.benefitWeeksLeft * 7);
+-    for (let i = dates.length - 1; i >= 0; i--) if (dates[i] >= end) dates.splice(i, 1);
+-  }
+-  return dates.sort();
+-}
+-
+-// Every scheduled item in one month: paychecks, bills, debt payments.
+-// key = kind:id:original date. A move (doc.cashflow.moves[key]) changes the date or skips it.
+-export function scheduledItems(doc, month, income) {
+-  const items = [];
+-  const first = month + '-01';
+-  const last = dateIn(month, 31);
+-  const def = defaultAccount(doc);
+-  const moves = (doc.cashflow && doc.cashflow.moves) || {};
+-  const push = (it) => {
+-    const mv = moves[it.key];
+-    if (mv && mv.to === null) return items.push({ ...it, skipped: true, date: it.planned });
+-    items.push({ ...it, date: mv ? mv.to : it.planned, moved: !!mv });
+-  };
+-  // Paychecks
+-  for (const inc of doc.income) {
+-    if (inc.state === 'archived') continue;
+-    const src = (income.sources || []).find((s) => s.id === inc.id);
+-    const per = src && src.takeHomeMonthly !== null && PER_YEAR[inc.payFrequency] ? r2((src.takeHomeMonthly * 12) / PER_YEAR[inc.payFrequency]) : null;
+-    const acct = inc.accountId || def;
+-    const dates = payDates(inc, month);
+-    if (dates === null) continue;
+-    for (const d of dates) push({ key: 'pay:' + inc.id + ':' + d, kind: 'paycheck', dir: 'in', name: inc.label, incomeId: inc.id, amount: per, account: acct, planned: d });
+-  }
+-  // Bills: a due day every month, or a due month and day once a year.
+-  const amts = lineAmounts(doc, month);
+-  for (const c of doc.categories) {
+-    if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
+-    for (const l of c.lines) {
+-      if (l.state === 'archived' || amts.byLine[l.id] === undefined) continue;
+-      const day = amountOfValue(l.dueDay);
+-      const dm = amountOfValue(l.dueMonth);
+-      if (!day) continue;
+-      const yearly = dm !== null;
+-      if (yearly && Number(month.slice(5)) !== dm) continue;
+-      const monthly = amts.byLine[l.id];
+-      const amount = monthly === null ? null : r2(yearly ? monthly * 12 : monthly);
+-      const d = dateIn(month, day);
+-      push({ key: 'bill:' + l.id + ':' + d, kind: 'bill', dir: 'out', name: l.name, lineId: l.id, yearly, amount, account: l.accountId || def, planned: d });
+-    }
+-  }
+-  // Debt payments from checking on the debt's due day: the minimum, or the card's
+-  // statement balance (last month's end) when the coach picked that and it is known.
+-  for (const debt of doc.debts) {
+-    // A debt a budget line pays is scheduled as that line (S-116).
+-    if (debt.state === 'archived' || linkedLine(doc, debt)) continue;
+-    const day = amountOfValue(debt.dueDay);
+-    if (!day) continue;
+-    const card = (doc.accounts || []).find((a) => a.debtId === debt.id && a.state !== 'archived');
+-    let amount = toMonthly(debt.minimum, 'monthly');
+-    let basis = 'minimum';
+-    if (debt.payWith === 'statement' && card) {
+-      const prev = monthOf(addDays(first, -1));
+-      const end = (((doc.balances || {})[prev] || {})[card.id] || {}).end;
+-      if (end && end.amount !== null) { amount = end.amount; basis = 'statement'; }
+-    }
+-    const d = dateIn(month, day);
+-    push({ key: 'debt:' + debt.id + ':' + d, kind: 'debt', dir: 'out', name: debt.label, debtId: debt.id, basis, amount: amount === null ? null : r2(amount), account: debt.payFrom || def, card: card ? card.id : null, planned: d });
+-  }
+-  return { items: items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)), amounts: amts };
+-}
+-
+-// A scheduled item counts as done when an entry carries its key, or a log entry
+-// on the same line (or income, or a card payment) lands within 3 days at about the amount.
+-function confirmItems(items, entries) {
+-  const used = new Set();
+-  for (const it of items) {
+-    if (it.skipped) continue;
+-    let hit = entries.find((e) => e.scheduleKey === it.key);
+-    if (!hit && it.amount !== null) {
+-      hit = entries.find((e) => !used.has(e.id) && !e.scheduleKey && Math.abs(daysBetween(e.date, it.date)) <= 3 && (
+-        (it.kind === 'bill' && e.lineId === it.lineId && amountClose(e.amount, it.amount)) ||
+-        (it.kind === 'paycheck' && e.kind === 'income' && (!e.incomeId || e.incomeId === it.incomeId) && amountClose(-e.amount, it.amount)) ||
+-        (it.kind === 'debt' && e.kind === 'card-payment' && e.amount > 0 && amountClose(e.amount, it.amount))));
+-    }
+-    if (hit) { used.add(hit.id); it.confirmed = hit.id; }
+-  }
+-}
+-
+-// Logged so far this month (up to and including today) per line, net of refunds.
+-function loggedByLine(entries, month, today) {
+-  const out = {};
+-  for (const e of entries) {
+-    if (monthOf(e.date) !== month || e.date > today || !e.lineId || !COUNTS.has(e.kind)) continue;
+-    out[e.lineId] = (out[e.lineId] || 0) + e.amount;
+-  }
+-  return out;
+-}
+-
+-// What is left of each unscheduled line (or one-number category) this month, spread per day.
+-function spreadFor(doc, month, today, sched, entries) {
+-  const scheduledLines = new Set(sched.items.filter((i) => i.kind === 'bill').map((i) => i.lineId));
+-  const yearlyLines = new Set();
+-  for (const c of doc.categories) for (const l of c.lines) if (amountOfValue(l.dueDay) && amountOfValue(l.dueMonth) !== null) yearlyLines.add(l.id);
+-  const logged = loggedByLine(entries, month, today);
+-  const first = month + '-01';
+-  const startDay = today >= first ? addDays(today, 1) : first;
+-  const daysLeft = monthOf(startDay) === month ? daysInMonth(month) - Number(startDay.slice(8)) + 1 : 0;
+-  const def = defaultAccount(doc);
+-  const out = [];
+-  for (const u of sched.amounts.units) {
+-    const parts = u.catLevel
+-      ? [{ name: u.name, ids: u.lines.filter((l) => !scheduledLines.has(l.id) && !yearlyLines.has(l.id)).map((l) => l.id), plan: u.amount === null ? null : Math.max(0, u.amount - u.lines.filter((l) => scheduledLines.has(l.id)).reduce((a, l) => a + (sched.amounts.byLine[l.id] || 0), 0)), account: def }]
+-      : u.lines.filter((l) => !scheduledLines.has(l.id) && !yearlyLines.has(l.id)).map((l) => {
+-        const line = doc.categories.find((c) => c.id === u.catId).lines.find((x) => x.id === l.id);
+-        return { name: l.name, ids: [l.id], plan: sched.amounts.byLine[l.id], account: (line && line.accountId) || def };
+-      });
+-    for (const p of parts) {
+-      if (p.plan === null || p.plan === undefined || p.plan <= 0) continue;
+-      const soFar = p.ids.reduce((a, id) => a + (logged[id] || 0), 0);
+-      const left = Math.max(0, p.plan - soFar);
+-      out.push({ name: p.name, lineIds: p.ids, plan: p.plan, logged: r2(soFar), left: r2(left), perDay: daysLeft ? left / daysLeft : 0, from: startDay, account: p.account });
+-    }
+-  }
+-  return { units: out, daysLeft, from: startDay };
+-}
+-
+-function effect(acct, flow) {
+-  // flow > 0 is money into the account. A card's balance is owed, so it moves the other way.
+-  return acct && acct.type === 'credit-card' ? -flow : flow;
+-}
+-
+-// opts: { today: 'YYYY-MM-DD', horizon: 30 | 60 | 90, cushion }
+-export function cashCalendar(doc, income, opts) {
+-  const today = opts.today;
+-  const horizon = opts.horizon || 30;
+-  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
+-  const byId = Object.fromEntries(accts.map((a) => [a.id, a]));
+-  const def = defaultAccount(doc);
+-  const cf = doc.cashflow || {};
+-  const cushion = opts.cushion !== undefined ? opts.cushion : (cf.cushion && cf.cushion.amount !== null ? cf.cushion.amount : 0);
+-  const balMonths = Object.keys(doc.balances || {}).filter((m) => Object.entries(doc.balances[m]).some(([id, b]) => byId[id] && ((b.start && b.start.amount !== null) || (b.end && b.end.amount !== null)))).sort();
+-  const firstMonth = balMonths.length && balMonths[0] < monthOf(today) ? balMonths[0] : monthOf(today);
+-  const start = firstMonth + '-01';
+-  const end = addDays(today, horizon);
+-  // "Kept your typed actual" entries (S-087) are bookkeeping, not money that moved.
+-  const entries = counted(doc.transactions).filter((e) => !e.adjust);
+-  const months = monthsBetween(firstMonth, monthOf(end));
+-  const allItems = [];
+-  const spreads = {};
+-  // Card interest (S-127): charged to the card on its due day (the last day without one). It moves what
+-  // is owed, never checking, so it shows "on the card" and is never waiting to be confirmed.
+-  const interestOn = {};
+-  for (const m of months) {
+-    for (const debt of doc.debts || []) {
+-      const card = accts.find((a) => a.debtId === debt.id && a.type === 'credit-card');
+-      const ci = card ? cardInterest(doc, debt, m) : null;
+-      if (!ci || !ci.amount) continue;
+-      const d = dateIn(m, amountOfValue(debt.dueDay) || 31);
+-      (interestOn[d] = interestOn[d] || []).push({ type: 'scheduled', key: 'interest:' + debt.id + ':' + d, kind: 'interest', name: debt.label + ' interest (computed)', card: card.id, amount: ci.amount });
+-    }
+-  }
+-  for (const m of months) {
+-    const s = scheduledItems(doc, m, income);
+-    confirmItems(s.items, entries);
+-    allItems.push(...s.items);
+-    if (dateIn(m, 31) > today) spreads[m] = spreadFor(doc, m, today, s, entries);
+-  }
+-  // Waiting: scheduled on or before today in an open month, not confirmed, not skipped.
+-  const openFrom = doc.currentMonth < monthOf(today) ? doc.currentMonth : monthOf(today);
+-  const waiting = allItems.filter((i) => !i.skipped && !i.confirmed && i.date <= today && monthOf(i.planned) >= openFrom);
+-  const future = allItems.filter((i) => !i.skipped && !i.confirmed && i.date > today && i.date <= end);
+-
+-  // Starting balances: each account's start for the first month (typed or carried); unknown counts as 0 and is named.
+-  const bal = {};
+-  const unknownStart = [];
+-  const checksOf = (id) => (cf.checks || []).filter((c) => c.accountId === id && c.amount && c.amount.amount !== null);
+-  for (const a of accts) {
+-    const b = ((doc.balances[firstMonth] || {})[a.id]) || {};
+-    const prevEnd = (((doc.balances[monthOf(addDays(start, -1))]) || {})[a.id] || {}).end;
+-    const s = b.start && b.start.amount !== null ? b.start.amount : prevEnd && prevEnd.amount !== null ? prevEnd.amount : null;
+-    // A balance read later in the month (S-136, Update on the Accounts tab) is known from its day on.
+-    const readLater = (b.end && b.end.amount !== null) || checksOf(a.id).some((c) => monthOf(c.date) === firstMonth);
+-    if (s === null && !readLater) unknownStart.push(a.name);
+-    bal[a.id] = s === null ? 0 : s;
+-  }
+-  const checks = (cf.checks || []).filter((c) => byId[c.accountId] && c.amount && c.amount.amount !== null);
+-  const days = [];
+-  for (let d = start; d <= end; d = addDays(d, 1)) {
+-    const m = monthOf(d);
+-    const items = [];
+-    // A month's start balance applies on the day it was read (S-100), the 1st unless another day was picked.
+-    if (d !== start) {
+-      for (const a of accts) { const b = (doc.balances[m] || {})[a.id] || {}; if (d === (b.startOn || dateIn(m, 1)) && b.start && b.start.amount !== null) bal[a.id] = b.start.amount; }
+-    }
+-    const add = (it, accountId, flow) => {
+-      const a = byId[accountId] || byId[def];
+-      if (a) bal[a.id] = bal[a.id] + effect(a, flow);
+-      items.push({ ...it, account: a ? a.id : null, flow, cash: a ? inCalendar(a) : false });
+-    };
+-    if (d <= today) {
+-      for (const e of entries) if (e.date === d) add({ type: 'entry', id: e.id, name: e.description || e.note || e.kind, kind: e.kind, source: e.source || 'import', lineId: e.lineId }, e.account || def, -e.amount);
+-    }
+-    if (d === today) for (const it of waiting) if (it.amount !== null) add({ type: 'waiting', key: it.key, kind: it.kind, name: it.name, date: it.date }, it.account, it.dir === 'in' ? it.amount : -it.amount);
+-    if (d > today) {
+-      for (const it of future) {
+-        if (it.date !== d || it.amount === null) continue;
+-        add({ type: 'scheduled', key: it.key, kind: it.kind, name: it.name }, it.account, it.dir === 'in' ? it.amount : -it.amount);
+-        if (it.kind === 'debt' && it.card && it.card !== it.account) add({ type: 'scheduled', key: it.key, kind: 'debt', name: it.name + ' (paid)', mirror: true }, it.card, it.amount);
+-      }
+-      for (const it of interestOn[d] || []) add({ type: it.type, key: it.key, kind: it.kind, name: it.name }, it.card, -it.amount);
+-      const sp = spreads[m];
+-      if (sp) for (const u of sp.units) if (u.perDay > 0 && d >= sp.from) add({ type: 'spread', kind: 'spread', name: u.name }, u.account, -u.perDay);
+-    }
+-    // Real numbers reset the projection: a typed month end, then any balance check that day.
+-    for (const a of accts) { const b = (doc.balances[m] || {})[a.id] || {}; if (d === (b.endOn || dateIn(m, 31)) && b.end && b.end.amount !== null && d <= today) bal[a.id] = b.end.amount; }
+-    for (const c of checks) if (c.date === d) bal[c.accountId] = c.amount.amount;
+-    const cash = accts.filter(inCalendar).reduce((a, x) => a + bal[x.id], 0);
+-    const cards = accts.filter((x) => x.type === 'credit-card').reduce((a, x) => a + bal[x.id], 0);
+-    // Savings is shown as its own line, never added into cash (S-095).
+-    const savings = accts.filter((x) => x.type === 'savings' || x.type === 'hysa').reduce((a, x) => a + bal[x.id], 0);
+-    const cashItems = items.filter((i) => i.cash && !i.mirror);
+-    days.push({
+-      date: d, past: d < today, today: d === today, cash: r2(cash), savings: r2(savings), cards: r2(cards), perAccount: Object.fromEntries(Object.entries(bal).map(([k, v]) => [k, r2(v)])), items,
+-      in: r2(cashItems.filter((i) => i.flow > 0).reduce((a, i) => a + i.flow, 0)), out: r2(-cashItems.filter((i) => i.flow < 0).reduce((a, i) => a + i.flow, 0))
+-    });
+-  }
+-  const ahead = days.filter((x) => x.date >= today);
+-  const todayRow = days.find((x) => x.today) || null;
+-  const lowest = ahead.reduce((lo, x) => (lo === null || x.cash < lo.cash ? x : lo), null);
+-  const nextPay = future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort()[0] || null;
+-  // Safe to spend (S-095): money spent today lowers every day after it, so the limit is the lowest
+-  // point anywhere ahead (through the horizon) less the cushion, never more than today's checking,
+-  // and never below $0. Below 0, the shortfall and its day are given instead.
+-  const raw = lowest && todayRow ? r2(Math.min(lowest.cash - cushion, todayRow.cash)) : null;
+-  const safe = raw === null ? null : Math.max(0, raw);
+-  const shortfall = raw !== null && raw < 0 ? { amount: r2(cushion - lowest.cash), date: lowest.date } : null;
+-  return {
+-    today, horizon, start, end, cushion, days, unknownStart,
+-    todayCash: todayRow ? todayRow.cash : null,
+-    lowest: lowest ? { date: lowest.date, amount: lowest.cash } : null,
+-    belowZero: ahead.filter((x) => x.cash < 0).length,
+-    belowCushion: ahead.filter((x) => x.cash < cushion).length,
+-    nextPayday: nextPay,
+-    paydays: future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort(),
+-    safeToSpend: safe,
+-    shortfall,
+-    waiting, scheduled: allItems.filter((i) => monthOf(i.planned) >= openFrom),
+-    spreads,
+-    payLater: payLaterFlags(days, future, cushion)
+-  };
+-}
+-
+-// A bill that lands while cash is below the cushion is really paid by the next
+-// paycheck after it: "Rent is due the 1st, paid the 5th".
+-export function payLaterFlags(days, future, cushion) {
+-  const pays = future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort();
+-  const out = [];
+-  for (const day of days) {
+-    const bills = day.items.filter((i) => i.type === 'scheduled' && (i.kind === 'bill' || i.kind === 'debt') && i.cash && i.flow < 0);
+-    if (!bills.length || day.cash >= cushion) continue;
+-    const big = bills.reduce((a, b) => (b.flow < a.flow ? b : a));
+-    const paidBy = pays.find((p) => p > day.date) || null;
+-    if (!paidBy) continue;
+-    out.push({ name: big.name, key: big.key, due: day.date, paidBy, gap: daysBetween(day.date, paidBy), cashThatDay: day.cash, amount: -big.flow });
+-  }
+-  return out;
+-}
+-
+-// The month's predicted end cash as of the 1st: start cash + paychecks - bills
+-// and payments from cash accounts - the whole plan spread (nothing logged yet).
+-export function forecastFor(doc, income, month) {
+-  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
+-  const byId = Object.fromEntries(accts.map((a) => [a.id, a]));
+-  const def = defaultAccount(doc);
+-  let startCash = 0;
+-  for (const a of accts.filter(inCalendar)) {
+-    const b = ((doc.balances[month] || {})[a.id] || {}).start;
+-    const prev = (((doc.balances[monthOf(addDays(month + '-01', -1))]) || {})[a.id] || {}).end;
+-    const s = b && b.amount !== null ? b.amount : prev && prev.amount !== null ? prev.amount : null;
+-    if (s === null) return null;
+-    startCash += s;
+-  }
+-  const s = scheduledItems(doc, month, income);
+-  const sp = spreadFor(doc, month, addDays(month + '-01', -1), s, []);
+-  const cashOf = (id) => { const a = byId[id] || byId[def]; return !!a && inCalendar(a); };
+-  let net = 0;
+-  for (const it of s.items) if (!it.skipped && it.amount !== null && cashOf(it.account)) net += it.dir === 'in' ? it.amount : -it.amount;
+-  for (const u of sp.units) if (cashOf(u.account)) net -= u.left;
+-  return r2(startCash + net);
+-}
+-
+-// Predicted on the 1st (saved) against the real end balance.
+-export function forecastCheck(doc, month) {
+-  const saved = ((doc.cashflow || {}).forecasts || {})[month];
+-  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && inCalendar(a));
+-  const ends = accts.map((a) => (((doc.balances[month] || {})[a.id] || {}).end || {}).amount);
+-  const actual = accts.length && ends.every((x) => x !== null && x !== undefined) ? r2(ends.reduce((a, x) => a + x, 0)) : null;
+-  const predicted = saved ? saved.predicted : null;
+-  return { month, predicted, actual, diff: predicted === null || actual === null ? null : r2(actual - predicted) };
+-}
+-
+-// This month so far: plan (or estimate) vs logged per category, and what is left.
+-export function monthSoFar(doc, month, today) {
+-  const { units, byLine } = lineAmounts(doc, month);
+-  const logged = loggedByLine(counted(doc.transactions), month, today);
+-  return units.map((u) => {
+-    const plan = u.catLevel ? u.amount : u.lines.reduce((a, l) => (byLine[l.id] === null || byLine[l.id] === undefined ? a : (a === null ? 0 : a) + byLine[l.id]), null);
+-    const soFar = r2(u.lines.reduce((a, l) => a + (logged[l.id] || 0), 0));
+-    return { id: u.catId, name: u.name, plan, logged: soFar, left: plan === null ? null : r2(plan - soFar) };
+-  }).filter((r) => (r.plan !== null && r.plan !== 0) || r.logged !== 0);
+-}
+-
+-const dollars = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
+-const nth = (iso) => { const d = Number(iso.slice(8)); const s = d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th'; return 'the ' + d + s; };
+-
+-const shortDay = (iso) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(iso.slice(5, 7)) - 1] + ' ' + Number(iso.slice(8));
+-
+-// The safe-to-spend line for the screens (S-095).
+-export function safeReading(cal) {
+-  if (cal.safeToSpend === null) return '';
+-  if (cal.shortfall) return 'Nothing safe to spend right now. You\'ll be ' + dollars(cal.shortfall.amount) + ' under your cushion on ' + shortDay(cal.shortfall.date) + '.';
+-  return dollars(cal.safeToSpend) + ' is safe to spend: the lowest point ahead stays at or above your cushion.';
+-}
+-
+-// One or two plain sentences, no verdicts.
+-export function calendarReading(cal) {
+-  if (!cal.lowest) return 'Add a balance for an account to see cash by day.';
+-  const out = [];
+-  const lo = cal.lowest;
+-  const before = (cal.paydays || []).includes(addDays(lo.date, 1)) ? ', the day before payday' : '';
+-  out.push('Your lowest point is ' + (lo.amount < 0 ? 'minus ' : '') + dollars(lo.amount) + ' on ' + nth(lo.date) + before + '.');
+-  for (const f of cal.payLater.slice(0, 2)) out.push(f.name + ' lands ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck that covers it.');
+-  return out.join(' ');
+-}
+-
+-// So far and expected by month end (S-128), for the open month only. Never counts money that has not
+-// arrived as actual:
+-//   so far   = income logged up to today - spending logged up to today (spending lines, not savings)
+-//   expected = so far + paychecks still to come this month - bills and loan payments still to come
+-//              - the rest of the plan for each spread line (plan - logged, never below 0)
+-// "Still to come" is the calendar's own projection (cashCalendar): its waiting and scheduled items and
+-// its spread, never a second engine. A card payment is left out: the charges were spending when logged.
+-// A closed month, or a day outside the open month, gives null (one number, as before).
+-export function monthOutlook(doc, income, today) {
+-  const month = monthOf(today);
+-  if (month !== doc.currentMonth || (doc.months || []).some((m) => m.key === month)) return null;
+-  const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
+-  const entries = counted(doc.transactions || []).filter((e) => !e.adjust && monthOf(e.date) === month && e.date <= today);
+-  const incomeSoFar = r2(entries.filter((e) => e.kind === 'income').reduce((a, e) => a - e.amount, 0));
+-  const spentSoFar = r2(entries.filter((e) => COUNTS.has(e.kind) && e.lineId && !savingsLines.has(e.lineId)).reduce((a, e) => a + e.amount, 0));
+-  const soFar = r2(incomeSoFar - spentSoFar);
+-  const cal = cashCalendar(doc, income, { today, horizon: Math.max(1, daysBetween(today, dateIn(month, 31))) });
+-  const toCome = [...cal.waiting, ...cal.scheduled.filter((i) => !i.skipped && !i.confirmed && i.date > today)]
+-    .filter((i) => monthOf(i.date) === month && i.amount !== null && !(i.kind === 'debt' && i.card) && !(i.lineId && savingsLines.has(i.lineId)));
+-  const seen = new Set();
+-  const items = toCome.filter((i) => (seen.has(i.key) ? false : seen.add(i.key))).map((i) => ({ date: i.date, name: i.name, kind: i.kind, amount: i.dir === 'in' ? i.amount : -i.amount }));
+-  const sp = cal.spreads[month];
+-  const rest = sp ? sp.units.filter((u) => !u.lineIds.some((id) => savingsLines.has(id))).map((u) => ({ name: u.name, plan: u.plan, logged: u.logged, left: u.left })) : [];
+-  const paychecks = r2(items.filter((i) => i.amount > 0).reduce((a, i) => a + i.amount, 0));
+-  const bills = r2(-items.filter((i) => i.amount < 0).reduce((a, i) => a + i.amount, 0));
+-  const planLeft = r2(rest.reduce((a, u) => a + u.left, 0));
+-  // An income with no pay date has no paychecks on the calendar, so none are expected: named, not guessed.
+-  const noPayDate = (doc.income || []).filter((i) => i.state !== 'archived' && payDates(i, month) === null).map((i) => i.label);
+-  return { month, today, incomeSoFar, spentSoFar, soFar, paychecks, bills, planLeft, items, rest, noPayDate, expected: r2(soFar + paychecks - bills - planLeft) };
+-}
+diff --git a/slam/src/calc/dates.js b/slam/src/calc/dates.js
+new file mode 100644
+index 0000000..a3f58e5
+--- /dev/null
++++ b/slam/src/calc/dates.js
+@@ -0,0 +1,60 @@
++// Date helpers and the pay schedule (S-209): what the Budget app keeps of its
++// retired cash calendar. payDates (the real pay dates in a month, S-117) feeds
++// the income month; forecastCheck reads forecasts the old calendar saved so
++// closed months keep their predicted-vs-actual line. Nothing here draws a
++// calendar: that lives in SLAM (calendar.html).
++
++const DAY = 86400000;
++const STEP_DAYS = { weekly: 7, biweekly: 14 };
++const r2 = (x) => Math.round(x * 100) / 100 + 0;
++const inCalendar = (a) => a.type === 'checking';
++export function addDays(iso, n) {
++  return new Date(Date.parse(iso + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
++}
++
++export function daysBetween(a, b) {
++  return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / DAY);
++}
++
++export function daysInMonth(month) {
++  const [y, m] = month.split('-').map(Number);
++  return new Date(Date.UTC(y, m, 0)).getUTCDate();
++}
++
++export const dateIn = (month, day) => month + '-' + String(Math.min(day, daysInMonth(month))).padStart(2, '0');
++
++export function payDates(inc, month) {
++  const first = month + '-01';
++  const last = dateIn(month, 31);
++  const dates = [];
++  if (inc.payFrequency === 'semimonthly') {
++    const days = inc.payDays && inc.payDays.length === 2 ? inc.payDays : [1, 15];
++    for (const d of days) dates.push(dateIn(month, d));
++    return dates.sort();
++  }
++  const d0 = inc.nextPayDate && inc.nextPayDate.date;
++  if (!d0) return null;
++  if (inc.payFrequency === 'monthly') dates.push(dateIn(month, Number(d0.slice(8))));
++  else {
++    const step = STEP_DAYS[inc.payFrequency];
++    if (!step) return null;
++    let d = addDays(d0, -step * Math.ceil(Math.max(0, daysBetween(first, d0)) / step));
++    while (d < first) d = addDays(d, step);
++    for (; d <= last; d = addDays(d, step)) dates.push(d);
++  }
++  // Unemployment stops when the weeks left run out, counted from the next pay date.
++  if (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null && inc.benefitWeeksLeft !== undefined) {
++    const end = addDays(d0, inc.benefitWeeksLeft * 7);
++    for (let i = dates.length - 1; i >= 0; i--) if (dates[i] >= end) dates.splice(i, 1);
++  }
++  return dates.sort();
++}
++
++export function forecastCheck(doc, month) {
++  const saved = ((doc.cashflow || {}).forecasts || {})[month];
++  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && inCalendar(a));
++  const ends = accts.map((a) => (((doc.balances[month] || {})[a.id] || {}).end || {}).amount);
++  const actual = accts.length && ends.every((x) => x !== null && x !== undefined) ? r2(ends.reduce((a, x) => a + x, 0)) : null;
++  const predicted = saved ? saved.predicted : null;
++  return { month, predicted, actual, diff: predicted === null || actual === null ? null : r2(actual - predicted) };
++}
+diff --git a/slam/src/calc/explain.js b/slam/src/calc/explain.js
+index 99d11cf..ddd8ab7 100644
+--- a/slam/src/calc/explain.js
++++ b/slam/src/calc/explain.js
+@@ -1,10 +1,11 @@
+ // How a number was worked out (S-108): the inputs behind each headline number,
+-// read straight from the summary and the cash calendar, so the panel and the
+-// number can never disagree. No new math: every amount here is one calc made.
++// read straight from the summary, so the panel and the number can never
++// disagree. (Safe to spend, so far and expected went with the cash calendar to
++// SLAM, S-209; the third argument is kept so callers keep their places.) No new math: every amount here is one calc made.
+ // `where` is a place in the app (ui/nav.js) or a field path, so each input links to its source.
+ 
+ // nw: a net worth at a day (networth.js), for the three net worths.
+-export function explain(summary, which, cal, nw) {
++export function explain(summary, which, _retired, nw) {
+   const t = summary.totals;
+   const inc = summary.income;
+   if (which === 'takeHome') {
+@@ -23,26 +24,6 @@ export function explain(summary, which, cal, nw) {
+       note: t.basisUsesEstimate.length ? 'Actuals, with estimates standing in for ' + t.basisUsesEstimate.join(', ') + '.' : 'Actuals for every category.'
+     };
+   }
+-  // So far and expected by month end (S-128): `cal` is the month's outlook (calendar.js monthOutlook).
+-  if (which === 'soFar' && cal) {
+-    return {
+-      title: 'So far this month',
+-      steps: [{ label: 'Income logged', amount: cal.incomeSoFar, where: 'log' }, { label: 'Spending logged', amount: -cal.spentSoFar, where: 'log' }],
+-      result: { label: 'So far', amount: cal.soFar, signed: true },
+-      note: 'Only money that has arrived or left, from the log, up to today.'
+-    };
+-  }
+-  if (which === 'expected' && cal) {
+-    return {
+-      title: 'Expected by month end',
+-      steps: [{ label: 'So far', amount: cal.soFar },
+-        ...cal.items.map((i) => ({ label: i.name + ' (' + i.date.slice(5) + ')', amount: i.amount, where: 'calendar' })),
+-        ...cal.rest.filter((u) => u.left).map((u) => ({ label: u.name + ': rest of the plan', amount: -u.left, where: 'calendar' }))],
+-      result: { label: 'Expected by month end', amount: cal.expected, signed: true },
+-      note: 'So far, plus paychecks and bills still to come on the calendar, less the rest of the plan for lines not yet spent.' +
+-        (cal.noPayDate.length ? ' No pay date yet for ' + cal.noPayDate.join(', ') + ', so none of its pay is counted.' : '')
+-    };
+-  }
+   if (which === 'surplus') {
+     return {
+       title: t.surplus !== null && t.surplus < 0 ? 'Shortfall, a month' : 'Surplus, a month',
+@@ -67,18 +48,6 @@ export function explain(summary, which, cal, nw) {
+       note: '(savings + retirement from the paycheck) / (take-home + retirement from the paycheck).'
+     };
+   }
+-  if (which === 'safeToSpend' && cal) {
+-    return {
+-      title: 'Safe to spend',
+-      steps: [
+-        { label: 'In checking today', amount: cal.todayCash, where: 'checks' },
+-        { label: 'Lowest point ahead' + (cal.lowest ? ' (' + cal.lowest.date + ')' : ''), amount: cal.lowest ? cal.lowest.amount : null, where: 'calendar' },
+-        { label: 'Less your cushion', amount: -cal.cushion, where: 'setup:coach' }
+-      ],
+-      result: { label: 'Safe to spend', amount: cal.safeToSpend },
+-      note: 'The lower of today\'s checking and the lowest point ahead less the cushion, never below $0.'
+-    };
+-  }
+   if (nw && (which === 'nwTotal' || which === 'nwFI')) {
+     const fi = which === 'nwFI';
+     const assets = nw.assets.filter((a) => !fi || a.fi).map((a) => ({ label: a.name, amount: a.amount, where: 'balances', asOf: a.asOf }));
+diff --git a/slam/src/calc/income-month.js b/slam/src/calc/income-month.js
+index b6adbca..54783f6 100644
+--- a/slam/src/calc/income-month.js
++++ b/slam/src/calc/income-month.js
+@@ -12,7 +12,7 @@
+ 
+ import { toMonthly } from './normalize.js';
+ import { counted } from './log.js';
+-import { payDates } from './calendar.js';
++import { payDates } from './dates.js';
+ 
+ const r2 = (x) => Math.round(x * 100) / 100 + 0;
+ const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
+diff --git a/slam/src/calc/loop.js b/slam/src/calc/loop.js
+index 9dcff0e..3fd1f37 100644
+--- a/slam/src/calc/loop.js
++++ b/slam/src/calc/loop.js
+@@ -4,7 +4,7 @@
+ 
+ import { planView, actualsFor, prevMonthKey, reviewSummary } from './plan.js';
+ import { counted, isPending, monthLog } from './log.js';
+-import { cashCalendar, forecastCheck } from './calendar.js';
++import { forecastCheck } from './dates.js';
+ import { balancesFor, kindOf, lastUpdated } from './balances.js';
+ import { bridgeFor } from './bridge.js';
+ import { detect, topMerchants } from './tx-analysis.js';
+@@ -44,14 +44,13 @@ export function gapLines(summary) {
+ export function loopStrip(doc, summary, today) {
+   const month = doc.currentMonth;
+   const log = monthLog(doc, month);
+-  const cal = cashCalendar(doc, summary.income, { today: today < month + '-01' ? month + '-01' : today, horizon: 0 });
+-  const items = cal.scheduled.filter((i) => monthOf(i.planned) === month && !i.skipped);
+   const bal = balancesFor(doc, month);
+   const br = bridgeFor(doc, summary.income, month);
+   return {
+     month,
+     plan: { state: planState(doc, summary, month) },
+-    track: { entries: log.count, last: log.last, confirmed: items.filter((i) => i.confirmed).length, scheduled: items.length },
++    // The scheduled-item counts went with the cash calendar (S-209): the calendar lives in SLAM now.
++    track: { entries: log.count, last: log.last },
+     review: { empty: gapLines(summary).length, balancesMissing: bal.missing.length, balancesTotal: bal.required.length * 2, ties: br.ties, unexplained: br.unexplained },
+     nextPlan: planState(doc, summary, nextKey(month))
+   };
+@@ -137,8 +136,6 @@ export function owedToClient(doc, month) {
+ export function monthEndChecklist(doc, summary, today) {
+   const month = doc.currentMonth;
+   const gaps = gapLines(summary);
+-  const cal = cashCalendar(doc, summary.income, { today: today > lastDay(month) ? lastDay(month) : today < month + '-01' ? month + '-01' : today, horizon: 0 });
+-  const waiting = cal.waiting.filter((i) => monthOf(i.planned) === month);
+   const bal = balancesFor(doc, month);
+   const br = bridgeFor(doc, summary.income, month);
+   const inMonth = doc.transactions.filter((t) => monthOf(t.date) === month);
+@@ -150,16 +147,15 @@ export function monthEndChecklist(doc, summary, today) {
+   const next = planState(doc, summary, nextKey(month));
+   const items = [
+     { key: 'gaps', label: 'Lines in the plan with no actual and no entries', count: gaps.length, open: gaps.length > 0, short: gaps.length + ' line' + (gaps.length === 1 ? '' : 's') + ' empty', fix: 'actual', names: gaps.map((g) => g.name) },
+-    { key: 'waiting', label: 'Scheduled items still waiting on It happened or Didn\'t happen', count: waiting.length, open: waiting.length > 0, short: waiting.length + ' scheduled item' + (waiting.length === 1 ? '' : 's') + ' waiting', fix: 'cashflow', names: waiting.map((w) => w.name) },
+     { key: 'balances', label: 'Start and end balances missing', count: bal.missing.length, open: bal.missing.length > 0 || !bal.rows.length, short: bal.rows.length ? bal.missing.length + ' balance' + (bal.missing.length === 1 ? '' : 's') + ' missing' : 'no accounts', fix: 'balances', names: bal.missing.map((m) => m.name + ' ' + m.which),
+       // Investments and things you own are optional at month-end (S-110): listed with their last update, never open items.
+       stale: bal.stale },
+     { key: 'bridge', label: 'Bridge from budget to cash', count: br.ties ? 0 : 1, open: br.ties !== true, state: br.ties === null ? 'needs balances' : br.ties ? 'ties' : 'off by ' + whole(br.unexplained), short: br.ties === null ? 'bridge needs balances' : 'off by ' + whole(br.unexplained || 0), fix: 'bridge' },
+     // Income entries with no source (S-118): the money counts, but it should say whose it is.
+     { key: 'income-source', label: 'Income entries with no source', count: incomeLoose.count, open: incomeLoose.count > 0, short: incomeLoose.count + ' income entr' + (incomeLoose.count === 1 ? 'y' : 'ies') + ' with no source', fix: 'actual' },
+-    { key: 'unmapped', label: 'Imported entries with no line, and possible matches to confirm', count: unmapped.length + possible.length, open: unmapped.length + possible.length > 0, short: unmapped.length + ' unmapped, ' + possible.length + ' possible match' + (possible.length === 1 ? '' : 'es'), fix: 'cashflow' },
+-    { key: 'duplicates', label: 'Likely duplicates not resolved', count: dups.length, open: dups.length > 0, short: dups.length + ' likely duplicate' + (dups.length === 1 ? '' : 's'), fix: 'cashflow' },
+-    { key: 'owed', label: 'Reimbursements still owed to the client', count: owed.count, open: owed.count > 0, short: owed.count + ' reimbursement' + (owed.count === 1 ? '' : 's') + ' owed', amount: owed.amount, fix: 'cashflow', names: owed.list.map((o) => o.name) },
++    { key: 'unmapped', label: 'Imported entries with no line, and possible matches to confirm', count: unmapped.length + possible.length, open: unmapped.length + possible.length > 0, short: unmapped.length + ' unmapped, ' + possible.length + ' possible match' + (possible.length === 1 ? '' : 'es'), fix: 'track' },
++    { key: 'duplicates', label: 'Likely duplicates not resolved', count: dups.length, open: dups.length > 0, short: dups.length + ' likely duplicate' + (dups.length === 1 ? '' : 's'), fix: 'track' },
++    { key: 'owed', label: 'Reimbursements still owed to the client', count: owed.count, open: owed.count > 0, short: owed.count + ' reimbursement' + (owed.count === 1 ? '' : 's') + ' owed', amount: owed.amount, fix: 'track', names: owed.list.map((o) => o.name) },
+     { key: 'next-plan', label: 'Next month\'s plan', count: next === 'not started' ? 1 : 0, open: next === 'not started', state: next, short: 'next month\'s plan not started', fix: 'plan' }
+   ];
+   const open = items.filter((i) => i.open);
+diff --git a/slam/src/calc/trends.js b/slam/src/calc/trends.js
+index f97b5e3..225e4fe 100644
+--- a/slam/src/calc/trends.js
++++ b/slam/src/calc/trends.js
+@@ -7,7 +7,7 @@ import { actualsFor, planView, prevMonthKey } from './plan.js';
+ import { counted } from './log.js';
+ import { detect } from './tx-analysis.js';
+ import { bridgeFor } from './bridge.js';
+-import { forecastCheck, daysInMonth } from './calendar.js';
++import { forecastCheck, daysInMonth } from './dates.js';
+ import { sortByPlan } from './loop.js';
+ import { ratio } from './money.js';
+ 
+diff --git a/slam/src/ui/charts/cash-charts.js b/slam/src/ui/charts/cash-charts.js
+deleted file mode 100644
+index e8c262b..0000000
+--- a/slam/src/ui/charts/cash-charts.js
++++ /dev/null
+@@ -1,152 +0,0 @@
+-// The cash calendar (S-086), on Track (S-106): the full calendar chart (past and
+-// future on one line, today marked, paydays and big bills labeled, days under the
+-// cushion shaded), pay-later flags, the list by date, a month grid, and this month
+-// so far. The forecast check is in Insights, Cash; the what-if (move a bill's due
+-// day) is in Setup, Bills and due dates. Data from src/calc/calendar.js.
+-
+-import { h, options } from '../dom.js';
+-import { money, dayLabel, monthLabel, todayIso } from '../format.js';
+-import { dayLine, hbars } from './svg.js';
+-import { card, chartWidth } from './catalog.js';
+-import { calendarFor } from '../components/cashflow.js';
+-import { emptyState } from '../components/jump.js';
+-import { quickEntryButton } from '../components/quick-entry.js';
+-import { cashCalendar, calendarReading, safeReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
+-import { findLine } from '../../store/edits.js';
+-import { makeValue } from '../../store/value.js';
+-
+-const SOURCE = { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' };
+-
+-function markersOf(cal, days) {
+-  const out = [];
+-  days.forEach((d, i) => {
+-    const pay = d.items.find((x) => x.kind === 'paycheck' && x.flow > 0);
+-    const big = d.items.filter((x) => (x.kind === 'bill' || x.kind === 'debt') && x.cash && x.flow < 0).sort((a, b) => a.flow - b.flow)[0];
+-    if (pay) out.push({ i, label: 'Payday' });
+-    else if (big && -big.flow >= 100) out.push({ i, label: big.name.split(' ')[0] });
+-  });
+-  return out;
+-}
+-
+-function chartCard(ctx, cal, id, title, extraReading) {
+-  // From the 1st of this month by default; the whole history (back to the first month with balances) on request.
+-  const whole = !!ctx.ui.cfWhole;
+-  const from = cal.today.slice(0, 7) + '-01';
+-  const days = whole ? cal.days : cal.days.filter((x) => x.date >= from);
+-  const ti = days.findIndex((x) => x.today);
+-  const horizon = ctx.ui.cfHorizon || 30;
+-  return card(ctx, {
+-    id, title,
+-    svg: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: chartWidth(false), fmt: money, todayIndex: ti >= 0 ? ti : null, cushion: cal.cushion || null, markers: markersOf(cal, days), height: 220, label: title }),
+-    extra: h('div', { class: 'row' },
+-      h('div', { class: 'toggle', role: 'group', 'aria-label': 'Days ahead' }, [30, 60, 90].map((n) => h('button', { 'aria-pressed': horizon === n ? 'true' : 'false', 'data-key': 'horizon-' + n, onclick: () => { ctx.ui.cfHorizon = n; ctx.rerender(); } }, n + ' days'))),
+-      cal.start < from ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: whole, 'data-key': 'cf-whole', onchange: (e) => { ctx.ui.cfWhole = e.target.checked; ctx.rerender(); } }), 'Back to ' + cal.start.slice(0, 7)) : null,
+-      quickEntryButton(ctx)),
+-    legendItems: [['Checking (the cash line)', 'var(--series-actual)'], ['Savings, shown apart', 'var(--series-dream)']],
+-    reading: calendarReading(cal) + ' ' + safeReading(cal) + (extraReading || '') + (cal.unknownStart.length ? ' No starting balance for ' + cal.unknownStart.join(', ') + ' (counted from $0).' : '')
+-  });
+-}
+-
+-function listCard(ctx, cal) {
+-  const from = ctx.doc.currentMonth + '-01' < cal.today ? ctx.doc.currentMonth + '-01' : cal.today;
+-  const acct = (id) => (ctx.doc.accounts.find((a) => a.id === id) || { name: '' }).name;
+-  const rows = [];
+-  const row = (date, name, flow, cash, sub, cls) => h('li', { class: 'cf-row' + (cls ? ' ' + cls : '') },
+-    h('div', { style: 'flex:1 1 160px;min-width:0' }, h('div', {}, h('span', { class: 'xs muted' }, dayLabel(date) + '  '), name), h('div', { class: 'xs muted' }, sub)),
+-    h('div', { class: 'num', style: 'text-align:right' }, h('div', {}, flow > 0 ? h('span', { class: 'in' }, '+' + money(flow, true)) : flow < 0 ? '-' + money(-flow, true) : ''), h('div', { class: 'xs muted' }, cash)));
+-  for (const d of cal.days) {
+-    if (d.date < from) continue;
+-    let run = d.cash - d.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
+-    for (const it of d.items) {
+-      if (it.mirror || it.type === 'spread') continue;
+-      if (it.cash) run += it.flow;
+-      const src = it.type === 'entry' ? SOURCE[it.source] || it.source : it.type === 'waiting' ? 'Waiting' : 'Scheduled';
+-      rows.push(row(d.date, it.name, it.flow, it.cash ? 'cash ' + money(run) : 'on the card', src + ', ' + acct(it.account), d.today ? 'today-row' : null));
+-    }
+-    const spread = d.items.filter((i) => i.type === 'spread');
+-    if (spread.length) rows.push(row(d.date, 'Spread across the month', spread.reduce((a, i) => a + i.flow, 0), 'cash ' + money(d.cash), 'Plan, ' + spread.map((i) => i.name).join(', '), 'muted'));
+-  }
+-  return h('div', { class: 'card', id: 'chart-cf-list' },
+-    h('h3', { style: 'margin:0' }, 'By date'),
+-    h('ul', { class: 'plain', style: 'max-height:440px;overflow:auto' }, rows),
+-    h('p', { class: 'reading' }, 'Date, item, in or out, cash after it, source, and account. Past days are the log; later days are what is scheduled, plus the rest of the plan spread across the month.'));
+-}
+-
+-function payLaterCard(ctx, cal) {
+-  return card(ctx, {
+-    id: 'cf-paylater', title: 'Bills that land before the paycheck that covers them',
+-    extra: cal.payLater.length ? h('ul', { class: 'plain' }, cal.payLater.map((f) => h('li', { class: 'small' }, h('span', {}, f.name + ' is due ' + dayLabel(f.due) + ', paid ' + dayLabel(f.paidBy)), h('b', { class: 'num' }, f.gap + ' days')))) : null,
+-    reading: cal.payLater.length ? cal.payLater.length + ' bill' + (cal.payLater.length === 1 ? '' : 's') + ' land while cash is under ' + money(cal.cushion) + '.' : 'Every bill in this window lands with cash at or above ' + money(cal.cushion) + '.'
+-  });
+-}
+-
+-function gridCard(ctx, cal) {
+-  const month = cal.today.slice(0, 7);
+-  const n = daysInMonth(month);
+-  const [y, m] = month.split('-').map(Number);
+-  const first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+-  const byDate = Object.fromEntries(cal.days.map((d) => [d.date, d]));
+-  const cells = [];
+-  for (let i = 0; i < first; i++) cells.push(h('td', {}));
+-  for (let d = 1; d <= n; d++) {
+-    const iso = month + '-' + String(d).padStart(2, '0');
+-    const x = byDate[iso];
+-    cells.push(h('td', { class: (x && x.today ? 'today ' : '') + (x && cal.lowest && x.date === cal.lowest.date ? 'low' : ''), title: x ? dayLabel(iso) + ': in ' + money(x.in, true) + ', out ' + money(x.out, true) + ', cash ' + money(x.cash) : dayLabel(iso) },
+-      h('div', { class: 'd' }, String(d)), x && x.in ? h('div', { class: 'in' }, '+' + money(x.in)) : null, x && x.out >= 0.5 ? h('div', { class: 'out' }, '-' + money(x.out)) : null));
+-  }
+-  const rows = [];
+-  for (let i = 0; i < cells.length; i += 7) rows.push(h('tr', {}, cells.slice(i, i + 7)));
+-  return h('div', { class: 'card', id: 'chart-cf-grid' }, h('h3', { style: 'margin:0' }, monthLabel(month) + ', day by day'),
+-    h('table', { class: 'month-grid' }, h('thead', {}, h('tr', {}, ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((x) => h('th', {}, x)))), h('tbody', {}, rows)),
+-    h('p', { class: 'reading' }, 'Money in and out each day. Today is outlined; the lowest day is shaded.'));
+-}
+-
+-function soFarCard(ctx, cal) {
+-  const rows = monthSoFar(ctx.doc, cal.today.slice(0, 7), cal.today);
+-  const w = chartWidth(true);
+-  const over = rows.filter((r) => r.left !== null && r.left < 0);
+-  return card(ctx, {
+-    id: 'cf-sofar', title: 'This month so far',
+-    svg: rows.length ? hbars({ rows: rows.map((r) => ({ label: r.name + (r.left === null ? '' : ', ' + money(Math.abs(r.left)) + (r.left < 0 ? ' over' : ' left')), values: [{ v: r.plan, color: 'var(--series-estimate)', tip: 'Plan ' + money(r.plan) }, { v: r.logged, color: 'var(--series-actual)', tip: 'Logged ' + money(r.logged) }] })), mode: 'overlay', width: w, fmt: money }) : null,
+-    legendItems: [['Plan (outline)', 'var(--series-estimate)'], ['Logged so far', 'var(--series-actual)']],
+-    reading: rows.length ? (over.length ? over.map((r) => r.name + ' is ' + money(-r.left) + ' past its plan').join('. ') + '.' : 'Every category is within its plan so far.') : 'No plan or estimates yet.'
+-  });
+-}
+-
+-// The one what-if: move a bill's due day and see the line change. Saving changes the due day itself.
+-export function whatIfCard(ctx, summary, cal) {
+-  const bills = [];
+-  for (const c of ctx.doc.categories) for (const l of c.lines) if (l.state !== 'archived' && l.dueDay && l.dueDay.amount) bills.push(l);
+-  if (!bills.length) return card(ctx, { id: 'cf-whatif', title: 'What if a bill moved?', reading: 'Give a bill a due day above to try moving it.' });
+-  const st = ctx.ui.whatIf = ctx.ui.whatIf && bills.some((b) => b.id === ctx.ui.whatIf.lineId) ? ctx.ui.whatIf : { lineId: bills[0].id, day: bills[0].dueDay.amount };
+-  const line = bills.find((b) => b.id === st.lineId);
+-  const draft = JSON.parse(JSON.stringify(ctx.doc));
+-  findLine(draft, st.lineId).line.dueDay = makeValue(st.day, { cadence: 'one-off' });
+-  const alt = cashCalendar(draft, summary.income, { today: todayIso(), horizon: ctx.ui.cfHorizon || 30 });
+-  const moved = st.day !== line.dueDay.amount;
+-  return card(ctx, {
+-    id: 'cf-whatif', title: 'What if a bill moved?',
+-    svg: dayLine({ days: alt.days.map((x) => ({ date: x.date, v: x.cash })), width: chartWidth(true), fmt: money, todayIndex: alt.days.findIndex((x) => x.today), cushion: alt.cushion || null, markers: markersOf(alt, alt.days), height: 180, label: 'What if' }),
+-    extra: h('div', { class: 'row' },
+-      h('select', { 'aria-label': 'Bill', 'data-key': 'whatif-line', onchange: (e) => { const b = bills.find((x) => x.id === e.target.value); ctx.ui.whatIf = { lineId: b.id, day: b.dueDay.amount }; ctx.rerender(); } }, options(bills.map((b) => [b.id, b.name]), st.lineId)),
+-      h('label', { class: 'row small' }, 'Due day', h('input', { type: 'number', min: 1, max: 31, class: 'day-box', 'data-key': 'whatif-day', value: String(st.day), onchange: (e) => { st.day = Math.min(31, Math.max(1, Math.round(Number(e.target.value) || 1))); ctx.rerender(); } })),
+-      moved ? h('button', { class: 'btn small primary', 'data-key': 'whatif-save', onclick: () => ctx.update('Due day', (d) => { findLine(d, st.lineId).line.dueDay = makeValue(st.day, { cadence: 'one-off' }); }) }, 'Save the new due day') : null),
+-    reading: moved ? 'With ' + line.name + ' due on day ' + st.day + ' instead of ' + line.dueDay.amount + ': ' + calendarReading(alt) + ' (Now: lowest ' + money(cal.lowest ? cal.lowest.amount : null) + '.)' : 'Pick a bill and a new due day to see the line change.'
+-  });
+-}
+-
+-export function forecastCard(ctx) {
+-  const months = Object.keys(ctx.doc.cashflow.forecasts || {}).sort().slice(-6);
+-  const rows = months.map((m) => forecastCheck(ctx.doc, m));
+-  return card(ctx, {
+-    id: 'cf-forecast', title: 'Forecast check',
+-    extra: rows.length ? h('ul', { class: 'plain' }, rows.map((r) => h('li', { class: 'small' }, h('span', {}, monthLabel(r.month) + ': predicted ' + money(r.predicted) + ' on the 1st'), h('b', { class: 'num' }, r.actual === null ? 'end not in yet' : 'ended ' + money(r.actual) + ' (' + (r.diff >= 0 ? '+' : '') + money(r.diff) + ')')))) : null,
+-    reading: rows.length ? 'Each month\'s predicted end cash, saved on the 1st, against the real end balance.' : 'A forecast is saved when a month starts (at close). It is compared with the real end balance.'
+-  });
+-}
+-
+-export function cashflowCards(ctx, s) {
+-  const cal = calendarFor(ctx, s, ctx.ui.cfHorizon || 30);
+-  if (!ctx.doc.accounts.some((a) => a.state !== 'archived')) return [h('div', { class: 'card', id: 'chart-cf-none' }, emptyState(ctx, 'Add a checking account and its balance to see cash by day.', 'balances', 'Add an account'))];
+-  return [chartCard(ctx, cal, 'cf-chart', 'Cash by day'), payLaterCard(ctx, cal), listCard(ctx, cal), gridCard(ctx, cal), soFarCard(ctx, cal)].filter(Boolean);
+-}
+diff --git a/slam/src/ui/components/budget-table.js b/slam/src/ui/components/budget-table.js
+index c2c4ed5..4505eda 100644
+--- a/slam/src/ui/components/budget-table.js
++++ b/slam/src/ui/components/budget-table.js
+@@ -3,7 +3,6 @@
+ // Every number comes from the summary (or calc's inUnit for the lens toggle).
+ 
+ import { h } from '../dom.js';
+-import { outlookLine } from './outlook.js';
+ import { money, pct, signedMoney, signedPct, times, inLens } from '../format.js';
+ import { statusChip } from './status.js';
+ import { inUnit } from '../../calc/lenses.js';
+@@ -152,7 +151,6 @@ export function budgetTable(ctx, summary) {
+   const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);
+   return h('div', {},
+     h('div', { class: 'table-wrap' }, h('table', { class: 'budget' }, h('thead', {}, head), h('tbody', {}, body))),
+-    outlookLine(ctx, summary, 'table-outlook'),
+     skipped.length ? h('p', { class: 'muted xs' }, "Doesn't apply: " + skipped.join(', ') + '.') : null);
+ }
+ 
+diff --git a/slam/src/ui/components/cashflow.js b/slam/src/ui/components/cashflow.js
+index 92351db..21b88ee 100644
+--- a/slam/src/ui/components/cashflow.js
++++ b/slam/src/ui/components/cashflow.js
+@@ -1,32 +1,19 @@
+-// Cash flow on screen (S-086): the inputs the calendar needs (pay dates, due
+-// days, the cushion; all in Setup, S-106), scheduled items waiting on "It
+-// happened" and a real balance check (Track), and the compact 30-day strip on Today.
+-// Every number comes from calc/calendar.js; this file only lays it out.
++// Cash flow inputs in Setup (S-086, S-106): the pay schedule (it counts each
++// month's paychecks for the income plan), the account each paycheck lands in
++// and each bill is paid from, the month a yearly bill is due, and how each card
++// is paid. The day-by-day cash calendar these once fed is retired (S-209): it
++// lives in SLAM (calendar.html), with due days and the floor in its Ledger. The
++// bills' due days, a debt's paid-from account and the cushion fed only that
++// calendar, so their inputs are gone; the stored fields are left as they were.
+ 
+ import { h, options } from '../dom.js';
+ import { money, todayIso, dayLabel, monthLabel } from '../format.js';
+ import { paidAheadSchedules, firstMonth } from '../../calc/paid-ahead.js';
+ import { valueInput, parseAmount } from './value-input.js';
+-import { quickEntryButton } from './quick-entry.js';
+-import { jumpLink, emptyState } from './jump.js';
+-import { howButton, howPanel, sourceLink } from './how.js';
+-import { explain } from '../../calc/explain.js';
+-import { liabilities } from '../../calc/balances.js';
++import { emptyState } from './jump.js';
+ import { PREMIUM_LINE_TYPES, premiumFor } from '../../calc/coverage.js';
+ import { linkedLine } from '../../calc/debts.js';
+-import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
+-import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
+-import { makeValue } from '../../store/value.js';
+-
+-// One calendar per render and horizon, from today.
+-// Keyed on the document itself (every edit makes a new one), not its timestamp: two edits in
+-// the same millisecond would otherwise show the older calendar.
+-export function calendarFor(ctx, summary, horizon = 30) {
+-  const key = horizon + ':' + todayIso();
+-  const c = ctx.ui.calCache;
+-  if (!c || c.doc !== ctx.doc || c.key !== key) ctx.ui.calCache = { doc: ctx.doc, key, cal: cashCalendar(ctx.doc, summary.income, { today: todayIso(), horizon }) };
+-  return ctx.ui.calCache.cal;
+-}
++import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith } from '../../store/cashflow.js';
+ 
+ function accountSelect(ctx, key, value, onPick, label) {
+   const live = ctx.doc.accounts.filter((a) => a.state !== 'archived');
+@@ -36,12 +23,12 @@ function accountSelect(ctx, key, value, onPick, label) {
+ 
+ const ANNUAL = (cat, line) => cat.type === 'annual' || line.estimate.cadence === 'year';
+ 
+-// Paydays (Setup, Income and paychecks): put paychecks on the calendar.
++// Paydays (Setup, Income and paychecks): how many paychecks land in each month, and where.
+ export function paydaysCard(ctx) {
+   const incomes = ctx.doc.income.filter((i) => i.state !== 'archived');
+   return h('div', { class: 'card', id: 'paydays-card' },
+     h('h2', {}, 'Paydays'),
+-    h('p', { class: 'muted small' }, 'Optional. These put paychecks on the calendar. Each lands in checking unless you pick another account.'),
++    h('p', { class: 'muted small' }, 'Optional. These count the paychecks in each month (a month with a third paycheck plans for it). Each lands in checking unless you pick another account.'),
+     incomes.length ? incomes.map((inc) => h('div', { class: 'qa' },
+       h('div', { class: 'q' }, h('div', {}, inc.label), h('div', { class: 'hint' }, inc.payFrequency === 'semimonthly' ? 'Paid twice a month on these days' : 'Next pay date; the rest follow every ' + ({ weekly: 'week', biweekly: 'two weeks', monthly: 'month' }[inc.payFrequency] || 'pay period') + (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null ? ', for ' + inc.benefitWeeksLeft + ' more weeks' : ''))),
+       h('div', { class: 'row' },
+@@ -64,19 +51,18 @@ export function billsCard(ctx) {
+   }
+   const debts = doc.debts.filter((x) => x.state !== 'archived' && !linkedLine(doc, x));
+   return h('div', { class: 'card', id: 'bills-card' },
+-    h('p', { class: 'muted small' }, 'Optional. These put bills on the calendar. Anything without a date is spread across the month.'),
++    h('p', { class: 'muted small' }, 'Optional. Which account pays each bill, the month a yearly bill is due, and how each card is paid. Due days for the day-by-day cash calendar are in SLAM: ', h('a', { href: 'ledger.html', target: '_blank', rel: 'noopener' }, 'the Ledger'), ' (S-209).'),
+     bills.length ? bills.map(({ l, annual }) => [h('div', { class: 'qa' },
+-      h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: due month (1 to 12) and day' : 'Due day of the month (1 to 31)')),
+-      h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null, dayBox(l, 'dueDay', 31, l.name + ' due day'),
++      h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: the month it is due (1 to 12), and the account it is paid from' : 'The account it is paid from')),
++      h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null,
+         accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account'))),
+     annual ? openingAheadRow(ctx, l) : null]) : emptyState(ctx, 'No fixed or yearly lines yet. Mark a line fixed to give it a due date.', 'setup:categories', 'Categories and lines', 'bills-empty'),
+-    debts.length ? h('h3', {}, 'Debt payments') : null,
+-    debts.map((debt) => h('div', { class: 'qa' },
+-      h('div', { class: 'q' }, h('div', {}, debt.label), h('div', { class: 'hint' }, 'Due day ' + (debt.dueDay.amount || 'not set yet (Debts)'))),
++    debts.some((d) => d.type === 'credit-card') ? h('h3', {}, 'How each card is paid') : null,
++    debts.filter((debt) => debt.type === 'credit-card').map((debt) => h('div', { class: 'qa' },
++      h('div', { class: 'q' }, h('div', {}, debt.label)),
+       h('div', { class: 'row' },
+-        debt.type === 'credit-card' ? h('select', { 'aria-label': debt.label + ' pays', 'data-key': 'paywith:' + debt.id, onchange: (e) => ctx.update('Card payment', (d) => setDebtPayWith(d, debt.id, e.target.value)) },
+-          options([['minimum', 'Pays the minimum'], ['statement', 'Pays the statement balance']], debt.payWith || 'minimum')) : null,
+-        accountSelect(ctx, 'acct-debt:' + debt.id, debt.payFrom, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'debt', debt.id, v)), debt.label + ' account')))));
++        h('select', { 'aria-label': debt.label + ' pays', 'data-key': 'paywith:' + debt.id, onchange: (e) => ctx.update('Card payment', (d) => setDebtPayWith(d, debt.id, e.target.value)) },
++          options([['minimum', 'Pays the minimum'], ['statement', 'Pays the statement balance']], debt.payWith || 'minimum'))))));
+ }
+ 
+ // Opening Paid ahead (S-130): a yearly bill paid before the client's first month. One tap opens it; the
+@@ -96,80 +82,4 @@ function openingAheadRow(ctx, l) {
+     h('div', { class: 'row' }, box('openingAhead', l.name + ' paid ahead, left', '$ left'), box('openingAheadMonths', l.name + ' paid ahead, months left', 'months')));
+ }
+ 
+-// The cushion is the coach's setting (S-096): the calendar uses it in both views, only the coach edits it.
+-export function cushionRow(ctx) {
+-  if (ctx.role === 'client') return null;
+-  return h('div', { class: 'qa', 'data-key': 'cushion-row' }, h('div', { class: 'q' }, h('div', {}, 'Cushion: keep at least this much in checking'), h('div', { class: 'hint' }, 'Days under it are shaded on the calendar. Blank means $0.')),
+-    valueInput({ ...ctx, preview: null }, ['cashflow', 'cushion'], ctx.doc.cashflow.cushion, { label: 'Cushion', cadence: false }));
+-}
+-
+ // Scheduled items on or before today: It happened (with the amount, editable) or Didn't happen / moved.
+-export function waitingCard(ctx, summary) {
+-  const cal = calendarFor(ctx, summary);
+-  if (!cal.waiting.length) return null;
+-  const st = ctx.ui.waitEdit = ctx.ui.waitEdit || {};
+-  return h('div', { class: 'card flag', id: 'waiting-card' },
+-    h('h2', {}, 'Scheduled, on or before today (' + cal.waiting.length + ')'),
+-    h('ul', { class: 'plain' }, cal.waiting.map((it) => {
+-      const s = st[it.key] = st[it.key] || { amount: it.amount === null ? '' : String(it.amount), moving: false, to: todayIso() };
+-      return h('li', {},
+-        h('div', { style: 'flex:1 1 200px' }, h('b', {}, it.name), h('div', { class: 'xs muted' }, (it.dir === 'in' ? 'Paycheck, ' : 'Due ') + dayLabel(it.date) + (it.moved ? ' (moved)' : ''))),
+-        h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:7em', 'aria-label': it.name + ' amount', 'data-key': 'wait-amt:' + it.key, value: s.amount, oninput: (e) => { s.amount = e.target.value; } }),
+-        h('button', { class: 'btn small primary', 'data-key': 'happened:' + it.key, onclick: () => {
+-          const a = parseAmount(s.amount);
+-          if (a === null || a === undefined) return ctx.toast('Type the amount');
+-          ctx.update('It happened', (d) => confirmScheduled(d, it, a));
+-          ctx.toast('Logged ' + it.name);
+-        } }, 'It happened'),
+-        s.moving ? h('span', { class: 'row' },
+-          h('input', { type: 'date', 'aria-label': 'New date', 'data-key': 'move-to:' + it.key, value: s.to, onchange: (e) => { s.to = e.target.value; } }),
+-          h('button', { class: 'btn small', onclick: () => ctx.update('Moved', (d) => moveItem(d, it.key, s.to, new Date().toISOString())) }, 'Move'),
+-          h('button', { class: 'btn small ghost', 'data-key': 'skip:' + it.key, onclick: () => ctx.update('Skipped this month', (d) => moveItem(d, it.key, null, new Date().toISOString())) }, 'Skip this month'))
+-          : h('button', { class: 'btn small ghost', 'data-key': 'didnt:' + it.key, onclick: () => { s.moving = true; ctx.rerender(); } }, "Didn't happen / moved"),
+-        it.moved ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Back to its date', (d) => clearMove(d, it.key)) }, 'Undo move') : null);
+-    })));
+-}
+-
+-// A real balance on any day resets the projection from that day.
+-// Every account and every debt with no account of its own can be checked on any day (S-110).
+-export function checkBalancesCard(ctx) {
+-  const live = [...ctx.doc.accounts.filter((a) => a.state !== 'archived'), ...liabilities(ctx.doc).filter((l) => !l.account).map((l) => ({ id: l.key, name: l.name }))];
+-  if (!live.length) return null;
+-  const st = ctx.ui.check = ctx.ui.check || { account: live[0].id, date: todayIso(), amount: '' };
+-  return h('details', { class: 'card', id: 'check-balances' }, h('summary', {}, 'Check balances'),
+-    h('p', { class: 'muted small' }, 'Type a real balance from the bank for any account and day. The calendar starts again from it.'),
+-    h('div', { class: 'row' },
+-      h('select', { 'aria-label': 'Account', 'data-key': 'check-acct', onchange: (e) => { st.account = e.target.value; } }, options(live.map((a) => [a.id, a.name]), st.account)),
+-      h('input', { type: 'date', 'aria-label': 'Day', 'data-key': 'check-date', value: st.date, onchange: (e) => { st.date = e.target.value || todayIso(); } }),
+-      h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:8em', placeholder: '$', 'aria-label': 'Balance', 'data-key': 'check-amt', value: st.amount, oninput: (e) => { st.amount = e.target.value; } }),
+-      h('button', { class: 'btn small primary', 'data-key': 'check-save', onclick: () => {
+-        const a = parseAmount(st.amount);
+-        if (a === null || a === undefined) return ctx.toast('Type the balance');
+-        ctx.update('Balance checked', (d) => addBalanceCheck(d, st.account, st.date, makeValue(a, { cadence: 'one-off' })));
+-        st.amount = '';
+-      } }, 'Save balance')));
+-}
+-
+-// Today's compact strip, numbers only: today, the lowest point in the next 30 days, and safe to spend.
+-export function budgetCashStrip(ctx, summary) {
+-  const cal = calendarFor(ctx, summary, 30);
+-  if (!cal.lowest || cal.unknownStart.length === ctx.doc.accounts.filter((a) => a.state !== 'archived').length) {
+-    return h('div', { class: 'card cash-strip' }, h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
+-      emptyState(ctx, 'Add a checking balance to see cash by day and what is safe to spend.', 'balances', 'Add a balance'));
+-  }
+-  return h('div', { class: 'card cash-strip', id: 'cash-strip' },
+-    h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
+-    // Numbers only on Today (lesson 7, S-116): the chart of these 30 days is the calendar on Track, one tap away.
+-    h('p', { class: 'xs' }, jumpLink(ctx, 'calendar', 'See cash by day (the calendar)', 'today-calendar')),
+-    h('div', { class: 'strip three' },
+-      // Jump to source (S-108): today's cash opens the balance check, the lowest point the calendar,
+-      // and safe to spend how it was worked out.
+-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, sourceLink(ctx, money(cal.todayCash), { where: 'checks' }, 'src-cash-today'))),
+-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, sourceLink(ctx, money(cal.lowest.amount), { where: 'calendar' }, 'src-cash-lowest')), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
+-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, howButton(ctx, 'safeToSpend', money(cal.safeToSpend))),
+-        h('div', { class: 'sub' }, 'through ' + dayLabel(cal.end)))),
+-    ctx.ui.how === 'safeToSpend' ? howPanel(ctx, explain(summary, 'safeToSpend', cal)) : null,
+-    cal.shortfall ? h('p', { class: 'small warn', 'data-key': 'safe-short' }, safeReading(cal)) : null,
+-    h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', jumpLink(ctx, 'calendar', 'See the calendar')));
+-}
+-
+diff --git a/slam/src/ui/components/lines.js b/slam/src/ui/components/lines.js
+index 29fecf9..a2bd442 100644
+--- a/slam/src/ui/components/lines.js
++++ b/slam/src/ui/components/lines.js
+@@ -142,7 +142,6 @@ export function debtCard(ctx, debt, summary) {
+     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
+     // A card or line of credit is credit you have (S-137): its limit shows what is available.
+     debt.type === 'credit-card' || debt.type === 'line-of-credit' ? question(ctx, 'Credit limit', 'What can be borrowed on it in all', p('creditLimit'), debt.creditLimit, { cadence: false }) : null,
+-    cardPromo(ctx, debt),
+-    linkedLine(ctx.doc, debt) ? null : question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
++    cardPromo(ctx, debt));
+ }
+ 
+diff --git a/slam/src/ui/components/loop.js b/slam/src/ui/components/loop.js
+index ed422ae..93f45ed 100644
+--- a/slam/src/ui/components/loop.js
++++ b/slam/src/ui/components/loop.js
+@@ -8,8 +8,6 @@ import { h } from '../dom.js';
+ import { money, signedMoney, pct, monthLabel, dayLabel, todayIso } from '../format.js';
+ import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../calc/loop.js';
+ import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
+-import { forecastFor } from '../../calc/calendar.js';
+-import { saveForecast } from '../../store/cashflow.js';
+ import { netWorthBridge } from '../../calc/networth-bridge.js';
+ import { milestones, netWorthByMonth } from '../../calc/networth.js';
+ import { incomeRowsList } from './income-month.js';
+@@ -29,7 +27,7 @@ export function loopStripCard(ctx, summary) {
+       ctx.doc.months.some((m) => m.key < s.month) && !(ctx.doc.plans || {})[s.month] ? h('button', { class: 'btn small primary', 'data-key': 'start-plan', onclick: () => ctx.jump('plan') }, 'Start next month\'s plan') : null),
+     h('div', { class: 'loop-steps' },
+       step('1', 'Plan', 'Plan: ' + s.plan.state, 'plan', 'Next month\'s plan'),
+-      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : '') + ', scheduled ' + t.confirmed + ' of ' + t.scheduled + ' confirmed', 'track', 'Track'),
++      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : ''), 'track', 'Track'),
+       step('3', 'Review', reviewState, 'actual', 'Fill gaps')));
+ }
+ 
+@@ -42,9 +40,7 @@ export function checklistCard(ctx, summary) {
+     const snap = { ...closeMonthSnapshot(summary), review };
+     const key = ctx.store.closeMonth(snap);
+     ctx.update('Save snapshot', (d) => { d.snapshots.push(snapshotOf(summary, new Date().toISOString())); });
+-    // The new month's predicted end cash, as of its 1st (S-086).
+-    const next = ctx.doc.currentMonth;
+-    ctx.update('Save forecast', (d) => saveForecast(d, next, forecastFor(d, summary.income, next), new Date().toISOString()));
++    // The predicted end cash went with the cash calendar (S-209); SLAM's check-in records the miss now.
+     ctx.ui.closing = false;
+     ctx.ui.justClosed = key;
+     ctx.toast(monthLabel(key) + ' closed. ' + c.summary + '.');
+diff --git a/slam/src/ui/components/outlook.js b/slam/src/ui/components/outlook.js
+deleted file mode 100644
+index bdd85cc..0000000
+--- a/slam/src/ui/components/outlook.js
++++ /dev/null
+@@ -1,18 +0,0 @@
+-// So far and expected by month end (S-128): the open month's two numbers, each labeled, on Review and
+-// under the budget table (Today has them as its tile). Numbers come from calc/calendar.js monthOutlook.
+-
+-import { h } from '../dom.js';
+-import { signedMoney, money, todayIso } from '../format.js';
+-import { monthOutlook } from '../../calc/calendar.js';
+-
+-// opts.short: the two numbers alone (Review, where the page is already long).
+-export function outlookLine(ctx, summary, key, opts = {}) {
+-  const o = monthOutlook(ctx.doc, summary.income, todayIso());
+-  if (!o) return null;
+-  return h('p', { class: 'small', 'data-key': key },
+-    'So far: ', h('b', { class: 'num', 'data-key': key + '-so-far' }, signedMoney(o.soFar)),
+-    opts.short ? '. ' : h('span', { class: 'muted' }, ' (income logged ' + money(o.incomeSoFar, true) + ' less spending logged ' + money(o.spentSoFar, true) + '). '),
+-    'Expected by month end: ', h('b', { class: 'num', 'data-key': key + '-expected' }, signedMoney(o.expected)),
+-    opts.short ? '.' : h('span', { class: 'muted' }, ' (with paychecks and bills still to come, and the rest of the plan).'),
+-    o.noPayDate.length ? h('span', { class: 'muted xs' }, ' No pay date yet for ' + o.noPayDate.join(', ') + '.') : null);
+-}
+diff --git a/slam/src/ui/nav.js b/slam/src/ui/nav.js
+index b8865a9..1711966 100644
+--- a/slam/src/ui/nav.js
++++ b/slam/src/ui/nav.js
+@@ -25,7 +25,7 @@ const DESTS = {
+   track: ['track', {}, null],
+   cashflow: ['track', {}, null],
+   log: ['track', {}, 'log-card'],
+-  calendar: ['track', {}, 'chart-cf-chart'],
++  calendar: ['track', {}, 'calendar'],
+   import: ['track', {}, 'import-card'],
+   checks: ['track', {}, 'check-balances'],
+   review: ['review', {}, null],
+@@ -95,9 +95,11 @@ export function screenLabel(id) {
+ 
+ // Every chart and card worth finding by name (S-108 search): [anchor id, name, where it lives].
+ export const CHARTS = [
+-  ['cash-strip', 'Cash, next 30 days', 'today'],
+-  ['chart-cf-chart', 'Cash by day (the calendar)', 'track'], ['chart-cf-paylater', 'Bills that land before the paycheck', 'track'],
+-  ['chart-cf-list', 'Cash by date (list)', 'track'], ['chart-cf-grid', 'Month grid', 'track'], ['chart-cf-sofar', 'This month so far', 'track'],
++  // The cash calendar moved to SLAM (S-209): its names still find the card that opens it.
++  ['cash-moved', 'Cash, next 30 days (in SLAM)', 'today'],
++  ['calendar', 'Cash by day (the calendar, in SLAM)', 'track'], ['calendar', 'Bills that land before the paycheck (in SLAM)', 'track'],
++  ['calendar', 'Cash by date (list, in SLAM)', 'track'], ['calendar', 'Month grid (in SLAM)', 'track'], ['calendar', 'This month so far (in SLAM)', 'track'],
++  ['calendar', 'Forecast check (drift at each check-in, in SLAM)', 'track'], ['calendar', 'What if a bill moved? (bill timing, in SLAM)', 'track'],
+   ['chart-sankey', 'Where the money goes', 'insights:where'], ['chart-donut', 'Spending by category', 'insights:where'], ['chart-nws', 'Needs, wants, savings', 'insights:where'],
+   ['chart-fv', 'Fixed vs variable', 'insights:where'], ['chart-types', 'Spending by type', 'insights:where'], ['chart-tags', 'By tag', 'insights:where'],
+   ['chart-gauges', 'Housing and savings rate', 'insights:where'],
+@@ -109,12 +111,11 @@ export const CHARTS = [
+   ['chart-trend-heat', 'Categories by month', 'insights:time'], ['chart-trend-mom', 'Month over month', 'insights:time'], ['chart-trend-pacing', 'Pacing', 'insights:time'],
+   ['chart-trend-dom', 'Spending by day of the month', 'insights:time'], ['trend-stats', 'Trends in one line each', 'insights:time'],
+   ['chart-estimate-history', 'When the estimate changed', 'insights:time'], ['chart-pareto', '80/20', 'insights:time'],
+-  ['chart-bridge', 'Budget to cash (the bridge)', 'insights:cash'], ['chart-cf-forecast', 'Forecast check', 'insights:cash'], ['chart-tx-top', 'Top 5 merchants', 'insights:cash'],
++  ['chart-bridge', 'Budget to cash (the bridge)', 'insights:cash'], ['chart-tx-top', 'Top 5 merchants', 'insights:cash'],
+   ['chart-tx-week', 'Spending by weekday', 'insights:cash'], ['chart-tx-size', 'Small and frequent vs big and rare', 'insights:cash'], ['chart-tx-subs', 'Subscriptions', 'insights:cash'],
+   ['chart-tx-findings', 'What the transactions show', 'insights:cash'],
+   ['chart-draftt', 'DRAFTT', 'insights:you'], ['chart-joy', 'Joy vs spend', 'insights:you'], ['chart-stress', 'Satisfaction and stress', 'insights:you'],
+   ['chart-mistake', 'Mistake cost', 'insights:you'], ['chart-statement', 'Personal income statement', 'insights:you'], ['extras', 'Also worth knowing', 'insights:you'],
+-  ['chart-cf-whatif', 'What if a bill moved?', 'setup:bills'],
+   ['nw-tiles', 'Net worth (everything)', 'insights:networth'], ['nw-tiles', 'FI net worth (what can fund your life)', 'insights:networth'],
+   ['nw-tiles', 'Locked in things you use', 'insights:networth'], ['chart-nw-time', 'Both net worths, month by month', 'insights:networth'],
+   ['chart-nw-assets-debts', 'What you have and what you owe, by month', 'insights:networth'], ['chart-nw-mix', 'What it is made of (liquidity tiers)', 'insights:networth'],
+diff --git a/slam/src/ui/screens/insights.js b/slam/src/ui/screens/insights.js
+index b88c66b..314e034 100644
+--- a/slam/src/ui/screens/insights.js
++++ b/slam/src/ui/screens/insights.js
+@@ -11,7 +11,6 @@ import { culpritsCard, proofCard, roughCard, extrasCard } from '../components/ca
+ import { trendCards } from '../charts/trend-charts.js';
+ import { estimateCard, paretoCard } from '../charts/months-charts.js';
+ import { bridgeCards } from '../charts/bridge-charts.js';
+-import { forecastCard } from '../charts/cash-charts.js';
+ import { transactionCards } from '../charts/tx-charts.js';
+ import { netWorthTiles, netWorthOverTimeCard, assetsDebtsCard, compositionCard, netWorthBridgeCard, milestonesCard } from '../charts/networth-charts.js';
+ import { owningCards } from '../charts/owning-charts.js';
+@@ -47,7 +46,7 @@ const TABS = {
+   compared: (ctx, s) => [blindSpot(s), tableCard(ctx, s), c.threeColumnCard(ctx, s, true), c.overlapCard(ctx, s), c.varianceCard(ctx, s), c.accuracyCard(ctx, s), c.gutCard(ctx, s),
+     culpritsCard(ctx, s), proofCard(s), c.completionCard(ctx, s), roughCard(ctx, s)],
+   time: (ctx, s) => [c.varianceByMonthCard(ctx, s), ...trendCards(ctx, s), estimateCard(ctx, s, ctx.ui.trendFocus), paretoCard(ctx, s, paretoAnchor(ctx))],
+-  cash: (ctx, s) => [...bridgeCards(ctx, s), forecastCard(ctx), ...transactionCards(ctx, s)],
++  cash: (ctx, s) => [...bridgeCards(ctx, s), ...transactionCards(ctx, s)],
+   networth: (ctx, s) => [netWorthTiles(ctx, s), netWorthOverTimeCard(ctx, s), assetsDebtsCard(ctx), compositionCard(ctx), netWorthBridgeCard(ctx, s), ...owningCards(ctx, s), milestonesCard(ctx)],
+   you: (ctx, s) => [c.draftCard(ctx, s), c.joyCard(ctx, s), c.stressCard(ctx, s), c.mistakeCard(ctx, s), c.incomeStatementCard(ctx, s), extrasCard(s, ctx.future)]
+ };
+diff --git a/slam/src/ui/screens/review.js b/slam/src/ui/screens/review.js
+index 0294ec5..e522047 100644
+--- a/slam/src/ui/screens/review.js
++++ b/slam/src/ui/screens/review.js
+@@ -15,7 +15,6 @@ import { coverageNote } from '../components/coverage.js';
+ import { incomeFillCard } from '../components/income-month.js';
+ import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+ import { checklistCard, reviewCard } from '../components/loop.js';
+-import { outlookLine } from '../components/outlook.js';
+ import { closedMonthTable } from '../components/budget-table.js';
+ import { monthRows } from '../../calc/history.js';
+ import { bridgeFor } from '../../calc/bridge.js';
+@@ -135,7 +134,6 @@ function monthEnd(ctx, summary) {
+       h('span', { class: 'small' }, 'Budget to cash, ' + monthLabel(doc.currentMonth) + ': ', h('b', { 'data-key': 'bridge-line' }, state), ' ',
+         h('a', { href: '#insights', 'data-key': 'go-bridge', onclick: (e) => { e.preventDefault(); ctx.jump('bridge', { ui: { bridgeMonth: doc.currentMonth } }); } }, 'See the bridge')),
+       h('button', { class: 'btn small primary', 'data-key': 'open-checklist', onclick: () => { ctx.ui.closing = true; ctx.rerender(); } }, 'Close ' + monthLabel(doc.currentMonth))),
+-    outlookLine(ctx, summary, 'review-outlook', { short: true }),
+     ctx.ui.closing ? checklistCard(ctx, summary) : null);
+ }
+ 
+diff --git a/slam/src/ui/screens/setup.js b/slam/src/ui/screens/setup.js
+index 67cf2e1..ebebc55 100644
+--- a/slam/src/ui/screens/setup.js
++++ b/slam/src/ui/screens/setup.js
+@@ -6,8 +6,7 @@
+ import { h } from '../dom.js';
+ import { SETUP_SECTIONS } from '../nav.js';
+ import { renderProfile, incomeSection, coachNotesCard, futureToolsCard } from './setup-basics.js';
+-import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
+-import { whatIfCard } from '../charts/cash-charts.js';
++import { paydaysCard, billsCard } from '../components/cashflow.js';
+ import { materialityInput } from '../charts/bridge-charts.js';
+ import { setOwnReturn } from '../../store/accounts.js';
+ import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
+@@ -84,9 +83,8 @@ function tagsSection(ctx) {
+ }
+ 
+ function coachSection(ctx) {
+-  if (ctx.role === 'client') return h('div', { class: 'card' }, h('p', { class: 'small muted' }, 'These are the coach\'s settings. The calendar still uses the cushion.'));
++  if (ctx.role === 'client') return h('div', { class: 'card' }, h('p', { class: 'small muted' }, 'These are the coach\'s settings.'));
+   return h('div', { class: 'card', id: 'coach-settings' },
+-    cushionRow(ctx),
+     h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, 'Bridge: counts as tied when within'), h('div', { class: 'hint' }, 'The budget-to-cash bridge ties when the part not explained is this small. Default $25.')),
+       materialityInput(ctx)),
+     h('div', { class: 'qa', 'data-key': 'own-return-row' }, h('div', { class: 'q' }, h('div', {}, 'Assumption: what a home\'s equity could earn elsewhere'), h('div', { class: 'hint' }, 'A year, after inflation. Used in "Owning vs the alternative". Default 5%.')),
+@@ -102,7 +100,7 @@ const SECTIONS = {
+   basics: (ctx, s) => renderProfile(ctx, s),
+   coverage: (ctx, s) => coverageSection(ctx, s),
+   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
+-  bills: (ctx, s) => h('div', {}, billsCard(ctx), whatIfCard(ctx, s, calendarFor(ctx, s, ctx.ui.cfHorizon || 30))),
++  bills: (ctx, s) => h('div', {}, billsCard(ctx)),
+   categories: categoriesSection,
+   tags: tagsSection,
+   coach: coachSection,
+diff --git a/slam/src/ui/screens/today.js b/slam/src/ui/screens/today.js
+index 7d2c030..20823c5 100644
+--- a/slam/src/ui/screens/today.js
++++ b/slam/src/ui/screens/today.js
+@@ -8,15 +8,14 @@ import { h } from '../dom.js';
+ import { money, pct, signedMoney, todayIso, dayLabel, dateLabel } from '../format.js';
+ import { statusChip } from '../components/status.js';
+ import { nextCard } from '../components/cards.js';
+-import { budgetCashStrip } from '../components/cashflow.js';
+ import { loopStripCard } from '../components/loop.js';
+ import { jumpLink } from '../components/jump.js';
+ import { INSIGHT_TABS } from '../nav.js';
+ import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
+ import { promoWarnings } from '../../calc/debts.js';
+-import { monthOutlook } from '../../calc/calendar.js';
+ import { explain } from '../../calc/explain.js';
+ import { howButton, howPanel } from '../components/how.js';
++import { quickEntryButton } from '../components/quick-entry.js';
+ 
+ function tile(label, value, sub, cls) {
+   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
+@@ -29,21 +28,20 @@ export function headlineTiles(ctx, summary) {
+   const inc = summary.income;
+   const since = summary.sinceLast;
+   const hb = (key, text) => howButton(ctx, key, text);
+-  // An open month (S-128): so far and expected by month end, never money that has not arrived as actual.
+-  const o = monthOutlook(ctx.doc, inc, todayIso());
+-  const open = ['takeHome', 'spending', 'surplus', 'savingsRate', ...(o ? ['soFar', 'expected'] : [])].includes(ctx.ui.how) ? ctx.ui.how : null;
++  // So far and expected by month end (S-128) went with the cash calendar (S-209): SLAM's Spending page and
++  // the Dashboard carry them now, so the third tile here is always the surplus.
++  const open = ['takeHome', 'spending', 'surplus', 'savingsRate'].includes(ctx.ui.how) ? ctx.ui.how : null;
+   return h('div', {},
+     h('div', { class: 'strip four', id: 'headline' },
+       tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
+       tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
+-      o ? tile('So far this month', hb('soFar', signedMoney(o.soFar)), h('span', {}, 'Expected by month end ', hb('expected', signedMoney(o.expected))), o.soFar < 0 ? 'bad' : 'good')
+-        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
++      tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
+           h('span', { 'data-key': 'surplus-rate' }, (t.surplusRate === null ? '' : pct(t.surplusRate) + ' of take-home') + (since && since.surplus !== null ? (t.surplusRate === null ? '' : ', ') + signedMoney(since.surplus) + ' since last time' : '')),
+           t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
+       // Only what is allocated counts (S-138); the surplus not allocated yet is shown as a boost.
+       tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), h('span', { 'data-key': 'savings-boost' }, 'incl. pre-tax' +
+         (summary.allocation.boost === null ? '' : '. Up to +' + pct(summary.allocation.boost) + ' if you allocate your surplus')))),
+-    open ? howPanel(ctx, explain(summary, open, o)) : null);
++    open ? howPanel(ctx, explain(summary, open)) : null);
+ }
+ 
+ function firstSessionCard(ctx, summary) {
+@@ -88,7 +86,7 @@ export function renderToday(ctx, summary) {
+     loopStripCard(ctx, summary),
+     firstSessionCard(ctx, summary),
+     nextCard(ctx, summary, extras(ctx, summary)),
+-    budgetCashStrip(ctx, summary),
++    spineLinks(ctx),
+     headlineTiles(ctx, summary),
+     chartLinks(ctx));
+ }
+@@ -98,3 +96,11 @@ function chartLinks(ctx) {
+   return h('div', { class: 'card', id: 'today-charts' }, h('h3', {}, 'Charts'),
+     h('div', { class: 'row' }, INSIGHT_TABS.map(([id, name]) => h('button', { class: 'btn small', 'data-key': 'today-chart:' + id, onclick: () => ctx.jump('insights:' + id) }, name))));
+ }
++
++// Where the cash calendar, safe to spend and the check-in live now (S-209): the SLAM pages next to this app.
++function spineLinks(ctx) {
++  return h('div', { class: 'card', id: 'cash-moved' },
++    h('div', { class: 'spread' }, h('h2', {}, 'Cash calendar, safe to spend, check-in'), quickEntryButton(ctx)),
++    h('p', { class: 'muted' }, 'These moved to SLAM, which reads the same household and feeds this log back. Open them in a new tab:'),
++    h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-calendar' }, 'Cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-spending' }, 'Spending and check-in'), ' ', h('a', { class: 'btn ghost', href: 'plan.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-plan' }, 'Plan')));
++}
+diff --git a/slam/src/ui/screens/track.js b/slam/src/ui/screens/track.js
+index 670f4e1..27be3e3 100644
+--- a/slam/src/ui/screens/track.js
++++ b/slam/src/ui/screens/track.js
+@@ -6,8 +6,6 @@
+ // Line actuals come from the log on their own (S-087); there is no confirm step.
+ 
+ import { h, options } from '../dom.js';
+-import { waitingCard, checkBalancesCard } from '../components/cashflow.js';
+-import { cashflowCards } from '../charts/cash-charts.js';
+ import { emptyState } from '../components/jump.js';
+ import { money, monthLabel } from '../format.js';
+ import { importCSV, FORMATS } from '../../calc/tx-import.js';
+@@ -162,14 +160,14 @@ function logCard(ctx, summary, month, months) {
+       ctx.ui.logAll ? 'Show the latest ' + LATEST : 'Show all ' + all.length) : null);
+ }
+ 
+-// What is missing for the calendar, as one-line prompts that link to Setup.
++// What is missing for the pay schedule, as one-line prompts that link to Setup.
+ function setupPrompts(ctx) {
+   const doc = ctx.doc;
+   const live = (xs) => xs.filter((x) => x.state !== 'archived');
+   const out = [];
+-  if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the calendar knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
++  if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the log knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
+   const noPayday = live(doc.income).filter((i) => i.payFrequency !== 'semimonthly' && !i.nextPayDate.date);
+-  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the calendar knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
++  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the income month knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
+   return out.length ? h('div', { class: 'card prompts' }, out) : null;
+ }
+ 
+@@ -180,11 +178,16 @@ export function renderTrack(ctx, summary) {
+   return h('div', {},
+     h('h1', {}, 'Track'),
+     setupPrompts(ctx),
+-    waitingCard(ctx, summary),
+     h('div', { class: 'card spread', id: 'quick-entry-card' }, h('span', {}, 'Spent something? Log it in a few taps.'), quickEntryButton(ctx)),
+     logCard(ctx, summary, month, months),
+-    h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'), h('div', { class: 'grid' }, cashflowCards(ctx, summary))),
+     importCard(ctx),
+     possibleCard(ctx),
+-    checkBalancesCard(ctx));
++    calendarMoved());
++}
++
++// The cash calendar, scheduled items and balance checks moved to SLAM (S-209); the anchor stays so old links land here.
++function calendarMoved() {
++  return h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'),
++    h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The day-by-day cash calendar, safe to spend, scheduled items and the balance check-in now live in SLAM, which reads this household and feeds the log back.'),
++      h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-calendar' }, 'Open the cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-spending' }, 'Check in and log spending'))));
+ }
+diff --git a/slam/test/calendar.test.js b/slam/test/calendar.test.js
+deleted file mode 100644
+index 97e9900..0000000
+--- a/slam/test/calendar.test.js
++++ /dev/null
+@@ -1,253 +0,0 @@
+-// Part 3 of the monthly loop: the cash flow calendar (S-086). One small
+-// household worked out by hand, day by day.
+-//
+-// Today is Sat 2026-10-10. Accounts at the start of October: checking 1,000,
+-// savings 2,000, Visa (a card) 300 owed. The calendar's cash is checking only (S-094),
+-// so savings never moves the line.
+-// Pay: biweekly, 1,500 a paycheck, next pay date Oct 16, so paychecks land
+-// Oct 2, Oct 16, Oct 30 (and Nov 13, past the 30-day horizon of Nov 9).
+-// Bills: rent 1,200 due the 1st; phone 60 due the 18th; Visa minimum 35 due the 25th, from checking.
+-// Groceries 400 a month has no due day, so it is spread across the month.
+-// Logged: rent on Oct 1 (It happened), groceries 80 on Oct 4 (checking), groceries 40 on Oct 8 (Visa).
+-// Not logged: the Oct 2 paycheck, which is waiting and lands on today in the projection.
+-
+-import { test } from 'node:test';
+-import assert from 'node:assert/strict';
+-import { newHousehold } from '../src/store/schema.js';
+-import { makeValue } from '../src/store/value.js';
+-import { validateHousehold } from '../src/store/validate.js';
+-import { migrate } from '../src/store/migrate.js';
+-import { addAccount, setBalance } from '../src/store/accounts.js';
+-import { addDebt, findLine } from '../src/store/edits.js';
+-import { addEntry } from '../src/store/log.js';
+-import { setNextPayDate, moveItem, confirmScheduled, addBalanceCheck, saveForecast } from '../src/store/cashflow.js';
+-import { incomeSummary } from '../src/calc/income.js';
+-import { cashCalendar, scheduledItems, forecastFor, forecastCheck, monthSoFar, calendarReading, safeReading, addDays } from '../src/calc/calendar.js';
+-import { loadRefs, near } from './helpers.js';
+-
+-const refs = loadRefs();
+-const one = (a) => makeValue(a, { cadence: 'one-off' });
+-const TODAY = '2026-10-10';
+-
+-function household() {
+-  const d = newHousehold('Calendar');
+-  d.currentMonth = '2026-10';
+-  d.income.push({ ...d.income[0], id: 'job', type: 'w2', label: 'Paycheck', payFrequency: 'biweekly', takeHome: makeValue(1500, { cadence: 'paycheck' }), gross: makeValue(), hourlyRate: makeValue(), deductions: [], withheld: {}, payBasis: 'salary', state: 'active' });
+-  const debt = addDebt(d, { label: 'Visa', type: 'credit-card' });
+-  debt.minimum = makeValue(35);
+-  debt.dueDay = one(25);
+-  addAccount(d, { id: 'chk', name: 'Checking', type: 'checking' });
+-  addAccount(d, { id: 'sav', name: 'Savings', type: 'savings' });
+-  addAccount(d, { id: 'visa', name: 'Visa', type: 'credit-card' });
+-  setBalance(d, '2026-10', 'chk', 'start', one(1000));
+-  setBalance(d, '2026-10', 'sav', 'start', one(2000));
+-  setBalance(d, '2026-10', 'visa', 'start', one(300));
+-  const doc = migrate(d);
+-  setNextPayDate(doc, 'job', '2026-10-16');
+-  findLine(doc, 'rent').line.estimate = makeValue(1200);
+-  findLine(doc, 'rent').line.dueDay = one(1);
+-  findLine(doc, 'subscriptions').line.estimate = makeValue(60);
+-  findLine(doc, 'subscriptions').line.dueDay = one(18);
+-  findLine(doc, 'groceries').line.estimate = makeValue(400);
+-  return doc;
+-}
+-
+-function logged(doc) {
+-  const inc = incomeSummary(doc, refs.tax);
+-  const rent = scheduledItems(doc, '2026-10', inc).items.find((i) => i.lineId === 'rent');
+-  confirmScheduled(doc, rent, 1200);
+-  addEntry(doc, { date: '2026-10-04', amount: 80, lineId: 'groceries', account: 'chk' });
+-  addEntry(doc, { date: '2026-10-08', amount: 40, lineId: 'groceries', account: 'visa' });
+-  return inc;
+-}
+-
+-const cashOn = (cal, date) => cal.days.find((x) => x.date === date).cash;
+-const money = (a, e, l) => assert.ok(near(a, e, 2), l + ': got ' + a + ', expected ' + e);
+-
+-test('the scheduled items in October', () => {
+-  const doc = household();
+-  const inc = incomeSummary(doc, refs.tax);
+-  const items = scheduledItems(doc, '2026-10', inc).items.map((i) => [i.date, i.kind, i.name, i.amount, i.account]);
+-  // 1,500 a paycheck: 1,500 x 26 / 12 = 3,250 a month, back to 3,250 x 12 / 26 = 1,500
+-  assert.deepEqual(items, [
+-    ['2026-10-01', 'bill', 'Rent or mortgage', 1200, 'chk'],
+-    ['2026-10-02', 'paycheck', 'Paycheck', 1500, 'chk'],
+-    ['2026-10-16', 'paycheck', 'Paycheck', 1500, 'chk'],
+-    ['2026-10-18', 'bill', 'Bills and subscriptions', 60, 'chk'],
+-    ['2026-10-25', 'debt', 'Visa', 35, 'chk'],
+-    ['2026-10-30', 'paycheck', 'Paycheck', 1500, 'chk']
+-  ]);
+-  assert.deepEqual(validateHousehold(doc), []);
+-});
+-
+-test('past days show the log, today takes the waiting paycheck, the future is scheduled and spread', () => {
+-  const doc = household();
+-  const inc = logged(doc);
+-  const cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  // Range: Oct 1 (first month with balances) to Nov 9 (today + 30)
+-  assert.deepEqual([cal.start, cal.end, cal.days.length], ['2026-10-01', '2026-11-09', 40]);
+-  // Oct 1: checking 1,000 - 1,200 rent = -200
+-  money(cashOn(cal, '2026-10-01'), -200, 'Oct 1');
+-  // Oct 4: -80 groceries from checking: -280. Oct 8: groceries on the Visa, checking stays -280, the card goes 300 -> 340
+-  money(cashOn(cal, '2026-10-08'), -280, 'Oct 8');
+-  assert.equal(cal.days.find((x) => x.date === '2026-10-08').cards, 340);
+-  // Waiting: only the Oct 2 paycheck (rent was confirmed). It lands today: -280 + 1,500 = 1,220
+-  assert.deepEqual(cal.waiting.map((i) => [i.date, i.kind]), [['2026-10-02', 'paycheck']]);
+-  money(cal.todayCash, 1220, 'today');
+-  // Groceries: 400 planned, 80 + 40 = 120 logged, 280 left over Oct 11 to Oct 31 (21 days) = 13.333 a day
+-  const g = cal.spreads['2026-10'].units.find((u) => u.name === 'Groceries');
+-  assert.deepEqual([g.plan, g.logged, g.left], [400, 120, 280]);
+-  money(g.perDay, 13.333333, 'per day');
+-  // Oct 15: 1,220 - 5 x 13.333 = 1,153.33
+-  money(cashOn(cal, '2026-10-15'), 1153.33, 'Oct 15');
+-  // Oct 16: 1,220 - 6 x 13.333 (80) + 1,500 = 2,640
+-  money(cashOn(cal, '2026-10-16'), 2640, 'Oct 16');
+-  // Oct 25: 1,220 - 15 x 13.333 (200) + 1,500 - 60 - 35 = 2,425; the Visa owes 340 - 35 = 305
+-  money(cashOn(cal, '2026-10-25'), 2425, 'Oct 25');
+-  assert.equal(cal.days.find((x) => x.date === '2026-10-25').cards, 305);
+-  // Oct 31: all 280 spread: 1,220 - 280 + 1,500 - 60 - 35 + 1,500 = 3,845
+-  money(cashOn(cal, '2026-10-31'), 3845, 'Oct 31');
+-  // November: 400 over 30 days = 13.333 a day. Nov 1: 3,845 - 1,200 rent - 13.333 = 2,631.67; Nov 9: 3,845 - 1,200 - 9 x 13.333 (120) = 2,525
+-  money(cashOn(cal, '2026-11-01'), 2631.67, 'Nov 1');
+-  money(cashOn(cal, '2026-11-09'), 2525, 'Nov 9');
+-  // Lowest from today to the horizon (S-095): Oct 15, the day before payday. Safe to spend: 1,153.33 - 0 cushion,
+-  // under today's 1,220, so 1,153.33. Until payday the lowest is the same day, so no second number.
+-  assert.equal(cal.lowest.date, '2026-10-15');
+-  money(cal.lowest.amount, 1153.33, 'lowest');
+-  assert.equal(cal.nextPayday, '2026-10-16');
+-  money(cal.safeToSpend, 1153.33, 'safe to spend');
+-  assert.equal(cal.shortfall, null);
+-  assert.deepEqual([cal.belowZero, cal.belowCushion, cal.payLater.length], [0, 0, 0]);
+-  assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday.');
+-});
+-
+-test('the projected balance on any day is the start plus every item up to that day', () => {
+-  const doc = household();
+-  const cal = cashCalendar(doc, logged(doc), { today: TODAY, horizon: 60 });
+-  let cash = 1000; // checking on Oct 1
+-  for (const day of cal.days) {
+-    cash += day.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
+-    // each day is rounded to the cent for display, so allow a cent
+-    assert.ok(Math.abs(day.cash - cash) <= 0.011, day.date + ': ' + day.cash + ' vs ' + cash);
+-    assert.ok(cal.safeToSpend <= cal.todayCash);
+-  }
+-});
+-
+-test('a cushion: days below it, a pay-later flag, and safe to spend below zero', () => {
+-  const doc = household();
+-  doc.cashflow.cushion = one(2450);
+-  const cal = cashCalendar(doc, logged(doc), { today: TODAY, horizon: 30 });
+-  // Below 2,450: Oct 10 to Oct 15 (6 days, 1,220 down to 1,153.33) and Oct 25 to Oct 29
+-  // (2,425, 2,411.67, 2,398.33, 2,385, 2,371.67): 11 days
+-  assert.equal(cal.belowCushion, 11);
+-  // The Visa payment on the 25th leaves 2,425, under the cushion; the next paycheck is Oct 30, 5 days later
+-  assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Visa', '2026-10-25', '2026-10-30', 5]]);
+-  // 1,153.33 - 2,450 = -1,296.67, below 0: safe to spend is 0, and the shortfall is 1,296.67 on Oct 15
+-  assert.equal(cal.safeToSpend, 0);
+-  assert.deepEqual(cal.shortfall, { amount: 1296.67, date: '2026-10-15' });
+-  assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $1,297 under your cushion on Oct 15.");
+-  assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.');
+-});
+-
+-test('spending the safe-to-spend amount today never takes a projected day below the cushion', () => {
+-  for (const c of [0, 500, 1100]) {
+-    const doc = household();
+-    doc.cashflow.cushion = one(c);
+-    const inc = logged(doc);
+-    const cal = cashCalendar(doc, inc, { today: TODAY, horizon: 60 });
+-    // cushion 0: 1,153.33; 500: 653.33; 1,100: 53.33 (lowest 1,153.33 less the cushion)
+-    money(cal.safeToSpend, 1153.33 - c, 'cushion ' + c);
+-    addEntry(doc, { date: TODAY, amount: cal.safeToSpend, lineId: 'shopping', account: 'chk' });
+-    const after = cashCalendar(doc, inc, { today: TODAY, horizon: 60 });
+-    for (const day of after.days.filter((x) => x.date >= TODAY)) assert.ok(day.cash >= c - 0.01, c + ' ' + day.date + ': ' + day.cash);
+-  }
+-});
+-
+-test('It happened, moved, skipped, and a real balance resets the projection', () => {
+-  const doc = household();
+-  const inc = logged(doc);
+-  const pay = scheduledItems(doc, '2026-10', inc).items.find((i) => i.date === '2026-10-02');
+-  confirmScheduled(doc, pay, 1500);
+-  let cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  // Now in the log on Oct 2: 1,000 - 1,200 + 1,500 = 1,300 checking; nothing waiting; today still 1,220
+-  assert.equal(cal.waiting.length, 0);
+-  money(cashOn(cal, '2026-10-02'), 1300, 'Oct 2');
+-  money(cal.todayCash, 1220, 'today');
+-  assert.equal(doc.transactions.find((t) => t.scheduleKey === pay.key).source, 'scheduled');
+-  // Skip the phone this month: Oct 31 is 3,845 + 60 = 3,905
+-  const phone = cal.scheduled.find((i) => i.lineId === 'subscriptions' && i.planned === '2026-10-18');
+-  moveItem(doc, phone.key, null, '2026-10-10T12:00:00Z');
+-  cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  money(cashOn(cal, '2026-10-31'), 3905, 'skipped phone');
+-  // Move it to Nov 2 instead: Oct 31 still 3,905; Nov 2 = 3,905 - 1,200 - 2 x 13.333 - 60 = 2,618.33
+-  moveItem(doc, phone.key, '2026-11-02', '2026-10-10T12:00:00Z');
+-  cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  money(cashOn(cal, '2026-11-02'), 2618.33, 'moved phone');
+-  // A real checking balance of 1,000 on Oct 12 resets it: cash that day 1,000
+-  addBalanceCheck(doc, 'chk', '2026-10-12', one(1000));
+-  cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  money(cashOn(cal, '2026-10-12'), 1000, 'checked');
+-  // Oct 13: 1,000 - 13.333 = 986.67
+-  money(cashOn(cal, '2026-10-13'), 986.67, 'after check');
+-  assert.deepEqual(validateHousehold(doc), []);
+-});
+-
+-test('the forecast saved on the 1st against the real end', () => {
+-  const doc = household();
+-  const inc = incomeSummary(doc, refs.tax);
+-  // Checking 1,000 + 3 paychecks 4,500 - rent 1,200 - phone 60 - Visa 35 - groceries 400 = 3,805
+-  assert.equal(forecastFor(doc, inc, '2026-10'), 3805);
+-  saveForecast(doc, '2026-10', 3805, '2026-10-01T09:00:00Z');
+-  setBalance(doc, '2026-10', 'chk', 'end', one(3900));
+-  setBalance(doc, '2026-10', 'sav', 'end', one(2000));
+-  // checking ended 3,900: 95 better than predicted
+-  assert.deepEqual(forecastCheck(doc, '2026-10'), { month: '2026-10', predicted: 3805, actual: 3900, diff: 95 });
+-});
+-
+-test('this month so far: plan vs logged per category', () => {
+-  const doc = household();
+-  logged(doc);
+-  const rows = Object.fromEntries(monthSoFar(doc, '2026-10', TODAY).map((r) => [r.id, [r.plan, r.logged, r.left]]));
+-  assert.deepEqual(rows, { housing: [1200, 1200, 0], food: [400, 120, 280], bills: [60, 0, 60] });
+-});
+-
+-test('semimonthly pays on its two days; a version 6 file loads with blank dates', () => {
+-  const doc = household();
+-  doc.income[0].payFrequency = 'semimonthly';
+-  doc.income[0].payDays = [5, 20];
+-  const inc = incomeSummary(doc, refs.tax);
+-  const pays = scheduledItems(doc, '2026-02', inc).items.filter((i) => i.kind === 'paycheck').map((i) => [i.date, i.amount]);
+-  // 1,500 x 24 / 12 = 3,000 a month; back to 3,000 x 12 / 24 = 1,500
+-  assert.deepEqual(pays, [['2026-02-05', 1500], ['2026-02-20', 1500]]);
+-  const raw = JSON.parse(JSON.stringify(household()));
+-  raw.schemaVersion = 6;
+-  delete raw.cashflow;
+-  delete raw.income[0].nextPayDate;
+-  const d = migrate(raw);
+-  assert.deepEqual([d.income[0].nextPayDate.date, d.cashflow.cushion.amount, d.cashflow.checks.length], [null, null, 0]);
+-  assert.equal(addDays('2026-12-31', 1), '2027-01-01');
+-});
+-
+-// A balance with the day it was read (S-100). By hand: checking runs 1,000 - 1,200 rent = -200 on Oct 1,
+-// - 80 groceries = -280 from Oct 4. The bank showed 500 on Oct 6 (typed as October's end balance, read Oct 6):
+-// the calendar takes 500 that day, and Oct 7 and 8 have no checking entries, so Oct 8 is 500 too.
+-// Without the date, the end balance belongs to Oct 31 (after today), so Oct 8 stays -280.
+-test('a balance read on a given day resets the calendar on that day', async () => {
+-  const { setBalanceDate } = await import('../src/store/accounts.js');
+-  const doc = household();
+-  const inc = logged(doc);
+-  setBalance(doc, '2026-10', 'chk', 'end', one(500));
+-  const plain = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  money(cashOn(plain, '2026-10-08'), -280, 'Oct 8, end balance on Oct 31');
+-  setBalanceDate(doc, '2026-10', 'chk', 'end', '2026-10-06');
+-  const dated = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
+-  money(cashOn(dated, '2026-10-05'), -280, 'Oct 5, before the reading');
+-  money(cashOn(dated, '2026-10-06'), 500, 'Oct 6, the reading');
+-  money(cashOn(dated, '2026-10-08'), 500, 'Oct 8');
+-  assert.deepEqual(validateHousehold(doc), []);
+-  // The date survives a save and load; picking the plain day again clears it.
+-  assert.equal(migrate(JSON.parse(JSON.stringify(doc))).balances['2026-10'].chk.endOn, '2026-10-06');
+-  setBalanceDate(doc, '2026-10', 'chk', 'end', null);
+-  assert.equal('endOn' in doc.balances['2026-10'].chk, false);
+-  assert.throws(() => setBalanceDate(doc, '2026-10', 'chk', 'end', '2026-11-02'), /Pick a day in 2026-10/);
+-});
+diff --git a/slam/test/explain.test.js b/slam/test/explain.test.js
+index 4e71783..ea840b2 100644
+--- a/slam/test/explain.test.js
++++ b/slam/test/explain.test.js
+@@ -51,11 +51,6 @@ test('take-home, spending, surplus, and savings rate list their inputs', () => {
+   assert.ok(Math.abs(sr.result.amount - 200 / 3000) < 1e-9);
+ });
+ 
+-test('safe to spend shows today, the lowest point, and the cushion', () => {
+-  // A calendar shaped like Riley's on October 17 (S-095): 3,291.03 today, lowest 60 on Nov 5, cushion 100, so $0.
+-  const cal = { todayCash: 3291.03, lowest: { date: '2026-11-05', amount: 60 }, cushion: 100, safeToSpend: 0 };
+-  const ex = explain(buildSummary(household(), refs), 'safeToSpend', cal);
+-  assert.deepEqual(ex.steps.map((x) => x.amount), [3291.03, 60, -100]);
+-  assert.equal(ex.result.amount, 0);
++test('a name it does not know explains nothing', () => {
+   assert.equal(explain(buildSummary(household(), refs), 'nothing'), null);
+ });
+diff --git a/slam/test/hosting.test.js b/slam/test/hosting.test.js
+index c25addb..013dd35 100644
+--- a/slam/test/hosting.test.js
++++ b/slam/test/hosting.test.js
+@@ -23,7 +23,6 @@ import { newHousehold } from '../src/store/schema.js';
+ import { migrate } from '../src/store/migrate.js';
+ import { findLine } from '../src/store/edits.js';
+ import { buildSummary } from '../src/calc/summary.js';
+-import { cashCalendar } from '../src/calc/calendar.js';
+ import { counted } from '../src/calc/log.js';
+ 
+ const refs = loadRefs();
+@@ -131,7 +130,7 @@ test('deleting leaves a marker; the live view, calc, and screens never count it'
+   await s.remove(id);
+ });
+ 
+-test('Riley: a deleted log entry never reaches the calendar or the month totals', () => {
++test('Riley: a deleted log entry never reaches the month totals', () => {
+   const doc = migrate(JSON.parse(readFileSync(join(here, 'test/fixtures/riley-schema9.json'), 'utf8')));
+   // Mark the Oct 15 Chipotle 13.75 deleted by hand, as a file from another copy would.
+   const full = JSON.parse(JSON.stringify(doc));
+@@ -142,9 +141,6 @@ test('Riley: a deleted log entry never reaches the calendar or the month totals'
+   const trimmed = JSON.parse(JSON.stringify(doc));
+   trimmed.transactions = trimmed.transactions.filter((t) => t.id !== 'tx-mcjhuru');
+   assert.deepEqual(buildSummary(full, refs).totals, buildSummary(trimmed, refs).totals);
+-  const opts = { today: '2026-10-17', horizon: 30 };
+-  const income = buildSummary(trimmed, refs).income;
+-  assert.deepEqual(cashCalendar(full, income, opts).lowest, cashCalendar(trimmed, income, opts).lowest);
+ });
+ 
+ test('removing a client keeps its file, marked deleted; it leaves the list and an import brings it back (S-098)', async () => {
+diff --git a/slam/test/income-month.test.js b/slam/test/income-month.test.js
+index 2402858..e5d7e6e 100644
+--- a/slam/test/income-month.test.js
++++ b/slam/test/income-month.test.js
+@@ -10,7 +10,7 @@ import { addEntry } from '../src/store/log.js';
+ import { setIncomeActual } from '../src/store/edits.js';
+ import { setPlanIncome } from '../src/store/plans.js';
+ import { incomeMonth } from '../src/calc/income-month.js';
+-import { payDates } from '../src/calc/calendar.js';
++import { payDates } from '../src/calc/dates.js';
+ import { buildSummary } from '../src/calc/summary.js';
+ import { bridgeFor } from '../src/calc/bridge.js';
+ import { netWorthBridge } from '../src/calc/networth-bridge.js';
+diff --git a/slam/test/loop.test.js b/slam/test/loop.test.js
+index 6ed5632..465d898 100644
+--- a/slam/test/loop.test.js
++++ b/slam/test/loop.test.js
+@@ -36,8 +36,8 @@ test('the loop strip for October', () => {
+   const s = loopStrip(d, buildSummary(d, refs), TODAY);
+   assert.equal(s.plan.state, 'started');
+   // 13 entries: 3 income, 2 groceries, Geico, 2 transfers, concert, couch, 2 card payments, ATM; last Oct 28.
+-  // Scheduled: the yearly car insurance on Oct 14, confirmed by the Geico entry (same line, same day, 1,200).
+-  assert.deepEqual(s.track, { entries: 13, last: '2026-10-28', confirmed: 1, scheduled: 1 });
++  // The scheduled-item counts went with the cash calendar (S-209).
++  assert.deepEqual(s.track, { entries: 13, last: '2026-10-28' });
+   assert.deepEqual(s.review, { empty: 0, balancesMissing: 0, balancesTotal: 6, ties: false, unexplained: -60 });
+   assert.equal(s.nextPlan, 'not started');
+ });
+@@ -47,7 +47,7 @@ test('the month-end checklist: three open items', () => {
+   const c = monthEndChecklist(d, buildSummary(d, refs), TODAY);
+   const by = Object.fromEntries(c.items.map((i) => [i.key, [i.count, i.open]]));
+   assert.deepEqual(by, {
+-    gaps: [0, false], waiting: [0, false], balances: [0, false], bridge: [1, true], unmapped: [0, false], duplicates: [0, false],
++    gaps: [0, false], balances: [0, false], bridge: [1, true], unmapped: [0, false], duplicates: [0, false],
+     'income-source': [0, false], // every income entry names the job (S-118)
+     owed: [1, true],          // the friend's 60 for the concert
+     'next-plan': [1, true]    // no November plan yet
+diff --git a/slam/test/outlook.test.js b/slam/test/outlook.test.js
+deleted file mode 100644
+index e406544..0000000
+--- a/slam/test/outlook.test.js
++++ /dev/null
+@@ -1,35 +0,0 @@
+-// So far and expected by month end (S-128), by hand, on Riley's October 17, 2026.
+-
+-import { test } from 'node:test';
+-import assert from 'node:assert/strict';
+-import { loadRefs, loadHousehold } from './helpers.js';
+-import { buildSummary } from '../src/calc/summary.js';
+-import { monthOutlook } from '../src/calc/calendar.js';
+-
+-const refs = loadRefs();
+-
+-test('Riley, October 17: so far and expected by month end', () => {
+-  const d = loadHousehold('riley');
+-  const o = monthOutlook(d, buildSummary(d, refs).income, '2026-10-17');
+-  // SO FAR (the log, up to today). Income: the October 9 paycheck 1,500 + dog walking on the 12th 130 = 1,630.
+-  // Spending: rent 1,750 + groceries 88.20 + 121.80 = 210 + eating out 4.75 + 4.75 + 13.75 = 23.25 + gas 46 +
+-  // the car payment 340 = 2,369.25. (The 250 moved to savings is a transfer, not spending.)
+-  // So far 1,630 - 2,369.25 = -739.25.
+-  assert.deepEqual([o.incomeSoFar, o.spentSoFar, o.soFar], [1630, 2369.25, -739.25]);
+-  // STILL TO COME (the calendar). The next paycheck, October 23: 1,500 (November 6 is next month). Dog walking
+-  // has no pay date, so nothing is scheduled for it. The phone bill, due the 18th: 65. The Visa on the 25th is a
+-  // card payment (its charges were already spending), so it is left out; the car loan is the car payment line,
+-  // already paid on the 15th.
+-  assert.deepEqual(o.items.map((i) => [i.date, i.kind, i.amount]), [['2026-10-18', 'bill', -65], ['2026-10-23', 'paycheck', 1500]]);
+-  // The rest of the plan for the lines with no due day (plan - logged, never below 0):
+-  //   utilities 84 - 0 = 84; groceries 420 - 210 = 210; eating out 150 - 23.25 = 126.75; gas 120 - 46 = 74;
+-  //   shopping 100; entertainment 60; gifts 40. Together 694.75. Savings lines are not spending: left out.
+-  assert.deepEqual(o.rest.map((u) => [u.name, u.left]), [['Utilities', 84], ['Groceries', 210], ['Eating out', 126.75], ['Gas', 74], ['Shopping', 100], ['Entertainment', 60], ['Gifts', 40]]);
+-  // EXPECTED BY MONTH END: -739.25 + 1,500 = 760.75; - 65 = 695.75; - 694.75 = 1.00.
+-  assert.deepEqual([o.paychecks, o.bills, o.planLeft, o.expected], [1500, 65, 694.75, 1]);
+-});
+-
+-test('a closed month has one number: no outlook', () => {
+-  const d = loadHousehold('riley');
+-  assert.equal(monthOutlook(d, buildSummary(d, refs).income, '2026-09-30'), null);
+-});
+diff --git a/slam/test/promo.test.js b/slam/test/promo.test.js
+index 43fa79e..685ebf4 100644
+--- a/slam/test/promo.test.js
++++ b/slam/test/promo.test.js
+@@ -9,7 +9,6 @@ import { buildSummary } from '../src/calc/summary.js';
+ import { bridgeFor } from '../src/calc/bridge.js';
+ import { netWorthBridge } from '../src/calc/networth-bridge.js';
+ import { cardInterest, promoEnded, promoWarnings } from '../src/calc/debts.js';
+-import { cashCalendar } from '../src/calc/calendar.js';
+ 
+ const refs = loadRefs();
+ const lines = (b) => Object.fromEntries(b.lines.map((l) => [l.key, l.amount]));
+@@ -56,15 +55,6 @@ test('Dana: Month in review for June says so', () => {
+   assert.ok(!review('2026-07').readings.some((r) => r.includes('promo')));
+ });
+ 
+-test('Dana: the calendar shows October\'s interest on the card, on its due day', () => {
+-  const d = loadHousehold('dana');
+-  // Due the 20th: 244.42 charged to the Visa (what is owed goes up), checking untouched.
+-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 });
+-  const day = cal.days.find((x) => x.date === '2026-10-20');
+-  const it = day.items.find((i) => i.kind === 'interest');
+-  assert.deepEqual([it.name, it.flow, it.cash, it.account], ['Visa interest (computed)', -244.42, false, 'visa']);
+-});
+-
+ test('Dana: the Next card warns 60 days before the promo ends', () => {
+   const d = loadHousehold('dana');
+   // April 1, 2026 to May 31: 29 days left in April + 31 in May = 60. Still on it: the latest balance, March's
+diff --git a/slam/test/riley.test.js b/slam/test/riley.test.js
+index 42fa482..2d9d2c1 100644
+--- a/slam/test/riley.test.js
++++ b/slam/test/riley.test.js
+@@ -29,7 +29,6 @@ import { removeTransaction } from '../src/store/edits.js';
+ import { newNextStage } from '../src/store/schema.js';
+ import { buildSummary } from '../src/calc/summary.js';
+ import { bridgeFor } from '../src/calc/bridge.js';
+-import { cashCalendar, safeReading } from '../src/calc/calendar.js';
+ import { paretoLevels, paretoCut, entryItems, lineItems, merchantItems } from '../src/calc/pareto.js';
+ import { monthOverMonth, fixedFloor, volatility, categoryGrid } from '../src/calc/trends.js';
+ import { budgetTotals } from '../src/calc/totals.js';
+@@ -313,87 +312,7 @@ test('February to March: month over month, fixed floor, volatility', () => {
+ // ---------------------------------------------------------------------------
+ // OCTOBER 2026, the open month, today the 17th.
+ // September ended with checking 4,001.03, savings 150, and the Visa at 2,818.03 (the car repair).
+-// The calendar's cash is checking only (S-094).
+-// October so far: rent 1,750 (Oct 1), 250 moved to savings (Oct 3), paycheck +1,500 (Oct 9), dog walking +130
+-// (Oct 12), car payment 340 (Oct 15), all logged; on the Visa: Trader Joe's 88.20, Corner Coffee 4.75 (twice), Shell 46, Safeway 121.80,
+-// Chipotle 13.75. Utilities (84 planned) is not in yet, so it is spread: 84 over Oct 18 to 31 (14 days) = 6 a day;
+-// November 84 / 30 = 2.80 a day. Every other line with no due day is paid on the Visa, so its spread moves
+-// the card, not cash.
+-// ---------------------------------------------------------------------------
+-
+-test('October: every scheduled item, five days, the lowest point, safe to spend, the pay-later flag', () => {
+-  const d = riley();
+-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 });
+-  const oct = cal.scheduled.filter((i) => i.planned.startsWith('2026-10')).map((i) => [i.date, i.kind, i.name, i.amount, !!i.confirmed]);
+-  assert.deepEqual(oct, [
+-    ['2026-10-01', 'bill', 'Rent', 1750, true],
+-    ['2026-10-09', 'paycheck', 'Northwind Labs', 1500, true],
+-    ['2026-10-15', 'bill', 'Car payment', 340, true],
+-    ['2026-10-18', 'bill', 'Phone', 65, false],
+-    ['2026-10-23', 'paycheck', 'Northwind Labs', 1500, false],
+-    ['2026-10-25', 'debt', 'Visa', 2818.03, false]
+-  ]);
+-  const at = (date) => cal.days.find((x) => x.date === date).cash;
+-  // Today: checking at September's end 4,001.03 - 1,750 - 250 + 1,500 + 130 - 340 = 3,291.03
+-  money(at('2026-10-17'), 3291.03, 'Oct 17');
+-  // Oct 22: - phone 65 - 5 days x 6 = 3,196.03
+-  money(at('2026-10-22'), 3196.03, 'Oct 22');
+-  // Oct 25: 3,291.03 - 65 - 8 x 6 + 1,500 (Oct 23) - 2,818.03 (Visa) = 1,860.00
+-  money(at('2026-10-25'), 1860, 'Oct 25');
+-  // Nov 1: 1,860 - 6 x 6 (Oct 26 to 31) - 1,750 rent - 2.80 = 71.20
+-  money(at('2026-11-01'), 71.2, 'Nov 1');
+-  // Nov 5: 71.20 - 4 x 2.80 = 60.00, the day before the Nov 6 paycheck
+-  money(at('2026-11-05'), 60, 'Nov 5');
+-  assert.deepEqual(cal.lowest, { date: '2026-11-05', amount: 60 });
+-  // Safe to spend (S-095), checking only: the lowest point anywhere ahead is Nov 5, 60.00; less the 100 cushion
+-  // = -40.00, below 0, so safe to spend is 0 and the shortfall is $40 on Nov 5. Until payday (Oct 23) the lowest
+-  // is Oct 22, 3,196.03 - 100 = 3,096.03: higher than 0, so it is not shown.
+-  assert.equal(cal.safeToSpend, 0);
+-  assert.deepEqual(cal.shortfall, { amount: 40, date: '2026-11-05' });
+-  assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
+-  assert.ok(cal.safeToSpend <= cal.todayCash);
+-  // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.
+-  assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Rent', '2026-11-01', '2026-11-06', 5]]);
+-  // Under the cushion: Nov 1 to Nov 5 (71.20, 68.40, 65.60, 62.80, 60.00). Never under zero.
+-  assert.deepEqual([cal.belowCushion, cal.belowZero], [5, 0]);
+-});
+-
+-test('October: the spread for groceries shrinks as entries come in', () => {
+-  // Plan 420. Spread over Oct 18 to 31 (14 days):
+-  //   no entries: 420 / 14 = 30 a day
+-  //   after Trader Joe's 88.20: 331.80 / 14 = 23.70 a day
+-  //   after Safeway 121.80 too: 210 / 14 = 15 a day
+-  const perDay = (d) => cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 }).spreads['2026-10'].units.find((u) => u.name === 'Groceries');
+-  const d = riley();
+-  const groc = d.transactions.filter((t) => t.lineId === 'groceries' && t.date.startsWith('2026-10'));
+-  const both = perDay(d);
+-  assert.deepEqual([both.plan, both.logged, both.left, both.perDay], [420, 210, 210, 15]);
+-  removeTransaction(d, groc.find((t) => t.amount === 121.8).id);
+-  money(perDay(d).perDay, 23.7, 'one entry');
+-  removeTransaction(d, groc.find((t) => t.amount === 88.2).id);
+-  money(perDay(d).perDay, 30, 'none');
+-});
+-
+-test('October: the projected balance on any day is the start plus every item up to that day', () => {
+-  const d = riley();
+-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 90 });
+-  // From the first month with balances (October 2025: checking 2,900), real month
+-  // starts and ends reset it; between resets it is the last real number plus every item since.
+-  let cash = null;
+-  for (const day of cal.days) {
+-    const flow = day.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
+-    if (cash === null) cash = 2900 + flow;
+-    else cash += flow;
+-    const m = day.date.slice(0, 7);
+-    const end = d.balances[m] && day.date <= '2026-10-17' && day.date === m + '-' + String(new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5)), 0)).getUTCDate()).padStart(2, '0');
+-    if (end && d.balances[m].chk.end.amount !== null) cash = d.balances[m].chk.end.amount;
+-    assert.ok(Math.abs(day.cash - cash) <= 0.011, day.date + ': ' + day.cash + ' vs ' + cash);
+-  }
+-});
+-
+-// ---------------------------------------------------------------------------
+-// The rules the loop stands on.
+-// ---------------------------------------------------------------------------
++// The October calendar tests moved with the calendar to SLAM (S-209): test/spine-calendar.test.js and test/spine-cashsim.test.js.
+ 
+ test('a line with entries cannot be typed over', () => {
+   const d = riley();
+diff --git a/slam/tools/gallery.mjs b/slam/tools/gallery.mjs
+index 819c8f8..858e095 100644
+--- a/slam/tools/gallery.mjs
++++ b/slam/tools/gallery.mjs
+@@ -31,7 +31,7 @@ const SHOTS = [
+   ['today', 'Today: the loop, Next, cash for 30 days, four numbers', 'today'],
+   ['plan', 'Plan: next month\'s plan', 'plan', 'plan-view-plan'],
+   ['estimates', 'Plan: your estimates (the Rough pass)', 'plan', 'plan-view-estimates'],
+-  ['track', 'Track: scheduled items, quick entry, the log, the calendar, import', 'track'],
++  ['track', 'Track: quick entry, the log, import (the calendar lives in SLAM)', 'track'],
+   ['review', 'Review: fill gaps, close the month, mistakes, past months', 'review'],
+   ['insights-where', 'Insights: Where it goes', 'insights', 'tab-where'],
+   ['insights-compared', 'Insights: Compared', 'insights', 'tab-compared'],
+diff --git a/slam/tools/journeys.mjs b/slam/tools/journeys.mjs
+index d6e0b97..ea62e99 100644
+--- a/slam/tools/journeys.mjs
++++ b/slam/tools/journeys.mjs
+@@ -124,10 +124,11 @@ async function firstSession(browser, view, size) {
+   check(J, 'First session done', String(await page.$$eval('#first-session', (x) => x.length)), '0');
+   check(J, 'Take-home', await text(page, '[data-key="how:takeHome"]'), money(2600));
+   check(J, 'Spending', await text(page, '[data-key="how:spending"]'), money(2000));
+-  check(J, 'So far', await text(page, '[data-key="how:soFar"]'), signedMoney(0));
+-  check(J, 'Expected by month end', await text(page, '[data-key="how:expected"]'), signedMoney(-2000));
++  // So far and expected by month end moved to SLAM's Spending page with the Budget calendar (S-209).
++  check(J, 'Surplus tile', String(await page.$$eval('[data-key="how:surplus"]', (x) => x.length)), '1');
+   check(J, 'Savings rate', await text(page, '[data-key="how:savingsRate"]'), pct(0));
+-  check(J, 'Cash today', await text(page, '[data-key="cash-today"]'), money(2500));
++  // Cash today moved to SLAM with the calendar (S-209): Today links there.
++  check(J, 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
+   report('a. First session', view, t, 60);
+   await page.close();
+ }
+@@ -167,7 +168,7 @@ async function monthDoc() {
+ 
+ // b. A month, by hand. 20 quick entries: groceries 52.10 + 47.35 + 61.80 + 44.20 + 39.90 + 55.15 + 48.60 + 50.40 = 399.50;
+ // eating out 14.60 + 12.25 + 18.40 + 9.75 + 16.30 + 21.10 = 92.40; gas 38.25 + 41.50 + 35.80 + 33.45 + 29.90 + 22.10 = 201.00.
+-// It happened: paycheck 4,000, rent 1,500, bills 60. The bank file has 5 of the entries (52.10, 47.35, 61.80, 38.25, 14.60)
++// Three more quick entries (the Budget's "It happened" retired with its calendar, S-209): paycheck 4,000, rent 1,500, bills 60. The bank file has 5 of the entries (52.10, 47.35, 61.80, 38.25, 14.60)
+ // a day earlier: matched 5, new 0. Utilities and internet: none this month.
+ // Spent: 399.50 + 92.40 + 201.00 + 1,500 + 60 = 2,252.90. Surplus: 4,000 - 2,252.90 = +1,747.10.
+ // Checking: 3,000 + 4,000 - 1,500 - 60 - (399.50 + 92.40 + 201.00) = 4,747.10, typed as the end balance, so the bridge ties.
+@@ -211,12 +212,19 @@ async function month(browser, view, size) {
+   }
+   t.step('20 quick entries (most taps for one: ' + most + ')');
+   if (most > 6) { failures += 1; console.log('  FAIL a quick entry took ' + most + ' taps (limit 6)'); }
+-  for (let i = 0; i < 3; i++) {
+-    await page.waitForSelector('[data-key^="happened:"]');
+-    await t.tap('[data-key^="happened:"]');
+-    await page.waitForTimeout(120);
++  // The scheduled items' "It happened" went with the Budget calendar (S-209): the paycheck, rent and the
++  // phone bill are three quick entries here (in SLAM they are "It happened" on the calendar).
++  for (const [kind, line, amount] of [['income', 'job', '4000'], ['spend', 'rent', '1500'], ['spend', 'subscriptions', '60']]) {
++    await t.tap('[data-key="open-quick-entry"]');
++    await amountReady(page);
++    if (kind === 'income') await t.tap('[data-key="qe-kind:income"]');
++    await page.locator('[data-key="qe-amount"]').fill(amount); t.n += 1;
++    if (!(await page.locator('[data-key="qe-line:' + line + '"]').count())) { await t.tap('[data-key="qe-search"]'); await page.keyboard.type(line === 'subscriptions' ? 'bills' : line); }
++    await t.tap('[data-key="qe-line:' + line + '"]');
++    await t.tap('[data-key="qe-save"]');
++    await page.waitForFunction(() => !document.querySelector('.sheet'));
+   }
+-  t.step('Confirm 3 scheduled items');
++  t.step('Log the paycheck, rent and the phone bill (3 quick entries)');
+   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(CSV) });
+   t.n += 2; // tap "Choose CSV file", pick the file
+   await page.waitForSelector('[data-key="match-summary"]');
+@@ -278,9 +286,9 @@ async function questions(browser, view, size) {
+   t.step('Log a $12 lunch', 6);
+   await home();
+ 
+-  // 2. Safe to spend (S-095 by hand): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0.
+-  check(J, 'Safe to spend', await text(page, '[data-key="safe-to-spend"]'), money(0));
+-  t.step('Safe to spend', 0);
++  // 2. Safe to spend moved to SLAM with the calendar (S-209): Today links to the Spending page, one tap.
++  check(J, 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
++  t.step('Safe to spend (a link to SLAM)', 0);
+ 
+   // 3. Why cash dropped last month: September's bridge. September ended with checking 4,001.03 and
+   // savings 150 = 4,151.03 (test/riley.test.js); explained + not explained = the actual change.
+diff --git a/slam/tools/riley.mjs b/slam/tools/riley.mjs
+index 355aba0..bb7235f 100644
+--- a/slam/tools/riley.mjs
++++ b/slam/tools/riley.mjs
+@@ -26,7 +26,6 @@ import { startPlan, copyPlanForward, setPlanAmount } from '../src/store/plans.js
+ import { planStartValues } from '../src/calc/plan.js';
+ import { importCSV } from '../src/calc/tx-import.js';
+ import { matchImport, matchSummary } from '../src/calc/log.js';
+-import { scheduledItems, forecastFor } from '../src/calc/calendar.js';
+ import { incomeSummary } from '../src/calc/income.js';
+ import { buildSummary, closeMonthSnapshot, snapshotOf } from '../src/calc/summary.js';
+ import { monthReview, lastDay } from '../src/calc/loop.js';
+@@ -165,9 +164,14 @@ function applyEvents(month, events, csvAccounts) {
+     if (ev.acct in bank) bank[ev.acct] = cents(bank[ev.acct] + (ev.acct === 'visa' ? ev.amt : -ev.amt));
+     if (ev.acct === 'chk' && bank.chk < lowChecking.amount) lowChecking = { amount: bank.chk, date: ev.date };
+     if (ev.how === 'scheduled') {
++      // The scheduled item used to come from the cash calendar (retired, S-209); the journey builds it from the event.
+       const key = ev.key + ':' + ev.date;
+-      const item = scheduledItems(store.doc, month, incomeSummary(store.doc, refs.tax)).items.find((i) => i.key === key);
+-      if (!item) throw new Error('No scheduled item ' + key);
++      const [kind, id] = ev.key.split(':');
++      const d0 = store.doc;
++      const line = kind === 'bill' ? d0.categories.flatMap((c) => c.lines).find((l) => l.id === id) : null;
++      const inc = kind === 'pay' ? d0.income.find((x) => x.id === id) : null;
++      const debt = kind === 'debt' ? (d0.debts || []).find((x) => x.id === id) : null;
++      const item = { key, kind: kind === 'pay' ? 'paycheck' : kind, dir: kind === 'pay' ? 'in' : 'out', name: inc ? inc.label : line ? line.name : debt ? debt.label : id, lineId: line ? line.id : (debt && debt.lineId) || null, incomeId: inc ? inc.id : null, account: ev.acct || 'chk', date: ev.date };
+       upd('It happened', (d) => confirmScheduled(d, item, Math.abs(ev.amt), ev.date));
+     }
+     if (ev.how === 'manual' || ev.how === 'both') {
+@@ -219,7 +223,6 @@ function close(month) {
+   store.closeMonth({ ...closeMonthSnapshot(s), review });
+   upd('Save snapshot', (d) => { d.snapshots.push(snapshotOf(s, now.toISOString())); });
+   const next = store.doc.currentMonth;
+-  upd('Save forecast', (d) => saveForecast(d, next, forecastFor(d, s.income, next), now.toISOString()));
+   console.log(month + ': ' + review.openItems.summary + '; bridge ' + (review.bridge.ties ? 'ties' : 'off by ' + review.bridge.unexplained));
+ }
+ 
+diff --git a/slam/tools/screens-check.mjs b/slam/tools/screens-check.mjs
+index 22d7a87..7f8d74e 100644
+--- a/slam/tools/screens-check.mjs
++++ b/slam/tools/screens-check.mjs
+@@ -274,14 +274,15 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   // the 4th and the 5th). No income or plan yet, so nothing moves ahead: today 2,500, also the lowest point and
+   // safe to spend.
+   await go(page, 'today');
+-  await page.waitForSelector('#cash-strip');
+-  check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2500));
+-  check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2500));
+-  check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2500));
++  // The cash strip retired with the Budget calendar (S-209): Today links to SLAM's calendar and keeps Quick entry.
++  await page.waitForSelector('#cash-moved');
++  check('loop', 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
++  check('loop', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
++  check('loop', 'Quick entry on Today', String(await page.$$eval('#cash-moved [data-key="open-quick-entry"]', (x) => x.length)), '1');
+   await go(page, 'track');
+-  await page.waitForSelector('#chart-cf-chart svg');
+-  check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
+-  check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
++  await page.waitForSelector('[data-key="track-slam-calendar"]');
++  check('loop', 'Track calendar link', await page.$eval('[data-key="track-slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
++  // The calendar chart and month grid moved to SLAM's calendar page with the Budget calendar (S-209).
+   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
+   await go(page, 'review');
+   // Filled categories are one row each until tapped (S-106).
+@@ -317,7 +318,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   await go(page, 'today');
+   await page.waitForSelector('#loop-strip');
+   check('loop strip', 'Review step', await settled(page, '[data-key="loop-review"] .small', '0 lines still empty, 6 of 6 balances in, bridge off by $60'), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
+-  check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28, scheduled 1 of 1 confirmed'), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
++  check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28'), '10 entries, last Oct 28');
+   page.on('dialog', (dl) => dl.accept());
+   await go(page, 'review');
+   await page.click('[data-key="open-checklist"]');
+@@ -362,14 +363,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   // car payment) and 6 on the Visa = 12;
+   // scheduled in October: rent, two paychecks, car payment, phone, Visa = 6, of which 3 are done so far.
+   await page.getByText('Riley, 31').click();
+-  await page.waitForSelector('#cash-strip');
+-  check('riley', 'Cash today', await settled(page, '[data-key="cash-today"]', money(3291.03)), money(3291.03));
+-  check('riley', 'Lowest point', await settled(page, '[data-key="cash-lowest"]', money(60)), money(60));
+-  // Safe to spend (S-095): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0 and a message.
+-  check('riley', 'Safe to spend', await settled(page, '[data-key="safe-to-spend"]', money(0)), money(0));
+-  check('riley', 'Shortfall message', await settled(page, '[data-key="safe-short"]', "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5."), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
+-  check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
+-  check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15, scheduled 3 of 6 confirmed'), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
++  // Cash today, the lowest point and safe to spend moved to SLAM with the calendar (S-209); Today links there.
++  await page.waitForSelector('#cash-moved');
++  check('riley', 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
++  check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15'), '12 entries, last Oct 15');
+   // Past months are on Review; the bridge history and the 80/20 are in Insights (S-106).
+   await go(page, 'review');
+   await page.waitForSelector('#months-review');
+@@ -430,10 +427,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   // November's plan: paydays Nov 6 and Nov 20, 2 x 1,500 = 3,000, and dog walking 250: 3,250.
+   await plan(page, 'plan');
+   check('riley', 'November planned income', await settled(page, '[data-key="plan-income-total"]', '$3,250'), '$3,250');
++  // The pay-later flag and the cash chart moved to SLAM's calendar page with the Budget calendar (S-209).
+   await go(page, 'track');
+-  await page.waitForSelector('#chart-cf-paylater');
+-  check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
+-  check('riley', 'cf-chart drawn', String(await page.$$eval('#chart-cf-chart svg', (x) => x.length >= 1)), 'true');
++  await page.waitForSelector('[data-key="track-slam-calendar"]');
+   await insights(page, 'cash');
+   check('riley', 'bridge drawn', String(await page.$$eval('#chart-bridge svg', (x) => x.length >= 1)), 'true');
+   await insights(page, 'time');
+@@ -557,18 +553,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
+   check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
+   // How a computed number was worked out: the panel ends on the same number as the tile.
+-  // October is open (S-128): so far and expected by month end, by hand in test/outlook.test.js:
+-  // so far 1,630 - 2,369.25 = -739.25; expected -739.25 + 1,500 - 65 - 694.75 = 1.00.
++  // So far and expected by month end (S-128) and safe to spend were built on the Budget calendar and moved
++  // to SLAM's Spending page with it (S-209): Today shows the surplus tile and links there.
+   await go(page, 'today');
+-  await page.waitForSelector('[data-key="how:soFar"]');
+-  check('sources', 'So far tile', await page.$eval('[data-key="how:soFar"]', (b) => b.textContent), signedMoney(-739.25));
+-  check('sources', 'Expected by month end', await page.$eval('[data-key="how:expected"]', (b) => b.textContent), signedMoney(1));
+-  await page.click('[data-key="how:expected"]');
++  await page.waitForSelector('[data-key="how:surplus"]');
++  await page.click('[data-key="how:surplus"]');
+   await page.waitForSelector('#how-panel');
+-  check('sources', 'Expected panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), signedMoney(1));
+-  // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
+-  await page.click('[data-key="how:safeToSpend"]');
+-  check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));
++  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), (await page.$eval('[data-key="how:surplus"]', (b) => b.textContent)).replace(/\.\d\d$/, ''));
++  check('sources', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
+   // A number in the Insights table opens its source: Food's actual opens its row on Review.
+   await insights(page, 'compared');
+   await page.locator('tr.cat', { hasText: 'Food' }).locator('td:not(.wide) a.src-link').first().click();
+@@ -587,14 +579,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   await page.goto(URL + '#clients');
+   console.log('view as client and merge (phone width)');
+   await page.getByText('Riley, 31').click();
+-  await page.waitForSelector('#cash-strip');
++  await page.waitForSelector('#cash-moved');
+   // The coach writes a note, tags Shopping as a mistake (not shared), and sees the coach-only settings.
+   await setup(page, 'notes');
+   await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
+   await page.press('[data-key="coach-notes"]', 'Tab');
+   await page.waitForTimeout(150);
+   await setup(page, 'coach');
+-  check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
++  check('client view', 'The cushion input went with the calendar (S-209)', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
+   check('client view', 'Coach sees materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '1');
+   await go(page, 'review');
+   await page.waitForSelector('#mistakes');
+@@ -619,9 +611,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
+   check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
+   await go(page, 'today');
+-  await page.waitForSelector('#cash-strip');
+-  // The calendar still uses the cushion: the same $0 and message as the coach sees.
+-  check('client view', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
++  await page.waitForSelector('#cash-moved');
++  // Safe to spend moved to SLAM with the calendar (S-209): the client sees the same link the coach sees.
++  check('client view', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
+   await page.click('[data-key="view-as-client"]');
+   await page.waitForTimeout(150);
+   check('client view', 'Back to coach', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'View as client');
+@@ -646,7 +638,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
+   check('merge', 'The file', String(/^The file: Shopping, .*estimate \$80.* \(client, /.test(file)), 'true');
+   await page.check('[data-key="pick:incoming:line:shopping"]');
+   await page.click('[data-key="finish-merge"]');
+-  await page.waitForSelector('#cash-strip');
++  await page.waitForSelector('#cash-moved');
+   await go(page, 'review');
+   await page.waitForSelector('#mistakes');
+   check('merge', 'Picked the file', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');

@@ -14,6 +14,8 @@ const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
 const P = (d, f) => 'debts.' + d.id + '.' + f;
 const debtOf = (spine, id) => (spine.debts || []).find((d) => d.id === id) || null;
+// A card's balance today, in cents: the run opens it lower by a statement carried in from before the run (S-209).
+const openingCents = (c) => c.balance + (c.carried ? Math.round(c.carried.amount * 100) : 0);
 const STUDENT = ['student_loan', 'private_student_loan'];
 const IDR_RULES = ['IDR_PAYMENT_SHARE', 'IDR_POVERTY_MULTIPLE', 'POVERTY_LINE_1', 'POVERTY_LINE_EACH'];
 const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), months); const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return ym + '-' + String(Math.min(+iso.slice(8, 10), last)).padStart(2, '0'); };
@@ -43,10 +45,10 @@ export function gantt(sim) {
   const frac = (date) => Math.min(1, Math.max(0, daysBetween(from, date) / span));
   const rows = [];
   for (const c of sim.model.cards) {
-    if (!(c.balance > 0)) continue;
+    if (!(openingCents(c) > 0)) continue;
     const st = sim.cards[c.id];
     const clear = sim.clearDates.perCard[c.id] || null;
-    rows.push({ id: c.id, name: c.name, kind: 'card', path: c.path, startBalance: dollars(c.balance), endBalance: st ? st.balance : null, clearDate: clear, beyond: !clear, endsAt: clear || to, fraction: clear ? frac(clear) : 1, interest: sim.interest.byCard[c.id] ?? 0, apr: c.apr, promoEnd: c.promoEnd, revolving: st ? st.revolving : null });
+    rows.push({ id: c.id, name: c.name, kind: 'card', path: c.path, startBalance: dollars(openingCents(c)), endBalance: st ? st.balance : null, clearDate: clear, beyond: !clear, endsAt: clear || to, fraction: clear ? frac(clear) : 1, interest: sim.interest.byCard[c.id] ?? 0, apr: c.apr, promoEnd: c.promoEnd, revolving: st ? st.revolving : null });
   }
   for (const l of sim.model.loans) {
     const st = sim.loans[l.id];
@@ -130,7 +132,7 @@ export function utilizationAtReport(spine, rules, sim) {
     all.useFact(P(d, 'limit'), d.limit);
     if (c.reportDayRough) { t.addRough(P(d, 'reportDay')); all.addRough(P(d, 'reportDay')); }
     const st = sim.run.cards[c.id];
-    const peak = dollars(Math.max(st ? st.peakBeforeReport || 0 : 0, st ? st.balance : 0, c.balance));
+    const peak = dollars(Math.max(st ? st.peakBeforeReport || 0 : 0, st ? st.balance : 0, openingCents(c)));
     const reports = d.type === 'credit_card' || d.reportsToPersonalCredit ? pers.useFact(P(d, 'reportsToPersonalCredit'), d.reportsToPersonalCredit) : false;
     if (reports === true) { pers.useFact(P(d, 'limit'), d.limit); if (c.reportDayRough) pers.addRough(P(d, 'reportDay')); pPeak += peak; if (l !== null) pLim += l; }
     peakSum += peak; if (l !== null) lim += l;
@@ -180,13 +182,13 @@ export function cardTiles(spine, rules, sim, asOf = spine.meta.asOf) {
     let nextClose = null, nextDue = null, nextStatement = null;
     for (const day of sim.run.days) { const e = day.events.find((x) => x.kind === 'statement' && x.card === c.id); if (e) { nextClose = day.date; nextDue = e.due; nextStatement = dollars(e.stmt); break; } }
     const cycle = { stmtDay: c.stmtDay, closeRough: !!c.estimated, graceDays: c.graceDays, dueDay: c.dueDay, nextClose, nextDue, nextStatement, autopay: c.autopay, everyday: !!c.goalNoInterest };
-    const why = st && c.balance > 0 ? C.whyStuck(sim.model, sim.run, c.id) : null;
+    const why = st && openingCents(c) > 0 ? C.whyStuck(sim.model, sim.run, c.id) : null;
     return {
-      id: c.id, name: c.name, path: c.path, balance: st ? st.balance : null, startBalance: dollars(c.balance), apr: c.apr, promoApr: c.promoApr, promoEnd: c.promoEnd,
+      id: c.id, name: c.name, path: c.path, balance: st ? st.balance : null, startBalance: dollars(openingCents(c)), carried: c.carried || null, apr: c.apr, promoApr: c.promoApr, promoEnd: c.promoEnd,
       everyday: !!c.goalNoInterest, payLast: !!c.payLast, revolving: st ? st.revolving : null, clearDate: sim.clearDates.perCard[c.id] || null, interest: sim.interest.byCard[c.id] ?? 0,
       cycle, util: util.items.find((x) => x.id === c.id) || null,
       why: why ? { code: why.code, text: why.text, minimum: dollars(why.minimum), interest: dollars(why.interest), charged: dollars(why.charged), paid: dollars(why.paid) } : null,
-      trap: d && c.balance > 0 ? minimumTrap(spine, rules, d, asOf) : null,
+      trap: d && openingCents(c) > 0 ? minimumTrap(spine, rules, d, asOf) : null,
       fee: d ? feeRoi(d) : null,
       bonus: d ? signupBonus(d, sim, asOf) : null
     };

@@ -21,8 +21,10 @@ import { emergency } from './emergency.js';
 import { mainChecking } from './defaults.js';
 import { shareOf, coverOf } from './sharing.js';
 import { isSubscription, nextCharge } from './subscriptions.js';
-import { DEFAULT_MIN_SOURCE, payPolicyOf } from './debt.js';
+import { DEFAULT_MIN_SOURCE, payPolicyOf, minimumPayment } from './debt.js';
 import * as C from './vendor/cashcal.js';
+import { MATCH_DAYS, BILL_MATCH_SHARE, amountClose } from './feed.js';
+import { TAG_WORDS } from './spending.js';
 
 const cents = (x) => (x === null || x === undefined ? null : Math.round(x * 100));
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
@@ -41,6 +43,17 @@ export function windowDays(asOf, months) {
   return daysBetween(asOf, last > ahead ? last : ahead) + 1;
 }
 const clampDay = (ym, day) => { const end = monthEnd(ym); return ym + '-' + String(Math.min(day, +end.slice(8, 10))).padStart(2, '0'); };
+
+// The last statement close strictly before the run, and its due date the way the engine sets one (the next
+// due day after the close, else the close plus the grace days), when that due date falls inside the run.
+export function carriedStatement(asOf, end, stmtDay, dueDay, graceDays) {
+  let ym = monthKey(asOf), close = clampDay(ym, stmtDay);
+  if (close >= asOf) { ym = addMonths(ym, -1); close = clampDay(ym, stmtDay); }
+  let due;
+  if (dueDay) { due = clampDay(monthKey(close), dueDay); if (due <= close) due = clampDay(addMonths(monthKey(close), 1), dueDay); }
+  else due = addDays(close, graceDays);
+  return due >= asOf && due <= end ? { close, due } : null;
+}
 
 // The debt plan (spine.debtPlan, every field optional): the extra at the debt and how it is aimed.
 export function debtPlanOf(spine, rules, t, year) {
@@ -73,6 +86,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     everydayMonthly: 0, realHourlyWage: null, surplusMonthly: null, paths: {}
   };
   const end = addDays(asOf, model.days - 1);
+  model.checkingPath = null;
   const cf = cashflow(spine, rules, ym, { mode: 'expected' });
   t.absorb({ ...cf.income.takeHome, value: undefined });
   model.surplusMonthly = cents(cf.surplus.value);
@@ -85,6 +99,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
 
   // ------------------------------------------------------------ cash accounts
   const main = mainChecking(spine);
+  model.checkingPath = main ? 'accounts.' + main + '.balance' : null;
   for (const a of spine.accounts || []) {
     if (a.family !== 'cash') continue;
     const bal = t.useFact('accounts.' + a.id + '.balance', a.balance);
@@ -116,14 +131,17 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     const perMonthNet = (st ? (st.gross / Math.max(w, 1e-9)) * ratio : amt * PER_YEAR[s.cadence] / 12) - deducted;
     const estimatedDay = !s.payDay || roughFact(s.payDay);
     const label = s.label;
-    const item = { id: s.id, label, to: pid, source: 'spine', variable: roughFact(s.amount), estimated: estimatedDay, path };
+    // Each paycheck lands in the account it is paid into when that account is in the run (S-209), else main checking.
+    const into = s.depositTo ? t.useFact(base + '.depositTo', s.depositTo) : null;
+    const to = into && model.accounts.some((a) => a.id === into) ? into : pid;
+    const item = { id: s.id, label, to, source: 'spine', variable: roughFact(s.amount), estimated: estimatedDay, path };
     model.paths['pay:' + s.id] = path;
     const maybe = w < 1;
     const push = (dates, each) => {
       if (maybe) { for (const d of dates) if (d >= asOf && d <= end && (!s.end || d <= s.end)) model.maybe.push({ id: s.id + '@' + d, label, cents: cents(each), date: d, likelihood: w, direction: 'in', path }); return; }
       model.incomes.push(item); fenceDates(model, item, dates, s.start, s.end);
     };
-    if (s.cadence === 'once') { if (s.start >= asOf && s.start <= end) { if (maybe) model.maybe.push({ id: s.id, label, cents: cents(amt * ratio), date: s.start, likelihood: w, direction: 'in', path }); else model.extras.push({ id: s.id, label, cents: cents(amt * ratio), cadence: 'once', date: s.start, direction: 'in', paidWith: 'cash', category: 'income', path }); } continue; }
+    if (s.cadence === 'once') { if (s.start >= asOf && s.start <= end) { if (maybe) model.maybe.push({ id: s.id, label, cents: cents(amt * ratio), date: s.start, likelihood: w, direction: 'in', path }); else model.extras.push({ id: s.id, label, cents: cents(amt * ratio), cadence: 'once', date: s.start, direction: 'in', paidWith: 'cash', category: 'income', to, path }); } continue; }
     if (STEP[s.cadence]) {
       if (!s.start) { needs.push({ path: base + '.payDay', what: label + ': first pay date' }); continue; }
       const each = amt * ratio - deducted * 12 / PER_YEAR[s.cadence];
@@ -153,8 +171,11 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     const base = 'expenses.' + e.id, path = base + '.amount';
     if (coverOf(e).covered) { t.useFact(base + '.covered', e.covered); continue; }
     if (e.end && e.end < asOf) continue;
+    // Marked "does not apply": not a cost, and not a missing one either.
+    if (e.amount && e.amount.kind === 'notForMe') { t.useFact(path, e.amount); continue; }
     const amt = t.useFact(path, e.amount);
     if (amt === null) { needs.push({ path, what: e.label + ': amount' }); continue; }
+    if (amt <= 0) continue;
     const sh = shareOf(spine, e);
     for (const p of sh.rough || []) t.addRough(p);
     for (const p of sh.missing || []) t.addMissing(p);
@@ -241,6 +262,23 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
         revolving: bal > 0, estimated: closeFact === null, movable: true, path: base + '.balance'
       });
       t.rule(rules, 'APP_CARD_MIN_FLOOR', year); t.rule(rules, 'APP_CARD_MIN_PCT', year);
+      // A statement that closed before the run, due inside it (S-209). The engine opens every card with no
+      // statement, so that payment would never leave checking and the lowest day and safe to spend would read
+      // too high. It lands on its due day from checking at the SLAM minimum (or the whole balance when the card
+      // is paid by its statement), and the card opens that much lower. The statement is taken as today's
+      // balance (charges since the close are not known), so it is rough.
+      const card = model.cards[model.cards.length - 1];
+      const carry = carriedStatement(asOf, end, card.stmtDay, card.dueDay, grace);
+      if (carry && bal > 0) {
+        const m = minimumPayment(d, rules, carry.due, bal, policy);
+        const pay = m.value === null ? null : Math.min(bal, m.value);
+        if (pay) {
+          model.extras.push({ id: 'carry:' + d.id, kind: 'card-payment', label: name + (policy === 'statement' ? ' statement' : ' minimum') + ' (statement closed ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+carry.close.slice(5, 7) - 1] + ' ' + +carry.close.slice(8, 10) + ')', cadence: 'once', date: carry.due, cents: cents(pay), direction: 'out', paidWith: 'cash', category: 'debt', card: d.id });
+          card.balance = cents(bal - pay);
+          card.carried = { close: carry.close, due: carry.due, amount: pay };
+          t.addRough(base + '.statementCloseDay');
+        }
+      }
       continue;
     }
     const minimum = t.useFact(base + '.minimum', d.minimum);
@@ -282,18 +320,105 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   model.extra = debtPlanOf(spine, rules, t, year);
   for (const m of cal.maybe || []) if (m.date >= asOf && m.date <= end) model.maybe.push({ id: m.id, label: m.label, cents: cents(m.amount), date: m.date, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5, direction: m.direction || 'in', tray: true });
   for (const [key, o] of Object.entries(cal.overrides || {})) { const ov = {}; if (o.date) ov.date = o.date; if (typeof o.amount === 'number') ov.cents = cents(o.amount); if (o.skip) ov.skip = true; model.overrides[key] = { ...(model.overrides[key] || {}), ...ov }; }
-  for (const id of ['CARD_GRACE_DAYS', 'CARD_LATE_FEE', 'CARD_PENALTY_APR']) t.rule(rules, id, year);
+  // Moved from before the as-of date to on or after it (S-209): it had not gone out (or come in) yet, so the
+  // as-of balance does not hold it. The engine only makes occurrences from the as-of date on, so it is added
+  // on its new day, once, unless it was logged as happened.
+  const happened = new Set((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith('sched:')).map((x) => x.importKey.slice(6)));
+  for (const [key, o] of Object.entries(cal.overrides || {})) {
+    const [src, orig] = key.split('|');
+    if (o.skip || !o.date || !orig || orig >= asOf || o.date < asOf || o.date > end || happened.has(key)) continue;
+    const it = model.bills.find((b) => b.id === src && b.cadence !== 'spread') || model.incomes.find((x) => x.id === src);
+    if (!it) continue;
+    const isIn = model.incomes.includes(it);
+    model.extras.push({ id: 'late:' + key, label: it.label, cents: typeof o.amount === 'number' ? cents(o.amount) : it.cents, cadence: 'once', date: o.date, direction: isIn ? 'in' : 'out', paidWith: isIn ? 'cash' : it.paidWith || 'cash', category: isIn ? 'income' : it.category || 'other', to: isIn ? it.to : undefined, late: key });
+  }
+  const fromLog = logIntoRun(spine, model, asOf, end, cardIds);
   const snap = t.snapshot();
-  return { model, needs, ...snap, cf };
+  return { model, needs, ...snap, cf, claims: fromLog.claims, fromLog: fromLog.entries };
+}
+
+// The log reaches the run (S-209), the engine's own logs input, with each entry moving cash once:
+// 1. "It happened" names its occurrence: the run takes the logged amount on the logged day,
+//    or skips the occurrence when that day is before the as-of balance, which already holds it.
+// 2. A typed entry on a dated bill line within a quarter of its amount, or typed income close to a
+//    paycheck's amount, within the feed's match window of an occurrence claims it the same way.
+// 3. Everyday spending on a tag the run already spreads moves cash only past what the spread
+//    takes from the as-of date to that month's end; a refund on that tag gives it back.
+// 4. Anything else dated on or after the as-of date lands on its own day.
+export function logIntoRun(spine, model, asOf, end, cardIds) {
+  const incomeIds = new Set((spine.income || []).map((x) => x.id));
+  const lineOf = new Map((spine.expenses || []).map((x) => [x.id, x]));
+  const planned = C.schedule(model, { maybeMode: 'ignore' }).filter((it) => (it.kind === 'income' && incomeIds.has(it.sourceId)) || (it.kind === 'bill' && lineOf.has(it.sourceId)));
+  const keyOf = (it) => it.sourceId + '|' + it.origDate;
+  const byKey = new Map(planned.map((it) => [keyOf(it), it]));
+  const taken = new Set(), claims = [], entries = [];
+  const claim = (it, e) => {
+    const key = keyOf(it); taken.add(key);
+    model.overrides[key] = e.date >= asOf ? { date: e.date, cents: cents(e.amount) } : { skip: true };
+    claims.push({ key, logId: e.id, date: e.date, label: it.label, kind: it.kind, amount: e.amount, planned: dollars(it.cents), inRun: e.date >= asOf && e.date <= end });
+  };
+  const log = (spine.log || []).filter((e) => e.date <= end).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  for (const e of log) if (e.importKey && e.importKey.startsWith('sched:')) { const it = byKey.get(e.importKey.slice(6)); if (it && !taken.has(keyOf(it))) claim(it, e); }
+  const near = (e, ok) => planned.filter((it) => !taken.has(keyOf(it)) && ok(it) && Math.abs(daysBetween(it.date, e.date)) <= MATCH_DAYS).sort((a, b) => Math.abs(daysBetween(a.date, e.date)) - Math.abs(daysBetween(b.date, e.date)))[0];
+  const rest = [];
+  for (const e of log) {
+    if (e.importKey && e.importKey.startsWith('sched:')) continue;
+    if (daysBetween(e.date, asOf) > MATCH_DAYS) continue;
+    const it = e.kind === 'income' ? near(e, (x) => x.kind === 'income' && amountClose(e.amount, dollars(x.cents)))
+      : e.kind !== 'refund' && e.expenseId ? near(e, (x) => x.kind === 'bill' && x.sourceId === e.expenseId && amountClose(e.amount, dollars(x.cents), BILL_MATCH_SHARE)) : null;
+    if (it) claim(it, e);
+    else if (e.date >= asOf) rest.push(e);
+  }
+  const spread = model.bills.filter((b) => b.cadence === 'spread');
+  const spreadLines = new Set(spread.map((b) => b.id));
+  const tagOf = (e) => e.tag || (e.expenseId && lineOf.get(e.expenseId) ? lineOf.get(e.expenseId).fat || 'other' : 'other');
+  const payerOf = (e) => (e.paidWith && cardIds.has(e.paidWith) ? e.paidWith : 'cash');
+  const words = (e) => e.note || e.merchant || TAG_WORDS[tagOf(e)] || 'Logged';
+  const groups = new Map();
+  for (const e of rest) {
+    if (e.kind === 'income') {
+      model.extras.push({ id: 'log:' + e.id, label: words(e), cents: cents(e.amount), cadence: 'once', date: e.date, direction: 'in', paidWith: 'cash', category: 'income', fromLog: true });
+      entries.push({ logId: e.id, date: e.date, label: words(e), kind: 'income', amount: e.amount, moved: e.amount, how: 'whole' });
+      continue;
+    }
+    const tag = tagOf(e), payer = payerOf(e);
+    const everyday = (!e.expenseId || spreadLines.has(e.expenseId)) && spread.some((b) => b.category === tag && b.paidWith === payer);
+    if (everyday) { const k = e.date.slice(0, 7) + '|' + tag + '|' + payer; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(e); continue; }
+    const signed = e.kind === 'refund' ? -e.amount : e.amount;
+    model.logs.push({ id: 'log:' + e.id, date: e.date, cents: cents(signed), what: words(e), tag, paidWith: payer });
+    entries.push({ logId: e.id, date: e.date, label: words(e), kind: e.kind || 'spend', amount: e.amount, moved: round2(signed), how: 'whole' });
+  }
+  for (const [k, es] of groups) {
+    const [ym, tag, payer] = k.split('|');
+    const n = daysInMonth(+ym.slice(0, 4), +ym.slice(5, 7));
+    const perDay = spread.filter((b) => b.category === tag && b.paidWith === payer).reduce((x, b) => x + Math.round(b.cents / n), 0);
+    const first = asOf > ym + '-01' ? asOf : ym + '-01';
+    const plan = perDay * (daysBetween(first, monthEnd(ym)) + 1);
+    let sum = 0;
+    for (const e of es) {
+      const past = (x) => Math.max(0, x - plan);
+      const before = past(sum); sum += cents(e.kind === 'refund' ? -e.amount : e.amount); const moved = past(sum) - before;
+      if (moved) model.logs.push({ id: 'log:' + e.id, date: e.date, cents: moved, what: (TAG_WORDS[tag] || tag) + ': logged past the plan', tag, paidWith: payer });
+      entries.push({ logId: e.id, date: e.date, label: words(e), kind: e.kind || 'spend', amount: e.amount, moved: dollars(moved), how: moved ? 'past the plan' : 'inside the plan', planLeft: dollars(Math.max(0, plan - sum)) });
+    }
+  }
+  return { claims, entries };
 }
 
 // Run the simulation and read it back in dollars.
 export function cashsim(spine, rules, opts = {}) {
-  const { model, needs, from, rough, missing, rules: ruleIds, cf } = cashModel(spine, rules, opts);
+  const { model, needs, from, rough, missing, rules: ruleIds, cf, claims, fromLog } = cashModel(spine, rules, opts);
   const mode = opts.maybeMode || 'weighted';
   const run = C.simulate(model, { maybeMode: mode, penaltyMonths: rules.get('CARD_PENALTY_MONTHS', +model.start.slice(0, 4)) });
   const ev = (e) => ({ kind: e.kind, label: e.label, amount: dollars(e.cents), account: e.account || null, card: e.card || null, statement: e.stmt !== undefined ? dollars(e.stmt) : undefined, due: e.due || undefined, partial: !!e.partial, guarded: !!e.guarded });
-  const days = run.days.map((d) => ({ date: d.date, dom: d.dom, cash: dollars(d.cash), primary: dollars(d.primary), cardDebt: dollars(d.cardDebt), loanDebt: dollars(d.loanDebt), payLater: dollars(d.payLater), debt: dollars(d.debt), in: dollars(d.in), out: dollars(d.out), balances: Object.fromEntries(Object.entries(d.balances).map(([k, c]) => [k, dollars(c)])), events: d.events.map(ev) }));
+  // A carried statement (S-209) left the card's opening balance so the engine would not charge it twice;
+  // until checking pays it on its due day it is still owed, so the debt reading carries it back.
+  const owedBefore = (date) => model.cards.reduce((a, c) => a + (c.carried && date < c.carried.due ? cents(c.carried.amount) : 0), 0);
+  // Checking (S-209): every checking account together, so a paycheck paid into a second checking account
+  // is in the line. With main checking unknown the engine's figure stands (and nothing shows it).
+  const checkingIds = model.accounts.some((a) => a.primary) ? model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) : null;
+  const checkingOf = (d) => (checkingIds ? checkingIds.reduce((x, id) => x + (d.balances[id] || 0), 0) : d.primary);
+  const days = run.days.map((d) => ({ date: d.date, dom: d.dom, cash: dollars(d.cash), primary: dollars(checkingOf(d)), cardDebt: dollars(d.cardDebt + owedBefore(d.date)), loanDebt: dollars(d.loanDebt), payLater: dollars(d.payLater), debt: dollars(d.debt + owedBefore(d.date)), in: dollars(d.in), out: dollars(d.out), balances: Object.fromEntries(Object.entries(d.balances).map(([k, c]) => [k, dollars(c)])), events: d.events.map(ev) }));
   const cards = Object.fromEntries(Object.entries(run.cards).map(([id, c]) => [id, { ...c, balance: dollars(c.balance), interest: dollars(c.interest), lateFees: dollars(c.lateFees), paid: dollars(c.paid), chargedBack: dollars(c.chargedBack), netPaydown: dollars(c.netPaydown), startBalance: dollars(c.startBalance), limit: dollars(c.limit), peakBeforeReport: dollars(c.peakBeforeReport), interestByMonth: Object.fromEntries(Object.entries(c.interestByMonth).map(([k, x]) => [k, dollars(x)])), statements: c.statements.map((s) => ({ ...s, balance: dollars(s.balance), interest: dollars(s.interest), charges: dollars(s.charges), adb: dollars(s.adb) })), path: model.paths['debt:' + id] || null }]));
   const loans = Object.fromEntries(Object.entries(run.loans).map(([id, l]) => [id, { ...l, balance: dollars(l.balance), interest: dollars(l.interest), paid: dollars(l.paid), path: model.paths['debt:' + id] || null }]));
   // Dates: cards free (every revolving card stopped revolving), high-interest free, loans paid, all free.
@@ -309,7 +434,10 @@ export function cashsim(spine, rules, opts = {}) {
   const raid = run.days.find((d) => d.events.some((e) => e.kind === 'auto-cover'));
   const kind = missing.length ? 'incomplete' : rough.length ? 'rough' : 'computed';
   return {
-    start: model.start, days: model.days, mode, model, run, needs, cf,
+    start: model.start, days: model.days, mode, model, run, needs, cf, claims, fromLog,
+    // Empty is not zero (S-209): with no balance on main checking the engine's "checking" is every cash account,
+    // savings included, so nothing that reads checking is shown until it has one.
+    checking: { known: model.accounts.some((a) => a.primary), path: model.checkingPath, ids: model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) },
     daily: days,
     low: { date: run.low.date, amount: dollars(run.low.cents) },
     floor: { amount: dollars(model.floor), target: dollars(model.floorTarget ?? null), cushionCash: dollars(model.cushionCash ?? 0), source: model.floorSource, guard: model.guard },

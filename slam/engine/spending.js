@@ -64,14 +64,37 @@ export function tagBudgets(spine, rules, cf, { ym, asOf = spine.meta.asOf } = {}
   return { ym: month, dayFrac: round2(dayFrac), day: inMonth ? dayOf(asOf) : null, daysInMonth: dim(month), rows, spentTotal: round2(rows.reduce((a, r) => a + r.spent, 0)), budgetTotal: out.value, hotMultiple: hot, entries: entries.length, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 
-// Safe to spend today: cash outside the cushion, less what is committed before
-// the next paycheck, less the floor; and per day until that paycheck.
+// Safe to spend today: the lower of two readings. The engine's: cash outside the
+// cushion, less what is committed before the next paycheck, less the floor. And
+// the Budget's (S-209): the lowest point ahead in the window, less the floor,
+// because a dollar spent today is a dollar lower on every later day, so money a
+// later bill needs is never offered today. The lowest point is read before the
+// run's protections: what the cushion topped up and any payment the floor held
+// back still count against it, or a household that is dipping into savings
+// would read as safe. Per day until the next paycheck; when it is below zero,
+// how far short and on which day.
 export function safeToSpend(sim) {
   const s = sim.safeToSpend;
+  if (!sim.checking.known) return { today: null, byPaycheck: null, byLow: null, binding: null, low: null, through: null, shortfall: null, cashPath: sim.checking.path, committed: null, nextIncome: s.nextIncome, daysUntil: null, perDay: null, cash: null, floor: sim.floor.amount, excludesCushion: s.excludesCushion, byDay: [], kind: 'incomplete', from: sim.from, rough: sim.rough, missing: [...new Set([...sim.missing, ...(sim.checking.path ? [sim.checking.path] : [])])], rules: sim.rules };
+  const cushion = sim.model.accounts.filter((a) => a.cushion);
+  const outside = (d) => round2(Object.entries(d.balances).filter(([id]) => !cushion.find((a) => a.id === id)).reduce((a, [, x]) => a + x, 0));
+  const fromCushion = (e) => e.kind === 'auto-cover' && cushion.some((a) => e.label.startsWith('From ' + a.name));
   const daysUntil = s.nextIncome ? daysBetween(sim.start, s.nextIncome) : null;
-  const perDay = s.today === null ? null : daysUntil && daysUntil > 0 ? round2(s.today / daysUntil) : s.today;
-  const cash = sim.daily.length ? round2(Object.entries(sim.daily[0].balances).filter(([id]) => !sim.model.accounts.find((a) => a.id === id && a.cushion)).reduce((a, [, x]) => a + x, 0)) : null;
-  return { today: s.today, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: s.excludesCushion, byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
+  const cash = sim.daily.length ? outside(sim.daily[0]) : null;
+  let covered = 0, held = 0, lowDay = null, low = null;
+  for (const d of sim.daily) {
+    for (const e of d.events) { if (fromCushion(e)) covered = round2(covered + e.amount); if (e.kind === 'shortfall') held = round2(held - e.amount); }
+    const x = round2(outside(d) - covered - held);
+    if (low === null || x < low.amount) { lowDay = d; low = { date: d.date, amount: x, asRun: outside(d), covered, held }; }
+  }
+  const byLow = s.today === null || !low ? null : round2(low.amount - sim.floor.amount);
+  const binding = byLow !== null && byLow < s.today ? 'low' : 'paycheck';
+  const today = s.today === null ? null : binding === 'low' ? byLow : s.today;
+  const perDay = today === null ? null : daysUntil && daysUntil > 0 ? round2(today / daysUntil) : today;
+  const shortfall = today !== null && today < 0 ? { amount: round2(-today), date: binding === 'low' ? lowDay.date : s.nextIncome || lowDay.date, covered: low.covered, held: low.held } : null;
+  const through = sim.daily.length ? sim.daily[sim.daily.length - 1].date : null;
+  const primary = sim.model.accounts.find((a) => a.primary);
+  return { today, byPaycheck: s.today, byLow, binding, low, through, shortfall, cashPath: primary ? 'accounts.' + primary.id + '.balance' : null, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: s.excludesCushion, byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
 }
 
 // Can I spend this: the same run with the purchase added. Yes, tight or no;
@@ -195,8 +218,10 @@ export function freeTrials(spine, rules, asOf = spine.meta.asOf) {
 // The forecast for a check-in: what the run says each cash account holds on that day.
 export function checkInForecast(spine, sim, date = sim.start) {
   const day = sim.daily.find((d) => d.date === date) || sim.daily[sim.daily.length - 1] || null;
-  const accounts = sim.model.accounts.map((a) => ({ id: a.id, name: a.name, path: 'accounts.' + a.id + '.balance', cushion: !!a.cushion, now: v((spine.accounts.find((x) => x.id === a.id) || {}).balance) }));
-  return { date: day ? day.date : date, forecast: Object.fromEntries(accounts.map((a) => [a.id, day ? (day.balances[a.id] ?? null) : null])), accounts };
+  // Every cash account, the ones the run left out for a missing balance too (S-209): a check-in is where it gets one.
+  const inRun = new Map(sim.model.accounts.map((a) => [a.id, a]));
+  const accounts = (spine.accounts || []).filter((a) => a.family === 'cash').map((a) => ({ id: a.id, name: inRun.has(a.id) ? inRun.get(a.id).name : v(a.name) || a.id, path: 'accounts.' + a.id + '.balance', cushion: inRun.has(a.id) ? !!inRun.get(a.id).cushion : false, now: v(a.balance), inRun: inRun.has(a.id) }));
+  return { date: day ? day.date : date, forecast: Object.fromEntries(accounts.map((a) => [a.id, day && a.inRun ? (day.balances[a.id] ?? null) : null])), accounts };
 }
 
 // Drift across check-ins: the mean miss (actual less forecast) and its spread;

@@ -9,7 +9,10 @@ import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
-import { estimatedVsActual } from '../engine/compare.js';
+import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
+import { cashsim } from '../engine/cashsim.js';
+import { safeToSpend } from '../engine/spending.js';
+import { cashReading } from '../engine/calendar-views.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
@@ -85,7 +88,13 @@ function render(base, rules, source) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
   const compare = estimatedVsActual(spine, rules, { months: 1 });
-  mathCtx = { spine, rules, s, compare };
+  // Cash at a glance (S-209, the Budget's Today strip): checking on the as-of day, the lowest point ahead, safe to spend.
+  const sim = cashsim(spine, rules, { months: 1 });
+  const safe = safeToSpend(sim);
+  const reading = cashReading(sim, spine.meta.asOf.slice(0, 7));
+  const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const outlook = monthOutlook(spine, rules, sim, { today: todayIso() });
+  mathCtx = { spine, rules, s, compare, spend: { safe }, monthOut: outlook };
   const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
   const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
 
@@ -130,12 +139,23 @@ function render(base, rules, source) {
       ]
     }),
     tile(spine, {
+      id: 'cash', label: 'Safe to spend, as of ' + shortDate(spine.meta.asOf), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
+      shown: money(safe.today), missingText: 'Missing: a checking balance',
+      lines: [
+        safe.shortfall ? 'Nothing safe to spend: checking runs ' + money(safe.shortfall.amount) + ' short by ' + shortDate(safe.shortfall.date) + (safe.shortfall.covered ? ', and the cushion covers ' + money(safe.shortfall.covered) + ' of it' : '') + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + ', keeping the floor of ' + money(safe.floor) + '.' : null,
+        reading && reading.today ? 'Checking on ' + shortDate(reading.today.date) + ': ' + money(reading.today.amount) + '.' : null,
+        safe.low ? 'Lowest point ahead: ' + money(safe.low.amount) + ' on ' + shortDate(safe.low.date) + '.' : null,
+        [h('a', { href: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : '') }, 'See cash by day ›'), ' ', h('a', { href: 'spending.html#checkin' }, 'Check in balances ›')]
+      ]
+    }),
+    tile(spine, {
       id: 'compare', label: 'Estimated vs actual, ' + monthLabel(compare.to), result: { value: compare.spend.diff, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.rough, missing: compare.monthsLogged.length ? compare.missing : ['log'] },
       shown: (compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing logged this month yet',
       lines: [
-        compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + ' entries).' : null,
+        compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + (compare.spend.entries === 1 ? ' entry' : ' entries') + ').' : null,
         compare.income.actual !== null ? 'Income logged ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' take-home planned' : '') + '.' : 'No income logged yet.',
         compare.savingsRate.real !== null ? 'Savings rate from the real ledger: ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' against ' + pct(compare.savingsRate.plan, 1) + ' planned' : '') + '.' : compare.savingsRate.note,
+        outlook.stale ? 'Check in with today\'s balances to see this month so far.' : ['So far this month: ', h('span', { class: outlook.soFar < 0 ? 'neg' : 'pos' }, (outlook.soFar < 0 ? '-' : '+') + money(Math.abs(outlook.soFar))), '. Expected by month end: ' + (outlook.expected === null ? 'missing' : (outlook.expected < 0 ? '-' : '+') + money(Math.abs(outlook.expected))) + '.'],
         [h('a', { href: 'spending.html' }, 'Log a spend, import a statement, or see every line ›')]
       ]
     }),

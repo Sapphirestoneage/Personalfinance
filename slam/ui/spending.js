@@ -5,11 +5,11 @@
 // Every number comes from engine/spending.js, engine/cashsim.js and the
 // summary; every number has Show the math. Formatting only.
 
-import { mountPage } from './page.js';
+import { mountPage, gapsCard } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
-import { estimatedVsActual } from '../engine/compare.js';
+import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
 import { realHourlyWage, hoursOf } from '../engine/plan.js';
 import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS } from '../engine/feed.js';
 import { logSpend, removeLog, checkIn, setSweep, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
@@ -55,14 +55,19 @@ function staleBanner(st) {
     h('a', { class: 'btn' + (st.stale ? ' primary' : ''), href: '#checkin' }, 'Check in'));
 }
 
-function safeCard(vw, ctx) {
+function safeCard(vw, ctx, spine, sim) {
   const s = vw.safe;
   return h('section', { class: 'card', 'aria-labelledby': 'safe-h' },
     h('h2', { id: 'safe-h' }, 'Safe to spend'),
-    s.today === null ? h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.') : [
-      h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today), hoursTag(s.today)), h('span', { class: 'muted' }, s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
-      h('p', { class: 'tile-sub' }, kindChip(s.kind), ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + ').' + (s.excludesCushion ? ' The cushion is not spending money.' : '')),
-      mathButton(['spend:safeToday', ...(s.daysUntil ? ['spend:safePerDay'] : [])], ctx)]);
+    s.today === null ? [h('p', { class: 'muted missing-row' }, 'Missing: a checking balance, so nothing is safe to say yet.'), gapsCard(spine, sim)] : [
+      gapsCard(spine, sim),
+      h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today), hoursTag(s.today)), h('span', { class: 'muted' }, s.shortfall ? 'short by ' + shortDate(s.shortfall.date) : s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
+      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend right now: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + (s.shortfall.covered ? ', and the cushion covers ' + money(s.shortfall.covered) + ' of it' : '') + '.') : null,
+      h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
+        ? ' The lowest point ahead decides it: cash outside the cushion falls to ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + (s.low.covered ? ' before the cushion tops it up' : '') + ', less the floor on checking (' + money(s.floor) + '). Spending more today would take that day lower.'
+        : ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + '). The lowest point ahead, through ' + shortDate(s.through) + ', stays above this.', s.excludesCushion ? ' The cushion is not spending money.' : ''),
+      s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See cash by day around ' + shortDate(s.low.date) + ' on the calendar')) : null,
+      mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], ctx)]);
 }
 
 // The five-second logger: amount, a tag chip, paid with, a merchant (cleaned as you type), Add.
@@ -172,6 +177,7 @@ function autopsyCard(vw, ctx) {
 }
 
 function askCard(c, spine, rerender, ctx) {
+  if (c && c.sim && !c.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I spend this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance, so the answer waits for it.'));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const amount = h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' }); amount.value = form.askAmount;
   const paid = h('select', { id: 'ask-paid' }, h('option', { value: 'cash' }, 'Cash or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
@@ -245,6 +251,29 @@ function sweepCard(c, spine, vw, ctx) {
     sw.on ? [h('p', { class: 'tile-sub' }, sw.moves.length ? 'Inside the window: ' + sw.moves.map((m) => money(m.amount) + ' on ' + shortDate(m.date) + (m.toName ? ' to ' + m.toName : '')).join('; ') + ' (' + money(sw.total) + ' in all).' : 'Nothing above the floor and the keep at a month end inside the window.'), mathButton(['spend:sweep'], ctx)] : h('p', { class: 'muted' }, 'Off.'));
 }
 
+// So far and expected by month end (S-209, the Budget's open-month reading): the log so far, then the run.
+function outlookCard(spine, sim, ctx) {
+  const o = monthOutlook(spine, rules, sim, { today: todayIso() });
+  const sign = (x) => (x === null ? 'missing' : (x < 0 ? '-' : '+') + money(Math.abs(x)));
+  if (o.stale) return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' }, h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
+    h('p', { class: 'muted' }, 'The balances are from ' + shortDate(o.asOf) + ', before this month. Check in with today\'s balances to see this month so far and where it ends.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#checkin' }, 'Check in')));
+  return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },
+    h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
+    h('div', { class: 'clear-grid' },
+      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.soFar)), h('span', { class: 'clear-label' }, 'So far'), h('span', { class: 'tile-note' }, 'income logged ' + money(o.incomeSoFar) + ' less spending logged ' + money(o.spentSoFar))),
+      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'Expected by month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line the run left out'] : []).join(', ') : money(o.paychecks) + ' in paychecks still to come, ' + money(o.bills) + ' in bills still to go out, ' + money(o.planLeft) + ' left of the plan'))),
+    o.logged ? null : h('p', { class: 'muted' }, 'Nothing logged this month yet, so so far is zero by the log, not by your bank. Log a spend or import a statement.'),
+    o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'No first pay date yet for ' + o.noPayDate.join(', ') + ', so expected by month end waits on it.') : null,
+    o.guessedPayDay.length ? h('p', { class: 'muted' }, 'The pay day for ' + o.guessedPayDay.join(', ') + ' is a guess, so its paycheck is on a guessed day.') : null,
+    h('details', { class: 'flow-list' }, h('summary', {}, 'What is still to come this month (' + (o.items.length + o.rest.length) + ')'),
+      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : ''))),
+        o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true) + ', with ' + money(r.logged, true) + ' logged'))),
+        o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened, so it is in so far')) : null)),
+    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is the day-by-day run after the as-of date, ' + shortDate(o.asOf) + '. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
+    mathButton(['compare:soFar', 'compare:expected'], () => ({ ...ctx(), monthOut: o })));
+}
+
 // Estimated vs actual (S-207): the plan month by month against the log, over the selector's window.
 function compareCard(spine, ctx) {
   const c = estimatedVsActual(spine, rules, { months: window_ });
@@ -312,7 +341,8 @@ function render() {
     staleBanner(vw.stale),
     windowBar(window_, (n) => { window_ = n; render(); }),
     h('div', { class: 'window-bar', role: 'group', 'aria-label': 'Hours of life' }, h('button', { type: 'button', class: 'btn', 'aria-pressed': String(showHours), onclick: () => { showHours = !showHours; try { localStorage.setItem(HOURS_KEY, showHours ? 'on' : 'off'); } catch { /* storage blocked */ } render(); } }, showHours ? 'Hours of life: on' : 'Show amounts as hours of life'), h('span', { class: 'muted' }, wage ? 'at ' + money(wage, true) + ' of take-home an hour' : showHours ? 'needs hours worked a week (Plan page)' : '')),
-    safeCard(vw, ctx),
+    safeCard(vw, ctx, spine, sim),
+    outlookCard(spine, sim, ctx),
     loggerCard(vw, spine, ctx),
     tagsCard(vw, ctx),
     compareCard(spine, ctx),

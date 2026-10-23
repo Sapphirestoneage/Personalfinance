@@ -33,7 +33,7 @@
 - [x] Windfall room: `windfall.html`, a lump sum assigned in the `WINDFALL_ORDER` house order, every step with Show the math (S-201)
 - [x] Report: `docs/PHASE2_REPORT.md` (what was built, tests, what to check against real data, questions)
 
-## Done: Phase 2 full version, Batches 0, A, B, C, D, E and F (2026-10-23)
+## Done: Phase 2 full version, Batches 0 to F, and G's ports (2026-10-23)
 
 - [x] Batch 0: `docs/CALENDAR_PARITY.md`; answers 21 to 28 as S-202; D-342 and the CLAUDE.md line
 - [x] Batch A: `engine/vendor/` (the v44 engine as ported by Money Rooms v3, drift-tested), `engine/cashsim.js` (spine in, model out, results back as Facts with kind), the ten self-test assertions as tests, the calendar's cash line and month-end checking from the simulation with Show the math (S-203)
@@ -42,10 +42,10 @@
 - [x] Batch D: the Spending page (S-206): the spend log and the five-second logger, per-tag budgets with pace and running hot, safe to spend, burn tiers, the donut with the cut simulator, the bill autopsy, can I spend this, price increases and free trials, check-ins with drift, momentum and the staleness banner, the month-end sweep; merchant cleanup on the spine
 - [x] Batch E: the feed and estimated vs actual (S-207): a statement or the Budget app's log becomes proposals (same, matched, recurring, new, skip), applied once; estimated vs actual per line and tag over the window, income logged against planned, the savings rate from the real ledger; a Dashboard tile
 - [x] Batch F: the Plan page (S-208): one waterfall with the match step, SE tax and the Roth cap (answers 23 to 25); the FOO ladder with ghost chips; the paycheck allocator; the solvers; the real hourly wage and the hours toggle; DRAFTT; the fixed floor and the income shock; goals; the outlook; life events; saved scenarios with a diff; the history; export and import; the one-pager; the skip link, error banner, build stamp and pinned Save on every page
+- [x] Batch G, the ports (S-209): a gap audit of the Budget calendar's own code; what it did brought to SLAM (the log reaches the run once, safe to spend capped at the lowest point ahead, Cash by day, the month in words, waiting, by date, so far and expected, empty states)
+- [ ] Batch G, the retirement: held, because a few things are still Budget only (questions 29 on); ready as `docs/phase2/batch-g-retire.patch`
 
-## Next: Phase 2 full version, Batches B to G (in order; each tested, committed and pushed)
-
-- Batch G: retire the old Budget calendar, after parity
+## Next: Eli's answers to questions 29 on, then the retirement patch
 
 ## Earlier plan (superseded by the batches above)
 

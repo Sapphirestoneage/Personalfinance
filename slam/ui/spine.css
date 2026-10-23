@@ -445,6 +445,10 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .ev-small.ev-done { opacity: 0.7; }
 .ev-small .pill { font-size: 9px; }
 .pill-maybe { border-style: dashed; }
+.paylater { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+.pill-logged { border-color: var(--st-known); color: var(--st-known); background: var(--good-soft); }
+.happened { border-top: 1px solid var(--border); padding-top: var(--space-2); margin-top: var(--space-2); display: grid; gap: var(--space-2); }
+.happened input { min-height: var(--tap); width: 100%; max-width: 360px; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
 .ev-foo { border: 1.5px dashed var(--border-strong, var(--border)); border-radius: var(--radius-sm); padding: 2px var(--space-1); }
 .ev-foo .ev-name { color: var(--text-muted); }
 /* The drag handle: a visible grip that moves the item; the words beside it tap to edit. */
@@ -655,3 +659,27 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .onepager .op-cell .op-v { font-family: var(--font-num); font-weight: 700; font-size: var(--text-lg); display: block; }
 .onepager .op-cell .op-k { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 @media print { .page-links, .top-actions, .btn, .skip, .build-stamp, .saved-line, .math, .window-bar { display: none !important; } body { background: #fff; color: #000; } .card, .op-cell { break-inside: avoid; border-color: #999; } }
+
+/* Cash by day (S-209): thin lines, a wash for days under the floor, labels in the gutters. */
+.cl-wrap { overflow: hidden; }
+.cl-svg { display: block; max-width: 100%; height: auto; }
+.cl-line { fill: none; stroke: var(--c); stroke-width: 2; stroke-linejoin: round; }
+.cl-thin { stroke-width: 1.25; }
+.cl-past { stroke: var(--text-muted); }
+.cl-floor { stroke: var(--text-muted); stroke-width: 1; }
+.cl-zero { stroke: var(--border); stroke-width: 1; }
+.cl-under { fill: var(--bad); opacity: 0.18; }
+.cl-today { stroke: var(--text); stroke-width: 1; }
+.cl-dot { fill: var(--c); stroke: var(--surface); stroke-width: 1; }
+.cl-label { font-size: 12px; fill: var(--text-muted); font-family: inherit; }
+.cl-hit { fill: transparent; }
+.cl-legend { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.cl-legend li { display: flex; align-items: center; gap: var(--space-1); }
+.cl-sw-past { --c: var(--text-muted); }
+.cl-sw-under { --c: var(--bad); opacity: 0.4; }
+.cl-sw-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; }
+/* A signed amount in words: the sign is in the text, the color only repeats it. */
+.neg { color: var(--bad); font-weight: 600; }
+.pos { color: var(--st-known); font-weight: 600; }
+/* The waiting card (S-209): full-width rows on a phone. */
+.waiting-list { list-style: none; margin: 0; padding: 0; }

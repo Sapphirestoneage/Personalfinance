@@ -2,10 +2,11 @@
 // that shows a banner instead of a silent failure, the build stamp in the
 // footer, and a polite live region for the page's headline. Formatting only.
 
-import { h } from './view.js';
+import { h, ledgerHref } from './view.js';
+import { accountGaps } from '../engine/calendar-views.js';
 
 // The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2, Batch F', date: '2026-10-23' };
+export const BUILD = { label: 'Phase 2, Batch G', date: '2026-10-23' };
 
 let banner = null;
 function showError(text) {
@@ -25,3 +26,17 @@ export function mountPage({ app }) {
 
 // A headline that screen readers announce when it changes.
 export const liveHeadline = (text) => h('p', { class: 'headline', 'aria-live': 'polite' }, text);
+
+// No cash account with a balance, or some without one (S-209): said once at the top, with the field to fill.
+export function gapsCard(spine, sim) {
+  const g = accountGaps(spine, sim);
+  if (g.none) return h('section', { class: 'card', 'aria-labelledby': 'gaps-h' }, h('h2', { id: 'gaps-h' }, 'No cash by day yet'),
+    h('p', {}, 'Add a checking account and its balance to see cash by day. Nothing is guessed, so until then the days show no balance.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: g.fix ? ledgerHref(g.fix) : 'ledger.html' }, g.fix ? 'Add the balance' : 'Add an account')));
+  if (!g.checking) return h('section', { class: 'card', 'aria-labelledby': 'gaps-h' }, h('h2', { id: 'gaps-h' }, 'Checking has no balance yet'),
+    h('p', {}, 'Cash by day, safe to spend and the lowest point all read checking, so they wait for its balance. Other accounts are not counted in its place.'),
+    g.missing.length ? h('p', { class: 'muted missing-row' }, 'No balance for ', ...g.missing.flatMap((m, i) => [i ? ', ' : '', h('a', { href: ledgerHref(m.path) }, m.name)]), '.') : null,
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: g.fix ? ledgerHref(g.fix) : 'ledger.html' }, 'Add the balance')));
+  if (!g.missing.length) return null;
+  return h('p', { class: 'muted missing-row' }, 'No balance for ', ...g.missing.flatMap((m, i) => [i ? ', ' : '', h('a', { href: ledgerHref(m.path) }, m.name)]), ', so ' + (g.missing.length === 1 ? 'it is' : 'they are') + ' left out of the cash line.');
+}

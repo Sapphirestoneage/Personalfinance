@@ -239,3 +239,35 @@ test('the spending view bundles everything from one run', () => {
   for (const k of ['safe', 'tags', 'donut', 'autopsy', 'prices', 'trials', 'drift', 'stale', 'momentum', 'sweep', 'log']) assert.ok(k in vw, k);
   assert.equal(vw.ym, '2026-10');
 });
+
+test('safe to spend is the lower of the paycheck reading and the lowest point ahead less the floor, and names a shortfall (S-209)', () => {
+  const s = demo();
+  const f = safeToSpend(cashsim(s, R, { months: 2 }));
+  assert.equal(f.today, Math.min(f.byPaycheck, f.byLow));
+  assert.equal(f.binding, f.byLow < f.byPaycheck ? 'low' : 'paycheck');
+  assert.equal(f.byLow, Math.round((f.low.amount - f.floor) * 100) / 100);
+  assert.equal(f.shortfall, f.today < 0 ? f.shortfall : null);
+  // The demo: the paycheck reading offers money, but checking runs dry on Nov 11 and the cushion tops it up until
+  // the Nov 15 paycheck. Read before those top-ups, the lowest point is below zero: nothing is safe to spend.
+  assert.ok(f.byPaycheck > 0);
+  assert.equal(f.binding, 'low');
+  assert.equal(f.low.date, '2026-11-14');
+  assert.ok(f.low.covered > 0 && f.low.asRun === 0);
+  assert.equal(f.low.amount, Math.round((f.low.asRun - f.low.covered - f.low.held) * 100) / 100);
+  assert.deepEqual(f.shortfall, { amount: -f.today, date: '2026-11-14', covered: f.low.covered, held: 0 });
+  // With 3,000 more in checking the paycheck reading is the lower one again and nothing is short.
+  const rich = putFact(s, 'accounts.chk.balance', 6000, 'known', '2026-10-23');
+  const g = safeToSpend(cashsim(rich, R, { months: 2 }));
+  assert.equal(g.binding, g.byLow < g.byPaycheck ? 'low' : 'paycheck');
+  assert.ok(g.today > 0);
+  assert.equal(g.shortfall, null);
+});
+
+test('the check-in offers every cash account, one with no balance too, with no forecast for it (S-209)', () => {
+  const s = putFact(demo(), 'accounts.hysa.balance', null, 'missing', '2026-10-23');
+  const f = checkInForecast(s, cashsim(s, R, { months: 1 }));
+  const hysa = f.accounts.find((a) => a.id === 'hysa');
+  assert.ok(hysa && hysa.inRun === false && hysa.now === null);
+  assert.equal(f.forecast.hysa, null);
+  assert.ok(f.accounts.find((a) => a.id === 'chk').inRun);
+});

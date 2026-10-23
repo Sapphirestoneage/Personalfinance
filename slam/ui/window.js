@@ -4,11 +4,11 @@
 
 import { h } from './view.js';
 
-export const WINDOWS = [[1, '1 month'], [3, '3 months'], [6, '6 months'], [12, '12 months']];
+export const WINDOWS = [[1, '1 month'], [2, '2 months'], [3, '3 months'], [6, '6 months'], [12, '12 months']];
 const KEY = 'slam-window:v1';
 
 export function pickedWindow() {
-  try { const v = localStorage.getItem(KEY); return ['1', '3', '6', '12'].includes(v) ? +v : 1; } catch { return 1; }
+  try { const v = localStorage.getItem(KEY); return WINDOWS.some(([n]) => String(n) === v) ? +v : 1; } catch { return 1; }
 }
 export function keepWindow(n) { try { localStorage.setItem(KEY, String(n)); } catch { /* storage blocked: lasts until the page closes */ } }
 

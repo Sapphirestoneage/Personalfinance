@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadHousehold } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
-import { logSpend, putFact } from '../engine/edits.js';
+import { logSpend, putFact, confirmOccurrence } from '../engine/edits.js';
 import { estimatedVsActual } from '../engine/compare.js';
 import { readJson, loadRules } from './spine-helpers.js';
 
@@ -68,4 +68,72 @@ test('a window of months: the plan adds up month by month, the log across them; 
   assert.equal(c2.tags.find((r) => r.tag === 'other').diff, null, 'the tag with the missing line has no difference');
   assert.equal(c2.spend.planned, null);
   assert.equal(c2.kind, 'missing');
+});
+
+test('so far and expected by month end (S-209): the log so far, then what the run still has this month, less the rest of each spread line', async () => {
+  const { monthOutlook } = await import('../engine/compare.js');
+  const { cashsim } = await import('../engine/cashsim.js');
+  let s = demo();
+  const empty = monthOutlook(s, R, cashsim(s, R, { months: 1 }), { asOf: T });
+  assert.equal(empty.logged, 0);
+  assert.equal(empty.soFar, 0);
+  s = logSpend(s, { amount: 4211, date: '2026-10-15', kind: 'income' }).spine;
+  s = logSpend(s, { amount: 300, date: '2026-10-10', expenseId: 'groceries' }).spine;
+  s = logSpend(s, { amount: 20, date: '2026-10-12', expenseId: 'groceries', kind: 'refund' }).spine;
+  s = logSpend(s, { amount: 1800, date: '2026-10-01', expenseId: 'rent' }).spine;
+  s = logSpend(s, { amount: 99, date: '2026-10-25', expenseId: 'groceries' }).spine;
+  const sim = cashsim(s, R, { months: 1 });
+  const o = monthOutlook(s, R, sim, { asOf: T });
+  assert.equal(o.incomeSoFar, 4211);
+  assert.equal(o.spentSoFar, 2080, '300 - 20 + 1800; the entry after today is not so far');
+  assert.equal(o.soFar, 2131);
+  const food = o.rest.find((r) => r.id === 'food');
+  assert.deepEqual(food.lines, ['Groceries', 'Eating out']);
+  assert.deepEqual([food.plan, food.logged, food.left], [700, 280, 420]);
+  // A Food entry with no line still eats the Food spread; a rent entry (a dated bill) does not.
+  const tagged = monthOutlook(logSpend(s, { amount: 50, date: '2026-10-20', tag: 'food' }).spine, R, sim, { asOf: T });
+  assert.equal(tagged.rest.find((r) => r.id === 'food').left, 370);
+  assert.equal(tagged.expected, o.expected, 'so far down 50, the plan left down 50');
+  assert.ok(o.items.every((i) => i.date > T && i.date.slice(0, 7) === '2026-10'));
+  assert.equal(o.expected, Math.round((o.soFar + o.paychecks - o.bills - o.planLeft) * 100) / 100);
+  assert.equal(o.planLeft, Math.round(o.rest.reduce((a, r) => a + r.left, 0) * 100) / 100);
+  // Today after the as-of date: so far runs to today, the run still starts at the as-of date.
+  const later = monthOutlook(s, R, sim, { asOf: T, today: '2026-10-25' });
+  assert.equal(later.spentSoFar, 2179);
+  // A run item already in the log is not still to come: "It happened" claims it by key, a typed entry on the line by day.
+  const early = { ...demo(), meta: { ...demo().meta, asOf: '2026-10-02' } };
+  const base = monthOutlook(early, R, cashsim(early, R, { months: 1 }), { asOf: '2026-10-02' });
+  const pay = base.items.find((i) => i.kind === 'income');
+  const bill = base.items.find((i) => i.kind === 'bill');
+  assert.ok(pay && bill, 'the demo has a paycheck and a bill after Oct 2');
+  const payId = early.income.find((x) => x.label === pay.label).id;
+  const hap = confirmOccurrence(early, payId + '|' + pay.date, { amount: pay.amount });
+  const o2 = monthOutlook(hap, R, cashsim(hap, R, { months: 1 }), { asOf: '2026-10-02', today: pay.date });
+  assert.deepEqual(o2.claimed.map((i) => i.label), [pay.label]);
+  assert.equal(o2.paychecks, Math.round((base.paychecks - pay.amount) * 100) / 100);
+  assert.equal(o2.incomeSoFar, pay.amount, 'counted once, in so far');
+  const billId = early.expenses.find((x) => x.label === bill.label).id;
+  const typed = logSpend(early, { amount: -bill.amount, date: bill.date, expenseId: billId }).spine;
+  const o3 = monthOutlook(typed, R, cashsim(typed, R, { months: 1 }), { asOf: '2026-10-02', today: bill.date });
+  assert.deepEqual(o3.claimed.map((i) => i.label), [bill.label]);
+  assert.equal(o3.bills, Math.round((base.bills + bill.amount) * 100) / 100);
+  // A spread line with no amount: expected is a missing row.
+  const gone = putFact(s, 'expenses.groceries.amount', null, 'missing', T);
+  assert.equal(monthOutlook(gone, R, cashsim(gone, R, { months: 1 }), { asOf: T }).expected, null);
+});
+
+test('the month reading counts a card-charged bill still to come, flags a month the balances are not from, and names guessed pay days (S-209)', async () => {
+  const { monthOutlook } = await import('../engine/compare.js');
+  const { cashsim } = await import('../engine/cashsim.js');
+  const early = (s) => ({ ...s, meta: { ...s.meta, asOf: '2026-10-02' } });
+  const onCard = early(putFact(demo(), 'expenses.phone.paidFrom', 'visa', 'known', '2026-10-23'));
+  const o = monthOutlook(onCard, R, cashsim(onCard, R, { months: 1 }), { asOf: '2026-10-02' });
+  const phone = o.items.find((i) => i.label === 'Phone');
+  assert.deepEqual([phone.date, phone.amount, phone.card], ['2026-10-20', -60, 'visa']);
+  const s = demo();
+  assert.equal(monthOutlook(s, R, cashsim(s, R, { months: 1 }), { asOf: T, today: '2026-11-02' }).stale, true);
+  assert.equal(monthOutlook(s, R, cashsim(s, R, { months: 1 }), { asOf: T, today: '2026-10-25' }).stale, false);
+  const guessed = putFact(s, 'income.salary.payDay', 15, 'rough', '2026-10-23');
+  const g = monthOutlook(guessed, R, cashsim(guessed, R, { months: 1 }), { asOf: T });
+  assert.ok(g.guessedPayDay.some((x) => /^Salary/.test(x)));
 });

@@ -132,3 +132,21 @@ test('the old Budget households saved in a browser are found by their keys', () 
   assert.equal(docs[0].name, 'Riley');
   assert.equal(docs[0].transactions, 1);
 });
+
+test('no duplicates: a statement row that repeats a typed entry or a calendar "it happened" is already in the log', async () => {
+  const { logSpend, confirmOccurrence } = await import('../engine/edits.js');
+  let s = demo();
+  s = logSpend(s, { amount: 7.25, date: '2026-10-05', tag: 'other', merchant: 'Blue Bottle' }).spine;
+  s = confirmOccurrence(s, 'gym|2026-10-05', { amount: 50 });
+  const csv = 'Date,Description,Amount\n2026-10-06,SQ *BLUE BOTTLE 4471,-7.25\n2026-10-07,CRUNCH FITNESS,-50.00\n2026-10-08,SQ *BLUE BOTTLE 4471,-7.25\n';
+  const p = proposeCsv(s, R, csv, { paidWith: 'visa', merchantRules: { kindRules: MR.kindRules, rules: [] } });
+  const [coffee1, gym, coffee2] = p.proposals;
+  assert.equal(coffee1.status, 'same');
+  assert.match(coffee1.why, /typed on 2026-10-05/);
+  assert.equal(gym.status, 'same');
+  assert.match(gym.why, /logged as happened on the calendar/);
+  assert.notEqual(coffee2.status, 'same', 'one typed entry absorbs one row, not two');
+  const a = applyImport(s, p.proposals);
+  assert.equal(a.added, 1);
+  assert.equal(a.spine.log.length, 3);
+});

@@ -368,7 +368,9 @@ export function skipOccurrence(spine, key, skip = true) {
   const next = { ...(overrides[key] || {}) };
   if (skip) next.skip = true; else delete next.skip;
   if (Object.keys(next).length) overrides[key] = next; else delete overrides[key];
-  return withCal(spine, { ...cal, overrides });
+  // Skipped and happened cannot both be true: skipping takes back a "happened" entry for it (S-209).
+  const log = skip ? (spine.log || []).filter((x) => x.importKey !== occurrenceLogKey(key)) : spine.log;
+  return withCal({ ...spine, log }, { ...cal, overrides });
 }
 // Re-price one occurrence (null puts the rule's amount back).
 export function repriceOccurrence(spine, key, amount) {
@@ -446,4 +448,27 @@ export function setSweep(spine, { on, to = null, keep = 0 }) {
   if (typeof keep !== 'number' || !Number.isFinite(keep) || keep < 0) throw new Error('Keep is a number, zero or more');
   const cal = { ...(spine.calendar || {}), sweep: { on: on === true, to: to || null, keep: Math.round(keep * 100) / 100 } };
   return { ...spine, calendar: cal };
+}
+
+// ---------------------------------------------------------------- did it happen (S-209)
+// A calendar occurrence confirmed from the calendar: it happened (at the planned
+// amount), a different amount, or it did not happen (skipped once). Happening
+// writes one log entry keyed to the occurrence, so it is never logged twice and
+// estimated vs actual sees it; undoing removes that entry.
+export const occurrenceLogKey = (key) => 'sched:' + key;
+export function confirmOccurrence(spine, key, { amount, date = null } = {}) {
+  if (!/^[^|]+\|\d{4}-\d{2}-\d{2}$/.test(key || '')) throw new Error('Not an occurrence key');
+  const [sourceId, orig] = key.split('|');
+  if ((spine.log || []).some((x) => x.importKey === occurrenceLogKey(key))) throw new Error('Already logged as happened');
+  const inc = (spine.income || []).find((x) => x.id === sourceId);
+  const exp = inc ? null : (spine.expenses || []).find((x) => x.id === sourceId);
+  if (!inc && !exp) throw new Error('Only a paycheck or a bill can be logged as happened');
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new Error('An amount is a number, zero or more');
+  const label = inc ? inc.label : exp.label;
+  // With no date given it happened on the day it is on the calendar: the moved day if it was moved.
+  const moved = ((spine.calendar || {}).overrides || {})[key];
+  return logSpend(spine, { amount, date: date || (moved && moved.date) || orig, kind: inc ? 'income' : 'spend', tag: null, expenseId: exp ? exp.id : null, merchant: null, note: label, paidWith: null, source: 'scheduled', importKey: occurrenceLogKey(key) }).spine;
+}
+export function unconfirmOccurrence(spine, key) {
+  return { ...spine, log: (spine.log || []).filter((x) => x.importKey !== occurrenceLogKey(key)) };
 }

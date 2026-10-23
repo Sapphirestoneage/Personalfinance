@@ -22,6 +22,8 @@ const norm = (h) => String(h).trim().toLowerCase();
 const CARD_FORMATS = ['chase-card', 'amex', 'capital-one'];
 export const MATCH_DAYS = 5;
 export const MATCH_SHARE = 0.02;
+// A typed entry on a bill's own line can differ more from the plan (a bill varies) and still be that bill (S-209).
+export const BILL_MATCH_SHARE = 0.25;
 export const RECURRING_COUNT = 3;
 
 // A small CSV reader: quoted fields, commas and line breaks inside quotes, doubled quotes, Windows line endings.
@@ -143,7 +145,7 @@ export function matchExpense(spine, { merchant = null, lineId = null, name = nul
 }
 
 function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
-const amountClose = (a, b) => Math.abs(a - b) <= Math.max(1, MATCH_SHARE * Math.max(Math.abs(a), Math.abs(b))) + 1e-9;
+export const amountClose = (a, b, share = MATCH_SHARE) => Math.abs(a - b) <= Math.max(1, share * Math.max(Math.abs(a), Math.abs(b))) + 1e-9;
 const dayGap = (iso, day) => { if (!day) return null; const d = +iso.slice(8, 10); return Math.min(Math.abs(d - day), 31 - Math.abs(d - day)); };
 
 // A planned line that this charge looks like: the amount within 2% of a per-charge amount, the day within 5 of the pay day or the next charge.
@@ -167,13 +169,21 @@ function propose(spine, items, { source }) {
   const merchantCounts = {};
   for (const e of spine.log || []) if (e.merchant) merchantCounts[e.merchant] = (merchantCounts[e.merchant] || 0) + 1;
   for (const it of items) if (it.merchant) merchantCounts[it.merchant] = (merchantCounts[it.merchant] || 0) + 1;
+  // An entry typed in the logger or logged as happened on the calendar is the same money as the statement
+  // row that shows it: within 2% and 5 days, the same line when both name one, the same merchant when both
+  // name one. Each such entry absorbs one row at most, so nothing lands twice.
+  const open = (spine.log || []).filter((e) => e.source !== 'import');
+  const claimed = new Set();
+  const twin = (it, kind, expense) => open.find((e) => !claimed.has(e.id) && (e.kind === 'income') === (kind === 'income') && amountClose(e.amount, it.amount) && Math.abs(daysBetween(e.date, it.date)) <= MATCH_DAYS && (!e.expenseId || !expense || e.expenseId === expense) && (!e.merchant || !it.merchant || tokens(e.merchant).some((w) => tokens(it.merchant).includes(w))));
   const proposals = items.map((it) => {
     const skip = !LOG_KIND[it.kind];
     const kind = LOG_KIND[it.kind] || it.kind;
     const expense = skip || kind === 'income' ? null : it.expenseId || plannedMatch(spine, it.amount, it.date);
     const exp = expense ? (spine.expenses || []).find((e) => e.id === expense) : null;
-    let status = skip ? 'skip' : have.has(it.key) ? 'same' : expense ? 'matched' : it.merchant && merchantCounts[it.merchant] >= RECURRING_COUNT ? 'recurring' : 'new';
-    const why = status === 'skip' ? (it.kind === 'card-payment' ? 'a card payment, not spending' : it.kind === 'transfer' ? 'a transfer between accounts, not spending' : 'not spending') : status === 'same' ? 'already in the log' : status === 'matched' ? (it.expenseId ? 'the line it was logged to' : 'the amount and the day fit this line') : status === 'recurring' ? 'this merchant shows up ' + merchantCounts[it.merchant] + ' times' : 'nothing like it in the plan';
+    const dup = skip || have.has(it.key) ? null : twin(it, kind, expense);
+    if (dup) claimed.add(dup.id);
+    let status = skip ? 'skip' : have.has(it.key) || dup ? 'same' : expense ? 'matched' : it.merchant && merchantCounts[it.merchant] >= RECURRING_COUNT ? 'recurring' : 'new';
+    const why = status === 'skip' ? (it.kind === 'card-payment' ? 'a card payment, not spending' : it.kind === 'transfer' ? 'a transfer between accounts, not spending' : 'not spending') : status === 'same' ? (dup ? 'already in the log: ' + (dup.source === 'scheduled' ? 'logged as happened on the calendar' : 'typed') + ' on ' + dup.date : 'already in the log') : status === 'matched' ? (it.expenseId ? 'the line it was logged to' : 'the amount and the day fit this line') : status === 'recurring' ? 'this merchant shows up ' + merchantCounts[it.merchant] + ' times' : 'nothing like it in the plan';
     return { key: it.key, date: it.date, amount: it.amount, kind, merchant: it.merchant, description: it.description, expenseId: expense, tag: exp ? exp.fat || 'other' : it.tag || (kind === 'income' ? null : 'other'), paidWith: it.paidWith, status, why, include: status !== 'skip' && status !== 'same', source };
   });
   const counts = Object.fromEntries(['same', 'matched', 'recurring', 'new', 'skip'].map((k) => [k, proposals.filter((p) => p.status === k).length]));

@@ -250,13 +250,21 @@ function debtMetric(id) {
 
 // Spending (S-206): one family, "spend:<what>[:<id>]", read from ctx.spend (the
 // spendingView result), ctx.tiers, ctx.cut and ctx.ask (the page's tool results).
-const SPEND_SCREENS = ['spending'];
+const SPEND_SCREENS = ['spending', 'dashboard#tile-cash'];
 function spendMetric(id) {
   if (!id || !id.startsWith('spend:')) return null;
   const [, what, key] = id.split(':');
   const tagOf = (sp) => sp && sp.tags.rows.find((r) => r.tag === key);
-  if (what === 'safeToday') return { id, label: 'Safe to spend today', unit: 'usd', op: 'sum', screens: SPEND_SCREENS, formula: 'Safe to spend = cash outside the cushion - what is committed before the next paycheck - the floor on checking',
-    explain: ({ spend: sp }) => (sp ? out(resOf(sp.safe, sp.safe.today), [term('Cash outside the cushion today', sp.safe.cash, 'usd', 'computed', 'plus'), term('Committed before ' + (sp.safe.nextIncome ? sp.safe.nextIncome : 'the end of the window'), sp.safe.committed, 'usd', 'computed', 'minus'), term('The floor on checking', sp.safe.floor, 'usd', 'computed', 'minus')]) : out(null, [])) };
+  if (what === 'safeToday') return { id, label: 'Safe to spend today', unit: 'usd', op: 'sum', screens: SPEND_SCREENS, formula: 'Safe to spend = the lower of (cash outside the cushion - what is committed before the next paycheck - the floor on checking) and (the lowest cash outside the cushion in the window - the floor on checking)',
+    explain: ({ spend: sp }) => {
+      if (!sp) return out(null, []);
+      const f = sp.safe;
+      const other = f.binding === 'low' ? 'Until the next paycheck it would be ' + money(f.byPaycheck) + '; the lowest point ahead is lower, so it wins.' : f.byLow === null ? null : 'The lowest point ahead less the floor is ' + money(f.byLow) + ', no lower, so the paycheck reading stands.';
+      const terms = f.binding === 'low'
+        ? [term('Cash outside the cushion on ' + f.low.date + ', as the run left it', f.low.asRun, 'usd', 'computed', 'plus'), ...(f.low.covered ? [term('Topped up from the cushion by then', f.low.covered, 'usd', 'computed', 'minus')] : []), ...(f.low.held ? [term('Payments the floor held back by then', f.low.held, 'usd', 'computed', 'minus')] : []), term('The floor on checking', f.floor, 'usd', 'computed', 'minus', { rule: 'STAGE_RUNWAY_RED_MONTHS' })]
+        : [term('Cash outside the cushion today', f.cash, 'usd', 'computed', 'plus', f.cashPath ? { path: f.cashPath } : {}), term('Committed before ' + (f.nextIncome ? f.nextIncome : 'the end of the window'), f.committed, 'usd', 'computed', 'minus'), term('The floor on checking', f.floor, 'usd', 'computed', 'minus', { rule: 'STAGE_RUNWAY_RED_MONTHS' })];
+      return out(resOf(f, f.today), terms, [], other ? { note: other } : {});
+    } };
   if (what === 'safePerDay') return { id, label: 'Safe to spend a day', unit: 'usd', op: 'custom', screens: SPEND_SCREENS, formula: 'A day = safe to spend today / days until the next paycheck',
     explain: ({ spend: sp }) => (sp && sp.safe.daysUntil ? out(resOf(sp.safe, sp.safe.perDay), [metric('spend:safeToday', 'Safe to spend today', { value: sp.safe.today, kind: sp.safe.kind }, 'usd', 'arg'), term('Days until the next paycheck', sp.safe.daysUntil, 'count', 'computed', 'arg')]) : out(null, [])),
     recompute: (t) => (t[0].value === null || !t[1].value ? null : Math.round(t[0].value / t[1].value * 100) / 100) };
@@ -307,6 +315,10 @@ function compareMetric(id) {
     explain: ({ compare: c }) => (c ? out({ value: c.spend.diff, kind: c.kind, from: c.from_, rough: c.rough, missing: c.missing, rules: c.rules }, [term('Spending logged, ' + win(c) + ' (' + c.spend.entries + ' entries)', c.spend.actual, 'usd', 'known', 'plus'), term('Spending planned, ' + win(c), c.spend.planned, 'usd', c.spend.planned === null ? 'missing' : 'computed', 'minus')]) : out(null, [])) };
   if (what === 'income') return { id, label: 'Income logged against the plan', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = income logged in the window - take-home planned month by month',
     explain: ({ compare: c }) => (c ? out({ value: c.income.diff, kind: c.income.diff === null ? 'missing' : c.kind, from: c.from_, rough: c.rough, missing: c.income.actual === null ? [] : c.missing, rules: c.rules }, [term('Income logged, ' + win(c) + (c.income.entries ? ' (' + c.income.entries + ' entries)' : ' (none)'), c.income.actual, 'usd', c.income.actual === null ? 'missing' : 'known', 'plus'), term('Take-home planned, ' + win(c), c.income.planned, 'usd', c.income.planned === null ? 'missing' : 'computed', 'minus')]) : out(null, [])) };
+  if (what === 'soFar') return { id, label: 'So far this month', unit: 'usd', op: 'sum', screens: COMPARE_SCREENS, formula: 'So far = income logged this month up to today - spending logged this month up to today (less refunds)',
+    explain: ({ monthOut: o }) => (o ? out({ value: o.soFar, kind: 'known', from: [], rough: [], missing: [], rules: [] }, [term('Income logged up to today', o.incomeSoFar, 'usd', 'known', 'plus'), term('Spending logged up to today, less refunds', o.spentSoFar, 'usd', 'known', 'minus')]) : out(null, [])) };
+  if (what === 'expected') return { id, label: 'Expected by month end', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Expected = so far + paychecks still to come this month - bills and loan payments still to come from cash - what is left of the spread lines in each tag (the month planned for the tag less what is logged in it, never below zero)',
+    explain: ({ monthOut: o }) => (o ? out({ value: o.expected, kind: o.kind, from: o.from, rough: o.rough, missing: o.missing, rules: o.rules }, [metric('compare:soFar', 'So far this month', { value: o.soFar, kind: 'known' }, 'usd', 'plus'), ...o.items.map((i) => term(i.label + ' on ' + i.date + (i.card ? ' (on the card)' : ''), Math.abs(i.amount), 'usd', 'computed', i.amount > 0 ? 'plus' : 'minus')), ...o.rest.map((r) => term(r.label + ' (' + r.lines.join(', ') + '): ' + (r.plan === null ? 'a line has no amount' : money(r.plan) + ' planned less ' + money(r.logged) + ' logged'), r.left, 'usd', r.left === null ? 'missing' : 'computed', 'minus', { path: r.path }))]) : out(null, [])) };
   if (what === 'savingsReal') return { id, label: 'Savings rate from the real ledger', unit: 'ratio', op: 'custom', screens: COMPARE_SCREENS, formula: 'Real savings rate = (income logged - spending logged) / income logged, over the window',
     explain: ({ compare: c }) => (c ? out({ value: c.savingsRate.real, kind: c.savingsRate.real === null ? 'missing' : 'known', from: [], rough: [], missing: [], rules: [] }, [term('Income logged, ' + win(c), c.income.actual, 'usd', c.income.actual === null ? 'missing' : 'known', 'arg'), term('Spending logged, ' + win(c), c.spend.actual, 'usd', 'known', 'arg')]) : out(null, [])),
     recompute: (t) => (t[0].value === null || !t[0].value ? null : Math.round((t[0].value - t[1].value) / t[0].value * 10000) / 10000) };
@@ -348,7 +360,7 @@ function planMetric(id) {
 export const DASHBOARD_MATH = {
   'tile-networth': ['netWorth'], 'tile-runway': ['runway', 'runwayFat', 'ruleOf5Dollars', 'rothBasis'], 'tile-surplus': ['surplus'],
   'tile-savings': ['savingsRateGross', 'savingsRateNet'], 'tile-cards': ['cards', 'promoTotal', 'promoMonthly', 'personalUtil', 'overallUtil'],
-  'tile-fi': ['fiPercent', 'fiNumber', 'impliedFi', 'leanFi', 'coastFi'], 'tile-tax': ['taxBalanceDue'], 'tile-compare': ['compare:spend', 'compare:income', 'compare:savingsReal']
+  'tile-fi': ['fiPercent', 'fiNumber', 'impliedFi', 'leanFi', 'coastFi'], 'tile-tax': ['taxBalanceDue'], 'tile-compare': ['compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected'], 'tile-cash': ['spend:safeToday']
 };
 export function flagMath(flag) {
   const id = flag.id;

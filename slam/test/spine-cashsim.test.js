@@ -208,3 +208,123 @@ test('a shared bill paid whole comes back a few days later; auto-cover tops chec
   assert.equal(r.clearDates.hiRate, 0.1);
   assert.ok(['computed', 'rough', 'incomplete'].includes(r.kind));
 });
+
+test('a statement closed before the run is paid on its due day inside it (S-209)', async () => {
+  const { carriedStatement } = await import('../engine/cashsim.js');
+  // Closed Oct 19 (before Oct 22), due the 12th: Nov 12. Closed Oct 22 itself is the run's own: no carry.
+  assert.deepEqual(carriedStatement('2026-10-22', '2026-12-31', 19, 12, 25), { close: '2026-10-19', due: '2026-11-12' });
+  assert.equal(carriedStatement('2026-10-22', '2026-12-31', 22, 12, 25), null);
+  assert.deepEqual(carriedStatement('2026-10-22', '2026-12-31', 9, null, 25), { close: '2026-10-09', due: '2026-11-03' });
+  assert.equal(carriedStatement('2026-10-22', '2026-10-31', 19, 12, 25), null, 'due after the run ends');
+  // On the demo: the Visa minimum leaves checking on Nov 12 and the card opens $90 lower.
+  const s = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  const sim = cashsim(s, R, { months: 2 });
+  const nov12 = sim.daily.find((d) => d.date === '2026-11-12');
+  const pay = nov12.events.find((e) => e.kind === 'card-payment' && /^Visa minimum/.test(e.label));
+  assert.ok(pay, JSON.stringify(nov12.events));
+  assert.equal(pay.amount, -90);
+  const visa = sim.model.cards.find((c) => c.id === 'visa');
+  assert.deepEqual(visa.carried, { close: '2026-10-19', due: '2026-11-12', amount: 90 });
+  assert.equal(visa.balance, 291000);
+  assert.ok(sim.rough.includes('debts.visa.statementCloseDay'));
+});
+
+test('the log reaches the run once (S-209): happened and typed bills re-price their occurrence, everyday spending moves cash only past the spread, the rest lands on its day', async () => {
+  const { logSpend, confirmOccurrence } = await import('../engine/edits.js');
+  const s = demo();
+  const run = (x) => cashsim(x, R, { months: 2 });
+  const base = run(s);
+  const day = (sim, d) => sim.daily.find((x) => x.date === d);
+  // 1. It happened, at a different amount: the paycheck lands at the logged amount, once.
+  const h = run(confirmOccurrence(s, 'salary|2026-11-15', { amount: 4000 }));
+  assert.deepEqual(h.claims.map((c) => c.key), ['salary|2026-11-15']);
+  near(day(h, '2026-11-15').primary, day(base, '2026-11-15').primary - 211, 'paid 4,000 instead of 4,211');
+  assert.equal(day(h, '2026-11-15').events.filter((e) => e.kind === 'income' && e.label.startsWith('Salary')).length, 1);
+  // 2. A typed rent entry three days early at a different amount claims Nov 1: rent moves to Oct 29 at 1,850.
+  const t = run(logSpend(s, { amount: 1850, date: '2026-10-29', expenseId: 'rent' }).spine);
+  assert.deepEqual(t.claims.map((c) => c.key), ['rent|2026-11-01']);
+  assert.ok(day(t, '2026-10-29').events.some((e) => e.label === 'Rent' && e.amount === -1850));
+  assert.ok(!day(t, '2026-11-01').events.some((e) => e.label === 'Rent'));
+  near(day(t, '2026-11-01').primary, day(base, '2026-11-01').primary - 50);
+  // A dollar on the rent line is not the rent: it lands whole on its day and Nov 1 still pays 1,800.
+  const dollar = run(logSpend(s, { amount: 1, date: '2026-10-30', expenseId: 'rent' }).spine);
+  assert.deepEqual(dollar.claims, []);
+  assert.ok(day(dollar, '2026-11-01').events.some((e) => e.label === 'Rent' && e.amount === -1800));
+  // Logged before the as-of date, inside the window: the balance already holds it, so the occurrence is skipped.
+  const late = { ...s, meta: { ...s.meta, asOf: '2026-10-28' } };
+  const lateBase = run(late);
+  const skip = run(logSpend(late, { amount: 1800, date: '2026-10-27', expenseId: 'rent' }).spine);
+  assert.deepEqual(skip.claims.map((c) => [c.key, c.inRun]), [['rent|2026-11-01', false]]);
+  near(day(skip, '2026-11-01').primary, day(lateBase, '2026-11-01').primary + 1800);
+  // 3. Everyday spending: inside the spread's share of the month it does not move cash; past it, only the part past.
+  const perDay = base.model.bills.filter((b) => b.cadence === 'spread' && b.category === 'other' && b.paidWith === 'cash').reduce((x, b) => x + Math.round(b.cents / 31), 0);
+  const plan = perDay * 10 / 100;
+  const inside = logSpend(s, { amount: 50, date: '2026-10-23', tag: 'other' }).spine;
+  const i1 = run(inside);
+  assert.equal(i1.fromLog[0].how, 'inside the plan');
+  near(day(i1, '2026-10-31').primary, day(base, '2026-10-31').primary);
+  const past = logSpend(inside, { amount: 300, date: '2026-10-24', tag: 'other' }).spine;
+  const p1 = run(past);
+  assert.deepEqual(p1.fromLog.map((x) => x.how), ['inside the plan', 'past the plan']);
+  near(day(p1, '2026-10-24').primary, day(base, '2026-10-24').primary - (350 - plan));
+  near(day(p1, '2026-10-31').primary, day(base, '2026-10-31').primary - (350 - plan));
+  // A refund on the tag gives back only what had gone past.
+  near(day(run(logSpend(past, { amount: 100, date: '2026-10-25', tag: 'other', kind: 'refund' }).spine), '2026-10-31').primary, day(base, '2026-10-31').primary - Math.max(0, 250 - plan));
+  // 4. Spending the run does not spread (Housing has only dated bills) lands whole on its day; income not near a paycheck lands as income.
+  near(day(run(logSpend(s, { amount: 120, date: '2026-10-26', tag: 'accommodation' }).spine), '2026-10-26').primary, day(base, '2026-10-26').primary - 120);
+  near(day(run(logSpend(s, { amount: 75, date: '2026-10-27', kind: 'income' }).spine), '2026-10-27').primary, day(base, '2026-10-27').primary + 75);
+  // Typed income close to a paycheck, inside the match window, is that paycheck.
+  assert.deepEqual(run(logSpend(s, { amount: 4211, date: '2026-11-14', kind: 'income' }).spine).claims.map((c) => c.key), ['salary|2026-11-15']);
+  // An entry from well before the as-of date is already in the balance: nothing moves.
+  near(day(run(logSpend(s, { amount: 500, date: '2026-10-10', tag: 'accommodation' }).spine), '2026-10-31').primary, day(base, '2026-10-31').primary);
+});
+
+test('a carried statement is still owed until checking pays it on its due day (S-209)', () => {
+  const sim = cashsim(demo(), R, { months: 1 });
+  const visa = sim.model.cards.find((c) => c.id === 'visa');
+  assert.deepEqual(visa.carried, { close: '2026-10-19', due: '2026-11-12', amount: 90 });
+  const day = (d) => sim.daily.find((x) => x.date === d);
+  // The run left the 90 out of the opening balance; the reading adds it back every day before Nov 12, and not from then on.
+  const raw = (d) => sim.run.days.find((x) => x.date === d);
+  const owed = (d) => sim.model.cards.filter((c) => c.carried && d < c.carried.due).reduce((a, c) => a + c.carried.amount, 0);
+  assert.ok(owed('2026-10-22') > 90, 'the store card carries one too');
+  for (const d of ['2026-10-22', '2026-11-01', '2026-11-11', '2026-11-12', '2026-11-20']) { near(day(d).cardDebt - raw(d).cardDebt / 100, owed(d), d); near(day(d).debt - raw(d).debt / 100, owed(d), d); }
+  assert.equal(owed('2026-11-12') < owed('2026-11-11'), true, 'the Visa 90 stops being owed on its due day');
+});
+
+test('a paycheck lands in the account it is paid into when that account is in the run (S-209)', () => {
+  const s = putFact(demo(), 'income.salary.depositTo', 'hysa', 'known', '2026-10-23');
+  const base = cashsim(demo(), R, { months: 2 });
+  const sim = cashsim(s, R, { months: 2 });
+  const day = (x, d) => x.daily.find((y) => y.date === d);
+  const pay = day(sim, '2026-11-15').events.find((e) => e.kind === 'income' && e.label.startsWith('Salary'));
+  assert.equal(pay.account, 'hysa');
+  const topUp = day(sim, '2026-11-15').events.filter((e) => e.kind === 'auto-cover').reduce((a, e) => a + e.amount, 0);
+  near(day(sim, '2026-11-15').balances.hysa - day(sim, '2026-11-14').balances.hysa, pay.amount - topUp, 'the paycheck lands in savings, less what tops checking up that day');
+  assert.ok(day(sim, '2026-11-15').primary < day(base, '2026-11-15').primary, 'checking no longer gets it');
+});
+
+test('an occurrence from before the as-of date moved after it reaches the run on its new day, once (S-209)', async () => {
+  const { moveOccurrence, confirmOccurrence } = await import('../engine/edits.js');
+  const s = demo();
+  const base = cashsim(s, R, { months: 1 });
+  const moved = moveOccurrence(s, 'rent|2026-10-01', '2026-10-28');
+  const sim = cashsim(moved, R, { months: 1 });
+  const day = (x, d) => x.daily.find((y) => y.date === d);
+  assert.ok(day(sim, '2026-10-28').events.some((e) => e.label === 'Rent' && e.amount === -1800));
+  near(day(sim, '2026-10-28').primary, day(base, '2026-10-28').primary - 1800);
+  // Logged as happened: the balance holds it, nothing is added.
+  const hap = confirmOccurrence(moved, 'rent|2026-10-01', { amount: 1800, date: '2026-10-20' });
+  assert.ok(!day(cashsim(hap, R, { months: 1 }), '2026-10-28').events.some((e) => e.label === 'Rent'));
+});
+
+test('checking is every checking account together: a paycheck paid into a second checking account is in the line (S-209)', () => {
+  let s = demo();
+  s = { ...s, accounts: [...s.accounts, { ...s.accounts.find((a) => a.id === 'chk'), id: 'chk2', name: { value: 'Second checking', kind: 'known', asOf: '2026-10-22', source: 'user' } }] };
+  s = putFact(s, 'accounts.chk2.balance', 500, 'known', '2026-10-23');
+  s = putFact(s, 'income.salary.depositTo', 'chk2', 'known', '2026-10-23');
+  const sim = cashsim(s, R, { months: 2 });
+  const d = sim.daily.find((x) => x.date === '2026-11-15');
+  near(d.primary, d.balances.chk + d.balances.chk2);
+  assert.deepEqual(sim.checking.ids.sort(), ['chk', 'chk2']);
+});

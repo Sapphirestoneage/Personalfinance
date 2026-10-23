@@ -212,6 +212,30 @@ scenarios with a diff; the undo history; export and import; and a printable
 one-pager. Every page carries a skip link, an error banner, the build stamp,
 and on a phone the Save row stays pinned.
 
+### What the Budget calendar did, now in SLAM (Batch G, S-209)
+
+Before retiring the Budget's calendar, a second audit read its code and
+listed what it did; most of it is now on the SLAM pages. On the calendar:
+Cash by day (a chart of checking, recorded before the as-of date and the run
+after it, savings apart, the floor, paydays and big bills, with every day as
+a list), the month in words (checking today, the lowest day and whether it is
+the day before payday, days under the floor or topped up from the cushion),
+"Scheduled, on or before today" with It happened and It did not happen, Back
+to its day for a moved item, Redo, the happened count, every movement by date
+with checking after it and where it came from, pay-later readings, card
+interest on its day, bill timing with Save the new due day. What you log now
+moves the cash line once: a happened item replaces its plan, a typed bill or
+paycheck claims its own occurrence, everyday spending moves cash only past the
+plan. Safe to spend is capped at the lowest point ahead. So far and expected
+by month end are on Spending and the Dashboard. No balance never reads as $0.
+
+The Budget keeps its own calendar for now: a few things it does are not in
+SLAM yet (bills paid from a second account, moving a card payment, a typed
+cushion, a forecast saved on the 1st, and three more), so the retirement waits
+on Eli's answers (questions 29 on). It is ready as
+`docs/phase2/batch-g-retire.patch`; from the repository root,
+`git apply slam/docs/phase2/batch-g-retire.patch` applies it.
+
 ### Where things are
 
 | Path | What it is |
