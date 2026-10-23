@@ -330,7 +330,7 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .tile-view { font-size: var(--text-sm); font-weight: 600; min-height: var(--tap); display: inline-flex; align-items: center; justify-self: start; }
 
 /* Page links above the title (DESIGN.md 6): navigation is a link, never a button. */
-.page-links { display: flex; gap: var(--space-4); margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 600; }
+.page-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 600; }
 .page-links a { min-height: var(--tap); display: inline-flex; align-items: center; }
 
 /* Fold marks are the row chevron, turned down when open (CLAUDE.md affordance 5). */
@@ -421,3 +421,9 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .wf-short { margin: 0; font-size: var(--text-sm); color: var(--st-roughly); }
 .wf-items { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); }
 .wf-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); }
+
+/* The Dashboard's pointers to the other pages (S-200, S-201): links with a line each. */
+.more-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.more-list li { display: grid; gap: 2px; }
+.more-list a { font-weight: 600; min-height: var(--tap); display: inline-flex; align-items: center; justify-self: start; }
+.more-sub { font-size: var(--text-sm); color: var(--text-muted); }

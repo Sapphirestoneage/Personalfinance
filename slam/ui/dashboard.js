@@ -137,10 +137,16 @@ function render(base, rules, source) {
 
   app.replaceChildren(
     // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('div', { class: 'tiles' }, tiles),
+    // The Phase 2 pages (S-200, S-201): going somewhere is a link, with a line on what is there.
+    h('section', { class: 'card more', 'aria-labelledby': 'more-h' },
+      h('h2', { id: 'more-h' }, 'Also'),
+      h('ul', { class: 'more-list' },
+        h('li', {}, h('a', { href: 'calendar.html' }, 'Cash flow calendar ›'), h('span', { class: 'more-sub' }, 'This month\'s pay, bills and minimums on their days, and the month-end cash.')),
+        h('li', {}, h('a', { href: 'windfall.html' }, 'Windfall ›'), h('span', { class: 'more-sub' }, 'A lump sum coming in: where it goes, step by step.')))),
     scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); document.getElementById('scenario')?.scrollIntoView({ block: 'nearest' }); }),
     flowPart(spine, rules, s),
     flagsSection(spine, s.flags)

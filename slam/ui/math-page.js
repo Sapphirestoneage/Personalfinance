@@ -12,7 +12,7 @@ import { h, chip, ledgerHref, shortDate } from './view.js';
 
 const app = document.getElementById('app');
 const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
-const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : h('span', {}, 'this page');
+const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Windfall') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : h('span', {}, 'this page');
 
 // Units in words, not codes.
 const UNIT_WORDS = { usd: 'dollars', 'usd/month': 'dollars a month', 'usd/year': 'dollars a year', ratio: 'percent', months: 'months', years: 'years', age: 'age', count: 'count' };
@@ -54,13 +54,13 @@ loadAll().then(({ spine: base, rules, source }) => {
   const s = summarize(spine, rules);
   const ctx = { spine, rules, s };
   app.replaceChildren(
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'How every number is figured'),
         h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]),
         h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'dashboard.html' }, 'change it on the Dashboard'), '.')),
     ),
-    h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card and one cost per expense. Each formula is followed by the same formula with today\'s numbers.'),
+    h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card, one cost per expense, and one per Windfall step (shown on the Windfall page). Each formula is followed by the same formula with today\'s numbers.'),
     h('nav', { class: 'card jump', 'aria-label': 'Jump to a number' }, METRICS.map((m) => h('a', { href: '#metric-' + m.id }, m.label)), h('a', { href: '#rules' }, 'Rules')),
     ...METRICS.map((m) => metricCard(m, ctx)),
     rulesTable(rules));

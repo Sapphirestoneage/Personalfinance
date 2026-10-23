@@ -871,7 +871,7 @@ function render() {
   // Empty slots (no picker, no banner) are left out, never drawn as text.
   app.replaceChildren(...[
     // Going somewhere is a link; doing something is a button (CLAUDE.md affordances 1 and 4).
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {},
         h('h1', {}, 'Ledger'),

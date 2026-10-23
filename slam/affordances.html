@@ -19,7 +19,7 @@
 </head>
 <body>
 <main id="app">
-  <nav class="page-links" aria-label="Pages"><a href="dashboard.html">Dashboard</a><a href="ledger.html">Ledger</a><a href="math.html">All formulas</a></nav>
+  <nav class="page-links" aria-label="Pages"><a href="dashboard.html">Dashboard</a><a href="ledger.html">Ledger</a><a href="calendar.html">Calendar</a><a href="windfall.html">Windfall</a><a href="math.html">All formulas</a></nav>
   <header class="top">
     <div><h1>Affordances</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
   </header>
@@ -113,6 +113,22 @@
     <div class="demo-row"><button class="filter-chip chip-missing" type="button" aria-pressed="false">Missing 18</button><button class="filter-chip chip-rough" type="button" aria-pressed="true">Only rough 69</button><button class="filter-chip chip-known off" type="button" aria-pressed="false">Known 73</button><button class="dot dot-missing" type="button">1 missing</button></div>
     <p class="muted">Stages, always with words:</p>
     <div class="demo-row"><span class="stage-chip stage-red">Stage 1 of 3</span><span class="stage-chip stage-yellow">Stage 2 of 3</span><span class="stage-chip stage-green">Stage 3</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="p2-h">
+    <h2 id="p2-h">Calendar and Windfall (Phase 2)</h2>
+    <p class="muted">A month is picked with real buttons; the heading between them is not a control.</p>
+    <div class="month-nav" role="group" aria-label="Pick a month"><button type="button" class="btn">&#8249; Sep 2026</button><h2 class="month-h">October 2026 <span class="stage-chip stage-green">This month</span></h2><button type="button" class="btn">Nov 2026 &#8250;</button></div>
+    <p class="muted">A calendar item: a data-color swatch, the name as a link to its field, the amount with its direction; a rough tag when the day or the amount is a guess.</p>
+    <ul class="ev-list">
+      <li class="ev ev-pay"><span class="sw viz-3" aria-hidden="true"></span><span class="ev-name"><a href="ledger.html">Salary</a></span><span class="ev-amt">+$4,211</span><span class="ev-note">after tax, Social Security and Medicare, and $500 saved from pay</span></li>
+      <li class="ev ev-debt ev-rough"><span class="sw viz-2" aria-hidden="true"></span><span class="ev-name"><a href="ledger.html">Federal student loan minimum</a><span class="ev-tag">rough</span></span><span class="ev-amt">-$212</span><span class="ev-note">due day is a house guess</span></li>
+    </ul>
+    <p class="muted">A Windfall step: its number in the step's color, the amount, a kind chip, the reason, a Ledger link and Show the math. A step that takes nothing is flat.</p>
+    <ol class="wf-steps">
+      <li class="wf-step viz-2"><span class="wf-num" aria-hidden="true">5</span><div class="wf-head"><span class="wf-label">Cards charging interest now</span><span class="wf-amt">$3,000</span></div><div class="wf-body"><p class="wf-why"><span class="chip chip-known">Known</span> Highest rate first (avalanche): Visa at 22%, $3,000.</p><div class="wf-links"><a href="ledger.html">View in the Ledger &#8250;</a></div><div class="math"><button type="button" class="btn math-btn" aria-expanded="false"><span class="math-icon" aria-hidden="true">=</span> Show the math</button></div></div></li>
+      <li class="wf-step viz-3 zero"><span class="wf-num" aria-hidden="true">6</span><div class="wf-head"><span class="wf-label">Cash up to the Rule of 5 target</span><span class="wf-amt">Nothing left for it</span></div><div class="wf-body"><p class="wf-why"><span class="chip chip-rough">Rough</span> The Rule of 5 target is $22,861; cash is $12,000, so $10,861 to go.</p><p class="wf-short">Short by $10,861: the windfall runs out here.</p></div></li>
+    </ol>
   </section>
 
   <section class="card" aria-labelledby="n-h">
