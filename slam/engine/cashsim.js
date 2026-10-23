@@ -431,7 +431,10 @@ export function cashsim(spine, rules, opts = {}) {
   const owedBefore = (date) => model.cards.reduce((a, c) => a + (c.carried && date < c.carried.due ? cents(c.carried.amount) : 0), 0);
   // Checking (S-209): every checking account together, so a paycheck paid into a second checking account
   // is in the line. With main checking unknown the engine's figure stands (and nothing shows it).
-  const checkingIds = model.accounts.some((a) => a.primary) ? model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) : null;
+  // Checking is known only when a checking account has a balance (S-209 review): with none, the engine's main
+  // account may be savings, and savings is never shown as checking.
+  const hasChecking = model.accounts.some((a) => a.primary && a.type === 'checking');
+  const checkingIds = hasChecking ? model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) : null;
   const checkingOf = (d) => (checkingIds ? checkingIds.reduce((x, id) => x + (d.balances[id] || 0), 0) : d.primary);
   // A day's in and out are checking's own (S-209 review): card charges, interest and fees move the card, not checking;
   // a payment the floor held back never left. Transfers between two checking accounts show on both sides.
@@ -455,7 +458,7 @@ export function cashsim(spine, rules, opts = {}) {
     start: model.start, days: model.days, mode, model, run, needs, cf, claims, fromLog,
     // Empty is not zero (S-209): with no balance on main checking the engine's "checking" is every cash account,
     // savings included, so nothing that reads checking is shown until it has one.
-    checking: { known: model.accounts.some((a) => a.primary), path: model.checkingPath, ids: checkingIds || [], open: checkingIds ? dollars(checkingIds.reduce((x, id) => x + model.accounts.find((a) => a.id === id).balance, 0)) : null },
+    checking: { known: hasChecking, path: (spine.accounts || []).some((a) => a.family === 'cash' && a.type === 'checking') ? model.checkingPath : null, ids: checkingIds || [], open: checkingIds ? dollars(checkingIds.reduce((x, id) => x + model.accounts.find((a) => a.id === id).balance, 0)) : null },
     daily: days,
     // The lowest day is read off the checking line (every checking account together), like the line itself.
     low: days.length ? (() => { const d = days.reduce((m, x) => (x.primary < m.primary ? x : m)); return { date: d.date, amount: d.primary }; })() : { date: run.low.date, amount: dollars(run.low.cents) },

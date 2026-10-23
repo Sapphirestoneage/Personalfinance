@@ -210,7 +210,8 @@ export function accountGaps(spine, sim) {
   const missing = ((sim && sim.needs) || []).filter((n) => n.path && /^accounts\.[^.]+\.balance$/.test(n.path)).map((n) => ({ path: n.path, name: String(n.what).replace(/: balance$/, '') }));
   const none = !sim || !sim.model.accounts.length;
   const main = (spine.accounts || []).find((a) => a.family === 'cash');
-  return { none, checking: !!(sim && sim.checking.known), missing, fix: (sim && sim.checking.path) || (main ? 'accounts.' + main.id + '.balance' : null) };
+  const noChecking = !(spine.accounts || []).some((a) => a.family === 'cash' && a.type === 'checking');
+  return { none, checking: !!(sim && sim.checking.known), noChecking, missing, fix: noChecking ? null : (sim && sim.checking.path) || (main ? 'accounts.' + main.id + '.balance' : null) };
 }
 
 // The month's cash reading in words (S-209, the Budget calendar's sentences): checking on the

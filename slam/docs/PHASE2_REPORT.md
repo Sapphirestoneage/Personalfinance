@@ -71,7 +71,10 @@ Batch G in more detail, all on the SLAM pages:
   checking shows a number; a card says what to add, with a button to it.
 
 A review of Batch G (three reviewers and a skeptic per finding) found nine
-defects in this new code, and all nine are fixed with tests. Among them: a
+defects in this new code, and all nine are fixed with tests. The gap audit's
+skeptics then named fourteen more differences worth closing, also fixed (among
+them: a household with no checking account no longer sees savings drawn as
+checking, and items nobody marked count toward expected by month end). Among them: a
 moved bill could drop out of the cash line or count twice; two checking
 accounts broke the month's Show the math; the waiting card could ask about a
 bill you had already typed in.
@@ -90,6 +93,7 @@ bill you had already typed in.
 | Batch F | 532 pass | 35,909 checks | the Plan page and the one-pager |
 | Batch G | 560 pass, 2 skipped, 0 fail | 35,909 checks | calendar, spending, dashboard, plan, one-pager, affordances |
 | Batch G review fixes | 566 pass, 2 skipped, 0 fail | 35,909 checks | the same pages, again |
+| The gap audit's second reading | 571 pass, 2 skipped, 0 fail | 35,909 checks | the same pages, again |
 
 The 2 skipped are your local golden tests (no profile here). The Budget app's
 own browser checks (`tools/screens-check.mjs`, `journeys.mjs`,
@@ -106,15 +110,18 @@ From the Budget calendar's own code (the gap audit, Batch G), 147 capabilities:
 
 | Now | Count |
 | --- | --- |
-| In SLAM before Batch G | 30 |
-| Ported in Batch G | 69 |
-| The same outcome by SLAM's design | 17 |
+| In SLAM before Batch G | 29 |
+| Ported in Batch G | 45 |
+| Ported, with a difference named in the table | 24 |
+| The same outcome by SLAM's design | 18 |
 | In the retirement patch | 2 |
 | Not a capability (a speed cache) | 1 |
 | Still Budget only, in whole or part | 28 |
 
-The 28 come down to questions 29 to 37; the biggest is card and loan payments
-as items (13 rows). Every row is in `docs/CALENDAR_PARITY.md`, "The gap audit".
+The 28 come down to questions 29 to 38; the biggest is card and loan payments
+as items (13 rows). A skeptic re-read every row against the code at a strict
+bar (any difference reads partial): in SLAM 33, partial 110, missing 4. Every
+row, with both readings, is in `docs/CALENDAR_PARITY.md`, "The gap audit".
 
 ## Skipped, and why
 

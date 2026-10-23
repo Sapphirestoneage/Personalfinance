@@ -310,7 +310,7 @@ test('card interest from the run is on its statement day, on the card, and not a
 test('accounts the run left out are named with the field that fills them; no cash account at all is said once (S-209)', async () => {
   const { accountGaps } = await import('../engine/calendar-views.js');
   const s = demo();
-  assert.deepEqual(accountGaps(s, cashsim(s, R, { months: 1 })), { none: false, checking: true, missing: [], fix: 'accounts.chk.balance' });
+  assert.deepEqual(accountGaps(s, cashsim(s, R, { months: 1 })), { none: false, checking: true, noChecking: false, missing: [], fix: 'accounts.chk.balance' });
   const noSavings = putFact(s, 'accounts.hysa.balance', null, 'missing', '2026-10-23');
   const g = accountGaps(noSavings, cashsim(noSavings, R, { months: 1 }));
   assert.deepEqual(g.missing.map((m) => m.path), ['accounts.hysa.balance']);
@@ -471,4 +471,17 @@ test('an unmarked paycheck or bill before the as-of date reads not marked yet, n
   assert.match(pay.note, /lands in/);
   assert.equal(nov.days.find((d) => d.date === pay.date).in, 0);
   assert.equal(nov.in, calendar(demo(), R, { from: '2026-11', months: 1 }).months[0].in, 'still in the month plan');
+});
+
+test('a household with no checking account never sees its savings drawn as checking (S-209 review)', async () => {
+  const { accountGaps, cashReading, cashLine } = await import('../engine/calendar-views.js');
+  const { safeToSpend } = await import('../engine/spending.js');
+  const s = { ...demo(), accounts: demo().accounts.filter((a) => a.id !== 'chk') };
+  const sim = cashsim(s, R, { months: 1 });
+  assert.equal(sim.checking.known, false);
+  assert.equal(safeToSpend(sim).today, null);
+  assert.equal(cashReading(sim, '2026-10'), null);
+  assert.equal(cashLine(s, sim), null);
+  const g = accountGaps(s, sim);
+  assert.deepEqual([g.checking, g.noChecking, g.fix], [false, true, null]);
 });
