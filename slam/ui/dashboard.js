@@ -130,7 +130,7 @@ function render(base, rules, source) {
   app.replaceChildren(
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
-      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Ledger'))),
+      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Open the Ledger'))),
     scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); }),
     h('div', { class: 'tiles' }, tiles),
     flagsSection(spine, s.flags)

@@ -296,3 +296,20 @@ test('a federal loan plan: pick a plan, type another, or give only the payment',
   const priv = addItem(s, { collection: 'debts', type: 'private_student_loan' }, '2026-10-22');
   assert.equal(typeFor(priv.spine, 'debts.' + priv.id + '.plan'), 'text', 'a private loan has its lender\'s plans');
 });
+
+// ------------------------------------------------------------------ your part of a shared bill (S-187)
+import { evenShare, shareFromAmount } from '../engine/sharing.js';
+
+test('your part of a shared bill: an even split, a percent, or the dollars you pay', () => {
+  assert.equal(evenShare(4), 0.25);
+  assert.equal(evenShare(1), null, 'one person is not sharing');
+  assert.equal(shareFromAmount(70, 17.5), 0.25);
+  assert.equal(shareFromAmount(0, 10), null, 'no bill, no share');
+  assert.equal(shareFromAmount(70, null), null);
+  // Saved as a percent, it gives back the dollars typed.
+  const s = demo();
+  const e = s.expenses.find((x) => x.amount.value > 0);
+  const share = shareFromAmount(e.amount.value, 17.5);
+  const d = editExpense(s, e.id, { amount: e.amount.value, cadence: e.cadence, sharing: { shared: true, sharedWith: 3, yourShare: share, whoPays: 'part' } }, '2026-10-22');
+  assert.ok(Math.abs(shareOf(d, d.expenses.find((x) => x.id === e.id)).share * e.amount.value - 17.5) < 1e-9);
+});

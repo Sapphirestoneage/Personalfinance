@@ -40,3 +40,11 @@ export function shareOf(spine, e) {
 
 // Your monthly cost of a bill: the amount times your share.
 export const yourCost = (amount, share) => (amount === null || share === null ? null : amount * share);
+
+// Your part of a shared bill, three ways (S-187): an even split (1 / people),
+// a percent, or the dollars you pay of it (17.50 of a 70 bill is 25%).
+export const evenShare = (people) => (Number.isInteger(people) && people >= 2 ? 1 / people : null);
+export function shareFromAmount(bill, yours) {
+  if (typeof bill !== 'number' || !(bill > 0) || typeof yours !== 'number' || yours < 0) return null;
+  return yours / bill;
+}

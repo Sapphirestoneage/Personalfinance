@@ -54,7 +54,7 @@ loadAll().then(({ spine: base, rules, source }) => {
       h('div', {}, h('h1', {}, 'How every number is figured'),
         h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]),
         h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'dashboard.html' }, 'change it on the Dashboard'), '.')),
-      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'ledger.html' }, 'Ledger'), h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
+      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'ledger.html' }, 'Ledger'), h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Back to the Dashboard'))),
     h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card and one cost per expense. Each formula is followed by the same formula with today\'s numbers.'),
     h('nav', { class: 'card jump', 'aria-label': 'Jump to a number' }, METRICS.map((m) => h('a', { href: '#metric-' + m.id }, m.label)), h('a', { href: '#rules' }, 'Rules')),
     ...METRICS.map((m) => metricCard(m, ctx)),

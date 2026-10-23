@@ -5,7 +5,7 @@
 // every rough and missing field, ordered by how much it changes the results.
 
 import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost } from '../engine/ledger.js';
-import { payersOf, shareOf } from '../engine/sharing.js';
+import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
@@ -169,15 +169,24 @@ function expenseEditor(row) {
   // Shared details
   const people = h('input', { id: 'exp-people', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   people.value = sh.shared && sh.people ? String(sh.people) : '2';
-  const share = h('input', { id: 'exp-share', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'even split' });
+  const share = h('input', { id: 'exp-share', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   share.value = sh.shared && valueOf(e.yourShare) !== null && e.yourShare ? inputText('rate', valueOf(e.yourShare)) : '';
+  // Your part (S-187): an even split, a percent, or the dollars you pay; each shows the other.
+  const mine = h('input', { id: 'exp-mine', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  const startPart = sh.shared && valueOf(e.yourShare) ? 'pct' : 'even';
+  const partChoice = (v, text) => h('label', { class: 'radio' }, h('input', { type: 'radio', name: 'exp-part', value: v, checked: startPart === v }), ' ', text);
+  const partGroup = h('div', { class: 'part-group', role: 'radiogroup', 'aria-labelledby': 'exp-part-h' }, partChoice('even', 'An even split'), partChoice('pct', 'A percent'), partChoice('amt', 'The amount I pay'));
+  const partVal = () => (partGroup.querySelector('input:checked') || { value: 'even' }).value;
+  const pctBox = h('div', { hidden: startPart !== 'pct' }, h('label', { for: 'exp-share', class: 'edit-label' }, 'Your share, as a percent'), share, h('p', { class: 'edit-hint' }, 'For example 25 for 25%.'));
+  const mineBox = h('div', { hidden: true }, h('label', { for: 'exp-mine', class: 'edit-label' }, 'What you pay, in dollars'), mine, h('p', { class: 'edit-hint' }, 'For the same period as the bill.'));
+  const partNote = h('p', { class: 'edit-hint part-note', 'aria-live': 'polite' });
+  partGroup.addEventListener('change', () => { pctBox.hidden = partVal() !== 'pct'; mineBox.hidden = partVal() !== 'amt'; preview(); (partVal() === 'pct' ? share : partVal() === 'amt' ? mine : people).focus(); });
   const whole = h('input', { type: 'radio', name: 'exp-who', value: 'whole', checked: sh.whoPays === 'whole' });
   const part = h('input', { type: 'radio', name: 'exp-who', value: 'part', checked: sh.whoPays !== 'whole' });
   const sharedBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'shared' },
     h('legend', {}, 'Sharing it'),
     h('label', { for: 'exp-people', class: 'edit-label' }, 'How many people share it, you included?'), people,
-    h('label', { for: 'exp-share', class: 'edit-label' }, 'Your share, as a percent'), share,
-    h('p', { class: 'edit-hint' }, 'Leave blank for an even split.'),
+    h('span', { id: 'exp-part-h', class: 'edit-label' }, 'Your part'), partGroup, pctBox, mineBox, partNote,
     h('span', { class: 'edit-label' }, 'Who pays the bill?'),
     h('label', { class: 'radio' }, part, ' Each of us pays our own part'),
     h('label', { class: 'radio' }, whole, ' I pay all of it and get paid back'),
@@ -196,14 +205,28 @@ function expenseEditor(row) {
   const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'It counts $0 now. Keeping the real cost shows what you would pay if the cover ends.');
   const stdBtn = std === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => { amount.value = String(std); often.value = 'monthly'; usedStd = true; preview(); amount.focus(); } }, 'Use a standard plan for 1 line (' + money(std) + ' a month)');
   const yours = h('p', { class: 'edit-preview', 'aria-live': 'polite' });
-  const readShare = () => { const p = parseInput('int', people.value); const y = share.value.trim() ? parseInput('rate', share.value) : { ok: true, value: null }; return { people: p.ok ? p.value : null, share: y.ok ? y.value : null }; };
+  // { people, share, problem }: share null means an even split.
+  const readShare = () => {
+    const p = parseInput('int', people.value), n = p.ok ? p.value : null;
+    if (partVal() === 'pct') { const y = parseInput('rate', share.value); return { people: n, share: y.ok ? y.value : null, problem: y.ok ? (y.value > 1 ? 'Your share: 100 or less' : null) : 'Your share: type a percent' }; }
+    if (partVal() === 'amt') {
+      const a = parseInput('money', amount.value), m = parseInput('money', mine.value);
+      const y = a.ok && m.ok ? shareFromAmount(a.value, m.value) : null;
+      return { people: n, share: y, problem: y === null ? 'What you pay: type the dollars, and the whole bill above' : y > 1 ? 'What you pay is more than the whole bill' : null };
+    }
+    return { people: n, share: null, problem: null };
+  };
   const preview = () => {
     const a = parseInput('money', amount.value);
     if (!a.ok) { yours.textContent = ''; return; }
     if (mode.value === 'covered') { const m = previewCost(a.value, often.value, false, null, null); yours.textContent = 'Costs you $0 a month' + (m ? ' (' + money(m) + ' a month if you paid it).' : '.'); return; }
     const r = readShare();
     const m = previewCost(a.value, often.value, mode.value === 'shared', r.people, r.share);
-    yours.textContent = m === null ? '' : 'Costs you ' + money(m) + ' a month.';
+    yours.textContent = m === null ? '' : 'Costs you ' + showValue(m, 'money') + ' a month.';
+    if (mode.value === 'shared') {
+      const even = evenShare(r.people), s = r.share ?? even;
+      partNote.textContent = r.problem ? '' : partVal() === 'even' ? (even === null ? '' : 'Even split with ' + r.people + ' people: ' + showValue(even, 'rate') + ' each.') : s === null ? '' : 'That is ' + showValue(s, 'rate') + ' of the bill.';
+    }
   };
   modeBox.addEventListener('change', () => {
     sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered'; amountHint.hidden = mode.value !== 'covered';
@@ -211,7 +234,7 @@ function expenseEditor(row) {
     preview();
   });
   amount.addEventListener('input', () => { usedStd = false; });
-  for (const el of [amount, often, people, share]) el.addEventListener('input', preview);
+  for (const el of [amount, often, people, share, mine]) el.addEventListener('input', preview);
   often.addEventListener('change', preview);
   preview();
   const doSet = (kind) => {
@@ -221,6 +244,7 @@ function expenseEditor(row) {
     if (mode.value === 'shared') {
       const r = readShare();
       if (!r.people || r.people < 2) { msg.textContent = 'How many people: 2 or more, you included'; people.focus(); return; }
+      if (r.problem) { msg.textContent = r.problem; (partVal() === 'amt' ? mine : share).focus(); return; }
       sharing = { shared: true, sharedWith: r.people, yourShare: r.share, whoPays: whole.checked ? 'whole' : 'part' };
     } else if (mode.value === 'me') sharing = { shared: false };
     if (mode.value === 'covered') {
@@ -590,6 +614,7 @@ function bulkBar(tree) {
   const run = (action, word) => { if (!rows.length) return; const n = rows.length; apply(bulkEdit(hist.present, rows, action, today()), word + ' ' + n + ' field' + (n === 1 ? '' : 's')); selected = new Set(); };
   return h('div', { class: 'bulk-bar', role: 'region', 'aria-label': 'Selected fields' },
     h('span', { class: 'bulk-count' }, rows.length + ' selected'),
+    rows.length ? null : h('span', { class: 'disabled-why' }, 'Tick fields above to act on them.'),
     h('button', { type: 'button', class: 'btn primary', disabled: !rows.length, onclick: () => run('confirm', 'Confirmed') }, 'Confirm'),
     h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('rough', 'Marked rough:') }, 'Mark rough'),
     h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('notForMe', 'Not for me:') }, 'Not for me'),
@@ -608,10 +633,10 @@ function render() {
         h('h1', {}, 'Ledger'),
         h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' },
-        h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, 'Undo'),
-        h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo'),
+        h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
+        h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, canRedo(hist) ? 'Redo' : 'Nothing to redo'),
         h('a', { class: 'btn', href: 'math.html' }, 'All formulas'),
-        h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
+        h('a', { class: 'btn', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     guessList(),
     filterBar(tree),
