@@ -53,7 +53,7 @@ levels or archetypes (links instead).
 | 30 | Returns: generated automatic payments | in cashcal.js | cashcal.js run.extraLog, day events | A |
 | 31 | Returns: shortfalls | in cashcal.js | cashcal.js run.shortfalls | A |
 | 32 | Returns: late fees | in cashcal.js | cashcal.js run.lateFees | A |
-| 33 | Returns: forgiven amounts (student loan forgiveness) | missing | none | C |
+| 33 | Returns: forgiven amounts (student loan forgiveness) | in SLAM (the forgiveness date and the balance it would forgive is the balance then; the amount is not a return line yet) | `slam/engine/debtview.js` idr | C |
 | 34 | Cleared = the day you stop revolving, not balance zero; works at 0% | in cashcal.js | cashcal.js simulate (cleared) | A |
 
 ## Section 4: features (v22)
@@ -76,11 +76,11 @@ levels or archetypes (links instead).
 | 48 | Card spending counts in its tier; a pay-in-full card's settling payment is skipped (4.2) | missing | none | D |
 | 49 | Where the money goes: donut by tag, expandable to line items (4.3) | in SLAM (the money-flow diagram, by section) / old Budget only (the donut) | `slam/ui/flow-chart.js`; `slam/src/ui/charts` | D |
 | 50 | Cut simulator: tap rows to drop them; put what I save toward the debt (4.3) | missing | none | D |
-| 51 | Payoff Gantt on one timeline (4.4) | missing | none | C |
-| 52 | Payoff order list: rate, clear date, interest (4.4) | in SLAM (order and monthly plan, no daily dates) | `slam/engine/debt.js` payoffPlan | C |
-| 53 | Interest timeline, stacked monthly bars per card (4.4) | missing | none | C |
-| 54 | Why it is taking so long: paid, charged back on, interest, net paydown (4.4) | in cashcal.js | cashcal.js whyStuck | C |
-| 55 | Target solver "X paid off by Y", says if it breaks cash (4.4) | in cashcal.js | cashcal.js solvePayoff | C |
+| 51 | Payoff Gantt on one timeline (4.4) | in SLAM | `slam/engine/debtview.js` gantt; `slam/ui/calendar.js` debtTab | C |
+| 52 | Payoff order list: rate, clear date, interest (4.4) | in SLAM | `slam/engine/debtview.js` orderList (dates from the run, months from `debt.js` payoffPlan beyond the window) | C |
+| 53 | Interest timeline, stacked monthly bars per card (4.4) | in SLAM | `slam/engine/debtview.js` interestTimeline; `slam/ui/calendar.js` stack | C |
+| 54 | Why it is taking so long: paid, charged back on, interest, net paydown (4.4) | in SLAM | `slam/engine/debtview.js` cardTiles (whyStuck from the vendored engine) | C |
+| 55 | Target solver "X paid off by Y", says if it breaks cash (4.4) | in SLAM | `slam/engine/debtview.js` solvePayoff (parameterized over the same run; no $600 cap) | C |
 | 56 | Separate dates: high-interest free, cards clear, student loans (4.4) | missing | none | A (dates), C (shown) |
 | 57 | Student loans their own category, held back from avalanche (4.5) | in cashcal.js | cashcal.js payLast | A |
 | 58 | The float card: goal zero interest, paid last, held flat, "interest-free from" (4.6) | in cashcal.js | cashcal.js goalNoInterest | A (engine), C (shown) |
@@ -111,22 +111,22 @@ levels or archetypes (links instead).
 | # | Feature (spec item) | Status now | File | Batch |
 | --- | --- | --- | --- | --- |
 | 80 | Bill autopsy: every recurring item ranked by yearly cost (batch 1) | missing | none | D |
-| 81 | Annual fee ROI per card (batch 1) | missing | none | C |
-| 82 | Utilization guardrail: peak before the report day, warns at 30% (batch 1) | in SLAM (today's utilization, personal and overall) / in cashcal.js (peak before report day) | `slam/engine/debt.js` utilization; cashcal.js utilizationCheck | C |
-| 83 | Minimum-payment trap readout (batch 1) | missing | none | C |
+| 81 | Annual fee ROI per card (batch 1) | in SLAM | `slam/engine/debtview.js` feeRoi (fields annualFee, annualValue) | C |
+| 82 | Utilization guardrail: peak before the report day, warns at 30% (batch 1) | in SLAM | `slam/engine/debtview.js` utilizationAtReport (peak before the report day, personal and overall) | C |
+| 83 | Minimum-payment trap readout (batch 1) | in SLAM | `slam/engine/debtview.js` minimumTrap (the minimum-only payoff from `debt.js` payoffPlan) | C |
 | 84 | Quarterly tax set-aside: monthly sweep plus the four IRS dates (batch 1) | in SLAM | `slam/engine/tax.js` taxSetAside; `slam/engine/calendar.js` estimatedTax | done |
-| 85 | Balance transfer analysis: fee, 0% window, post-window rate (batch 1) | in cashcal.js | cashcal.js balanceTransfer | C |
+| 85 | Balance transfer analysis: fee, 0% window, post-window rate (batch 1) | in SLAM | `slam/engine/debtview.js` balanceTransfer (rules BT_FEE_SHARE, BT_PROMO_MONTHS) | C |
 | 86 | Saved scenarios with a diff (batch 1) | missing | none | F |
 | 87 | Goals and sinking funds: monthly set-aside, spend on the date, repeat yearly (batch 2) | in SLAM (goals with a target) / missing (sinking funds) | `slam/engine/schema.js` goals | F |
 | 88 | Amortizing loans with a term (batch 2) | in cashcal.js | `money-rooms-v3/engine/loanmath.js` levelPayment | A |
 | 89 | Net worth with per-asset growth rates and a ten-year projection (batch 2) | in SLAM | `slam/engine/projection.js`, `networth.js` | done |
 | 90 | Undo history, last 25 restore points (batch 2) | in SLAM (200 steps, no history view) | `slam/engine/edits.js` | F |
 | 91 | Printable one-pager (batch 2) | missing | none | F |
-| 92 | Which card should I use: rewards minus interest, interest-free days, utilization warning (batch 3) | in cashcal.js | cashcal.js whichCard | C |
-| 93 | Float days per card for a purchase today (batch 3) | in cashcal.js | cashcal.js whichCard (interestFreeDays) | C |
-| 94 | Signup bonus tracking: spend so far, days left, pace, deadline on the calendar (batch 3) | missing | none | C |
-| 95 | Billing cycle on every card tile (batch 3) | missing | none | C |
-| 96 | Student loan income-driven payment and forgiveness (batch 3) | missing | none | C |
+| 92 | Which card should I use: rewards minus interest, interest-free days, utilization warning (batch 3) | in SLAM | `slam/engine/debtview.js` whichCard (rewardsRate or APP_REWARDS_RATE) | C |
+| 93 | Float days per card for a purchase today (batch 3) | in SLAM | `slam/engine/debtview.js` whichCard (interestFreeDays) | C |
+| 94 | Signup bonus tracking: spend so far, days left, pace, deadline on the calendar (batch 3) | in SLAM | `slam/engine/debtview.js` signupBonus; `slam/engine/calendar.js` bonusBy event; milestones | C |
+| 95 | Billing cycle on every card tile (batch 3) | in SLAM | `slam/engine/debtview.js` cardTiles (cycle) | C |
+| 96 | Student loan income-driven payment and forgiveness (batch 3) | in SLAM | `slam/engine/debtview.js` idr (rules IDR_*, POVERTY_LINE_*, PSLF_PAYMENTS; missing row when a rule is missing) | C |
 | 97 | Price-increase and free-trial detection (batch 3) | missing | none | D |
 | 98 | Merchant name cleanup ("SQ *BLUE BOTTLE 4471" to "Blue Bottle") (batch 3) | old Budget only | `slam/src/calc/tx-import.js`, `slam/data/merchant-rules.json` | D |
 | 99 | Split transactions (batch 3) | missing (a parking-lot idea) | none | D |
@@ -184,14 +184,14 @@ levels or archetypes (links instead).
 
 | Status | Rows |
 | --- | --- |
-| in SLAM | 43 (some also in cashcal.js for the daily form) |
+| in SLAM | 56 (some also in cashcal.js for the daily form) |
 | old Budget only | 10 |
-| in cashcal.js | 51 |
-| missing | 36 |
+| in cashcal.js | 46 |
+| missing | 28 |
 | excluded | 3 |
 | rows in all | 143 |
 
-After Batch B (2026-10-23): in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
+After Batch C (2026-10-23): in SLAM 56, old Budget only 10, in cashcal.js 46, missing 28, excluded 3. After Batch B: in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
 
 The brief counted 87 features in sections 3, 4 and 7; this list has 129 there because
 each return value, each burn tier, each pill set and each self-test assertion is its own

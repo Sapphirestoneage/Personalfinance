@@ -156,12 +156,27 @@ ending) sit on their days and on a timeline. Search finds any item. Edits save
 in this browser like the Ledger's, with Undo. `engine/calendar-views.js` holds
 the readings; `ui/window.js` the selector; `ui/calendar.js` only formats.
 
+### The Debt tab (Batch C, S-205)
+
+A Debt tab on the calendar page, every number from the same run
+(`engine/debtview.js`): the four clear dates, a payoff Gantt, the payoff order
+with the interest each debt costs, card interest month by month stacked by
+card, why a card is stuck, a target solver ("clear the Visa by June": the
+extra a month it takes and whether that breaks cash), the minimum-payment
+trap, utilization as the bureaus will see it (the peak before each card's
+report day), a balance transfer worked out, the annual fee against what the
+card gives back, which card to use for a purchase today (rewards minus
+interest, with the float days), a signup bonus with its deadline on the
+calendar, and the billing cycle on every card tile. Federal student loans get
+the income-driven payment and the forgiveness dates from the rules registry;
+a rule that is not in the registry shows as a missing row, never a number.
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), windfall |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, windfall |
 | `ui/` | the Ledger, Dashboard, Calendar and Windfall views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |

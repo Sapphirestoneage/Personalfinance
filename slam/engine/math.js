@@ -19,6 +19,7 @@ import { project } from './projection.js';
 import { money } from '../src/ui/format.js';
 import { expenseRow } from './ledger.js';
 import { monthlyAmount } from './cashflow.js';
+import { minimumTrap, solvePayoff } from './debtview.js';
 
 const v = valueOf;
 export const UNITS = ['usd', 'usd/month', 'usd/year', 'months', 'years', 'ratio', 'age', 'count'];
@@ -115,7 +116,7 @@ def({ id: 'cliffCosts', label: 'Costs once certain income stops', unit: 'usd/mon
   explain: ({ s }) => { const c = s.cliff; if (!c) return out(null, []); return out({ value: Math.round(c.costs * 100) / 100, kind: c.spending.kind === 'computed' && c.minimums.kind === 'computed' ? 'computed' : 'rough', rules: [], rough: [], missing: [] }, [{ label: 'Spending', value: c.spending.value, unit: 'usd/month', kind: c.spending.kind, role: 'plus', group: 'E' }, { label: 'Minimum payments', value: c.minimums.value, unit: 'usd/month', kind: c.minimums.kind, role: 'plus', group: 'D' }, { label: 'Tax set-aside', value: c.setAside.value, unit: 'usd/month', kind: c.setAside.kind, role: 'plus', group: 'T' }]); } });
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id);
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
 function expenseCostMetric(id) {
@@ -203,6 +204,45 @@ function cardUtilMetric(id) {
   const card = id.slice(9);
   return { id, label: 'Card utilization', unit: 'ratio', op: 'ratio', screens: ['flag:utilization-' + card], formula: 'Utilization = balance / credit limit',
     explain: ({ spine, s }) => { const c = s.debt.utilization.items.find((x) => x.id === card); return c ? out(c.util, [field(spine, 'debts.' + card + '.balance', c.balance, 'usd', 'num', c.name + ' balance'), field(spine, 'debts.' + card + '.limit', c.limit, 'usd', 'den', c.name + ' limit')]) : out(null, []); } };
+}
+
+// The Debt tab (S-205): one family, "debt:<what>[:<id>]", read from ctx.debt (the
+// debtView result), ctx.bt, ctx.solve and ctx.which (the tab's tool results).
+const DEBT_SCREENS = ['calendar#debt'];
+const resOf = (x, value) => (x ? { value, kind: x.kind, from: x.from || [], rough: x.rough || [], missing: x.missing || [], rules: x.rules || [] } : null);
+const term = (label, value, unit, kind, role, extra = {}) => ({ label, value, unit, kind, role, group: null, ...extra });
+const ruleOrMissing = (rules, id, year, label, unit) => (rules.has(id, year) ? ruleTerm(rules, id, year, 'arg', label, unit) : term(label + ' (rule ' + id + ', not in the registry)', null, unit, 'missing', 'arg', { rule: id }));
+function debtMetric(id) {
+  if (!id || !id.startsWith('debt:')) return null;
+  const [, what, key] = id.split(':');
+  const cardOf = (d) => d && d.cards.find((c) => c.id === key);
+  if (what === 'interestWindow') return { id, label: 'Card interest inside the window', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Card interest in the window = what each card charges at its statement closes, added up',
+    explain: ({ debt: d }) => (d ? out(resOf(d, d.interest.total), d.interest.debts.map((x) => term(x.name + ' interest', x.total, 'usd', 'computed', 'plus', { path: (d.cards.find((c) => c.id === x.id) || {}).path || null }))) : out(null, [])) };
+  if (what === 'interestMonth') return { id, label: 'A month of interest today', unit: 'usd/month', op: 'custom', screens: DEBT_SCREENS, formula: 'A month of interest = balance x the rate charged today / 12',
+    explain: ({ spine, debt: d }) => { const t = cardOf(d) && cardOf(d).trap; return t ? out(resOf(t, t.interestNow), [field(spine, 'debts.' + key + '.balance', t.balance, 'usd', 'arg', t.name + ' balance'), field(spine, 'debts.' + key + '.apr', t.rate, 'ratio', 'arg', t.name + ' rate today' + (t.promo ? ' (intro)' : ''))]) : out(null, []); },
+    recompute: (t) => (t[0].value === null || t[1].value === null ? null : Math.round(t[0].value * t[1].value / 12 * 100) / 100) };
+  if (what === 'minOnly') return { id, label: 'Interest paying only the minimum', unit: 'usd', op: 'custom', screens: DEBT_SCREENS, formula: 'Interest at the minimum only = the monthly plan on this one debt with no extra: each month adds interest at the rate in force and takes the minimum, until the balance is gone (or never, when the minimum does not cover the interest)',
+    explain: ({ spine, rules, debt: d }) => { const t = cardOf(d) && cardOf(d).trap; if (!t) return out(null, []); const r = resOf(t, t.interest); return out(r, [field(spine, 'debts.' + key + '.balance', t.balance, 'usd', 'arg', t.name + ' balance'), field(spine, 'debts.' + key + '.apr', t.rate, 'ratio', 'arg', t.name + ' rate today'), term('Minimum today', t.minimumNow, 'usd/month', t.minimumNow === null ? 'missing' : 'computed', 'arg', { path: 'debts.' + key + '.minimum' }), term('Months at the minimum only', t.months, 'months', t.months === null ? 'computed' : 'computed', 'arg')], [], t.neverPaysOff ? { note: 'The minimum never clears it, so there is no total.' } : {}); },
+    recompute: (t, ctx) => { const d = (ctx.spine.debts || []).find((x) => x.id === key); if (!d || t[0].value === null) return null; return minimumTrap(ctx.spine, ctx.rules, d, ctx.s.asOf).interest; } };
+  if (what === 'utilReport') return { id, label: 'Utilization at the report day', unit: 'ratio', op: 'ratio', screens: DEBT_SCREENS, formula: 'Utilization at the report day = the peak balance before the card reports / credit limit',
+    explain: ({ spine, debt: d }) => { const c = cardOf(d) && cardOf(d).util; return c ? out(c.util, [term(c.name + ' peak before day ' + c.reportDay + (c.reportDayRough ? ' (the close day standing in)' : ''), c.peak, 'usd', c.reportDayRough ? 'rough' : 'computed', 'num', { path: c.balancePath }), field(spine, c.path, c.limit, 'usd', 'den', c.name + ' limit')]) : out(null, []); } };
+  if (what === 'utilPersonal' || what === 'utilOverall') { const personal = what === 'utilPersonal'; return { id, label: personal ? 'Personal utilization at the report day' : 'Overall utilization at the report day', unit: 'ratio', op: 'ratio', screens: DEBT_SCREENS, formula: (personal ? 'Personal utilization' : 'Overall utilization') + ' at the report day = the peaks before each card reports, added up / the limits added up' + (personal ? ', over the cards that report to personal credit' : ', over every card'),
+    explain: ({ spine, debt: d }) => { if (!d) return out(null, []); const items = d.utilization.items.filter((c) => !personal || c.reports === true); const r = personal ? d.utilization.personal : d.utilization.overall; return out(r, items.flatMap((c) => [term(c.name + ' peak', c.peak, 'usd', c.reportDayRough ? 'rough' : 'computed', 'num', { path: c.balancePath }), field(spine, c.path, c.limit, 'usd', 'den', c.name + ' limit')])); } }; }
+  if (what === 'feeRoi') return { id, label: 'Annual fee against what the card gives back', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Net = what the card gives back a year - its annual fee',
+    explain: ({ spine, debt: d }) => { const f = cardOf(d) && cardOf(d).fee; return f ? out(resOf(f, f.net), [field(spine, 'debts.' + key + '.annualValue', f.value, 'usd', 'plus'), field(spine, 'debts.' + key + '.annualFee', f.fee, 'usd', 'minus')]) : out(null, []); } };
+  if (what === 'bonus') return { id, label: 'Signup bonus: still to spend', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Still to spend = the spend required - what is spent so far (below zero means the target is passed)',
+    explain: ({ spine, debt: d }) => { const b = cardOf(d) && cardOf(d).bonus; return b ? out(resOf(b, b.toGo), [field(spine, 'debts.' + key + '.bonusSpend', b.required, 'usd', 'plus'), field(spine, 'debts.' + key + '.bonusSpent', b.spent, 'usd', 'minus')]) : out(null, []); } };
+  if (what === 'idr') return { id, label: 'Income-driven payment', unit: 'usd/month', op: 'custom', screens: DEBT_SCREENS, formula: 'Income-driven payment = share x (income - multiple x the poverty line for the household) / 12; the poverty line = the line for one + the amount for each extra person',
+    explain: ({ spine, rules, s, debt: d }) => { const l = d && d.loans.find((x) => x.id === key); if (!l || l.federal === false) return out(null, []); const year = +s.asOf.slice(0, 4); return out(resOf(l, l.payment), [term(l.agiSource === 'tax' ? 'Adjusted gross income this year' : 'A year of this month\'s gross income', l.agi, 'usd', l.agi === null ? 'missing' : l.agiSource === 'tax' ? s.tax.lines.agi.kind : 'rough', 'arg'), field(spine, 'household.householdSize', l.householdSize, 'count', 'arg', 'People in the household'), ruleOrMissing(rules, 'POVERTY_LINE_1', year, 'Poverty line for one', 'usd'), ruleOrMissing(rules, 'POVERTY_LINE_EACH', year, 'Added for each extra person', 'usd'), ruleOrMissing(rules, 'IDR_POVERTY_MULTIPLE', year, 'Multiple of the poverty line', 'ratio'), ruleOrMissing(rules, 'IDR_PAYMENT_SHARE', year, 'Share of discretionary income', 'ratio')]); },
+    recompute: (t) => { if (t.some((x) => x.value === null)) return null; const [agi, size, p1, each, mult, share] = t.map((x) => x.value); const poverty = p1 + each * Math.max(0, size - 1); return Math.round(share * Math.max(0, agi - mult * poverty) / 12 * 100) / 100; } };
+  if (what === 'bt') return { id, label: 'Balance transfer: net saving', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Net saving = the interest skipped during the 0% window - the transfer fee',
+    explain: ({ bt: b }) => (b && b.value !== null ? out(resOf(b, b.netSaving), [term('Interest skipped over ' + b.promoMonths + ' months at ' + Math.round(b.apr * 10000) / 100 + '%', b.interestSkipped, 'usd', 'computed', 'plus', { path: b.path }), term('Transfer fee (' + Math.round(b.feeShare * 10000) / 100 + '% of ' + money(b.balance) + ')', b.fee, 'usd', 'computed', 'minus', b.rules.includes('BT_FEE_SHARE') ? { rule: 'BT_FEE_SHARE' } : {})]) : out(null, [])) };
+  if (what === 'solve') return { id, label: 'Extra a month to clear it by the date', unit: 'usd/month', op: 'custom', screens: DEBT_SCREENS, formula: 'The smallest extra a month, found by halving between the extra now and the balance, that clears the debt by the date on the same day-by-day run',
+    explain: ({ spine, solve: x, sim }) => { if (!x || x.impossible) return out(null, []); const bal = sim ? (sim.model.cards.find((c) => c.id === x.target) || sim.model.loans.find((l) => l.id === x.target) || {}).balance : null; return out({ value: x.need, kind: sim ? sim.kind : 'computed', from: [], rough: [], missing: [], rules: [] }, [field(spine, 'debts.' + x.target + '.balance', bal === null || bal === undefined ? null : Math.round(bal) / 100, 'usd', 'arg', x.name + ' balance'), term('The extra now', x.extraNow, 'usd/month', 'computed', 'arg', { path: spine.debtPlan && spine.debtPlan.extra ? 'debtPlan.extra' : null }), term('Days until ' + x.byDate, Math.max(0, Math.round((new Date(x.byDate + 'T00:00:00Z') - new Date(sim ? sim.start + 'T00:00:00Z' : x.byDate + 'T00:00:00Z')) / 86400000)), 'count', 'computed', 'arg')]); },
+    recompute: (t, ctx) => (ctx.solve && ctx.sim && !ctx.solve.impossible ? (solvePayoff(ctx.spine, ctx.rules, ctx.sim, { target: ctx.solve.target, byDate: ctx.solve.byDate }) || {}).need ?? null : null) };
+  if (what === 'whichCard') return { id, label: 'Which card: rewards minus interest', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Net = rewards on the purchase - a month of interest on it (only on a card that is revolving)',
+    explain: ({ which: w }) => { const r = w && w.rows.find((x) => x.id === key); return r ? out({ value: r.net, kind: w.kind, from: w.from, rough: w.rough, missing: w.missing, rules: w.rules }, [term(r.name + ' rewards at ' + Math.round(r.rate * 10000) / 100 + '%', r.rewards, 'usd', w.rough.includes('debts.' + key + '.rewardsRate') ? 'rough' : 'known', 'plus', w.rough.includes('debts.' + key + '.rewardsRate') ? { rule: 'APP_REWARDS_RATE' } : { path: 'debts.' + key + '.rewardsRate' }), term('A month of interest on it' + (r.revolving ? '' : ' (paid in full: none)'), r.interest, 'usd', 'computed', 'minus', { path: 'debts.' + key + '.apr' })]) : out(null, []); } };
+  return null;
 }
 
 // The metric(s) behind each Dashboard tile and flag.

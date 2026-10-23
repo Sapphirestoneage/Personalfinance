@@ -1691,6 +1691,96 @@
       "notes": "",
       "source": "SLAM house assumption (v44 used the 14th)",
       "verified": "assumption"
+    },
+    {
+      "id": "BT_FEE_SHARE",
+      "rule": "Balance transfer fee as a share of the amount moved, when the offer is not entered",
+      "value": 0.03,
+      "unit": "rate",
+      "appliesTo": "Debt tab: balance transfer analysis",
+      "notes": "Typical offers charge 3% to 5%; the offer's own fee wins when typed",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "BT_PROMO_MONTHS",
+      "rule": "Balance transfer 0% window in months, when the offer is not entered",
+      "value": 18,
+      "unit": "months",
+      "appliesTo": "Debt tab: balance transfer analysis",
+      "notes": "Offers run 12 to 21 months; the offer's own window wins when typed",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_REWARDS_RATE",
+      "rule": "Rewards back on everyday card spending when a card's own rate is not entered",
+      "value": 0.01,
+      "unit": "rate",
+      "appliesTo": "Debt tab: which card to use",
+      "notes": "1% is the floor most cards pay; a card's rewardsRate wins",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "IDR_PAYMENT_SHARE",
+      "rule": "Income-driven repayment (IBR, new borrowers on or after July 1, 2014): payment is this share of discretionary income",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Federal student loans on an income-driven plan",
+      "notes": "15% for older IBR borrowers; the Repayment Assistance Plan that opens July 1, 2026 uses 1% to 10% of AGI by income band and is not modeled yet",
+      "source": "20 U.S.C. 1098e (IBR); verify the plan before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "IDR_POVERTY_MULTIPLE",
+      "rule": "Income-driven repayment: discretionary income is AGI above this multiple of the poverty line",
+      "value": 1.5,
+      "unit": "multiple",
+      "appliesTo": "Federal student loans on an income-driven plan",
+      "notes": "IBR uses 150% of the poverty guideline for the household size",
+      "source": "20 U.S.C. 1098e (IBR); verify the plan before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "IDR_FORGIVENESS_YEARS",
+      "rule": "Income-driven repayment: the balance left after this many years of payments is forgiven",
+      "value": 20,
+      "unit": "years",
+      "appliesTo": "Federal student loans on an income-driven plan",
+      "notes": "IBR: 20 years for new borrowers, 25 for older borrowers; any tax on the forgiven amount is not modeled",
+      "source": "20 U.S.C. 1098e (IBR); verify the plan before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "PSLF_PAYMENTS",
+      "rule": "Public Service Loan Forgiveness: qualifying monthly payments before the rest is forgiven",
+      "value": 120,
+      "unit": "payments",
+      "appliesTo": "Federal Direct loans while working full time for a qualifying employer",
+      "notes": "Ten years of payments on a qualifying plan; the employer and the plan both have to qualify",
+      "source": "20 U.S.C. 1087e(m)",
+      "verified": "law"
+    },
+    {
+      "id": "POVERTY_LINE_1",
+      "rule": "Poverty guideline for a household of one (48 contiguous states and D.C.)",
+      "value": 15650,
+      "unit": "$",
+      "appliesTo": "Income-driven repayment: discretionary income",
+      "notes": "2025 HHS guideline; replace with the 2026 figure when published and verified",
+      "source": "HHS poverty guidelines, 2025",
+      "verified": "verify"
+    },
+    {
+      "id": "POVERTY_LINE_EACH",
+      "rule": "Poverty guideline: added for each person in the household beyond the first (48 contiguous states and D.C.)",
+      "value": 5500,
+      "unit": "$",
+      "appliesTo": "Income-driven repayment: discretionary income",
+      "notes": "2025 HHS guideline; replace with the 2026 figure when published and verified",
+      "source": "HHS poverty guidelines, 2025",
+      "verified": "verify"
     }
   ]
 }

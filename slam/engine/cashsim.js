@@ -222,10 +222,15 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       if (minEntered === null) t.addRough(base + '.minimum');
       const everyday = d.everydayCard ? t.useFact(base + '.everydayCard', d.everydayCard) === true : false;
       const payLast = d.payLast ? t.useFact(base + '.payLast', d.payLast) === true : false;
+      // The day the card reports to the bureaus (S-205): entered, else the statement close day (rough).
+      const reportFact = d.reportDay ? t.useFact(base + '.reportDay', d.reportDay) : null;
+      const reportDay = reportFact ?? stmtDay;
+      if (reportFact === null) t.addRough(base + '.reportDay');
+      const annualFee = d.annualFee && d.annualFee.kind !== 'notForMe' ? t.useFact(base + '.annualFee', d.annualFee) ?? 0 : 0;
       model.cards.push({
         id: d.id, name, balance: cents(bal), apr, promoApr, promoEnd: promoEnds ? promoEnds.slice(0, 7) : null, limit: cents(limit), minimum: cents(minEntered),
         stmtDay, graceDays: grace, dueDay, payInFull: false, autopay: policy === 'statement' ? 'statement' : 'minimum', goalNoInterest: everyday,
-        lateFee, penaltyApr, reportDay: stmtDay, payLast, annualFee: 0,
+        lateFee, penaltyApr, reportDay: reportDay, reportDayRough: reportFact === null, payLast, annualFee: cents(annualFee),
         minPct: minEntered === null ? 0.01 + apr / 12 : 0, minFloor: minEntered === null ? cents(rules.get('APP_CARD_MIN_FLOOR', year)) : 0,
         revolving: bal > 0, estimated: closeFact === null, movable: true, path: base + '.balance'
       });

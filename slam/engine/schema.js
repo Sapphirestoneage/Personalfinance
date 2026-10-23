@@ -73,7 +73,12 @@ export const FAMILIES = {
       statementCloseDay: 'int', secured: 'bool', payoffDate: 'date', federal: 'bool', plan: 'text', stress: 'int', reasonsToKeep: 'list',
       business: 'bool', reportsToPersonalCredit: 'bool', paidFrom: 'link', payPolicy: 'choice:minimum|statement',
       // The everyday (float) card is paid in full and held flat; a debt paid last waits for the others (S-203).
-      everydayCard: 'bool', payLast: 'bool'
+      everydayCard: 'bool', payLast: 'bool',
+      // The Debt tab (S-205): the day the card reports to the bureaus, the annual fee and what the card gives back a year,
+      // the rewards rate on everyday spending, a signup bonus (spend required, by when, spent so far, what it is worth),
+      // and whether a federal loan is on track for Public Service Loan Forgiveness.
+      reportDay: 'int', annualFee: 'money', annualValue: 'money', rewardsRate: 'rate',
+      bonusSpend: 'money', bonusBy: 'date', bonusSpent: 'money', bonusValue: 'money', pslf: 'bool'
     }
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
@@ -207,6 +212,8 @@ export function validate(spine) {
   checkFact('household.state', h.state, 'text');
   checkFact('household.county', h.county, 'text');
   checkFact('household.nycResident', h.nycResident, 'bool');
+  // People in the household for the poverty line (S-205): adults and dependents together.
+  checkFact('household.householdSize', h.householdSize, 'int', false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).

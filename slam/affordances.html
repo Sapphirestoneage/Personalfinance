@@ -151,6 +151,21 @@
     <div class="tablewrap"><table class="data-table"><thead><tr><th>Week</th><th class="num">In</th><th class="num">Out</th><th class="num">Ending balance</th></tr></thead><tbody><tr><td>Nov 1 to Nov 7</td><td class="num">$500</td><td class="num">$2,400</td><td class="num">$2,100</td></tr><tr class="tight"><td>Nov 8 to Nov 14 (the lowest day)</td><td class="num">$0</td><td class="num">$640</td><td class="num">$1,460</td></tr><tr class="under"><td>Nov 15 to Nov 21</td><td class="num">$0</td><td class="num">$1,900</td><td class="num">-$440</td></tr></tbody></table></div>
     <div class="year-strip" role="list"><div class="ys" role="listitem"><b>Nov</b><span class="ys-low">$1,460</span></div><div class="ys tight" role="listitem"><b>Dec</b><span class="ys-low">$310</span><span class="pill">tight</span></div><div class="ys under" role="listitem"><b>Jan</b><span class="ys-low">-$120</span><span class="pill">under</span></div></div>
   </section>
+  <section class="card" aria-labelledby="p2c-h">
+    <h2 id="p2c-h">Debt tab (Phase 2, Batch C)</h2>
+    <p class="muted">Clear dates are tiles; a date past the window reads as words. The payoff Gantt is a bar per debt on one timeline, striped when it runs past the window. The interest stack is one column a month, a segment per card, with a legend and a list twin.</p>
+    <div class="clear-grid"><div class="clear-tile"><span class="clear-date">Mar 3, 2027</span><span class="clear-label">High-interest free</span></div><div class="clear-tile beyond"><span class="clear-date">Not inside the window</span><span class="clear-label">Debt free</span></div></div>
+    <div class="gantt"><div class="gantt-row"><span class="gantt-label">Visa</span><div class="gantt-track"><div class="gantt-bar viz-1" style="width: 45%"></div><span class="gantt-tick" style="left: 25%"></span><span class="gantt-tick" style="left: 50%"></span></div></div><div class="gantt-row"><span class="gantt-label">Federal student loan</span><div class="gantt-track"><div class="gantt-bar viz-4 beyond" style="width: 100%"></div></div></div></div>
+    <div class="stack" role="img" aria-label="Card interest by month"><div class="stack-col"><div class="stack-seg viz-1" style="height: 40%"></div><div class="stack-seg viz-2" style="height: 20%"></div></div><div class="stack-col"><div class="stack-seg viz-1" style="height: 35%"></div><div class="stack-seg viz-2" style="height: 20%"></div></div><div class="stack-col"><div class="stack-seg viz-1" style="height: 30%"></div></div></div>
+    <p class="muted">A card tile: the billing cycle, utilization at the report day, why it is stuck, the minimum-payment trap, the annual fee and the signup bonus with its deadline chip. A missing input or rule is a missing row in words.</p>
+    <section class="card card-tile"><h3>Visa <span class="pill">revolving</span> <span class="deadline-chip">Bonus deadline in 12 days</span></h3>
+      <dl class="kv"><dt>Closes</dt><dd>day 15 (a house guess)</dd><dt>Due</dt><dd>day 12</dd><dt>Next statement</dt><dd>$3,041 due Nov 12, 2026</dd><dt>Minimum vs interest</dt><dd><span class="trap-bad">$55 minimum, $100 interest: the balance can only grow</span></dd><dt>Annual fee</dt><dd class="words missing-row">Missing: what it gives back a year</dd></dl>
+      <div class="math"><button type="button" class="btn math-btn" aria-expanded="false"><span class="math-icon" aria-hidden="true">=</span> Show the math</button></div></section>
+    <p class="muted">Tools on the tab are small forms with a result box; a result that breaks cash is red-edged.</p>
+    <form class="tool-form" onsubmit="return false"><label class="edit-label" for="d-solve-by">Clear it by</label><input id="d-solve-by" type="date"><button type="button" class="btn primary">Work it out</button></form>
+    <div class="tool-result">$410 a month more clears the Visa by Apr 1, 2027.</div>
+    <div class="tool-result bad">$1,200 a month more clears it by Jan 1, 2027, but checking goes under the floor twice.</div>
+  </section>
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>

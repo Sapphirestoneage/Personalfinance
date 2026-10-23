@@ -20,6 +20,7 @@ import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 import { pickedWindow, windowBar } from './window.js';
+import { debtTab } from './debt-tab.js';
 
 const app = document.getElementById('app');
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -32,7 +33,7 @@ const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + St
 const CAT = { pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', maybe: 'maybe' };
-const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year']];
+const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
 
 // ---------------------------------------------------------------- state
 let hist, rules, source, lastSaved = null;
@@ -363,7 +364,7 @@ function render() {
       state.ym !== asOfYm ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.ym = asOfYm; keep(KEY, state.ym); render(); } }, 'Back to this month') : null),
     h('div', { class: 'tabs', role: 'group', 'aria-label': 'Views' }, TABS.map(([id, label]) => h('button', { type: 'button', class: 'tab-btn', 'aria-pressed': String(state.tab === id), onclick: () => { state.tab = id; state.open = null; render(); } }, label))),
     searchCard(c),
-    ...(state.tab === 'month' ? monthTab(c, today, ms, mathCtx) : state.tab === 'weeks' ? [weeksTab(c, mathCtx)] : state.tab === 'agenda' ? [agendaTab(c)] : state.tab === 'paychecks' ? [paychecksTab(c, spine, mathCtx)] : [yearTab(c, spine, mathCtx)]),
+    ...(state.tab === 'month' ? monthTab(c, today, ms, mathCtx) : state.tab === 'weeks' ? [weeksTab(c, mathCtx)] : state.tab === 'agenda' ? [agendaTab(c)] : state.tab === 'paychecks' ? [paychecksTab(c, spine, mathCtx)] : state.tab === 'debt' ? debtTab({ c, spine, rules, mathCtx, rerender: render }) : [yearTab(c, spine, mathCtx)]),
     trayCard(c),
     milestonesCard(c, spine),
     h('p', { class: 'muted' }, 'Maybe money is weighted by how likely it is. Cards are paid by their pay setting on their due days; the extra at the debt follows the debt plan in the Ledger.')].filter(Boolean));

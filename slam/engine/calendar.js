@@ -134,6 +134,11 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
   if (cf.taxSetAside.total.value) add({ id: 'setAside', sourceId: 'setAside', repeats: true, kind: 'setAside', label: 'Tax set-aside', date: null, amount: cf.taxSetAside.total.value, direction: 'out', rough: cf.taxSetAside.total.kind !== 'computed', note: 'money to hold back for tax that nothing withholds', path: setAsidePath(spine, cf) });
 
   // ------------------------------------------------------------ dates: promos, tax, starts and ends, changes
+  // A signup bonus deadline (S-205): the day the spend has to be done by.
+  for (const d of spine.debts || []) {
+    const by = d.bonusBy && d.bonusBy.kind !== 'notForMe' ? v(d.bonusBy) : null;
+    if (by && inMonth(by)) add({ id: 'bonus:' + d.id, kind: 'bonusBy', label: (v(d.name) || d.id) + ': signup bonus deadline', date: by, amount: v(d.bonusSpend), direction: null, counted: false, path: 'debts.' + d.id + '.bonusBy', note: v(d.bonusSpend) !== null ? 'spend ' + Math.round(v(d.bonusSpend)) + ' by this day' : 'spend required not entered' });
+  }
   for (const p of promoDeadlines(spine, asOf).items) if (inMonth(p.switchDate)) add({ id: 'promo:' + p.id, kind: 'promoEnds', label: p.name + ': intro rate ends, ' + (p.aprAfter === null ? 'regular rate not entered' : Math.round(p.aprAfter * 10000) / 100 + '% from this day'), date: p.switchDate, rough: p.aprAfterKind === 'rough', path: 'debts.' + p.id + '.promoEnds' });
   for (const [q, rid] of [[1, 'EST_Q1'], [2, 'EST_Q2'], [3, 'EST_Q3']]) { const d = year + '-' + rules.get(rid, year); if (inMonth(d)) add({ id: 'est:' + q, kind: 'estimatedTax', label: 'Estimated tax payment date (quarter ' + q + ')', date: d, note: 'no payment is planned here; the tax set-aside covers the balance due at the return', source: rid }); }
   { const d = year + '-' + rules.get('EST_Q4', year - 1); if (inMonth(d)) add({ id: 'est:4', kind: 'estimatedTax', label: 'Estimated tax payment date (quarter 4 of ' + (year - 1) + ')', date: d, note: 'no payment is planned here; the tax set-aside covers the balance due at the return', source: 'EST_Q4' }); }

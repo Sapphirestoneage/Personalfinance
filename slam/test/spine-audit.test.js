@@ -14,6 +14,7 @@ import { setSectionSharing, editExpense } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { calendar, rangeCashTerms } from '../engine/calendar.js';
 import { weeks, paychecks } from '../engine/calendar-views.js';
+import { debtView, balanceTransfer, solvePayoff, whichCard } from '../engine/debtview.js';
 import { money } from '../src/ui/format.js';
 import { readJson, exists, loadRules, SLAM } from './spine-helpers.js';
 
@@ -32,12 +33,20 @@ const households = () => {
     const c = calendar(spine, R, { from: '2026-11', months: 1 });
     const w = weeks(c.sim);
     // The weeks' span and the first paycheck are audited too (S-204).
-    const ctx = { spine, rules: R, s, windfall: windfall(spine, R, s, { amount: 5000, taxed: true }), month: c.months[0], range: { terms: rangeCashTerms(c.sim, w[0].from, w[w.length - 1].to), kind: c.sim.kind }, paycheck: paychecks(spine, R, c.sim, s)[0] || null };
+    // The Debt tab (S-205): every card and loan, a balance transfer on the first card with a balance, the solver on it, which card for $100.
+    const debt = debtView(spine, R, c.sim, s);
+    const firstCard = c.sim.model.cards.find((x) => x.balance > 0);
+    const ctx = { spine, rules: R, s, windfall: windfall(spine, R, s, { amount: 5000, taxed: true }), month: c.months[0], range: { terms: rangeCashTerms(c.sim, w[0].from, w[w.length - 1].to), kind: c.sim.kind }, paycheck: paychecks(spine, R, c.sim, s)[0] || null,
+      sim: c.sim, debt, bt: firstCard ? balanceTransfer(spine, R, { cardId: firstCard.id }) : null, solve: firstCard ? solvePayoff(spine, R, c.sim, { target: firstCard.id, byDate: '2027-06-01' }) : null, which: whichCard(spine, R, c.sim, { amount: 100 }) };
     return { name, spine, s, windfall: ctx.windfall, month: ctx.month, ctx };
   });
 };
 const ALL = households();
-const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.items.map((c) => 'cardUtil:' + c.id), ...h.spine.expenses.map((e) => 'expenseCost:' + e.id), ...h.windfall.steps.map((x) => 'windfall:' + x.id), 'calendar:monthCash', 'calendar:rangeCash', ...(h.ctx.paycheck ? ['calendar:paycheckLeft'] : [])];
+const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.items.map((c) => 'cardUtil:' + c.id), ...h.spine.expenses.map((e) => 'expenseCost:' + e.id), ...h.windfall.steps.map((x) => 'windfall:' + x.id), 'calendar:monthCash', 'calendar:rangeCash', ...(h.ctx.paycheck ? ['calendar:paycheckLeft'] : []),
+  'debt:interestWindow', 'debt:utilPersonal', 'debt:utilOverall',
+  ...h.ctx.debt.cards.flatMap((c) => [c.trap ? 'debt:interestMonth:' + c.id : null, c.trap ? 'debt:minOnly:' + c.id : null, c.util && c.util.limit !== null ? 'debt:utilReport:' + c.id : null, c.fee ? 'debt:feeRoi:' + c.id : null, c.bonus ? 'debt:bonus:' + c.id : null].filter(Boolean)),
+  ...h.ctx.debt.loans.filter((l) => l.federal !== false).map((l) => 'debt:idr:' + l.id),
+  ...(h.ctx.bt && h.ctx.bt.value !== null ? ['debt:bt'] : []), ...(h.ctx.solve && !h.ctx.solve.impossible ? ['debt:solve'] : []), ...h.ctx.which.rows.map((r) => 'debt:whichCard:' + r.id)];
 
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');
