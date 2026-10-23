@@ -235,6 +235,7 @@ window.addEventListener('hashchange', () => { const p = decodeURIComponent(locat
 async function start() {
   const loaded = await loadAll();
   rules = loaded.rules; source = loaded.source; hist = createHistory(loaded.spine); guess = null; open = null;
+  if (loaded.problem) lastSaved = loaded.problem;
   render();
   const p = decodeURIComponent(location.hash.slice(1));
   if (p && getAt(hist.present, rowPathFor(hist.present, p))) openField(p);

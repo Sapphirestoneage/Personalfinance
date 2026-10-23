@@ -19,7 +19,7 @@ export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pe
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
 export const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 export const FAT = ['food', 'accommodation', 'transportation'];
-export const TAX_YEAR_FIELDS = ['estimatedPaidFederal', 'estimatedPaidState', 'capitalGainsLong', 'qualifiedDividends', 'otherIncome'];
+export const TAX_YEAR_FIELDS = ['estimatedPaidFederal', 'estimatedPaidState', 'capitalGainsLong', 'qualifiedDividends', 'otherIncome', 'setAside'];
 
 // ---------------------------------------------------------------- families
 // Field types: money, rate, date, int, text, bool, choice:<a|b>, list.
@@ -200,6 +200,9 @@ export function validate(spine) {
       checkFact(p + '.value', e.value, values);
       if (extra) {
         checkFact(p + '.planType', e.planType, PLAN_TYPES, false);
+        // A coming coverage change can say it is enrolled and what is set aside for it (S-165).
+        checkFact(p + '.enrolled', e.enrolled, 'bool', false);
+        checkFact(p + '.setAside', e.setAside, 'money', false);
         if (e.personId && !(h.people || []).some((x) => x.id === e.personId)) err(p + '.personId', 'no such person');
       }
     }

@@ -10,7 +10,7 @@ import { balanceSheet } from '../engine/networth.js';
 import { emergency } from '../engine/emergency.js';
 import { fiReport, yearsToTarget } from '../engine/fi.js';
 import { project } from '../engine/projection.js';
-import { buildFlags } from '../engine/flags.js';
+import { buildFlags, goal, stageFor } from '../engine/flags.js';
 import { summarize } from '../engine/summary.js';
 import { loadRules } from './spine-helpers.js';
 
@@ -203,7 +203,7 @@ test('debt: a known minimum is used; a card with none gets a rough estimate', ()
   near(est.value, 2000 * 0.01 + 2000 * 0.24 / 12);
   assert.equal(est.estimated, true);
   assert.ok(est.rough.includes('debts.b.minimum'));
-  assert.equal(minimumPayment(card('c', 300, { apr: 0 }), R, '2026-11-01').value, 25, 'floor');
+  assert.equal(minimumPayment(card('c', 300, { apr: 0 }), R, '2026-11-01').value, 40, 'floor');
   assert.equal(minimumPayment(card('d', 10, { apr: 0 }), R, '2026-11-01').value, 10, 'never above the balance');
 });
 
@@ -428,12 +428,16 @@ test('flags: each alert fires from data and stays quiet otherwise', () => {
     goals: [{ id: 'fi', type: 'fi', label: 'FI', fiNumber: K(100000) }]
   });
   const ids = summarize(s, R).flags.map((f) => f.id);
-  for (const id of ['roth-conversion-r', 'unemployment-withholding-ui', 'utilization-cc', 'promo-deadlines', 'income-ends-ui', 'runway', 'fi-goal-gap', 'health-26-p', 'missing-utilization']) assert.ok(ids.includes(id), 'expected ' + id + ' in ' + ids.join(', '));
+  for (const id of ['roth-conversion-r', 'unemployment-withholding-ui', 'utilization-cc', 'promo-deadlines', 'income-ends-ui', 'runway', 'fi-goal-gap', 'health-26-p', 'input-utilization']) assert.ok(ids.includes(id), 'expected ' + id + ' in ' + ids.join(', '));
 
+  // A calm household: every flag it shows is at stage 3 (green).
   const quiet = household();
-  quiet.accounts[0].balance = K(9000);
-  const q = summarize(quiet, R).flags.map((f) => f.id);
-  assert.deepEqual(q, [], 'a calm household raises nothing: ' + q.join(', '));
+  quiet.accounts[0].balance = K(20000);
+  quiet.accounts.find((a) => a.id === 'h').balance = K(9000);
+  quiet.debts[0].limit = K(20000);
+  quiet.taxYears[0].setAside = K(50000);
+  const q = summarize(quiet, R).flags.filter((f) => f.stage !== 'green').map((f) => f.id + ':' + f.stage);
+  assert.deepEqual(q, [], 'a calm household has only green flags: ' + q.join(', '));
 });
 
 test('flags: the 30% flag uses personal cards; a business card that does not report is not flagged', () => {
@@ -442,11 +446,61 @@ test('flags: the 30% flag uses personal cards; a business card that does not rep
   s1.debts = [card('p', 1800, { limit: 2000, min: 50 }), card('q', 200, { limit: 3000, min: 25 }), card('biz', 4500, { limit: 5000, min: 100, business: true })];
   const f = summarize(s1, R).flags;
   const ids = f.map((x) => x.id);
-  assert.ok(ids.includes('utilization-p'));
-  assert.ok(ids.includes('utilization-personal'), 'personal 2,000 / 5,000 = 40%');
-  assert.ok(!ids.includes('utilization-biz'));
-  assert.ok(!ids.includes('utilization-q'));
+  const stage = (id) => (f.find((x) => x.id === id) || {}).stage;
+  assert.equal(stage('utilization-p'), 'red', '90%');
+  assert.equal(stage('utilization-personal'), 'red', 'personal 2,000 / 5,000 = 40%');
+  assert.equal(stage('utilization-q'), 'green', '200 / 3,000 = 6.7%');
+  assert.ok(!ids.includes('utilization-biz'), 'a business card that does not report is not flagged');
   assert.match(f.find((x) => x.id === 'utilization-personal').detail, /All cards, business ones included: 65.0%/);
+});
+
+test('stages: thresholds, labels, sorting, and goals with gaps and monthly amounts', () => {
+  assert.equal(stageFor(0.31, 0.3, 0.1), 'red');
+  assert.equal(stageFor(0.3, 0.3, 0.1), 'yellow');
+  assert.equal(stageFor(0.1, 0.3, 0.1), 'green');
+  const g = goal('2026-10-22', 'Next: x', { target: 100, gap: 700, by: '2027-05-31', path: 'debts.a.balance' });
+  assert.deepEqual([g.months, g.monthly, g.path], [7, 100, 'debts.a.balance']);
+  assert.match(g.text, /\$100 a month, Nov 2026 to May 2027/);
+  const s1 = household();
+  s1.debts = [card('p', 1800, { limit: 2000, min: 50, promoEnds: '2027-03-31' })];
+  const f = summarize(s1, R).flags;
+  const order = f.map((x) => x.stageNumber);
+  assert.deepEqual(order, [...order].sort((a, b) => a - b), 'red first, then yellow, then green');
+  for (const x of f) {
+    assert.equal(x.stageLabel, 'Stage ' + x.stageNumber + ' of 3');
+    if (x.stage !== 'green') assert.ok(x.green && x.green.text.startsWith('Stage 3'), x.id + ' has a green goal');
+    if (x.stage !== 'green') assert.ok(x.next && x.next.text.startsWith('Next'), x.id + ' has a next goal');
+  }
+  const u = f.find((x) => x.id === 'utilization-p');
+  assert.deepEqual([u.next.target, u.next.gap, u.green.target], [600, 1200, 200]);
+  assert.equal(u.next.months, 5, 'the promo end gives a date: Nov to Mar');
+});
+
+test('stages: runway, promo, income ending, FI and coverage', () => {
+  const s1 = mini({
+    household: { ...mini().household, people: [{ id: 'p', name: 'Pat', birthDate: K('2000-12-01') }], healthCoverage: [{ id: 'now', from: null, value: K('parent_plan') }, { id: 'next', from: '2026-12-01', value: K('own_plan'), planType: M() }] },
+    income: [stream('job', 'w2', 3000, 'monthly', { end: '2026-12-31', fed: 300, st: 100 }), stream('gig', '1099', 2000, 'monthly', { start: '2027-01-01', likelihood: 0.6 })],
+    expenses: [expense('rent', 1500), expense('health', 300, { start: '2026-12-01' })],
+    accounts: [{ id: 'c', family: 'cash', type: 'savings', name: K('Savings'), balance: K(1000) }],
+    debts: [card('pr', 1400, { limit: 10000, min: 40, promoEnds: '2027-05-31' })],
+    goals: [{ id: 'fi', type: 'fi', label: 'FI', fiNumber: K(400000) }]
+  });
+  const f = Object.fromEntries(summarize(s1, R).flags.map((x) => [x.id, x]));
+  // runway: 1,000 / 1,540 = 0.65 months: red; 1 month is 1,540
+  assert.equal(f.runway.stage, 'red');
+  assert.deepEqual([f.runway.next.target, f.runway.next.gap], [1540, 540]);
+  assert.equal(f.runway.green.target, Math.ceil((25 / 5) * 1540));
+  // promo: 1,400 / 7 = 200 a month against a surplus of 3000-300-100-229.5-1500-40 = 830.5: yellow
+  assert.equal(f['promo-deadlines'].stage, 'yellow');
+  // income ending: the gig is 60% likely: yellow
+  assert.equal(f['income-ends-job'].stage, 'yellow');
+  assert.equal(f['income-ends-job'].next.path, 'income.gig.likelihood');
+  // FI: 400,000 / (1,500 x 12 / 0.04 = 450,000) = 89%: yellow; green at 450,000 or 1,333 a month
+  assert.equal(f['fi-goal-gap'].stage, 'yellow');
+  assert.deepEqual([f['fi-goal-gap'].next.goalNeeded, f['fi-goal-gap'].next.spendingNeeded], [450000, 1333]);
+  // coverage: 40 days away, no plan type: red
+  assert.equal(f['health-26-p'].stage, 'red');
+  assert.equal(f['health-26-p'].next.path, 'household.healthCoverage.next.planType');
 });
 
 test('flags: no em dashes and no instructions in flag text', () => {

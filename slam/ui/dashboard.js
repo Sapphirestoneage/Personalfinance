@@ -114,16 +114,36 @@ function render(spine, rules, source) {
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' }, h('a', { class: 'btn primary', href: 'ledger.html' }, 'Ledger'))),
     h('div', { class: 'tiles' }, tiles),
-    h('section', { class: 'card', 'aria-labelledby': 'flags-h' },
-      h('h2', { id: 'flags-h' }, 'Flags'),
-      s.flags.length ? h('ul', { class: 'flags' }, s.flags.map((f) => h('li', { class: 'flag flag-' + f.level, id: 'flag-' + f.id },
-        h('p', { class: 'flag-title' }, h('span', { class: 'level' }, f.level), f.title),
-        h('p', { class: 'flag-detail' }, f.detail),
-        f.from.length ? h('details', { class: 'from' }, h('summary', {}, 'From ' + f.from.length + ' field' + (f.from.length === 1 ? '' : 's')), h('ul', {}, [...new Set(f.from)].map((p) => h('li', {}, h('a', { href: ledgerHref(p) }, labelFor(spine, p)))))) : null)))
-        : h('p', { class: 'muted' }, 'Nothing to flag.'))
+    flagsSection(spine, s.flags)
   );
 }
 
-loadAll().then(({ spine, rules, source }) => render(spine, rules, source)).catch((err) => {
+// A goal line: a link to the Ledger field it depends on when there is one.
+const goalLine = (g, cls) => g && h('p', { class: 'goal ' + cls }, g.path ? h('a', { href: ledgerHref(g.path) }, g.text) : g.text);
+
+// One flag: its stage in words and color (never color alone), what is true,
+// what moves it up one stage, and the goal for stage 3 (S-165).
+function flagItem(spine, f) {
+  return h('li', { class: 'flag flag-' + f.stage, id: 'flag-' + f.id },
+    h('p', { class: 'flag-title' }, h('span', { class: 'stage-chip stage-' + f.stage }, f.stageLabel), ' ', f.title),
+    h('p', { class: 'flag-detail' }, f.detail),
+    goalLine(f.next, 'goal-next'),
+    f.next && f.green && f.green.text.slice(9) !== f.next.text.slice(6) ? goalLine(f.green, 'goal-green') : null,
+    f.from.length ? h('details', { class: 'from' }, h('summary', {}, 'From ' + f.from.length + ' field' + (f.from.length === 1 ? '' : 's')), h('ul', {}, [...new Set(f.from)].map((p) => h('li', {}, h('a', { href: ledgerHref(p) }, labelFor(spine, p)))))) : null);
+}
+
+// Red first, then yellow; green folded into "Done" with a count.
+function flagsSection(spine, flags) {
+  const open = flags.filter((f) => f.stage !== 'green'), done = flags.filter((f) => f.stage === 'green');
+  const count = (st) => flags.filter((f) => f.stage === st).length;
+  return h('section', { class: 'card', 'aria-labelledby': 'flags-h' },
+    h('h2', { id: 'flags-h' }, 'Flags', h('span', { class: 'group-counts' },
+      count('red') ? h('span', { class: 'stage-chip stage-red' }, count('red') + ' at stage 1') : null,
+      count('yellow') ? h('span', { class: 'stage-chip stage-yellow' }, count('yellow') + ' at stage 2') : null)),
+    open.length ? h('ul', { class: 'flags' }, open.map((f) => flagItem(spine, f))) : h('p', { class: 'muted' }, 'Nothing open.'),
+    done.length ? h('details', { class: 'done' }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
+}
+
+loadAll().then(({ spine, rules, source, problem }) => { render(spine, rules, source); if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem)); }).catch((err) => {
   app.replaceChildren(h('p', { class: 'card' }, 'The Dashboard could not load: ' + err.message));
 });

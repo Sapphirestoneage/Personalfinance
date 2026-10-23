@@ -23,12 +23,14 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const burn = (expenses) => { const t = tracker(); t.absorb(expenses); t.absorb(cf.debtMinimums.total); return t.out(round2(expenses.value + cf.debtMinimums.total.value)); };
   const full = burn(cf.expenses.total), fat = burn(cf.expenses.fat);
   const runway = (b) => { const t = tracker(); t.absorb(sheet.cash); t.absorb(b); return t.out(b.value > 0 ? sheet.cash.value / b.value : null); };
+  // Targets in dollars use the month's spending rounded up to a whole dollar,
+  // so reaching a target in dollars always reaches it in months (S-165).
+  const monthlyNeed = full.value === null ? null : Math.ceil(full.value);
   const target = tracker();
   target.absorb(targetMonths); target.absorb(full);
-  const targetDollars = target.out(targetMonths.value === null ? null : round2(targetMonths.value * full.value));
+  const targetDollars = target.out(targetMonths.value === null || monthlyNeed === null ? null : Math.ceil(targetMonths.value * monthlyNeed));
   const gap = tracker();
   gap.absorb(targetDollars); gap.absorb(sheet.cash);
-  const warn = rules.get('APP_RUNWAY_WARN', year);
 
   return {
     age: years,
@@ -39,7 +41,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
       full: { burn: full, runway: runway(full) },
       fatOnly: { burn: fat, runway: runway(fat) }
     },
-    runwayWarnMonths: warn,
+    monthlyNeed,
     backstop: rothBackstop(spine, rules, asOf, years)
   };
 }

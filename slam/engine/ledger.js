@@ -16,7 +16,7 @@ export function typeFor(spine, path) {
     if (s[1] === 'filingStatus') return 'choice:' + FILING_STATUSES.join('|');
     if (s[1] === 'nycResident') return 'bool';
     if (s[1] === 'situation') return 'choice:' + SITUATIONS.join('|');
-    if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : 'choice:' + COVERAGES.join('|');
+    if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : 'money';

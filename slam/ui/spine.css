@@ -80,9 +80,19 @@ details.from summary { cursor: pointer; min-height: 24px; }
 details.from ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
 .flags { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .flag { border-left: 4px solid var(--border); padding: var(--space-2) var(--space-3); background: var(--surface-2); border-radius: var(--radius-sm); }
-.flag-act { border-left-color: var(--bad); }
-.flag-watch { border-left-color: var(--warn); }
-.flag-info { border-left-color: var(--st-will-email); }
+/* Flag stages (S-165): color and the words "Stage N of 3", never color alone. */
+.flag-red { border-left-color: var(--bad); }
+.flag-yellow { border-left-color: var(--warn); }
+.flag-green { border-left-color: var(--good); }
+.stage-chip { display: inline-block; padding: 1px var(--space-2); border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: 700; border: 1px solid currentColor; white-space: nowrap; }
+.stage-red { color: var(--st-dont-know); background: var(--bad-soft); }
+.stage-yellow { color: var(--st-roughly); background: var(--warn-soft); }
+.stage-green { color: var(--st-known); background: var(--good-soft); }
+.goal { font-size: var(--text-sm); margin: var(--space-1) 0 0; }
+.goal a { font-weight: 600; }
+.goal-green { color: var(--text-muted); }
+details.done { margin-top: var(--space-3); }
+details.done > summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; gap: var(--space-2); font-weight: 600; }
 .flag-title { font-weight: 600; font-size: var(--text-sm); }
 .flag-detail { font-size: var(--text-sm); margin: var(--space-1) 0 0; }
 .level { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-right: var(--space-2); }

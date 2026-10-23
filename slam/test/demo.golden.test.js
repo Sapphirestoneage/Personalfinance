@@ -44,7 +44,7 @@ test('demo golden values as of 2026-10-22', async (t) => {
     near(s.emergency.targetMonths.value, 32 / 5); // 6.4
     near(s.emergency.tiers.full.runway.value, 12000 / (3230 + 342)); // 3.36
     near(s.emergency.tiers.fatOnly.runway.value, 12000 / (2780 + 342)); // 3.84
-    near(s.emergency.targetDollars.value, 6.4 * 3572); // 22,860.80
+    assert.equal(s.emergency.targetDollars.value, Math.ceil(6.4 * 3572)); // 22,861: whole dollars, rounded up
     assert.equal(s.emergency.backstop.contributions.value, 12000);
   });
 
@@ -99,8 +99,16 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.ok(L.federalIncomeTax.rules.includes('FED_BRK_S'));
   });
 
-  await t.test('flags', () => {
-    const ids = s.flags.map((f) => f.id).sort();
-    assert.deepEqual(ids, ['promo-deadlines', 'utilization-personal', 'utilization-store']);
+  await t.test('flags and their stages', () => {
+    const st = Object.fromEntries(s.flags.map((f) => [f.id, f.stage]));
+    assert.equal(st['utilization-store'], 'red'); // 60%
+    assert.equal(st['utilization-personal'], 'red'); // 35%
+    assert.equal(st['utilization-visa'], 'yellow'); // exactly 30%
+    assert.equal(st['promo-deadlines'], 'yellow'); // 300 a month fits in an 839 surplus
+    assert.equal(st.runway, 'yellow'); // 3.4 months, under the 6.4-month target
+    assert.equal(st['fi-goal-gap'], 'green'); // 1,000,000 is over 969,000
+    assert.equal(st['tax-2026'], 'yellow'); // a number, built on the rough tutoring amount
+    const runway = s.flags.find((f) => f.id === 'runway');
+    assert.deepEqual([runway.next.target, runway.next.gap], [22861, 22861 - 12000]);
   });
 });

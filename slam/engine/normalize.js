@@ -5,6 +5,24 @@
 import { fact, monthEnd } from './spine.js';
 import { SCHEMA_ID, PRESETS } from './schema.js';
 
+// Bring a spine saved by an earlier version up to the current shape (S-167):
+// fields a newer version requires are added as missing (or defaulted the way
+// the profile loader does), never removed or overwritten.
+export function upgradeSpine(spine) {
+  const s = structuredClone(spine);
+  const asOf = s.meta && s.meta.asOf;
+  const stamp = { asOf, source: 'upgrade' };
+  for (const d of s.debts || []) {
+    if (d.type !== 'credit_card') continue;
+    if (!d.business) d.business = fact(null, stamp);
+    if (!d.reportsToPersonalCredit) {
+      const b = d.business.value;
+      d.reportsToPersonalCredit = b === null ? fact(null, stamp) : b ? fact(false, { ...stamp, kind: 'rough' }) : fact(true, { ...stamp, kind: d.business.kind });
+    }
+  }
+  return s;
+}
+
 export function loadHousehold(raw) {
   if (raw && raw.schema === SCHEMA_ID) return structuredClone(raw);
   if (raw && raw._meta && raw.household) return fromProfile(raw);
@@ -44,7 +62,7 @@ export function fromProfile(p) {
   if (H.situation.changesTo) situation.push({ id: 'next', from: H.situation.on, value: F(H.situation.changesTo, H.situation.kind) });
   const hc = H.healthCoverage;
   const healthCoverage = [{ id: 'now', from: null, personId, value: F(hc.value, hc.kind) }];
-  if (hc.after) healthCoverage.push({ id: 'next', from: hc.endsOn, personId, value: F(hc.after, hc.kind), planType: F(null) });
+  if (hc.after) healthCoverage.push({ id: 'next', from: hc.endsOn, personId, value: F(hc.after, hc.kind), planType: F(null), enrolled: F(null), setAside: F(null) });
 
   const incomeIds = new Set();
   const income = (p.income || []).map((s) => {
@@ -156,7 +174,8 @@ export function fromProfile(p) {
     taxYears: [{
       id: asOf.slice(0, 4), year: +asOf.slice(0, 4),
       estimatedPaidFederal: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' }),
-      estimatedPaidState: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' })
+      estimatedPaidState: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' }),
+      setAside: fact(0, { kind: 'rough', asOf, source, note: 'assumed nothing set aside for the tax bill yet' })
     }]
   };
 }

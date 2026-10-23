@@ -1,144 +1,300 @@
 // Flags: plain-English alerts built from the data. They say what is true and
 // what it means in dollars and dates; they never tell anyone what to do.
-// Each flag: { id, level: act | watch | info, title, detail, from: [paths], rules: [ids] }.
+//
+// Every flag has a stage (S-165): red (stage 1), yellow (stage 2) or green
+// (stage 3), a "next" goal that moves it up one stage, and the goal for green.
+// A goal names the number or action, the dollar gap, and when there is a date,
+// the monthly amount that gets there in time. Its path opens the Ledger field.
+// Thresholds are STAGE_* rules in data/rules-<year>.json.
+//
+// Flag: { id, stage, stageNumber, stageLabel, title, detail, next, green, from, rules }
+// Goal: { text, target, gap, by, months, monthly, path }
 
-import { valueOf, daysBetween, addDays, inForce } from './spine.js';
+import { valueOf, daysBetween, addDays, inForce, monthKey, addMonths } from './spine.js';
 import { labelFor, listWords } from './labels.js';
+import { paymentsBefore } from './debt.js';
 import { money } from '../src/ui/format.js';
 
 const v = valueOf;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const longDate = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
+const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1].slice(0, 3) + ' ' + ym.slice(0, 4);
 const pctWords = (x) => Math.round(x * 100) + '%';
 const pct1 = (x) => (Math.round(x * 1000) / 10).toFixed(1) + '%';
 const rateWords = (x) => String(Math.round(x * 10000) / 100) + '%';
 const months1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
 
+export const STAGES = ['red', 'yellow', 'green'];
+const STAGE_NUMBER = { red: 1, yellow: 2, green: 3 };
+
+// A goal: the words, the target, the gap from today, and with a date, the
+// monthly amount over the payments left (months after the as-of month through
+// the month of the date).
+export function goal(asOf, text, { target = null, gap = null, by = null, path = null } = {}) {
+  const months = by ? paymentsBefore(asOf, by) : null;
+  const monthly = by && gap !== null && gap > 0 && months ? gap / months : null;
+  const when = monthly !== null ? ' (' + money(Math.ceil(monthly)) + ' a month, ' + monthWords(addMonths(monthKey(asOf), 1)) + ' to ' + monthWords(monthKey(by)) + ')' : '';
+  return { text: text + when, target, gap, by, months, monthly, path };
+}
+
+// Stage by a value against two thresholds. high: bigger is worse (utilization).
+export function stageFor(value, redOver, greenAtOrUnder) {
+  if (value === null || value === undefined) return null;
+  if (value > redOver) return 'red';
+  return value <= greenAtOrUnder ? 'green' : 'yellow';
+}
+
 // s: the summary from summary.js (cashflow, sheet, debt, emergency, fi, tax).
 export function buildFlags(spine, rules, s) {
   const asOf = s.asOf, year = +asOf.slice(0, 4);
+  const R = (id) => rules.get(id, year);
   const out = [];
-  const add = (f) => out.push({ rules: [], from: [], ...f });
+  const add = (f) => out.push({ rules: [], from: [], next: null, green: null, ...f, stageNumber: STAGE_NUMBER[f.stage], stageLabel: 'Stage ' + STAGE_NUMBER[f.stage] + ' of 3' });
 
-  // Roth conversion this year: taxable income with nothing withheld.
+  // ------------------------------------------------------------ the year's tax
+  // red: an input is missing. yellow: a number, but rough or not covered by a
+  // set-aside. green: every input known and the balance due is covered.
+  const tax = s.tax;
+  const ty = (spine.taxYears || []).find((x) => x.year === year);
+  const setAside = ty && ty.setAside ? v(ty.setAside) : null;
+  const setAsideKnown = !!(ty && ty.setAside && ty.setAside.kind === 'known');
+  const due = tax.balanceDue.value;
+  const nextDate = tax.nextEstimated;
+  let taxStage, taxNext = null;
+  const setAsidePath = ty && ty.setAside ? 'taxYears.' + ty.id + '.setAside' : null;
+  const coverGoal = (stageWord) => goal(asOf, stageWord + 'set aside ' + money(Math.ceil(Math.max(0, due))) + ' for the ' + year + ' tax by ' + longDate(nextDate.date) + (setAside ? ' (' + money(Math.ceil(Math.max(0, due - setAside))) + ' more than the ' + money(setAside) + ' set aside)' : ''), { target: Math.ceil(Math.max(0, due)), gap: Math.max(0, due - (setAside || 0)), by: nextDate.date, path: setAsidePath });
+  if (due === null) {
+    taxStage = 'red';
+    const first = tax.balanceDue.missing[0];
+    taxNext = goal(asOf, 'Next: enter ' + (tax.missingText ? tax.missingText.replace(/^missing: /, '') : labelFor(spine, first)) + (tax.partial ? ' (at least ' + money(tax.partial.federalIncomeTax.value) + ' federal is due on the income known so far)' : ''), { path: first });
+  } else if (due <= 0 || (setAsideKnown && setAside >= due)) {
+    taxStage = tax.balanceDue.kind === 'computed' ? 'green' : 'yellow';
+    if (taxStage === 'yellow') taxNext = goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + (tax.balanceDue.rough.length > 1 ? ' (and ' + (tax.balanceDue.rough.length - 1) + ' more rough inputs)' : ''), { path: tax.balanceDue.rough[0] });
+  } else {
+    taxStage = 'yellow';
+    taxNext = tax.balanceDue.kind === 'rough' ? goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + ', and ' + coverGoal('').text, { path: tax.balanceDue.rough[0], gap: Math.max(0, due - (setAside || 0)), by: nextDate.date }) : coverGoal('Next: ');
+  }
+  const taxGreen = goal(asOf, 'Stage 3: every ' + year + ' tax input known, and the balance due set aside by ' + longDate(nextDate.date), { target: due === null ? null : Math.ceil(due), gap: due === null ? null : Math.max(0, due - (setAside || 0)), by: nextDate.date, path: setAsidePath });
+  const taxBits = { stage: taxStage, next: taxStage === 'green' ? null : taxNext, green: taxStage === 'green' ? null : taxGreen };
+  add({
+    id: 'tax-' + year, ...taxBits,
+    title: due === null ? 'The ' + year + ' tax bill cannot be figured yet' : 'Estimated ' + year + ' balance due: ' + money(due),
+    detail: (due === null ? 'It needs ' + (tax.missingText || 'more inputs').replace(/^missing: /, '') + '. ' : '') + 'Next estimated payment date: ' + longDate(nextDate.date) + '.' + (setAside !== null && due !== null ? ' Set aside so far: ' + money(setAside) + '.' : ''),
+    from: [...new Set([...tax.balanceDue.from, ...(setAsidePath ? [setAsidePath] : [])])], rules: [nextDate.rule, ...tax.balanceDue.rules]
+  });
+
+  // Roth conversion this year: taxable income with nothing withheld. Same stage as the tax bill.
   for (const a of spine.accounts || []) for (const c of v(a.conversions) || []) {
     if (c.year !== year) continue;
     add({
-      id: 'roth-conversion-' + a.id, level: 'watch',
+      id: 'roth-conversion-' + a.id, ...taxBits,
       title: 'Roth conversion adds ' + year + ' taxable income',
       detail: 'The ' + money(c.taxable ?? c.amount) + ' converted in ' + year + ' counts as ' + year + ' taxable income. No tax was withheld from it.',
       from: ['accounts.' + a.id + '.conversions']
     });
   }
 
-  // Unemployment with no federal withholding.
-  const tax = s.tax;
+  // Unemployment with no federal withholding. Same stage as the tax bill.
   for (const st of spine.income || []) {
     if (st.type !== 'unemployment' || v(st.withholding && st.withholding.federal) !== 0) continue;
     if ((st.start && st.start > year + '-12-31') || (st.end && st.end < year + '-01-01')) continue;
-    const next = tax.nextEstimated;
-    const due = tax.balanceDue.value;
     const floor = tax.partial && tax.partial.federalIncomeTax.value;
     const detail = due !== null
-      ? 'Estimated ' + year + ' balance due: ' + money(due) + '. Next estimated payment date: ' + longDate(next.date) + '.'
-      : 'The ' + year + ' balance due cannot be figured yet (' + tax.missingText + '). Tax on the ' + year + ' income known so far is at least ' + money(floor) + ' federal, and the unemployment (' + money(tax.inputs.unemployment) + ' in ' + year + ') had none withheld. Next estimated payment date: ' + longDate(next.date) + '.';
-    add({ id: 'unemployment-withholding-' + st.id, level: 'act', title: st.label + ' has no federal tax withheld', detail, from: ['income.' + st.id + '.withholding.federal', ...tax.balanceDue.missing], rules: [next.rule, ...tax.balanceDue.rules] });
+      ? 'Estimated ' + year + ' balance due: ' + money(due) + '. Next estimated payment date: ' + longDate(nextDate.date) + '.'
+      : 'The ' + year + ' balance due cannot be figured yet (' + tax.missingText + '). Tax on the ' + year + ' income known so far is at least ' + money(floor) + ' federal, and the unemployment (' + money(tax.inputs.unemployment) + ' in ' + year + ') had none withheld. Next estimated payment date: ' + longDate(nextDate.date) + '.';
+    add({ id: 'unemployment-withholding-' + st.id, ...taxBits, title: st.label + ' has no federal tax withheld', detail, from: ['income.' + st.id + '.withholding.federal', ...tax.balanceDue.missing], rules: [nextDate.rule, ...tax.balanceDue.rules] });
   }
 
-  // Card utilization (S-158): per card, for cards that report to personal
-  // credit (or may: unknown counts), and the personal total. Business cards
-  // that do not report, and the overall total, are shown but not flagged.
-  const warn = rules.get('APP_UTIL_WARN', year);
+  // ------------------------------------------------------------ utilization
+  // Per card (cards that report to personal credit, or might) and the personal
+  // total. red over STAGE_UTIL_RED, green at or under STAGE_UTIL_GREEN.
+  const red = R('STAGE_UTIL_RED'), green = R('STAGE_UTIL_GREEN');
+  const utilRules = ['STAGE_UTIL_RED', 'STAGE_UTIL_GREEN'];
   for (const c of s.debt.utilization.items) {
-    if (c.reports === false || c.util.value === null || c.util.value <= warn) continue;
-    add({ id: 'utilization-' + c.id, level: 'watch', title: c.name + ' is at ' + pctWords(c.util.value) + ' of its limit', detail: money(c.balance) + ' of ' + money(c.limit) + '. Over ' + pctWords(warn) + ' of a limit counts against a credit score' + (c.reports === null ? ', if this card reports to personal credit (not entered yet)' : '') + '.', from: c.util.from, rules: ['APP_UTIL_WARN'] });
+    if (c.reports === false || c.util.value === null) continue;
+    const stage = stageFor(c.util.value, red, green);
+    const card = spine.debts.find((d) => d.id === c.id);
+    const by = card.promoEnds && v(card.promoEnds) && v(card.promoEnds) >= asOf ? v(card.promoEnds) : null;
+    const path = 'debts.' + c.id + '.balance';
+    const downTo = (share, word) => {
+      const target = Math.floor(c.limit * share);
+      return goal(asOf, word + 'pay it down to ' + money(target) + ' (' + pctWords(share) + ' of ' + money(c.limit) + '): ' + money(c.balance - target) + ' to go', { target, gap: c.balance - target, by, path });
+    };
+    add({
+      id: 'utilization-' + c.id, stage,
+      title: c.name + ' is at ' + pctWords(c.util.value) + ' of its limit',
+      detail: money(c.balance) + ' of ' + money(c.limit) + '. Over ' + pctWords(red) + ' of a limit counts against a credit score' + (c.reports === null ? ', if this card reports to personal credit (not entered yet)' : '') + '.',
+      next: stage === 'red' ? downTo(red, 'Next: ') : stage === 'yellow' ? downTo(green, 'Next: ') : null,
+      green: stage === 'green' ? null : downTo(green, 'Stage 3: '),
+      from: c.util.from, rules: utilRules
+    });
   }
   const pu = s.debt.utilization.personal, ov = s.debt.utilization.overall, cs = s.debt.creditScore;
-  if (pu.value !== null && pu.value > warn) {
+  if (pu.value !== null) {
+    const stage = stageFor(pu.value, red, green);
+    const path = cs.smallest ? 'debts.' + cs.smallest.id + '.balance' : pu.from[0];
+    const payTo = (share, word) => {
+      const target = Math.floor(pu.limit * share);
+      return goal(asOf, word + 'paying ' + money(pu.balance - target) + ' across personal cards gets them to ' + pctWords(share) + ' (' + money(target) + ' of ' + money(pu.limit) + ')', { target, gap: pu.balance - target, path });
+    };
     add({
-      id: 'utilization-personal', level: 'watch', title: 'Personal cards are at ' + pct1(pu.value) + ' of their limits',
-      detail: money(pu.balance) + ' of ' + money(pu.limit) + ' on the cards that report to personal credit; over ' + pctWords(warn) + ' counts against a credit score.' + (ov.value !== null ? ' All cards, business ones included: ' + pct1(ov.value) + '.' : '') + (cs.smallest && cs.personalAfter.value !== null ? ' Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + '), the smallest balance over ' + pctWords(warn) + ', would bring personal utilization to ' + pct1(cs.personalAfter.value) + '.' : ''),
-      from: pu.from, rules: ['APP_UTIL_WARN']
+      id: 'utilization-personal', stage,
+      title: 'Personal cards are at ' + pct1(pu.value) + ' of their limits',
+      detail: money(pu.balance) + ' of ' + money(pu.limit) + ' on the cards that report to personal credit; over ' + pctWords(red) + ' counts against a credit score.' + (ov.value !== null ? ' All cards, business ones included: ' + pct1(ov.value) + '.' : '') + (cs.smallest && cs.personalAfter.value !== null ? ' Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + '), the smallest balance over ' + pctWords(red) + ', would bring personal utilization to ' + pct1(cs.personalAfter.value) + '.' : ''),
+      next: stage === 'red' ? payTo(red, 'Next: ') : stage === 'yellow' ? payTo(green, 'Next: ') : null,
+      green: stage === 'green' ? null : payTo(green, 'Stage 3: '),
+      from: pu.from, rules: utilRules
     });
   }
 
-  // Promo balances and the monthly amount that clears them in time.
+  // ------------------------------------------------------------ promo deadlines
+  // red: the monthly amount that clears them in time is more than the monthly
+  // surplus. yellow: it fits. green: every promo balance is paid off.
   const pr = s.debt.promo;
-  if (pr.items.length) {
-    // "$700 on a card goes to 24% on April 1, 2027 if not paid": the rate after the intro, from the day after it ends.
+  const promoCards = (spine.debts || []).filter((d) => v(d.promoEnds) && v(d.promoEnds) >= asOf && v(d.promoApr) !== null);
+  if (promoCards.length) {
+    const surplus = s.cashflow.surplus.value;
+    const last = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : promoCards.map((d) => v(d.promoEnds)).sort().pop();
+    const stage = !pr.items.length ? 'green' : surplus === null || pr.monthly.value > surplus ? 'red' : 'yellow';
     const after = (x) => x.aprAfter === null ? 'goes to its regular rate (not entered) on ' + longDate(x.switchDate) + ' if not paid' : 'goes to ' + rateWords(x.aprAfter) + (x.aprAfterKind === 'rough' ? ' (rough)' : '') + ' on ' + longDate(x.switchDate) + ' if not paid';
     const lines = pr.items.map((x) => money(x.balance) + ' on ' + x.name + ' ' + after(x) + ' (' + money(x.monthlyNeeded, true) + ' a month over ' + x.paymentsLeft + ' payments clears it' + (x.deferredInterest === true ? '; interest is deferred, so any balance left then can be charged interest from the start' : x.deferredInterest === null ? '; whether interest is deferred is not entered' : '') + ')');
-    add({ id: 'promo-deadlines', level: 'act', title: money(pr.total.value) + ' in promo balances due by ' + longDate(pr.items[pr.items.length - 1].promoEnds), detail: 'Clearing them in time takes about ' + money(pr.monthly.value, true) + ' a month: ' + lines.join('; ') + '.', from: pr.total.from });
-  }
-
-  // Income ending soon with no confirmed replacement.
-  const days = rules.get('APP_INCOME_END_DAYS', year);
-  const horizon = addDays(asOf, days);
-  for (const st of spine.income || []) {
-    if (!st.end || st.end <= asOf || st.end > horizon) continue;
-    const after = (spine.income || []).filter((o) => o !== st && (!o.end || o.end > st.end) && (!o.start || o.start <= addDays(st.end, 31)) && o.type !== 'maybeMoney');
-    const confirmed = after.filter((o) => (!o.likelihood || v(o.likelihood) === 1) && v(o.amount) !== null && (!o.start || o.start > asOf || true));
-    const replacements = confirmed.filter((o) => o.start && o.start > asOf);
-    if (replacements.length) continue;
-    const named = after.filter((o) => o.start && o.start > asOf).map((o) => o.label + (v(o.amount) === null ? ' (amount missing)' : o.likelihood ? ' (' + pctWords(v(o.likelihood)) + ' likely)' : ''));
+    const path = pr.items.length ? 'debts.' + pr.items[0].id + '.balance' : null;
+    const allPaid = (word) => goal(asOf, word + money(pr.total.value) + ' paid by ' + longDate(last), { target: 0, gap: pr.total.value, by: last, path });
     add({
-      id: 'income-ends-' + st.id, level: 'act',
-      title: st.label + ' ends ' + longDate(st.end) + ', in ' + daysBetween(asOf, st.end) + ' days',
-      detail: named.length ? 'What follows: ' + listWords(named) + '. None of it is confirmed yet.' : 'No income is entered to follow it.',
-      from: ['income.' + st.id + '.amount', ...after.flatMap((o) => ['income.' + o.id + '.amount', ...(o.likelihood ? ['income.' + o.id + '.likelihood'] : [])])],
-      rules: ['APP_INCOME_END_DAYS']
+      id: 'promo-deadlines', stage,
+      title: stage === 'green' ? 'Every promo balance is paid off' : money(pr.total.value) + ' in promo balances due by ' + longDate(last),
+      detail: stage === 'green' ? 'Nothing is left on a 0% intro rate.' : 'Clearing them in time takes about ' + money(pr.monthly.value, true) + ' a month: ' + lines.join('; ') + '.',
+      next: stage === 'red'
+        ? goal(asOf, 'Next: ' + money(Math.ceil(pr.monthly.value - (surplus ?? 0))) + ' more a month toward the promos' + (surplus === null ? ' (the monthly surplus is not known yet)' : ' than the ' + money(surplus) + ' monthly surplus') + '; ' + money(Math.ceil(pr.monthly.value)) + ' a month clears them', { target: Math.ceil(pr.monthly.value), gap: pr.monthly.value - (surplus ?? 0), path })
+        : stage === 'yellow' ? allPaid('Next: ') : null,
+      green: stage === 'green' ? null : allPaid('Stage 3: '),
+      from: pr.total.from
     });
   }
 
-  // Runway.
+  // ------------------------------------------------------------ income ending
+  // red: nothing at least STAGE_REPLACE_YELLOW likely follows. yellow: something
+  // that likely does. green: a confirmed replacement (likelihood 1 and an amount).
+  const days = R('APP_INCOME_END_DAYS');
+  const horizon = addDays(asOf, days);
+  const weightOf = (o) => (o.likelihood ? v(o.likelihood) : 1);
+  for (const st of spine.income || []) {
+    if (!st.end || st.end <= asOf || st.end > horizon) continue;
+    const after = (spine.income || []).filter((o) => o !== st && o.type !== 'maybeMoney' && (!o.end || o.end > st.end) && (!o.start || o.start <= addDays(st.end, 31)) && (!o.start || o.start > asOf));
+    const known = after.filter((o) => v(o.amount) !== null);
+    const confirmed = known.filter((o) => weightOf(o) === 1);
+    const likely = known.filter((o) => (weightOf(o) ?? 0) >= R('STAGE_REPLACE_YELLOW')).sort((a, b) => weightOf(b) - weightOf(a));
+    const stage = confirmed.length ? 'green' : likely.length ? 'yellow' : 'red';
+    const named = after.map((o) => o.label + (v(o.amount) === null ? ' (amount missing)' : o.likelihood ? ' (' + pctWords(v(o.likelihood)) + ' likely)' : ''));
+    const lost = st.cadence === 'weekly' || st.cadence === 'biweekly' || st.cadence === 'monthly' || st.cadence === 'semimonthly' ? v(st.amount) * { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[st.cadence] / 12 : null;
+    const best = likely[0] || after[0] || null;
+    const bestPath = best ? (v(best.amount) === null ? 'income.' + best.id + '.amount' : 'income.' + best.id + '.likelihood') : 'income.' + st.id + '.end';
+    const confirmGoal = (word) => goal(asOf, word + 'a confirmed replacement' + (lost !== null ? ' for the ' + money(lost) + ' a month that ends' : '') + (best ? ' (confirm ' + best.label + ')' : ''), { gap: lost, path: bestPath });
+    add({
+      id: 'income-ends-' + st.id, stage,
+      title: st.label + ' ends ' + longDate(st.end) + ', in ' + daysBetween(asOf, st.end) + ' days',
+      detail: stage === 'green' ? 'Replaced by ' + listWords(confirmed.map((o) => o.label)) + ' (confirmed).' : named.length ? 'What follows: ' + listWords(named) + '. None of it is confirmed yet.' : 'No income is entered to follow it.',
+      next: stage === 'red' ? goal(asOf, 'Next: a replacement at least ' + pctWords(R('STAGE_REPLACE_YELLOW')) + ' likely, with an amount' + (lost !== null ? ' (' + money(lost) + ' a month ends)' : ''), { gap: lost, path: bestPath }) : stage === 'yellow' ? confirmGoal('Next: ') : null,
+      green: stage === 'green' ? null : confirmGoal('Stage 3: '),
+      from: ['income.' + st.id + '.amount', ...after.flatMap((o) => ['income.' + o.id + '.amount', ...(o.likelihood ? ['income.' + o.id + '.likelihood'] : [])])],
+      rules: ['APP_INCOME_END_DAYS', 'STAGE_REPLACE_YELLOW']
+    });
+  }
+
+  // ------------------------------------------------------------ runway
+  // red under STAGE_RUNWAY_RED_MONTHS; yellow up to the Rule of 5 target; green at it.
   const em = s.emergency;
   const rw = em.tiers.full.runway;
-  if (rw.value !== null && rw.value < em.runwayWarnMonths) {
+  if (rw.value !== null && em.monthlyNeed) {
+    const redMonths = R('STAGE_RUNWAY_RED_MONTHS'), target = em.targetMonths.value;
+    const stage = rw.value < redMonths ? 'red' : target !== null && rw.value < target ? 'yellow' : 'green';
+    const cashAcc = (spine.accounts || []).filter((a) => a.family === 'cash');
+    const home = cashAcc.find((a) => v(a.role) === 'emergency') || cashAcc.find((a) => ['savings', 'hysa'].includes(a.type)) || cashAcc[0];
+    const path = home ? 'accounts.' + home.id + '.balance' : rw.from[0];
+    const cash = s.sheet.cash.value;
+    const toMonths = (m, word, extra) => { const t = Math.ceil(m * em.monthlyNeed); return goal(asOf, word + money(t) + ' in cash gets you to ' + (m === 1 ? '1 month' : m + ' months') + extra + ' (' + money(Math.max(0, t - cash)) + ' more)', { target: t, gap: Math.max(0, t - cash), path }); };
     const fat = em.tiers.fatOnly.runway.value;
     const back = em.backstop.contributions.value;
     add({
-      id: 'runway', level: 'act', title: 'Cash covers ' + months1(rw.value) + ' months of spending',
-      detail: money(s.sheet.cash.value) + ' in cash against ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments)' + (fat !== null ? '; ' + months1(fat) + ' months on food, housing and transportation alone' : '') + '.' + (back ? ' Roth contributions of ' + money(back) + ' can come out with no tax or penalty; they are not counted as cash.' : ''),
-      from: rw.from, rules: ['APP_RUNWAY_WARN']
+      id: 'runway', stage, title: 'Cash covers ' + months1(rw.value) + ' months of spending',
+      detail: money(cash) + ' in cash against ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments)' + (fat !== null ? '; ' + months1(fat) + ' months on food, housing and transportation alone' : '') + '.' + (back ? ' Roth contributions of ' + money(back) + ' can come out with no tax or penalty; they are not counted as cash.' : ''),
+      next: stage === 'red' ? toMonths(redMonths, 'Next: ', '') : stage === 'yellow' ? toMonths(target, 'Next: ', ', the Rule of 5 target') : null,
+      green: stage === 'green' || target === null ? null : toMonths(target, 'Stage 3: ', ', the Rule of 5 target'),
+      from: rw.from, rules: ['STAGE_RUNWAY_RED_MONTHS', 'APP_RULE_OF_5']
     });
   }
 
-  // FI goal below what today's spending implies.
+  // ------------------------------------------------------------ FI goal vs spending
+  // red: the goal is under STAGE_FI_YELLOW_RATIO of what today's spending
+  // implies; yellow up to STAGE_FI_GREEN_RATIO; green at or over. Each goal shows
+  // both fixes: the FI goal it takes, or the monthly spending it takes.
   const fi = s.fi;
-  if (fi.goalBelowImplied.value === true) {
+  const wr = v(spine.assumptions.withdrawalRate);
+  if (fi.goal.value !== null && fi.implied.value && wr) {
+    const ratio = fi.goal.value / fi.implied.value;
+    const yr = R('STAGE_FI_YELLOW_RATIO'), gr = R('STAGE_FI_GREEN_RATIO');
+    const stage = ratio < yr ? 'red' : ratio < gr ? 'yellow' : 'green';
+    const spend = s.cashflow.expenses.total.value;
+    const goalRec = (spine.goals || []).find((g) => g.type === 'fi');
+    const path = 'goals.' + goalRec.id + (goalRec.fiNumber ? '.fiNumber' : '.annualSpending');
+    const fix = (share, word) => {
+      const goalNeeded = Math.ceil(share * fi.implied.value);
+      const spendNeeded = Math.floor(fi.goal.value * wr / 12 / share);
+      return goal(asOf, word + 'an FI goal of ' + money(goalNeeded) + ' or more (' + money(goalNeeded - fi.goal.value) + ' higher), or spending of ' + money(spendNeeded) + ' a month or less (' + money(Math.max(0, Math.ceil(spend - spendNeeded))) + ' less)', { target: goalNeeded, gap: goalNeeded - fi.goal.value, path });
+    };
+    const ys = fix(yr, 'Next: '), gs = fix(gr, 'Stage 3: ');
     add({
-      id: 'fi-goal-gap', level: 'watch', title: 'The FI goal is below what today\'s spending implies',
-      detail: 'Goal: ' + money(fi.goal.value) + '. Today\'s spending (' + money(s.cashflow.expenses.total.value) + ' a month, before debt payments) at a ' + pctWords(v(spine.assumptions.withdrawalRate)) + ' withdrawal rate implies ' + money(fi.implied.value) + '.',
-      from: [...fi.goal.from, ...fi.implied.from]
+      id: 'fi-goal-gap', stage,
+      title: stage === 'green' ? 'The FI goal covers today\'s spending' : 'The FI goal is below what today\'s spending implies',
+      detail: 'Goal: ' + money(fi.goal.value) + '. Today\'s spending (' + money(spend) + ' a month, before debt payments) at a ' + pctWords(wr) + ' withdrawal rate implies ' + money(fi.implied.value) + ' (the goal is ' + pctWords(ratio) + ' of it).',
+      next: stage === 'red' ? { ...ys, spendingNeeded: Math.floor(fi.goal.value * wr / 12 / yr), goalNeeded: Math.ceil(yr * fi.implied.value) } : stage === 'yellow' ? { ...fix(gr, 'Next: '), spendingNeeded: Math.floor(fi.goal.value * wr / 12 / gr), goalNeeded: Math.ceil(gr * fi.implied.value) } : null,
+      green: stage === 'green' ? null : { ...gs, spendingNeeded: Math.floor(fi.goal.value * wr / 12 / gr), goalNeeded: Math.ceil(gr * fi.implied.value) },
+      from: [...fi.goal.from, ...fi.implied.from], rules: ['STAGE_FI_YELLOW_RATIO', 'STAGE_FI_GREEN_RATIO']
     });
   }
 
-  // Health coverage changes at 26, and what HSA eligibility depends on.
-  const ageLimit = rules.get('APP_HEALTH_PARENT_AGE', year);
+  // ------------------------------------------------------------ health coverage switch
+  // red: under STAGE_COVERAGE_RED_DAYS away with no plan type. green: enrolled
+  // and money set aside for it. yellow: anything in between.
+  const ageLimit = R('APP_HEALTH_PARENT_AGE');
   for (const p of spine.household.people) {
     const birth = v(p.birthDate);
     if (!birth) continue;
     const cov = (spine.household.healthCoverage || []).filter((e) => !e.personId || e.personId === p.id);
     const now = inForce(cov, asOf);
-    if (!now || v(now.value) !== 'parent_plan') continue;
+    const change = cov.filter((e) => e.from && e.from > asOf).sort((a, b) => (a.from < b.from ? -1 : 1))[0] || null;
+    if (!now || (v(now.value) !== 'parent_plan' && !change)) continue;
     const turns = (+birth.slice(0, 4) + ageLimit) + birth.slice(4);
-    const change = cov.find((e) => e.from && e.from > asOf) || null;
     const when = change ? change.from : turns;
+    if (when <= asOf) continue;
+    const base = change ? 'household.healthCoverage.' + change.id : null;
     const costs = (spine.expenses || []).filter((e) => e.start && Math.abs(daysBetween(e.start, when)) <= 31);
+    const cost = costs.length ? costs.reduce((a, e) => a + (v(e.amount) ?? 0), 0) : null;
     const plan = change && change.planType ? v(change.planType) : null;
+    const enrolled = change && change.enrolled ? v(change.enrolled) : null;
+    const saved = change && change.setAside ? v(change.setAside) : null;
+    const left = daysBetween(asOf, when);
+    const stage = enrolled === true && saved > 0 ? 'green' : left < R('STAGE_COVERAGE_RED_DAYS') && plan === null ? 'red' : 'yellow';
     const hsa = plan === null ? 'Plan type is not entered yet.' : ['hdhp', 'bronze', 'catastrophic'].includes(plan) ? 'This plan type qualifies.' : 'This plan type does not qualify.';
+    const setAsideGoal = (word) => goal(asOf, word + 'enrolled, with ' + (cost ? money(cost) + ' (one month of the new cost)' : 'a set-aside') + ' set aside by ' + longDate(when), { target: cost, gap: cost === null ? null : Math.max(0, cost - (saved || 0)), by: when, path: base ? base + (enrolled === true ? '.setAside' : '.enrolled') : null });
+    const nextGoal = plan === null && base ? goal(asOf, 'Next: enter the new plan type (HDHP, bronze, catastrophic or other)', { path: base + '.planType' })
+      : cost === null ? goal(asOf, 'Next: enter the monthly cost of the new coverage', { path: base ? base + '.value' : null })
+        : setAsideGoal('Next: ');
     add({
-      id: 'health-26-' + p.id, level: 'watch',
-      title: p.name + '\'s coverage on a parent\'s plan ends at ' + ageLimit + ' (' + longDate(when) + ')',
+      id: 'health-26-' + p.id, stage,
+      title: p.name + '\'s coverage ' + (v(now.value) === 'parent_plan' ? 'on a parent\'s plan ends at ' + ageLimit : 'changes') + ' (' + longDate(when) + ', in ' + left + ' days)',
       detail: (costs.length ? listWords(costs.map((e) => money(v(e.amount)) + ' a month for ' + e.label)) + ' starts then. ' : '') + 'Putting money in an HSA depends on the new plan: an HDHP qualifies, and bronze and catastrophic plans count from 2026. ' + hsa,
-      from: ['household.people.' + p.id + '.birthDate', ...(change ? ['household.healthCoverage.' + change.id + '.value', 'household.healthCoverage.' + change.id + '.planType'] : []), ...costs.map((e) => 'expenses.' + e.id + '.amount')],
-      rules: ['APP_HEALTH_PARENT_AGE', 'HDHP_MIN_S']
+      next: stage === 'green' ? null : nextGoal,
+      green: stage === 'green' ? null : setAsideGoal('Stage 3: '),
+      from: ['household.people.' + p.id + '.birthDate', ...(base ? [base + '.value', base + '.planType', base + '.enrolled', base + '.setAside'] : []), ...costs.map((e) => 'expenses.' + e.id + '.amount')],
+      rules: ['APP_HEALTH_PARENT_AGE', 'HDHP_MIN_S', 'STAGE_COVERAGE_RED_DAYS']
     });
   }
 
-  // Results that need an input, naming the field.
-  const needs = [
-    ['tax', year + ' tax', tax.balanceDue, tax.missingText],
+  // ------------------------------------------------------------ inputs of each headline number
+  // red: an input is missing. yellow: an input is rough. green: every input known.
+  const inputs = [
+    ['tax', year + ' tax', tax.balanceDue],
     ['takehome', 'Monthly take-home', s.cashflow.income.takeHome],
     ['surplus', 'Monthly surplus', s.cashflow.surplus],
     ['utilization', 'Personal card utilization', s.debt.utilization.personal],
@@ -146,17 +302,22 @@ export function buildFlags(spine, rules, s) {
     ['fi', 'FI percent', fi.fiPercent],
     ['runway', 'Cash runway', em.tiers.full.runway]
   ];
-  for (const [id, what, r, text] of needs) {
-    if (!r || !r.missing || !r.missing.length) continue;
-    const fields = [...new Set(r.missing)].map((p) => labelFor(spine, p));
+  for (const [id, what, r] of inputs) {
+    if (!r) continue;
+    const missing = [...new Set(r.missing || [])], rough = [...new Set(r.rough || [])];
+    const stage = missing.length ? 'red' : rough.length ? 'yellow' : 'green';
+    const fields = (list) => listWords(list.map((p) => labelFor(spine, p)));
     add({
-      id: 'missing-' + id, level: 'info',
-      title: what + (r.value === null ? ' cannot be figured yet' : ' is built without some inputs'),
-      detail: (text ? text.charAt(0).toUpperCase() + text.slice(1) + '. ' : '') + 'Needs: ' + listWords(fields) + '.',
-      from: r.missing
+      id: 'input-' + id, stage,
+      title: stage === 'red' ? what + ' needs ' + missing.length + ' input' + (missing.length === 1 ? '' : 's') : stage === 'yellow' ? what + ' uses ' + rough.length + ' rough number' + (rough.length === 1 ? '' : 's') : what + ': every input known',
+      detail: stage === 'red' ? 'Needs: ' + fields(missing) + '.' : stage === 'yellow' ? 'Rough: ' + fields(rough) + '.' : 'Built from ' + (r.from || []).length + ' known fields.',
+      next: stage === 'red' ? goal(asOf, 'Next: enter ' + labelFor(spine, missing[0]) + (missing.length > 1 ? ' (and ' + (missing.length - 1) + ' more)' : ''), { path: missing[0] })
+        : stage === 'yellow' ? goal(asOf, 'Next: confirm ' + labelFor(spine, rough[0]) + (rough.length > 1 ? ' (and ' + (rough.length - 1) + ' more)' : ''), { path: rough[0] }) : null,
+      green: stage === 'green' ? null : goal(asOf, 'Stage 3: every input known', { path: missing[0] || rough[0] }),
+      from: missing.length ? missing : rough.length ? rough : r.from || []
     });
   }
 
-  const order = { act: 0, watch: 1, info: 2 };
-  return out.sort((a, b) => order[a.level] - order[b.level]);
+  // Red first, then yellow, then green; the order within a stage is kept.
+  return out.map((f, i) => [f, i]).sort((a, b) => a[0].stageNumber - b[0].stageNumber || a[1] - b[1]).map(([f]) => f);
 }

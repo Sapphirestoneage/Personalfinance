@@ -34,7 +34,7 @@ Every stored answer is a Fact:
     filingStatus: Fact<single|mfj|mfs|hoh>,
     state: Fact<text>, county: Fact<text>, nycResident: Fact<bool>,
     situation: [{ id, from: date|null, value: Fact<employed|self_employed|between_jobs|student|retired|mixed> }],
-    healthCoverage: [{ id, from, personId?, value: Fact<employer|parent_plan|own_plan|marketplace|medicaid|medicare|none|other>, planType?: Fact<hdhp|bronze|catastrophic|other> }]
+    healthCoverage: [{ id, from, personId?, value: Fact<employer|parent_plan|own_plan|marketplace|medicaid|medicare|none|other>, planType?: Fact<hdhp|bronze|catastrophic|other>, enrolled?: Fact<bool>, setAside?: Fact<money> }]
   },
   income: [{ id, type, label, personId, amount: Fact<money>, cadence, start, end,
              likelihood?: Fact<0..1>, withholding: { federal: Fact<money>, state: Fact<money> }, notes? }],
@@ -44,7 +44,7 @@ Every stored answer is a Fact:
   debts: [{ id, family: "debt", type, ...fields as Facts }],
   goals: [{ id, type: fi|savings|payoff|other, label, target?, fiNumber?, annualSpending?: Fact<money>, by?, flavor?, notes? }],
   assumptions: { inflation, realReturn, withdrawalRate: Fact<rate>, lifeExpectancy, coastAge?: Fact<int> },
-  taxYears: [{ id: "2026", year: 2026, estimatedPaidFederal?, estimatedPaidState?, capitalGainsLong?, qualifiedDividends?, otherIncome?: Fact<money> }]
+  taxYears: [{ id: "2026", year: 2026, estimatedPaidFederal?, estimatedPaidState?, capitalGainsLong?, qualifiedDividends?, otherIncome?, setAside?: Fact<money> }]
 }
 ```
 
@@ -77,7 +77,8 @@ the rules that limit it.
 | otherAssets | appreciationRate, linkedDebt, incomeProduced | home, rental, car, business, pension, cash_value_life, annuity |
 
 `validate(spine) -> { ok, errors: [{ path, message }] }`.
-`loadHousehold(raw)` (`engine/normalize.js`) takes a spine as is, or a
+`upgradeSpine(spine)` adds fields a newer version requires to a saved
+spine. `loadHousehold(raw)` (`engine/normalize.js`) takes a spine as is, or a
 profile file (`_meta.version` 3) and turns it into a spine.
 
 ## The Result
@@ -118,11 +119,11 @@ All pure: spine and rules in, plain objects out. `asOf` defaults to `spine.meta.
 | fi | `fiReport(spine, rules, cf, sheet, asOf)` | `{ fiNumber, goal, goalSource, implied, goalBelowImplied, fiPercent, leanFi, coastFi, coastAge, coastReached, annualSaving, yearsToFi, neverAtThisRate }` |
 | | `yearsToTarget(P, C, F, r)` | years or null |
 | debt | `utilization(spine)` returns `{ items: [{ id, name, balance, limit, business, reports, util }], personal, overall }` (each total a Result with balance and limit); `creditScoreNote(spine, rules, asOf, util)` returns `{ warn, cards, smallest, personalNow, personalAfter }`; `orderDetail(spine, ids, asOf)`; `rateOn(debt, iso)` (the intro rate through its end date, then the APR; an APR marked not for me is 0); `promoDeadlines` items carry `switchDate`, `aprAfter`, `aprAfterKind`; `minimumPayment(debt, rules, iso, balance)`, `promoDeadlines(spine, asOf)`, `order(spine, strategy, asOf, { cardsOnly })`, `payoffPlan(spine, rules, { strategy, extra, asOf, cardsOnly })`, `minimumsTotal(spine, rules, iso)` (items carry `dueDate`), `dueDateIn(debt, ym)`, `debtTotals(spine)` | strategies: avalanche, snowball, stress |
-| emergency | `emergency(spine, rules, cf, sheet, asOf)` | `{ age, targetMonths, targetDollars, gap, tiers: { full: { burn, runway }, fatOnly: { burn, runway } }, runwayWarnMonths, backstop }` |
+| emergency | `emergency(spine, rules, cf, sheet, asOf)` | `{ age, targetMonths, targetDollars, gap, tiers: { full: { burn, runway }, fatOnly: { burn, runway } }, monthlyNeed, backstop }` (dollar targets use `monthlyNeed`, the month's spending rounded up to a whole dollar) |
 | | `rothBackstop(spine, rules, asOf, age)` | `{ contributions, conversions: [{ accountId, year, amount, clockOpens, penaltyFree, penaltyRate }], conversionsTotal, countedAsCash: false }` |
 | defaults | `applyDefaults(spine, rules)` | a new spine: every credit card with no APR gets `DEFAULT_CARD_APR`, and every debt with no due day gets `DEFAULT_DUE_DAY`, as rough Facts (never a statement close day). Run after loading and after every edit |
 | networth | `balanceSheet(spine)` | `{ cash, invested, assets, debts, cards, netWorth, byFamily }` |
-| flags | `buildFlags(spine, rules, summary)` | `[{ id, level: act\|watch\|info, title, detail, from, rules }]` |
+| flags | `buildFlags(spine, rules, summary)` | `[{ id, stage: red\|yellow\|green, stageNumber, stageLabel, title, detail, next, green, from, rules }]`, red first; a goal is `{ text, target, gap, by, months, monthly, path }` (FI goals add `goalNeeded`, `spendingNeeded`). Also `goal(asOf, text, opts)` and `stageFor(value, redOver, greenAtOrUnder)` |
 | summary | `summarize(spine, rules, { asOf, flags })` | `{ asOf, ym, cashflow, sheet, debt: { utilization, creditScore, promo, avalanche, avalancheCards, avalancheCardsDetail }, emergency, fi, tax, flags }`; `payoffOrders(spine, rules, summary)` |
 | labels | `labelFor(spine, path)`, `groupFor(path)`, `GROUPS` | words for a field; its DAITE group |
 | ledger | `ledgerRows(spine)`, `stillGuessing(spine, rules)`, `typeFor(spine, path)`, `cardRateRow(spine, card)`, `rowPathFor(spine, path)`, `hasIntro(card)` | rows by group (a card's APR, intro rate and intro end are one row of type `cardRate`, value `{ apr, intro: { rate, ends } | null }`); `{ swing, items: [{ path, label, kind, group, blocks, score, moves }] }` |

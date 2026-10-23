@@ -1314,26 +1314,6 @@
       "verified": "law"
     },
     {
-      "id": "APP_UTIL_WARN",
-      "rule": "Card utilization that raises a flag",
-      "value": 0.3,
-      "unit": "rate",
-      "appliesTo": "Flags",
-      "notes": "Per card and overall",
-      "source": "SLAM design (Phase 1 brief)",
-      "verified": "app"
-    },
-    {
-      "id": "APP_RUNWAY_WARN",
-      "rule": "Cash runway that raises a flag",
-      "value": 3,
-      "unit": "months",
-      "appliesTo": "Flags",
-      "notes": "",
-      "source": "SLAM design (Phase 1 brief)",
-      "verified": "app"
-    },
-    {
       "id": "APP_INCOME_END_DAYS",
       "rule": "Look-ahead for an income stream ending",
       "value": 90,
@@ -1385,23 +1365,23 @@
     },
     {
       "id": "APP_CARD_MIN_PCT",
-      "rule": "Estimated card minimum: this share of the balance plus a month of interest",
+      "rule": "Default card minimum: this share of the balance plus a month of interest",
       "value": 0.01,
       "unit": "rate",
       "appliesTo": "Debt engine",
-      "notes": "Used only when the real minimum is missing; result is rough",
-      "source": "Common issuer formula; check the statement",
-      "verified": "verify"
+      "notes": "Used with APP_CARD_MIN_FLOOR",
+      "source": "Eli house assumption (issuers commonly charge the larger of about $40 or 1% of the balance plus the month's interest)",
+      "verified": "assumption"
     },
     {
       "id": "APP_CARD_MIN_FLOOR",
-      "rule": "Estimated card minimum floor",
-      "value": 25,
+      "rule": "Default card minimum: never less than this",
+      "value": 40,
       "unit": "$",
       "appliesTo": "Debt engine",
-      "notes": "Used only when the real minimum is missing",
-      "source": "Common issuer floor; check the statement",
-      "verified": "verify"
+      "notes": "Stored as a rough default when a card has no minimum; recomputed as the balance changes; never more than the balance",
+      "source": "Eli house assumption (issuers commonly charge the larger of about $40 or 1% of the balance plus the month's interest)",
+      "verified": "assumption"
     },
     {
       "id": "APP_GUESS_SWING",
@@ -1440,6 +1420,76 @@
       "unit": "day of month",
       "appliesTo": "Every debt type: credit cards, auto, student, personal and other loans, mortgages, HELOCs, BNPL, IOUs with a payment",
       "notes": "Filled in at load and after each Ledger edit, stored as rough. A card statement close day is never filled in.",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_RUNWAY_RED_MONTHS",
+      "rule": "Cash runway under this many months is stage 1 (red)",
+      "value": 1,
+      "unit": "months",
+      "appliesTo": "Flags: runway",
+      "notes": "Stage 2 (yellow) from here to the Rule of 5 target; stage 3 (green) at the target",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_UTIL_RED",
+      "rule": "Card utilization over this is stage 1 (red)",
+      "value": 0.3,
+      "unit": "rate",
+      "appliesTo": "Flags: per card and personal utilization",
+      "notes": "Stage 2 (yellow) up to and including this",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_UTIL_GREEN",
+      "rule": "Card utilization at or under this is stage 3 (green)",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Flags: per card and personal utilization",
+      "notes": "",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_FI_YELLOW_RATIO",
+      "rule": "FI goal under this share of the spending-implied FI number is stage 1 (red)",
+      "value": 0.8,
+      "unit": "ratio",
+      "appliesTo": "Flags: FI goal",
+      "notes": "",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_FI_GREEN_RATIO",
+      "rule": "FI goal at or over this share of the spending-implied FI number is stage 3 (green)",
+      "value": 1,
+      "unit": "ratio",
+      "appliesTo": "Flags: FI goal",
+      "notes": "",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_REPLACE_YELLOW",
+      "rule": "A replacement income this likely makes an ending income stage 2 (yellow)",
+      "value": 0.5,
+      "unit": "likelihood",
+      "appliesTo": "Flags: income ending",
+      "notes": "Confirmed (likelihood 1 and an amount) is stage 3 (green)",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "STAGE_COVERAGE_RED_DAYS",
+      "rule": "A coverage change sooner than this with no plan type is stage 1 (red)",
+      "value": 90,
+      "unit": "days",
+      "appliesTo": "Flags: health coverage change",
+      "notes": "",
       "source": "Eli house assumption",
       "verified": "assumption"
     }

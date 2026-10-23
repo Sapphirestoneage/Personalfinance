@@ -3,7 +3,7 @@
 // machine only, gitignored), then the made-up demo household.
 
 import { fetchRules } from '../engine/rules.js';
-import { loadHousehold } from '../engine/normalize.js';
+import { loadHousehold, upgradeSpine } from '../engine/normalize.js';
 import { validate } from '../engine/schema.js';
 import { applyDefaults } from '../engine/defaults.js';
 
@@ -24,10 +24,19 @@ async function fetchJson(rel) {
 export async function loadAll() {
   const rules = await fetchRules(new URL('data/', base));
   const saved = readSaved();
-  if (saved && validate(saved).ok) return { rules, spine: applyDefaults(saved, rules), source: 'saved' };
+  let problem = null;
+  if (saved) {
+    // Edits saved by an earlier version are upgraded, not dropped (S-167).
+    const up = upgradeSpine(saved);
+    const check = validate(up);
+    if (check.ok) return { rules, spine: applyDefaults(up, rules), source: 'saved' };
+    // Still unreadable: keep a copy under its own key so nothing is lost, and say so.
+    try { localStorage.setItem(KEY + ':unreadable:' + new Date().toISOString(), JSON.stringify(saved)); } catch { /* storage blocked */ }
+    problem = 'Edits saved in this browser could not be read (' + check.errors[0].path + ': ' + check.errors[0].message + '). A copy is kept in this browser; showing the file instead.';
+  }
   const local = await fetchJson('fixtures/eli.local.json');
-  if (local) return { rules, spine: applyDefaults(loadHousehold(local), rules), source: 'local' };
-  return { rules, spine: applyDefaults(loadHousehold(await fetchJson('fixtures/demo.json')), rules), source: 'demo' };
+  if (local) return { rules, spine: applyDefaults(loadHousehold(local), rules), source: 'local', problem };
+  return { rules, spine: applyDefaults(loadHousehold(await fetchJson('fixtures/demo.json')), rules), source: 'demo', problem };
 }
 
 export function save(spine) {

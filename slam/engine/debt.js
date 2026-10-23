@@ -17,25 +17,35 @@ export function rateOn(debt, iso) {
   return { rate: debt.apr && debt.apr.kind === 'notForMe' ? 0 : v(debt.apr), path: P(debt, 'apr'), promo: false };
 }
 
-// The monthly minimum. A known minimum is used as is. A card with no minimum
-// gets an estimate (APP_CARD_MIN_PCT of the balance plus a month of interest,
-// at least APP_CARD_MIN_FLOOR, never more than the balance), marked rough.
+// The house default card minimum (S-166): the larger of APP_CARD_MIN_FLOOR or
+// APP_CARD_MIN_PCT of the balance plus a month of interest at the rate charged
+// then, never more than the balance.
+export function estimateCardMinimum(debt, rules, iso, balance, t) {
+  const year = +iso.slice(0, 4);
+  const { rate, path } = rateOn(debt, iso);
+  if (t) t.useFact(path, path.endsWith('promoApr') ? debt.promoApr : debt.apr);
+  const g = (id) => (t ? t.rule(rules, id, year) : rules.get(id, year));
+  if (balance <= 0) return 0;
+  return round2(Math.min(balance, Math.max(g('APP_CARD_MIN_FLOOR'), balance * g('APP_CARD_MIN_PCT') + balance * (rate ?? 0) / 12)));
+}
+export const DEFAULT_MIN_SOURCE = 'APP_CARD_MIN_FLOOR';
+
+// The monthly minimum. A minimum someone entered is used as is. A card's house
+// default (stored rough by engine/defaults.js) is recomputed for the balance at
+// hand, so it falls as the balance falls; so is a card with no minimum at all.
 // Any other debt with no minimum is missing.
 export function minimumPayment(debt, rules, iso, balance = v(debt.balance)) {
   const t = tracker();
-  const year = +iso.slice(0, 4);
   t.useFact(P(debt, 'balance'), debt.balance);
   if (balance === null) return t.out(null);
   if (balance <= 0) return t.out(0);
+  const isDefault = debt.minimum && debt.minimum.source === DEFAULT_MIN_SOURCE;
   const known = t.useFact(P(debt, 'minimum'), debt.minimum);
-  if (known !== null) return t.out(Math.min(known, balance), { estimated: false });
+  if (known !== null && !isDefault) return t.out(Math.min(known, balance), { estimated: false });
   if (debt.type !== 'credit_card') return t.out(null, { estimated: false });
-  const { rate, path } = rateOn(debt, iso);
-  const rateUsed = t.useFact(path, path.endsWith('promoApr') ? debt.promoApr : debt.apr);
-  const pct = t.rule(rules, 'APP_CARD_MIN_PCT', year), floor = t.rule(rules, 'APP_CARD_MIN_FLOOR', year);
-  const est = Math.min(balance, Math.max(floor, balance * pct + balance * (rateUsed ?? rate ?? 0) / 12));
+  const est = estimateCardMinimum(debt, rules, iso, balance, t);
   t.addRough(P(debt, 'minimum'));
-  return t.out(round2(est), { estimated: true });
+  return t.out(est, { estimated: true });
 }
 
 export function debtTotals(spine) {
@@ -78,10 +88,10 @@ export function utilization(spine) {
 }
 
 // The credit score note (S-159), kept apart from the payoff order: personal
-// cards over APP_UTIL_WARN, highest first, and what personal utilization would
+// cards over STAGE_UTIL_RED, highest first, and what personal utilization would
 // be with the smallest of those balances paid off.
 export function creditScoreNote(spine, rules, asOf, util = utilization(spine)) {
-  const warn = rules.get('APP_UTIL_WARN', +asOf.slice(0, 4));
+  const warn = rules.get('STAGE_UTIL_RED', +asOf.slice(0, 4));
   const over = util.items.filter((c) => c.reports === true && c.util.value !== null && c.util.value > warn).sort((a, b) => b.util.value - a.util.value);
   const smallest = over.length ? over.reduce((m, c) => (c.balance < m.balance ? c : m), over[0]) : null;
   const t = tracker();

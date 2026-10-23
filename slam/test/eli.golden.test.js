@@ -9,6 +9,7 @@ import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { cashflow } from '../engine/cashflow.js';
 import { applyDefaults } from '../engine/defaults.js';
+import { setAt } from '../engine/spine.js';
 import { readJson, exists, loadRules } from './spine-helpers.js';
 
 const skip = !(exists('fixtures/eli.local.json') && exists('fixtures/eli.golden.local.json')) && 'the local profile or its golden values are not on this machine';
@@ -110,6 +111,20 @@ test('Eli golden values', { skip }, async (t) => {
     assert.equal(s.tax.missingText, X.taxMissingText);
     assert.ok(s.tax.balanceDue.missing.includes(X.taxMissingPath));
     assert.equal(s.tax.nextEstimated.date, X.nextEstimated);
+  });
+
+  await t.test('flag stages and their goals', () => {
+    const by = Object.fromEntries(s.flags.map((f) => [f.id, f]));
+    for (const [id, stage] of Object.entries(X.stages)) assert.equal(by[id].stage, stage, id);
+    for (const [id, [next, green]] of Object.entries(X.goals)) assert.deepEqual([by[id].next.target, by[id].green.target], [next, green], id);
+    assert.equal(by['utilization-personal'].next.gap, X.personalPay);
+    assert.equal(by['promo-deadlines'].green.months, X.promoMonths);
+    assert.equal(Math.ceil(s.debt.promo.monthly.value), X.promoMonthlyRounded);
+    assert.deepEqual([by['fi-goal-gap'].next.goalNeeded, by['fi-goal-gap'].next.spendingNeeded], X.fiGoals.next);
+    assert.deepEqual([by['fi-goal-gap'].green.goalNeeded, by['fi-goal-gap'].green.spendingNeeded], X.fiGoals.green);
+    const w = X.greenWhenKnown;
+    const after = summarize(setAt(spine, w.path, { value: w.value, kind: 'known', asOf: X.asOf, source: 'ledger' }), R);
+    assert.equal(after.flags.find((f) => f.id === w.flag).stage, 'green', w.flag + ' turns green once the field is known');
   });
 
   await t.test('the flags the brief lists all fire', () => {

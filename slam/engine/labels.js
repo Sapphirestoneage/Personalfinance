@@ -15,7 +15,8 @@ const FIELD = {
   estimatedPaidFederal: 'estimated payments made (federal)', estimatedPaidState: 'estimated payments made (state)',
   capitalGainsLong: 'long-term gains', qualifiedDividends: 'qualified dividends', otherIncome: 'other income',
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
-  business: 'business card', reportsToPersonalCredit: 'reports to personal credit'
+  business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
+  setAside: 'set aside', enrolled: 'enrolled'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
 const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City' };
@@ -33,7 +34,8 @@ export function labelFor(spine, path) {
       if (s[1] === 'people') { const p = item('household.people', s[2]); return (p ? p.name : s[2]) + ': birth date'; }
       const e = item('household.' + s[1], s[2]);
       const what = s[1] === 'situation' ? 'Situation' : 'Health coverage';
-      return (s[3] === 'planType' ? 'Health plan type' : what) + ' (' + dateWords(e && e.from) + ')';
+      const sub = { planType: 'Health plan type', enrolled: 'Enrolled in the new health plan', setAside: 'Set aside for the new health plan' }[s[3]];
+      return (sub || what) + ' (' + dateWords(e && e.from) + ')';
     }
     case 'income': {
       const x = item('income', s[1]);
