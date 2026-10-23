@@ -115,7 +115,7 @@ def({ id: 'cliffCosts', label: 'Costs once certain income stops', unit: 'usd/mon
   explain: ({ s }) => { const c = s.cliff; if (!c) return out(null, []); return out({ value: Math.round(c.costs * 100) / 100, kind: c.spending.kind === 'computed' && c.minimums.kind === 'computed' ? 'computed' : 'rough', rules: [], rough: [], missing: [] }, [{ label: 'Spending', value: c.spending.value, unit: 'usd/month', kind: c.spending.kind, role: 'plus', group: 'E' }, { label: 'Minimum payments', value: c.minimums.value, unit: 'usd/month', kind: c.minimums.kind, role: 'plus', group: 'D' }, { label: 'Tax set-aside', value: c.setAside.value, unit: 'usd/month', kind: c.setAside.kind, role: 'plus', group: 'T' }]); } });
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id);
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
 function expenseCostMetric(id) {
@@ -134,6 +134,47 @@ function expenseCostMetric(id) {
         [field(spine, 'expenses.' + eid + '.amount', bill === null ? null : Math.round(bill * 100) / 100, 'usd/month', 'arg', 'The bill a month'), shareTerm]);
     },
     recompute: (t) => (t[0].value === null || t[1].value === null ? null : Math.round(t[0].value * t[1].value * 100) / 100) };
+}
+
+// One Windfall step ("windfall:<step>", S-201): what the step takes is the
+// smaller of what it needs and what is left of the windfall before it. The
+// terms show both, then the inputs behind the need, each a link. The windfall
+// itself is in ctx.windfall (the page and the tests put it there).
+const WINDFALL_FORMULAS = {
+  taxOnIt: 'Tax on the windfall = the windfall x the marginal rate (federal + state), when tax is still owed on it',
+  taxBill: 'Tax bill step = the year\'s balance due - money already set aside, capped at what is left of the windfall',
+  cashFloor: 'Cash floor step = (stage 1 months x monthly spending and minimums, rounded up) - cash, capped at what is left',
+  promos: 'Promo step = what, paid now, brings the monthly amount that clears the promos down to the monthly surplus, capped at what is left',
+  cards: 'Cards step = every card balance charging interest today, highest rate first, capped at what is left',
+  cushion: 'Cushion step = the Rule of 5 target - (cash + the floor step), capped at what is left',
+  roth: 'Roth step = this year\'s IRA limit - put in so far, reduced by the income phase-out, capped at what is left',
+  left: 'Left over = the windfall - every step before it'
+};
+function windfallMetric(id) {
+  if (!id || !id.startsWith('windfall:')) return null;
+  const stepId = id.slice(9);
+  if (!WINDFALL_FORMULAS[stepId]) return null;
+  return { id, label: 'Windfall: ' + stepId.replace(/([A-Z])/g, ' $1').toLowerCase(), unit: 'usd', op: stepId === 'left' ? 'sum' : 'custom', screens: ['windfall'], formula: WINDFALL_FORMULAS[stepId],
+    explain: ({ spine, s, rules, windfall: w }) => {
+      const st = w && w.steps.find((x) => x.id === stepId);
+      if (!st) return out(null, []);
+      const r = { value: st.amount, kind: st.kind, from: st.from, rough: st.rough, missing: st.missing, rules: st.rules };
+      if (stepId === 'left') return out(r, [{ label: 'The windfall', value: w.amount, unit: 'usd', kind: 'known', role: 'plus', group: null }, ...w.steps.filter((x) => x.id !== 'left').map((x) => ({ label: x.label, value: x.amount, unit: 'usd', kind: x.kind === 'missing' ? 'computed' : x.kind, role: 'minus', metric: 'windfall:' + x.id, group: null }))]);
+      const terms = [
+        { label: 'What this step needs', value: st.need, unit: 'usd', kind: st.kind === 'missing' ? 'missing' : st.kind, role: 'arg', group: null },
+        { label: 'Left of the windfall before this step', value: st.before, unit: 'usd', kind: 'computed', role: 'arg', group: null }
+      ];
+      const year = +s.asOf.slice(0, 4);
+      if (stepId === 'taxOnIt' && st.rate !== undefined) terms.push({ label: 'Marginal rate (federal + state)', value: st.rate, unit: 'ratio', kind: s.tax.marginal.value !== null ? s.tax.marginal.kind : 'rough', role: 'arg', metric: 'taxBalanceDue', group: 'T' });
+      if (stepId === 'taxBill') terms.push(metric('taxBalanceDue', 'Tax balance due', s.tax.balanceDue, 'usd', 'arg'), { label: 'Already set aside', value: st.held ?? 0, unit: 'usd', kind: st.path && st.path.startsWith('taxYears.') ? kindOf(spine, st.path) : 'known', role: 'arg', path: st.path && st.path.startsWith('taxYears.') ? st.path : null, group: 'T' });
+      if (stepId === 'cashFloor') terms.push(metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'Spending and minimums a month, rounded up', value: s.emergency.monthlyNeed, unit: 'usd/month', kind: s.emergency.tiers.full.burn.kind, role: 'arg', group: null }, ruleTerm(rules, 'STAGE_RUNWAY_RED_MONTHS', year, 'arg', 'Stage 1 floor', 'months'));
+      if (stepId === 'promos') terms.push(metric('promoMonthly', 'Monthly amount that clears the promos', s.debt.promo.monthly, 'usd/month', 'arg'), metric('surplus', 'Monthly surplus', s.cashflow.surplus, 'usd/month', 'arg'), ...st.items.map((x) => field(spine, x.path, x.balance, 'usd', 'arg', x.name + ' balance (' + x.paymentsLeft + ' payments left)')));
+      if (stepId === 'cards') terms.push(...st.items.map((x) => field(spine, x.path, x.pay, 'usd', 'arg', x.name + ' at ' + (Math.round(x.rate * 10000) / 100) + '%')));
+      if (stepId === 'cushion') terms.push(metric('ruleOf5Dollars', 'Rule of 5 target', s.emergency.targetDollars, 'usd', 'arg'), metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'The floor step', value: w.steps.find((x) => x.id === 'cashFloor').amount ?? 0, unit: 'usd', kind: 'computed', role: 'arg', metric: 'windfall:cashFloor', group: null });
+      if (stepId === 'roth') { const acct = (spine.accounts || []).find((a) => a.type === 'roth_ira'); if (acct) terms.push(ruleTerm(rules, 'IRA_LIMIT', year, 'arg', 'IRA limit', 'usd'), { label: 'Put in so far this year', value: st.soFar ?? null, unit: 'usd', kind: st.rough.includes('accounts.' + acct.id + '.contributions') ? 'rough' : 'known', role: 'arg', path: 'accounts.' + acct.id + '.contributions', group: 'A' }); }
+      return out(r, terms);
+    },
+    recompute: (t) => (t[0].value === null ? null : Math.round(Math.max(0, Math.min(t[0].value, Math.max(0, t[1].value))) * 100) / 100) };
 }
 
 // Per-card utilization, one metric per card ("cardUtil:<id>").

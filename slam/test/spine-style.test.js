@@ -11,7 +11,7 @@ const EM = String.fromCharCode(0x2014);
 const files = [
   ...['engine', 'ui'].flatMap((d) => readdirSync(SLAM + d).map((f) => d + '/' + f)),
   ...readdirSync(SLAM + 'test').filter((f) => /^(spine-|rules\.|schema\.|eli\.golden|demo\.golden)/.test(f)).map((f) => 'test/' + f),
-  'ledger.html', 'dashboard.html', 'calendar.html', 'data/rules-2026.json', 'fixtures/demo.json',
+  'ledger.html', 'dashboard.html', 'calendar.html', 'windfall.html', 'data/rules-2026.json', 'fixtures/demo.json',
   'CONTRACTS.md', 'BOARD.md', 'QUESTIONS.md', 'DECISIONS.md', 'README.md'
 ];
 

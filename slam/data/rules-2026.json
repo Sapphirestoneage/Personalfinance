@@ -1592,6 +1592,25 @@
       "notes": "A car loses about 15% of its value a year; stored on the car as rough so it shows yellow, and the net worth projection uses it",
       "source": "Eli house assumption",
       "verified": "assumption"
+    },
+    {
+      "id": "WINDFALL_ORDER",
+      "rule": "The order a lump sum is assigned in the Windfall room",
+      "value": [
+        "taxOnIt",
+        "taxBill",
+        "cashFloor",
+        "promos",
+        "cards",
+        "cushion",
+        "roth",
+        "left"
+      ],
+      "unit": "order",
+      "appliesTo": "Windfall",
+      "notes": "Tax on the money itself (when it is still owed), the year's tax bill, cash up to the stage 1 floor, promo balances the surplus cannot clear in time, cards charging interest now (highest rate first), cash up to the Rule of 5 target, the year's Roth IRA room, then what is left. Change the order here, not in code.",
+      "source": "SLAM house assumption (Phase 2, S-201)",
+      "verified": "assumption"
     }
   ]
 }

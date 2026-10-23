@@ -398,3 +398,26 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .cell .ev .ev-amt { grid-column: 2; font-size: var(--text-xs); }
 .cell .ev-name a { overflow-wrap: anywhere; }
 .cell .ev-tag { font-size: 10px; padding: 0 4px; }
+
+/* The Windfall room (S-201): one amount in, an ordered list of where it goes. */
+.windfall-form { display: grid; gap: var(--space-3); max-width: 480px; }
+.windfall-form .amount-row input { font-size: var(--text-lg); font-weight: 600; }
+.windfall-form .amount-row { align-items: center; }
+.windfall-form .amount-row .unit { font-size: var(--text-lg); font-weight: 600; color: var(--text-muted); }
+.wf-bar { display: flex; height: 22px; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); margin: var(--space-2) 0; }
+.wf-seg { height: 100%; background: var(--c); min-width: 2px; }
+.wf-seg + .wf-seg { border-left: 1px solid var(--surface); }
+.wf-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: var(--space-2); }
+.wf-step { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-left: 4px solid var(--c); border-radius: var(--radius-sm); background: var(--surface); }
+.wf-step.zero { border-left-color: var(--border); background: var(--surface-2); }
+.wf-num { counter-increment: step; width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--c); color: #fff; font-weight: 700; font-size: var(--text-sm); align-self: start; }
+.wf-step.zero .wf-num { background: var(--text-muted); }
+.wf-head { display: flex; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; align-items: baseline; }
+.wf-label { font-weight: 700; }
+.wf-amt { font-family: var(--font-num); font-size: var(--text-lg); font-weight: 700; white-space: nowrap; }
+.wf-step.zero .wf-amt { font-size: var(--text-md); font-weight: 400; color: var(--text-muted); }
+.wf-body { grid-column: 2; display: grid; gap: var(--space-1); }
+.wf-why { margin: 0; font-size: var(--text-sm); }
+.wf-short { margin: 0; font-size: var(--text-sm); color: var(--st-roughly); }
+.wf-items { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); }
+.wf-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); }
