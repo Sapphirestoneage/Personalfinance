@@ -208,6 +208,7 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
     item = { id, family: preset.family, type, name: K(label || preset.label) };
     for (const k of STARTING_FIELDS[preset.family] || ['balance']) item[k] = M();
     if (type === 'roth_ira') item.basis = M();
+    if (type === 'student_loan') item.plan = M();
     if (type === 'credit_card') Object.assign(item, { limit: M(), business: M(), reportsToPersonalCredit: M() });
     first = collection + '.' + id + '.balance';
   } else if (collection === 'income') {

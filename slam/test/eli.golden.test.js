@@ -105,11 +105,9 @@ test('Eli golden values', { skip }, async (t) => {
     assert.equal(s.sheet.cash.value, X.cash, 'the backstop is not cash');
   });
 
-  await t.test('the tax result reports what is missing instead of a number', () => {
-    assert.equal(s.tax.owed.value, null);
-    assert.equal(s.tax.balanceDue.value, null);
-    assert.equal(s.tax.missingText, X.taxMissingText);
-    assert.ok(s.tax.balanceDue.missing.includes(X.taxMissingPath));
+  await t.test('the tax result: owed, withheld and balance due, rough while an input is a guess', () => {
+    assert.deepEqual([s.tax.owed.value, s.tax.balanceDue.value, s.tax.balanceDue.kind], [X.tax.owed, X.tax.balanceDue, X.tax.kind]);
+    for (const p of X.tax.roughFrom) assert.ok(s.tax.balanceDue.rough.includes(p), p);
     assert.equal(s.tax.nextEstimated.date, X.nextEstimated);
   });
 

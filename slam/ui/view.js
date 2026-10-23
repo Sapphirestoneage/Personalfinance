@@ -2,6 +2,7 @@
 // number arrives already computed by the engines.
 
 import { money, pct } from '../src/ui/format.js';
+import { LOAN_PLAN_WORDS } from '../engine/schema.js';
 
 export { money, pct };
 
@@ -48,6 +49,7 @@ export function showValue(value, type) {
     return value.map((x) => (typeof x === 'object' ? (x.year ? x.year + ': ' : '') + money(x.amount) + (x.taxable !== undefined && x.taxable !== x.amount ? ' (taxable ' + money(x.taxable) + ')' : '') : x)).join(', ');
   }
   if (type.startsWith('choice:')) return words(value);
+  if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
   return String(value);
 }
 

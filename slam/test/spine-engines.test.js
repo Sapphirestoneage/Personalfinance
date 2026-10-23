@@ -1,7 +1,8 @@
 // Unit tests for the Phase 1 engines on tiny hand-worked households.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fact } from '../engine/spine.js';
+import { fact, setAt } from '../engine/spine.js';
+import { money } from '../src/ui/format.js';
 import { validate } from '../engine/schema.js';
 import { monthlyAmount, paidBetween, cashflow } from '../engine/cashflow.js';
 import { computeTax, taxForYear, nextEstimatedDate } from '../engine/tax.js';
@@ -423,9 +424,26 @@ test('schedule: a promo card moves to its rate after the intro and its minimum f
   assert.ok(sc.months.get('2027-01').payments[0].amount > sc.months.get('2026-12').payments[0].amount, 'the default minimum includes the new interest');
 });
 
-test('tax set-aside: unwithheld income at the marginal rate; a Roth conversion spread to the return', () => {
+test('tax set-aside: the year\'s balance due, less what is set aside, spread to the return', () => {
   const s = mini({
     income: [stream('job', 'w2', 4000, 'monthly', { fed: 400, st: 150 }), stream('gig', '1099', 1000, 'monthly'), stream('ui', 'unemployment', 1000, 'monthly')],
+    accounts: [{ id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(9000), conversions: K([{ year: 2026, amount: 7000, taxable: 7000 }]) }]
+  });
+  const c = cashflow(s, R, '2026-10');
+  const due = c.taxSetAside.lines[0].base;
+  assert.equal(due, summarize(s, R).tax.balanceDue.value);
+  assert.deepEqual(c.taxSetAside.lines.map((l) => [l.kind, l.taxYear, l.months]), [['balance', 2026, 7]], 'October 2026 through April 2027');
+  near(c.taxSetAside.total.value, due / 7);
+  near(c.surplus.value, c.income.takeHome.value - c.expenses.total.value - c.debtMinimums.total.value - c.saving.afterTax.value - c.taxSetAside.total.value);
+  // Money already set aside comes off; a refund sets nothing aside.
+  near(cashflow(setAt(s, 'taxYears.2026.setAside', K(1000)), R, '2026-10').taxSetAside.total.value, (due - 1000) / 7);
+  assert.equal(cashflow(setAt(s, 'income.job.withholding.federal', K(4000)), R, '2026-10').taxSetAside.total.value, 0);
+  assert.equal(cashflow(s, R, '2027-05').taxSetAside.lines.filter((l) => l.taxYear === 2026).length, 0, 'done after the return is due');
+});
+
+test('tax set-aside: while the year\'s tax cannot be figured, the marginal rate on untaxed income', () => {
+  const s = mini({
+    income: [stream('job', 'w2', 4000, 'monthly', { fed: null, st: 150 }), stream('gig', '1099', 1000, 'monthly'), stream('ui', 'unemployment', 1000, 'monthly')],
     accounts: [{ id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(9000), conversions: K([{ year: 2026, amount: 7000, taxable: 7000 }]) }]
   });
   const c = cashflow(s, R, '2026-10');
@@ -439,6 +457,8 @@ test('tax set-aside: unwithheld income at the marginal rate; a Roth conversion s
   // Surplus = take-home - expenses - minimums - after-tax saving - tax set-aside.
   near(c.surplus.value, c.income.takeHome.value - c.expenses.total.value - c.debtMinimums.total.value - c.saving.afterTax.value - sa.total.value);
   assert.equal(cashflow(s, R, '2027-05').taxSetAside.lines.filter((l) => l.kind === 'conversion').length, 0, 'done after the return is due');
+  assert.notEqual(sa.total.kind, 'computed', 'a floor while the paycheck withholding is missing');
+  assert.ok(sa.total.missing.includes('income.job.withholding.federal'));
 });
 
 test('needs: missing when nothing is tagged a need; a covered expense counts $0', () => {
@@ -472,8 +492,31 @@ test('income cliff: certain income at $0 within 6 months is the first flag', () 
   const sum = summarize(s, R);
   assert.equal(sum.cliff.from, '2027-01-03');
   assert.equal(sum.flags[0].id, 'income-cliff');
-  assert.match(sum.flags[0].title, /From January 3, 2027, certain income is \$0 and costs are \$1,500 a month/);
+  // Costs: the $1,500 of spending plus the 2026 tax still due, set aside until April.
+  near(sum.cliff.costs, 1500 + sum.cliff.setAside.value);
+  assert.ok(sum.cliff.setAside.value > 0);
+  assert.match(sum.flags[0].title, new RegExp('From January 3, 2027, certain income is \\$0 and costs are ' + money(Math.round(sum.cliff.costs)).replace('$', '\\$') + ' a month'));
   near(sum.cliff.likely.value, 2100);
+});
+
+test('stages: FI is goal / implied FI; red under 80%, yellow 80% to 100%, green at 100%', () => {
+  // $3,100 a month at a 5% withdrawal rate implies $744,000; the goal is $580,000 (78%, red).
+  const s = mini({
+    income: [stream('job', 'w2', 6000, 'monthly', { fed: 900, st: 300 })],
+    expenses: [expense('rent', 3100)],
+    goals: [{ id: 'fi', type: 'fi', label: 'FI', fiNumber: K(580000) }],
+    assumptions: { inflation: K(0.03), realReturn: K(0.08), withdrawalRate: K(0.05), lifeExpectancy: K(90) }
+  });
+  const sum = summarize(s, R);
+  assert.equal(sum.fi.implied.value, 744000);
+  const f = sum.flags.find((x) => x.id === 'fi-goal-gap');
+  assert.equal(f.stage, 'red');
+  assert.deepEqual([f.next.goalNeeded, f.next.spendingNeeded], [595200, 3020], 'yellow: 80% of $744,000, or spending at $580,000 / 80% x 5% / 12');
+  assert.deepEqual([f.green.goalNeeded, f.green.spendingNeeded], [744000, 2416], 'green: the goal reaches the implied number, or spending at $580,000 x 5% / 12');
+  // Raising the goal to $595,200 is yellow; to $744,000 is green.
+  const at = (v) => summarize(setAt(s, 'goals.fi.fiNumber', K(v)), R).flags.find((x) => x.id === 'fi-goal-gap');
+  assert.equal(at(595200).stage, 'yellow');
+  assert.equal(at(744000) ? at(744000).stage : 'green', 'green');
 });
 
 test('projection: a 0% promo starts charging the APR after it ends', () => {

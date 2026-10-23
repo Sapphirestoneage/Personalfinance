@@ -12,6 +12,15 @@ export const COVERAGES = ['employer', 'parent_plan', 'own_plan', 'marketplace', 
 // HSA-eligible plan types (HDHP_MIN_S notes: bronze and catastrophic count from 2026).
 export const PLAN_TYPES = ['hdhp', 'bronze', 'catastrophic', 'other'];
 export const HSA_ELIGIBLE_PLANS = ['hdhp', 'bronze', 'catastrophic'];
+// Federal student loan repayment plans (S-181): suggestions, not a closed list,
+// so a plan typed under "Other" is kept as typed. Plan names change with the
+// law (RAP opened July 2026; SAVE, PAYE and ICR are closing): check them yearly.
+export const LOAN_PLANS = ['standard', 'graduated', 'extended', 'ibr', 'rap', 'paye', 'icr', 'save', 'paused', 'not_sure'];
+export const LOAN_PLAN_WORDS = {
+  standard: 'Standard (same payment, 10 years)', graduated: 'Graduated (starts low, goes up)', extended: 'Extended (up to 25 years)',
+  ibr: 'Income-Based Repayment (IBR)', rap: 'Repayment Assistance Plan (RAP)', paye: 'Pay As You Earn (PAYE)',
+  icr: 'Income-Contingent Repayment (ICR)', save: 'SAVE (closing)', paused: 'Paused (deferment or forbearance)', not_sure: 'Not sure'
+};
 
 export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pension', 'ss', 'maybeMoney', 'other'];
 // total: the amount is spread evenly from start to end (a known total for a window).
@@ -233,6 +242,7 @@ export function validate(spine) {
       if (s.cadence === 'total' && !s.end) err(p + '.end', 'total needs an end date');
       if (s.start && s.end && s.end < s.start) err(p + '.end', 'ends before it starts');
       checkFact(p + '.likelihood', s.likelihood, 'rate', false);
+      checkFact(p + '.businessExpenses', s.businessExpenses, 'money', false);
       if (s.likelihood && s.likelihood.value !== null && (s.likelihood.value < 0 || s.likelihood.value > 1)) err(p + '.likelihood', 'between 0 and 1');
       if (s.type === 'maybeMoney' && !s.likelihood) err(p + '.likelihood', 'maybe money needs a likelihood');
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');

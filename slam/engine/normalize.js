@@ -58,6 +58,8 @@ export function fromProfile(p) {
   // except a blank, which is missing. A debt may name a field's own kind in
   // `kinds` ({ apr: 'rough' }) when one number is less sure than the rest.
   const F = (value, kind, note) => fact(value === undefined ? null : value, { kind: value === null || value === undefined ? 'missing' : kind === 'missing' ? 'missing' : kind || 'known', asOf, source, note });
+  // The kind of one field on a record: its own entry in `kinds`, else the record's.
+  const K = (rec, field) => (rec.kinds && rec.kinds[field]) || rec.kind;
   const H = p.household;
   const people = H.people.map((x) => ({ id: x.id, name: x.name, birthDate: F(x.birthDate, x.kind) }));
   const personId = people[0].id;
@@ -66,7 +68,7 @@ export function fromProfile(p) {
   if (H.situation.changesTo) situation.push({ id: 'next', from: H.situation.on, value: F(H.situation.changesTo, H.situation.kind) });
   const hc = H.healthCoverage;
   const healthCoverage = [{ id: 'now', from: null, personId, value: F(hc.value, hc.kind) }];
-  if (hc.after) healthCoverage.push({ id: 'next', from: hc.endsOn, personId, value: F(hc.after, hc.kind), planType: F(null), enrolled: F(null), setAside: F(null) });
+  if (hc.after) healthCoverage.push({ id: 'next', from: hc.endsOn, personId, value: F(hc.after, hc.kind), planType: F(hc.afterPlanType ?? null, K(hc, 'afterPlanType')), enrolled: F(hc.enrolled ?? null, K(hc, 'enrolled')), setAside: F(hc.setAside ?? null, K(hc, 'setAside')) });
 
   const incomeIds = new Set();
   const income = (p.income || []).map((s) => {
@@ -77,14 +79,16 @@ export function fromProfile(p) {
     const noWithholding = s.type === '1099';
     const out = {
       id: s.id || slug(s.label, incomeIds), type: s.type, label: s.label, personId,
-      amount: F(s.amount, s.kind),
+      amount: F(s.amount, K(s, 'amount')),
       cadence, start: s.start || null, end: s.end || null,
       withholding: {
-        federal: s.federalWithholding !== undefined ? F(s.federalWithholding, 'known') : noWithholding ? fact(0, { kind: 'known', asOf, source: 'a 1099 has no withholding' }) : F(null),
-        state: s.stateWithholding !== undefined ? F(s.stateWithholding, 'known') : noWithholding ? fact(0, { kind: 'known', asOf, source: 'a 1099 has no withholding' }) : F(null)
+        federal: s.federalWithholding !== undefined ? F(s.federalWithholding, K(s, 'federalWithholding')) : noWithholding ? fact(0, { kind: 'known', asOf, source: 'a 1099 has no withholding' }) : F(null),
+        state: s.stateWithholding !== undefined ? F(s.stateWithholding, K(s, 'stateWithholding')) : noWithholding ? fact(0, { kind: 'known', asOf, source: 'a 1099 has no withholding' }) : F(null)
       }
     };
-    if (s.likelihood !== undefined) out.likelihood = F(s.likelihood, 'rough');
+    // 1099 business expenses, in the stream's own cadence (S-179).
+    if (s.businessExpenses !== undefined) out.businessExpenses = F(s.businessExpenses, K(s, 'businessExpenses'));
+    if (s.likelihood !== undefined) out.likelihood = F(s.likelihood, (s.kinds && s.kinds.likelihood) || 'rough');
     if (s.notes) out.notes = s.notes;
     // A 0 written next to kind missing is a blank, not a typed zero.
     if (s.kind === 'missing' && s.amount === 0) out.amount = fact(null, { kind: 'missing', asOf, source, note: 'profile had 0 with kind missing' });
@@ -94,22 +98,22 @@ export function fromProfile(p) {
   const expIds = new Set();
   const expenses = (p.expenses || []).map((e) => {
     const out = {
-      id: e.id || slug(e.label, expIds), label: e.label, amount: F(e.amount, e.kind), cadence: e.cadence,
+      id: e.id || slug(e.label, expIds), label: e.label, amount: F(e.amount, K(e, 'amount')), cadence: e.cadence,
       start: e.start || null, end: e.end || null,
       fixed: typeof e.fixed === 'boolean' ? e.fixed : null,
       need: F(typeof e.need === 'boolean' ? e.need : null, 'known'),
       fat: e.fat || null
     };
-    if (typeof e.covered === 'boolean') out.covered = F(e.covered, 'known');
-    if (e.coveredBy) out.coveredBy = F(e.coveredBy, 'known');
+    if (typeof e.covered === 'boolean') out.covered = F(e.covered, K(e, 'covered') === 'rough' ? 'rough' : 'known');
+    if (e.coveredBy) out.coveredBy = F(e.coveredBy, K(e, 'coveredBy') === 'rough' ? 'rough' : 'known');
     if (e.notes) out.notes = e.notes;
     return out;
   });
 
   const accounts = (p.accounts || []).map((a) => {
-    const out = { id: a.id, family: a.family, type: a.type, name: F([a.institution, PRESETS[a.type] ? PRESETS[a.type].label : a.type].filter(Boolean).join(' '), 'known'), institution: F(a.institution, 'known'), balance: F(a.balance, a.kind) };
-    if ('apy' in a) out.apy = F(a.apy, a.kind);
-    if (a.contributions) out.contributions = F(a.contributions, a.kind);
+    const out = { id: a.id, family: a.family, type: a.type, name: F([a.institution, PRESETS[a.type] ? PRESETS[a.type].label : a.type].filter(Boolean).join(' '), 'known'), institution: F(a.institution, K(a, 'institution') === 'rough' ? 'rough' : 'known'), balance: F(a.balance, K(a, 'balance')) };
+    if ('apy' in a) out.apy = F(a.apy, K(a, 'apy'));
+    if (a.contributions) out.contributions = F(a.contributions, K(a, 'contributions'));
     if (a.basis !== undefined) out.basis = F(a.basis, a.kind);
     if (a.firstRothYear !== undefined) out.firstRothYear = F(a.firstRothYear, a.kind);
     if (a.conversionYear !== undefined) out.conversions = F([{ year: a.conversionYear, amount: a.conversionTaxable ?? a.balance, taxable: a.conversionTaxable ?? null }], a.kind);
@@ -119,7 +123,7 @@ export function fromProfile(p) {
   });
   const otherIds = new Set(accounts.map((a) => a.id));
   for (const o of p.otherAssets || []) {
-    accounts.push({ id: o.id || slug(o.type, otherIds), family: 'otherAssets', type: o.type, name: F(o.label || PRESETS[o.type]?.label || o.type, 'known'), balance: F(o.value, o.kind), ...(o.notes ? { notes: o.notes } : {}) });
+    accounts.push({ id: o.id || slug(o.type, otherIds), family: 'otherAssets', type: o.type, name: F(o.label || PRESETS[o.type]?.label || o.type, 'known'), balance: F(o.value, K(o, 'value')), ...(o.appreciationRate !== undefined ? { appreciationRate: F(o.appreciationRate, K(o, 'appreciationRate')) } : {}), ...(o.notes ? { notes: o.notes } : {}) });
   }
 
   const debts = (p.debts || []).map((d) => {
@@ -177,11 +181,15 @@ export function fromProfile(p) {
     income, expenses, accounts, debts, goals, assumptions,
     // The as-of year's tax entries. Nothing in the profile says estimates were
     // paid, so none is the rough starting answer.
-    taxYears: [{
-      id: asOf.slice(0, 4), year: +asOf.slice(0, 4),
-      estimatedPaidFederal: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' }),
-      estimatedPaidState: fact(0, { kind: 'rough', asOf, source, note: 'assumed none paid' }),
-      setAside: fact(0, { kind: 'rough', asOf, source, note: 'assumed nothing set aside for the tax bill yet' })
-    }]
+    taxYears: [(() => {
+      const ty = p.taxYear || {};
+      const said = (k, note) => (ty[k] !== undefined ? F(ty[k], K(ty, k)) : fact(0, { kind: 'rough', asOf, source, note }));
+      return {
+        id: asOf.slice(0, 4), year: +asOf.slice(0, 4),
+        estimatedPaidFederal: said('estimatedPaidFederal', 'assumed none paid'),
+        estimatedPaidState: said('estimatedPaidState', 'assumed none paid'),
+        setAside: said('setAside', 'assumed nothing set aside for the tax bill yet')
+      };
+    })()]
   };
 }

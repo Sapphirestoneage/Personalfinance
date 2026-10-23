@@ -26,8 +26,9 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(cf.debtMinimums.total.value, 90 + 40 + 212); // 342
     // Tax set-aside on the 1099 tutoring (no withholding): 500 x (22% federal + 5.4% NY
     // + 92.35% x 15.3% self-employment) = 500 x 0.4152955 = 207.65.
-    const setAside = 500 * (0.22 + 0.054 + 0.9235 * 0.153);
+    const setAside = Math.round(s.tax.balanceDue.value / 7 * 100) / 100;
     near(cf.taxSetAside.total.value, setAside);
+    assert.deepEqual(cf.taxSetAside.lines.map((l) => [l.kind, l.months]), [['balance', 7]]);
     const surplus = 4711 - 3230 - 342 - 300 - setAside; // 631.35 (300 to the Roth from take-home)
     near(cf.surplus.value, surplus);
     near(cf.savingsRate.gross.value, (surplus + 500 + 300) / 6500);

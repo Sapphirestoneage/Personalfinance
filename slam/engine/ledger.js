@@ -3,14 +3,15 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
 
-// The field type of a path, from the schema: money, rate, date, int, text, bool, choice:a|b, list.
+// The field type of a path, from the schema: money, rate, date, int, text, bool,
+// choice:a|b (pick one), suggest:a|b (pick one or type another), list.
 export function typeFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'household') {
@@ -26,6 +27,8 @@ export function typeFor(spine, path) {
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
+    // A federal loan's plan: pick from the plans, or type another (S-181).
+    if (s[2] === 'plan' && item && item.type === 'student_loan') return 'suggest:' + LOAN_PLANS.join('|');
     return (item && fieldsFor(item.family)[s[2]]) || 'text';
   }
   if (s[0] === 'goals') return 'money';

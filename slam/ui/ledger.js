@@ -238,10 +238,66 @@ function sectionSharing(n) {
   h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { sharingOpen = null; render(); } }, 'Cancel')));
 }
 
+// Pick from a list, or type another (S-181): a loan's repayment plan. "Not
+// sure" is saved as a guess. "I only know my monthly payment" asks for just the
+// amount: the plan is saved as not sure and the amount as the loan's payment,
+// in one step that one Undo takes back.
+function suggestEditor(row) {
+  const f = getAt(hist.present, row.path);
+  const opts = row.type.slice(8).split('|');
+  const typedOwn = f.value !== null && !opts.includes(f.value);
+  const payPath = row.path.replace(/\.plan$/, '.minimum');
+  const pay = getAt(hist.present, payPath);
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const pickEl = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose a plan'),
+    ...opts.map((v) => h('option', { value: v, selected: f.value === v }, showValue(v, row.type))),
+    h('option', { value: '__other', selected: typedOwn }, 'Other (type it)'),
+    pay ? h('option', { value: '__amount' }, 'I only know my monthly payment') : null);
+  const own = h('input', { id: 'edit-own', type: 'text', autocomplete: 'off' });
+  own.value = typedOwn ? f.value : '';
+  const amount = h('input', { id: 'edit-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  amount.value = pay ? inputText('money', pay.value) : '';
+  const ownBox = h('div', { class: 'sub-fields', hidden: !typedOwn }, h('label', { for: 'edit-own', class: 'edit-label' }, 'Plan name'), own);
+  const amountBox = h('div', { class: 'sub-fields', hidden: true }, h('label', { for: 'edit-amount', class: 'edit-label' }, 'Monthly payment'), amount, h('p', { class: 'edit-hint' }, 'Dollars a month, for example 210. The plan is saved as not sure.'));
+  pickEl.addEventListener('change', () => {
+    ownBox.hidden = pickEl.value !== '__other';
+    amountBox.hidden = pickEl.value !== '__amount';
+    if (!ownBox.hidden) own.focus();
+    if (!amountBox.hidden) amount.focus();
+  });
+  const doSet = (kind) => {
+    const v = pickEl.value;
+    if (v === '') { msg.textContent = 'Choose a plan, or use Not for me'; pickEl.focus(); return; }
+    if (v === '__amount') {
+      const a = parseInput('money', amount.value);
+      if (!a.ok) { msg.textContent = a.message; amount.focus(); return; }
+      open = null;
+      const s1 = editFact(hist.present, row.path, 'set', { value: 'not_sure', kind: 'rough', today: today() });
+      apply(editFact(s1, payPath, 'set', { value: a.value, kind, today: today() }), row.label, 'not sure; payment ' + showValue(a.value, 'money') + ' a month' + (kind === 'rough' ? ' (a guess)' : ''));
+      return;
+    }
+    const value = v === '__other' ? own.value.trim() : v;
+    if (!value) { msg.textContent = 'Type the plan name'; own.focus(); return; }
+    open = null;
+    // Not sure is never known.
+    const k = value === 'not_sure' ? 'rough' : kind;
+    apply(editFact(hist.present, row.path, 'set', { value, kind: k, today: today() }), row.label, showValue(value, row.type) + (k === 'rough' && value !== 'not_sure' ? ' (a guess)' : ''));
+  };
+  return editorForm(() => doSet('known'),
+    h('label', { for: 'edit-input', class: 'edit-label' }, row.label),
+    pickEl, ownBox, amountBox, msg,
+    h('div', { class: 'edit-actions' },
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+}
+
 function editor(row) {
   if (row.type === 'cardRate') return cardRateEditor(row);
   if (row.type === 'expense') return expenseEditor(row);
   const f = getAt(hist.present, row.path);
+  if (row.type.startsWith('suggest:')) return suggestEditor(row);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   let input;
   if (row.type.startsWith('choice:') || row.type === 'bool') {
@@ -363,7 +419,9 @@ function filterBar(tree) {
   const all = tree.flatMap((g) => g.allRows);
   const n = (k) => all.filter((r) => r.fact.kind === k).length;
   const showing = all.filter(shows).length;
-  const toggle = (k) => setView({ kinds: view.kinds.includes(k) ? view.kinds.filter((x) => x !== k) : [...view.kinds, k] });
+  // A chip shows only its kind; tapped again, it shows everything (S-182).
+  const solo = (k) => view.kinds.length === 1 && view.kinds[0] === k;
+  const pick = (k) => (solo(k) ? setView({ kinds: [...KIND_ORDER] }) : onlyKind(k));
   const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Find a field (press /)', autocomplete: 'off', 'aria-label': 'Find a field' });
   search.value = view.q;
   search.addEventListener('input', () => { view = { ...view, q: search.value }; render(); });
@@ -371,7 +429,8 @@ function filterBar(tree) {
   return h('section', { class: 'card filters', 'aria-label': 'Show fields' },
     h('div', { class: 'filter-row' },
       h('span', { class: 'filter-label' }, 'Show:'),
-      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k, 'aria-pressed': String(view.kinds.includes(k)), onclick: () => toggle(k), title: (view.kinds.includes(k) ? 'Hide ' : 'Show ') + KIND_LABEL[k].toLowerCase() + ' fields' }, KIND_LABEL[k] + ' ' + n(k)))),
+      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (view.kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
+    h('p', { class: 'filter-hint muted' }, view.kinds.length === 1 ? 'Tap it again to show everything.' : 'Tap one to see only those fields.'),
     h('div', { class: 'filter-row' },
       h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed') }) }, 'Hide known'),
       h('button', { type: 'button', class: 'btn', onclick: () => onlyKind('missing') }, 'Only missing'),

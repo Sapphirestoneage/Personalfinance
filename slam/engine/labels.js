@@ -16,7 +16,7 @@ const FIELD = {
   capitalGainsLong: 'long-term gains', qualifiedDividends: 'qualified dividends', otherIncome: 'other income',
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
-  setAside: 'set aside', enrolled: 'enrolled',
+  setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
   need: 'a need (not a want)', covered: 'paid by someone else',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };

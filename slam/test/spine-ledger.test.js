@@ -271,3 +271,28 @@ test('an expense row says how much, how often and who pays', () => {
   assert.deepEqual([row.fact.value.amount, row.fact.value.cadence, row.fact.value.shared, row.fact.value.yourMonthly], [1800, 'monthly', true, 900]);
   assert.equal(rowPathFor(s, 'expenses.rent.coveredBy'), 'expenses.rent.amount');
 });
+
+// ------------------------------------------------------------------ repayment plan (S-181)
+import { LOAN_PLANS } from '../engine/schema.js';
+import { showValue } from '../ui/view.js';
+
+test('a federal loan plan: pick a plan, type another, or give only the payment', () => {
+  const added = addItem(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R), { collection: 'debts', type: 'student_loan' }, '2026-10-22');
+  let s = added.spine;
+  const loan = { id: added.id };
+  const plan = 'debts.' + loan.id + '.plan';
+  const type = typeFor(s, plan);
+  assert.equal(type, 'suggest:' + LOAN_PLANS.join('|'));
+  assert.ok(LOAN_PLANS.includes('not_sure'));
+  assert.equal(showValue('ibr', type), 'Income-Based Repayment (IBR)');
+  assert.deepEqual(parseInput(type, '  My own plan '), { ok: true, value: 'My own plan' }, 'Other keeps what was typed');
+  assert.equal(showValue('My own plan', type), 'My own plan');
+  // Only the payment: the plan is a not-sure guess and the payment is its own field, one step.
+  s = editFact(s, plan, 'set', { value: 'not_sure', kind: 'rough', today: '2026-10-22' });
+  s = editFact(s, 'debts.' + loan.id + '.minimum', 'set', { value: 210, kind: 'known', today: '2026-10-22' });
+  assert.deepEqual([getAt(s, plan).value, getAt(s, plan).kind], ['not_sure', 'rough']);
+  assert.equal(getAt(s, 'debts.' + loan.id + '.minimum').value, 210);
+  assert.ok(validate(s).ok);
+  const priv = addItem(s, { collection: 'debts', type: 'private_student_loan' }, '2026-10-22');
+  assert.equal(typeFor(priv.spine, 'debts.' + priv.id + '.plan'), 'text', 'a private loan has its lender\'s plans');
+});
