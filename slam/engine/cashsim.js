@@ -126,6 +126,8 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     const base = 'income.' + s.id, path = base + '.amount';
     const amt = t.useFact(path, s.amount);
     if (amt === null) { needs.push({ path, what: s.label + ': amount' }); continue; }
+    // A line typed as $0 pays nothing: nothing lands, and nothing is missing.
+    if (amt === 0) continue;
     if (s.end && s.end < asOf) continue;
     const w = streamWeight(s, 'expected') ?? 1;
     if (w === 0) continue;

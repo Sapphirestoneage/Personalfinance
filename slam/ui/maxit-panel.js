@@ -117,6 +117,8 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     r.main === 'paycheck' ? (r.perMonth !== null ? ['A month', cash(r.perMonth) + ' more (' + plural(r.months.count, 'month') + ' with a paycheck' + lastWords(r.months.last, r.perMonth) + ')'] : null) : ['A paycheck', p && p.blank ? 'missing: ' + p.blank.label + ' ' + p.blank.what : p && p.perPaycheck !== null ? cash(p.perPaycheck) + ' (' + plural(p.count, 'paycheck') + lastWords(p.last, p.perPaycheck) + ')' : 'no paycheck before the deadline'],
     ['The limit', cash(L.value) + (L.words.length ? ', ' + L.words.join(', ') : '')],
     ['In for ' + r.year, r.contributed.parts.map((x) => (r.contributed.parts.length > 1 ? x.name + ': ' : '') + x.words).join('; ')],
+    // A Solo 401(k)'s employer part is its own pool: it shows here too, so the room's drop is explained.
+    r.type === 'solo_k401' && r.record.employer > 0 ? ['Employer part in for ' + r.year, cash(r.record.employer) + ' recorded (it counts against the employer share and the total)'] : null,
     // The cap shows only where it binds (earned income under the limit).
     r.cap && r.cap.label && r.type !== 'solo_k401' && r.type !== 'simple_ira' && r.cap.value < L.value ? ['Capped at', r.cap.label + ', ' + cash(r.cap.value)] : null,
     // The Roth limit line only inside or past the phase-out (under it, the cap is pay, shown above).
@@ -162,11 +164,15 @@ export function maxItCard(spine, rules) {
   const firstMissing = rows.find((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const line = (r) => {
     const main = r.applies && r.room !== null ? mainOf(r) : null;
+    const last = !main || !main.big ? '' : r.main === 'paycheck' ? lastWords(r.paychecks.last, r.paychecks.perPaycheck) : lastWords(r.months.last, r.perMonth);
+    // A spouse's IRA: the couple's pay they share, and what the Plan counts when that is less than the account alone.
+    const pool = r.couple ? m.mx.pools.find((x) => x.key === r.pools[0] && x.year === r.year && x.sharedCap) : null;
     return h('li', { class: 'max-row' },
       h('a', { class: 'max-name', href: maxHref(r.accountId) }, r.name + ', ' + r.year + ' ›'),
       !r.applies ? h('span', { class: 'muted' }, r.why)
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
-          : main.big ? h('span', { class: 'max-main' }, main.big) : h('span', { class: 'missing-row' }, main.sub),
+          : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
+      r.couple ? h('span', { class: 'tile-sub' }, r.couple.words + (pool && r.lump !== null && pool.fill < r.lump ? ' Counted in the Plan: ' + cash(pool.fill) + ' (the spouse who earns more is counted first).' : '')) : null,
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
       r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);

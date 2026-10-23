@@ -63,7 +63,7 @@ export function showValue(value, type) {
     if (!value.length) return 'none';
     // A contributions entry says what kind it was when it is not a plain contribution (S-211).
     const KIND = { rollover: ' (rollover, not counted)', conversion: ' (conversion, not counted)', from529: ' (from a 529)', employer: ' (employer part)' };
-    return value.map((x) => (typeof x === 'object' ? (x.year ? x.year + ': ' : '') + money(x.amount) + (x.taxable !== undefined && x.taxable !== x.amount ? ' (taxable ' + money(x.taxable) + ')' : '') + (KIND[x.kind] || '') : x)).join(', ');
+    return value.map((x) => (typeof x === 'object' ? (x.year ? x.year + ': ' : '') + money(x.amount, !Number.isInteger(x.amount)) + (x.taxable !== undefined && x.taxable !== x.amount ? ' (taxable ' + money(x.taxable, !Number.isInteger(x.taxable)) + ')' : '') + (KIND[x.kind] || '') : x)).join(', ');
   }
   if (type === 'choice:' + PAY_POLICIES.join('|')) return PAY_POLICY_WORDS[value] || words(value);
   if (type.startsWith('choice:')) return words(value);

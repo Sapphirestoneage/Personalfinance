@@ -108,7 +108,8 @@ test('the room for every account type on the demo, by hand', () => {
   assert.equal(k.paychecks.landed, 4111);
   assert.deepEqual(mx.totals.short, ['k401:2026']);
   assert.deepEqual([mx.totals.room, mx.totals.lump], [32015.22, 2 * 4111 + 2900 + 2700 + 1115.22 + 5000]);
-  assert.deepEqual(mx.totals.steps, [{ until: '2026-12-31', perMonth: 4111 + 483.34 + 450 + 92.94 + 1666.67 }, { until: '2027-04-15', perMonth: 1026.28 }, { until: '2027-10-15', perMonth: 92.94 }]);
+  // The 401(k)'s step ends on its last 2026 payday, December 15 (S-214); the 529's runs to December 31.
+  assert.deepEqual(mx.totals.steps, [{ until: '2026-12-15', perMonth: 4111 + 483.34 + 450 + 92.94 + 1666.67 }, { until: '2026-12-31', perMonth: 483.34 + 450 + 92.94 + 1666.67 }, { until: '2027-04-15', perMonth: 1026.28 }, { until: '2027-10-15', perMonth: 92.94 }]);
   // Without the day-by-day run nothing says what lands, so the whole $18,500 counts.
   assert.equal(maxIt(s, R).totals.lump, 30215.22);
   assert.equal(mx.totals.groups, 5);
@@ -847,4 +848,56 @@ test('a recorded total is through the day it was recorded: the monthly amount ad
   // The through date is checked when it is there.
   const bad = { ...d, accounts: d.accounts.map((x) => (x.id === 'roth' ? { ...x, contributions: F([{ year: 2026, amount: 1, through: 'soon' }]) } : x)) };
   assert.ok(validate(bad).errors.some((x) => x.path === 'accounts.roth.contributions[0].through'));
+});
+
+test('round 4 (S-214): an ineligible HSA lowers nothing; a payroll plan with no payday after its deadline asks nothing; the excess lands on the right spouse; a $0 line is not a blank; a moved payday moves', () => {
+  const d = demo();
+  const c = couple(d);
+  // An HSA on a plan that is not HSA-eligible has a $0 limit: its $300 a month stays in wages, so modified AGI is
+  // $161,576.11 and the Roth limit $3,220 ($220 of room), as with no HSA.
+  const h = putFact(d, 'income.salary.amount', 13500, 'known', T);
+  const hi = { ...h, accounts: [...h.accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), planEligible: F('no'), monthlyContribution: F(300) })] };
+  const r1 = row(maxIt(hi, R), 'roth:2026');
+  assert.deepEqual([r1.phase.magi, r1.phase.limit, r1.room], [161576.11, 3220, 220]);
+  // The salary ends December 31 (last payday December 15): when the surplus reaches the rung in 2028 the 401(k) can take
+  // nothing, so no steady month is asked for.
+  const e = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-12-31' } : x)) };
+  const f = fooLadder(e, R, summarize(e, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
+  assert.deepEqual([f.need, f.done, f.why], [0, true, 'Work 401(k) 2026: no paycheck after December 31, 2026, so nothing goes in once the surplus reaches this rung.']);
+  // MFJ: Casey earns $9,000 with $5,000 in a Roth and $400 a month (November, December); Sam earns $2,400 with $6,000 in
+  // a traditional IRA and $300 a month. Casey's $5,800 is under Casey's own $7,500: not over. Sam may put in $11,400 -
+  // $5,800 = $5,600: $400 over now, $1,000 by December 31.
+  const x1 = { ...c, income: [{ ...c.income[0], amount: F(750) }, w2('samjob', 'sam', 200)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: F(400), contributions: F([{ year: 2026, amount: 5000 }]) } : a)), acct('st', 'traditional_ira', 'ira', { owner: F('partner'), monthlyContribution: F(300), contributions: F([{ year: 2026, amount: 6000 }]) })] };
+  const m3 = maxIt(x1, R);
+  assert.deepEqual([row(m3, 'roth:2026').over || 0, row(m3, 'roth:2026').overSoon || 0], [0, 0]);
+  assert.deepEqual([row(m3, 'st:2026').over, row(m3, 'st:2026').overByYearEnd], [400, 1000]);
+  // Sam is set to put $12,000 into an IRA against Sam's own $7,500: only $7,500 of it counts against the couple's $13,200,
+  // so Casey can still add $5,700 (not $1,200); Sam's excess is Sam's.
+  const x4 = { ...c, income: [{ ...c.income[0], amount: F(800) }, w2('samjob', 'sam', 300)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)), acct('st', 'traditional_ira', 'ira', { owner: F('partner'), monthlyContribution: F(300), contributions: F([{ year: 2026, amount: 11400 }]) })] };
+  const m4 = maxIt(x4, R);
+  assert.deepEqual([row(m4, 'roth:2026').lump, row(m4, 'st:2026').over, row(m4, 'st:2026').overByYearEnd], [5700, 3900, 4500]);
+  // Sam's only pay is a maybe line: it is still Sam's pay line, so Sam's 401(k) is "cannot be filled", not "whose pay".
+  const x5 = { ...c, income: [...c.income, { ...w2('samjob', 'sam', 1200), cadence: 'weekly', start: '2026-01-02', likelihood: F(0.5) }], accounts: [...c.accounts, acct('sk', 'k401', 'employerRetirement', { owner: F('partner'), monthlyContribution: F(100) })] };
+  const r5 = row(maxIt(x5, R), 'sk:2026');
+  assert.deepEqual([r5.fillable, r5.missingLabel], [false, null]);
+  // Tips typed as $0: nothing lands from them, and nothing is missing; the cash check reads as without the line.
+  const x6 = { ...d, income: [...d.income, { ...w2('tips', 'casey', 0), type: 'tips', label: 'Cafe tips' }] };
+  const s6 = maxItSim(x6, R), mx6 = maxIt(x6, R, { sim: s6 }), s0 = maxItSim(d, R), mx0 = maxIt(d, R, { sim: s0 });
+  assert.equal(maxItCash(x6, R, mx6, { sim: s6, rows: [row(mx6, 'k401:2026')] }).words, maxItCash(d, R, mx0, { sim: s0, rows: [row(mx0, 'k401:2026')] }).words);
+  // As of December 10, the December 15 payday moved to January 4: no 2026 paycheck is left, with or without the run.
+  const x7 = { ...d, meta: { ...d.meta, asOf: '2026-12-10' }, calendar: { ...(d.calendar || {}), overrides: { ...((d.calendar || {}).overrides || {}), 'salary|2026-12-15': { date: '2027-01-04' } } } };
+  const sim7 = maxItSim(x7, R), m7 = maxIt(x7, R, { sim: sim7 });
+  assert.deepEqual([row(m7, 'k401:2026').fillable, row(m7, 'k401:2026').lump, m7.totals.unfillable, row(maxIt(x7, R), 'k401:2026').fillable], [false, null, ['k401:2026'], false]);
+});
+
+test('cents (S-214): a few cents over many months takes fewer of them, never a negative one; the Plan step matches the row', () => {
+  const d = demo();
+  // $0.03 of Roth room over 6 months: $0.01 in each of 3 months (it was $0.01 then a last one of -$0.02).
+  const x = { ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7499.97 }]) } : a)) };
+  const r = row(maxIt(x, R), 'roth:2026');
+  assert.deepEqual([r.room, r.perMonth, r.months.count, r.months.last], [0.03, 0.01, 3, 0.01]);
+  // A Solo 401(k) beside the W-2 401(k): its last step is $464.68 a month, as on its row (12 x $464.69 was too much).
+  const so = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] };
+  const sim = maxItSim(so, R), mx = maxIt(so, R, { sim });
+  assert.deepEqual([mx.totals.steps[mx.totals.steps.length - 1].perMonth, row(mx, 'solo:2026').perMonth], [464.68, 464.68]);
 });

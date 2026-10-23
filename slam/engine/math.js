@@ -170,7 +170,12 @@ function maxitMetric(id) {
       if (r.family) for (const sp of r.family.spouses.filter((x) => x.id !== r.person && x.catch)) terms.push(term(sp.name + '\'s own age 55 catch-up (rule HSA_CU55)', sp.catch, 'usd', 'known', 'arg', { key: 'catch', rule: 'HSA_CU55', owner: sp.id }));
       if (r.type === 'simple_ira' && r.cap) terms.push(term('The 401(k) deferral limit it shares (rule K401_DEF, with the catch-up)', cap.value, 'usd', 'known', 'arg', { key: 'deferralLimit', rule: 'K401_DEF' }));
       if (r.type === 'sep_ira' && L.se !== null && L.se !== undefined) terms.push(term('Total additions limit, no more than the earnings (rule ADD_415C)', Math.min(ctx.rules.get('ADD_415C', r.year), L.se), 'usd', 'computed', 'arg', { key: 'total415', rule: 'ADD_415C' }));
-      if (r.phase) terms.push(term('Roth limit at modified AGI' + (r.phase.magi !== undefined ? ' of ' + money(r.phase.magi) : ''), r.phase.limit, 'usd', r.phase.unknown ? 'rough' : 'computed', 'arg', { key: 'rothLimit', rule: 'ROTH_PO_MIN' }));
+      // Inside or past the phase-out the Roth limit is the reduced one; under it, the limit itself.
+      if (r.phase) {
+        const ph = r.phase, inside = ph.lo != null && ph.magi > ph.lo;
+        const words = ph.unknown || ph.magi === undefined ? 'Roth limit (the phase-out cannot be checked yet)' : inside ? 'Roth limit at modified AGI of ' + money(ph.magi) : 'Roth limit (modified AGI of ' + money(ph.magi) + ' is under the phase-out)';
+        terms.push(term(words, ph.limit, 'usd', ph.unknown ? 'rough' : 'computed', 'arg', { key: 'rothLimit', rule: 'ROTH_PO_MIN' }));
+      }
       if (r.cap && ['traditional_ira', 'roth_ira', 'spousal_ira'].includes(r.type)) terms.push({ ...metric(cap.metric, cap.label + ' (the cap)', { value: cap.value, kind: cap.kind }, 'usd', 'arg'), key: 'cap' });
       // Room that waits on earned income names it, blank, as the cap.
       if (r.room === null && r.eiMetric) terms.push({ ...metric(r.eiMetric, r.ei.label + ' (the cap)', { value: null, kind: 'missing' }, 'usd', 'arg'), key: 'cap' });
@@ -234,12 +239,15 @@ function maxitMetric(id) {
       return out(res(r, p.perPaycheck), terms, [], lastNote(r, p.last, p.perPaycheck));
     },
     recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };
-  // Every account together: each shared limit (a pool) once, filled by the row that holds most of it.
-  const poolTerms = (mx, f) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + POOL_WORDS(p.key) + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + (f === 'fill' && p.still ? ', ' + money(p.room) + ' of room less ' + money(p.still) + ' already set to go in' : '') + (p.capped ? ', only what a paycheck holds' : '') + ')', p[f], f === 'perMonth' ? 'usd/month' : 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':' + (f === 'perMonth' ? 'month' : 'lump') }));
+  // Every account together: each shared limit (a pool) once, filled by the row that holds most of it. A pool that
+  // counts less than its row alone says so, since its link shows the row alone.
+  const poolTerms = (mx, f) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + POOL_WORDS(p.key) + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + (f === 'fill' && p.still ? ', ' + money(p.room) + ' of room less ' + money(p.still) + ' already set to go in' : '') + (p.capped ? ', only what a paycheck holds' : '') + (p.row.lump !== null && p.fill < p.row.lump && !p.spill ? '; the account alone could take ' + money(p.row.lump) : '') + ')', p[f], 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':lump' }));
+  // A month: each account year once, its pools' new money over its months.
+  const monthTerms = (mx) => (mx.totals.months || []).map((x) => term(x.row.name + ', ' + x.row.year + ' (' + x.pools.map(POOL_WORDS).join(' and ') + ', to ' + x.until + (x.perMonth !== x.row.perMonth && x.row.perMonth !== null ? '; the account alone ' + money(x.row.perMonth) + ' a month' : '') + ')', x.perMonth, 'usd/month', x.row.kind === 'missing' ? 'missing' : x.row.kind, 'plus', { metric: 'maxit:' + x.row.accountId + ':' + x.row.year + ':month' }));
   if (what === 'lump' && all) return { ...base, label: 'Every account, the new money', op: 'sum',
     explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.lump, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'fill')) : out(null, []); } };
   if (what === 'month' && all) return { ...base, label: 'Every account, a month to its deadline', op: 'sum',
-    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'perMonth'), [], mx.totals.steps.length > 1 ? { note: 'The total changes as deadlines pass: ' + mx.totals.steps.map((s) => money(s.perMonth) + ' a month to ' + s.until).join(', then ') + '.' } : {}) : out(null, []); } };
+    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, monthTerms(mx), [], mx.totals.steps.length > 1 ? { note: 'The total changes as deadlines pass: ' + mx.totals.steps.map((s) => money(s.perMonth) + ' a month to ' + s.until).join(', then ') + '.' } : {}) : out(null, []); } };
   // The cash check: the lowest day of cash, and the payoff date moved, with the new money in the run.
   const cashOf = (ctx) => (ctx.maxitCash ? ctx.maxitCash(all ? 'all' : acct + ':' + year) : null);
   if (what === 'low') return { ...base, label: 'Lowest day of cash with it', op: 'custom',

@@ -12,7 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
-import { yearAmount, hasTotal, hsaLimit, familyHsa, counts } from './contrib.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -218,6 +218,9 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     const om = payMonths[owner] || 0;
     const fromPay = !!(om && a.monthlyContribution);
     if (a.type === 'hsa') {
+      // An HSA on a plan that is not HSA-eligible has a $0 limit: its money is all excess, so it stays in wages and
+      // is never deducted (Form 8889).
+      if (!hsaEligible(a)) { t.useFact('accounts.' + a.id + '.planEligible', a.planEligible); continue; }
       // HSA money for the year: the recorded total and what the monthly amount still adds, else the monthly forecast.
       // Employer money (a recorded employer total, else the yearly employer amount) comes off the limit, not off pay.
       const y = hasTotal(a, year) || !fromPay ? yearAmount(spine, a, year, asOf, t, 'own') : null;
