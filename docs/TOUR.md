@@ -52,7 +52,7 @@ Open these in this order. Ten minutes is enough for the first five; the rest is 
    dated decisions, one row each, with the reason).
 
 To see it run: `npm run serve` at the repository root, open http://localhost:8765/, click
-"Try with example numbers", pick Riley. `npm test` runs the 350 unit tests in about ten seconds.
+"Try with example numbers", pick Riley. `npm test` runs the 350 unit tests in a few seconds.
 
 ## 3. What Eli is proudest of
 

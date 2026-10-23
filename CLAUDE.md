@@ -8,7 +8,7 @@ tests wiring, or the archive of earlier generations. Public repository.
 
 1. Read `README.md` (the front page) and `slam/LESSONS.md` (the 23 rules every change is checked
    against). For how the pieces fit, `docs/ARCHITECTURE.md`; for words, `docs/GLOSSARY.md`.
-2. Run `git log --oneline -10` and `npm test` (350 tests, about ten seconds).
+2. Run `git log --oneline -10` and `npm test` (350 tests, a few seconds).
 3. Decisions are logged in `slam/DECISIONS.md` (one row per decision, S-###, newest last); the
    reasoning behind the main ones is in `docs/DECISIONS.md`. Add a row for anything a reader would
    ask "why" about. Ideas out of scope go in `slam/PARKING_LOT.md`.

@@ -25,7 +25,7 @@ demo households. The live copy is at https://sapphirestoneage.github.io/Personal
 ## Run the tests
 
 ```
-npm test               # 350 unit tests in about ten seconds (node --test, no dependencies)
+npm test               # 350 unit tests in a few seconds (node --test, no dependencies)
 npm run test:browser   # the three Playwright checks, with slam/ served on port 8765
 ```
 
@@ -48,7 +48,7 @@ fail any screen taller than six phone screens. They need Playwright:
 | `slam/tests/` | Unit tests, `node --test`. |
 | `slam/tools/` | The Playwright checks, the journey tap counter, the screenshot gallery, and the generators that rebuild two demo households from a fixed seed. |
 | `slam/README.md`, `slam/LESSONS.md`, `slam/DECISIONS.md` | The app's own guide, the 23 rules every change is checked against, and the dated decisions log (S-001 onward). |
-| `docs/` | For a newcomer: `TOUR.md` (ten minutes, start here), `ARCHITECTURE.md`, `DECISIONS.md` (the main decisions with their why), `GLOSSARY.md`, `AUDIT.md` (the state of the repository before the 2026-10-23 cleanup). |
+| `docs/` | For a newcomer: `TOUR.md` (ten minutes, start here), `ARCHITECTURE.md`, `DECISIONS.md` (the main decisions with their why), `GLOSSARY.md`, `AUDIT.md` (the state of the repository before the 2026-10-23 cleanup), `CLEANUP-REPORT.md` (what that cleanup changed, and the open questions). |
 | `KNOWN_ISSUES.md` | Bugs, rough edges and debt, ranked. |
 | `archive/` | Every earlier generation of this idea, unchanged, with [the story of how one led to the next](archive/README.md). |
 | `rooms/`, `dnd/`, `coach/`, `marketing/`, `money-rooms-v3/`, `map.html` | Redirect stubs. Addresses that were public before the archive move still land. |
@@ -68,7 +68,8 @@ without a rewrite.
 
 **In progress.** Two branches add a Ledger and a Dashboard beside the Budget
 (`claude/slam-phase-1-foundation`, `claude/slam-phase-2`). The cleanup pass this README comes from
-is on `cleanup-for-review`; see `docs/AUDIT.md` and `KNOWN_ISSUES.md`.
+is on the branch `claude/peaceful-franklin-xlfo1t`; see `docs/CLEANUP-REPORT.md`, `docs/AUDIT.md` and
+`KNOWN_ISSUES.md`.
 
 **Planned.** Hosting with a coach sign-in and a client view (`slam/HOSTING.md` says what is already
 in place for it); the tools that read the Budget's numbers next: FIRE, emergency fund, debt payoff;

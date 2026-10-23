@@ -1,5 +1,7 @@
 # HANDOFF: the cleanup-for-review pass
 
+> Kept as the record of how the cleanup pass started. Everything it planned has been done or decided; what happened, and the open questions, are in [CLEANUP-REPORT.md](CLEANUP-REPORT.md).
+
 Written 2026-10-23 by the Claude Code session that started this work on Eli's laptop.
 The laptop was overheating, so the task moves to a cloud session. This file is
 everything that session needs to continue without asking Eli anything.

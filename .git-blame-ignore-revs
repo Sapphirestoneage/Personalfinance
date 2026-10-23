@@ -1,0 +1,3 @@
+# Formatting-only commits, skipped by `git blame --ignore-revs-file .git-blame-ignore-revs`
+# (GitHub reads this file on its own).
+9f23aebcd417e42d494301904940af86236095a0  # Step 7b: Prettier over the current build
