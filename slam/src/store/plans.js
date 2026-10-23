@@ -50,7 +50,8 @@ export function setPlanAmount(doc, month, key, value) {
 export function setPlanIncome(doc, month, incomeId, value) {
   const inc = (doc.income || []).find((i) => i.id === incomeId);
   if (!inc) throw new Error('No income ' + incomeId);
-  if (['w2', 'unemployment'].includes(inc.type)) throw new Error('Scheduled pay comes from the paydays; change the take-home in Setup, Income');
+  if (['w2', 'unemployment'].includes(inc.type))
+    throw new Error('Scheduled pay comes from the paydays; change the take-home in Setup, Income');
   if (!doc.plans[month]) doc.plans[month] = { createdFrom: 'manual', lines: {} };
   const p = doc.plans[month];
   p.income = p.income || {};
@@ -110,7 +111,11 @@ export function copyPlanForward(doc, month) {
   const next = nextMonthKey(month);
   if (getPlan(doc, next)) throw new Error('There is already a plan for ' + next);
   // Stopped lines are left out: they are archived when the month starts.
-  const values = Object.fromEntries(Object.entries(p.lines).filter(([, e]) => !e.stop).map(([k, e]) => [k, e.amount]));
+  const values = Object.fromEntries(
+    Object.entries(p.lines)
+      .filter(([, e]) => !e.stop)
+      .map(([k, e]) => [k, e.amount])
+  );
   return startPlan(doc, next, 'plan:' + month, values);
 }
 

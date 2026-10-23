@@ -55,7 +55,10 @@ export function linkCandidates(doc, debt) {
   const types = PAYS_DEBT[debt.type] || [];
   const spend = allLines(doc).filter((x) => !x.cat.savings && x.cat.id !== 'debt' && x.line.state !== 'archived');
   const lineType = (l) => l.type || null;
-  return [...spend.filter((x) => types.includes(lineType(x.line))), ...spend.filter((x) => !types.includes(lineType(x.line)))].map((x) => ({ id: x.line.id, name: x.line.name, category: x.cat.name, matches: types.includes(lineType(x.line)) }));
+  return [
+    ...spend.filter((x) => types.includes(lineType(x.line))),
+    ...spend.filter((x) => !types.includes(lineType(x.line)))
+  ].map((x) => ({ id: x.line.id, name: x.line.name, category: x.cat.name, matches: types.includes(lineType(x.line)) }));
 }
 
 /**
@@ -93,7 +96,13 @@ export function splitPayment(doc, debt, month, payment) {
   const apr = typed(debt.apr) ? debt.apr.amount : null;
   // The APR is a percent a year: / 100 for the rate, / 12 for one month's share.
   const interest = start === null || start === undefined || apr === null ? null : r2((start.amount * apr) / 100 / 12);
-  return { balance: start ? start.amount : null, apr, payment, interest, principal: payment === null || interest === null ? null : r2(payment - interest) };
+  return {
+    balance: start ? start.amount : null,
+    apr,
+    payment,
+    interest,
+    principal: payment === null || interest === null ? null : r2(payment - interest)
+  };
 }
 
 /**
@@ -107,7 +116,8 @@ export function aprFor(debt, month) {
   // The promo covers a month only when the month's last day is on or before its end date. A promo that ends
   // on a month's last day still covers that month (ending May 31: May is promo, June is not); one that ends
   // mid-month leaves that whole month at the card's own APR.
-  if (debt.promoEnds && typed(debt.promoApr) && lastDayOf(month) <= debt.promoEnds) return { apr: debt.promoApr.amount, promo: true };
+  if (debt.promoEnds && typed(debt.promoApr) && lastDayOf(month) <= debt.promoEnds)
+    return { apr: debt.promoApr.amount, promo: true };
   return { apr: typed(debt.apr) ? debt.apr.amount : null, promo: false };
 }
 
@@ -138,12 +148,30 @@ export function cardInterest(doc, debt, month) {
   if (debt.type !== 'credit-card' || debt.state === 'archived') return null;
   const key = cardKey(doc, debt);
   const { apr, promo } = aprFor(debt, month);
-  if (debt.payWith === 'statement') return { amount: 0, why: 'Paid in full each month: no interest', apr, promo, balance: null };
+  if (debt.payWith === 'statement')
+    return { amount: 0, why: 'Paid in full each month: no interest', apr, promo, balance: null };
   // No month balances yet: the card's own balance stands in for the one going into the month.
-  const start = tracked(doc, key) ? monthStartOf(doc, key, month) : typed(debt.balance) ? { amount: debt.balance.amount } : null;
-  if (apr === null || !start) return { amount: null, why: apr === null ? 'Needs the APR' : 'Needs the balance going into the month', apr, promo, balance: start ? start.amount : null };
+  const start = tracked(doc, key)
+    ? monthStartOf(doc, key, month)
+    : typed(debt.balance)
+      ? { amount: debt.balance.amount }
+      : null;
+  if (apr === null || !start)
+    return {
+      amount: null,
+      why: apr === null ? 'Needs the APR' : 'Needs the balance going into the month',
+      apr,
+      promo,
+      balance: start ? start.amount : null
+    };
   const amount = r2((start.amount * apr) / 100 / 12);
-  return { amount, why: (promo ? 'Promo ' + apr + '% until ' + debt.promoEnds : apr + '% a year') + ' on ' + start.amount, apr, promo, balance: start.amount };
+  return {
+    amount,
+    why: (promo ? 'Promo ' + apr + '% until ' + debt.promoEnds : apr + '% a year') + ' on ' + start.amount,
+    apr,
+    promo,
+    balance: start.amount
+  };
 }
 
 // Typed interest hands off to computed (S-120, S-133). A typed interest line (Luis's "Interest charged")
@@ -192,8 +220,16 @@ export function promoMonthsLeft(debt, month) {
  */
 export function promoEnded(doc, month) {
   const [y, m] = month.split('-').map(Number);
-  const prev = m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0');
-  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && !aprFor(d, month).promo && aprFor(d, prev).promo)
+  const prev = m === 1 ? y - 1 + '-12' : y + '-' + String(m - 1).padStart(2, '0');
+  return (doc.debts || [])
+    .filter(
+      (d) =>
+        d.type === 'credit-card' &&
+        d.state !== 'archived' &&
+        d.promoEnds &&
+        !aprFor(d, month).promo &&
+        aprFor(d, prev).promo
+    )
     .map((d) => ({ debt: d, promoApr: d.promoApr.amount, interest: cardInterest(doc, d, month) }));
 }
 
@@ -208,12 +244,15 @@ export function promoEnded(doc, month) {
  */
 export function promoWarnings(doc, today) {
   const DAY = 86400000;
-  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && typed(d.promoApr)).map((d) => {
-    // Both days at UTC midnight, so a daylight saving change cannot leave a day count at 0.96 days.
-    const days = Math.round((Date.parse(d.promoEnds + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / DAY);
-    const b = balanceAt(doc, cardKey(doc, d), today);
-    return { debt: d, ends: d.promoEnds, days, balance: b ? b.amount : null };
-  }).filter((x) => x.days >= 0 && x.days <= 60);
+  return (doc.debts || [])
+    .filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && typed(d.promoApr))
+    .map((d) => {
+      // Both days at UTC midnight, so a daylight saving change cannot leave a day count at 0.96 days.
+      const days = Math.round((Date.parse(d.promoEnds + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / DAY);
+      const b = balanceAt(doc, cardKey(doc, d), today);
+      return { debt: d, ends: d.promoEnds, days, balance: b ? b.amount : null };
+    })
+    .filter((x) => x.days >= 0 && x.days <= 60);
 }
 
 /**

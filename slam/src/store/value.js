@@ -22,13 +22,18 @@ export function makeValue(amount = null, opts = {}) {
   const v = {
     amount: amount,
     cadence: opts.cadence || 'month',
-    status: opts.status !== undefined ? opts.status : (amount === null ? null : 'known'),
+    status: opts.status !== undefined ? opts.status : amount === null ? null : 'known',
     source: opts.source || 'client',
     asOf: opts.asOf || null,
     note: opts.note || ''
   };
   // Optional items inside one amount (Uber, bus, subway); the amount is their sum.
-  if (Array.isArray(opts.parts) && opts.parts.length) v.parts = opts.parts.map((p) => ({ name: String(p.name || ''), amount: p.amount === undefined ? null : p.amount, ...(p.cadence ? { cadence: p.cadence } : {}) }));
+  if (Array.isArray(opts.parts) && opts.parts.length)
+    v.parts = opts.parts.map((p) => ({
+      name: String(p.name || ''),
+      amount: p.amount === undefined ? null : p.amount,
+      ...(p.cadence ? { cadence: p.cadence } : {})
+    }));
   return v;
 }
 
@@ -48,7 +53,8 @@ export function isBlank(v) {
 export function valueErrors(v, where) {
   const errs = [];
   if (!v || typeof v !== 'object') return [where + ': missing value'];
-  if (v.amount !== null && (typeof v.amount !== 'number' || !Number.isFinite(v.amount))) errs.push(where + ': amount must be a number or empty');
+  if (v.amount !== null && (typeof v.amount !== 'number' || !Number.isFinite(v.amount)))
+    errs.push(where + ': amount must be a number or empty');
   if (!CADENCES.includes(v.cadence)) errs.push(where + ': unknown cadence ' + v.cadence);
   if (v.status !== null && !STATUSES.includes(v.status)) errs.push(where + ': unknown status ' + v.status);
   if (!SOURCES.includes(v.source)) errs.push(where + ': unknown source ' + v.source);
@@ -57,14 +63,17 @@ export function valueErrors(v, where) {
     else {
       v.parts.forEach((p, i) => {
         if (typeof p.name !== 'string') errs.push(where + '.parts[' + i + ']: name must be text');
-        if (p.amount !== null && (typeof p.amount !== 'number' || !Number.isFinite(p.amount))) errs.push(where + '.parts[' + i + ']: amount must be a number or empty');
+        if (p.amount !== null && (typeof p.amount !== 'number' || !Number.isFinite(p.amount)))
+          errs.push(where + '.parts[' + i + ']: amount must be a number or empty');
         // An item may carry its own cadence (S-074); none means the value's own.
-        if (p.cadence !== undefined && !PART_CADENCES[p.cadence]) errs.push(where + '.parts[' + i + ']: cadence must be week, month, or year');
+        if (p.cadence !== undefined && !PART_CADENCES[p.cadence])
+          errs.push(where + '.parts[' + i + ']: cadence must be week, month, or year');
       });
       // sumParts rounds to the cent, so half a cent is the tolerance. The check is skipped while an
       // item is already wrong, and when no item has a number (sum null: empty is not zero).
       const sum = errs.length ? null : sumParts(v.parts, v.cadence);
-      if (!errs.length && v.amount !== null && sum !== null && Math.abs(sum - v.amount) > 0.005) errs.push(where + ': amount must equal the sum of its items');
+      if (!errs.length && v.amount !== null && sum !== null && Math.abs(sum - v.amount) > 0.005)
+        errs.push(where + ': amount must equal the sum of its items');
     }
   }
   return errs;

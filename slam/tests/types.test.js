@@ -19,7 +19,18 @@ const refs = loadRefs();
 
 test('renaming a category or line keeps what it counts as', () => {
   const d = newHousehold('Names');
-  d.income.push({ ...d.income[0], id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(4000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({
+    ...d.income[0],
+    id: 'job',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: makeValue(4000),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
   findCategory(d, 'food').name = 'Eats';
   findCategory(d, 'food').estimate = makeValue(500);
   renameLine(d, 'transit', 'MetroCard');
@@ -75,7 +86,10 @@ test('spending by type adds lines of one type across categories', () => {
 
 test('compat: files before types get them from default ids, else from the name', () => {
   const raw = JSON.parse(JSON.stringify(newHousehold('Old')));
-  for (const c of raw.categories) { delete c.type; for (const l of c.lines) delete l.type; }
+  for (const c of raw.categories) {
+    delete c.type;
+    for (const l of c.lines) delete l.type;
+  }
   raw.categories[0].lines.push({ id: 'line-x', name: 'Electric bill' });
   raw.categories.push({ id: 'cat-x', name: 'Mine', lines: [] });
   const m = migrate(raw);

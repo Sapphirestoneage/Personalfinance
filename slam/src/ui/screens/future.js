@@ -11,19 +11,37 @@ import { eraCards } from '../charts/era-charts.js';
 import { nextStageCards } from '../charts/next-charts.js';
 import { runningBar } from './plan.js';
 
-const TABS = [['eras', 'Dream life and Eras'], ['next', 'Next stage']];
+const TABS = [
+  ['eras', 'Dream life and Eras'],
+  ['next', 'Next stage']
+];
 
 export function renderFuture(ctx, summary) {
   const tab = TABS.some(([id]) => id === ctx.ui.futureTab) ? ctx.ui.futureTab : 'eras';
   const charts = tab === 'eras' ? eraCards(ctx, summary) : nextStageCards(ctx, summary);
-  return h('div', {},
+  return h(
+    'div',
+    {},
     h('h1', {}, 'Future'),
     h('p', { class: 'muted small' }, 'Parked tools: what life could look like. Turn them off again in Setup.'),
-    h('div', { class: 'passes', role: 'tablist' }, TABS.map(([id, label]) => h('button', {
-      'aria-current': id === tab ? 'step' : null, 'data-key': 'future-tab-' + id, onclick: () => ctx.go('future', { futureTab: id })
-    }, label))),
+    h(
+      'div',
+      { class: 'passes', role: 'tablist' },
+      TABS.map(([id, label]) =>
+        h(
+          'button',
+          {
+            'aria-current': id === tab ? 'step' : null,
+            'data-key': 'future-tab-' + id,
+            onclick: () => ctx.go('future', { futureTab: id })
+          },
+          label
+        )
+      )
+    ),
     tab === 'eras' ? renderEras(ctx, summary) : renderNextStage(ctx, summary),
     h('div', { class: 'grid two', id: 'future-charts', style: 'margin-top:12px' }, charts),
     // The bar follows the tab: Eras types the dream, Next stage reads actuals (runningBar maps the tab names).
-    runningBar(ctx, summary, tab));
+    runningBar(ctx, summary, tab)
+  );
 }

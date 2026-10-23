@@ -34,7 +34,15 @@ function tierWeight(c) {
  */
 export function questionItems(doc, model, income) {
   const items = [];
-  const add = (key, label, path, weight, status, amount) => items.push({ key, label, path, weight, status: status === undefined ? null : status, amount: amount === undefined ? null : amount });
+  const add = (key, label, path, weight, status, amount) =>
+    items.push({
+      key,
+      label,
+      path,
+      weight,
+      status: status === undefined ? null : status,
+      amount: amount === undefined ? null : amount
+    });
 
   add('gut', 'Gut number: what you think you spend a month', ['gut'], WEIGHTS.light, doc.gut.status, doc.gut.amount);
 
@@ -42,23 +50,47 @@ export function questionItems(doc, model, income) {
   // No income source yet: one heavy question stands in for all of them.
   if (!sources.length) add('income', 'Take-home pay', ['income'], WEIGHTS.heavy, null, null);
   for (const s of sources) {
-    add('income:' + s.id, 'Take-home: ' + s.label, ['income', s.id, 'takeHome'], WEIGHTS.heavy, s.takeHomeStatus, s.takeHomeMonthly);
+    add(
+      'income:' + s.id,
+      'Take-home: ' + s.label,
+      ['income', s.id, 'takeHome'],
+      WEIGHTS.heavy,
+      s.takeHomeStatus,
+      s.takeHomeMonthly
+    );
   }
 
   for (const c of model.categories) {
     if (c.isDebt) continue;
     const w = tierWeight(c);
-    if (c.notForMe) { add('est:' + c.id, c.name + ': estimate', ['categories', c.id, 'estimate'], w, 'not-for-me', 0); continue; }
+    if (c.notForMe) {
+      add('est:' + c.id, c.name + ': estimate', ['categories', c.id, 'estimate'], w, 'not-for-me', 0);
+      continue;
+    }
     // Single-total households: a blank category estimate is covered by the one total, so it is not a question.
     const coveredByTotal = doc.settings.singleTotal && !c.isEverything && c.estimate.amount === null;
     if (!coveredByTotal) {
-      add('est:' + c.id, c.name + ': estimate', ['categories', c.id, 'estimate'], w, c.estimate.status, c.estimate.amount);
+      add(
+        'est:' + c.id,
+        c.name + ': estimate',
+        ['categories', c.id, 'estimate'],
+        w,
+        c.estimate.status,
+        c.estimate.amount
+      );
     }
     const lines = c.lines;
     // The category's weight is shared across its lines, so ten lines do not outweigh a category with two.
     // A line is sized by its actual, else its estimate.
     for (const l of lines) {
-      add('act:' + l.id, c.name + ' / ' + l.name + ': actual', ['line', l.id, 'actual'], w / lines.length, l.status.actual, l.actual !== null ? l.actual : l.estimate);
+      add(
+        'act:' + l.id,
+        c.name + ' / ' + l.name + ': actual',
+        ['line', l.id, 'actual'],
+        w / lines.length,
+        l.status.actual,
+        l.actual !== null ? l.actual : l.estimate
+      );
     }
   }
 
@@ -71,9 +103,18 @@ export function questionItems(doc, model, income) {
     for (const d of doc.debts) {
       if (d.state === 'archived') continue;
       // A debt a budget line pays reads its minimum from that line (S-116): asked once, on the line.
-      if (!linkedLine(doc, d)) add('min:' + d.id, d.label + ': minimum payment', ['debts', d.id, 'minimum'], WEIGHTS.heavy, d.minimum.status, d.minimum.amount);
+      if (!linkedLine(doc, d))
+        add(
+          'min:' + d.id,
+          d.label + ': minimum payment',
+          ['debts', d.id, 'minimum'],
+          WEIGHTS.heavy,
+          d.minimum.status,
+          d.minimum.amount
+        );
       // A card linked to an account keeps its balance there (S-084), so it is not asked here.
-      if (!(doc.accounts || []).some((a) => a.debtId === d.id && a.state !== 'archived')) add('bal:' + d.id, d.label + ': balance', ['debts', d.id, 'balance'], WEIGHTS.light, d.balance.status, null);
+      if (!(doc.accounts || []).some((a) => a.debtId === d.id && a.state !== 'archived'))
+        add('bal:' + d.id, d.label + ': balance', ['debts', d.id, 'balance'], WEIGHTS.light, d.balance.status, null);
       add('apr:' + d.id, d.label + ': APR', ['debts', d.id, 'apr'], WEIGHTS.light, d.apr.status, null);
     }
   }
@@ -93,7 +134,13 @@ export function completion(items) {
     total += it.weight;
     if (COMPLETE.has(it.status)) done += it.weight;
   }
-  return { done, total, pct: total ? done / total : 0, answered: items.filter((i) => COMPLETE.has(i.status)).length, count: items.length };
+  return {
+    done,
+    total,
+    pct: total ? done / total : 0,
+    answered: items.filter((i) => COMPLETE.has(i.status)).length,
+    count: items.length
+  };
 }
 
 /**
@@ -141,14 +188,22 @@ const ROUGH = new Set(['roughly', 'will-email', 'dont-know']);
  */
 export function roughList(doc) {
   const out = [];
-  const check = (label, path, v) => { if (v && ROUGH.has(v.status)) out.push({ label, path, status: v.status, amount: v.amount, cadence: v.cadence }); };
+  const check = (label, path, v) => {
+    if (v && ROUGH.has(v.status)) out.push({ label, path, status: v.status, amount: v.amount, cadence: v.cadence });
+  };
   check('Gut number', ['gut'], doc.gut);
   for (const i of doc.income) {
     if (i.state === 'archived') continue;
     check(i.label + ': take-home', ['income', i.id, 'takeHome'], i.takeHome);
     check(i.label + ': gross', ['income', i.id, 'gross'], i.gross);
     // A percent deduction has no typed amount to be rough about.
-    for (const d of i.deductions || []) if (d.mode === 'amount') check(i.label + ': ' + (d.label || d.kind) + ' deduction', ['income', i.id, 'deductions', d.id, 'amount'], d.amount);
+    for (const d of i.deductions || [])
+      if (d.mode === 'amount')
+        check(
+          i.label + ': ' + (d.label || d.kind) + ' deduction',
+          ['income', i.id, 'deductions', d.id, 'amount'],
+          d.amount
+        );
   }
   for (const c of doc.categories) {
     if (c.state === 'archived') continue;
@@ -161,8 +216,8 @@ export function roughList(doc) {
   for (const d of doc.debts) {
     if (d.state === 'archived') continue;
     // A linked debt's minimum is the line's estimate, already listed under the line.
-    for (const k of ['balance', 'apr', 'minimum']) if (!(k === 'minimum' && linkedLine(doc, d))) check(d.label + ': ' + k, ['debts', d.id, k], d[k]);
+    for (const k of ['balance', 'apr', 'minimum'])
+      if (!(k === 'minimum' && linkedLine(doc, d))) check(d.label + ': ' + k, ['debts', d.id, k], d[k]);
   }
   return out;
 }
-

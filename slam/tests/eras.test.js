@@ -48,7 +48,10 @@ test('two eras end to end, template shares as guesses, against regular life', ()
   assert.equal(sab.cashEnd, 23800); // 38,200 - 14,400
   assert.equal(sab.oneTimeBlank, true);
   // Regular life over the same 20 months: 10,000 + 20 x 1,000 = 30,000; the eras cost 6,200 of it
-  assert.deepEqual([r.totalMonths, r.endKey, r.regularEnd, r.cashEnd, r.costVsRegular], [20, '2028-06', 30000, 23800, 6200]);
+  assert.deepEqual(
+    [r.totalMonths, r.endKey, r.regularEnd, r.cashEnd, r.costVsRegular],
+    [20, '2028-06', 30000, 23800, 6200]
+  );
 });
 
 test('typed numbers replace the guess; cash running out says when and how long to save first', () => {
@@ -68,7 +71,13 @@ test('blocks move earlier and later; dates follow the order', () => {
   moveEra(d, sab.id, -1);
   const r = eraTimeline(d, totals, refs);
   // Sabbatical first: 2 months gap (Nov, Dec) then Jan to Jun 2027; Geo from Jul 2027
-  assert.deepEqual(r.eras.map((e) => [e.name, e.start]), [['Sabbatical', '2027-01'], ['Geo arbitrage', '2027-07']]);
+  assert.deepEqual(
+    r.eras.map((e) => [e.name, e.start]),
+    [
+      ['Sabbatical', '2027-01'],
+      ['Geo arbitrage', '2027-07']
+    ]
+  );
   moveEra(d, geo.id, 5); // past the end: no change
   assert.equal(d.eras.list[1].id, geo.id);
   removeEra(d, sab.id);

@@ -28,19 +28,38 @@ import { money, signedMoney, pct } from '../src/ui/format.js';
 const require = createRequire(import.meta.url);
 let playwright;
 // Playwright is not in package.json: take it from this folder's node_modules, or from the global install.
-try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
+try {
+  playwright = require('playwright');
+} catch (e) {
+  playwright = require(execSync('npm root -g').toString().trim() + '/playwright');
+}
 
 const URL = process.env.SLAM_URL || 'http://localhost:8765/';
-const VIEWS = [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 900 }]];
+const VIEWS = [
+  ['phone', { width: 390, height: 844 }],
+  ['desktop', { width: 1280, height: 900 }]
+];
 let failures = 0;
 const results = [];
 
 // Counts taps as the header defines them.
 function counter(page, phone) {
   const t = { n: 0, steps: [], at: 0 };
-  t.tap = async (sel) => { await page.click(sel); t.n += 1; };
-  t.type = async (sel, text) => { await t.tap(sel); await page.keyboard.type(text); await page.keyboard.press('Tab'); await page.waitForTimeout(60); };
-  t.pick = async (sel, value) => { await page.selectOption(sel, value); t.n += 2; await page.waitForTimeout(60); };
+  t.tap = async (sel) => {
+    await page.click(sel);
+    t.n += 1;
+  };
+  t.type = async (sel, text) => {
+    await t.tap(sel);
+    await page.keyboard.type(text);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(60);
+  };
+  t.pick = async (sel, value) => {
+    await page.selectOption(sel, value);
+    t.n += 2;
+    await page.waitForTimeout(60);
+  };
   // A screen from the menu: one tap, or two on a phone for what sits under More.
   t.go = async (screen) => {
     const direct = phone ? '.bottom-bar > a[href="#' + screen + '"]' : 'header nav a[href="#' + screen + '"]';
@@ -48,7 +67,10 @@ function counter(page, phone) {
     await t.tap('[data-key="more"]');
     await t.tap('.more-menu a[data-nav="' + screen + '"]');
   };
-  t.step = (name, limit) => { t.steps.push({ name, taps: t.n - t.at, limit: limit === undefined ? null : limit }); t.at = t.n; };
+  t.step = (name, limit) => {
+    t.steps.push({ name, taps: t.n - t.at, limit: limit === undefined ? null : limit });
+    t.at = t.n;
+  };
   return t;
 }
 
@@ -57,17 +79,29 @@ function counter(page, phone) {
 function check(journey, label, shown, expected) {
   const ok = shown === expected;
   if (!ok) failures += 1;
-  console.log((ok ? '  ok   ' : '  FAIL ') + journey + ', ' + label + ': shown "' + shown + '", expected "' + expected + '"');
+  console.log(
+    (ok ? '  ok   ' : '  FAIL ') + journey + ', ' + label + ': shown "' + shown + '", expected "' + expected + '"'
+  );
 }
 
 // Quick entry puts the cursor in the amount by itself; wait for it before typing.
-const amountReady = (page) => page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('data-key') === 'qe-amount');
+const amountReady = (page) =>
+  page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('data-key') === 'qe-amount');
 // An element that is not there reads as "missing", so the check fails with a readable line instead of
 // the run throwing. settled() gives the screen up to 3 seconds to show the wanted text, then reports
 // whatever is shown: a slow or wrong screen fails its check, it does not stop the other journeys.
 const text = (page, sel) => page.$eval(sel, (e) => e.textContent.trim()).catch(() => 'missing');
 async function settled(page, sel, want) {
-  await page.waitForFunction(([q, w]) => { const e = document.querySelector(q); return e && e.textContent.trim() === w; }, [sel, want], { timeout: 3000 }).catch(() => null);
+  await page
+    .waitForFunction(
+      ([q, w]) => {
+        const e = document.querySelector(q);
+        return e && e.textContent.trim() === w;
+      },
+      [sel, want],
+      { timeout: 3000 }
+    )
+    .catch(() => null);
   return text(page, sel);
 }
 
@@ -78,9 +112,18 @@ function report(journey, view, t, limit) {
   for (const s of t.steps) {
     const over = s.limit !== null && s.taps > s.limit;
     if (over) failures += 1;
-    console.log('  ' + (over ? 'FAIL ' : '     ') + s.name.padEnd(46) + String(s.taps).padStart(4) + (s.limit !== null ? ' (limit ' + s.limit + ')' : ''));
+    console.log(
+      '  ' +
+        (over ? 'FAIL ' : '     ') +
+        s.name.padEnd(46) +
+        String(s.taps).padStart(4) +
+        (s.limit !== null ? ' (limit ' + s.limit + ')' : '')
+    );
   }
-  if (limit && t.n >= limit) { failures += 1; console.log('  FAIL total ' + t.n + ' is not under ' + limit); }
+  if (limit && t.n >= limit) {
+    failures += 1;
+    console.log('  FAIL total ' + t.n + ' is not under ' + limit);
+  }
   results.push({ journey, view, total: t.n, limit, steps: t.steps });
 }
 
@@ -122,7 +165,15 @@ async function firstSession(browser, view, size) {
   await t.tap('[data-key="first-go-rough"]');
   await t.type('[data-path=\'["categories","housing","estimate"]\']', '1000');
   t.step('Rent (the Housing estimate)');
-  for (const [id, a] of [['food', 400], ['transport', 150], ['health', 100], ['bills', 80], ['fun', 200], ['annual', 50], ['giving', 20]]) {
+  for (const [id, a] of [
+    ['food', 400],
+    ['transport', 150],
+    ['health', 100],
+    ['bills', 80],
+    ['fun', 200],
+    ['annual', 50],
+    ['giving', 20]
+  ]) {
     await t.type('[data-path=\'["categories","' + id + '","estimate"]\']', String(a));
   }
   t.step('Rough estimates, the other 7 categories');
@@ -160,7 +211,16 @@ async function monthDoc() {
   const { exportHousehold } = await import('../src/store/transfer.js');
   const raw = newHousehold('Month journey');
   raw.currentMonth = '2026-10';
-  raw.income.push({ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(4000), gross: makeValue(), deductions: [], state: 'active' });
+  raw.income.push({
+    id: 'job',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: makeValue(4000),
+    gross: makeValue(),
+    deductions: [],
+    state: 'active'
+  });
   const d = migrate(raw);
   d.income[0].nextPayDate = makeDate('2026-10-01');
   d.gut = makeValue(2500);
@@ -168,9 +228,19 @@ async function monthDoc() {
   d.situation = ['employed'];
   d.household.livingWith = 'alone';
   d.noDebts = true;
-  for (const c of d.categories) if (!['housing', 'food', 'transport', 'bills', 'debt'].includes(c.id)) c.estimate = makeValue(null, { status: 'not-for-me' });
+  for (const c of d.categories)
+    if (!['housing', 'food', 'transport', 'bills', 'debt'].includes(c.id))
+      c.estimate = makeValue(null, { status: 'not-for-me' });
   const one = (a) => makeValue(a, { cadence: 'one-off' });
-  for (const [id, a, due] of [['rent', 1500, 1], ['subscriptions', 60, 10], ['groceries', 400], ['eating-out', 100], ['gas', 200], ['utilities', 120], ['internet', 70]]) {
+  for (const [id, a, due] of [
+    ['rent', 1500, 1],
+    ['subscriptions', 60, 10],
+    ['groceries', 400],
+    ['eating-out', 100],
+    ['gas', 200],
+    ['utilities', 120],
+    ['internet', 70]
+  ]) {
     const l = findLine(d, id).line;
     l.estimate = makeValue(a);
     if (due) l.dueDay = one(due);
@@ -188,18 +258,40 @@ async function monthDoc() {
 // Checking: 3,000 + 4,000 - 1,500 - 60 - (399.50 + 92.40 + 201.00) = 4,747.10, typed as the end balance, so the bridge ties.
 // All of it came from the log: 100% ($2,253 logged, $0 typed). November's plan is started, so nothing is open.
 const ENTRIES = [
-  ['groceries', '52.10'], ['groceries', '47.35'], ['groceries', '61.80'], ['groceries', '44.20'], ['groceries', '39.90'], ['groceries', '55.15'], ['groceries', '48.60'], ['groceries', '50.40'],
-  ['eating-out', '14.60'], ['eating-out', '12.25'], ['eating-out', '18.40'], ['eating-out', '9.75'], ['eating-out', '16.30'], ['eating-out', '21.10'],
-  ['gas', '38.25'], ['gas', '41.50'], ['gas', '35.80'], ['gas', '33.45'], ['gas', '29.90'], ['gas', '22.10']
+  ['groceries', '52.10'],
+  ['groceries', '47.35'],
+  ['groceries', '61.80'],
+  ['groceries', '44.20'],
+  ['groceries', '39.90'],
+  ['groceries', '55.15'],
+  ['groceries', '48.60'],
+  ['groceries', '50.40'],
+  ['eating-out', '14.60'],
+  ['eating-out', '12.25'],
+  ['eating-out', '18.40'],
+  ['eating-out', '9.75'],
+  ['eating-out', '16.30'],
+  ['eating-out', '21.10'],
+  ['gas', '38.25'],
+  ['gas', '41.50'],
+  ['gas', '35.80'],
+  ['gas', '33.45'],
+  ['gas', '29.90'],
+  ['gas', '22.10']
 ];
-const CSV = 'Date,Description,Amount\n10/30/2026,TRADER JOE S #552,-52.10\n10/30/2026,SAFEWAY 0412,-47.35\n10/30/2026,WHOLE FOODS MKT,-61.80\n10/30/2026,SHELL OIL 5744,-38.25\n10/30/2026,CHIPOTLE 1234,-14.60\n';
+const CSV =
+  'Date,Description,Amount\n10/30/2026,TRADER JOE S #552,-52.10\n10/30/2026,SAFEWAY 0412,-47.35\n10/30/2026,WHOLE FOODS MKT,-61.80\n10/30/2026,SHELL OIL 5744,-38.25\n10/30/2026,CHIPOTLE 1234,-14.60\n';
 
 async function month(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
   await page.clock.setFixedTime(new Date('2026-10-31T12:00:00'));
   page.on('dialog', (dl) => dl.accept());
   await page.goto(URL + '#clients');
-  await page.setInputFiles('#import-file', { name: 'month.json', mimeType: 'application/json', buffer: Buffer.from(await monthDoc()) });
+  await page.setInputFiles('#import-file', {
+    name: 'month.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(await monthDoc())
+  });
   await page.waitForSelector('#headline');
   const t = counter(page, view === 'phone');
   const J = 'b. A month, ' + view;
@@ -225,7 +317,10 @@ async function month(browser, view, size) {
     most = Math.max(most, t.n - before);
   }
   t.step('20 quick entries (most taps for one: ' + most + ')');
-  if (most > 6) { failures += 1; console.log('  FAIL a quick entry took ' + most + ' taps (limit 6)'); }
+  if (most > 6) {
+    failures += 1;
+    console.log('  FAIL a quick entry took ' + most + ' taps (limit 6)');
+  }
   for (let i = 0; i < 3; i++) {
     await page.waitForSelector('[data-key^="happened:"]');
     await t.tap('[data-key^="happened:"]');
@@ -235,7 +330,12 @@ async function month(browser, view, size) {
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(CSV) });
   t.n += 2; // tap "Choose CSV file", pick the file
   await page.waitForSelector('[data-key="match-summary"]');
-  check(J, 'Import', await text(page, '[data-key="match-summary"] b'), 'Matched 5, new 0, possible matches 0 to confirm.');
+  check(
+    J,
+    'Import',
+    await text(page, '[data-key="match-summary"] b'),
+    'Matched 5, new 0, possible matches 0 to confirm.'
+  );
   await t.tap('[data-key="tx-add"]');
   t.step('Import a CSV that matches 5 entries');
   await t.go('accounts');
@@ -257,14 +357,21 @@ async function month(browser, view, size) {
   t.n += 1; // the "Close October 2026?" confirm
   await page.waitForSelector('#just-closed');
   t.step('Close the month');
-  const tiles = await page.$$eval('#just-closed .tile', (ts) => ts.map((x) => x.querySelector('.value').textContent.trim()));
+  const tiles = await page.$$eval('#just-closed .tile', (ts) =>
+    ts.map((x) => x.querySelector('.value').textContent.trim())
+  );
   check(J, 'Spent', tiles[0], money(2252.9));
   check(J, 'Surplus', tiles[1], signedMoney(1747.1));
   check(J, 'Bridge', tiles[2], 'Ties');
   // The headline numbers first (S-129); "See the full review" opens the rest.
   await t.tap('#just-closed [data-key="review-full"]');
   await page.waitForSelector('#just-closed [data-key="review-tracking"]');
-  check(J, 'Tracking', await text(page, '#just-closed [data-key="review-tracking"]'), '100% (' + money(2252.9) + ' logged, ' + money(0) + ' typed)');
+  check(
+    J,
+    'Tracking',
+    await text(page, '#just-closed [data-key="review-tracking"]'),
+    '100% (' + money(2252.9) + ' logged, ' + money(0) + ' typed)'
+  );
   check(J, 'Open at close', await text(page, '#just-closed [data-key="review-open"]'), 'Closed with nothing open');
   t.step('Read the review');
   report('b. A month', view, t, 120);
@@ -280,13 +387,22 @@ async function questions(browser, view, size) {
   await page.waitForSelector('#headline');
   const t = counter(page, view === 'phone');
   const J = 'c. Six questions, ' + view;
-  const home = async () => { await page.evaluate(() => { location.hash = 'today'; }); await page.waitForSelector('#headline'); t.at = t.n; };
+  const home = async () => {
+    await page.evaluate(() => {
+      location.hash = 'today';
+    });
+    await page.waitForSelector('#headline');
+    t.at = t.n;
+  };
 
   // 1. Log a $12 lunch.
   await t.tap('[data-key="open-quick-entry"]');
   await amountReady(page);
   await page.keyboard.type('12');
-  if (!(await page.locator('[data-key="qe-line:eating-out"]').count())) { await t.tap('[data-key="qe-search"]'); await page.keyboard.type('eating'); }
+  if (!(await page.locator('[data-key="qe-line:eating-out"]').count())) {
+    await t.tap('[data-key="qe-search"]');
+    await page.keyboard.type('eating');
+  }
   await t.tap('[data-key="qe-line:eating-out"]');
   await t.tap('[data-key="qe-save"]');
   check(J, 'Lunch logged', await settled(page, '.toast', 'Logged $12.00 to Eating out'), 'Logged $12.00 to Eating out');
@@ -318,7 +434,9 @@ async function questions(browser, view, size) {
   check(J, 'Review month', await text(page, '#months-review h2'), 'September 2026 in review');
   await t.tap('#months-review [data-key="review-full"]');
   await page.waitForSelector('#months-review [data-key="review-vs-plan"]');
-  const worse = await page.$$eval('#months-review [data-key="review-vs-plan"] > div:last-child h4', (x) => x.map((e) => e.textContent));
+  const worse = await page.$$eval('#months-review [data-key="review-vs-plan"] > div:last-child h4', (x) =>
+    x.map((e) => e.textContent)
+  );
   check(J, 'Worse than planned shown', String(/^Worse than planned \(\d+\)$/.test(worse[0] || '')), 'true');
   t.step('What went over plan last month', 3);
   await home();
@@ -333,10 +451,15 @@ async function questions(browser, view, size) {
 
   // 6. What's my FI net worth (S-115): Insights, Net worth (under More on a phone). Today it is
   // September's ends: 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323 (tests/networth-households.test.js).
-  if (view === 'phone') { await t.tap('[data-key="more"]'); await t.tap('.more-menu a[data-nav="insights:networth"]'); }
-  else { await t.go('insights'); await t.tap('[data-key="tab-networth"]'); }
+  if (view === 'phone') {
+    await t.tap('[data-key="more"]');
+    await t.tap('.more-menu a[data-nav="insights:networth"]');
+  } else {
+    await t.go('insights');
+    await t.tap('[data-key="tab-networth"]');
+  }
   check(J, 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
-  t.step('What\'s my FI net worth', 2);
+  t.step("What's my FI net worth", 2);
   report('c. Six questions', view, t, null);
   await page.close();
 }
@@ -358,21 +481,41 @@ async function balances(browser, view, size) {
   await t.go('accounts');
   await page.waitForSelector('#cash-card');
   if (await page.locator('[data-key="accounts-review"]').count()) await t.tap('[data-key="accounts-review"]');
-  for (const [id, v] of [['chk', '3000'], ['sav', '400']]) await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
+  for (const [id, v] of [
+    ['chk', '3000'],
+    ['sav', '400']
+  ])
+    await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
   // Investments sit below, folded until their step.
   await t.tap('#other-accounts > summary');
-  for (const [id, v] of [['k401', '17100'], ['roth', '11300']]) await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
+  for (const [id, v] of [
+    ['k401', '17100'],
+    ['roth', '11300']
+  ])
+    await t.type('[data-path=\'["balances","2026-10","' + id + '","end"]\']', v);
   // The Visa's balance is what is owed, in Credit and debt on the same tab (S-137); it folds when up to date.
   if (await page.locator('[data-key="credit-review"]').count()) await t.tap('[data-key="credit-review"]');
   await t.type('[data-path=\'["balances","2026-10","visa","end"]\']', '300');
   t.step('Month-end balances for 5 accounts');
   report('d. Month-end balances', view, t, 20);
-  await page.evaluate(() => { location.hash = 'insights'; });
+  await page.evaluate(() => {
+    location.hash = 'insights';
+  });
   await page.click('[data-key="tab-networth"]');
   await page.selectOption('[data-key="nw-month"]', '2026-10');
-  check(J, 'October net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(37102.36)), money(37102.36));
+  check(
+    J,
+    'October net worth',
+    await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(37102.36)),
+    money(37102.36)
+  );
   await page.click('[data-key="nw-which-fi"]');
-  check(J, 'October FI net worth', await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(31500)), money(31500));
+  check(
+    J,
+    'October FI net worth',
+    await settled(page, '#chart-nw-bridge [data-key="nwb-actual"]', money(31500)),
+    money(31500)
+  );
   await page.close();
 }
 
@@ -388,8 +531,34 @@ await browser.close();
 console.log('\n| Journey | Step | Phone taps | Desktop taps | Limit |\n| --- | --- | --- | --- | --- |');
 for (const r of results.filter((x) => x.view === 'phone')) {
   const d = results.find((x) => x.journey === r.journey && x.view === 'desktop');
-  r.steps.forEach((s, i) => console.log('| ' + (i ? '' : r.journey) + ' | ' + s.name + ' | ' + s.taps + ' | ' + (d ? d.steps[i].taps : '') + ' | ' + (s.limit !== null ? s.limit : '') + ' |'));
-  console.log('| ' + r.journey + ' | **Total** | **' + r.total + '** | **' + (d ? d.total : '') + '** | ' + (r.limit ? 'under ' + r.limit : '') + ' |');
+  r.steps.forEach((s, i) =>
+    console.log(
+      '| ' +
+        (i ? '' : r.journey) +
+        ' | ' +
+        s.name +
+        ' | ' +
+        s.taps +
+        ' | ' +
+        (d ? d.steps[i].taps : '') +
+        ' | ' +
+        (s.limit !== null ? s.limit : '') +
+        ' |'
+    )
+  );
+  console.log(
+    '| ' +
+      r.journey +
+      ' | **Total** | **' +
+      r.total +
+      '** | **' +
+      (d ? d.total : '') +
+      '** | ' +
+      (r.limit ? 'under ' + r.limit : '') +
+      ' |'
+  );
 }
-console.log(failures ? '\n' + failures + ' FAILED' : '\nEvery journey within its limits, every number as worked out by hand.');
+console.log(
+  failures ? '\n' + failures + ' FAILED' : '\nEvery journey within its limits, every number as worked out by hand.'
+);
 process.exit(failures ? 1 : 0);

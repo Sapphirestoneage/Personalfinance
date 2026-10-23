@@ -74,16 +74,29 @@ export function blindSpot(model) {
  */
 export function culprits(model, n = 3) {
   // A single-total household's "everything" row has no actual of its own: what was found inside the total stands in.
-  const rows = spendingCats(model).map((c) => (c.isEverything && c.actual.amount === null
-    ? { id: c.id, name: c.name + ' (single total)', estimate: c.estimate.amount, actual: c.insideActual === undefined ? null : c.insideActual }
-    : { id: c.id, name: c.name, estimate: c.estimate.amount, actual: c.actual.amount }));
+  const rows = spendingCats(model).map((c) =>
+    c.isEverything && c.actual.amount === null
+      ? {
+          id: c.id,
+          name: c.name + ' (single total)',
+          estimate: c.estimate.amount,
+          actual: c.insideActual === undefined ? null : c.insideActual
+        }
+      : { id: c.id, name: c.name, estimate: c.estimate.amount, actual: c.actual.amount }
+  );
   return rows
     .filter((c) => c.actual !== null && c.estimate !== null && c.actual > c.estimate)
     .map((c) => {
       const gap = c.actual - c.estimate;
       return {
-        id: c.id, name: c.name, estimate: c.estimate, actual: c.actual,
-        gap, ratio: ratio(c.actual, c.estimate), cutMonthly: gap, cutYearly: gap * 12
+        id: c.id,
+        name: c.name,
+        estimate: c.estimate,
+        actual: c.actual,
+        gap,
+        ratio: ratio(c.actual, c.estimate),
+        cutMonthly: gap,
+        cutYearly: gap * 12
       };
     })
     .sort((a, b) => b.gap - a.gap)
@@ -135,8 +148,14 @@ export function correctionFactors(model, history) {
     const suggested = c.estimate.amount * avg;
     // Offered in whole dollars; a suggestion that rounds to the current estimate is not worth showing.
     out.push({
-      id: c.id, name: c.name, estimate: c.estimate.amount, factor: avg, suggested, months: ratios.length,
-      suggestedWhole: Math.round(suggested), worthOffering: Math.round(suggested) !== Math.round(c.estimate.amount)
+      id: c.id,
+      name: c.name,
+      estimate: c.estimate.amount,
+      factor: avg,
+      suggested,
+      months: ratios.length,
+      suggestedWhole: Math.round(suggested),
+      worthOffering: Math.round(suggested) !== Math.round(c.estimate.amount)
     });
   }
   return out;
@@ -164,13 +183,16 @@ export function proofOfCash(totals, threshold = 0.15) {
   const diff = entered - implied;
   const pct = implied > 0 ? Math.abs(diff) / implied : null;
   return {
-    available: true, implied, entered, diff, pct,
+    available: true,
+    implied,
+    entered,
+    diff,
+    pct,
     // With nothing left to spend after savings and debt, any entered spending at all is a mismatch.
     flagged: pct === null ? entered > 0 : pct > threshold,
     threshold
   };
 }
-
 
 /**
  * Blind guess vs the original estimate, measured against the actual.
@@ -196,7 +218,12 @@ export function blindCompare(doc, model, roundId) {
     const dBlind = act === null ? null : Math.abs(act - blind);
     const dOrig = act === null || orig === null ? null : Math.abs(act - orig);
     rows.push({
-      id: c.id, name: c.name, original: orig, blind, actual: act, change: minus(blind, orig),
+      id: c.id,
+      name: c.name,
+      original: orig,
+      blind,
+      actual: act,
+      change: minus(blind, orig),
       closer: dBlind === null || dOrig === null ? null : dBlind < dOrig ? 'blind' : dBlind > dOrig ? 'original' : 'tie'
     });
   }

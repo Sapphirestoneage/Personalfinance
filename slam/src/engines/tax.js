@@ -56,10 +56,26 @@ export function bracketTax(taxable, brackets) {
  * @returns {object} dollars a year: incomeTax, fica (socialSecurity + medicare), seTax, totalTax, takeHome, stdUsed, agi,
  *   taxable, ficaBase, bracket (the marginal rate), slices, and withheld (true for W-2 pay, where the employer withholds).
  */
-export function estimateAnnualTax({ gross, deductions = 0, incomeTaxFree = 0, ficaFree = 0, type, filingStatus, stdDeduction }, tax) {
+export function estimateAnnualTax(
+  { gross, deductions = 0, incomeTaxFree = 0, ficaFree = 0, type, filingStatus, stdDeduction },
+  tax
+) {
   // An unknown filing status is taxed as single.
   const brackets = tax.brackets[filingStatus] || tax.brackets.single;
-  const out = { incomeTax: 0, fica: 0, socialSecurity: 0, medicare: 0, seTax: 0, stdUsed: 0, taxable: 0, bracket: null, slices: [], agi: 0, ficaBase: 0, withheld: type === 'w2' };
+  const out = {
+    incomeTax: 0,
+    fica: 0,
+    socialSecurity: 0,
+    medicare: 0,
+    seTax: 0,
+    stdUsed: 0,
+    taxable: 0,
+    bracket: null,
+    slices: [],
+    agi: 0,
+    ficaBase: 0,
+    withheld: type === 'w2'
+  };
   // Family support is a gift to the client, not taxable income.
   if (type === 'not-taxable' || type === 'family') return finish(out, gross, deductions);
 
@@ -78,7 +94,9 @@ export function estimateAnnualTax({ gross, deductions = 0, incomeTaxFree = 0, fi
     // Self-employment tax is on 92.35% of net earnings (the netEarningsFactor), as on Schedule SE; the employer half
     // (half the tax) comes off AGI.
     const se = gross * tax.selfEmployment.netEarningsFactor;
-    out.seTax = Math.min(se, tax.fica.socialSecurityWageBase) * tax.selfEmployment.socialSecurityRate + se * tax.selfEmployment.medicareRate;
+    out.seTax =
+      Math.min(se, tax.fica.socialSecurityWageBase) * tax.selfEmployment.socialSecurityRate +
+      se * tax.selfEmployment.medicareRate;
     agi -= out.seTax / 2;
   }
   // How much of the standard deduction this source used up, so income.js can hand the rest to the next source.

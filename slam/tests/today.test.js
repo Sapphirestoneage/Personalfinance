@@ -30,8 +30,14 @@ test('the loop step: plan, then track, then review in the last three days', () =
   // The month is over but not closed yet: review it.
   assert.equal(loopStep(strip('reviewed', 40), '2026-11-03'), 'review');
   // February 2026 has 28 days: Review from the 26th.
-  assert.equal(loopStep({ month: '2026-02', plan: { state: 'started' }, track: { entries: 3 } }, '2026-02-25'), 'track');
-  assert.equal(loopStep({ month: '2026-02', plan: { state: 'started' }, track: { entries: 3 } }, '2026-02-26'), 'review');
+  assert.equal(
+    loopStep({ month: '2026-02', plan: { state: 'started' }, track: { entries: 3 } }, '2026-02-25'),
+    'track'
+  );
+  assert.equal(
+    loopStep({ month: '2026-02', plan: { state: 'started' }, track: { entries: 3 } }, '2026-02-26'),
+    'review'
+  );
 });
 
 test('the first session: five things, each done by an answer, not a number', () => {
@@ -39,7 +45,17 @@ test('the first session: five things, each done by an answer, not a number', () 
   const fs = () => firstSession(d, buildSummary(d, refs));
   // A new client: nothing answered. Filing status has a default, so it is not one of the five.
   // A sixth item is optional (S-130): yearly bills already paid. It never counts toward "left" or done.
-  assert.deepEqual(fs().items.map((i) => [i.key, i.done, !!i.optional]), [['gut', false, false], ['basics', false, false], ['income', false, false], ['rough', false, false], ['accounts', false, false], ['paid-ahead', false, true]]);
+  assert.deepEqual(
+    fs().items.map((i) => [i.key, i.done, !!i.optional]),
+    [
+      ['gut', false, false],
+      ['basics', false, false],
+      ['income', false, false],
+      ['rough', false, false],
+      ['accounts', false, false],
+      ['paid-ahead', false, true]
+    ]
+  );
   assert.equal(fs().left, 5);
 
   d.gut = makeValue(3000);
@@ -48,7 +64,10 @@ test('the first session: five things, each done by an answer, not a number', () 
   // Basics needs who you live with too.
   assert.equal(fs().items[1].done, false);
   d.household.livingWith = 'alone';
-  assert.deepEqual(fs().items.map((i) => i.done), [true, true, false, false, false, false]);
+  assert.deepEqual(
+    fs().items.map((i) => i.done),
+    [true, true, false, false, false, false]
+  );
 
   addIncome(d, { type: 'w2', label: 'Job' });
   // An income with nothing typed is not done (blank is not zero).

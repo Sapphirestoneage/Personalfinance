@@ -10,10 +10,23 @@ import { parseCSV } from './csv.js';
 // A format matches when every header is present (trimmed, lower-cased). Amex also needs one of its
 // extra headers, since its base three are the same as the generic file's.
 export const FORMATS = {
-  'chase-card': { label: 'Chase credit card', headers: ['transaction date', 'post date', 'description', 'category', 'type', 'amount'] },
-  'chase-checking': { label: 'Chase checking', headers: ['details', 'posting date', 'description', 'amount', 'type', 'balance'] },
-  amex: { label: 'American Express', headers: ['date', 'description', 'amount'], extra: ['card member', 'account #', 'extended details', 'appears on your statement as'] },
-  'capital-one': { label: 'Capital One', headers: ['transaction date', 'posted date', 'card no.', 'description', 'category', 'debit', 'credit'] },
+  'chase-card': {
+    label: 'Chase credit card',
+    headers: ['transaction date', 'post date', 'description', 'category', 'type', 'amount']
+  },
+  'chase-checking': {
+    label: 'Chase checking',
+    headers: ['details', 'posting date', 'description', 'amount', 'type', 'balance']
+  },
+  amex: {
+    label: 'American Express',
+    headers: ['date', 'description', 'amount'],
+    extra: ['card member', 'account #', 'extended details', 'appears on your statement as']
+  },
+  'capital-one': {
+    label: 'Capital One',
+    headers: ['transaction date', 'posted date', 'card no.', 'description', 'category', 'debit', 'credit']
+  },
   generic: { label: 'Generic (date, description, amount)', headers: ['date', 'description', 'amount'] }
 };
 
@@ -32,7 +45,12 @@ export function detectFormat(headerRow) {
   if (has(FORMATS['chase-card'].headers)) return 'chase-card';
   if (has(FORMATS['chase-checking'].headers)) return 'chase-checking';
   if (has(FORMATS.amex.headers) && FORMATS.amex.extra.some((x) => hs.includes(x))) return 'amex';
-  if (hs.some((x) => x.includes('date')) && hs.some((x) => x.includes('desc') || x === 'payee' || x === 'name') && hs.some((x) => x.includes('amount'))) return 'generic';
+  if (
+    hs.some((x) => x.includes('date')) &&
+    hs.some((x) => x.includes('desc') || x === 'payee' || x === 'name') &&
+    hs.some((x) => x.includes('amount'))
+  )
+    return 'generic';
   return null;
 }
 
@@ -80,7 +98,11 @@ export function merchantKey(description) {
   // Processor prefixes first (Square, Toast, PayPal, Chase's "PURCHASE AUTHORIZED ON"), then store
   // numbers, runs of three or more digits (dates, card digits), and stray punctuation.
   d = d.replace(/^(SQ \*|TST\* ?|POS |PURCHASE AUTHORIZED ON \d\d\/\d\d |DEBIT CARD PURCHASE |PAYPAL \*)/, '');
-  d = d.replace(/#\s*\d+/g, ' ').replace(/\b\d{3,}\b/g, ' ').replace(/[*]/g, ' ').replace(/[^A-Z0-9&.' /-]/g, ' ');
+  d = d
+    .replace(/#\s*\d+/g, ' ')
+    .replace(/\b\d{3,}\b/g, ' ')
+    .replace(/[*]/g, ' ')
+    .replace(/[^A-Z0-9&.' /-]/g, ' ');
   const words = d.split(/\s+/).filter(Boolean);
   return words.slice(0, 3).join(' ') || 'UNKNOWN';
 }
@@ -92,16 +114,31 @@ function readRow(format, cols, row, flip) {
     // Capital One splits money into debit and credit columns; an empty one means nothing moved that way.
     const debit = parseMoney(get('debit'));
     const credit = parseMoney(get('credit'));
-    return { date: parseDate(get('transaction date')), description: get('description'), outflow: (debit || 0) - (credit || 0), typeHint: null };
+    return {
+      date: parseDate(get('transaction date')),
+      description: get('description'),
+      outflow: (debit || 0) - (credit || 0),
+      typeHint: null
+    };
   }
   // Chase writes a charge as a negative amount, so the sign flips to read as money out.
   if (format === 'chase-card') {
     const a = parseMoney(get('amount'));
-    return { date: parseDate(get('transaction date')), description: get('description'), outflow: a === null ? null : -a, typeHint: (get('type') || '').toLowerCase() };
+    return {
+      date: parseDate(get('transaction date')),
+      description: get('description'),
+      outflow: a === null ? null : -a,
+      typeHint: (get('type') || '').toLowerCase()
+    };
   }
   if (format === 'chase-checking') {
     const a = parseMoney(get('amount'));
-    return { date: parseDate(get('posting date')), description: get('description'), outflow: a === null ? null : -a, typeHint: (get('type') || '').toLowerCase() };
+    return {
+      date: parseDate(get('posting date')),
+      description: get('description'),
+      outflow: a === null ? null : -a,
+      typeHint: (get('type') || '').toLowerCase()
+    };
   }
   // Amex already writes charges as positive.
   if (format === 'amex') {
@@ -113,10 +150,17 @@ function readRow(format, cols, row, flip) {
   const descCol = cols.find((c) => c.includes('desc') || c === 'payee' || c === 'name');
   const amtCol = cols.find((c) => c.includes('amount'));
   const a = parseMoney(row[cols.indexOf(amtCol)]);
-  return { date: parseDate(row[cols.indexOf(dateCol)]), description: row[cols.indexOf(descCol)], outflow: a === null ? null : (flip ? a : -a), typeHint: null };
+  return {
+    date: parseDate(row[cols.indexOf(dateCol)]),
+    description: row[cols.indexOf(descCol)],
+    outflow: a === null ? null : flip ? a : -a,
+    typeHint: null
+  };
 }
 
-function rx(pattern) { return new RegExp(pattern, 'i'); }
+function rx(pattern) {
+  return new RegExp(pattern, 'i');
+}
 
 /**
  * The kind of one imported row: card-payment, transfer, income, reimbursement, refund, fee, or spend.
@@ -191,9 +235,19 @@ export function importCSV(text, { account, format = 'auto', flip = false, rulesD
   rows.slice(1).forEach((row, i) => {
     const r = readRow(fmt, cols, row, flip);
     // Row i is line i + 2 of the file: the header is line 1 and i counts from 0.
-    if (!r.date || r.outflow === null || r.outflow === undefined || !r.description) { skipped.push(i + 2); return; }
+    if (!r.date || r.outflow === null || r.outflow === undefined || !r.description) {
+      skipped.push(i + 2);
+      return;
+    }
     // Rounded to the cent; the + 0 turns a -0 into 0.
-    const base = { date: r.date, amount: Math.round(r.outflow * 100) / 100 + 0, description: r.description.trim(), account, typeHint: r.typeHint, outflow: r.outflow };
+    const base = {
+      date: r.date,
+      amount: Math.round(r.outflow * 100) / 100 + 0,
+      description: r.description.trim(),
+      account,
+      typeHint: r.typeHint,
+      outflow: r.outflow
+    };
     base.kind = classifyKind(base, rulesData.kindRules, isCard);
     base.merchant = merchantKey(base.description);
     base.lineId = mapLine(base, rulesData.rules, memory);

@@ -22,20 +22,49 @@ function household() {
   // outflow 2,300; surplus 1,700. Take-home per hour: 4,000 / (50 x 52 / 12 = 216.667) = 18.461538
   const d = newHousehold('Switch');
   d.noDebts = true;
-  d.income.push({ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(4000), gross: makeValue(), deductions: [], hoursPerWeek: 50, state: 'active' });
+  d.income.push({
+    id: 'job',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: v(4000),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: 50,
+    state: 'active'
+  });
   findCategory(d, 'housing').estimate = v(1500);
   findCategory(d, 'food').estimate = v(500);
   findCategory(d, 'savings').estimate = v(300);
   // NEXT: teaching job, take-home 3,000 a month, 40 hours. Costs: +200 a month (license loan), -100 (shorter commute).
   // One-offs: course 2,500 + moving 500 = 3,000. Three months at 1,000 take-home while switching.
   // Pay rises to 4,500 a month after month 24.
-  const ns = newNextStage([['Stress, 1 to 10', 'lower'], ['Meaning or joy, 1 to 10', 'higher']]);
-  Object.assign(ns, { name: 'Become a teacher', takeHome: v(3000), hoursPerWeek: 40, transitionMonths: 3, transitionTakeHome: v(1000), laterTakeHome: v(4500), laterAfterMonths: 24 });
-  ns.costChanges = [{ id: 'c1', label: 'License loan', amount: v(200) }, { id: 'c2', label: 'Commute', amount: v(-100) }];
-  ns.oneOffCosts = [{ id: 'o1', label: 'Course', amount: v(2500, 'one-off') }, { id: 'o2', label: 'Moving', amount: v(500, 'one-off') }];
+  const ns = newNextStage([
+    ['Stress, 1 to 10', 'lower'],
+    ['Meaning or joy, 1 to 10', 'higher']
+  ]);
+  Object.assign(ns, {
+    name: 'Become a teacher',
+    takeHome: v(3000),
+    hoursPerWeek: 40,
+    transitionMonths: 3,
+    transitionTakeHome: v(1000),
+    laterTakeHome: v(4500),
+    laterAfterMonths: 24
+  });
+  ns.costChanges = [
+    { id: 'c1', label: 'License loan', amount: v(200) },
+    { id: 'c2', label: 'Commute', amount: v(-100) }
+  ];
+  ns.oneOffCosts = [
+    { id: 'o1', label: 'Course', amount: v(2500, 'one-off') },
+    { id: 'o2', label: 'Moving', amount: v(500, 'one-off') }
+  ];
   // hours are not a typed measure: 50 now (Basics) and 40 next come from the hours fields
-  ns.metrics[0].now = 8; ns.metrics[0].next = 4;
-  ns.metrics[1].now = 3; ns.metrics[1].next = 8;
+  ns.metrics[0].now = 8;
+  ns.metrics[0].next = 4;
+  ns.metrics[1].now = 3;
+  ns.metrics[1].next = 8;
   d.nextStage = ns;
   return d;
 }
@@ -74,7 +103,14 @@ test('next stage: other measures, and a shortfall that needs a cut', () => {
   const d = household();
   const n = buildSummary(migrate(d), refs).nextStage;
   // Hours 50 -> 40 = -10, stress 8 -> 4 = -4, meaning 3 -> 8 = +5: each moved the way it should.
-  assert.deepEqual(n.metrics.map((m) => [m.change, m.better]), [[-10, true], [-4, true], [5, true]]);
+  assert.deepEqual(
+    n.metrics.map((m) => [m.change, m.better]),
+    [
+      [-10, true],
+      [-4, true],
+      [5, true]
+    ]
+  );
   d.nextStage.takeHome = v(2000); // 2,000 - 2,400 = -400 a month
   const n2 = buildSummary(migrate(d), refs).nextStage;
   assert.equal(n2.cutNeeded, 400);
@@ -91,7 +127,12 @@ test('three lenses: disaster, likely, dream, with cash on hand and runway', () =
   Object.assign(ns.cases.disaster, { takeHome: v(2500), transitionMonths: 6, transitionTakeHome: v(0) });
   ns.oneOffCosts[0].disaster = v(4000, 'one-off');
   // DREAM: take-home 3,500; 1 month switching (at likely's 1,000); pay rises to 5,000 after 12 months.
-  Object.assign(ns.cases.dream, { takeHome: v(3500), transitionMonths: 1, laterTakeHome: v(5000), laterAfterMonths: 12 });
+  Object.assign(ns.cases.dream, {
+    takeHome: v(3500),
+    transitionMonths: 1,
+    laterTakeHome: v(5000),
+    laterAfterMonths: 12
+  });
   const { cases } = buildSummary(migrate(d), refs).nextStage;
 
   // DISASTER: outflow 2,400; after the switch 2,500 - 2,400 = +100

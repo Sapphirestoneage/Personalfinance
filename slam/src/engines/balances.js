@@ -17,7 +17,10 @@ import { weakestStatus } from './model.js';
 export function prevKey(key) {
   let [y, m] = key.split('-').map(Number);
   m -= 1;
-  if (m < 1) { m = 12; y -= 1; }
+  if (m < 1) {
+    m = 12;
+    y -= 1;
+  }
   return y + '-' + String(m).padStart(2, '0');
 }
 
@@ -33,10 +36,14 @@ const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
  */
 export function monthBalance(doc, month, accountId) {
   const b = ((doc.balances || {})[month] || {})[accountId] || null;
-  const end = b && typed(b.end) ? { amount: b.end.amount, status: b.end.status, from: 'typed' } : { amount: null, status: null, from: null };
+  const end =
+    b && typed(b.end)
+      ? { amount: b.end.amount, status: b.end.status, from: 'typed' }
+      : { amount: null, status: null, from: null };
   if (b && typed(b.start)) return { start: { amount: b.start.amount, status: b.start.status, from: 'typed' }, end };
   const prev = ((doc.balances || {})[prevKey(month)] || {})[accountId];
-  if (prev && typed(prev.end)) return { start: { amount: prev.end.amount, status: prev.end.status, from: 'carried' }, end };
+  if (prev && typed(prev.end))
+    return { start: { amount: prev.end.amount, status: prev.end.status, from: 'carried' }, end };
   return { start: { amount: null, status: null, from: null }, end };
 }
 
@@ -55,22 +62,45 @@ export function isCashAccount(a) {
  *   totals in dollars, null while any account in the group has no balance; missing and stale name the gaps
  */
 export function balancesFor(doc, month) {
-  const rows = (doc.accounts || []).filter((a) => a.state !== 'archived').map((a) => ({ id: a.id, name: a.name, type: a.type, cash: isCashAccount(a), card: a.type === 'credit-card',
-    required: isCashAccount(a) || a.type === 'credit-card', ...monthBalance(doc, month, a.id) }));
+  const rows = (doc.accounts || [])
+    .filter((a) => a.state !== 'archived')
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      cash: isCashAccount(a),
+      card: a.type === 'credit-card',
+      required: isCashAccount(a) || a.type === 'credit-card',
+      ...monthBalance(doc, month, a.id)
+    }));
   const cash = rows.filter((r) => r.cash);
   const cards = rows.filter((r) => r.card);
   // A total is only a total when every account in the list has the number: one missing balance makes
   // it null, not smaller. Rounded to the cent.
-  const total = (list, k) => (list.length && list.every((r) => r[k].amount !== null) ? Math.round(sumKnown(list.map((r) => r[k].amount)).total * 100) / 100 : null);
+  const total = (list, k) =>
+    list.length && list.every((r) => r[k].amount !== null)
+      ? Math.round(sumKnown(list.map((r) => r[k].amount)).total * 100) / 100
+      : null;
   return {
-    month, rows,
-    cashStart: total(cash, 'start'), cashEnd: total(cash, 'end'),
+    month,
+    rows,
+    cashStart: total(cash, 'start'),
+    cashEnd: total(cash, 'end'),
     // No card accounts means nothing is owed, a real 0. No cash accounts gives null: there is nothing to add.
-    cardsStart: cards.length ? total(cards, 'start') : 0, cardsEnd: cards.length ? total(cards, 'end') : 0,
+    cardsStart: cards.length ? total(cards, 'start') : 0,
+    cardsEnd: cards.length ? total(cards, 'end') : 0,
     required: rows.filter((r) => r.required),
-    missing: rows.filter((r) => r.required).flatMap((r) => [r.start.amount === null ? { id: r.id, name: r.name, which: 'start' } : null, r.end.amount === null ? { id: r.id, name: r.name, which: 'end' } : null]).filter(Boolean),
+    missing: rows
+      .filter((r) => r.required)
+      .flatMap((r) => [
+        r.start.amount === null ? { id: r.id, name: r.name, which: 'start' } : null,
+        r.end.amount === null ? { id: r.id, name: r.name, which: 'end' } : null
+      ])
+      .filter(Boolean),
     // Optional ones with no end this month: when each was last updated (a date, or null for never).
-    stale: rows.filter((r) => !r.required && r.end.amount === null).map((r) => ({ id: r.id, name: r.name, last: lastUpdated(doc, r.id, lastDayOf(month)) }))
+    stale: rows
+      .filter((r) => !r.required && r.end.amount === null)
+      .map((r) => ({ id: r.id, name: r.name, last: lastUpdated(doc, r.id, lastDayOf(month)) }))
   };
 }
 
@@ -94,8 +124,17 @@ export function liabilities(doc) {
   const cards = (doc.accounts || []).filter((a) => a.state !== 'archived' && a.type === 'credit-card');
   const linked = new Set(cards.map((a) => a.debtId).filter(Boolean));
   return [
-    ...cards.map((a) => ({ key: a.id, name: a.name, debtType: 'credit-card', debtId: a.debtId || null, account: a, debt: (doc.debts || []).find((d) => d.id === a.debtId) || null })),
-    ...(doc.debts || []).filter((d) => d.state !== 'archived' && !linked.has(d.id)).map((d) => ({ key: d.id, name: d.label, debtType: d.type, debtId: d.id, account: null, debt: d }))
+    ...cards.map((a) => ({
+      key: a.id,
+      name: a.name,
+      debtType: 'credit-card',
+      debtId: a.debtId || null,
+      account: a,
+      debt: (doc.debts || []).find((d) => d.id === a.debtId) || null
+    })),
+    ...(doc.debts || [])
+      .filter((d) => d.state !== 'archived' && !linked.has(d.id))
+      .map((d) => ({ key: d.id, name: d.label, debtType: d.type, debtId: d.id, account: null, debt: d }))
   ];
 }
 
@@ -112,10 +151,20 @@ export function observations(doc, key) {
   for (const [m, accts] of Object.entries(doc.balances || {})) {
     const b = accts[key];
     if (!b) continue;
-    if (typed(b.start)) out.push({ date: b.startOn || m + '-01', amount: b.start.amount, status: b.start.status, from: 'start', order: 0 });
-    if (typed(b.end)) out.push({ date: b.endOn || lastDayOf(m), amount: b.end.amount, status: b.end.status, from: 'end', order: 2 });
+    if (typed(b.start))
+      out.push({
+        date: b.startOn || m + '-01',
+        amount: b.start.amount,
+        status: b.start.status,
+        from: 'start',
+        order: 0
+      });
+    if (typed(b.end))
+      out.push({ date: b.endOn || lastDayOf(m), amount: b.end.amount, status: b.end.status, from: 'end', order: 2 });
   }
-  for (const c of ((doc.cashflow || {}).checks || [])) if (c.accountId === key && typed(c.amount)) out.push({ date: c.date, amount: c.amount.amount, status: c.amount.status, from: 'check', order: 1 });
+  for (const c of (doc.cashflow || {}).checks || [])
+    if (c.accountId === key && typed(c.amount))
+      out.push({ date: c.date, amount: c.amount.amount, status: c.amount.status, from: 'check', order: 1 });
   // On the same day: start, then checks, then end (order 0, 1, 2), so the end is the latest reading.
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.order - b.order));
 }
@@ -133,7 +182,8 @@ export function balanceAt(doc, key, date) {
   const obs = observations(doc, key).filter((o) => o.date <= date);
   if (obs.length) return obs[obs.length - 1];
   const debt = (doc.debts || []).find((d) => d.id === key);
-  if (debt && typed(debt.balance)) return { date: debt.balance.asOf || null, amount: debt.balance.amount, status: debt.balance.status, from: 'debt' };
+  if (debt && typed(debt.balance))
+    return { date: debt.balance.asOf || null, amount: debt.balance.amount, status: debt.balance.status, from: 'debt' };
   return null;
 }
 
@@ -162,14 +212,24 @@ export function cashOnHand(doc) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && isCashAccount(a));
   // Only months up to the one being worked on count, newest first: a balance typed for a month ahead is
   // not cash on hand yet. An account with no month end anywhere falls back to this month's start.
-  const months = Object.keys(doc.balances || {}).filter((k) => k <= doc.currentMonth).sort().reverse();
+  const months = Object.keys(doc.balances || {})
+    .filter((k) => k <= doc.currentMonth)
+    .sort()
+    .reverse();
   const parts = accts.map((a) => {
     for (const m of months) {
       const v = (doc.balances[m][a.id] || {}).end;
       if (typed(v)) return { id: a.id, name: a.name, amount: v.amount, status: v.status, month: m, from: 'end' };
     }
     const s = monthBalance(doc, doc.currentMonth, a.id).start;
-    return { id: a.id, name: a.name, amount: s.amount, status: s.status, month: doc.currentMonth, from: s.from ? 'start' : null };
+    return {
+      id: a.id,
+      name: a.name,
+      amount: s.amount,
+      status: s.status,
+      month: doc.currentMonth,
+      from: s.from ? 'start' : null
+    };
   });
   const known = parts.filter((p) => p.amount !== null);
   return {
@@ -191,7 +251,10 @@ export function cashOnHand(doc) {
 export function linkedCardBalance(doc, debtId) {
   const a = (doc.accounts || []).find((x) => x.debtId === debtId && x.state !== 'archived');
   if (!a) return null;
-  const months = Object.keys(doc.balances || {}).filter((k) => k <= doc.currentMonth).sort().reverse();
+  const months = Object.keys(doc.balances || {})
+    .filter((k) => k <= doc.currentMonth)
+    .sort()
+    .reverse();
   for (const m of months) {
     const v = (doc.balances[m][a.id] || {}).end;
     if (typed(v)) return { accountId: a.id, name: a.name, amount: v.amount, month: m };
@@ -211,14 +274,20 @@ export function linkedCardBalance(doc, debtId) {
  */
 export function cardMap(doc, month) {
   const cards = (doc.accounts || []).filter((a) => a.state !== 'archived' && a.type === 'credit-card');
-  const lines = (doc.categories || []).flatMap((c) => c.state === 'archived' ? [] : c.lines.filter((l) => l.state !== 'archived'));
+  const lines = (doc.categories || []).flatMap((c) =>
+    c.state === 'archived' ? [] : c.lines.filter((l) => l.state !== 'archived')
+  );
   // Charges logged on the card: spend entries only (an entry with no kind is a spend).
-  const entries = (doc.transactions || []).filter((t) => !t.deleted && t.date.startsWith(month) && (t.kind || 'spend') === 'spend');
+  const entries = (doc.transactions || []).filter(
+    (t) => !t.deleted && t.date.startsWith(month) && (t.kind || 'spend') === 'spend'
+  );
   const rows = cards.map((a) => {
     const debt = a.debtId ? (doc.debts || []).find((d) => d.id === a.debtId) || null : null;
     const logged = entries.filter((t) => t.account === a.id);
     return {
-      id: a.id, name: a.name, institution: a.institution || '',
+      id: a.id,
+      name: a.name,
+      institution: a.institution || '',
       debt: debt ? { id: debt.id, label: debt.label } : null,
       owed: monthBalance(doc, month, a.id).end.amount,
       paidOn: lines.filter((l) => l.accountId === a.id).map((l) => l.name),
@@ -227,7 +296,9 @@ export function cardMap(doc, month) {
     };
   });
   const linked = new Set(cards.map((a) => a.debtId).filter(Boolean));
-  const noAccount = (doc.debts || []).filter((d) => d.state !== 'archived' && d.type === 'credit-card' && !linked.has(d.id)).map((d) => ({ id: d.id, label: d.label }));
+  const noAccount = (doc.debts || [])
+    .filter((d) => d.state !== 'archived' && d.type === 'credit-card' && !linked.has(d.id))
+    .map((d) => ({ id: d.id, label: d.label }));
   return { rows, noAccount };
 }
 
@@ -239,7 +310,6 @@ export const ACCOUNT_GROUPS = [
   ['retire', 'Retirement, HSA, and 529', ['401k', 'trad-ira', 'roth-ira', 'hsa', '529', 'cash-value-life']],
   ['own', 'Things you own', ['home', 'vehicle', 'other-asset']]
 ];
-
 
 const prevDay = (date) => new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
 const typedValue = (v) => !!v && v.amount !== null && v.amount !== undefined;
@@ -253,7 +323,8 @@ const typedValue = (v) => !!v && v.amount !== null && v.amount !== undefined;
  */
 export function monthStartOf(doc, key, month) {
   const b = ((doc.balances || {})[month] || {})[key];
-  if (b && typedValue(b.start)) return { date: b.startOn || month + '-01', amount: b.start.amount, status: b.start.status, from: 'start' };
+  if (b && typedValue(b.start))
+    return { date: b.startOn || month + '-01', amount: b.start.amount, status: b.start.status, from: 'start' };
   return balanceAt(doc, key, prevDay(month + '-01'));
 }
 
@@ -266,7 +337,8 @@ export function monthStartOf(doc, key, month) {
  */
 export function monthEndOf(doc, key, month) {
   const b = ((doc.balances || {})[month] || {})[key];
-  if (b && typedValue(b.end)) return { date: b.endOn || lastDayOf(month), amount: b.end.amount, status: b.end.status, from: 'end' };
+  if (b && typedValue(b.end))
+    return { date: b.endOn || lastDayOf(month), amount: b.end.amount, status: b.end.status, from: 'end' };
   return balanceAt(doc, key, lastDayOf(month));
 }
 
@@ -283,12 +355,26 @@ export const FRESH_DAYS = 30;
  */
 export function accountsStatus(doc, today) {
   const DAY = 86400000;
-  const cash = (doc.accounts || []).filter((a) => a.state !== 'archived' && CASH_ACCOUNT_TYPES.includes(a.type)).map((a) => {
-    const latest = balanceAt(doc, a.id, today);
-    // Days since the latest reading; null when it has no day, so it can never count as fresh.
-    const days = latest && latest.date ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY) : null;
-    return { id: a.id, name: a.name, type: a.type, institution: a.institution || '', latest, days, fresh: days !== null && days <= FRESH_DAYS, history: observations(doc, a.id) };
-  });
+  const cash = (doc.accounts || [])
+    .filter((a) => a.state !== 'archived' && CASH_ACCOUNT_TYPES.includes(a.type))
+    .map((a) => {
+      const latest = balanceAt(doc, a.id, today);
+      // Days since the latest reading; null when it has no day, so it can never count as fresh.
+      const days =
+        latest && latest.date
+          ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY)
+          : null;
+      return {
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        institution: a.institution || '',
+        latest,
+        days,
+        fresh: days !== null && days <= FRESH_DAYS,
+        history: observations(doc, a.id)
+      };
+    });
   const known = cash.filter((x) => x.latest);
   return {
     cash,
@@ -313,14 +399,27 @@ export function creditStatus(doc, today) {
   const DAY = 86400000;
   const rows = liabilities(doc).map((l) => {
     const latest = balanceAt(doc, l.key, today);
-    const days = latest && latest.date ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY) : null;
+    const days =
+      latest && latest.date
+        ? Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(latest.date + 'T00:00:00Z')) / DAY)
+        : null;
     const limit = l.debt && typed(l.debt.creditLimit) ? l.debt.creditLimit.amount : null;
     const owed = latest ? latest.amount : null;
     const revolving = REVOLVING.includes(l.debtType);
     return {
-      key: l.key, name: l.name, debtType: l.debtType, debtId: l.debtId, revolving, latest, owed, days, fresh: days !== null && days <= FRESH_DAYS,
+      key: l.key,
+      name: l.name,
+      debtType: l.debtType,
+      debtId: l.debtId,
+      revolving,
+      latest,
+      owed,
+      days,
+      fresh: days !== null && days <= FRESH_DAYS,
       // A limit of 0 (or none) gives no used share; a missing balance leaves available and used unknown.
-      limit, available: limit === null || owed === null ? null : Math.round((limit - owed) * 100) / 100, used: limit && owed !== null ? owed / limit : null,
+      limit,
+      available: limit === null || owed === null ? null : Math.round((limit - owed) * 100) / 100,
+      used: limit && owed !== null ? owed / limit : null,
       history: observations(doc, l.key)
     };
   });

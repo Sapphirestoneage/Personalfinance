@@ -27,7 +27,8 @@ export function estimateHistory(doc, history, catId) {
     const plan = planView(doc, k);
     return {
       // The estimate is the one locked at the month's close; an open month has none yet.
-      key: k, closed: !!rec,
+      key: k,
+      closed: !!rec,
       estimate: rec && rec.snapshot.categories[catId] ? rec.snapshot.categories[catId].estimate : null,
       plan: plan && plan.cats[catId] ? plan.cats[catId].amount : null,
       actual: p ? p.actual : null
@@ -36,9 +37,18 @@ export function estimateHistory(doc, history, catId) {
   const freq = primaryPayFrequency(doc);
   const cat = doc.categories.find((c) => c.id === catId);
   const lineIds = new Set(cat ? cat.lines.map((l) => l.id) : []);
-  const changes = (doc.estimateLog || []).filter((e) => e.categoryId === catId || lineIds.has(e.lineId)).map((e) => ({
-    at: e.at, month: e.month, what: e.categoryId ? (cat ? cat.name : catId) : ((cat && cat.lines.find((l) => l.id === e.lineId)) || { name: e.lineId }).name,
-    from: e.from ? toMonthly(e.from, freq) : null, to: e.to ? toMonthly(e.to, freq) : null
-  }));
+  const changes = (doc.estimateLog || [])
+    .filter((e) => e.categoryId === catId || lineIds.has(e.lineId))
+    .map((e) => ({
+      at: e.at,
+      month: e.month,
+      what: e.categoryId
+        ? cat
+          ? cat.name
+          : catId
+        : ((cat && cat.lines.find((l) => l.id === e.lineId)) || { name: e.lineId }).name,
+      from: e.from ? toMonthly(e.from, freq) : null,
+      to: e.to ? toMonthly(e.to, freq) : null
+    }));
   return { catId, rows, changes };
 }

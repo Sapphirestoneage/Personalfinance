@@ -68,23 +68,29 @@ test('a month that ties: every line by hand, total and FI', () => {
   assert.deepEqual([b.total.start, b.total.actual, b.total.change], [15500, 17750, 2250]);
   assert.deepEqual(lines(b.total), {
     surplus: 1750,
-    timing: -310,       // yearly -1,100 + paid ahead +1,100 = 0 (the bill's line is gone), owed -60, one-off -250
-    saved: 500,         // the savings line 200 + the Roth from the paycheck 300
-    'paid-down': 260,   // the Visa minimum 40 + the loan 6,000 -> 5,780 = 220
-    market: 200,        // Roth 6,500 - 6,000 - 300 contributed
-    value: -150         // car 9,000 -> 8,850
+    timing: -310, // yearly -1,100 + paid ahead +1,100 = 0 (the bill's line is gone), owed -60, one-off -250
+    saved: 500, // the savings line 200 + the Roth from the paycheck 300
+    'paid-down': 260, // the Visa minimum 40 + the loan 6,000 -> 5,780 = 220
+    market: 200, // Roth 6,500 - 6,000 - 300 contributed
+    value: -150 // car 9,000 -> 8,850
   });
   // 15,500 + 1,750 - 310 + 500 + 260 + 200 - 150 = 17,750: explained, nothing left over.
   assert.deepEqual([b.total.explained, b.total.unexplained, b.total.ties], [17750, 0, true]);
   // Saved: 1,750 - 310 + 500 = 1,940.
-  assert.equal(b.reading, 'Net worth rose $2,250. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own.');
+  assert.equal(
+    b.reading,
+    'Net worth rose $2,250. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own.'
+  );
   // FI leaves out the car, its loan, and what is paid ahead (the cash went out: FI tells that story). Start: 2,000 + 5,000 + 6,000 - 500 = 12,500. End: 2,230 + 5,200 + 6,500 - 350 = 13,580.
   assert.deepEqual([b.fi.start, b.fi.actual, b.fi.change], [12500, 13580, 1080]);
   // Lines: the loan's 220 and the car's -150 are gone: 1,750 - 1,410 + 500 + 40 + 200 = 1,080.
   assert.deepEqual(lines(b.fi), { surplus: 1750, timing: -1410, saved: 500, 'paid-down': 40, market: 200 });
   assert.deepEqual([b.fi.explained, b.fi.unexplained], [13580, 0]);
   // The waterfall: start, six lines, explained, end (nothing unexplained to draw).
-  assert.deepEqual(netWorthBridgeRows(b.total).map((r) => r.label), ['Start', 'Surplus', 'Timing', 'Saved', 'Debt paid', 'Market', 'Values', 'Explained', 'End']);
+  assert.deepEqual(
+    netWorthBridgeRows(b.total).map((r) => r.label),
+    ['Start', 'Surplus', 'Timing', 'Saved', 'Debt paid', 'Market', 'Values', 'Explained', 'End']
+  );
 });
 
 test('a month with $60 not explained (the ATM cash), the same in the total and FI', () => {
@@ -93,7 +99,10 @@ test('a month with $60 not explained (the ATM cash), the same in the total and F
   // Checking ends 60 lower (2,170): actual 17,690; explained still 17,750; not explained -60, as in the cash bridge.
   assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained, b.total.ties], [17690, 17750, -60, false]);
   assert.deepEqual([b.fi.unexplained, b.parts.cash], [-60, -60]);
-  assert.equal(b.reading, 'Net worth rose $2,190. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own. $60 is not explained yet.');
+  assert.equal(
+    b.reading,
+    'Net worth rose $2,190. $1,940 you saved, $200 the market added, $260 of debt paid down, $150 of value lost on things you own. $60 is not explained yet.'
+  );
   assert.equal(netWorthBridgeRows(b.total).find((r) => r.kind === 'unexplained').label, 'Not explained yet');
 });
 
@@ -104,7 +113,10 @@ test('an investment not updated this month: no market line, and its contribution
   // explained 15,500 + 1,750 - 310 + 500 + 260 - 150 = 17,550, so -300 (the 300 contributed) is not explained yet.
   assert.equal(lines(b.total).market, undefined);
   assert.deepEqual([b.total.actual, b.total.explained, b.total.unexplained], [17250, 17550, -300]);
-  assert.deepEqual(b.total.stale.map((x) => [x.name, x.contributions]), [['Roth IRA', 300]]);
+  assert.deepEqual(
+    b.total.stale.map((x) => [x.name, x.contributions]),
+    [['Roth IRA', 300]]
+  );
   assert.equal(b.parts.stale, -300);
   assert.match(b.reading, /\$300 is not explained yet \(Roth IRA not updated this month\)\.$/);
 });
@@ -119,7 +131,9 @@ test('contributions are never typed twice: balances do not change them', () => {
 });
 
 test('the bridge always ties, for every month of every household file', () => {
-  const files = readdirSync(new URL('../src/data/households/', import.meta.url)).filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
+  const files = readdirSync(new URL('../src/data/households/', import.meta.url))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace('.json', ''));
   let checked = 0;
   for (const name of files) {
     const d = loadHousehold(name);
@@ -130,9 +144,17 @@ test('the bridge always ties, for every month of every household file', () => {
         const x = b[k];
         if (x.unexplained === null) continue;
         // Explained + not explained = the actual change, to the cent.
-        assert.equal(Math.round((x.explained - x.start + x.unexplained) * 100), Math.round(x.change * 100), name + ' ' + month + ' ' + k);
+        assert.equal(
+          Math.round((x.explained - x.start + x.unexplained) * 100),
+          Math.round(x.change * 100),
+          name + ' ' + month + ' ' + k
+        );
         // And not explained = the cash bridge's + money moved outside the budget + contributions not seen yet.
-        assert.equal(Math.round(x.unexplained * 100), Math.round((b.parts.cash + b.parts.moved + b.parts.stale) * 100), name + ' ' + month + ' ' + k + ' parts');
+        assert.equal(
+          Math.round(x.unexplained * 100),
+          Math.round((b.parts.cash + b.parts.moved + b.parts.stale) * 100),
+          name + ' ' + month + ' ' + k + ' parts'
+        );
         checked += 1;
       }
     }

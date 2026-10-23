@@ -38,9 +38,18 @@ export function guessFor(doc, catId, refs) {
   // Whole dollars: a guess with cents would look measured. The table says when its figures are a
   // placeholder, and the note repeats that so the label stays honest.
   return {
-    amount: Math.round(row[catId]), cadence: 'month', status: 'guess', source: 'app', asOf: null,
-    note: 'Guess: national average, household of ' + size + ', source ' + (refs.averages.placeholder ? 'placeholder ' : '') +
-      'BLS Consumer Expenditure Survey ' + refs.averages.year
+    amount: Math.round(row[catId]),
+    cadence: 'month',
+    status: 'guess',
+    source: 'app',
+    asOf: null,
+    note:
+      'Guess: national average, household of ' +
+      size +
+      ', source ' +
+      (refs.averages.placeholder ? 'placeholder ' : '') +
+      'BLS Consumer Expenditure Survey ' +
+      refs.averages.year
   };
 }
 

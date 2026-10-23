@@ -7,26 +7,122 @@
 
 import { newId } from './ids.js';
 
-export const META = ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version', 'deleted', 'deletedAt', 'deletedBy'];
+export const META = [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'createdBy',
+  'updatedBy',
+  'version',
+  'deleted',
+  'deletedAt',
+  'deletedBy'
+];
 
 // Where records live. kind 'array': a list of records with ids; 'nested': a list inside each record
 // of a parent collection; 'map': records keyed by a path (they get a random id of their own).
 // Both maps are two deep: balances[month][accountId] and plans[month].lines[key].
 export const COLLECTIONS = [
-  { name: 'category', kind: 'array', get: (d) => d.categories, set: (d, v) => { d.categories = v; }, children: ['lines'] },
+  {
+    name: 'category',
+    kind: 'array',
+    get: (d) => d.categories,
+    set: (d, v) => {
+      d.categories = v;
+    },
+    children: ['lines']
+  },
   { name: 'line', kind: 'nested', parent: 'category', field: 'lines' },
-  { name: 'income', kind: 'array', get: (d) => d.income, set: (d, v) => { d.income = v; }, children: ['deductions'] },
+  {
+    name: 'income',
+    kind: 'array',
+    get: (d) => d.income,
+    set: (d, v) => {
+      d.income = v;
+    },
+    children: ['deductions']
+  },
   { name: 'deduction', kind: 'nested', parent: 'income', field: 'deductions' },
-  { name: 'debt', kind: 'array', get: (d) => d.debts, set: (d, v) => { d.debts = v; } },
-  { name: 'account', kind: 'array', get: (d) => d.accounts, set: (d, v) => { d.accounts = v; } },
-  { name: 'entry', kind: 'array', get: (d) => d.transactions, set: (d, v) => { d.transactions = v; } },
-  { name: 'tag', kind: 'array', get: (d) => d.tags, set: (d, v) => { d.tags = v; } },
-  { name: 'era', kind: 'array', get: (d) => d.eras && d.eras.list, set: (d, v) => { d.eras.list = v; } },
-  { name: 'estimate-change', kind: 'array', get: (d) => d.estimateLog, set: (d, v) => { d.estimateLog = v; } },
-  { name: 'balance-check', kind: 'array', get: (d) => d.cashflow && d.cashflow.checks, set: (d, v) => { d.cashflow.checks = v; } },
-  { name: 'next-cost', kind: 'array', get: (d) => d.nextStage && d.nextStage.oneOffCosts, set: (d, v) => { d.nextStage.oneOffCosts = v; } },
-  { name: 'next-change', kind: 'array', get: (d) => d.nextStage && d.nextStage.costChanges, set: (d, v) => { d.nextStage.costChanges = v; } },
-  { name: 'next-measure', kind: 'array', get: (d) => d.nextStage && d.nextStage.metrics, set: (d, v) => { d.nextStage.metrics = v; } },
+  {
+    name: 'debt',
+    kind: 'array',
+    get: (d) => d.debts,
+    set: (d, v) => {
+      d.debts = v;
+    }
+  },
+  {
+    name: 'account',
+    kind: 'array',
+    get: (d) => d.accounts,
+    set: (d, v) => {
+      d.accounts = v;
+    }
+  },
+  {
+    name: 'entry',
+    kind: 'array',
+    get: (d) => d.transactions,
+    set: (d, v) => {
+      d.transactions = v;
+    }
+  },
+  {
+    name: 'tag',
+    kind: 'array',
+    get: (d) => d.tags,
+    set: (d, v) => {
+      d.tags = v;
+    }
+  },
+  {
+    name: 'era',
+    kind: 'array',
+    get: (d) => d.eras && d.eras.list,
+    set: (d, v) => {
+      d.eras.list = v;
+    }
+  },
+  {
+    name: 'estimate-change',
+    kind: 'array',
+    get: (d) => d.estimateLog,
+    set: (d, v) => {
+      d.estimateLog = v;
+    }
+  },
+  {
+    name: 'balance-check',
+    kind: 'array',
+    get: (d) => d.cashflow && d.cashflow.checks,
+    set: (d, v) => {
+      d.cashflow.checks = v;
+    }
+  },
+  {
+    name: 'next-cost',
+    kind: 'array',
+    get: (d) => d.nextStage && d.nextStage.oneOffCosts,
+    set: (d, v) => {
+      d.nextStage.oneOffCosts = v;
+    }
+  },
+  {
+    name: 'next-change',
+    kind: 'array',
+    get: (d) => d.nextStage && d.nextStage.costChanges,
+    set: (d, v) => {
+      d.nextStage.costChanges = v;
+    }
+  },
+  {
+    name: 'next-measure',
+    kind: 'array',
+    get: (d) => d.nextStage && d.nextStage.metrics,
+    set: (d, v) => {
+      d.nextStage.metrics = v;
+    }
+  },
   { name: 'balance', kind: 'map', get: (d) => d.balances, depth: 2 },
   { name: 'plan-line', kind: 'map', get: (d) => d.plans, depth: 2, inner: 'lines' }
 ];
@@ -47,16 +143,19 @@ export function flatten(doc) {
     if (c.kind === 'array') {
       for (const r of c.get(doc) || []) out[c.name + ':' + r.id] = { rec: r, coll: c };
       if (c.children) {
-        for (const parent of c.get(doc) || []) for (const field of c.children) {
-          const child = COLLECTIONS.find((x) => x.parent === c.name && x.field === field);
-          for (const r of parent[field] || []) out[child.name + ':' + r.id] = { rec: r, coll: child, parentId: parent.id };
-        }
+        for (const parent of c.get(doc) || [])
+          for (const field of c.children) {
+            const child = COLLECTIONS.find((x) => x.parent === c.name && x.field === field);
+            for (const r of parent[field] || [])
+              out[child.name + ':' + r.id] = { rec: r, coll: child, parentId: parent.id };
+          }
       }
     }
     if (c.kind === 'map') {
       for (const [a, inner] of Object.entries(c.get(doc) || {})) {
         const level = c.inner ? (inner || {})[c.inner] || {} : inner || {};
-        for (const [b, r] of Object.entries(level)) if (r && typeof r === 'object') out[c.name + ':' + a + '/' + b] = { rec: r, coll: c, path: [a, b] };
+        for (const [b, r] of Object.entries(level))
+          if (r && typeof r === 'object') out[c.name + ':' + a + '/' + b] = { rec: r, coll: c, path: [a, b] };
       }
     }
   }
@@ -73,7 +172,10 @@ function ensureIds(doc, fromPlace = false) {
     if (c.kind !== 'array') continue;
     (c.get(doc) || []).forEach((r, i) => {
       if (!r.id) r.id = fromPlace ? 'old-' + c.name + '-' + i : newId('rec');
-      for (const field of childrenOf(c)) (r[field] || []).forEach((k, j) => { if (!k.id) k.id = fromPlace ? 'old-' + c.name + '-' + i + '-' + j : newId('rec'); });
+      for (const field of childrenOf(c))
+        (r[field] || []).forEach((k, j) => {
+          if (!k.id) k.id = fromPlace ? 'old-' + c.name + '-' + i + '-' + j : newId('rec');
+        });
     });
   }
   return doc;
@@ -83,7 +185,8 @@ function ensureIds(doc, fromPlace = false) {
 // key is its path, not an id.
 function fresh(rec, nowIso, role, idNeeded) {
   if (idNeeded && !rec.id) rec.id = newId('rec');
-  if (rec.version === undefined) Object.assign(rec, { createdAt: nowIso, updatedAt: nowIso, createdBy: role, updatedBy: role, version: 1 });
+  if (rec.version === undefined)
+    Object.assign(rec, { createdAt: nowIso, updatedAt: nowIso, createdBy: role, updatedBy: role, version: 1 });
 }
 
 // The live view: the document with every deleted record left out.
@@ -120,24 +223,42 @@ export function stamp(prev, draft, nowIso, role) {
   for (const [key, x] of Object.entries(after)) {
     const p = before[key];
     const kids = childrenOf(x.coll);
-    if (!p) { fresh(x.rec, nowIso, role, x.coll.kind === 'map'); continue; }
+    if (!p) {
+      fresh(x.rec, nowIso, role, x.coll.kind === 'map');
+      continue;
+    }
     // Same content on a live record keeps its version; a record brought back from deleted counts as changed.
     const same = contentOf(p.rec, kids) === contentOf(x.rec, kids) && !p.rec.deleted;
     // Identity and creation come from before, even when the draft lost them.
     for (const k of ['id', 'createdAt', 'createdBy']) if (p.rec[k] !== undefined) x.rec[k] = p.rec[k];
     // A record never stamped (from an older file) is stamped fresh, not bumped.
-    if (p.rec.version === undefined) { fresh(x.rec, nowIso, role, x.coll.kind === 'map'); continue; }
+    if (p.rec.version === undefined) {
+      fresh(x.rec, nowIso, role, x.coll.kind === 'map');
+      continue;
+    }
     if (same) {
       for (const k of ['updatedAt', 'updatedBy', 'version']) x.rec[k] = p.rec[k];
     } else {
       Object.assign(x.rec, { updatedAt: nowIso, updatedBy: role, version: p.rec.version + 1 });
-      delete x.rec.deleted; delete x.rec.deletedAt; delete x.rec.deletedBy;
+      delete x.rec.deleted;
+      delete x.rec.deletedAt;
+      delete x.rec.deletedBy;
     }
   }
   // Records the edit removed (and ones deleted before) stay in the file, marked deleted.
   for (const [key, p] of Object.entries(before)) {
     if (after[key]) continue;
-    const tomb = p.rec.deleted ? clone(p.rec) : { ...clone(p.rec), deleted: true, deletedAt: nowIso, deletedBy: role, updatedAt: nowIso, updatedBy: role, version: (p.rec.version || 1) + 1 };
+    const tomb = p.rec.deleted
+      ? clone(p.rec)
+      : {
+          ...clone(p.rec),
+          deleted: true,
+          deletedAt: nowIso,
+          deletedBy: role,
+          updatedAt: nowIso,
+          updatedBy: role,
+          version: (p.rec.version || 1) + 1
+        };
     putBack(next, p, tomb);
   }
   return next;
@@ -177,6 +298,7 @@ export function stampAll(doc, atIso, role = 'coach') {
 // records refer to it by that); a map record's id is bookkeeping only, since its key is its path.
 export function stripMeta(doc) {
   const d = clone(doc);
-  for (const x of Object.values(flatten(d))) for (const k of META) if (k !== 'id' || x.coll.kind === 'map') delete x.rec[k];
+  for (const x of Object.values(flatten(d)))
+    for (const k of META) if (k !== 'id' || x.coll.kind === 'map') delete x.rec[k];
   return d;
 }

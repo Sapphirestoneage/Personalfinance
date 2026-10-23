@@ -12,8 +12,13 @@ export const PREMIUM_LINE_TYPES = ['health-insurance'];
 export const PARENTS_PLAN_LINE_TYPES = PREMIUM_LINE_TYPES;
 
 export const HOW_LABELS = {
-  employer: 'An employer plan', parent: 'A parent\'s plan', marketplace: 'Marketplace or ACA', public: 'Medicaid or Medicare',
-  school: 'A school plan', none: 'No coverage', 'not-sure': 'Not sure'
+  employer: 'An employer plan',
+  parent: "A parent's plan",
+  marketplace: 'Marketplace or ACA',
+  public: 'Medicaid or Medicare',
+  school: 'A school plan',
+  none: 'No coverage',
+  'not-sure': 'Not sure'
 };
 
 const cov = (doc) => doc.coverage || {};
@@ -64,11 +69,22 @@ export function premiumFor(doc, freq) {
   if (parentsPlan(doc).on) return { amount: 0, from: 'parent', status: 'not-for-me' };
   if (c.how === 'none') return { amount: 0, from: 'none', status: 'not-for-me' };
   if (c.premiumFrom === 'paycheck') return { amount: 0, from: 'paycheck', status: 'not-for-me' };
-  if (c.premiumFrom === 'direct') return { amount: typed(c.premium) ? toMonthly(c.premium, freq) : null, from: 'direct', status: typed(c.premium) ? c.premium.status : null, value: c.premium };
+  if (c.premiumFrom === 'direct')
+    return {
+      amount: typed(c.premium) ? toMonthly(c.premium, freq) : null,
+      from: 'direct',
+      status: typed(c.premium) ? c.premium.status : null,
+      value: c.premium
+    };
   return { amount: null, from: null, status: null };
 }
 
-const usd = (x) => '$' + (Math.round(x * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(x) ? 0 : 2, maximumFractionDigits: 2 });
+const usd = (x) =>
+  '$' +
+  (Math.round(x * 100) / 100).toLocaleString('en-US', {
+    minimumFractionDigits: Number.isInteger(x) ? 0 : 2,
+    maximumFractionDigits: 2
+  });
 
 /**
  * One line for every other screen: "Covered by a parent's plan. No premium."
@@ -80,7 +96,12 @@ export function coverageSummary(doc, freq) {
   const c = cov(doc);
   const p = parentsPlan(doc);
   if (!c.how) return 'Health coverage not answered yet.';
-  if (c.how === 'parent') return p.on ? 'Covered by a parent\'s plan. No premium.' : p.agedOut ? 'Aged off a parent\'s plan (' + p.age + ' this year), so premiums count again.' : 'On a parent\'s plan (needs a birth year: it counts through age ' + PARENTS_PLAN_MAX_AGE + ').';
+  if (c.how === 'parent')
+    return p.on
+      ? "Covered by a parent's plan. No premium."
+      : p.agedOut
+        ? "Aged off a parent's plan (" + p.age + ' this year), so premiums count again.'
+        : "On a parent's plan (needs a birth year: it counts through age " + PARENTS_PLAN_MAX_AGE + ').';
   if (c.how === 'none') return 'No health coverage. No premium.';
   const head = HOW_LABELS[c.how] + '.';
   if (c.premiumFrom === 'paycheck') {
@@ -89,7 +110,12 @@ export function coverageSummary(doc, freq) {
   }
   if (c.premiumFrom === 'direct') {
     const m = typed(c.premium) ? toMonthly(c.premium, freq) : null;
-    return head + (m === null ? ' Premium paid directly, amount not answered yet.' : ' Premium ' + usd(m) + ' a month, paid directly.');
+    return (
+      head +
+      (m === null
+        ? ' Premium paid directly, amount not answered yet.'
+        : ' Premium ' + usd(m) + ' a month, paid directly.')
+    );
   }
   return head + ' How the premium is paid is not answered yet.';
 }

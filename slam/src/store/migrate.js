@@ -5,7 +5,23 @@
 // and blank-record factories), value.js and types.js (Values, category and line types),
 // records.js (bookkeeping stamps) and one engine, normalize.js, for step 7's toMonthly.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate, newCoverage } from './schema.js';
+import {
+  SCHEMA_VERSION,
+  newHousehold,
+  newCategory,
+  newLine,
+  newIncome,
+  newDebt,
+  newDeduction,
+  newCaseOverrides,
+  newWithheld,
+  WITHHELD_KEYS,
+  newEra,
+  newAccount,
+  newCashflow,
+  makeDate,
+  newCoverage
+} from './schema.js';
 import { normalizeValue, isBlank, makeValue } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 import { toMonthly } from '../engines/normalize.js';
@@ -60,8 +76,15 @@ const STEPS = {
   // (blank) and promo end (null) in normalizing. A debt with no minimum is linked to the one budget line
   // of a matching type that has an amount (a car loan to the Car payment line). No amount changes.
   12: (doc) => ({
-    ...doc, schemaVersion: 13,
-    accounts: (doc.accounts || []).map((a) => (a.type === 'investment' ? { ...a, type: 'unset', tier: 2 } : a.type === 'retirement' ? { ...a, type: 'unset', tier: 3 } : a)),
+    ...doc,
+    schemaVersion: 13,
+    accounts: (doc.accounts || []).map((a) =>
+      a.type === 'investment'
+        ? { ...a, type: 'unset', tier: 2 }
+        : a.type === 'retirement'
+          ? { ...a, type: 'unset', tier: 3 }
+          : a
+    ),
     debts: (doc.debts || []).map((d) => ({ ...d, lineId: d.lineId === undefined ? autoLink(doc, d) : d.lineId }))
   }),
   // Version 13 to 14 (S-117): health coverage moves to doc.coverage. A parent's plan (household.parentsPlan)
@@ -81,15 +104,49 @@ const STEPS = {
   // file). Totals do not change; Bills and subscriptions holds what Fees held.
   15: (doc) => ({ ...doc, schemaVersion: 16, categories: withoutFees(doc) }),
   // Version 16 to 17 (S-130): an opening Paid ahead on each line, blank (no line had one before).
-  16: (doc) => ({ ...doc, schemaVersion: 17, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
-    ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) }),
+  16: (doc) => ({
+    ...doc,
+    schemaVersion: 17,
+    categories: (doc.categories || []).map((c) => ({
+      ...c,
+      lines: (c.lines || []).map((l) => ({
+        ...l,
+        openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }),
+        openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' })
+      }))
+    }))
+  }),
   // Version 17 to 18 (S-134): a split line's people and share, blank on every line (no line had them).
-  17: (doc) => ({ ...doc, schemaVersion: 18, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
-    ...l, splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }), splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' }) })) })) }),
+  17: (doc) => ({
+    ...doc,
+    schemaVersion: 18,
+    categories: (doc.categories || []).map((c) => ({
+      ...c,
+      lines: (c.lines || []).map((l) => ({
+        ...l,
+        splitPeople: l.splitPeople || makeValue(null, { cadence: 'one-off' }),
+        splitShare: l.splitShare || makeValue(null, { cadence: 'one-off' })
+      }))
+    }))
+  }),
   // Version 18 to 19 (S-137): a credit limit on each debt, blank (none had one).
-  18: (doc) => ({ ...doc, schemaVersion: 19, debts: (doc.debts || []).map((d) => ({ ...d, creditLimit: d.creditLimit || makeValue(null, { cadence: 'one-off' }) })) }),
+  18: (doc) => ({
+    ...doc,
+    schemaVersion: 19,
+    debts: (doc.debts || []).map((d) => ({
+      ...d,
+      creditLimit: d.creditLimit || makeValue(null, { cadence: 'one-off' })
+    }))
+  }),
   // Version 19 to 20 (S-138): who pays a split bill, 'part' on every line (what every split meant before).
-  19: (doc) => ({ ...doc, schemaVersion: 20, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({ ...l, splitPays: l.splitPays || 'part' })) })) })
+  19: (doc) => ({
+    ...doc,
+    schemaVersion: 20,
+    categories: (doc.categories || []).map((c) => ({
+      ...c,
+      lines: (c.lines || []).map((l) => ({ ...l, splitPays: l.splitPays || 'part' }))
+    }))
+  })
 };
 
 // Entry kinds that count toward a line's actual (S-087). Refunds and reimbursements are stored as
@@ -102,14 +159,19 @@ function withoutFees(doc) {
   const fees = cats.find((c) => c.id === 'fees');
   if (!fees) return cats;
   // Answered means an amount or a status: a typed 0 and "doesn't apply" both count, blank does not.
-  const answered = (v) => !!v && ((v.amount !== null && v.amount !== undefined) || (v.status !== null && v.status !== undefined));
+  const answered = (v) =>
+    !!v && ((v.amount !== null && v.amount !== undefined) || (v.status !== null && v.status !== undefined));
   const used = new Set([
     ...(doc.transactions || []).map((t) => t.lineId),
     ...Object.values(doc.monthActuals || {}).flatMap((m) => Object.keys(m)),
     ...Object.values(doc.plans || {}).flatMap((p) => Object.keys(p.lines || {}))
   ]);
-  const keep = fees.lines.filter((l) => answered(l.estimate) || answered(l.actual) || answered(l.dream) || used.has(l.id));
-  const to = cats.find((c) => c.id === 'bills') || cats.find((c) => !c.savings && c.id !== 'debt' && c.id !== 'fees' && c.id !== 'everything');
+  const keep = fees.lines.filter(
+    (l) => answered(l.estimate) || answered(l.actual) || answered(l.dream) || used.has(l.id)
+  );
+  const to =
+    cats.find((c) => c.id === 'bills') ||
+    cats.find((c) => !c.savings && c.id !== 'debt' && c.id !== 'fees' && c.id !== 'everything');
   // A line keeps what it was: Fees' own tag (a mistake, say) stays on each line it held.
   if (to) to.lines.push(...keep.map((l) => ({ ...l, tag: l.tag || fees.tag || 'planned' })));
   return cats.filter((c) => c.id !== 'fees');
@@ -119,23 +181,44 @@ function withoutFees(doc) {
 function coverageFrom(doc, onParentsPlan) {
   const c = newCoverage();
   const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
-  const premiumLine = (doc.categories || []).flatMap((x) => x.lines || []).find((l) => (l.type || DEFAULT_LINE_TYPES[l.id]) === 'health-insurance' && l.state !== 'archived' && has(l.estimate));
+  const premiumLine = (doc.categories || [])
+    .flatMap((x) => x.lines || [])
+    .find(
+      (l) => (l.type || DEFAULT_LINE_TYPES[l.id]) === 'health-insurance' && l.state !== 'archived' && has(l.estimate)
+    );
   const fromPay = (doc.income || []).find((i) => (i.deductions || []).some((d) => d.kind === 'health'));
   if (onParentsPlan) c.how = 'parent';
-  if (premiumLine) { c.premiumFrom = 'direct'; c.premium = { ...premiumLine.estimate }; }
-  else if (fromPay) { c.premiumFrom = 'paycheck'; c.premiumIncomeId = fromPay.id; }
+  if (premiumLine) {
+    c.premiumFrom = 'direct';
+    c.premium = { ...premiumLine.estimate };
+  } else if (fromPay) {
+    c.premiumFrom = 'paycheck';
+    c.premiumIncomeId = fromPay.id;
+  }
   return c;
 }
 
 // S-116: the one line of a matching type with an amount, for a debt with no minimum of its own.
-const LINK_TYPES = { 'car-loan': ['car-payment'], mortgage: ['rent'], 'student-loan': ['loan'], 'personal-loan': ['loan'] };
+const LINK_TYPES = {
+  'car-loan': ['car-payment'],
+  mortgage: ['rent'],
+  'student-loan': ['loan'],
+  'personal-loan': ['loan']
+};
 function autoLink(doc, d) {
   const min = d.minimum;
   if (min && min.amount !== null && min.amount !== undefined) return null;
   const types = LINK_TYPES[d.type] || [];
   const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
-  const hits = (doc.categories || []).filter((c) => !c.savings && c.id !== 'debt').flatMap((c) => c.lines || [])
-    .filter((l) => types.includes(l.type || DEFAULT_LINE_TYPES[l.id]) && l.state !== 'archived' && (has(l.estimate) || has(l.actual)));
+  const hits = (doc.categories || [])
+    .filter((c) => !c.savings && c.id !== 'debt')
+    .flatMap((c) => c.lines || [])
+    .filter(
+      (l) =>
+        types.includes(l.type || DEFAULT_LINE_TYPES[l.id]) &&
+        l.state !== 'archived' &&
+        (has(l.estimate) || has(l.actual))
+    );
   // Two candidates is no link: picking one would be a silent choice.
   return hits.length === 1 ? hits[0].id : null;
 }
@@ -151,7 +234,14 @@ function logOwnsActuals(doc) {
   // What the log says for a line in a month: logged kinds only, and not a row still waiting on a
   // possible-match answer. Summed to the cent.
   const sumFor = (lineId, month) => {
-    const list = txs.filter((t) => t.lineId === lineId && t.date && t.date.startsWith(month) && LOGGED.has(t.kind) && !(t.possible && t.possible.length));
+    const list = txs.filter(
+      (t) =>
+        t.lineId === lineId &&
+        t.date &&
+        t.date.startsWith(month) &&
+        LOGGED.has(t.kind) &&
+        !(t.possible && t.possible.length)
+    );
     return { n: list.length, total: Math.round(list.reduce((a, t) => a + t.amount, 0) * 100) / 100 };
   };
   // Returns the typed Value to keep it, or null to clear it once the log owns that line and month.
@@ -162,7 +252,8 @@ function logOwnsActuals(doc) {
     let monthly = toMonthly(normalizeValue(typed), freq);
     if (monthly === null) return typed;
     // A typed reimbursable line marked received counted only the client's share.
-    const owed = line.path === 'reimbursable' && line.owedBackReceived ? toMonthly(normalizeValue(line.owedBack), freq) : null;
+    const owed =
+      line.path === 'reimbursable' && line.owedBackReceived ? toMonthly(normalizeValue(line.owedBack), freq) : null;
     if (owed !== null) monthly -= owed;
     // Dollars, rounded to the cent; a typed actual that already matches the log needs no make-up entry.
     const diff = Math.round((monthly - s.total) * 100) / 100;
@@ -172,26 +263,64 @@ function logOwnsActuals(doc) {
       const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
       // A spend when the client typed more than the log holds, a refund (negative) when less.
       // adjust marks it so the budget-to-cash bridge leaves it out.
-      txs.push({ id: 'tx-kept-' + lineId + '-' + month, date: last, amount: diff, description: '', account: null, kind: diff > 0 ? 'spend' : 'refund',
-        merchant: '', lineId, bnpl: false, source: 'manual', note: 'Kept your typed actual when the log took over', adjust: true });
+      txs.push({
+        id: 'tx-kept-' + lineId + '-' + month,
+        date: last,
+        amount: diff,
+        description: '',
+        account: null,
+        kind: diff > 0 ? 'spend' : 'refund',
+        merchant: '',
+        lineId,
+        bnpl: false,
+        source: 'manual',
+        note: 'Kept your typed actual when the log took over',
+        adjust: true
+      });
     }
     return null;
   };
-  out.categories = (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => {
-    if (!l.actual || l.actual.amount === null || l.actual.amount === undefined) return l;
-    return keep(l, doc.currentMonth, l.actual) ? l : { ...l, actual: null };
-  }) }));
+  out.categories = (doc.categories || []).map((c) => ({
+    ...c,
+    lines: (c.lines || []).map((l) => {
+      if (!l.actual || l.actual.amount === null || l.actual.amount === undefined) return l;
+      return keep(l, doc.currentMonth, l.actual) ? l : { ...l, actual: null };
+    })
+  }));
   const lineById = Object.fromEntries((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => [l.id, l])));
-  out.incomeActuals = Object.fromEntries(Object.entries(doc.incomeActuals || {}).map(([k, src]) => [k, Object.fromEntries(Object.entries(src).map(([id, v]) => [id, normalizeValue(v)]))]));
+  out.incomeActuals = Object.fromEntries(
+    Object.entries(doc.incomeActuals || {}).map(([k, src]) => [
+      k,
+      Object.fromEntries(Object.entries(src).map(([id, v]) => [id, normalizeValue(v)]))
+    ])
+  );
   // Other open months get the same treatment; a month left with no typed actuals is dropped.
-  out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([month, lines]) => [month,
-    Object.fromEntries(Object.entries(lines).filter(([id, v]) => !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)))]).filter(([, lines]) => Object.keys(lines).length));
+  out.monthActuals = Object.fromEntries(
+    Object.entries(doc.monthActuals || {})
+      .map(([month, lines]) => [
+        month,
+        Object.fromEntries(
+          Object.entries(lines).filter(
+            ([id, v]) =>
+              !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)
+          )
+        )
+      ])
+      .filter(([, lines]) => Object.keys(lines).length)
+  );
   out.transactions = txs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return out;
 }
 
 // A first guess at an account's type from words in its imported name; checking when nothing matches.
-const guessAccountType = (name) => (/card|visa|amex|master|discover|credit/i.test(name) ? 'credit-card' : /saving/i.test(name) ? 'savings' : /cash|wallet/i.test(name) ? 'cash' : 'checking');
+const guessAccountType = (name) =>
+  /card|visa|amex|master|discover|credit/i.test(name)
+    ? 'credit-card'
+    : /saving/i.test(name)
+      ? 'savings'
+      : /cash|wallet/i.test(name)
+        ? 'cash'
+        : 'checking';
 
 function logWithAccounts(doc) {
   const accounts = [...(doc.accounts || [])];
@@ -202,12 +331,26 @@ function logWithAccounts(doc) {
     if (accounts.some((a) => a.id === name)) return name;
     let a = accounts.find((x) => x.name.toLowerCase() === String(name).toLowerCase());
     if (!a) {
-      a = newAccount({ id: 'acct-' + String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name: String(name), type: guessAccountType(name) });
+      a = newAccount({
+        id:
+          'acct-' +
+          String(name)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, ''),
+        name: String(name),
+        type: guessAccountType(name)
+      });
       accounts.push(a);
     }
     return a.id;
   };
-  const transactions = (doc.transactions || []).map((t) => ({ ...t, source: t.source || 'import', note: t.note || '', account: idFor(t.account) }));
+  const transactions = (doc.transactions || []).map((t) => ({
+    ...t,
+    source: t.source || 'import',
+    note: t.note || '',
+    account: idFor(t.account)
+  }));
   return { ...doc, accounts, transactions, schemaVersion: 6 };
 }
 
@@ -218,17 +361,37 @@ function cashIntoAccounts(doc) {
   if (doc.nextStage) out.nextStage = ns;
   if (doc.eras) out.eras = eras;
   // Older files held either a Value or a bare number.
-  const typed = (v) => (v && typeof v === 'object' && v.amount !== null && v.amount !== undefined ? v : typeof v === 'number' ? { amount: v } : null);
-  const found = [[typed(cashOnHand), 'Next stage cash on hand'], [typed(cashNow), 'Eras cash now']].filter(([v]) => v);
+  const typed = (v) =>
+    v && typeof v === 'object' && v.amount !== null && v.amount !== undefined
+      ? v
+      : typeof v === 'number'
+        ? { amount: v }
+        : null;
+  const found = [
+    [typed(cashOnHand), 'Next stage cash on hand'],
+    [typed(cashNow), 'Eras cash now']
+  ].filter(([v]) => v);
   if (!found.length || !/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) return out;
   out.balances = { ...out.balances, [doc.currentMonth]: { ...(out.balances[doc.currentMonth] || {}) } };
   // Two different answers: the first counts, the other is kept on an archived account so nothing is lost.
   const kept = found[1] && found[1][0].amount === found[0][0].amount ? [found[0]] : found;
   kept.forEach(([v, from], i) => {
-    const acct = newAccount({ id: 'acct-cash-on-hand' + (i ? '-2' : ''), name: i ? 'Cash on hand (' + from + ')' : 'Cash on hand', type: 'cash', state: i ? 'archived' : 'active' });
+    const acct = newAccount({
+      id: 'acct-cash-on-hand' + (i ? '-2' : ''),
+      name: i ? 'Cash on hand (' + from + ')' : 'Cash on hand',
+      type: 'cash',
+      state: i ? 'archived' : 'active'
+    });
     out.accounts = [...out.accounts, acct];
     // Status and source default to known and client: the client typed this number.
-    const start = { amount: v.amount, cadence: 'one-off', status: v.status || 'known', source: v.source || 'client', asOf: v.asOf || null, note: 'Moved from ' + from };
+    const start = {
+      amount: v.amount,
+      cadence: 'one-off',
+      status: v.status || 'known',
+      source: v.source || 'client',
+      asOf: v.asOf || null,
+      note: 'Moved from ' + from
+    };
     out.balances[doc.currentMonth][acct.id] = { start, end: null };
   });
   return out;
@@ -259,7 +422,10 @@ function unemploymentCompat(inc) {
   } else if (inc.withholding === null && t.amount !== null && g.amount) {
     // Both as a yearly figure so the two cadences can differ: a paycheck amount times paychecks a
     // year by pay frequency, anything else by its own cadence.
-    const per = (v) => (v.cadence === 'paycheck' ? v.amount * ({ weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[inc.payFrequency] || 0) : v.amount * ({ week: 52, month: 12, year: 1 }[v.cadence] || 0));
+    const per = (v) =>
+      v.cadence === 'paycheck'
+        ? v.amount * ({ weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[inc.payFrequency] || 0)
+        : v.amount * ({ week: 52, month: 12, year: 1 }[v.cadence] || 0);
     const r = per(t) / per(g);
     // Within one percent of 90% reads as the 10% federal withholding, within half a percent of equal
     // as none; anything else leaves withholding unanswered.
@@ -289,27 +455,53 @@ export function normalizeHousehold(doc) {
   out.household = { ...base.household, ...(doc.household || {}) };
   const cv = doc.coverage || {};
   // The deductible and out-of-pocket max are plan-year limits, so their cadence defaults to year.
-  out.coverage = { ...newCoverage(), ...cv, premium: normalizeValue(cv.premium), deductible: { ...normalizeValue(cv.deductible), cadence: (cv.deductible && cv.deductible.cadence) || 'year' }, outOfPocketMax: { ...normalizeValue(cv.outOfPocketMax), cadence: (cv.outOfPocketMax && cv.outOfPocketMax.cadence) || 'year' } };
+  out.coverage = {
+    ...newCoverage(),
+    ...cv,
+    premium: normalizeValue(cv.premium),
+    deductible: { ...normalizeValue(cv.deductible), cadence: (cv.deductible && cv.deductible.cadence) || 'year' },
+    outOfPocketMax: {
+      ...normalizeValue(cv.outOfPocketMax),
+      cadence: (cv.outOfPocketMax && cv.outOfPocketMax.cadence) || 'year'
+    }
+  };
   out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
   // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
   const { yourShare, ...rm } = out.household.roommates || {};
   out.household.roommates = withDefaults(base.household.roommates, rm, ['totalRent']);
   out.household.family = { ...base.household.family, ...(out.household.family || {}) };
   // Compatibility: older files only had a roommate count.
-  if (out.household.livingWith === undefined || out.household.livingWith === null) out.household.livingWith = rm.count > 0 ? 'roommates' : null;
+  if (out.household.livingWith === undefined || out.household.livingWith === null)
+    out.household.livingWith = rm.count > 0 ? 'roommates' : null;
   out.gut = normalizeValue(doc.gut);
   out.income = (doc.income || []).map((raw) => {
     // Compatibility: the old single "pretaxRetirement" amount becomes a retirement deduction.
     const { pretaxRetirement, ...i } = raw;
     const inc = withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'hourlyRate']);
     inc.nextPayDate = { ...makeDate(), ...(i.nextPayDate || {}) };
-    inc.deductions = (i.deductions || []).map((d) => ({ ...newDeduction({ id: d.id, kind: d.kind }), ...d, amount: normalizeValue(d.amount) }));
+    inc.deductions = (i.deductions || []).map((d) => ({
+      ...newDeduction({ id: d.id, kind: d.kind }),
+      ...d,
+      amount: normalizeValue(d.amount)
+    }));
     const old = pretaxRetirement === undefined ? null : normalizeValue(pretaxRetirement);
-    if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
+    if (old && !isBlank(old))
+      inc.deductions.unshift({
+        ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }),
+        amount: old
+      });
     // Compatibility (S-064): files before paystub taxes load with them all blank.
-    inc.withheld = { ...newWithheld(), ...Object.fromEntries(Object.entries(i.withheld || {}).filter(([k]) => WITHHELD_KEYS.includes(k)).map(([k, v]) => [k, normalizeValue(v)])) };
+    inc.withheld = {
+      ...newWithheld(),
+      ...Object.fromEntries(
+        Object.entries(i.withheld || {})
+          .filter(([k]) => WITHHELD_KEYS.includes(k))
+          .map(([k, v]) => [k, normalizeValue(v)])
+      )
+    };
     // Additional withholding (S-101) is optional: only files that have it carry it.
-    if (i.extraWithholding !== undefined) inc.extraWithholding = { ...makeValue(null, { cadence: 'paycheck' }), ...normalizeValue(i.extraWithholding) };
+    if (i.extraWithholding !== undefined)
+      inc.extraWithholding = { ...makeValue(null, { cadence: 'paycheck' }), ...normalizeValue(i.extraWithholding) };
     if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });
@@ -321,14 +513,28 @@ export function normalizeHousehold(doc) {
   });
   const cf = doc.cashflow || {};
   // The cushion is a balance to keep and a check is a balance read, not monthly flows, so both are one-off.
-  out.cashflow = { ...newCashflow(), ...cf, cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' }, moves: cf.moves || {}, forecasts: cf.forecasts || {},
-    checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } })) };
+  out.cashflow = {
+    ...newCashflow(),
+    ...cf,
+    cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' },
+    moves: cf.moves || {},
+    forecasts: cf.forecasts || {},
+    checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } }))
+  };
   out.categories = (doc.categories || base.categories).map((c) => {
     const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream', 'dreamLong']);
     // Compatibility (S-068): files before types get them from the default ids, else from the name.
     if (!c.type) cat.type = CATEGORY_TYPE_IDS.includes(c.id) ? c.id : 'other';
     cat.lines = (c.lines || []).map((l) => {
-      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'dreamLong', 'actual', 'owedBack', 'dueDay', 'dueMonth']);
+      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, [
+        'estimate',
+        'dream',
+        'dreamLong',
+        'actual',
+        'owedBack',
+        'dueDay',
+        'dueMonth'
+      ]);
       if (!l.type) line.type = DEFAULT_LINE_TYPES[l.id] || guessLineType(line.name, cat.type);
       return line;
     });
@@ -338,21 +544,48 @@ export function normalizeHousehold(doc) {
   out.coachNotes = typeof doc.coachNotes === 'string' ? doc.coachNotes : '';
   out.months = doc.months || [];
   // Compatibility: files before per-month actuals have none stored.
-  out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
+  out.monthActuals = Object.fromEntries(
+    Object.entries(doc.monthActuals || {}).map(([k, lines]) => [
+      k,
+      Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))
+    ])
+  );
   // Compatibility (S-067): files before eras load with none.
   const er = doc.eras || {};
-  out.eras = { list: (er.list || []).map((e) => ({ ...newEra({ id: e.id }), ...e, takeHome: normalizeValue(e.takeHome), spending: normalizeValue(e.spending), oneTime: normalizeValue(e.oneTime) })) };
+  out.eras = {
+    list: (er.list || []).map((e) => ({
+      ...newEra({ id: e.id }),
+      ...e,
+      takeHome: normalizeValue(e.takeHome),
+      spending: normalizeValue(e.spending),
+      oneTime: normalizeValue(e.oneTime)
+    }))
+  };
   const nv = (v) => normalizeValue(v);
-  out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
-    createdFrom: p.createdFrom || 'manual',
-    ...(p.income ? { income: Object.fromEntries(Object.entries(p.income).map(([k, v]) => [k, nv(v)])) } : {}),
-    lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
-      ...meta(e),
-      // Plans saved before start existed use the amount as the start.
-      amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',
-      reviewed: !!e.reviewed, note: e.note || '', stop: !!e.stop
-    }]))
-  }]));
+  out.plans = Object.fromEntries(
+    Object.entries(doc.plans || {}).map(([m, p]) => [
+      m,
+      {
+        createdFrom: p.createdFrom || 'manual',
+        ...(p.income ? { income: Object.fromEntries(Object.entries(p.income).map(([k, v]) => [k, nv(v)])) } : {}),
+        lines: Object.fromEntries(
+          Object.entries(p.lines || {}).map(([k, e]) => [
+            k,
+            {
+              ...meta(e),
+              // Plans saved before start existed use the amount as the start.
+              amount: nv(e.amount),
+              start: nv(e.start === undefined ? e.amount : e.start),
+              decision: e.decision || 'keep',
+              reviewed: !!e.reviewed,
+              note: e.note || '',
+              stop: !!e.stop
+            }
+          ])
+        )
+      }
+    ])
+  );
   // Compatibility: files before tags have none.
   out.tags = (doc.tags || []).map((t) => ({ ...meta(t), id: t.id, name: t.name }));
   out.estimateLog = (doc.estimateLog || []).map((e) => ({ ...e }));
@@ -362,23 +595,37 @@ export function normalizeHousehold(doc) {
   out.snapshots = doc.snapshots || [];
   out.passesSeen = doc.passesSeen || [];
   out.blindRounds = (doc.blindRounds || []).map((r) => ({
-    ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
+    ...r,
+    estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
   }));
   out.nextStage = doc.nextStage ? normalizeNextStage(doc.nextStage) : null;
   out.accounts = (doc.accounts || []).map((a) => {
     const acct = { ...newAccount({ id: a.id, type: a.type }), ...a };
     if (acct.purchasePrice) acct.purchasePrice = { ...normalizeValue(acct.purchasePrice), cadence: 'one-off' };
     if (acct.purchaseDate) acct.purchaseDate = { ...makeDate(), ...acct.purchaseDate };
-    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (acct[k]) acct[k] = { ...normalizeValue(acct[k]), cadence: acct[k].cadence || 'month' };
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt'])
+      if (acct[k]) acct[k] = { ...normalizeValue(acct[k]), cadence: acct[k].cadence || 'month' };
     return acct;
   });
   // A balance is a point-in-time figure, so start and end are one-off Values.
-  out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
-    ...meta(b || {}),
-    start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' },
-    // The day each was read (S-100), only when one was picked.
-    ...(b && b.startOn ? { startOn: b.startOn } : {}), ...(b && b.endOn ? { endOn: b.endOn } : {})
-  }]))]));
+  out.balances = Object.fromEntries(
+    Object.entries(doc.balances || {}).map(([m, accts]) => [
+      m,
+      Object.fromEntries(
+        Object.entries(accts).map(([id, b]) => [
+          id,
+          {
+            ...meta(b || {}),
+            start: { ...normalizeValue(b && b.start), cadence: 'one-off' },
+            end: { ...normalizeValue(b && b.end), cadence: 'one-off' },
+            // The day each was read (S-100), only when one was picked.
+            ...(b && b.startOn ? { startOn: b.startOn } : {}),
+            ...(b && b.endOn ? { endOn: b.endOn } : {})
+          }
+        ])
+      )
+    ])
+  );
   out.schemaVersion = SCHEMA_VERSION;
   // Any record still without bookkeeping gets it now (S-096), dated from the file's last save, or a
   // fixed date when the file has none, so loading never depends on the clock.
@@ -394,17 +641,32 @@ function meta(r) {
 // Compatibility: plans saved before the three lenses load with empty disaster
 // and dream overrides (so both follow likely).
 function normalizeNextStage(ns) {
-  const item = (c) => ({ ...c, amount: normalizeValue(c.amount), disaster: normalizeValue(c.disaster), dream: normalizeValue(c.dream) });
+  const item = (c) => ({
+    ...c,
+    amount: normalizeValue(c.amount),
+    disaster: normalizeValue(c.disaster),
+    dream: normalizeValue(c.dream)
+  });
   const cases = {};
   for (const id of ['disaster', 'dream']) {
     const given = (ns.cases && ns.cases[id]) || {};
     const base = newCaseOverrides();
-    cases[id] = { ...base, ...given, takeHome: normalizeValue(given.takeHome), transitionTakeHome: normalizeValue(given.transitionTakeHome), laterTakeHome: normalizeValue(given.laterTakeHome) };
+    cases[id] = {
+      ...base,
+      ...given,
+      takeHome: normalizeValue(given.takeHome),
+      transitionTakeHome: normalizeValue(given.transitionTakeHome),
+      laterTakeHome: normalizeValue(given.laterTakeHome)
+    };
   }
   return {
     ...ns,
-    takeHome: normalizeValue(ns.takeHome), transitionTakeHome: normalizeValue(ns.transitionTakeHome), laterTakeHome: normalizeValue(ns.laterTakeHome),
-    oneOffCosts: (ns.oneOffCosts || []).map(item), costChanges: (ns.costChanges || []).map(item),
-    metrics: ns.metrics || [], cases
+    takeHome: normalizeValue(ns.takeHome),
+    transitionTakeHome: normalizeValue(ns.transitionTakeHome),
+    laterTakeHome: normalizeValue(ns.laterTakeHome),
+    oneOffCosts: (ns.oneOffCosts || []).map(item),
+    costChanges: (ns.costChanges || []).map(item),
+    metrics: ns.metrics || [],
+    cases
   };
 }

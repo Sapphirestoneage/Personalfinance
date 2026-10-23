@@ -12,7 +12,10 @@ export function sumKnown(list) {
   let total = null;
   let missing = 0;
   for (const x of list) {
-    if (x === null || x === undefined) { missing += 1; continue; }
+    if (x === null || x === undefined) {
+      missing += 1;
+      continue;
+    }
     total = (total === null ? 0 : total) + x;
   }
   return { total, missing };

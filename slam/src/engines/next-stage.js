@@ -14,7 +14,9 @@ const HOURS_A_MONTH = 52 / 12;
 const MAX_MONTHS = 120;
 
 // A Value as dollars a month. A next-stage value is never typed per paycheck, so 'monthly' is only a stand-in.
-function monthly(v) { return v ? toMonthly(v, 'monthly') : null; }
+function monthly(v) {
+  return v ? toMonthly(v, 'monthly') : null;
+}
 
 // A one-off amount: whatever was typed, regardless of cadence.
 function oneOff(v) {
@@ -64,13 +66,16 @@ export function nextStage(doc, income, totals, culprits) {
     const r = nextStageCase(resolveCase(doc.nextStage, c), income, totals, culprits);
     // burn: the monthly shortfall during the lower-pay stretch; 0 when it covers itself.
     const burn = r.transitionGap !== null && r.transitionGap < 0 ? -r.transitionGap : 0;
-    r.cash = cash === null ? null : {
-      onHand: cash,
-      gap: r.cashNeeded === null ? null : cash - r.cashNeeded,
-      covers: r.cashNeeded === null ? null : cash >= r.cashNeeded,
-      // Months of the lower-pay stretch the cash lasts after the one-time costs.
-      runwayMonths: burn > 0 ? Math.max(0, cash - r.oneOffs) / burn : null
-    };
+    r.cash =
+      cash === null
+        ? null
+        : {
+            onHand: cash,
+            gap: r.cashNeeded === null ? null : cash - r.cashNeeded,
+            covers: r.cashNeeded === null ? null : cash >= r.cashNeeded,
+            // Months of the lower-pay stretch the cash lasts after the one-time costs.
+            runwayMonths: burn > 0 ? Math.max(0, cash - r.oneOffs) / burn : null
+          };
     cases[c] = r;
   }
   return { ...cases.likely, cases };
@@ -117,19 +122,47 @@ function nextStageCase(ns, income, totals, culprits) {
   return {
     name: ns.name || 'Next stage',
     // perHour: take-home per hour worked, monthly take-home over monthly hours (hours a week x weeks a month).
-    now: { takeHome: nowTakeHome, outflow: nowOutflow, surplus: nowSurplus, hours: nowHours, perHour: ratio(nowTakeHome, nowHours ? nowHours * HOURS_A_MONTH : null) },
-    next: { takeHome: nextTakeHome, outflow: nextOutflow, surplus: nextSurplus, hours: nextHours, perHour: ratio(nextTakeHome, nextHours ? nextHours * HOURS_A_MONTH : null) },
-    costChange, oneOffs, transitionMonths: tMonths, transitionTakeHome: tTakeHome, transitionGap, transitionBurn,
+    now: {
+      takeHome: nowTakeHome,
+      outflow: nowOutflow,
+      surplus: nowSurplus,
+      hours: nowHours,
+      perHour: ratio(nowTakeHome, nowHours ? nowHours * HOURS_A_MONTH : null)
+    },
+    next: {
+      takeHome: nextTakeHome,
+      outflow: nextOutflow,
+      surplus: nextSurplus,
+      hours: nextHours,
+      perHour: ratio(nextTakeHome, nextHours ? nextHours * HOURS_A_MONTH : null)
+    },
+    costChange,
+    oneOffs,
+    transitionMonths: tMonths,
+    transitionTakeHome: tTakeHome,
+    transitionGap,
+    transitionBurn,
     // Whole months, rounded up; the 1e-9 keeps an exact 6 from becoming 7 through floating-point noise.
-    cashNeeded, monthsToSave, monthsToSaveWhole: monthsToSave === null ? null : Math.ceil(monthsToSave - 1e-9),
-    cutNeeded, ownWords, ownWordsCovers: cutNeeded > 0 ? ownWords >= cutNeeded : null,
+    cashNeeded,
+    monthsToSave,
+    monthsToSaveWhole: monthsToSave === null ? null : Math.ceil(monthsToSave - 1e-9),
+    cutNeeded,
+    ownWords,
+    ownWordsCovers: cutNeeded > 0 ? ownWords >= cutNeeded : null,
     later: laterTakeHome === null ? null : { takeHome: laterTakeHome, afterMonths: laterAfter, surplus: laterSurplus },
     path: stayVsChange({ nowSurplus, oneOffs, tMonths, transitionGap, nextSurplus, laterSurplus, laterAfter }),
     // Hours come from the income (now) and the next-stage hours, so they are never asked twice.
-    metrics: [{ id: 'hours', label: 'Hours worked a week', now: nowHours, next: nextHours, better: 'lower', computed: true }, ...(ns.metrics || [])].map((m) => {
+    metrics: [
+      { id: 'hours', label: 'Hours worked a week', now: nowHours, next: nextHours, better: 'lower', computed: true },
+      ...(ns.metrics || [])
+    ].map((m) => {
       // better: true when the change goes the metric's good way, null with a side missing or no change.
       const change = m.now === null || m.next === null ? null : m.next - m.now;
-      return { ...m, change, better: change === null || change === 0 ? null : (m.better === 'lower' ? change < 0 : change > 0) };
+      return {
+        ...m,
+        change,
+        better: change === null || change === 0 ? null : m.better === 'lower' ? change < 0 : change > 0
+      };
     })
   };
 }

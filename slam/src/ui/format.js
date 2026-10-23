@@ -2,7 +2,12 @@
 // Imports nothing; every screen and component calls these for money, percents, and dates.
 
 const usd0 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-const usd2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const usd2 = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 // What a null (not entered) value shows as. Never '0' or '$0': empty is not zero.
 export const EMPTY = '·';
@@ -50,11 +55,23 @@ export function inLens(x, unit) {
 // The word on a status chip (store/value.js lists the statuses). null is a field nobody has answered;
 // 'guess' is an average the app supplied, which is always labeled; 'computed' came from the engines.
 export const STATUS_LABELS = {
-  null: 'Blank', known: 'Known', roughly: 'Roughly', 'will-email': 'Will email',
-  'dont-know': "Don't know", 'not-for-me': "Doesn't apply", guess: 'Guess', computed: 'Computed'
+  null: 'Blank',
+  known: 'Known',
+  roughly: 'Roughly',
+  'will-email': 'Will email',
+  'dont-know': "Don't know",
+  'not-for-me': "Doesn't apply",
+  guess: 'Guess',
+  computed: 'Computed'
 };
 
-export const CADENCE_LABELS = { month: '/ month', week: '/ week', paycheck: '/ paycheck', year: '/ year', 'one-off': 'one-off' };
+export const CADENCE_LABELS = {
+  month: '/ month',
+  week: '/ week',
+  paycheck: '/ paycheck',
+  year: '/ year',
+  'one-off': 'one-off'
+};
 
 // 'YYYY-MM' to "October 2026". UTC in and out (Date.UTC to build, timeZone: 'UTC' to print), so the
 // first of the month cannot slip into the month before, whatever zone the viewer is in.
@@ -72,7 +89,9 @@ export function less(x) {
 
 // Today as YYYY-MM-DD in the viewer's own time zone (dates in the log are local days).
 export function todayIso(now = new Date()) {
-  return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  return (
+    now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0')
+  );
 }
 
 // 'YYYY-MM-DD' to "May 31". UTC in and out, for the same reason as monthLabel.
@@ -86,5 +105,10 @@ export function dayLabel(iso) {
 export function dateLabel(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+  });
 }

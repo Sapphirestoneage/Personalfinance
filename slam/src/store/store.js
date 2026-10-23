@@ -34,14 +34,20 @@ export function createStore(storage, clock = () => new Date()) {
 
   const nowIso = () => clock().toISOString();
   const notify = (label) => listeners.forEach((fn) => fn(live, label));
-  const setFull = (d) => { full = d; live = d ? liveView(d) : null; };
+  const setFull = (d) => {
+    full = d;
+    live = d ? liveView(d) : null;
+  };
 
   // Validate what the screens see; save the whole file in the background (the list updates now).
   function persist(d) {
     const errs = validateHousehold(liveView(d));
     if (errs.length) throw new Error('Change refused: ' + errs[0]);
     cache.set(d.id, d);
-    clients = [...clients.filter((e) => e.id !== d.id), { id: d.id, name: d.profile.name, updatedAt: d.updatedAt }].sort((a, b) => a.name.localeCompare(b.name));
+    clients = [
+      ...clients.filter((e) => e.id !== d.id),
+      { id: d.id, name: d.profile.name, updatedAt: d.updatedAt }
+    ].sort((a, b) => a.name.localeCompare(b.name));
     // A copy, so an edit made in memory before the write runs cannot change what is saved.
     const copy = JSON.parse(JSON.stringify(d));
     pending = pending.then(() => storage.saveClient(copy));
@@ -54,9 +60,13 @@ export function createStore(storage, clock = () => new Date()) {
   }
 
   const store = {
-    get doc() { return live; },
+    get doc() {
+      return live;
+    },
     // The full file: deleted records kept, for export and merge.
-    get fullDoc() { return full; },
+    get fullDoc() {
+      return full;
+    },
     // The client list as last loaded (load() fills it; saves keep it current).
     list: () => clients.slice(),
     backups: () => backups.map(({ id, takenAt, reason, docs }) => ({ id, takenAt, reason, count: docs.length })),
@@ -68,7 +78,10 @@ export function createStore(storage, clock = () => new Date()) {
     },
     // Wait for saves to finish (tests, and before leaving the page).
     flush: () => pending,
-    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    subscribe(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
 
     create(name) {
       const d = stampNew(newHousehold(name, clock()));
@@ -101,14 +114,18 @@ export function createStore(storage, clock = () => new Date()) {
       return live;
     },
 
-    close() { setFull(null); history.clear(); notify('close'); },
+    close() {
+      setFull(null);
+      history.clear();
+      notify('close');
+    },
 
     // Removing a client keeps its file, marked deleted (S-098), like any record. It leaves the
     // list; importing the same client again brings it back.
     async remove(id) {
       // Wait for queued saves so the deleted mark lands on the latest copy.
       await pending;
-      const doc = cache.get(id) || await storage.loadClient(id);
+      const doc = cache.get(id) || (await storage.loadClient(id));
       cache.delete(id);
       clients = clients.filter((e) => e.id !== id);
       if (full && full.id === id) store.close();
@@ -134,8 +151,12 @@ export function createStore(storage, clock = () => new Date()) {
       return live;
     },
 
-    undo() { return step(history.undo(full)); },
-    redo() { return step(history.redo(full)); },
+    undo() {
+      return step(history.undo(full));
+    },
+    redo() {
+      return step(history.redo(full));
+    },
     canUndo: () => history.canUndo(),
     canRedo: () => history.canRedo(),
     undoLabel: () => history.undoLabel(),
@@ -154,7 +175,7 @@ export function createStore(storage, clock = () => new Date()) {
     async importText(text) {
       const incoming = parseImport(text);
       const backup = await store.backupAll('Before import of ' + incoming.profile.name);
-      const found = cache.get(incoming.id) || await storage.loadClient(incoming.id);
+      const found = cache.get(incoming.id) || (await storage.loadClient(incoming.id));
       // A client removed here (marked deleted) counts as new: the import brings it back whole (S-098).
       const here = found && !found.deleted ? found : null;
       if (!here) {
@@ -163,10 +184,24 @@ export function createStore(storage, clock = () => new Date()) {
         return { id: incoming.id, backupId: backup.id, merged: false };
       }
       const result = mergeDocs(migrate(here), incoming);
-      const summary = { id: incoming.id, backupId: backup.id, merged: true, added: result.added.length, fromIncoming: result.fromIncoming.length, fromLocal: result.fromLocal.length, conflicts: result.conflicts };
-      if (result.conflicts.length) { pendingMerge = result; return summary; }
+      const summary = {
+        id: incoming.id,
+        backupId: backup.id,
+        merged: true,
+        added: result.added.length,
+        fromIncoming: result.fromIncoming.length,
+        fromLocal: result.fromLocal.length,
+        conflicts: result.conflicts
+      };
+      if (result.conflicts.length) {
+        pendingMerge = result;
+        return summary;
+      }
       // Nothing new in the file (say it was imported already): leave this copy exactly as it is.
-      if (!result.added.length && !result.fromIncoming.length && !result.monthsAdded) { await store.open(incoming.id); return { ...summary, unchanged: true }; }
+      if (!result.added.length && !result.fromIncoming.length && !result.monthsAdded) {
+        await store.open(incoming.id);
+        return { ...summary, unchanged: true };
+      }
       await store.applyMerge(result, {});
       return summary;
     },
@@ -178,7 +213,10 @@ export function createStore(storage, clock = () => new Date()) {
       pendingMerge = null;
       await store.applyMerge(r, picks);
     },
-    cancelImport() { pendingMerge = null; notify('import cancelled'); },
+    cancelImport() {
+      pendingMerge = null;
+      notify('import cancelled');
+    },
     async applyMerge(result, picks) {
       const d = resolveMerge(result, picks, nowIso());
       d.updatedAt = nowIso();
@@ -211,7 +249,9 @@ export function createStore(storage, clock = () => new Date()) {
     // snapshot comes from the engines (monthSnapshot in engines/history.js); the store never does math.
     closeMonth(snapshot) {
       let key;
-      store.update('Close month', (d) => { key = closeMonth(d, snapshot, nowIso()); });
+      store.update('Close month', (d) => {
+        key = closeMonth(d, snapshot, nowIso());
+      });
       return key;
     },
     reviseMonth(key, lineId, amount) {

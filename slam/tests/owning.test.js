@@ -12,7 +12,14 @@ import { makeValue } from '../src/store/value.js';
 import { migrate } from '../src/store/migrate.js';
 import { validateHousehold } from '../src/store/validate.js';
 import { viewFor } from '../src/store/visibility.js';
-import { addAccount, setBalance, setAccountField, setAlternative, setAccountNotes, setOwnReturn } from '../src/store/accounts.js';
+import {
+  addAccount,
+  setBalance,
+  setAccountField,
+  setAlternative,
+  setAccountNotes,
+  setOwnReturn
+} from '../src/store/accounts.js';
 import { addDebt, addLine, findLine } from '../src/store/edits.js';
 import { owningCosts, depreciationFromValues } from '../src/engines/owning.js';
 import { buildSummary } from '../src/engines/summary.js';
@@ -65,12 +72,21 @@ test('the condo: what you never get back, next to rent', () => {
   // Interest: 240,000 x 6% / 12 = 1,200. Tax 300 and insurance 100 from the budget.
   // Maintenance: no line, so the Guess: 310,000 x 1% / 12 = 258.33.
   // Equity 310,000 - 240,000 = 70,000; at the 5% assumption: 70,000 x 5% / 12 = 291.67.
-  assert.deepEqual(parts(condo), { interest: [1200, 'debt'], tax: [300, 'budget'], insurance: [100, 'budget'], maintenance: [258.33, 'guess'], opportunity: [291.67, 'assumption'] });
+  assert.deepEqual(parts(condo), {
+    interest: [1200, 'debt'],
+    tax: [300, 'budget'],
+    insurance: [100, 'budget'],
+    maintenance: [258.33, 'guess'],
+    opportunity: [291.67, 'assumption']
+  });
   // 1,200 + 300 + 100 + 258.33 + 291.67 = 2,150.
   assert.deepEqual([condo.equity, condo.neverBack, condo.missing], [70000, 2150, []]);
   // The payment 1,800 builds 1,800 - 1,200 = 600 of equity. To hold it: Housing lines 300 + 100 + 150 = 550, plus the payment = 2,350.
   assert.deepEqual([condo.debt.principal, condo.hold.lines, condo.hold.total], [600, 550, 2350]);
-  assert.equal(condo.reading, 'Owning costs you about $2,150 a month you\'ll never get back. Renting a similar place would be about $2,100.');
+  assert.equal(
+    condo.reading,
+    "Owning costs you about $2,150 a month you'll never get back. Renting a similar place would be about $2,100."
+  );
   // A 3% assumption: 70,000 x 3% / 12 = 175; 2,150 - 291.67 + 175 = 2,033.33.
   setOwnReturn(d, 0.03);
   assert.equal(owningCosts(d, buildSummary(d, refs), DAY)[0].neverBack, 2033.33);
@@ -81,10 +97,20 @@ test('the car: depreciation from its values, the loan, and the lines, next to Ub
   const car = owningCosts(d, buildSummary(d, refs), DAY)[1];
   // Depreciation: 10,200 on Oct 31, 2025 to 9,000 on Oct 31, 2026, twelve month ends: 1,200 / 12 = 100.
   // Interest: 5,000 x 7.2% / 12 = 30. Insurance 80, maintenance 40, gas 120; parking and tolls not in the budget.
-  assert.deepEqual(parts(car), { interest: [30, 'debt'], depreciation: [100, 'values'], insurance: [80, 'budget'], maintenance: [40, 'budget'], parking: [null, null], gas: [120, 'budget'] });
+  assert.deepEqual(parts(car), {
+    interest: [30, 'debt'],
+    depreciation: [100, 'values'],
+    insurance: [80, 'budget'],
+    maintenance: [40, 'budget'],
+    parking: [null, null],
+    gas: [120, 'budget']
+  });
   // 30 + 100 + 80 + 40 + 120 = 370. The alternative: 250 + 90 = 340 (no rental set).
   assert.deepEqual([car.neverBack, car.missing, car.alternative.amount], [370, ['Parking and tolls'], 340]);
-  assert.equal(car.reading, 'The car costs about $370 a month you\'ll never get back (not counting parking and tolls). Your trips by Uber and transit would be about $340.');
+  assert.equal(
+    car.reading,
+    "The car costs about $370 a month you'll never get back (not counting parking and tolls). Your trips by Uber and transit would be about $340."
+  );
   // One value only: the Guess, 9,000 x 15% / 12 = 112.50.
   delete d.balances['2025-10'];
   const guessed = owningCosts(d, buildSummary(d, refs), DAY)[1];

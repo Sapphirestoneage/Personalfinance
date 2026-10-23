@@ -13,11 +13,13 @@ const FILES = {
 };
 
 export async function loadRefs() {
-  const entries = await Promise.all(Object.entries(FILES).map(async ([k, path]) => {
-    const res = await fetch(path);
-    if (!res.ok) throw new Error('Could not load ' + path);
-    return [k, await res.json()];
-  }));
+  const entries = await Promise.all(
+    Object.entries(FILES).map(async ([k, path]) => {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error('Could not load ' + path);
+      return [k, await res.json()];
+    })
+  );
   return Object.fromEntries(entries);
 }
 
@@ -34,7 +36,12 @@ export const DEMO_HOUSEHOLDS = [
 
 // Demo households that come with sample bank files to import.
 // [file, account name, account type]: the account is made first, and the file goes into it (S-085).
-export const DEMO_CSVS = { jordan: [['jordan-chase.csv', 'Chase card', 'credit-card'], ['jordan-checking.csv', 'Checking', 'checking']] };
+export const DEMO_CSVS = {
+  jordan: [
+    ['jordan-chase.csv', 'Chase card', 'credit-card'],
+    ['jordan-checking.csv', 'Checking', 'checking']
+  ]
+};
 
 export async function loadDemoCSV(file) {
   const res = await fetch('src/data/households/' + file);

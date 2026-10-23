@@ -9,7 +9,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { importCSV, detectFormat, merchantKey, parseDate, parseMoney } from '../src/engines/tx-import.js';
 import { parseCSV } from '../src/engines/csv.js';
-import { actualsFromTransactions, detect, topMerchants, weekdaySpending, sizeVsCount } from '../src/engines/tx-analysis.js';
+import {
+  actualsFromTransactions,
+  detect,
+  topMerchants,
+  weekdaySpending,
+  sizeVsCount
+} from '../src/engines/tx-analysis.js';
 import { budgetModel } from '../src/engines/model.js';
 import { addTransactions, setTransactionLine } from '../src/store/edits.js';
 import { validateHousehold } from '../src/store/validate.js';
@@ -36,14 +42,26 @@ const money = (a, e, l) => assert.ok(near(a, e, 2), l + ': got ' + a + ', expect
 const share = (a, e, l) => assert.ok(near(a, e, 6), l + ': got ' + a + ', expected ' + e);
 
 test('CSV reader handles quotes, commas inside quotes, and CRLF', () => {
-  assert.deepEqual(parseCSV('a,b\r\n"x, y","say ""hi"""\r\n'), [['a', 'b'], ['x, y', 'say "hi"']]);
+  assert.deepEqual(parseCSV('a,b\r\n"x, y","say ""hi"""\r\n'), [
+    ['a', 'b'],
+    ['x, y', 'say "hi"']
+  ]);
 });
 
 test('formats are detected from the header row', () => {
-  assert.equal(detectFormat(['Transaction Date', 'Post Date', 'Description', 'Category', 'Type', 'Amount', 'Memo']), 'chase-card');
-  assert.equal(detectFormat(['Details', 'Posting Date', 'Description', 'Amount', 'Type', 'Balance', 'Check or Slip #']), 'chase-checking');
+  assert.equal(
+    detectFormat(['Transaction Date', 'Post Date', 'Description', 'Category', 'Type', 'Amount', 'Memo']),
+    'chase-card'
+  );
+  assert.equal(
+    detectFormat(['Details', 'Posting Date', 'Description', 'Amount', 'Type', 'Balance', 'Check or Slip #']),
+    'chase-checking'
+  );
   assert.equal(detectFormat(['Date', 'Description', 'Card Member', 'Account #', 'Amount']), 'amex');
-  assert.equal(detectFormat(['Transaction Date', 'Posted Date', 'Card No.', 'Description', 'Category', 'Debit', 'Credit']), 'capital-one');
+  assert.equal(
+    detectFormat(['Transaction Date', 'Posted Date', 'Card No.', 'Description', 'Category', 'Debit', 'Credit']),
+    'capital-one'
+  );
   assert.equal(detectFormat(['Date', 'Description', 'Amount']), 'generic');
   assert.equal(detectFormat(['foo', 'bar']), null);
 });
@@ -57,17 +75,34 @@ test('dates, money, and merchant keys', () => {
 });
 
 test('Amex: positive is a charge; refunds and payments are not spending', () => {
-  const r = importCSV('Date,Description,Card Member,Account #,Amount\n09/05/2026,STARBUCKS,JORDAN,-1001,6.50\n09/07/2026,STARBUCKS REFUND,JORDAN,-1001,-6.50\n09/10/2026,AUTOPAY PAYMENT - THANK YOU,JORDAN,-1001,-200.00\n',
-    { account: 'Amex', rulesData: refs.merchantRules });
+  const r = importCSV(
+    'Date,Description,Card Member,Account #,Amount\n09/05/2026,STARBUCKS,JORDAN,-1001,6.50\n09/07/2026,STARBUCKS REFUND,JORDAN,-1001,-6.50\n09/10/2026,AUTOPAY PAYMENT - THANK YOU,JORDAN,-1001,-200.00\n',
+    { account: 'Amex', rulesData: refs.merchantRules }
+  );
   assert.equal(r.format, 'amex');
-  assert.deepEqual(r.transactions.map((t) => [t.amount, t.kind, t.lineId]), [[6.5, 'spend', 'eating-out'], [-6.5, 'refund', 'eating-out'], [-200, 'card-payment', null]]);
+  assert.deepEqual(
+    r.transactions.map((t) => [t.amount, t.kind, t.lineId]),
+    [
+      [6.5, 'spend', 'eating-out'],
+      [-6.5, 'refund', 'eating-out'],
+      [-200, 'card-payment', null]
+    ]
+  );
 });
 
 test('Capital One: debit and credit columns', () => {
-  const r = importCSV('Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2026-09-03,2026-09-04,1234,KROGER #12,Merchandise,54.20,\n2026-09-09,2026-09-10,1234,CAPITAL ONE MOBILE PYMT,Payment/Credit,,300.00\n',
-    { account: 'Capital One', rulesData: refs.merchantRules });
+  const r = importCSV(
+    'Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2026-09-03,2026-09-04,1234,KROGER #12,Merchandise,54.20,\n2026-09-09,2026-09-10,1234,CAPITAL ONE MOBILE PYMT,Payment/Credit,,300.00\n',
+    { account: 'Capital One', rulesData: refs.merchantRules }
+  );
   assert.equal(r.format, 'capital-one');
-  assert.deepEqual(r.transactions.map((t) => [t.amount, t.kind, t.lineId]), [[54.2, 'spend', 'groceries'], [-300, 'card-payment', null]]);
+  assert.deepEqual(
+    r.transactions.map((t) => [t.amount, t.kind, t.lineId]),
+    [
+      [54.2, 'spend', 'groceries'],
+      [-300, 'card-payment', null]
+    ]
+  );
 });
 
 test('Jordan: every row imported and classified', () => {
@@ -81,7 +116,11 @@ test('Jordan: every row imported and classified', () => {
 
 test('Jordan: importing the same file again adds nothing (but real same-day repeats were kept)', () => {
   const { doc } = loadJordan();
-  const again = importCSV(readText('src/data/households/jordan-chase.csv'), { account: 'acct-chase', rulesData: refs.merchantRules, memory: doc.merchantMemory });
+  const again = importCSV(readText('src/data/households/jordan-chase.csv'), {
+    account: 'acct-chase',
+    rulesData: refs.merchantRules,
+    memory: doc.merchantMemory
+  });
   assert.equal(addTransactions(doc, again.transactions), 0);
   assert.equal(doc.transactions.filter((t) => t.merchant === 'TRADER JOE S').length, 2);
 });
@@ -115,11 +154,23 @@ test('Jordan: actuals come from the log, with no confirm step (S-087)', () => {
 test('Jordan: detections', () => {
   const { doc } = loadJordan();
   const d = detect(doc.transactions);
-  assert.deepEqual(d.subscriptions.map((s) => [s.merchant, s.yearly]), exp.subscriptions);
+  assert.deepEqual(
+    d.subscriptions.map((s) => [s.merchant, s.yearly]),
+    exp.subscriptions
+  );
   money(d.subscriptionsYearly, exp.subscriptionsYearly, 'subscriptions yearly');
-  assert.deepEqual(d.priceCreep.map((p) => [p.merchant, p.from, p.to, p.monthly, p.yearly]), exp.priceCreep);
-  assert.deepEqual(d.trials.map((t) => [t.merchant, t.trialDate, t.paidDate, t.amount]), exp.trials);
-  assert.deepEqual(d.duplicates.map((x) => [x.merchant, x.date, x.amount]), exp.duplicates);
+  assert.deepEqual(
+    d.priceCreep.map((p) => [p.merchant, p.from, p.to, p.monthly, p.yearly]),
+    exp.priceCreep
+  );
+  assert.deepEqual(
+    d.trials.map((t) => [t.merchant, t.trialDate, t.paidDate, t.amount]),
+    exp.trials
+  );
+  assert.deepEqual(
+    d.duplicates.map((x) => [x.merchant, x.date, x.amount]),
+    exp.duplicates
+  );
   money(d.feesTotal, exp.feesTotal, 'fees');
   money(d.bnplTotal, exp.bnplTotal, 'bnpl');
 });
@@ -143,7 +194,10 @@ test('Jordan: top merchants, weekdays, size vs count', () => {
   money(w.perWeekendDay, exp.perWeekendDay, 'per weekend day');
   money(w.perWeekday, exp.perWeekday, 'per weekday');
   const sc = Object.fromEntries(sizeVsCount(doc.transactions).map((x) => [x.merchant, [x.count, x.average]]));
-  for (const [m, [c, avg]] of Object.entries(exp.sizeVsCount)) { assert.equal(sc[m][0], c, m); money(sc[m][1], avg, m + ' average'); }
+  for (const [m, [c, avg]] of Object.entries(exp.sizeVsCount)) {
+    assert.equal(sc[m][0], c, m);
+    money(sc[m][1], avg, m + ' average');
+  }
 });
 
 test('re-mapping a merchant is remembered and applied to its other transactions', () => {
@@ -160,8 +214,26 @@ test('a fee line is made in Bills the first time an import maps to it (S-123)', 
   const { findLine } = await import('../src/store/edits.js');
   const d = october();
   assert.equal(findLine(d, 'fee-late'), null);
-  mergeImport(d, { rows: [{ status: 'new', tx: { id: 'tx-late', date: '2026-10-05', amount: 39, merchant: 'LATE FEE', lineId: 'fee-late', account: 'chk', kind: 'spend' } }] });
+  mergeImport(d, {
+    rows: [
+      {
+        status: 'new',
+        tx: {
+          id: 'tx-late',
+          date: '2026-10-05',
+          amount: 39,
+          merchant: 'LATE FEE',
+          lineId: 'fee-late',
+          account: 'chk',
+          kind: 'spend'
+        }
+      }
+    ]
+  });
   const hit = findLine(d, 'fee-late');
   // In Bills and subscriptions, named "Late fees", and the entry points to it.
-  assert.deepEqual([hit.category.id, hit.line.name, d.transactions.find((t) => t.id === 'tx-late').lineId], ['bills', 'Late fees', 'fee-late']);
+  assert.deepEqual(
+    [hit.category.id, hit.line.name, d.transactions.find((t) => t.id === 'tx-late').lineId],
+    ['bills', 'Late fees', 'fee-late']
+  );
 });

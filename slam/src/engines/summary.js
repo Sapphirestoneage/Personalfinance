@@ -12,7 +12,16 @@ import { eraTimeline } from './eras.js';
 import { dreamLife } from './dream-life.js';
 import { budgetModel } from './model.js';
 import { budgetTotals, surplusAllocation } from './totals.js';
-import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
+import {
+  gaps,
+  accuracy,
+  blindSpot,
+  culprits,
+  gutCheck,
+  correctionFactors,
+  proofOfCash,
+  blindCompare
+} from './compare.js';
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
@@ -37,20 +46,49 @@ function tableRows(model, totals) {
       // A line's basis is its actual when one exists, else its estimate (totals.js does the same for a category).
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
-        id: l.id, name: l.name, type: l.type, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
-        estimate: l.estimate, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
-        gaps: gaps(l.estimate, l.actual), accuracy: accuracy(l.estimate, l.actual),
+        id: l.id,
+        name: l.name,
+        type: l.type,
+        addedInReview: !!l.addedFor,
+        computed: l.computed,
+        kind: l.kind,
+        need: l.need,
+        tag: l.tag,
+        path: l.path,
+        joy: l.joy,
+        state: l.state,
+        estimate: l.estimate,
+        actual: l.actual,
+        basis: lb,
+        status: l.status,
+        sourceStatus: l.sourceStatus || null,
+        gaps: gaps(l.estimate, l.actual),
+        accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.actual, lb, th),
         pctSpending: c.savings ? null : ratio(lb, totals.spending),
-        owedOutstanding: l.owedOutstanding, split: l.split || null,
+        owedOutstanding: l.owedOutstanding,
+        split: l.split || null,
         covered: l.covered || null
       };
     });
     return {
-      id: c.id, name: c.name, type: c.type, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
-      estimate: c.estimate.amount, actual: c.actual.amount, partial: c.actual.partial,
-      estimateFrom: c.estimate.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
-      basis: basis.amount, basisFrom: basis.from,
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      savings: c.savings,
+      isDebt: c.isDebt,
+      isEverything: c.isEverything,
+      notForMe: c.notForMe,
+      state: c.state,
+      estimate: c.estimate.amount,
+      actual: c.actual.amount,
+      partial: c.actual.partial,
+      estimateFrom: c.estimate.from,
+      carved: c.estimate.carved,
+      total: c.estimate.total,
+      overSplit: !!c.estimate.overSplit,
+      basis: basis.amount,
+      basisFrom: basis.from,
       status: { estimate: c.estimate.status, actual: c.actual.status },
       gaps: gaps(c.estimate.amount, c.actual.amount),
       accuracy: accuracy(c.estimate.amount, c.actual.amount),
@@ -83,11 +121,21 @@ export function buildSummary(full, refs) {
     householdId: doc.id,
     month: doc.currentMonth,
     profile: { ...doc.profile, householdSize: householdSize(doc) },
-    income, model, totals,
+    income,
+    model,
+    totals,
     rows: tableRows(model, totals),
     allocation: surplusAllocation(model, totals),
     // Each card's interest this month (S-133), for the chart on Credit and debt.
-    cardInterest: interestHandoff(doc, doc.currentMonth).rows.map(({ d, i }) => ({ id: d.id, name: d.label, amount: i ? i.amount : null, apr: i ? i.apr : null, balance: i ? i.balance : null, promo: i ? i.promo : false, why: i ? i.why : null })),
+    cardInterest: interestHandoff(doc, doc.currentMonth).rows.map(({ d, i }) => ({
+      id: d.id,
+      name: d.label,
+      amount: i ? i.amount : null,
+      apr: i ? i.apr : null,
+      balance: i ? i.balance : null,
+      promo: i ? i.promo : false,
+      why: i ? i.why : null
+    })),
     oneOffs: model.oneOffs,
     blindSpot: blind,
     culprits: culprits(model),
@@ -122,11 +170,18 @@ export function buildSummary(full, refs) {
   summary.sinceLast = sinceLast(doc, summary);
   summary.nextStage = nextStage(doc, income, totals, summary.culprits);
   // Living with family: what housing might cost on your own (an average, labeled guess).
-  summary.moveOut = doc.household.livingWith === 'family' ? { guess: guessFor(doc, 'housing', refs), now: totals.housing } : null;
-  summary.transactions = doc.transactions.length ? {
-    count: doc.transactions.length, months: txMonths(doc.transactions), detections: detect(doc.transactions),
-    top: topMerchants(doc.transactions), weekdays: weekdaySpending(doc.transactions), sizeVsCount: sizeVsCount(doc.transactions)
-  } : null;
+  summary.moveOut =
+    doc.household.livingWith === 'family' ? { guess: guessFor(doc, 'housing', refs), now: totals.housing } : null;
+  summary.transactions = doc.transactions.length
+    ? {
+        count: doc.transactions.length,
+        months: txMonths(doc.transactions),
+        detections: detect(doc.transactions),
+        top: topMerchants(doc.transactions),
+        weekdays: weekdaySpending(doc.transactions),
+        sizeVsCount: sizeVsCount(doc.transactions)
+      }
+    : null;
   return summary;
 }
 
@@ -137,9 +192,23 @@ function addPlanAndShares(summary, doc, model, totals) {
   const plan = planView(doc, doc.currentMonth);
   summary.plan = plan;
   const th = totals.takeHome;
-  const colTotal = { estimate: totals.estimateTotal, actual: totals.actualTotal, basis: totals.spending, plan: plan ? plan.spending : null };
+  const colTotal = {
+    estimate: totals.estimateTotal,
+    actual: totals.actualTotal,
+    basis: totals.spending,
+    plan: plan ? plan.spending : null
+  };
   // Joy or purpose counts savings lines too (the positives); debt lines are computed, never rated.
-  const ratedLines = model.categories.filter((c) => !c.isDebt).flatMap((c) => c.lines).map((l) => ({ id: l.id, name: l.name, joy: l.joy, stress: l.stress, amount: l.actual !== null ? l.actual : l.estimate }));
+  const ratedLines = model.categories
+    .filter((c) => !c.isDebt)
+    .flatMap((c) => c.lines)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      joy: l.joy,
+      stress: l.stress,
+      amount: l.actual !== null ? l.actual : l.estimate
+    }));
   const joy = happinessOf(ratedLines);
   summary.happinessPoints = joy.points;
   summary.stress = stressOf(ratedLines);
@@ -169,7 +238,13 @@ function addPlanAndShares(summary, doc, model, totals) {
     // Category happiness: % of happiness adds its lines; rating and joy per $100 stay spend-weighted (joy lens).
     const rated = r.lines.filter((l) => l.happiness);
     const lr = lensRow(r.id);
-    r.happiness = rated.length ? { share: rated.reduce((a, l) => a + (l.happiness.share || 0), 0), rating: lr ? lr.joy : null, per100: lr ? lr.joyPer100 : null } : null;
+    r.happiness = rated.length
+      ? {
+          share: rated.reduce((a, l) => a + (l.happiness.share || 0), 0),
+          rating: lr ? lr.joy : null,
+          per100: lr ? lr.joyPer100 : null
+        }
+      : null;
   }
   summary.totals.planSpending = plan ? plan.spending : null;
   summary.totals.planOutflow = plan ? plan.outflow : null;
@@ -206,7 +281,8 @@ export function sinceLast(doc, summary) {
   if (!last) return null;
   const now = snapshotOf(summary, null);
   const out = { date: last.date };
-  for (const k of ['takeHome', 'spending', 'surplus', 'savingsRate', 'blindSpot', 'completion']) out[k] = minus(now[k], last[k]);
+  for (const k of ['takeHome', 'spending', 'surplus', 'savingsRate', 'blindSpot', 'completion'])
+    out[k] = minus(now[k], last[k]);
   return out;
 }
 

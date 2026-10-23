@@ -14,7 +14,9 @@ import { sumParts, PART_CADENCES } from '../../store/value.js';
 const CADENCES = ['month', 'week', 'paycheck', 'year', 'one-off'];
 const CLEARS_AMOUNT = new Set(['not-for-me', 'dont-know']);
 
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 // Builds the next Value from a user edit. Typing a number marks it known (or `typed`,
 // "roughly" in the Rough pass, S-106) unless the coach already chose "roughly";
@@ -24,9 +26,19 @@ export function editValue(prev, change, typed = 'known') {
   if ('amount' in change) {
     if (change.amount === null) next.status = prev.status === 'roughly' || prev.status === 'known' ? null : prev.status;
     // Only a blank value takes `typed`; a number over a guess, a computed figure, or a non-answer is known.
-    else if (!prev.status || CLEARS_AMOUNT.has(prev.status) || prev.status === 'guess' || prev.status === 'computed' || prev.status === 'will-email') next.status = prev.status ? 'known' : typed;
+    else if (
+      !prev.status ||
+      CLEARS_AMOUNT.has(prev.status) ||
+      prev.status === 'guess' ||
+      prev.status === 'computed' ||
+      prev.status === 'will-email'
+    )
+      next.status = prev.status ? 'known' : typed;
     // A number typed over a Guess is the client's own: drop the app source and its note.
-    if (prev.status === 'guess' && change.amount !== null) { next.source = 'client'; next.note = ''; }
+    if (prev.status === 'guess' && change.amount !== null) {
+      next.source = 'client';
+      next.note = '';
+    }
   }
   if ('parts' in change) {
     if (!change.parts || !change.parts.length) delete next.parts;
@@ -39,10 +51,15 @@ export function editValue(prev, change, typed = 'known') {
   }
   if ('cadence' in change && prev.parts && prev.parts.length && PART_CADENCES[change.cadence]) {
     // Items keep what they meant: an item with no cadence of its own was in the old one.
-    const parts = prev.parts.map((p) => (p.cadence || !PART_CADENCES[prev.cadence] ? p : { ...p, cadence: prev.cadence }));
+    const parts = prev.parts.map((p) =>
+      p.cadence || !PART_CADENCES[prev.cadence] ? p : { ...p, cadence: prev.cadence }
+    );
     return { ...next, parts, amount: sumParts(parts, change.cadence) };
   }
-  if ('status' in change && CLEARS_AMOUNT.has(change.status)) { next.amount = null; delete next.parts; }
+  if ('status' in change && CLEARS_AMOUNT.has(change.status)) {
+    next.amount = null;
+    delete next.parts;
+  }
   return next;
 }
 
@@ -66,21 +83,93 @@ function partsEditor(ctx, path, value, label) {
   const key = JSON.stringify(path);
   const parts = value.parts || [];
   const commit = (next, what) => ctx.commit(path, editValue(value, { parts: next }), what || label);
-  return h('div', { class: 'parts' },
-    parts.map((p, i) => h('div', { class: 'part' },
-      h('input', { type: 'text', class: 'part-name', value: p.name, placeholder: 'What is it?', 'aria-label': label + ' item ' + (i + 1) + ' name', 'data-key': key + ':part:' + i + ':name',
-        onchange: (e) => commit(parts.map((x, j) => (j === i ? { ...x, name: e.target.value.trim() } : x)), label + ' item name') }),
-      h('input', { type: 'text', inputmode: 'decimal', class: 'amount part-amount', value: p.amount === null ? '' : String(p.amount), placeholder: '$', 'aria-label': label + ' item ' + (i + 1) + ' amount', 'data-key': key + ':part:' + i + ':amount',
-        onchange: (e) => {
-          const a = parseAmount(e.target.value);
-          if (a === undefined) { e.target.value = p.amount === null ? '' : p.amount; return; }
-          commit(parts.map((x, j) => (j === i ? { ...x, amount: a } : x)), label + ' item amount');
-        } }),
-      h('select', { class: 'part-cadence', 'aria-label': label + ' item ' + (i + 1) + ' cadence', 'data-key': key + ':part:' + i + ':cadence',
-        onchange: (e) => commit(parts.map((x, j) => (j === i ? { ...x, cadence: e.target.value } : x)), label + ' item cadence') },
-        options([['month', '/ mo'], ['year', '/ yr'], ['week', '/ wk']], p.cadence || (PART_CADENCES[value.cadence] ? value.cadence : 'month'))),
-      h('button', { class: 'btn small ghost', 'aria-label': 'Remove item ' + (p.name || i + 1), title: 'Remove', onclick: () => commit(parts.filter((x, j) => j !== i), 'Remove item') }, '\u00d7'))),
-    h('button', { class: 'btn small ghost', 'data-key': key + ':add-part', onclick: () => commit([...parts, { name: '', amount: null }], 'Add item') }, '+ Add item'));
+  return h(
+    'div',
+    { class: 'parts' },
+    parts.map((p, i) =>
+      h(
+        'div',
+        { class: 'part' },
+        h('input', {
+          type: 'text',
+          class: 'part-name',
+          value: p.name,
+          placeholder: 'What is it?',
+          'aria-label': label + ' item ' + (i + 1) + ' name',
+          'data-key': key + ':part:' + i + ':name',
+          onchange: (e) =>
+            commit(
+              parts.map((x, j) => (j === i ? { ...x, name: e.target.value.trim() } : x)),
+              label + ' item name'
+            )
+        }),
+        h('input', {
+          type: 'text',
+          inputmode: 'decimal',
+          class: 'amount part-amount',
+          value: p.amount === null ? '' : String(p.amount),
+          placeholder: '$',
+          'aria-label': label + ' item ' + (i + 1) + ' amount',
+          'data-key': key + ':part:' + i + ':amount',
+          onchange: (e) => {
+            const a = parseAmount(e.target.value);
+            if (a === undefined) {
+              e.target.value = p.amount === null ? '' : p.amount;
+              return;
+            }
+            commit(
+              parts.map((x, j) => (j === i ? { ...x, amount: a } : x)),
+              label + ' item amount'
+            );
+          }
+        }),
+        h(
+          'select',
+          {
+            class: 'part-cadence',
+            'aria-label': label + ' item ' + (i + 1) + ' cadence',
+            'data-key': key + ':part:' + i + ':cadence',
+            onchange: (e) =>
+              commit(
+                parts.map((x, j) => (j === i ? { ...x, cadence: e.target.value } : x)),
+                label + ' item cadence'
+              )
+          },
+          options(
+            [
+              ['month', '/ mo'],
+              ['year', '/ yr'],
+              ['week', '/ wk']
+            ],
+            p.cadence || (PART_CADENCES[value.cadence] ? value.cadence : 'month')
+          )
+        ),
+        h(
+          'button',
+          {
+            class: 'btn small ghost',
+            'aria-label': 'Remove item ' + (p.name || i + 1),
+            title: 'Remove',
+            onclick: () =>
+              commit(
+                parts.filter((x, j) => j !== i),
+                'Remove item'
+              )
+          },
+          '\u00d7'
+        )
+      )
+    ),
+    h(
+      'button',
+      {
+        class: 'btn small ghost',
+        'data-key': key + ':add-part',
+        onclick: () => commit([...parts, { name: '', amount: null }], 'Add item')
+      },
+      '+ Add item'
+    )
+  );
 }
 
 // ctx: { commit(path, value, label), preview(path, value), payFrequency }
@@ -95,13 +184,21 @@ export function valueInput(ctx, path, value, opts = {}) {
   // when toMonthly has no answer (a paycheck amount with no pay frequency).
   const showMonthly = (v) => {
     const m = toMonthly(v, ctx.payFrequency);
-    monthly.textContent = v.cadence !== 'month' && m !== null && v.cadence !== 'one-off' ? '= ' + money(m) + ' / month' : '';
+    monthly.textContent =
+      v.cadence !== 'month' && m !== null && v.cadence !== 'one-off' ? '= ' + money(m) + ' / month' : '';
   };
   showMonthly(value);
   const split = opts.parts && value.parts && value.parts.length;
   const input = h('input', {
-    type: 'text', inputmode: 'decimal', readonly: split ? true : null, title: split ? 'The sum of the items below' : null, class: 'amount' + (opts.big ? ' big' : ''), 'aria-label': label,
-    'data-key': key, 'data-path': key, placeholder: opts.placeholder || '$',
+    type: 'text',
+    inputmode: 'decimal',
+    readonly: split ? true : null,
+    title: split ? 'The sum of the items below' : null,
+    class: 'amount' + (opts.big ? ' big' : ''),
+    'aria-label': label,
+    'data-key': key,
+    'data-path': key,
+    placeholder: opts.placeholder || '$',
     value: value.amount === null ? '' : String(value.amount),
     oninput: (e) => {
       const a = parseAmount(e.target.value);
@@ -112,9 +209,17 @@ export function valueInput(ctx, path, value, opts = {}) {
     },
     onchange: (e) => {
       const { amount: a, pieces } = parseAmounts(e.target.value);
-      if (a === undefined) { e.target.value = value.amount === null ? '' : value.amount; return; }
+      if (a === undefined) {
+        e.target.value = value.amount === null ? '' : value.amount;
+        return;
+      }
       // 12+30+8 in a box that can hold items keeps each number as its own item.
-      if (opts.parts && pieces.length > 1) return ctx.commit(path, editValue(value, { parts: pieces.map((n) => ({ name: '', amount: n })) }, opts.typed), label);
+      if (opts.parts && pieces.length > 1)
+        return ctx.commit(
+          path,
+          editValue(value, { parts: pieces.map((n) => ({ name: '', amount: n })) }, opts.typed),
+          label
+        );
       // Same number, no commit: every commit lands in undo history and restamps asOf.
       if (a === value.amount) return;
       ctx.commit(path, editValue(value, { amount: a }, opts.typed), label);
@@ -124,35 +229,91 @@ export function valueInput(ctx, path, value, opts = {}) {
   if (opts.compact && !opts.open) {
     // The status stays visible (lesson 2); everything else waits behind "more".
     // Tap the chip to change it (S-121): the same picker as under "more".
-    parts.push(statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key), monthly);
+    parts.push(
+      statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key),
+      monthly
+    );
     if (split) parts.push(h('span', { class: 'xs muted' }, value.parts.length + ' items'));
-    if (opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'false', 'aria-label': 'More for ' + label, onclick: opts.onMore }, 'more'));
+    if (opts.onMore)
+      parts.push(
+        h(
+          'button',
+          {
+            class: 'btn small ghost more-ctl',
+            'data-key': key + ':more',
+            'aria-expanded': 'false',
+            'aria-label': 'More for ' + label,
+            onclick: opts.onMore
+          },
+          'more'
+        )
+      );
     return h('div', { class: 'value-input' }, parts);
   }
   // Callers turn the cadence picker off for amounts that are not a rate (a balance, a price, an APR).
   // With items, only the cadences items can total (PART_CADENCES: week, month, year) are offered.
   if (opts.cadence !== false) {
-    parts.push(h('select', {
-      class: 'cadence', 'aria-label': label + ' cadence', 'data-key': key + ':cadence',
-      onchange: (e) => ctx.commit(path, editValue(value, { cadence: e.target.value }), label)
-    }, options((split ? CADENCES.filter((c) => PART_CADENCES[c]) : CADENCES).map((c) => [c, CADENCE_LABELS[c]]), value.cadence)));
+    parts.push(
+      h(
+        'select',
+        {
+          class: 'cadence',
+          'aria-label': label + ' cadence',
+          'data-key': key + ':cadence',
+          onchange: (e) => ctx.commit(path, editValue(value, { cadence: e.target.value }), label)
+        },
+        options(
+          (split ? CADENCES.filter((c) => PART_CADENCES[c]) : CADENCES).map((c) => [c, CADENCE_LABELS[c]]),
+          value.cadence
+        )
+      )
+    );
   }
   parts.push(statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key));
   parts.push(monthly);
   // A Guess carries where its figure came from in `note`; show it beside the chip.
   if (value.status === 'guess' && value.note) parts.push(h('span', { class: 'xs st-guess' }, value.note));
   if (opts.parts && !split && value.status !== 'not-for-me') {
-    parts.push(h('button', { class: 'btn small ghost', 'data-key': key + ':split',
-      onclick: () => ctx.commit(path, editValue(value, { parts: [{ name: '', amount: value.amount }, { name: '', amount: null }] }), 'Break into items') }, '+ Items'));
+    parts.push(
+      h(
+        'button',
+        {
+          class: 'btn small ghost',
+          'data-key': key + ':split',
+          onclick: () =>
+            ctx.commit(
+              path,
+              editValue(value, {
+                parts: [
+                  { name: '', amount: value.amount },
+                  { name: '', amount: null }
+                ]
+              }),
+              'Break into items'
+            )
+        },
+        '+ Items'
+      )
+    );
   }
   if (split) parts.push(partsEditor(ctx, path, value, label));
-  if (opts.compact && opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'true', onclick: opts.onMore }, 'less'));
+  if (opts.compact && opts.onMore)
+    parts.push(
+      h(
+        'button',
+        { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'true', onclick: opts.onMore },
+        'less'
+      )
+    );
   return h('div', { class: 'value-input' }, parts);
 }
 
 // A question row: words on the left, the value input on the right.
 export function question(ctx, text, hint, path, value, opts) {
-  return h('div', { class: 'qa' },
+  return h(
+    'div',
+    { class: 'qa' },
     h('div', { class: 'q' }, h('div', {}, text), hint ? h('div', { class: 'hint' }, hint) : null),
-    valueInput(ctx, path, value, { label: text, ...opts }));
+    valueInput(ctx, path, value, { label: text, ...opts })
+  );
 }

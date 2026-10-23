@@ -22,9 +22,13 @@ export function explain(summary, which, cal, nw) {
     // A source with no take-home yet is left out of the steps, never shown as $0.
     return {
       title: 'Take-home, a month',
-      steps: inc.sources.filter((s) => s.takeHomeMonthly !== null).map((s) => ({ label: s.label, amount: s.takeHomeMonthly, path: ['income', s.id, 'takeHome'] })),
+      steps: inc.sources
+        .filter((s) => s.takeHomeMonthly !== null)
+        .map((s) => ({ label: s.label, amount: s.takeHomeMonthly, path: ['income', s.id, 'takeHome'] })),
       result: { label: 'Take-home', amount: t.takeHome },
-      note: inc.takeHomeIsGuess ? 'Some take-home is worked out from gross pay (a guess; state tax not included).' : 'Each source\'s take-home, a month.'
+      note: inc.takeHomeIsGuess
+        ? 'Some take-home is worked out from gross pay (a guess; state tax not included).'
+        : "Each source's take-home, a month."
     };
   }
   if (which === 'spending') {
@@ -33,16 +37,28 @@ export function explain(summary, which, cal, nw) {
     // on the Accounts tab, where the debt itself is entered.
     return {
       title: 'Spending, a month',
-      steps: summary.rows.filter((r) => !r.savings && !r.notForMe && r.basis !== null).map((r) => ({ label: r.name + (r.basisFrom === 'estimate' ? ' (estimate)' : ''), amount: r.basis, where: r.isDebt ? 'setup:debts' : r.basisFrom === 'estimate' ? 'estimates' : 'actual', open: r.isDebt ? null : 'rv-cat:' + r.id })),
+      steps: summary.rows
+        .filter((r) => !r.savings && !r.notForMe && r.basis !== null)
+        .map((r) => ({
+          label: r.name + (r.basisFrom === 'estimate' ? ' (estimate)' : ''),
+          amount: r.basis,
+          where: r.isDebt ? 'setup:debts' : r.basisFrom === 'estimate' ? 'estimates' : 'actual',
+          open: r.isDebt ? null : 'rv-cat:' + r.id
+        })),
       result: { label: 'Spending', amount: t.spending },
-      note: t.basisUsesEstimate.length ? 'Actuals, with estimates standing in for ' + t.basisUsesEstimate.join(', ') + '.' : 'Actuals for every category.'
+      note: t.basisUsesEstimate.length
+        ? 'Actuals, with estimates standing in for ' + t.basisUsesEstimate.join(', ') + '.'
+        : 'Actuals for every category.'
     };
   }
   // So far and expected by month end (S-128): `cal` is the month's outlook (calendar.js monthOutlook).
   if (which === 'soFar' && cal) {
     return {
       title: 'So far this month',
-      steps: [{ label: 'Income logged', amount: cal.incomeSoFar, where: 'log' }, { label: 'Spending logged', amount: -cal.spentSoFar, where: 'log' }],
+      steps: [
+        { label: 'Income logged', amount: cal.incomeSoFar, where: 'log' },
+        { label: 'Spending logged', amount: -cal.spentSoFar, where: 'log' }
+      ],
       result: { label: 'So far', amount: cal.soFar, signed: true },
       note: 'Only money that has arrived or left, from the log, up to today.'
     };
@@ -50,12 +66,23 @@ export function explain(summary, which, cal, nw) {
   if (which === 'expected' && cal) {
     return {
       title: 'Expected by month end',
-      steps: [{ label: 'So far', amount: cal.soFar },
-        ...cal.items.map((i) => ({ label: i.name + ' (' + i.date.slice(5) + ')', amount: i.amount, where: 'calendar' })),
-        ...cal.rest.filter((u) => u.left).map((u) => ({ label: u.name + ': rest of the plan', amount: -u.left, where: 'calendar' }))],
+      steps: [
+        { label: 'So far', amount: cal.soFar },
+        ...cal.items.map((i) => ({
+          label: i.name + ' (' + i.date.slice(5) + ')',
+          amount: i.amount,
+          where: 'calendar'
+        })),
+        ...cal.rest
+          .filter((u) => u.left)
+          .map((u) => ({ label: u.name + ': rest of the plan', amount: -u.left, where: 'calendar' }))
+      ],
       result: { label: 'Expected by month end', amount: cal.expected, signed: true },
-      note: 'So far, plus paychecks and bills still to come on the calendar, less the rest of the plan for lines not yet spent.' +
-        (cal.noPayDate.length ? ' No pay date yet for ' + cal.noPayDate.join(', ') + ', so none of its pay is counted.' : '')
+      note:
+        'So far, plus paychecks and bills still to come on the calendar, less the rest of the plan for lines not yet spent.' +
+        (cal.noPayDate.length
+          ? ' No pay date yet for ' + cal.noPayDate.join(', ') + ', so none of its pay is counted.'
+          : '')
     };
   }
   if (which === 'surplus') {
@@ -88,31 +115,50 @@ export function explain(summary, which, cal, nw) {
       title: 'Safe to spend',
       steps: [
         { label: 'In checking today', amount: cal.todayCash, where: 'checks' },
-        { label: 'Lowest point ahead' + (cal.lowest ? ' (' + cal.lowest.date + ')' : ''), amount: cal.lowest ? cal.lowest.amount : null, where: 'calendar' },
+        {
+          label: 'Lowest point ahead' + (cal.lowest ? ' (' + cal.lowest.date + ')' : ''),
+          amount: cal.lowest ? cal.lowest.amount : null,
+          where: 'calendar'
+        },
         { label: 'Less your cushion', amount: -cal.cushion, where: 'setup:coach' }
       ],
       result: { label: 'Safe to spend', amount: cal.safeToSpend },
-      note: 'The lower of today\'s checking and the lowest point ahead less the cushion, never below $0.'
+      note: "The lower of today's checking and the lowest point ahead less the cushion, never below $0."
     };
   }
   if (nw && (which === 'nwTotal' || which === 'nwFI')) {
     const fi = which === 'nwFI';
     // FI counts only assets that could fund your life, and only debts not secured by a home or car; networth.js sets both flags.
-    const assets = nw.assets.filter((a) => !fi || a.fi).map((a) => ({ label: a.name, amount: a.amount, where: 'balances', asOf: a.asOf }));
+    const assets = nw.assets
+      .filter((a) => !fi || a.fi)
+      .map((a) => ({ label: a.name, amount: a.amount, where: 'balances', asOf: a.asOf }));
     // Cards and loans alike point at 'balances' (the cash card on the Accounts tab): with no field path on the step,
     // how.js cannot send a debt on to its own row under Credit and debt.
-    const debts = nw.debts.filter((d) => !fi || d.counts).map((d) => ({ label: 'Less ' + d.name, amount: d.amount === null ? null : -d.amount, where: d.debtType === 'credit-card' ? 'balances' : 'balances', asOf: d.asOf }));
+    const debts = nw.debts
+      .filter((d) => !fi || d.counts)
+      .map((d) => ({
+        label: 'Less ' + d.name,
+        amount: d.amount === null ? null : -d.amount,
+        where: d.debtType === 'credit-card' ? 'balances' : 'balances',
+        asOf: d.asOf
+      }));
     return {
       title: fi ? 'FI net worth' : 'Net worth',
       steps: [...assets, ...debts],
       result: { label: fi ? 'FI net worth' : 'Net worth', amount: fi ? nw.fi : nw.total },
-      note: fi ? 'Assets that count toward FI, less every debt not tied to a home or car that does not count.' : 'Every account, less everything owed. Each at its latest balance.'
+      note: fi
+        ? 'Assets that count toward FI, less every debt not tied to a home or car that does not count.'
+        : 'Every account, less everything owed. Each at its latest balance.'
     };
   }
   if (nw && which === 'nwLocked') {
     return {
       title: 'Locked in things you use',
-      steps: nw.lockedRows.map((r) => ({ label: r.name + (r.debtNames.length ? ', less ' + r.debtNames.join(', ') : ''), amount: r.equity, where: 'balances' })),
+      steps: nw.lockedRows.map((r) => ({
+        label: r.name + (r.debtNames.length ? ', less ' + r.debtNames.join(', ') : ''),
+        amount: r.equity,
+        where: 'balances'
+      })),
       result: { label: 'Locked in', amount: nw.locked },
       note: 'Each thing that does not count toward FI: its value less the debt it secures.'
     };

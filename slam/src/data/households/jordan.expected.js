@@ -51,24 +51,54 @@
 export default {
   count: 30,
   kinds: { 'card-payment': 3, transfer: 1, income: 4, reimbursement: 2, refund: 1, fee: 2, spend: 17 },
-  september: { groceries: 218.20, subscriptions: 29.98, gas: 83.00, 'eating-out': 16.00, shopping: 80.00, 'fee-late': 39.00, 'fee-atm': 3.00 },
-  septemberCounts: { groceries: 3, subscriptions: 2, gas: 2, 'eating-out': 2, shopping: 2, 'fee-late': 1, 'fee-atm': 1 },
-  septemberUnmapped: [50.00, 1],
-  august: { groceries: 136.50, subscriptions: 15.49, gas: 40.00, 'eating-out': 14.25 },
-  subscriptions: [['NETFLIX.COM', 215.88], ['SPOTIFY USA', 143.88]],
+  september: {
+    groceries: 218.2,
+    subscriptions: 29.98,
+    gas: 83.0,
+    'eating-out': 16.0,
+    shopping: 80.0,
+    'fee-late': 39.0,
+    'fee-atm': 3.0
+  },
+  septemberCounts: {
+    groceries: 3,
+    subscriptions: 2,
+    gas: 2,
+    'eating-out': 2,
+    shopping: 2,
+    'fee-late': 1,
+    'fee-atm': 1
+  },
+  septemberUnmapped: [50.0, 1],
+  august: { groceries: 136.5, subscriptions: 15.49, gas: 40.0, 'eating-out': 14.25 },
+  subscriptions: [
+    ['NETFLIX.COM', 215.88],
+    ['SPOTIFY USA', 143.88]
+  ],
   subscriptionsYearly: 359.76,
-  priceCreep: [['NETFLIX.COM', 15.49, 17.99, 2.50, 30.00]],
+  priceCreep: [['NETFLIX.COM', 15.49, 17.99, 2.5, 30.0]],
   trials: [['SPOTIFY USA', '2026-08-12', '2026-09-11', 11.99]],
-  duplicates: [['TRADER JOE S', '2026-09-13', 61.30]],
-  feesTotal: 42.00,
-  bnplTotal: 100.00,
+  duplicates: [['TRADER JOE S', '2026-09-13', 61.3]],
+  feesTotal: 42.0,
+  bnplTotal: 100.0,
   topTotal: 791.42,
-  top: [['WHOLE FOODS MARKET', 232.10, 0.293270], ['SHELL OIL', 123.00, 0.155417], ['TRADER JOE S', 122.60, 0.154911], ['AFFIRM PAYMENT', 100.00, 0.126355], ['AMAZON MKTPLACE PMTS', 80.00, 0.101084]],
+  top: [
+    ['WHOLE FOODS MARKET', 232.1, 0.29327],
+    ['SHELL OIL', 123.0, 0.155417],
+    ['TRADER JOE S', 122.6, 0.154911],
+    ['AFFIRM PAYMENT', 100.0, 0.126355],
+    ['AMAZON MKTPLACE PMTS', 80.0, 0.101084]
+  ],
   topShare: 0.831038,
-  weekdays: [15.49, 3.00, 232.10, 106.99, 131.99, 46.25, 295.60],
-  weekdayTotal: 831.42, weekend: 341.85, weekday: 489.57, weekendShare: 0.411164, perWeekendDay: 170.93, perWeekday: 97.91,
-  sizeVsCount: { 'SHELL OIL': [3, 41.00], 'TRADER JOE S': [2, 61.30], 'WHOLE FOODS MARKET': [3, 77.37] },
+  weekdays: [15.49, 3.0, 232.1, 106.99, 131.99, 46.25, 295.6],
+  weekdayTotal: 831.42,
+  weekend: 341.85,
+  weekday: 489.57,
+  weekendShare: 0.411164,
+  perWeekendDay: 170.93,
+  perWeekday: 97.91,
+  sizeVsCount: { 'SHELL OIL': [3, 41.0], 'TRADER JOE S': [2, 61.3], 'WHOLE FOODS MARKET': [3, 77.37] },
   // Food's September actual as budgetModel reads it from the log: groceries 218.20 + eating out 16.00 = 234.20.
   // The key's name dates from the confirm step that S-087 removed; there is no apply step now.
-  foodActualAfterApplying: 234.20
+  foodActualAfterApplying: 234.2
 };

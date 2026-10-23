@@ -22,12 +22,41 @@ export const LINE_KINDS = ['fixed', 'variable'];
 // the client back (owedBack, owed until marked received).
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
-export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
+export const DEBT_TYPES = [
+  'credit-card',
+  'line-of-credit',
+  'student-loan',
+  'car-loan',
+  'personal-loan',
+  'medical',
+  'bnpl',
+  'mortgage',
+  'family-friend',
+  'other'
+];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 // Investment, retirement, and HSA accounts (S-103) hold money that is not spent day to day: never cash on hand.
 // S-110 adds every kind of asset, so the balance sheet has one place for all of them.
-export const ACCOUNT_TYPES = ['checking', 'savings', 'hysa', 'credit-card', 'cash', 'unset', 'hsa', 'other',
-  '401k', 'trad-ira', 'roth-ira', 'brokerage', '529', 'crypto', 'cash-value-life', 'home', 'vehicle', 'other-asset'];
+export const ACCOUNT_TYPES = [
+  'checking',
+  'savings',
+  'hysa',
+  'credit-card',
+  'cash',
+  'unset',
+  'hsa',
+  'other',
+  '401k',
+  'trad-ira',
+  'roth-ira',
+  'brokerage',
+  '529',
+  'crypto',
+  'cash-value-life',
+  'home',
+  'vehicle',
+  'other-asset'
+];
 // What each type is (S-110). kind: cash (counted in the cash bridge), invested (it can rise or fall with
 // a market), valued (a thing you own and use: its value is entered), or owed (a card).
 // tier: how fast it becomes cash. 1 cash now, 2 sell within days, 3 retirement with a penalty or rules,
@@ -73,33 +102,109 @@ export const ACCOUNT_STATES = ['active', 'archived'];
 // FAT is separate and strict: the Food, Housing (accommodation), and Transportation
 // categories, whatever their lines are labeled (see DECISIONS.md S-048).
 const TREE = [
-  ['housing', 'Housing', 'fixed', true, false, 'planned', [
-    ['rent', 'Rent or mortgage', 'fixed', true], ['utilities', 'Utilities', 'variable', true],
-    ['internet', 'Internet', 'fixed', true], ['home-insurance', 'Renters or home insurance', 'fixed', true]]],
-  ['food', 'Food', 'variable', true, false, 'planned', [
-    ['groceries', 'Groceries', 'variable', true], ['eating-out', 'Eating out', 'variable', false],
-    ['delivery', 'Delivery', 'variable', false]]],
-  ['transport', 'Transportation', 'variable', true, false, 'planned', [
-    ['car-payment', 'Car payment', 'fixed', true], ['car-insurance', 'Car insurance', 'fixed', true],
-    ['gas', 'Gas', 'variable', true], ['transit', 'Transit', 'variable', true],
-    ['maintenance', 'Maintenance', 'variable', true]]],
+  [
+    'housing',
+    'Housing',
+    'fixed',
+    true,
+    false,
+    'planned',
+    [
+      ['rent', 'Rent or mortgage', 'fixed', true],
+      ['utilities', 'Utilities', 'variable', true],
+      ['internet', 'Internet', 'fixed', true],
+      ['home-insurance', 'Renters or home insurance', 'fixed', true]
+    ]
+  ],
+  [
+    'food',
+    'Food',
+    'variable',
+    true,
+    false,
+    'planned',
+    [
+      ['groceries', 'Groceries', 'variable', true],
+      ['eating-out', 'Eating out', 'variable', false],
+      ['delivery', 'Delivery', 'variable', false]
+    ]
+  ],
+  [
+    'transport',
+    'Transportation',
+    'variable',
+    true,
+    false,
+    'planned',
+    [
+      ['car-payment', 'Car payment', 'fixed', true],
+      ['car-insurance', 'Car insurance', 'fixed', true],
+      ['gas', 'Gas', 'variable', true],
+      ['transit', 'Transit', 'variable', true],
+      ['maintenance', 'Maintenance', 'variable', true]
+    ]
+  ],
   ['debt', 'Debt payments', 'fixed', true, false, 'planned', []],
-  ['health', 'Health', 'fixed', true, false, 'planned', [
-    ['premiums', 'Premiums', 'fixed', true], ['out-of-pocket', 'Out of pocket', 'variable', true],
-    ['therapy', 'Therapy', 'fixed', true]]],
-  ['bills', 'Bills and subscriptions', 'fixed', false, false, 'planned', [
-    ['subscriptions', 'Bills and subscriptions', 'fixed', false]]],
-  ['fun', 'Personal and fun', 'variable', false, false, 'planned', [
-    ['shopping', 'Shopping', 'variable', false], ['entertainment', 'Entertainment', 'variable', false],
-    ['travel', 'Travel', 'variable', false], ['hobbies', 'Hobbies', 'variable', false],
-    ['gifts', 'Gifts', 'variable', false]]],
-  ['annual', 'Annual and irregular', 'variable', false, false, 'planned', [
-    ['yearly', 'Yearly and irregular costs', 'variable', false]]],
-  ['giving', 'Giving', 'variable', false, false, 'planned', [
-    ['giving-line', 'Giving', 'variable', false]]],
-  ['savings', 'Savings', 'fixed', false, true, 'planned', [
-    ['emergency-fund', 'Emergency fund', 'fixed', false], ['retirement', 'Retirement (after tax)', 'fixed', false],
-    ['other-goals', 'Other goals', 'fixed', false]]]
+  [
+    'health',
+    'Health',
+    'fixed',
+    true,
+    false,
+    'planned',
+    [
+      ['premiums', 'Premiums', 'fixed', true],
+      ['out-of-pocket', 'Out of pocket', 'variable', true],
+      ['therapy', 'Therapy', 'fixed', true]
+    ]
+  ],
+  [
+    'bills',
+    'Bills and subscriptions',
+    'fixed',
+    false,
+    false,
+    'planned',
+    [['subscriptions', 'Bills and subscriptions', 'fixed', false]]
+  ],
+  [
+    'fun',
+    'Personal and fun',
+    'variable',
+    false,
+    false,
+    'planned',
+    [
+      ['shopping', 'Shopping', 'variable', false],
+      ['entertainment', 'Entertainment', 'variable', false],
+      ['travel', 'Travel', 'variable', false],
+      ['hobbies', 'Hobbies', 'variable', false],
+      ['gifts', 'Gifts', 'variable', false]
+    ]
+  ],
+  [
+    'annual',
+    'Annual and irregular',
+    'variable',
+    false,
+    false,
+    'planned',
+    [['yearly', 'Yearly and irregular costs', 'variable', false]]
+  ],
+  ['giving', 'Giving', 'variable', false, false, 'planned', [['giving-line', 'Giving', 'variable', false]]],
+  [
+    'savings',
+    'Savings',
+    'fixed',
+    false,
+    true,
+    'planned',
+    [
+      ['emergency-fund', 'Emergency fund', 'fixed', false],
+      ['retirement', 'Retirement (after tax)', 'fixed', false],
+      ['other-goals', 'Other goals', 'fixed', false]
+    ]
+  ]
 ];
 
 export const EVERYTHING_CATEGORY_ID = 'everything';
@@ -107,7 +212,11 @@ export const EVERYTHING_CATEGORY_ID = 'everything';
 // Fee lines (S-123): no Fees category and no fee lines up front. A fee line is made in Bills and
 // subscriptions the first time an entry is mapped to it (a bank import's "LATE FEE", say).
 export const FEE_LINES = {
-  'fee-overdraft': 'Overdraft', 'fee-late': 'Late fees', 'fee-atm': 'ATM', 'fee-foreign': 'Foreign transaction', 'fee-interest': 'Interest charged'
+  'fee-overdraft': 'Overdraft',
+  'fee-late': 'Late fees',
+  'fee-atm': 'ATM',
+  'fee-foreign': 'Foreign transaction',
+  'fee-interest': 'Interest charged'
 };
 
 export function newLine(fields = {}) {
@@ -128,18 +237,28 @@ export function newLine(fields = {}) {
     stress: fields.stress === undefined ? null : fields.stress,
     state: fields.state || 'active',
     // dream = short term (this year, or the next step); dreamLong = long term (S-075).
-    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
-    owedBack: makeValue(), owedBackReceived: false,
+    estimate: makeValue(),
+    dream: makeValue(),
+    dreamLong: makeValue(),
+    actual: makeValue(),
+    owedBack: makeValue(),
+    owedBackReceived: false,
     // Split with someone (S-122): a mark the client sets; the amount is still what they pay. S-134: with how
     // many other people, and your share in percent (blank = an even split). S-138: who pays the bill,
     // 'part' (you pay your part; the amount is your part) or 'whole' (on your card; the amount is the whole bill).
-    shared: false, splitPeople: makeValue(null, { cadence: 'one-off' }), splitShare: makeValue(null, { cadence: 'one-off' }), splitPays: 'part',
+    shared: false,
+    splitPeople: makeValue(null, { cadence: 'one-off' }),
+    splitShare: makeValue(null, { cadence: 'one-off' }),
+    splitPays: 'part',
     // Opening Paid ahead (S-130): for a yearly or irregular bill paid before the client's first month, what
     // is left of it and for how many more months, as of that first month. Blank when there is none.
-    openingAhead: makeValue(null, { cadence: 'one-off' }), openingAheadMonths: makeValue(null, { cadence: 'one-off' }),
+    openingAhead: makeValue(null, { cadence: 'one-off' }),
+    openingAheadMonths: makeValue(null, { cadence: 'one-off' }),
     // Cash flow (S-086): an optional due day (1 to 31); with a due month (1 to 12) it is
     // once a year. The account it is paid from (null = the first checking account).
-    dueDay: makeValue(null, { cadence: 'one-off' }), dueMonth: makeValue(null, { cadence: 'one-off' }), accountId: null,
+    dueDay: makeValue(null, { cadence: 'one-off' }),
+    dueMonth: makeValue(null, { cadence: 'one-off' }),
+    accountId: null,
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
     tags: fields.tags || [],
     // Added during a monthly review for this month ('YYYY-MM'); not part of earlier months (S-076).
@@ -160,7 +279,9 @@ export function newCategory(fields = {}) {
     savings: fields.savings || false,
     tag: fields.tag || 'planned',
     state: fields.state || 'active',
-    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(),
+    estimate: makeValue(),
+    dream: makeValue(),
+    dreamLong: makeValue(),
     // Broken down in the Rough pass: the estimate comes from the sub-categories (lines).
     split: fields.split || false,
     lines: []
@@ -173,7 +294,8 @@ export function defaultCategories() {
   return TREE.map(([id, name, kind, need, savings, tag, lines]) => {
     const cat = newCategory({ id, name, type: id, kind, need, savings, tag });
     cat.lines = lines.map(([lid, lname, lkind, lneed]) =>
-      newLine({ id: lid, name: lname, type: DEFAULT_LINE_TYPES[lid], kind: lkind, need: lneed, savings, tag }));
+      newLine({ id: lid, name: lname, type: DEFAULT_LINE_TYPES[lid], kind: lkind, need: lneed, savings, tag })
+    );
     return cat;
   });
 }
@@ -198,12 +320,27 @@ export function newIncome(fields = {}) {
     benefitWeeksLeft: null,
     // Cash flow (S-086): the next pay date schedules every paycheck with the pay frequency;
     // semimonthly pays on two days of the month. accountId null = the first checking account.
-    nextPayDate: makeDate(), payDays: [1, 15], accountId: null,
+    nextPayDate: makeDate(),
+    payDays: [1, 15],
+    accountId: null,
     state: 'active'
   };
 }
 
-export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'dental', 'vision', 'life', 'disability', 'union', 'garnishment', 'other'];
+export const DEDUCTION_KIND_IDS = [
+  'retirement',
+  'roth',
+  'health',
+  'hsa',
+  'transportation',
+  'dental',
+  'vision',
+  'life',
+  'disability',
+  'union',
+  'garnishment',
+  'other'
+];
 
 // Taxes withheld, copied line by line from a paystub (W-2 pay). Each is a Value, per paycheck by default.
 // sdi = state disability insurance; pfl = paid family or medical leave; sui = state unemployment (employee share) (S-080).
@@ -251,13 +388,23 @@ export function newNextStage(metrics = []) {
 
 export function newCaseOverrides() {
   return {
-    takeHome: makeValue(null, { cadence: 'month' }), transitionTakeHome: makeValue(null, { cadence: 'month' }),
-    laterTakeHome: makeValue(null, { cadence: 'month' }), hoursPerWeek: null, transitionMonths: null, laterAfterMonths: null
+    takeHome: makeValue(null, { cadence: 'month' }),
+    transitionTakeHome: makeValue(null, { cadence: 'month' }),
+    laterTakeHome: makeValue(null, { cadence: 'month' }),
+    hoursPerWeek: null,
+    transitionMonths: null,
+    laterAfterMonths: null
   };
 }
 
 export function newNextStageItem(label) {
-  return { id: newId('ns'), label: label || '', amount: makeValue(null, { cadence: 'month' }), disaster: makeValue(null, { cadence: 'month' }), dream: makeValue(null, { cadence: 'month' }) };
+  return {
+    id: newId('ns'),
+    label: label || '',
+    amount: makeValue(null, { cadence: 'month' }),
+    disaster: makeValue(null, { cadence: 'month' }),
+    dream: makeValue(null, { cadence: 'month' })
+  };
 }
 
 export function newDebt(fields = {}) {
@@ -265,11 +412,17 @@ export function newDebt(fields = {}) {
     id: fields.id || newId('debt'),
     label: fields.label || 'Debt',
     type: fields.type || 'credit-card',
-    balance: makeValue(), apr: makeValue(), minimum: makeValue(), dueDay: makeValue(),
+    balance: makeValue(),
+    apr: makeValue(),
+    minimum: makeValue(),
+    dueDay: makeValue(),
     // Cash flow (S-086): paid from this account (null = checking), the minimum or the statement balance.
-    payFrom: null, payWith: 'minimum',
+    payFrom: null,
+    payWith: 'minimum',
     // S-116: the budget line that pays it (its estimate is the minimum), and a card's promo APR until a date.
-    lineId: null, promoApr: makeValue(null, { cadence: 'one-off' }), promoEnds: null,
+    lineId: null,
+    promoApr: makeValue(null, { cadence: 'one-off' }),
+    promoEnds: null,
     // S-137: a card's or line of credit's limit (blank for a loan, or not given yet).
     creditLimit: makeValue(null, { cadence: 'one-off' }),
     state: 'active'
@@ -324,7 +477,13 @@ export function securedFields(fields = {}) {
 
 // A date with a status, like a Value without an amount (S-086).
 export function makeDate(date = null, opts = {}) {
-  return { date, status: opts.status !== undefined ? opts.status : (date ? 'known' : null), source: opts.source || 'client', asOf: opts.asOf || null, note: opts.note || '' };
+  return {
+    date,
+    status: opts.status !== undefined ? opts.status : date ? 'known' : null,
+    source: opts.source || 'client',
+    asOf: opts.asOf || null,
+    note: opts.note || ''
+  };
 }
 
 // Cash flow settings and records (S-086): the coach's cushion, scheduled items
@@ -350,7 +509,8 @@ export function newEra(fields = {}) {
     // Six months is a starting length to edit, not a guess about anything.
     months: fields.months === undefined ? 6 : fields.months,
     gapMonths: fields.gapMonths || 0,
-    takeHome: makeValue(), spending: makeValue(),
+    takeHome: makeValue(),
+    spending: makeValue(),
     oneTime: makeValue(null, { cadence: 'month' }),
     note: ''
   };
@@ -369,9 +529,14 @@ export function monthKey(date) {
 export const COVERAGE_HOW = ['employer', 'parent', 'marketplace', 'public', 'school', 'none', 'not-sure'];
 export function newCoverage() {
   return {
-    how: null, premiumFrom: null, premiumIncomeId: null, premium: makeValue(),
-    deductible: makeValue(null, { cadence: 'year' }), outOfPocketMax: makeValue(null, { cadence: 'year' }),
-    hsa: null, hsaFrom: null
+    how: null,
+    premiumFrom: null,
+    premiumIncomeId: null,
+    premium: makeValue(),
+    deductible: makeValue(null, { cadence: 'year' }),
+    outOfPocketMax: makeValue(null, { cadence: 'year' }),
+    hsa: null,
+    hsaFrom: null
   };
 }
 

@@ -12,19 +12,27 @@ export const EXPORT_FORMAT = 'slam-household';
 export const EXPORT_VERSION = 1;
 
 export function exportHousehold(doc, nowIso) {
-  return JSON.stringify({
-    format: EXPORT_FORMAT,
-    exportVersion: EXPORT_VERSION,
-    exportedAt: nowIso,
-    household: doc
-  }, null, 2);
+  return JSON.stringify(
+    {
+      format: EXPORT_FORMAT,
+      exportVersion: EXPORT_VERSION,
+      exportedAt: nowIso,
+      household: doc
+    },
+    null,
+    2
+  );
 }
 
 // Accepts an export envelope or a bare household document.
 // Returns a migrated, validated document, or throws with a plain message.
 export function parseImport(text) {
   let data;
-  try { data = JSON.parse(text); } catch (e) { throw new Error('That file is not valid JSON.'); }
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error('That file is not valid JSON.');
+  }
   let doc = data;
   if (data && data.format === EXPORT_FORMAT) {
     // A newer wrapper may hold keys this build does not know; refuse rather than guess.

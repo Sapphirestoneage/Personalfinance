@@ -49,8 +49,22 @@ export function dreamReading(label, total, today, diffs) {
   // Under half a dollar would print as $0, so say "about the same" instead.
   if (Math.abs(d) < 0.5) return 'Your ' + label + ' costs about the same as today.';
   const up = d > 0;
-  const top = diffs.filter((x) => (up ? x.diff > 0 : x.diff < 0)).sort((a, b) => (up ? b.diff - a.diff : a.diff - b.diff)).slice(0, 2).map((x) => x.name);
-  return 'Your ' + label + ' costs ' + dollars + ' a month ' + (up ? 'more' : 'less') + ' than today' + (top.length ? ', mostly ' + names(top) : '') + '.';
+  const top = diffs
+    .filter((x) => (up ? x.diff > 0 : x.diff < 0))
+    .sort((a, b) => (up ? b.diff - a.diff : a.diff - b.diff))
+    .slice(0, 2)
+    .map((x) => x.name);
+  return (
+    'Your ' +
+    label +
+    ' costs ' +
+    dollars +
+    ' a month ' +
+    (up ? 'more' : 'less') +
+    ' than today' +
+    (top.length ? ', mostly ' + names(top) : '') +
+    '.'
+  );
 }
 
 // Today, per category, is the budget's actual, falling back to the estimate
@@ -78,18 +92,28 @@ export function dreamLife(doc, summary) {
   for (const s of short) {
     const b = summary.rows.find((x) => x.id === s.id);
     // A single-total row with no total typed has nothing to compare.
-    if (!b || s.isEverything && b.estimate === null) continue;
+    if (!b || (s.isEverything && b.estimate === null)) continue;
     const l = long.find((x) => x.id === s.id);
     const today = todayOf(b);
     const shortAmt = s.amount !== null ? s.amount : today.amount;
     const longAmt = l.own && l.amount !== null ? l.amount : shortAmt;
     rows.push({
-      id: s.id, name: s.name, savings: s.savings, isDebt: s.isDebt, notForMe: s.notForMe,
-      today: today.amount, todayFrom: today.from,
-      short: shortAmt, shortFrom: s.amount !== null ? 'dream' : 'today',
-      long: longAmt, longFrom: l.own && l.amount !== null ? 'dream' : s.amount !== null ? 'short' : 'today',
-      todayShare: ratio(today.amount, th), shortShare: ratio(shortAmt, th), longShare: ratio(longAmt, th),
-      shortDiff: minus(shortAmt, today.amount), longDiff: minus(longAmt, today.amount)
+      id: s.id,
+      name: s.name,
+      savings: s.savings,
+      isDebt: s.isDebt,
+      notForMe: s.notForMe,
+      today: today.amount,
+      todayFrom: today.from,
+      short: shortAmt,
+      shortFrom: s.amount !== null ? 'dream' : 'today',
+      long: longAmt,
+      longFrom: l.own && l.amount !== null ? 'dream' : s.amount !== null ? 'short' : 'today',
+      todayShare: ratio(today.amount, th),
+      shortShare: ratio(shortAmt, th),
+      longShare: ratio(longAmt, th),
+      shortDiff: minus(shortAmt, today.amount),
+      longDiff: minus(longAmt, today.amount)
     });
   }
   const spend = rows.filter((r) => !r.savings);
@@ -102,16 +126,37 @@ export function dreamLife(doc, summary) {
   // The dream the pay is worked out for: long term (which copies short term where it is blank).
   const payNeeded = takeHomeFor(longTotal, savingsShare);
   return {
-    any, hasShort, hasLong, rows, takeHome: th,
-    today, shortTotal, longTotal,
-    shortDiff: minus(shortTotal, today), longDiff: minus(longTotal, today),
+    any,
+    hasShort,
+    hasLong,
+    rows,
+    takeHome: th,
+    today,
+    shortTotal,
+    longTotal,
+    shortDiff: minus(shortTotal, today),
+    longDiff: minus(longTotal, today),
     todayUsesEstimate: rows.filter((r) => r.todayFrom === 'estimate').map((r) => r.name),
     savingsShare,
     pay: { needed: payNeeded, short: minus(payNeeded, th) },
     // With no long-term dream at all, long follows short, so only the short-term sentence is said.
     readings: {
-      short: hasShort ? dreamReading('short-term dream', shortTotal, today, spend.map((r) => ({ name: r.name, diff: r.shortDiff }))) : null,
-      long: hasLong ? dreamReading('long-term dream', longTotal, today, spend.map((r) => ({ name: r.name, diff: r.longDiff }))) : null
+      short: hasShort
+        ? dreamReading(
+            'short-term dream',
+            shortTotal,
+            today,
+            spend.map((r) => ({ name: r.name, diff: r.shortDiff }))
+          )
+        : null,
+      long: hasLong
+        ? dreamReading(
+            'long-term dream',
+            longTotal,
+            today,
+            spend.map((r) => ({ name: r.name, diff: r.longDiff }))
+          )
+        : null
     },
     // For the dream entry screen (moved from the budget as it was): each column as given, and what it leaves.
     entry: entryOf(summary, short, columnModel(doc, 'dreamLong'), th)
@@ -125,10 +170,20 @@ function entryOf(summary, short, long, th) {
     const s = short.find((x) => x.id === r.id) || {};
     const l = long.find((x) => x.id === r.id) || {};
     return {
-      id: r.id, name: r.name, type: r.type, isDebt: r.isDebt, isEverything: r.isEverything, notForMe: r.notForMe, savings: r.savings,
-      estimate: r.estimate, estimateFrom: r.estimateFrom, pctTakeHome: { estimate: r.pctTakeHome.estimate },
-      dream: s.amount === undefined ? null : s.amount, dreamFrom: s.from || null,
-      dreamLong: l.amount === undefined ? null : l.amount, dreamLongFrom: l.from || null,
+      id: r.id,
+      name: r.name,
+      type: r.type,
+      isDebt: r.isDebt,
+      isEverything: r.isEverything,
+      notForMe: r.notForMe,
+      savings: r.savings,
+      estimate: r.estimate,
+      estimateFrom: r.estimateFrom,
+      pctTakeHome: { estimate: r.pctTakeHome.estimate },
+      dream: s.amount === undefined ? null : s.amount,
+      dreamFrom: s.from || null,
+      dreamLong: l.amount === undefined ? null : l.amount,
+      dreamLongFrom: l.from || null,
       status: { dream: s.status || null, dreamLong: l.status || null }
     };
   });

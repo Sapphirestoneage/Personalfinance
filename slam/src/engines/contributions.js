@@ -9,7 +9,6 @@ import { counted } from './log.js';
 import { kindOf } from './balances.js';
 import { r2 } from './money.js';
 
-
 /**
  * Contributions into each invested account for one month.
  * @param {object} doc the household document (accounts, transactions).
@@ -25,13 +24,35 @@ export function contributionsFor(doc, income, month) {
   const byAccount = {};
   for (const a of invested) {
     // A transfer into an account is a negative amount on it (money in); out is positive.
-    const moves = counted(doc.transactions || []).filter((t) => t.kind === 'transfer' && t.account === a.id && t.date.slice(0, 7) === month);
+    const moves = counted(doc.transactions || []).filter(
+      (t) => t.kind === 'transfer' && t.account === a.id && t.date.slice(0, 7) === month
+    );
     const transfers = r2(-moves.reduce((x, t) => x + t.amount, 0));
     // A deduction with no monthly amount yet (a % with no gross pay) is left out, not counted as 0.
-    const deds = (income.sources || []).filter((s) => s.state !== 'archived').flatMap((s) => s.deductions.filter((d) => d.accountId === a.id && d.monthly !== null).map((d) => ({ income: s.label, label: d.label, monthly: d.monthly })));
+    const deds = (income.sources || [])
+      .filter((s) => s.state !== 'archived')
+      .flatMap((s) =>
+        s.deductions
+          .filter((d) => d.accountId === a.id && d.monthly !== null)
+          .map((d) => ({ income: s.label, label: d.label, monthly: d.monthly }))
+      );
     const deductions = r2(deds.reduce((x, d) => x + d.monthly, 0));
-    byAccount[a.id] = { id: a.id, name: a.name, transfers, transferCount: moves.length, deductions, fromPaycheck: deds, total: r2(transfers + deductions) };
+    byAccount[a.id] = {
+      id: a.id,
+      name: a.name,
+      transfers,
+      transferCount: moves.length,
+      deductions,
+      fromPaycheck: deds,
+      total: r2(transfers + deductions)
+    };
   }
   const list = Object.values(byAccount);
-  return { month, byAccount, total: r2(list.reduce((x, c) => x + c.total, 0)), transfers: r2(list.reduce((x, c) => x + c.transfers, 0)), deductions: r2(list.reduce((x, c) => x + c.deductions, 0)) };
+  return {
+    month,
+    byAccount,
+    total: r2(list.reduce((x, c) => x + c.total, 0)),
+    transfers: r2(list.reduce((x, c) => x + c.transfers, 0)),
+    deductions: r2(list.reduce((x, c) => x + c.deductions, 0))
+  };
 }

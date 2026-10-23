@@ -34,8 +34,12 @@ export function fiftyThirtyTwenty(totals, targets) {
 // when a therapy line has an amount. Base = take-home + pre-tax retirement, so
 // DRAFTT + everything else + left over = 100% of the base exactly.
 const LETTERS = [
-  ['debt', 'Debt', 'D'], ['retirement', 'Retirement', 'R'], ['accommodation', 'Accommodation', 'A'],
-  ['food', 'Food', 'F'], ['transportation', 'Transportation', 'T'], ['therapy', 'Therapy', 'Th']
+  ['debt', 'Debt', 'D'],
+  ['retirement', 'Retirement', 'R'],
+  ['accommodation', 'Accommodation', 'A'],
+  ['food', 'Food', 'F'],
+  ['transportation', 'Transportation', 'T'],
+  ['therapy', 'Therapy', 'Th']
 ];
 const TYPE_OF = { debt: 'debt', accommodation: 'housing', food: 'food', transportation: 'transport' };
 const LETTER_TYPES = Object.values(TYPE_OF);
@@ -43,7 +47,8 @@ const LETTER_TYPES = Object.values(TYPE_OF);
 // The pieces a category's estimate column is made of (mirrors basisFor in totals.js).
 function estimateParts(c) {
   if (c.estimate.amount === null) return [];
-  if (c.estimate.from === 'lines') return c.lines.filter((l) => l.estimate !== null).map((l) => ({ type: l.type, amount: l.estimate }));
+  if (c.estimate.from === 'lines')
+    return c.lines.filter((l) => l.estimate !== null).map((l) => ({ type: l.type, amount: l.estimate }));
   return [{ type: 'cat:' + c.type, amount: c.estimate.amount }];
 }
 
@@ -57,8 +62,15 @@ function letterAmount(model, key, partsOf) {
     return { amount: sumKnown(vals).total, usesEstimate: cats.some((c) => partsOf(c).from === 'estimate') };
   }
   const cats = model.categories.filter((c) => !LETTER_TYPES.includes(c.type));
-  const hits = cats.flatMap((c) => partsOf(c).parts.filter((p) => p.type === key).map((p) => ({ ...p, from: partsOf(c).from })));
-  return { amount: hits.length ? sumKnown(hits.map((p) => p.amount)).total : null, usesEstimate: hits.some((p) => p.from === 'estimate') };
+  const hits = cats.flatMap((c) =>
+    partsOf(c)
+      .parts.filter((p) => p.type === key)
+      .map((p) => ({ ...p, from: partsOf(c).from }))
+  );
+  return {
+    amount: hits.length ? sumKnown(hits.map((p) => p.amount)).total : null,
+    usesEstimate: hits.some((p) => p.from === 'estimate')
+  };
 }
 
 /**
@@ -77,7 +89,11 @@ export function draftt(model, totals, income) {
   const base = th === null ? null : th + pretax;
   const basisOf = (c) => totals.bases[c.id];
   const estOf = (c) => ({ amount: c.estimate.amount, from: 'estimate', parts: estimateParts(c) });
-  const hasTherapy = model.categories.some((c) => c.lines.some((l) => l.type === 'therapy' && ((l.actual !== null && l.actual > 0) || (l.estimate !== null && l.estimate > 0))));
+  const hasTherapy = model.categories.some((c) =>
+    c.lines.some(
+      (l) => l.type === 'therapy' && ((l.actual !== null && l.actual > 0) || (l.estimate !== null && l.estimate > 0))
+    )
+  );
 
   const rows = LETTERS.filter(([key]) => key !== 'therapy' || hasTherapy).map(([key, label, letter]) => {
     let act = letterAmount(model, key, basisOf);
@@ -92,7 +108,9 @@ export function draftt(model, totals, income) {
 
   const total = sumKnown(rows.map((r) => r.amount)).total;
   // Everything else: all other spending and saving. Pre-tax retirement is not in outflow, so it is left out here.
-  const inOutflow = sumKnown(rows.map((r) => (r.key === 'retirement' ? (r.amount === null ? null : r.amount - pretax) : r.amount))).total;
+  const inOutflow = sumKnown(
+    rows.map((r) => (r.key === 'retirement' ? (r.amount === null ? null : r.amount - pretax) : r.amount))
+  ).total;
   const everythingElse = totals.outflow === null ? null : totals.outflow - (inOutflow || 0);
   const leftOver = totals.surplus;
   for (const r of rows) {
@@ -106,10 +124,18 @@ export function draftt(model, totals, income) {
   const taxes = income.gross !== null && th !== null ? income.gross - income.deductions - th : null;
   return {
     rows,
-    total, totalShare: ratio(total, base),
-    everythingElse, everythingElseShare: ratio(everythingElse, base),
-    leftOver, leftOverShare: ratio(leftOver, base),
-    base: { amount: base, takeHome: th, pretaxRetirement: pretax, label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home' },
+    total,
+    totalShare: ratio(total, base),
+    everythingElse,
+    everythingElseShare: ratio(everythingElse, base),
+    leftOver,
+    leftOverShare: ratio(leftOver, base),
+    base: {
+      amount: base,
+      takeHome: th,
+      pretaxRetirement: pretax,
+      label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home'
+    },
     // Taxes are not in the base: shown on their own, as a share of gross, only when gross is known.
     taxes: taxes === null ? null : { amount: taxes, shareOfGross: ratio(taxes, income.gross) }
   };
@@ -181,7 +207,10 @@ export function incomeStatement(model, totals, income) {
   }
   const expenses = groups.needs + groups.debt + groups.wants + groups.savings;
   const monthly = {
-    revenueByType: byType, revenue, taxes, deductions,
+    revenueByType: byType,
+    revenue,
+    taxes,
+    deductions,
     takeHome: revenue - taxes - deductions,
     expenses: STATEMENT_GROUPS.map(([key, label]) => ({ key, label, amount: groups[key] })),
     totalExpenses: expenses,
@@ -189,11 +218,20 @@ export function incomeStatement(model, totals, income) {
   };
   const annual = {
     revenueByType: Object.fromEntries(Object.entries(byType).map(([k, v]) => [k, v * 12])),
-    revenue: monthly.revenue * 12, taxes: monthly.taxes * 12, deductions: monthly.deductions * 12,
-    takeHome: monthly.takeHome * 12, totalExpenses: expenses * 12, net: monthly.net * 12,
+    revenue: monthly.revenue * 12,
+    taxes: monthly.taxes * 12,
+    deductions: monthly.deductions * 12,
+    takeHome: monthly.takeHome * 12,
+    totalExpenses: expenses * 12,
+    net: monthly.net * 12,
     expenses: monthly.expenses.map((e) => ({ ...e, amount: e.amount * 12 }))
   };
-  return { monthly, annual, hasGross: income.sources.some((s) => s.grossMonthly !== null), revenueIncludesTakeHomeOnly: income.sources.some((s) => s.grossMonthly === null && s.takeHomeMonthly !== null) };
+  return {
+    monthly,
+    annual,
+    hasGross: income.sources.some((s) => s.grossMonthly !== null),
+    revenueIncludesTakeHomeOnly: income.sources.some((s) => s.grossMonthly === null && s.takeHomeMonthly !== null)
+  };
 }
 
 /**
@@ -231,12 +269,28 @@ export function drafttReading(d) {
   const big = known.slice().sort((a, b) => b.amount - a.amount)[0];
   if (big) out.push(big.label + ' is the biggest letter at ' + p(big.shareOfDraftt) + ' of DRAFTT.');
   // A move under half a percentage point is noise, and a letter standing on an estimate has not moved.
-  const moved = known.filter((r) => !r.usesEstimate && r.change !== null && Math.abs(r.change) >= 0.005).sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0];
-  if (moved) out.push(moved.label + "'s share went from " + p(moved.estimateShare) + ' estimated to ' + p(moved.actualShare) + ' actual.');
+  const moved = known
+    .filter((r) => !r.usesEstimate && r.change !== null && Math.abs(r.change) >= 0.005)
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0];
+  if (moved)
+    out.push(
+      moved.label +
+        "'s share went from " +
+        p(moved.estimateShare) +
+        ' estimated to ' +
+        p(moved.actualShare) +
+        ' actual.'
+    );
   const stand = known.filter((r) => r.usesEstimate).map((r) => r.label);
   if (!moved && stand.length) out.push('Estimates stand in where actuals are missing (' + stand.join(', ') + ').');
   if (d.everythingElseShare !== null && d.leftOverShare !== null) {
-    out.push('Everything else is ' + p(d.everythingElseShare) + (d.leftOverShare < 0 ? ' and there is a shortfall of ' + p(-d.leftOverShare) + '.' : ' and left over is ' + p(d.leftOverShare) + '.'));
+    out.push(
+      'Everything else is ' +
+        p(d.everythingElseShare) +
+        (d.leftOverShare < 0
+          ? ' and there is a shortfall of ' + p(-d.leftOverShare) + '.'
+          : ' and left over is ' + p(d.leftOverShare) + '.')
+    );
   }
   if (d.taxes) out.push('Taxes are ' + p(d.taxes.shareOfGross) + ' of gross, outside this picture.');
   return out.join(' ');

@@ -17,7 +17,11 @@ function household(pretax) {
   const d = newHousehold('Base');
   const inc = newIncome({ id: 'job', type: 'w2', payFrequency: 'monthly' });
   inc.takeHome = makeValue(3000, { cadence: 'paycheck' });
-  if (pretax) inc.deductions.push({ ...newDeduction({ id: 'ret', kind: 'retirement', mode: 'amount' }), amount: makeValue(pretax, { cadence: 'month' }) });
+  if (pretax)
+    inc.deductions.push({
+      ...newDeduction({ id: 'ret', kind: 'retirement', mode: 'amount' }),
+      amount: makeValue(pretax, { cadence: 'month' })
+    });
   d.income.push(inc);
   d.noDebts = true;
   findCategory(d, 'housing').estimate = makeValue(1200);

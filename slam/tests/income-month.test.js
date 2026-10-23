@@ -33,7 +33,10 @@ test('Riley, March: estimate, plan from the real paydays, and actual from the lo
   // Estimate: 1,500 x 26 / 12 = 3,250, and dog walking 250: 3,500.
   // Plan: March's paydays are the 13th and 27th: 2 x 1,500 = 3,000; dog walking its estimate, 250: 3,250.
   // Actual: paychecks 1,500 + 1,500 = 3,000 (2 entries); dog walking 120 + 100 = 220 (2 entries): 3,220.
-  assert.deepEqual(rows(im), [['Northwind Labs', 3250, 3000, '2 paychecks this month', 3000, 'log', 2], ['Dog walking', 250, 250, '', 220, 'log', 2]]);
+  assert.deepEqual(rows(im), [
+    ['Northwind Labs', 3250, 3000, '2 paychecks this month', 3000, 'log', 2],
+    ['Dog walking', 250, 250, '', 220, 'log', 2]
+  ]);
   assert.deepEqual([im.estimate, im.plan, im.actual, im.tracked, im.unassigned.count], [3500, 3250, 3220, true, 0]);
 });
 
@@ -44,7 +47,10 @@ test('Riley, January: 3 paychecks, planned as 3, and both bridges tie', () => {
   assert.deepEqual(payDates(d.income[0], '2026-01'), ['2026-01-02', '2026-01-16', '2026-01-30']);
   const im = incomeMonth(d, inc, '2026-01');
   // Plan 3 x 1,500 = 4,500 + 250 = 4,750. Actual: 4,500 (3 entries) + dog walking 149.59 + 114.63 = 264.22: 4,764.22.
-  assert.deepEqual(rows(im), [['Northwind Labs', 3250, 4500, '3 paychecks this month', 4500, 'log', 3], ['Dog walking', 250, 250, '', 264.22, 'log', 2]]);
+  assert.deepEqual(rows(im), [
+    ['Northwind Labs', 3250, 4500, '3 paychecks this month', 4500, 'log', 3],
+    ['Dog walking', 250, 250, '', 264.22, 'log', 2]
+  ]);
   assert.deepEqual([im.plan, im.actual], [4750, 4764.22]);
   // Spending: rent 1,750 + utilities 77.96 + groceries (103.16 + 58.26 + 84.42 + 89.34 = 335.18) + eating out
   // (6 x 4.75 + 24.01 + 30.98 = 83.49) + car payment 340 + car insurance 80 (its share) + gas (47.98 + 41.47
@@ -67,11 +73,24 @@ test('Riley, January: 3 paychecks, planned as 3, and both bridges tie', () => {
   // January's (400 less 80 a month). Net worth adds it: start 25,815.34 + 160 = 25,975.34; end 28,485.39 + 80 =
   // 28,565.39. Timing: the yearly shares 95, less the 80 of it used: 15.
   const nb = netWorthBridge(d, inc, '2026-01');
-  assert.deepEqual(lines(nb.total), { surplus: 1135.45, timing: 15, saved: 975, 'paid-down': 344.6, market: 220, value: -100 });
+  assert.deepEqual(lines(nb.total), {
+    surplus: 1135.45,
+    timing: 15,
+    saved: 975,
+    'paid-down': 344.6,
+    market: 220,
+    value: -100
+  });
   // 25,975.34 + 1,135.45 + 15 + 975 + 344.60 + 220 - 100 = 28,565.39: ties.
-  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [25975.34, 28565.39, 28565.39, 0]);
+  assert.deepEqual(
+    [nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained],
+    [25975.34, 28565.39, 28565.39, 0]
+  );
   // Rose 28,565.39 - 25,975.34 = 2,590.05; saved 1,135.45 + 15 + 975 = 2,125.45.
-  assert.equal(nb.reading, 'Net worth rose $2,590. $2,125 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.');
+  assert.equal(
+    nb.reading,
+    'Net worth rose $2,590. $2,125 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.'
+  );
 });
 
 test('W-2 income is never typed twice: the plan and the actual come from the paycheck and the log', () => {
@@ -110,13 +129,18 @@ test('an income entry with no source counts, and is a month-end checklist item',
   addEntry(d, { date: '2026-10-22', amount: -75, kind: 'income', account: 'chk', note: 'cash gift' });
   const s = buildSummary(d, refs);
   // 4,300 from the job + 75 with no source = 4,375.
-  assert.deepEqual([s.totals.income.unassigned.count, s.totals.income.unassigned.amount, s.totals.income.actual], [1, 75, 4375]);
+  assert.deepEqual(
+    [s.totals.income.unassigned.count, s.totals.income.unassigned.amount, s.totals.income.actual],
+    [1, 75, 4375]
+  );
   const item = monthEndChecklist(d, s, '2026-10-31').items.find((i) => i.key === 'income-source');
   assert.deepEqual([item.count, item.open, item.short], [1, true, '1 income entry with no source']);
 });
 
 test('both bridges tie every month, for every household', () => {
-  const files = readdirSync(new URL('../src/data/households/', import.meta.url)).filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
+  const files = readdirSync(new URL('../src/data/households/', import.meta.url))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace('.json', ''));
   let checked = 0;
   for (const name of files) {
     const d = loadHousehold(name);
@@ -125,11 +149,20 @@ test('both bridges tie every month, for every household', () => {
     for (const m of months) {
       const br = bridgeFor(d, inc, m);
       if (br.explained !== null && br.actual !== null && br.unexplained !== null) {
-        assert.equal(Math.round((br.explained + br.unexplained) * 100), Math.round(br.actual * 100), name + ' ' + m + ' cash');
+        assert.equal(
+          Math.round((br.explained + br.unexplained) * 100),
+          Math.round(br.actual * 100),
+          name + ' ' + m + ' cash'
+        );
         checked += 1;
       }
       const nb = netWorthBridge(d, inc, m);
-      if (nb.total.unexplained !== null) assert.equal(Math.round((nb.total.explained + nb.total.unexplained) * 100), Math.round(nb.total.actual * 100), name + ' ' + m + ' net worth');
+      if (nb.total.unexplained !== null)
+        assert.equal(
+          Math.round((nb.total.explained + nb.total.unexplained) * 100),
+          Math.round(nb.total.actual * 100),
+          name + ' ' + m + ' net worth'
+        );
     }
   }
   // Today that is Riley's 12 months and Dana's 12: 24. A floor, so a new household only adds to it.

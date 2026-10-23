@@ -10,7 +10,18 @@ import { newHousehold, SCHEMA_VERSION } from '../src/store/schema.js';
 import { makeValue } from '../src/store/value.js';
 import { findLine, findCategory } from '../src/store/edits.js';
 import { switchMonth } from '../src/store/months.js';
-import { startPlan, setPlanAmount, setPlanDecision, setPlanReviewed, setPlanStop, addPlanLine, addPlanCategory, planLineByLine, copyPlanForward, getPlan } from '../src/store/plans.js';
+import {
+  startPlan,
+  setPlanAmount,
+  setPlanDecision,
+  setPlanReviewed,
+  setPlanStop,
+  addPlanLine,
+  addPlanCategory,
+  planLineByLine,
+  copyPlanForward,
+  getPlan
+} from '../src/store/plans.js';
 import { planStartValues, planView } from '../src/engines/plan.js';
 import { buildSummary } from '../src/engines/summary.js';
 import { validateHousehold } from '../src/store/validate.js';
@@ -18,7 +29,8 @@ import { migrate } from '../src/store/migrate.js';
 import { loadRefs, loadHousehold } from './helpers.js';
 
 const refs = loadRefs();
-const estimates = (d) => JSON.stringify(d.categories.map((c) => [c.id, c.estimate, c.lines.map((l) => [l.id, l.estimate])]));
+const estimates = (d) =>
+  JSON.stringify(d.categories.map((c) => [c.id, c.estimate, c.lines.map((l) => [l.id, l.estimate])]));
 
 function base() {
   const d = newHousehold('Plan');
@@ -78,7 +90,10 @@ test('copy forward: same amounts, decisions back to keep, nothing reviewed, stop
   const nov = getPlan(d, '2026-11');
   assert.equal(nov.createdFrom, 'plan:2026-10');
   assert.deepEqual(Object.keys(nov.lines), ['eating-out']);
-  assert.deepEqual([nov.lines['eating-out'].amount.amount, nov.lines['eating-out'].decision, nov.lines['eating-out'].reviewed], [280, 'keep', false]);
+  assert.deepEqual(
+    [nov.lines['eating-out'].amount.amount, nov.lines['eating-out'].decision, nov.lines['eating-out'].reviewed],
+    [280, 'keep', false]
+  );
 });
 
 test('stop tracking archives the line when the plan month starts; history is untouched', () => {

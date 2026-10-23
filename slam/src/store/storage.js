@@ -10,11 +10,20 @@ export function memoryBackend() {
   const fns = new Set();
   return {
     getItem: (k) => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, String(v)); },
-    removeItem: (k) => { map.delete(k); },
+    setItem: (k, v) => {
+      map.set(k, String(v));
+    },
+    removeItem: (k) => {
+      map.delete(k);
+    },
     keys: () => [...map.keys()],
-    onChange: (fn) => { fns.add(fn); return () => fns.delete(fn); },
-    changedElsewhere: (k) => { for (const fn of fns) fn(k); }
+    onChange: (fn) => {
+      fns.add(fn);
+      return () => fns.delete(fn);
+    },
+    changedElsewhere: (k) => {
+      for (const fn of fns) fn(k);
+    }
   };
 }
 
@@ -26,7 +35,9 @@ export function localStorageBackend(ls = globalThis.localStorage) {
     keys: () => Object.keys(ls),
     // Another tab saved: tell the app which key changed.
     onChange: (fn) => {
-      const h = (e) => { if (e.key) fn(e.key); };
+      const h = (e) => {
+        if (e.key) fn(e.key);
+      };
       globalThis.addEventListener('storage', h);
       return () => globalThis.removeEventListener('storage', h);
     }
@@ -57,8 +68,12 @@ export function createStorage(backend) {
   // The client list is its own small record, so listing clients never loads a whole document.
   const index = () => read('index') || [];
   return {
-    async listClients() { return index(); },
-    async loadClient(id) { return read('hh:' + id); },
+    async listClients() {
+      return index();
+    },
+    async loadClient(id) {
+      return read('hh:' + id);
+    },
     async saveClient(doc) {
       write('hh:' + doc.id, doc);
       const list = index().filter((e) => e.id !== doc.id);
@@ -66,11 +81,19 @@ export function createStorage(backend) {
       list.sort((a, b) => a.name.localeCompare(b.name));
       write('index', list);
     },
-    async loadBackups() { return read('backups') || []; },
-    async saveBackups(list) { write('backups', list); },
+    async loadBackups() {
+      return read('backups') || [];
+    },
+    async saveBackups(list) {
+      write('backups', list);
+    },
     // Only client documents matter here; the id follows 'slam:hh:' (3 is the length of 'hh:').
     subscribe(fn) {
-      return backend.onChange ? backend.onChange((key) => { if (key.startsWith(PREFIX + 'hh:')) fn(key.slice(PREFIX.length + 3)); }) : () => {};
+      return backend.onChange
+        ? backend.onChange((key) => {
+            if (key.startsWith(PREFIX + 'hh:')) fn(key.slice(PREFIX.length + 3));
+          })
+        : () => {};
     },
     getSetting: (k) => read('setting:' + k),
     setSetting: (k, v) => write('setting:' + k, v)

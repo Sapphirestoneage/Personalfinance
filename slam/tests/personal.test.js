@@ -25,7 +25,13 @@ test('12+30+8.50 adds up to 50.50; a bad piece is refused', () => {
 });
 
 test('items inside one amount: the amount is their sum, blanks are not zero', () => {
-  const v = editValue(makeValue(), { parts: [{ name: 'Uber', amount: 42 }, { name: 'Coach bus', amount: 35 }, { name: 'Subway', amount: null }] });
+  const v = editValue(makeValue(), {
+    parts: [
+      { name: 'Uber', amount: 42 },
+      { name: 'Coach bus', amount: 35 },
+      { name: 'Subway', amount: null }
+    ]
+  });
   assert.equal(v.amount, 77); // 42 + 35; the blank subway is left out, not counted as 0
   assert.equal(v.status, 'known');
   assert.deepEqual(valueErrors(v, 'v'), []);
@@ -42,7 +48,12 @@ test('items inside one amount: the amount is their sum, blanks are not zero', ()
 test('items flow into the budget like any amount (Transit 42 + 35 = 77)', () => {
   const d = newHousehold('Items');
   const { line } = findLine(d, 'transit');
-  line.actual = editValue(line.actual, { parts: [{ name: 'Uber', amount: 42 }, { name: 'Coach bus', amount: 35 }] });
+  line.actual = editValue(line.actual, {
+    parts: [
+      { name: 'Uber', amount: 42 },
+      { name: 'Coach bus', amount: 35 }
+    ]
+  });
   assert.deepEqual(validateHousehold(d), []);
   const s = buildSummary(d, refs);
   assert.equal(s.model.categories.find((c) => c.id === 'transport').lines.find((l) => l.id === 'transit').actual, 77);
@@ -141,8 +152,13 @@ test('Rough debts: per card, bank, or person, totals by type', async () => {
 test('items with their own cadence: monthly and yearly subscriptions add up a month at a time (S-074)', () => {
   // YouTube 27 / month + Spotify 21 / month + a yearly plan 139 / year
   // = (27 x 12 + 21 x 12 + 139) / 12 = (324 + 252 + 139) / 12 = 715 / 12 = 59.583333 -> 59.58
-  const v = editValue(makeValue(null, { cadence: 'month' }), { parts: [
-    { name: 'youtube', amount: 27, cadence: 'month' }, { name: 'spotify', amount: 21 }, { name: 'yearly plan', amount: 139, cadence: 'year' }] });
+  const v = editValue(makeValue(null, { cadence: 'month' }), {
+    parts: [
+      { name: 'youtube', amount: 27, cadence: 'month' },
+      { name: 'spotify', amount: 21 },
+      { name: 'yearly plan', amount: 139, cadence: 'year' }
+    ]
+  });
   assert.equal(v.cadence, 'month');
   assert.equal(v.amount, 59.58);
   assert.deepEqual(valueErrors(v, 'v'), []);
@@ -151,10 +167,27 @@ test('items with their own cadence: monthly and yearly subscriptions add up a mo
   assert.equal(y.amount, 715);
   assert.equal(y.parts[1].cadence, 'month', 'spotify keeps meaning a month after the switch');
   // A paycheck amount with mixed items becomes a monthly one
-  const p = editValue(makeValue(null, { cadence: 'paycheck' }), { parts: [{ name: 'a', amount: 120, cadence: 'year' }, { name: 'b', amount: 5, cadence: 'month' }] });
+  const p = editValue(makeValue(null, { cadence: 'paycheck' }), {
+    parts: [
+      { name: 'a', amount: 120, cadence: 'year' },
+      { name: 'b', amount: 5, cadence: 'month' }
+    ]
+  });
   assert.equal(p.cadence, 'month');
   assert.equal(p.amount, 15); // 120 / 12 + 5 = 10 + 5
   // Items with no cadence of their own still add up as before
-  assert.equal(sumParts([{ name: '', amount: 10 }, { name: '', amount: 2.5 }], 'week'), 12.5);
-  assert.ok(valueErrors({ ...v, parts: [{ name: 'x', amount: 1, cadence: 'day' }], amount: 1 }, 'v').length, 'unknown item cadence is refused');
+  assert.equal(
+    sumParts(
+      [
+        { name: '', amount: 10 },
+        { name: '', amount: 2.5 }
+      ],
+      'week'
+    ),
+    12.5
+  );
+  assert.ok(
+    valueErrors({ ...v, parts: [{ name: 'x', amount: 1, cadence: 'day' }], amount: 1 }, 'v').length,
+    'unknown item cadence is refused'
+  );
 });

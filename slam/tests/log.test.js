@@ -10,7 +10,16 @@ import { migrate } from '../src/store/migrate.js';
 import { validateHousehold } from '../src/store/validate.js';
 import { addAccount } from '../src/store/accounts.js';
 import { addEntry, mergeImport, confirmMatch, rejectMatch, editEntry, markNotDuplicate } from '../src/store/log.js';
-import { matchImport, matchSummary, similarMerchant, amountClose, recentLines, lastAccount, monthLog, counted } from '../src/engines/log.js';
+import {
+  matchImport,
+  matchSummary,
+  similarMerchant,
+  amountClose,
+  recentLines,
+  lastAccount,
+  monthLog,
+  counted
+} from '../src/engines/log.js';
 import { importCSV } from '../src/engines/tx-import.js';
 import { actualsFromTransactions, detect } from '../src/engines/tx-analysis.js';
 import { loadRefs } from './helpers.js';
@@ -24,22 +33,37 @@ function october() {
   addAccount(d, { id: 'card', name: 'Visa', type: 'credit-card' });
   const m = {};
   // Logged during the month with quick entry (positive = money out)
-  m.m1 = addEntry(d, { date: '2026-10-03', amount: 54.2, lineId: 'groceries', merchant: "Trader Joe's", note: 'weekly shop', account: 'chk' });
+  m.m1 = addEntry(d, {
+    date: '2026-10-03',
+    amount: 54.2,
+    lineId: 'groceries',
+    merchant: "Trader Joe's",
+    note: 'weekly shop',
+    account: 'chk'
+  });
   m.m2 = addEntry(d, { date: '2026-10-05', amount: 40, lineId: 'gas', merchant: 'Shell', account: 'card' });
   m.m3 = addEntry(d, { date: '2026-10-07', amount: 6.5, lineId: 'eating-out', note: 'coffee' });
   m.m4 = addEntry(d, { date: '2026-10-09', amount: 13, lineId: 'eating-out', merchant: 'Chipotle', account: 'card' });
-  m.m5 = addEntry(d, { date: '2026-10-12', amount: 30, lineId: 'shopping', merchant: 'Target', note: 'towels', account: 'chk' });
+  m.m5 = addEntry(d, {
+    date: '2026-10-12',
+    amount: 30,
+    lineId: 'shopping',
+    merchant: 'Target',
+    note: 'towels',
+    account: 'chk'
+  });
   m.m6 = addEntry(d, { date: '2026-10-25', amount: 20, lineId: 'transit', merchant: 'Uber', account: 'chk' });
   return { d, m };
 }
 
-const CSV = 'Date,Description,Amount\n' +
-  '10/04/2026,TRADER JOE S #552,-54.20\n' +   // i1: m1, same amount, 1 day later, same shop: clear
-  '10/06/2026,STARBUCKS 0091,-6.75\n' +       // i2: m3 (no account, no merchant), 0.25 off: possible
-  '10/12/2026,TARGET T-1234,-31.00\n' +       // i3: m5, $1.00 off (within $1), same shop: clear
-  '10/15/2026,PAYROLL ACME,2400.00\n' +       // i4: income, nothing logged: new
-  '10/20/2026,WHOLE FOODS MKT,-80.10\n' +     // i5: nothing logged: new
-  '10/25/2026,UBER TRIP,-20.00\n' +           // i7 and i8 both could be m6 (one ride logged, two taken): possible
+const CSV =
+  'Date,Description,Amount\n' +
+  '10/04/2026,TRADER JOE S #552,-54.20\n' + // i1: m1, same amount, 1 day later, same shop: clear
+  '10/06/2026,STARBUCKS 0091,-6.75\n' + // i2: m3 (no account, no merchant), 0.25 off: possible
+  '10/12/2026,TARGET T-1234,-31.00\n' + // i3: m5, $1.00 off (within $1), same shop: clear
+  '10/15/2026,PAYROLL ACME,2400.00\n' + // i4: income, nothing logged: new
+  '10/20/2026,WHOLE FOODS MKT,-80.10\n' + // i5: nothing logged: new
+  '10/25/2026,UBER TRIP,-20.00\n' + // i7 and i8 both could be m6 (one ride logged, two taken): possible
   '10/26/2026,UBER TRIP,-20.00\n';
 
 function imported(d) {
@@ -50,8 +74,17 @@ test('quick entry: a manual entry, the merchant remembers its line, recent lines
   const d = newHousehold('Quick');
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking' });
   addAccount(d, { id: 'card', name: 'Visa', type: 'credit-card' });
-  const a = addEntry(d, { date: '2026-10-02', amount: 5.25, lineId: 'eating-out', merchant: 'Blue Bottle', account: 'card' });
-  assert.deepEqual([a.source, a.merchant, a.lineId, a.account, a.kind], ['manual', 'BLUE BOTTLE', 'eating-out', 'card', 'spend']);
+  const a = addEntry(d, {
+    date: '2026-10-02',
+    amount: 5.25,
+    lineId: 'eating-out',
+    merchant: 'Blue Bottle',
+    account: 'card'
+  });
+  assert.deepEqual(
+    [a.source, a.merchant, a.lineId, a.account, a.kind],
+    ['manual', 'BLUE BOTTLE', 'eating-out', 'card', 'spend']
+  );
   assert.equal(d.merchantMemory['BLUE BOTTLE'], 'eating-out');
   // Same shop again, no line picked: the line comes from memory
   const b = addEntry(d, { date: '2026-10-04', amount: 4.75, merchant: 'blue bottle' });
@@ -93,7 +126,10 @@ test('an import is matched against the log: matched 2, new 2, possible 3', () =>
   assert.deepEqual(by['STARBUCKS 0091'].candidates, [m.m3.id]);
   assert.equal(by['PAYROLL ACME'].status, 'new');
   assert.equal(by['WHOLE FOODS MKT'].status, 'new');
-  assert.deepEqual(res.rows.filter((r) => r.tx.merchant === 'UBER TRIP').map((r) => r.status), ['possible', 'possible']);
+  assert.deepEqual(
+    res.rows.filter((r) => r.tx.merchant === 'UBER TRIP').map((r) => r.status),
+    ['possible', 'possible']
+  );
   assert.equal(matchSummary(res), 'Matched 2, new 2, possible matches 3 to confirm.');
 });
 
@@ -108,7 +144,10 @@ test('merging keeps the bank date, amount, and merchant, and the logged line and
   // 6 logged - 2 merged + 7 imported = 11 entries
   assert.equal(d.transactions.length, 11);
   const tj = d.transactions.find((t) => t.merchant === 'TRADER JOE S');
-  assert.deepEqual([tj.date, tj.amount, tj.lineId, tj.note, tj.source, tj.mergedFrom.id], ['2026-10-04', 54.2, 'groceries', 'weekly shop', 'import', m.m1.id]);
+  assert.deepEqual(
+    [tj.date, tj.amount, tj.lineId, tj.note, tj.source, tj.mergedFrom.id],
+    ['2026-10-04', 54.2, 'groceries', 'weekly shop', 'import', m.m1.id]
+  );
   const tg = d.transactions.find((t) => t.merchant === 'TARGET T-');
   assert.deepEqual([tg.amount, tg.lineId, tg.note], [31, 'shopping', 'towels']);
   // Possible matches do not count yet; Whole Foods (80.10) is new, mapped by the rules
@@ -162,11 +201,43 @@ test('a version 5 file: transactions become the log, account names become accoun
   const raw = JSON.parse(JSON.stringify(newHousehold('Old')));
   raw.schemaVersion = 5;
   raw.transactions = [
-    { id: 'tx-a', date: '2026-09-02', amount: 50, description: 'KROGER', account: 'Chase card', kind: 'spend', merchant: 'KROGER', lineId: 'groceries', bnpl: false },
-    { id: 'tx-b', date: '2026-09-03', amount: -2400, description: 'PAYROLL', account: 'Checking', kind: 'income', merchant: 'PAYROLL', lineId: null, bnpl: false }
+    {
+      id: 'tx-a',
+      date: '2026-09-02',
+      amount: 50,
+      description: 'KROGER',
+      account: 'Chase card',
+      kind: 'spend',
+      merchant: 'KROGER',
+      lineId: 'groceries',
+      bnpl: false
+    },
+    {
+      id: 'tx-b',
+      date: '2026-09-03',
+      amount: -2400,
+      description: 'PAYROLL',
+      account: 'Checking',
+      kind: 'income',
+      merchant: 'PAYROLL',
+      lineId: null,
+      bnpl: false
+    }
   ];
   const d = migrate(raw);
   assert.deepEqual(validateHousehold(d), []);
-  assert.deepEqual(d.accounts.map((a) => [a.id, a.name, a.type]), [['acct-chase-card', 'Chase card', 'credit-card'], ['acct-checking', 'Checking', 'checking']]);
-  assert.deepEqual(d.transactions.map((t) => [t.source, t.account]), [['import', 'acct-chase-card'], ['import', 'acct-checking']]);
+  assert.deepEqual(
+    d.accounts.map((a) => [a.id, a.name, a.type]),
+    [
+      ['acct-chase-card', 'Chase card', 'credit-card'],
+      ['acct-checking', 'Checking', 'checking']
+    ]
+  );
+  assert.deepEqual(
+    d.transactions.map((t) => [t.source, t.account]),
+    [
+      ['import', 'acct-chase-card'],
+      ['import', 'acct-checking']
+    ]
+  );
 });

@@ -63,7 +63,13 @@ test('trends include open months: August 350 and September 400 (being worked on)
   assert.equal(aug.variancePct, -0.3);
   assert.deepEqual(s.history.openKeys, ['2026-08']);
   const t = trendData(s, 'food');
-  assert.deepEqual(t.points.map((p) => [p.key, p.actual]), [['2026-08', 350], ['2026-09', 400]]);
+  assert.deepEqual(
+    t.points.map((p) => [p.key, p.actual]),
+    [
+      ['2026-08', 350],
+      ['2026-09', 400]
+    ]
+  );
 });
 
 test('closed months cannot be switched to; they are viewed instead', () => {

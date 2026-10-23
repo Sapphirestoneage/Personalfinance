@@ -39,10 +39,14 @@ export function actualsFromTransactions(txs, month) {
   let unmapped = 0;
   let unmappedCount = 0;
   for (const t of counted(txs)) {
-    if (monthOf(t.date) !== month || !COUNTS.has(t.kind) || t.oneOff || (t.kind === 'reimbursement' && t.settles)) continue;
+    if (monthOf(t.date) !== month || !COUNTS.has(t.kind) || t.oneOff || (t.kind === 'reimbursement' && t.settles))
+      continue;
     if (!t.lineId) {
       // Only purchases count as unmapped money: an unmapped refund has no line to reduce.
-      if (PURCHASE.has(t.kind)) { unmapped += t.amount; unmappedCount += 1; }
+      if (PURCHASE.has(t.kind)) {
+        unmapped += t.amount;
+        unmappedCount += 1;
+      }
       continue;
     }
     byLine[t.lineId] = (byLine[t.lineId] || 0) + t.amount - (t.owed || 0);
@@ -87,14 +91,28 @@ export function detect(all) {
     for (let i = 1; i < list.length; i++) {
       const a = list[i - 1];
       const b = list[i];
-      if (a.amount === b.amount && a.amount > 0 && Math.abs(daysBetween(a.date, b.date)) <= 1 && !(a.notDuplicate && b.notDuplicate)) duplicates.push({ merchant, date: b.date, amount: b.amount, ids: [a.id, b.id] });
+      if (
+        a.amount === b.amount &&
+        a.amount > 0 &&
+        Math.abs(daysBetween(a.date, b.date)) <= 1 &&
+        !(a.notDuplicate && b.notDuplicate)
+      )
+        duplicates.push({ merchant, date: b.date, amount: b.amount, ids: [a.id, b.id] });
     }
     // free trial that converted: a first charge of $1 or less, then a real one within 45 days.
     // The yearly cost assumes it bills monthly from there.
     const first = list[0];
     if (first.amount <= TRIAL_MAX) {
       const paid = list.find((t) => t.amount > TRIAL_MAX && daysBetween(first.date, t.date) <= 45);
-      if (paid) trials.push({ merchant, trialDate: first.date, trialAmount: first.amount, paidDate: paid.date, amount: paid.amount, yearly: r2(paid.amount * 12) });
+      if (paid)
+        trials.push({
+          merchant,
+          trialDate: first.date,
+          trialAmount: first.amount,
+          paidDate: paid.date,
+          amount: paid.amount,
+          yearly: r2(paid.amount * 12)
+        });
     }
     // Installments look like a subscription (equal, monthly) but end; they are listed as BNPL instead.
     if (list.some((t) => t.bnpl)) continue;
@@ -111,24 +129,49 @@ export function detect(all) {
     if (!ok) continue;
     const last = charges[charges.length - 1];
     const prev = charges[charges.length - 2];
-    subscriptions.push({ merchant, amount: last.amount, yearly: r2(last.amount * 12), since: charges[0].date, lineId: last.lineId });
+    subscriptions.push({
+      merchant,
+      amount: last.amount,
+      yearly: r2(last.amount * 12),
+      since: charges[0].date,
+      lineId: last.lineId
+    });
     // Half a percent of slack so a rounding cent does not read as a price rise.
     if (last.amount > prev.amount * 1.005) {
-      priceCreep.push({ merchant, from: prev.amount, to: last.amount, monthly: r2(last.amount - prev.amount), yearly: r2((last.amount - prev.amount) * 12), date: last.date });
+      priceCreep.push({
+        merchant,
+        from: prev.amount,
+        to: last.amount,
+        monthly: r2(last.amount - prev.amount),
+        yearly: r2((last.amount - prev.amount) * 12),
+        date: last.date
+      });
     }
   }
   // converted trials count as subscriptions too
   for (const t of trials) {
-    if (!subscriptions.some((s) => s.merchant === t.merchant)) subscriptions.push({ merchant: t.merchant, amount: t.amount, yearly: t.yearly, since: t.paidDate, fromTrial: true });
+    if (!subscriptions.some((s) => s.merchant === t.merchant))
+      subscriptions.push({
+        merchant: t.merchant,
+        amount: t.amount,
+        yearly: t.yearly,
+        since: t.paidDate,
+        fromTrial: true
+      });
   }
   subscriptions.sort((a, b) => b.yearly - a.yearly);
   const fees = txs.filter((t) => t.kind === 'fee');
   const bnpl = txs.filter((t) => t.bnpl && t.kind === 'spend');
   return {
-    subscriptions, subscriptionsYearly: r2(subscriptions.reduce((a, s) => a + s.yearly, 0)),
-    duplicates, trials, priceCreep,
-    fees, feesTotal: r2(fees.reduce((a, t) => a + t.amount, 0)),
-    bnpl, bnplTotal: r2(bnpl.reduce((a, t) => a + t.amount, 0))
+    subscriptions,
+    subscriptionsYearly: r2(subscriptions.reduce((a, s) => a + s.yearly, 0)),
+    duplicates,
+    trials,
+    priceCreep,
+    fees,
+    feesTotal: r2(fees.reduce((a, t) => a + t.amount, 0)),
+    bnpl,
+    bnplTotal: r2(bnpl.reduce((a, t) => a + t.amount, 0))
   };
 }
 
@@ -148,10 +191,18 @@ export function topMerchants(txs, n = 5) {
     totals[t.merchant] = (totals[t.merchant] || 0) + t.amount;
   }
   const total = Object.values(totals).reduce((a, x) => a + x, 0);
-  const rows = Object.entries(totals).map(([merchant, amount]) => ({ merchant, amount: r2(amount), share: ratio(amount, total) }))
+  const rows = Object.entries(totals)
+    .map(([merchant, amount]) => ({ merchant, amount: r2(amount), share: ratio(amount, total) }))
     .sort((a, b) => b.amount - a.amount);
   const top = rows.slice(0, n);
-  return { total: r2(total), top, topShare: ratio(top.reduce((a, x) => a + x.amount, 0), total) };
+  return {
+    total: r2(total),
+    top,
+    topShare: ratio(
+      top.reduce((a, x) => a + x.amount, 0),
+      total
+    )
+  };
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -177,9 +228,12 @@ export function weekdaySpending(txs) {
   const weekday = total - weekend;
   return {
     days: order.map((i) => ({ label: DAYS[i], amount: r2(sums[i]), share: ratio(sums[i], total) })),
-    total: r2(total), weekend: r2(weekend), weekday: r2(weekday),
+    total: r2(total),
+    weekend: r2(weekend),
+    weekday: r2(weekday),
     weekendShare: ratio(weekend, total),
-    perWeekendDay: r2(weekend / 2), perWeekday: r2(weekday / 5)
+    perWeekendDay: r2(weekend / 2),
+    perWeekday: r2(weekday / 5)
   };
 }
 
@@ -196,6 +250,7 @@ export function sizeVsCount(txs) {
     x.count += 1;
     x.total += t.amount;
   }
-  return Object.values(g).map((x) => ({ merchant: x.merchant, count: x.count, total: r2(x.total), average: r2(x.total / x.count) }))
+  return Object.values(g)
+    .map((x) => ({ merchant: x.merchant, count: x.count, total: r2(x.total), average: r2(x.total / x.count) }))
     .sort((a, b) => b.total - a.total);
 }

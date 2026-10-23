@@ -47,25 +47,52 @@
 
 export default {
   moveOut: [1500, 0],
-  fat: 250, fatShare: 0.144231,
+  fat: 250,
+  fatShare: 0.144231,
   takeHome: 1733.333333,
   categories: {
     // [estimate, actual]
-    housing: [0, 0], food: [null, 250], transport: [0, 0], debt: [0, 0], health: [0, 0],
-    bills: [null, 40], fun: [null, null], annual: [0, 0], giving: [0, 0],
-    savings: [0, 0], everything: [800, null]
+    housing: [0, 0],
+    food: [null, 250],
+    transport: [0, 0],
+    debt: [0, 0],
+    health: [0, 0],
+    bills: [null, 40],
+    fun: [null, null],
+    annual: [0, 0],
+    giving: [0, 0],
+    savings: [0, 0],
+    everything: [800, null]
   },
-  estimateTotal: 800, actualTotal: 290, spending: 800, savings: 0,
-  surplus: 933.333333, savingsRate: 0, housingShare: 0, housingOver: false,
+  estimateTotal: 800,
+  actualTotal: 290,
+  spending: 800,
+  savings: 0,
+  surplus: 933.333333,
+  savingsRate: 0,
+  housingShare: 0,
+  housingOver: false,
   roommateWorstCase: null,
   basisMissing: [],
   blindSpot: 0,
   culprits: [],
   gut: { gut: 900, estimates: 800, actual: 800, actualVsGut: -100, ratio: 0.888889 },
   proofOfCash: { implied: 1733.333333, entered: 800, pct: 0.538462, flagged: true },
-  fixed: 40, variable: 760, fixedPct: 0.05,
-  needs: 0, wants: 800, needsPct: 0, wantsPct: 0.461538, savingsPct: 0,
-  mistakeMonthly: 0, mistakeYearly: 0, owedBack: 0,
+  fixed: 40,
+  variable: 760,
+  fixedPct: 0.05,
+  needs: 0,
+  wants: 800,
+  needsPct: 0,
+  wantsPct: 0.461538,
+  savingsPct: 0,
+  mistakeMonthly: 0,
+  mistakeYearly: 0,
+  owedBack: 0,
   completion: 0.958333,
-  next: ['Personal and fun / Shopping: actual', 'Everything else: estimate', 'Gut number: what you think you spend a month']
+  next: [
+    'Personal and fun / Shopping: actual',
+    'Everything else: estimate',
+    'Gut number: what you think you spend a month'
+  ]
 };

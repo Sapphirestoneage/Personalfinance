@@ -16,7 +16,16 @@ const one = (a) => makeValue(a, { cadence: 'one-off' });
 export function october(opts = {}) {
   const raw = newHousehold('Bridge');
   raw.currentMonth = '2026-10';
-  raw.income.push({ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(4000), gross: makeValue(), deductions: [], state: 'active' });
+  raw.income.push({
+    id: 'job',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: makeValue(4000),
+    gross: makeValue(),
+    deductions: [],
+    state: 'active'
+  });
   const d = migrate(raw);
   const visa = addDebt(d, { label: 'Visa', type: 'credit-card' });
   visa.minimum = makeValue(40);
@@ -40,7 +49,13 @@ export function october(opts = {}) {
   addEntry(d, { date: '2026-10-14', amount: 1200, lineId: 'car-insurance', account: 'chk', merchant: 'Geico' });
   addEntry(d, { date: '2026-10-03', amount: 200, kind: 'transfer', account: 'chk', note: 'to savings' });
   addEntry(d, { date: '2026-10-03', amount: -200, kind: 'transfer', account: 'sav', note: 'from checking' });
-  const concert = addEntry(d, { date: '2026-10-10', amount: 120, lineId: 'shopping', account: 'chk', merchant: 'Ticketmaster' });
+  const concert = addEntry(d, {
+    date: '2026-10-10',
+    amount: 120,
+    lineId: 'shopping',
+    account: 'chk',
+    merchant: 'Ticketmaster'
+  });
   editEntry(d, concert.id, { owed: 60 });
   const couch = addEntry(d, { date: '2026-10-12', amount: 250, lineId: 'shopping', account: 'chk', merchant: 'Couch' });
   editEntry(d, couch.id, { oneOff: true });
@@ -53,4 +68,3 @@ export function october(opts = {}) {
   setBalance(d, '2026-10', 'visa', 'end', one(350));
   return d;
 }
-

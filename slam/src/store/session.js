@@ -9,13 +9,17 @@ export const ROLES = ['coach', 'client'];
 let role = 'coach';
 let display = 'coach';
 
-export function currentRole() { return role; }
+export function currentRole() {
+  return role;
+}
 export function setRole(r) {
   if (!ROLES.includes(r)) throw new Error('Unknown role ' + r);
   role = r;
 }
 
-export function displayRole() { return display; }
+export function displayRole() {
+  return display;
+}
 export function setDisplayRole(r) {
   if (!ROLES.includes(r)) throw new Error('Unknown role ' + r);
   display = r;

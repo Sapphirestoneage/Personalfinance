@@ -4,19 +4,32 @@
 // show what the client would see. No imports; app.js and the screens read it.
 
 export const COACH_ONLY = {
-  coachNotes: 'The coach\'s notes about the client (Setup, Coach notes).',
+  coachNotes: "The coach's notes about the client (Setup, Coach notes).",
   'plans.*.lines.*.note': 'Internal decision notes in the monthly plan.',
   'line.tag=mistake': 'A mistake tag, until the coach shares it (line.mistakeShared).',
-  'cashflow.cushion': 'The coach\'s cushion setting (the calendar still uses it).',
+  'cashflow.cushion': "The coach's cushion setting (the calendar still uses it).",
   'settings.materiality': 'The coach\'s materiality: how close the bridge must be to "tie".',
-  'accounts.*.notes': 'The coach\'s notes on a home, a vehicle, or another thing the client owns (S-113).'
+  'accounts.*.notes': "The coach's notes on a home, a vehicle, or another thing the client owns (S-113)."
 };
 
 // Every record type in records.js, and whether the client sees it.
 export const RECORDS = {
-  category: 'shared', line: 'shared', income: 'shared', deduction: 'shared', debt: 'shared', account: 'shared',
-  entry: 'shared', tag: 'shared', era: 'shared', 'estimate-change': 'shared', 'balance-check': 'shared',
-  'next-cost': 'shared', 'next-change': 'shared', 'next-measure': 'shared', balance: 'shared', 'plan-line': 'shared'
+  category: 'shared',
+  line: 'shared',
+  income: 'shared',
+  deduction: 'shared',
+  debt: 'shared',
+  account: 'shared',
+  entry: 'shared',
+  tag: 'shared',
+  era: 'shared',
+  'estimate-change': 'shared',
+  'balance-check': 'shared',
+  'next-cost': 'shared',
+  'next-change': 'shared',
+  'next-measure': 'shared',
+  balance: 'shared',
+  'plan-line': 'shared'
 };
 
 export function canSee(field, role) {
@@ -32,9 +45,11 @@ export function viewFor(doc, role) {
   const d = clone(doc);
   d.coachNotes = '';
   for (const a of d.accounts || []) if (a.notes) a.notes = '';
-  for (const p of Object.values(d.plans || {})) for (const e of Object.values(p.lines || {})) if (e && e.note) e.note = '';
+  for (const p of Object.values(d.plans || {}))
+    for (const e of Object.values(p.lines || {})) if (e && e.note) e.note = '';
   // An unshared mistake reads as a planned line; a tag the client ticked is shared at once (S-096).
-  for (const c of d.categories || []) for (const l of c.lines || []) if (l.tag === 'mistake' && !l.mistakeShared) l.tag = 'planned';
+  for (const c of d.categories || [])
+    for (const l of c.lines || []) if (l.tag === 'mistake' && !l.mistakeShared) l.tag = 'planned';
   return d;
 }
 
@@ -42,8 +57,14 @@ export function viewFor(doc, role) {
 // Everything else reads the same to both.
 const WORDS = {
   'owed-label': ['Reimbursements still owed to the client', 'Reimbursements still owed to you'],
-  'completion-note': ['This is about the data, not how the client is doing.', 'This is about the data, not how you are doing.'],
-  'estimate-own': ['That estimate is the client\'s own; it is never overwritten', 'That estimate is your own; it is never overwritten'],
+  'completion-note': [
+    'This is about the data, not how the client is doing.',
+    'This is about the data, not how you are doing.'
+  ],
+  'estimate-own': [
+    "That estimate is the client's own; it is never overwritten",
+    'That estimate is your own; it is never overwritten'
+  ],
   'view-toggle': ['View as client', 'Back to the coach view']
 };
 

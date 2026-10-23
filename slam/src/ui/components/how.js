@@ -19,15 +19,40 @@ export function goSource(ctx, target) {
 // No target: the plain text comes back, so a caller can pass null for a value with nothing to open.
 export function sourceLink(ctx, text, target, key) {
   if (!target) return text;
-  return h('a', { href: '#', class: 'src-link', 'data-key': key || null, title: 'Open where this comes from', onclick: (e) => { e.preventDefault(); goSource(ctx, target); } }, text);
+  return h(
+    'a',
+    {
+      href: '#',
+      class: 'src-link',
+      'data-key': key || null,
+      title: 'Open where this comes from',
+      onclick: (e) => {
+        e.preventDefault();
+        goSource(ctx, target);
+      }
+    },
+    text
+  );
 }
 
 // The number itself, as a button that opens (or closes) its panel.
 // One panel at a time: ctx.ui.how holds the key of the open one, and tapping the same number again closes it.
 export function howButton(ctx, key, text) {
   const open = ctx.ui.how === key;
-  return h('button', { class: 'how-btn', 'data-key': 'how:' + key, 'aria-expanded': open ? 'true' : 'false', title: 'How this was worked out',
-    onclick: () => { ctx.ui.how = open ? null : key; ctx.rerender(); } }, text);
+  return h(
+    'button',
+    {
+      class: 'how-btn',
+      'data-key': 'how:' + key,
+      'aria-expanded': open ? 'true' : 'false',
+      title: 'How this was worked out',
+      onclick: () => {
+        ctx.ui.how = open ? null : key;
+        ctx.rerender();
+      }
+    },
+    text
+  );
 }
 
 // ex is what explain (engines/explain.js) returns: steps, a result, a note. Steps are plain dollars, a negative one
@@ -35,11 +60,54 @@ export function howButton(ctx, key, text) {
 // shortfall). Each step is its own link target, since explain puts where, path, or open on it.
 export function howPanel(ctx, ex) {
   if (!ex) return null;
-  const fmt = (x, isPct, signed) => (x === null || x === undefined ? 'not entered' : isPct ? pct(x) : signed ? signedMoney(x, true) : (x < 0 ? '-' + money(-x, true) : money(x, true)));
-  return h('div', { class: 'card how-panel', id: 'how-panel', role: 'region', 'aria-label': ex.title },
-    h('div', { class: 'spread' }, h('b', {}, 'How this was worked out: ' + ex.title), h('button', { class: 'btn small ghost', 'data-key': 'how-close', onclick: () => { ctx.ui.how = null; ctx.rerender(); } }, 'Close')),
-    h('ul', { class: 'plain' },
-      ex.steps.map((st, i) => h('li', { class: 'small' }, sourceLink(ctx, st.label, st, 'how-step-' + i), h('span', { class: 'num' }, fmt(st.amount)))),
-      h('li', { class: 'small total' }, h('b', {}, ex.result.label), h('b', { class: 'num', 'data-key': 'how-result' }, fmt(ex.result.amount, ex.result.pct, ex.result.signed)))),
-    h('p', { class: 'xs muted' }, ex.note));
+  const fmt = (x, isPct, signed) =>
+    x === null || x === undefined
+      ? 'not entered'
+      : isPct
+        ? pct(x)
+        : signed
+          ? signedMoney(x, true)
+          : x < 0
+            ? '-' + money(-x, true)
+            : money(x, true);
+  return h(
+    'div',
+    { class: 'card how-panel', id: 'how-panel', role: 'region', 'aria-label': ex.title },
+    h(
+      'div',
+      { class: 'spread' },
+      h('b', {}, 'How this was worked out: ' + ex.title),
+      h(
+        'button',
+        {
+          class: 'btn small ghost',
+          'data-key': 'how-close',
+          onclick: () => {
+            ctx.ui.how = null;
+            ctx.rerender();
+          }
+        },
+        'Close'
+      )
+    ),
+    h(
+      'ul',
+      { class: 'plain' },
+      ex.steps.map((st, i) =>
+        h(
+          'li',
+          { class: 'small' },
+          sourceLink(ctx, st.label, st, 'how-step-' + i),
+          h('span', { class: 'num' }, fmt(st.amount))
+        )
+      ),
+      h(
+        'li',
+        { class: 'small total' },
+        h('b', {}, ex.result.label),
+        h('b', { class: 'num', 'data-key': 'how-result' }, fmt(ex.result.amount, ex.result.pct, ex.result.signed))
+      )
+    ),
+    h('p', { class: 'xs muted' }, ex.note)
+  );
 }

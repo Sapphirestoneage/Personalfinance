@@ -19,7 +19,8 @@ import { budgetModel, primaryPayFrequency } from '../src/engines/model.js';
 import { modelForMonth } from '../src/engines/plan.js';
 import { toMonthly } from '../src/engines/normalize.js';
 
-const raw = (name) => JSON.parse(readFileSync(new URL('../src/data/households/' + name + '.json', import.meta.url), 'utf8'));
+const raw = (name) =>
+  JSON.parse(readFileSync(new URL('../src/data/households/' + name + '.json', import.meta.url), 'utf8'));
 const lineOf = (model, id) => model.categories.flatMap((c) => c.lines).find((l) => l.id === id);
 
 test('a line with entries: its actual is the log, "from your log, N entries", and it cannot be typed over', () => {
@@ -31,7 +32,10 @@ test('a line with entries: its actual is the log, "from your log, N entries", an
   // 61.40 + 48.60 - 10 refund = 100
   const g = lineOf(budgetModel(d), 'groceries');
   assert.deepEqual([g.actual, g.actualFrom, g.logCount, g.status.actual], [100, 'log', 3, 'computed']);
-  assert.throws(() => setField(d, ['line', 'groceries', 'actual'], makeValue(250)), /This comes from 3 entries\. Add one, or edit an entry\./);
+  assert.throws(
+    () => setField(d, ['line', 'groceries', 'actual'], makeValue(250)),
+    /This comes from 3 entries\. Add one, or edit an entry\./
+  );
   // A line with no entries is typed as before
   setField(d, ['line', 'gas', 'actual'], makeValue(40));
   assert.deepEqual([lineOf(budgetModel(d), 'gas').actual, lineOf(budgetModel(d), 'gas').actualFrom], [40, 'typed']);
@@ -45,8 +49,13 @@ test('a line with entries: its actual is the log, "from your log, N entries", an
 test('the store refuses typing over a logged line, with the plain message', () => {
   const s = createStore(createStorage(memoryBackend()), () => new Date('2026-10-17T12:00:00Z'));
   s.create('Store');
-  s.update('Log', (d) => { addEntry(d, { date: s.doc.currentMonth + '-03', amount: 20, lineId: 'transit' }); });
-  assert.throws(() => s.update('Type', (d) => setField(d, ['line', 'transit', 'actual'], makeValue(99))), /This comes from 1 entry/);
+  s.update('Log', (d) => {
+    addEntry(d, { date: s.doc.currentMonth + '-03', amount: 20, lineId: 'transit' });
+  });
+  assert.throws(
+    () => s.update('Type', (d) => setField(d, ['line', 'transit', 'actual'], makeValue(99))),
+    /This comes from 1 entry/
+  );
   assert.equal(findLine(s.doc, 'transit').line.actual.amount, null);
 });
 
@@ -64,7 +73,7 @@ test('a yearly line (due month set): the actual is its monthly share; the paymen
 });
 
 for (const name of ['maya', 'luis', 'tasha', 'sam', 'jordan']) {
-  test('migration keeps every month\'s actual: ' + name, () => {
+  test("migration keeps every month's actual: " + name, () => {
     const r = raw(name);
     const month = r.currentMonth;
     // Another open month: the one after (earlier ones may be closed)
@@ -73,18 +82,60 @@ for (const name of ['maya', 'luis', 'tasha', 'sam', 'jordan']) {
     r.transactions = [];
     const typed = [];
     let blankLine = null;
-    for (const c of r.categories) for (const l of c.lines || []) {
-      if (l.actual && l.actual.amount !== null && l.actual.amount !== undefined) {
-        typed.push([l.id, l]);
-        r.transactions.push({ id: 'tx-t' + typed.length, date: month + '-01', amount: 10, description: 'TEST', account: null, kind: 'spend', merchant: 'TEST', lineId: l.id, bnpl: false });
-      } else if (!blankLine && c.id !== 'savings') blankLine = l.id;
-    }
+    for (const c of r.categories)
+      for (const l of c.lines || []) {
+        if (l.actual && l.actual.amount !== null && l.actual.amount !== undefined) {
+          typed.push([l.id, l]);
+          r.transactions.push({
+            id: 'tx-t' + typed.length,
+            date: month + '-01',
+            amount: 10,
+            description: 'TEST',
+            account: null,
+            kind: 'spend',
+            merchant: 'TEST',
+            lineId: l.id,
+            bnpl: false
+          });
+        } else if (!blankLine && c.id !== 'savings') blankLine = l.id;
+      }
     // A line with no typed actual just takes its log: 25 (blank before, a number now; nothing typed is lost).
-    if (blankLine) r.transactions.push({ id: 'tx-blank', date: month + '-02', amount: 25, description: 'NEW', account: null, kind: 'spend', merchant: 'NEW', lineId: blankLine, bnpl: false });
+    if (blankLine)
+      r.transactions.push({
+        id: 'tx-blank',
+        date: month + '-02',
+        amount: 25,
+        description: 'NEW',
+        account: null,
+        kind: 'spend',
+        merchant: 'NEW',
+        lineId: blankLine,
+        bnpl: false
+      });
     // And another open month with a typed 300 on groceries and two entries of 100.
     r.monthActuals = { ...(r.monthActuals || {}), [prev]: { groceries: { amount: 300 } } };
-    r.transactions.push({ id: 'tx-p1', date: prev + '-05', amount: 100, description: 'G', account: null, kind: 'spend', merchant: 'G', lineId: 'groceries', bnpl: false });
-    r.transactions.push({ id: 'tx-p2', date: prev + '-15', amount: 100, description: 'G', account: null, kind: 'spend', merchant: 'G', lineId: 'groceries', bnpl: false });
+    r.transactions.push({
+      id: 'tx-p1',
+      date: prev + '-05',
+      amount: 100,
+      description: 'G',
+      account: null,
+      kind: 'spend',
+      merchant: 'G',
+      lineId: 'groceries',
+      bnpl: false
+    });
+    r.transactions.push({
+      id: 'tx-p2',
+      date: prev + '-15',
+      amount: 100,
+      description: 'G',
+      account: null,
+      kind: 'spend',
+      merchant: 'G',
+      lineId: 'groceries',
+      bnpl: false
+    });
     const d = migrate(r);
     assert.deepEqual(validateHousehold(d), []);
     const freq = primaryPayFrequency(d);

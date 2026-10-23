@@ -96,7 +96,17 @@ test('compat: incomes before paystub taxes, or before the extra tax lines, load 
   const raw = JSON.parse(JSON.stringify(d));
   delete raw.income[0].withheld;
   const m = migrate(raw);
-  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'sdi', 'pfl', 'sui', 'other']);
+  assert.deepEqual(Object.keys(m.income[0].withheld), [
+    'federal',
+    'socialSecurity',
+    'medicare',
+    'state',
+    'local',
+    'sdi',
+    'pfl',
+    'sui',
+    'other'
+  ]);
   assert.equal(m.income[0].withheld.state.amount, null);
 });
 
@@ -123,7 +133,14 @@ test('hourly: an estimated paycheck is worked out, and a typed actual paycheck s
 
 test('extra tax lines (SDI, paid leave) count with the state and local lines, outside the federal comparison', () => {
   const { d, inc } = tal();
-  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80), sdi: pc(18.9), pfl: pc(10) });
+  Object.assign(inc.withheld, {
+    federal: pc(150),
+    socialSecurity: pc(130.2),
+    medicare: pc(30.45),
+    state: pc(80),
+    sdi: pc(18.9),
+    pfl: pc(10)
+  });
   const r = incomeSummary(d, refs.tax).sources[0];
   // take-home = 2,100 - 63 - (150 + 130.20 + 30.45 + 80 + 18.90 + 10) = 2,037 - 419.55 = 1,617.45 a paycheck
   assert.ok(near(r.takeHomePerPaycheck, 1617.45));
@@ -143,7 +160,10 @@ test('taxes break down: federal income tax at its bracket, Social Security, Medi
   inc.takeHome = pc(2000);
   const r = incomeSummary(d, refs.tax).sources[0];
   const line = (k) => r.taxLines.find((l) => l.key === k);
-  assert.deepEqual(r.taxLines.map((l) => l.key), ['federal', 'socialSecurity', 'medicare', 'short']);
+  assert.deepEqual(
+    r.taxLines.map((l) => l.key),
+    ['federal', 'socialSecurity', 'medicare', 'short']
+  );
   assert.ok(near(line('federal').perPaycheck, 160.593846, 5));
   assert.equal(line('federal').bracket, 0.12);
   assert.ok(near(line('socialSecurity').perPaycheck, 130.2));
@@ -151,7 +171,12 @@ test('taxes break down: federal income tax at its bracket, Social Security, Medi
   // Withheld 37 a paycheck: 37 - 321.243846 = -284.243846, the gap the "doesn't add up" note names.
   assert.ok(near(line('short').perPaycheck, -284.243846, 5));
   // The lines add up to the taxes row: 160.593846 + 130.20 + 30.45 - 284.243846 = 37
-  assert.ok(near(r.taxLines.reduce((a, l) => a + l.perPaycheck, 0), r.taxPerPaycheck));
+  assert.ok(
+    near(
+      r.taxLines.reduce((a, l) => a + l.perPaycheck, 0),
+      r.taxPerPaycheck
+    )
+  );
   assert.ok(near(r.taxPerPaycheck, 37));
 });
 
@@ -169,8 +194,15 @@ test('taxes break down: copied paystub lines are used as they are, one per line'
   const { d, inc } = tal();
   Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80) });
   const r = incomeSummary(d, refs.tax).sources[0];
-  assert.deepEqual(r.taxLines.map((l) => [l.key, Math.round(l.perPaycheck * 100) / 100, l.from]),
-    [['federal', 150, 'paystub'], ['socialSecurity', 130.2, 'paystub'], ['medicare', 30.45, 'paystub'], ['state', 80, 'paystub']]);
+  assert.deepEqual(
+    r.taxLines.map((l) => [l.key, Math.round(l.perPaycheck * 100) / 100, l.from]),
+    [
+      ['federal', 150, 'paystub'],
+      ['socialSecurity', 130.2, 'paystub'],
+      ['medicare', 30.45, 'paystub'],
+      ['state', 80, 'paystub']
+    ]
+  );
   // 150 + 130.20 + 30.45 + 80 = 390.65, the taxes row
   assert.ok(near(r.taxPerPaycheck, 390.65));
 });
@@ -178,7 +210,10 @@ test('taxes break down: copied paystub lines are used as they are, one per line'
 test('taxes break down: with only gross pay, the estimate is listed and state tax says it is not estimated', () => {
   const { d } = tal();
   const r = incomeSummary(d, refs.tax).sources[0];
-  assert.deepEqual(r.taxLines.map((l) => l.key), ['federal', 'socialSecurity', 'medicare', 'state']);
+  assert.deepEqual(
+    r.taxLines.map((l) => l.key),
+    ['federal', 'socialSecurity', 'medicare', 'state']
+  );
   assert.equal(r.taxLines[3].monthly, null);
   // taxes row = the estimate, 321.243846 a paycheck
   assert.ok(near(r.taxPerPaycheck, 321.243846, 5));
@@ -192,8 +227,17 @@ test('the federal estimate, step by step, for the Sankey', () => {
   const { d, inc } = tal();
   inc.takeHome = pc(2000);
   const w = incomeSummary(d, refs.tax).sources[0].taxLines.find((l) => l.key === 'federal').walk;
-  assert.deepEqual([w.gross, w.pretax, w.agi, w.std, w.taxable].map((x) => Math.round(x * 100) / 100), [54600, 1638, 52962, 16100, 36862]);
-  assert.deepEqual(w.slices.map((s) => [s.rate, Math.round(s.amount * 100) / 100, Math.round(s.tax * 100) / 100]), [[0.1, 12400, 1240], [0.12, 24462, 2935.44]]);
+  assert.deepEqual(
+    [w.gross, w.pretax, w.agi, w.std, w.taxable].map((x) => Math.round(x * 100) / 100),
+    [54600, 1638, 52962, 16100, 36862]
+  );
+  assert.deepEqual(
+    w.slices.map((s) => [s.rate, Math.round(s.amount * 100) / 100, Math.round(s.tax * 100) / 100]),
+    [
+      [0.1, 12400, 1240],
+      [0.12, 24462, 2935.44]
+    ]
+  );
   assert.ok(near(w.incomeTax, 4175.44));
   assert.ok(near(w.effectiveRate, 0.0764732, 6));
   assert.equal(w.bracket, 0.12);

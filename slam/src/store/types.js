@@ -5,10 +5,24 @@
 
 // What a category counts as. FAT is housing + food + transport.
 export const CATEGORY_TYPES = [
-  ['housing', 'Housing'], ['food', 'Food'], ['transport', 'Transportation'], ['debt', 'Debt payments'],
-  ['health', 'Health'], ['bills', 'Bills & Utilities'], ['fun', 'Personal & Fun'], ['annual', 'Annual & Irregular'],
-  ['fees', 'Fees'], ['giving', 'Giving'], ['savings', 'Savings'], ['education', 'Education'], ['family', 'Family Care'],
-  ['pets', 'Pets'], ['travel', 'Travel'], ['business', 'Business'], ['taxes', 'Taxes'], ['other', 'Other']
+  ['housing', 'Housing'],
+  ['food', 'Food'],
+  ['transport', 'Transportation'],
+  ['debt', 'Debt payments'],
+  ['health', 'Health'],
+  ['bills', 'Bills & Utilities'],
+  ['fun', 'Personal & Fun'],
+  ['annual', 'Annual & Irregular'],
+  ['fees', 'Fees'],
+  ['giving', 'Giving'],
+  ['savings', 'Savings'],
+  ['education', 'Education'],
+  ['family', 'Family Care'],
+  ['pets', 'Pets'],
+  ['travel', 'Travel'],
+  ['business', 'Business'],
+  ['taxes', 'Taxes'],
+  ['other', 'Other']
 ];
 export const CATEGORY_TYPE_IDS = CATEGORY_TYPES.map(([id]) => id);
 
@@ -27,12 +41,24 @@ export const LINE_TYPES = [
   ['car-payment', 'Car Payment', ['car payment', 'auto loan', 'lease']],
   ['auto-insurance', 'Auto Insurance', ['car insurance', 'auto insurance']],
   ['gas', 'Gas & Fuel', ['gas', 'fuel', 'charging']],
-  ['public-transit', 'Public Transit', ['transit', 'metro', 'subway', 'bus', 'train', 'coach', 'bus ticket', 'train ticket', 'public transportation']],
+  [
+    'public-transit',
+    'Public Transit',
+    ['transit', 'metro', 'subway', 'bus', 'train', 'coach', 'bus ticket', 'train ticket', 'public transportation']
+  ],
   ['rideshare', 'Rideshare & Taxi', ['uber', 'lyft', 'rideshare', 'taxi']],
-  ['auto-maintenance', 'Auto Maintenance', ['maintenance', 'oil change', 'tires', 'car wash', 'registration', 'inspection']],
+  [
+    'auto-maintenance',
+    'Auto Maintenance',
+    ['maintenance', 'oil change', 'tires', 'car wash', 'registration', 'inspection']
+  ],
   ['parking-tolls', 'Parking & Tolls', ['parking', 'toll']],
   ['health-insurance', 'Health Insurance', ['premium', 'health insurance']],
-  ['medical', 'Medical', ['medical', 'doctor', 'copay', 'prescription', 'out of pocket', 'dental', 'vision', 'pharmacy']],
+  [
+    'medical',
+    'Medical',
+    ['medical', 'doctor', 'copay', 'prescription', 'out of pocket', 'dental', 'vision', 'pharmacy']
+  ],
   ['therapy', 'Therapy & Mental Health', ['therap', 'counsel']],
   ['fitness', 'Fitness', ['gym', 'fitness', 'yoga', 'climbing']],
   ['subscriptions', 'Subscriptions & Streaming', ['subscription', 'streaming', 'netflix', 'spotify', 'apps']],
@@ -88,7 +114,11 @@ export function guessLineType(name, categoryType) {
   // The label itself counts as a keyword, so typing a type's own name always finds it. On a tie
   // (two keywords of one length) the earlier type in the list keeps it.
   for (const [id, label, words] of pool) {
-    for (const w of [label.toLowerCase(), ...words]) if (w && n.includes(w) && w.length > len) { best = id; len = w.length; }
+    for (const w of [label.toLowerCase(), ...words])
+      if (w && n.includes(w) && w.length > len) {
+        best = id;
+        len = w.length;
+      }
   }
   return best;
 }
@@ -96,11 +126,35 @@ export function guessLineType(name, categoryType) {
 // Starting types for the default lines (their ids never change), and for the fee lines that
 // feeLine() in edits.js makes on first use from schema.js FEE_LINES (S-123).
 export const DEFAULT_LINE_TYPES = {
-  rent: 'rent', utilities: 'utilities', internet: 'internet-phone', 'home-insurance': 'home-insurance',
-  groceries: 'groceries', 'eating-out': 'dining', delivery: 'delivery',
-  'car-payment': 'car-payment', 'car-insurance': 'auto-insurance', gas: 'gas', transit: 'public-transit', maintenance: 'auto-maintenance',
-  premiums: 'health-insurance', 'out-of-pocket': 'medical', therapy: 'therapy',
-  subscriptions: 'subscriptions', shopping: 'shopping', entertainment: 'entertainment', travel: 'travel', hobbies: 'hobbies', gifts: 'gifts',
-  yearly: 'annual', 'fee-overdraft': 'bank-fees', 'fee-late': 'late-fees', 'fee-atm': 'bank-fees', 'fee-foreign': 'bank-fees', 'fee-interest': 'interest',
-  'giving-line': 'charity', 'emergency-fund': 'emergency-fund', retirement: 'retirement', 'other-goals': 'savings-goal'
+  rent: 'rent',
+  utilities: 'utilities',
+  internet: 'internet-phone',
+  'home-insurance': 'home-insurance',
+  groceries: 'groceries',
+  'eating-out': 'dining',
+  delivery: 'delivery',
+  'car-payment': 'car-payment',
+  'car-insurance': 'auto-insurance',
+  gas: 'gas',
+  transit: 'public-transit',
+  maintenance: 'auto-maintenance',
+  premiums: 'health-insurance',
+  'out-of-pocket': 'medical',
+  therapy: 'therapy',
+  subscriptions: 'subscriptions',
+  shopping: 'shopping',
+  entertainment: 'entertainment',
+  travel: 'travel',
+  hobbies: 'hobbies',
+  gifts: 'gifts',
+  yearly: 'annual',
+  'fee-overdraft': 'bank-fees',
+  'fee-late': 'late-fees',
+  'fee-atm': 'bank-fees',
+  'fee-foreign': 'bank-fees',
+  'fee-interest': 'interest',
+  'giving-line': 'charity',
+  'emergency-fund': 'emergency-fund',
+  retirement: 'retirement',
+  'other-goals': 'savings-goal'
 };

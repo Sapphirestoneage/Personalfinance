@@ -18,13 +18,25 @@ import { flatten, contentOf, COLLECTIONS } from './records.js';
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const kidsOf = (coll) => coll.children || [];
 // Same content (bookkeeping and child records aside) and the same deleted state; versions and timestamps alone do not count.
-const sameRecord = (a, b, coll) => contentOf(a, kidsOf(coll)) === contentOf(b, kidsOf(coll)) && !!a.deleted === !!b.deleted;
+const sameRecord = (a, b, coll) =>
+  contentOf(a, kidsOf(coll)) === contentOf(b, kidsOf(coll)) && !!a.deleted === !!b.deleted;
 
 export function describe(key, rec) {
   const kind = key.split(':')[0];
   const name = rec.name || rec.label || rec.description || rec.note || '';
   const when = rec.date ? ' (' + rec.date + ')' : '';
-  const label = { entry: 'Log entry', line: 'Line', category: 'Category', income: 'Income', debt: 'Debt', account: 'Account', tag: 'Tag', balance: 'Balance', 'plan-line': 'Plan line' }[kind] || kind;
+  const label =
+    {
+      entry: 'Log entry',
+      line: 'Line',
+      category: 'Category',
+      income: 'Income',
+      debt: 'Debt',
+      account: 'Account',
+      tag: 'Tag',
+      balance: 'Balance',
+      'plan-line': 'Plan line'
+    }[kind] || kind;
   return label + (name || when ? ': ' : '') + name + when;
 }
 
@@ -36,7 +48,11 @@ function put(doc, key, x) {
     const list = c.get(doc);
     if (!list) return;
     const i = list.findIndex((r) => r.id === rec.id);
-    if (i < 0) { for (const k of kidsOf(c)) rec[k] = rec[k] || []; list.push(rec); return; }
+    if (i < 0) {
+      for (const k of kidsOf(c)) rec[k] = rec[k] || [];
+      list.push(rec);
+      return;
+    }
     // A parent keeps the child records it has here; children merge on their own.
     for (const k of kidsOf(c)) rec[k] = list[i][k];
     list[i] = rec;
@@ -48,14 +64,18 @@ function put(doc, key, x) {
     if (!parent) return;
     const list = (parent[c.field] = parent[c.field] || []);
     const i = list.findIndex((r) => r.id === rec.id);
-    if (i < 0) list.push(rec); else list[i] = rec;
+    if (i < 0) list.push(rec);
+    else list[i] = rec;
     return;
   }
   // A 'map' record (a month's balance, a plan line) sits at a two-level path, under an inner key for plans.
   const root = c.get(doc);
   const [a, b] = x.path;
   root[a] = root[a] || (c.inner ? { [c.inner]: {} } : {});
-  if (c.inner) { root[a][c.inner] = root[a][c.inner] || {}; root[a][c.inner][b] = rec; } else root[a][b] = rec;
+  if (c.inner) {
+    root[a][c.inner] = root[a][c.inner] || {};
+    root[a][c.inner][b] = rec;
+  } else root[a][b] = rec;
 }
 
 export function mergeDocs(local, incoming) {
@@ -71,26 +91,62 @@ export function mergeDocs(local, incoming) {
   for (const key of keys) {
     const l = L[key];
     const i = I[key];
-    if (!i) { if (l.rec.version > (base[key] || 0)) out.fromLocal.push(key); else out.same += 1; continue; }
-    if (!l) { put(doc, key, i); out.added.push(key); continue; }
-    if (sameRecord(l.rec, i.rec, l.coll)) { out.same += 1; continue; }
+    if (!i) {
+      if (l.rec.version > (base[key] || 0)) out.fromLocal.push(key);
+      else out.same += 1;
+      continue;
+    }
+    if (!l) {
+      put(doc, key, i);
+      out.added.push(key);
+      continue;
+    }
+    if (sameRecord(l.rec, i.rec, l.coll)) {
+      out.same += 1;
+      continue;
+    }
     // Never shared (no base for this key): the lower version number stands in for the shared one.
     const b = base[key] !== undefined ? base[key] : Math.min(l.rec.version, i.rec.version);
     const changedL = l.rec.version > b;
     const changedI = i.rec.version > b;
-    if (changedI && !changedL) { put(doc, key, i); out.fromIncoming.push(key); continue; }
-    if (changedL && !changedI) { out.fromLocal.push(key); continue; }
+    if (changedI && !changedL) {
+      put(doc, key, i);
+      out.fromIncoming.push(key);
+      continue;
+    }
+    if (changedL && !changedI) {
+      out.fromLocal.push(key);
+      continue;
+    }
     // Neither is past the shared version: the other copy is older, keep this one. With no shared
     // version and the same version number, there is no telling which is newer, so the coach picks.
-    if (!changedL && !changedI && (base[key] !== undefined || l.rec.version !== i.rec.version)) { out.fromLocal.push(key); continue; }
+    if (!changedL && !changedI && (base[key] !== undefined || l.rec.version !== i.rec.version)) {
+      out.fromLocal.push(key);
+      continue;
+    }
     out.conflicts.push({
-      key, what: describe(key, l.rec),
-      local: { rec: clone(l.rec), by: l.rec.deleted ? l.rec.deletedBy : l.rec.updatedBy, at: l.rec.updatedAt, deleted: !!l.rec.deleted },
-      incoming: { rec: clone(i.rec), by: i.rec.deleted ? i.rec.deletedBy : i.rec.updatedBy, at: i.rec.updatedAt, deleted: !!i.rec.deleted }
+      key,
+      what: describe(key, l.rec),
+      local: {
+        rec: clone(l.rec),
+        by: l.rec.deleted ? l.rec.deletedBy : l.rec.updatedBy,
+        at: l.rec.updatedAt,
+        deleted: !!l.rec.deleted
+      },
+      incoming: {
+        rec: clone(i.rec),
+        by: i.rec.deleted ? i.rec.deletedBy : i.rec.updatedBy,
+        at: i.rec.updatedAt,
+        deleted: !!i.rec.deleted
+      }
     });
   }
   // Closed months only in the other copy are added (a closed month is never edited, only revised).
-  for (const m of incoming.months || []) if (!doc.months.some((x) => x.key === m.key)) { doc.months.push(clone(m)); out.monthsAdded += 1; }
+  for (const m of incoming.months || [])
+    if (!doc.months.some((x) => x.key === m.key)) {
+      doc.months.push(clone(m));
+      out.monthsAdded += 1;
+    }
   doc.months.sort((a, b) => (a.key < b.key ? -1 : 1));
   // The flattened other copy rides along so resolveMerge can place a picked record.
   return { doc, ...out, incoming: { flat: I } };
@@ -105,7 +161,10 @@ export function resolveMerge(result, picks = {}, nowIso) {
   for (const c of result.conflicts) {
     const pick = picks[c.key] === 'incoming' ? c.incoming.rec : c.local.rec;
     // The pick gets a version past both, so the next merge on either device takes it as the newer one.
-    const x = { ...result.incoming.flat[c.key], rec: { ...pick, version: Math.max(c.local.rec.version, c.incoming.rec.version) + 1 } };
+    const x = {
+      ...result.incoming.flat[c.key],
+      rec: { ...pick, version: Math.max(c.local.rec.version, c.incoming.rec.version) + 1 }
+    };
     put(doc, c.key, x);
   }
   doc.sync = { versions: versionsOf(doc), at: nowIso || null };

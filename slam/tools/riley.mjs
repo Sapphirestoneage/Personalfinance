@@ -26,7 +26,15 @@ import { createStore } from '../src/store/store.js';
 import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { makeValue } from '../src/store/value.js';
 import { makeDate } from '../src/store/schema.js';
-import { addIncome, addDebt, addDeduction, findLine, setField, setTransactionLine, setDebtLine } from '../src/store/edits.js';
+import {
+  addIncome,
+  addDebt,
+  addDeduction,
+  findLine,
+  setField,
+  setTransactionLine,
+  setDebtLine
+} from '../src/store/edits.js';
 import { addAccount, setBalance, setAccountField, setDeductionAccount, setAlternative } from '../src/store/accounts.js';
 import { addEntry, editEntry, mergeImport, confirmMatch } from '../src/store/log.js';
 import { confirmScheduled, saveForecast } from '../src/store/cashflow.js';
@@ -42,15 +50,19 @@ import { monthReview, lastDay } from '../src/engines/loop.js';
 const root = new URL('../', import.meta.url);
 const json = (p) => JSON.parse(readFileSync(new URL(p, root), 'utf8'));
 const refs = {
-  tax: json('src/data/tax-constants.json'), benchmarks: json('src/data/benchmarks.json'), averages: json('src/data/spending-averages.json'),
-  merchantRules: json('src/data/merchant-rules.json'), subcategoryIdeas: json('src/data/subcategory-ideas.json'), eraTemplates: json('src/data/era-templates.json')
+  tax: json('src/data/tax-constants.json'),
+  benchmarks: json('src/data/benchmarks.json'),
+  averages: json('src/data/spending-averages.json'),
+  merchantRules: json('src/data/merchant-rules.json'),
+  subcategoryIdeas: json('src/data/subcategory-ideas.json'),
+  eraTemplates: json('src/data/era-templates.json')
 };
 
 // A small seeded random number generator (mulberry32), so every run is the same.
 function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -64,7 +76,20 @@ const cents = (x) => Math.round(x * 100) / 100;
 const between = (lo, hi) => cents(lo + rand() * (hi - lo));
 const pick = (xs) => xs[Math.floor(rand() * xs.length)];
 
-const CLOSED = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
+const CLOSED = [
+  '2025-10',
+  '2025-11',
+  '2025-12',
+  '2026-01',
+  '2026-02',
+  '2026-03',
+  '2026-04',
+  '2026-05',
+  '2026-06',
+  '2026-07',
+  '2026-08',
+  '2026-09'
+];
 const OPEN = '2026-10';
 const TODAY = '2026-10-17';
 // Opening balances on October 1, 2025. START.chk also sets the size of September's car repair
@@ -89,11 +114,13 @@ const NW_ENDS = {
   // 7,000 + 35.00 - 340 = 6,695.00; + 33.48 = 6,388.48; + 31.94 = 6,080.42; + 30.40 = 5,770.82;
   // + 28.85 = 5,459.67; + 27.30 = 5,146.97; + 25.73 = 4,832.70; + 24.16 = 4,516.86; + 22.58 = 4,199.44;
   // + 21.00 = 3,880.44; + 19.40 = 3,559.84; + 17.80 = 3,237.64 (each less 340).
-  'debt-car': [6695, 6388.48, 6080.42, 5770.82, 5459.67, 5146.97, 4832.70, 4516.86, 4199.44, 3880.44, 3559.84, 3237.64]
+  'debt-car': [6695, 6388.48, 6080.42, 5770.82, 5459.67, 5146.97, 4832.7, 4516.86, 4199.44, 3880.44, 3559.84, 3237.64]
 };
 
 let now = new Date('2025-10-01T09:00:00Z');
-const at = (iso) => { now = new Date(iso.length === 10 ? iso + 'T12:00:00Z' : iso); };
+const at = (iso) => {
+  now = new Date(iso.length === 10 ? iso + 'T12:00:00Z' : iso);
+};
 const store = createStore(createStorage(memoryBackend()), () => now);
 const upd = (label, fn) => store.update(label, fn);
 
@@ -110,7 +137,12 @@ upd('Setup', (d) => {
   const side = addIncome(d, { id: 'side', type: 'side', label: 'Dog walking', payFrequency: 'monthly' });
   side.takeHome = makeValue(250, { cadence: 'month' });
   const visa = addDebt(d, { id: 'debt-visa', label: 'Visa', type: 'credit-card' });
-  Object.assign(visa, { minimum: makeValue(35), apr: makeValue(24.99, { cadence: 'one-off' }), dueDay: makeValue(25, { cadence: 'one-off' }), payWith: 'statement' });
+  Object.assign(visa, {
+    minimum: makeValue(35),
+    apr: makeValue(24.99, { cadence: 'one-off' }),
+    dueDay: makeValue(25, { cadence: 'one-off' }),
+    payWith: 'statement'
+  });
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking', institution: 'Harbor Credit Union' });
   addAccount(d, { id: 'sav', name: 'Savings', type: 'savings', institution: 'Harbor Credit Union' });
   addAccount(d, { id: 'visa', name: 'Visa', type: 'credit-card', debtId: 'debt-visa' });
@@ -135,16 +167,28 @@ upd('Setup', (d) => {
   Object.assign(L('groceries'), { estimate: makeValue(350), joy: 6 });
   Object.assign(L('eating-out'), { estimate: makeValue(100), joy: 8 });
   Object.assign(L('car-payment'), { estimate: makeValue(340), dueDay: one(15) });
-  Object.assign(L('car-insurance'), { estimate: makeValue(960, { cadence: 'year' }), dueMonth: one(3), dueDay: one(14) });
+  Object.assign(L('car-insurance'), {
+    estimate: makeValue(960, { cadence: 'year' }),
+    dueMonth: one(3),
+    dueDay: one(14)
+  });
   // Opening Paid ahead (S-130): the 960 was paid in March 2025, before Riley's first month. As of October
   // 2025, 5 months are left (October through February) at 960 / 12 = 80 a month: 5 x 80 = 400, "roughly".
-  Object.assign(L('car-insurance'), { openingAhead: makeValue(400, { cadence: 'one-off', status: 'roughly' }), openingAheadMonths: makeValue(5, { cadence: 'one-off', status: 'roughly' }) });
+  Object.assign(L('car-insurance'), {
+    openingAhead: makeValue(400, { cadence: 'one-off', status: 'roughly' }),
+    openingAheadMonths: makeValue(5, { cadence: 'one-off', status: 'roughly' })
+  });
   L('gas').estimate = makeValue(120);
   Object.assign(L('subscriptions'), { name: 'Phone', estimate: makeValue(65), dueDay: one(18) });
   Object.assign(L('shopping'), { estimate: makeValue(100), joy: 5 });
   Object.assign(L('entertainment'), { estimate: makeValue(60), joy: 9 });
   Object.assign(L('gifts'), { estimate: makeValue(40), joy: 8 });
-  Object.assign(L('yearly'), { name: 'Car registration', estimate: makeValue(180, { cadence: 'year' }), dueMonth: one(7), dueDay: one(10) });
+  Object.assign(L('yearly'), {
+    name: 'Car registration',
+    estimate: makeValue(180, { cadence: 'year' }),
+    dueMonth: one(7),
+    dueDay: one(10)
+  });
   L('emergency-fund').estimate = makeValue(200);
   L('retirement').estimate = makeValue(400);
   Object.assign(L('other-goals'), { name: 'Car repair fund', estimate: makeValue(50) });
@@ -154,7 +198,14 @@ upd('Setup', (d) => {
   setBalance(d, '2025-10', 'chk', 'start', one(START.chk));
   setBalance(d, '2025-10', 'sav', 'start', one(START.sav));
   setBalance(d, '2025-10', 'visa', 'start', one(START.visa));
-  for (const [id, v] of Object.entries(NW_START)) setBalance(d, '2025-10', id, 'start', makeValue(v, { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' }));
+  for (const [id, v] of Object.entries(NW_START))
+    setBalance(
+      d,
+      '2025-10',
+      id,
+      'start',
+      makeValue(v, { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' })
+    );
   startPlan(d, '2025-10', 'estimates', planStartValues(d, null, 'estimates', null, '2025-10'));
 });
 
@@ -178,7 +229,9 @@ function applyEvents(month, events, csvAccounts) {
     if (ev.acct === 'chk' && bank.chk < lowChecking.amount) lowChecking = { amount: bank.chk, date: ev.date };
     if (ev.how === 'scheduled') {
       const key = ev.key + ':' + ev.date;
-      const item = scheduledItems(store.doc, month, incomeSummary(store.doc, refs.tax)).items.find((i) => i.key === key);
+      const item = scheduledItems(store.doc, month, incomeSummary(store.doc, refs.tax)).items.find(
+        (i) => i.key === key
+      );
       // The calendar keys an item as kind:id:date. No item means the event list and the plan disagree
       // (a due day or pay date moved), so stop rather than confirm a bill the app never expected.
       if (!item) throw new Error('No scheduled item ' + key);
@@ -187,7 +240,16 @@ function applyEvents(month, events, csvAccounts) {
     if (ev.how === 'manual' || ev.how === 'both') {
       if (ev.loggedOn) at(ev.loggedOn);
       upd('Quick entry', (d) => {
-        const e = addEntry(d, { date: ev.loggedOn || ev.date, amount: ev.logAmt !== undefined ? ev.logAmt : ev.amt, kind: ev.kind || 'spend', lineId: ev.lineId || null, incomeId: ev.incomeId || null, merchant: ev.merchant || '', note: ev.note || '', account: ev.logAcct === undefined ? ev.acct : ev.logAcct });
+        const e = addEntry(d, {
+          date: ev.loggedOn || ev.date,
+          amount: ev.logAmt !== undefined ? ev.logAmt : ev.amt,
+          kind: ev.kind || 'spend',
+          lineId: ev.lineId || null,
+          incomeId: ev.incomeId || null,
+          merchant: ev.merchant || '',
+          note: ev.note || '',
+          account: ev.logAcct === undefined ? ev.acct : ev.logAcct
+        });
         if (ev.owed) editEntry(d, e.id, { owed: ev.owed });
         if (ev.ref) ev.ref.id = e.id;
       });
@@ -224,13 +286,28 @@ function importRows(month, rows, after) {
 // forward with any estimate tweaks.
 function monthEnd(month, typed, planTweaks) {
   at(lastDay(month) + 'T20:00:00Z');
-  for (const [lineId, amount, note] of typed) upd('Actual', (d) => setField(d, ['line', lineId, 'actual'], makeValue(amount, { note: note || '' })));
-  upd('End balances', (d) => { for (const a of ['chk', 'sav', 'visa']) setBalance(d, month, a, 'end', makeValue(bank[a], { cadence: 'one-off' })); });
+  for (const [lineId, amount, note] of typed)
+    upd('Actual', (d) => setField(d, ['line', lineId, 'actual'], makeValue(amount, { note: note || '' })));
+  upd('End balances', (d) => {
+    for (const a of ['chk', 'sav', 'visa']) setBalance(d, month, a, 'end', makeValue(bank[a], { cadence: 'one-off' }));
+  });
   const i = CLOSED.indexOf(month);
-  upd('Other balances', (d) => { for (const [id, list] of Object.entries(NW_ENDS)) setBalance(d, month, id, 'end', makeValue(list[i], { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' })); });
+  upd('Other balances', (d) => {
+    for (const [id, list] of Object.entries(NW_ENDS))
+      setBalance(
+        d,
+        month,
+        id,
+        'end',
+        makeValue(list[i], { cadence: 'one-off', status: id === 'car' ? 'roughly' : 'known' })
+      );
+  });
   ends[month] = { ...bank };
   const next = nextKey(month);
-  upd('Plan ' + next, (d) => { copyPlanForward(d, month); for (const [k, v] of planTweaks || []) setPlanAmount(d, next, k, makeValue(v)); });
+  upd('Plan ' + next, (d) => {
+    copyPlanForward(d, month);
+    for (const [k, v] of planTweaks || []) setPlanAmount(d, next, k, makeValue(v));
+  });
 }
 
 // Closes on the morning of the 1st, as the app does: the review is as of the month's last day, then the
@@ -242,16 +319,27 @@ function close(month) {
   const s = buildSummary(store.doc, refs);
   const review = monthReview(store.doc, s, lastDay(month));
   store.closeMonth({ ...closeMonthSnapshot(s), review });
-  upd('Save snapshot', (d) => { d.snapshots.push(snapshotOf(s, now.toISOString())); });
+  upd('Save snapshot', (d) => {
+    d.snapshots.push(snapshotOf(s, now.toISOString()));
+  });
   const next = store.doc.currentMonth;
   upd('Save forecast', (d) => saveForecast(d, next, forecastFor(d, s.income, next), now.toISOString()));
-  console.log(month + ': ' + review.openItems.summary + '; bridge ' + (review.bridge.ties ? 'ties' : 'off by ' + review.bridge.unexplained));
+  console.log(
+    month +
+      ': ' +
+      review.openItems.summary +
+      '; bridge ' +
+      (review.bridge.ties ? 'ties' : 'off by ' + review.bridge.unexplained)
+  );
 }
 
 function nextKey(key) {
   let [y, m] = key.split('-').map(Number);
   m += 1;
-  if (m > 12) { m = 1; y += 1; }
+  if (m > 12) {
+    m = 1;
+    y += 1;
+  }
   return y + '-' + String(m).padStart(2, '0');
 }
 
@@ -269,7 +357,10 @@ function paydays(month) {
 const day = (month, d) => month + '-' + String(d).padStart(2, '0');
 // The Visa is paid in full on the 25th: last month's end balance (the statement), or the opening balance
 // in the first month.
-const statement = (month) => { const prev = CLOSED[CLOSED.indexOf(month) - 1]; return prev ? ends[prev].visa : START.visa; };
+const statement = (month) => {
+  const prev = CLOSED[CLOSED.indexOf(month) - 1];
+  return prev ? ends[prev].visa : START.visa;
+};
 
 // Checking: rent, the savings transfer, utilities (typed later), the car payment, phone, Visa, and paychecks.
 function checkingEvents(month, o = {}) {
@@ -279,16 +370,49 @@ function checkingEvents(month, o = {}) {
     { date: day(month, 3), acct: 'sav', amt: -250, how: 'bank' },
     { date: day(month, 15), acct: 'chk', amt: 340, how: 'scheduled', key: 'bill:car-payment', desc: 'NW AUTO LOAN' },
     { date: day(month, 18), acct: 'chk', amt: 65, how: 'scheduled', key: 'bill:subscriptions', desc: 'T-MOBILE BILL' },
-    { date: day(month, 25), acct: 'chk', amt: statement(month), how: 'scheduled', key: 'debt:debt-visa', desc: 'VISA ONLINE PAYMENT' },
+    {
+      date: day(month, 25),
+      acct: 'chk',
+      amt: statement(month),
+      how: 'scheduled',
+      key: 'debt:debt-visa',
+      desc: 'VISA ONLINE PAYMENT'
+    },
     { date: day(month, 26), acct: 'visa', amt: -statement(month), how: 'csv', desc: 'PAYMENT THANK YOU' },
     // A Roth IRA at an outside broker: the money leaves Riley's accounts, so it is logged.
-    { date: day(month, 28), acct: 'chk', amt: 400, how: o.csv ? 'both' : 'manual', desc: 'VANGUARD ROTH IRA', merchant: 'Vanguard', lineId: 'retirement' },
+    {
+      date: day(month, 28),
+      acct: 'chk',
+      amt: 400,
+      how: o.csv ? 'both' : 'manual',
+      desc: 'VANGUARD ROTH IRA',
+      merchant: 'Vanguard',
+      lineId: 'retirement'
+    },
     // Its other side, logged on the Roth IRA (S-115): money in, so the bridge counts it as a contribution.
     { date: day(month, 28), acct: 'roth', amt: -400, how: 'manual', kind: 'transfer', note: 'From checking' }
   ];
-  for (const p of paydays(month)) ev.push({ date: p, acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job', desc: 'PAYROLL NORTHWIND' });
-  if (o.utilities !== undefined) ev.push({ date: day(month, 8), acct: 'chk', amt: o.utilities, how: o.csv ? 'csv' : 'bank', desc: 'PGE ELECTRIC BILL', lineId: 'utilities' });
-  for (const [d, a] of o.side || []) ev.push({ date: day(month, d), acct: 'chk', amt: -a, how: 'manual', kind: 'income', incomeId: 'side', note: 'Dog walking' });
+  for (const p of paydays(month))
+    ev.push({ date: p, acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job', desc: 'PAYROLL NORTHWIND' });
+  if (o.utilities !== undefined)
+    ev.push({
+      date: day(month, 8),
+      acct: 'chk',
+      amt: o.utilities,
+      how: o.csv ? 'csv' : 'bank',
+      desc: 'PGE ELECTRIC BILL',
+      lineId: 'utilities'
+    });
+  for (const [d, a] of o.side || [])
+    ev.push({
+      date: day(month, d),
+      acct: 'chk',
+      amt: -a,
+      how: 'manual',
+      kind: 'income',
+      incomeId: 'side',
+      note: 'Dog walking'
+    });
   // With a checking CSV, scheduled items are still tapped "It happened" and also need a bank row.
   // applyEvents skips this marker (no confirm, no row), so the caller has to rename it to
   // 'scheduled+csv' and hand the list to applyScheduledCsv, as June does.
@@ -299,28 +423,97 @@ function checkingEvents(month, o = {}) {
 // Filler: a month of Visa spending from the seeded generator.
 function visaFiller(month, how) {
   const ev = [];
-  const groc = [['TRADER JOE S #552', "Trader Joe's"], ['SAFEWAY 0412', 'Safeway'], ['WHOLE FOODS MKT', 'Whole Foods']];
-  for (const d of [2, 9, 16, 23]) { const [desc, m] = pick(groc); ev.push({ date: day(month, d + Math.floor(rand() * 2)), acct: 'visa', amt: between(58, 118), how, desc, merchant: m, lineId: 'groceries' }); }
+  const groc = [
+    ['TRADER JOE S #552', "Trader Joe's"],
+    ['SAFEWAY 0412', 'Safeway'],
+    ['WHOLE FOODS MKT', 'Whole Foods']
+  ];
+  for (const d of [2, 9, 16, 23]) {
+    const [desc, m] = pick(groc);
+    ev.push({
+      date: day(month, d + Math.floor(rand() * 2)),
+      acct: 'visa',
+      amt: between(58, 118),
+      how,
+      desc,
+      merchant: m,
+      lineId: 'groceries'
+    });
+  }
   const coffeeDays = [4, 7, 11, 14, 19, 24].filter(() => rand() < 0.85);
-  for (const d of coffeeDays) ev.push({ date: day(month, d), acct: 'visa', amt: 4.75, how, desc: 'CORNER COFFEE', merchant: 'Corner Coffee', lineId: 'eating-out' });
-  const meals = [['CHIPOTLE 1234', 'Chipotle'], ['SWEETGREEN', 'Sweetgreen'], ['THAI BASIL', 'Thai Basil']];
-  for (const d of [10, 20]) { const [desc, m] = pick(meals); ev.push({ date: day(month, d), acct: 'visa', amt: between(12, 48), how, desc, merchant: m, lineId: 'eating-out' }); }
-  for (const d of [6, 21]) ev.push({ date: day(month, d), acct: 'visa', amt: between(40, 55), how, desc: 'SHELL OIL 5744', merchant: 'Shell', lineId: 'gas' });
-  const shops = [['TARGET', 'Target'], ['AMAZON MKTPL', 'Amazon']];
-  for (const d of [13, 27].slice(0, 1 + Math.floor(rand() * 2))) { const [desc, m] = pick(shops); ev.push({ date: day(month, d), acct: 'visa', amt: between(20, 60), how, desc, merchant: m, lineId: 'shopping' }); }
-  ev.push({ date: day(month, 17), acct: 'visa', amt: between(15, 40), how, desc: 'AMC 0921', merchant: 'AMC', lineId: 'entertainment' });
+  for (const d of coffeeDays)
+    ev.push({
+      date: day(month, d),
+      acct: 'visa',
+      amt: 4.75,
+      how,
+      desc: 'CORNER COFFEE',
+      merchant: 'Corner Coffee',
+      lineId: 'eating-out'
+    });
+  const meals = [
+    ['CHIPOTLE 1234', 'Chipotle'],
+    ['SWEETGREEN', 'Sweetgreen'],
+    ['THAI BASIL', 'Thai Basil']
+  ];
+  for (const d of [10, 20]) {
+    const [desc, m] = pick(meals);
+    ev.push({ date: day(month, d), acct: 'visa', amt: between(12, 48), how, desc, merchant: m, lineId: 'eating-out' });
+  }
+  for (const d of [6, 21])
+    ev.push({
+      date: day(month, d),
+      acct: 'visa',
+      amt: between(40, 55),
+      how,
+      desc: 'SHELL OIL 5744',
+      merchant: 'Shell',
+      lineId: 'gas'
+    });
+  const shops = [
+    ['TARGET', 'Target'],
+    ['AMAZON MKTPL', 'Amazon']
+  ];
+  for (const d of [13, 27].slice(0, 1 + Math.floor(rand() * 2))) {
+    const [desc, m] = pick(shops);
+    ev.push({ date: day(month, d), acct: 'visa', amt: between(20, 60), how, desc, merchant: m, lineId: 'shopping' });
+  }
+  ev.push({
+    date: day(month, 17),
+    acct: 'visa',
+    amt: between(15, 40),
+    how,
+    desc: 'AMC 0921',
+    merchant: 'AMC',
+    lineId: 'entertainment'
+  });
   const gift = rand() < 0.5;
-  if (gift) ev.push({ date: day(month, 12), acct: 'visa', amt: between(20, 45), how, desc: 'ETSY', merchant: 'Etsy', lineId: 'gifts' });
+  if (gift)
+    ev.push({
+      date: day(month, 12),
+      acct: 'visa',
+      amt: between(20, 45),
+      how,
+      desc: 'ETSY',
+      merchant: 'Etsy',
+      lineId: 'gifts'
+    });
   return { ev, gift };
 }
 
 // Savings back to checking: an internal move, not logged.
-const sweep = (month, d, amount) => [{ date: day(month, d), acct: 'sav', amt: amount, how: 'bank' }, { date: day(month, d), acct: 'chk', amt: -amount, how: 'bank' }];
+const sweep = (month, d, amount) => [
+  { date: day(month, d), acct: 'sav', amt: amount, how: 'bank' },
+  { date: day(month, d), acct: 'chk', amt: -amount, how: 'bank' }
+];
 
 // In the closed months checkingEvents builds, the 250 to savings on the 3rd is an internal move and is
 // not logged (October, the open month, logs it as a transfer on both sides), so the two savings lines
 // are typed at month end instead: 200 + 50 = 250.
-const SAVINGS_TYPED = [['emergency-fund', 200], ['other-goals', 50]];
+const SAVINGS_TYPED = [
+  ['emergency-fund', 200],
+  ['other-goals', 50]
+];
 
 function fillerMonth(month, o = {}) {
   const utilities = between(72, 96);
@@ -345,70 +538,153 @@ for (const month of CLOSED) {
     typed = fillerMonth(month);
   } else if (month === '2025-11') {
     typed = fillerMonth(month);
-    tweaks = [['gifts', 400], ['eating-out', 150]];
+    tweaks = [
+      ['gifts', 400],
+      ['eating-out', 150]
+    ];
   } else if (month === '2025-12') {
     // December by hand: a holiday month. Eating out's estimate goes from 100 to 150 on the 1st.
     at('2025-12-01T10:00:00Z');
-    upd('Eating out estimate', (d) => { findLine(d, 'eating-out').line.estimate = makeValue(150); });
-    const v = (date, amt, merchant, lineId) => ({ date: day(month, date), acct: 'visa', amt, how: 'manual', merchant, lineId });
-    const ev = [...checkingEvents(month, { utilities: 92.40, side: [[13, 140]] }),
-      v(2, 91.30, "Trader Joe's", 'groceries'), v(6, 4.75, 'Corner Coffee', 'eating-out'), v(9, 104.20, 'Safeway', 'groceries'),
-      v(10, 140, "Powell's Books", 'gifts'), v(12, 4.75, 'Corner Coffee', 'eating-out'), v(14, 48.10, 'Shell', 'gas'),
-      v(16, 87.65, "Trader Joe's", 'groceries'), v(17, 180, 'Etsy', 'gifts'), v(20, 56, 'Thai Basil', 'eating-out'),
-      v(21, 32.40, 'Target', 'shopping'), v(22, 100, 'Nordstrom', 'gifts'), v(23, 118.90, 'Whole Foods', 'groceries'),
-      v(27, 31, 'AMC', 'entertainment'), v(28, 44.60, 'Shell', 'gas'), v(30, 4.75, 'Corner Coffee', 'eating-out')];
+    upd('Eating out estimate', (d) => {
+      findLine(d, 'eating-out').line.estimate = makeValue(150);
+    });
+    const v = (date, amt, merchant, lineId) => ({
+      date: day(month, date),
+      acct: 'visa',
+      amt,
+      how: 'manual',
+      merchant,
+      lineId
+    });
+    const ev = [
+      ...checkingEvents(month, { utilities: 92.4, side: [[13, 140]] }),
+      v(2, 91.3, "Trader Joe's", 'groceries'),
+      v(6, 4.75, 'Corner Coffee', 'eating-out'),
+      v(9, 104.2, 'Safeway', 'groceries'),
+      v(10, 140, "Powell's Books", 'gifts'),
+      v(12, 4.75, 'Corner Coffee', 'eating-out'),
+      v(14, 48.1, 'Shell', 'gas'),
+      v(16, 87.65, "Trader Joe's", 'groceries'),
+      v(17, 180, 'Etsy', 'gifts'),
+      v(20, 56, 'Thai Basil', 'eating-out'),
+      v(21, 32.4, 'Target', 'shopping'),
+      v(22, 100, 'Nordstrom', 'gifts'),
+      v(23, 118.9, 'Whole Foods', 'groceries'),
+      v(27, 31, 'AMC', 'entertainment'),
+      v(28, 44.6, 'Shell', 'gas'),
+      v(30, 4.75, 'Corner Coffee', 'eating-out')
+    ];
     applyEvents(month, ev, []);
-    typed = [['utilities', 92.40], ...SAVINGS_TYPED];
-    tweaks = [['gifts', 40], ['groceries', 400]];
+    typed = [['utilities', 92.4], ...SAVINGS_TYPED];
+    tweaks = [
+      ['gifts', 40],
+      ['groceries', 400]
+    ];
   } else if (month === '2026-01') {
     // January: the groceries estimate goes from 350 to 400; the first Visa CSV. The coach maps
     // Corner Coffee to eating out and asks the app to remember it.
     at('2026-01-02T10:00:00Z');
-    upd('Groceries estimate', (d) => { findLine(d, 'groceries').line.estimate = makeValue(400); });
-    typed = fillerMonth(month, { csvVisa: true, afterImport: () => {
-      const cc = store.doc.transactions.find((t) => t.merchant === 'CORNER COFFEE' && !t.lineId);
-      if (cc) upd('Map Corner Coffee', (d) => setTransactionLine(d, cc.id, 'eating-out', true));
-    } });
+    upd('Groceries estimate', (d) => {
+      findLine(d, 'groceries').line.estimate = makeValue(400);
+    });
+    typed = fillerMonth(month, {
+      csvVisa: true,
+      afterImport: () => {
+        const cc = store.doc.transactions.find((t) => t.merchant === 'CORNER COFFEE' && !t.lineId);
+        if (cc) upd('Map Corner Coffee', (d) => setTransactionLine(d, cc.id, 'eating-out', true));
+      }
+    });
   } else if (month === '2026-02') {
     // February by hand.
-    const v = (date, amt, merchant, lineId) => ({ date: day(month, date), acct: 'visa', amt, how: 'manual', merchant, lineId });
-    const ev = [...checkingEvents(month, { utilities: 88.10, side: [[21, 110]] }),
-      v(2, 84.60, "Trader Joe's", 'groceries'), v(4, 4.75, 'Corner Coffee', 'eating-out'), v(7, 47.20, 'Shell', 'gas'),
-      v(9, 99.40, 'Safeway', 'groceries'), v(11, 4.75, 'Corner Coffee', 'eating-out'), v(14, 64, 'Thai Basil', 'eating-out'),
-      v(16, 79.80, "Trader Joe's", 'groceries'), v(18, 4.75, 'Corner Coffee', 'eating-out'), v(21, 45.90, 'Amazon', 'shopping'),
-      v(22, 50.30, 'Shell', 'gas'), v(23, 72.15, 'Whole Foods', 'groceries'), v(25, 4.75, 'Corner Coffee', 'eating-out'),
+    const v = (date, amt, merchant, lineId) => ({
+      date: day(month, date),
+      acct: 'visa',
+      amt,
+      how: 'manual',
+      merchant,
+      lineId
+    });
+    const ev = [
+      ...checkingEvents(month, { utilities: 88.1, side: [[21, 110]] }),
+      v(2, 84.6, "Trader Joe's", 'groceries'),
+      v(4, 4.75, 'Corner Coffee', 'eating-out'),
+      v(7, 47.2, 'Shell', 'gas'),
+      v(9, 99.4, 'Safeway', 'groceries'),
+      v(11, 4.75, 'Corner Coffee', 'eating-out'),
+      v(14, 64, 'Thai Basil', 'eating-out'),
+      v(16, 79.8, "Trader Joe's", 'groceries'),
+      v(18, 4.75, 'Corner Coffee', 'eating-out'),
+      v(21, 45.9, 'Amazon', 'shopping'),
+      v(22, 50.3, 'Shell', 'gas'),
+      v(23, 72.15, 'Whole Foods', 'groceries'),
+      v(25, 4.75, 'Corner Coffee', 'eating-out'),
       v(26, 24, 'AMC', 'entertainment'),
       // Savings runs ahead of checking; Riley moves some back (an internal move, cash stays the same).
-      ...sweep(month, 26, 1500)];
+      ...sweep(month, 26, 1500)
+    ];
     applyEvents(month, ev, []);
-    typed = [['utilities', 88.10], ...SAVINGS_TYPED, ['gifts', 0, 'None this month']];
+    typed = [['utilities', 88.1], ...SAVINGS_TYPED, ['gifts', 0, 'None this month']];
     tweaks = [['shopping', 60]];
   } else if (month === '2026-03') {
     // March by hand: the month checked start to finish in tests/riley.test.js.
     const coffee = { id: null };
-    const c = (date, amt, desc, how = 'csv', more = {}) => ({ date: day(month, date), acct: 'visa', amt, how, desc, ...more });
-    const ev = [...checkingEvents(month, { utilities: 84.30, side: [[9, 120], [23, 100]] }),
+    const c = (date, amt, desc, how = 'csv', more = {}) => ({
+      date: day(month, date),
+      acct: 'visa',
+      amt,
+      how,
+      desc,
+      ...more
+    });
+    const ev = [
+      ...checkingEvents(month, {
+        utilities: 84.3,
+        side: [
+          [9, 120],
+          [23, 100]
+        ]
+      }),
       { date: day(month, 14), acct: 'chk', amt: 960, how: 'manual', merchant: 'Geico', lineId: 'car-insurance' },
       // 'both' rows test the matcher: same amount and shop on the same day (Mar 2) or a day apart (logged
       // Mar 16, posted Mar 17) merge on their own.
-      c(2, 82.40, 'TRADER JOE S #552', 'both', { merchant: "Trader Joe's", lineId: 'groceries' }),
-      c(4, 13.50, 'CHIPOTLE 1234'), c(5, 4.75, 'CORNER COFFEE'), c(6, 45.00, 'SHELL OIL 5744'), c(7, 4.75, 'CORNER COFFEE'),
-      c(9, 96.10, 'SAFEWAY 0412'), c(11, 15.25, 'SWEETGREEN'), c(12, 4.75, 'CORNER COFFEE'), c(14, 38.99, 'TARGET T-1234'),
-      c(15, 28.00, 'AMC 0921'),
-      c(17, 74.25, 'TRADER JOE S #552', 'both', { loggedOn: day(month, 16), merchant: "Trader Joe's", lineId: 'groceries' }),
+      c(2, 82.4, 'TRADER JOE S #552', 'both', { merchant: "Trader Joe's", lineId: 'groceries' }),
+      c(4, 13.5, 'CHIPOTLE 1234'),
+      c(5, 4.75, 'CORNER COFFEE'),
+      c(6, 45.0, 'SHELL OIL 5744'),
+      c(7, 4.75, 'CORNER COFFEE'),
+      c(9, 96.1, 'SAFEWAY 0412'),
+      c(11, 15.25, 'SWEETGREEN'),
+      c(12, 4.75, 'CORNER COFFEE'),
+      c(14, 38.99, 'TARGET T-1234'),
+      c(15, 28.0, 'AMC 0921'),
+      c(17, 74.25, 'TRADER JOE S #552', 'both', {
+        loggedOn: day(month, 16),
+        merchant: "Trader Joe's",
+        lineId: 'groceries'
+      }),
       c(19, 4.75, 'CORNER COFFEE'),
-      c(20, 42.00, 'THAI BASIL', 'both', { merchant: 'Thai Basil', lineId: 'eating-out' }),
+      c(20, 42.0, 'THAI BASIL', 'both', { merchant: 'Thai Basil', lineId: 'eating-out' }),
       // Logged as "coffee" 4.50 with no account or merchant: the Mar 19 and Mar 21 bank rows are both within
       // 3 days and a dollar, so the matcher offers 2 possible matches and the coach decides (below).
-      c(21, 4.75, 'CORNER COFFEE', 'both', { logAmt: 4.50, logAcct: null, note: 'coffee', lineId: 'eating-out', ref: coffee }),
-      c(23, 61.80, 'WHOLE FOODS MKT'), c(24, 48.30, 'SHELL OIL 5744'), c(25, 24.50, 'AMAZON MKTPL'), c(26, 4.75, 'CORNER COFFEE'),
-      c(29, 54.00, 'WALMART')];
+      c(21, 4.75, 'CORNER COFFEE', 'both', {
+        logAmt: 4.5,
+        logAcct: null,
+        note: 'coffee',
+        lineId: 'eating-out',
+        ref: coffee
+      }),
+      c(23, 61.8, 'WHOLE FOODS MKT'),
+      c(24, 48.3, 'SHELL OIL 5744'),
+      c(25, 24.5, 'AMAZON MKTPL'),
+      c(26, 4.75, 'CORNER COFFEE'),
+      c(29, 54.0, 'WALMART')
+    ];
     importRows(month, applyEvents(month, ev, ['visa']), () => {
       // The coach says the Mar 21 Corner Coffee is the coffee logged that day.
       const bank21 = store.doc.transactions.find((t) => t.date === '2026-03-21' && t.merchant === 'CORNER COFFEE');
       upd('Same entry', (d) => confirmMatch(d, bank21.id, coffee.id));
     });
-    typed = [['utilities', 84.30], ...SAVINGS_TYPED, ['gifts', 0, 'None this month']];
+    typed = [['utilities', 84.3], ...SAVINGS_TYPED, ['gifts', 0, 'None this month']];
     tweaks = [['shopping', 100]];
   } else if (month === '2026-04') {
     typed = fillerMonth(month);
@@ -416,22 +692,58 @@ for (const month of CLOSED) {
   } else if (month === '2026-05') {
     // May: the groceries estimate goes to 420; a concert, half of it owed back by a friend.
     at('2026-05-01T10:00:00Z');
-    upd('Groceries estimate', (d) => { findLine(d, 'groceries').line.estimate = makeValue(420); });
+    upd('Groceries estimate', (d) => {
+      findLine(d, 'groceries').line.estimate = makeValue(420);
+    });
     // A late April utility bill, after April closed: a revision, never part of April's saved review.
     at('2026-05-03T10:00:00Z');
-    store.reviseMonth('2026-04', 'utilities', 91.20);
-    typed = fillerMonth(month, { extra: [{ date: day(month, 9), acct: 'visa', amt: 120, how: 'manual', merchant: 'Ticketmaster', lineId: 'entertainment', owed: 60, note: 'Concert, Sam owes half' }, ...sweep(month, 29, 1000)] });
+    store.reviseMonth('2026-04', 'utilities', 91.2);
+    typed = fillerMonth(month, {
+      extra: [
+        {
+          date: day(month, 9),
+          acct: 'visa',
+          amt: 120,
+          how: 'manual',
+          merchant: 'Ticketmaster',
+          lineId: 'entertainment',
+          owed: 60,
+          note: 'Concert, Sam owes half'
+        },
+        ...sweep(month, 29, 1000)
+      ]
+    });
   } else if (month === '2026-06') {
     // June by hand: both CSVs; $60 of ATM cash no line explains; Sam pays back the concert.
     const c = (date, amt, desc) => ({ date: day(month, date), acct: 'visa', amt, how: 'csv', desc });
-    const ev = [...checkingEvents(month, { utilities: 79.60, csv: true }),
+    const ev = [
+      ...checkingEvents(month, { utilities: 79.6, csv: true }),
       // Cash no line explains: a bank row with no entry, so June's bridge is off by 60 and closes with it open.
       { date: day(month, 12), acct: 'chk', amt: 60, how: 'csv', desc: 'ATM WITHDRAWAL 0612' },
       { date: day(month, 14), acct: 'chk', amt: -60, how: 'csv', desc: 'ZELLE FROM SAM' },
-      { date: day(month, 20), acct: 'chk', amt: -150, how: 'both', desc: 'ZELLE FROM PAT', kind: 'income', incomeId: 'side', note: 'Dog walking' },
-      c(2, 93.40, 'TRADER JOE S #552'), c(4, 4.75, 'CORNER COFFEE'), c(6, 49.90, 'SHELL OIL 5744'), c(9, 88.75, 'SAFEWAY 0412'),
-      c(11, 4.75, 'CORNER COFFEE'), c(13, 14.25, 'CHIPOTLE 1234'), c(16, 81.20, 'TRADER JOE S #552'), c(18, 4.75, 'CORNER COFFEE'),
-      c(20, 46.10, 'SHELL OIL 5744'), c(23, 77.35, 'WHOLE FOODS MKT'), c(25, 4.75, 'CORNER COFFEE'), c(27, 41.80, 'TARGET')];
+      {
+        date: day(month, 20),
+        acct: 'chk',
+        amt: -150,
+        how: 'both',
+        desc: 'ZELLE FROM PAT',
+        kind: 'income',
+        incomeId: 'side',
+        note: 'Dog walking'
+      },
+      c(2, 93.4, 'TRADER JOE S #552'),
+      c(4, 4.75, 'CORNER COFFEE'),
+      c(6, 49.9, 'SHELL OIL 5744'),
+      c(9, 88.75, 'SAFEWAY 0412'),
+      c(11, 4.75, 'CORNER COFFEE'),
+      c(13, 14.25, 'CHIPOTLE 1234'),
+      c(16, 81.2, 'TRADER JOE S #552'),
+      c(18, 4.75, 'CORNER COFFEE'),
+      c(20, 46.1, 'SHELL OIL 5744'),
+      c(23, 77.35, 'WHOLE FOODS MKT'),
+      c(25, 4.75, 'CORNER COFFEE'),
+      c(27, 41.8, 'TARGET')
+    ];
     // checkingEvents marks its scheduled items 'scheduled-csv' but applyScheduledCsv looks for
     // 'scheduled+csv'; without the rename applyEvents would skip them (no confirm, no bank row).
     for (const e of ev) if (e.how === 'scheduled-csv') e.how = 'scheduled+csv';
@@ -443,7 +755,9 @@ for (const month of CLOSED) {
     typed = [...SAVINGS_TYPED, ['gifts', 0, 'None this month'], ['entertainment', 0, 'None this month']];
   } else if (month === '2026-07') {
     // July: the car registration (a yearly bill) comes due on the 10th.
-    typed = fillerMonth(month, { extra: [{ date: day(month, 10), acct: 'chk', amt: 180, how: 'manual', merchant: 'Oregon DMV', lineId: 'yearly' }] });
+    typed = fillerMonth(month, {
+      extra: [{ date: day(month, 10), acct: 'chk', amt: 180, how: 'manual', merchant: 'Oregon DMV', lineId: 'yearly' }]
+    });
   } else if (month === '2026-08') {
     typed = fillerMonth(month);
   } else if (month === '2026-09') {
@@ -457,7 +771,11 @@ for (const month of CLOSED) {
 
 // June: every checking row is in the bank file, and scheduled ones were also tapped "It happened".
 function applyScheduledCsv(month, ev) {
-  for (const e of ev) if (e.how === 'scheduled+csv') { e.how = 'scheduled'; e.alsoCsv = true; }
+  for (const e of ev)
+    if (e.how === 'scheduled+csv') {
+      e.how = 'scheduled';
+      e.alsoCsv = true;
+    }
   // applyEvents confirms the scheduled items but writes rows only for 'csv' and 'both', so their bank
   // rows are added here, then sorted by date so the file reads like a real export.
   const rows = applyEvents(month, ev, ['chk', 'visa']);
@@ -477,7 +795,10 @@ function septemberWithRepair(month) {
   // Most of savings moves to checking on the 29th to cover the repair bill and rent (an internal move):
   // what is there now, plus the 250 that arrives on the 3rd, less 150 left behind.
   const move = cents(Math.max(0, bank.sav + 250 - 150));
-  ev.push({ date: day(month, 29), acct: 'sav', amt: move, how: 'bank' }, { date: day(month, 29), acct: 'chk', amt: -move, how: 'bank' });
+  ev.push(
+    { date: day(month, 29), acct: 'sav', amt: move, how: 'bank' },
+    { date: day(month, 29), acct: 'chk', amt: -move, how: 'bank' }
+  );
   // Checking at the end of September does not depend on the repair (it is on the card).
   let checking = bank.chk;
   for (const e of ev) if (e.acct === 'chk') checking -= e.amt;
@@ -490,7 +811,16 @@ function septemberWithRepair(month) {
   // The check: the repair has to read as a real brakes-and-tires bill, 400 to 3,000. Outside that range the
   // opening balances no longer produce the story, so stop instead of writing a household that misleads.
   if (repair < 400 || repair > 3000) throw new Error('Car repair out of range: ' + repair + ' (tune START)');
-  ev.push({ date: day(month, 12), acct: 'visa', amt: repair, how: 'both', desc: 'BRAKE AND TIRE CO', merchant: 'Brake and Tire Co', lineId: 'maintenance', note: 'Brakes and tires' });
+  ev.push({
+    date: day(month, 12),
+    acct: 'visa',
+    amt: repair,
+    how: 'both',
+    desc: 'BRAKE AND TIRE CO',
+    merchant: 'Brake and Tire Co',
+    lineId: 'maintenance',
+    note: 'Brakes and tires'
+  });
   importRows(month, applyEvents(month, ev, ['visa']));
   const typed = [['utilities', utilities], ...SAVINGS_TYPED];
   if (!vf.gift) typed.push(['gifts', 0, 'None this month']);
@@ -508,22 +838,42 @@ const oct = [
   { date: '2026-10-09', acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job' },
   { date: '2026-10-12', acct: 'chk', amt: -130, how: 'manual', kind: 'income', incomeId: 'side', note: 'Dog walking' },
   { date: '2026-10-15', acct: 'chk', amt: 340, how: 'scheduled', key: 'bill:car-payment' },
-  { date: '2026-10-04', acct: 'visa', amt: 88.20, how: 'manual', merchant: "Trader Joe's", lineId: 'groceries' },
+  { date: '2026-10-04', acct: 'visa', amt: 88.2, how: 'manual', merchant: "Trader Joe's", lineId: 'groceries' },
   { date: '2026-10-06', acct: 'visa', amt: 4.75, how: 'manual', merchant: 'Corner Coffee', lineId: 'eating-out' },
-  { date: '2026-10-07', acct: 'visa', amt: 46.00, how: 'manual', merchant: 'Shell', lineId: 'gas' },
-  { date: '2026-10-11', acct: 'visa', amt: 121.80, how: 'manual', merchant: 'Safeway', lineId: 'groceries' },
+  { date: '2026-10-07', acct: 'visa', amt: 46.0, how: 'manual', merchant: 'Shell', lineId: 'gas' },
+  { date: '2026-10-11', acct: 'visa', amt: 121.8, how: 'manual', merchant: 'Safeway', lineId: 'groceries' },
   { date: '2026-10-13', acct: 'visa', amt: 4.75, how: 'manual', merchant: 'Corner Coffee', lineId: 'eating-out' },
   { date: '2026-10-15', acct: 'visa', amt: 13.75, how: 'manual', merchant: 'Chipotle', lineId: 'eating-out' }
 ];
 applyEvents(OPEN, oct, []);
 at(TODAY + 'T18:00:00Z');
 // The paycheck after today: October 9 plus 14 days.
-upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-23'); });
+upd('Next pay date', (d) => {
+  d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-23');
+});
 
 const doc = store.doc;
 writeFileSync(new URL('src/data/households/riley.json', root), JSON.stringify(doc, null, 1) + '\n');
-console.log('Wrote riley.json: ' + doc.transactions.length + ' log entries, ' + doc.months.length + ' closed months, ' + doc.estimateLog.length + ' estimate changes, CSVs ' + csvFiles.join(', '));
+console.log(
+  'Wrote riley.json: ' +
+    doc.transactions.length +
+    ' log entries, ' +
+    doc.months.length +
+    ' closed months, ' +
+    doc.estimateLog.length +
+    ' estimate changes, CSVs ' +
+    csvFiles.join(', ')
+);
 // Printed for the hand checks in tests/riley.test.js: the September Visa statement and checking balance
 // are the inputs to October's calendar story.
-console.log('Lowest checking: ' + lowChecking.amount + ' on ' + lowChecking.date + '; September Visa statement ' + octV + '; Sep-end checking ' + ends['2026-09'].chk);
+console.log(
+  'Lowest checking: ' +
+    lowChecking.amount +
+    ' on ' +
+    lowChecking.date +
+    '; September Visa statement ' +
+    octV +
+    '; Sep-end checking ' +
+    ends['2026-09'].chk
+);
 console.log('Balances at each month end: ' + JSON.stringify(ends));

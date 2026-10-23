@@ -33,6 +33,9 @@ export function createHistory() {
     canRedo: () => future.length > 0,
     undoLabel: () => (past.length ? past[past.length - 1].label : null),
     redoLabel: () => (future.length ? future[future.length - 1].label : null),
-    clear() { past = []; future = []; }
+    clear() {
+      past = [];
+      future = [];
+    }
   };
 }

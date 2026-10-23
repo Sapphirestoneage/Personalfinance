@@ -50,10 +50,27 @@ const steps = (br) => Object.fromEntries(br.steps.map((s) => [s.key, s.amount]))
 test('Riley loads, validates, and has the year as the loop ran it', () => {
   const d = riley();
   assert.deepEqual(validateHousehold(d), []);
-  assert.deepEqual(d.months.map((m) => m.key), ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09']);
+  assert.deepEqual(
+    d.months.map((m) => m.key),
+    [
+      '2025-10',
+      '2025-11',
+      '2025-12',
+      '2026-01',
+      '2026-02',
+      '2026-03',
+      '2026-04',
+      '2026-05',
+      '2026-06',
+      '2026-07',
+      '2026-08',
+      '2026-09'
+    ]
+  );
   assert.equal(d.currentMonth, '2026-10');
   // Every closed month has a start and an end for all three accounts (start carried or typed).
-  for (const m of d.months) for (const a of ['chk', 'sav', 'visa']) assert.ok(d.balances[m.key][a].end.amount !== null, m.key + ' ' + a);
+  for (const m of d.months)
+    for (const a of ['chk', 'sav', 'visa']) assert.ok(d.balances[m.key][a].end.amount !== null, m.key + ' ' + a);
   // Sources: manual, scheduled, and import all used
   const by = {};
   for (const t of d.transactions) by[t.source] = (by[t.source] || 0) + 1;
@@ -113,7 +130,10 @@ test('March: the log after matching, and nothing counted twice', () => {
   // 10 checking entries + 20 Visa rows (3 merged into logged entries, the coffee confirmed) = 30,
   // + the Roth IRA side of the Mar 28 move (S-115) = 31
   assert.equal(mar.length, 31);
-  const merged = mar.filter((t) => t.mergedFrom).map((t) => [t.date, t.merchant, t.amount, t.mergedFrom.date, t.mergedFrom.amount]).sort();
+  const merged = mar
+    .filter((t) => t.mergedFrom)
+    .map((t) => [t.date, t.merchant, t.amount, t.mergedFrom.date, t.mergedFrom.amount])
+    .sort();
   assert.deepEqual(merged, [
     ['2026-03-02', 'TRADER JOE S', 82.4, '2026-03-02', 82.4],
     ['2026-03-17', 'TRADER JOE S', 74.25, '2026-03-16', 74.25],
@@ -130,21 +150,52 @@ test('March: prefilled actuals, better / on plan / worse', () => {
   const d = riley();
   const r = rec(d, '2026-03').snapshot.review;
   const lines = rec(d, '2026-03').snapshot.lines;
-  const want = { rent: 1750, utilities: 84.3, groceries: 314.55, 'eating-out': 99.25, 'car-payment': 340, 'car-insurance': 80, gas: 93.3, subscriptions: 65, shopping: 117.49, entertainment: 28, gifts: 0, yearly: 15, 'debt:debt-visa': 35, 'emergency-fund': 200, retirement: 400, 'other-goals': 50 };
+  const want = {
+    rent: 1750,
+    utilities: 84.3,
+    groceries: 314.55,
+    'eating-out': 99.25,
+    'car-payment': 340,
+    'car-insurance': 80,
+    gas: 93.3,
+    subscriptions: 65,
+    shopping: 117.49,
+    entertainment: 28,
+    gifts: 0,
+    yearly: 15,
+    'debt:debt-visa': 35,
+    'emergency-fund': 200,
+    retirement: 400,
+    'other-goals': 50
+  };
   for (const [id, v] of Object.entries(want)) money(lines[id].actual, v, id);
   money(r.totals.spent, 3021.89, 'spent');
   money(r.totals.plan, 3199, 'plan');
   money(r.totals.surplus, -451.89, 'surplus');
   assert.deepEqual(r.totals.income, { estimate: 3500, plan: 3250, actual: 3220, tracked: true, unassigned: 0 });
-  assert.deepEqual(r.incomeRows.map((x) => [x.name, x.estimate, x.plan, x.planNote, x.actual, x.count]),
-    [['Northwind Labs', 3250, 3000, '2 paychecks this month', 3000, 2], ['Dog walking', 250, 250, '', 220, 2]]);
+  assert.deepEqual(
+    r.incomeRows.map((x) => [x.name, x.estimate, x.plan, x.planNote, x.actual, x.count]),
+    [
+      ['Northwind Labs', 3250, 3000, '2 paychecks this month', 3000, 2],
+      ['Dog walking', 250, 250, '', 220, 2]
+    ]
+  );
   // Lines vs plan (more than 5% and $10 counts):
   //   better: groceries -85.45 (21%), eating out -50.75, gifts -40, entertainment -32 (53%), gas -26.70 (22%)
   //   on plan: rent, utilities (+0.30), car payment, car insurance, phone, car registration
   //   worse: shopping +57.49 (96%)
   const g = (x) => x.map((y) => y.name + ' ' + y.diff);
-  assert.deepEqual(g(r.vsPlan.lines.better), ['Groceries -85.45', 'Eating out -50.75', 'Gifts -40', 'Entertainment -32', 'Gas -26.7']);
-  assert.deepEqual(r.vsPlan.lines.onPlan.map((x) => x.name), ['Rent', 'Utilities', 'Car payment', 'Car insurance', 'Phone', 'Car registration']);
+  assert.deepEqual(g(r.vsPlan.lines.better), [
+    'Groceries -85.45',
+    'Eating out -50.75',
+    'Gifts -40',
+    'Entertainment -32',
+    'Gas -26.7'
+  ]);
+  assert.deepEqual(
+    r.vsPlan.lines.onPlan.map((x) => x.name),
+    ['Rent', 'Utilities', 'Car payment', 'Car insurance', 'Phone', 'Car registration']
+  );
   assert.deepEqual(g(r.vsPlan.lines.worse), ['Shopping 57.49']);
   // Categories: Food 413.80 vs 550 = -136.20 better; Personal and fun 145.49 vs 160 = -14.51 (9%) better;
   // Transportation 513.30 vs 540 = -26.70 is 4.9%, so on plan.
@@ -155,7 +206,11 @@ test('March: prefilled actuals, better / on plan / worse', () => {
   // insurance 80, gas 120, phone 65, shopping 100, entertainment 60, gifts 40, registration 15, Visa 35).
   // March 3,021.89 / 3,239 = 0.93297, 1.07x off. February 2,959.45 / 3,239 = 0.91369, 1.09x off.
   assert.deepEqual([r.accuracy.now, r.accuracy.last], [1.07, 1.09]);
-  assert.deepEqual(r.readings, ['Food came in $136 under plan.', 'Shopping was $57 over.', '1.07x off this month, down from 1.09x.']);
+  assert.deepEqual(r.readings, [
+    'Food came in $136 under plan.',
+    'Shopping was $57 over.',
+    '1.07x off this month, down from 1.09x.'
+  ]);
   // Tracking: from the log 1,750 + 314.55 + 99.25 + 340 + 93.30 + 65 + 117.49 + 28 = 2,807.59;
   // typed: utilities 84.30 + gifts 0. Share 2,807.59 / 2,891.89 = 0.9708495 (2,891.89 x 0.97085 = 2,807.5914, a hair over).
   assert.deepEqual([r.tracking.fromLog, r.tracking.typed], [2807.59, 84.3]);
@@ -175,8 +230,14 @@ test('March: the bridge ties, and the checklist closed with nothing open', () =>
   money(br.explained, -965.65, 'explained');
   // cash: February's end 3,793.11 + 450 = 4,243.11; March's end 2,577.46 + 700 = 3,277.46: -965.65.
   // By the flows: +1,500 +1,500 +120 +100 -1,750 -960 -340 -65 -586.35 -400 -84.30 = -965.65 (the savings move is inside).
-  assert.deepEqual([br.cashStart, br.cashEnd, br.actual, br.unexplained, br.ties], [4243.11, 3277.46, -965.65, 0, true]);
-  assert.equal(br.reading, 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  assert.deepEqual(
+    [br.cashStart, br.cashEnd, br.actual, br.unexplained, br.ties],
+    [4243.11, 3277.46, -965.65, 0, true]
+  );
+  assert.equal(
+    br.reading,
+    'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.'
+  );
   // The checklist at close: every line filled, scheduled items confirmed, balances in, ties,
   // nothing unmapped or waiting, no duplicates, nothing owed, April's plan started.
   assert.equal(rec(d, '2026-03').snapshot.review.openItems.summary, 'Closed with nothing open');
@@ -200,7 +261,10 @@ test('March: the 80/20 at all three levels', () => {
   //   Phone 65; WHOLE FOODS MKT 61.80; WALMART 54; THAI BASIL 42; TARGET T- 38.99; CORNER COFFEE 28.50; AMC 28;
   //   AMAZON MKTPL 24.50; SWEETGREEN 15.25; CHIPOTLE 13.50: 16, total 3,767.59, 80% is 3,014.07.
   //   1,750 + 960 = 2,710 is short; + 340 = 3,050 reaches it: 3 of 16 (18.75%).
-  assert.deepEqual([p.merchants.items.map((i) => i.label), p.merchants.of], [['Rent (no merchant, by line)', 'GEICO', 'Car payment (no merchant, by line)'], 16]);
+  assert.deepEqual(
+    [p.merchants.items.map((i) => i.label), p.merchants.of],
+    [['Rent (no merchant, by line)', 'GEICO', 'Car payment (no merchant, by line)'], 16]
+  );
   assert.equal(p.merchants.amount, 3050);
   assert.equal(p.merchants.reading, '19% of your merchants (3 of 16) made up 80% of your spending.');
   // LINES (actuals; gifts at 0 takes no part): rent 1,750, car payment 340, groceries 314.55, shopping 117.49,
@@ -265,8 +329,14 @@ test('June 2026: $60 of ATM cash is not explained, and the month closed with ope
   // not explained yet: -192.22 - (-132.22) = -60, the ATM withdrawal with no line
   assert.deepEqual([br.explained, br.actual, br.unexplained, br.ties], [-132.22, -192.22, -60, false]);
   // The biggest step is now the set-aside, 250.
-  assert.equal(br.reading, 'Your budget showed $376 over, but cash went down $192. $250 was set aside and is still in your accounts. $60 is not explained yet.');
-  assert.equal(rec(d, '2026-06').snapshot.review.openItems.summary, 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
+  assert.equal(
+    br.reading,
+    'Your budget showed $376 over, but cash went down $192. $250 was set aside and is still in your accounts. $60 is not explained yet.'
+  );
+  assert.equal(
+    rec(d, '2026-06').snapshot.review.openItems.summary,
+    'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches'
+  );
   // May closed with the concert money still owed
   assert.equal(rec(d, '2026-05').snapshot.review.openItems.summary, 'Closed with 1 open item: 1 reimbursement owed');
 });
@@ -294,7 +364,15 @@ test('February to March: month over month, fixed floor, volatility', () => {
   // Housing 1,838.10 -> 1,834.30 (-3.80); Food 418.95 -> 413.80 (-5.15); Transportation 517.50 -> 513.30 (-4.20);
   // Personal and fun 69.90 -> 145.49 (+75.59); Debt 35, Bills 65, Annual 15 unchanged.
   assert.deepEqual([mom.before, mom.after, mom.change], [2959.45, 3021.89, 62.44]);
-  assert.deepEqual(mom.steps.map((x) => [x.name, x.change]), [['Personal and fun', 75.59], ['Food', -5.15], ['Transportation', -4.2], ['Housing', -3.8]]);
+  assert.deepEqual(
+    mom.steps.map((x) => [x.name, x.change]),
+    [
+      ['Personal and fun', 75.59],
+      ['Food', -5.15],
+      ['Transportation', -4.2],
+      ['Housing', -3.8]
+    ]
+  );
   // Fixed floor, both months: rent 1,750 + car payment 340 + car insurance 80 + phone 65 + Visa minimum 35 = 2,270,
   // 2,270 / 3,500 = 0.648571 of take-home.
   for (const m of ['2026-02', '2026-03']) {
@@ -308,7 +386,10 @@ test('February to March: month over month, fixed floor, volatility', () => {
   //   Transportation 517.50 and 513.30: mean 515.40, sd 2.10, 0.004075
   //   Housing 1,838.10 and 1,834.30: mean 1,836.20, sd 1.90, 0.001035. Debt, Bills, Annual do not move.
   const v = volatility(categoryGrid(d, s.history, ['2026-02', '2026-03']));
-  assert.deepEqual(v.map((x) => x.name), ['Personal and fun', 'Food', 'Transportation']);
+  assert.deepEqual(
+    v.map((x) => x.name),
+    ['Personal and fun', 'Food', 'Transportation']
+  );
   assert.ok(near(v[0].swing, 0.350945, 6));
   assert.ok(near(v[1].swing, 0.006184, 6));
   assert.ok(near(v[2].swing, 0.004075, 6));
@@ -328,7 +409,9 @@ test('February to March: month over month, fixed floor, volatility', () => {
 test('October: every scheduled item, five days, the lowest point, safe to spend, the pay-later flag', () => {
   const d = riley();
   const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 });
-  const oct = cal.scheduled.filter((i) => i.planned.startsWith('2026-10')).map((i) => [i.date, i.kind, i.name, i.amount, !!i.confirmed]);
+  const oct = cal.scheduled
+    .filter((i) => i.planned.startsWith('2026-10'))
+    .map((i) => [i.date, i.kind, i.name, i.amount, !!i.confirmed]);
   assert.deepEqual(oct, [
     ['2026-10-01', 'bill', 'Rent', 1750, true],
     ['2026-10-09', 'paycheck', 'Northwind Labs', 1500, true],
@@ -357,7 +440,10 @@ test('October: every scheduled item, five days, the lowest point, safe to spend,
   assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
   assert.ok(cal.safeToSpend <= cal.todayCash);
   // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.
-  assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Rent', '2026-11-01', '2026-11-06', 5]]);
+  assert.deepEqual(
+    cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]),
+    [['Rent', '2026-11-01', '2026-11-06', 5]]
+  );
   // Under the cushion: Nov 1 to Nov 5 (71.20, 68.40, 65.60, 62.80, 60.00). Never under zero.
   assert.deepEqual([cal.belowCushion, cal.belowZero], [5, 0]);
 });
@@ -367,7 +453,10 @@ test('October: the spread for groceries shrinks as entries come in', () => {
   //   no entries: 420 / 14 = 30 a day
   //   after Trader Joe's 88.20: 331.80 / 14 = 23.70 a day
   //   after Safeway 121.80 too: 210 / 14 = 15 a day
-  const perDay = (d) => cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 }).spreads['2026-10'].units.find((u) => u.name === 'Groceries');
+  const perDay = (d) =>
+    cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 }).spreads['2026-10'].units.find(
+      (u) => u.name === 'Groceries'
+    );
   const d = riley();
   const groc = d.transactions.filter((t) => t.lineId === 'groceries' && t.date.startsWith('2026-10'));
   const both = perDay(d);
@@ -389,7 +478,13 @@ test('October: the projected balance on any day is the start plus every item up 
     if (cash === null) cash = 2900 + flow;
     else cash += flow;
     const m = day.date.slice(0, 7);
-    const end = d.balances[m] && day.date <= '2026-10-17' && day.date === m + '-' + String(new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5)), 0)).getUTCDate()).padStart(2, '0');
+    const end =
+      d.balances[m] &&
+      day.date <= '2026-10-17' &&
+      day.date ===
+        m +
+          '-' +
+          String(new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5)), 0)).getUTCDate()).padStart(2, '0');
     if (end && d.balances[m].chk.end.amount !== null) cash = d.balances[m].chk.end.amount;
     assert.ok(Math.abs(day.cash - cash) <= 0.011, day.date + ': ' + day.cash + ' vs ' + cash);
   }
@@ -404,12 +499,18 @@ test('a line with entries cannot be typed over', () => {
   assert.throws(() => setField(d, ['line', 'groceries', 'actual'], makeValue(500)), /This comes from 2 entries/);
 });
 
-test('closing never changed an estimate: the log holds only the client\'s changes', () => {
+test("closing never changed an estimate: the log holds only the client's changes", () => {
   const d = riley();
   // 15 estimates typed at setup, eating out 100 -> 150 (Dec 1), groceries 350 -> 400 (Jan 2) and 400 -> 420 (May 1)
   assert.equal(d.estimateLog.length, 18);
-  const groc = d.estimateLog.filter((e) => e.lineId === 'groceries').map((e) => [e.from ? e.from.amount : null, e.to.amount, e.at.slice(0, 10)]);
-  assert.deepEqual(groc, [[null, 350, '2025-10-01'], [350, 400, '2026-01-02'], [400, 420, '2026-05-01']]);
+  const groc = d.estimateLog
+    .filter((e) => e.lineId === 'groceries')
+    .map((e) => [e.from ? e.from.amount : null, e.to.amount, e.at.slice(0, 10)]);
+  assert.deepEqual(groc, [
+    [null, 350, '2025-10-01'],
+    [350, 400, '2026-01-02'],
+    [400, 420, '2026-05-01']
+  ]);
   // Nothing was written at a close (closes happen on the 1st at 08:00)
   assert.ok(d.estimateLog.every((e) => !e.at.endsWith('T08:00:00.000Z')));
   // Each close kept the estimate as it stood: food at March's close was 400 + 150 = 550
@@ -424,7 +525,9 @@ test('the saved review never changes after close, even with a revision', () => {
   const typed = apr.snapshot.lines.utilities.actual;
   assert.notEqual(typed, 91.2);
   // The review saved at close still has the spending it had then
-  const spentAtClose = Object.values(apr.snapshot.categories).filter((c) => !c.savings).reduce((a, c) => a + (c.actual || 0), 0);
+  const spentAtClose = Object.values(apr.snapshot.categories)
+    .filter((c) => !c.savings)
+    .reduce((a, c) => a + (c.actual || 0), 0);
   money(apr.snapshot.review.totals.spent, spentAtClose, 'April at close');
   // History shows the revision (91.20 - typed) on Housing, the saved review does not
   const housing = buildSummary(d, refs).history.byCategory.housing.find((p) => p.key === '2026-04');

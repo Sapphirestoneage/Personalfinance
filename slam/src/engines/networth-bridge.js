@@ -84,21 +84,36 @@ export function netWorthBridge(doc, income, month) {
   const paChange = r2(paidAheadTotal(doc, lastDayOf(month)) - paStart);
   const endNW = netWorthAt(doc, lastDayOf(month), (key) => monthEndOf(doc, key, month));
 
-  const invested = accts.filter((a) => kindOf(a) === 'invested').map((a) => ({ a, ...span(doc, a.id, month), c: contrib.byAccount[a.id] }));
+  const invested = accts
+    .filter((a) => kindOf(a) === 'invested')
+    .map((a) => ({ a, ...span(doc, a.id, month), c: contrib.byAccount[a.id] }));
   const valued = accts.filter((a) => kindOf(a) === 'valued').map((a) => ({ a, ...span(doc, a.id, month) }));
   // Debts other than cards (a card's change is already inside the cash bridge).
-  const debts = liabilities(doc).filter((l) => !l.account).map((l) => {
-    const by = securedBy[l.debtId] || null;
-    // A loan a budget line pays (S-116): the line's actual is the payment, split into interest and principal.
-    const debt = (doc.debts || []).find((x) => x.id === l.debtId);
-    const line = debt ? linkedLine(doc, debt) : null;
-    const split = line ? { line: line.name, ...splitPayment(doc, debt, month, br.lineActuals[line.id] === undefined ? null : br.lineActuals[line.id]) } : null;
-    // fi: the debt counts toward FI unless the asset securing it does not (the mortgage goes with the home).
-    return { l, ...span(doc, l.key, month), fi: !(by && !countsForFI(by)), split };
-  });
+  const debts = liabilities(doc)
+    .filter((l) => !l.account)
+    .map((l) => {
+      const by = securedBy[l.debtId] || null;
+      // A loan a budget line pays (S-116): the line's actual is the payment, split into interest and principal.
+      const debt = (doc.debts || []).find((x) => x.id === l.debtId);
+      const line = debt ? linkedLine(doc, debt) : null;
+      const split = line
+        ? {
+            line: line.name,
+            ...splitPayment(doc, debt, month, br.lineActuals[line.id] === undefined ? null : br.lineActuals[line.id])
+          }
+        : null;
+      // fi: the debt counts toward FI unless the asset securing it does not (the mortgage goes with the home).
+      return { l, ...span(doc, l.key, month), fi: !(by && !countsForFI(by)), split };
+    });
   // Savings-line entries out of your accounts this month (the budget counted them as savings).
-  const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
-  const savEntries = add(counted(doc.transactions || []).filter((t) => t.date.slice(0, 7) === month && savingsLines.has(t.lineId) && COUNTS.has(t.kind) && !t.oneOff).map((t) => t.amount));
+  const savingsLines = new Set(
+    (doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id))
+  );
+  const savEntries = add(
+    counted(doc.transactions || [])
+      .filter((t) => t.date.slice(0, 7) === month && savingsLines.has(t.lineId) && COUNTS.has(t.kind) && !t.oneOff)
+      .map((t) => t.amount)
+  );
 
   // A cash-bridge step that was left out (under half a cent) reads as 0.
   const step = (key) => (br.steps.find((x) => x.key === key) || { amount: 0 }).amount;
@@ -113,35 +128,114 @@ export function netWorthBridge(doc, income, month) {
     const known = (x) => x.start !== null && x.end !== null;
     // Market change needs an account updated this month: end - start - what was put in. An account not
     // updated has no market line; its contributions are listed as stale instead.
-    const market = inv.filter((x) => known(x) && x.updated).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start - x.c.total), start: x.start, end: x.end, contributions: x.c.total }));
-    const value = val.filter((x) => known(x) && x.end !== x.start).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start), start: x.start, end: x.end }));
+    const market = inv
+      .filter((x) => known(x) && x.updated)
+      .map((x) => ({
+        name: x.a.name,
+        id: x.a.id,
+        amount: r2(x.end - x.start - x.c.total),
+        start: x.start,
+        end: x.end,
+        contributions: x.c.total
+      }));
+    const value = val
+      .filter((x) => known(x) && x.end !== x.start)
+      .map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start), start: x.start, end: x.end }));
     // A debt's balance going down is principal paid (the interest was spent); going up is debt added.
-    const paid = dbt.filter((x) => known(x) && x.end < x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.start - x.end), split: x.split }));
-    const added = dbt.filter((x) => known(x) && x.end > x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.end - x.start) }));
+    const paid = dbt
+      .filter((x) => known(x) && x.end < x.start)
+      .map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.start - x.end), split: x.split }));
+    const added = dbt
+      .filter((x) => known(x) && x.end > x.start)
+      .map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.end - x.start) }));
     // Paycheck deductions into an account (a 401(k)) never passed through cash, so the surplus does not hold them.
     const deductions = add(inv.map((x) => x.c.deductions));
     // FI only: money moved into accounts that do not count leaves FI net worth.
-    const movedOut = fiOnly ? invested.filter((x) => !countsForFI(x.a)).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(-x.c.transfers) })).filter((x) => x.amount) : [];
+    const movedOut = fiOnly
+      ? invested
+          .filter((x) => !countsForFI(x.a))
+          .map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(-x.c.transfers) }))
+          .filter((x) => x.amount)
+      : [];
     const lines = [];
-    const line = (key, label, amount, from, link) => { lines.push({ key, label, amount: r2(amount), from, link }); };
-    line('surplus', 'Surplus: take-home less spending and savings', br.surplus === null ? null : br.surplus, 'The budget for ' + month +
-      (br.interest.length ? ', which spends card interest: ' + br.interest.map((x) => x.name + ' ' + money(x.amount)).join(', ') : ''), { to: 'actual' });
+    const line = (key, label, amount, from, link) => {
+      lines.push({ key, label, amount: r2(amount), from, link });
+    };
+    line(
+      'surplus',
+      'Surplus: take-home less spending and savings',
+      br.surplus === null ? null : br.surplus,
+      'The budget for ' +
+        month +
+        (br.interest.length
+          ? ', which spends card interest: ' + br.interest.map((x) => x.name + ' ' + money(x.amount)).join(', ')
+          : ''),
+      { to: 'actual' }
+    );
     // Net worth only (not FI): what was paid ahead this month, less what was used of it.
     const pa = fiOnly ? 0 : paChange;
     const t = r2(add(timing.map((x) => x.amount)) + pa);
-    if (t) line('timing', 'Timing and one-offs', t, [...timing.map((x) => x.short + ' ' + money(x.amount)), pa ? 'Paid ahead ' + signed(pa) : null].filter(Boolean).join(', '), { to: 'bridge' });
+    if (t)
+      line(
+        'timing',
+        'Timing and one-offs',
+        t,
+        [...timing.map((x) => x.short + ' ' + money(x.amount)), pa ? 'Paid ahead ' + signed(pa) : null]
+          .filter(Boolean)
+          .join(', '),
+        { to: 'bridge' }
+      );
     const saved = r2((br.savings || 0) + deductions);
-    if (saved) line('saved', 'Saved and invested (moved into your own accounts, not spent)', saved, 'Savings lines ' + money(br.savings || 0) + (deductions ? ', from the paycheck ' + money(deductions) : ''), { to: 'actual' });
-    if (movedOut.length) line('moved-out', 'Moved into accounts that do not count toward FI', add(movedOut.map((x) => x.amount)), movedOut.map((x) => x.name + ' ' + money(-x.amount)).join(', '), { to: 'balances' });
+    if (saved)
+      line(
+        'saved',
+        'Saved and invested (moved into your own accounts, not spent)',
+        saved,
+        'Savings lines ' + money(br.savings || 0) + (deductions ? ', from the paycheck ' + money(deductions) : ''),
+        { to: 'actual' }
+      );
+    if (movedOut.length)
+      line(
+        'moved-out',
+        'Moved into accounts that do not count toward FI',
+        add(movedOut.map((x) => x.amount)),
+        movedOut.map((x) => x.name + ' ' + money(-x.amount)).join(', '),
+        { to: 'balances' }
+      );
     const down = r2(cardMin + add(paid.map((x) => x.amount)));
-    if (down) line('paid-down', 'Debt paid down (the principal; interest stays spent)', down, [cardMin ? 'Card payments ' + money(cardMin) : null, ...paid.map((x) => x.name + ' ' + money(x.amount) + splitText(x))].filter(Boolean).join(', '), { to: 'balances' });
+    if (down)
+      line(
+        'paid-down',
+        'Debt paid down (the principal; interest stays spent)',
+        down,
+        [
+          cardMin ? 'Card payments ' + money(cardMin) : null,
+          ...paid.map((x) => x.name + ' ' + money(x.amount) + splitText(x))
+        ]
+          .filter(Boolean)
+          .join(', '),
+        { to: 'balances' }
+      );
     const m = add(market.map((x) => x.amount));
-    if (market.length && m) line('market', 'Market change on investments', m, market.map((x) => x.name + ' ' + signed(x.amount)).join(', '), { to: 'balances' });
+    if (market.length && m)
+      line('market', 'Market change on investments', m, market.map((x) => x.name + ' ' + signed(x.amount)).join(', '), {
+        to: 'balances'
+      });
     const v = add(value.map((x) => x.amount));
-    if (v) line('value', 'Value change on things you own', v, value.map((x) => x.name + ' ' + signed(x.amount)).join(', '), { to: 'balances' });
+    if (v)
+      line('value', 'Value change on things you own', v, value.map((x) => x.name + ' ' + signed(x.amount)).join(', '), {
+        to: 'balances'
+      });
     const up = add(added.map((x) => x.amount));
     // Negative: more owed lowers net worth.
-    if (up) line('debt-added', 'Debt added, not from payments (interest, new borrowing)', -up, added.map((x) => x.name + ' +' + money(x.amount)).join(', '), { to: 'balances' });
+    if (up)
+      line(
+        'debt-added',
+        'Debt added, not from payments (interest, new borrowing)',
+        -up,
+        added.map((x) => x.name + ' +' + money(x.amount)).join(', '),
+        { to: 'balances' }
+      );
     const start = fiOnly ? startNW.fi : startNW.total;
     const actualEnd = fiOnly ? endNW.fi : endNW.total;
     // Explained end = start + every line. The surplus is needed; without it nothing is explained.
@@ -149,18 +243,39 @@ export function netWorthBridge(doc, income, month) {
     // Cash and cards must be in to know the actual change (as in the cash bridge).
     const cashKnown = br.actual !== null && !br.missing.length;
     const unexplained = explained !== null && actualEnd !== null && cashKnown ? r2(actualEnd - explained) : null;
-    const stale = inv.filter((x) => !x.updated && x.c.total).map((x) => ({ name: x.a.name, last: x.last, contributions: x.c.total }));
-    return { start, lines, explained, actual: actualEnd, change: start === null || actualEnd === null ? null : r2(actualEnd - start), unexplained, stale, market, value, paid, added };
+    const stale = inv
+      .filter((x) => !x.updated && x.c.total)
+      .map((x) => ({ name: x.a.name, last: x.last, contributions: x.c.total }));
+    return {
+      start,
+      lines,
+      explained,
+      actual: actualEnd,
+      change: start === null || actualEnd === null ? null : r2(actualEnd - start),
+      unexplained,
+      stale,
+      market,
+      value,
+      paid,
+      added
+    };
   };
 
   const total = build(false);
   const fi = build(true);
   const out = {
-    month, total, fi,
+    month,
+    total,
+    fi,
     // Where the not explained part comes from, when everything is in (see the identity above).
-    parts: { cash: br.unexplained, moved: r2(add(invested.map((x) => x.c.transfers)) - savEntries), stale: r2(-add(invested.filter((x) => !x.updated).map((x) => x.c.total))) },
+    parts: {
+      cash: br.unexplained,
+      moved: r2(add(invested.map((x) => x.c.transfers)) - savEntries),
+      stale: r2(-add(invested.filter((x) => !x.updated).map((x) => x.c.total)))
+    },
     within: br.within,
-    missingStart: startNW.missing, missingEnd: endNW.missing
+    missingStart: startNW.missing,
+    missingEnd: endNW.missing
   };
   // Ties within the cash bridge's materiality (the coach's setting, 25 when not set); null while a balance is missing.
   out.total.ties = out.total.unexplained === null ? null : Math.abs(out.total.unexplained) < br.within;
@@ -172,7 +287,9 @@ export function netWorthBridge(doc, income, month) {
 
 function money(x) {
   const v = Math.round(Math.abs(x) * 100) / 100;
-  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 });
+  return (
+    '$' + v.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 })
+  );
 }
 const signed = (x) => (x < 0 ? '-' : '+') + money(x);
 // "(Car payment $340: interest $27.30, principal $312.70)", and what the balance did beyond it.
@@ -180,7 +297,18 @@ function splitText(x) {
   const sp = x.split;
   if (!sp || sp.payment === null || sp.interest === null) return '';
   const extra = r2(x.amount - sp.principal);
-  return ' (' + sp.line + ' ' + money(sp.payment) + ': interest ' + money(sp.interest) + ', principal ' + money(sp.principal) + (Math.abs(extra) >= 0.01 ? '; the balance moved ' + money(Math.abs(extra)) + (extra > 0 ? ' more' : ' less') : '') + ')';
+  return (
+    ' (' +
+    sp.line +
+    ' ' +
+    money(sp.payment) +
+    ': interest ' +
+    money(sp.interest) +
+    ', principal ' +
+    money(sp.principal) +
+    (Math.abs(extra) >= 0.01 ? '; the balance moved ' + money(Math.abs(extra)) + (extra > 0 ? ' more' : ' less') : '') +
+    ')'
+  );
 }
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 
@@ -198,13 +326,36 @@ export function reading(b, within, name = 'Net worth') {
   // out of FI. A part under 50 cents is not mentioned.
   const saved = r2(amt('surplus') + amt('timing') + amt('saved') + amt('moved-out'));
   const bits = [];
-  if (Math.round(saved)) bits.push(saved > 0 ? whole(saved) + ' you saved' : whole(saved) + ' more went out than came in');
-  if (Math.round(amt('market'))) bits.push(amt('market') > 0 ? whole(amt('market')) + ' the market added' : whole(amt('market')) + ' the market took');
+  if (Math.round(saved))
+    bits.push(saved > 0 ? whole(saved) + ' you saved' : whole(saved) + ' more went out than came in');
+  if (Math.round(amt('market')))
+    bits.push(
+      amt('market') > 0 ? whole(amt('market')) + ' the market added' : whole(amt('market')) + ' the market took'
+    );
   if (Math.round(amt('paid-down'))) bits.push(whole(amt('paid-down')) + ' of debt paid down');
-  if (Math.round(amt('value'))) bits.push(amt('value') > 0 ? whole(amt('value')) + ' of value gained on things you own' : whole(amt('value')) + ' of value lost on things you own');
+  if (Math.round(amt('value')))
+    bits.push(
+      amt('value') > 0
+        ? whole(amt('value')) + ' of value gained on things you own'
+        : whole(amt('value')) + ' of value lost on things you own'
+    );
   if (Math.round(amt('debt-added'))) bits.push(whole(amt('debt-added')) + ' added to debts');
-  const head = name + (Math.abs(b.change) < 0.5 ? ' held steady' : b.change > 0 ? ' rose ' + whole(b.change) : ' fell ' + whole(b.change)) + '.';
-  const tail = b.unexplained !== null && Math.abs(b.unexplained) >= (within === undefined ? 25 : within) ? ' ' + whole(b.unexplained) + ' is not explained yet' + (b.stale.length ? ' (' + b.stale.map((x) => x.name).join(', ') + ' not updated this month)' : '') + '.' : '';
+  const head =
+    name +
+    (Math.abs(b.change) < 0.5
+      ? ' held steady'
+      : b.change > 0
+        ? ' rose ' + whole(b.change)
+        : ' fell ' + whole(b.change)) +
+    '.';
+  const tail =
+    b.unexplained !== null && Math.abs(b.unexplained) >= (within === undefined ? 25 : within)
+      ? ' ' +
+        whole(b.unexplained) +
+        ' is not explained yet' +
+        (b.stale.length ? ' (' + b.stale.map((x) => x.name).join(', ') + ' not updated this month)' : '') +
+        '.'
+      : '';
   return head + (bits.length ? ' ' + bits.join(', ').replace(/^./, (c) => c.toUpperCase()) + '.' : '') + tail;
 }
 
@@ -218,10 +369,23 @@ export function netWorthBridgeRows(b) {
   if (b.start === null) return [];
   const rows = [{ label: 'Start', from: 0, to: b.start, kind: 'total' }];
   let run = b.start;
-  for (const l of b.lines) { rows.push({ label: SHORT[l.key] || l.label, from: run, to: run + l.amount, kind: 'step' }); run += l.amount; }
+  for (const l of b.lines) {
+    rows.push({ label: SHORT[l.key] || l.label, from: run, to: run + l.amount, kind: 'step' });
+    run += l.amount;
+  }
   rows.push({ label: 'Explained', from: 0, to: b.explained, kind: 'total' });
-  if (b.unexplained !== null && Math.abs(b.unexplained) >= 0.005) rows.push({ label: 'Not explained yet', from: b.explained, to: b.actual, kind: 'unexplained' });
+  if (b.unexplained !== null && Math.abs(b.unexplained) >= 0.005)
+    rows.push({ label: 'Not explained yet', from: b.explained, to: b.actual, kind: 'unexplained' });
   if (b.actual !== null) rows.push({ label: 'End', from: 0, to: b.actual, kind: 'total' });
   return rows;
 }
-const SHORT = { surplus: 'Surplus', timing: 'Timing', saved: 'Saved', 'moved-out': 'Moved out of FI', 'paid-down': 'Debt paid', market: 'Market', value: 'Values', 'debt-added': 'Debt added' };
+const SHORT = {
+  surplus: 'Surplus',
+  timing: 'Timing',
+  saved: 'Saved',
+  'moved-out': 'Moved out of FI',
+  'paid-down': 'Debt paid',
+  market: 'Market',
+  value: 'Values',
+  'debt-added': 'Debt added'
+};

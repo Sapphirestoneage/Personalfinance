@@ -8,7 +8,6 @@ import { counted } from './log.js';
 import { actualsFor, modelForMonth } from './plan.js';
 import { ratio, r2 } from './money.js';
 
-
 /**
  * The smallest set of the biggest items that reaches a share of the total.
  * @param {Array<{key: string, label: string, amount: number}>} items dollars; only amounts above zero take part.
@@ -18,16 +17,32 @@ import { ratio, r2 } from './money.js';
  */
 export function paretoCut(items, share = 0.8) {
   // Largest first; ties by label, so the same data always gives the same cut.
-  const all = items.filter((i) => i.amount > 0).slice().sort((a, b) => b.amount - a.amount || (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
+  const all = items
+    .filter((i) => i.amount > 0)
+    .slice()
+    .sort((a, b) => b.amount - a.amount || (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
   const total = r2(all.reduce((a, i) => a + i.amount, 0));
   let run = 0;
   let count = 0;
-  const cumulative = all.map((i) => { run += i.amount; return { ...i, cum: r2(run), cumShare: total ? run / total : null }; });
+  const cumulative = all.map((i) => {
+    run += i.amount;
+    return { ...i, cum: r2(run), cumShare: total ? run / total : null };
+  });
   // The 1e-9 absorbs floating-point noise, so a set that reaches exactly 80% counts.
   if (total > 0) count = cumulative.findIndex((i) => i.cum >= share * total - 1e-9) + 1;
   const cut = all.slice(0, count);
   const amount = r2(cut.reduce((a, i) => a + i.amount, 0));
-  return { share, items: cut, count, of: all.length, countShare: ratio(count, all.length), amount, amountShare: ratio(amount, total), total, cumulative };
+  return {
+    share,
+    items: cut,
+    count,
+    of: all.length,
+    countShare: ratio(count, all.length),
+    amount,
+    amountShare: ratio(amount, total),
+    total,
+    cumulative
+  };
 }
 
 const pct = (x) => Math.round(x * 100) + '%';
@@ -43,12 +58,26 @@ export function paretoReading(cut, level) {
   if (!cut.of) return level === 'entries' ? 'No entries in the log for this period.' : 'Nothing to count yet.';
   const of = cut.count + ' of ' + cut.of;
   const sh = pct(cut.share);
-  if (level === 'lines') return cut.count <= 4 ? cut.count + ' line' + (cut.count === 1 ? '' : 's') + ', ' + list(cut.items.map((i) => i.label)) + ', made up ' + sh + '.' : pct(cut.countShare) + ' of your lines (' + of + ') made up ' + sh + ' of your spending.';
-  if (level === 'merchants') return pct(cut.countShare) + ' of your merchants (' + of + ') made up ' + sh + ' of your spending.';
+  if (level === 'lines')
+    return cut.count <= 4
+      ? cut.count +
+          ' line' +
+          (cut.count === 1 ? '' : 's') +
+          ', ' +
+          list(cut.items.map((i) => i.label)) +
+          ', made up ' +
+          sh +
+          '.'
+      : pct(cut.countShare) + ' of your lines (' + of + ') made up ' + sh + ' of your spending.';
+  if (level === 'merchants')
+    return pct(cut.countShare) + ' of your merchants (' + of + ') made up ' + sh + ' of your spending.';
   return pct(cut.countShare) + ' of your entries (' + of + ') made up ' + sh + ' of your spending.';
 }
 
-const inRange = (months) => { const set = new Set(months); return (t) => set.has(t.date.slice(0, 7)); };
+const inRange = (months) => {
+  const set = new Set(months);
+  return (t) => set.has(t.date.slice(0, 7));
+};
 // Money moved to savings (a Roth IRA, say) is not spending.
 const savingsLines = (doc) => new Set(doc.categories.filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
 
@@ -62,8 +91,14 @@ export function entryItems(doc, months) {
   const lineName = Object.fromEntries(doc.categories.flatMap((c) => c.lines.map((l) => [l.id, l.name])));
   const sav = savingsLines(doc);
   // Balance adjustments are not spending.
-  return counted(doc.transactions).filter(inRange(months)).filter((t) => !t.adjust && !sav.has(t.lineId) && (t.kind === 'spend' || t.kind === 'fee') && t.amount > 0)
-    .map((t) => ({ key: t.id, label: (t.description || t.note || lineName[t.lineId] || 'Entry') + ', ' + t.date.slice(5), amount: t.amount - (t.owed || 0) }));
+  return counted(doc.transactions)
+    .filter(inRange(months))
+    .filter((t) => !t.adjust && !sav.has(t.lineId) && (t.kind === 'spend' || t.kind === 'fee') && t.amount > 0)
+    .map((t) => ({
+      key: t.id,
+      label: (t.description || t.note || lineName[t.lineId] || 'Entry') + ', ' + t.date.slice(5),
+      amount: t.amount - (t.owed || 0)
+    }));
 }
 
 /**
@@ -80,7 +115,8 @@ export function merchantItems(doc, months) {
   const lineName = Object.fromEntries(doc.categories.flatMap((c) => c.lines.map((l) => [l.id, l.name])));
   for (const t of counted(doc.transactions).filter(inRange(months))) {
     if (t.adjust || sav.has(t.lineId) || !(t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund')) continue;
-    const k = t.merchant || (lineName[t.lineId] ? lineName[t.lineId] + ' (no merchant, by line)' : 'No merchant, no line');
+    const k =
+      t.merchant || (lineName[t.lineId] ? lineName[t.lineId] + ' (no merchant, by line)' : 'No merchant, no line');
     g[k] = (g[k] || 0) + t.amount - (t.owed || 0);
   }
   return Object.entries(g).map(([k, v]) => ({ key: k, label: k, amount: r2(v) }));
@@ -101,8 +137,12 @@ export function lineItems(doc, history, months) {
     // A closed month's lines come from its snapshot (the tree as it was); an open month from the tree as it stands then.
     const rec = (doc.months || []).find((x) => x.key === m);
     const lines = rec
-      ? Object.entries(rec.snapshot.lines).filter(([, l]) => !(rec.snapshot.categories[l.categoryId] || {}).savings).map(([id, l]) => ({ id, name: l.name }))
-      : modelForMonth(doc, m).categories.filter((c) => !c.savings).flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name })));
+      ? Object.entries(rec.snapshot.lines)
+          .filter(([, l]) => !(rec.snapshot.categories[l.categoryId] || {}).savings)
+          .map(([id, l]) => ({ id, name: l.name }))
+      : modelForMonth(doc, m)
+          .categories.filter((c) => !c.savings)
+          .flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name })));
     for (const l of lines) {
       const v = a.lines[l.id];
       if (v === null || v === undefined) continue;
@@ -123,7 +163,19 @@ export function lineItems(doc, history, months) {
  */
 export function rangeMonths(doc, history, range, anchor) {
   const cur = anchor || doc.currentMonth;
-  const back = (n) => { const out = []; let [y, m] = cur.split('-').map(Number); for (let i = 0; i < n; i++) { out.unshift(y + '-' + String(m).padStart(2, '0')); m -= 1; if (m < 1) { m = 12; y -= 1; } } return out; };
+  const back = (n) => {
+    const out = [];
+    let [y, m] = cur.split('-').map(Number);
+    for (let i = 0; i < n; i++) {
+      out.unshift(y + '-' + String(m).padStart(2, '0'));
+      m -= 1;
+      if (m < 1) {
+        m = 12;
+        y -= 1;
+      }
+    }
+    return out;
+  };
   if (range === 'month') return [cur];
   if (range === '3') return back(3);
   if (range === '12') return back(12);
@@ -144,7 +196,8 @@ export function paretoLevels(doc, history, months, share = 0.8) {
   const merchants = paretoCut(merchantItems(doc, months), share);
   const lines = paretoCut(lineItems(doc, history, months), share);
   return {
-    months, noEntries: entries.of === 0,
+    months,
+    noEntries: entries.of === 0,
     entries: { ...entries, reading: paretoReading(entries, 'entries') },
     merchants: { ...merchants, reading: paretoReading(merchants, 'merchants') },
     lines: { ...lines, reading: paretoReading(lines, 'lines') }

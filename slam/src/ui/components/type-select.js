@@ -8,17 +8,46 @@ import { CATEGORY_TYPES, LINE_TYPES } from '../../store/types.js';
 import { findCategory, setLineType } from '../../store/edits.js';
 
 export function categoryTypeSelect(ctx, cat, opts = {}) {
-  return h('label', { class: 'field type-field' }, h('span', { class: 'lbl' }, opts.label || 'Counts as'),
-    h('select', { 'data-key': 'cat:' + cat.id + ':type', onchange: (e) => ctx.update('Counts as', (d) => { findCategory(d, cat.id).type = e.target.value; }) },
+  return h(
+    'label',
+    { class: 'field type-field' },
+    h('span', { class: 'lbl' }, opts.label || 'Counts as'),
+    h(
+      'select',
+      {
+        'data-key': 'cat:' + cat.id + ':type',
+        onchange: (e) =>
+          ctx.update('Counts as', (d) => {
+            findCategory(d, cat.id).type = e.target.value;
+          })
+      },
       // No Fees to pick (S-123); an older category already counted as Fees keeps it.
-      options(CATEGORY_TYPES.filter(([id]) => id !== 'fees' || cat.type === 'fees'), cat.type)));
+      options(
+        CATEGORY_TYPES.filter(([id]) => id !== 'fees' || cat.type === 'fees'),
+        cat.type
+      )
+    )
+  );
 }
 
 export function lineTypeSelect(ctx, line, opts = {}) {
-  return h('label', { class: 'field type-field' }, h('span', { class: 'lbl' }, opts.label || 'Type (for tracking)'),
-    h('select', { 'data-key': 'line:' + line.id + ':type', onchange: (e) => ctx.update('Line type', (d) => setLineType(d, line.id, e.target.value)) },
+  return h(
+    'label',
+    { class: 'field type-field' },
+    h('span', { class: 'lbl' }, opts.label || 'Type (for tracking)'),
+    h(
+      'select',
+      {
+        'data-key': 'line:' + line.id + ':type',
+        onchange: (e) => ctx.update('Line type', (d) => setLineType(d, line.id, e.target.value))
+      },
       // LINE_TYPES rows carry name keywords as a third element; options wants [id, label] pairs.
-      options(LINE_TYPES.map(([id, label]) => [id, label]), line.type)));
+      options(
+        LINE_TYPES.map(([id, label]) => [id, label]),
+        line.type
+      )
+    )
+  );
 }
 
 // Small grey label under a name when the name does not already say it.

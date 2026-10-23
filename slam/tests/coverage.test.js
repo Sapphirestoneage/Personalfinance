@@ -31,15 +31,18 @@ function client(birthYear, how = 'parent') {
   return d;
 }
 const health = (d) => budgetModel(d).categories.find((c) => c.id === 'health').estimate.amount;
-const premiumLine = (d) => budgetModel(d).categories.find((c) => c.id === 'health').lines.find((l) => l.id === 'premiums');
+const premiumLine = (d) =>
+  budgetModel(d)
+    .categories.find((c) => c.id === 'health')
+    .lines.find((l) => l.id === 'premiums');
 
-test('24 and on a parent\'s plan: no premium, Health = out of pocket 40', () => {
+test("24 and on a parent's plan: no premium, Health = out of pocket 40", () => {
   const d = client(2002); // 2026 - 2002 = 24
   assert.deepEqual(parentsPlan(d), { age: 24, eligible: true, chosen: true, on: true, agedOut: false });
   assert.equal(health(d), 40); // premium 0 + out of pocket 40
   const prem = buildSummary(d, refs).items.find((i) => i.key === 'act:premiums');
   assert.equal(prem.status, 'not-for-me', 'a covered premium counts as answered');
-  assert.equal(coverageSummary(d), 'Covered by a parent\'s plan. No premium.');
+  assert.equal(coverageSummary(d), "Covered by a parent's plan. No premium.");
   assert.deepEqual(validateHousehold(d), []);
 });
 
@@ -48,7 +51,7 @@ test('25 is the last year it counts; at 26 the premium counts again', () => {
   const d = client(2000); // 26
   assert.equal(parentsPlan(d).agedOut, true);
   assert.equal(health(d), 340); // the premium 300 + 40
-  assert.equal(coverageSummary(d), 'Aged off a parent\'s plan (26 this year), so premiums count again.');
+  assert.equal(coverageSummary(d), "Aged off a parent's plan (26 this year), so premiums count again.");
 });
 
 test('paid directly: the premium is the Health insurance line, computed and never asked twice', () => {
@@ -66,7 +69,7 @@ test('paid directly: the premium is the Health insurance line, computed and neve
   assert.equal(premiumFor(d, 'monthly').amount, 300);
 });
 
-test('from a paycheck: the premium stays the income\'s health deduction, and the line is 0', () => {
+test("from a paycheck: the premium stays the income's health deduction, and the line is 0", () => {
   const d = client(1990, 'employer');
   const job = addIncome(d, { id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly' });
   const ded = addDeduction(d, 'job', 'health');
@@ -117,7 +120,18 @@ test('migration moves the old answers to coverage without changing a number', ()
   const raw2 = JSON.parse(JSON.stringify(raw));
   raw2.categories.find((c) => c.id === 'health').lines.find((l) => l.id === 'premiums').estimate = makeValue();
   raw2.household.parentsPlan = false;
-  raw2.income = [{ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(3000), gross: makeValue(), deductions: [{ id: 'd1', kind: 'health', mode: 'amount', amount: makeValue(120, { cadence: 'paycheck' }) }], state: 'active' }];
+  raw2.income = [
+    {
+      id: 'job',
+      type: 'w2',
+      label: 'Job',
+      payFrequency: 'monthly',
+      takeHome: makeValue(3000),
+      gross: makeValue(),
+      deductions: [{ id: 'd1', kind: 'health', mode: 'amount', amount: makeValue(120, { cadence: 'paycheck' }) }],
+      state: 'active'
+    }
+  ];
   const d2 = migrate(raw2);
   assert.deepEqual([d2.coverage.how, d2.coverage.premiumFrom, d2.coverage.premiumIncomeId], [null, 'paycheck', 'job']);
 });

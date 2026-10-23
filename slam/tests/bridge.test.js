@@ -39,20 +39,26 @@ test('a month that ties: every step by hand', () => {
   assert.equal(br.surplus, 2000);
   // No income step (S-118): the surplus already uses the 4,300 that landed.
   assert.deepEqual(stepsOf(br), {
-    yearly: -1100,     // share 100 in the budget - 1,200 paid
-    'set-aside': 200,  // emergency fund 200, no entry paid it out
-    cards: -150,       // Visa 500 -> 350
-    'card-min': 40,    // the Visa minimum in Debt payments
-    owed: -60,         // the friend's half of the concert
-    'one-off': -250    // the couch
+    yearly: -1100, // share 100 in the budget - 1,200 paid
+    'set-aside': 200, // emergency fund 200, no entry paid it out
+    cards: -150, // Visa 500 -> 350
+    'card-min': 40, // the Visa minimum in Debt payments
+    owed: -60, // the friend's half of the concert
+    'one-off': -250 // the couch
   });
   // 2,000 - 1,100 + 200 - 150 + 40 - 60 - 250 = 680
   assert.equal(br.explained, 680);
   // cash 2,000 + 5,000 = 7,000 -> 2,480 + 5,200 = 7,680: +680
   assert.deepEqual([br.cashStart, br.cashEnd, br.actual, br.unexplained, br.ties], [7000, 7680, 680, 0, true]);
-  assert.equal(br.reading, 'Your budget showed $2,000 left, but cash went up $680. The car insurance bill ($1,200) came due this month.');
+  assert.equal(
+    br.reading,
+    'Your budget showed $2,000 left, but cash went up $680. The car insurance bill ($1,200) came due this month.'
+  );
   // $0 steps are hidden: no reimbursements were received for earlier months
-  assert.equal(br.steps.some((x) => x.key === 'received'), false);
+  assert.equal(
+    br.steps.some((x) => x.key === 'received'),
+    false
+  );
 });
 
 test('a month that does not tie: $60 of ATM cash not mapped', () => {
@@ -60,7 +66,10 @@ test('a month that does not tie: $60 of ATM cash not mapped', () => {
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-10');
   // The ATM 60 is not in the budget (no line), so explained stays 680; cash 7,620 - 7,000 = 620
   assert.deepEqual([br.explained, br.actual, br.unexplained, br.ties], [680, 620, -60, false]);
-  assert.equal(br.reading, 'Your budget showed $2,000 left, but cash went up $620. The car insurance bill ($1,200) came due this month. $60 is not explained yet.');
+  assert.equal(
+    br.reading,
+    'Your budget showed $2,000 left, but cash went up $620. The car insurance bill ($1,200) came due this month. $60 is not explained yet.'
+  );
 });
 
 test('explained + not explained yet = the actual change in cash', () => {
@@ -88,7 +97,13 @@ test('after close the bridge reads the locked snapshot and gives the same answer
   assert.deepEqual([br.surplus, br.explained, br.actual, br.unexplained], [2000, 680, 680, 0]);
   // The friend pays back 60 in November: received for an earlier month, +60
   const concert = d.transactions.find((t) => t.owed);
-  const back = addEntry(d, { date: '2026-11-04', amount: -60, kind: 'reimbursement', account: 'chk', merchant: 'Venmo' });
+  const back = addEntry(d, {
+    date: '2026-11-04',
+    amount: -60,
+    kind: 'reimbursement',
+    account: 'chk',
+    merchant: 'Venmo'
+  });
   editEntry(d, back.id, { settles: concert.id });
   const nov = bridgeFor(d, buildSummary(d, refs).income, '2026-11');
   assert.equal(stepsOf(nov).received, 60);

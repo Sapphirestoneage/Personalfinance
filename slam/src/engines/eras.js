@@ -45,7 +45,9 @@ function eraMoney(value, base, share, start = null) {
  */
 export function eraTimeline(doc, totals, refs, dreams = null) {
   const eras = doc.eras || { list: [] };
-  const templates = Object.fromEntries(((refs.eraTemplates && refs.eraTemplates.templates) || []).map((t) => [t.id, t]));
+  const templates = Object.fromEntries(
+    ((refs.eraTemplates && refs.eraTemplates.templates) || []).map((t) => [t.id, t])
+  );
   const baseIncome = totals.takeHome;
   const baseSpend = totals.spending;
   const baseNet = minus(baseIncome, baseSpend);
@@ -88,23 +90,44 @@ export function eraTimeline(doc, totals, refs, dreams = null) {
     }
     const shortBy = low < 0 ? -low : 0;
     out.push({
-      id: e.id, name: e.name, template: e.template, oneTimeHint: t.oneTimeHint || '', about: t.about || '',
-      start, end: addMonths(start, e.months - 1), months: e.months, gapMonths: e.gapMonths,
-      income: income.amount, incomeGuess: income.guess, spend: spend.amount, spendGuess: spend.guess,
-      spendFrom, spendTyped: hasAnswer(e.spending), spendStart: startAt,
-      net, oneTime, oneTimeBlank: oneTime === null,
+      id: e.id,
+      name: e.name,
+      template: e.template,
+      oneTimeHint: t.oneTimeHint || '',
+      about: t.about || '',
+      start,
+      end: addMonths(start, e.months - 1),
+      months: e.months,
+      gapMonths: e.gapMonths,
+      income: income.amount,
+      incomeGuess: income.guess,
+      spend: spend.amount,
+      spendGuess: spend.guess,
+      spendFrom,
+      spendTyped: hasAnswer(e.spending),
+      spendStart: startAt,
+      net,
+      oneTime,
+      oneTimeBlank: oneTime === null,
       // A blank one-time cost counts as none in the total; oneTimeBlank tells the screen to say so.
       total: net === null ? null : net * e.months - (oneTime || 0),
-      cashStart, cashEnd: net === null ? null : cash, cashChange: net === null ? null : cash - cashStart,
-      runsOut: cashKnown ? runsOut : null, shortBy: cashKnown ? shortBy : null,
+      cashStart,
+      cashEnd: net === null ? null : cash,
+      cashChange: net === null ? null : cash - cashStart,
+      runsOut: cashKnown ? runsOut : null,
+      shortBy: cashKnown ? shortBy : null,
       // Months of regular life to save first so the cash never dips below zero.
       saveFirstMonths: cashKnown && shortBy > 0 && baseNet > 0 ? Math.ceil(shortBy / baseNet) : null
     });
   }
   const last = path.length ? path[path.length - 1] : null;
   return {
-    cashKnown, baseIncome, baseSpend, baseNet,
-    eras: out, path,
+    cashKnown,
+    baseIncome,
+    baseSpend,
+    baseNet,
+    eras: out,
+    path,
     endKey: last ? last.key : null,
     cashEnd: last ? last.cash : null,
     regularEnd: last ? last.regular : null,

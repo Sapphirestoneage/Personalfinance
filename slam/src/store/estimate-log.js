@@ -32,5 +32,6 @@ export function recordEstimates(before, after, nowIso) {
 export function checkAppendOnly(before, after) {
   const a = before.estimateLog || [];
   const b = after.estimateLog || [];
-  if (b.length < a.length || a.some((e, i) => !same(e, b[i]))) throw new Error('Change refused: estimate history is never edited or deleted');
+  if (b.length < a.length || a.some((e, i) => !same(e, b[i])))
+    throw new Error('Change refused: estimate history is never edited or deleted');
 }

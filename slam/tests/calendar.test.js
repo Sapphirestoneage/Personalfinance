@@ -25,7 +25,16 @@ import { addDebt, findLine } from '../src/store/edits.js';
 import { addEntry } from '../src/store/log.js';
 import { setNextPayDate, moveItem, confirmScheduled, addBalanceCheck, saveForecast } from '../src/store/cashflow.js';
 import { incomeSummary } from '../src/engines/income.js';
-import { cashCalendar, scheduledItems, forecastFor, forecastCheck, monthSoFar, calendarReading, safeReading, addDays } from '../src/engines/calendar.js';
+import {
+  cashCalendar,
+  scheduledItems,
+  forecastFor,
+  forecastCheck,
+  monthSoFar,
+  calendarReading,
+  safeReading,
+  addDays
+} from '../src/engines/calendar.js';
 import { loadRefs, near } from './helpers.js';
 
 const refs = loadRefs();
@@ -35,7 +44,20 @@ const TODAY = '2026-10-10';
 function household() {
   const d = newHousehold('Calendar');
   d.currentMonth = '2026-10';
-  d.income.push({ ...d.income[0], id: 'job', type: 'w2', label: 'Paycheck', payFrequency: 'biweekly', takeHome: makeValue(1500, { cadence: 'paycheck' }), gross: makeValue(), hourlyRate: makeValue(), deductions: [], withheld: {}, payBasis: 'salary', state: 'active' });
+  d.income.push({
+    ...d.income[0],
+    id: 'job',
+    type: 'w2',
+    label: 'Paycheck',
+    payFrequency: 'biweekly',
+    takeHome: makeValue(1500, { cadence: 'paycheck' }),
+    gross: makeValue(),
+    hourlyRate: makeValue(),
+    deductions: [],
+    withheld: {},
+    payBasis: 'salary',
+    state: 'active'
+  });
   const debt = addDebt(d, { label: 'Visa', type: 'credit-card' });
   debt.minimum = makeValue(35);
   debt.dueDay = one(25);
@@ -95,7 +117,10 @@ test('past days show the log, today takes the waiting paycheck, the future is sc
   money(cashOn(cal, '2026-10-08'), -280, 'Oct 8');
   assert.equal(cal.days.find((x) => x.date === '2026-10-08').cards, 340);
   // Waiting: only the Oct 2 paycheck (rent was confirmed). It lands today: -280 + 1,500 = 1,220
-  assert.deepEqual(cal.waiting.map((i) => [i.date, i.kind]), [['2026-10-02', 'paycheck']]);
+  assert.deepEqual(
+    cal.waiting.map((i) => [i.date, i.kind]),
+    [['2026-10-02', 'paycheck']]
+  );
   money(cal.todayCash, 1220, 'today');
   // Groceries: 400 planned, 80 + 40 = 120 logged, 280 left over Oct 11 to Oct 31 (21 days) = 13.333 a day
   const g = cal.spreads['2026-10'].units.find((u) => u.name === 'Groceries');
@@ -144,12 +169,18 @@ test('a cushion: days below it, a pay-later flag, and safe to spend below zero',
   // (2,425, 2,411.67, 2,398.33, 2,385, 2,371.67): 11 days
   assert.equal(cal.belowCushion, 11);
   // The Visa payment on the 25th leaves 2,425, under the cushion; the next paycheck is Oct 30, 5 days later
-  assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Visa', '2026-10-25', '2026-10-30', 5]]);
+  assert.deepEqual(
+    cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]),
+    [['Visa', '2026-10-25', '2026-10-30', 5]]
+  );
   // 1,153.33 - 2,450 = -1,296.67, below 0: safe to spend is 0, and the shortfall is 1,296.67 on Oct 15
   assert.equal(cal.safeToSpend, 0);
   assert.deepEqual(cal.shortfall, { amount: 1296.67, date: '2026-10-15' });
   assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $1,297 under your cushion on Oct 15.");
-  assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.');
+  assert.equal(
+    calendarReading(cal),
+    'Your lowest point is $1,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.'
+  );
 });
 
 test('spending the safe-to-spend amount today never takes a projected day below the cushion', () => {
@@ -162,7 +193,8 @@ test('spending the safe-to-spend amount today never takes a projected day below 
     money(cal.safeToSpend, 1153.33 - c, 'cushion ' + c);
     addEntry(doc, { date: TODAY, amount: cal.safeToSpend, lineId: 'shopping', account: 'chk' });
     const after = cashCalendar(doc, inc, { today: TODAY, horizon: 60 });
-    for (const day of after.days.filter((x) => x.date >= TODAY)) assert.ok(day.cash >= c - 0.01, c + ' ' + day.date + ': ' + day.cash);
+    for (const day of after.days.filter((x) => x.date >= TODAY))
+      assert.ok(day.cash >= c - 0.01, c + ' ' + day.date + ': ' + day.cash);
   }
 });
 
@@ -221,15 +253,23 @@ test('semimonthly pays on its two days; a version 6 file loads with blank dates'
   doc.income[0].payFrequency = 'semimonthly';
   doc.income[0].payDays = [5, 20];
   const inc = incomeSummary(doc, refs.tax);
-  const pays = scheduledItems(doc, '2026-02', inc).items.filter((i) => i.kind === 'paycheck').map((i) => [i.date, i.amount]);
+  const pays = scheduledItems(doc, '2026-02', inc)
+    .items.filter((i) => i.kind === 'paycheck')
+    .map((i) => [i.date, i.amount]);
   // 1,500 x 24 / 12 = 3,000 a month; back to 3,000 x 12 / 24 = 1,500
-  assert.deepEqual(pays, [['2026-02-05', 1500], ['2026-02-20', 1500]]);
+  assert.deepEqual(pays, [
+    ['2026-02-05', 1500],
+    ['2026-02-20', 1500]
+  ]);
   const raw = JSON.parse(JSON.stringify(household()));
   raw.schemaVersion = 6;
   delete raw.cashflow;
   delete raw.income[0].nextPayDate;
   const d = migrate(raw);
-  assert.deepEqual([d.income[0].nextPayDate.date, d.cashflow.cushion.amount, d.cashflow.checks.length], [null, null, 0]);
+  assert.deepEqual(
+    [d.income[0].nextPayDate.date, d.cashflow.cushion.amount, d.cashflow.checks.length],
+    [null, null, 0]
+  );
   assert.equal(addDays('2026-12-31', 1), '2027-01-01');
 });
 

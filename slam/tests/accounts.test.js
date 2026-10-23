@@ -37,12 +37,21 @@ test('a version 4 file: Next stage cash on hand moves into a Cash on hand accoun
   raw.currentMonth = '2026-10';
   delete raw.accounts;
   delete raw.balances;
-  raw.nextStage = { ...newNextStage([]), cashOnHand: { amount: 8000, cadence: 'one-off', status: 'roughly', source: 'client', asOf: null, note: '' } };
-  raw.eras = { cashNow: { amount: 8000, cadence: 'month', status: 'known', source: 'client', asOf: null, note: '' }, list: [] };
+  raw.nextStage = {
+    ...newNextStage([]),
+    cashOnHand: { amount: 8000, cadence: 'one-off', status: 'roughly', source: 'client', asOf: null, note: '' }
+  };
+  raw.eras = {
+    cashNow: { amount: 8000, cadence: 'month', status: 'known', source: 'client', asOf: null, note: '' },
+    list: []
+  };
   const d = migrate(raw);
   assert.deepEqual(validateHousehold(d), []);
   // Same 8,000 in both places: one account, started with it, nothing asked twice.
-  assert.deepEqual(d.accounts.map((a) => [a.name, a.type, a.state]), [['Cash on hand', 'cash', 'active']]);
+  assert.deepEqual(
+    d.accounts.map((a) => [a.name, a.type, a.state]),
+    [['Cash on hand', 'cash', 'active']]
+  );
   const b = d.balances['2026-10'][d.accounts[0].id];
   assert.deepEqual([b.start.amount, b.start.status, b.end.amount], [8000, 'roughly', null]);
   assert.equal('cashOnHand' in d.nextStage, false);
@@ -57,7 +66,13 @@ test('two different old answers: the first counts, the other is kept on an archi
   raw.nextStage = { ...newNextStage([]), cashOnHand: { amount: 5000, cadence: 'one-off', status: 'known' } };
   raw.eras = { cashNow: { amount: 7000, status: 'known' }, list: [] };
   const d = migrate(raw);
-  assert.deepEqual(d.accounts.map((a) => [a.name, a.state]), [['Cash on hand', 'active'], ['Cash on hand (Eras cash now)', 'archived']]);
+  assert.deepEqual(
+    d.accounts.map((a) => [a.name, a.state]),
+    [
+      ['Cash on hand', 'active'],
+      ['Cash on hand (Eras cash now)', 'archived']
+    ]
+  );
   // Archived accounts do not count: cash on hand is 5,000, and 7,000 is still on file.
   assert.equal(cashOnHand(d).amount, 5000);
   assert.equal(d.balances['2026-10'][d.accounts[1].id].start.amount, 7000);
@@ -103,7 +118,10 @@ test('cash on hand: checking + savings + cash at the latest end, else this month
   const b = balancesFor(d, '2026-10');
   // cash start 1,250 + 4,000 + 60 = 5,310; cash end missing (savings, wallet)
   assert.deepEqual([b.cashStart, b.cashEnd, b.cardsStart, b.cardsEnd], [5310, null, 600, null]);
-  assert.deepEqual(b.missing.map((m) => m.name + ' ' + m.which), ['Savings end', 'Visa end', 'Wallet end']);
+  assert.deepEqual(
+    b.missing.map((m) => m.name + ' ' + m.which),
+    ['Savings end', 'Visa end', 'Wallet end']
+  );
   assert.deepEqual(validateHousehold(d), []);
 });
 
@@ -112,7 +130,16 @@ test('Next stage and Eras read cash from the balances', () => {
   setBalance(d, '2026-10', chk.id, 'start', one(2000));
   setBalance(d, '2026-10', sav.id, 'start', one(3000));
   d.noDebts = true;
-  d.income.push({ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(4000), gross: makeValue(), deductions: [], state: 'active' });
+  d.income.push({
+    id: 'job',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: makeValue(4000),
+    gross: makeValue(),
+    deductions: [],
+    state: 'active'
+  });
   d.nextStage = newNextStage([]);
   d.nextStage.takeHome = makeValue(3000);
   const s = buildSummary(migrate(d), refs);
@@ -164,9 +191,18 @@ test('every credit card: which debt it pays down, and what goes on it', async ()
   const amex = addDebt(d, { label: 'Amex', type: 'credit-card' });
   addDebt(d, { label: 'Chase', type: 'credit-card' });
   addDebt(d, { label: 'Car', type: 'car-loan' });
-  assert.deepEqual(cardMap(d, '2026-10').noAccount.map((x) => x.label), ['Amex', 'Chase']);
+  assert.deepEqual(
+    cardMap(d, '2026-10').noAccount.map((x) => x.label),
+    ['Amex', 'Chase']
+  );
   assert.equal(addCardAccounts(d), 2);
-  assert.deepEqual(d.accounts.map((a) => [a.name, a.type, a.debtId === amex.id]), [['Amex', 'credit-card', true], ['Chase', 'credit-card', false]]);
+  assert.deepEqual(
+    d.accounts.map((a) => [a.name, a.type, a.debtId === amex.id]),
+    [
+      ['Amex', 'credit-card', true],
+      ['Chase', 'credit-card', false]
+    ]
+  );
   assert.equal(addCardAccounts(d), 0, 'running it again adds nothing');
   const amexAcct = d.accounts[0].id;
   findLine(d, 'groceries').line.accountId = amexAcct;
@@ -175,8 +211,13 @@ test('every credit card: which debt it pays down, and what goes on it', async ()
   addEntry(d, { date: '2026-09-30', amount: 15, lineId: 'gas', account: amexAcct });
   const m = cardMap(d, '2026-10');
   assert.deepEqual(m.noAccount, []);
-  assert.deepEqual(m.rows.map((r) => [r.name, r.debt && r.debt.label, r.paidOn, r.loggedCount, r.loggedAmount]),
-    [['Amex', 'Amex', ['Groceries'], 2, 70], ['Chase', 'Chase', [], 0, 0]]);
+  assert.deepEqual(
+    m.rows.map((r) => [r.name, r.debt && r.debt.label, r.paidOn, r.loggedCount, r.loggedAmount]),
+    [
+      ['Amex', 'Amex', ['Groceries'], 2, 70],
+      ['Chase', 'Chase', [], 0, 0]
+    ]
+  );
 });
 
 // The Accounts pass (S-103), by hand. October: checking end 1,000; savings start 2,000 (no end yet, so its start

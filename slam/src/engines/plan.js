@@ -20,7 +20,10 @@ const copy = (v) => JSON.parse(JSON.stringify(v));
 export function prevMonthKey(key) {
   let [y, m] = key.split('-').map(Number);
   m -= 1;
-  if (m < 1) { m = 12; y -= 1; }
+  if (m < 1) {
+    m = 12;
+    y -= 1;
+  }
   return y + '-' + String(m).padStart(2, '0');
 }
 
@@ -36,7 +39,14 @@ export function modelForMonth(doc, key) {
   // Another open month: its typed actuals live in doc.monthActuals; a line with none is blank there, never this
   // month's number.
   const saved = (doc.monthActuals || {})[key] || {};
-  return budgetModel({ ...doc, currentMonth: key, categories: doc.categories.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l, actual: saved[l.id] || blank })) })) });
+  return budgetModel({
+    ...doc,
+    currentMonth: key,
+    categories: doc.categories.map((c) => ({
+      ...c,
+      lines: c.lines.map((l) => ({ ...l, actual: saved[l.id] || blank }))
+    }))
+  });
 }
 
 /**
@@ -71,9 +81,24 @@ export function actualsFor(doc, history, key) {
       for (const l of c.lines) lines[l.id] = l.actual;
     }
   }
-  const spending = sumKnown(Object.keys(cats).filter((id) => !savings[id]).map((id) => cats[id])).total;
-  const saved = sumKnown(Object.keys(cats).filter((id) => savings[id]).map((id) => cats[id])).total;
-  return { key, closed: !!closed, lines, cats, spending, outflow: spending === null && saved === null ? null : (spending || 0) + (saved || 0) };
+  const spending = sumKnown(
+    Object.keys(cats)
+      .filter((id) => !savings[id])
+      .map((id) => cats[id])
+  ).total;
+  const saved = sumKnown(
+    Object.keys(cats)
+      .filter((id) => savings[id])
+      .map((id) => cats[id])
+  ).total;
+  return {
+    key,
+    closed: !!closed,
+    lines,
+    cats,
+    spending,
+    outflow: spending === null && saved === null ? null : (spending || 0) + (saved || 0)
+  };
 }
 
 /**
@@ -90,19 +115,39 @@ export function planView(doc, month) {
   if (!plan) return null;
   const freq = primaryPayFrequency(doc);
   const pm = modelForMonth(doc, month);
-  const cats = pm.categories.filter((c) => !c.notForMe).map((c) => {
-    if (c.isDebt) return { id: c.id, name: c.name, savings: false, isDebt: true, byCategory: true, amount: c.estimate.amount, lines: {} };
-    const ce = plan.lines['cat:' + c.id];
-    // A typed interest line replaced by computed interest (S-133) plans nothing: Debt payments has it.
-    const lines = Object.fromEntries(c.lines.map((l) => [l.id, plan.lines[l.id] && l.covered !== 'computed-interest' ? toMonthly(plan.lines[l.id].amount, freq) : null]));
-    const amount = ce ? toMonthly(ce.amount, freq) : sumKnown(Object.values(lines)).total;
-    return { id: c.id, name: c.name, savings: c.savings, isDebt: false, byCategory: !!ce, amount, lines };
-  });
+  const cats = pm.categories
+    .filter((c) => !c.notForMe)
+    .map((c) => {
+      if (c.isDebt)
+        return {
+          id: c.id,
+          name: c.name,
+          savings: false,
+          isDebt: true,
+          byCategory: true,
+          amount: c.estimate.amount,
+          lines: {}
+        };
+      const ce = plan.lines['cat:' + c.id];
+      // A typed interest line replaced by computed interest (S-133) plans nothing: Debt payments has it.
+      const lines = Object.fromEntries(
+        c.lines.map((l) => [
+          l.id,
+          plan.lines[l.id] && l.covered !== 'computed-interest' ? toMonthly(plan.lines[l.id].amount, freq) : null
+        ])
+      );
+      const amount = ce ? toMonthly(ce.amount, freq) : sumKnown(Object.values(lines)).total;
+      return { id: c.id, name: c.name, savings: c.savings, isDebt: false, byCategory: !!ce, amount, lines };
+    });
   const spending = sumKnown(cats.filter((c) => !c.savings).map((c) => c.amount)).total;
   const saved = sumKnown(cats.filter((c) => c.savings).map((c) => c.amount)).total;
   return {
-    month, createdFrom: plan.createdFrom, cats: Object.fromEntries(cats.map((c) => [c.id, c])),
-    spending, savings: saved, outflow: spending === null && saved === null ? null : (spending || 0) + (saved || 0)
+    month,
+    createdFrom: plan.createdFrom,
+    cats: Object.fromEntries(cats.map((c) => [c.id, c])),
+    spending,
+    savings: saved,
+    outflow: spending === null && saved === null ? null : (spending || 0) + (saved || 0)
   };
 }
 
@@ -139,7 +184,7 @@ export function planStartValues(doc, history, source, reviewMonth, planMonth) {
         // The typed Value is copied when there is one (it keeps its cadence and status); a closed month's number, or
         // an actual from the log, becomes a monthly Value marked known.
         const stored = live(c).lines.find((x) => x.id === l.id);
-        const v = a.closed ? null : (saved ? saved[l.id] : stored && stored.actual);
+        const v = a.closed ? null : saved ? saved[l.id] : stored && stored.actual;
         out[l.id] = v && hasAnswer(v) ? copy(v) : { ...blank, amount: a.lines[l.id], status: 'known' };
       }
     }
@@ -155,7 +200,10 @@ export function planStartValues(doc, history, source, reviewMonth, planMonth) {
       continue;
     }
     // A category broken down in Rough keeps its first number stored, but the lines carry the estimate now.
-    if (hasAnswer(stored[col]) && !(col === 'estimate' && stored.split)) { out['cat:' + c.id] = copy(stored[col]); continue; }
+    if (hasAnswer(stored[col]) && !(col === 'estimate' && stored.split)) {
+      out['cat:' + c.id] = copy(stored[col]);
+      continue;
+    }
     for (const l of stored.lines) if (l.state !== 'archived' && hasAnswer(l[col])) out[l.id] = copy(l[col]);
   }
   return out;
@@ -184,7 +232,16 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
   const pm = modelForMonth(doc, planMonth);
   const spendLines = pm.categories.filter((c) => !c.savings && !c.isDebt).flatMap((c) => c.lines);
   // Joy and stress are rated on every line but the computed debt lines; savings lines count (the positives).
-  const allLines = pm.categories.filter((c) => !c.isDebt).flatMap((c) => c.lines).map((l) => ({ id: l.id, name: l.name, joy: l.joy, stress: l.stress, amount: act.lines[l.id] === undefined ? null : act.lines[l.id] }));
+  const allLines = pm.categories
+    .filter((c) => !c.isDebt)
+    .flatMap((c) => c.lines)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      joy: l.joy,
+      stress: l.stress,
+      amount: act.lines[l.id] === undefined ? null : act.lines[l.id]
+    }));
   const joy = happinessOf(allLines);
   const strain = stressOf(allLines);
   const groups = [];
@@ -193,52 +250,112 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
     const pc = plan ? plan.cats[c.id] : null;
     const byCategory = !!(pc && pc.byCategory && !c.isDebt);
     const rowOf = (key, name, src, extra) => {
-      const actual = key.startsWith('cat:') ? (act.cats[c.id] === undefined ? null : act.cats[c.id]) : (act.lines[src.id] === undefined ? null : act.lines[src.id]);
+      const actual = key.startsWith('cat:')
+        ? act.cats[c.id] === undefined
+          ? null
+          : act.cats[c.id]
+        : act.lines[src.id] === undefined
+          ? null
+          : act.lines[src.id];
       // A debt row's plan is its computed minimum; nothing is typed for it. Savings take no share of spending.
-      const planAmt = c.isDebt ? src.estimate : key.startsWith('cat:') ? (pc ? pc.amount : null) : (pc ? pc.lines[src.id] : null);
+      const planAmt = c.isDebt
+        ? src.estimate
+        : key.startsWith('cat:')
+          ? pc
+            ? pc.amount
+            : null
+          : pc
+            ? pc.lines[src.id]
+            : null;
       const est = key.startsWith('cat:') ? c.estimate.amount : src.estimate;
       const e = entries[key] || null;
       return {
-        key, name, catId: c.id, savings: c.savings, computed: !!c.isDebt,
-        actual, estimate: est, plan: planAmt,
+        key,
+        name,
+        catId: c.id,
+        savings: c.savings,
+        computed: !!c.isDebt,
+        actual,
+        estimate: est,
+        plan: planAmt,
         pctIncome: { actual: ratio(actual, th), plan: ratio(planAmt, th), estimate: ratio(est, th) },
-        pctSpending: c.savings ? { actual: null, plan: null } : { actual: ratio(actual, act.spending), plan: ratio(planAmt, plan ? plan.spending : null) },
+        pctSpending: c.savings
+          ? { actual: null, plan: null }
+          : { actual: ratio(actual, act.spending), plan: ratio(planAmt, plan ? plan.spending : null) },
         happiness: key.startsWith('cat:') ? null : joy.byId[src.id] || null,
         stress: key.startsWith('cat:') || c.isDebt ? null : strain.byId[src.id] || null,
         gapFromEstimate: minus(actual, est),
         addedInReview: !!(src && src.addedFor) || (e && e.decision === 'new'),
-        decision: e ? e.decision : null, reviewed: e ? e.reviewed : false, stop: e ? e.stop : false, note: e ? e.note : '',
+        decision: e ? e.decision : null,
+        reviewed: e ? e.reviewed : false,
+        stop: e ? e.stop : false,
+        note: e ? e.note : '',
         startAmount: e ? toMonthly(e.start, primaryPayFrequency(doc)) : null,
         ...extra
       };
     };
-    const lineOf = (l) => ({ ...l, addedFor: (doc.categories.find((x) => x.id === c.id).lines.find((x) => x.id === l.id) || {}).addedFor || null });
-    const rows = c.isDebt ? c.lines.map((l) => rowOf(l.id, l.name, l))
-      : byCategory ? [rowOf('cat:' + c.id, 'All of ' + c.name + ' (one number)', null)]
+    const lineOf = (l) => ({
+      ...l,
+      addedFor: (doc.categories.find((x) => x.id === c.id).lines.find((x) => x.id === l.id) || {}).addedFor || null
+    });
+    const rows = c.isDebt
+      ? c.lines.map((l) => rowOf(l.id, l.name, l))
+      : byCategory
+        ? [rowOf('cat:' + c.id, 'All of ' + c.name + ' (one number)', null)]
         : c.lines.map((l) => rowOf(l.id, l.name, lineOf(l)));
-    groups.push({ id: c.id, name: c.name, type: c.type, savings: c.savings, isDebt: c.isDebt, byCategory, rows, actual: act.cats[c.id] === undefined ? null : act.cats[c.id], plan: pc ? pc.amount : null, estimate: c.estimate.amount });
+    groups.push({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      savings: c.savings,
+      isDebt: c.isDebt,
+      byCategory,
+      rows,
+      actual: act.cats[c.id] === undefined ? null : act.cats[c.id],
+      plan: pc ? pc.amount : null,
+      estimate: c.estimate.amount
+    });
   }
   // Lines ticked off per category (S-106: a collapsed category says how far its review is).
   for (const g of groups) g.reviewed = g.rows.filter((r) => r.reviewed).length;
   const plannable = groups.filter((g) => !g.isDebt).flatMap((g) => g.rows);
   const reviewed = plannable.filter((r) => r.reviewed).length;
   const catOf = Object.fromEntries(pm.categories.flatMap((c) => c.lines.map((l) => [l.id, c.id])));
-  const planLines = spendLines.map((l) => ({ joy: l.joy, amount: plan && plan.cats[catOf[l.id]] ? plan.cats[catOf[l.id]].lines[l.id] : null }));
-  const actLines = spendLines.map((l) => ({ joy: l.joy, amount: act.lines[l.id] === undefined ? null : act.lines[l.id] }));
+  const planLines = spendLines.map((l) => ({
+    joy: l.joy,
+    amount: plan && plan.cats[catOf[l.id]] ? plan.cats[catOf[l.id]].lines[l.id] : null
+  }));
+  const actLines = spendLines.map((l) => ({
+    joy: l.joy,
+    amount: act.lines[l.id] === undefined ? null : act.lines[l.id]
+  }));
   // The happy share: dollars on spending lines rated 7 or more, over the column's spending.
   const happyNow = happySpendShare(actLines, act.spending);
   const happyPlan = plan ? happySpendShare(planLines, plan.spending) : null;
   const totals = {
     takeHome: th,
-    plan: plan ? plan.outflow : null, planSpending: plan ? plan.spending : null,
+    plan: plan ? plan.outflow : null,
+    planSpending: plan ? plan.spending : null,
     planLeft: plan ? minus(th, plan.outflow) : null,
-    actual: act.outflow, actualSpending: act.spending,
+    actual: act.outflow,
+    actualSpending: act.spending,
     // frees = this month's actual outflow - next month's plan: positive when the plan spends less.
     frees: plan ? minus(act.outflow, plan.outflow) : null,
     planPctIncome: plan ? ratio(plan.outflow, th) : null,
-    happyNow, happyPlan, happyChange: happyNow === null || happyPlan === null ? null : happyPlan - happyNow
+    happyNow,
+    happyPlan,
+    happyChange: happyNow === null || happyPlan === null ? null : happyPlan - happyNow
   };
-  const out = { reviewMonth, planMonth, exists: !!plan, createdFrom: plan ? plan.createdFrom : null, groups, checklist: { reviewed, total: plannable.length }, totals, ratedPoints: joy.points };
+  const out = {
+    reviewMonth,
+    planMonth,
+    exists: !!plan,
+    createdFrom: plan ? plan.createdFrom : null,
+    groups,
+    checklist: { reviewed, total: plannable.length },
+    totals,
+    ratedPoints: joy.points
+  };
   out.reading = reviewReading(out);
   return out;
 }
@@ -253,19 +370,43 @@ export function reviewReading(r) {
   if (!r.exists) return 'Start a plan for next month to see what it would change.';
   const out = [];
   // Within 50 cents counts as a match, since the sentence shows whole dollars.
-  if (t.frees !== null) out.push(t.frees > 0.5 ? "Next month's plan frees " + dollars(t.frees) + '.' : t.frees < -0.5 ? "Next month's plan spends " + dollars(t.frees) + ' more than this month.' : "Next month's plan matches this month's actual.");
+  if (t.frees !== null)
+    out.push(
+      t.frees > 0.5
+        ? "Next month's plan frees " + dollars(t.frees) + '.'
+        : t.frees < -0.5
+          ? "Next month's plan spends " + dollars(t.frees) + ' more than this month.'
+          : "Next month's plan matches this month's actual."
+    );
   const rows = r.groups.filter((g) => !g.isDebt).flatMap((g) => g.rows);
   const cuts = rows.filter((x) => x.decision === 'cut');
   if (cuts.length) {
     // For the sentence only: a cut line with no actual or no rating adds nothing to these shares.
     const spend = cuts.reduce((a, x) => a + (x.actual || 0), 0);
     const joy = cuts.reduce((a, x) => a + (x.happiness && x.happiness.share ? x.happiness.share : 0), 0);
-    out.push('The cuts were in ' + list(cuts.map((x) => x.name)) + ', which held ' + pct(ratio(spend, t.actualSpending) || 0) + ' of spending and ' + pct(joy) + ' of happiness.');
+    out.push(
+      'The cuts were in ' +
+        list(cuts.map((x) => x.name)) +
+        ', which held ' +
+        pct(ratio(spend, t.actualSpending) || 0) +
+        ' of spending and ' +
+        pct(joy) +
+        ' of happiness.'
+    );
   }
   const changes = rows.filter((x) => x.decision === 'change' && x.plan !== null);
-  for (const x of changes.slice(0, 3)) out.push(x.name + ' changes from ' + (x.actual === null ? 'no actual' : dollars(x.actual)) + ' to ' + dollars(x.plan) + '.');
+  for (const x of changes.slice(0, 3))
+    out.push(
+      x.name + ' changes from ' + (x.actual === null ? 'no actual' : dollars(x.actual)) + ' to ' + dollars(x.plan) + '.'
+    );
   const added = rows.filter((x) => x.decision === 'new');
-  if (added.length) out.push('Added: ' + list(added.map((x) => x.name + (x.plan !== null ? ' at ' + dollars(x.plan) : ''))) + '.');
-  if (t.planLeft !== null) out.push(t.planLeft >= 0 ? 'The plan leaves ' + dollars(t.planLeft) + ' of take-home.' : 'The plan is ' + dollars(t.planLeft) + ' over take-home.');
+  if (added.length)
+    out.push('Added: ' + list(added.map((x) => x.name + (x.plan !== null ? ' at ' + dollars(x.plan) : ''))) + '.');
+  if (t.planLeft !== null)
+    out.push(
+      t.planLeft >= 0
+        ? 'The plan leaves ' + dollars(t.planLeft) + ' of take-home.'
+        : 'The plan is ' + dollars(t.planLeft) + ' over take-home.'
+    );
   return out.join(' ');
 }

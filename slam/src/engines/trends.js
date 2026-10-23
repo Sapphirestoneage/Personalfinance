@@ -27,13 +27,18 @@ const mean = (xs) => (xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : nu
  * @returns {string[]} months 'YYYY-MM'
  */
 export function trendMonths(doc, history, range) {
-  const all = [...new Set([...history.allKeys, ...counted(doc.transactions).map((t) => monthOf(t.date)), doc.currentMonth])].sort();
+  const all = [
+    ...new Set([...history.allKeys, ...counted(doc.transactions).map((t) => monthOf(t.date)), doc.currentMonth])
+  ].sort();
   if (range === 'all') return all;
   const n = Number(range) || 12;
   const out = [];
   let k = doc.currentMonth;
   // Never before the first month with data, so empty months do not show as zeros.
-  for (let i = 0; i < n && k >= all[0]; i++) { out.unshift(k); k = prevMonthKey(k); }
+  for (let i = 0; i < n && k >= all[0]; i++) {
+    out.unshift(k);
+    k = prevMonthKey(k);
+  }
   return out;
 }
 
@@ -57,7 +62,9 @@ const spendEntries = (doc, months) => {
  *   creep is the detect() priceCreep row ({ from, to, monthly, yearly, date }) or null
  */
 export function merchantPrices(doc, merchant, months) {
-  const list = spendEntries(doc, months).filter((t) => t.merchant === merchant && t.kind === 'spend' && t.amount > 0).map((t) => ({ date: t.date, amount: t.amount }));
+  const list = spendEntries(doc, months)
+    .filter((t) => t.merchant === merchant && t.kind === 'spend' && t.amount > 0)
+    .map((t) => ({ date: t.date, amount: t.amount }));
   // Creep is detected over the whole log, not just the range, so a rise seen earlier still shows.
   const creep = detect(doc.transactions).priceCreep.find((p) => p.merchant === merchant) || null;
   return { merchant, charges: list, creep };
@@ -100,7 +107,9 @@ export function merchantRange(visits) {
 export function categoryCharges(doc, catId, months) {
   const cat = doc.categories.find((c) => c.id === catId);
   const ids = new Set(cat ? cat.lines.map((l) => l.id) : []);
-  return spendEntries(doc, months).filter((t) => ids.has(t.lineId) && PURCHASE.has(t.kind) && t.amount > 0).map((t) => ({ date: t.date, amount: t.amount, label: t.description || t.note || '' }));
+  return spendEntries(doc, months)
+    .filter((t) => ids.has(t.lineId) && PURCHASE.has(t.kind) && t.amount > 0)
+    .map((t) => ({ date: t.date, amount: t.amount, label: t.description || t.note || '' }));
 }
 
 /**
@@ -111,8 +120,11 @@ export function categoryCharges(doc, catId, months) {
  */
 export function merchantsIn(doc, months) {
   const g = {};
-  for (const t of spendEntries(doc, months)) if (t.merchant && PURCHASE.has(t.kind)) g[t.merchant] = (g[t.merchant] || 0) + t.amount;
-  return Object.entries(g).sort((a, b) => b[1] - a[1]).map(([m]) => m);
+  for (const t of spendEntries(doc, months))
+    if (t.merchant && PURCHASE.has(t.kind)) g[t.merchant] = (g[t.merchant] || 0) + t.amount;
+  return Object.entries(g)
+    .sort((a, b) => b[1] - a[1])
+    .map(([m]) => m);
 }
 
 // ---- By category or line ----
@@ -132,7 +144,9 @@ export function monthlySeries(doc, history, focus, months) {
     const a = actualsFor(doc, history, m);
     const rec = (doc.months || []).find((x) => x.key === m);
     const plan = planView(doc, m);
-    let actual; let estimate = null; let planAmt = null;
+    let actual;
+    let estimate = null;
+    let planAmt = null;
     // The estimate comes from the closed month's snapshot, so an open month has none yet.
     if (focus.kind === 'category') {
       actual = a.cats[focus.id] === undefined ? null : a.cats[focus.id];
@@ -142,22 +156,41 @@ export function monthlySeries(doc, history, focus, months) {
       actual = a.lines[focus.id] === undefined ? null : a.lines[focus.id];
       if (rec && rec.snapshot.lines[focus.id]) estimate = rec.snapshot.lines[focus.id].estimate;
       // The plan keys lines under their category, so every category is checked for this line.
-      if (plan) for (const c of Object.values(plan.cats)) if (c.lines[focus.id] !== undefined) planAmt = c.lines[focus.id];
+      if (plan)
+        for (const c of Object.values(plan.cats)) if (c.lines[focus.id] !== undefined) planAmt = c.lines[focus.id];
     }
     return { month: m, actual, estimate, plan: planAmt };
   });
   // This month and the two before it; a month not entered is skipped, never counted as zero.
   rows.forEach((r, i) => {
-    const win = rows.slice(Math.max(0, i - 2), i + 1).map((x) => x.actual).filter((x) => x !== null);
+    const win = rows
+      .slice(Math.max(0, i - 2), i + 1)
+      .map((x) => x.actual)
+      .filter((x) => x !== null);
     r.rolling3 = win.length ? r2(mean(win)) : null;
   });
   const last = rows.filter((r) => r.actual !== null).slice(-1)[0] || null;
   // The year-ago month is usually outside the range, so it is read straight from actualsFor then.
-  const yearAgo = last ? rows.find((r) => r.month === lastYear(last.month)) || { month: lastYear(last.month), actual: actualsFor(doc, history, lastYear(last.month))[focus.kind === 'category' ? 'cats' : 'lines'][focus.id] ?? null } : null;
-  return { focus, rows, sameMonthLastYear: last && yearAgo && yearAgo.actual !== null && yearAgo.actual !== undefined ? { month: last.month, now: last.actual, then: yearAgo.actual, change: r2(last.actual - yearAgo.actual) } : null };
+  const yearAgo = last
+    ? rows.find((r) => r.month === lastYear(last.month)) || {
+        month: lastYear(last.month),
+        actual:
+          actualsFor(doc, history, lastYear(last.month))[focus.kind === 'category' ? 'cats' : 'lines'][focus.id] ?? null
+      }
+    : null;
+  return {
+    focus,
+    rows,
+    sameMonthLastYear:
+      last && yearAgo && yearAgo.actual !== null && yearAgo.actual !== undefined
+        ? { month: last.month, now: last.actual, then: yearAgo.actual, change: r2(last.actual - yearAgo.actual) }
+        : null
+  };
 }
 
-function lastYear(m) { return (Number(m.slice(0, 4)) - 1) + m.slice(4); }
+function lastYear(m) {
+  return Number(m.slice(0, 4)) - 1 + m.slice(4);
+}
 
 /**
  * Spending categories by month: a heatmap and one sparkline each.
@@ -173,7 +206,13 @@ export function categoryGrid(doc, history, months) {
   const cols = months.map((m) => actualsFor(doc, history, m));
   // A category blank or zero across the whole range is left out. The total only ranks rows, so a
   // month not entered adds nothing to it; the cells themselves keep their null.
-  const rows = cats.map((c) => ({ id: c.id, name: c.name, values: cols.map((a) => (a.cats[c.id] === undefined ? null : a.cats[c.id])) })).filter((r) => r.values.some((v) => v !== null && v !== 0))
+  const rows = cats
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      values: cols.map((a) => (a.cats[c.id] === undefined ? null : a.cats[c.id]))
+    }))
+    .filter((r) => r.values.some((v) => v !== null && v !== 0))
     .map((r) => ({ ...r, total: r.values.reduce((a, v) => a + (v || 0), 0) }));
   const all = rows.flatMap((r) => r.values).filter((v) => v !== null);
   // The darkest row: the biggest total over the range (a tie keeps the category order).
@@ -197,9 +236,18 @@ export function monthOverMonth(doc, history, month) {
   const b = actualsFor(doc, history, month);
   const cats = doc.categories.filter((c) => !c.savings);
   // A category entered in only one of the two months steps from or to zero, so the steps add up to the change in total.
-  const steps = cats.map((c) => ({ id: c.id, name: c.name, change: r2((b.cats[c.id] || 0) - (a.cats[c.id] || 0)) })).filter((x) => Math.abs(x.change) >= 0.005)
+  const steps = cats
+    .map((c) => ({ id: c.id, name: c.name, change: r2((b.cats[c.id] || 0) - (a.cats[c.id] || 0)) }))
+    .filter((x) => Math.abs(x.change) >= 0.005)
     .sort((x, y) => Math.abs(y.change) - Math.abs(x.change));
-  return { from: prev, to: month, before: r2(a.spending), after: r2(b.spending), steps, change: r2((b.spending || 0) - (a.spending || 0)) };
+  return {
+    from: prev,
+    to: month,
+    before: r2(a.spending),
+    after: r2(b.spending),
+    steps,
+    change: r2((b.spending || 0) - (a.spending || 0))
+  };
 }
 
 /**
@@ -214,9 +262,16 @@ export function monthOverMonth(doc, history, month) {
 export function waterfallSteps(mom, limit = 8) {
   const steps = [];
   let run = mom.before || 0;
-  for (const x of mom.steps.slice(0, limit)) { steps.push({ id: x.id, name: x.name, change: x.change, from: run, to: run + x.change }); run += x.change; }
+  for (const x of mom.steps.slice(0, limit)) {
+    steps.push({ id: x.id, name: x.name, change: x.change, from: run, to: run + x.change });
+    run += x.change;
+  }
   let rest = null;
-  if (mom.steps.length > limit) { const change = mom.steps.slice(limit).reduce((a, x) => a + x.change, 0); rest = { change, from: run, to: run + change }; run += change; }
+  if (mom.steps.length > limit) {
+    const change = mom.steps.slice(limit).reduce((a, x) => a + x.change, 0);
+    rest = { change, from: run, to: run + change };
+    run += change;
+  }
   return { before: mom.before || 0, steps, rest, after: mom.after || 0 };
 }
 
@@ -233,12 +288,22 @@ export function pacing(doc, month, planSpending) {
     const out = new Array(n).fill(0);
     // Refunds and reimbursements (negative amounts) pull the line back down. One-offs stay out, as in
     // the budget, and a purchase someone will pay back counts only the client's share (amount - owed).
-    for (const t of spendEntries(doc, [m])) if (SPEND.has(t.kind) && !t.oneOff) out[Number(t.date.slice(8)) - 1] += t.amount - (t.owed || 0);
+    for (const t of spendEntries(doc, [m]))
+      if (SPEND.has(t.kind) && !t.oneOff) out[Number(t.date.slice(8)) - 1] += t.amount - (t.owed || 0);
     let run = 0;
-    return out.map((x) => { run += x; return r2(run); });
+    return out.map((x) => {
+      run += x;
+      return r2(run);
+    });
   };
   const n = daysInMonth(month);
-  return { month, days: n, now: byDay(month), last: byDay(prevMonthKey(month)), plan: planSpending === null ? null : Array.from({ length: n }, (_, i) => r2((planSpending * (i + 1)) / n)) };
+  return {
+    month,
+    days: n,
+    now: byDay(month),
+    last: byDay(prevMonthKey(month)),
+    plan: planSpending === null ? null : Array.from({ length: n }, (_, i) => r2((planSpending * (i + 1)) / n))
+  };
 }
 
 /**
@@ -249,7 +314,8 @@ export function pacing(doc, month, planSpending) {
  */
 export function dayOfMonth(doc, months) {
   const sums = new Array(31).fill(0);
-  for (const t of spendEntries(doc, months)) if (SPEND.has(t.kind) && !t.oneOff) sums[Number(t.date.slice(8)) - 1] += t.amount - (t.owed || 0);
+  for (const t of spendEntries(doc, months))
+    if (SPEND.has(t.kind) && !t.oneOff) sums[Number(t.date.slice(8)) - 1] += t.amount - (t.owed || 0);
   // Every day divides by the whole range, so the 29th to 31st read low when short months are in it.
   return sums.map((s, i) => ({ day: i + 1, average: r2(s / months.length) }));
 }
@@ -273,18 +339,25 @@ export function fixedFloor(totals) {
  *   ratio (sd / mean); biggest swing first; needs two months with actuals and some swing
  */
 export function volatility(grid, n = 3) {
-  return grid.rows.map((r) => {
-    const xs = r.values.filter((v) => v !== null);
-    const m = mean(xs);
-    if (xs.length < 2 || !m) return null;
-    // Population deviation (divide by the count, not count - 1): these are all the months there are, not a sample.
-    const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) * (x - m), 0) / xs.length);
-    return { id: r.id, name: r.name, mean: r2(m), sd: r2(sd), swing: sd / m };
-  }).filter((v) => v && v.sd > 0).sort((a, b) => b.swing - a.swing).slice(0, n);
+  return grid.rows
+    .map((r) => {
+      const xs = r.values.filter((v) => v !== null);
+      const m = mean(xs);
+      if (xs.length < 2 || !m) return null;
+      // Population deviation (divide by the count, not count - 1): these are all the months there are, not a sample.
+      const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) * (x - m), 0) / xs.length);
+      return { id: r.id, name: r.name, mean: r2(m), sd: r2(sd), swing: sd / m };
+    })
+    .filter((v) => v && v.sd > 0)
+    .sort((a, b) => b.swing - a.swing)
+    .slice(0, n);
 }
 
 // A snapshot's spending total: savings categories out, a category not entered adds nothing.
-const totalOf = (snap) => Object.values(snap.categories).filter((c) => !c.savings).reduce((a, c) => (c.actual === null ? a : a + c.actual), 0);
+const totalOf = (snap) =>
+  Object.values(snap.categories)
+    .filter((c) => !c.savings)
+    .reduce((a, c) => (c.actual === null ? a : a + c.actual), 0);
 
 /**
  * Spending trend vs take-home trend: change per month from the first to the last closed month in the range.
@@ -296,18 +369,28 @@ const totalOf = (snap) => Object.values(snap.categories).filter((c) => !c.saving
  */
 export function lifestyleCreep(doc, history, months) {
   // Closed months only: take-home comes from the locked snapshot, so both lines use the same months.
-  const pts = months.map((m) => ({ m, a: actualsFor(doc, history, m), rec: (doc.months || []).find((x) => x.key === m) })).filter((p) => p.a.spending !== null && p.rec);
+  const pts = months
+    .map((m) => ({ m, a: actualsFor(doc, history, m), rec: (doc.months || []).find((x) => x.key === m) }))
+    .filter((p) => p.a.spending !== null && p.rec);
   if (pts.length < 2) return null;
   const first = pts[0];
   const last = pts[pts.length - 1];
   const steps = pts.length - 1;
   // Endpoints only, not a fitted line: (last - first) / the months between them.
-  return { from: first.m, to: last.m, spendingPerMonth: r2((last.a.spending - first.a.spending) / steps), takeHomePerMonth: r2(((last.rec.snapshot.takeHome || 0) - (first.rec.snapshot.takeHome || 0)) / steps) };
+  return {
+    from: first.m,
+    to: last.m,
+    spendingPerMonth: r2((last.a.spending - first.a.spending) / steps),
+    takeHomePerMonth: r2(((last.rec.snapshot.takeHome || 0) - (first.rec.snapshot.takeHome || 0)) / steps)
+  };
 }
 
 // Off by a factor with the direction dropped: 1.25 whether actual ran 25% over the estimate or the
 // estimate ran 25% over actual. Null when either side is missing or zero.
-const offBy = (a, e) => { const r = ratio(a, e); return r === null || r <= 0 ? null : r2(r >= 1 ? r : 1 / r); };
+const offBy = (a, e) => {
+  const r = ratio(a, e);
+  return r === null || r <= 0 ? null : r2(r >= 1 ? r : 1 / r);
+};
 
 /**
  * How far off the estimates were, month by month (closed months only).
@@ -317,11 +400,14 @@ const offBy = (a, e) => { const r = ratio(a, e); return r === null || r <= 0 ? n
  *   null when a month's actual or estimate total is missing or zero
  */
 export function learningCurve(doc, months) {
-  return months.map((m) => (doc.months || []).find((x) => x.key === m)).filter(Boolean).map((rec) => {
-    const cs = Object.values(rec.snapshot.categories).filter((c) => !c.savings);
-    const e = cs.reduce((a, c) => (c.estimate === null ? a : a + c.estimate), 0);
-    return { month: rec.key, offBy: offBy(totalOf(rec.snapshot), e) };
-  });
+  return months
+    .map((m) => (doc.months || []).find((x) => x.key === m))
+    .filter(Boolean)
+    .map((rec) => {
+      const cs = Object.values(rec.snapshot.categories).filter((c) => !c.savings);
+      const e = cs.reduce((a, c) => (c.estimate === null ? a : a + c.estimate), 0);
+      return { month: rec.key, offBy: offBy(totalOf(rec.snapshot), e) };
+    });
 }
 
 /**
@@ -342,10 +428,25 @@ export function planHitRate(doc, summary, months) {
       const a = actualsFor(doc, summary.history, m);
       // Savings and debt categories stay out, as in the review. Lines missing a plan or an actual land
       // in sortByPlan's notCompared and are not counted either way.
-      g = sortByPlan(Object.values(plan.cats).filter((c) => !c.savings && !c.isDebt).flatMap((c) => Object.entries(c.lines).map(([id, p]) => ({ id, plan: p, actual: a.lines[id] === undefined ? null : a.lines[id] }))));
+      g = sortByPlan(
+        Object.values(plan.cats)
+          .filter((c) => !c.savings && !c.isDebt)
+          .flatMap((c) =>
+            Object.entries(c.lines).map(([id, p]) => ({
+              id,
+              plan: p,
+              actual: a.lines[id] === undefined ? null : a.lines[id]
+            }))
+          )
+      );
     }
     const of = g.better.length + g.onPlan.length + g.worse.length;
-    return { month: m, hits: g.better.length + g.onPlan.length, of, rate: of ? (g.better.length + g.onPlan.length) / of : null };
+    return {
+      month: m,
+      hits: g.better.length + g.onPlan.length,
+      of,
+      rate: of ? (g.better.length + g.onPlan.length) / of : null
+    };
   });
 }
 
@@ -363,8 +464,15 @@ export function notExplained(doc, income, months) {
   const bridges = months.map((m) => bridgeFor(doc, income, m)).filter((b) => b.unexplained !== null);
   // Found by the description: there is no 'cash' kind. Unmapped payments to people are the ones the budget cannot place.
   const atm = es.filter((t) => /\bATM\b|CASH WITHDRAWAL/i.test(t.description || t.merchant || '') && t.amount > 0);
-  const p2p = es.filter((t) => !t.lineId && /VENMO|ZELLE|CASH APP/i.test(t.description || t.merchant || '') && t.amount > 0);
-  return { bridge: r2(bridges.reduce((a, b) => a + b.unexplained, 0)), months: bridges.length, atm: r2(atm.reduce((a, t) => a + t.amount, 0)), p2p: r2(p2p.reduce((a, t) => a + t.amount, 0)) };
+  const p2p = es.filter(
+    (t) => !t.lineId && /VENMO|ZELLE|CASH APP/i.test(t.description || t.merchant || '') && t.amount > 0
+  );
+  return {
+    bridge: r2(bridges.reduce((a, b) => a + b.unexplained, 0)),
+    months: bridges.length,
+    atm: r2(atm.reduce((a, t) => a + t.amount, 0)),
+    p2p: r2(p2p.reduce((a, t) => a + t.amount, 0))
+  };
 }
 
 /**
@@ -378,9 +486,17 @@ export function cardFloat(doc, months) {
   const kind = Object.fromEntries((doc.accounts || []).map((a) => [a.id, a.type]));
   return months.map((m) => {
     const es = spendEntries(doc, [m]);
-    const charged = r2(es.filter((t) => kind[t.account] === 'credit-card' && PURCHASE.has(t.kind) && t.amount > 0).reduce((a, t) => a + t.amount, 0));
+    const charged = r2(
+      es
+        .filter((t) => kind[t.account] === 'credit-card' && PURCHASE.has(t.kind) && t.amount > 0)
+        .reduce((a, t) => a + t.amount, 0)
+    );
     // A payment shows twice when both statements are imported (out of checking, onto the card); only the cash side counts.
-    const paid = r2(es.filter((t) => t.kind === 'card-payment' && t.amount > 0 && kind[t.account] !== 'credit-card').reduce((a, t) => a + t.amount, 0));
+    const paid = r2(
+      es
+        .filter((t) => t.kind === 'card-payment' && t.amount > 0 && kind[t.account] !== 'credit-card')
+        .reduce((a, t) => a + t.amount, 0)
+    );
     return { month: m, charged, paid, gap: r2(charged - paid) };
   });
 }
@@ -396,7 +512,13 @@ export function incomeStability(doc, months) {
   const ids = new Set(doc.income.filter((i) => i.type === '1099' || i.type === 'side').map((i) => i.id));
   if (!ids.size) return null;
   // Income entries are negative (money in), so the sign flips to read as dollars received.
-  const per = months.map((m) => r2(-spendEntries(doc, [m]).filter((t) => t.kind === 'income' && ids.has(t.incomeId)).reduce((a, t) => a + t.amount, 0)));
+  const per = months.map((m) =>
+    r2(
+      -spendEntries(doc, [m])
+        .filter((t) => t.kind === 'income' && ids.has(t.incomeId))
+        .reduce((a, t) => a + t.amount, 0)
+    )
+  );
   const got = per.filter((x) => x > 0);
   if (!got.length) return null;
   // Months with nothing received stay in: a dry month is the point of the stat.
@@ -420,9 +542,16 @@ export function annualizedHabits(doc, months, n = 3) {
     x.total += t.amount;
   }
   // Twice a month is measured over the whole range (count >= 2 x months), not month by month.
-  return Object.values(g).filter((x) => x.total / x.count <= 20 && x.count >= 2 * months.length)
-    .map((x) => ({ merchant: x.merchant, count: x.count, average: r2(x.total / x.count), yearly: r2((x.total / months.length) * 12) }))
-    .sort((a, b) => b.yearly - a.yearly).slice(0, n);
+  return Object.values(g)
+    .filter((x) => x.total / x.count <= 20 && x.count >= 2 * months.length)
+    .map((x) => ({
+      merchant: x.merchant,
+      count: x.count,
+      average: r2(x.total / x.count),
+      yearly: r2((x.total / months.length) * 12)
+    }))
+    .sort((a, b) => b.yearly - a.yearly)
+    .slice(0, n);
 }
 
 /**
@@ -443,5 +572,8 @@ export function forecastAccuracy(doc, months) {
  *   with a review only
  */
 export function trackingByMonth(doc, months) {
-  return months.map((m) => (doc.months || []).find((x) => x.key === m)).filter((rec) => rec && rec.snapshot.review).map((rec) => ({ month: rec.key, share: rec.snapshot.review.tracking.share }));
+  return months
+    .map((m) => (doc.months || []).find((x) => x.key === m))
+    .filter((rec) => rec && rec.snapshot.review)
+    .map((rec) => ({ month: rec.key, share: rec.snapshot.review.tracking.share }));
 }

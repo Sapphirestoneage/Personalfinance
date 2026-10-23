@@ -49,12 +49,31 @@ export function openMonthRecords(doc) {
   // A line with no stored actual for the month is blank (null), never 0.
   const blank = { amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' };
   // A month with only log entries is open too (S-087): its actuals come from the log.
-  const keys = new Set([...Object.keys(doc.monthActuals || {}), ...(doc.transactions || []).map((t) => t.date.slice(0, 7))]);
+  const keys = new Set([
+    ...Object.keys(doc.monthActuals || {}),
+    ...(doc.transactions || []).map((t) => t.date.slice(0, 7))
+  ]);
   // The model is rebuilt as if that month were current, so its lines carry that month's actuals.
-  return [...keys].filter((k) => !closed.has(k) && k !== doc.currentMonth).sort().map((key) => [key, (doc.monthActuals || {})[key] || {}]).map(([key, actuals]) => {
-    const copy = { ...doc, currentMonth: key, categories: doc.categories.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l, actual: actuals[l.id] || blank })) })) };
-    return { key, open: true, snapshot: monthSnapshot(budgetModel(copy), { takeHome: null }), revised: { lines: {} } };
-  });
+  return [...keys]
+    .filter((k) => !closed.has(k) && k !== doc.currentMonth)
+    .sort()
+    .map((key) => [key, (doc.monthActuals || {})[key] || {}])
+    .map(([key, actuals]) => {
+      const copy = {
+        ...doc,
+        currentMonth: key,
+        categories: doc.categories.map((c) => ({
+          ...c,
+          lines: c.lines.map((l) => ({ ...l, actual: actuals[l.id] || blank }))
+        }))
+      };
+      return {
+        key,
+        open: true,
+        snapshot: monthSnapshot(budgetModel(copy), { takeHome: null }),
+        revised: { lines: {} }
+      };
+    });
 }
 
 /**
@@ -75,20 +94,41 @@ export function monthHistory(doc) {
     for (const [catId, c] of Object.entries(rec.snapshot.categories)) {
       const actual = revisedCategoryActual(rec, catId);
       (byCategory[catId] = byCategory[catId] || []).push({
-        key: rec.key, open: !!rec.open, name: c.name, estimate: c.estimate, actual,
-        revised: actual !== c.actual, variancePct: ratio(actual === null || c.estimate === null ? null : actual - c.estimate, c.estimate)
+        key: rec.key,
+        open: !!rec.open,
+        name: c.name,
+        estimate: c.estimate,
+        actual,
+        revised: actual !== c.actual,
+        variancePct: ratio(actual === null || c.estimate === null ? null : actual - c.estimate, c.estimate)
       });
       // Totals are spending only: savings categories stay out, as in the Budget's spending total.
-      if (!c.savings) { estSum.push(c.estimate); actSum.push(actual); }
+      if (!c.savings) {
+        estSum.push(c.estimate);
+        actSum.push(actual);
+      }
     }
     // A month where nothing was entered totals null, not 0.
     const e = sumKnown(estSum).total;
     const a = sumKnown(actSum).total;
-    totals.push({ key: rec.key, open: !!rec.open, estimate: e, actual: a, variancePct: ratio(a === null || e === null ? null : a - e, e) });
+    totals.push({
+      key: rec.key,
+      open: !!rec.open,
+      estimate: e,
+      actual: a,
+      variancePct: ratio(a === null || e === null ? null : a - e, e)
+    });
   }
   const trends = {};
   for (const [catId, pts] of Object.entries(byCategory)) trends[catId] = trendOf(pts);
-  return { keys: months.filter((m) => !m.open).map((m) => m.key), openKeys: months.filter((m) => m.open).map((m) => m.key), allKeys: months.map((m) => m.key), byCategory, totals, trends };
+  return {
+    keys: months.filter((m) => !m.open).map((m) => m.key),
+    openKeys: months.filter((m) => m.open).map((m) => m.key),
+    allKeys: months.map((m) => m.key),
+    byCategory,
+    totals,
+    trends
+  };
 }
 
 /**
@@ -99,7 +139,8 @@ export function monthHistory(doc) {
  */
 export function lastActual(history, catId) {
   const pts = history.byCategory[catId] || [];
-  for (let i = pts.length - 1; i >= 0; i--) if (pts[i].actual !== null) return { key: pts[i].key, amount: pts[i].actual };
+  for (let i = pts.length - 1; i >= 0; i--)
+    if (pts[i].actual !== null) return { key: pts[i].key, amount: pts[i].actual };
   return null;
 }
 
@@ -139,12 +180,29 @@ export function monthRows(doc, history, key) {
         const rev = rec.revised.lines[lineId];
         // original keeps the actual as it was at close, so a revision stays visible next to it.
         const actual = rev ? rev.amount : l.actual;
-        return { id: lineId, name: l.name, estimate: l.estimate, actual, original: l.actual, revised: !!rev, gap: minus(actual, l.estimate), accuracy: ratio(actual, l.estimate) };
+        return {
+          id: lineId,
+          name: l.name,
+          estimate: l.estimate,
+          actual,
+          original: l.actual,
+          revised: !!rev,
+          gap: minus(actual, l.estimate),
+          accuracy: ratio(actual, l.estimate)
+        };
       });
     return {
-      id: catId, name: c.name, savings: !!c.savings, estimate: c.estimate,
-      actual: pt.actual, original: c.actual, revised: pt.revised, gap: minus(pt.actual, c.estimate),
-      gapPct: pt.variancePct, accuracy: ratio(pt.actual, c.estimate), lines
+      id: catId,
+      name: c.name,
+      savings: !!c.savings,
+      estimate: c.estimate,
+      actual: pt.actual,
+      original: c.actual,
+      revised: pt.revised,
+      gap: minus(pt.actual, c.estimate),
+      gapPct: pt.variancePct,
+      accuracy: ratio(pt.actual, c.estimate),
+      lines
     };
   });
 }

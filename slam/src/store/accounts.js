@@ -6,7 +6,16 @@
 // addBalanceCheck in cashflow.js. Each function edits a draft inside store.update.
 
 import { addBalanceCheck } from './cashflow.js';
-import { newAccount, newBalance, ACCOUNT_TYPE_INFO, LIQUIDITY_TIERS, SECURED_TYPES, securedFields, ownedFields, ALTERNATIVES } from './schema.js';
+import {
+  newAccount,
+  newBalance,
+  ACCOUNT_TYPE_INFO,
+  LIQUIDITY_TIERS,
+  SECURED_TYPES,
+  securedFields,
+  ownedFields,
+  ALTERNATIVES
+} from './schema.js';
 
 export function addAccount(doc, fields = {}) {
   const acct = newAccount(fields);
@@ -25,7 +34,12 @@ export function addAccount(doc, fields = {}) {
 
 // One card account for each card debt that has none yet, named and linked to it (S-102). Returns how many.
 export function addCardAccounts(doc) {
-  const taken = new Set(doc.accounts.filter((a) => a.state !== 'archived').map((a) => a.debtId).filter(Boolean));
+  const taken = new Set(
+    doc.accounts
+      .filter((a) => a.state !== 'archived')
+      .map((a) => a.debtId)
+      .filter(Boolean)
+  );
   const free = doc.debts.filter((d) => d.type === 'credit-card' && d.state !== 'archived' && !taken.has(d.id));
   for (const d of free) doc.accounts.push(newAccount({ name: d.label, type: 'credit-card', debtId: d.id }));
   return free.length;
@@ -38,11 +52,13 @@ export function findAccount(doc, id) {
 export function setAccountField(doc, id, field, value) {
   const a = findAccount(doc, id);
   if (!a) throw new Error('No account ' + id);
-  if (!['name', 'type', 'institution', 'state', 'debtId', 'tier', 'countsForFI', 'securedDebtId'].includes(field)) throw new Error('Unknown account field ' + field);
+  if (!['name', 'type', 'institution', 'state', 'debtId', 'tier', 'countsForFI', 'securedDebtId'].includes(field))
+    throw new Error('Unknown account field ' + field);
   if (field === 'name' && !String(value || '').trim()) throw new Error('An account needs a name');
   if (field === 'tier' && !LIQUIDITY_TIERS.includes(value)) throw new Error('A liquidity tier is 1 to 4');
   if (field === 'countsForFI' && typeof value !== 'boolean') throw new Error('Counts toward FI is yes or no');
-  if (field === 'securedDebtId' && value && !(doc.debts || []).some((d) => d.id === value)) throw new Error('No debt ' + value);
+  if (field === 'securedDebtId' && value && !(doc.debts || []).some((d) => d.id === value))
+    throw new Error('No debt ' + value);
   if (field === 'type') {
     // A new type brings its own tier and FI default (S-110); a home or vehicle gets its purchase fields.
     const info = ACCOUNT_TYPE_INFO[value];
@@ -52,8 +68,13 @@ export function setAccountField(doc, id, field, value) {
     a.countsForFI = info.fi;
     // Fields that belong to the old type leave with it: purchase fields, the alternatives to owning, and notes.
     if (SECURED_TYPES.includes(value)) Object.assign(a, securedFields(a));
-    else { delete a.purchasePrice; delete a.purchaseDate; delete a.securedDebtId; }
-    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (!(ALTERNATIVES[value] || []).includes(k)) delete a[k];
+    else {
+      delete a.purchasePrice;
+      delete a.purchaseDate;
+      delete a.securedDebtId;
+    }
+    for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt'])
+      if (!(ALTERNATIVES[value] || []).includes(k)) delete a[k];
     if (info.kind === 'valued') Object.assign(a, ownedFields(value, a));
     else delete a.notes;
     return;
@@ -92,7 +113,8 @@ export function setDeductionAccount(doc, incomeId, deductionId, accountId) {
 export function setBalanceDate(doc, month, accountId, which, date) {
   if (!hasBalances(doc, accountId)) throw new Error('No account ' + accountId);
   if (which !== 'start' && which !== 'end') throw new Error('A balance is a start or an end');
-  if (date !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && date.slice(0, 7) === month)) throw new Error('Pick a day in ' + month);
+  if (date !== null && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && date.slice(0, 7) === month))
+    throw new Error('Pick a day in ' + month);
   doc.balances[month] = doc.balances[month] || {};
   doc.balances[month][accountId] = doc.balances[month][accountId] || newBalance();
   if (date === null) delete doc.balances[month][accountId][which + 'On'];
@@ -141,7 +163,8 @@ export function updateBalance(doc, accountId, date, value) {
   // Day 0 of the next month is this month's last day (UTC, so no timezone shift).
   const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
   const b = ((doc.balances || {})[month] || {})[accountId];
-  const prev = b && b.end && b.end.amount !== null && b.end.amount !== undefined ? { date: b.endOn || last, amount: b.end } : null;
+  const prev =
+    b && b.end && b.end.amount !== null && b.end.amount !== undefined ? { date: b.endOn || last, amount: b.end } : null;
   // Only a reading from an earlier day is kept as a check; one from the same day is a correction and is replaced.
   if (prev && prev.date < date) addBalanceCheck(doc, accountId, prev.date, prev.amount);
   setBalance(doc, month, accountId, 'end', value);

@@ -51,7 +51,7 @@ export function incomeMonth(doc, income, month) {
   const live = (doc.income || []).filter((i) => i.state !== 'archived');
   const entries = incomeEntries(doc, month);
   const typed = (doc.incomeActuals || {})[month] || {};
-  const planned = (((doc.plans || {})[month] || {}).income) || {};
+  const planned = ((doc.plans || {})[month] || {}).income || {};
   const sources = live.map((inc) => {
     const s = (income.sources || []).find((x) => x.id === inc.id) || {};
     const estimate = s.takeHomeMonthly === undefined ? null : s.takeHomeMonthly;
@@ -79,14 +79,43 @@ export function incomeMonth(doc, income, month) {
     let from = null;
     let status = null;
     // Log entries win over a typed amount. "None this month" is an answer: actual 0, not empty.
-    if (mine.length) { actual = r2(-mine.reduce((a, x) => a + x.amount, 0)); from = 'log'; status = 'computed'; }
-    else if (t && t.status === 'not-for-me') { actual = 0; from = 'none'; status = 'not-for-me'; }
-    else if (t && t.amount !== null && t.amount !== undefined) { actual = t.amount; from = 'typed'; status = t.status; }
-    return { id: inc.id, label: inc.label, type: inc.type, scheduled: isScheduled(inc), estimate, plan, planNote, paydays, actual, from, status, gapFromEstimate: minus(actual, estimate), gapFromPlan: minus(actual, plan), count: mine.length };
+    if (mine.length) {
+      actual = r2(-mine.reduce((a, x) => a + x.amount, 0));
+      from = 'log';
+      status = 'computed';
+    } else if (t && t.status === 'not-for-me') {
+      actual = 0;
+      from = 'none';
+      status = 'not-for-me';
+    } else if (t && t.amount !== null && t.amount !== undefined) {
+      actual = t.amount;
+      from = 'typed';
+      status = t.status;
+    }
+    return {
+      id: inc.id,
+      label: inc.label,
+      type: inc.type,
+      scheduled: isScheduled(inc),
+      estimate,
+      plan,
+      planNote,
+      paydays,
+      actual,
+      from,
+      status,
+      gapFromEstimate: minus(actual, estimate),
+      gapFromPlan: minus(actual, plan),
+      count: mine.length
+    };
   });
   const known = new Set(live.map((i) => i.id));
   const loose = entries.filter((t) => !t.incomeId || !known.has(t.incomeId));
-  const unassigned = { count: loose.length, amount: r2(-loose.reduce((a, x) => a + x.amount, 0)), ids: loose.map((x) => x.id) };
+  const unassigned = {
+    count: loose.length,
+    amount: r2(-loose.reduce((a, x) => a + x.amount, 0)),
+    ids: loose.map((x) => x.id)
+  };
   const tracked = sources.some((x) => x.actual !== null) || loose.length > 0;
   // A total is null while any source is missing that number (empty is not zero).
   const add = (xs) => (xs.some((x) => x === null) ? null : r2(xs.reduce((a, x) => a + x, 0)));
@@ -95,9 +124,16 @@ export function incomeMonth(doc, income, month) {
   // Only what is known adds up; sources still empty are named.
   const actual = tracked ? r2(sources.reduce((a, x) => a + (x.actual || 0), 0) + unassigned.amount) : null;
   return {
-    month, sources, unassigned, tracked, estimate, plan, actual,
+    month,
+    sources,
+    unassigned,
+    tracked,
+    estimate,
+    plan,
+    actual,
     // Actual against the estimate and against the plan (null until both sides exist).
-    gapFromEstimate: minus(actual, estimate), gapFromPlan: minus(actual, plan),
+    gapFromEstimate: minus(actual, estimate),
+    gapFromPlan: minus(actual, plan),
     empty: sources.filter((x) => x.actual === null).map((x) => x.label),
     logged: r2(-entries.reduce((a, x) => a + x.amount, 0))
   };

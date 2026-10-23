@@ -58,7 +58,10 @@ test('no long-term dreams: the entry total is empty, not zero', () => {
 
 test('compat: files before long-term dreams load with them blank, short-term dreams unchanged', () => {
   const raw = JSON.parse(JSON.stringify(plan()));
-  for (const c of raw.categories) { delete c.dreamLong; for (const l of c.lines) delete l.dreamLong; }
+  for (const c of raw.categories) {
+    delete c.dreamLong;
+    for (const l of c.lines) delete l.dreamLong;
+  }
   const m = migrate(raw);
   assert.equal(findCategory(m, 'housing').dreamLong.amount, null);
   assert.equal(findLine(m, 'groceries').line.dreamLong.status, null);
@@ -100,9 +103,16 @@ test('Maya: today vs short-term vs long-term dream, by hand', () => {
   const dl = buildSummary(mayaDreams(), refs).dreamLife;
   const row = (id) => dl.rows.find((r) => r.id === id);
   const want = {
-    housing: [1750, 1720, 2300], food: [840, 430, 530], transport: [132, 132, 132], debt: [300, 300, 300],
-    health: [145, 160, 160], bills: [107, 30, 30], fun: [370, 80, 200], annual: [120, 100, 100],
-    giving: [50, 100, 100], savings: [150, 400, 400]
+    housing: [1750, 1720, 2300],
+    food: [840, 430, 530],
+    transport: [132, 132, 132],
+    debt: [300, 300, 300],
+    health: [145, 160, 160],
+    bills: [107, 30, 30],
+    fun: [370, 80, 200],
+    annual: [120, 100, 100],
+    giving: [50, 100, 100],
+    savings: [150, 400, 400]
   };
   for (const [id, [t, s, l]] of Object.entries(want)) {
     money(row(id).today, t, id + ' today');
@@ -123,7 +133,10 @@ test('Maya: today vs short-term vs long-term dream, by hand', () => {
   money(dl.longDiff, 38, 'long vs today');
   money(dl.shortDiff, -762, 'short vs today');
   assert.equal(dl.readings.long, 'Your long-term dream costs $38 a month more than today, mostly Housing and Giving.');
-  assert.equal(dl.readings.short, 'Your short-term dream costs $762 a month less than today, mostly Food and Personal and fun.');
+  assert.equal(
+    dl.readings.short,
+    'Your short-term dream costs $762 a month less than today, mostly Food and Personal and fun.'
+  );
   assert.ok(near(dl.savingsShare, 0.038462, 6));
   money(dl.pay.needed, 4006.08, 'the pay the long-term dream needs');
   money(dl.pay.short, 106.08, 'short of what she brings home now');
@@ -168,12 +181,19 @@ test('no budget number reads dream or dreamLong', () => {
   const a = loadHousehold('maya');
   const b = loadHousehold('maya');
   for (const c of b.categories) {
-    c.dream = makeValue(99999); c.dreamLong = makeValue(77777);
-    for (const l of c.lines) { l.dream = makeValue(55555); l.dreamLong = makeValue(33333); }
+    c.dream = makeValue(99999);
+    c.dreamLong = makeValue(77777);
+    for (const l of c.lines) {
+      l.dream = makeValue(55555);
+      l.dreamLong = makeValue(33333);
+    }
   }
   const sa = buildSummary(a, refs);
   const sb = buildSummary(b, refs);
-  const budget = (s) => { const { dreamLife, eras, ...rest } = s; return JSON.parse(JSON.stringify(rest)); };
+  const budget = (s) => {
+    const { dreamLife, eras, ...rest } = s;
+    return JSON.parse(JSON.stringify(rest));
+  };
   assert.deepEqual(budget(sb), budget(sa));
   assert.notDeepEqual(sb.dreamLife.longTotal, sa.dreamLife.longTotal);
   // And no engine file but the dream life and Eras (and Next stage, whose "dream" lens key is its own) reads a
@@ -195,12 +215,16 @@ test('old files load unchanged: dreams stay stored, show in Eras, and the budget
     // was Luis's 0, which adds nothing to his dream totals).
     for (const c of raw.categories.filter((x) => x.id !== 'fees')) {
       const m = d.categories.find((x) => x.id === c.id);
-      if (c.dream) assert.equal(m.dream.amount, c.dream.amount === undefined ? c.dream : c.dream.amount, name + ' ' + c.id);
+      if (c.dream)
+        assert.equal(m.dream.amount, c.dream.amount === undefined ? c.dream : c.dream.amount, name + ' ' + c.id);
     }
     assert.deepEqual(stripMeta(migrate(JSON.parse(JSON.stringify(d)))), stripMeta(d), name + ' loads the same again');
     const s = buildSummary(d, refs);
     assert.ok(s.dreamLife, name + ' has a dream life');
-    assert.ok(s.rows.every((r) => !('dream' in r)), name + ' budget rows');
+    assert.ok(
+      s.rows.every((r) => !('dream' in r)),
+      name + ' budget rows'
+    );
   }
   // Maya's short-term dreams are in Eras: 3,052 of spending.
   money(buildSummary(loadHousehold('maya'), refs).dreamLife.shortTotal, 3052, 'maya short');

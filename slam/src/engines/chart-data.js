@@ -21,7 +21,13 @@ export function foldSlices(items, max = MAX_SLICES) {
   if (sorted.length <= max) return sorted;
   const keep = sorted.slice(0, max - 1);
   const rest = sorted.slice(max - 1);
-  keep.push({ id: 'other', name: 'Other (' + rest.length + ')', amount: rest.reduce((a, x) => a + x.amount, 0), other: true, members: rest.map((x) => x.name) });
+  keep.push({
+    id: 'other',
+    name: 'Other (' + rest.length + ')',
+    amount: rest.reduce((a, x) => a + x.amount, 0),
+    other: true,
+    members: rest.map((x) => x.name)
+  });
   return keep;
 }
 
@@ -33,7 +39,9 @@ export function foldSlices(items, max = MAX_SLICES) {
  */
 export function colorSlots(summary) {
   const slots = {};
-  summary.rows.forEach((r, i) => { slots[r.id] = (i % 8) + 1; });
+  summary.rows.forEach((r, i) => {
+    slots[r.id] = (i % 8) + 1;
+  });
   return slots;
 }
 
@@ -45,7 +53,9 @@ export function colorSlots(summary) {
  */
 export function spendingDonut(summary) {
   const spend = summary.totals.spending;
-  const slices = foldSlices(summary.rows.filter((r) => !r.savings && r.basis !== null).map((r) => ({ id: r.id, name: r.name, amount: r.basis })));
+  const slices = foldSlices(
+    summary.rows.filter((r) => !r.savings && r.basis !== null).map((r) => ({ id: r.id, name: r.name, amount: r.basis }))
+  );
   return { total: spend, slices: slices.map((s) => ({ ...s, share: ratio(s.amount, spend) })) };
 }
 
@@ -59,7 +69,12 @@ export function spendingDonut(summary) {
 export function sankeyData(summary) {
   const t = summary.totals;
   if (t.takeHome === null || t.outflow === null) return null;
-  const right = foldSlices(summary.rows.filter((r) => !r.savings && r.basis !== null).map((r) => ({ id: r.id, name: r.name, amount: r.basis })), 7);
+  const right = foldSlices(
+    summary.rows
+      .filter((r) => !r.savings && r.basis !== null)
+      .map((r) => ({ id: r.id, name: r.name, amount: r.basis })),
+    7
+  );
   if (t.savings) right.push({ id: 'savings', name: 'Savings', amount: t.savings, savings: true });
   if (t.surplus > 0) right.push({ id: 'surplus', name: 'Surplus', amount: t.surplus, surplus: true });
   const left = [{ id: 'take-home', name: 'Take-home', amount: t.takeHome }];
@@ -76,8 +91,21 @@ export function sankeyData(summary) {
  */
 export function needsWantsSavings(summary) {
   const l = summary.lenses.fiftyThirtyTwenty;
-  const parts = l.rows.map((r) => ({ id: r.key, name: r.key[0].toUpperCase() + r.key.slice(1), amount: r.amount, share: r.share, target: r.target }));
-  if (l.unassigned > 0) parts.push({ id: 'unassigned', name: 'Not assigned', amount: l.unassigned, share: l.unassignedShare, target: null });
+  const parts = l.rows.map((r) => ({
+    id: r.key,
+    name: r.key[0].toUpperCase() + r.key.slice(1),
+    amount: r.amount,
+    share: r.share,
+    target: r.target
+  }));
+  if (l.unassigned > 0)
+    parts.push({
+      id: 'unassigned',
+      name: 'Not assigned',
+      amount: l.unassigned,
+      share: l.unassignedShare,
+      target: null
+    });
   return { takeHome: l.takeHome, parts };
 }
 
@@ -105,11 +133,19 @@ const hasAny = (r) => r.estimate !== null || r.actual !== null;
  */
 export function threeColumns(summary) {
   const th = summary.totals.takeHome;
-  return summary.rows.filter((r) => !r.notForMe && hasAny(r) && !(r.estimate === 0 && r.actual === 0)).map((r) => ({
-    id: r.id, name: r.name, savings: r.savings,
-    estimate: r.estimate, plan: r.plan === undefined ? null : r.plan, actual: r.actual,
-    estimateShare: ratio(r.estimate, th), planShare: ratio(r.plan === undefined ? null : r.plan, th), actualShare: ratio(r.actual, th)
-  }));
+  return summary.rows
+    .filter((r) => !r.notForMe && hasAny(r) && !(r.estimate === 0 && r.actual === 0))
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      savings: r.savings,
+      estimate: r.estimate,
+      plan: r.plan === undefined ? null : r.plan,
+      actual: r.actual,
+      estimateShare: ratio(r.estimate, th),
+      planShare: ratio(r.plan === undefined ? null : r.plan, th),
+      actualShare: ratio(r.actual, th)
+    }));
 }
 
 /**
@@ -121,7 +157,13 @@ export function threeColumns(summary) {
 export function variance(summary) {
   return summary.rows
     .filter((r) => r.gaps.actualMinusEstimate !== null && !r.isDebt && !r.notForMe)
-    .map((r) => ({ id: r.id, name: r.name, amount: r.gaps.actualMinusEstimate, share: r.gaps.actualMinusEstimatePct, savings: r.savings }))
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      amount: r.gaps.actualMinusEstimate,
+      share: r.gaps.actualMinusEstimatePct,
+      savings: r.savings
+    }))
     .sort((a, b) => b.amount - a.amount);
 }
 
@@ -162,7 +204,11 @@ export function gutBars(summary) {
  * @returns {{id: string, name: string, points: object[]}} points by month key 'YYYY-MM', oldest first, dollars a month
  */
 export function trendData(summary, catId) {
-  const pts = (summary.history.byCategory[catId] || []).map((p) => ({ key: p.key, estimate: p.estimate, actual: p.actual }));
+  const pts = (summary.history.byCategory[catId] || []).map((p) => ({
+    key: p.key,
+    estimate: p.estimate,
+    actual: p.actual
+  }));
   const row = summary.rows.find((r) => r.id === catId);
   if (row) pts.push({ key: summary.month, estimate: row.estimate, actual: row.actual, current: true });
   pts.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
@@ -237,6 +283,10 @@ export function gauges(summary, refs) {
   const t = summary.totals;
   return {
     housing: { value: t.housingShare, band: t.housingBand, over: t.housingOver },
-    savings: { value: t.savingsRate, target: refs.benchmarks.fiftyThirtyTwenty.savings, under: t.savingsRate === null ? null : t.savingsRate < refs.benchmarks.fiftyThirtyTwenty.savings }
+    savings: {
+      value: t.savingsRate,
+      target: refs.benchmarks.fiftyThirtyTwenty.savings,
+      under: t.savingsRate === null ? null : t.savingsRate < refs.benchmarks.fiftyThirtyTwenty.savings
+    }
   };
 }

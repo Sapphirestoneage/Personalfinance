@@ -3,7 +3,18 @@
 // record constructors and constants in schema.js, newId (ids.js), guessLineType
 // and DEFAULT_LINE_TYPES (types.js), and makeValue (value.js).
 
-import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID, FEE_LINES } from './schema.js';
+import {
+  newLine,
+  newCategory,
+  newIncome,
+  newDebt,
+  newDeduction,
+  newNextStage,
+  newNextStageItem,
+  newEra,
+  EVERYTHING_CATEGORY_ID,
+  FEE_LINES
+} from './schema.js';
 import { newId } from './ids.js';
 import { guessLineType, DEFAULT_LINE_TYPES } from './types.js';
 import { makeValue } from './value.js';
@@ -22,7 +33,14 @@ export function findLine(doc, lineId) {
 
 export function addLine(doc, catId, name) {
   const cat = findCategory(doc, catId);
-  const line = newLine({ name, type: guessLineType(name, cat.type), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
+  const line = newLine({
+    name,
+    type: guessLineType(name, cat.type),
+    kind: cat.kind,
+    need: cat.need,
+    savings: cat.savings,
+    tag: cat.tag
+  });
   cat.lines.push(line);
   return line;
 }
@@ -45,8 +63,17 @@ export function setSplitPays(doc, lineId, pays) {
 
 // A fee line made on first use (S-123), in Bills and subscriptions (else the first spending category).
 export function feeLine(doc, id) {
-  const cat = findCategory(doc, 'bills') || doc.categories.find((c) => !c.savings && c.id !== 'debt' && c.id !== EVERYTHING_CATEGORY_ID);
-  const line = newLine({ id, name: FEE_LINES[id], type: DEFAULT_LINE_TYPES[id], kind: 'variable', need: false, tag: 'planned' });
+  const cat =
+    findCategory(doc, 'bills') ||
+    doc.categories.find((c) => !c.savings && c.id !== 'debt' && c.id !== EVERYTHING_CATEGORY_ID);
+  const line = newLine({
+    id,
+    name: FEE_LINES[id],
+    type: DEFAULT_LINE_TYPES[id],
+    kind: 'variable',
+    need: false,
+    tag: 'planned'
+  });
   cat.lines.push(line);
   return line;
 }
@@ -112,7 +139,14 @@ export function useOneNumber(doc, catId, monthly) {
   if (cat.estimate.amount !== null || cat.estimate.status !== null) return;
   if (monthly === null) return;
   // monthly is dollars a month from the engine. Rounded to the cent and marked roughly: a total of rough numbers is rough.
-  cat.estimate = { amount: Math.round(monthly * 100) / 100, cadence: 'month', status: 'roughly', source: 'client', asOf: null, note: 'Total of the sub-categories' };
+  cat.estimate = {
+    amount: Math.round(monthly * 100) / 100,
+    cadence: 'month',
+    status: 'roughly',
+    source: 'client',
+    asOf: null,
+    note: 'Total of the sub-categories'
+  };
 }
 
 // Eras: add from a ready-made template, move earlier or later, remove.
@@ -166,7 +200,8 @@ export function setDebtLine(doc, debtId, lineId) {
   const debt = doc.debts.find((x) => x.id === debtId);
   if (!debt) throw new Error('No debt ' + debtId);
   if (lineId && !findLine(doc, lineId)) throw new Error('No line ' + lineId);
-  if (lineId && doc.debts.some((x) => x.id !== debtId && x.lineId === lineId)) throw new Error('That line already pays another debt');
+  if (lineId && doc.debts.some((x) => x.id !== debtId && x.lineId === lineId))
+    throw new Error('That line already pays another debt');
   debt.lineId = lineId || null;
 }
 
@@ -174,13 +209,24 @@ export function setDebtLine(doc, debtId, lineId) {
 // null (back to empty). Refused when the log already has its entries (the log owns the money).
 export function setIncomeActual(doc, month, incomeId, value) {
   if (!(doc.income || []).some((i) => i.id === incomeId)) throw new Error('No income ' + incomeId);
-  const n = (doc.transactions || []).filter((t) => t.kind === 'income' && t.incomeId === incomeId && t.date.startsWith(month) && !t.deleted).length;
-  if (n && value !== null) throw new Error('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.');
+  const n = (doc.transactions || []).filter(
+    (t) => t.kind === 'income' && t.incomeId === incomeId && t.date.startsWith(month) && !t.deleted
+  ).length;
+  if (n && value !== null)
+    throw new Error('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.');
   doc.incomeActuals = doc.incomeActuals || {};
-  const m = doc.incomeActuals[month] = doc.incomeActuals[month] || {};
+  const m = (doc.incomeActuals[month] = doc.incomeActuals[month] || {});
   if (value === null) delete m[incomeId];
   // "None this month" is a typed 0 with status not-for-me: an answer, unlike a blank.
-  else if (value === 'none') m[incomeId] = { amount: 0, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: 'None this month' };
+  else if (value === 'none')
+    m[incomeId] = {
+      amount: 0,
+      cadence: 'month',
+      status: 'not-for-me',
+      source: 'client',
+      asOf: null,
+      note: 'None this month'
+    };
   else m[incomeId] = { ...value, cadence: 'month' };
   if (!Object.keys(m).length) delete doc.incomeActuals[month];
 }
@@ -246,7 +292,10 @@ export function setField(doc, path, value) {
 // An import still waiting on a possible match (t.possible) is not counted yet.
 const LOGGED_KINDS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 export function logEntriesFor(doc, lineId, month) {
-  return (doc.transactions || []).filter((t) => t.lineId === lineId && t.date.startsWith(month) && LOGGED_KINDS.has(t.kind) && !(t.possible && t.possible.length));
+  return (doc.transactions || []).filter(
+    (t) =>
+      t.lineId === lineId && t.date.startsWith(month) && LOGGED_KINDS.has(t.kind) && !(t.possible && t.possible.length)
+  );
 }
 function refuseTypingOverLog(doc, lineId) {
   const n = logEntriesFor(doc, lineId, doc.currentMonth).length;
@@ -309,9 +358,10 @@ export function startNextStage(doc, metrics) {
 
 export function addNextStageItem(doc, list, label) {
   // A measure is { now, next, better }: today's number, the next stage's, and whether 'higher' or 'lower' is the good way.
-  const item = list === 'metrics'
-    ? { id: newNextStageItem().id, label: label || 'New measure', now: null, next: null, better: 'higher' }
-    : newNextStageItem(label);
+  const item =
+    list === 'metrics'
+      ? { id: newNextStageItem().id, label: label || 'New measure', now: null, next: null, better: 'higher' }
+      : newNextStageItem(label);
   doc.nextStage[list].push(item);
   return item;
 }

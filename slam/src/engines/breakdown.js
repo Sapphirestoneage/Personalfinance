@@ -35,7 +35,7 @@ export function debtsByType(doc) {
   const groups = {};
   for (const d of doc.debts) {
     if (d.state === 'archived') continue;
-    const g = groups[d.type] = groups[d.type] || { type: d.type, count: 0, minimums: [], balances: [] };
+    const g = (groups[d.type] = groups[d.type] || { type: d.type, count: 0, minimums: [], balances: [] });
     g.count += 1;
     g.minimums.push(minimumAmount(doc, d));
     // A card linked to an account reads its balance from there (S-084).
@@ -43,8 +43,11 @@ export function debtsByType(doc) {
     g.balances.push(linked ? linked.amount : d.balance.amount);
   }
   return Object.values(groups).map((g) => ({
-    type: g.type, count: g.count,
-    monthly: sumKnown(g.minimums).total, monthlyMissing: sumKnown(g.minimums).missing,
-    balance: sumKnown(g.balances).total, balanceMissing: sumKnown(g.balances).missing
+    type: g.type,
+    count: g.count,
+    monthly: sumKnown(g.minimums).total,
+    monthlyMissing: sumKnown(g.minimums).missing,
+    balance: sumKnown(g.balances).total,
+    balanceMissing: sumKnown(g.balances).missing
   }));
 }

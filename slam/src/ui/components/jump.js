@@ -7,7 +7,18 @@ import { destination } from '../nav.js';
 
 // The href is the real screen hash, so the link reads right when hovered or copied; a click goes through ctx.jump instead.
 export function jumpLink(ctx, where, text, key) {
-  return h('a', { href: '#' + destination(where)[0], 'data-key': key || 'go-' + where, onclick: (e) => { e.preventDefault(); ctx.jump(where); } }, text);
+  return h(
+    'a',
+    {
+      href: '#' + destination(where)[0],
+      'data-key': key || 'go-' + where,
+      onclick: (e) => {
+        e.preventDefault();
+        ctx.jump(where);
+      }
+    },
+    text
+  );
 }
 
 export function jumpButton(ctx, where, text, key, cls = 'btn small') {
@@ -21,5 +32,10 @@ export function changeIn(ctx, where, label) {
 
 // An empty state: what to do next, in one sentence, with a button.
 export function emptyState(ctx, sentence, where, button, key) {
-  return h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, sentence), jumpButton(ctx, where, button, key));
+  return h(
+    'div',
+    { class: 'empty-state row' },
+    h('span', { class: 'small' }, sentence),
+    jumpButton(ctx, where, button, key)
+  );
 }

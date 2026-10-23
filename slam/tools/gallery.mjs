@@ -21,20 +21,30 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync, rmSync
 const require = createRequire(import.meta.url);
 let playwright;
 // Playwright is not in package.json: take it from this folder's node_modules, or from the global install.
-try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
+try {
+  playwright = require('playwright');
+} catch (e) {
+  playwright = require(execSync('npm root -g').toString().trim() + '/playwright');
+}
 
 // URL here is the site's address, so the URL class is reached through globalThis.
 const URL = process.env.SLAM_URL || 'http://localhost:8765/';
 const OUT = new globalThis.URL('./gallery/', import.meta.url).pathname;
 const APPROVED = new globalThis.URL('./gallery-approved/', import.meta.url).pathname;
 const approve = process.argv.includes('--approve');
-const PEOPLE = [['riley', 'Riley, 31'], ['maya', 'Maya, 26']];
-const VIEWS = [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 900 }]];
+const PEOPLE = [
+  ['riley', 'Riley, 31'],
+  ['maya', 'Maya, 26']
+];
+const VIEWS = [
+  ['phone', { width: 390, height: 844 }],
+  ['desktop', { width: 1280, height: 900 }]
+];
 const THEMES = ['light', 'dark'];
 // [file part, caption, hash, data-key to click]
 const SHOTS = [
   ['today', 'Today: the loop, Next, cash for 30 days, four numbers', 'today'],
-  ['plan', 'Plan: next month\'s plan', 'plan', 'plan-view-plan'],
+  ['plan', "Plan: next month's plan", 'plan', 'plan-view-plan'],
   ['estimates', 'Plan: your estimates (the Rough pass)', 'plan', 'plan-view-estimates'],
   ['track', 'Track: scheduled items, quick entry, the log, the calendar, import', 'track'],
   ['review', 'Review: fill gaps, close the month, mistakes, past months', 'review'],
@@ -42,7 +52,12 @@ const SHOTS = [
   ['insights-compared', 'Insights: Compared', 'insights', 'tab-compared'],
   ['insights-time', 'Insights: Over time', 'insights', 'tab-time'],
   ['insights-cash', 'Insights: Cash', 'insights', 'tab-cash'],
-  ['insights-networth', 'Insights: Net worth: both net worths, the bridge, owning next to the alternative', 'insights', 'tab-networth'],
+  [
+    'insights-networth',
+    'Insights: Net worth: both net worths, the bridge, owning next to the alternative',
+    'insights',
+    'tab-networth'
+  ],
   ['insights-you', 'Insights: You', 'insights', 'tab-you'],
   ['setup', 'Setup: Basics (one section open at a time)', 'setup', 'setup-basics']
 ];
@@ -64,7 +79,9 @@ for (const [who, button] of PEOPLE) {
       await page.getByText(button).first().click();
       await page.waitForSelector('#headline');
       for (const [part, caption, hash, click] of SHOTS) {
-        await page.evaluate((x) => { location.hash = x; }, hash);
+        await page.evaluate((x) => {
+          location.hash = x;
+        }, hash);
         await page.waitForSelector('#main[data-screen="' + hash + '"]');
         if (click) await page.click('[data-key="' + click + '"]');
         // The shot is the viewport, not the whole page.
@@ -109,11 +126,15 @@ const html = `<!doctype html>
 <p class="meta">${slides.length} screenshots: Riley and Maya, phone and desktop, light and dark, October 17, 2026.</p>
 <p class="meta">${approve ? 'This set was just approved.' : changedCount ? '<span class="changed">' + changedCount + ' changed since the approved set</span> (marked in red).' : 'Nothing changed since the approved set.'}</p>
 <p class="meta">Scroll, or use the arrow keys, one screen at a time.</p></header>
-${slides.map((s, i) => `<section id="s${i + 1}">
+${slides
+  .map(
+    (s, i) => `<section id="s${i + 1}">
   <img loading="lazy" src="${s.changed ? s.name : '../gallery-approved/' + s.name}" alt="${esc(s.caption)}">
   <div class="cap">${esc(s.caption)}</div>
   <div class="meta">${s.who === 'riley' ? 'Riley' : 'Maya'}, ${s.view}, ${s.theme} &middot; ${i + 1} of ${slides.length}${s.changed ? ' &middot; <span class="changed">' + (s.isNew ? 'New, not approved yet' : 'Changed since approved') + '</span>' : ''}</div>
-</section>`).join('\n')}
+</section>`
+  )
+  .join('\n')}
 <script>
   document.addEventListener('keydown', (e) => {
     if (!['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp'].includes(e.key)) return;
@@ -127,4 +148,10 @@ ${slides.map((s, i) => `<section id="s${i + 1}">
 </body></html>
 `;
 writeFileSync(OUT + 'gallery.html', html);
-console.log((approve ? 'Approved ' : 'Took ') + slides.length + ' screenshots; ' + changedCount + ' changed since approved. Open slam/tools/gallery/gallery.html');
+console.log(
+  (approve ? 'Approved ' : 'Took ') +
+    slides.length +
+    ' screenshots; ' +
+    changedCount +
+    ' changed since approved. Open slam/tools/gallery/gallery.html'
+);

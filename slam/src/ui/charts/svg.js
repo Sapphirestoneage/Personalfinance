@@ -9,12 +9,37 @@ import { esc } from '../dom.js';
 const F = 12; // font size in px; charts are drawn at real pixel width so text stays readable
 
 export function svgWrap(width, height, body, label) {
-  return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + esc(label) + '">' + body + '</svg>';
+  return (
+    '<svg width="' +
+    width +
+    '" height="' +
+    height +
+    '" viewBox="0 0 ' +
+    width +
+    ' ' +
+    height +
+    '" role="img" aria-label="' +
+    esc(label) +
+    '">' +
+    body +
+    '</svg>'
+  );
 }
 
 function t(x, y, s, o = {}) {
-  return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '"' + (o.anchor ? ' text-anchor="' + o.anchor + '"' : '') +
-    (o.cls ? ' class="' + o.cls + '"' : '') + (o.weight ? ' font-weight="' + o.weight + '"' : '') + '>' + esc(s) + '</text>';
+  return (
+    '<text x="' +
+    x.toFixed(1) +
+    '" y="' +
+    y.toFixed(1) +
+    '"' +
+    (o.anchor ? ' text-anchor="' + o.anchor + '"' : '') +
+    (o.cls ? ' class="' + o.cls + '"' : '') +
+    (o.weight ? ' font-weight="' + o.weight + '"' : '') +
+    '>' +
+    esc(s) +
+    '</text>'
+  );
 }
 
 function rect(x, y, w, h, fill, o = {}) {
@@ -22,11 +47,39 @@ function rect(x, y, w, h, fill, o = {}) {
   const style = o.outline
     ? 'fill:none;stroke:' + fill + ';stroke-width:2'
     : 'fill:' + fill + (o.opacity ? ';fill-opacity:' + o.opacity : '');
-  return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + Math.max(0, w).toFixed(1) + '" height="' + h.toFixed(1) + '" rx="3" style="' + style + '">' + tip + '</rect>';
+  return (
+    '<rect x="' +
+    x.toFixed(1) +
+    '" y="' +
+    y.toFixed(1) +
+    '" width="' +
+    Math.max(0, w).toFixed(1) +
+    '" height="' +
+    h.toFixed(1) +
+    '" rx="3" style="' +
+    style +
+    '">' +
+    tip +
+    '</rect>'
+  );
 }
 
 function line(x1, y1, x2, y2, cls, dash) {
-  return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" class="' + cls + '"' + (dash ? ' stroke-dasharray="4 3"' : '') + ' stroke-width="1.5"/>';
+  return (
+    '<line x1="' +
+    x1.toFixed(1) +
+    '" y1="' +
+    y1.toFixed(1) +
+    '" x2="' +
+    x2.toFixed(1) +
+    '" y2="' +
+    y2.toFixed(1) +
+    '" class="' +
+    cls +
+    '"' +
+    (dash ? ' stroke-dasharray="4 3"' : '') +
+    ' stroke-width="1.5"/>'
+  );
 }
 
 // Horizontal bars, one row per item, label above the bars (fits a phone).
@@ -36,15 +89,21 @@ function line(x1, y1, x2, y2, cls, dash) {
 export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel = '', label = 'Bar chart' }) {
   const barH = mode === 'overlay' || mode === 'diverging' ? 14 : 11;
   // Leave room on the right for the longest value label so nothing is clipped.
-  const labelOf = (r, v) => (mode === 'overlay' ? r.values.map((q) => (q.v === null || q.v === undefined ? 'none' : fmt(q.v))).join(' / ') : fmt(v.v));
-  const longest = Math.max(4, ...rows.flatMap((r) => r.values.filter((v) => v.v !== null && v.v !== undefined).map((v) => labelOf(r, v).length)));
+  const labelOf = (r, v) =>
+    mode === 'overlay'
+      ? r.values.map((q) => (q.v === null || q.v === undefined ? 'none' : fmt(q.v))).join(' / ')
+      : fmt(v.v);
+  const longest = Math.max(
+    4,
+    ...rows.flatMap((r) => r.values.filter((v) => v.v !== null && v.v !== undefined).map((v) => labelOf(r, v).length))
+  );
   const padR = Math.min(width * 0.45, longest * 7 + 10);
   const vals = rows.flatMap((r) => r.values.map((v) => v.v).filter((v) => v !== null && v !== undefined));
   let max = Math.max(0, ...vals.map(Math.abs), ref === null ? 0 : ref);
   if (max === 0) max = 1;
   const plotW = width - padR - 4 - (mode === 'diverging' ? padR : 0);
   const zeroX = mode === 'diverging' ? 4 + padR + plotW / 2 : 4;
-  const scale = mode === 'diverging' ? (plotW / 2) / max : plotW / max;
+  const scale = mode === 'diverging' ? plotW / 2 / max : plotW / max;
   let y = 4;
   let body = '';
   for (const r of rows) {
@@ -55,7 +114,10 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
       // Not entered is not zero: a null value never gets a bar. Grouped mode writes "not given" in
       // its slot; overlay shows "none" in the shared row label (labelOf); diverging draws nothing.
       if (v.v === null || v.v === undefined) {
-        if (mode === 'grouped') { body += t(zeroX + 2, y + barH - 1, (v.name ? v.name + ': ' : '') + 'not given', { cls: 'muted tiny' }); y += barH + 2; }
+        if (mode === 'grouped') {
+          body += t(zeroX + 2, y + barH - 1, (v.name ? v.name + ': ' : '') + 'not given', { cls: 'muted tiny' });
+          y += barH + 2;
+        }
         return;
       }
       const w = Math.abs(v.v) * scale;
@@ -82,7 +144,11 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
   if (ref !== null) {
     const rx = zeroX + ref * scale;
     axes += line(rx, 0, rx, h - 4, 'axis', true);
-    if (refLabel) axes += t(Math.min(rx + 3, width - 2), h + 10, refLabel, { cls: 'muted', anchor: rx > width - 60 ? 'end' : null });
+    if (refLabel)
+      axes += t(Math.min(rx + 3, width - 2), h + 10, refLabel, {
+        cls: 'muted',
+        anchor: rx > width - 60 ? 'end' : null
+      });
   }
   return svgWrap(width, h + (refLabel ? 14 : 0), axes + body, label);
 }
@@ -93,7 +159,20 @@ export function donut({ slices, size = 200, inner = 0.6, center = '', centerSub 
   const cx = size / 2;
   const cy = size / 2;
   const total = slices.reduce((a, s) => a + s.amount, 0);
-  if (!total) return svgWrap(size, size, '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" style="fill:var(--surface-2)"/>' + t(cx, cy + 4, 'No data yet', { anchor: 'middle', cls: 'muted' }), label);
+  if (!total)
+    return svgWrap(
+      size,
+      size,
+      '<circle cx="' +
+        cx +
+        '" cy="' +
+        cy +
+        '" r="' +
+        r +
+        '" style="fill:var(--surface-2)"/>' +
+        t(cx, cy + 4, 'No data yet', { anchor: 'middle', cls: 'muted' }),
+      label
+    );
   let a0 = -Math.PI / 2;
   let body = '';
   for (const s of slices) {
@@ -102,11 +181,47 @@ export function donut({ slices, size = 200, inner = 0.6, center = '', centerSub 
     const p = (a, rad) => (cx + rad * Math.cos(a)).toFixed(2) + ' ' + (cy + rad * Math.sin(a)).toFixed(2);
     const ri = r * inner;
     // One slice would be a 360-degree arc, which SVG collapses to nothing, so draw it as two half circles.
-    const d = slices.length === 1
-      ? 'M ' + (cx - r) + ' ' + cy + ' a ' + r + ' ' + r + ' 0 1 0 ' + 2 * r + ' 0 a ' + r + ' ' + r + ' 0 1 0 ' + -2 * r + ' 0'
-      : 'M ' + p(a0, r) + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p(a1, r) +
-        (ri > 0 ? ' L ' + p(a1, ri) + ' A ' + ri + ' ' + ri + ' 0 ' + large + ' 0 ' + p(a0, ri) : ' L ' + cx + ' ' + cy) + ' Z';
-    body += '<path d="' + d + '" style="fill:' + s.color + ';stroke:var(--surface);stroke-width:2"><title>' + esc(s.name + ': ' + fmt(s.amount)) + '</title></path>';
+    const d =
+      slices.length === 1
+        ? 'M ' +
+          (cx - r) +
+          ' ' +
+          cy +
+          ' a ' +
+          r +
+          ' ' +
+          r +
+          ' 0 1 0 ' +
+          2 * r +
+          ' 0 a ' +
+          r +
+          ' ' +
+          r +
+          ' 0 1 0 ' +
+          -2 * r +
+          ' 0'
+        : 'M ' +
+          p(a0, r) +
+          ' A ' +
+          r +
+          ' ' +
+          r +
+          ' 0 ' +
+          large +
+          ' 1 ' +
+          p(a1, r) +
+          (ri > 0
+            ? ' L ' + p(a1, ri) + ' A ' + ri + ' ' + ri + ' 0 ' + large + ' 0 ' + p(a0, ri)
+            : ' L ' + cx + ' ' + cy) +
+          ' Z';
+    body +=
+      '<path d="' +
+      d +
+      '" style="fill:' +
+      s.color +
+      ';stroke:var(--surface);stroke-width:2"><title>' +
+      esc(s.name + ': ' + fmt(s.amount)) +
+      '</title></path>';
     a0 = a1;
   }
   if (inner > 0 && center) {
@@ -121,7 +236,10 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
   const gap = 6;
   const labelW = Math.min(150, width * 0.42);
   const nodeW = 12;
-  const total = Math.max(left.reduce((a, x) => a + x.amount, 0), right.reduce((a, x) => a + x.amount, 0));
+  const total = Math.max(
+    left.reduce((a, x) => a + x.amount, 0),
+    right.reduce((a, x) => a + x.amount, 0)
+  );
   const minRow = 26;
   const h = Math.max(220, right.length * minRow + 10);
   const usable = h - gap * (right.length - 1);
@@ -131,12 +249,22 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
   let body = '';
   // left nodes
   let y = 0;
-  const lefts = left.map((n) => { const node = { ...n, y, h: n.amount * k }; y += node.h + gap; return node; });
+  const lefts = left.map((n) => {
+    const node = { ...n, y, h: n.amount * k };
+    y += node.h + gap;
+    return node;
+  });
   // right nodes with a minimum label slot
   y = 0;
-  const rights = right.map((n) => { const node = { ...n, y, h: Math.max(2, n.amount * k) }; y += Math.max(node.h, minRow - gap) + gap; return node; });
+  const rights = right.map((n) => {
+    const node = { ...n, y, h: Math.max(2, n.amount * k) };
+    y += Math.max(node.h, minRow - gap) + gap;
+    return node;
+  });
   const scaleY = h / Math.max(h, y);
-  rights.forEach((n) => { n.y *= scaleY; });
+  rights.forEach((n) => {
+    n.y *= scaleY;
+  });
   // bands: fill right nodes in order from the stacked left sources
   let srcIdx = 0;
   let srcUsed = 0;
@@ -151,18 +279,58 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
       const x0 = lx + nodeW;
       const x1 = rx;
       const mx = (x0 + x1) / 2;
-      body += '<path d="M ' + x0 + ' ' + sy.toFixed(1) + ' C ' + mx + ' ' + sy.toFixed(1) + ' ' + mx + ' ' + ry.toFixed(1) + ' ' + x1 + ' ' + ry.toFixed(1) +
-        ' L ' + x1 + ' ' + (ry + th).toFixed(1) + ' C ' + mx + ' ' + (ry + th).toFixed(1) + ' ' + mx + ' ' + (sy + th).toFixed(1) + ' ' + x0 + ' ' + (sy + th).toFixed(1) +
-        ' Z" style="fill:' + n.color + ';fill-opacity:0.28"><title>' + esc(src.name + ' to ' + n.name + ': ' + fmt(take)) + '</title></path>';
+      body +=
+        '<path d="M ' +
+        x0 +
+        ' ' +
+        sy.toFixed(1) +
+        ' C ' +
+        mx +
+        ' ' +
+        sy.toFixed(1) +
+        ' ' +
+        mx +
+        ' ' +
+        ry.toFixed(1) +
+        ' ' +
+        x1 +
+        ' ' +
+        ry.toFixed(1) +
+        ' L ' +
+        x1 +
+        ' ' +
+        (ry + th).toFixed(1) +
+        ' C ' +
+        mx +
+        ' ' +
+        (ry + th).toFixed(1) +
+        ' ' +
+        mx +
+        ' ' +
+        (sy + th).toFixed(1) +
+        ' ' +
+        x0 +
+        ' ' +
+        (sy + th).toFixed(1) +
+        ' Z" style="fill:' +
+        n.color +
+        ';fill-opacity:0.28"><title>' +
+        esc(src.name + ' to ' + n.name + ': ' + fmt(take)) +
+        '</title></path>';
       need -= take;
       ry += th;
       srcUsed += take;
-      if (src.amount - srcUsed < 0.0001) { srcIdx += 1; srcUsed = 0; }
+      if (src.amount - srcUsed < 0.0001) {
+        srcIdx += 1;
+        srcUsed = 0;
+      }
     }
   }
   // A shortfall source (from sankeyData in src/engines/chart-data.js) is drawn red; a surplus use is bold.
   for (const n of lefts) {
-    body += rect(lx, n.y, nodeW, n.h, n.shortfall ? 'var(--bad)' : 'var(--series-actual)', { tip: n.name + ': ' + fmt(n.amount) });
+    body += rect(lx, n.y, nodeW, n.h, n.shortfall ? 'var(--bad)' : 'var(--series-actual)', {
+      tip: n.name + ': ' + fmt(n.amount)
+    });
   }
   const maxChars = Math.floor((labelW - 8) / 6.6);
   for (const n of rights) {
@@ -175,7 +343,13 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
   const first = lefts[0];
   body += t(lx + nodeW + 6, first.y + 14, first.name, { weight: 700 });
   body += t(lx + nodeW + 6, first.y + 30, fmt(first.amount), { cls: 'muted' });
-  if (lefts[1]) body += t(lx + nodeW + 6, lefts[1].y + Math.max(12, lefts[1].h / 2 + 4), lefts[1].name + ' ' + fmt(lefts[1].amount), { cls: 'muted' });
+  if (lefts[1])
+    body += t(
+      lx + nodeW + 6,
+      lefts[1].y + Math.max(12, lefts[1].h / 2 + 4),
+      lefts[1].name + ' ' + fmt(lefts[1].amount),
+      { cls: 'muted' }
+    );
   return svgWrap(width, h + 2, body, label);
 }
 
@@ -188,7 +362,20 @@ export function gauge({ value, band, size = 180, good = 'under', fmt, caption, l
   const max = Math.max(1, value || 0);
   const ang = (v) => Math.PI + (Math.min(v, max) / max) * Math.PI;
   const p = (a, rad) => (cx + rad * Math.cos(a)).toFixed(1) + ' ' + (cy + rad * Math.sin(a)).toFixed(1);
-  const arc = (v0, v1, color, w) => '<path d="M ' + p(ang(v0), r) + ' A ' + r + ' ' + r + ' 0 0 1 ' + p(ang(v1), r) + '" style="fill:none;stroke:' + color + ';stroke-width:' + w + ';stroke-linecap:butt"/>';
+  const arc = (v0, v1, color, w) =>
+    '<path d="M ' +
+    p(ang(v0), r) +
+    ' A ' +
+    r +
+    ' ' +
+    r +
+    ' 0 0 1 ' +
+    p(ang(v1), r) +
+    '" style="fill:none;stroke:' +
+    color +
+    ';stroke-width:' +
+    w +
+    ';stroke-linecap:butt"/>';
   let body = arc(0, max, 'var(--surface-2)', 14);
   body += good === 'under' ? arc(0, band, 'var(--good)', 4) : arc(band, max, 'var(--good)', 4);
   if (value !== null && value !== undefined) {
@@ -199,7 +386,18 @@ export function gauge({ value, band, size = 180, good = 'under', fmt, caption, l
     body += t(cx, cy - 6, 'not enough data', { anchor: 'middle', cls: 'muted' });
   }
   const ba = ang(band);
-  body += '<line x1="' + p(ba, r - 12).split(' ')[0] + '" y1="' + p(ba, r - 12).split(' ')[1] + '" x2="' + p(ba, r + 9).split(' ')[0] + '" y2="' + p(ba, r + 9).split(' ')[1] + '" class="axis" stroke-width="2"><title>Band: ' + esc(fmt(band)) + '</title></line>';
+  body +=
+    '<line x1="' +
+    p(ba, r - 12).split(' ')[0] +
+    '" y1="' +
+    p(ba, r - 12).split(' ')[1] +
+    '" x2="' +
+    p(ba, r + 9).split(' ')[0] +
+    '" y2="' +
+    p(ba, r + 9).split(' ')[1] +
+    '" class="axis" stroke-width="2"><title>Band: ' +
+    esc(fmt(band)) +
+    '</title></line>';
   body += t(cx, cy + 16, caption, { anchor: 'middle', cls: 'muted' });
   return svgWrap(size, cy + 22, body, label);
 }
@@ -209,8 +407,31 @@ export function ring({ value, size = 120, label = 'Completion' }) {
   const r = size / 2 - 10;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(1, value || 0));
-  const body = '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" style="fill:none;stroke:var(--surface-2);stroke-width:12"/>' +
-    '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')" style="fill:none;stroke:var(--accent);stroke-width:12;stroke-linecap:round" stroke-dasharray="' + (c * v).toFixed(1) + ' ' + c.toFixed(1) + '"><title>' + Math.round(v * 100) + '% filled in</title></circle>' +
+  const body =
+    '<circle cx="' +
+    size / 2 +
+    '" cy="' +
+    size / 2 +
+    '" r="' +
+    r +
+    '" style="fill:none;stroke:var(--surface-2);stroke-width:12"/>' +
+    '<circle cx="' +
+    size / 2 +
+    '" cy="' +
+    size / 2 +
+    '" r="' +
+    r +
+    '" transform="rotate(-90 ' +
+    size / 2 +
+    ' ' +
+    size / 2 +
+    ')" style="fill:none;stroke:var(--accent);stroke-width:12;stroke-linecap:round" stroke-dasharray="' +
+    (c * v).toFixed(1) +
+    ' ' +
+    c.toFixed(1) +
+    '"><title>' +
+    Math.round(v * 100) +
+    '% filled in</title></circle>' +
     t(size / 2, size / 2 + 5, Math.round(v * 100) + '%', { anchor: 'middle', weight: 700 });
   return svgWrap(size, size, body, label);
 }
@@ -224,7 +445,10 @@ export function lines({ series, xs, width, fmt, zero = true, label = 'Line chart
   // With zero (the default) the y axis includes 0, so small swings do not look dramatic.
   let lo = zero ? Math.min(0, ...vals) : Math.min(...vals);
   let hi = Math.max(...vals, zero ? 0 : -Infinity);
-  if (!vals.length) { lo = 0; hi = 1; }
+  if (!vals.length) {
+    lo = 0;
+    hi = 1;
+  }
   if (hi === lo) hi = lo + 1;
   const padR = 30;
   const x = (i) => padL + (xs.length === 1 ? (width - padL - padR) / 2 : (i * (width - padL - padR)) / (xs.length - 1));
@@ -237,24 +461,55 @@ export function lines({ series, xs, width, fmt, zero = true, label = 'Line chart
   if (lo < 0 && hi > 0) body += line(padL, y(0), width - 4, y(0), 'axis');
   // Fewer labels when they would run into each other (twelve months on a phone).
   const every = Math.max(1, Math.ceil((xs.length * 52) / Math.max(1, width - padL - padR)));
-  xs.forEach((lab, i) => { if (i % every === 0 || i === xs.length - 1 && (xs.length - 1) % every >= every / 2) body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' }); });
+  xs.forEach((lab, i) => {
+    if (i % every === 0 || (i === xs.length - 1 && (xs.length - 1) % every >= every / 2))
+      body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' });
+  });
   for (const s of series) {
     let d = '';
     s.values.forEach((v, i) => {
       if (v === null || v === undefined) return;
       d += (d ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
     });
-    if (d) body += '<path d="' + d + '" style="fill:none;stroke:' + s.color + ';stroke-width:2"' + (s.dashed ? ' stroke-dasharray="5 4"' : '') + '/>';
+    if (d)
+      body +=
+        '<path d="' +
+        d +
+        '" style="fill:none;stroke:' +
+        s.color +
+        ';stroke-width:2"' +
+        (s.dashed ? ' stroke-dasharray="5 4"' : '') +
+        '/>';
     s.values.forEach((v, i) => {
       if (v === null || v === undefined) return;
-      body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="4.5" style="fill:' + s.color + ';stroke:var(--surface);stroke-width:2"><title>' + esc(s.name + ', ' + xs[i] + ': ' + fmt(v)) + '</title></circle>';
+      body +=
+        '<circle cx="' +
+        x(i).toFixed(1) +
+        '" cy="' +
+        y(v).toFixed(1) +
+        '" r="4.5" style="fill:' +
+        s.color +
+        ';stroke:var(--surface);stroke-width:2"><title>' +
+        esc(s.name + ', ' + xs[i] + ': ' + fmt(v)) +
+        '</title></circle>';
     });
   }
   return svgWrap(width, h, body, label);
 }
 
 // Scatter with optional quadrant split lines. points: [{ x, y, label, color, tip }]
-export function scatter({ points, width, xFmt, yFmt, xLabel, yLabel, splitX = null, splitY = null, yMax = null, label = 'Scatter chart' }) {
+export function scatter({
+  points,
+  width,
+  xFmt,
+  yFmt,
+  xLabel,
+  yLabel,
+  splitX = null,
+  splitY = null,
+  yMax = null,
+  label = 'Scatter chart'
+}) {
   const h = 220;
   const padL = 40;
   const padB = 34;
@@ -271,7 +526,12 @@ export function scatter({ points, width, xFmt, yFmt, xLabel, yLabel, splitX = nu
   body += t(padL - 6, Y(0), yFmt(0), { anchor: 'end', cls: 'muted' });
   body += t(width - 4, Y(0) + 14, xFmt(xMax), { anchor: 'end', cls: 'muted' });
   body += t((padL + width) / 2, h - 4, xLabel, { anchor: 'middle', cls: 'muted' });
-  body += '<text transform="translate(12 ' + (h / 2) + ') rotate(-90)" text-anchor="middle" class="muted">' + esc(yLabel) + '</text>';
+  body +=
+    '<text transform="translate(12 ' +
+    h / 2 +
+    ') rotate(-90)" text-anchor="middle" class="muted">' +
+    esc(yLabel) +
+    '</text>';
   const placed = [];
   for (const p of points) {
     const lx = X(p.x);
@@ -282,7 +542,16 @@ export function scatter({ points, width, xFmt, yFmt, xLabel, yLabel, splitX = nu
     p.showLabel = p.label && !clash;
   }
   for (const p of points) {
-    body += '<circle cx="' + X(p.x).toFixed(1) + '" cy="' + Y(p.y).toFixed(1) + '" r="6" style="fill:' + p.color + ';fill-opacity:0.85;stroke:var(--surface);stroke-width:2"><title>' + esc(p.tip) + '</title></circle>';
+    body +=
+      '<circle cx="' +
+      X(p.x).toFixed(1) +
+      '" cy="' +
+      Y(p.y).toFixed(1) +
+      '" r="6" style="fill:' +
+      p.color +
+      ';fill-opacity:0.85;stroke:var(--surface);stroke-width:2"><title>' +
+      esc(p.tip) +
+      '</title></circle>';
     if (p.showLabel) {
       const right = X(p.x) > width - 110;
       body += t(right ? X(p.x) - 9 : X(p.x) + 9, Y(p.y) + 4, p.label, { anchor: right ? 'end' : null });
@@ -298,7 +567,10 @@ export function stack({ parts, width, fmt, label = 'Stacked bar' }) {
   const w = width - 8;
   let x = 4;
   let body = '';
-  const total = Math.max(1, parts.reduce((a, p) => a + (p.share || 0), 0));
+  const total = Math.max(
+    1,
+    parts.reduce((a, p) => a + (p.share || 0), 0)
+  );
   for (const p of parts) {
     const pw = ((p.share || 0) / total) * w;
     body += rect(x, barY, Math.max(0, pw - 2), barH, p.color, { tip: p.name + ': ' + fmt(p.share) });
@@ -326,7 +598,16 @@ export function heatRow({ cells, width, fmt, label = 'Heatmap' }) {
   // Shade is the cell's share of the biggest day, with a floor so the smallest day still shows.
   cells.forEach((c, i) => {
     const x = 4 + i * cw;
-    body += '<rect x="' + x.toFixed(1) + '" y="4" width="' + (cw - 3).toFixed(1) + '" height="48" rx="4" style="fill:var(--series-actual);fill-opacity:' + (0.08 + 0.85 * (c.amount / max)).toFixed(2) + '"><title>' + esc(c.label + ': ' + fmt(c.amount)) + '</title></rect>';
+    body +=
+      '<rect x="' +
+      x.toFixed(1) +
+      '" y="4" width="' +
+      (cw - 3).toFixed(1) +
+      '" height="48" rx="4" style="fill:var(--series-actual);fill-opacity:' +
+      (0.08 + 0.85 * (c.amount / max)).toFixed(2) +
+      '"><title>' +
+      esc(c.label + ': ' + fmt(c.amount)) +
+      '</title></rect>';
     body += t(x + (cw - 3) / 2, 66, c.label, { anchor: 'middle', cls: 'muted' });
     body += t(x + (cw - 3) / 2, 82, fmt(c.amount), { anchor: 'middle' });
   });
@@ -348,13 +629,20 @@ export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
     const x0 = at(x);
     const pw = at(x + s) - x0;
     body += rect(x0, barY, Math.max(0, pw - 1.5), barH, p.color, { tip: p.name + ': ' + Math.round(s * 100) + '%' });
-    if (pw > 34) body += t(x0 + pw / 2, barY + 19, p.short || p.name, { anchor: 'middle', weight: 700, cls: 'on-fill' });
+    if (pw > 34)
+      body += t(x0 + pw / 2, barY + 19, p.short || p.name, { anchor: 'middle', weight: 700, cls: 'on-fill' });
     x += s;
   }
   const end = at(1);
   if (shortfall > 0) {
-    body += rect(end, barY, at(span) - end - 1.5, barH, 'var(--chart-axis)', { outline: true, tip: 'Shortfall: ' + Math.round(shortfall * 100) + '%' });
-    body += t(Math.min(end + 4, width - 4), barY + barH + 14, 'Short ' + Math.round(shortfall * 100) + '%', { anchor: end > width - 60 ? 'end' : 'start', cls: 'muted' });
+    body += rect(end, barY, at(span) - end - 1.5, barH, 'var(--chart-axis)', {
+      outline: true,
+      tip: 'Shortfall: ' + Math.round(shortfall * 100) + '%'
+    });
+    body += t(Math.min(end + 4, width - 4), barY + barH + 14, 'Short ' + Math.round(shortfall * 100) + '%', {
+      anchor: end > width - 60 ? 'end' : 'start',
+      cls: 'muted'
+    });
   }
   body += line(end, barY - 6, end, barY + barH + 4, 'axis');
   body += t(Math.min(end, width - 4), 12, '100%', { anchor: 'end', cls: 'muted' });
@@ -365,7 +653,17 @@ export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
 // days under the cushion shaded, and labeled markers (paydays, big bills).
 // days: [{ date, v }], markers: [{ i, label }], todayIndex, cushion.
 // A day may carry s, a second value (savings) drawn as its own thin line, never added in (S-095).
-export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, markers = [], height = 200, compact = false, label = 'Cash by day' }) {
+export function dayLine({
+  days,
+  width,
+  fmt,
+  todayIndex = null,
+  cushion = null,
+  markers = [],
+  height = 200,
+  compact = false,
+  label = 'Cash by day'
+}) {
   const padL = compact ? 4 : 56;
   const padB = compact ? 16 : 22;
   const padT = compact ? 14 : 18;
@@ -373,7 +671,10 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
   // Fit the values (and the cushion), with a little room; zero shows only when the line gets near it.
   let lo = Math.min(...vals, cushion === null ? Infinity : cushion);
   let hi = Math.max(...vals, cushion === null ? -Infinity : cushion);
-  if (!vals.length) { lo = 0; hi = 1; }
+  if (!vals.length) {
+    lo = 0;
+    hi = 1;
+  }
   if (hi === lo) hi = lo + 1;
   const pad = (hi - lo) * 0.08;
   lo = lo >= 0 && lo - pad * 3 <= 0 ? 0 : lo - pad;
@@ -385,7 +686,21 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
   // Shade days under the cushion (or under zero when there is no cushion).
   const floor = cushion === null ? 0 : cushion;
   const bw = n > 1 ? (width - padL - 6) / (n - 1) : 4;
-  days.forEach((d, i) => { if (d.v !== null && d.v < floor) body += '<rect x="' + (x(i) - bw / 2).toFixed(1) + '" y="' + padT + '" width="' + bw.toFixed(1) + '" height="' + (height - padB - padT).toFixed(1) + '" style="fill:var(--chart-4);fill-opacity:0.18"><title>' + esc(d.date + ': under ' + fmt(floor)) + '</title></rect>'; });
+  days.forEach((d, i) => {
+    if (d.v !== null && d.v < floor)
+      body +=
+        '<rect x="' +
+        (x(i) - bw / 2).toFixed(1) +
+        '" y="' +
+        padT +
+        '" width="' +
+        bw.toFixed(1) +
+        '" height="' +
+        (height - padB - padT).toFixed(1) +
+        '" style="fill:var(--chart-4);fill-opacity:0.18"><title>' +
+        esc(d.date + ': under ' + fmt(floor)) +
+        '</title></rect>';
+  });
   if (!compact) {
     for (const g of [lo, (lo + hi) / 2, hi]) {
       body += line(padL, y(g), width - 4, y(g), 'grid-line');
@@ -395,32 +710,61 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
   if (lo < 0) body += line(padL, y(0), width - 4, y(0), 'axis');
   if (cushion) body += line(padL, y(cushion), width - 4, y(cushion), 'axis', true);
   let sav = '';
-  days.forEach((d, i) => { if (d.s !== undefined && d.s !== null) sav += (sav ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.s).toFixed(1); });
-  if (sav) body += '<path d="' + sav + '" style="fill:none;stroke:var(--series-dream);stroke-width:1.5;stroke-opacity:0.8"><title>Savings (not counted in cash)</title></path>';
+  days.forEach((d, i) => {
+    if (d.s !== undefined && d.s !== null) sav += (sav ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.s).toFixed(1);
+  });
+  if (sav)
+    body +=
+      '<path d="' +
+      sav +
+      '" style="fill:none;stroke:var(--series-dream);stroke-width:1.5;stroke-opacity:0.8"><title>Savings (not counted in cash)</title></path>';
   let path = '';
-  days.forEach((d, i) => { if (d.v !== null) path += (path ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+  days.forEach((d, i) => {
+    if (d.v !== null) path += (path ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1);
+  });
   body += '<path d="' + path + '" style="fill:none;stroke:var(--series-actual);stroke-width:2"/>';
   // Past solid, future dashed on top so the line reads as "projected" after today.
   if (todayIndex !== null && todayIndex < n - 1) {
     let fut = '';
-    days.forEach((d, i) => { if (i >= todayIndex && d.v !== null) fut += (fut ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+    days.forEach((d, i) => {
+      if (i >= todayIndex && d.v !== null) fut += (fut ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1);
+    });
     body += '<path d="' + fut + '" style="fill:none;stroke:var(--surface);stroke-width:2" stroke-dasharray="3 5"/>';
   }
   if (todayIndex !== null) {
     body += line(x(todayIndex), padT - 4, x(todayIndex), height - padB, 'axis', true);
-    body += t(x(todayIndex), padT - 4, 'Today', { anchor: x(todayIndex) > width - 40 ? 'end' : 'middle', cls: 'muted' });
+    body += t(x(todayIndex), padT - 4, 'Today', {
+      anchor: x(todayIndex) > width - 40 ? 'end' : 'middle',
+      cls: 'muted'
+    });
   }
   const placed = [];
   for (const m of markers) {
     const mx = x(m.i);
     const my = y(days[m.i].v);
-    body += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="4" style="fill:var(--surface);stroke:var(--chart-2);stroke-width:2"><title>' + esc(m.label + ', ' + days[m.i].date + ': ' + fmt(days[m.i].v)) + '</title></circle>';
+    body +=
+      '<circle cx="' +
+      mx.toFixed(1) +
+      '" cy="' +
+      my.toFixed(1) +
+      '" r="4" style="fill:var(--surface);stroke:var(--chart-2);stroke-width:2"><title>' +
+      esc(m.label + ', ' + days[m.i].date + ': ' + fmt(days[m.i].v)) +
+      '</title></circle>';
     if (compact || placed.some((p) => Math.abs(p - mx) < 70)) continue;
     placed.push(mx);
     body += t(Math.min(Math.max(mx, padL + 20), width - 30), height - 4, m.label, { anchor: 'middle', cls: 'muted' });
   }
   // Invisible hit targets so every day has a hover value, not just the markers.
-  days.forEach((d, i) => { body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v === null ? lo : d.v).toFixed(1) + '" r="5" style="fill:transparent"><title>' + esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) + '</title></circle>'; });
+  days.forEach((d, i) => {
+    body +=
+      '<circle cx="' +
+      x(i).toFixed(1) +
+      '" cy="' +
+      y(d.v === null ? lo : d.v).toFixed(1) +
+      '" r="5" style="fill:transparent"><title>' +
+      esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) +
+      '</title></circle>';
+  });
   return svgWrap(width, height, body, label);
 }
 
@@ -447,12 +791,27 @@ export function waterfall({ rows, width, fmt, label = 'Waterfall' }) {
     const b = x(Math.max(r.from, r.to));
     const color = r.kind === 'total' ? 'var(--series-actual)' : r.to >= r.from ? 'var(--chart-3)' : 'var(--chart-2)';
     const tip = r.label + ': ' + fmt(r.to - r.from);
-    if (r.kind === 'unexplained') body += '<rect x="' + a.toFixed(1) + '" y="' + y + '" width="' + Math.max(2, b - a).toFixed(1) + '" height="' + barH + '" rx="3" style="fill:none;stroke:var(--chart-axis);stroke-width:2" stroke-dasharray="4 3"><title>' + esc(tip) + '</title></rect>';
+    if (r.kind === 'unexplained')
+      body +=
+        '<rect x="' +
+        a.toFixed(1) +
+        '" y="' +
+        y +
+        '" width="' +
+        Math.max(2, b - a).toFixed(1) +
+        '" height="' +
+        barH +
+        '" rx="3" style="fill:none;stroke:var(--chart-axis);stroke-width:2" stroke-dasharray="4 3"><title>' +
+        esc(tip) +
+        '</title></rect>';
     else body += rect(a, y, Math.max(2, b - a), barH, color, { tip });
     if (prevX !== null && r.kind !== 'total') body += line(prevX, y - F - 7, prevX, y + barH, 'grid-line', true);
     const amt = amtOf(r);
     const right = r.to >= r.from || r.kind === 'total' ? b + 6 + amt.length * 7 <= width : a - 6 - amt.length * 7 < 0;
-    body += t(right ? b + 5 : a - 5, y + barH - 3, amt, { anchor: right ? null : 'end', weight: r.kind === 'total' ? 700 : null });
+    body += t(right ? b + 5 : a - 5, y + barH - 3, amt, {
+      anchor: right ? null : 'end',
+      weight: r.kind === 'total' ? 700 : null
+    });
     prevX = x(r.to);
     y += barH + 10;
   }
@@ -474,10 +833,25 @@ export function paretoChart({ cumulative, count, share = 0.8, width, fmt, label 
   let body = '';
   cumulative.forEach((c, i) => {
     const bh = (c.amount / max) * (h - padB - 8);
-    body += '<rect x="' + (padL + i * bw).toFixed(1) + '" y="' + (h - padB - bh).toFixed(1) + '" width="' + Math.max(1, bw - (bw > 4 ? 1 : 0)).toFixed(1) + '" height="' + bh.toFixed(1) + '" style="fill:' + (i < count ? 'var(--series-actual)' : 'var(--chart-other)') + ';fill-opacity:0.75"><title>' + esc(c.label + ': ' + fmt(c.amount) + ', ' + Math.round(c.cumShare * 100) + '% so far') + '</title></rect>';
+    body +=
+      '<rect x="' +
+      (padL + i * bw).toFixed(1) +
+      '" y="' +
+      (h - padB - bh).toFixed(1) +
+      '" width="' +
+      Math.max(1, bw - (bw > 4 ? 1 : 0)).toFixed(1) +
+      '" height="' +
+      bh.toFixed(1) +
+      '" style="fill:' +
+      (i < count ? 'var(--series-actual)' : 'var(--chart-other)') +
+      ';fill-opacity:0.75"><title>' +
+      esc(c.label + ': ' + fmt(c.amount) + ', ' + Math.round(c.cumShare * 100) + '% so far') +
+      '</title></rect>';
   });
   let d = '';
-  cumulative.forEach((c, i) => { d += (d ? ' L ' : 'M ') + (padL + (i + 0.5) * bw).toFixed(1) + ' ' + y(c.cumShare).toFixed(1); });
+  cumulative.forEach((c, i) => {
+    d += (d ? ' L ' : 'M ') + (padL + (i + 0.5) * bw).toFixed(1) + ' ' + y(c.cumShare).toFixed(1);
+  });
   body += '<path d="' + d + '" style="fill:none;stroke:var(--chart-2);stroke-width:2"/>';
   body += line(padL, y(share), width - padR, y(share), 'axis', true);
   body += t(width - padR + 4, y(share) + 4, Math.round(share * 100) + '%', { cls: 'muted' });
@@ -500,14 +874,29 @@ export function heatGrid({ rows, cols, width, fmt, max, label = 'Heatmap by mont
   const rh = 22;
   let body = '';
   const every = Math.max(1, Math.ceil((cols.length * 48) / Math.max(1, width - labW)));
-  cols.forEach((c, j) => { if (j % every === 0) body += t(labW + j * cw + cw / 2, 12, c, { anchor: 'middle', cls: 'muted' }); });
+  cols.forEach((c, j) => {
+    if (j % every === 0) body += t(labW + j * cw + cw / 2, 12, c, { anchor: 'middle', cls: 'muted' });
+  });
   rows.forEach((r, i) => {
     const y = 18 + i * rh;
     body += t(4, y + 15, r.label.length > 14 ? r.label.slice(0, 13) + '.' : r.label, { cls: 'muted' });
     r.values.forEach((v, j) => {
       // A null month is left blank (nothing entered); a zero month is the faintest cell.
       const op = v === null || !max ? 0 : 0.08 + 0.85 * (v / max);
-      body += '<rect x="' + (labW + j * cw).toFixed(1) + '" y="' + y + '" width="' + Math.max(1, cw - 2).toFixed(1) + '" height="' + (rh - 3) + '" rx="3" style="fill:var(--series-actual);fill-opacity:' + op.toFixed(2) + ';stroke:var(--chart-grid)"><title>' + esc(r.label + ', ' + cols[j] + ': ' + (v === null ? 'none' : fmt(v))) + '</title></rect>';
+      body +=
+        '<rect x="' +
+        (labW + j * cw).toFixed(1) +
+        '" y="' +
+        y +
+        '" width="' +
+        Math.max(1, cw - 2).toFixed(1) +
+        '" height="' +
+        (rh - 3) +
+        '" rx="3" style="fill:var(--series-actual);fill-opacity:' +
+        op.toFixed(2) +
+        ';stroke:var(--chart-grid)"><title>' +
+        esc(r.label + ', ' + cols[j] + ': ' + (v === null ? 'none' : fmt(v))) +
+        '</title></rect>';
     });
   });
   return svgWrap(width, 22 + rows.length * rh, body, label);
@@ -522,8 +911,19 @@ export function spark({ values, width, height = 28, max = null, label = 'Sparkli
   const y = (v) => height - 2 - (v / (hi || 1)) * (height - 4);
   let d = '';
   let dots = '';
-  values.forEach((v, i) => { if (v !== null) { d += (d ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="1.8" style="fill:var(--series-actual)"/>'; } });
-  return svgWrap(width, height, '<path d="' + d + '" style="fill:none;stroke:var(--series-actual);stroke-width:1.5"/>' + dots, label);
+  values.forEach((v, i) => {
+    if (v !== null) {
+      d += (d ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+      dots +=
+        '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="1.8" style="fill:var(--series-actual)"/>';
+    }
+  });
+  return svgWrap(
+    width,
+    height,
+    '<path d="' + d + '" style="fill:none;stroke:var(--series-actual);stroke-width:1.5"/>' + dots,
+    label
+  );
 }
 
 // Vertical bars with a few labels, for many points (days of a month). values: [{ label, v }]
@@ -533,10 +933,14 @@ export function columns({ values, width, fmt, every = 5, label = 'Columns' }) {
   const padB = 18;
   const max = Math.max(1, ...values.map((x) => x.v || 0));
   const bw = (width - padL - 4) / Math.max(1, values.length);
-  let body = t(padL - 6, 14, fmt(max), { anchor: 'end', cls: 'muted' }) + t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
+  let body =
+    t(padL - 6, 14, fmt(max), { anchor: 'end', cls: 'muted' }) +
+    t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
   values.forEach((x, i) => {
     const bh = ((x.v || 0) / max) * (h - padB - 10);
-    body += rect(padL + i * bw, h - padB - bh, Math.max(1, bw - 1), bh, 'var(--series-actual)', { tip: x.label + ': ' + fmt(x.v || 0) });
+    body += rect(padL + i * bw, h - padB - bh, Math.max(1, bw - 1), bh, 'var(--series-actual)', {
+      tip: x.label + ': ' + fmt(x.v || 0)
+    });
     if (i % every === 0) body += t(padL + i * bw + bw / 2, h - 4, x.label, { anchor: 'middle', cls: 'muted' });
   });
   return svgWrap(width, h, body, label);

@@ -21,7 +21,12 @@ export function setPayDays(doc, incomeId, days) {
 
 // kind: 'income', 'line', or 'debt'. accountId null = the first checking account.
 export function setItemAccount(doc, kind, id, accountId) {
-  const target = kind === 'income' ? doc.income.find((i) => i.id === id) : kind === 'line' ? findLine(doc, id).line : doc.debts.find((d) => d.id === id);
+  const target =
+    kind === 'income'
+      ? doc.income.find((i) => i.id === id)
+      : kind === 'line'
+        ? findLine(doc, id).line
+        : doc.debts.find((d) => d.id === id);
   if (kind === 'debt') target.payFrom = accountId || null;
   else target.accountId = accountId || null;
 }
@@ -60,11 +65,21 @@ export function saveForecast(doc, month, predicted, nowIso) {
 export function confirmScheduled(doc, item, amount, date) {
   // The log's sign: positive is money out, so a paycheck is stored negative (addEntry in log.js).
   const out = item.dir === 'in' ? -Math.abs(amount) : Math.abs(amount);
-  return addEntry(doc, {
-    // A debt payment is logged as a card payment (money moved to the card, not spending). The calendar finds
-    // this entry again by its scheduleKey below, not by kind; matching by kind is only for entries with no key.
-    date: date || item.date, amount: out, kind: item.kind === 'paycheck' ? 'income' : item.kind === 'debt' ? 'card-payment' : 'spend',
-    // No merchant: the bank's own description matches it on import by amount and date.
-    lineId: item.lineId || null, incomeId: item.incomeId || null, note: item.name, account: item.account, scheduleKey: item.key
-  }, 'scheduled');
+  return addEntry(
+    doc,
+    {
+      // A debt payment is logged as a card payment (money moved to the card, not spending). The calendar finds
+      // this entry again by its scheduleKey below, not by kind; matching by kind is only for entries with no key.
+      date: date || item.date,
+      amount: out,
+      kind: item.kind === 'paycheck' ? 'income' : item.kind === 'debt' ? 'card-payment' : 'spend',
+      // No merchant: the bank's own description matches it on import by amount and date.
+      lineId: item.lineId || null,
+      incomeId: item.incomeId || null,
+      note: item.name,
+      account: item.account,
+      scheduleKey: item.key
+    },
+    'scheduled'
+  );
 }

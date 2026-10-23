@@ -30,7 +30,8 @@ export const LABELS = {
 export const EXPLAIN = {
   total: 'Everything you have, less everything you owe.',
   fi: 'What could pay for your life: money and investments, less the debts that are not tied to a home or car.',
-  locked: 'The part of your net worth in things you live in and use, like a home or a car. It counts, but it cannot pay a bill.'
+  locked:
+    'The part of your net worth in things you live in and use, like a home or a car. It counts, but it cannot pay a bill.'
 };
 
 /**
@@ -49,10 +50,34 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && kindOf(a) !== 'owed');
   const assets = accts.map((a) => {
     const b = get(a.id);
-    return { id: a.id, name: a.name, type: a.type, kind: kindOf(a), tier: tierOf(a), fi: countsForFI(a), amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null, from: b ? b.from : null };
+    return {
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      kind: kindOf(a),
+      tier: tierOf(a),
+      fi: countsForFI(a),
+      amount: b ? b.amount : null,
+      status: b ? b.status : null,
+      asOf: b ? b.date : null,
+      from: b ? b.from : null
+    };
   });
   // Paid ahead (S-119): computed from the log, one row per line; tier 4, not counted toward FI.
-  for (const p of paidAheadAt(doc, paDate)) assets.push({ id: 'paid-ahead:' + p.lineId, name: 'Paid ahead: ' + p.name, type: 'paid-ahead', kind: 'prepaid', tier: 4, fi: false, amount: p.amount, status: 'computed', asOf: paDate, from: 'computed', computed: true });
+  for (const p of paidAheadAt(doc, paDate))
+    assets.push({
+      id: 'paid-ahead:' + p.lineId,
+      name: 'Paid ahead: ' + p.name,
+      type: 'paid-ahead',
+      kind: 'prepaid',
+      tier: 4,
+      fi: false,
+      amount: p.amount,
+      status: 'computed',
+      asOf: paDate,
+      from: 'computed',
+      computed: true
+    });
   // Each debt secured by an asset belongs to the first asset that names it.
   const securedBy = {};
   for (const a of accts) if (a.securedDebtId && !securedBy[a.securedDebtId]) securedBy[a.securedDebtId] = a;
@@ -60,35 +85,66 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
     const b = get(l.key);
     const by = l.debtId ? securedBy[l.debtId] || null : null;
     // counts: toward FI. A debt secured by an asset that does not count (the mortgage on the home) is left out with it.
-    return { key: l.key, name: l.name, debtType: l.debtType, debtId: l.debtId, amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null,
-      securedBy: by ? by.id : null, counts: !(by && !countsForFI(by)) };
+    return {
+      key: l.key,
+      name: l.name,
+      debtType: l.debtType,
+      debtId: l.debtId,
+      amount: b ? b.amount : null,
+      status: b ? b.status : null,
+      asOf: b ? b.date : null,
+      securedBy: by ? by.id : null,
+      counts: !(by && !countsForFI(by))
+    };
   });
   const fiAssets = assets.filter((a) => a.fi);
   const fiDebts = debts.filter((d) => d.counts);
   const totalNW = total(assets) === null || total(debts) === null ? null : r2(total(assets) - total(debts));
   const fiNW = total(fiAssets) === null || total(fiDebts) === null ? null : r2(total(fiAssets) - total(fiDebts));
   // Locked in: each asset that does not count, less the debts it secures.
-  const lockedRows = assets.filter((a) => !a.fi).map((a) => {
-    const owed = debts.filter((d) => d.securedBy === a.id && !d.counts);
-    const debt = total(owed);
-    return { id: a.id, name: a.name, type: a.type, value: a.amount, debt: owed.length ? debt : 0, debtNames: owed.map((d) => d.name), equity: a.amount === null || debt === null ? null : r2(a.amount - (owed.length ? debt : 0)) };
-  });
+  const lockedRows = assets
+    .filter((a) => !a.fi)
+    .map((a) => {
+      const owed = debts.filter((d) => d.securedBy === a.id && !d.counts);
+      const debt = total(owed);
+      return {
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        value: a.amount,
+        debt: owed.length ? debt : 0,
+        debtNames: owed.map((d) => d.name),
+        equity: a.amount === null || debt === null ? null : r2(a.amount - (owed.length ? debt : 0))
+      };
+    });
   // byTier is cumulative: tier 1 is cash, 2 adds brokerage and the like, 3 adds retirement, 4 adds things you
   // use and paid ahead, so byTier[4] is every asset.
   const tierSum = (max) => total(assets.filter((a) => a.tier <= max));
   const types = [...new Set(debts.map((d) => d.debtType))];
   return {
     date,
-    assets, debts,
+    assets,
+    debts,
     total: totalNW,
     fi: fiNW,
     locked: totalNW === null || fiNW === null ? null : r2(totalNW - fiNW),
     lockedRows,
-    assetsTotal: total(assets), debtsTotal: total(debts),
+    assetsTotal: total(assets),
+    debtsTotal: total(debts),
     byTier: { 1: tierSum(1), 2: tierSum(2), 3: tierSum(3), 4: tierSum(4) },
-    debtsByType: types.map((t) => ({ type: t, amount: total(debts.filter((d) => d.debtType === t)), count: debts.filter((d) => d.debtType === t).length })),
-    byKind: ['cash', 'invested', 'valued', 'prepaid'].map((k) => ({ kind: k, amount: total(assets.filter((a) => a.kind === k)) })),
-    missing: [...assets.filter((a) => a.amount === null).map((a) => a.name), ...debts.filter((d) => d.amount === null).map((d) => d.name)]
+    debtsByType: types.map((t) => ({
+      type: t,
+      amount: total(debts.filter((d) => d.debtType === t)),
+      count: debts.filter((d) => d.debtType === t).length
+    })),
+    byKind: ['cash', 'invested', 'valued', 'prepaid'].map((k) => ({
+      kind: k,
+      amount: total(assets.filter((a) => a.kind === k))
+    })),
+    missing: [
+      ...assets.filter((a) => a.amount === null).map((a) => a.name),
+      ...debts.filter((d) => d.amount === null).map((d) => d.name)
+    ]
   };
 }
 
@@ -99,7 +155,9 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
  *   last with one and the month being worked on; empty with no balances at all
  */
 export function balanceMonths(doc) {
-  const keys = Object.keys(doc.balances || {}).filter((k) => /^\d{4}-\d{2}$/.test(k)).sort();
+  const keys = Object.keys(doc.balances || {})
+    .filter((k) => /^\d{4}-\d{2}$/.test(k))
+    .sort();
   if (!keys.length) return [];
   const out = [];
   let [y, m] = keys[0].split('-').map(Number);
@@ -109,7 +167,10 @@ export function balanceMonths(doc) {
     out.push(k);
     if (k >= last) break;
     m += 1;
-    if (m > 12) { m = 1; y += 1; }
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
   }
   return out;
 }
@@ -123,8 +184,18 @@ export function balanceMonths(doc) {
 export function netWorthByMonth(doc) {
   return balanceMonths(doc).map((month) => {
     const nw = netWorthAt(doc, lastDayOf(month));
-    return { month, date: nw.date, total: nw.total, fi: nw.fi, locked: nw.locked, assets: nw.assetsTotal, debts: nw.debtsTotal,
-      nonMortgageDebt: total(nw.debts.filter((d) => d.debtType !== 'mortgage')), byKind: nw.byKind, byTier: nw.byTier };
+    return {
+      month,
+      date: nw.date,
+      total: nw.total,
+      fi: nw.fi,
+      locked: nw.locked,
+      assets: nw.assetsTotal,
+      debts: nw.debtsTotal,
+      nonMortgageDebt: total(nw.debts.filter((d) => d.debtType !== 'mortgage')),
+      byKind: nw.byKind,
+      byTier: nw.byTier
+    };
   });
 }
 
@@ -158,14 +229,36 @@ export function milestones(series) {
     for (let i = 1; i < series.length; i++) {
       const a = series[i - 1];
       const b = series[i];
-      if (test(a) === false && test(b) === true) { out.push({ key, label, month: b.month, date: b.date, celebrate: !!celebrate }); return; }
+      if (test(a) === false && test(b) === true) {
+        out.push({ key, label, month: b.month, date: b.date, celebrate: !!celebrate });
+        return;
+      }
     }
   };
   const known = (k, f) => (x) => (x[k] === null ? null : f(x[k]));
-  first('fi-zero', 'FI net worth crossed $0', known('fi', (v) => v >= 0), true);
-  first('total-zero', 'Net worth crossed $0', known('total', (v) => v >= 0), true);
-  for (const n of FI_STEPS) first('fi-' + n, 'First $' + n.toLocaleString('en-US') + ' of FI net worth', known('fi', (v) => v >= n));
-  first('debt-free', 'Debt-free except the mortgage', known('nonMortgageDebt', (v) => v <= 0));
+  first(
+    'fi-zero',
+    'FI net worth crossed $0',
+    known('fi', (v) => v >= 0),
+    true
+  );
+  first(
+    'total-zero',
+    'Net worth crossed $0',
+    known('total', (v) => v >= 0),
+    true
+  );
+  for (const n of FI_STEPS)
+    first(
+      'fi-' + n,
+      'First $' + n.toLocaleString('en-US') + ' of FI net worth',
+      known('fi', (v) => v >= n)
+    );
+  first(
+    'debt-free',
+    'Debt-free except the mortgage',
+    known('nonMortgageDebt', (v) => v <= 0)
+  );
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 

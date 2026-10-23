@@ -17,13 +17,21 @@ const refs = loadRefs();
 
 test('fixed floor and volatility', () => {
   assert.deepEqual(tr.fixedFloor({ fixed: 1640, takeHome: 4000 }), { amount: 1640, share: 0.41 });
-  const v = tr.volatility({ rows: [
-    { id: 'a', name: 'A', values: [100, 300] },      // mean 200, sd 100: 0.5
-    { id: 'b', name: 'B', values: [50, 50] },        // no swing: left out
-    { id: 'c', name: 'C', values: [10, 30, 20] },    // mean 20, sd sqrt((100 + 100 + 0) / 3) = 8.165: 0.408
-    { id: 'd', name: 'D', values: [null, 80] }       // one month only: left out
-  ] });
-  assert.deepEqual(v.map((x) => [x.name, x.mean, x.sd]), [['A', 200, 100], ['C', 20, 8.16]]);
+  const v = tr.volatility({
+    rows: [
+      { id: 'a', name: 'A', values: [100, 300] }, // mean 200, sd 100: 0.5
+      { id: 'b', name: 'B', values: [50, 50] }, // no swing: left out
+      { id: 'c', name: 'C', values: [10, 30, 20] }, // mean 20, sd sqrt((100 + 100 + 0) / 3) = 8.165: 0.408
+      { id: 'd', name: 'D', values: [null, 80] } // one month only: left out
+    ]
+  });
+  assert.deepEqual(
+    v.map((x) => [x.name, x.mean, x.sd]),
+    [
+      ['A', 200, 100],
+      ['C', 20, 8.16]
+    ]
+  );
   assert.ok(near(v[1].swing, 0.408248, 6));
 });
 
@@ -31,10 +39,14 @@ test('annualized habits, day of month, and pacing', () => {
   const d = newHousehold('Habits');
   d.currentMonth = '2026-10';
   // Coffee: five charges of 4.00 in October; a 60 dinner once
-  for (const day of ['02', '06', '09', '13', '20']) addEntry(d, { date: '2026-10-' + day, amount: 4, lineId: 'eating-out', merchant: 'Corner Coffee' });
+  for (const day of ['02', '06', '09', '13', '20'])
+    addEntry(d, { date: '2026-10-' + day, amount: 4, lineId: 'eating-out', merchant: 'Corner Coffee' });
   addEntry(d, { date: '2026-10-20', amount: 60, lineId: 'eating-out', merchant: 'Bistro' });
   // 5 x 4 = 20 a month, 240 a year; the dinner is not small or frequent
-  assert.deepEqual(tr.annualizedHabits(d, ['2026-10']).map((x) => [x.merchant, x.count, x.average, x.yearly]), [['CORNER COFFEE', 5, 4, 240]]);
+  assert.deepEqual(
+    tr.annualizedHabits(d, ['2026-10']).map((x) => [x.merchant, x.count, x.average, x.yearly]),
+    [['CORNER COFFEE', 5, 4, 240]]
+  );
   // Day 20: 4 + 60 = 64; day 2: 4
   const dom = tr.dayOfMonth(d, ['2026-10']);
   assert.deepEqual([dom[1].average, dom[19].average, dom[0].average], [4, 64, 0]);

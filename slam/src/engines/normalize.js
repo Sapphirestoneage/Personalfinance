@@ -21,18 +21,23 @@ export function toMonthly(value, payFrequency) {
   if (value.amount === null || value.amount === undefined) return null;
   const a = value.amount;
   switch (value.cadence) {
-    case 'month': return a;
+    case 'month':
+      return a;
     // 52 weeks over 12 months (4.33 a month), not 4: four weeks a month loses a month a year.
-    case 'week': return (a * 52) / 12;
-    case 'year': return a / 12;
+    case 'week':
+      return (a * 52) / 12;
+    case 'year':
+      return a / 12;
     case 'paycheck': {
       // No pay frequency, no answer: guessing one would be a silent assumption.
       const n = PAYCHECKS_PER_YEAR[payFrequency];
       return n ? (a * n) / 12 : null;
     }
     // A one-off is listed apart (isOneOff) and must not inflate a monthly total.
-    case 'one-off': return 0;
-    default: return null;
+    case 'one-off':
+      return 0;
+    default:
+      return null;
   }
 }
 
@@ -72,8 +77,9 @@ export function sumParts(parts, cadence) {
   if (!known.length) return null;
   const mixed = known.some((p) => p.cadence && p.cadence !== cadence);
   // Same cadence throughout: a plain sum. Mixed: each item x its periods a year, then back to the value's cadence.
-  const total = mixed && PART_CADENCES[cadence]
-    ? known.reduce((a, p) => a + p.amount * PART_CADENCES[p.cadence || cadence], 0) / PART_CADENCES[cadence]
-    : known.reduce((a, p) => a + p.amount, 0);
+  const total =
+    mixed && PART_CADENCES[cadence]
+      ? known.reduce((a, p) => a + p.amount * PART_CADENCES[p.cadence || cadence], 0) / PART_CADENCES[cadence]
+      : known.reduce((a, p) => a + p.amount, 0);
   return Math.round(total * 100) / 100;
 }

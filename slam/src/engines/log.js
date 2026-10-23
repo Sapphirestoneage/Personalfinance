@@ -45,7 +45,11 @@ export function sourceOf(t) {
 
 // "TRADER JOE S" and "Trader Joe's" are the same shop.
 function words(m) {
-  return String(m || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').split(/\s+/).filter(Boolean);
+  return String(m || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
 }
 /**
  * Same shop? Letters and digits only, case folded: equal, one a prefix of the other, or the same first
@@ -118,10 +122,20 @@ export function matchImport(log, incoming) {
   const byId = Object.fromEntries(open.map((e) => [e.id, e]));
   for (const r of rows) {
     if (r.status) continue;
-    if (!r.candidates.length) { r.status = 'new'; continue; }
+    if (!r.candidates.length) {
+      r.status = 'new';
+      continue;
+    }
     const only = r.candidates.length === 1 ? byId[r.candidates[0]] : null;
-    const clear = only && claims[only.id] === 1 && ((r.tx.merchant && only.merchant && similarMerchant(r.tx.merchant, only.merchant)) || r2(r.tx.amount) === r2(only.amount));
-    if (clear) { r.status = 'matched'; r.entryId = only.id; } else r.status = 'possible';
+    const clear =
+      only &&
+      claims[only.id] === 1 &&
+      ((r.tx.merchant && only.merchant && similarMerchant(r.tx.merchant, only.merchant)) ||
+        r2(r.tx.amount) === r2(only.amount));
+    if (clear) {
+      r.status = 'matched';
+      r.entryId = only.id;
+    } else r.status = 'possible';
   }
   const count = (st) => rows.filter((r) => r.status === st).length;
   return { rows, matched: count('matched'), fresh: count('new'), possible: count('possible'), same: count('same') };
@@ -133,7 +147,17 @@ export function matchImport(log, incoming) {
  * @returns {string}
  */
 export function matchSummary(m) {
-  return 'Matched ' + m.matched + ', new ' + m.fresh + ', possible matches ' + m.possible + ' to confirm' + (m.same ? ', already imported ' + m.same : '') + '.';
+  return (
+    'Matched ' +
+    m.matched +
+    ', new ' +
+    m.fresh +
+    ', possible matches ' +
+    m.possible +
+    ' to confirm' +
+    (m.same ? ', already imported ' + m.same : '') +
+    '.'
+  );
 }
 
 /**
@@ -144,7 +168,10 @@ export function matchSummary(m) {
  */
 export function recentLines(doc, n = 6) {
   const out = [];
-  const manual = doc.transactions.filter((t) => sourceOf(t) !== 'import' && t.lineId).slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const manual = doc.transactions
+    .filter((t) => sourceOf(t) !== 'import' && t.lineId)
+    .slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   for (const t of manual) if (!out.includes(t.lineId)) out.push(t.lineId);
   return out.slice(0, n);
 }
@@ -170,8 +197,18 @@ export function lastAccount(doc) {
  *   every entry dated that month, pending ones included and counted; last is the newest date 'YYYY-MM-DD'.
  */
 export function monthLog(doc, month) {
-  const list = doc.transactions.filter((t) => t.date.startsWith(month)).slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const list = doc.transactions
+    .filter((t) => t.date.startsWith(month))
+    .slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   const by = { manual: 0, scheduled: 0, import: 0 };
   for (const t of list) by[sourceOf(t)] += 1;
-  return { month, entries: list, count: list.length, bySource: by, pending: list.filter(isPending).length, last: list.length ? list[0].date : null };
+  return {
+    month,
+    entries: list,
+    count: list.length,
+    bySource: by,
+    pending: list.filter(isPending).length,
+    last: list.length ? list[0].date : null
+  };
 }

@@ -42,7 +42,9 @@ export function switchMonth(doc, key) {
 
 // Fixed costs rarely change: copy them from the latest earlier month that has them.
 export function copyFixedFromLastMonth(doc) {
-  const earlier = Object.keys(doc.monthActuals).filter((k) => k < doc.currentMonth).sort();
+  const earlier = Object.keys(doc.monthActuals)
+    .filter((k) => k < doc.currentMonth)
+    .sort();
   const closed = doc.months.filter((m) => m.key < doc.currentMonth).map((m) => m.key);
   const from = [...earlier, ...closed].sort().pop();
   if (!from) return null;
@@ -52,9 +54,17 @@ export function copyFixedFromLastMonth(doc) {
     // Only blank fixed lines are filled; a typed actual is never overwritten. A snapshot holds plain
     // numbers, so a copy from a closed month is rebuilt as a known Value; an open month's Value is copied whole.
     if (l.kind !== 'fixed' || !isBlankValue(l.actual)) continue;
-    const v = rec ? (rec.snapshot.lines[l.id] && rec.snapshot.lines[l.id].actual !== null ? { ...blank(), amount: rec.snapshot.lines[l.id].actual, status: 'known', note: 'Copied from ' + from } : null)
-      : (doc.monthActuals[from][l.id] ? { ...doc.monthActuals[from][l.id], note: 'Copied from ' + from } : null);
-    if (v) { l.actual = v; copied += 1; }
+    const v = rec
+      ? rec.snapshot.lines[l.id] && rec.snapshot.lines[l.id].actual !== null
+        ? { ...blank(), amount: rec.snapshot.lines[l.id].actual, status: 'known', note: 'Copied from ' + from }
+        : null
+      : doc.monthActuals[from][l.id]
+        ? { ...doc.monthActuals[from][l.id], note: 'Copied from ' + from }
+        : null;
+    if (v) {
+      l.actual = v;
+      copied += 1;
+    }
   }
   return { from, copied };
 }
@@ -62,7 +72,10 @@ export function copyFixedFromLastMonth(doc) {
 export function nextMonthKey(key) {
   let [y, m] = key.split('-').map(Number);
   m += 1;
-  if (m > 12) { m = 1; y += 1; }
+  if (m > 12) {
+    m = 1;
+    y += 1;
+  }
   return y + '-' + String(m).padStart(2, '0');
 }
 
@@ -76,7 +89,10 @@ export function closeMonth(doc, snapshot, nowIso) {
   // If the next month already has its own actuals, load them; otherwise the
   // closed month's numbers carry forward as a starting point (S-007).
   if (doc.monthActuals[next]) loadMonth(doc, next);
-  else { doc.currentMonth = next; applyPlanStops(doc, next); }
+  else {
+    doc.currentMonth = next;
+    applyPlanStops(doc, next);
+  }
   return key;
 }
 

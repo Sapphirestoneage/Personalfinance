@@ -176,77 +176,190 @@ export default {
   stress: {
     points: 34,
     // line: [stress, % of stress, stress per $100, net, lean]
-    lines: { delivery: [7, 0.205882, 5.833333, -4, 'less'], rent: [8, 0.235294, 0.5, null, null], 'eating-out': [4, 0.117647, 1.176471, 4, 'more'],
-      subscriptions: [6, null, null, -2, 'even'], therapy: [2, null, null, 7, 'more'], concert: [1, null, null, 8, 'more'] },
-    lookFirst: [['delivery', 4.8], ['shopping', 2.1], ['subscriptions', 1.36]],
+    lines: {
+      delivery: [7, 0.205882, 5.833333, -4, 'less'],
+      rent: [8, 0.235294, 0.5, null, null],
+      'eating-out': [4, 0.117647, 1.176471, 4, 'more'],
+      subscriptions: [6, null, null, -2, 'even'],
+      therapy: [2, null, null, 7, 'more'],
+      concert: [1, null, null, 8, 'more']
+    },
+    lookFirst: [
+      ['delivery', 4.8],
+      ['shopping', 2.1],
+      ['subscriptions', 1.36]
+    ],
     moreOf: ['therapy', 'concert', 'eating-out'],
-    reading: 'Look at Delivery first: $120 a month that drains more than it gives (stress 7, joy or purpose 3). Then Shopping and Streaming and apps. Worth more of: Therapy, Concert tickets (split with Jo), and Eating out. Rate joy or purpose for Rent to compare.'
+    reading:
+      'Look at Delivery first: $120 a month that drains more than it gives (stress 7, joy or purpose 3). Then Shopping and Streaming and apps. Worth more of: Therapy, Concert tickets (split with Jo), and Eating out. Rate joy or purpose for Rent to compare.'
   },
   shares: {
     // category: [% of income (basis), % of spending (basis)]
-    categories: { housing: [0.448718, 0.458836], food: [0.215385, 0.220241], transport: [0.033846, 0.034609], debt: [0.076923, 0.078658],
-      health: [0.037179, 0.038018], bills: [0.027436, 0.028055], fun: [0.094872, 0.097011], annual: [0.030769, 0.031463],
-      giving: [0.012821, 0.013110], savings: [0.038462, null] },
+    categories: {
+      housing: [0.448718, 0.458836],
+      food: [0.215385, 0.220241],
+      transport: [0.033846, 0.034609],
+      debt: [0.076923, 0.078658],
+      health: [0.037179, 0.038018],
+      bills: [0.027436, 0.028055],
+      fun: [0.094872, 0.097011],
+      annual: [0.030769, 0.031463],
+      giving: [0.012821, 0.01311],
+      savings: [0.038462, null]
+    },
     foodEstimateOfSpending: 0.174216,
     lines: { 'eating-out': [0.087179, 0.089145], delivery: [0.030769, 0.031463] }
   },
   happiness: {
     // line: [rating, % of happiness, joy per $100]
-    lines: { 'eating-out': [8, 0.210526, 2.352941], delivery: [3, 0.078947, 2.5], therapy: [9, 0.236842, 7.5],
-      subscriptions: [4, 0.105263, 5.882353], shopping: [5, 0.131579, 2.380952], concert: [9, 0.236842, 5.625] },
-    foodShare: 0.289474, points: 38
+    lines: {
+      'eating-out': [8, 0.210526, 2.352941],
+      delivery: [3, 0.078947, 2.5],
+      therapy: [9, 0.236842, 7.5],
+      subscriptions: [4, 0.105263, 5.882353],
+      shopping: [5, 0.131579, 2.380952],
+      concert: [9, 0.236842, 5.625]
+    },
+    foodShare: 0.289474,
+    points: 38
   },
   plan: {
-    spending: 3257, outflow: 3457,
-    categories: { housing: [1720, 30, 0.017442], food: [600, 240, 0.4], health: [160, -15, -0.09375], bills: [45, 62, 1.377778],
-      fun: [150, 220, 1.466667], annual: [100, 20, 0.2], savings: [200, -50, -0.25], transport: [132, 0, 0], debt: [300, 0, 0], giving: [50, 0, 0] },
-    foodPctIncome: 0.153846, foodPctSpending: 0.184219, housingPctSpending: 0.528093
+    spending: 3257,
+    outflow: 3457,
+    categories: {
+      housing: [1720, 30, 0.017442],
+      food: [600, 240, 0.4],
+      health: [160, -15, -0.09375],
+      bills: [45, 62, 1.377778],
+      fun: [150, 220, 1.466667],
+      annual: [100, 20, 0.2],
+      savings: [200, -50, -0.25],
+      transport: [132, 0, 0],
+      debt: [300, 0, 0],
+      giving: [50, 0, 0]
+    },
+    foodPctIncome: 0.153846,
+    foodPctSpending: 0.184219,
+    housingPctSpending: 0.528093
   },
   review: {
-    reviewMonth: '2026-09', planMonth: '2026-10',
-    plan: 3737, planSpending: 3587, planLeft: 163, actual: 3964, frees: 227, planPctIncome: 0.958205,
-    happyNow: 0.162559, happyPlan: 0.156119, happyChange: -0.00644,
+    reviewMonth: '2026-09',
+    planMonth: '2026-10',
+    plan: 3737,
+    planSpending: 3587,
+    planLeft: 163,
+    actual: 3964,
+    frees: 227,
+    planPctIncome: 0.958205,
+    happyNow: 0.162559,
+    happyPlan: 0.156119,
+    happyChange: -0.00644,
     checklist: [12, 18],
-    rows: { 'eating-out': { plan: 280, decision: 'change', planPctIncome: 0.071795, planPctSpending: 0.07806 },
+    rows: {
+      'eating-out': { plan: 280, decision: 'change', planPctIncome: 0.071795, planPctSpending: 0.07806 },
       'cooking-class': { plan: 60, decision: 'new', planPctIncome: 0.015385, estimate: null, addedInReview: true },
-      delivery: { plan: 0, decision: 'cut' }, subscriptions: { plan: 0, decision: 'cut' }, 'fee-late': { plan: 0, decision: 'cut', stop: true } },
-    reading: "Next month's plan frees $227. The cuts were in Delivery, Streaming and apps, and Late fee, which held 6% of spending and 18% of happiness. Eating out changes from $340 to $280. Added: Cooking class at $60. The plan leaves $163 of take-home."
+      delivery: { plan: 0, decision: 'cut' },
+      subscriptions: { plan: 0, decision: 'cut' },
+      'fee-late': { plan: 0, decision: 'cut', stop: true }
+    },
+    reading:
+      "Next month's plan frees $227. The cuts were in Delivery, Streaming and apps, and Late fee, which held 6% of spending and 18% of happiness. Eating out changes from $340 to $280. Added: Cooking class at $60. The plan leaves $163 of take-home."
   },
-  fat: 2722, fatShare: 0.697949,
-  takeHome: 3900, pretax: 260, hourly: 22.5,
+  fat: 2722,
+  fatShare: 0.697949,
+  takeHome: 3900,
+  pretax: 260,
+  hourly: 22.5,
   categories: {
     // [estimate, actual]
-    housing: [1720, 1750], food: [550, 840], transport: [132, 132], debt: [300, 300],
-    health: [160, 145], bills: [45, 107], fun: [100, 370], annual: [100, 120],
-    giving: [50, 50], savings: [200, 150]
+    housing: [1720, 1750],
+    food: [550, 840],
+    transport: [132, 132],
+    debt: [300, 300],
+    health: [160, 145],
+    bills: [45, 107],
+    fun: [100, 370],
+    annual: [100, 120],
+    giving: [50, 50],
+    savings: [200, 150]
   },
-  estimateTotal: 3157, actualTotal: 3814, spending: 3814, savings: 150,
-  surplus: -64, savingsRate: 0.098558, housingShare: 0.448718, housingOver: true,
-  roommateWorstCase: 3350, roommateWorstCaseShare: 0.858974,
+  estimateTotal: 3157,
+  actualTotal: 3814,
+  spending: 3814,
+  savings: 150,
+  surplus: -64,
+  savingsRate: 0.098558,
+  housingShare: 0.448718,
+  housingOver: true,
+  roommateWorstCase: 3350,
+  roommateWorstCaseShare: 0.858974,
   blindSpot: 0.176193,
-  culprits: [['Food', 290, 1.527273, 3480], ['Personal and fun', 270, 3.7, 3240], ['Bills and subscriptions', 62, 2.377778, 744]],
+  culprits: [
+    ['Food', 290, 1.527273, 3480],
+    ['Personal and fun', 270, 3.7, 3240],
+    ['Bills and subscriptions', 62, 2.377778, 744]
+  ],
   gut: { gut: 2800, estimates: 3157, actual: 3814, actualVsGut: 1014, ratio: 1.362143 },
   proofOfCash: { implied: 3450, entered: 3514, pct: 0.018551, flagged: false },
-  fixed: 2260, variable: 1554, fixedPct: 0.592554,
-  needs: 2707, wants: 1107, needsPct: 0.694103, wantsPct: 0.283846, savingsPct: 0.038462, unassignedShare: -0.016410,
-  mistakeMonthly: 39, mistakeYearly: 468, owedBack: 80,
+  fixed: 2260,
+  variable: 1554,
+  fixedPct: 0.592554,
+  needs: 2707,
+  wants: 1107,
+  needsPct: 0.694103,
+  wantsPct: 0.283846,
+  savingsPct: 0.038462,
+  unassignedShare: -0.01641,
+  mistakeMonthly: 39,
+  mistakeYearly: 468,
+  owedBack: 80,
   draftt: {
-    base: 4160, baseLabel: 'take-home plus pre-tax retirement', total: 3402, totalShare: 0.817788,
-    everythingElse: 822, everythingElseShare: 0.197596, leftOver: -64, leftOverShare: -0.015385, taxes: null,
+    base: 4160,
+    baseLabel: 'take-home plus pre-tax retirement',
+    total: 3402,
+    totalShare: 0.817788,
+    everythingElse: 822,
+    everythingElseShare: 0.197596,
+    leftOver: -64,
+    leftOverShare: -0.015385,
+    taxes: null,
     // letter: [amount, % of base, % of DRAFTT, estimate % of base, change, uses estimate]
     letters: {
-      debt: [300, 0.072115, 0.088183, 0.072115, 0, false], retirement: [260, 0.0625, 0.076426, 0.0625, 0, false],
-      accommodation: [1750, 0.420673, 0.514403, 0.413462, 0.007212, false], food: [840, 0.201923, 0.246914, 0.132212, 0.069712, false],
-      transportation: [132, 0.031731, 0.038801, 0.031731, 0, false], therapy: [120, 0.028846, 0.035273, 0.028846, 0, false]
+      debt: [300, 0.072115, 0.088183, 0.072115, 0, false],
+      retirement: [260, 0.0625, 0.076426, 0.0625, 0, false],
+      accommodation: [1750, 0.420673, 0.514403, 0.413462, 0.007212, false],
+      food: [840, 0.201923, 0.246914, 0.132212, 0.069712, false],
+      transportation: [132, 0.031731, 0.038801, 0.031731, 0, false],
+      therapy: [120, 0.028846, 0.035273, 0.028846, 0, false]
     },
-    reading: "DRAFTT is 82% of take-home plus pre-tax retirement. Accommodation is the biggest letter at 51% of DRAFTT. Food's share went from 13% estimated to 20% actual. Everything else is 20% and there is a shortfall of 2%."
+    reading:
+      "DRAFTT is 82% of take-home plus pre-tax retirement. Accommodation is the biggest letter at 51% of DRAFTT. Food's share went from 13% estimated to 20% actual. Everything else is 20% and there is a shortfall of 2%."
   },
-  incomeStatement: { revenue: 3900, taxes: 0, deductions: 0, needs: 2407, debt: 300, wants: 1107, savings: 150, net: -64 },
-  joyLowest: [['Food', 1.455577], ['Personal and fun', 1.818846], ['Bills and subscriptions', 5.882353]],
+  incomeStatement: {
+    revenue: 3900,
+    taxes: 0,
+    deductions: 0,
+    needs: 2407,
+    debt: 300,
+    wants: 1107,
+    savings: 150,
+    net: -64
+  },
+  joyLowest: [
+    ['Food', 1.455577],
+    ['Personal and fun', 1.818846],
+    ['Bills and subscriptions', 5.882353]
+  ],
   history: {
-    food: [['2026-07', 550, 700, 0.272727], ['2026-08', 550, 810, 0.472727]],
+    food: [
+      ['2026-07', 550, 700, 0.272727],
+      ['2026-08', 550, 810, 0.472727]
+    ],
     trends: { food: 'up', fun: 'up', housing: 'flat' },
-    totals: [['2026-07', 2370, 2690, 0.135021], ['2026-08', 2370, 2870, 0.210970]],
+    totals: [
+      ['2026-07', 2370, 2690, 0.135021],
+      ['2026-08', 2370, 2870, 0.21097]
+    ],
     correctionFood: { factor: 1.424242, suggested: 783.33 },
     lastActualFood: 810
   },

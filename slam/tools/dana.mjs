@@ -20,7 +20,14 @@ import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { makeValue } from '../src/store/value.js';
 import { makeDate } from '../src/store/schema.js';
 import { addIncome, addDebt, addDeduction, addLine, findLine, setField } from '../src/store/edits.js';
-import { addAccount, setBalance, setAccountField, setDeductionAccount, setAlternative, setPurchase } from '../src/store/accounts.js';
+import {
+  addAccount,
+  setBalance,
+  setAccountField,
+  setDeductionAccount,
+  setAlternative,
+  setPurchase
+} from '../src/store/accounts.js';
 import { startPlan, copyPlanForward } from '../src/store/plans.js';
 import { planStartValues } from '../src/engines/plan.js';
 import { buildSummary, closeMonthSnapshot } from '../src/engines/summary.js';
@@ -31,14 +38,27 @@ const root = new URL('../', import.meta.url);
 const refs = loadRefs();
 // Ids (newId) use Math.random; a seeded one (mulberry32) makes the file the same on every run.
 Math.random = ((seed) => () => {
-  seed = (seed + 0x6D2B79F5) >>> 0;
+  seed = (seed + 0x6d2b79f5) >>> 0;
   let t = seed;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 })(34);
 
-const CLOSED = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
+const CLOSED = [
+  '2025-10',
+  '2025-11',
+  '2025-12',
+  '2026-01',
+  '2026-02',
+  '2026-03',
+  '2026-04',
+  '2026-05',
+  '2026-06',
+  '2026-07',
+  '2026-08',
+  '2026-09'
+];
 // Balances, rates, prices and due days are one-off values: there is no cadence to turn into a monthly amount.
 const one = (n, opts = {}) => makeValue(n, { cadence: 'one-off', ...opts });
 
@@ -70,13 +90,16 @@ const START = { chk: 2400, sav: 1200, visa: 16000, k401: 6000, condo: 285000, ca
 const ENDS = {
   chk: [2400, 2400, 2400, 2400, 2315, 2315, 2315, 2315, 2315, 2315, 2315, 2315],
   sav: [1500, 1800, 2100, 2400, 2700, 3000, 3300, 3600, 3900, 4200, 4500, 4800],
-  visa: [15560, 15120, 14680, 14240, 13800, 13360, 12920, 12480, 12299.90, 12116.05, 11928.37, 11736.78],
+  visa: [15560, 15120, 14680, 14240, 13800, 13360, 12920, 12480, 12299.9, 12116.05, 11928.37, 11736.78],
   k401: [6460, 6950, 7230, 7710, 7960, 8470, 9010, 9450, 9790, 10310, 10680, 11170],
   // 240,000 + 1,200.00 - 1,700 = 239,500.00; + 1,197.50 = 238,997.50; + 1,194.99 = 238,492.49;
   // + 1,192.46 = 237,984.95; + 1,189.92 = 237,474.87; + 1,187.37 = 236,962.24; + 1,184.81 = 236,447.05;
   // + 1,182.24 = 235,929.29; + 1,179.65 = 235,408.94; + 1,177.04 = 234,885.98; + 1,174.43 = 234,360.41;
   // + 1,171.80 = 233,832.21 (each less 1,700).
-  'debt-mort': [239500, 238997.50, 238492.49, 237984.95, 237474.87, 236962.24, 236447.05, 235929.29, 235408.94, 234885.98, 234360.41, 233832.21],
+  'debt-mort': [
+    239500, 238997.5, 238492.49, 237984.95, 237474.87, 236962.24, 236447.05, 235929.29, 235408.94, 234885.98, 234360.41,
+    233832.21
+  ],
   condo: [null, null, 286500, null, null, 288000, null, null, 290000, null, null, 289000],
   car: [null, null, 13400, null, null, 12800, null, null, 12200, null, null, 11600]
 };
@@ -84,7 +107,9 @@ const ROUGHLY = new Set(['condo', 'car']);
 
 // The store takes its clock from here, so every edit and every close is stamped at a believable time.
 let now = new Date('2025-10-01T09:00:00Z');
-const at = (iso) => { now = new Date(iso); };
+const at = (iso) => {
+  now = new Date(iso);
+};
 const store = createStore(createStorage(memoryBackend()), () => now);
 const upd = (label, fn) => store.update(label, fn);
 
@@ -98,7 +123,13 @@ upd('Setup', (d) => {
   job.nextPayDate = makeDate('2025-10-31');
   const visa = addDebt(d, { id: 'debt-visa', label: 'Visa', type: 'credit-card' });
   // A balance transfer: 24.99% on the card, 0% until May 31, 2026 (S-116, S-127).
-  Object.assign(visa, { minimum: makeValue(250), apr: one(24.99), promoApr: one(0), promoEnds: '2026-05-31', dueDay: one(20) });
+  Object.assign(visa, {
+    minimum: makeValue(250),
+    apr: one(24.99),
+    promoApr: one(0),
+    promoEnds: '2026-05-31',
+    dueDay: one(20)
+  });
   const mort = addDebt(d, { id: 'debt-mort', label: 'Mortgage', type: 'mortgage' });
   Object.assign(mort, { minimum: makeValue(1700), apr: one(6), dueDay: one(1) });
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking', institution: 'Aspen Bank' });
@@ -120,12 +151,28 @@ upd('Setup', (d) => {
   const L = (id) => findLine(d, id).line;
   const tax = addLine(d, 'housing', 'Property tax');
   tax.type = 'taxes';
-  const lines = [['utilities', 140], ['home-insurance', 60], [tax.id, 250], ['groceries', 450], ['eating-out', 150],
-    ['car-insurance', 90], ['gas', 110], ['maintenance', 40], ['subscriptions', 70], ['shopping', 120], ['entertainment', 80], ['emergency-fund', 300]];
-  for (const [id, n] of lines) { L(id).estimate = makeValue(n); setField(d, ['line', id, 'actual'], makeValue(n)); }
+  const lines = [
+    ['utilities', 140],
+    ['home-insurance', 60],
+    [tax.id, 250],
+    ['groceries', 450],
+    ['eating-out', 150],
+    ['car-insurance', 90],
+    ['gas', 110],
+    ['maintenance', 40],
+    ['subscriptions', 70],
+    ['shopping', 120],
+    ['entertainment', 80],
+    ['emergency-fund', 300]
+  ];
+  for (const [id, n] of lines) {
+    L(id).estimate = makeValue(n);
+    setField(d, ['line', id, 'actual'], makeValue(n));
+  }
   L('subscriptions').name = 'Phone';
   d.cashflow.cushion = one(500);
-  for (const [id, v] of Object.entries(START)) setBalance(d, '2025-10', id, 'start', one(v, ROUGHLY.has(id) ? { status: 'roughly' } : {}));
+  for (const [id, v] of Object.entries(START))
+    setBalance(d, '2025-10', id, 'start', one(v, ROUGHLY.has(id) ? { status: 'roughly' } : {}));
   startPlan(d, '2025-10', 'estimates', planStartValues(d, null, 'estimates', null, '2025-10'));
 });
 
@@ -136,7 +183,8 @@ upd('Setup', (d) => {
 CLOSED.forEach((month, i) => {
   at(lastDay(month) + 'T20:00:00Z');
   upd('End balances', (d) => {
-    for (const [id, list] of Object.entries(ENDS)) if (list[i] !== null) setBalance(d, month, id, 'end', one(list[i], ROUGHLY.has(id) ? { status: 'roughly' } : {}));
+    for (const [id, list] of Object.entries(ENDS))
+      if (list[i] !== null) setBalance(d, month, id, 'end', one(list[i], ROUGHLY.has(id) ? { status: 'roughly' } : {}));
   });
   upd('Plan next month', (d) => copyPlanForward(d, month));
   const [y, m] = month.split('-').map(Number);
@@ -148,6 +196,8 @@ CLOSED.forEach((month, i) => {
 // The demo clock is October 17, 2026 (the date the screen tests and screenshots use); the pay date
 // moves into the open month so Today has a paycheck ahead of it.
 at('2026-10-17T18:00:00Z');
-upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-31'); });
+upd('Next pay date', (d) => {
+  d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-31');
+});
 writeFileSync(new URL('src/data/households/dana.json', root), JSON.stringify(store.doc, null, 1) + '\n');
 console.log('Wrote dana.json: ' + store.doc.months.length + ' closed months, now on ' + store.doc.currentMonth);

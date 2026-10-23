@@ -17,9 +17,15 @@ import { makeValue } from '../src/store/value.js';
 // 10% on the first 10,000; 20% on the next 30,000; 30% above 40,000.
 const TOY_TAX = {
   taxYear: 2026,
-  brackets: { single: [[10000, 0.10], [40000, 0.20], [null, 0.30]] },
+  brackets: {
+    single: [
+      [10000, 0.1],
+      [40000, 0.2],
+      [null, 0.3]
+    ]
+  },
   fica: { socialSecurityRate: 0.06, socialSecurityWageBase: 100000, medicareRate: 0.01 },
-  selfEmployment: { netEarningsFactor: 1, socialSecurityRate: 0.10, medicareRate: 0.02 }
+  selfEmployment: { netEarningsFactor: 1, socialSecurityRate: 0.1, medicareRate: 0.02 }
 };
 
 test('toMonthly: every cadence lands on the same month', () => {
@@ -40,18 +46,42 @@ test('toMonthly: empty is not zero, and "does not apply" is zero', () => {
 
 test('sumParts: items in mixed cadences add up to the cent in the value cadence', () => {
   // 10 a week plus 20 a month, as a monthly amount: 10 x 52 / 12 = 43.33, plus 20 = 63.33
-  assert.equal(sumParts([{ name: 'bus', amount: 10, cadence: 'week' }, { name: 'parking', amount: 20 }], 'month'), 63.33);
-  assert.equal(sumParts([{ name: 'a', amount: null }, { name: 'b', amount: null }], 'month'), null);
+  assert.equal(
+    sumParts(
+      [
+        { name: 'bus', amount: 10, cadence: 'week' },
+        { name: 'parking', amount: 20 }
+      ],
+      'month'
+    ),
+    63.33
+  );
+  assert.equal(
+    sumParts(
+      [
+        { name: 'a', amount: null },
+        { name: 'b', amount: null }
+      ],
+      'month'
+    ),
+    null
+  );
 });
 
 test('bracketTax: 50,000 taxable in the toy brackets is 10,000', () => {
   // 10,000 x 10% = 1,000; 30,000 x 20% = 6,000; 10,000 x 30% = 3,000.
   assert.equal(bracketTax(50000, TOY_TAX.brackets.single), 10000);
-  assert.equal(marginalRate(50000, TOY_TAX.brackets.single), 0.30);
-  assert.equal(marginalRate(5000, TOY_TAX.brackets.single), 0.10);
+  assert.equal(marginalRate(50000, TOY_TAX.brackets.single), 0.3);
+  assert.equal(marginalRate(5000, TOY_TAX.brackets.single), 0.1);
   assert.equal(marginalRate(0, TOY_TAX.brackets.single), 0);
   const slices = bracketSlices(25000, TOY_TAX.brackets.single);
-  assert.deepEqual(slices.map((s) => [s.amount, s.tax]), [[10000, 1000], [15000, 3000]]);
+  assert.deepEqual(
+    slices.map((s) => [s.amount, s.tax]),
+    [
+      [10000, 1000],
+      [15000, 3000]
+    ]
+  );
 });
 
 test('estimateAnnualTax: a 60,000 W-2 salary in the toy table takes home 45,800', () => {
@@ -64,7 +94,7 @@ test('estimateAnnualTax: a 60,000 W-2 salary in the toy table takes home 45,800'
   assert.equal(t.medicare, 600);
   assert.equal(t.totalTax, 14200);
   assert.equal(t.takeHome, 45800);
-  assert.equal(t.bracket, 0.30);
+  assert.equal(t.bracket, 0.3);
 });
 
 test('estimateAnnualTax: self-employment tax, half of it off the top', () => {
@@ -112,13 +142,28 @@ test('rounding to the cent: r2, r2OrNull and the exact variant', () => {
 test('50/30/20: 4,000 take-home split 2,000 / 1,200 / 800 is exactly 50%, 30%, 20%', () => {
   const totals = { takeHome: 4000, needs: 2000, wants: 1200, savingsAmount: 800, surplus: 0 };
   const lens = fiftyThirtyTwenty(totals, { needs: 0.5, wants: 0.3, savings: 0.2 });
-  assert.deepEqual(lens.rows.map((r) => [r.key, r.share, r.target]), [['needs', 0.5, 0.5], ['wants', 0.3, 0.3], ['savings', 0.2, 0.2]]);
+  assert.deepEqual(
+    lens.rows.map((r) => [r.key, r.share, r.target]),
+    [
+      ['needs', 0.5, 0.5],
+      ['wants', 0.3, 0.3],
+      ['savings', 0.2, 0.2]
+    ]
+  );
   assert.equal(lens.unassignedShare, 0);
 });
 
 test('card interest: 12% a year on a 1,000 balance is 10 a month', () => {
   const doc = { accounts: [], balances: {} };
-  const card = { id: 'd1', type: 'credit-card', state: 'active', apr: makeValue(12), balance: makeValue(1000), promoEnds: null, promoApr: makeValue() };
+  const card = {
+    id: 'd1',
+    type: 'credit-card',
+    state: 'active',
+    apr: makeValue(12),
+    balance: makeValue(1000),
+    promoEnds: null,
+    promoApr: makeValue()
+  };
   const ci = cardInterest(doc, card, '2026-10');
   assert.equal(ci.amount, 10); // 1,000 x 12% / 12 months
   assert.equal(ci.apr, 12);
@@ -144,7 +189,11 @@ test('surplus allocation: 4,600 take-home, 3,000 of spending, 600 saved so far',
   // surplus = 4,600 - 3,000 = 1,600; allocated 600; not allocated yet 1,000.
   // Pre-tax retirement 400 makes the base 5,000: savings rate (600 + 400) / 5,000 = 20%;
   // the rest of the surplus would add 1,000 / 5,000 = 20% more, for a possible 40%.
-  const model = { categories: [{ savings: true, lines: [{ id: 'ef', name: 'Emergency fund', type: 'emergency-fund', estimate: 600 }] }] };
+  const model = {
+    categories: [
+      { savings: true, lines: [{ id: 'ef', name: 'Emergency fund', type: 'emergency-fund', estimate: 600 }] }
+    ]
+  };
   const totals = { estimateTotal: 3000, takeHome: 4600, savingsEstimate: 600, retirementDeductions: 400 };
   const a = surplusAllocation(model, totals);
   assert.equal(a.surplus, 1600);
@@ -158,12 +207,31 @@ test('surplus allocation: 4,600 take-home, 3,000 of spending, 600 saved so far',
 
 test('trends: a merchant range and a folded waterfall', () => {
   // Three months at one coffee shop: 4 + 6 + 10 visits, 20 + 30 + 50 spent; average ticket 100 / 20 = 5.
-  const range = merchantRange([{ visits: 4, total: 20 }, { visits: 6, total: 30 }, { visits: 10, total: 50 }]);
+  const range = merchantRange([
+    { visits: 4, total: 20 },
+    { visits: 6, total: 30 },
+    { visits: 10, total: 50 }
+  ]);
   assert.deepEqual(range, { visits: 20, total: 100, averageTicket: 5 });
   // Month over month from 1,000 to 1,150 in four steps, folded after two: +200, -100, then +30 + 20 as one step.
-  const mom = { before: 1000, after: 1150, steps: [{ id: 'a', name: 'A', change: 200 }, { id: 'b', name: 'B', change: -100 }, { id: 'c', name: 'C', change: 30 }, { id: 'd', name: 'D', change: 20 }] };
+  const mom = {
+    before: 1000,
+    after: 1150,
+    steps: [
+      { id: 'a', name: 'A', change: 200 },
+      { id: 'b', name: 'B', change: -100 },
+      { id: 'c', name: 'C', change: 30 },
+      { id: 'd', name: 'D', change: 20 }
+    ]
+  };
   const wf = waterfallSteps(mom, 2);
-  assert.deepEqual(wf.steps.map((s) => [s.from, s.to]), [[1000, 1200], [1200, 1100]]);
+  assert.deepEqual(
+    wf.steps.map((s) => [s.from, s.to]),
+    [
+      [1000, 1200],
+      [1200, 1100]
+    ]
+  );
   assert.deepEqual(wf.rest, { change: 50, from: 1100, to: 1150 });
   assert.equal(wf.after, 1150);
 });

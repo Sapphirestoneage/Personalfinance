@@ -31,12 +31,19 @@ const here = fileURLToPath(new URL('../', import.meta.url));
 // A clock that moves one minute on every reading, so each edit has its own time.
 function ticking(startIso) {
   let t = new Date(startIso).getTime();
-  return () => { t += 60000; return new Date(t); };
+  return () => {
+    t += 60000;
+    return new Date(t);
+  };
 }
 const storeAt = (iso) => createStore(createStorage(memoryBackend()), ticking(iso));
 const entry = (doc, id) => doc.transactions.find((t) => t.id === id);
-const spentOn = (doc, lineId, month) => Math.round(counted(doc.transactions)
-  .filter((t) => t.lineId === lineId && t.date.startsWith(month) && t.kind === 'spend').reduce((a, t) => a + t.amount, 0) * 100) / 100;
+const spentOn = (doc, lineId, month) =>
+  Math.round(
+    counted(doc.transactions)
+      .filter((t) => t.lineId === lineId && t.date.startsWith(month) && t.kind === 'spend')
+      .reduce((a, t) => a + t.amount, 0) * 100
+  ) / 100;
 
 // ---------------------------------------------------------------- records
 
@@ -46,7 +53,8 @@ test('every record in every household carries id, timestamps, author, and versio
     const recs = Object.entries(flatten(doc));
     assert.ok(recs.length > 0, name);
     for (const [key, x] of recs) {
-      for (const k of ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version']) assert.ok(x.rec[k] !== undefined, name + ' ' + key + ' has ' + k);
+      for (const k of ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version'])
+        assert.ok(x.rec[k] !== undefined, name + ' ' + key + ' has ' + k);
       assert.match(x.rec.createdAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/, 'UTC ISO');
       assert.ok(['coach', 'client'].includes(x.rec.createdBy));
       assert.ok(Number.isInteger(x.rec.version) && x.rec.version >= 1);
@@ -60,7 +68,10 @@ test('migration stamps older files from their last saved time, as the coach, ver
   assert.equal(raw.schemaVersion, 9);
   const doc = migrate(raw);
   const e = entry(doc, 'tx-0yb9sdc');
-  assert.deepEqual([e.createdAt, e.updatedAt, e.createdBy, e.updatedBy, e.version], ['2026-10-17T18:00:00.000Z', '2026-10-17T18:00:00.000Z', 'coach', 'coach', 1]);
+  assert.deepEqual(
+    [e.createdAt, e.updatedAt, e.createdBy, e.updatedBy, e.version],
+    ['2026-10-17T18:00:00.000Z', '2026-10-17T18:00:00.000Z', 'coach', 'coach', 1]
+  );
   assert.equal(findLine(doc, 'groceries').line.id, 'groceries', 'existing ids kept');
   assert.equal(doc.categories.find((c) => c.id === 'food').version, 1);
   // Calendar dates stay local "YYYY-MM-DD".
@@ -85,16 +96,23 @@ test('an edit stamps who and when, and the version goes up by one', async () => 
   s.create('Stamps');
   setRole('client');
   let id;
-  s.update('Coffee', (d) => { id = addEntry(d, { date: '2026-10-17', amount: 4.5, lineId: 'eating-out', merchant: 'Corner Coffee' }).id; });
+  s.update('Coffee', (d) => {
+    id = addEntry(d, { date: '2026-10-17', amount: 4.5, lineId: 'eating-out', merchant: 'Corner Coffee' }).id;
+  });
   setRole('coach');
   const made = entry(s.doc, id);
   assert.deepEqual([made.createdBy, made.updatedBy, made.version], ['client', 'client', 1]);
-  s.update('Fix', (d) => { entry(d, id).amount = 5; });
+  s.update('Fix', (d) => {
+    entry(d, id).amount = 5;
+  });
   const fixed = entry(s.doc, id);
   assert.deepEqual([fixed.createdBy, fixed.updatedBy, fixed.version], ['client', 'coach', 2]);
   assert.ok(fixed.updatedAt > fixed.createdAt);
   // An edit somewhere else leaves this record's stamp alone.
-  s.update('Gut', (d) => { d.gut.amount = 3000; d.gut.status = 'known'; });
+  s.update('Gut', (d) => {
+    d.gut.amount = 3000;
+    d.gut.status = 'known';
+  });
   assert.equal(entry(s.doc, id).version, 2);
 });
 
@@ -108,7 +126,9 @@ test('deleting leaves a marker; the live view, calc, and screens never count it'
     a = addEntry(d, { date: '2026-09-03', amount: 100, lineId: 'groceries' }).id;
     b = addEntry(d, { date: '2026-09-04', amount: 40, lineId: 'groceries' }).id;
   });
-  s.update('Remove', (d) => { d.transactions = d.transactions.filter((t) => t.id !== b); });
+  s.update('Remove', (d) => {
+    d.transactions = d.transactions.filter((t) => t.id !== b);
+  });
   assert.equal(entry(s.doc, b), undefined, 'gone from the live view');
   const tomb = entry(s.fullDoc, b);
   assert.deepEqual([tomb.deleted, tomb.deletedBy, tomb.version], [true, 'coach', 2]);
@@ -123,7 +143,9 @@ test('deleting leaves a marker; the live view, calc, and screens never count it'
   assert.equal(entry(out, b).deleted, true);
   assert.equal(entry(out, a).deleted, undefined);
   // Archive is separate from delete: an archived account is still a live record.
-  s.update('Account', (d) => { d.accounts.push({ id: 'acct-x', name: 'Old savings', type: 'savings', state: 'archived' }); });
+  s.update('Account', (d) => {
+    d.accounts.push({ id: 'acct-x', name: 'Old savings', type: 'savings', state: 'archived' });
+  });
   assert.equal(s.doc.accounts.find((x) => x.id === 'acct-x').state, 'archived');
   assert.equal(s.doc.accounts.find((x) => x.id === 'acct-x').deleted, undefined);
   await s.remove(id);
@@ -133,7 +155,12 @@ test('Riley: a deleted log entry never reaches the calendar or the month totals'
   const doc = migrate(JSON.parse(readFileSync(join(here, 'tests/fixtures/riley-schema9.json'), 'utf8')));
   // Mark the Oct 15 Chipotle 13.75 deleted by hand, as a file from another copy would.
   const full = JSON.parse(JSON.stringify(doc));
-  Object.assign(entry(full, 'tx-mcjhuru'), { deleted: true, deletedAt: '2026-10-17T19:00:00.000Z', deletedBy: 'client', version: 2 });
+  Object.assign(entry(full, 'tx-mcjhuru'), {
+    deleted: true,
+    deletedAt: '2026-10-17T19:00:00.000Z',
+    deletedBy: 'client',
+    version: 2
+  });
   // Eating out in October: 4.75 + 4.75 + 13.75 = 23.25 before; 4.75 + 4.75 = 9.50 without it.
   assert.equal(spentOn(doc, 'eating-out', '2026-10'), 23.25);
   assert.equal(spentOn(full, 'eating-out', '2026-10'), 9.5);
@@ -149,7 +176,10 @@ test('removing a client keeps its file, marked deleted; it leaves the list and a
   const backend = memoryBackend();
   const s = createStore(createStorage(backend), ticking('2026-10-17T12:00:00.000Z'));
   const id = s.create('Gone for now');
-  s.update('Gut', (d) => { d.gut.amount = 2000; d.gut.status = 'known'; });
+  s.update('Gut', (d) => {
+    d.gut.amount = 2000;
+    d.gut.status = 'known';
+  });
   const file = s.exportCurrent();
   await s.remove(id);
   await s.flush();
@@ -161,7 +191,10 @@ test('removing a client keeps its file, marked deleted; it leaves the list and a
   assert.deepEqual(await again.load(), [], 'a fresh load does not list it either');
   const res = await s.importText(file);
   assert.equal(res.merged, false, 'a removed client comes back whole');
-  assert.deepEqual(s.list().map((e) => e.name), ['Gone for now']);
+  assert.deepEqual(
+    s.list().map((e) => e.name),
+    ['Gone for now']
+  );
 });
 
 // ---------------------------------------------------------------- storage
@@ -170,13 +203,15 @@ function filesUnder(dir) {
   const out = [];
   for (const f of readdirSync(dir)) {
     const p = join(dir, f);
-    if (statSync(p).isDirectory()) out.push(...filesUnder(p)); else out.push(p);
+    if (statSync(p).isDirectory()) out.push(...filesUnder(p));
+    else out.push(p);
   }
   return out;
 }
 
 test('no screen or calc file touches localStorage; storage goes through src/store/storage.js', () => {
-  const bad = filesUnder(join(here, 'src')).filter((p) => p.endsWith('.js') && !p.endsWith(join('store', 'storage.js')))
+  const bad = filesUnder(join(here, 'src'))
+    .filter((p) => p.endsWith('.js') && !p.endsWith(join('store', 'storage.js')))
     .filter((p) => /\b(localStorage|sessionStorage|indexedDB)\b/.test(readFileSync(p, 'utf8')));
   assert.deepEqual(bad, []);
 });
@@ -190,7 +225,10 @@ test('the storage interface is async: list, load, save, and a change subscriptio
   const p = st.saveClient(doc);
   assert.ok(p instanceof Promise);
   await p;
-  assert.deepEqual((await st.listClients()).map((e) => e.name), ['Async']);
+  assert.deepEqual(
+    (await st.listClients()).map((e) => e.name),
+    ['Async']
+  );
   assert.equal((await st.loadClient(doc.id)).profile.name, 'Async');
   // Another device saves this client: the app hears which one.
   backend.changedElsewhere('slam:hh:' + doc.id);
@@ -202,8 +240,18 @@ test('the storage interface is async: list, load, save, and a change subscriptio
 test('every record type is in the visibility map, and the coach-only list is the agreed one', () => {
   const kinds = [...new Set(Object.keys(flatten(loadHousehold('riley'))).map((k) => k.split(':')[0]))];
   for (const k of kinds) assert.ok(RECORDS[k], k + ' is in the map');
-  assert.deepEqual(Object.keys(COACH_ONLY), ['coachNotes', 'plans.*.lines.*.note', 'line.tag=mistake', 'cashflow.cushion', 'settings.materiality', 'accounts.*.notes']);
-  for (const f of Object.keys(COACH_ONLY)) { assert.equal(canSee(f, 'client'), false, f); assert.equal(canSee(f, 'coach'), true, f); }
+  assert.deepEqual(Object.keys(COACH_ONLY), [
+    'coachNotes',
+    'plans.*.lines.*.note',
+    'line.tag=mistake',
+    'cashflow.cushion',
+    'settings.materiality',
+    'accounts.*.notes'
+  ]);
+  for (const f of Object.keys(COACH_ONLY)) {
+    assert.equal(canSee(f, 'client'), false, f);
+    assert.equal(canSee(f, 'coach'), true, f);
+  }
   assert.equal(canSee('transactions', 'client'), true);
 });
 
@@ -215,14 +263,21 @@ test('View as client hides every coach-only field and keeps everything else', ()
   doc.plans[month].lines[key].note = 'Cut this if rent goes up.';
   findLine(doc, 'gifts').line.tag = 'mistake';
   const shop = findLine(doc, 'shopping').line;
-  shop.tag = 'mistake'; shop.mistakeShared = true;
+  shop.tag = 'mistake';
+  shop.mistakeShared = true;
   const v = viewFor(doc, 'client');
   assert.equal(v.coachNotes, '');
   assert.equal(v.plans[month].lines[key].note, '');
   assert.equal(findLine(v, 'gifts').line.tag, 'planned', 'an unshared mistake tag is hidden');
   assert.equal(findLine(v, 'shopping').line.tag, 'mistake', 'a shared one shows');
   // Nothing else differs, and the coach's view is the document itself.
-  const strip = (d) => { const x = JSON.parse(JSON.stringify(d)); x.coachNotes = ''; x.plans[month].lines[key].note = ''; findLine(x, 'gifts').line.tag = 'planned'; return x; };
+  const strip = (d) => {
+    const x = JSON.parse(JSON.stringify(d));
+    x.coachNotes = '';
+    x.plans[month].lines[key].note = '';
+    findLine(x, 'gifts').line.tag = 'planned';
+    return x;
+  };
   assert.deepEqual(v, strip(doc));
   assert.equal(viewFor(doc, 'coach'), doc);
   // Coach wording is swapped for client wording where they differ.
@@ -252,7 +307,9 @@ test('merge: entries added on the other copy are added', async () => {
   const { coach, client } = await twoCopies();
   setRole('client');
   let z;
-  client.update('Add', (d) => { z = addEntry(d, { date: '2026-10-06', amount: 30, lineId: 'gas', merchant: 'Shell' }).id; });
+  client.update('Add', (d) => {
+    z = addEntry(d, { date: '2026-10-06', amount: 30, lineId: 'gas', merchant: 'Shell' }).id;
+  });
   setRole('coach');
   const res = await coach.importText(client.exportCurrent());
   assert.deepEqual([res.added, res.fromIncoming, res.conflicts.length], [1, 0, 0]);
@@ -263,8 +320,12 @@ test('merge: entries added on the other copy are added', async () => {
 
 test('merge: an edit on one side takes that side', async () => {
   const { coach, client, x, y } = await twoCopies();
-  client.update('Edit', (d) => { entry(d, x).amount = 55; });
-  coach.update('Edit here', (d) => { entry(d, y).amount = 13; });
+  client.update('Edit', (d) => {
+    entry(d, x).amount = 55;
+  });
+  coach.update('Edit here', (d) => {
+    entry(d, y).amount = 13;
+  });
   const res = await coach.importText(client.exportCurrent());
   assert.deepEqual([res.added, res.fromIncoming, res.conflicts.length], [0, 1, 0]);
   assert.equal(entry(coach.doc, x).amount, 55, 'their edit');
@@ -274,9 +335,13 @@ test('merge: an edit on one side takes that side', async () => {
 test('merge: an edit on both sides is a conflict the coach picks, seeing both values, who, and when', async () => {
   const { coach, client, x } = await twoCopies();
   setRole('client');
-  client.update('Edit', (d) => { entry(d, x).amount = 52; });
+  client.update('Edit', (d) => {
+    entry(d, x).amount = 52;
+  });
   setRole('coach');
-  coach.update('Edit here', (d) => { entry(d, x).amount = 51; });
+  coach.update('Edit here', (d) => {
+    entry(d, x).amount = 51;
+  });
   const res = await coach.importText(client.exportCurrent());
   assert.equal(res.conflicts.length, 1);
   const c = res.conflicts[0];
@@ -291,9 +356,15 @@ test('merge: an edit on both sides is a conflict the coach picks, seeing both va
 
 test('merge: a delete on one side and an edit on the other is a conflict; a delete alone applies', async () => {
   const { coach, client, x, y } = await twoCopies();
-  client.update('Delete x', (d) => { d.transactions = d.transactions.filter((t) => t.id !== x); });
-  client.update('Delete y', (d) => { d.transactions = d.transactions.filter((t) => t.id !== y); });
-  coach.update('Edit x', (d) => { entry(d, x).amount = 49; });
+  client.update('Delete x', (d) => {
+    d.transactions = d.transactions.filter((t) => t.id !== x);
+  });
+  client.update('Delete y', (d) => {
+    d.transactions = d.transactions.filter((t) => t.id !== y);
+  });
+  coach.update('Edit x', (d) => {
+    entry(d, x).amount = 49;
+  });
   const res = await coach.importText(client.exportCurrent());
   assert.equal(res.conflicts.length, 1);
   assert.deepEqual([res.conflicts[0].incoming.deleted, res.conflicts[0].local.deleted], [true, false]);
@@ -305,7 +376,9 @@ test('merge: a delete on one side and an edit on the other is a conflict; a dele
 
 test('merge: the same file imported twice changes nothing; a backup is taken before each import', async () => {
   const { coach, client, x } = await twoCopies();
-  client.update('Edit', (d) => { entry(d, x).amount = 60; });
+  client.update('Edit', (d) => {
+    entry(d, x).amount = 60;
+  });
   const file = client.exportCurrent();
   await coach.importText(file);
   const once = JSON.stringify(coach.fullDoc);
@@ -347,15 +420,41 @@ test('Riley: merging the second copy, by hand', async () => {
 
   setRole('client');
   let n1, n2;
-  riley.update('Groceries', (d) => { n1 = addEntry(d, { date: '2026-10-16', amount: 52.4, lineId: 'groceries', merchant: 'Safeway', account: 'visa' }).id; });
-  riley.update('Coffee', (d) => { n2 = addEntry(d, { date: '2026-10-17', amount: 6.5, lineId: 'eating-out', merchant: 'Corner Coffee', account: 'visa' }).id; });
-  riley.update('Chipotle', (d) => { entry(d, 'tx-mcjhuru').amount = 15.25; });
-  riley.update('Not mine', (d) => { d.transactions = d.transactions.filter((t) => t.id !== 'tx-t0lfvsd'); });
-  riley.update('Trader Joe', (d) => { entry(d, 'tx-0yb9sdc').amount = 92.1; });
+  riley.update('Groceries', (d) => {
+    n1 = addEntry(d, {
+      date: '2026-10-16',
+      amount: 52.4,
+      lineId: 'groceries',
+      merchant: 'Safeway',
+      account: 'visa'
+    }).id;
+  });
+  riley.update('Coffee', (d) => {
+    n2 = addEntry(d, {
+      date: '2026-10-17',
+      amount: 6.5,
+      lineId: 'eating-out',
+      merchant: 'Corner Coffee',
+      account: 'visa'
+    }).id;
+  });
+  riley.update('Chipotle', (d) => {
+    entry(d, 'tx-mcjhuru').amount = 15.25;
+  });
+  riley.update('Not mine', (d) => {
+    d.transactions = d.transactions.filter((t) => t.id !== 'tx-t0lfvsd');
+  });
+  riley.update('Trader Joe', (d) => {
+    entry(d, 'tx-0yb9sdc').amount = 92.1;
+  });
   const back = riley.exportCurrent();
   setRole('coach');
-  coach.update('Shell', (d) => { entry(d, 'tx-qtbp5mx').amount = 48; });
-  coach.update('Trader Joe', (d) => { entry(d, 'tx-0yb9sdc').amount = 90; });
+  coach.update('Shell', (d) => {
+    entry(d, 'tx-qtbp5mx').amount = 48;
+  });
+  coach.update('Trader Joe', (d) => {
+    entry(d, 'tx-0yb9sdc').amount = 90;
+  });
 
   const res = await coach.importText(back);
   assert.equal(res.id, id);
@@ -364,7 +463,10 @@ test('Riley: merging the second copy, by hand', async () => {
   assert.equal(res.conflicts.length, 1);
   const c = res.conflicts[0];
   assert.equal(c.key, 'entry:tx-0yb9sdc');
-  assert.deepEqual([c.local.rec.amount, c.local.by, c.incoming.rec.amount, c.incoming.by], [90, 'coach', 92.1, 'client']);
+  assert.deepEqual(
+    [c.local.rec.amount, c.local.by, c.incoming.rec.amount, c.incoming.by],
+    [90, 'coach', 92.1, 'client']
+  );
   // Riley typed the receipt, so the coach takes Riley's 92.10.
   await coach.resolveImport({ [c.key]: 'incoming' });
   const d = coach.doc;
@@ -372,8 +474,11 @@ test('Riley: merging the second copy, by hand', async () => {
   assert.equal(entry(d, n2).amount, 6.5);
   assert.deepEqual([entry(d, 'tx-mcjhuru').amount, entry(d, 'tx-mcjhuru').updatedBy], [15.25, 'client']);
   assert.equal(entry(d, 'tx-t0lfvsd'), undefined);
-  assert.deepEqual([entry(coach.fullDoc, 'tx-t0lfvsd').deleted, entry(coach.fullDoc, 'tx-t0lfvsd').deletedBy], [true, 'client']);
-  assert.equal(entry(d, 'tx-qtbp5mx').amount, 48, 'the coach\'s own edit stays');
+  assert.deepEqual(
+    [entry(coach.fullDoc, 'tx-t0lfvsd').deleted, entry(coach.fullDoc, 'tx-t0lfvsd').deletedBy],
+    [true, 'client']
+  );
+  assert.equal(entry(d, 'tx-qtbp5mx').amount, 48, "the coach's own edit stays");
   assert.equal(entry(d, 'tx-0yb9sdc').amount, 92.1);
   // October by line, by hand:
   //   Groceries: 92.10 (Oct 4) + 121.80 (Oct 11) + 52.40 (Oct 16) = 266.30   (was 88.20 + 121.80 = 210.00)

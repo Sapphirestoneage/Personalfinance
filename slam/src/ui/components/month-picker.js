@@ -8,7 +8,20 @@ import { h, options } from '../dom.js';
 import { monthLabel } from '../format.js';
 import { switchMonth, copyFixedFromLastMonth } from '../../store/months.js';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
 
 function go(ctx, key) {
   ctx.update('Work on ' + monthLabel(key), (d) => switchMonth(d, key));
@@ -28,30 +41,90 @@ export function monthPicker(ctx, summary, opts = {}) {
   // A closed month cannot be reopened (switchMonth throws), so picking one views it in Past months on Review instead.
   const pick = (yy, mm) => {
     const key = yy + '-' + String(mm).padStart(2, '0');
-    if (closed.has(key)) { ctx.jump('months', { ui: { monthsPick: key } }); return; }
+    if (closed.has(key)) {
+      ctx.jump('months', { ui: { monthsPick: key } });
+      return;
+    }
     go(ctx, key);
   };
   // Nothing typed this month yet (debt rows are computed, so they do not count): only then is copying fixed costs offered.
   const isEmpty = summary.model.categories.every((c) => c.isDebt || c.lines.every((l) => l.status.actual === null));
-  return h('div', { class: 'card', id: 'start-month' },
+  return h(
+    'div',
+    { class: 'card', id: 'start-month' },
     h('h2', { style: 'margin-top:0' }, 'Start of month'),
-    h('div', { class: 'row' },
+    h(
+      'div',
+      { class: 'row' },
       h('b', {}, 'Month'),
-      h('select', { 'aria-label': 'Month', 'data-key': 'pick-month', onchange: (e) => pick(y, Number(e.target.value)) },
-        options(MONTHS.map((name, i) => [String(i + 1), name]), String(m))),
-      h('select', { 'aria-label': 'Year', 'data-key': 'pick-year', onchange: (e) => pick(Number(e.target.value), m) },
-        options(years.map((yr) => [String(yr), String(yr)]), String(y)))),
-    h('p', { class: 'muted xs' }, 'Actuals you enter are saved under ' + monthLabel(doc.currentMonth) + '. Switch months any time; nothing is lost.'),
+      h(
+        'select',
+        { 'aria-label': 'Month', 'data-key': 'pick-month', onchange: (e) => pick(y, Number(e.target.value)) },
+        options(
+          MONTHS.map((name, i) => [String(i + 1), name]),
+          String(m)
+        )
+      ),
+      h(
+        'select',
+        { 'aria-label': 'Year', 'data-key': 'pick-year', onchange: (e) => pick(Number(e.target.value), m) },
+        options(
+          years.map((yr) => [String(yr), String(yr)]),
+          String(y)
+        )
+      )
+    ),
+    h(
+      'p',
+      { class: 'muted xs' },
+      'Actuals you enter are saved under ' + monthLabel(doc.currentMonth) + '. Switch months any time; nothing is lost.'
+    ),
     // Chips only when there is more than one month. The year is shortened: October 2026 reads as October '26.
-    withData.length > 1 ? h('div', { class: 'row' }, withData.map((k) => h('button', {
-      class: 'btn small' + (k === doc.currentMonth ? ' primary' : ''),
-      title: closed.has(k) ? 'Closed (view only)' : 'Has actuals',
-      onclick: () => (k === doc.currentMonth ? null : closed.has(k) ? ctx.jump('months', { ui: { monthsPick: k } }) : go(ctx, k))
-    }, monthLabel(k).replace(/ (\d{4})$/, " '$1").replace("'20", "'") + (closed.has(k) ? ' (closed)' : '')))) : null,
+    withData.length > 1
+      ? h(
+          'div',
+          { class: 'row' },
+          withData.map((k) =>
+            h(
+              'button',
+              {
+                class: 'btn small' + (k === doc.currentMonth ? ' primary' : ''),
+                title: closed.has(k) ? 'Closed (view only)' : 'Has actuals',
+                onclick: () =>
+                  k === doc.currentMonth
+                    ? null
+                    : closed.has(k)
+                      ? ctx.jump('months', { ui: { monthsPick: k } })
+                      : go(ctx, k)
+              },
+              monthLabel(k)
+                .replace(/ (\d{4})$/, " '$1")
+                .replace("'20", "'") + (closed.has(k) ? ' (closed)' : '')
+            )
+          )
+        )
+      : null,
     // ctx.update turns a thrown message into a toast, so the result comes out through res; null means no earlier month.
-    opts.copyFixed && isEmpty ? h('button', { class: 'btn small', style: 'margin-top:8px', onclick: () => {
-      let res;
-      ctx.update('Copy fixed costs', (d) => { res = copyFixedFromLastMonth(d); });
-      ctx.toast(res ? 'Copied ' + res.copied + ' fixed costs from ' + monthLabel(res.from) : 'No earlier month to copy from');
-    } }, 'Copy fixed costs from last month') : null);
+    opts.copyFixed && isEmpty
+      ? h(
+          'button',
+          {
+            class: 'btn small',
+            style: 'margin-top:8px',
+            onclick: () => {
+              let res;
+              ctx.update('Copy fixed costs', (d) => {
+                res = copyFixedFromLastMonth(d);
+              });
+              ctx.toast(
+                res
+                  ? 'Copied ' + res.copied + ' fixed costs from ' + monthLabel(res.from)
+                  : 'No earlier month to copy from'
+              );
+            }
+          },
+          'Copy fixed costs from last month'
+        )
+      : null
+  );
 }

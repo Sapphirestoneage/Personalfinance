@@ -40,7 +40,12 @@ export function splitOf(line, amount) {
     const yours = !has ? null : known ? r2(amount * (share / 100)) : amount;
     return { ...base, yours, whole: has ? amount : null, paidBack: has && known ? r2(amount - yours) : null };
   }
-  return { ...base, yours: has ? amount : null, whole: has && known ? r2(amount / (share / 100)) : null, paidBack: null };
+  return {
+    ...base,
+    yours: has ? amount : null,
+    whole: has && known ? r2(amount / (share / 100)) : null,
+    paidBack: null
+  };
 }
 
 /**

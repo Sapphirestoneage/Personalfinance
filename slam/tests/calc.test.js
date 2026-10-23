@@ -29,9 +29,9 @@ test('toMonthly handles every cadence', () => {
   assert.equal(toMonthly(v(1200), 'biweekly'), 1200);
   assert.equal(toMonthly(v(120, 'week')), 520); // 120 x 52 / 12
   assert.equal(toMonthly(v(1200, 'year')), 100);
-  assert.equal(toMonthly(v(1000, 'paycheck'), 'biweekly'), 1000 * 26 / 12);
+  assert.equal(toMonthly(v(1000, 'paycheck'), 'biweekly'), (1000 * 26) / 12);
   assert.equal(toMonthly(v(1000, 'paycheck'), 'semimonthly'), 2000);
-  assert.equal(toMonthly(v(1000, 'paycheck'), 'weekly'), 1000 * 52 / 12);
+  assert.equal(toMonthly(v(1000, 'paycheck'), 'weekly'), (1000 * 52) / 12);
   assert.equal(toMonthly(v(1000, 'paycheck'), null), null, 'paycheck with no pay frequency is unknown, not zero');
   assert.equal(toMonthly(v(500, 'one-off')), 0, 'one-offs stay out of the monthly total');
   assert.equal(toMonthly(v(null)), null, 'empty is not zero');
@@ -65,17 +65,43 @@ test('1099 estimate: self-employment tax, half deducted, nothing withheld', () =
 
 test('unemployment: income tax but no FICA; not-taxable: none', () => {
   // 20,000 - 16,100 = 3,900 taxable x 10% = 390
-  const u = estimateAnnualTax({ gross: 20000, type: 'unemployment', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
+  const u = estimateAnnualTax(
+    { gross: 20000, type: 'unemployment', filingStatus: 'single', stdDeduction: 16100 },
+    refs.tax
+  );
   assert.equal(u.takeHome, 19610);
   assert.equal(u.fica + u.seTax, 0);
-  const n = estimateAnnualTax({ gross: 12000, type: 'not-taxable', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
+  const n = estimateAnnualTax(
+    { gross: 12000, type: 'not-taxable', filingStatus: 'single', stdDeduction: 16100 },
+    refs.tax
+  );
   assert.equal(n.takeHome, 12000);
 });
 
 test('standard deduction is used once: a known paycheck uses it before a gross-only source', () => {
   const d = newHousehold('Two jobs');
-  d.income.push({ id: 'a', type: 'w2', label: 'Main', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
-  d.income.push({ id: 'b', type: 'unemployment', label: 'Second', payFrequency: 'monthly', takeHome: makeValue(), gross: v(12000, 'year'), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({
+    id: 'a',
+    type: 'w2',
+    label: 'Main',
+    payFrequency: 'monthly',
+    takeHome: v(3000),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
+  d.income.push({
+    id: 'b',
+    type: 'unemployment',
+    label: 'Second',
+    payFrequency: 'monthly',
+    takeHome: makeValue(),
+    gross: v(12000, 'year'),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
   const inc = incomeSummary(d, refs.tax);
   // Unemployment lands in full (nothing withheld): 12,000 / 12 = 1,000 a month.
   // It gets no standard deduction: 12,000 x 10% = 1,200 tax, set aside 1,200 / 52 = 23.076923 a week.
@@ -89,7 +115,11 @@ test('standard deduction is used once: a known paycheck uses it before a gross-o
 test('unemployment: one benefit number, set-aside when not withheld, 10% option', () => {
   const d = newHousehold('Benefits');
   d.currentMonth = '2026-10';
-  d.income.push({ ...newIncome({ id: 'u', type: 'unemployment', payFrequency: 'weekly' }), gross: v(869, 'week'), benefitWeeksLeft: 10 });
+  d.income.push({
+    ...newIncome({ id: 'u', type: 'unemployment', payFrequency: 'weekly' }),
+    gross: v(869, 'week'),
+    benefitWeeksLeft: 10
+  });
   let u = incomeSummary(d, refs.tax).sources[0];
   // 869 x 52 = 45,188 a year = 3,765.666667 a month, all of it lands.
   assert.ok(near(u.takeHomeMonthly, 3765.666667));
@@ -109,9 +139,20 @@ test('unemployment: one benefit number, set-aside when not withheld, 10% option'
 
 test('unemployment compat: old take-home moves to the benefit; equal take-home and gross means none withheld', () => {
   const old = newHousehold('Old');
-  old.income.push({ ...newIncome({ id: 'a', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(869, 'paycheck'), gross: v(869, 'week') });
-  old.income.push({ ...newIncome({ id: 'b', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(400, 'paycheck') });
-  old.income.push({ ...newIncome({ id: 'c', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(450, 'week'), gross: v(500, 'week') });
+  old.income.push({
+    ...newIncome({ id: 'a', type: 'unemployment', payFrequency: 'weekly' }),
+    takeHome: v(869, 'paycheck'),
+    gross: v(869, 'week')
+  });
+  old.income.push({
+    ...newIncome({ id: 'b', type: 'unemployment', payFrequency: 'weekly' }),
+    takeHome: v(400, 'paycheck')
+  });
+  old.income.push({
+    ...newIncome({ id: 'c', type: 'unemployment', payFrequency: 'weekly' }),
+    takeHome: v(450, 'week'),
+    gross: v(500, 'week')
+  });
   const m = migrate(JSON.parse(JSON.stringify(old)));
   assert.equal(m.income[0].gross.amount, 869);
   assert.equal(m.income[0].takeHome.amount, null);
@@ -141,7 +182,10 @@ test('one-off amounts are listed separately and kept out of monthly totals', () 
   findLine(d, 'gas').line.actual = v(150);
   const m = budgetModel(d);
   assert.equal(m.categories.find((c) => c.id === 'transport').actual.amount, 150);
-  assert.deepEqual(m.oneOffs.map((o) => [o.lineId, o.amount]), [['maintenance', 900]]);
+  assert.deepEqual(
+    m.oneOffs.map((o) => [o.lineId, o.amount]),
+    [['maintenance', 900]]
+  );
 });
 
 test('archived lines stop counting; hidden lines still count', () => {
@@ -167,14 +211,38 @@ test('single total is carved by later category estimates without losing the tota
 
 test('debt minimums flow into Debt payments as computed lines', () => {
   const d = newHousehold('Debts');
-  d.debts.push({ id: 'd1', label: 'Card', type: 'credit-card', balance: v(1000), apr: v(20), minimum: v(35), dueDay: makeValue(), state: 'active' });
-  d.debts.push({ id: 'd2', label: 'Old', type: 'other', balance: v(0), apr: v(0), minimum: v(50), dueDay: makeValue(), state: 'archived' });
+  d.debts.push({
+    id: 'd1',
+    label: 'Card',
+    type: 'credit-card',
+    balance: v(1000),
+    apr: v(20),
+    minimum: v(35),
+    dueDay: makeValue(),
+    state: 'active'
+  });
+  d.debts.push({
+    id: 'd2',
+    label: 'Old',
+    type: 'other',
+    balance: v(0),
+    apr: v(0),
+    minimum: v(50),
+    dueDay: makeValue(),
+    state: 'archived'
+  });
   const debt = budgetModel(d).categories.find((c) => c.id === 'debt');
   // The minimum 35, plus the card's interest as soon as its details are in (S-133): 1,000 x 20 / 1,200 =
   // 16.666..., 16.67. 35 + 16.67 = 51.67. The archived debt adds nothing.
   assert.equal(debt.estimate.amount, 51.67);
   assert.equal(debt.lines[0].status.actual, 'computed');
-  assert.deepEqual(debt.lines.map((l) => [l.id, l.estimate]), [['debt:d1', 35], ['interest:d1', 16.67]]);
+  assert.deepEqual(
+    debt.lines.map((l) => [l.id, l.estimate]),
+    [
+      ['debt:d1', 35],
+      ['interest:d1', 16.67]
+    ]
+  );
 });
 
 test('guesses: the national average for the household size, labeled Guess with its source', () => {
@@ -219,8 +287,26 @@ test('a brand new household computes without errors and points at take-home firs
 
 test('since last time compares with the latest stored snapshot', () => {
   const d = newHousehold('Since');
-  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
-  d.snapshots.push({ date: '2026-08-01', takeHome: 2500, spending: null, surplus: null, savingsRate: null, blindSpot: null, completion: 0 });
+  d.income.push({
+    id: 'a',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: v(3000),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
+  d.snapshots.push({
+    date: '2026-08-01',
+    takeHome: 2500,
+    spending: null,
+    surplus: null,
+    savingsRate: null,
+    blindSpot: null,
+    completion: 0
+  });
   const s = buildSummary(d, refs);
   // 3,000 now - 2,500 in the August snapshot = 500; spending is blank in both, so no change to report.
   assert.equal(s.sinceLast.takeHome, 500);
@@ -237,12 +323,25 @@ test('blind guess round compares against the original estimate and the actual', 
   r.estimates.food = v(700);
   const cmp = blindCompare(d, budgetModel(d), r.id);
   // original misses by 300, blind misses by 100 -> blind is closer; change = +200
-  assert.deepEqual(cmp.rows.map((x) => [x.id, x.original, x.blind, x.actual, x.change, x.closer]), [['food', 500, 700, 800, 200, 'blind']]);
+  assert.deepEqual(
+    cmp.rows.map((x) => [x.id, x.original, x.blind, x.actual, x.change, x.closer]),
+    [['food', 500, 700, 800, 200, 'blind']]
+  );
 });
 
 test('estimate "left over" for the running total (dreams have their own, in Eras)', () => {
   const d = newHousehold('Left');
-  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({
+    id: 'a',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: v(3000),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
   d.noDebts = true;
   findCategory(d, 'housing').estimate = v(1200);
   findCategory(d, 'savings').estimate = v(300);
@@ -258,7 +357,19 @@ test('hourly pay: gross from rate x hours, take-home guess, and pay in every uni
   // take-home 45,500 - 3,280 - 3,480.75 = 38,739.25 a year = 3,228.270833 a month; paycheck 38,739.25 / 26 = 1,489.971154
   // hours 35 x 52 = 1,820 a year -> take-home per hour 38,739.25 / 1,820 = 21.285302; gross per hour 25
   const d = newHousehold('Hourly');
-  d.income.push({ id: 'h', type: 'w2', label: 'Yedei Chesed', payFrequency: 'biweekly', payBasis: 'hourly', hourlyRate: v(25), takeHome: makeValue(), gross: makeValue(), deductions: [], hoursPerWeek: 35, state: 'active' });
+  d.income.push({
+    id: 'h',
+    type: 'w2',
+    label: 'Yedei Chesed',
+    payFrequency: 'biweekly',
+    payBasis: 'hourly',
+    hourlyRate: v(25),
+    takeHome: makeValue(),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: 35,
+    state: 'active'
+  });
   const s = incomeSummary(d, refs.tax).sources[0];
   assert.equal(s.grossFrom, 'hourly');
   assert.ok(near(s.grossAnnual, 45500));
@@ -274,13 +385,35 @@ test('hourly pay: gross from rate x hours, take-home guess, and pay in every uni
 
 test('hourly pay without hours gives no gross (empty, not zero)', () => {
   const d = newHousehold('No hours');
-  d.income.push({ id: 'h', type: 'w2', label: 'Job', payFrequency: 'weekly', payBasis: 'hourly', hourlyRate: v(20), takeHome: makeValue(), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({
+    id: 'h',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'weekly',
+    payBasis: 'hourly',
+    hourlyRate: v(20),
+    takeHome: makeValue(),
+    gross: makeValue(),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
   assert.equal(incomeSummary(d, refs.tax).sources[0].grossMonthly, null);
 });
 
 test('family support is not taxed: gross 3,600 a year -> take-home 300 a month', () => {
   const d = newHousehold('Family');
-  d.income.push({ id: 'f', type: 'family', label: 'Parents', payFrequency: 'monthly', takeHome: makeValue(), gross: v(3600, 'year'), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({
+    id: 'f',
+    type: 'family',
+    label: 'Parents',
+    payFrequency: 'monthly',
+    takeHome: makeValue(),
+    gross: v(3600, 'year'),
+    deductions: [],
+    hoursPerWeek: null,
+    state: 'active'
+  });
   const s = incomeSummary(d, refs.tax).sources[0];
   assert.equal(s.takeHomeMonthly, 300);
   assert.equal(s.taxMonthly, 0);
@@ -297,11 +430,31 @@ test('paycheck deductions: 401(k) as 5% of gross, health per paycheck, transit p
   // take-home: 45,500 - 5,075 - 2,671 - 3,266.55 = 34,487.45 a year = 2,873.954167 a month = 1,326.440385 a paycheck
   // take-home per hour: 34,487.45 / 1,820 = 18.949148
   const d = newHousehold('Deductions');
-  d.income.push({ id: 'h', type: 'w2', label: 'Yedei Chesed', payFrequency: 'biweekly', payBasis: 'hourly', hourlyRate: v(25), takeHome: makeValue(), gross: makeValue(), hoursPerWeek: 35, state: 'active',
+  d.income.push({
+    id: 'h',
+    type: 'w2',
+    label: 'Yedei Chesed',
+    payFrequency: 'biweekly',
+    payBasis: 'hourly',
+    hourlyRate: v(25),
+    takeHome: makeValue(),
+    gross: makeValue(),
+    hoursPerWeek: 35,
+    state: 'active',
     deductions: [
       { id: 'r', kind: 'retirement', label: '', mode: 'percent', percent: 5, amount: makeValue(), pretax: true },
       { id: 'hl', kind: 'health', label: '', mode: 'amount', percent: null, amount: v(80, 'paycheck'), pretax: true },
-      { id: 't', kind: 'transportation', label: '', mode: 'amount', percent: null, amount: v(60, 'month'), pretax: true }] });
+      {
+        id: 't',
+        kind: 'transportation',
+        label: '',
+        mode: 'amount',
+        percent: null,
+        amount: v(60, 'month'),
+        pretax: true
+      }
+    ]
+  });
   const s = incomeSummary(d, refs.tax).sources[0];
   const ret = s.deductions.find((x) => x.id === 'r');
   assert.ok(near(ret.annual, 2275));
@@ -319,8 +472,19 @@ test('paycheck deductions: 401(k) as 5% of gross, health per paycheck, transit p
 
 test('a % deduction with no gross pay stays empty, not zero', () => {
   const d = newHousehold('No gross');
-  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), hoursPerWeek: null, state: 'active',
-    deductions: [{ id: 'r', kind: 'retirement', label: '', mode: 'percent', percent: 6, amount: makeValue(), pretax: true }] });
+  d.income.push({
+    id: 'a',
+    type: 'w2',
+    label: 'Job',
+    payFrequency: 'monthly',
+    takeHome: v(3000),
+    gross: makeValue(),
+    hoursPerWeek: null,
+    state: 'active',
+    deductions: [
+      { id: 'r', kind: 'retirement', label: '', mode: 'percent', percent: 6, amount: makeValue(), pretax: true }
+    ]
+  });
   const s = incomeSummary(d, refs.tax).sources[0];
   assert.equal(s.deductions[0].monthly, null);
   assert.equal(s.deductionsMissing, 1);
@@ -337,7 +501,10 @@ test('Total rent, then your share (S-123): an even split while your share is bla
   d.household.roommates.totalRent = makeValue(2500);
   // By hand: 2,500 for the place, you and 1 roommate: 2,500 / 2 = 1,250. Your share (the Rent line's
   // estimate) is blank, so it shows as null, never 0.
-  assert.deepEqual([rentShare(d).total, rentShare(d).even, rentShare(d).yours, rentShare(d).lineId], [2500, 1250, null, 'rent']);
+  assert.deepEqual(
+    [rentShare(d).total, rentShare(d).even, rentShare(d).yours, rentShare(d).lineId],
+    [2500, 1250, null, 'rent']
+  );
   // 2 roommates: 2,500 / 3 = 833.333... to the cent, 833.33.
   d.household.roommates.count = 2;
   assert.equal(rentShare(d).even, 833.33);
@@ -356,14 +523,21 @@ test('Surplus first, then allocate it (S-132), by hand', async () => {
   // Savings is one number, 300 (no lines typed), so nothing is grouped yet; allocated 300; not allocated
   // 1,086.54 - 300 = 786.54.
   const a = buildSummary(d, refs).allocation;
-  assert.deepEqual([a.surplus, a.allocated, a.unallocated, a.groups], [1086.54, 300, 786.54, { saving: null, investing: null, debt: null }]);
+  assert.deepEqual(
+    [a.surplus, a.allocated, a.unallocated, a.groups],
+    [1086.54, 300, 786.54, { saving: null, investing: null, debt: null }]
+  );
   // The gap as a share of take-home (S-135): surplus rate 1,086.54 / 4,600 = 0.23620435; left over rate
   // 786.54 / 4,600 = 0.17098696.
   assert.ok(Math.abs(a.surplusRate - 0.23620435) < 1e-7 && Math.abs(a.unallocatedRate - 0.17098696) < 1e-7);
   // Only what is allocated counts as saving (S-138). Planned savings rate (300 + pre-tax 200) / (4,600 + 200)
   // = 500 / 4,800 = 0.10416667; the 786.54 not allocated yet would add 786.54 / 4,800 = 0.16386250, for
   // (300 + 786.54 + 200) / 4,800 = 1,286.54 / 4,800 = 0.26802917.
-  assert.ok(Math.abs(a.savingsRate - 0.10416667) < 1e-7 && Math.abs(a.boost - 0.1638625) < 1e-7 && Math.abs(a.possibleSavingsRate - 0.26802917) < 1e-7);
+  assert.ok(
+    Math.abs(a.savingsRate - 0.10416667) < 1e-7 &&
+      Math.abs(a.boost - 0.1638625) < 1e-7 &&
+      Math.abs(a.possibleSavingsRate - 0.26802917) < 1e-7
+  );
   // The month (Luis's September): surplus 571.54 / take-home 4,600 = 0.12424783.
   assert.ok(Math.abs(buildSummary(d, refs).totals.surplusRate - 0.12424783) < 1e-7);
   // Broken into lines: emergency fund 200, "Extra on debt" 150 (its type from the name). 200 + 150 = 350
@@ -373,5 +547,8 @@ test('Surplus first, then allocate it (S-132), by hand', async () => {
   assert.equal(extra.type, 'extra-debt');
   d.categories.find((c) => c.id === 'savings').lines.find((l) => l.id === 'emergency-fund').estimate = makeValue(200);
   const b = buildSummary(d, refs).allocation;
-  assert.deepEqual([b.surplus, b.allocated, b.unallocated, b.groups.saving, b.groups.debt], [1086.54, 350, 736.54, 200, 150]);
+  assert.deepEqual(
+    [b.surplus, b.allocated, b.unallocated, b.groups.saving, b.groups.debt],
+    [1086.54, 350, 736.54, 200, 150]
+  );
 });

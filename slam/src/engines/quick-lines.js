@@ -20,7 +20,11 @@ const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
  */
 export function parseQuickLines(text) {
   // 1,200 is one number: join thousands before commas split the list.
-  const tokens = String(text || '').replace(/(\d),(\d{3})(?!\d)/g, '$1$2').replace(/[;,\n]+/g, ' , ').split(/\s+/).filter(Boolean);
+  const tokens = String(text || '')
+    .replace(/(\d),(\d{3})(?!\d)/g, '$1$2')
+    .replace(/[;,\n]+/g, ' , ')
+    .split(/\s+/)
+    .filter(Boolean);
   const out = [];
   let words = [];
   const flush = (amount) => {
@@ -29,10 +33,19 @@ export function parseQuickLines(text) {
     words = [];
   };
   for (const t of tokens) {
-    if (t === ',') { flush(null); continue; }
+    if (t === ',') {
+      flush(null);
+      continue;
+    }
     // A number with no name before it is a word, so a name may start with digits (24 Hour Fitness).
-    if (NUM.test(t) && words.length) { flush(Number(t.replace(/[$,]/g, ''))); continue; }
-    if (MARK.test(t) && !words.length && out.length) { out[out.length - 1].shared = true; continue; }
+    if (NUM.test(t) && words.length) {
+      flush(Number(t.replace(/[$,]/g, '')));
+      continue;
+    }
+    if (MARK.test(t) && !words.length && out.length) {
+      out[out.length - 1].shared = true;
+      continue;
+    }
     words.push(t);
   }
   flush(null);

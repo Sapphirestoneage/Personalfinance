@@ -47,7 +47,9 @@ function periodOf(line, entry) {
  */
 export function paidAheadSchedules(doc) {
   // Only spending lines can be paid ahead: a savings transfer or a debt payment is not a prepaid expense.
-  const lines = (doc.categories || []).filter((c) => !c.savings && c.id !== 'debt').flatMap((c) => (c.lines || []).map((l) => ({ l, c })));
+  const lines = (doc.categories || [])
+    .filter((c) => !c.savings && c.id !== 'debt')
+    .flatMap((c) => (c.lines || []).map((l) => ({ l, c })));
   const out = [];
   for (const t of counted(doc.transactions || [])) {
     // Purchases and fees with money out only; a one-off entry is not a recurring bill, so it starts nothing.
@@ -59,8 +61,20 @@ export function paidAheadSchedules(doc) {
     const share = r2(t.amount / n);
     const m0 = t.date.slice(0, 7);
     const ends = [];
-    for (let k = 1; k <= n; k++) ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(t.amount - share * k) });
-    out.push({ id: t.id, lineId: hit.l.id, name: hit.l.name, paid: t.amount, date: t.date, months: n, share, from: m0, through: ends[n - 1].month, ends });
+    for (let k = 1; k <= n; k++)
+      ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(t.amount - share * k) });
+    out.push({
+      id: t.id,
+      lineId: hit.l.id,
+      name: hit.l.name,
+      paid: t.amount,
+      date: t.date,
+      months: n,
+      share,
+      from: m0,
+      through: ends[n - 1].month,
+      ends
+    });
   }
   for (const { l } of lines) {
     const amount = typedAmount(l.openingAhead);
@@ -69,13 +83,28 @@ export function paidAheadSchedules(doc) {
     const m0 = firstMonth(doc);
     const share = r2(amount / n);
     const ends = [];
-    for (let k = 1; k <= n; k++) ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(amount - share * k) });
-    out.push({ id: 'opening:' + l.id, lineId: l.id, name: l.name, paid: amount, date: prevDay(m0), months: n, share, from: m0, through: ends[n - 1].month, ends, opening: true, status: l.openingAhead.status });
+    for (let k = 1; k <= n; k++)
+      ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(amount - share * k) });
+    out.push({
+      id: 'opening:' + l.id,
+      lineId: l.id,
+      name: l.name,
+      paid: amount,
+      date: prevDay(m0),
+      months: n,
+      share,
+      from: m0,
+      through: ends[n - 1].month,
+      ends,
+      opening: true,
+      status: l.openingAhead.status
+    });
   }
   return out.sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
-const typedAmount = (v) => (v && v.amount !== null && v.amount !== undefined && v.status !== 'not-for-me' ? v.amount : null);
+const typedAmount = (v) =>
+  v && v.amount !== null && v.amount !== undefined && v.status !== 'not-for-me' ? v.amount : null;
 const prevDay = (m) => lastDayOf(monthOfIndex(monthIndex(m) - 1));
 
 /**
@@ -84,7 +113,9 @@ const prevDay = (m) => lastDayOf(monthOfIndex(monthIndex(m) - 1));
  * @returns {string} 'YYYY-MM'.
  */
 export function firstMonth(doc) {
-  const all = [...(doc.months || []).map((m) => m.key), ...Object.keys(doc.balances || {}), doc.currentMonth].filter(Boolean).sort();
+  const all = [...(doc.months || []).map((m) => m.key), ...Object.keys(doc.balances || {}), doc.currentMonth]
+    .filter(Boolean)
+    .sort();
   return all[0];
 }
 
@@ -118,7 +149,7 @@ export function paidAheadAt(doc, date) {
   for (const s of paidAheadSchedules(doc)) {
     const a = scheduleAt(s, date);
     if (!a) continue;
-    const row = by[s.lineId] = by[s.lineId] || { lineId: s.lineId, name: s.name, amount: 0, schedules: [] };
+    const row = (by[s.lineId] = by[s.lineId] || { lineId: s.lineId, name: s.name, amount: 0, schedules: [] });
     row.amount = r2(row.amount + a);
     row.schedules.push({ ...s, left: a });
   }
