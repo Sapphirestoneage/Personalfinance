@@ -91,6 +91,11 @@ export function editCardRate(spine, cardId, action, { value, kind = 'known', tod
   return s;
 }
 
+// Set a field that may not exist yet (a new tag such as "paid by someone else").
+export function putFact(spine, path, value, kind, today) {
+  return setAt(spine, path, { value, kind, asOf: today, source: 'ledger' });
+}
+
 // ---------------------------------------------------------------- history
 export const MAX_STEPS = 200;
 
@@ -160,7 +165,7 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
     if (type === 'maybeMoney') item.likelihood = M();
     first = 'income.' + id + '.amount';
   } else if (collection === 'expenses') {
-    item = { id, label: label || 'New expense', amount: M(), cadence, start: null, end: null, fixed: null, need: null, fat };
+    item = { id, label: label || 'New expense', amount: M(), cadence, start: null, end: null, fixed: null, need: M(), fat };
     first = 'expenses.' + id + '.amount';
   } else if (collection === 'goals') {
     item = { id, type: type || 'savings', label: label || 'New goal' };

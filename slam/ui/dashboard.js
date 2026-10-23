@@ -79,7 +79,10 @@ function render(spine, rules, source) {
       ],
       extra: em.backstop.contributions.value || em.backstop.conversions.length ? backstop : null
     }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', result: cf.surplus, shown: money(cf.surplus.value), lines: ['Take-home ' + money(cf.income.takeHome.value) + ' less expenses ' + money(cf.expenses.total.value) + ' and minimum payments ' + money(cf.debtMinimums.total.value) + (cf.saving.afterTax.value ? ' and ' + money(cf.saving.afterTax.value) + ' saved from take-home' : '') + '.'] }),
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', result: cf.surplus, shown: money(cf.surplus.value), lines: [
+        'Take-home ' + money(cf.income.takeHome.value) + ' less expenses ' + money(cf.expenses.total.value) + ', minimum payments ' + money(cf.debtMinimums.total.value) + (cf.saving.afterTax.value ? ', ' + money(cf.saving.afterTax.value) + ' saved from take-home' : '') + (cf.taxSetAside.total.value ? ' and a tax set-aside of ' + money(cf.taxSetAside.total.value) : '') + '.',
+        cf.taxSetAside.lines.length ? 'Tax set-aside: ' + cf.taxSetAside.lines.map((l) => l.label + ' ' + money(l.amount) + ' (' + pct(l.rate, 1) + ' of ' + money(l.base) + (l.months ? ' over ' + l.months + ' months' : '') + ')').join('; ') + '.' : null
+      ] }),
     tile(spine, { id: 'savings', label: 'Savings rate', result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
     tile(spine, {
       id: 'cards', label: 'Credit cards', result: sh.cards, shown: money(sh.cards.value),

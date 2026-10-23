@@ -20,7 +20,8 @@ export function typeFor(spine, path) {
     return 'text';
   }
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : 'money';
-  if (s[0] === 'expenses' || s[0] === 'taxYears') return 'money';
+  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' ? 'bool' : 'money';
+  if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
     return (item && fieldsFor(item.family)[s[2]]) || 'text';

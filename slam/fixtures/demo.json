@@ -184,7 +184,12 @@
       "start": null,
       "end": null,
       "fixed": true,
-      "need": true,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": "accommodation"
     },
     {
@@ -200,7 +205,12 @@
       "start": null,
       "end": null,
       "fixed": true,
-      "need": true,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": "accommodation"
     },
     {
@@ -216,7 +226,12 @@
       "start": null,
       "end": null,
       "fixed": null,
-      "need": true,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": "food"
     },
     {
@@ -232,7 +247,12 @@
       "start": null,
       "end": null,
       "fixed": null,
-      "need": false,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": "food"
     },
     {
@@ -248,7 +268,12 @@
       "start": null,
       "end": null,
       "fixed": null,
-      "need": true,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": "transportation"
     },
     {
@@ -264,7 +289,12 @@
       "start": null,
       "end": null,
       "fixed": true,
-      "need": true,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": null
     },
     {
@@ -280,7 +310,12 @@
       "start": null,
       "end": null,
       "fixed": true,
-      "need": false,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": null
     },
     {
@@ -296,7 +331,12 @@
       "start": null,
       "end": null,
       "fixed": true,
-      "need": false,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "fat": null
     },
     {
@@ -312,7 +352,12 @@
       "start": null,
       "end": null,
       "fixed": null,
-      "need": null,
+      "need": {
+        "value": null,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "missing"
+      },
       "fat": null
     }
   ],

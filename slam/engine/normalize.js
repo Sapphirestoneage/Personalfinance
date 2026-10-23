@@ -12,6 +12,10 @@ export function upgradeSpine(spine) {
   const s = structuredClone(spine);
   const asOf = s.meta && s.meta.asOf;
   const stamp = { asOf, source: 'upgrade' };
+  // Need or want became a Fact (S-171).
+  for (const e of s.expenses || []) {
+    if (e.need === undefined || e.need === null || typeof e.need === 'boolean') e.need = typeof e.need === 'boolean' ? fact(e.need, { ...stamp, kind: 'known' }) : fact(null, stamp);
+  }
   for (const d of s.debts || []) {
     if (d.type !== 'credit_card') continue;
     if (!d.business) d.business = fact(null, stamp);
@@ -24,7 +28,7 @@ export function upgradeSpine(spine) {
 }
 
 export function loadHousehold(raw) {
-  if (raw && raw.schema === SCHEMA_ID) return structuredClone(raw);
+  if (raw && raw.schema === SCHEMA_ID) return upgradeSpine(raw);
   if (raw && raw._meta && raw.household) return fromProfile(raw);
   throw new Error('Not a household file: expected ' + SCHEMA_ID + ' or a profile with _meta and household');
 }
@@ -93,9 +97,10 @@ export function fromProfile(p) {
       id: e.id || slug(e.label, expIds), label: e.label, amount: F(e.amount, e.kind), cadence: e.cadence,
       start: e.start || null, end: e.end || null,
       fixed: typeof e.fixed === 'boolean' ? e.fixed : null,
-      need: typeof e.need === 'boolean' ? e.need : null,
+      need: F(typeof e.need === 'boolean' ? e.need : null, 'known'),
       fat: e.fat || null
     };
+    if (typeof e.covered === 'boolean') out.covered = F(e.covered, 'known');
     if (e.notes) out.notes = e.notes;
     return out;
   });

@@ -24,9 +24,16 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(cf.expenses.total.value, 1800 + 150 + 500 + 200 + 130 + 60 + 40 + 50 + 300); // 3,230
     assert.equal(cf.expenses.fat.value, 1800 + 150 + 500 + 200 + 130); // 2,780
     assert.equal(cf.debtMinimums.total.value, 90 + 40 + 212); // 342
-    near(cf.surplus.value, 4711 - 3230 - 342 - 300); // 839 (300 to the Roth from take-home)
-    near(cf.savingsRate.gross.value, (839 + 500 + 300) / 6500); // 25.2%
-    near(cf.savingsRate.net.value, (839 + 300) / 4711); // 24.2%
+    // Tax set-aside on the 1099 tutoring (no withholding): 500 x (22% federal + 5.4% NY
+    // + 92.35% x 15.3% self-employment) = 500 x 0.4152955 = 207.65.
+    const setAside = 500 * (0.22 + 0.054 + 0.9235 * 0.153);
+    near(cf.taxSetAside.total.value, setAside);
+    const surplus = 4711 - 3230 - 342 - 300 - setAside; // 631.35 (300 to the Roth from take-home)
+    near(cf.surplus.value, surplus);
+    near(cf.savingsRate.gross.value, (surplus + 500 + 300) / 6500);
+    near(cf.savingsRate.net.value, (surplus + 300) / 4711);
+    assert.equal(cf.expenses.need.value, 1800 + 150 + 500 + 130 + 60); // tagged needs; "Everything else" is not tagged yet
+    assert.equal(cf.expenses.lean.value, 1800 + 150 + 500 + 130); // food, housing, transportation that are not wants
     assert.equal(cf.surplus.kind, 'rough');
   });
 
@@ -54,7 +61,7 @@ test('demo golden values as of 2026-10-22', async (t) => {
     near(s.fi.fiPercent.value, 65000 / 1000000);
     assert.equal(s.fi.implied.value, 3230 * 12 / 0.04); // 969,000
     assert.equal(s.fi.goalBelowImplied.value, false);
-    assert.equal(s.fi.leanFi.value, 2780 * 12 * 25); // 834,000
+    assert.equal(s.fi.leanFi.value, (2780 - 200) * 12 / 0.04); // 774,000: eating out is a want; same 4% rate
     near(s.fi.coastFi.value, 1000000 / Math.pow(1.05, 65 - 32), 0.01); // 199,872.54
   });
 

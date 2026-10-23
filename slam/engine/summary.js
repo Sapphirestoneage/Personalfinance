@@ -8,6 +8,29 @@ import { emergency } from './emergency.js';
 import { fiReport } from './fi.js';
 import { taxForYear } from './tax.js';
 import { buildFlags } from './flags.js';
+import { monthKey, addMonths, addDays, valueOf } from './spine.js';
+
+// The income cliff (S-174): the first month within STAGE_CLIFF_MONTHS where
+// certain income (no likelihood, or likelihood 1) is $0, what that month costs
+// (spending, minimum payments, tax set-aside), and the likely income then.
+export function incomeCliff(spine, rules, asOf) {
+  const n = rules.get('STAGE_CLIFF_MONTHS', +asOf.slice(0, 4));
+  let ym = monthKey(asOf);
+  const now = cashflow(spine, rules, ym, { mode: 'committed' });
+  if (!now.income.gross.value) return null;
+  for (let k = 1; k <= n; k++) {
+    ym = addMonths(ym, 1);
+    const sure = cashflow(spine, rules, ym, { mode: 'committed' });
+    if (sure.income.gross.value) continue;
+    const likely = cashflow(spine, rules, ym, { mode: 'expected' });
+    // The day certain income stops: the day after the last certain stream ends.
+    const ends = (spine.income || []).filter((s) => s.end && s.end >= asOf && (!s.likelihood || valueOf(s.likelihood) === 1)).map((s) => s.end).sort();
+    const from = ends.length ? addDays(ends[ends.length - 1], 1) : ym + '-01';
+    const costs = sure.expenses.total.value + sure.debtMinimums.total.value + (sure.taxSetAside.total.value ?? 0);
+    return { ym, from, costs, spending: sure.expenses.total, minimums: sure.debtMinimums.total, setAside: sure.taxSetAside.total, likely: likely.income.gross, likelyStreams: likely.income.streams.filter((x) => x.included && x.gross) };
+  }
+  return null;
+}
 
 export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true } = {}) {
   const ym = asOf.slice(0, 7);
@@ -28,7 +51,8 @@ export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true }
     asOf, ym, cashflow: cf, sheet, debt,
     emergency: emergency(spine, rules, cf, sheet, asOf),
     fi: fiReport(spine, rules, cf, sheet, asOf),
-    tax: taxForYear(spine, rules, +asOf.slice(0, 4), { asOf })
+    tax: taxForYear(spine, rules, +asOf.slice(0, 4), { asOf }),
+    cliff: incomeCliff(spine, rules, asOf)
   };
   if (flags) s.flags = buildFlags(spine, rules, s);
   return s;

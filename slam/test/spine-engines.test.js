@@ -5,7 +5,7 @@ import { fact } from '../engine/spine.js';
 import { validate } from '../engine/schema.js';
 import { monthlyAmount, paidBetween, cashflow } from '../engine/cashflow.js';
 import { computeTax, taxForYear, nextEstimatedDate } from '../engine/tax.js';
-import { minimumPayment, rateOn, utilization, creditScoreNote, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
+import { minimumPayment, rateOn, debtSchedule, utilization, creditScoreNote, promoDeadlines, order, payoffPlan, paymentsBefore } from '../engine/debt.js';
 import { balanceSheet } from '../engine/networth.js';
 import { emergency } from '../engine/emergency.js';
 import { fiReport, yearsToTarget } from '../engine/fi.js';
@@ -43,7 +43,7 @@ function mini(over = {}) {
   return s;
 }
 const stream = (id, type, amount, cadence, o = {}) => ({ id, type, label: o.label || id, personId: 'p', amount: o.kind === 'missing' ? M() : K(amount), cadence, start: o.start ?? null, end: o.end ?? null, withholding: { federal: o.fed === undefined ? K(0) : o.fed === null ? M() : K(o.fed), state: o.st === undefined ? K(0) : o.st === null ? M() : K(o.st) }, ...(o.likelihood !== undefined ? { likelihood: RO(o.likelihood) } : {}) });
-const expense = (id, amount, o = {}) => ({ id, label: id, amount: K(amount), cadence: o.cadence || 'monthly', start: o.start ?? null, end: o.end ?? null, fixed: null, need: null, fat: o.fat ?? null });
+const expense = (id, amount, o = {}) => ({ id, label: id, amount: K(amount), cadence: o.cadence || 'monthly', start: o.start ?? null, end: o.end ?? null, fixed: null, need: o.need === undefined ? M() : K(o.need), fat: o.fat ?? null });
 const card = (id, balance, o = {}) => ({ id, family: 'debt', type: 'credit_card', name: K(id), balance: K(balance), apr: o.apr === null ? M() : K(o.apr ?? 0.2), limit: o.limit === null ? M() : K(o.limit ?? 5000), minimum: o.min === undefined ? M() : K(o.min), ...(o.promoEnds ? { promoApr: K(0), promoEnds: K(o.promoEnds), deferredInterest: K(o.deferred ?? false) } : {}), ...(o.stress ? { stress: K(o.stress) } : {}), business: K(o.business ?? false), reportsToPersonalCredit: o.reports === null ? M() : K(o.reports ?? !(o.business ?? false)) });
 
 // ------------------------------------------------------------------ cashflow
@@ -327,7 +327,7 @@ test('FI: goal spending / rate, percent, implied, lean, coast and years', () => 
   near(f.fiPercent.value, 50000 / 900000);
   assert.equal(f.implied.value, 2500 * 12 / 0.04);
   assert.equal(f.goalBelowImplied.value, false);
-  assert.equal(f.leanFi.value, 2000 * 12 * 25);
+  assert.equal(f.leanFi.value, 2000 * 12 / 0.04, 'lean uses the same withdrawal rate');
   near(f.coastFi.value, 900000 / Math.pow(1.05, 65 - 35), 0.05);
   assert.ok(f.coastFi.rough.includes('assumptions.coastAge'), 'default coast age is rough');
   assert.ok(f.yearsToFi.value > 10 && f.yearsToFi.value < 30);
@@ -400,6 +400,80 @@ test('debt: each minimum lands on its due day, the last day in a short month', (
   assert.deepEqual(feb.map((x) => [x.id, x.dueDate]), [['a', '2027-02-28'], ['l', '2027-02-15']]);
   const p = project(s, R, { mode: 'committed', endYm: '2026-12' });
   assert.deepEqual(p.months[0].payments.map((x) => [x.id, x.date, x.amount]), [['l', '2026-11-15', 500], ['a', '2026-11-30', 40]]);
+});
+
+test('schedule: a $2,000 loan at $500 a month ends after 4 payments, in cash flow and the projection', () => {
+  const s = mini({ debts: [{ id: 'car', family: 'debt', type: 'auto_loan', name: K('Car'), balance: K(2000), apr: K(0), minimum: K(500), dueDay: K(1) }] });
+  const sc = debtSchedule(s, R, '2026-10-22', '2027-04');
+  assert.deepEqual([...sc.months.values()].map((m) => m.paid), [500, 500, 500, 500, 0, 0]); // Nov to Apr
+  assert.deepEqual(sc.months.get('2027-02').paidOff, ['car']);
+  assert.equal(cashflow(s, R, '2027-02').debtMinimums.total.value, 500, 'the fourth payment');
+  assert.equal(cashflow(s, R, '2027-03').debtMinimums.total.value, 0, 'no payment once paid off');
+  assert.equal(cashflow(s, R, '2026-10').debtMinimums.total.value, 500, 'this month reads today\'s balance');
+  const p = project(s, R, { mode: 'committed', endYm: '2027-04' });
+  assert.deepEqual(p.months.map((m) => m.debtPaid), [500, 500, 500, 500, 0, 0]);
+});
+
+test('schedule: a promo card moves to its rate after the intro and its minimum follows', () => {
+  const c = card('p', 6000, { promoEnds: '2026-12-31', apr: 0.24 }); // Dec: 1% = $60; Jan: $60 + $120 interest
+  const s = mini({ debts: [c] });
+  const sc = debtSchedule(s, R, '2026-10-22', '2027-02');
+  assert.equal(sc.months.get('2026-12').interest, 0);
+  assert.ok(sc.months.get('2027-01').interest > 0, 'interest after the intro');
+  assert.ok(sc.months.get('2027-01').payments[0].amount > sc.months.get('2026-12').payments[0].amount, 'the default minimum includes the new interest');
+});
+
+test('tax set-aside: unwithheld income at the marginal rate; a Roth conversion spread to the return', () => {
+  const s = mini({
+    income: [stream('job', 'w2', 4000, 'monthly', { fed: 400, st: 150 }), stream('gig', '1099', 1000, 'monthly'), stream('ui', 'unemployment', 1000, 'monthly')],
+    accounts: [{ id: 'r', family: 'ira', type: 'roth_ira', name: K('Roth'), balance: K(9000), conversions: K([{ year: 2026, amount: 7000, taxable: 7000 }]) }]
+  });
+  const c = cashflow(s, R, '2026-10');
+  const sa = c.taxSetAside;
+  const gig = sa.lines.find((l) => l.id === 'gig'), ui = sa.lines.find((l) => l.id === 'ui'), conv = sa.lines.find((l) => l.kind === 'conversion');
+  assert.ok(!sa.lines.some((l) => l.id === 'job'), 'a withheld paycheck sets nothing aside');
+  near(ui.amount, 1000 * (sa.rate.federal + sa.rate.state));
+  near(gig.amount, 1000 * (sa.rate.federal + sa.rate.state + sa.rate.se));
+  assert.equal(conv.months, 7, 'October 2026 through April 2027');
+  near(conv.amount, 7000 * (sa.rate.federal + sa.rate.state) / 7);
+  // Surplus = take-home - expenses - minimums - after-tax saving - tax set-aside.
+  near(c.surplus.value, c.income.takeHome.value - c.expenses.total.value - c.debtMinimums.total.value - c.saving.afterTax.value - sa.total.value);
+  assert.equal(cashflow(s, R, '2027-05').taxSetAside.lines.filter((l) => l.kind === 'conversion').length, 0, 'done after the return is due');
+});
+
+test('needs: missing when nothing is tagged a need; a covered expense counts $0', () => {
+  const s = mini({ expenses: [expense('rent', 1000, { fat: 'accommodation' }), expense('food', 400, { fat: 'food', need: true }), expense('out', 200, { fat: 'food', need: false }), expense('phone', 70, { need: true })] });
+  s.expenses.find((e) => e.id === 'phone').covered = K(true);
+  const c = cashflow(s, R, '2026-10');
+  assert.equal(c.expenses.total.value, 1600, 'phone is covered by someone else');
+  assert.equal(c.expenses.need.value, 400);
+  assert.ok(c.expenses.need.missing.includes('expenses.rent.need'), 'an untagged expense is named');
+  assert.equal(c.expenses.lean.value, 1400, 'lean: food and housing that are not wants');
+  const none = mini({ expenses: [expense('rent', 1000)] });
+  assert.equal(cashflow(none, R, '2026-10').expenses.need.value, null, 'no need tags: missing, not $0');
+});
+
+test('years to FI come from the projection; missing when nothing is ever saved', () => {
+  const s = household();
+  const f = fiReport(s, R, cashflow(s, R, '2026-10'), balanceSheet(s), '2026-10-22');
+  assert.ok(f.yearsToFi.value > 0 && f.yearsToFi.value < 60);
+  const broke = household();
+  broke.income = [];
+  const g = fiReport(broke, R, cashflow(broke, R, '2026-10'), balanceSheet(broke), '2026-10-22');
+  assert.equal(g.yearsToFi.value, null);
+  assert.match(g.yearsToFi.note, /no month with positive saving|does not reach/);
+});
+
+test('income cliff: certain income at $0 within 6 months is the first flag', () => {
+  const s = mini({
+    income: [stream('ui', 'unemployment', 2000, 'monthly', { end: '2027-01-02' }), stream('gig', '1099', 3000, 'monthly', { start: '2027-01-01', likelihood: 0.7 })],
+    expenses: [expense('rent', 1500)]
+  });
+  const sum = summarize(s, R);
+  assert.equal(sum.cliff.from, '2027-01-03');
+  assert.equal(sum.flags[0].id, 'income-cliff');
+  assert.match(sum.flags[0].title, /From January 3, 2027, certain income is \$0 and costs are \$1,500 a month/);
+  near(sum.cliff.likely.value, 2100);
 });
 
 test('projection: a 0% promo starts charging the APR after it ends', () => {

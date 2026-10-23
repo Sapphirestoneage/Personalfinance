@@ -1334,16 +1334,6 @@
       "verified": "app"
     },
     {
-      "id": "APP_LEAN_MULTIPLE",
-      "rule": "Lean FI = yearly FAT spending times this",
-      "value": 25,
-      "unit": "x",
-      "appliesTo": "FI engine",
-      "notes": "",
-      "source": "SLAM design (Phase 1 brief)",
-      "verified": "app"
-    },
-    {
       "id": "APP_COAST_AGE",
       "rule": "Default age Coast FI grows to when no goal age is entered",
       "value": 65,
@@ -1490,6 +1480,26 @@
       "unit": "days",
       "appliesTo": "Flags: health coverage change",
       "notes": "",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "TAX_RETURN_DUE",
+      "rule": "Federal income tax return and balance due date",
+      "value": "04-15",
+      "unit": "month-day",
+      "appliesTo": "Tax engine, tax set-aside",
+      "notes": "The year after the tax year. Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS Form 1040 instructions",
+      "verified": "law"
+    },
+    {
+      "id": "STAGE_CLIFF_MONTHS",
+      "rule": "Look-ahead for certain income dropping to $0",
+      "value": 6,
+      "unit": "months",
+      "appliesTo": "Flags: income cliff",
+      "notes": "Certain income is streams with no likelihood or likelihood 1",
       "source": "Eli house assumption",
       "verified": "assumption"
     }

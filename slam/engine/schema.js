@@ -241,7 +241,10 @@ export function validate(spine) {
     checkFact(p + '.amount', e.amount, 'money');
     optDate(p + '.start', e.start); optDate(p + '.end', e.end);
     if (e.fat !== null && !FAT.includes(e.fat)) err(p + '.fat', 'food, accommodation, transportation or null');
-    for (const k of ['fixed', 'need']) if (e[k] !== null && typeof e[k] !== 'boolean') err(p + '.' + k, 'true, false or null');
+    if (e.fixed !== null && e.fixed !== undefined && typeof e.fixed !== 'boolean') err(p + '.fixed', 'true, false or null');
+    // Need or want, and paid by someone else, are Facts (S-171): a missing tag shows in the Ledger.
+    checkFact(p + '.need', e.need, 'bool', false);
+    checkFact(p + '.covered', e.covered, 'bool', false);
   }
 
   // accounts and debts: shells of a family, with preset types

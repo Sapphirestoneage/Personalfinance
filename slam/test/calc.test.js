@@ -84,31 +84,31 @@ test('standard deduction is used once: a known paycheck uses it before a gross-o
 test('unemployment: one benefit number, set-aside when not withheld, 10% option', () => {
   const d = newHousehold('Benefits');
   d.currentMonth = '2026-10';
-  d.income.push({ ...newIncome({ id: 'u', type: 'unemployment', payFrequency: 'weekly' }), gross: v(869, 'week'), benefitWeeksLeft: 10 });
+  d.income.push({ ...newIncome({ id: 'u', type: 'unemployment', payFrequency: 'weekly' }), gross: v(640, 'week'), benefitWeeksLeft: 10 });
   let u = incomeSummary(d, refs.tax).sources[0];
-  // 869 x 52 = 45,188 a year = 3,765.666667 a month, all of it lands.
-  assert.ok(near(u.takeHomeMonthly, 3765.666667));
-  // 45,188 - 16,100 = 29,088 taxable: 1,240 + (29,088 - 12,400) x 12% = 3,242.56; / 52 = 62.356923 a week.
-  assert.ok(near(u.unemployment.estTaxAnnual, 3242.56));
-  assert.ok(near(u.unemployment.setAsideWeekly, 62.356923));
-  // 10 weeks from Oct 15 is Dec 24: ends around December 2026; 8,690 still to come.
+  // 640 x 52 = 33,280 a year = 2,773.333333 a month, all of it lands.
+  assert.ok(near(u.takeHomeMonthly, 2773.333333));
+  // 33,280 - 16,100 = 17,180 taxable: 1,240 + (17,180 - 12,400) x 12% = 1,813.60; / 52 = 34.876923 a week.
+  assert.ok(near(u.unemployment.estTaxAnnual, 1813.6));
+  assert.ok(near(u.unemployment.setAsideWeekly, 34.876923));
+  // 10 weeks from Oct 15 is Dec 24: ends around December 2026; 6,400 still to come.
   assert.equal(u.unemployment.endsAround, 'December 2026');
-  assert.ok(near(u.unemployment.stillToCome, 8690));
+  assert.ok(near(u.unemployment.stillToCome, 6400));
   d.income[0].withholding = 'ten-percent';
   u = incomeSummary(d, refs.tax).sources[0];
-  // 10% withheld: 3,765.666667 x 0.9 = 3,389.10 lands; 4,518.80 withheld >= 3,242.56 owed, refund about 1,276.24.
-  assert.ok(near(u.takeHomeMonthly, 3389.1));
+  // 10% withheld: 2,773.333333 x 0.9 = 2,496 lands; 3,328 withheld >= 1,813.60 owed, refund about 1,514.40.
+  assert.ok(near(u.takeHomeMonthly, 2496));
   assert.equal(u.unemployment.owedAtTaxTime, 0);
-  assert.ok(near(u.unemployment.refundLikely, 1276.24));
+  assert.ok(near(u.unemployment.refundLikely, 1514.4));
 });
 
 test('unemployment compat: old take-home moves to the benefit; equal take-home and gross means none withheld', () => {
   const old = newHousehold('Old');
-  old.income.push({ ...newIncome({ id: 'a', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(869, 'paycheck'), gross: v(869, 'week') });
+  old.income.push({ ...newIncome({ id: 'a', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(640, 'paycheck'), gross: v(640, 'week') });
   old.income.push({ ...newIncome({ id: 'b', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(400, 'paycheck') });
   old.income.push({ ...newIncome({ id: 'c', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(450, 'week'), gross: v(500, 'week') });
   const m = migrate(JSON.parse(JSON.stringify(old)));
-  assert.equal(m.income[0].gross.amount, 869);
+  assert.equal(m.income[0].gross.amount, 640);
   assert.equal(m.income[0].takeHome.amount, null);
   assert.equal(m.income[0].withholding, 'none');
   assert.deepEqual([m.income[1].gross.amount, m.income[1].gross.cadence], [400, 'week']);

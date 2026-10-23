@@ -2,9 +2,10 @@
 // expenses, debt minimums, saving, surplus and savings rates. Dated income and
 // expense changes are handled month by month.
 
-import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays } from './spine.js';
+import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey } from './spine.js';
 import { PER_YEAR } from './schema.js';
-import { minimumsTotal } from './debt.js';
+import { minimumsTotal, debtSchedule } from './debt.js';
+import { taxSetAside } from './tax.js';
 
 const v = valueOf;
 
@@ -61,7 +62,10 @@ const isActive = (item, ym) => activeDays(item.start, item.end, ym) > 0 && (item
 // Accounts whose monthly contribution comes out of a paycheck before take-home.
 const PAYROLL_FAMILIES = ['employerRetirement', 'hsaFsa'];
 
-export function cashflow(spine, rules, ym, { mode = 'committed' } = {}) {
+// schedule: a debtSchedule covering ym (the projection passes its own); a month
+// after the as-of month reads its minimums from it (S-170).
+// taxCache: shared year-by-year tax results (the projection passes its own).
+export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null, taxCache = null } = {}) {
   const year = +ym.slice(0, 4);
   const iso = monthStart(ym);
   const g = tracker(), wh = tracker(), fi = tracker(), th = tracker(), uw = tracker();
@@ -120,27 +124,50 @@ export function cashflow(spine, rules, ym, { mode = 'committed' } = {}) {
   }
   th.absorb(pay.out(0));
 
-  // Expenses
-  const ex = tracker(), fat = tracker(), need = tracker();
-  let total = 0, fatSum = 0, needSum = 0;
+  // Expenses. One paid by someone else counts $0 (S-171). Needs: expenses
+  // tagged need; with none tagged the total is missing, not 0. Lean: food,
+  // housing and transportation that are not wants (eating out is a want).
+  const ex = tracker(), fat = tracker(), need = tracker(), lean = tracker();
+  let total = 0, fatSum = 0, needSum = 0, leanSum = 0, anyNeed = false;
   const items = [];
   for (const e of spine.expenses || []) {
     if (!isActive(e, ym)) continue;
-    const path = 'expenses.' + e.id + '.amount';
+    const base = 'expenses.' + e.id, path = base + '.amount';
+    const covered = !!e.covered && v(e.covered) === true;
+    if (covered) { ex.useFact(base + '.covered', e.covered); items.push({ id: e.id, label: e.label, amount: 0, covered: true, fat: e.fat, need: v(e.need), fixed: e.fixed }); continue; }
     const amt = ex.useFact(path, e.amount);
     const m = monthlyAmount(amt, e.cadence, e.start, e.end, ym);
     if (m !== null) total += m;
+    const isNeed = v(e.need);
     if (e.fat) { fat.useFact(path, e.amount); if (m !== null) fatSum += m; }
-    if (e.need) { need.useFact(path, e.amount); if (m !== null) needSum += m; }
-    items.push({ id: e.id, label: e.label, amount: round2(m), fat: e.fat, need: e.need, fixed: e.fixed });
+    if (isNeed === true) { anyNeed = true; need.useFact(path, e.amount); need.useFact(base + '.need', e.need); if (m !== null) needSum += m; }
+    else if (isNeed === null) need.addMissing(base + '.need');
+    if (e.fat && isNeed !== false) { lean.useFact(path, e.amount); if (isNeed === null) lean.addMissing(base + '.need'); if (m !== null) leanSum += m; }
+    items.push({ id: e.id, label: e.label, amount: round2(m), fat: e.fat, need: isNeed, fixed: e.fixed });
   }
 
-  const mins = minimumsTotal(spine, rules, iso);
+  // Minimums: this month from today's balances; a later month from the debt
+  // schedule, so a loan stops once paid and a promo moves to its rate after.
+  const asOfYm = monthKey(spine.meta.asOf);
+  let mins;
+  if (ym > asOfYm) {
+    const sc = schedule && schedule.months.has(ym) ? schedule : debtSchedule(spine, rules, spine.meta.asOf, ym);
+    const mo = sc.months.get(ym);
+    const st = tracker();
+    st.absorb({ value: 0, from: sc.from, rough: sc.rough, missing: sc.missing, rules: sc.rules });
+    mins = { total: st.out(mo.paid), items: mo.payments.map((p) => ({ id: p.id, name: p.name, amount: p.amount, estimated: p.estimated, dueDate: p.dueDate })) };
+  } else mins = minimumsTotal(spine, rules, iso);
+
+  // Tax set-aside (S-172): income with no federal withholding (unemployment,
+  // 1099) and this year's Roth conversions set aside tax at the marginal
+  // federal plus state rate (plus self-employment tax on 1099 income).
+  const setAside = taxSetAside(spine, rules, ym, { mode, streams, cache: taxCache });
 
   const takeHome = th.out(round2(gross - withheld - fica - payroll));
   const sur = tracker();
-  sur.absorb(takeHome); sur.absorb(ex.out(0)); sur.absorb(mins.total); sur.absorb(after.out(0));
-  const surplus = round2(gross - withheld - fica - payroll - total - mins.total.value - afterTax);
+  sur.absorb(takeHome); sur.absorb(ex.out(0)); sur.absorb(mins.total); sur.absorb(after.out(0)); sur.absorb(setAside.total);
+  // Surplus = take-home - expenses - minimum payments - after-tax saving - tax set-aside.
+  const surplus = round2(gross - withheld - fica - payroll - total - mins.total.value - afterTax - (setAside.total.value ?? 0));
   const surplusR = sur.out(surplus);
   const rate = (num, den, ...parts) => { const t = tracker(); for (const p of parts) t.absorb(p); return t.out(den > 0 ? num / den : null); };
   const grossR = g.out(round2(gross));
@@ -148,8 +175,9 @@ export function cashflow(spine, rules, ym, { mode = 'committed' } = {}) {
     ym, mode,
     income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams },
     saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)) },
-    expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(round2(needSum)), items },
+    expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items },
     debtMinimums: mins,
+    taxSetAside: setAside,
     surplus: surplusR,
     savingsRate: {
       // Gross: everything saved (surplus, payroll and after-tax contributions) out of gross pay.

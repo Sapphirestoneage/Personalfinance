@@ -127,6 +127,17 @@ test('Eli golden values', { skip }, async (t) => {
     assert.equal(after.flags.find((f) => f.id === w.flag).stage, 'green', w.flag + ' turns green once the field is known');
   });
 
+  await t.test('review fixes: tax set-aside, covered expenses, the car loan schedule, the cliff', () => {
+    const cf = s.cashflow;
+    assert.equal(cf.taxSetAside.total.value, X.octSetAside);
+    assert.equal(Math.round((cf.surplus.value + cf.taxSetAside.total.value) * 100) / 100, X.octSurplusBeforeSetAside, 'surplus is lower by exactly the set-aside');
+    assert.ok(cf.expenses.items.find((i) => i.id === X.coveredExpense).covered, 'covered expense counts $0');
+    assert.equal(cashflow(spine, R, X.carLastPayment).debtMinimums.items.some((p) => p.id === 'car'), true);
+    assert.equal(cashflow(spine, R, '2027-03').debtMinimums.items.some((p) => p.id === 'car'), false, 'the car loan stops after its last payment');
+    assert.deepEqual([s.cliff.from, Math.round(s.cliff.costs * 100) / 100, Math.round(s.cliff.likely.value * 100) / 100], [X.cliff.from, X.cliff.costs, X.cliff.likely]);
+    assert.equal(s.flags[0].id, 'income-cliff');
+  });
+
   await t.test('the flags the brief lists all fire', () => {
     const ids = s.flags.map((f) => f.id);
     for (const id of X.flags) assert.ok(ids.includes(id), id);

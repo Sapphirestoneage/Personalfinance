@@ -271,3 +271,40 @@ export function minimumsTotal(spine, rules, iso) {
   return { total: t.out(round2(sum)), items };
 }
 
+
+// ---------------------------------------------------------------- the debt schedule (S-170)
+// Every debt amortized month by month from the month after asOf through
+// untilYm, paying its minimum on its due day: interest accrues (an intro rate
+// through its end, then the rate after it), the minimum is figured for the
+// balance at hand, and payments stop when a balance reaches zero. Cash flow
+// and the projection both read this, so a loan's last payment is the same in
+// both. Returns { months: Map(ym -> { payments, paid, interest, debt, paidOff }),
+// from, rough, missing, rules }.
+export function debtSchedule(spine, rules, asOf, untilYm) {
+  const t = tracker();
+  const states = (spine.debts || []).map((d) => {
+    const b = t.useFact(P(d, 'balance'), d.balance);
+    return { d, bal: b ?? 0, startBal: b ?? 0, interest: 0, deferredDone: false, paidYm: null };
+  });
+  const months = new Map();
+  let ym = monthKey(asOf);
+  while (ym < untilYm) {
+    ym = addMonths(ym, 1);
+    const iso = monthStart(ym);
+    const payments = [], paidOff = [];
+    let paid = 0, interest = 0;
+    for (const s of states) {
+      if (s.bal <= 0.005) continue;
+      interest += accrueMonth(s, iso, asOf, t);
+      const m = minimumPayment(s.d, rules, iso, s.bal);
+      t.absorb({ ...m, value: undefined });
+      if (m.value === null) t.addMissing(P(s.d, 'minimum'));
+      const pay = Math.min(s.bal, m.value ?? 0);
+      s.bal -= pay; paid += pay;
+      if (pay > 0) payments.push({ id: s.d.id, name: v(s.d.name), amount: round2(pay), estimated: !!m.estimated, dueDate: dueDateIn(s.d, ym) });
+      if (s.bal <= 0.005 && !s.paidYm) { s.bal = 0; s.paidYm = ym; paidOff.push(s.d.id); }
+    }
+    months.set(ym, { payments, paid: round2(paid), interest: round2(interest), debt: round2(states.reduce((a, s) => a + s.bal, 0)), paidOff });
+  }
+  return { months, ...t.snapshot() };
+}

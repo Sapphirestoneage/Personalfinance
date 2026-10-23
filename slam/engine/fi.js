@@ -4,6 +4,7 @@
 // current spending so a gap with the goal is visible.
 
 import { valueOf, tracker, round2, ageOn } from './spine.js';
+import { project } from './projection.js';
 
 const v = valueOf;
 
@@ -17,7 +18,11 @@ export function yearsToTarget(P, C, F, r) {
   return n >= 0 ? n : null;
 }
 
-export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
+// fromProjection: years to FI from the month-by-month projection (income
+// ending and starting, debts paid off, tax set aside), with positive surplus
+// invested (S-173). Off, it uses this month's saving a year (the still-guessing
+// ranking turns it off to stay fast).
+export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { fromProjection = true } = {}) {
   const year = +asOf.slice(0, 4);
   const A = spine.assumptions;
   const base = tracker();
@@ -50,9 +55,11 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   pct.absorb(sheet.invested); pct.absorb(fiNumber);
   const fiPercent = pct.out(fiNumber.value ? sheet.invested.value / fiNumber.value : null);
 
+  // Lean FI: yearly food, housing and transportation that are needs (eating
+  // out is a want), at the same withdrawal rate as every other FI number (S-173).
   const lean = tracker();
-  lean.absorb(cf.expenses.fat);
-  const leanFi = lean.out(round2(cf.expenses.fat.value * 12 * lean.rule(rules, 'APP_LEAN_MULTIPLE', year)));
+  lean.absorb(cf.expenses.lean); lean.read(spine, 'assumptions.withdrawalRate');
+  const leanFi = lean.out(wr ? round2(cf.expenses.lean.value * 12 / wr) : null);
 
   // Coast FI: what invested today grows into the FI number by the coast age.
   const person = spine.household.people[0];
@@ -70,7 +77,17 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   yt.absorb(sheet.invested); yt.absorb(fiNumber); yt.absorb(cf.surplus); yt.absorb(cf.saving.payroll); yt.absorb(cf.saving.afterTax);
   yt.read(spine, 'assumptions.realReturn');
   const annualSaving = (cf.surplus.value + cf.saving.payroll.value + cf.saving.afterTax.value) * 12;
-  const years = r === null || !fiNumber.value ? null : yearsToTarget(sheet.invested.value, annualSaving, fiNumber.value, r);
+  let years = null, projectionNote = null;
+  if (r !== null && fiNumber.value) {
+    if (fromProjection) {
+      const p = project(spine, rules, { asOf, mode: 'expected', investSurplus: true, stopAt: fiNumber.value });
+      yt.absorb({ value: 0, from: p.from, rough: p.rough, missing: p.missing, rules: p.rules });
+      const anySaving = p.years.some((y) => y.saved > 0) || p.months.some((m) => m.saved > 0);
+      if (sheet.invested.value >= fiNumber.value) years = 0;
+      else if (p.reached) { const [y, m] = p.reached.split('-').map(Number); const [y0, m0] = asOf.slice(0, 7).split('-').map(Number); years = ((y - y0) * 12 + (m - m0)) / 12; }
+      else projectionNote = anySaving ? 'The projection does not reach the FI number by the life expectancy assumption.' : 'The projection has no month with positive saving.';
+    } else years = yearsToTarget(sheet.invested.value, annualSaving, fiNumber.value, r);
+  }
 
   const mis = tracker();
   mis.absorb(goalR); mis.absorb(implied);
@@ -79,7 +96,7 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
     goalBelowImplied: mis.out(goal === null || implied.value === null ? null : goal < implied.value),
     fiPercent, leanFi, coastFi: coast, coastAge, coastReached: coast.value === null ? null : sheet.invested.value >= coast.value,
     annualSaving: round2(annualSaving),
-    yearsToFi: yt.out(years === null ? null : Math.round(years * 10) / 10),
+    yearsToFi: yt.out(years === null ? null : Math.round(years * 10) / 10, { note: projectionNote }),
     neverAtThisRate: years === null && fiNumber.value !== null && sheet.invested.value < fiNumber.value
   };
 }

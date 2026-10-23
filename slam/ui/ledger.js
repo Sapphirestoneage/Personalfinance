@@ -7,7 +7,7 @@
 import { ledgerRows, stillGuessing, rowPathFor } from '../engine/ledger.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { parseInput, inputText, editFact, parseCardRate, editCardRate, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
+import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { getAt } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
@@ -293,6 +293,15 @@ function addButton(n) {
   return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; render(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
 }
 
+// An expense someone else pays counts $0 toward spending (S-171).
+function coveredBtn(it) {
+  if (it.collection !== 'expenses') return null;
+  const path = 'expenses.' + it.id + '.covered';
+  const f = getAt(hist.present, path);
+  const on = !!f && f.value === true;
+  return h('button', { type: 'button', class: 'btn small', onclick: () => apply(putFact(hist.present, path, !on, 'known', today()), it.label, on ? 'paid by you' : 'paid by someone else (counts $0)') }, on ? 'I pay this' : 'Paid by someone else');
+}
+
 // One item: a header with its headline value that opens and closes it, its
 // fields, and Remove (undo brings it back).
 function itemEl(it) {
@@ -316,7 +325,7 @@ function itemEl(it) {
         h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, isOpen ? '-' : '+'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
-    isOpen && !selecting ? h('div', { class: 'item-actions' }, remove) : null);
+    isOpen && !selecting ? h('div', { class: 'item-actions' }, coveredBtn(it), remove) : null);
 }
 
 // A section or sub-section: its label and counts, its add button, its children.

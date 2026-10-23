@@ -9,7 +9,7 @@
 
 import { bracketTax, marginalRate } from '../src/calc/tax.js';
 import { statusRuleId } from './rules.js';
-import { valueOf, tracker, round2 } from './spine.js';
+import { valueOf, tracker, round2, monthKey, addMonths } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
 
@@ -239,7 +239,78 @@ export function taxForYear(spine, R, year, { asOf = spine.meta.asOf, mode = 'com
     notModeled,
     notes,
     // Tax on the known income only: a floor while something is missing.
-    partial: partial && { federalIncomeTax: partial.lines.federalIncomeTax, federalTotal: partial.lines.federalTotal, stateTax: partial.lines.stateTax, total: partial.lines.total },
+    partial: partial && { federalIncomeTax: partial.lines.federalIncomeTax, federalTotal: partial.lines.federalTotal, stateTax: partial.lines.stateTax, total: partial.lines.total, marginalFederal: partial.lines.marginalFederal, marginalState: partial.lines.marginalState, marginalSe: partial.lines.marginalSe },
     nextEstimated: nextEstimatedDate(asOf, R)
   };
+}
+
+// ---------------------------------------------------------------- monthly tax set-aside (S-172)
+// Money that should go aside each month for tax nobody withholds: income with
+// no federal withholding (unemployment, 1099; 1099 adds self-employment tax)
+// at the marginal federal plus state rate, and a Roth conversion's tax spread
+// over the months from max(as-of month, January of its year) through
+// TAX_RETURN_DUE the next year. The rates come from the year's tax; when an
+// input is missing they come from the income known so far (a floor), and the
+// result names what is missing.
+const taxMemo = new WeakMap();
+export function yearTax(spine, R, year, mode = 'committed', cache = null) {
+  let c = cache;
+  if (!c) { c = taxMemo.get(spine); if (!c) { c = new Map(); taxMemo.set(spine, c); } }
+  const key = year + ':' + mode;
+  if (!c.has(key)) c.set(key, taxForYear(spine, R, year, { mode }));
+  return c.get(key);
+}
+
+function marginalFor(tx, t) {
+  const L = tx.lines, P = tx.partial;
+  const full = L.marginalFederal && L.marginalFederal.value !== null && tx.owed.value !== null;
+  const src = full ? { f: L.marginalFederal, s: L.marginalState, e: L.marginalSe } : P ? { f: P.marginalFederal, s: P.marginalState, e: P.marginalSe } : null;
+  if (!src) return null;
+  if (!full) for (const p of tx.balanceDue.missing) t.addMissing(p);
+  for (const l of [src.f, src.s, src.e]) for (const r of (l && l.rules) || []) t.rule(R0, r);
+  return { federal: src.f.value ?? 0, state: src.s ? src.s.value ?? 0 : 0, se: src.e ? src.e.value ?? 0 : 0 };
+}
+let R0 = null;
+
+export function taxSetAside(spine, R, ym, { mode = 'committed', streams = [], cache = null } = {}) {
+  R0 = R;
+  const year = +ym.slice(0, 4);
+  const t = tracker();
+  const lines = [];
+  let total = 0;
+  const tx = yearTax(spine, R, year, mode, cache);
+  const rate = marginalFor(tx, t);
+  for (const st of streams) {
+    if (!st.included || !st.gross) continue;
+    const src = (spine.income || []).find((x) => x.id === st.id);
+    if (!src || src.type === 'w2' || src.type === 'tips' || valueOf(src.withholding && src.withholding.federal) !== 0) continue;
+    if (!rate) { t.addMissing('household.filingStatus'); continue; }
+    t.useFact('income.' + st.id + '.amount', src.amount);
+    t.useFact('income.' + st.id + '.withholding.federal', src.withholding.federal);
+    const r = rate.federal + rate.state + (src.type === '1099' ? rate.se : 0);
+    const amount = st.gross * r;
+    total += amount;
+    lines.push({ kind: 'income', id: st.id, label: st.label, base: round2(st.gross), rate: r, amount: round2(amount), taxYear: year });
+  }
+  // Roth conversions of this tax year or last (their tax is still being set aside until the return is due).
+  const due = R.get('TAX_RETURN_DUE', year);
+  const asOfYm = monthKey(spine.meta.asOf);
+  for (const ty of [year, year - 1]) {
+    const endYm = (ty + 1) + '-' + due.slice(0, 2);
+    const startYm = asOfYm > ty + '-01' ? asOfYm : ty + '-01';
+    if (ym < startYm || ym > endYm) continue;
+    const months = (+endYm.slice(0, 4) - +startYm.slice(0, 4)) * 12 + (+endYm.slice(5) - +startYm.slice(5)) + 1;
+    const txY = ty === year ? tx : yearTax(spine, R, ty, mode, cache);
+    const rY = ty === year ? rate : marginalFor(txY, t);
+    for (const a of spine.accounts || []) for (const c of valueOf(a.conversions) || []) {
+      if (c.year !== ty || typeof c.taxable !== 'number' || !rY) continue;
+      t.useFact('accounts.' + a.id + '.conversions', a.conversions);
+      const r = rY.federal + rY.state;
+      const amount = c.taxable * r / months;
+      total += amount;
+      lines.push({ kind: 'conversion', id: a.id, label: 'Roth conversion ' + ty, base: c.taxable, rate: r, months, amount: round2(amount), taxYear: ty });
+    }
+  }
+  t.rule(R, 'TAX_RETURN_DUE', year);
+  return { total: t.out(round2(total)), lines, rate };
 }

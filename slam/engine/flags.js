@@ -51,6 +51,21 @@ export function buildFlags(spine, rules, s) {
   const out = [];
   const add = (f) => out.push({ rules: [], from: [], next: null, green: null, ...f, stageNumber: STAGE_NUMBER[f.stage], stageLabel: 'Stage ' + STAGE_NUMBER[f.stage] + ' of 3' });
 
+  // ------------------------------------------------------------ the income cliff (S-174)
+  const cl = s.cliff;
+  if (cl) {
+    const lk = cl.likelyStreams.map((x) => x.label + (x.weight < 1 ? ' at ' + pctWords(x.weight) : '')).join(', ');
+    const best = (spine.income || []).filter((x) => x.likelihood && v(x.likelihood) < 1 && (!x.start || x.start <= cl.from + 'Z')).sort((a, b) => v(b.likelihood) - v(a.likelihood))[0];
+    add({
+      id: 'income-cliff', stage: 'red',
+      title: 'From ' + longDate(cl.from) + ', certain income is $0 and costs are ' + money(cl.costs) + ' a month',
+      detail: 'Costs then: spending ' + money(cl.spending.value) + ', minimum payments ' + money(cl.minimums.value) + (cl.setAside.value ? ', tax set-aside ' + money(cl.setAside.value) : '') + '. Likely income from then: ' + money(cl.likely.value) + ' a month' + (lk ? ' (' + lk + ')' : '') + '.',
+      next: goal(asOf, 'Next: a confirmed income from ' + longDate(cl.from) + ' that covers ' + money(cl.costs) + ' a month', { target: Math.ceil(cl.costs), gap: cl.costs, path: best ? 'income.' + best.id + '.likelihood' : null }),
+      green: goal(asOf, 'Stage 3: certain income covers the costs from ' + longDate(cl.from), { target: Math.ceil(cl.costs), path: best ? 'income.' + best.id + '.likelihood' : null }),
+      from: [...new Set([...cl.spending.from, ...cl.minimums.from, ...cl.likely.from])], rules: ['STAGE_CLIFF_MONTHS']
+    });
+  }
+
   // ------------------------------------------------------------ the year's tax
   // red: an input is missing. yellow: a number, but rough or not covered by a
   // set-aside. green: every input known and the balance due is covered.

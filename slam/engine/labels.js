@@ -16,7 +16,8 @@ const FIELD = {
   capitalGainsLong: 'long-term gains', qualifiedDividends: 'qualified dividends', otherIncome: 'other income',
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
-  setAside: 'set aside', enrolled: 'enrolled'
+  setAside: 'set aside', enrolled: 'enrolled',
+  need: 'a need (not a want)', covered: 'paid by someone else'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
 const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City' };
@@ -43,7 +44,7 @@ export function labelFor(spine, path) {
       if (s[2] === 'withholding') return name + ': ' + s[3] + ' tax withheld';
       return name + ': ' + words(s[2]);
     }
-    case 'expenses': { const x = item('expenses', s[1]); return x ? x.label : s[1]; }
+    case 'expenses': { const x = item('expenses', s[1]); const name = x ? x.label : s[1]; return s[2] === 'amount' ? name : name + ': ' + words(s[2]); }
     case 'accounts': case 'debts': {
       const x = item(s[0], s[1]);
       const name = x ? valueOf(x.name) || s[1] : s[1];

@@ -91,7 +91,7 @@ export function ledgerTree(spine, inst) {
   // Expenses: FAT tag > each expense (one row each); health coverage
   const expSections = [...FAT, 'other'].map((tag) => {
     const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag);
-    return list.length ? node('E:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label, r, { collection: 'expenses', id: e.id, single: true, summary: 'expenses.' + e.id + '.amount' }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
+    return list.length ? node('E:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label, r, { collection: 'expenses', id: e.id, single: false, summary: 'expenses.' + e.id + '.amount' }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
   }).filter(Boolean);
   const health = take(byPrefix('household.healthCoverage'));
   if (health.length) expSections.push(node('E:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
