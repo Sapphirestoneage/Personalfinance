@@ -31,7 +31,7 @@ export function seTaxFor(seNet, ficaWages, R, year) {
 
 // computeTax(inputs, rules, year): numbers in, lines out. No spine here.
 // inputs: { filingStatus, state, wages, ficaWages, seNet, unemployment,
-//   otherOrdinary, conversions, ltcg, qualifiedDividends,
+//   otherOrdinary, conversions, ltcg, qualifiedDividends, hsaDeduction,
 //   withheldFederal, withheldState, estimatedFederal, estimatedState }
 export function computeTax(inp, R, year) {
   const fs = inp.filingStatus;
@@ -51,7 +51,9 @@ export function computeTax(inp, R, year) {
 
   const pref = n(inp.ltcg) + n(inp.qualifiedDividends);
   const grossIncome = n(inp.wages) + n(inp.seNet) + n(inp.unemployment) + n(inp.otherOrdinary) + n(inp.conversions) + pref;
-  const agi = grossIncome - seDeduction.value;
+  // Money put into an HSA directly is deducted above the line (Form 8889); through payroll it never reached wages.
+  const hsaDeduction = line(n(inp.hsaDeduction));
+  const agi = grossIncome - seDeduction.value - hsaDeduction.value;
   const std = g(id('STD'));
   const taxable = Math.max(0, agi - std);
   const ordinaryTaxable = Math.max(0, taxable - pref);
@@ -90,7 +92,7 @@ export function computeTax(inp, R, year) {
     year, filingStatus: fs,
     lines: {
       grossIncome: line(grossIncome),
-      fica, seTax: se, seDeduction,
+      fica, seTax: se, seDeduction, hsaDeduction,
       agi: line(agi, ['SE_DEDUCT_SHARE']),
       standardDeduction: line(std, [id('STD')]),
       taxable: line(taxable, [id('STD')]),
@@ -133,7 +135,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   const t = tracker();
   const miss = { wages: [], income: [], withholding: [], other: [] };
   const notModeled = [];
-  const known = { wages: 0, ficaWages: 0, seNet: 0, unemployment: 0, otherOrdinary: 0, conversions: 0, ltcg: 0, qualifiedDividends: 0, withheldFederal: 0, withheldState: 0, estimatedFederal: 0, estimatedState: 0 };
+  const known = { wages: 0, ficaWages: 0, seNet: 0, unemployment: 0, otherOrdinary: 0, conversions: 0, ltcg: 0, qualifiedDividends: 0, hsaDeduction: 0, withheldFederal: 0, withheldState: 0, estimatedFederal: 0, estimatedState: 0 };
   // The earning lines (W-2, tips, 1099) and the pre-tax payroll saving taken off them, for earnedIncome.
   const earned = { lines: [], pretax: [] };
   const status = t.read(spine, 'household.filingStatus');
@@ -182,12 +184,20 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known[key] += paidBetween(x, s.cadence, s.start, s.end, from, to) * (w ?? 1);
     }
   }
-  // Pre-tax payroll contributions lower W-2 wages (not FICA wages) while a paycheck runs.
+  // Pre-tax payroll contributions lower W-2 wages while a paycheck runs. An HSA or FSA through payroll is a cafeteria
+  // plan, so it lowers FICA wages too (Publication 969; a 401(k) deferral does not). Money put into an HSA directly
+  // (recorded, with no monthly amount from pay) is a deduction on the return instead (Form 8889, S-211).
   for (const a of spine.accounts || []) {
-    const pre = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax' && (a.family === 'employerRetirement' || a.family === 'hsaFsa');
+    const pretax = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax';
+    const cafeteria = a.family === 'hsaFsa' && (a.type === 'hsa' || pretax);
+    const pre = cafeteria || (pretax && a.family === 'employerRetirement');
+    if (a.type === 'hsa' && !(a.monthlyContribution && w2Months) && a.contributions) {
+      const list = t.useFact('accounts.' + a.id + '.contributions', a.contributions) || [];
+      known.hsaDeduction += list.filter((c) => c.year === year && !['rollover', 'conversion', 'employer'].includes(c.kind)).reduce((x, c) => x + c.amount, 0);
+    }
     if (!pre || !a.monthlyContribution || !w2Months) continue;
     const c = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
-    if (c !== null) known.wages -= c * w2Months;
+    if (c !== null) { known.wages -= c * w2Months; if (cafeteria) known.ficaWages -= c * w2Months; }
     earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', monthly: c, owner: v(a.owner) });
   }
   // Roth conversions in the year are ordinary income.

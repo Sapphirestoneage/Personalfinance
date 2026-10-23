@@ -320,7 +320,11 @@ function deferralLimit(rules, age, year, t) {
 // $200 while above $0 (Publication 590-A).
 function rothLimit(spine, rules, year, limit, t, path) {
   const status = v(spine.household.filingStatus);
-  const tx = yearTax(spine, rules, year);
+  let tx = yearTax(spine, rules, year);
+  // Conversions are not in modified AGI, so a conversion with no amount does not stop the check: the AGI without them is.
+  const mp = tx.missingPaths || {};
+  const only = (mp.income || []).length && (mp.income || []).every((p) => p.endsWith('.conversions')) && !(mp.wages || []).length && !(mp.other || []).length;
+  if (only) tx = yearTax({ ...spine, accounts: spine.accounts.map((a) => (a.conversions ? { ...a, conversions: undefined } : a)) }, rules, year);
   const agi = tx.lines.agi ? tx.lines.agi.value : null;
   if (agi === null) { t.addRough(path); return { limit, unknown: true, words: 'whether income is under the Roth phase-out cannot be checked until the year\'s tax can be figured' }; }
   t.absorb({ ...tx.lines.agi, value: undefined });

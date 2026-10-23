@@ -18,7 +18,7 @@ import { fooLadder } from '../engine/plan.js';
 import { calendar } from '../engine/calendar.js';
 import { milestones, yearStrip } from '../engine/calendar-views.js';
 import { maxIt, maxItRow, maxItSim, maxItCash, maxItDeadlines, deadlineOf, openYears, monthlyDates, maxItTypes } from '../engine/maxit.js';
-import { earnedIncome } from '../engine/tax.js';
+import { earnedIncome, yearTax } from '../engine/tax.js';
 import { explainMetric } from '../engine/math.js';
 import { readJson, loadRules } from './spine-helpers.js';
 
@@ -568,4 +568,31 @@ test('the cash check per tax year adds up to the Plan card\'s: from January to A
   const all = maxItCash(d, R, mx, { sim }).flows.filter((f) => f.pool.startsWith('ira')).reduce((s, f) => s + f.amount, 0);
   // 2026: $7,500 less 12 x $300 = $3,900; 2027: $7,500 less February's $600 and March to December's $3,000 = $3,900.
   assert.deepEqual([one('roth:2026'), one('roth:2027'), Math.round(all * 100) / 100], [3900, 3900, 7800]);
+});
+
+test('HSA money lowers AGI, so the Roth phase-out reads it; a conversion with no amount does not stop the check (S-212)', () => {
+  const noRoth = (s) => ({ ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)) });
+  // $13,900 a month and $300 a month to an HSA through pay (a cafeteria plan): wages $166,800 - $6,000 to the 401(k) -
+  // $3,600 = $157,200, FICA wages $166,800 - $3,600; AGI with the tutoring $162,776.11. Roth: $7,500 - $7,500 x
+  // 9,776.11 / 15,000 = $2,611.94, up to $2,620.
+  const s = noRoth(putFact(demo(), 'income.salary.amount', 13900, 'known', T));
+  const pay = { ...s, accounts: [...s.accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(300) })] };
+  const tx = yearTax(pay, R, 2026);
+  assert.deepEqual([tx.inputs.wages, tx.inputs.ficaWages, tx.lines.agi.value], [157200, 163200, 162776.11]);
+  assert.equal(row(maxIt(pay, R), 'roth:2026').phase.limit, 2620);
+  assert.equal(earnedIncome(pay, R, 2026).value, 162776.11, 'HSA money from pay is not earned income (W-2 box 1)');
+  // $4,000 put in directly (recorded, no monthly amount): a deduction on the return, $157,576.11 of AGI at $13,500 a month: $5,220.
+  const t = noRoth(putFact(demo(), 'income.salary.amount', 13500, 'known', T));
+  const direct = { ...t, accounts: [...t.accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), contributions: F([{ year: 2026, amount: 4000 }, { year: 2026, amount: 500, kind: 'employer' }]) })] };
+  assert.deepEqual([yearTax(direct, R, 2026).lines.hsaDeduction.value, yearTax(direct, R, 2026).lines.agi.value], [4000, 157576.11]);
+  assert.equal(row(maxIt(direct, R), 'roth:2026').phase.limit, 5220);
+  // A conversion with no amount: the year's AGI is missing, but modified AGI leaves conversions out, so the Roth limit
+  // is still known ($3,220 at $13,500 a month), not a rough $7,500.
+  const conv = { ...putFact(demo(), 'income.salary.amount', 13500, 'known', T) };
+  const c = { ...conv, accounts: [...conv.accounts, acct('trad', 'traditional_ira', 'ira', { conversions: F([{ year: 2026, amount: 10000 }]) })] };
+  assert.equal(yearTax(c, R, 2026).lines.agi.value, null);
+  const r = row(maxIt(c, R), 'roth:2026');
+  assert.deepEqual([r.phase.unknown || false, r.phase.magi, r.phase.limit, r.room], [false, 161576.11, 3220, 220]);
+  // The demo, with no HSA, is unchanged.
+  assert.equal(yearTax(demo(), R, 2026).lines.agi.value, 71576.11);
 });
