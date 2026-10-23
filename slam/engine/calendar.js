@@ -17,7 +17,7 @@
 //   bonusBy, maybe, maxDeadline (S-211, an account's last day for a tax year), and foo (added by the page).
 
 import { valueOf as v, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, toDay, fromDay, dayIn, daysInMonth, isFact } from './spine.js';
-import { cashflow, streamWeight } from './cashflow.js';
+import { cashflow, streamWeight, payrollShares } from './cashflow.js';
 import { cashsim } from './cashsim.js';
 import { promoDeadlines } from './debt.js';
 import { yearTax } from './tax.js';
@@ -56,10 +56,9 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
 
   // ------------------------------------------------------------ pay
   // What lands from each paycheck: its gross less its tax withheld, Social
-  // Security and Medicare, and its share of payroll saving (split across W-2
-  // pay by gross, as the money flow does), so the month adds up to take-home.
-  const w2Gross = cf.income.streams.filter((x) => x.included && x.type === 'w2').reduce((x, y) => x + (y.gross || 0), 0);
-  const payroll = cf.saving.payroll.value || 0;
+  // Security and Medicare, and its share of payroll saving (its owner's accounts,
+  // split across that owner's pay by gross, S-211), so the month adds up to take-home.
+  const shares = payrollShares(spine, cf);
   for (const st of cf.income.streams) {
     if (st.included && (st.gross === null || st.gross === undefined)) {
       // A paycheck with no amount is still on its day, named, and moves nothing (S-209): empty is not zero.
@@ -77,7 +76,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     t.useFact(path, s.amount);
     const w = streamWeight(s, mode) ?? 1;
     const likely = w < 1 ? ' (' + Math.round(w * 100) + '% likely)' : '';
-    const deducted = s.type === 'w2' && w2Gross > 0 ? payroll * st.gross / w2Gross : 0;
+    const deducted = shares[s.id] || 0;
     const net = st.takeHome === null ? null : round2(st.takeHome - deducted);
     const amountRough = roughFact(s.amount);
     const perPay = (n) => (net === null ? null : net / n);

@@ -12,7 +12,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { makeRules } from '../engine/rules.js';
-import { putFact, addContribution, editIncome } from '../engine/edits.js';
+import { putFact, addContribution, editIncome, recordContribution, skipOccurrence } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { fooLadder } from '../engine/plan.js';
 import { calendar } from '../engine/calendar.js';
@@ -389,17 +389,24 @@ test('missing stays missing: a blank filing status for a New York 529, a blank m
   const roth = row(maxIt(putFact(demo(), 'accounts.k401.monthlyContribution', null, 'missing', T), R), 'roth:2026');
   assert.equal(roth.missingLabel, 'missing: 2026 earned income');
   assert.match(roth.why, /Work 401\(k\): monthly contribution is not entered\.$/);
-  // A blank pay amount: the paychecks still come from its schedule, the panel names the blank, and the cash check says
-  // it is incomplete, since that pay is not in the run.
+  // A blank pay amount: the paychecks still come from its schedule and the panel names the blank, but that pay is not
+  // in the run, so the 401(k) is left out of the totals (named missing) and the cash check cannot run it.
   const noPay = putFact(demo(), 'income.salary.amount', null, 'missing', T);
   const noSim = maxItSim(noPay, R);
   const noMx = maxIt(noPay, R, { sim: noSim });
   const pay = row(noMx, 'k401:2026');
-  assert.deepEqual([pay.paychecks.count, pay.paychecks.blank.path], [2, 'income.salary.amount']);
+  assert.deepEqual([pay.paychecks.count, pay.paychecks.blank.path, pay.blankLabel], [2, 'income.salary.amount', 'missing: Salary at Hudson Valley Health amount']);
+  assert.ok(noMx.totals.missing.includes('k401:2026'));
+  assert.ok(!noMx.pools.some((p) => p.key.startsWith('deferral:')));
   const c = maxItCash(noPay, R, noMx, { sim: noSim, rows: [pay] });
-  assert.match(c.words, /^Incomplete: Salary at Hudson Valley Health has no amount, so that pay is not in the run\./);
-  assert.equal(c.kind, 'incomplete');
+  assert.equal(c.words, 'Cannot be checked against cash until Salary at Hudson Valley Health has an amount.');
+  assert.deepEqual([c.flows.length, c.breaks, c.kind], [0, null, 'incomplete']);
   assert.ok(c.missing.includes('income.salary.amount'));
+  // With a 529 (which does not wait on pay) in the same check, the 529 runs and the 401(k) is named as left out.
+  const with529 = { ...noPay, accounts: [...noPay.accounts, acct('kid', 'k529', 'education')] };
+  const sim529 = maxItSim(with529, R);
+  const both = maxItCash(with529, R, maxIt(with529, R, { sim: sim529 }), { sim: sim529 });
+  assert.match(both.words, /^Incomplete: the payroll money is left out until Salary at Hudson Valley Health has an amount\. \$5,000 more leaves checking/);
 });
 
 test('over the limit says so; a passed deadline says the year closed, with no amount', () => {
@@ -593,6 +600,109 @@ test('HSA money lowers AGI, so the Roth phase-out reads it; a conversion with no
   assert.equal(yearTax(c, R, 2026).lines.agi.value, null);
   const r = row(maxIt(c, R), 'roth:2026');
   assert.deepEqual([r.phase.unknown || false, r.phase.magi, r.phase.limit, r.room], [false, 161576.11, 3220, 220]);
+  // Self-employed (a $14,000 a month 1099, no W-2) with $300 a month into an HSA from take-home: a whole year of it,
+  // $3,600, is the deduction: modified AGI $152,531.18, under $153,000, the full $7,500.
+  const se = { ...t, income: [{ ...t.income[1], amount: F(14000) }], accounts: [...t.accounts.filter((x) => x.id !== 'k401'), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(300) })] };
+  assert.deepEqual([yearTax(se, R, 2026).lines.hsaDeduction.value, row(maxIt(se, R), 'roth:2026').phase.magi, row(maxIt(se, R), 'roth:2026').phase.limit], [3600, 152531.18, 7500]);
+  // $3,000 recorded and $300 a month still to come: the same $3,600.
+  const part = { ...se, accounts: se.accounts.map((x) => (x.id === 'h' ? { ...x, contributions: F([{ year: 2026, amount: 3000 }]) } : x)) };
+  assert.equal(yearTax(part, R, 2026).lines.hsaDeduction.value, 3600);
   // The demo, with no HSA, is unchanged.
   assert.equal(yearTax(demo(), R, 2026).lines.agi.value, 71576.11);
+});
+
+test('a couple\'s IRAs: the spouse who earns less counts what the other put in and still has set to go in; together never past the couple\'s pay', () => {
+  // Casey earns $500 a month ($6,000), Sam $300 ($3,600): $9,600 together. Casey's Roth has $3,000 in and $300 a month
+  // still to come ($600). Casey: $6,000 - $3,000 = $3,000 of room, $2,400 new. Sam: $9,600 - $3,000 - $600 = $6,000
+  // alone, but together only $6,600 is left, so Sam's part of the total is $3,600.
+  let s = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
+  s = couple(s);
+  s = { ...s, income: [{ ...s.income[0], amount: F(500) }, { ...s.income[1], amount: F(0) }, w2('samjob', 'sam', 300)], accounts: [...s.accounts, acct('st', 'roth_ira', 'ira', { owner: F('partner') })] };
+  const mx = maxIt(s, R);
+  const c = row(mx, 'roth:2026'), j = row(mx, 'st:2026');
+  assert.deepEqual([c.room, c.still.value, c.lump, j.room, j.cap.value], [3000, 600, 2400, 6000, 6000]);
+  assert.deepEqual([c.sharedWith, j.sharedWith], [['st'], ['Roth IRA']]);
+  assert.match(j.why, /Shares the couple's \$9,600 of 2026 earned income with Casey Rivera's Roth IRA/);
+  assert.deepEqual(mx.pools.filter((p) => p.key.startsWith('ira')).map((p) => [p.key, p.fill]), [['ira:casey', 2400], ['ira:sam', 3600]]);
+  // Sam already put in $3,000 and Casey nothing (and no monthly amount): $6,600 left; Casey's own $6,000 first, Sam $600.
+  const s8 = { ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a.id === 'st' ? { ...a, contributions: F([{ year: 2026, amount: 3000 }]) } : a)) };
+  assert.deepEqual(maxIt(s8, R).pools.filter((p) => p.key.startsWith('ira')).map((p) => [p.key, p.room]), [['ira:casey', 6000], ['ira:sam', 600]]);
+});
+
+test('set to go over: money a monthly amount still puts in past the limit is named before it happens', () => {
+  const d = demo();
+  const r = row(maxIt({ ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 7500 }]) } : a)) }, R), 'roth:2026');
+  assert.deepEqual([r.room, r.over, r.overSoon, r.still.soon], [0, null, 600, 600]);
+  assert.equal(r.overSoonWords, 'What is set up already puts $600 more in by December 31, 2026, $600 over the 2026 limit: lower or stop it before then.');
+});
+
+test('payroll saving comes off its owner\'s own pay; skipped or $0 paydays hold nothing; blank paydays are missing, not counted', () => {
+  // Casey's $500 to the 401(k) comes off Casey's pay only: $4,211 lands, as when Casey is alone; Sam's $200 a month
+  // ($92.31 a paycheck, 26 a year) off Sam's $3,000 every two weeks, less Social Security and Medicare: $2,678.19.
+  let s = couple(demo());
+  s = { ...s, income: [...s.income, w2('samjob', 'sam', 3000, { cadence: 'biweekly', start: '2026-01-09' })], accounts: [...s.accounts, acct('sk', 'k401', 'employerRetirement', { owner: F('partner'), monthlyContribution: F(200) })] };
+  const sim = maxItSim(s, R);
+  const mx = maxIt(s, R, { sim });
+  assert.deepEqual([row(mx, 'k401:2026').paychecks.landed, row(mx, 'sk:2026').paychecks.landed], [4211, 2678.19]);
+  // November 15 and December 15 skipped on the calendar: no paycheck is left for 2026, with or without the run.
+  let d = demo();
+  d = skipOccurrence(skipOccurrence(d, 'salary|2026-11-15'), 'salary|2026-12-15');
+  const r1 = row(maxIt(d, R), 'k401:2026'), r2 = row(maxIt(d, R, { sim: maxItSim(d, R) }), 'k401:2026');
+  assert.deepEqual([r1.fillable, r1.still.value, r2.fillable], [false, 0, false]);
+  // A salary of $0: no pay, nothing out of it, and no paycheck to fill the 401(k).
+  const z = row(maxIt(putFact(demo(), 'income.salary.amount', 0, 'known', T), R), 'k401:2026');
+  assert.deepEqual([z.fillable, z.contributed.value], [false, 0]);
+  // Every two weeks with no first pay date: the 401(k) is named missing and left out of the totals and the cash check.
+  const b = { ...demo(), income: demo().income.map((x) => (x.id === 'salary' ? { ...x, cadence: 'biweekly', start: null } : x)) };
+  const bsim = maxItSim(b, R);
+  const bmx = maxIt(b, R, { sim: bsim });
+  assert.deepEqual([bmx.totals.missing, bmx.totals.lump], [['k401:2026'], 2620]);
+  assert.match(maxItCash(b, R, bmx, { sim: bsim }).words, /^Incomplete: the payroll money is left out until Salary at Hudson Valley Health has a first pay date\./);
+});
+
+test('a Solo 401(k) beside a W-2 401(k): the W-2 deferrals still to come never shrink the Solo\'s own room; a capped 401(k) leaves the rest to the Solo', () => {
+  // The Solo's $5,576.11 (its earnings) fits under the 402(g) room left ($19,500 less $1,000 still to come from pay):
+  // all of it is new money, $464.68 a month for 12 months to October 15, 2027, the last $464.63.
+  const d = demo();
+  const s = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] };
+  const sim = maxItSim(s, R);
+  const mx = maxIt(s, R, { sim });
+  const r = row(mx, 'solo:2026');
+  assert.deepEqual([r.lump, r.perMonth, r.months.last], [5576.11, 464.68, 464.63]);
+  // The 401(k) holds only $4,211 a paycheck (2 x $4,211 of its $18,500): the Solo's deferral takes $4,460.89 more of
+  // the same limit. $8,422 + $4,460.89 + $1,115.22 + $3,900.
+  assert.equal(mx.totals.lump, 17898.11);
+  assert.ok(mx.pools.some((p) => p.key === 'deferral:casey' && p.spill && p.fill === 4460.89));
+  // A $500 employer entry leaves the $200 a month employee guess in place: $5,576.11 less $2,000 and $500.
+  const e = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement', { monthlyContribution: F(200), contributions: F([{ year: 2026, amount: 500, kind: 'employer' }]) })] };
+  assert.equal(row(maxIt(e, R), 'solo:2026').room, 3076.11);
+});
+
+test('recording a total replaces the year\'s total: one deposit never erases the months before it', () => {
+  // The Roth's $300 a month is about $3,000 so far; the form starts there. A total of $4,000 leaves $3,500.
+  const d = demo();
+  const a = recordContribution(d, 'roth', { year: 2026, amount: 4000 }, T);
+  assert.equal(row(maxIt(a, R), 'roth:2026').room, 3500);
+  const b = recordContribution(a, 'roth', { year: 2026, amount: 4500 }, T);
+  assert.deepEqual(b.accounts.find((x) => x.id === 'roth').contributions.value.filter((c) => c.year === 2026), [{ year: 2026, amount: 4500 }]);
+  // A rollover is one more entry, not a total.
+  const c = recordContribution(b, 'roth', { year: 2026, amount: 9000, kind: 'rollover' }, T);
+  assert.equal(c.accounts.find((x) => x.id === 'roth').contributions.value.filter((x) => x.year === 2026).length, 2);
+  assert.equal(row(maxIt(c, R), 'roth:2026').room, 3000);
+  // A total of $0 is a typed zero: nothing went in.
+  assert.equal(row(maxIt(recordContribution(d, 'roth', { year: 2026, amount: 0 }, T), R), 'roth:2026').room, 7500);
+});
+
+test('the FOO rungs count from the rung\'s start: a 401(k) with no paycheck left reads its steady month; no start date when the surplus never gets there', () => {
+  // December 20: the last 2026 payday has passed but the salary runs on: about $1,541.67 a month, not "done".
+  const d = demo();
+  const late = { ...d, meta: { ...d.meta, asOf: '2026-12-20' } };
+  const f = fooLadder(late, R, summarize(late, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
+  assert.deepEqual([f.need, f.done], [1541.67, false]);
+  assert.match(f.why, /Work 401\(k\) 2026 has no paycheck left before December 31, 2026\./);
+  // The salary ended in June: no surplus reaches the rung, so it has no date.
+  const ended = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-06-30' } : x)) };
+  const lad = fooLadder(ended, R, summarize(ended, R, { flags: false }));
+  assert.equal(lad.allDated, false);
+  assert.equal(lad.rungs.find((x) => x.id === 'rothHsa').completes, null);
 });

@@ -9,7 +9,7 @@
 
 import { bracketTax, marginalRate } from '../src/calc/tax.js';
 import { statusRuleId } from './rules.js';
-import { valueOf, tracker, round2, monthKey, addMonths } from './spine.js';
+import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
 
@@ -147,6 +147,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   t.read(spine, 'household.nycResident');
 
   let w2Months = 0;
+  const payMonths = {};
   for (const s of spine.income || []) {
     if ((s.start && s.start > to) || (s.end && s.end < from)) continue;
     if (s.cadence === 'once' && !(s.start >= from && s.start <= to)) continue;
@@ -175,7 +176,11 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     }
     if (s.type === 'w2' || s.type === 'tips') {
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
-      w2Months = Math.max(w2Months, (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1);
+      const months = (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1;
+      w2Months = Math.max(w2Months, months);
+      // Each person's months of pay: payroll saving comes out of its owner's pay (S-211).
+      const who = incomeOwner(spine, s);
+      payMonths[who] = Math.max(payMonths[who] || 0, months);
     }
     for (const [k, key] of [['federal', 'withheldFederal'], ['state', 'withheldState']]) {
       const f = s.withholding && s.withholding[k];
@@ -184,20 +189,30 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known[key] += paidBetween(x, s.cadence, s.start, s.end, from, to) * (w ?? 1);
     }
   }
-  // Pre-tax payroll contributions lower W-2 wages while a paycheck runs. An HSA or FSA through payroll is a cafeteria
-  // plan, so it lowers FICA wages too (Publication 969; a 401(k) deferral does not). Money put into an HSA directly
-  // (recorded, with no monthly amount from pay) is a deduction on the return instead (Form 8889, S-211).
+  // Pre-tax payroll contributions lower W-2 wages while its owner's paycheck runs. An HSA or FSA through payroll is a
+  // cafeteria plan, so it lowers FICA wages too (Publication 969; a 401(k) deferral does not). An HSA put in directly
+  // (no monthly amount from its owner's pay) is a deduction on the return instead (Form 8889, S-211): the year's
+  // recorded entries plus what its monthly amount still puts in by December, or a whole year of the monthly amount.
+  const asOf = spine.meta && spine.meta.asOf ? spine.meta.asOf : to;
   for (const a of spine.accounts || []) {
     const pretax = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax';
     const cafeteria = a.family === 'hsaFsa' && (a.type === 'hsa' || pretax);
     const pre = cafeteria || (pretax && a.family === 'employerRetirement');
-    if (a.type === 'hsa' && !(a.monthlyContribution && w2Months) && a.contributions) {
-      const list = t.useFact('accounts.' + a.id + '.contributions', a.contributions) || [];
-      known.hsaDeduction += list.filter((c) => c.year === year && !['rollover', 'conversion', 'employer'].includes(c.kind)).reduce((x, c) => x + c.amount, 0);
+    const om = payMonths[(accountOwner(spine, a) || {}).id] || 0;
+    // An HSA is through payroll only with a monthly amount and its owner's pay; otherwise it is put in directly.
+    if (a.type === 'hsa' && !(om && a.monthlyContribution)) {
+      const base = 'accounts.' + a.id;
+      const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) || [] : [];
+      const rec = list.filter((c) => c.year === year && !['rollover', 'conversion', 'employer'].includes(c.kind));
+      const m = a.monthlyContribution ? t.useFact(base + '.monthlyContribution', a.monthlyContribution) : null;
+      const after = year === +asOf.slice(0, 4) ? 12 - +asOf.slice(5, 7) : year > +asOf.slice(0, 4) ? 12 : 0;
+      if (rec.length) known.hsaDeduction += rec.reduce((x, c) => x + c.amount, 0) + (m || 0) * after;
+      else if (m) { known.hsaDeduction += m * 12; t.addRough(base + '.contributions'); }
+      continue;
     }
-    if (!pre || !a.monthlyContribution || !w2Months) continue;
+    if (!pre || !a.monthlyContribution || !om) continue;
     const c = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
-    if (c !== null) { known.wages -= c * w2Months; if (cafeteria) known.ficaWages -= c * w2Months; }
+    if (c !== null) { known.wages -= c * om; if (cafeteria) known.ficaWages -= c * om; }
     earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', monthly: c, owner: v(a.owner) });
   }
   // Roth conversions in the year are ordinary income.

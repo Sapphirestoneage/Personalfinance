@@ -6,7 +6,9 @@
 // the monthly plan (engine/debt.js), the FI engine or the waterfall
 // (engine/windfall.js). Views only format what comes back.
 
-import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetween, fact, ageOn } from './spine.js';
+import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetween, fact, ageOn, incomeOwner } from './spine.js';
+// Rounded up to the cent (a month that fills a limit by its deadline).
+const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
 import { yearsToTarget } from './fi.js';
 import { payoffPlan, rateOn } from './debt.js';
 import { windfall } from './windfall.js';
@@ -60,7 +62,8 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     const isDone = done !== null ? done : n !== null ? n <= 0 : null;
     // A flow rung (a monthly amount) takes from the surplus for good; a stock rung is filled once.
     const months = n === null ? null : isDone ? 0 : flow ? 0 : monthsToFill(n, surplus);
-    const completes = n === null ? null : isDone ? asOf : months === null ? null : sameDayLater(asOf, monthsSoFar + months);
+    // A flow rung after one that never finishes has no date either.
+    const completes = n === null ? null : isDone ? asOf : months === null || (flow && !afterAll) ? null : sameDayLater(asOf, monthsSoFar + months);
     if (n !== null && !isDone) { if (months === null) afterAll = false; else monthsSoFar += months; }
     rungs.push({ id, rung: rungs.length + 1, label: RUNG_LABELS[id], need: n, flow, done: isDone, months, completes, why, path, kind: n === null ? 'missing' : snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed', from: snap.from, rough: snap.rough, missing: snap.missing, rules: snap.rules });
     all.absorb({ value: 0, ...snap });
@@ -78,30 +81,37 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     else if (id === 'rothHsa' || id === 'maxRetirement') {
       const want = id === 'rothHsa' ? /^(ira|hsa|hsa55):/ : /^(deferral|k457b|employer):/;
       const m = mx();
-      const start = sameDayLater(asOf, monthsSoFar);
+      // The surplus reaches this rung on `start`; when a rung before it never finishes, it has no date.
+      const start = afterAll ? sameDayLater(asOf, monthsSoFar) : null;
+      const from = start || asOf;
       const mine = m.rows.filter((r) => r.pools.some((k) => want.test(k)));
       for (const r of mine) t.absorb({ ...r, value: undefined });
-      const miss = mine.filter((r) => r.applies && r.room === null && !r.passed);
-      const shut = mine.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
+      const miss = mine.filter((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
       const off = mine.filter((r) => !r.applies);
-      const over = mine.filter((r) => r.over);
-      const pools = m.pools.filter((p) => want.test(p.key));
-      const open = pools.filter((p) => p.deadline >= start), closed = pools.filter((p) => p.deadline < start);
+      const over = mine.filter((r) => r.over || r.overSoon);
+      // A payroll-only limit with no paycheck left counts as closed while its owner still has pay (next year's room).
+      const paysOn = (r, d) => (spine.income || []).some((x) => (x.type === 'w2' || x.type === 'tips') && incomeOwner(spine, x) === r.person && (!x.end || x.end >= d));
+      const shut = mine.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
+      // Each limit counted from the rung's start: its dates left from then; none left means its deadline passes first.
+      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = p.row.months.dates.filter((d) => d >= from).length; return { ...p, left: n, perMonth: n ? c2(p.fill / n) : null }; });
+      const open = sized.filter((p) => p.left > 0);
+      const closed = [...sized.filter((p) => p.left === 0), ...shut.filter((r) => paysOn(r, from)).map((r) => ({ key: r.pools[0], year: r.year, room: r.room, row: r, deadline: r.deadline.date }))];
       // A limit whose deadline passes first: its steady month, once per pool (a later year still open sizes it instead).
       const later = closed.filter((p, i) => !open.some((o) => o.key === p.key) && closed.findIndex((c) => c.key === p.key) === i).map((p) => ({ ...p, perMonth: steadyMonth(spine, p), steady: true }));
-      if (!pools.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.why).join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
+      if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
       else {
         const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '');
         const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
+        const when = start ? 'before the surplus reaches this rung (about ' + longDay(start) + ')' : 'before the surplus reaches this rung';
         const why = [
-          miss.length ? miss.map((r) => r.name + ' ' + r.year + ': ' + r.missingLabel).join('; ') + '.' : '',
-          over.length ? over.map((r) => r.name + ' ' + r.year + ': over the limit by ' + money(r.over)).join('; ') + '.' : '',
+          miss.length ? miss.map((r) => r.name + ' ' + r.year + ': ' + (r.missingLabel || r.blankLabel)).join('; ') + '.' : '',
+          over.length ? over.map((r) => r.name + ' ' + r.year + ': ' + (r.over ? 'over the limit by ' + money(r.over) : 'set to go over the limit by ' + money(r.overSoon))).join('; ') + '.' : '',
           [...open, ...later].map(line).join('; ') + (open.length || later.length ? '.' : ''),
-          closed.length ? closed.map((p) => p.row.name + ' ' + p.year + ' closes on ' + longDay(p.deadline) + ', before the surplus reaches this rung (about ' + longDay(start) + ')').join('; ') + '.' : '',
-          shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : ''
+          closed.length ? closed.map((p) => p.row.name + ' ' + p.year + (p.row.fillable ? ' closes on ' + longDay(p.deadline) + ', ' + when : ' has no paycheck left before ' + longDay(p.deadline))).join('; ') + '.' : '',
+          shut.filter((r) => !paysOn(r, from)).map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ')
         ].filter(Boolean).join(' ');
-        const first = miss[0] || over[0] || (pools[0] && pools[0].row);
-        push(id, t, { need: miss.length ? null : need, flow: true, why: why.trim(), path: (miss[0] && miss[0].ei && miss[0].ei.missing[0]) || (first ? 'accounts.' + first.accountId + '.contributions' : null), done: miss.length ? null : over.length ? false : need <= 0 });
+        const first = miss[0] || over[0] || (sized[0] && sized[0].row);
+        push(id, t, { need: miss.length ? null : need, flow: true, why: why.trim(), path: (miss[0] && ((miss[0].ei && miss[0].ei.missing[0]) || (miss[0].paychecks && miss[0].paychecks.blank && miss[0].paychecks.blank.path))) || (first ? 'accounts.' + first.accountId + '.contributions' : null), done: miss.length ? null : over.length ? false : need <= 0 });
       }
     }
     else if (id === 'hyper') { const rate = t.rule(rules, 'FOO_HYPER_RATE', year); const g = s.cashflow.savingsRate.gross; t.absorb({ ...g, value: undefined }); const gross = s.cashflow.income.gross.value; push(id, t, { need: g.value === null || gross === null ? null : Math.max(0, (rate - g.value) * gross), flow: true, why: g.value === null ? 'Needs the gross savings rate.' : g.value >= rate ? 'Saving ' + Math.round(g.value * 100) + '% of gross, past the ' + Math.round(rate * 100) + '% mark.' : 'Saving ' + Math.round(g.value * 100) + '% of gross; ' + money(Math.max(0, (rate - g.value) * gross)) + ' a month more reaches ' + Math.round(rate * 100) + '%.', path: g.missing[0] || s.cashflow.income.gross.from[0] || null }); }

@@ -61,6 +61,21 @@ export function addContribution(spine, accountId, { year, amount, kind = 'contri
   return setAt(spine, path, { value: [...list, { year, amount, ...(kind && kind !== 'contribution' ? { kind } : {}) }], kind: 'known', asOf: today, source: 'ledger' });
 }
 
+// The total that went in for a year, as one entry (S-211): a contribution total replaces the year's contribution
+// entries and an employer total the year's employer entries, so the monthly guess never stands beside a part of it.
+// A rollover, a conversion and money rolled in from a 529 are events: each is added as its own entry.
+export const TOTAL_KINDS = ['contribution', 'employer'];
+export function recordContribution(spine, accountId, { year, amount, kind = 'contribution' }, today) {
+  if (!TOTAL_KINDS.includes(kind)) return addContribution(spine, accountId, { year, amount, kind }, today);
+  const path = 'accounts.' + accountId + '.contributions';
+  if (!getAt(spine, 'accounts.' + accountId)) throw new Error('No account ' + accountId);
+  if (!Number.isInteger(year) || typeof amount !== 'number' || !(amount >= 0)) throw new Error('A year and an amount of $0 or more');
+  const f = getAt(spine, path);
+  const part = (c) => (kind === 'employer' ? c.kind === 'employer' : !c.kind || c.kind === 'contribution');
+  const kept = (isFact(f) && Array.isArray(f.value) ? f.value : []).filter((c) => !(c.year === year && part(c)));
+  return setAt(spine, path, { value: [...kept, { year, amount, ...(kind === 'employer' ? { kind } : {}) }], kind: 'known', asOf: today, source: 'ledger' });
+}
+
 // ---------------------------------------------------------------- card rate
 // The Ledger's one "Interest rate" panel for a card (S-161). Typed text in:
 // { apr, hasIntro, introRate, introEnds }. A blank APR is allowed: the house

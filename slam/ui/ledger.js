@@ -17,7 +17,7 @@ import { downloadProfile, readProfile, matchesFile, setBaseline, FILE_NAME } fro
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, addContribution } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, TOTAL_KINDS } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
@@ -92,7 +92,7 @@ const isLater = (path) => !!later[rowPathFor(hist.present, path)];
 // Leaving an editor with unsaved typing is refused with a message, never silent.
 function canLeave() {
   // A copy or a contribution typed into its small form and not saved yet holds the page too.
-  const form = [...document.querySelectorAll('.dup-form, .rec-form')].find((f) => f.querySelector('input').value.trim());
+  const form = [...document.querySelectorAll('.dup-form, .rec-form')].find((f) => { const i = f.querySelector('input'); return i.value.trim() !== (i.dataset.start || ''); });
   if (form) {
     const msg = form.querySelector('.edit-msg');
     if (msg) msg.textContent = 'Not saved yet. Save it or choose Cancel.';
@@ -848,7 +848,8 @@ function itemEl(it) {
 // "Record what went in for <year>" (S-211): one entry added to the account's contributions by year, one undoable edit.
 function saveContribution(accountId, year, amount, kind) {
   const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
-  apply(addContribution(hist.present, accountId, { year, amount, kind }, today()), 'Recorded ' + money(amount, !Number.isInteger(amount)) + ' for ' + year + ' in ' + (valueOf(acc.name) || accountId));
+  const what = TOTAL_KINDS.includes(kind) ? (kind === 'employer' ? 'the employer part for ' : 'the total for ') + year + ', ' : 'a ' + ({ rollover: 'rollover', conversion: 'conversion', from529: '529 rollover' }[kind] || 'deposit') + ' for ' + year + ' of ';
+  apply(recordContribution(hist.present, accountId, { year, amount, kind }, today()), 'Recorded ' + what + money(amount, !Number.isInteger(amount)) + ', in ' + (valueOf(acc.name) || accountId));
 }
 
 // A link to ledger.html#max:<account> opens that account and its panel, unfolding its group and showing every kind.

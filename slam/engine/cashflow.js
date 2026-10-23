@@ -2,7 +2,7 @@
 // expenses, debt minimums, saving, surplus and savings rates. Dated income and
 // expense changes are handled month by month.
 
-import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey } from './spine.js';
+import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey, accountOwner, incomeOwner } from './spine.js';
 import { PER_YEAR } from './schema.js';
 import { minimumsTotal, debtSchedule } from './debt.js';
 import { taxSetAside } from './tax.js';
@@ -62,6 +62,26 @@ const isActive = (item, ym) => activeDays(item.start, item.end, ym) > 0 && (item
 
 // Accounts whose monthly contribution comes out of a paycheck before take-home.
 const PAYROLL_FAMILIES = ['employerRetirement', 'hsaFsa'];
+
+// Each paycheck's share of the month's payroll saving (S-211): an account's monthly amount comes off its owner's W-2
+// and tips pay, split by gross; when its owner has no such pay this month, off all the household's W-2 and tips pay.
+// cf is this month's cashflow(); the shares add up to cf.saving.payroll whenever any pay has an amount.
+export function payrollShares(spine, cf) {
+  const pays = cf.income.streams.filter((x) => x.included && (x.type === 'w2' || x.type === 'tips') && x.gross);
+  const owner = Object.fromEntries((spine.income || []).map((s) => [s.id, incomeOwner(spine, s)]));
+  const share = {};
+  if (!pays.length) return share;
+  for (const a of spine.accounts || []) {
+    if (!PAYROLL_FAMILIES.includes(a.family) || !a.monthlyContribution) continue;
+    const m = valueOf(a.monthlyContribution);
+    if (!m) continue;
+    const mine = pays.filter((x) => owner[x.id] === (accountOwner(spine, a) || {}).id);
+    const from = mine.length ? mine : pays;
+    const g = from.reduce((s, x) => s + x.gross, 0);
+    for (const x of from) share[x.id] = (share[x.id] || 0) + m * x.gross / g;
+  }
+  return share;
+}
 
 // schedule: a debtSchedule covering ym (the projection passes its own); a month
 // after the as-of month reads its minimums from it (S-170).

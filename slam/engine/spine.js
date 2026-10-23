@@ -23,6 +23,14 @@ export const isFact = (x) => !!x && typeof x === 'object' && 'value' in x && 'ki
 
 // The usable value of a Fact (null when missing, not for me, or absent).
 export const valueOf = (f) => (isFact(f) && f.kind !== 'missing' && f.kind !== 'notForMe' ? f.value : null);
+// Whose an account is (S-211): the partner's when its owner says so and there is a partner (a spousal IRA with no
+// owner set is the partner's, the IRA of the spouse who earns less); everything else is the first person's.
+export function accountOwner(spine, a) {
+  const ps = (spine.household && spine.household.people) || [], o = a.owner ? valueOf(a.owner) : null;
+  return (o === 'partner' || (o === null && a.type === 'spousal_ira')) && ps[1] ? ps[1] : ps[0];
+}
+// Whose an income line is: its person, else the first person's.
+export const incomeOwner = (spine, s) => s.personId || (((spine.household && spine.household.people) || [])[0] || {}).id;
 
 // ---------------------------------------------------------------- paths
 // A path names one field: "household.filingStatus", "debts.visa.apr",

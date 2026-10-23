@@ -29,7 +29,7 @@ const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 export const maxHref = (accountId) => 'ledger.html#' + encodeURIComponent('max:' + accountId);
 const VERIFY = 'This date has not been checked against the IRS yet.';
 // What a recorded amount can be, by account: rollovers and conversions never count against the limit.
-const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferral' : 'A contribution'], ...(type === 'solo_k401' ? [['employer', 'Employer part']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
+const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferrals (the total)' : 'Contributions (the total)'], ...(type === 'solo_k401' ? [['employer', 'Employer part (the total)']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
 // "; the last one $483.30" when the last payment is what is left.
 const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? '; the last one ' + cash(last) : '');
 // A blank the row waits on that the Ledger can fill (not a rule).
@@ -48,25 +48,38 @@ function mainOf(r) {
   return { big: cash(r.perMonth) + ' a month', sub: plural(r.months.count, 'month') + ', one a month from today to ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', on top of what already goes in' : '') + lastWords(r.months.last, r.perMonth) };
 }
 
-// The record form: what went in for a year, and what kind of money it was. Built when asked, like Duplicate's.
+// The record form: the total that went in for a year so far (prefilled with what is counted now, the monthly guess
+// included), or one rollover or conversion. Built when asked, like Duplicate's.
+const TOTALS = ['contribution', 'employer'];
 function recordButton(r, onRecord) {
   const btn = h('button', { type: 'button', class: 'btn small' }, 'Record what went in for ' + r.year);
   btn.addEventListener('click', () => {
     const id = 'rec-' + r.accountId + '-' + r.year;
+    const own = r.contributed.parts.filter((x) => x.id === r.accountId && x.path && x.path.endsWith('.contributions'));
+    const now = own.length ? Math.round(own.reduce((x, p) => x + p.value, 0) * 100) / 100 : 0;
     const amount = h('input', { id: id + '-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '500' });
     const kind = h('select', { id: id + '-kind' }, KIND_CHOICES(r.type).map(([v, w]) => h('option', { value: v }, w)));
+    const label = h('label', { for: id + '-amount', class: 'edit-label' });
+    const hint = h('p', { class: 'edit-hint' });
     const msg = h('p', { class: 'edit-msg', role: 'alert' });
+    // A total replaces the year's figure; a rollover or a conversion is one more entry.
+    const sync = () => {
+      const total = TOTALS.includes(kind.value);
+      label.textContent = total ? (kind.value === 'employer' ? 'Employer part in for ' + r.year + ' so far, in all' : 'Total in for ' + r.year + ' so far') : 'Amount of this ' + (kind.value === 'from529' ? '529 rollover' : kind.value);
+      hint.textContent = total ? 'Everything that went in for ' + r.year + ', not just the last deposit. ' + (kind.value === 'contribution' && now ? 'It starts at what is counted now (' + cash(now) + (own.some((x) => x.estimated) ? ', a guess from the monthly amount' : '') + ').' : '') : (kind.value === 'from529' ? 'It counts against the limit.' : 'It is kept but never counts against the limit.');
+      if (total && kind.value === 'contribution' && !amount.value) amount.value = now ? String(now) : '';
+      amount.dataset.start = amount.value;
+    };
+    kind.addEventListener('change', () => { amount.value = ''; sync(); });
     const form = h('form', { class: 'confirm rec-form', onsubmit: (ev) => {
       ev.preventDefault();
       const p = parseInput('money', amount.value);
-      if (!p.ok || !(p.value > 0)) { msg.textContent = 'An amount above $0, like 500.'; amount.focus(); return; }
+      const total = TOTALS.includes(kind.value);
+      if (!p.ok || p.value === null || (total ? p.value < 0 : !(p.value > 0))) { msg.textContent = total ? 'The total so far, $0 or more, like 3000.' : 'An amount above $0, like 500.'; amount.focus(); return; }
       onRecord(r.accountId, r.year, p.value, kind.value);
-    } },
-      h('label', { for: id + '-amount', class: 'edit-label' }, 'What went in for ' + r.year), amount,
-      h('label', { for: id + '-kind', class: 'edit-label' }, 'What it was'), kind,
-      h('p', { class: 'edit-hint' }, 'One deposit, or the total so far. It is added to the account\'s contributions by year; a rollover or a conversion is kept but never counts against the limit.'),
-      msg,
+    } }, label, amount, h('label', { for: id + '-kind', class: 'edit-label' }, 'What it was'), kind, hint, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'), h('button', { type: 'button', class: 'btn ghost', onclick: () => form.replaceWith(btn) }, 'Cancel')));
+    sync();
     btn.replaceWith(form);
     amount.focus();
   });
@@ -94,9 +107,9 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   const stillNames = [...new Map(r.still.parts.map((x) => [x.id, x])).values()];
   const kv = [
     ['Room left for ' + r.year, cash(r.room)],
-    r.still.value > 0 ? ['Already set to go in', cash(r.still.value) + ' (' + stillNames.map((x) => (stillNames.length > 1 ? x.name + ' ' : '') + x.words).join('; ') + ')'] : null,
+    r.still.value > 0 || r.overSoon ? ['Already set to go in', cash(r.overSoon ? r.still.soon : r.still.value) + ' (' + stillNames.map((x) => (stillNames.length > 1 ? x.name + ' ' : '') + x.words).join('; ') + ')'] : null,
     r.lump !== null ? ['Lump sum today', cash(r.lump) + (r.still.value > 0 ? ' (new money)' : '')] : null,
-    r.main === 'paycheck' ? (r.perMonth !== null ? ['A month', cash(r.perMonth) + ' more (' + plural(r.months.count, 'month') + ' with a paycheck)'] : null) : ['A paycheck', p && p.perPaycheck !== null ? cash(p.perPaycheck) + ' (' + plural(p.count, 'paycheck') + ')' : 'no paycheck before the deadline'],
+    r.main === 'paycheck' ? (r.perMonth !== null ? ['A month', cash(r.perMonth) + ' more (' + plural(r.months.count, 'month') + ' with a paycheck' + lastWords(r.months.last, r.perMonth) + ')'] : null) : ['A paycheck', p && p.perPaycheck !== null ? cash(p.perPaycheck) + ' (' + plural(p.count, 'paycheck') + lastWords(p.last, p.perPaycheck) + ')' : 'no paycheck before the deadline'],
     ['The limit', cash(L.value) + (L.words.length ? ', ' + L.words.join(', ') : '')],
     ['In for ' + r.year, r.contributed.parts.map((x) => (r.contributed.parts.length > 1 ? x.name + ': ' : '') + x.words).join('; ')],
     // The cap shows only where it binds (earned income under the limit).
@@ -110,6 +123,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     main.big ? h('p', { class: 'tile-sub' }, main.sub) : null,
     p && p.tooBig ? h('p', { class: 'tool-result bad' }, 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.') : null,
     r.overWords ? h('p', { class: 'tool-result bad' }, r.overWords) : null,
+    r.overSoonWords ? h('p', { class: 'tool-result bad' }, r.overSoonWords) : null,
     r.aboveCap ? h('p', { class: 'tile-sub' }, cash(r.aboveCap) + ' is above the New York deduction cap: that part is not deductible (it can stay in the 529).') : null,
     h('dl', { class: 'kv' }, ...kv.flatMap(([k, val]) => [h('dt', {}, k), h('dd', { class: /^[$-]/.test(val) ? '' : 'words' }, val)])),
     h('div', { class: 'edit-actions' }, record),
@@ -137,7 +151,7 @@ export function maxItCard(spine, rules) {
   const title = h('h2', { id: 'maxit-h' }, 'How much to max it ', h('span', { class: 'count' }, String(m.mx.accounts.length)));
   if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-labelledby': 'maxit-h' }, title, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in the Ledger yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open the Ledger ›'));
   const all = m.mx.pools.length && T.lump > 0 ? cashFor(m, 'all') : null;
-  const firstMissing = rows.find((r) => r.applies && r.room === null);
+  const firstMissing = rows.find((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const line = (r) => {
     const main = r.applies && r.room !== null ? mainOf(r) : null;
     return h('li', { class: 'max-row' },
@@ -147,14 +161,14 @@ export function maxItCard(spine, rules) {
           : main.big ? h('span', { class: 'max-main' }, main.big) : h('span', { class: 'missing-row' }, main.sub),
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
       r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
-      r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over)) : null);
+      r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over)) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);
   };
-  const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null].filter(Boolean);
+  const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);
   const steps = T.steps || [];
   return h('section', { class: 'card', id: 'maxit', 'aria-labelledby': 'maxit-h' }, title,
     h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to see it in the Ledger.'),
     m.mx.pools.length && steps.length ? h('p', { class: 'max-big' }, cash(steps[0].perMonth) + ' a month')
-      : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel) : m.mx.pools.length ? 'What already goes in fills it' : 'Nothing can go in before the deadlines'),
+      : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel || firstMissing.blankLabel) : m.mx.pools.length && T.lump === 0 ? 'What already goes in fills it' : 'Nothing can go in before the deadlines'),
     m.mx.pools.length && steps.length ? h('p', { class: 'tile-sub' }, 'to ' + longDay(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + longDay(s.until)).join('') + ' (' + cash(T.lump) + ' of new money in all; a limit two accounts share counts once)' + (leftOut.length ? '; not counted: ' + leftOut.join(' and ') : '') + '.') : null,
     m.mx.window.words ? h('p', { class: 'max-window' }, m.mx.window.words) : null,
     h('ul', { class: 'max-list' }, rows.map(line)),

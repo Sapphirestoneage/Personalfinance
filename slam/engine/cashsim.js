@@ -15,7 +15,7 @@
 // null is never zero: a line without an amount is left out and named in needs.
 
 import { valueOf as v, tracker, round2, monthKey, monthEnd, addMonths, addDays, daysBetween, dayIn, daysInMonth } from './spine.js';
-import { cashflow, streamWeight } from './cashflow.js';
+import { cashflow, streamWeight, payrollShares } from './cashflow.js';
 import { balanceSheet } from './networth.js';
 import { emergency } from './emergency.js';
 import { mainChecking } from './defaults.js';
@@ -114,8 +114,8 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   const pid = main;
 
   // ------------------------------------------------------------ income: what lands, on its days
-  const w2Gross = cf.income.streams.filter((x) => x.included && x.type === 'w2').reduce((x, y) => x + (y.gross || 0), 0);
-  const payroll = cf.saving.payroll.value || 0;
+  // Each paycheck's share of payroll saving: its owner's accounts, by gross (S-211).
+  const shares = payrollShares(spine, cf);
   for (const s of spine.income || []) {
     const st = cf.income.streams.find((x) => x.id === s.id);
     const base = 'income.' + s.id, path = base + '.amount';
@@ -127,7 +127,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     // Net per dollar of gross, from the same cash flow the Dashboard uses; the payroll saving share comes off W-2 pay.
     const ratio = st && st.included && st.gross ? st.takeHome / st.gross : (s.type === 'w2' || s.type === 'tips' ? null : 1);
     if (ratio === null) { if (!st || !st.included) continue; needs.push({ path, what: s.label + ': this month\'s pay' }); continue; }
-    const deducted = s.type === 'w2' && w2Gross > 0 && st ? payroll * st.gross / w2Gross : 0;
+    const deducted = st ? shares[s.id] || 0 : 0;
     const perMonthNet = (st ? (st.gross / Math.max(w, 1e-9)) * ratio : amt * PER_YEAR[s.cadence] / 12) - deducted;
     const estimatedDay = !s.payDay || roughFact(s.payDay);
     const label = s.label;
