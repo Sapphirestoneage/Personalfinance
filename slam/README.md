@@ -236,6 +236,30 @@ on Eli's answers (questions 29 on). It is ready as
 `docs/phase2/batch-g-retire.patch`; from the repository root,
 `git apply slam/docs/phase2/batch-g-retire.patch` applies it.
 
+### How much to max it? (S-211)
+
+Every tax-advantaged account in the Ledger (401(k), Roth 401(k), 403(b),
+457(b), TSP, SIMPLE IRA, Solo 401(k), SEP IRA, traditional, Roth and spousal
+IRAs, HSA, 529) has a "How much to max it?" button among its actions. It opens
+a panel with each tax year still open: the year's limit plus the catch-up for
+your age on December 31, less what is in for the year across every account
+that shares the limit, is the room left. What is in is the account's
+contributions by year (a small form in the panel records one), else its
+monthly amount so far as a guess. IRA room is capped at that year's earned
+income (W-2, tips and 1099; unemployment does not count; for a married couple
+filing jointly, the couple's) and the Roth phase-out; while earned income is
+missing it reads "missing: 2026 earned income", never a number. Conversions
+and rollovers never count. Three amounts: a lump sum today, a month to the
+deadline, and a paycheck on the real pay dates before it; a 401(k) leads with
+the paycheck, an IRA or HSA with the month. From January 1 to April 15 the two
+tax years sit side by side. The per-month amounts run through the day-by-day
+cash run: whether the cash floor breaks, how much comes out of the cushion,
+and whether a card or loan payoff date moves. The deadlines are rules in
+`data/rules-2026.json` (not yet checked against the IRS) and show on the
+calendar as chips. The Plan page has one card for every account, and the FOO
+ladder's Roth and HSA rung and retirement rung read the same numbers, as does
+the Windfall's Roth step.
+
 ### Where things are
 
 | Path | What it is |

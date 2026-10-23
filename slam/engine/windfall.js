@@ -14,14 +14,14 @@
 // s is the summary from summary.js. amount is dollars; taxed says whether tax
 // on the lump sum is already taken out (or none is owed).
 
-import { valueOf as v, tracker, round2, ageOn, monthKey } from './spine.js';
+import { valueOf as v, tracker, round2, monthKey } from './spine.js';
 import { rateOn } from './debt.js';
 import { money } from '../src/ui/format.js';
 import { longDate } from './flags.js';
-import { earnedIncome } from './tax.js';
+import { maxItRow, openYears } from './maxit.js';
 
 const pct = (x) => Math.round(x * 10000) / 100 + '%';
-const ROTH_PO = { single: 'ROTH_PO_S', hoh: 'ROTH_PO_S', mfj: 'ROTH_PO_J' };
+const cap1 = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 
 // Months of the as-of year up to and including the as-of month (for contributions so far).
 const monthsSoFar = (asOf) => +asOf.slice(5, 7);
@@ -158,42 +158,18 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
     else if (id === 'roth') run(id, (t) => {
       const roth = (spine.accounts || []).find((a) => a.type === 'roth_ira');
       if (!roth) return { need: 0, why: 'There is no Roth IRA in the Ledger. Add one under Assets, IRA, to see this year\'s room.' };
-      const base = 'accounts.' + roth.id;
-      const person = spine.household.people[0];
-      const birth = t.useFact('household.people.' + person.id + '.birthDate', person.birthDate);
-      const age = birth ? ageOn(birth, asOf) : null;
-      let limit = t.rule(rules, 'IRA_LIMIT', year);
-      if (age !== null && age >= 50) limit += t.rule(rules, 'IRA_CU50', year);
-      // Put in this year: the year's entry in the contributions list, else the monthly contribution so far (rough).
-      const list = roth.contributions ? t.useFact(base + '.contributions', roth.contributions) : null;
-      const entry = (list || []).find((c) => c.year === year);
-      let soFar = 0, soFarWords = 'nothing recorded for ' + year;
-      if (entry) { soFar = entry.amount; soFarWords = money(entry.amount) + ' put in for ' + year + ' (from the contributions list)'; }
-      else if (roth.monthlyContribution && v(roth.monthlyContribution)) { const m = t.useFact(base + '.monthlyContribution', roth.monthlyContribution); soFar = m * monthsSoFar(asOf); t.addRough(base + '.contributions'); soFarWords = 'about ' + money(soFar) + ' put in so far this year (' + money(m) + ' a month for ' + monthsSoFar(asOf) + ' months, a guess)'; }
-      let room = Math.max(0, limit - soFar);
-      // The income phase-out, when the year's AGI is known.
-      const status = v(spine.household.filingStatus);
-      const agi = s.tax.lines.agi ? s.tax.lines.agi.value : null;
-      let phase = '';
-      if (status === 'mfs') { const top = t.rule(rules, 'ROTH_PO_MFS', year); if (agi !== null) { if (agi >= top) { room = 0; phase = ' Married filing separately with income over ' + money(top) + ': no Roth room.'; } else if (agi > 0) { room = round2(room * (top - agi) / top); phase = ' Married filing separately: the room phases out between $0 and ' + money(top) + ' of income.'; t.addRough(base + '.contributions'); } } }
-      else if (ROTH_PO[status]) {
-        const lo = rules.get(ROTH_PO[status] + '_LO', year), hi = rules.get(ROTH_PO[status] + '_HI', year);
-        all.rule(rules, ROTH_PO[status] + '_LO', year); all.rule(rules, ROTH_PO[status] + '_HI', year); t.rule(rules, ROTH_PO[status] + '_LO', year); t.rule(rules, ROTH_PO[status] + '_HI', year);
-        if (agi !== null && agi >= hi) { room = 0; phase = ' Income of ' + money(agi) + ' is over the ' + money(hi) + ' phase-out, so there is no Roth room this year (a backdoor Roth is not modeled).'; }
-        else if (agi !== null && agi >= lo) { room = round2(room * (hi - agi) / (hi - lo)); phase = ' Income of ' + money(agi) + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the room is reduced.'; t.addRough(base + '.contributions'); }
-        else if (agi === null) { phase = ' Whether income is under the ' + money(lo) + ' phase-out cannot be checked until the year\'s tax can be figured.'; t.addRough(base + '.contributions'); }
-      }
-      // Capped at the year's earned income (answer 25): W-2, tips and 1099 for the calendar year, one
-      // function for every reader (S-210); while any of it is missing the step reads missing.
-      const ei = earnedIncome(spine, rules, year);
-      t.absorb({ ...ei, value: undefined });
-      if (ei.value === null) return { need: null, why: 'Missing: ' + ei.label + '. A Roth contribution needs earned income to cover it, and ' + (ei.none ? 'no income is in the Ledger yet.' : 'a W-2, 1099 or tips amount for ' + year + ' is not known.'), path: ei.missing[0] || null, earned: ei };
-      const earned = ei.value;
-      const roomBefore = room;
-      room = Math.max(0, Math.min(room, earned - soFar));
-      const capWords = room < roomBefore ? ' Capped at ' + year + ' earned income (' + money(earned) + ' less what is in).' : '';
-      if (monthly) room = round2(room / Math.max(1, 12 - monthsSoFar(asOf) + 1));
-      return { need: room, why: 'The ' + year + ' limit is ' + money(limit) + (age !== null && age >= 50 ? ' (with the age 50 catch-up)' : '') + '; ' + soFarWords + ', so ' + money(room) + ' of room is left.' + phase + capWords + (monthly ? ' Spread over the months left this year.' : ' A contribution for ' + year + ' can be made until the return is due.'), path: base + '.contributions', limit, soFar, earned: ei };
+      // The room is the max-it engine's (S-211): the limit and the catch-up for the age on December 31, what is in
+      // for the year across every IRA, the income phase-out, and the cap at the owner's earned income (answer 25),
+      // so the Windfall room, the FOO ladder and the account's panel read one number. From January 1 to the IRA
+      // deadline last year's room is open too, and it closes first, so it comes first.
+      const rows = openYears(rules, roth.type, asOf).map((ty) => maxItRow(spine, rules, roth, ty, { asOf }));
+      for (const r of rows) t.absorb({ ...r, value: undefined });
+      const gap = rows.find((r) => r.room === null);
+      const r = rows[rows.length - 1];
+      if (gap) return { need: null, why: cap1(gap.missingLabel) + '. ' + gap.why, path: (gap.ei && gap.ei.missing[0]) || null, earned: gap.ei || null, row: gap, rows };
+      const need = round2(rows.reduce((x, y) => x + ((monthly ? y.perMonth : y.room) || 0), 0));
+      const each = rows.map((y) => (rows.length > 1 ? y.year + ': ' : '') + y.why + (monthly ? ' That is ' + money(y.perMonth, true) + ' a month for ' + y.months.count + ' month' + (y.months.count === 1 ? '' : 's') + ', to ' + longDate(y.deadline.date) + '.' : ' A contribution for ' + y.year + ' can be made until ' + longDate(y.deadline.date) + '.'));
+      return { need, why: each.join(' '), path: 'accounts.' + roth.id + '.contributions', limit: r.limit.value, soFar: r.contributed.value, earned: r.ei, row: r, rows };
     });
     else if (id === 'left') run(id, () => ({ need: Math.max(0, remaining), why: remaining > 0.005 ? money(remaining) + ' has no job yet. It stays as cash until it is given one: invest it, start a sinking fund, or add it to a goal.' : 'Every dollar is assigned.', path: null }));
     const last = steps[steps.length - 1];

@@ -6,7 +6,7 @@ import { h, ledgerHref } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 
 // The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2, Batch G', date: '2026-10-23' };
+export const BUILD = { label: 'Phase 2, Batch G and How much to max it', date: '2026-10-23' };
 
 let banner = null;
 function showError(text) {

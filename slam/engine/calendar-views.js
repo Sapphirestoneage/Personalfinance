@@ -4,12 +4,13 @@
 // third biweekly or fifth weekly pay in a month), the milestones, and a text
 // search over the events. Views only format what comes back.
 
-import { round2, addDays, daysBetween, monthKey } from './spine.js';
+import { round2, addDays, daysBetween, monthKey, monthEnd } from './spine.js';
 import { cashsim } from './cashsim.js';
 import { windfall } from './windfall.js';
 import { longDate } from './flags.js';
 import { payDatesIn, calendar } from './calendar.js';
 import * as C from './vendor/cashcal.js';
+import { maxItDeadlines } from './maxit.js';
 
 const weekdayOf = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
 const PER_MONTH = { weekly: 52 / 12, biweekly: 26 / 12 };
@@ -72,7 +73,8 @@ export function agenda(sim, n = 14) {
 export function yearStrip(spine, rules, { asOf = spine.meta.asOf, maybeMode = 'weighted', sim = null } = {}) {
   const r = sim && sim.days >= 365 ? sim : cashsim(spine, rules, { asOf, months: 12, maybeMode });
   const week = (r.everydayPerDay || 0) * 7;
-  const months = Object.keys(r.monthly).sort().slice(0, 12).map((ym) => { const m = r.monthly[ym]; return { ym, in: m.in, out: m.out, net: m.net, low: m.low, interest: m.interest, tight: m.low < r.floor.amount + week, underFloor: m.low < r.floor.amount }; });
+  // Each month's account deadlines (S-211) ride along, so the strip shows them as chips with a link each.
+  const months = Object.keys(r.monthly).sort().slice(0, 12).map((ym) => { const m = r.monthly[ym]; return { ym, in: m.in, out: m.out, net: m.net, low: m.low, interest: m.interest, tight: m.low < r.floor.amount + week, underFloor: m.low < r.floor.amount, deadlines: maxItDeadlines(spine, rules, ym + '-01', monthEnd(ym), { asOf }) }; });
   return { months, floor: r.floor.amount, tightWeek: round2(week), tightCount: months.filter((m) => m.tight).length, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules };
 }
 
@@ -108,14 +110,14 @@ export function paychecks(spine, rules, sim, s) {
 // free, high-interest free, debt free, a promo ending, income starting or ending.
 export function milestones(spine, rules, sim, months = []) {
   const out = [];
-  const add = (date, label, kind, path = null, note = null) => { if (date && date >= sim.start) out.push({ date, label, kind, path, note }); };
+  const add = (date, label, kind, path = null, note = null, accountId = null) => { if (date && date >= sim.start) out.push({ date, label, kind, path, note, ...(accountId ? { accountId } : {}) }); };
   for (const [id, d] of Object.entries(sim.clearDates.perCard)) { const c = sim.cards[id]; if (d && d > sim.start) add(d, (c ? c.name : id) + ' cleared', 'cleared', c ? c.path : null, 'stopped revolving: the statement was paid in full'); }
   for (const [id, l] of Object.entries(sim.loans)) if (l.paidOff) add(l.paidOff, l.name + ' paid off', 'paidOff', l.path);
   if (sim.clearDates.cardsFree && sim.clearDates.cardsFree > sim.start) add(sim.clearDates.cardsFree, 'Every card clear', 'cardsFree');
   if (sim.clearDates.hiFree && sim.clearDates.hiFree > sim.start) add(sim.clearDates.hiFree, 'High-interest free (nothing above ' + Math.round(sim.clearDates.hiRate * 100) + '%)', 'hiFree');
   if (sim.clearDates.allFree && sim.clearDates.allFree > sim.start) add(sim.clearDates.allFree, 'Debt free', 'allFree');
   if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up falls under the floor');
-  for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path);
+  for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn', 'maxDeadline'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path, e.kind === 'maxDeadline' ? e.note : null, e.accountId || null);
   const seen = new Set();
   return out.filter((m) => { const k = m.date + '|' + m.label; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }

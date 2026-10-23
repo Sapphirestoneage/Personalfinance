@@ -1922,6 +1922,210 @@
       "notes": "The history itself keeps 200 steps",
       "source": "Spec batch 2 (25 restore points)",
       "verified": "assumption"
+    },
+    {
+      "id": "CATCHUP_AGE",
+      "rule": "Age that opens the catch-up on 401(k), 403(b), 457(b), TSP, SIMPLE and IRA contributions",
+      "value": 50,
+      "unit": "age",
+      "appliesTo": "401(k), 403(b), 457(b), TSP, SIMPLE IRA, IRAs",
+      "notes": "Counts for the whole year once you reach it by December 31 of that year",
+      "source": "IRC 414(v) and 219(b)(5)(B); IRS Publication 590-A",
+      "verified": "law"
+    },
+    {
+      "id": "SUPER_CATCHUP_AGES",
+      "rule": "Ages whose catch-up is the larger super catch-up (replaces the age 50 one)",
+      "value": [
+        60,
+        63
+      ],
+      "unit": "ages, first and last",
+      "appliesTo": "401(k), 403(b), 457(b), TSP, SIMPLE IRA",
+      "notes": "The age reached by December 31 of the year; from 64 the age 50 catch-up applies again",
+      "source": "SECURE 2.0 Act section 109",
+      "verified": "law"
+    },
+    {
+      "id": "HSA_CATCHUP_AGE",
+      "rule": "Age that opens the HSA catch-up",
+      "value": 55,
+      "unit": "age",
+      "appliesTo": "HSA",
+      "notes": "Reached by December 31 of the year",
+      "source": "IRC 223(b)(3); IRS Publication 969",
+      "verified": "law"
+    },
+    {
+      "id": "NY_529_DED_S",
+      "rule": "New York 529 deduction cap a year, one taxpayer",
+      "value": 5000,
+      "unit": "$",
+      "appliesTo": "529 plan (New York residents, the NY 529 plan)",
+      "notes": "Single, head of household and married filing separately",
+      "source": "NY Tax Law 612(c)(32); NY 529 College Savings Program",
+      "verified": "verify"
+    },
+    {
+      "id": "NY_529_DED_J",
+      "rule": "New York 529 deduction cap a year, married filing jointly",
+      "value": 10000,
+      "unit": "$",
+      "appliesTo": "529 plan (New York residents, the NY 529 plan)",
+      "notes": "",
+      "source": "NY Tax Law 612(c)(32); NY 529 College Savings Program",
+      "verified": "verify"
+    },
+    {
+      "id": "SE_EMPLOYER_SHARE",
+      "rule": "Employer part for the self-employed (SEP IRA, Solo 401(k)): share of net self-employment earnings after half the SE tax",
+      "value": 0.2,
+      "unit": "rate",
+      "appliesTo": "SEP IRA, Solo 401(k)",
+      "notes": "25% of compensation works out to 20% of net earnings for a sole proprietor",
+      "source": "IRS Publication 560, rate table for the self-employed",
+      "verified": "verify"
+    },
+    {
+      "id": "TAX_RETURN_EXT_DUE",
+      "rule": "Federal income tax return due date with the automatic extension",
+      "value": "10-15",
+      "unit": "month-day",
+      "appliesTo": "SEP IRA, Solo 401(k) funding",
+      "notes": "The year after the tax year (Form 4868). Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS Form 4868 instructions",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_IRA",
+      "rule": "IRA contributions for a tax year: last day",
+      "value": "04-15",
+      "unit": "month-day",
+      "yearOffset": 1,
+      "types": [
+        "traditional_ira",
+        "roth_ira",
+        "spousal_ira"
+      ],
+      "main": "month",
+      "appliesTo": "Traditional IRA, Roth IRA, spousal IRA",
+      "notes": "Tax filing day without extensions. Money put in from January 1 to this day can count for either year and has to be assigned to one. Conversions and rollovers do not count against the limit (a 529 rolled into a Roth IRA does). Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS Publication 590-A, When can contributions be made (by the return due date, not including extensions)",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_HSA",
+      "rule": "HSA contributions for a tax year: last day",
+      "value": "04-15",
+      "unit": "month-day",
+      "yearOffset": 1,
+      "types": [
+        "hsa"
+      ],
+      "main": "month",
+      "appliesTo": "HSA",
+      "notes": "Tax filing day without extensions. Money put in from January 1 to this day can count for either year and has to be assigned to one. Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS Publication 969, contributions for a year by the return due date without extensions",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_PAYROLL",
+      "rule": "401(k), 403(b), 457(b), TSP and SIMPLE IRA employee deferrals: last day",
+      "value": "12-31",
+      "unit": "month-day",
+      "yearOffset": 0,
+      "types": [
+        "k401",
+        "roth_k401",
+        "k403b",
+        "k457b",
+        "tsp",
+        "simple_ira"
+      ],
+      "main": "paycheck",
+      "payrollOnly": true,
+      "appliesTo": "401(k), Roth 401(k), 403(b), 457(b), TSP, SIMPLE IRA",
+      "notes": "Through payroll by December 31: a deferral counts for the year the paycheck is paid.",
+      "source": "IRC 402(g); IRS 401(k) Plan Overview (elective deferrals come out of pay)",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_SOLO_ELECT",
+      "rule": "Solo 401(k) employee deferral election: last day",
+      "value": "12-31",
+      "unit": "month-day",
+      "yearOffset": 0,
+      "types": [],
+      "main": "month",
+      "appliesTo": "Solo 401(k)",
+      "notes": "The employee deferral has to be elected by December 31; the money can go in later, by the funding deadline.",
+      "source": "IRS One-Participant 401(k) Plans",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_SOLO_FUND",
+      "rule": "Solo 401(k) funding and employer part: last day",
+      "value": "10-15",
+      "unit": "month-day",
+      "yearOffset": 1,
+      "types": [
+        "solo_k401"
+      ],
+      "main": "month",
+      "appliesTo": "Solo 401(k)",
+      "notes": "The filing deadline with extensions: October 15 only with an extension (Form 4868) filed by the April deadline, otherwise April 15. The employee deferral had to be elected by December 31 of the year. Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS One-Participant 401(k) Plans; Form 4868 extends the return to October 15",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_SEP",
+      "rule": "SEP IRA contributions for a tax year: last day",
+      "value": "10-15",
+      "unit": "month-day",
+      "yearOffset": 1,
+      "types": [
+        "sep_ira"
+      ],
+      "main": "month",
+      "appliesTo": "SEP IRA",
+      "notes": "The filing deadline with extensions: October 15 only with an extension (Form 4868) filed by the April deadline, otherwise April 15. Moves to the next business day on a weekend or holiday (not modeled).",
+      "source": "IRS SEP Plan FAQs (by the due date of the return, including extensions)",
+      "verified": "verify"
+    },
+    {
+      "id": "DEADLINE_529_NY",
+      "rule": "529 NY deduction: last day",
+      "value": "12-31",
+      "unit": "month-day",
+      "yearOffset": 0,
+      "types": [
+        "k529"
+      ],
+      "main": "month",
+      "appliesTo": "529 plan (the NY deduction)",
+      "notes": "Contributions by December 31 count for that year's New York deduction.",
+      "source": "NY Tax Law 612(c)(32); NY 529 Direct Plan",
+      "verified": "verify"
+    },
+    {
+      "id": "ROTH_PO_ROUND",
+      "rule": "Roth IRA limit in the phase-out: rounded up to the next multiple of this",
+      "value": 10,
+      "unit": "$",
+      "appliesTo": "Roth IRA",
+      "notes": "Publication 590-A, Worksheet 2-2",
+      "source": "IRS Publication 590-A, Worksheet 2-2 (reduced Roth IRA contribution limit)",
+      "verified": "law"
+    },
+    {
+      "id": "ROTH_PO_MIN",
+      "rule": "Roth IRA limit in the phase-out: never under this while above $0",
+      "value": 200,
+      "unit": "$",
+      "appliesTo": "Roth IRA",
+      "notes": "Publication 590-A, Worksheet 2-2",
+      "source": "IRS Publication 590-A, Worksheet 2-2 (reduced Roth IRA contribution limit)",
+      "verified": "law"
     }
   ]
 }

@@ -12,6 +12,7 @@ import { summarize } from '../engine/summary.js';
 import { METRICS, DASHBOARD_MATH, UNITS, metricById, explainMetric, flagMath, showNumber } from '../engine/math.js';
 import { labelFor, namedPath, unnamedLabel } from '../engine/labels.js';
 import { earnedIncome } from '../engine/tax.js';
+import { maxIt, maxItSim, maxItCash } from '../engine/maxit.js';
 import { setSectionSharing, editExpense } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { calendar, rangeCashTerms } from '../engine/calendar.js';
@@ -59,6 +60,11 @@ const households = () => {
       compare: estimatedVsActual(spine, R, { months: 1 }), monthOut: monthOutlook(spine, R, c.sim),
       plan: { foo: fooLadder(spine, R, s), wage: realHourlyWage(spine, R, s), draftt: draftt(spine, R, s), floor: fixedFloor(spine, R, s, null), goals: goalsView(spine, R, s), alloc: allocator(spine, R, c.sim, s) }, solvers: solvers(spine, R, s, { byAge: 60 }), outlook: outlook(spine, R, c.sim, { runs: 12 }),
       sim: c.sim, debt, bt: firstCard ? balanceTransfer(spine, R, { cardId: firstCard.id }) : null, solve: firstCard ? solvePayoff(spine, R, c.sim, { target: firstCard.id, byDate: '2027-06-01' }) : null, which: whichCard(spine, R, c.sim, { amount: 100 }) };
+    // How much to max it (S-211): every account and open year, with the cash check one row at a time and all together.
+    const msim = maxItSim(spine, R);
+    ctx.maxit = maxIt(spine, R, { sim: msim });
+    const cashMemo = new Map();
+    ctx.maxitCash = (key) => { if (!cashMemo.has(key)) cashMemo.set(key, maxItCash(spine, R, ctx.maxit, { sim: msim, rows: key === 'all' ? null : ctx.maxit.rows.filter((r) => r.id === key) })); return cashMemo.get(key); };
     return { name, spine, s, windfall: ctx.windfall, month: ctx.month, ctx };
   });
 };
@@ -73,7 +79,9 @@ const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.item
   ...h.ctx.spend.prices.rows.map((r) => 'spend:priceChange:' + r.id), ...(h.ctx.spend.drift.count ? ['spend:drift'] : []), ...(h.ctx.spend.momentum.perMonth !== null ? ['spend:momentum'] : []), ...(h.ctx.spend.sweep.on ? ['spend:sweep'] : []),
   'compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected', ...h.ctx.compare.lines.slice(0, 3).map((r) => 'compare:line:' + r.id), ...h.ctx.compare.tags.map((r) => 'compare:tag:' + r.tag),
   ...h.ctx.plan.foo.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), ...h.ctx.plan.alloc.paychecks.slice(0, 2).map((p) => 'plan:pay:' + p.date + ':' + p.streamId), ...h.ctx.solvers.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id),
-  ...(h.ctx.plan.wage.wage !== null ? ['plan:wage'] : []), ...h.ctx.plan.draftt.rows.map((r) => 'plan:draftt:' + r.key), 'plan:floor', ...h.ctx.plan.goals.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), 'plan:outlook'];
+  ...(h.ctx.plan.wage.wage !== null ? ['plan:wage'] : []), ...h.ctx.plan.draftt.rows.map((r) => 'plan:draftt:' + r.key), 'plan:floor', ...h.ctx.plan.goals.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), 'plan:outlook',
+  ...h.ctx.maxit.rows.filter((r) => r.applies).flatMap((r) => { const k = 'maxit:' + r.accountId + ':' + r.year + ':'; const cash = r.fillable && r.room > 0 && r.perMonth ? h.ctx.maxitCash(r.id) : null; return [k + 'room', ...(r.cap && r.cap.metric ? [r.cap.metric] : []), ...(r.lump !== null ? [k + 'lump'] : []), ...(r.perMonth !== null ? [k + 'month'] : []), ...(r.fillable && r.paychecks && r.paychecks.perPaycheck !== null ? [k + 'paycheck'] : []), ...(cash ? [k + 'low', ...(cash.measurable ? [k + 'payoff'] : [])] : [])]; }),
+  ...(h.ctx.maxit.pools.length ? ['maxit:all:month', 'maxit:all:lump', 'maxit:all:low', ...(h.ctx.maxitCash('all').measurable ? ['maxit:all:payoff'] : [])] : [])];
 
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');
@@ -200,7 +208,10 @@ test('h. the Roth step with the W-2 ended and a blank 1099: earned income is the
   assert.equal(roth.need, 4500, '$7,500 less about $3,000 put in so far');
   assert.ok(!roth.missing.includes('income'));
   const e = explainMetric('windfall:roth', h.ctx);
-  assert.ok(e.terms.some((t) => t.metric === 'earned:2026'));
+  // The step links the Roth row's room, and the room links the year's earned income (the cap).
+  const link = e.terms.find((t) => /^maxit:[^:]+:2026:room$/.test(t.metric || ''));
+  assert.ok(link, 'the step names the 2026 Roth room');
+  assert.ok(explainMetric(link.metric, h.ctx).terms.some((t) => /^earned:2026/.test(t.metric || '')));
   // 2027: the 1099 runs from January with no amount, so earned income is missing and names that line.
   const next = earnedIncome(h.spine, R, 2027);
   assert.equal(next.value, null);

@@ -43,6 +43,8 @@
 - [x] Batch E: the feed and estimated vs actual (S-207): a statement or the Budget app's log becomes proposals (same, matched, recurring, new, skip), applied once; estimated vs actual per line and tag over the window, income logged against planned, the savings rate from the real ledger; a Dashboard tile
 - [x] Batch F: the Plan page (S-208): one waterfall with the match step, SE tax and the Roth cap (answers 23 to 25); the FOO ladder with ghost chips; the paycheck allocator; the solvers; the real hourly wage and the hours toggle; DRAFTT; the fixed floor and the income shock; goals; the outlook; life events; saved scenarios with a diff; the history; export and import; the one-pager; the skip link, error banner, build stamp and pinned Save on every page
 - [x] Batch G, the ports (S-209): a gap audit of the Budget calendar's own code; what it did brought to SLAM (the log reaches the run once, safe to spend capped at the lowest point ahead, Cash by day, the month in words, waiting, by date, so far and expected, empty states)
+- [x] Bug: a bare `income` path crashed the self-audit with a local profile; earned income for a year is one function, `labelFor` never throws, a fourth audited household reproduces it (S-210)
+- [x] How much to max it? (S-211): a panel on every tax-advantaged account in the Ledger, one Plan card, deadline chips on the calendar, the FOO rungs and the Windfall Roth step on the same rows, the cash check on the day-by-day run
 - [ ] Batch G, the retirement: held, because a few things are still Budget only (questions 29 on); ready as `docs/phase2/batch-g-retire.patch`
 
 ## Next: Eli's answers to questions 29 on, then the retirement patch

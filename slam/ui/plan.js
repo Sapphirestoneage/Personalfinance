@@ -13,6 +13,7 @@ import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { mathButton } from './math-panel.js';
+import { maxItCard } from './maxit-panel.js';
 import { loadAll, save, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
@@ -247,6 +248,8 @@ function render() {
     ladderCard(spine, s, ctx),
     waterfallCard(spine, s, ctx),
     allocatorCard(spine, s, sim, ctx),
+    // How much to max it (S-211): every tax-advantaged account, its room and deadline, and all of it against cash.
+    maxItCard(spine, rules),
     goalsCard(spine, s, ctx),
     solversCard(spine, s, ctx),
     wageCard(spine, s, ctx),

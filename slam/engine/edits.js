@@ -46,6 +46,21 @@ export function editFact(spine, path, action, { value, kind = 'known', today }) 
   return setAt(spine, path, next);
 }
 
+// ---------------------------------------------------------------- contributions by year (S-211)
+// What went into a tax-advantaged account for a tax year: one entry added to its
+// contributions by year, the field made when the account has none yet. kind:
+// contribution (left out of the entry), rollover or conversion (never count
+// against a limit), from529 (a 529 rolled into a Roth IRA, counts), employer
+// (a Solo 401(k)'s or SEP's employer part).
+export function addContribution(spine, accountId, { year, amount, kind = 'contribution' }, today) {
+  const path = 'accounts.' + accountId + '.contributions';
+  if (!getAt(spine, 'accounts.' + accountId)) throw new Error('No account ' + accountId);
+  if (!Number.isInteger(year) || typeof amount !== 'number' || !(amount > 0)) throw new Error('A year and an amount above $0');
+  const f = getAt(spine, path);
+  const list = isFact(f) && Array.isArray(f.value) ? f.value : [];
+  return setAt(spine, path, { value: [...list, { year, amount, ...(kind && kind !== 'contribution' ? { kind } : {}) }], kind: 'known', asOf: today, source: 'ledger' });
+}
+
 // ---------------------------------------------------------------- card rate
 // The Ledger's one "Interest rate" panel for a card (S-161). Typed text in:
 // { apr, hasIntro, introRate, introEnds }. A blank APR is allowed: the house

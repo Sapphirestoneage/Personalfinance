@@ -409,6 +409,8 @@ export function logIntoRun(spine, model, asOf, end, cardIds) {
 // Run the simulation and read it back in dollars.
 export function cashsim(spine, rules, opts = {}) {
   const { model, needs, from, rough, missing, rules: ruleIds, cf, claims, fromLog } = cashModel(spine, rules, opts);
+  // A what-if changes a fresh model before the run (S-211): never a lengthened one, which loses its end-date fences.
+  if (opts.adjust) opts.adjust(model);
   const mode = opts.maybeMode || 'weighted';
   const simOpts = { maybeMode: mode, penaltyMonths: rules.get('CARD_PENALTY_MONTHS', +model.start.slice(0, 4)) };
   let run = C.simulate(model, simOpts);

@@ -6,6 +6,7 @@
 import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { METRICS, metricById, explainMetric, showNumber } from '../engine/math.js';
+import { canMaxIt } from '../engine/maxit.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
@@ -14,7 +15,7 @@ import { h, chip, ledgerHref, shortDate } from './view.js';
 const app = document.getElementById('app');
 mountPage({ app });
 const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
-const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Windfall') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : h('span', {}, 'this page');
+const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Windfall') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : sc === 'plan' ? h('a', { href: 'plan.html' }, 'Plan') : h('span', {}, 'this page');
 
 // Units in words, not codes.
 const UNIT_WORDS = { usd: 'dollars', 'usd/month': 'dollars a month', 'usd/year': 'dollars a year', ratio: 'percent', months: 'months', years: 'years', age: 'age', count: 'count' };
@@ -35,6 +36,13 @@ function metricCard(m, ctx, anchor = m.id) {
     e.rules.length ? h('p', { class: 'math-rules' }, 'Rules: ', ...e.rules.flatMap((r, i) => [i ? ', ' : '', h('a', { href: '#rule-' + r }, r)])) : null);
 }
 
+// How much to max it (S-211): the first account's room, a month and lump sum for this year, as the family's sample.
+function maxItSample(spine, rules, s) {
+  const y = +s.asOf.slice(0, 4);
+  const a = (spine.accounts || []).find((x) => canMaxIt(rules, x, y));
+  return a ? ['room', 'lump', 'month'].map((w) => ['maxit' + (w === 'room' ? '' : '-' + w), 'maxit:' + a.id + ':' + y + ':' + w]) : [];
+}
+
 function rulesTable(rules) {
   const year = rules.years().slice(-1)[0];
   return h('section', { class: 'card', id: 'rules', 'aria-labelledby': 'rules-h' },
@@ -42,7 +50,10 @@ function rulesTable(rules) {
     h('p', { class: 'muted' }, 'Every limit, rate and threshold, with its source and how sure it is.'),
     h('ul', { class: 'rule-list' }, rules.ids(year).map((id) => {
       const r = rules.meta(id, year);
-      const val = Array.isArray(r.value) ? r.value.map(([top, rate]) => (Math.round(rate * 10000) / 100) + '% to ' + (top === null ? 'the top' : '$' + top.toLocaleString('en-US'))).join('; ') : String(r.value);
+      // Brackets are [top, rate] pairs; any other list (an order, two ages) reads as a list (S-211).
+      const val = Array.isArray(r.value) && r.value.every((x) => Array.isArray(x)) ? r.value.map(([top, rate]) => (Math.round(rate * 10000) / 100) + '% to ' + (top === null ? 'the top' : '$' + top.toLocaleString('en-US'))).join('; ')
+        : Array.isArray(r.value) ? r.value.join(', ')
+          : String(r.value) + (r.yearOffset ? ' of the year after the tax year' : r.yearOffset === 0 ? ' of the tax year' : '');
       return h('li', { id: 'rule-' + id, class: 'rule' },
         h('p', { class: 'rule-head' }, h('code', {}, id), ' ', r.rule),
         h('p', { class: 'rule-body' }, 'Value: ', h('strong', {}, val), r.unit ? ' (' + r.unit + ')' : '', '. Year ' + r.year + '. Source: ' + r.source + '. Verified: ' + r.verified + '.'));
@@ -66,7 +77,7 @@ loadAll().then(({ spine: base, rules, source }) => {
     h('nav', { class: 'card jump', 'aria-label': 'Jump to a number' }, METRICS.map((m) => h('a', { href: '#metric-' + m.id }, m.label)), h('a', { href: '#rules' }, 'Rules')),
     ...METRICS.map((m) => metricCard(m, ctx)),
     // Numbers that come one per year or per account (S-210): this year's, under the family's name.
-    ...[['earned', 'earned:' + s.asOf.slice(0, 4)]].map(([anchor, id]) => metricCard(metricById(id), ctx, anchor)),
+    ...[['earned', 'earned:' + s.asOf.slice(0, 4)], ...maxItSample(spine, rules, s)].map(([anchor, id]) => metricCard(metricById(id), ctx, anchor)),
     rulesTable(rules));
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
 }).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The math page could not load: ' + err.message)); });

@@ -8,6 +8,8 @@ import { mountPage } from './page.js';
 import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
+import { maxItPanel } from './maxit-panel.js';
+import { canMaxIt } from '../engine/maxit.js';
 import { summarize } from '../engine/summary.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
 import { validate } from '../engine/schema.js';
@@ -15,7 +17,7 @@ import { downloadProfile, readProfile, matchesFile, setBaseline, FILE_NAME } fro
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, addContribution } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
@@ -28,6 +30,8 @@ const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to
 let rules, hist, source, inst, open = null, showAll = false, guess = null;
 // The tree (S-169): which items are open, which add form is open, and select mode.
 let openItems = new Set(), adding = null, selecting = false, selected = new Set();
+// Accounts whose "How much to max it?" panel is open (S-211). It holds no inputs, so it survives every redraw.
+let maxOpen = new Set();
 // dirty: something was typed in the open editor and not saved yet (S-164).
 // lastSaved: the line under the header that says what was just saved.
 let dirty = false, lastSaved = null;
@@ -87,6 +91,14 @@ const isLater = (path) => !!later[rowPathFor(hist.present, path)];
 
 // Leaving an editor with unsaved typing is refused with a message, never silent.
 function canLeave() {
+  // A copy or a contribution typed into its small form and not saved yet holds the page too.
+  const form = [...document.querySelectorAll('.dup-form, .rec-form')].find((f) => f.querySelector('input').value.trim());
+  if (form) {
+    const msg = form.querySelector('.edit-msg');
+    if (msg) msg.textContent = 'Not saved yet. Save it or choose Cancel.';
+    form.querySelector('input').focus();
+    return false;
+  }
   if (!open || !dirty) return true;
   const msg = document.querySelector('.row.open .edit-msg');
   if (msg) msg.textContent = 'Not saved yet. Choose Save, Save as a guess, or Cancel.';
@@ -681,10 +693,11 @@ const shows = (row) => view.kinds.includes(row.fact.kind) && (!view.q || (row.la
 const filtering = () => view.q !== '' || view.kinds.length !== KIND_ORDER.length;
 
 // The tree keys of the item (and its parents) that hold a field.
-function itemKeysFor(path) {
+// The keys of the item holding a field, and of every group above it (or of the item with this key).
+function itemKeysFor(path, key = null) {
   const keys = [];
   const walk = (n, trail) => {
-    if (n.item) { if (n.rows.some((r) => r.path === path)) keys.push(...trail, n.key); return; }
+    if (n.item) { if (key ? n.key === key : n.rows.some((r) => r.path === path)) keys.push(...trail, n.key); return; }
     for (const c of n.children) walk(c, [...trail, n.key]);
   };
   for (const g of ledgerTree(hist.present, inst)) walk(g, []);
@@ -810,14 +823,41 @@ function itemEl(it) {
     name.focus();
   } }, 'Duplicate') : null;
   const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select these') : null;
+  // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
+  const acct = it.collection === 'accounts' ? (hist.present.accounts || []).find((x) => x.id === it.id) : null;
+  const maxable = acct && canMaxIt(rules, acct, +hist.present.meta.asOf.slice(0, 4));
+  const maxShown = maxable && maxOpen.has(it.id);
+  const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(!!maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; if (maxOpen.has(it.id)) maxOpen.delete(it.id); else maxOpen.add(it.id); render(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
   return h('li', { class: 'item' + (isOpen ? ' open' : ''), id: 'item-' + it.key },
     h('div', { class: 'item-head' },
       h('button', { type: 'button', class: 'fold item-fold', 'aria-expanded': String(isOpen), onclick: toggle },
         h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
-    isOpen && !selecting ? h('div', { class: 'item-actions' }, dup, remove) : null);
+    isOpen && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dup, remove) : null,
+    isOpen && !selecting && maxShown ? maxItPanel(hist.present, rules, it.id, { onRecord: saveContribution }) : null);
 }
+
+// "Record what went in for <year>" (S-211): one entry added to the account's contributions by year, one undoable edit.
+function saveContribution(accountId, year, amount, kind) {
+  const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
+  apply(addContribution(hist.present, accountId, { year, amount, kind }, today()), 'Recorded ' + money(amount, !Number.isInteger(amount)) + ' for ' + year + ' in ' + (valueOf(acc.name) || accountId));
+}
+
+// A link to ledger.html#max:<account> opens that account and its panel, unfolding its group and showing every kind.
+function openMax(id) {
+  if (!(hist.present.accounts || []).some((a) => a.id === id) || !canLeave()) return;
+  const trail = itemKeysFor(null, 'accounts.' + id);
+  selecting = false;
+  for (const k of trail) openItems.add(k);
+  maxOpen.add(id);
+  if (trail.some((k) => view.folded.includes(k))) { view = { ...view, folded: view.folded.filter((k) => !trail.includes(k)) }; keepView(); }
+  render();
+  if (!document.getElementById('max-' + id)) { view = { ...view, kinds: [...KIND_ORDER], q: '' }; keepView(); render(); }
+  const el = document.getElementById('max-' + id);
+  if (el) el.scrollIntoView({ block: 'start' });
+}
+const fromHash = () => { const p = decodeURIComponent(location.hash.slice(1)); return p.startsWith('max:') ? { max: p.slice(4) } : { path: p }; };
 
 // A section or sub-section: its label and counts, its add button, its children.
 function nodeEl(n, depth) {
@@ -947,7 +987,7 @@ document.addEventListener('keydown', (e) => {
 });
 // Closing or leaving the page with unsaved typing asks first.
 window.addEventListener('beforeunload', (e) => { if (open && dirty) { e.preventDefault(); e.returnValue = ''; } });
-window.addEventListener('hashchange', () => { const p = decodeURIComponent(location.hash.slice(1)); if (p && hist) openField(p); });
+window.addEventListener('hashchange', () => { const x = fromHash(); if (!hist) return; if (x.max) openMax(x.max); else if (x.path) openField(x.path); });
 
 async function start() {
   const loaded = await loadAll();
@@ -957,8 +997,9 @@ async function start() {
   if (loaded.problem) lastSaved = loaded.problem;
   render();
   refreshGuess();
-  const p = decodeURIComponent(location.hash.slice(1));
-  if (p && getAt(hist.present, rowPathFor(hist.present, p))) openField(p);
+  const x = fromHash();
+  if (x.max) openMax(x.max);
+  else if (x.path && getAt(hist.present, rowPathFor(hist.present, x.path))) openField(x.path);
 }
 
 start().catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Ledger could not load: ' + err.message)); });

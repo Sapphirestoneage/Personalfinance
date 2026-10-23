@@ -13,7 +13,8 @@
 // An event: { id, date (YYYY-MM-DD or null), day, kind, label, amount (positive, or null),
 //   direction: in | out | null, rough (the day or the amount is a guess), note, path, source }.
 // Event kinds: pay, bill, subscription, debt, saving, setAside, promoEnds, estimatedTax,
-//   taxReturn, incomeStarts, incomeEnds, expenseStarts, expenseEnds, coverage, situation.
+//   taxReturn, incomeStarts, incomeEnds, expenseStarts, expenseEnds, coverage, situation,
+//   bonusBy, maybe, maxDeadline (S-211, an account's last day for a tax year), and foo (added by the page).
 
 import { valueOf as v, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, toDay, fromDay, dayIn, daysInMonth, isFact } from './spine.js';
 import { cashflow, streamWeight } from './cashflow.js';
@@ -24,6 +25,7 @@ import { nextCharge, isSubscription } from './subscriptions.js';
 import { shareOf, coverOf } from './sharing.js';
 import { balanceSheet } from './networth.js';
 import { money } from '../src/ui/format.js';
+import { maxItDeadlines, maxItTypes } from './maxit.js';
 import * as C from './vendor/cashcal.js';
 import { matchOccurrence } from './feed.js';
 
@@ -177,6 +179,8 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (by && inMonth(by)) add({ id: 'bonus:' + d.id, kind: 'bonusBy', label: (v(d.name) || d.id) + ': signup bonus deadline', date: by, amount: v(d.bonusSpend), direction: null, counted: false, path: 'debts.' + d.id + '.bonusBy', note: v(d.bonusSpend) !== null ? 'spend ' + Math.round(v(d.bonusSpend)) + ' by this day' : 'spend required not entered' });
   }
   for (const p of promoDeadlines(spine, asOf).items) if (inMonth(p.switchDate)) add({ id: 'promo:' + p.id, kind: 'promoEnds', label: p.name + ': intro rate ends, ' + (p.aprAfter === null ? 'regular rate not entered' : Math.round(p.aprAfter * 10000) / 100 + '% from this day'), date: p.switchDate, rough: p.aprAfterKind === 'rough', path: 'debts.' + p.id + '.promoEnds' });
+  // The last day to put money into a tax-advantaged account for a tax year (S-211), with the room left in its note.
+  for (const e of maxItDeadlines(spine, rules, monthStart(ym), monthEnd(ym), { asOf })) add(e);
   for (const [q, rid] of [[1, 'EST_Q1'], [2, 'EST_Q2'], [3, 'EST_Q3']]) { const d = year + '-' + rules.get(rid, year); if (inMonth(d)) add({ id: 'est:' + q, kind: 'estimatedTax', label: 'Estimated tax payment date (quarter ' + q + ')', date: d, note: 'no payment is planned here; the tax set-aside covers the balance due at the return', source: rid }); }
   { const d = year + '-' + rules.get('EST_Q4', year - 1); if (inMonth(d)) add({ id: 'est:4', kind: 'estimatedTax', label: 'Estimated tax payment date (quarter 4 of ' + (year - 1) + ')', date: d, note: 'no payment is planned here; the tax set-aside covers the balance due at the return', source: 'EST_Q4' }); }
   { const d = year + '-' + rules.get('TAX_RETURN_DUE', year); if (inMonth(d)) { const tx = yearTax(spine, rules, year - 1, mode, taxCache); const due = tx.balanceDue.value; add({ counted: false, id: 'return:' + (year - 1), kind: 'taxReturn', label: (year - 1) + ' tax return due' + (due === null ? ' (balance not figured yet)' : due >= 0 ? ': balance due' : ': refund'), date: d, amount: due === null ? null : Math.abs(due), direction: due === null ? null : due >= 0 ? 'out' : 'in', rough: tx.balanceDue.kind !== 'computed', note: due === null ? 'needs ' + (tx.missingText || 'more inputs').replace(/^missing: /, '') : 'paid from what the tax set-aside put by, so it is not counted again in the month\'s total', source: 'TAX_RETURN_DUE' }); } }
@@ -333,6 +337,7 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
       surplus: cf.surplus, kind: snap.missing.length ? 'incomplete' : snap.rough.length || events.some((e) => e.rough) ? 'rough' : 'computed', rough: snap.rough, missing: snap.missing
     });
   }
+  { const y = +start.slice(0, 4); if ((spine.accounts || []).some((a) => maxItTypes(rules, y).includes(a.type))) for (const id of rules.ids(y)) if (id.startsWith('DEADLINE_')) all.rule(rules, id, y); }
   all.rule(rules, 'EST_Q1', +start.slice(0, 4)); all.rule(rules, 'EST_Q2', +start.slice(0, 4)); all.rule(rules, 'EST_Q3', +start.slice(0, 4)); all.rule(rules, 'EST_Q4', +start.slice(0, 4)); all.rule(rules, 'TAX_RETURN_DUE', +start.slice(0, 4));
   const snap = all.snapshot();
   const tray = ((spine.calendar || {}).maybe || []).filter((m) => !m.date).map((m) => ({ id: m.id, label: m.label, amount: m.amount, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5, direction: m.direction || 'in' }));

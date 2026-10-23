@@ -22,6 +22,7 @@ import { loadAll, save, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal } from './view.js';
+import { maxHref } from './maxit-panel.js';
 import { pickedWindow, windowBar } from './window.js';
 import { debtTab } from './debt-tab.js';
 import { fooGhosts } from '../engine/plan.js';
@@ -35,8 +36,8 @@ const addMonths = (ym, n) => { const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
-const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
-const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
+const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
+const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax and account deadlines'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
 const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
 
@@ -70,11 +71,13 @@ function eventEl(e, { small = false } = {}) {
   const editable = !!e.key;
   const name = editable
     ? h('button', { type: 'button', class: 'ev-tap', 'aria-pressed': String(state.open === e.key), onclick: () => { state.open = state.open === e.key ? null : e.key; render(); } }, e.label)
-    : e.path ? h('a', { href: ledgerHref(e.path) }, e.label) : h('span', {}, e.label);
+    // An account's deadline opens its "How much to max it?" panel (S-211).
+    : e.kind === 'maxDeadline' ? h('a', { href: maxHref(e.accountId) }, e.label)
+      : e.path ? h('a', { href: ledgerHref(e.path) }, e.label) : h('span', {}, e.label);
   const li = h('li', { class: 'ev ev-' + e.kind + (e.rough ? ' ev-rough' : '') + (small ? ' ev-small' : '') + ((e.pills || []).includes('done') ? ' ev-done' : ''), 'data-key': e.key || null, 'data-drag': e.movable && !e.locked ? 'event' : null },
     e.movable && !e.locked ? h('span', { class: 'grip', title: 'Drag to another day', 'aria-hidden': 'true' }, '⋮⋮') : null,
     h('span', { class: 'sw ' + (CAT[e.kind] || 'viz-0'), 'aria-hidden': 'true' }),
-    h('span', { class: 'ev-name' }, name, ...pills(e, small), e.rough && !small ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && !small && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null),
+    h('span', { class: 'ev-name' }, name, e.kind === 'maxDeadline' ? h('span', { class: 'deadline-chip due' }, e.passed ? 'Deadline passed' : e.missing ? 'Deadline, room missing' : 'Deadline') : null, ...pills(e, small), e.rough && !small ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && !small && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null),
     amt(e) ? h('span', { class: 'ev-amt' }, amt(e)) : null,
     e.note && !small ? h('span', { class: 'ev-note' }, e.note) : null);
   return li;
@@ -147,7 +150,8 @@ function dayHead(d, m, today) {
     bal ? h('span', { class: 'day-cash' }, 'ends at ' + money(bal.primary) + (bal.debt ? ', debt ' + money(bal.debt) : '')) : null);
 }
 
-function msOn(ms, date) { return ms.filter((x) => x.date === date).map((x) => h('span', { class: 'ms' }, x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label)); }
+// An account deadline is already on its day as an event with its chip (S-211), so its marker is left off the day; it stays on the Milestones card.
+function msOn(ms, date) { return ms.filter((x) => x.date === date && x.kind !== 'maxDeadline').map((x) => h('span', { class: 'ms' }, x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label)); }
 
 // The phone form: days as a list.
 function dayList(m, today, ms) {
@@ -347,9 +351,11 @@ function yearTab(c, spine, mathCtx) {
   return h('section', { class: 'card', 'aria-labelledby': 'year-h' },
     h('h2', { id: 'year-h' }, 'The year, month by month ', h('span', { class: 'count' }, y.tightCount + ' tight')),
     h('p', { class: 'muted' }, 'A month is tight when its lowest day comes within a week of everyday spending (' + money(y.tightWeek) + ') of the floor' + (y.floor ? ' (' + money(y.floor) + ')' : '') + '; red when it goes under.'),
-    h('div', { class: 'year-strip', role: 'list' }, y.months.map((m) => h('div', { class: 'ys' + (m.underFloor ? ' under' : m.tight ? ' tight' : ''), role: 'listitem', 'aria-label': longMonth(m.ym) + ', lowest ' + money(m.low) + (m.tight ? ', tight' : '') }, h('b', {}, MONTH_NAMES[+m.ym.slice(5, 7) - 1].slice(0, 3)), h('span', { class: 'ys-low' }, money(m.low)), m.underFloor ? h('span', { class: 'pill' }, 'under') : m.tight ? h('span', { class: 'pill' }, 'tight') : null))),
+    h('div', { class: 'year-strip', role: 'list' }, y.months.map((m) => h('div', { class: 'ys' + (m.underFloor ? ' under' : m.tight ? ' tight' : ''), role: 'listitem', 'aria-label': longMonth(m.ym) + ', lowest ' + money(m.low) + (m.tight ? ', tight' : '') + (m.deadlines.length ? ', ' + m.deadlines.length + ' account deadline' + (m.deadlines.length === 1 ? '' : 's') : '') }, h('b', {}, MONTH_NAMES[+m.ym.slice(5, 7) - 1].slice(0, 3)), h('span', { class: 'ys-low' }, money(m.low)), m.underFloor ? h('span', { class: 'pill' }, 'under') : m.tight ? h('span', { class: 'pill' }, 'tight') : null, m.deadlines.length ? h('span', { class: 'ys-flag', title: m.deadlines.map((d) => d.label).join('; ') }, '\u2691' + (m.deadlines.length > 1 ? ' ' + m.deadlines.length : '')) : null))),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Month'), h('th', { class: 'num' }, 'In'), h('th', { class: 'num' }, 'Out'), h('th', { class: 'num' }, 'Net'), h('th', { class: 'num' }, 'Lowest day'), h('th', { class: 'num' }, 'Interest'))),
       h('tbody', {}, y.months.map((m) => h('tr', { class: m.underFloor ? 'under' : m.tight ? 'tight' : '' }, h('td', {}, h('button', { type: 'button', class: 'ev-tap', onclick: () => { state.ym = m.ym; state.tab = 'month'; keep(KEY, state.ym); render(); window.scrollTo({ top: 0 }); } }, longMonth(m.ym))), h('td', { class: 'num' }, money(m.in)), h('td', { class: 'num' }, money(m.out)), h('td', { class: 'num' }, money(m.net)), h('td', { class: 'num' }, money(m.low) + (m.tight ? ' (tight)' : '')), h('td', { class: 'num' }, money(m.interest))))))),
+    // The strip's deadline chips in words, each opening its account's panel (S-211).
+    y.months.some((m) => m.deadlines.length) ? h('div', { class: 'ys-deadlines' }, h('h3', {}, '\u2691 Account deadlines in these twelve months'), h('ul', { class: 'max-list' }, y.months.flatMap((m) => m.deadlines).map((d) => h('li', { class: 'max-row' }, h('a', { class: 'max-name', href: maxHref(d.accountId) }, shortDate(d.date) + ': ' + d.label + ' ›'), h('span', { class: 'tile-sub' }, d.note))))) : null,
     h('p', { class: 'tile-note' }, chip(y.kind === 'computed' ? 'known' : y.kind), ' Twelve months from the as-of date, from the day-by-day simulation. Tap a month to open it.'));
 }
 
@@ -386,7 +392,7 @@ function milestonesCard(c, spine) {
   const ms = milestones(spine, rules, c.sim, c.months);
   return h('section', { class: 'card', 'aria-labelledby': 'ms-h' },
     h('h2', { id: 'ms-h' }, 'Milestones ', h('span', { class: 'count' }, String(ms.length))),
-    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + window_ + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + window_ + '-month window. A longer window may show when a card clears.'));
+    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), x.kind === 'maxDeadline' ? h('a', { href: maxHref(x.accountId) }, x.label) : x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + window_ + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + window_ + '-month window. A longer window may show when a card clears.'));
 }
 
 function searchCard(c) {

@@ -50,7 +50,9 @@ export const FAMILIES = {
   employerRetirement: {
     label: 'Employer retirement', fields: {
       rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
-      priorYearFicaWages: 'money', allowsAfterTax: 'bool', allowsLoans: 'bool', employerType: 'choice:private|nonprofit|government|federal|self'
+      priorYearFicaWages: 'money', allowsAfterTax: 'bool', allowsLoans: 'bool', employerType: 'choice:private|nonprofit|government|federal|self',
+      // What went in for each tax year (S-211), as on an IRA: [{ year, amount, kind? }]; rollovers and conversions never count.
+      contributions: 'list'
     }
   },
   ira: {
@@ -62,10 +64,10 @@ export const FAMILIES = {
   hsaFsa: {
     label: 'HSA / FSA', fields: {
       coverageLevel: 'choice:self|family', annualLimit: 'money', investedPortion: 'money', unreimbursedReceipts: 'money',
-      rolloverRule: 'choice:rolls|forfeit', planEligible: 'choice:hdhp|bronze|catastrophic|no', monthsEligible: 'int', employerSeed: 'money'
+      rolloverRule: 'choice:rolls|forfeit', planEligible: 'choice:hdhp|bronze|catastrophic|no', monthsEligible: 'int', employerSeed: 'money', contributions: 'list'
     }
   },
-  education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int' } },
+  education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list' } },
   taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate' } },
   debt: {
     label: 'Debt', fields: {
@@ -334,6 +336,10 @@ export function validate(spine) {
         const v = a[k] && a[k].value;
         if (Array.isArray(v)) v.forEach((x, i) => need.forEach((n) => { if (typeof x[n] !== 'number') err(p + '.' + k + '[' + i + '].' + n, 'needs a number'); }));
       }
+      // A contribution entry may say what it was (S-211): a rollover or a conversion never counts against a limit, a 529
+      // rolled into a Roth IRA does (from529), and employer marks a Solo 401(k)'s or SEP's employer part.
+      const cl = a.contributions && a.contributions.value;
+      if (Array.isArray(cl)) cl.forEach((x, i) => { if (x.kind !== undefined && !['contribution', 'rollover', 'conversion', 'from529', 'employer'].includes(x.kind)) err(p + '.contributions[' + i + '].kind', 'contribution, rollover, conversion, from529 or employer'); });
     }
   }
 
