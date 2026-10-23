@@ -9,6 +9,8 @@ import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
+import { validate } from '../engine/schema.js';
+import { downloadProfile, readProfile, matchesFile, setBaseline, FILE_NAME } from './profile-file.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
@@ -767,7 +769,8 @@ function render() {
   const tree = ledgerTree(spine, inst);
   const focusId = document.activeElement && document.activeElement.id;
   const caret = focusId === 'ledger-search' ? document.activeElement.selectionStart : null;
-  app.replaceChildren(
+  // Empty slots (no picker, no banner) are left out, never drawn as text.
+  app.replaceChildren(...[
     h('header', { class: 'top' },
       h('div', {},
         h('h1', {}, 'Ledger'),
@@ -775,10 +778,14 @@ function render() {
       h('nav', { class: 'top-actions' },
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
         h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, canRedo(hist) ? 'Redo' : 'Nothing to redo'),
+        h('button', { type: 'button', class: matchesFile(spine) ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
+        h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
+        h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
         h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); render(); document.getElementById('picker')?.scrollIntoView({ block: 'start' }); } }, 'Pick what you have'),
         h('a', { class: 'btn', href: 'math.html' }, 'All formulas'),
         h('a', { class: 'btn', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
+    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
     picking ? pickerCard() : null,
     guessList(),
     subsCard(),
@@ -788,9 +795,31 @@ function render() {
     h('footer', { class: 'foot' },
       h('a', { class: 'btn ghost', href: '#' }, 'Back to top'),
       source === 'saved' && h('button', { class: 'btn ghost', onclick: resetAsk }, 'Go back to the file (drop edits saved in this browser)'))
-  );
+  ].filter(Boolean));
   if (focusId === 'edit-input') { const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
   if (focusId === 'ledger-search') { const i = document.getElementById('ledger-search'); if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(caret, caret); } }
+}
+
+// The profile file (S-195): save downloads it; load reads one back (undoable).
+function saveFile() {
+  if (!canLeave()) return;
+  downloadProfile(hist.present);
+  lastSaved = 'Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ to make it the file the app starts from.';
+  render();
+}
+async function loadFile(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  try {
+    const next = applyDefaults(await readProfile(file), rules);
+    const check = validate(next);
+    if (!check.ok) throw new Error(file.name + ' has ' + check.errors.length + ' problem' + (check.errors.length === 1 ? '' : 's') + ', starting with ' + check.errors[0].path + ': ' + check.errors[0].message + '.');
+    open = null;
+    apply(next, 'Loaded ' + file.name);
+    setBaseline(hist.present);
+    lastSaved = 'Loaded ' + file.name + '. Undo goes back to what you had.';
+    render();
+  } catch (err) { lastSaved = 'Could not load that file: ' + err.message; render(); }
 }
 
 function resetAsk(e) {
@@ -820,6 +849,8 @@ window.addEventListener('hashchange', () => { const p = decodeURIComponent(locat
 async function start() {
   const loaded = await loadAll();
   rules = loaded.rules; source = loaded.source; inst = loaded.institutions; hist = createHistory(loaded.spine); guess = null; open = null;
+  // Shown straight from the file (no browser edits): the file and the page match.
+  if (loaded.source !== 'saved') setBaseline(hist.present);
   if (loaded.problem) lastSaved = loaded.problem;
   render();
   refreshGuess();

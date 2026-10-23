@@ -395,3 +395,17 @@ test('pick what you have: everything ticked is added with its details blank, in 
   assert.ok(STARTER.every((g) => g.items.length), 'every group has choices');
   assert.throws(() => addPicked(s, [{ key: 'nope' }], '2026-10-23'));
 });
+
+// ------------------------------------------------------------------ the profile file (S-195)
+import { fingerprint } from '../ui/profile-file.js';
+
+test('the profile file: a saved Ledger loads back the same, and its fingerprint tells edits apart', () => {
+  const s = applyDefaults(demo(), R);
+  const edited = editFact(s, 'debts.' + s.debts[0].id + '.balance', 'set', { value: 1234, kind: 'known', today: '2026-10-23' });
+  const file = JSON.parse(JSON.stringify(edited, null, 2));
+  const back = applyDefaults(loadHousehold(file), R);
+  assert.deepEqual(back, edited, 'every field, kind, date and source comes back');
+  assert.ok(validate(back).ok);
+  assert.equal(fingerprint(back), fingerprint(edited));
+  assert.notEqual(fingerprint(s), fingerprint(edited), 'an edit changes the fingerprint');
+});

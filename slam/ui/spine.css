@@ -300,3 +300,6 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .later-list { margin-top: var(--space-3); }
 .later-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
 .later-list ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+
+/* Edits not in the profile file (S-195). */
+.file-banner { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); border: 1px solid var(--warn); border-left-width: 4px; border-radius: var(--radius-sm); background: var(--warn-soft); color: var(--text); font-size: var(--text-sm); font-weight: 600; }
