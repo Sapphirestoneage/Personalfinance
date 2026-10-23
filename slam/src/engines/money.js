@@ -33,6 +33,7 @@ export const r2 = (x) => Math.round(x * 100) / 100 + 0;
 // The same, but a missing number stays missing (empty is not zero).
 export const r2OrNull = (x) => (x === null || x === undefined ? null : r2(x));
 
-// Round to the cent after trimming floating-point noise (0.1 + 0.2 style), for amounts
-// built up from many fractions where 0.005 must round up, not fall to 0.00499999.
+// Round to the cent after trimming floating-point noise to 12 significant digits. A total that
+// arithmetic left at 0.034999999999999996 is treated as 0.035 and rounds to 0.04, where plain r2
+// gives 0.03. Used where many fractions are added up (card interest, split payments).
 export const r2Exact = (x) => Math.round(Number(x.toPrecision(12)) * 100) / 100 + 0;

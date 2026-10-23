@@ -29,10 +29,14 @@ All demo households are made up.
 ## Run the tests
 
 ```
-node --test
+npm test
 ```
 
-Run it from this folder. Needs Node 20 or newer. The math library runs in Node with no browser.
+Run it from the repository root (it runs `node --test` over `slam/tests/`). From this folder,
+`node --test` does the same. Needs Node 22 or newer. The math library runs in Node with no browser.
+`tests/engines-roundnumbers.test.js` is the place to start reading: small round numbers you can
+check in your head, one engine at a time; the household tests then check whole budgets against
+hand-computed answers in `src/data/households/`.
 
 To also check that the screens show the same numbers as the hand-computed answers
 (needs Playwright and the local server running on port 8765):

@@ -1,10 +1,6 @@
 # Nothing here is needed to run the app: SLAM is static files with no build step.
 # node_modules/ is what the dev tools (Playwright, the linter, the formatter) leave behind.
 node_modules/
-# package.json and the lock file are ignored until the root gets an npm test (cleanup step 5);
-# archive/sparks/tests/.gitignore un-ignores its own, which the Lane 2 harness needs.
-package.json
-package-lock.json
 
 # Client data never enters this public repository. These patterns cover the export
 # filenames every generation has used, so a saved file cannot be committed by accident.

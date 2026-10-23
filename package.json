@@ -1,0 +1,10 @@
+{
+  "name": "slam",
+  "private": true,
+  "description": "SLAM (Stress Less About Money): coach-operated budgeting. Static files, no build step. This file only names the commands; the app itself has no dependencies.",
+  "scripts": {
+    "test": "node --test \"slam/tests/**/*.test.js\"",
+    "test:browser": "cd slam && node tools/screens-check.mjs && node tools/journeys.mjs && node tools/layout-check.mjs",
+    "serve": "cd slam && python3 -m http.server 8765"
+  }
+}
