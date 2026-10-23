@@ -289,3 +289,14 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .flow-list ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); font-size: var(--text-sm); }
 .flow-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .fl-band { transition: none; } }
+
+/* Pick what you have (S-193) and Not now (S-194). */
+.pick-group { border: 0; padding: 0; margin: var(--space-3) 0 0; }
+.pick-group legend { font-weight: 700; margin-bottom: var(--space-2); }
+.pick-grid { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.pick .pick-count { width: 64px; min-height: var(--tap); margin-left: auto; padding: var(--space-1) var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+.pick-actions { position: sticky; bottom: 0; padding: var(--space-3) 0; background: var(--surface); }
+.later-tag { margin-left: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); border: 1px dashed var(--text-muted); border-radius: var(--radius-pill); padding: 0 var(--space-2); }
+.later-list { margin-top: var(--space-3); }
+.later-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.later-list ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }

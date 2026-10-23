@@ -8,6 +8,7 @@ import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } 
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
+import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
@@ -66,6 +67,19 @@ function refreshGuess() {
   };
   setTimeout(run, 0);
 }
+
+// Not now (S-194): a field you will come back to. It stays missing or rough
+// (the numbers stay honest), but Still guessing stops asking until Ask me
+// again. Kept per viewer in this browser, with the day it was set aside.
+const LATER_KEY = 'slam-ledger-later:v1';
+let later = (() => { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || {}; } catch { return {}; } })();
+const keepLater = () => { try { localStorage.setItem(LATER_KEY, JSON.stringify(later)); } catch { /* storage blocked: lasts until the page closes */ } };
+function laterBtn(row) {
+  if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { delete later[row.path]; keepLater(); lastSaved = 'Asking again: ' + row.label + '.'; render(); } }, 'Ask me again');
+  if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
+  return h('button', { type: 'button', class: 'btn', onclick: () => { later[row.path] = today(); keepLater(); open = null; dirty = false; lastSaved = 'Not now: ' + row.label + '. It stays ' + (row.fact.kind === 'missing' ? 'missing' : 'a guess') + ', and Still guessing will not ask until you choose Ask me again.'; render(); } }, 'Not now');
+}
+const isLater = (path) => !!later[rowPathFor(hist.present, path)];
 
 // Leaving an editor with unsaved typing is refused with a message, never silent.
 function canLeave() {
@@ -136,7 +150,7 @@ function cardRateEditor(row) {
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
       row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
     ));
 }
 
@@ -273,7 +287,7 @@ function expenseEditor(row) {
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label, 'confirmed'); } }, 'Confirm'),
       row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), e.label, 'not for me'); } }, 'Not for me'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
 // A section's sharing default (S-175): "Bills here are just mine" or "shared",
@@ -354,7 +368,7 @@ function suggestEditor(row) {
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
 // A pick list of the household's accounts (and cards, or the paycheck) for a link (S-189).
@@ -393,7 +407,7 @@ function paymentEditor(row) {
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label + ': paid from', 'confirmed'); } }, 'Confirm'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
 function editor(row) {
@@ -435,7 +449,7 @@ function editor(row) {
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), row.label, 'confirmed'); } }, 'Confirm'),
       f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
     ));
 }
 
@@ -457,11 +471,46 @@ function rowEl(row) {
   const computed = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
     h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
-      h('span', { class: 'row-label' }, label),
+      h('span', { class: 'row-label' }, label, later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
       chip(f.kind)),
     computed && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: hist.present, rules, s: summarize(hist.present, rules, { flags: false }) })) : null,
     isOpen && editor(row));
+}
+
+// Pick what you have (S-193): tick the accounts, cards, loans, income and
+// bills you have; Add puts them all in with their details blank and then
+// shows only what is missing, so the details come next. One Undo takes it back.
+let picking = null;
+function pickerCard() {
+  const have = haveCounts(hist.present);
+  const addBtn = h('button', { type: 'button', class: 'btn primary', onclick: () => {
+    const picks = [...picking].map(([key, n]) => ({ key, count: n }));
+    if (!picks.length) return;
+    const r = addPicked(hist.present, picks, today());
+    picking = null;
+    for (const p of r.added) { const [c, id] = p.split('.'); openItems.add(c + '.' + id); }
+    apply(r.spine, 'Added ' + r.count + ' item' + (r.count === 1 ? '' : 's'));
+    lastSaved = 'Added ' + r.count + '. Showing only what is missing: fill in the red fields, or use Not now.';
+    view = { ...view, kinds: ['missing'], q: '' }; keepView(); render();
+    openField(r.added[0]);
+  } });
+  const sync = () => { const n = [...picking.values()].reduce((x, k) => x + k, 0); addBtn.disabled = !n; addBtn.textContent = n ? 'Add ' + n + ' and fill in details' : 'Tick what you have first'; };
+  const pick = (x) => {
+    const box = h('input', { type: 'checkbox', checked: picking.has(x.key) });
+    const many = x.many ? h('input', { type: 'number', class: 'pick-count', min: 1, max: 9, inputmode: 'numeric', 'aria-label': 'How many: ' + x.label, hidden: !picking.has(x.key) }) : null;
+    if (many) { many.value = String(picking.get(x.key) || 1); many.addEventListener('input', () => { const p = parseInput('int', many.value); if (p.ok && p.value >= 1 && p.value <= 9) { picking.set(x.key, p.value); sync(); } }); }
+    box.addEventListener('change', () => { if (box.checked) picking.set(x.key, many ? Math.max(1, +many.value || 1) : 1); else picking.delete(x.key); if (many) many.hidden = !box.checked; sync(); });
+    const n = have.get(x.key) || 0;
+    return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
+  };
+  const card = h('section', { class: 'card picker', id: 'picker', 'aria-labelledby': 'picker-h' },
+    h('h2', { id: 'picker-h' }, 'Pick what you have'),
+    h('p', { class: 'muted' }, 'Tick everything that applies; for several of one kind, say how many. Each is added with its details blank, then the Ledger shows only what is missing so you can fill it in.'),
+    ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
+    h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; render(); } }, 'Cancel')));
+  sync();
+  return card;
 }
 
 // Subscriptions to look at (S-191): soonest charge first, each with Reviewed
@@ -486,7 +535,8 @@ function subsCard() {
 function guessList() {
   if (!guess) return h('section', { class: 'card guessing', 'aria-labelledby': 'g-title' }, h('h2', { id: 'g-title' }, 'Still guessing'), h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
   const stale = guessFor !== hist.present;
-  const items = guess.items;
+  const items = guess.items.filter((it) => !isLater(it.path));
+  const setAside = guess.items.filter((it) => isLater(it.path));
   const list = showAll ? items : items.slice(0, 8);
   const why = (it) => {
     if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
@@ -499,7 +549,10 @@ function guessList() {
     h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
       h('a', { href: '#' + it.path, onclick: (e) => { e.preventDefault(); openField(it.path); } }, chip(it.kind), ' ', it.label),
       h('span', { class: 'why' }, why(it))))),
-    items.length > 8 && h('button', { class: 'btn ghost', onclick: () => { showAll = !showAll; render(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length));
+    items.length > 8 && h('button', { class: 'btn ghost', onclick: () => { showAll = !showAll; render(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
+    setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
+      h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
+        h('button', { type: 'button', class: 'btn small', onclick: () => { delete later[rowPathFor(hist.present, it.path)]; keepLater(); render(); } }, 'Ask me again'))))) : null);
 }
 
 function openField(path) {
@@ -722,9 +775,11 @@ function render() {
       h('nav', { class: 'top-actions' },
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
         h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, canRedo(hist) ? 'Redo' : 'Nothing to redo'),
+        h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); render(); document.getElementById('picker')?.scrollIntoView({ block: 'start' }); } }, 'Pick what you have'),
         h('a', { class: 'btn', href: 'math.html' }, 'All formulas'),
         h('a', { class: 'btn', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
+    picking ? pickerCard() : null,
     guessList(),
     subsCard(),
     filterBar(tree),

@@ -377,3 +377,21 @@ test('duplicate: a copy keeps everything but its name and amount', () => {
   const cc = c.spine.debts.find((d) => d.id === c.id);
   assert.deepEqual([cc.name.value, cc.balance.value, cc.apr.value], ['New card', null, card.apr.value]);
 });
+
+// ------------------------------------------------------------------ pick what you have (S-193)
+import { STARTER, addPicked, haveCounts } from '../engine/starter.js';
+
+test('pick what you have: everything ticked is added with its details blank, in one step', () => {
+  const s = applyDefaults(demo(), R);
+  const before = haveCounts(s).get('credit_card');
+  const r = addPicked(s, [{ key: 'credit_card', count: 2 }, { key: 'ex-rent' }, { key: 'ex-streaming-and-apps' }, { key: 'in-1099' }], '2026-10-23');
+  assert.equal(r.count, 5);
+  assert.equal(haveCounts(r.spine).get('credit_card'), before + 2);
+  for (const p of r.added) assert.equal(getAt(r.spine, p).kind, 'missing', p + ' starts blank');
+  const stream = r.spine.expenses.find((e) => e.label === 'Streaming and apps');
+  assert.equal(stream.subscription.value, true, 'streaming is a subscription');
+  assert.equal(r.spine.expenses.find((e) => e.label === 'Rent').fat, 'accommodation');
+  assert.ok(validate(applyDefaults(r.spine, R)).ok);
+  assert.ok(STARTER.every((g) => g.items.length), 'every group has choices');
+  assert.throws(() => addPicked(s, [{ key: 'nope' }], '2026-10-23'));
+});
