@@ -39,8 +39,10 @@ test('the adapter maps the demo: accounts, what lands from each paycheck, bills 
   const sl = model.loans.find((l) => l.id === 'sl');
   assert.deepEqual([sl.payment, sl.day, sl.payLast, sl.rate], [21200, 1, true, 0.05], 'a student loan is paid last');
   assert.ok(model.transfers.some((t) => t.id === 'save:roth' && t.cents === 30000) && model.transfers.some((t) => t.id === 'setAside'));
-  assert.equal(windowDays('2026-10-22', 1), 10);
-  assert.equal(windowDays('2026-10-22', 3), 71);
+  assert.equal(windowDays('2026-10-22', 1), 31, 'one month on the 22nd runs to the 21st of next month, never just to month end');
+  assert.equal(windowDays('2026-10-22', 3), 92);
+  assert.equal(windowDays('2026-10-01', 1), 31, 'from the 1st the month itself is the window');
+  assert.equal(windowDays('2026-01-31', 1), 28, 'Jan 31 plus a month clamps to Feb 28; the window runs to the later of Jan 31 and Feb 27');
 });
 
 test('SLAM minimum rule: a card with no entered minimum pays the larger of $40 or 1% plus a month of interest, following the balance', () => {

@@ -140,12 +140,28 @@ that builds the engine's model from the spine and reads the run back as numbers
 with a kind. The parity matrix for the whole calendar is
 `docs/CALENDAR_PARITY.md`.
 
+### The calendar views (Batch B, S-204)
+
+One time selector (1, 3, 6 or 12 months; 12 is the year) sits over the
+calendar and, from Batch E, the budget. The calendar page has tabs, every one a
+reading of the same day-by-day run: the month grid with running checking and
+debt in each cell, the weeks (in, out, ending balance), the next 14 days, each
+paycheck with what it covers and what is left (a bonus chip on the third
+biweekly or fifth weekly paycheck of a month, and what it could do), and the
+year strip with tight months flagged. A paycheck shows what lands; the gross
+and what came off fold out. Drag an item's grip to another day, or open it and
+press Move; skip it once, re-price it this time, lock it. Maybe money waits in
+a tray until it has a day. Milestones (a card cleared, debt free, a promo
+ending) sit on their days and on a timeline. Search finds any item. Edits save
+in this browser like the Ledger's, with Undo. `engine/calendar-views.js` holds
+the readings; `ui/window.js` the selector; `ui/calendar.js` only formats.
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, windfall |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), windfall |
 | `ui/` | the Ledger, Dashboard, Calendar and Windfall views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |

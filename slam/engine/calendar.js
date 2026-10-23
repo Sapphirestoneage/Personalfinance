@@ -68,14 +68,16 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     const net = st.takeHome === null ? null : round2(st.takeHome - deducted);
     const amountRough = roughFact(s.amount);
     const perPay = (n) => (net === null ? null : net / n);
-    const common = { kind: 'pay', label: s.label + likely, direction: 'in', path, id: 'pay:' + s.id, note: deducted ? 'after tax, Social Security and Medicare, and ' + money(deducted) + ' saved from pay' : 'after tax' };
+    const common = { kind: 'pay', label: s.label + likely, direction: 'in', path, id: 'pay:' + s.id, sourceId: s.id, repeats: s.cadence !== 'once', movable: true, note: deducted ? 'after tax, Social Security and Medicare, and ' + money(deducted) + ' saved from pay' : 'after tax', gross: st ? round2(st.gross) : null, withheld: st ? round2(st.withheld) : null, fica: st ? round2(st.fica) : null, saved: round2(deducted) };
     if (s.cadence === 'once') { add({ ...common, date: s.start, amount: net, rough: amountRough }); continue; }
     if (STEP[s.cadence]) {
       const dates = payDatesIn(s.start, s.cadence, s.end, ym);
       if (!dates.length) { add({ ...common, date: null, amount: net, rough: amountRough, note: 'no pay date falls in this month' }); continue; }
       // One paycheck: the stream's net per dollar of gross, times the gross of one pay.
       const each = v(s.amount) === null || !st.gross ? null : v(s.amount) * w * net / st.gross;
-      for (const d of dates) add({ ...common, date: d, amount: each, rough: amountRough, note: 'counted from the first pay date; ' + common.note });
+      const perPayGross = v(s.amount) === null ? null : v(s.amount) * w;
+      const share = st && st.gross ? perPayGross / st.gross : null;
+      for (const d of dates) add({ ...common, date: d, amount: each, rough: amountRough, note: 'counted from the first pay date; ' + common.note, gross: perPayGross, withheld: share !== null ? round2(st.withheld * share) : null, fica: share !== null ? round2(st.fica * share) : null, saved: share !== null ? round2(deducted * share) : null });
       continue;
     }
     const day = s.payDay ? t.useFact(base + '.payDay', s.payDay) : null;
@@ -83,8 +85,9 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     const dayRough = roughFact(s.payDay);
     if (s.cadence === 'semimonthly') {
       const d2 = Math.min(day + 15, daysInMonth(year, +ym.slice(5, 7)));
-      add({ ...common, date: dayIn(ym, day), amount: perPay(2), rough: amountRough || dayRough });
-      add({ ...common, date: dayIn(ym, d2), amount: perPay(2), rough: amountRough || dayRough, note: 'the second pay of the month, 15 days after the first' });
+      const half = { gross: common.gross === null ? null : round2(common.gross / 2), withheld: common.withheld === null ? null : round2(common.withheld / 2), fica: common.fica === null ? null : round2(common.fica / 2), saved: round2(common.saved / 2) };
+      add({ ...common, ...half, date: dayIn(ym, day), amount: perPay(2), rough: amountRough || dayRough });
+      add({ ...common, ...half, date: dayIn(ym, d2), amount: perPay(2), rough: amountRough || dayRough, note: 'the second pay of the month, 15 days after the first' });
     } else add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: s.cadence === 'monthly' ? null : 'counted as its monthly share' });
   }
 
@@ -102,14 +105,14 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
       const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;
       const charge = v(e.amount) === null ? null : (sh.shared && sh.share !== null ? v(e.amount) * sh.share : v(e.amount));
       const next = renews ? nextCharge(renews, e.cadence, first) : null;
-      if (next && inMonth(next)) add({ id: 'sub:' + e.id, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path });
-      else if (!renews) add({ id: 'sub:' + e.id, kind: 'subscription', label: e.label, date: null, amount: yours, direction: 'out', rough: true, note: 'next charge date not entered', path });
+      if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path });
+      else if (!renews) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, kind: 'subscription', label: e.label, date: null, amount: yours, direction: 'out', rough: true, note: 'next charge date not entered', path });
       // A charge in another month: nothing this month; the monthly share is in the month-end cash from the projection.
       continue;
     }
     const day = e.payDay ? t.useFact(base + '.payDay', e.payDay) : null;
-    if (day === null) { add({ id: 'bill:' + e.id, kind: 'bill', label: e.label, date: null, amount: yours, direction: 'out', rough: amountRough, note: 'day paid not entered', path: base + '.paidFrom' }); continue; }
-    add({ id: 'bill:' + e.id, kind: 'bill', label: e.label, date: dayIn(ym, day), amount: yours, direction: 'out', rough: amountRough || roughFact(e.payDay), path: base + '.paidFrom', note: e.cadence === 'monthly' ? null : 'counted as its monthly share' });
+    if (day === null) { add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', kind: 'bill', label: e.label, date: null, amount: yours, direction: 'out', rough: amountRough, note: 'day paid not entered', path: base + '.paidFrom' }); continue; }
+    add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', movable: true, kind: 'bill', label: e.label, date: dayIn(ym, day), amount: yours, direction: 'out', rough: amountRough || roughFact(e.payDay), path: base + '.paidFrom', note: e.cadence === 'monthly' ? null : 'counted as its monthly share' });
   }
 
   // ------------------------------------------------------------ debt minimums on their due days
@@ -118,7 +121,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     const d = (spine.debts || []).find((x) => x.id === m.id);
     t.useFact('debts.' + d.id + '.minimum', d.minimum);
     const dueRough = roughFact(d.dueDay);
-    add({ id: 'debt:' + d.id, kind: 'debt', label: (m.name || d.id) + (m.estimated ? ' (minimum, house default)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a house guess' : null) : 'due day not entered', path: 'debts.' + d.id + '.minimum' });
+    add({ id: 'debt:' + d.id, sourceId: null, repeats: true, plan: d.type === 'bnpl', kind: 'debt', label: (m.name || d.id) + (m.estimated ? ' (minimum, house default)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a house guess' : null) : 'due day not entered', path: 'debts.' + d.id + '.minimum' });
   }
 
   // ------------------------------------------------------------ saving from take-home, the tax set-aside
@@ -126,9 +129,9 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
     if (!a.monthlyContribution || a.family === 'cash' || ['employerRetirement', 'hsaFsa'].includes(a.family)) continue;
     const x = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
     if (!x) continue;
-    add({ id: 'save:' + a.id, kind: 'saving', label: 'Into ' + (v(a.name) || a.id), date: null, amount: x, direction: 'out', rough: roughFact(a.monthlyContribution), note: 'paid in from take-home; no day entered', path: 'accounts.' + a.id + '.monthlyContribution' });
+    add({ id: 'save:' + a.id, sourceId: 'save:' + a.id, repeats: true, kind: 'saving', label: 'Into ' + (v(a.name) || a.id), date: null, amount: x, direction: 'out', rough: roughFact(a.monthlyContribution), note: 'paid in from take-home; no day entered', path: 'accounts.' + a.id + '.monthlyContribution' });
   }
-  if (cf.taxSetAside.total.value) add({ id: 'setAside', kind: 'setAside', label: 'Tax set-aside', date: null, amount: cf.taxSetAside.total.value, direction: 'out', rough: cf.taxSetAside.total.kind !== 'computed', note: 'money to hold back for tax that nothing withholds', path: setAsidePath(spine, cf) });
+  if (cf.taxSetAside.total.value) add({ id: 'setAside', sourceId: 'setAside', repeats: true, kind: 'setAside', label: 'Tax set-aside', date: null, amount: cf.taxSetAside.total.value, direction: 'out', rough: cf.taxSetAside.total.kind !== 'computed', note: 'money to hold back for tax that nothing withholds', path: setAsidePath(spine, cf) });
 
   // ------------------------------------------------------------ dates: promos, tax, starts and ends, changes
   for (const p of promoDeadlines(spine, asOf).items) if (inMonth(p.switchDate)) add({ id: 'promo:' + p.id, kind: 'promoEnds', label: p.name + ': intro rate ends, ' + (p.aprAfter === null ? 'regular rate not entered' : Math.round(p.aprAfter * 10000) / 100 + '% from this day'), date: p.switchDate, rough: p.aprAfterKind === 'rough', path: 'debts.' + p.id + '.promoEnds' });
@@ -146,8 +149,46 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule }) {
   for (const [k, word] of [['healthCoverage', 'Health coverage becomes '], ['situation', 'Situation becomes ']]) for (const e of spine.household[k] || []) if (inMonth(e.from)) add({ id: k + ':' + e.id, kind: k === 'situation' ? 'situation' : 'coverage', label: word + String(v(e.value)).replace(/_/g, ' '), date: e.from, path: 'household.' + k + '.' + e.id + '.value' });
 
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined });
-  for (const e of events) e.day = e.date ? +e.date.slice(8, 10) : null;
-  return { events, cf, tracker: t, first, last };
+
+  // ------------------------------------------------------------ the household's own timing decisions (S-203, S-204)
+  // Overrides move, re-price or skip one occurrence (keyed sourceId|original date);
+  // the maybe tray's dated items land as maybe money; locks are pills.
+  const cal = spine.calendar || {};
+  const overrides = cal.overrides || {};
+  const kept = [];
+  for (const e of events) {
+    e.key = e.sourceId && e.date ? e.sourceId + '|' + e.date : null;
+    e.origDate = e.date;
+    const ov = e.key ? overrides[e.key] : null;
+    if (ov) {
+      if (ov.skip) { e.skipped = true; continue; }
+      if (ov.date) { e.date = ov.date; e.moved = true; e.note = 'moved from ' + e.origDate + (e.note ? '; ' + e.note : ''); }
+      if (typeof ov.amount === 'number') { e.amount = round2(ov.amount); e.repriced = true; }
+    }
+    if (e.date && !inMonth(e.date)) continue;
+    kept.push(e);
+  }
+  // Moved into this month from another one.
+  for (const [key, ov] of Object.entries(overrides)) {
+    if (!ov.date || !inMonth(ov.date)) continue;
+    const [sourceId, orig] = key.split('|');
+    if (inMonth(orig)) continue;
+    const src = (spine.income || []).find((x) => x.id === sourceId) || (spine.expenses || []).find((x) => x.id === sourceId);
+    if (!src) continue;
+    const isIncome = !!(spine.income || []).find((x) => x.id === sourceId);
+    const base = (isIncome ? 'income.' : 'expenses.') + sourceId;
+    kept.push({ amount: typeof ov.amount === 'number' ? round2(ov.amount) : null, direction: isIncome ? 'in' : 'out', rough: true, note: 'moved from ' + orig + '; amount as of that day', path: base + '.amount', counted: true, id: (isIncome ? 'pay:' : 'bill:') + sourceId, sourceId, repeats: true, movable: true, kind: isIncome ? 'pay' : 'bill', label: src.label, date: ov.date, key, origDate: orig, moved: true });
+  }
+  for (const m of cal.maybe || []) {
+    if (!m.date || !inMonth(m.date)) continue;
+    kept.push({ amount: round2(m.amount), direction: m.direction === 'out' ? 'out' : 'in', rough: true, note: Math.round((typeof m.likelihood === 'number' ? m.likelihood : 0.5) * 100) + '% likely; counted at that weight in the cash line', path: null, counted: false, id: 'maybe:' + m.id, sourceId: 'maybe:' + m.id, maybeId: m.id, kind: 'maybe', label: m.label, date: m.date, key: 'maybe:' + m.id + '|' + m.date, origDate: m.date, movable: true, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5 });
+  }
+  for (const e of kept) {
+    e.day = e.date ? +e.date.slice(8, 10) : null;
+    e.locked = !!(e.key && cal.locks && cal.locks[e.key]);
+    e.pills = [...(e.kind === 'subscription' ? ['sub'] : []), ...(e.plan ? ['plan'] : []), ...(e.repeats ? ['repeat'] : []), ...(e.locked ? ['locked'] : []), ...(e.date && e.date < asOf ? ['done'] : []), ...(e.kind === 'maybe' ? ['maybe'] : [])];
+  }
+  return { events: kept, cf, tracker: t, first, last };
 }
 
 // Where the tax set-aside line opens: the tax year's set-aside field, else the untaxed income.
@@ -169,9 +210,10 @@ function cashLineFor(sim, ym) {
 
 // The month-end cash number and how it was reached (S-203): the start-of-month
 // checking balance plus every event on the checking account in the month, by kind.
-export function monthCashTerms(sim, ym) {
+export function monthCashTerms(sim, ym) { return rangeCashTerms(sim, ym + '-01', ym + '-31'); }
+export function rangeCashTerms(sim, from, to) {
   if (!sim) return null;
-  const days = sim.daily.filter((d) => d.date.slice(0, 7) === ym);
+  const days = sim.daily.filter((d) => d.date >= from && d.date <= to);
   if (!days.length) return null;
   const pid = sim.model.accounts.find((a) => a.primary);
   if (!pid) return null;
@@ -223,7 +265,8 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
   }
   all.rule(rules, 'EST_Q1', +start.slice(0, 4)); all.rule(rules, 'EST_Q2', +start.slice(0, 4)); all.rule(rules, 'EST_Q3', +start.slice(0, 4)); all.rule(rules, 'EST_Q4', +start.slice(0, 4)); all.rule(rules, 'TAX_RETURN_DUE', +start.slice(0, 4));
   const snap = all.snapshot();
-  return { asOf, mode, maybeMode, from: start, months: out, sim, ...snap };
+  const tray = ((spine.calendar || {}).maybe || []).filter((m) => !m.date).map((m) => ({ id: m.id, label: m.label, amount: m.amount, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5, direction: m.direction || 'in' }));
+  return { asOf, mode, maybeMode, from: start, months: out, sim, tray, ...snap };
 }
 
 // The first day of the week (0 Sunday) a month starts on, for a grid.

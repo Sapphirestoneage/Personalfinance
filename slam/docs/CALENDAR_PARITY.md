@@ -60,15 +60,15 @@ levels or archetypes (links instead).
 
 | # | Feature (spec item) | Status now | File | Batch |
 | --- | --- | --- | --- | --- |
-| 35 | Weeks view: in, out, ending balance per week (4.1) | old Budget only (a cash strip and calendar) / in cashcal.js view | `slam/src/ui/components/cashflow.js`; `money-rooms-v3/ui/views/calendar.js` drawWeeks | B |
-| 36 | Month grid with running cash and debt per day (4.1) | in SLAM (grid, no running cash yet) | `slam/ui/calendar.js` grid | A (cash line), B (grid shows it) |
-| 37 | Drag to reschedule (pointer events, works on touch) (4.1) | missing | none | B |
-| 38 | Tap to edit; a drag past 14px moves it; a visible Move button (4.1) | missing | none | B |
-| 39 | Chips colour-coded by kind, tag spine, card dot (4.1) | in SLAM (colour by kind) | `slam/ui/calendar.js` eventEl | B |
-| 40 | Pills: sub, plan, repeat, locked, done (4.1) | missing (a rough tag only) | `slam/ui/calendar.js` | B |
-| 41 | Drag into Maybe money to unschedule; the maybe tray (4.1) | missing | none | B |
-| 42 | Locks (4.1) | missing | none | B |
-| 43 | Search (4.1) | in SLAM (the Ledger's field search, not the calendar's) | `slam/ui/ledger.js` | B |
+| 35 | Weeks view: in, out, ending balance per week (4.1) | in SLAM | `slam/engine/calendar-views.js` weeks; `slam/ui/calendar.js` weeksTab | B |
+| 36 | Month grid with running cash and debt per day (4.1) | in SLAM | `slam/ui/calendar.js` grid (checking and debt per day from the month's cash line) | A (cash line), B (grid shows it) |
+| 37 | Drag to reschedule (pointer events, works on touch) (4.1) | in SLAM | `slam/ui/calendar.js` dragSetup (pointer events, 14px threshold, touch-action none on the grip) | B |
+| 38 | Tap to edit; a drag past 14px moves it; a visible Move button (4.1) | in SLAM | `slam/ui/calendar.js` editor (Move button), dragSetup | B |
+| 39 | Chips colour-coded by kind, tag spine, card dot (4.1) | in SLAM | `slam/ui/calendar.js` eventEl (data colour by kind, legend) | B |
+| 40 | Pills: sub, plan, repeat, locked, done (4.1) | in SLAM | `slam/engine/calendar-views.js` pillsFor; `slam/ui/calendar.js` pills | B |
+| 41 | Drag into Maybe money to unschedule; the maybe tray (4.1) | in SLAM | `slam/engine/edits.js` addMaybe, setMaybeDate, removeMaybe; `slam/ui/calendar.js` trayCard, editor (Back to the tray) | B |
+| 42 | Locks (4.1) | in SLAM | `slam/engine/edits.js` lockOccurrence; `slam/ui/calendar.js` editor | B |
+| 43 | Search (4.1) | in SLAM | `slam/engine/calendar-views.js` searchEvents; `slam/ui/calendar.js` searchCard | B |
 | 44 | Burn tier 1: core burn (food, accommodation, transport) (4.2) | in SLAM (FAT total) | `slam/engine/cashflow.js` expenses.fat | A (tiers), D (shown) |
 | 45 | Tier 2: plus everything else that is not debt (4.2) | missing | none | A, D |
 | 46 | Tier 3: plus every debt at its minimum (4.2) | in SLAM (minimums total) | cashflow.js debtMinimums | A, D |
@@ -86,8 +86,8 @@ levels or archetypes (links instead).
 | 58 | The float card: goal zero interest, paid last, held flat, "interest-free from" (4.6) | in cashcal.js | cashcal.js goalNoInterest | A (engine), C (shown) |
 | 59 | FOO: nine rungs funded by the surplus, completion date per rung (4.7) | missing | none | F |
 | 60 | FOO allocations as dashed ghost chips tagged Plan (4.7) | missing | none | F |
-| 61 | Milestones: auto markers ("Amex cleared"), clickable (4.8) | missing | none | B |
-| 62 | Milestone horizontal timeline (4.8) | missing | none | B |
+| 61 | Milestones: auto markers ("Amex cleared"), clickable (4.8) | in SLAM | `slam/engine/calendar-views.js` milestones; `slam/ui/calendar.js` msOn | B |
+| 62 | Milestone horizontal timeline (4.8) | in SLAM | `slam/ui/calendar.js` milestonesCard | B |
 | 63 | Setup wizard, ends listing what is still a guess (4.9) | in SLAM (Pick what you have; Still guessing) | `slam/ui/ledger.js` | done |
 | 64 | Weekly check-in: happened / different amount / did not happen (4.9) | old Budget only (It happened, on Track) | `slam/src/ui/screens/track.js` | D |
 | 65 | Check-in: real balances prefilled with the forecast; re-anchor to today (4.9) | old Budget only (balance checks) | `slam/src/ui/screens/track.js` | D |
@@ -165,10 +165,10 @@ levels or archetypes (links instead).
 
 | # | Feature | Status now | File | Batch |
 | --- | --- | --- | --- | --- |
-| 130 | One time selector (1, 3, 6, 12 months) shared by the calendar and the budget | missing | none | B, E |
-| 131 | Next-14-days agenda | in cashcal.js | cashcal.js agenda | B |
-| 132 | Year strip with tight months flagged | in cashcal.js | cashcal.js yearStrip | B |
-| 133 | Per-paycheck view with bonus paycheck chips (third biweekly, fifth weekly) | in cashcal.js (the paycheck map, no bonus chip) | cashcal.js paycheckMap | B |
+| 130 | One time selector (1, 3, 6, 12 months) shared by the calendar and the budget | in SLAM (the calendar; the budget joins in Batch E) | `slam/ui/window.js` | B, E |
+| 131 | Next-14-days agenda | in SLAM | `slam/engine/calendar-views.js` agenda; `slam/ui/calendar.js` agendaTab | B |
+| 132 | Year strip with tight months flagged | in SLAM | `slam/engine/calendar-views.js` yearStrip; `slam/ui/calendar.js` yearTab | B |
+| 133 | Per-paycheck view with bonus paycheck chips (third biweekly, fifth weekly) | in SLAM | `slam/engine/calendar-views.js` paychecks (bonus, couldDo); `slam/ui/calendar.js` paychecksTab | B |
 | 134 | Reimbursed subscriptions | in cashcal.js | cashcal.js (reimb incomes) | A |
 | 135 | Per-occurrence overrides and repeats with an end count | in cashcal.js | cashcal.js overrides, occurrences count | A |
 | 136 | Paycheck allocator by due date, three-paycheck month planner, 1099 set-aside on each deposit (R006) | missing | none | F |
@@ -184,12 +184,14 @@ levels or archetypes (links instead).
 
 | Status | Rows |
 | --- | --- |
-| in SLAM | 24 (some also in cashcal.js for the daily form) |
-| old Budget only | 11 |
-| in cashcal.js | 56 |
-| missing | 48 |
+| in SLAM | 43 (some also in cashcal.js for the daily form) |
+| old Budget only | 10 |
+| in cashcal.js | 51 |
+| missing | 36 |
 | excluded | 3 |
 | rows in all | 143 |
+
+After Batch B (2026-10-23): in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
 
 The brief counted 87 features in sections 3, 4 and 7; this list has 129 there because
 each return value, each burn tier, each pill set and each self-test assertion is its own

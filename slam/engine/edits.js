@@ -338,3 +338,75 @@ export function bulkEdit(spine, rows, action, today) {
   }
   return s;
 }
+
+// ---------------------------------------------------------------- the calendar's timing decisions (S-204)
+// Overrides, locks and the maybe tray live in spine.calendar as plain values (S-203): a
+// decision about one occurrence, not a fact about the household. Each returns a new spine.
+const calOf = (spine) => ({ overrides: {}, maybe: [], locks: {}, ...(spine.calendar || {}) });
+const withCal = (spine, cal) => ({ ...spine, calendar: cal });
+const isoDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d));
+
+// Move one occurrence to another day. A locked occurrence refuses.
+export function moveOccurrence(spine, key, date) {
+  if (!isoDate(date)) throw new Error('Use YYYY-MM-DD');
+  const cal = calOf(spine);
+  if (cal.locks[key]) throw new Error('This one is locked; unlock it first');
+  const orig = key.split('|')[1];
+  const cur = cal.overrides[key] || {};
+  const next = { ...cur };
+  if (date === orig) delete next.date; else next.date = date;
+  delete next.skip;
+  const overrides = { ...cal.overrides };
+  if (Object.keys(next).length) overrides[key] = next; else delete overrides[key];
+  return withCal(spine, { ...cal, overrides });
+}
+// Skip one occurrence (it stays in the rule), or put it back.
+export function skipOccurrence(spine, key, skip = true) {
+  const cal = calOf(spine);
+  if (cal.locks[key]) throw new Error('This one is locked; unlock it first');
+  const overrides = { ...cal.overrides };
+  const next = { ...(overrides[key] || {}) };
+  if (skip) next.skip = true; else delete next.skip;
+  if (Object.keys(next).length) overrides[key] = next; else delete overrides[key];
+  return withCal(spine, { ...cal, overrides });
+}
+// Re-price one occurrence (null puts the rule's amount back).
+export function repriceOccurrence(spine, key, amount) {
+  const cal = calOf(spine);
+  if (cal.locks[key]) throw new Error('This one is locked; unlock it first');
+  if (amount !== null && (typeof amount !== 'number' || !Number.isFinite(amount))) throw new Error('Type a number');
+  const overrides = { ...cal.overrides };
+  const next = { ...(overrides[key] || {}) };
+  if (amount === null) delete next.amount; else next.amount = amount;
+  if (Object.keys(next).length) overrides[key] = next; else delete overrides[key];
+  return withCal(spine, { ...cal, overrides });
+}
+// Lock or unlock one occurrence so a drag cannot move it.
+export function lockOccurrence(spine, key, on = true) {
+  const cal = calOf(spine);
+  const locks = { ...cal.locks };
+  if (on) locks[key] = true; else delete locks[key];
+  return withCal(spine, { ...cal, locks });
+}
+// Maybe money (the tray): add an item, put it on a date or back in the tray, remove it.
+export function addMaybe(spine, { label, amount, likelihood = 0.5, direction = 'in', date = null }) {
+  if (!label || !String(label).trim()) throw new Error('Give it a name');
+  if (typeof amount !== 'number' || !(amount > 0)) throw new Error('How much: more than $0');
+  if (typeof likelihood !== 'number' || likelihood < 0 || likelihood > 1) throw new Error('How likely: 0 to 100%');
+  if (date !== null && !isoDate(date)) throw new Error('Use YYYY-MM-DD');
+  const cal = calOf(spine);
+  const base = String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'maybe';
+  let id = base, n = 2;
+  while (cal.maybe.some((m) => m.id === id)) id = base + '-' + n++;
+  return { spine: withCal(spine, { ...cal, maybe: [...cal.maybe, { id, label: String(label).trim(), amount, likelihood, direction, date }] }), id };
+}
+export function setMaybeDate(spine, id, date) {
+  if (date !== null && !isoDate(date)) throw new Error('Use YYYY-MM-DD');
+  const cal = calOf(spine);
+  if (!cal.maybe.some((m) => m.id === id)) throw new Error('No maybe item ' + id);
+  return withCal(spine, { ...cal, maybe: cal.maybe.map((m) => (m.id === id ? { ...m, date } : m)) });
+}
+export function removeMaybe(spine, id) {
+  const cal = calOf(spine);
+  return withCal(spine, { ...cal, maybe: cal.maybe.filter((m) => m.id !== id) });
+}

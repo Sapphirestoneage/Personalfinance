@@ -181,12 +181,15 @@ function windfallMetric(id) {
 // the month = checking at the start + every event on the account in the month, by kind,
 // from the day-by-day simulation. ctx.month is the calendar month (the page puts it there).
 function calendarMetric(id) {
-  if (id !== 'calendar:monthCash') return null;
-  return { id, label: 'Checking at the end of the month', unit: 'usd', op: 'sum', screens: ['calendar'], formula: 'Checking at month end = checking at the start of the month + pay in - bills - card and loan payments - everyday spending - saving and the set-aside + top-ups from the cushion',
-    explain: ({ month, s }) => {
-      const t = month && month.monthCash;
+  if (id === 'calendar:paycheckLeft') return { id, label: 'Left after this paycheck', unit: 'usd', op: 'sum', screens: ['calendar'], formula: 'Left = the paycheck - every bill, payment and everyday spending it covers until the next paycheck',
+    explain: ({ paycheck: p }) => (p ? out({ value: p.left, kind: 'computed', from: [], rough: [], missing: [], rules: [] }, [{ label: 'The paycheck (what lands)', value: p.amount, unit: 'usd', kind: 'computed', role: 'plus', path: p.path || null, group: 'I' }, ...p.bills.map((b) => ({ label: b.label + (b.date ? ' (' + b.date + ')' : ''), value: b.amount, unit: 'usd', kind: 'computed', role: 'minus', group: null }))]) : out(null, [])) };
+  if (id !== 'calendar:monthCash' && id !== 'calendar:rangeCash') return null;
+  const range = id === 'calendar:rangeCash';
+  return { id, label: range ? 'Checking at the end of the period' : 'Checking at the end of the month', unit: 'usd', op: 'sum', screens: ['calendar'], formula: (range ? 'Checking at the end = checking at the start' : 'Checking at month end = checking at the start of the month') + ' + pay in - bills - card and loan payments - everyday spending - saving and the set-aside + top-ups from the cushion',
+    explain: ({ month, range: rg, s }) => {
+      const t = range ? rg && rg.terms : month && month.monthCash;
       if (!t) return out(null, []);
-      const kind = month.cash.kind === 'computed' ? 'computed' : month.cash.kind;
+      const kind = range ? (rg.kind || 'computed') : month.cash.kind === 'computed' ? 'computed' : month.cash.kind;
       return out({ value: t.end, kind, from: [], rough: [], missing: [], rules: [] }, [
         { label: 'Checking at the start (' + t.startDate + ')', value: t.start, unit: 'usd', kind: s.sheet.cash.kind === 'computed' ? 'known' : s.sheet.cash.kind, role: 'plus', group: 'A' },
         ...t.groups.map((g) => ({ label: g.label, value: Math.abs(g.amount), unit: 'usd', kind: 'computed', role: g.amount < 0 ? 'minus' : 'plus', group: null }))

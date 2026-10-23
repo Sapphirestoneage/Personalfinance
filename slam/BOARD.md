@@ -33,14 +33,14 @@
 - [x] Windfall room: `windfall.html`, a lump sum assigned in the `WINDFALL_ORDER` house order, every step with Show the math (S-201)
 - [x] Report: `docs/PHASE2_REPORT.md` (what was built, tests, what to check against real data, questions)
 
-## Done: Phase 2 full version, Batch 0 and Batch A (2026-10-23)
+## Done: Phase 2 full version, Batches 0, A and B (2026-10-23)
 
 - [x] Batch 0: `docs/CALENDAR_PARITY.md`; answers 21 to 28 as S-202; D-342 and the CLAUDE.md line
 - [x] Batch A: `engine/vendor/` (the v44 engine as ported by Money Rooms v3, drift-tested), `engine/cashsim.js` (spine in, model out, results back as Facts with kind), the ten self-test assertions as tests, the calendar's cash line and month-end checking from the simulation with Show the math (S-203)
+- [x] Batch B: the calendar views (S-204): the time selector (`ui/window.js`), tabs for the month grid with running cash and debt, weeks, the next 14 days, each paycheck with bonus chips and the gross fold-out, the year strip; drag or Move, skip, re-price, lock; the maybe tray; search; milestones and their timeline; pills; Undo; affordances.html entries
 
 ## Next: Phase 2 full version, Batches B to G (in order; each tested, committed and pushed)
 
-- Batch B: calendar views (time selector, grid with running cash and debt, weeks, next 14 days, year strip, per-paycheck with bonus chips, drag or Move, maybe tray, locks, search, milestones, pills)
 - Batch C: the Debt tab on the calendar page
 - Batch D: spending and keeping it true
 - Batch E: estimated vs actual, the feed model

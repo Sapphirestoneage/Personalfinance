@@ -359,6 +359,7 @@ export function validate(spine) {
   }
   if (cal.maybe !== undefined) { if (!Array.isArray(cal.maybe)) err('calendar.maybe', 'a list'); else { uniqueIds('calendar.maybe', cal.maybe); for (const m of cal.maybe) { const p = 'calendar.maybe.' + m.id; if (typeof m.label !== 'string') err(p, 'needs a label'); if (typeof m.amount !== 'number') err(p, 'amount must be a number'); if (m.date !== null && m.date !== undefined && !isDate(m.date)) err(p, 'date is not a date'); if (m.likelihood !== undefined && (typeof m.likelihood !== 'number' || m.likelihood < 0 || m.likelihood > 1)) err(p, 'likelihood is 0 to 1'); if (m.direction !== undefined && !['in', 'out'].includes(m.direction)) err(p, 'direction is in or out'); } } }
   for (const k of ['guard', 'autoCover']) if (cal[k] !== undefined && typeof cal[k] !== 'boolean') err('calendar.' + k, 'true or false');
+  for (const [key, on] of Object.entries(cal.locks || {})) { if (!/^[^|]+\|\d{4}-\d{2}-\d{2}$/.test(key)) err('calendar.locks.' + key, 'key is sourceId|YYYY-MM-DD'); if (on !== true) err('calendar.locks.' + key, 'a lock is true or absent'); }
 
   // assumptions
   const as = spine.assumptions || {};

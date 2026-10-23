@@ -31,10 +31,16 @@ const STEP = { weekly: 'weekly', biweekly: 'biweekly' };
 const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 
 // Days from the as-of date through the end of the last of `months` months.
+// The window runs to the end of the last calendar month asked for, and never
+// less than the same number of whole months ahead (one month on the 22nd runs
+// to the 21st of next month, so the next paycheck and the next 14 days are in it).
 export function windowDays(asOf, months) {
-  const last = monthEnd(addMonths(monthKey(asOf), Math.max(1, months) - 1));
-  return daysBetween(asOf, last) + 1;
+  const n = Math.max(1, months);
+  const last = monthEnd(addMonths(monthKey(asOf), n - 1));
+  const ahead = addDays(clampDay(addMonths(monthKey(asOf), n), +asOf.slice(8, 10)), -1);
+  return daysBetween(asOf, last > ahead ? last : ahead) + 1;
 }
+const clampDay = (ym, day) => { const end = monthEnd(ym); return ym + '-' + String(Math.min(day, +end.slice(8, 10))).padStart(2, '0'); };
 
 // The debt plan (spine.debtPlan, every field optional): the extra at the debt and how it is aimed.
 export function debtPlanOf(spine, rules, t, year) {
