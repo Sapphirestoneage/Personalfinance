@@ -22,7 +22,9 @@ test('ledger: every Fact is a row, in a DAITE group, with a label and type', () 
   const rows = groups.flatMap((g) => g.rows);
   // A card's APR, intro rate and intro end share one row.
   const cardIntro = listFacts(s).filter((x) => /^debts\.[^.]+\.(promoApr|promoEnds)$/.test(x.path) && getAt(s, x.path.split('.').slice(0, 2).join('.')).type === 'credit_card');
-  assert.equal(rows.length, listFacts(s).length - cardIntro.length);
+  // A pay day folds into its income or expense row (S-189, S-199).
+  const payDays = listFacts(s).filter((x) => /^(income|expenses)\.[^.]+\.payDay$/.test(x.path));
+  assert.equal(rows.length, listFacts(s).length - cardIntro.length - payDays.length);
   const find = (p) => rows.find((r) => r.path === p);
   assert.equal(find('debts.visa.apr').group, 'D');
   assert.equal(find('debts.visa.apr').type, 'cardRate');
@@ -415,7 +417,7 @@ test('income: one row says how much, how often, since when and the day paid; the
   let s = demo();
   const row = ledgerRows(s).flatMap((g) => g.rows).find((r) => r.path === 'income.salary.amount');
   assert.equal(row.type, 'income');
-  assert.deepEqual(row.fact.value, { amount: 6000, cadence: 'monthly', start: '2024-01-01', end: null, payDay: null });
+  assert.deepEqual(row.fact.value, { amount: 6000, cadence: 'monthly', start: '2024-01-01', end: null, payDay: 15 });
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'semimonthly', start: '2024-01-01', end: '2027-06-30', payDay: 15, kind: 'known', label: 'Salary (new title)' }, '2026-10-23');
   const x = s.income.find((i) => i.id === 'salary');
   assert.deepEqual([x.amount.value, x.cadence, x.start, x.end, x.payDay.value, x.label], [6200, 'semimonthly', '2024-01-01', '2027-06-30', 15, 'Salary (new title)']);
@@ -424,7 +426,7 @@ test('income: one row says how much, how often, since when and the day paid; the
   const rows = ledgerRows(s).flatMap((g) => g.rows);
   assert.equal(rows.filter((r) => r.path.startsWith('income.salary.')).some((r) => r.path.endsWith('.payDay')), false);
   assert.equal(rowPathFor(s, 'income.salary.payDay'), 'income.salary.amount');
-  assert.equal(rows.length, listFacts(s).length - 2 - 1, 'the two card intro facts and the pay day fold into their rows');
+  assert.equal(rows.length, listFacts(s).length - 2 - listFacts(s).filter((x) => /\.payDay$/.test(x.path)).length, 'the two card intro facts and every pay day fold into their rows');
   // A blank clears a date; a pay day of null drops the field; bad dates are refused.
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'monthly', end: null, payDay: null }, '2026-10-23');
   assert.equal(s.income.find((i) => i.id === 'salary').end, null);

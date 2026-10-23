@@ -103,6 +103,12 @@
           "source": "demo (made up)",
           "kind": "known"
         }
+      },
+      "payDay": {
+        "value": 15,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
       }
     },
     {
@@ -190,7 +196,13 @@
         "source": "demo (made up)",
         "kind": "known"
       },
-      "fat": "accommodation"
+      "fat": "accommodation",
+      "payDay": {
+        "value": 1,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
     },
     {
       "id": "utilities",
@@ -211,7 +223,13 @@
         "source": "demo (made up)",
         "kind": "known"
       },
-      "fat": "accommodation"
+      "fat": "accommodation",
+      "payDay": {
+        "value": 10,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
     },
     {
       "id": "groceries",
@@ -295,7 +313,13 @@
         "source": "demo (made up)",
         "kind": "known"
       },
-      "fat": null
+      "fat": null,
+      "payDay": {
+        "value": 20,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
     },
     {
       "id": "streaming",
@@ -337,7 +361,13 @@
         "source": "demo (made up)",
         "kind": "known"
       },
-      "fat": null
+      "fat": null,
+      "payDay": {
+        "value": 1,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
     },
     {
       "id": "other",
