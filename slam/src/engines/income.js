@@ -1,5 +1,8 @@
 // Monthly income per source: take-home (typed, or guessed from gross), gross,
 // pre-tax retirement, hours worked, and the household's hourly take-home.
+// Depends on normalize.js (toMonthly, hasAnswer, paychecks a year), tax.js (the federal estimate),
+// deductions.js (paycheck deductions), money.js (sumKnown, ratio) and the withheld-line keys in store/schema.js.
+// Dollars a month unless a field says Annual or PerPaycheck; estimateAnnualTax and the tax walk are dollars a year.
 
 import { toMonthly, hasAnswer, PAYCHECKS_PER_YEAR } from './normalize.js';
 import { estimateAnnualTax } from './tax.js';
@@ -9,7 +12,12 @@ import { deductionRows, deductionTotals } from './deductions.js';
 
 const HOURS_PER_MONTH_PER_WEEKLY_HOUR = 52 / 12;
 
-// Hourly pay: gross = rate x hours a week x 52 weeks. Needs both numbers.
+/**
+ * Hourly pay: gross = rate x hours a week x 52 weeks. Needs both numbers.
+ * @param {object} inc an income source.
+ * @returns {?{rate: number, annual: number, monthly: number}} rate in dollars an hour, gross in dollars a year and a month;
+ *   null for salaried pay, no rate (or "doesn't apply"), or no hours.
+ */
 export function hourlyGross(inc) {
   if (inc.payBasis !== 'hourly' || !inc.hourlyRate || inc.hourlyRate.amount === null || inc.hourlyRate.status === 'not-for-me') return null;
   if (!inc.hoursPerWeek) return null;
@@ -22,6 +30,12 @@ export function hourlyGross(inc) {
 // Take-home is only worked out from these once the three federal lines are answered.
 const FEDERAL_KEYS = ['federal', 'socialSecurity', 'medicare'];
 
+/**
+ * Taxes withheld, from the paystub lines, a month at a time.
+ * @param {object} inc an income source; inc.withheld holds one Value per line, entered a paycheck at a time.
+ * @returns {{lines: Object<string, number|null>, any: boolean, federalDone: boolean, federal: number|null, stateLocal: number|null, total: number|null}}
+ *   dollars a month per line (null = not entered); federalDone when income tax, Social Security and Medicare are all answered.
+ */
 export function withheldFromStub(inc) {
   const w = inc.withheld || {};
   const m = (k) => toMonthly(w[k], inc.payFrequency);
@@ -36,9 +50,16 @@ export function withheldFromStub(inc) {
   };
 }
 
-// How the federal estimate is worked out, step by step (S-101), all for a year: gross, less pre-tax
-// deductions (and half the self-employment tax) = adjusted gross; less the standard deduction =
-// taxable; taxable cut into brackets; Social Security and Medicare on wages.
+/**
+ * The federal estimate step by step (S-101), all for a year: gross, less pre-tax deductions (and half the
+ * self-employment tax) = adjusted gross; less the standard deduction = taxable; taxable cut into brackets;
+ * Social Security and Medicare on wages.
+ * @param {object} est what estimateAnnualTax returns (tax.js), dollars a year.
+ * @param {number} grossAnnual dollars a year.
+ * @param {number} pretaxAnnual deductions that lower income tax, dollars a year.
+ * @param {object} tax tax-constants.json for the year.
+ * @returns {object} each step in dollars a year; rates are ratios (0.062); effectiveRate = income tax / gross.
+ */
 export function taxWalk(est, grossAnnual, pretaxAnnual, tax) {
   return {
     gross: grossAnnual, pretax: pretaxAnnual, seHalf: est.seTax / 2, agi: est.agi, std: est.stdUsed, taxable: est.taxable,
@@ -48,7 +69,11 @@ export function taxWalk(est, grossAnnual, pretaxAnnual, tax) {
   };
 }
 
-// Additional withholding the client asked for on the W-4 (step 4c), monthly; W-2 pay only (S-101).
+/**
+ * Additional withholding the client asked for on the W-4 (step 4c); W-2 pay only (S-101).
+ * @param {object} inc an income source.
+ * @returns {number|null} dollars a month; null for other pay types or when not entered.
+ */
 export function extraWithholding(inc) {
   return inc.type === 'w2' ? toMonthly(inc.extraWithholding, inc.payFrequency) : null;
 }
@@ -62,12 +87,20 @@ const TAX_LABELS = {
   federal: 'Federal income tax', socialSecurity: 'Social Security', medicare: 'Medicare', state: 'State income tax',
   local: 'Local or city tax', sdi: 'State disability (SDI)', pfl: 'Paid family or medical leave', sui: 'State unemployment', other: 'Other tax'
 };
+/**
+ * The taxes on a paycheck, one line per tax (S-099); the rules are in the note above TAX_LABELS.
+ * @param {object} inc an income source.
+ * @param {object} row the source's row in incomeSummary, with taxCheck or estimate filled in.
+ * @returns {?Array<{key: string, label: string, monthly: number|null, from: string}>} dollars a month; from is 'paystub',
+ *   'estimate', 'W-4', 'the rest' or 'not estimated'; null when there is nothing to work from.
+ */
 export function taxBreakdown(inc, row) {
   const stub = withheldFromStub(inc);
   if (stub.federalDone) {
     return WITHHELD_KEYS.filter((k) => stub.lines[k] !== null).map((k) => ({ key: k, label: TAX_LABELS[k], monthly: stub.lines[k], from: 'paystub' }));
   }
   const tc = row.taxCheck;
+  // The tax check's numbers are annual; these lines are monthly.
   const est = tc ? { incomeTax: tc.estIncomeTaxAnnual / 12, socialSecurity: tc.estSocialSecurityAnnual / 12, medicare: tc.estMedicareAnnual / 12, seTax: 0, bracket: tc.bracket, walk: tc.walk } : row.estimate;
   if (!est) return null;
   const lines = [
@@ -79,6 +112,7 @@ export function taxBreakdown(inc, row) {
   ].filter(Boolean);
   if (row.withheldMonthly === null) return [...lines, { key: 'state', label: TAX_LABELS.state, monthly: null, from: 'not estimated' }];
   const rest = row.withheldMonthly - sumKnown(lines.map((l) => l.monthly)).total;
+  // Under half a cent is rounding, not a tax.
   if (Math.abs(rest) < 0.005) return lines;
   return [...lines, rest > 0
     ? { key: 'rest', label: 'State and other taxes', monthly: rest, from: 'the rest' }
@@ -112,7 +146,12 @@ function payBreakdown(row, freq) {
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-// Roughly when benefits run out, counted from the middle of the month being worked on.
+/**
+ * Roughly when unemployment benefits run out, counted from the middle of the month being worked on.
+ * @param {string} monthKey 'YYYY-MM'.
+ * @param {number|null} weeksLeft weeks of benefit left.
+ * @returns {?string} 'Month YYYY'; null without a month or a count.
+ */
 export function benefitsEndAround(monthKey, weeksLeft) {
   if (!monthKey || weeksLeft === null || weeksLeft === undefined) return null;
   const [y, m] = monthKey.split('-').map(Number);
@@ -124,15 +163,19 @@ export function benefitsEndAround(monthKey, weeksLeft) {
 // if the client chose federal withholding. The tax is shown as a set-aside.
 function unemploymentRow(doc, inc, row, tax, stdLeft) {
   const freq = inc.payFrequency;
+  // The benefit may have been typed in either box; gross wins when both are.
   const benefit = hasAnswer(inc.gross) ? inc.gross : inc.takeHome;
   const benefitMonthly = toMonthly(benefit, freq);
   row.grossMonthly = benefitMonthly;
   row.grossFrom = benefitMonthly === null ? null : 'typed';
   row.takeHomeStatus = benefit.status;
   if (benefitMonthly === null) return { stdUsed: 0 };
+  // The federal option on unemployment is a flat 10% withholding.
   const withheldMonthly = inc.withholding === 'ten-percent' ? benefitMonthly * 0.1 : 0;
   row.takeHomeMonthly = benefitMonthly - withheldMonthly;
+  // The benefit uses whatever standard deduction the sources before it left.
   const est = estimateAnnualTax({ gross: benefitMonthly * 12, type: 'unemployment', filingStatus: doc.household.filingStatus, stdDeduction: stdLeft }, tax);
+  // Owed beyond what was withheld, never negative; a likely refund is its own field below.
   const owed = Math.max(0, est.incomeTax - withheldMonthly * 12);
   row.taxMonthly = est.incomeTax / 12;
   const weeksLeft = inc.benefitWeeksLeft === null || inc.benefitWeeksLeft === undefined ? null : inc.benefitWeeksLeft;
@@ -148,9 +191,15 @@ function unemploymentRow(doc, inc, row, tax, stdLeft) {
   return { stdUsed: est.stdUsed };
 }
 
-// Withheld (paystub, or gross minus deductions minus take-home) against the
-// estimate of what the year's federal income tax and FICA will really be.
-// State tax is not estimated, so it is kept out of the comparison when known.
+/**
+ * Withheld (paystub, or gross minus deductions minus take-home) against the estimate of what the year's
+ * federal income tax and FICA will really be. State tax is not estimated, so it is kept out when known.
+ * @param {object} inc an income source; row its row in incomeSummary (withheldMonthly and withheldFrom are set here).
+ * @param {object} dt deductionTotals (deductions.js), dollars a month; grossMonthly dollars a month.
+ * @param {object} tax tax-constants.json; filing the filing status; stdLeft the standard deduction still unused, dollars a year.
+ * @returns {object} fields ending Annual are dollars a year, Monthly dollars a month; estRate and withheldRate are ratios of
+ *   gross; gapAnnual positive = refund likely, negative = owed; includesState when withheld came from take-home.
+ */
 export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
   const est = estimateAnnualTax({
     gross: grossMonthly * 12, deductions: dt.all * 12, incomeTaxFree: dt.incomeTaxFree * 12, ficaFree: dt.ficaFree * 12, type: inc.type,
@@ -158,7 +207,9 @@ export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
   }, tax);
   const stub = withheldFromStub(inc);
   const fromStub = stub.federalDone;
+  // Without paystub lines, everything between gross, deductions and take-home is treated as tax, state included.
   const withheldMonthly = fromStub ? stub.total : (row.takeHomeMonthly === null ? null : grossMonthly - dt.all - row.takeHomeMonthly);
+  // The federal estimate is compared with the paystub's federal lines when known, else with the whole withheld amount.
   const federalMonthly = fromStub ? stub.federal : withheldMonthly;
   row.withheldMonthly = withheldMonthly;
   row.withheldFrom = fromStub ? 'paystub' : 'take-home';
@@ -183,8 +234,18 @@ export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
   };
 }
 
+/**
+ * Monthly income per source and for the household.
+ * @param {object} doc the household file.
+ * @param {object} tax tax-constants.json for the year (standard deduction, brackets, FICA rates).
+ * @returns {{sources: object[], takeHome: number|null, takeHomeMissing: number, takeHomeIsGuess: boolean, gross: number|null,
+ *   retirementDeductions: number, deductionsByKind: object, fromPaycheckByLineType: object, deductions: number,
+ *   hoursMonthly: number|null, hourlyTakeHome: number|null, taxYear: number}} dollars a month (hourlyTakeHome dollars an hour);
+ *   each source row also carries Annual and PerPaycheck versions of its numbers; takeHomeMissing counts sources with none.
+ */
 export function incomeSummary(doc, tax) {
   const filing = doc.household.filingStatus;
+  // One standard deduction for the household: each source, in order, uses what the earlier ones left.
   let stdLeft = tax.standardDeduction[filing] || tax.standardDeduction.single;
   const sources = [];
 
@@ -217,6 +278,7 @@ export function incomeSummary(doc, tax) {
       const used = grossMonthly === null ? stdLeft : Math.min(stdLeft, Math.max(0, (grossMonthly - dt.incomeTaxFree) * 12));
       if (inc.type === 'w2' && grossMonthly !== null) row.taxCheck = taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft);
       stdLeft -= used;
+      // With a typed take-home, tax is whatever is left of gross after deductions, state included.
       if (grossMonthly !== null) row.taxMonthly = grossMonthly - dt.all - row.takeHomeMonthly;
     } else if (inc.type === 'w2' && grossMonthly !== null && withheldFromStub(inc).federalDone) {
       // Copied from the paystub: take-home is what the lines leave.
@@ -283,6 +345,7 @@ export function incomeSummary(doc, tax) {
     takeHome: take.total,
     takeHomeMissing: take.missing,
     takeHomeIsGuess: sources.some((s) => s.takeHomeStatus === 'guess'),
+    // Household gross only when every source has one; a partial gross would understate it.
     gross: sources.length && sources.every((s) => s.grossMonthly !== null) ? sumKnown(sources.map((s) => s.grossMonthly)).total : null,
     retirementDeductions,
     deductionsByKind,

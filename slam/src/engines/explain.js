@@ -1,13 +1,25 @@
 // How a number was worked out (S-108): the inputs behind each headline number,
 // read straight from the summary and the cash calendar, so the panel and the
 // number can never disagree. No new math: every amount here is one calc made.
-// `where` is a place in the app (ui/nav.js) or a field path, so each input links to its source.
+// A step's `where` is a place in the app (ui/nav.js) and its `path` a field path, so each input links to its source.
+// No imports. Reads what buildSummary (summary.js), monthOutlook and cashCalendar (calendar.js)
+// and the net worth engine (networth.js) return. Dollars a month, except net worth (dollars on a day).
 
-// nw: a net worth at a day (networth.js), for the three net worths.
+/**
+ * The steps behind one headline number, for the "how was this worked out" panel.
+ * @param {object} summary what buildSummary returns (summary.js).
+ * @param {string} which 'takeHome', 'spending', 'soFar', 'expected', 'surplus', 'savingsRate', 'safeToSpend', 'nwTotal', 'nwFI' or 'nwLocked'.
+ * @param {?object} cal monthOutlook for soFar and expected, cashCalendar for safeToSpend (both calendar.js); otherwise unused.
+ * @param {?object} nw a net worth at a day (networth.js), for the three net worths.
+ * @returns {?{title: string, steps: Array<{label: string, amount: number|null, where?: string, path?: string[], open?: string, asOf?: string}>, result: object, note: string}}
+ *   dollars a month (net worth: dollars on a day; savingsRate: a ratio 0 to 1); a step links by where (a place in nav.js) or
+ *   path (a field), and a step with neither is plain text; null for an unknown `which` or a missing cal or nw.
+ */
 export function explain(summary, which, cal, nw) {
   const t = summary.totals;
   const inc = summary.income;
   if (which === 'takeHome') {
+    // A source with no take-home yet is left out of the steps, never shown as $0.
     return {
       title: 'Take-home, a month',
       steps: inc.sources.filter((s) => s.takeHomeMonthly !== null).map((s) => ({ label: s.label, amount: s.takeHomeMonthly, path: ['income', s.id, 'takeHome'] })),
@@ -16,6 +28,9 @@ export function explain(summary, which, cal, nw) {
     };
   }
   if (which === 'spending') {
+    // Spending is each non-savings category's basis (the actual, else the estimate, totals.js); "doesn't apply"
+    // and blank rows are left out. A debt row points at 'setup:debts', which nav.js routes to Credit and debt
+    // on the Accounts tab, where the debt itself is entered.
     return {
       title: 'Spending, a month',
       steps: summary.rows.filter((r) => !r.savings && !r.notForMe && r.basis !== null).map((r) => ({ label: r.name + (r.basisFrom === 'estimate' ? ' (estimate)' : ''), amount: r.basis, where: r.isDebt ? 'setup:debts' : r.basisFrom === 'estimate' ? 'estimates' : 'actual', open: r.isDebt ? null : 'rv-cat:' + r.id })),
@@ -56,6 +71,7 @@ export function explain(summary, which, cal, nw) {
     };
   }
   if (which === 'savingsRate') {
+    // Pre-tax retirement never reaches take-home, so it is added to both the savings and the base (totals.js).
     return {
       title: 'Savings rate',
       steps: [
@@ -81,7 +97,10 @@ export function explain(summary, which, cal, nw) {
   }
   if (nw && (which === 'nwTotal' || which === 'nwFI')) {
     const fi = which === 'nwFI';
+    // FI counts only assets that could fund your life, and only debts not secured by a home or car; networth.js sets both flags.
     const assets = nw.assets.filter((a) => !fi || a.fi).map((a) => ({ label: a.name, amount: a.amount, where: 'balances', asOf: a.asOf }));
+    // Cards and loans alike point at 'balances' (the cash card on the Accounts tab): with no field path on the step,
+    // how.js cannot send a debt on to its own row under Credit and debt.
     const debts = nw.debts.filter((d) => !fi || d.counts).map((d) => ({ label: 'Less ' + d.name, amount: d.amount === null ? null : -d.amount, where: d.debtType === 'credit-card' ? 'balances' : 'balances', asOf: d.asOf }));
     return {
       title: fi ? 'FI net worth' : 'Net worth',

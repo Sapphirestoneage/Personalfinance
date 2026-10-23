@@ -1,5 +1,8 @@
 // Paystub order: gross, pre-tax deductions, taxes withheld, post-tax deductions,
-// take-home. Withheld is checked against the estimate of the real tax.
+// take-home. Withheld is checked against the estimate of the real tax. Uses incomeSummary in
+// engines/income.js, the store (schema, value, validate, migrate), and the helpers, which load the
+// reference data in src/data; the tax constants (src/data/tax-constants.json) supply the brackets,
+// standard deduction and FICA rates the hand numbers below use.
 //
 // Hand numbers (the same pay as Tal's screen): $35/hour x 30 hours x 52 = 54,600 a year,
 // paid every two weeks: 2,100 a paycheck, 4,550 a month. Retirement 3% = 63 a paycheck, 1,638 a year.

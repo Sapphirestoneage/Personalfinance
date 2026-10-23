@@ -1,7 +1,8 @@
 // Plan, Next month's plan (S-076, moved from Analyze by S-106): a month's actuals next to the following
 // month's plan, line by line, with % of income, % of spending, and happiness.
 // Adjust the plan, keep / cut / change, tick each line off, carry it forward.
-// Every number comes from calc (reviewSummary); estimates are only ever read here.
+// Every number comes from reviewSummary and planStartValues in engines/plan.js; estimates are only ever read here.
+// Edits go through store/plans.js (the plan) and store/edits.js (names); the income card is income-month.js.
 
 import { h, options } from '../dom.js';
 import { incomePlanCard } from './income-month.js';
@@ -21,7 +22,9 @@ const COLS = [
   ['name', 'Line'], ['actual', 'Actual'], ['pctIncome', '% of income'], ['pctSpending', '% of spending'], ['happy', 'Happiness'],
   ['estimate', 'Estimate'], ['plan', 'Plan'], ['decision', 'Keep / cut / change'], ['reviewed', 'Reviewed']
 ];
+// Same breakpoint as the CSS that swaps the table for cards; it picks which copy of a new line's name box to focus.
 const narrow = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 759px)').matches;
+// Quick sorts: [sort key, direction (-1 puts the biggest first), label].
 const QUICK = [['drain', -1, 'Look at first (stress)'], ['pctIncome', -1, 'Biggest % of income'], ['per100', 1, 'Lowest joy per $100'], ['gap', -1, 'Biggest gap from estimate']];
 
 function sortValue(r, key) {
@@ -42,6 +45,7 @@ function sorted(rows, sort) {
     const x = sortValue(a, sort.key);
     const y = sortValue(b, sort.key);
     if (x === y) return 0;
+    // Not entered sorts last whichever way the column is sorted; null is not a small number.
     if (x === null || x === undefined) return 1;
     if (y === null || y === undefined) return -1;
     return (x < y ? -1 : 1) * sort.dir;
@@ -51,6 +55,7 @@ function sorted(rows, sort) {
 function joyCell(hp, st) {
   const stress = st ? h('div', { class: 'xs muted' }, 'stress ' + st.stress + '/10' + (st.lean ? ', ' + { more: 'more of', less: 'less of', even: 'about even' }[st.lean] : '')) : null;
   if (!hp) return h('span', {}, h('span', { class: 'xs muted' }, 'not rated'), stress);
+  // per100 is null for a typed $0 (no cost) and for nothing entered (no amount); engines/happiness.js tells them apart with noCost.
   const per = hp.per100 !== null ? hp.per100.toFixed(2) + ' per $100' : hp.noCost ? 'no cost' : 'no amount';
   return h('span', {}, pct(hp.share), h('div', { class: 'xs muted' }, hp.rating + '/10, ' + per), stress);
 }
@@ -61,6 +66,7 @@ function planInput(ctx, pm, r, sfx = '') {
     'aria-label': r.name + ' plan for ' + monthLabel(pm), 'data-key': 'plan:' + pm + ':' + r.key + sfx,
     onchange: (e) => {
       const a = parseAmount(e.target.value);
+      // Unreadable text puts the old value back; a blank saves null (not entered), never 0.
       if (a === undefined) { e.target.value = r.plan === null ? '' : r.plan; return; }
       ctx.update('Plan ' + r.name, (d) => setPlanAmount(d, pm, r.key, makeValue(a, { cadence: 'month' })));
     } });
@@ -68,16 +74,19 @@ function planInput(ctx, pm, r, sfx = '') {
 
 function decisionCell(ctx, pm, r, sfx = '') {
   if (r.computed) return h('span', { class: 'xs muted' }, 'computed');
+  // A line added in the plan (addPlanLine) is marked new; there is nothing from last month to keep or cut.
   if (r.decision === 'new') return h('span', { class: 'chip' }, 'New');
   const btn = (d, label) => h('button', { 'aria-pressed': r.decision === d ? 'true' : 'false', 'data-key': 'plan-dec:' + pm + ':' + r.key + ':' + d + sfx,
     onclick: () => ctx.update(label + ' ' + r.name, (doc) => setPlanDecision(doc, pm, r.key, d)) }, label);
   return h('div', {},
     h('div', { class: 'toggle', role: 'group', 'aria-label': 'Decision for ' + r.name }, btn('keep', 'Keep'), btn('cut', 'Cut'), btn('change', 'Change')),
+    // Stop tracking is offered for a cut line only (setPlanStop needs the cut first); a category is not stopped as a whole.
     r.decision === 'cut' && !r.key.startsWith('cat:') ? h('label', { class: 'check xs' }, h('input', { type: 'checkbox', checked: r.stop, 'data-key': 'plan-stop:' + pm + ':' + r.key + sfx,
       onchange: (e) => ctx.update('Stop tracking ' + r.name, (doc) => setPlanStop(doc, pm, r.key, e.target.checked)) }), 'Stop tracking from ' + monthLabel(pm)) : null);
 }
 
 function nameCell(ctx, r, sfx = '') {
+  // A category row is renamed from its group bar (groupTable); a computed line keeps its name.
   return r.key.startsWith('cat:') || r.computed ? r.name
     : nameEdit(ctx, r.name, 'line:' + r.key + ':name' + sfx, (d, v) => renameLine(d, r.key, v), 'Line name');
 }
@@ -90,8 +99,10 @@ function reviewedBox(ctx, pm, r, sfx = '') {
 function row(ctx, pm, r) {
   return h('tr', { class: r.reviewed ? 'line done' : 'line' },
     h('td', {}, nameCell(ctx, r)),
+    // Each number links to where it came from (S-108, sourceLink): a debt to Accounts, Credit and debt; a category to its Review row; a line to its actual.
     h('td', { class: 'num' }, r.actual === null ? money(r.actual) : sourceLink(ctx, money(r.actual), r.computed ? { where: 'setup:debts' } : r.key.startsWith('cat:') ? { where: 'actual', open: 'rv-cat:' + r.key.slice(4) } : { path: ['line', r.key, 'actual'] })),
     h('td', { class: 'num' }, pct(r.pctIncome.actual)),
+    // A savings line is not spending, so it has no share of spending.
     h('td', { class: 'num' }, r.savings ? h('span', { class: 'xs muted' }, 'saving') : pct(r.pctSpending.actual)),
     h('td', { class: 'num' }, joyCell(r.happiness, r.stress)),
     h('td', { class: 'num' }, r.estimate === null && r.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : r.estimate === null || r.computed ? money(r.estimate)
@@ -119,12 +130,15 @@ function lineCard(ctx, pm, r) {
 function groupTable(ctx, rv, g) {
   const pm = rv.planMonth;
   const sort = ctx.ui.reviewSort || { key: null, dir: -1 };
+  // "Only not yet reviewed" hides ticked lines and computed ones (nothing to decide there).
   const rows = sorted(ctx.ui.reviewFilter ? g.rows.filter((r) => !r.reviewed && !r.computed) : g.rows, sort);
   if (!rows.length && ctx.ui.reviewFilter) return null;
   const head = h('tr', {}, COLS.map(([k, l]) => h('th', { scope: 'col', 'aria-sort': sort.key === k ? (sort.dir > 0 ? 'ascending' : 'descending') : null,
+    // First tap sorts biggest first (names A to Z); a second tap on the same column flips it.
     onclick: () => { ctx.ui.reviewSort = { key: k, dir: sort.key === k ? -sort.dir : (k === 'name' ? 1 : -1) }; ctx.rerender(); } }, l)));
   // One row per category until tapped (S-106), saying how far its review is.
   const key = 'plan-cat:' + g.id;
+  // The filter opens every group: its point is to see what is left.
   const open = ctx.ui.expanded.has(key) || ctx.ui.reviewFilter;
   const toggle = () => { if (ctx.ui.expanded.has(key)) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); };
   const bar = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: toggle },
@@ -135,6 +149,7 @@ function groupTable(ctx, rv, g) {
     g.isDebt ? null : h('div', { class: 'row' }, nameEdit(ctx, g.name, 'cat:' + g.id + ':name', (d, v) => { findCategory(d, g.id).name = v; }, 'Category name')),
     h('div', { class: 'table-wrap review-wide' }, h('table', { class: 'budget review' }, h('thead', {}, head), h('tbody', {}, rows.map((r) => row(ctx, pm, r))))),
     h('div', { class: 'review-narrow' }, rows.map((r) => lineCard(ctx, pm, r))),
+    // A category planned as one amount (byCategory) can be split into its lines; one planned line by line can add a line.
     g.isDebt || !rv.exists ? null : h('div', { class: 'row' },
       g.byCategory ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Plan line by line', (d) => planLineByLine(d, pm, g.id)) }, 'Plan line by line') : null,
       g.byCategory ? null : h('button', { class: 'btn small ghost', onclick: () => {
@@ -146,6 +161,7 @@ function groupTable(ctx, rv, g) {
 
 export function reviewCards(ctx, summary) {
   const doc = ctx.doc;
+  // Reviewing: any month with actuals, or the open month. Plan for: one of the 12 months after it, the next one unless another was picked.
   const months = [...new Set([...summary.history.allKeys, doc.currentMonth])].sort();
   const rm = ctx.ui.reviewMonth && months.includes(ctx.ui.reviewMonth) ? ctx.ui.reviewMonth : doc.currentMonth;
   const planMonths = Array.from({ length: 12 }, (_, i) => i).reduce((acc) => [...acc, nextMonthKey(acc[acc.length - 1])], [rm]).slice(1);
@@ -170,6 +186,7 @@ export function reviewCards(ctx, summary) {
       tile('Plan vs take-home', signedMoney(t.planLeft), t.planLeft === null ? '' : t.planLeft >= 0 ? 'left over' : 'shortfall'),
       tile('Plan vs ' + monthLabel(rm) + ' actual', signedMoney(t.frees), 'freed up'),
       tile('Plan % of income', pct(t.planPctIncome), 'of take-home'),
+      // happyChange is a ratio from reviewSummary, shown as percentage points.
       tile('Happiness spend', pct(t.happyPlan), t.happyChange === null ? 'rated 7 or above' : (t.happyChange >= 0 ? '+' : '') + (t.happyChange * 100).toFixed(1) + ' pts vs ' + pct(t.happyNow))) : null,
     rv.exists ? h('div', { class: 'spread' },
       h('b', { class: 'review-count' }, rv.checklist.reviewed + ' of ' + rv.checklist.total + ' lines reviewed'),
@@ -186,6 +203,7 @@ export function reviewCards(ctx, summary) {
         if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
       } }, '+ Add category'),
       getPlan(doc, nextMonthKey(pm)) ? h('span', { class: 'small muted' }, monthLabel(nextMonthKey(pm)) + ' already has a plan.')
+        // Carrying forward also moves the screen on: review this plan's month, plan the one after.
         : h('button', { class: 'btn primary', onclick: () => { ctx.update('Copy plan forward', (d) => copyPlanForward(d, pm)); ctx.ui.reviewMonth = pm; ctx.ui.planMonth = nextMonthKey(pm); ctx.rerender(); } }, 'Start ' + monthLabel(nextMonthKey(pm)) + ' from this plan')) : null);
   return [top, incomePlanCard(ctx, summary, pm, rv.exists), h('div', { class: 'card', style: 'grid-column:1 / -1' }, groups), bottom];
 }

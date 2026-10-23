@@ -1,5 +1,8 @@
-// Eras: life chapters end to end after regular life, with cash month by month.
-// Regular life here: take-home 4,000, spending 3,000, so 1,000 a month is saved.
+// Eras: life chapters end to end after regular life, with cash month by month (the eras engine,
+// slam/src/engines/eras.js). Regular life here: take-home 4,000, spending 3,000, so 1,000 a month is
+// saved. Uses the store (schema, value, edits, validate, migrate) and the helpers, which load the
+// reference data in src/data (the era templates give the income and spending shares used as guesses)
+// and put the cash on hand in a checking account.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

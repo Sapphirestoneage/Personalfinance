@@ -1,9 +1,9 @@
-// Review (S-106): fill gaps (the Actual pass, S-087), close the month (the
-// checklist and the bridge in one line), mistakes, and past months. A line with
-// log entries this month has its actual from the log (with "see entries"); a
-// yearly line shows its monthly share; anything still empty is listed first
-// with three answers: add an entry, type an amount, or none this month.
-// Line details, tags, and debts are set up in Setup.
+// Review (S-106): fill gaps (the Actual pass, S-087), close the month (the checklist and
+// the bridge in one line), mistakes, and past months. A line with log entries this month
+// has its actual from the log (with "see entries"); a yearly line shows its monthly share;
+// anything still empty is listed first with three answers: add an entry, type an amount, or
+// none this month. Line details, tags, and debts are set up in Setup. Depends on the engines
+// (loop, bridge, history, debts, coverage), the store (edits, log, value), and the ui helpers and components.
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
@@ -39,6 +39,7 @@ function entriesList(ctx, line) {
   return h('ul', { class: 'plain entries' }, list.map((t) => h('li', { class: 'small' },
     h('span', {}, dayLabel(t.date) + (t.description ? ', ' + t.description : '') + (t.note ? ' (' + t.note + ')' : ''), h('span', { class: 'src-chip' }, { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' }[t.source || 'import'])),
     h('span', { class: 'row' },
+      // A blank or unreadable amount puts the old one back: an entry is never emptied here, only removed.
       h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6.5em', 'aria-label': 'Entry amount', 'data-key': 'entry-amt:' + t.id, value: String(t.amount),
         onchange: (e) => { const a = parseAmount(e.target.value); if (a === null || a === undefined) { e.target.value = t.amount; return; } ctx.update('Edit entry', (d) => editEntry(d, t.id, { amount: a })); } }),
       h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove entry', onclick: () => ctx.update('Remove entry', (d) => removeTransaction(d, t.id)) }, 'Remove')))));
@@ -50,6 +51,7 @@ function actualCell(ctx, summary, line) {
   const open = ctx.ui.expanded.has('entries:' + line.id);
   const toggle = () => { if (open) ctx.ui.expanded.delete('entries:' + line.id); else ctx.ui.expanded.add('entries:' + line.id); ctx.rerender(); };
   const add = h('button', { class: 'btn small ghost', 'data-key': 'add-entry:' + line.id, onclick: () => openQuickEntry(ctx, { lineId: line.id }) }, '+ Add entry');
+  // actualFrom and logCount are set by budgetModel (engines/model.js). The "computed" chip says nothing was typed.
   if (m && m.actualFrom === 'share') {
     return h('div', { class: 'value-input' }, h('b', { class: 'num' }, money(m.actual)), statusChip('computed'), h('span', { class: 'xs muted' }, 'monthly share of a yearly cost' + (m.logCount ? '; paid this month, see the bridge' : '')), add);
   }
@@ -66,13 +68,14 @@ function actualCell(ctx, summary, line) {
     line.actual.status === null ? noneButton(ctx, line) : null, add);
 }
 
+// "None this month" is an answer: a typed 0 with a note and a date, never a blank (empty is not zero).
 function noneButton(ctx, line) {
   return h('button', { class: 'btn small ghost', 'data-key': 'none:' + line.id, onclick: () => ctx.commit(['line', line.id, 'actual'], makeValue(0, { note: 'None this month', asOf: todayIso() }), 'None this month') }, 'None this month');
 }
 
 // Lines in the plan or with an estimate that have nothing yet this month: on top.
 function gapsCard(ctx, summary) {
-  // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate (calc/loop.js).
+  // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate (gapLines, engines/loop.js).
   const gaps = gapLines(summary).map((g) => ({ c: summary.model.categories.find((x) => x.id === g.catId), l: modelLine(summary, g.id) }));
   const done = summary.model.categories.flatMap((c) => c.lines).filter((l) => l.actualFrom === 'log').length;
   return h('div', { class: 'card' + (gaps.length ? ' flag' : ''), id: 'gaps-card' },
@@ -108,12 +111,14 @@ function categoryRow(ctx, summary, r) {
     h('span', {}, (open ? '\u25be ' : '\u25b8 ') + summaryText(r)));
   if (!open) return h('div', { class: 'rv-cat', id: 'rv-cat-' + r.id }, head);
   if (r.isDebt) {
+    // Debt payments has no lines to fill: each debt's payment is minimumAmount (engines/debts.js), or the budget line that pays it.
     const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
     return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
       h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(minimumAmount(ctx.doc, d)) + (linkedLine(ctx.doc, d) ? ' (the ' + linkedLine(ctx.doc, d).name + ' line)' : ' minimum'))))),
       h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Accounts')));
   }
   const cat = ctx.doc.categories.find((c) => c.id === r.id);
+  // A line added for a later month (addedFor) is not part of this month's review.
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
   return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
     live.map((line) => h('div', { class: 'qa' },
@@ -162,6 +167,7 @@ function pastMonths(ctx, summary) {
 
 export function renderReview(ctx, summary) {
   const doc = ctx.doc;
+  // Right after a close, that month's review sits on top until dismissed (ui.justClosed).
   const justClosed = ctx.ui.justClosed ? doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
   return h('div', {},
     h('h1', {}, 'Review'),

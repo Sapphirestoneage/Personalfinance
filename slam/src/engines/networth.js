@@ -9,6 +9,9 @@
 //     its value less the debt it secures (home equity, vehicle equity, other).
 //
 // Empty is not zero: a total with a missing balance is null and the missing ones are named.
+// Dollars on a day (balances, not monthly flows), rounded to the cent. Depends on balances.js (balanceAt,
+// liabilities), store/schema.js (each type's tier and whether it counts toward FI), paid-ahead.js, and
+// money.js (r2).
 
 import { balanceAt, liabilities, lastDayOf, kindOf } from './balances.js';
 import { tierOf, countsForFI, typeInfo } from '../store/schema.js';
@@ -30,9 +33,19 @@ export const EXPLAIN = {
   locked: 'The part of your net worth in things you live in and use, like a home or a car. It counts, but it cannot pay a bill.'
 };
 
-// get(key) gives one account's or debt's balance; by default the latest dated one on the day.
-// paDate: the day Paid ahead is read on (S-119); the bridge reads a month's start on the day before it.
+/**
+ * Both net worths on one day, with every asset and debt that went into them.
+ * get(key) gives one account's or debt's balance; by default the latest dated one on the day.
+ * paDate: the day Paid ahead is read on (S-119); the bridge reads a month's start on the day before it.
+ * @param {object} doc the household file
+ * @param {string} date 'YYYY-MM-DD'
+ * @param {function(string): ?object} [get] key => { amount, status, date, from } in dollars, or null
+ * @param {string} [paDate=date] 'YYYY-MM-DD'
+ * @returns {object} { date, assets, debts, total, fi, locked, lockedRows, assetsTotal, debtsTotal, byTier,
+ *   debtsByType, byKind, missing }: dollars; a total is null while any of its balances is missing
+ */
 export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), paDate = date) {
+  // Cards (kind 'owed') are not assets; they come in below as liabilities.
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && kindOf(a) !== 'owed');
   const assets = accts.map((a) => {
     const b = get(a.id);
@@ -46,6 +59,7 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
   const debts = liabilities(doc).map((l) => {
     const b = get(l.key);
     const by = l.debtId ? securedBy[l.debtId] || null : null;
+    // counts: toward FI. A debt secured by an asset that does not count (the mortgage on the home) is left out with it.
     return { key: l.key, name: l.name, debtType: l.debtType, debtId: l.debtId, amount: b ? b.amount : null, status: b ? b.status : null, asOf: b ? b.date : null,
       securedBy: by ? by.id : null, counts: !(by && !countsForFI(by)) };
   });
@@ -59,6 +73,8 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
     const debt = total(owed);
     return { id: a.id, name: a.name, type: a.type, value: a.amount, debt: owed.length ? debt : 0, debtNames: owed.map((d) => d.name), equity: a.amount === null || debt === null ? null : r2(a.amount - (owed.length ? debt : 0)) };
   });
+  // byTier is cumulative: tier 1 is cash, 2 adds brokerage and the like, 3 adds retirement, 4 adds things you
+  // use and paid ahead, so byTier[4] is every asset.
   const tierSum = (max) => total(assets.filter((a) => a.tier <= max));
   const types = [...new Set(debts.map((d) => d.debtType))];
   return {
@@ -76,7 +92,12 @@ export function netWorthAt(doc, date, get = (key) => balanceAt(doc, key, date), 
   };
 }
 
-// The months with any balance, from the first one to the month being worked on.
+/**
+ * The months with any balance, from the first one to the month being worked on.
+ * @param {object} doc the household file
+ * @returns {Array<string>} consecutive months 'YYYY-MM', from the first with a balance to the later of the
+ *   last with one and the month being worked on; empty with no balances at all
+ */
 export function balanceMonths(doc) {
   const keys = Object.keys(doc.balances || {}).filter((k) => /^\d{4}-\d{2}$/.test(k)).sort();
   if (!keys.length) return [];
@@ -93,7 +114,12 @@ export function balanceMonths(doc) {
   return out;
 }
 
-// Both net worths at every month end (the last day of each month).
+/**
+ * Both net worths at every month end (the last day of each month).
+ * @param {object} doc the household file
+ * @returns {Array<object>} per month { month, date, total, fi, locked, assets, debts, nonMortgageDebt, byKind,
+ *   byTier }: dollars on the month's last day, null where a balance is missing
+ */
 export function netWorthByMonth(doc) {
   return balanceMonths(doc).map((month) => {
     const nw = netWorthAt(doc, lastDayOf(month));
@@ -102,7 +128,12 @@ export function netWorthByMonth(doc) {
   });
 }
 
-// From the first month end with both net worths to the last: how much each changed.
+/**
+ * From the first month end with both net worths to the last: how much each changed.
+ * @param {Array<object>} series what netWorthByMonth returns
+ * @returns {?{from: string, to: string, total: number, fi: number}} months 'YYYY-MM' and dollars; null with
+ *   fewer than two month ends where both are known
+ */
 export function seriesChange(series) {
   const known = series.filter((x) => x.total !== null && x.fi !== null);
   if (known.length < 2) return null;
@@ -111,12 +142,18 @@ export function seriesChange(series) {
   return { from: a.month, to: b.month, total: r2(b.total - a.total), fi: r2(b.fi - a.fi) };
 }
 
-// Milestones (S-111): events with dates, never grades. Each is the first month end where it is true
-// after a month end where it was not (a series that starts past a line has no event for it: we do
-// not know when it happened).
+// The dollar lines for the FI net worth milestones.
 export const FI_STEPS = [10000, 25000, 50000, 100000];
+/**
+ * Milestones (S-111): events with dates, never grades. Each is the first month end where it is true
+ * after a month end where it was not (a series that starts past a line has no event for it: we do
+ * not know when it happened).
+ * @param {Array<object>} series what netWorthByMonth returns
+ * @returns {Array<{key: string, label: string, month: string, date: string, celebrate: boolean}>} oldest first
+ */
 export function milestones(series) {
   const out = [];
+  // A month with no number is null, neither false nor true, so a gap in the balances never fakes a crossing.
   const first = (key, label, test, celebrate) => {
     for (let i = 1; i < series.length; i++) {
       const a = series[i - 1];
@@ -132,4 +169,9 @@ export function milestones(series) {
   return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
+/**
+ * The label for an account type; 'paid-ahead' is the paid-ahead row (paid-ahead.js), not a stored type.
+ * @param {string} type an account type from store/schema.js, or 'paid-ahead'
+ * @returns {string} the type's label from ACCOUNT_TYPE_INFO (the "other" label for an unknown type)
+ */
 export const typeLabel = (type) => (type === 'paid-ahead' ? 'Paid ahead' : typeInfo({ type }).label);

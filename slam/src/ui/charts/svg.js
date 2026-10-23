@@ -1,6 +1,8 @@
-// Small inline-SVG chart primitives. Each takes chart-ready data (from
-// src/engines/chart-data.js) and returns SVG markup. Colors are CSS variables
-// from tokens.css, so light and dark mode both work. Hover a mark for its value.
+// Small inline-SVG chart primitives. Each takes chart-ready data from the engines
+// (src/engines/) and returns SVG markup; nothing here reads the store or works out
+// a number, it only scales what it is given to pixels. Depends on esc() from
+// src/ui/dom.js. Colors are CSS variables from tokens.css and the text and line
+// classes come from app.css, so light and dark mode both work. Hover a mark for its value.
 
 import { esc } from '../dom.js';
 
@@ -50,6 +52,8 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
     y += F + 6;
     const rowTop = y;
     r.values.forEach((v, i) => {
+      // Not entered is not zero: a null value never gets a bar. Grouped mode writes "not given" in
+      // its slot; overlay shows "none" in the shared row label (labelOf); diverging draws nothing.
       if (v.v === null || v.v === undefined) {
         if (mode === 'grouped') { body += t(zeroX + 2, y + barH - 1, (v.name ? v.name + ': ' : '') + 'not given', { cls: 'muted tiny' }); y += barH + 2; }
         return;
@@ -97,6 +101,7 @@ export function donut({ slices, size = 200, inner = 0.6, center = '', centerSub 
     const large = a1 - a0 > Math.PI ? 1 : 0;
     const p = (a, rad) => (cx + rad * Math.cos(a)).toFixed(2) + ' ' + (cy + rad * Math.sin(a)).toFixed(2);
     const ri = r * inner;
+    // One slice would be a 360-degree arc, which SVG collapses to nothing, so draw it as two half circles.
     const d = slices.length === 1
       ? 'M ' + (cx - r) + ' ' + cy + ' a ' + r + ' ' + r + ' 0 1 0 ' + 2 * r + ' 0 a ' + r + ' ' + r + ' 0 1 0 ' + -2 * r + ' 0'
       : 'M ' + p(a0, r) + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p(a1, r) +
@@ -155,6 +160,7 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
       if (src.amount - srcUsed < 0.0001) { srcIdx += 1; srcUsed = 0; }
     }
   }
+  // A shortfall source (from sankeyData in src/engines/chart-data.js) is drawn red; a surplus use is bold.
   for (const n of lefts) {
     body += rect(lx, n.y, nodeW, n.h, n.shortfall ? 'var(--bad)' : 'var(--series-actual)', { tip: n.name + ': ' + fmt(n.amount) });
   }
@@ -178,6 +184,7 @@ export function gauge({ value, band, size = 180, good = 'under', fmt, caption, l
   const r = size / 2 - 10;
   const cx = size / 2;
   const cy = r + 8;
+  // The arc runs 0 to 1 (100%); a value past that stretches the scale rather than clipping.
   const max = Math.max(1, value || 0);
   const ang = (v) => Math.PI + (Math.min(v, max) / max) * Math.PI;
   const p = (a, rad) => (cx + rad * Math.cos(a)).toFixed(1) + ' ' + (cy + rad * Math.sin(a)).toFixed(1);
@@ -214,6 +221,7 @@ export function lines({ series, xs, width, fmt, zero = true, label = 'Line chart
   const padL = 56;
   const padB = 22;
   const vals = series.flatMap((s) => s.values.filter((v) => v !== null && v !== undefined));
+  // With zero (the default) the y axis includes 0, so small swings do not look dramatic.
   let lo = zero ? Math.min(0, ...vals) : Math.min(...vals);
   let hi = Math.max(...vals, zero ? 0 : -Infinity);
   if (!vals.length) { lo = 0; hi = 1; }
@@ -297,6 +305,7 @@ export function stack({ parts, width, fmt, label = 'Stacked bar' }) {
     if (pw > 44) body += t(x + 6, barY + 17, fmt(p.share), { weight: 700 });
     x += pw;
   }
+  // Target ticks are cumulative, so each sits where its segment would end if every part hit its target.
   let tx = 4;
   let ty = barY + barH + 16;
   for (const p of parts) {
@@ -314,6 +323,7 @@ export function heatRow({ cells, width, fmt, label = 'Heatmap' }) {
   const cw = (width - 8) / n;
   const max = Math.max(1, ...cells.map((c) => c.amount));
   let body = '';
+  // Shade is the cell's share of the biggest day, with a floor so the smallest day still shows.
   cells.forEach((c, i) => {
     const x = 4 + i * cw;
     body += '<rect x="' + x.toFixed(1) + '" y="4" width="' + (cw - 3).toFixed(1) + '" height="48" rx="4" style="fill:var(--series-actual);fill-opacity:' + (0.08 + 0.85 * (c.amount / max)).toFixed(2) + '"><title>' + esc(c.label + ': ' + fmt(c.amount)) + '</title></rect>';
@@ -409,6 +419,7 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
     placed.push(mx);
     body += t(Math.min(Math.max(mx, padL + 20), width - 30), height - 4, m.label, { anchor: 'middle', cls: 'muted' });
   }
+  // Invisible hit targets so every day has a hover value, not just the markers.
   days.forEach((d, i) => { body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v === null ? lo : d.v).toFixed(1) + '" r="5" style="fill:transparent"><title>' + esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) + '</title></circle>'; });
   return svgWrap(width, height, body, label);
 }
@@ -494,6 +505,7 @@ export function heatGrid({ rows, cols, width, fmt, max, label = 'Heatmap by mont
     const y = 18 + i * rh;
     body += t(4, y + 15, r.label.length > 14 ? r.label.slice(0, 13) + '.' : r.label, { cls: 'muted' });
     r.values.forEach((v, j) => {
+      // A null month is left blank (nothing entered); a zero month is the faintest cell.
       const op = v === null || !max ? 0 : 0.08 + 0.85 * (v / max);
       body += '<rect x="' + (labW + j * cw).toFixed(1) + '" y="' + y + '" width="' + Math.max(1, cw - 2).toFixed(1) + '" height="' + (rh - 3) + '" rx="3" style="fill:var(--series-actual);fill-opacity:' + op.toFixed(2) + ';stroke:var(--chart-grid)"><title>' + esc(r.label + ', ' + cols[j] + ': ' + (v === null ? 'none' : fmt(v))) + '</title></rect>';
     });

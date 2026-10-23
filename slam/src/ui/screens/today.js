@@ -2,7 +2,8 @@
 // Review strip (the step for now highlighted), the first-session checklist
 // until it is done, the Next card, the next 30 days of cash with safe to spend
 // and Quick entry, four headline tiles, and a link to each chart tab. Numbers only (lesson 7, S-116):
-// every chart is one tap away, in Insights or on Track.
+// every chart is one tap away, in Insights or on Track. Depends on the engines (loop, debts, calendar,
+// explain), nav.js for the chart tabs, and the ui helpers (dom, format, the cards, cashflow, loop, jump, status, and how components).
 
 import { h } from '../dom.js';
 import { money, pct, signedMoney, todayIso, dayLabel, dateLabel } from '../format.js';
@@ -31,6 +32,7 @@ export function headlineTiles(ctx, summary) {
   const hb = (key, text) => howButton(ctx, key, text);
   // An open month (S-128): so far and expected by month end, never money that has not arrived as actual.
   const o = monthOutlook(ctx.doc, inc, todayIso());
+  // ui.how is shared by every how button on every screen; only a key from these tiles opens a panel here.
   const open = ['takeHome', 'spending', 'surplus', 'savingsRate', ...(o ? ['soFar', 'expected'] : [])].includes(ctx.ui.how) ? ctx.ui.how : null;
   return h('div', {},
     h('div', { class: 'strip four', id: 'headline' },
@@ -50,7 +52,9 @@ function firstSessionCard(ctx, summary) {
   const fs = firstSession(ctx.doc, summary);
   if (fs.done) return null;
   return h('div', { class: 'card', id: 'first-session' },
+    // The count covers required items only; fs.left and fs.done come from firstSession (engines/loop.js).
     h('h2', { style: 'margin-top:0' }, 'First session (' + (fs.items.filter((i) => !i.optional).length - fs.left) + ' of ' + fs.items.filter((i) => !i.optional).length + ')'),
+    // Chip colors borrow the value statuses: done reads as known, optional as roughly, to do as don't know.
     h('ul', { class: 'plain' }, fs.items.map((i) => h('li', { class: 'small', 'data-key': 'first-' + i.key },
       h('span', {}, h('span', { class: 'chip ' + (i.done ? 'st-known' : i.optional ? 'st-roughly' : 'st-dont-know') }, i.done ? 'Done' : i.optional ? 'Optional' : 'To do'), ' ', i.label),
       i.done ? null : jumpLink(ctx, i.where, 'Do it', 'first-go-' + i.key)))));

@@ -1,14 +1,17 @@
 // Accounts and month balances (S-084). No math here: adding, renaming,
 // archiving, linking a card to its debt, and storing a typed balance.
 // A month's start that was never typed is carried from last month's end by
-// calc (balances.js), so it is never stored twice.
+// the balances engine (src/engines/balances.js), so it is never stored twice.
+// Depends on the account, balance, and Value shapes in schema.js and on
+// addBalanceCheck in cashflow.js. Each function edits a draft inside store.update.
 
 import { addBalanceCheck } from './cashflow.js';
 import { newAccount, newBalance, ACCOUNT_TYPE_INFO, LIQUIDITY_TIERS, SECURED_TYPES, securedFields, ownedFields, ALTERNATIVES } from './schema.js';
 
 export function addAccount(doc, fields = {}) {
   const acct = newAccount(fields);
-  // A card links to its debt when there is exactly one card debt it could be.
+  // A card links to its debt when there is exactly one card debt it could be:
+  // the one with the same name, else the only card debt no account has yet.
   if (acct.type === 'credit-card' && !acct.debtId) {
     const taken = new Set(doc.accounts.map((a) => a.debtId).filter(Boolean));
     const free = doc.debts.filter((d) => d.type === 'credit-card' && d.state !== 'archived' && !taken.has(d.id));
@@ -47,6 +50,7 @@ export function setAccountField(doc, id, field, value) {
     a.type = value;
     a.tier = info.tier;
     a.countsForFI = info.fi;
+    // Fields that belong to the old type leave with it: purchase fields, the alternatives to owning, and notes.
     if (SECURED_TYPES.includes(value)) Object.assign(a, securedFields(a));
     else { delete a.purchasePrice; delete a.purchaseDate; delete a.securedDebtId; }
     for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (!(ALTERNATIVES[value] || []).includes(k)) delete a[k];
@@ -54,6 +58,7 @@ export function setAccountField(doc, id, field, value) {
     else delete a.notes;
     return;
   }
+  // An empty link is stored as null (not linked), never as an empty string.
   a[field] = field === 'debtId' || field === 'securedDebtId' ? value || null : value;
 }
 
@@ -61,6 +66,7 @@ export function setAccountField(doc, id, field, value) {
 export function setPurchase(doc, id, field, value) {
   const a = findAccount(doc, id);
   if (!a || !SECURED_TYPES.includes(a.type)) throw new Error('Only a home or vehicle has a purchase');
+  // A price is paid once, so its cadence is one-off whatever the input carried.
   if (field === 'price') a.purchasePrice = { ...value, cadence: 'one-off' };
   else if (field === 'date') {
     if (value !== null && !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('A date is YYYY-MM-DD');
@@ -99,6 +105,7 @@ export function setBalance(doc, month, accountId, which, value) {
   if (which !== 'start' && which !== 'end') throw new Error('A balance is a start or an end');
   doc.balances[month] = doc.balances[month] || {};
   doc.balances[month][accountId] = doc.balances[month][accountId] || newBalance();
+  // A balance is what the account held on a day, so it is stored one-off, never as a monthly flow.
   doc.balances[month][accountId][which] = { ...value, cadence: 'one-off' };
 }
 
@@ -119,6 +126,7 @@ export function setAccountNotes(doc, id, text) {
 // The return the equity could earn elsewhere, a year (an assumption, 0% to 20%).
 export function setOwnReturn(doc, rate) {
   if (!(typeof rate === 'number' && rate >= 0 && rate <= 0.2)) throw new Error('Use a return from 0% to 20% a year');
+  // A ratio, not a percent: 0.05 is 5%. The owning engine (src/engines/owning.js) uses its own default when unset.
   doc.settings.ownReturn = rate;
 }
 
@@ -130,10 +138,13 @@ export function updateBalance(doc, accountId, date, value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('A date is YYYY-MM-DD');
   const month = date.slice(0, 7);
   const [y, m] = month.split('-').map(Number);
+  // Day 0 of the next month is this month's last day (UTC, so no timezone shift).
   const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
   const b = ((doc.balances || {})[month] || {})[accountId];
   const prev = b && b.end && b.end.amount !== null && b.end.amount !== undefined ? { date: b.endOn || last, amount: b.end } : null;
+  // Only a reading from an earlier day is kept as a check; one from the same day is a correction and is replaced.
   if (prev && prev.date < date) addBalanceCheck(doc, accountId, prev.date, prev.amount);
   setBalance(doc, month, accountId, 'end', value);
+  // An end on the last day is the default and is not stored as a date (see setBalanceDate).
   setBalanceDate(doc, month, accountId, 'end', date === last ? null : date);
 }

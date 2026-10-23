@@ -1,8 +1,9 @@
-// Future, Eras (parked, S-105): it opens with Your dream life (S-097: the dream entry
-// moved here from the budget as it was, then today vs each dream), then
-// potential budgets as life chapters (school abroad, geo arbitrage, a
-// sabbatical...) laid end to end like blocks after regular life. Numbers come
-// from calc (summary.dreamLife, summary.eras); this screen only asks and words it.
+// Future, Eras (parked, S-105): it opens with Your dream life (S-097: the dream entry moved here from the budget
+// as it was, then today vs each dream), then potential budgets as life chapters (school abroad, geo arbitrage, a
+// sabbatical...) laid end to end like blocks after regular life. Numbers come from buildSummary: summary.dreamLife
+// (engines/dream-life.js) and summary.eras (engines/eras.js eraTimeline). The dream entry is plan-estimates.js
+// renderEstimates with a dream key; era templates are src/data/era-templates.json through ctx.refs; edits go
+// through store/edits.js (addEra, moveEra, removeEra). This screen only asks and words it.
 
 import { cashOnHandNote } from '../components/accounts.js';
 import { cashOnHand } from '../../engines/balances.js';
@@ -17,6 +18,7 @@ import { pct } from '../format.js';
 
 const findEra = (d, id) => d.eras.list.find((e) => e.id === id);
 export const eraColor = (i) => 'var(--chart-' + ((i % 7) + 1) + ')';
+// Years only for a whole number of years from two up; anything shorter or uneven reads in months.
 const span = (n) => (n === 1 ? '1 month' : n < 24 || n % 12 ? n + ' months' : n / 12 + ' years');
 
 function monthsField(ctx, label, era, key, min) {
@@ -36,6 +38,7 @@ export function eraStrip(ctx, s, opts = {}) {
   const total = t.totalMonths;
   const parts = [];
   t.eras.forEach((e, i) => {
+    // A label only fits a wide enough block (8% of the span for regular life, 12% for an era); the title has it either way.
     if (e.gapMonths) parts.push(h('div', { class: 'era-block regular', style: 'flex:' + e.gapMonths, title: 'Regular life, ' + span(e.gapMonths) }, e.gapMonths / total > 0.08 ? 'Regular' : ''));
     parts.push(h('button', { class: 'era-block', style: 'flex:' + e.months + ';background:' + eraColor(i), title: e.name + ', ' + span(e.months),
       onclick: opts.jump ? () => { const el = document.getElementById('era-' + e.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } : null },
@@ -50,6 +53,8 @@ function eraCard(ctx, s, e, i, count) {
   const era = findEra(ctx.doc, e.id);
   const t = s.eras;
   const guessHint = (amount, isGuess, what) => (isGuess ? 'Blank uses a guess: ' + money(amount) + ' (' + what + ' of today). Type your own.' : null);
+  // Both warnings read eraTimeline's fields: runsOut, shortBy, and saveFirstMonths exist only when cash on hand is known;
+  // net is null until the era has take-home and spending (its own, or the budget's).
   const warn = [];
   if (e.runsOut) warn.push('Cash runs out in ' + monthLabel(e.runsOut) + ' and dips ' + money(e.shortBy) + ' below zero.' +
     (e.saveFirstMonths ? ' About ' + span(e.saveFirstMonths) + ' more of regular life first would cover it.' : ''));
@@ -79,7 +84,7 @@ function eraCard(ctx, s, e, i, count) {
 
 const SPEND_LABEL = { template: "The template's share of today", today: "Today's budget", dream: 'Your short-term dream', dreamLong: 'Your long-term dream' };
 
-// Where the era's blank spending starts (S-097). The template's share is the default.
+// Where the era's blank spending starts (S-097). The template's share is the default; the dream choices need a typed dream life.
 function spendFromField(ctx, era, e, dl) {
   const opts = Object.entries(SPEND_LABEL).filter(([k]) => dl.any || (k !== 'dream' && k !== 'dreamLong'));
   return h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Start spending from'),
@@ -95,6 +100,7 @@ export function dreamCompare(ctx, dl, opts = {}) {
     const copied = from === 'today' || from === 'short';
     return h('td', { class: 'num' + (copied ? ' muted' : '') }, money(amt), h('div', { class: 'xs muted' }, copied ? 'copied' : share !== null ? pct(share) : ''));
   };
+  // Long vs today: a positive gap means the dream spends more than today, the one direction marked bad. Null shows a dot.
   const diff = (x) => h('td', { class: 'num wide' + (x > 0 ? ' bad' : '') }, x === null ? '\u00b7' : signedMoney(x));
   return h('div', { id: opts.id || 'dream-compare' },
     h('div', { class: 'table-wrap' }, h('table', { class: 'budget tight' },

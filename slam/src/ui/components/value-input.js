@@ -1,5 +1,9 @@
 // One amount question: number box, cadence picker, status picker, and the
 // monthly equivalent. Commits on change; previews on every keystroke.
+// Depends on dom.js (h, options), the status chip and picker in status.js,
+// toMonthly from the normalize engine for the "= $x / month" line, money and
+// cadence labels from format.js, and sumParts / PART_CADENCES from the store
+// (re-exported from the engine) for an amount broken into items.
 
 import { h, options } from '../dom.js';
 import { statusPicker, statusChip } from './status.js';
@@ -19,7 +23,9 @@ export function editValue(prev, change, typed = 'known') {
   const next = { ...prev, ...change, asOf: today() };
   if ('amount' in change) {
     if (change.amount === null) next.status = prev.status === 'roughly' || prev.status === 'known' ? null : prev.status;
+    // Only a blank value takes `typed`; a number over a guess, a computed figure, or a non-answer is known.
     else if (!prev.status || CLEARS_AMOUNT.has(prev.status) || prev.status === 'guess' || prev.status === 'computed' || prev.status === 'will-email') next.status = prev.status ? 'known' : typed;
+    // A number typed over a Guess is the client's own: drop the app source and its note.
     if (prev.status === 'guess' && change.amount !== null) { next.source = 'client'; next.note = ''; }
   }
   if ('parts' in change) {
@@ -41,6 +47,8 @@ export function editValue(prev, change, typed = 'known') {
 }
 
 // "12+30+8.50" adds up, like a calculator. Returns the pieces too.
+// Two kinds of "no amount": null is an empty box (nothing entered); undefined is
+// text that is not a number, which callers reject and revert.
 export function parseAmounts(text) {
   const t = String(text).replace(/[$,\s]/g, '');
   if (t === '') return { amount: null, pieces: [] };
@@ -82,6 +90,9 @@ export function valueInput(ctx, path, value, opts = {}) {
   const key = JSON.stringify(path);
   const label = opts.label || 'Amount';
   const monthly = h('span', { class: 'monthly num' });
+  // The conversion is toMonthly (engines/normalize.js). The line stays blank for a monthly amount
+  // (it would repeat the box), for a one-off (toMonthly gives 0 there, which would mislead), and
+  // when toMonthly has no answer (a paycheck amount with no pay frequency).
   const showMonthly = (v) => {
     const m = toMonthly(v, ctx.payFrequency);
     monthly.textContent = v.cadence !== 'month' && m !== null && v.cadence !== 'one-off' ? '= ' + money(m) + ' / month' : '';
@@ -104,6 +115,7 @@ export function valueInput(ctx, path, value, opts = {}) {
       if (a === undefined) { e.target.value = value.amount === null ? '' : value.amount; return; }
       // 12+30+8 in a box that can hold items keeps each number as its own item.
       if (opts.parts && pieces.length > 1) return ctx.commit(path, editValue(value, { parts: pieces.map((n) => ({ name: '', amount: n })) }, opts.typed), label);
+      // Same number, no commit: every commit lands in undo history and restamps asOf.
       if (a === value.amount) return;
       ctx.commit(path, editValue(value, { amount: a }, opts.typed), label);
     }
@@ -117,6 +129,8 @@ export function valueInput(ctx, path, value, opts = {}) {
     if (opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'false', 'aria-label': 'More for ' + label, onclick: opts.onMore }, 'more'));
     return h('div', { class: 'value-input' }, parts);
   }
+  // Callers turn the cadence picker off for amounts that are not a rate (a balance, a price, an APR).
+  // With items, only the cadences items can total (PART_CADENCES: week, month, year) are offered.
   if (opts.cadence !== false) {
     parts.push(h('select', {
       class: 'cadence', 'aria-label': label + ' cadence', 'data-key': key + ':cadence',
@@ -125,6 +139,7 @@ export function valueInput(ctx, path, value, opts = {}) {
   }
   parts.push(statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key));
   parts.push(monthly);
+  // A Guess carries where its figure came from in `note`; show it beside the chip.
   if (value.status === 'guess' && value.note) parts.push(h('span', { class: 'xs st-guess' }, value.note));
   if (opts.parts && !split && value.status !== 'not-for-me') {
     parts.push(h('button', { class: 'btn small ghost', 'data-key': key + ':split',

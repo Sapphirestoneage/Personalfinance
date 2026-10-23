@@ -1,6 +1,9 @@
 // The budget-to-cash bridge (S-088): why the budget's surplus and the change in
 // cash differ for one month. Every step has an amount, where it came from,
 // and a link. Explained + not explained yet = the actual change in cash.
+// Dollars for the month, rounded to the cent. Depends on plan.js (the month's model), totals.js
+// (budget totals), balances.js (cash and card balances), log.js (counted entries),
+// income-month.js (the month's income), and money.js (r2).
 //
 //   budget surplus (take-home - spending - savings, the budget's own number)
 // + yearly costs: the monthly share in the budget - what was paid this month
@@ -21,6 +24,7 @@ import { counted } from './log.js';
 import { incomeMonth } from './income-month.js';
 import { r2 } from './money.js';
 
+// Entry kinds that count as paid on a budget line, net of refunds and reimbursements (negative amounts).
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 const monthOf = (d) => d.slice(0, 7);
 // The coach's materiality (settings.materiality, coach-only); 25 when not set.
@@ -36,12 +40,15 @@ function budgetSide(doc, income, month) {
     const cats = rec.snapshot.categories;
     const spending = Object.values(cats).filter((c) => !c.savings).reduce((a, c) => a + (c.actual || 0), 0);
     const saved = Object.values(cats).filter((c) => c.savings).reduce((a, c) => a + (c.actual || 0), 0);
+    // The snapshot keeps no due month, so a yearly line is read off the live line; a debt line's id is
+    // 'debt:' + the debt's id.
     const lines = Object.entries(rec.snapshot.lines).map(([id, l]) => ({
       id, name: l.name, actual: l.actual, savings: !!(cats[l.categoryId] && cats[l.categoryId].savings),
       yearly: !!(lineDoc[id] && lineDoc[id].line.dueMonth && lineDoc[id].line.dueMonth.amount !== null), debtId: id.startsWith('debt:') ? id.slice(5) : null
     }));
     // Income (S-118): the month's actual income as saved at close; a month saved before it, from the log.
     const im = rec.snapshot.income || incomeMonth(doc, income, month);
+    // The surplus is against the income that landed when the month's income was tracked, else the budget's take-home.
     const basis = im.tracked ? im.actual : rec.snapshot.takeHome;
     return { closed: true, takeHome: rec.snapshot.takeHome, incomeBasis: basis, incomeTracked: im.tracked, surplus: basis === null ? null : r2(basis - spending - saved), spending: r2(spending), savings: r2(saved), lines, oneOffs: [] };
   }
@@ -51,6 +58,15 @@ function budgetSide(doc, income, month) {
   return { closed: false, takeHome: totals.takeHome, incomeBasis: totals.incomeBasis, incomeTracked: totals.incomeTracked, surplus: totals.surplus, spending: totals.spending, savings: totals.savings, lines, oneOffs: model.oneOffs.filter((o) => o.which === 'actual') };
 }
 
+/**
+ * The bridge for one month: the budget's surplus, each step that explains part of the gap, and the
+ * actual change in cash. A step under half a cent is left out.
+ * @param {object} doc the household file
+ * @param {object} income the income summary (summary.income); take-home in dollars a month
+ * @param {string} month 'YYYY-MM'
+ * @returns {object} { surplus, steps, explained, cashStart, cashEnd, actual, unexplained, ties, missing,
+ *   within, reading, ... }: dollars for the month; null wherever an input is not entered
+ */
 export function bridgeFor(doc, income, month) {
   const b = budgetSide(doc, income, month);
   const all = counted(doc.transactions).filter((t) => !t.adjust);
@@ -59,7 +75,8 @@ export function bridgeFor(doc, income, month) {
   const steps = [];
   const step = (key, label, amount, from, link, extra = {}) => { if (amount !== null && Math.abs(amount) >= 0.005) steps.push({ key, label, short: SHORT[key], amount: r2(amount), from, link, ...extra }); };
 
-  // Yearly costs: the share in the budget, less what was paid.
+  // Yearly costs: the share in the budget, less what was paid. Positive in months the bill did not come
+  // due (cash kept the share the budget counted); negative in the month it was paid in full.
   const yearly = b.lines.filter((l) => l.yearly);
   if (yearly.length) {
     const ids = new Set(yearly.map((l) => l.id));
@@ -93,7 +110,10 @@ export function bridgeFor(doc, income, month) {
     const mins = b.lines.filter((l) => l.debtId && linked.has(l.debtId) && l.actual);
     step('card-min', 'Card minimums in the budget (the card\'s change already counts them)', mins.reduce((a, l) => a + l.actual, 0), mins.map((l) => l.name + ' ' + money(l.actual)).join(', '), { to: 'actual' });
   }
-  // Reimbursements: owed for this month's purchases, and received now for earlier ones.
+  // Reimbursements: owed for this month's purchases, and received now for earlier ones. The budget's actual
+  // counts only your share of a purchase, but the whole amount left cash, so what is still owed to you
+  // lowers the explained change; money paid back for an earlier month's purchase raises it (no budget
+  // line this month has it). A purchase settled in a later month still counts as owed in this one.
   const settled = new Map(all.filter((t) => t.kind === 'reimbursement' && t.settles).map((t) => [t.settles, t]));
   const owed = inMonth.filter((t) => t.owed && !(settled.has(t.id) && monthOf(settled.get(t.id).date) <= month));
   step('owed', 'Reimbursements still owed to you', -owed.reduce((a, t) => a + t.owed, 0), owed.map((t) => (t.description || t.note || 'purchase') + ' ' + money(t.owed)).join(', '), { to: 'log' });
@@ -107,6 +127,7 @@ export function bridgeFor(doc, income, month) {
   // log; when income was not tracked, what landed vs the budget's take-home.
   const pay = inMonth.filter((t) => t.kind === 'income');
   if (pay.length && b.incomeBasis !== null) {
+    // Income entries carry negative amounts (money in), so the sum is negated.
     const got = -pay.reduce((a, t) => a + t.amount, 0);
     const vs = b.incomeTracked ? 'the income counted' : 'take-home';
     step('income', got >= b.incomeBasis ? 'More income landed than ' + vs : 'Less income landed than ' + vs, got - b.incomeBasis,
@@ -114,6 +135,8 @@ export function bridgeFor(doc, income, month) {
   }
   const explained = b.surplus === null ? null : r2(b.surplus + steps.reduce((a, s) => a + s.amount, 0));
   const actual = bal.cashStart !== null && bal.cashEnd !== null ? r2(bal.cashEnd - bal.cashStart) : null;
+  // With a card balance missing the cards step could not be built, so nothing is called unexplained:
+  // the gap would just be the missing card.
   const cardsMissing = missing.filter((m) => cards.some((c) => c.id === m.id));
   const unexplained = explained !== null && actual !== null && !cardsMissing.length ? r2(actual - explained) : null;
   const out = {
@@ -129,12 +152,18 @@ export function bridgeFor(doc, income, month) {
   return out;
 }
 
+// Text for the step descriptions and the reading. money keeps cents when there are any; whole rounds to
+// the dollar. Both drop the sign: the words around them say which way the money went.
 function money(x) {
   return '$' + (Math.round(Math.abs(x) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(Math.round(Math.abs(x) * 100) / 100) ? 0 : 2, maximumFractionDigits: 2 });
 }
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 
-// One or two plain sentences, no judgment.
+/**
+ * One or two plain sentences on the bridge, no judgment.
+ * @param {object} br what bridgeFor returns
+ * @returns {string} the sentences, or what is still needed before there can be any
+ */
 export function bridgeReading(br) {
   if (br.surplus === null) return 'Needs take-home and the month\'s actuals first.';
   const left = br.surplus >= 0 ? 'Your budget showed ' + whole(br.surplus) + ' left' : 'Your budget showed ' + whole(br.surplus) + ' over';
@@ -142,6 +171,8 @@ export function bridgeReading(br) {
     const names = [...new Set(br.missing.map((m) => m.name + ' ' + m.which))];
     return left + '. The change in cash needs ' + names.join(', ') + ' balance' + (names.length === 1 ? '' : 's') + '.';
   }
+  // "but" when the surplus and the cash change differ by at least the materiality; a bridge built without
+  // within uses the default.
   const moved = (Math.abs(br.actual - br.surplus) >= (br.within === undefined ? TIES_WITHIN : br.within) ? 'but ' : 'and ') + (br.actual >= 0 ? 'cash went up ' + whole(br.actual) : 'cash went down ' + whole(br.actual));
   const top = br.steps.slice().sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0];
   const why = top ? ' ' + topSentence(top) : '';
@@ -149,6 +180,7 @@ export function bridgeReading(br) {
   return left + ', ' + moved + '.' + why + tail;
 }
 
+// The sentence for the biggest step, by its key; any other step falls back to its label and amount.
 function topSentence(s) {
   if (s.key === 'yearly' && s.paid && s.paid.length) return s.paid.map((p) => 'The ' + p.name.toLowerCase() + ' bill (' + whole(p.paid) + ')').join(' and ') + ' came due this month.';
   if (s.key === 'cards') return s.amount >= 0 ? 'Card balances went up ' + whole(s.amount) + '.' : 'Card balances went down ' + whole(s.amount) + '.';

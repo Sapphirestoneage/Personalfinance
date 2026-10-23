@@ -1,5 +1,9 @@
-// Checks a household document and returns a list of problems (empty = valid).
-// The store refuses to save a document that fails validation.
+// Checks a household document and returns a list of problems (empty = valid). The store
+// refuses to save a document that fails validation (store.js, on the live view with deleted
+// records trimmed), and transfer.js runs it on an imported file after migration. Shape rules
+// only: nothing is computed here. Needs value.js (valueErrors and the status list), schema.js
+// (SCHEMA_VERSION and the allowed-values lists), types.js (category and line type ids),
+// plans.js (plan decisions) and log.js (entry kinds and sources).
 
 import { valueErrors, STATUSES } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
@@ -10,7 +14,7 @@ import {
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM, LIQUIDITY_TIERS, SECURED_TYPES, COVERAGE_HOW
 } from './schema.js';
 
-// A date with a status (S-086).
+// A date with a status (S-086): { date: 'YYYY-MM-DD' or null, status }. A null date is not entered.
 function dateErrors(v, where) {
   const errs = [];
   if (v.date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(v.date || '')) errs.push(where + ': date must be YYYY-MM-DD or empty');
@@ -18,6 +22,8 @@ function dateErrors(v, where) {
   return errs;
 }
 
+// A due day (1 to 31) or due month (1 to 12) stored as a Value so it carries a status; the amount
+// is the day. Absent means the line is not scheduled, which is fine.
 function dayErrors(errs, v, max, where) {
   if (!v) return;
   errs.push(...valueErrors(v, where));
@@ -40,9 +46,13 @@ export function validateHousehold(doc) {
   oneOf(errs, LIVING_WITH, doc.household && doc.household.livingWith, 'household.livingWith', true);
   errs.push(...valueErrors(doc.gut, 'gut'));
 
+  // One id space across income, deductions, debts, categories, lines, accounts, and eras:
+  // merging by record id (S-096) relies on an id naming one thing.
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
+  // Health coverage (engines/coverage.js). The premium and the HSA contribution each come out of a
+  // paycheck (premiumIncomeId says which) or are paid directly; null means not asked yet.
   if (doc.coverage) {
     const c = doc.coverage;
     if (c.how !== null && !COVERAGE_HOW.includes(c.how)) errs.push('coverage.how: unknown ' + c.how);
@@ -66,9 +76,11 @@ export function validateHousehold(doc) {
     oneOf(errs, ITEM_STATES, inc.state, w + '.state');
     oneOf(errs, PAY_BASES, inc.payBasis, w + '.payBasis');
     if (inc.withholding !== undefined) oneOf(errs, WITHHOLDING, inc.withholding, w + '.withholding');
+    // Unemployment: weeks of benefit left; the calendar stops those paychecks after them (S-086).
     if (inc.benefitWeeksLeft !== undefined && inc.benefitWeeksLeft !== null && !(typeof inc.benefitWeeksLeft === 'number' && inc.benefitWeeksLeft >= 0)) errs.push(w + '.benefitWeeksLeft must be 0 or more, or empty');
     for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
     if (inc.nextPayDate) errs.push(...dateErrors(inc.nextPayDate, w + '.nextPayDate'));
+    // Semimonthly pay days; the calendar uses the 1st and 15th when they are absent (S-086).
     if (inc.payDays !== undefined && !(Array.isArray(inc.payDays) && inc.payDays.length === 2 && inc.payDays.every((d) => Number.isInteger(d) && d >= 1 && d <= 31))) errs.push(w + '.payDays must be two days, 1 to 31');
     for (const [k, v] of Object.entries(inc.withheld || {})) errs.push(...valueErrors(v, w + '.withheld.' + k));
     if (inc.extraWithholding !== undefined) errs.push(...valueErrors(inc.extraWithholding, w + '.extraWithholding'));
@@ -77,6 +89,7 @@ export function validateHousehold(doc) {
       seen(d.id, dw);
       oneOf(errs, DEDUCTION_KIND_IDS, d.kind, dw + '.kind');
       oneOf(errs, ['percent', 'amount'], d.mode, dw + '.mode');
+      // A percent deduction is a percent number of gross (6 means 6%), not a ratio.
       if (d.percent !== null && !(typeof d.percent === 'number' && d.percent >= 0 && d.percent <= 100)) errs.push(dw + '.percent must be 0 to 100 or empty');
       errs.push(...valueErrors(d.amount, dw + '.amount'));
       if (d.accountId && !(doc.accounts || []).some((a) => a.id === d.accountId)) errs.push(dw + '.accountId: unknown account ' + d.accountId);
@@ -87,6 +100,7 @@ export function validateHousehold(doc) {
     seen(d.id, w);
     oneOf(errs, DEBT_TYPES, d.type, w + '.type');
     for (const k of ['balance', 'apr', 'minimum', 'dueDay']) errs.push(...valueErrors(d[k], w + '.' + k));
+    // What the calendar pays on the due day: the minimum, or the card's statement balance (S-086).
     if (d.payWith !== undefined) oneOf(errs, ['minimum', 'statement'], d.payWith, w + '.payWith');
     if (d.promoApr !== undefined) errs.push(...valueErrors(d.promoApr, w + '.promoApr'));
     if (d.promoEnds !== undefined && d.promoEnds !== null && !/^\d{4}-\d{2}-\d{2}$/.test(d.promoEnds)) errs.push(w + '.promoEnds must be YYYY-MM-DD or empty');
@@ -108,6 +122,7 @@ export function validateHousehold(doc) {
       oneOf(errs, LINE_PATHS, l.path, lw + '.path');
       oneOf(errs, LINE_TAGS, l.tag, lw + '.tag');
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');
+      // Joy and stress are 1 to 10 ratings (engines/happiness.js); blank is not rated, never 0.
       if (l.joy !== null && !(Number.isInteger(l.joy) && l.joy >= 1 && l.joy <= 10)) errs.push(lw + '.joy must be 1 to 10 or empty');
       if (l.shared !== undefined && typeof l.shared !== 'boolean') errs.push(lw + '.shared must be true or false');
       if (l.stress !== undefined && l.stress !== null && !(Number.isInteger(l.stress) && l.stress >= 1 && l.stress <= 10)) errs.push(lw + '.stress must be 1 to 10 or empty');
@@ -132,7 +147,7 @@ export function validateHousehold(doc) {
     oneOf(errs, ACCOUNT_STATES, a.state, w + '.state');
     if (a.debtId && !(doc.debts || []).some((d) => d.id === a.debtId)) errs.push(w + '.debtId: unknown debt ' + a.debtId);
     // S-110: liquidity tier (none for a card), counts toward FI, and what a home or vehicle secures.
-    // Absent means the type's default (calc reads tierOf and countsForFI with that fallback).
+    // Absent means the type's default (tierOf and countsForFI in schema.js read it with that fallback).
     if (a.tier !== undefined && (a.type === 'credit-card' ? a.tier !== null : !LIQUIDITY_TIERS.includes(a.tier))) errs.push(w + '.tier must be 1 to 4' + (a.type === 'credit-card' ? ' (none for a card)' : ''));
     if (a.countsForFI !== undefined && typeof a.countsForFI !== 'boolean') errs.push(w + '.countsForFI must be true or false');
     if (SECURED_TYPES.includes(a.type)) {
@@ -140,6 +155,8 @@ export function validateHousehold(doc) {
       if (a.purchasePrice) errs.push(...valueErrors(a.purchasePrice, w + '.purchasePrice'));
       if (a.purchaseDate) errs.push(...dateErrors(a.purchaseDate, w + '.purchaseDate'));
     }
+    // The alternative to owning, typed by the coach: rent a month for a home; rideshare, transit, and
+    // an occasional rental a month for a vehicle (S-113).
     for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (a[k] !== undefined) errs.push(...valueErrors(a[k], w + '.' + k));
     if (a.notes !== undefined && typeof a.notes !== 'string') errs.push(w + '.notes must be text');
   });
@@ -150,25 +167,31 @@ export function validateHousehold(doc) {
     for (const [id, b] of Object.entries(accts)) {
       if (!balanceIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
       errs.push(...valueErrors(b.start, 'balances.' + m + '.' + id + '.start'), ...valueErrors(b.end, 'balances.' + m + '.' + id + '.end'));
+      // The day a balance was read; balanceAt picks the latest on or before a date (S-110), so it must
+      // fall inside its own month.
       for (const k of ['startOn', 'endOn']) if (b[k] !== undefined && !(typeof b[k] === 'string' && b[k].slice(0, 7) === m && /^\d{4}-\d{2}-\d{2}$/.test(b[k]))) errs.push('balances.' + m + '.' + id + '.' + k + ' must be a day in ' + m);
     }
   }
+  // A ratio, 0.05 for 5% a year: what home equity could earn elsewhere (engines/owning.js, S-113).
   if (doc.settings && doc.settings.ownReturn !== undefined && !(typeof doc.settings.ownReturn === 'number' && doc.settings.ownReturn >= 0 && doc.settings.ownReturn <= 0.2)) errs.push('settings.ownReturn must be 0% to 20% a year');
   if (doc.cashflow) {
     const cf = doc.cashflow;
     errs.push(...valueErrors(cf.cushion, 'cashflow.cushion'));
+    // A scheduled item that did not happen on its day: a new date, or null to skip it (S-086).
     for (const [k, mv] of Object.entries(cf.moves || {})) if (mv.to !== null && !/^\d{4}-\d{2}-\d{2}$/.test(mv.to || '')) errs.push('cashflow.moves.' + k + ': the new date must be YYYY-MM-DD, or none to skip');
     (cf.checks || []).forEach((c, i) => {
       if (!balanceIds.has(c.accountId)) errs.push('cashflow.checks[' + i + ']: unknown account ' + c.accountId);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(c.date || '')) errs.push('cashflow.checks[' + i + ']: needs a date');
       errs.push(...valueErrors(c.amount, 'cashflow.checks[' + i + '].amount'));
     });
+    // The end-of-month cash predicted on the 1st, saved at close and compared with the real end (S-086).
     for (const [m, f] of Object.entries(cf.forecasts || {})) if (!/^\d{4}-\d{2}$/.test(m) || typeof f.predicted !== 'number') errs.push('cashflow.forecasts.' + m + ' needs a month and a number');
   }
   if (doc.eras) {
     (doc.eras.list || []).forEach((e, i) => {
       const w = 'eras[' + i + ']';
       seen(e.id, w);
+      // 600 months is 50 years, the longest an era or the gap before it can run.
       if (!(Number.isInteger(e.months) && e.months >= 1 && e.months <= 600)) errs.push(w + '.months must be 1 to 600');
       if (!(Number.isInteger(e.gapMonths) && e.gapMonths >= 0 && e.gapMonths <= 600)) errs.push(w + '.gapMonths must be 0 to 600');
       for (const k of ['takeHome', 'spending', 'oneTime']) errs.push(...valueErrors(e[k], w + '.' + k));
@@ -181,6 +204,7 @@ export function validateHousehold(doc) {
   for (const [m, p] of Object.entries(doc.plans || {})) {
     const w = 'plans.' + m;
     if (!/^\d{4}-\d{2}$/.test(m)) errs.push(w + ': the month must be YYYY-MM');
+    // A plan key is a line id, or 'cat:<categoryId>' for a category planned as one number (S-076).
     for (const [k, e] of Object.entries(p.lines || {})) {
       const known = k.startsWith('cat:') ? catIds.has(k.slice(4)) : lineIds.has(k);
       if (!known) errs.push(w + ': unknown line ' + k);
@@ -192,6 +216,7 @@ export function validateHousehold(doc) {
   if (doc.nextStage) {
     const ns = doc.nextStage;
     for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    // Best case is still stored under its old key 'dream' so older files load unchanged (S-097).
     for (const c of ['disaster', 'dream']) {
       const o = (ns.cases || {})[c] || {};
       for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(o[k], 'nextStage.cases.' + c + '.' + k));
@@ -209,16 +234,21 @@ export function validateHousehold(doc) {
     oneOf(errs, ENTRY_SOURCES, t.source, w + '.source');
     if (t.account && !acctIds.has(t.account)) errs.push(w + '.account: unknown account ' + t.account);
     if (t.lineId && !lineIds.has(t.lineId)) errs.push(w + '.lineId: unknown line ' + t.lineId);
+    // possible: candidate matches from an import that wait for the coach (log.js). owed: the part of a
+    // purchase someone else owes back (S-088). coverMonths: a payment that covers 2 to 60 months ahead
+    // (paid ahead, S-119). settles: the purchase a reimbursement pays off.
     (t.possible || []).forEach((id) => { if (!txIds.has(id)) errs.push(w + '.possible: unknown entry ' + id); });
     if (t.owed !== undefined && !(typeof t.owed === 'number' && t.owed > 0 && t.owed <= Math.abs(t.amount))) errs.push(w + '.owed must be more than 0 and no more than the amount');
     if (t.coverMonths !== undefined && !(Number.isInteger(t.coverMonths) && t.coverMonths >= 2 && t.coverMonths <= 60)) errs.push(w + '.coverMonths must be 2 to 60');
     if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
+  // Dollars: how close the bridge must be to say it ties (engines/bridge.js uses 25 when not set).
   if (doc.settings && doc.settings.materiality !== undefined && !(typeof doc.settings.materiality === 'number' && doc.settings.materiality >= 0)) errs.push('settings.materiality must be 0 or more');
   if (doc.coachNotes !== undefined && typeof doc.coachNotes !== 'string') errs.push('coachNotes must be text');
   (doc.estimateLog || []).forEach((e, i) => {
     const w = 'estimateLog[' + i + ']';
+    // Exactly one of the two: a row is about a line, or about a category planned as one number.
     if (!e.lineId === !e.categoryId) errs.push(w + ': needs a lineId or a categoryId');
     if (!e.at || !/^\d{4}-\d{2}$/.test(e.month || '')) errs.push(w + ': needs at and month');
     if (e.to) errs.push(...valueErrors(e.to, w + '.to'));
@@ -233,6 +263,8 @@ export function validateHousehold(doc) {
   }
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
     if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
+    // The month being worked on keeps its actuals on the lines (months.js); a saved copy would be a
+    // second place for the same fact.
     if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');
     for (const [id, v] of Object.entries(lines)) errs.push(...valueErrors(v, 'monthActuals.' + k + '.' + id));
   }

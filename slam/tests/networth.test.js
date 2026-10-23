@@ -1,5 +1,8 @@
 // Two net worths (S-111): total and FI, locked in things you use, tiers, debts by type, and
-// milestones. Every expected number is worked out by hand in the comments.
+// milestones, from engines/networth.js (netWorthAt, netWorthByMonth, milestones, balanceMonths).
+// Every expected number is worked out by hand in the comments. Uses the store's schema, value,
+// migrate, validate, accounts and edits modules to build the sample household; no reference
+// data and no demo files.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

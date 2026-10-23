@@ -1,5 +1,8 @@
 // Health coverage in one place (S-117; the parent's plan rule from S-073). Every coverage fact lives in
-// doc.coverage; the premium line follows it. Worked out by hand.
+// doc.coverage; the premium line follows it. Worked out by hand. Uses the store (schema, value, edits,
+// validate, migrate), the model, summary and coverage engines, and the helpers, which load the reference
+// data in src/data and the demo households in src/data/households (with their .expected.js answers);
+// the last test also migrates every household JSON and the schema 9 fixture in tests/fixtures.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -10,12 +10,14 @@
 // delete on one side with an edit on the other is a conflict. Everything that
 // is not a record (profile, settings, the month being worked on) stays as it
 // is here; closed months only in the other copy are added.
-// Pure functions: the store saves the result.
+// Pure functions: the store saves the result. Depends on flatten, contentOf, and
+// COLLECTIONS in records.js (where each kind of record lives and how it is keyed).
 
 import { flatten, contentOf, COLLECTIONS } from './records.js';
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const kidsOf = (coll) => coll.children || [];
+// Same content (bookkeeping and child records aside) and the same deleted state; versions and timestamps alone do not count.
 const sameRecord = (a, b, coll) => contentOf(a, kidsOf(coll)) === contentOf(b, kidsOf(coll)) && !!a.deleted === !!b.deleted;
 
 export function describe(key, rec) {
@@ -49,6 +51,7 @@ function put(doc, key, x) {
     if (i < 0) list.push(rec); else list[i] = rec;
     return;
   }
+  // A 'map' record (a month's balance, a plan line) sits at a two-level path, under an inner key for plans.
   const root = c.get(doc);
   const [a, b] = x.path;
   root[a] = root[a] || (c.inner ? { [c.inner]: {} } : {});
@@ -57,6 +60,7 @@ function put(doc, key, x) {
 
 export function mergeDocs(local, incoming) {
   if (local.id !== incoming.id) throw new Error('These are two different clients');
+  // The versions both copies last shared; this copy's record of them wins when both have one.
   const base = { ...((incoming.sync || {}).versions || {}), ...((local.sync || {}).versions || {}) };
   const L = flatten(local);
   const I = flatten(incoming);
@@ -70,6 +74,7 @@ export function mergeDocs(local, incoming) {
     if (!i) { if (l.rec.version > (base[key] || 0)) out.fromLocal.push(key); else out.same += 1; continue; }
     if (!l) { put(doc, key, i); out.added.push(key); continue; }
     if (sameRecord(l.rec, i.rec, l.coll)) { out.same += 1; continue; }
+    // Never shared (no base for this key): the lower version number stands in for the shared one.
     const b = base[key] !== undefined ? base[key] : Math.min(l.rec.version, i.rec.version);
     const changedL = l.rec.version > b;
     const changedI = i.rec.version > b;
@@ -87,6 +92,7 @@ export function mergeDocs(local, incoming) {
   // Closed months only in the other copy are added (a closed month is never edited, only revised).
   for (const m of incoming.months || []) if (!doc.months.some((x) => x.key === m.key)) { doc.months.push(clone(m)); out.monthsAdded += 1; }
   doc.months.sort((a, b) => (a.key < b.key ? -1 : 1));
+  // The flattened other copy rides along so resolveMerge can place a picked record.
   return { doc, ...out, incoming: { flat: I } };
 }
 
@@ -98,6 +104,7 @@ export function resolveMerge(result, picks = {}, nowIso) {
   const doc = clone(result.doc);
   for (const c of result.conflicts) {
     const pick = picks[c.key] === 'incoming' ? c.incoming.rec : c.local.rec;
+    // The pick gets a version past both, so the next merge on either device takes it as the newer one.
     const x = { ...result.incoming.flat[c.key], rec: { ...pick, version: Math.max(c.local.rec.version, c.incoming.rec.version) + 1 } };
     put(doc, c.key, x);
   }

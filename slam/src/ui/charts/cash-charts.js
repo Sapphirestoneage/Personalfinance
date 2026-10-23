@@ -1,8 +1,9 @@
-// The cash calendar (S-086), on Track (S-106): the full calendar chart (past and
-// future on one line, today marked, paydays and big bills labeled, days under the
-// cushion shaded), pay-later flags, the list by date, a month grid, and this month
-// so far. The forecast check is in Insights, Cash; the what-if (move a bill's due
-// day) is in Setup, Bills and due dates. Data from src/engines/calendar.js.
+// The cash calendar (S-086), on Track (S-106): the full calendar chart (past and future on one line,
+// today marked, paydays and big bills labeled, days under the cushion shaded), pay-later flags, the
+// list by date, a month grid, and this month so far. The forecast check is in Insights, Cash; the
+// what-if (move a bill's due day) is in Setup, Bills and due dates. Data from src/engines/calendar.js
+// (cashCalendar through components/cashflow.js calendarFor, monthSoFar, forecastCheck, and the readings);
+// the what-if's save goes through store/edits.js and store/value.js. Builds on dom, format, svg, catalog, jump, quick-entry.
 
 import { h, options } from '../dom.js';
 import { money, dayLabel, monthLabel, todayIso } from '../format.js';
@@ -17,6 +18,8 @@ import { makeValue } from '../../store/value.js';
 
 const SOURCE = { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' };
 
+// Labels along the line: a payday takes the day; otherwise the biggest cash bill of $100 or more,
+// first word only, so the labels do not crowd each other.
 function markersOf(cal, days) {
   const out = [];
   days.forEach((d, i) => {
@@ -48,6 +51,7 @@ function chartCard(ctx, cal, id, title, extraReading) {
 }
 
 function listCard(ctx, cal) {
+  // From the 1st of the month being worked on; when that month has not started yet, from today.
   const from = ctx.doc.currentMonth + '-01' < cal.today ? ctx.doc.currentMonth + '-01' : cal.today;
   const acct = (id) => (ctx.doc.accounts.find((a) => a.id === id) || { name: '' }).name;
   const rows = [];
@@ -57,6 +61,7 @@ function listCard(ctx, cal) {
   for (const d of cal.days) {
     if (d.date < from) continue;
     for (const it of d.items) {
+      // Mirrors (the card side of a card payment) are not cash; the plan's spread is one row per day, below.
       if (it.mirror || it.type === 'spread') continue;
       const src = it.type === 'entry' ? SOURCE[it.source] || it.source : it.type === 'waiting' ? 'Waiting' : 'Scheduled';
       rows.push(row(d.date, it.name, it.flow, it.cash ? 'cash ' + money(it.cashAfter) : 'on the card', src + ', ' + acct(it.account), d.today ? 'today-row' : null));
@@ -90,6 +95,7 @@ function gridCard(ctx, cal) {
     const iso = month + '-' + String(d).padStart(2, '0');
     const x = byDate[iso];
     cells.push(h('td', { class: (x && x.today ? 'today ' : '') + (x && cal.lowest && x.date === cal.lowest.date ? 'low' : ''), title: x ? dayLabel(iso) + ': in ' + money(x.in, true) + ', out ' + money(x.out, true) + ', cash ' + money(x.cash) : dayLabel(iso) },
+      // An outflow under half a dollar would show as $0, so the cell leaves it off.
       h('div', { class: 'd' }, String(d)), x && x.in ? h('div', { class: 'in' }, '+' + money(x.in)) : null, x && x.out >= 0.5 ? h('div', { class: 'out' }, '-' + money(x.out)) : null));
   }
   const rows = [];
@@ -116,6 +122,7 @@ export function whatIfCard(ctx, summary, cal) {
   const bills = [];
   for (const c of ctx.doc.categories) for (const l of c.lines) if (l.state !== 'archived' && l.dueDay && l.dueDay.amount) bills.push(l);
   if (!bills.length) return card(ctx, { id: 'cf-whatif', title: 'What if a bill moved?', reading: 'Give a bill a due day above to try moving it.' });
+  // The picked bill and day live on ctx.ui; if that bill is gone, start over on the first one.
   const st = ctx.ui.whatIf = ctx.ui.whatIf && bills.some((b) => b.id === ctx.ui.whatIf.lineId) ? ctx.ui.whatIf : { lineId: bills[0].id, day: bills[0].dueDay.amount };
   const line = bills.find((b) => b.id === st.lineId);
   const draft = JSON.parse(JSON.stringify(ctx.doc));

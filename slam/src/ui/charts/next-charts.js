@@ -1,5 +1,7 @@
 // Future, Next stage: what the change would take, now vs next, stay vs
-// change over time, and the other measures. Numbers from src/engines/next-stage.js.
+// change over time, and the other measures. Numbers from src/engines/next-stage.js
+// (s.nextStage: the three cases, the stay-vs-change paths, and the metrics); this file only lays
+// them out. Builds on dom, format, svg (hbars, lines), and catalog (card, chartWidth).
 
 import { h } from '../dom.js';
 import { money, signedMoney } from '../format.js';
@@ -19,6 +21,7 @@ export function nextStageCards(ctx, s) {
   const C = n.cases;
   // The best case is stored as cases.dream, the old name kept so files load unchanged (S-097).
   const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Best case']];
+  // Each cell's function returns [text, tone]; the tone is a class (good or bad) or nothing.
   const row = (label, f, cls) => h('tr', {}, h('td', {}, label), LENSES.map(([k]) => {
     const [text, tone] = f(C[k]);
     return h('td', { class: 'num ' + (tone || '') + (cls ? ' ' + cls : '') }, text);
@@ -58,6 +61,8 @@ export function nextStageCards(ctx, s) {
 
   let path = null;
   if (C.likely.path) {
+    // Sample the engine's 10-year paths: out to a year past the latest break-even (5 years when none
+    // breaks even), every 6 months, or every 12 once the horizon passes 3 years.
     const be = [C.disaster, C.likely, C.dream].map((x) => (x.path ? x.path.breakEven : null)).filter((x) => x !== null);
     const horizon = be.length ? Math.min(120, Math.max(...be) + 12) : 60;
     const step = horizon > 36 ? 12 : 6;
@@ -85,6 +90,7 @@ export function nextStageCards(ctx, s) {
       h('thead', {}, h('tr', {}, ['', 'Now', 'Next', ''].map((x) => h('th', {}, x)))),
       h('tbody', {}, ms.map((m) => h('tr', {}, h('td', {}, m.label), h('td', { class: 'num' }, m.now === null ? '·' : String(m.now)),
         h('td', { class: 'num' }, m.next === null ? '·' : String(m.next)),
+        // Better or Worse comes from the engine; no verdict with a zero change is Same, otherwise a side is blank.
         h('td', { class: m.better === true ? 'good' : m.better === false ? 'bad' : 'muted' }, m.better === true ? 'Better' : m.better === false ? 'Worse' : m.change === 0 ? 'Same' : 'Not filled in')))))) : null,
     reading: ms.length ? better.length + ' of ' + ms.length + ' measures get better' + (better.length ? ': ' + better.map((m) => m.label.split(',')[0].toLowerCase()).join(', ') + '.' : '.') : 'Add the measures that make the change worth it.'
   });

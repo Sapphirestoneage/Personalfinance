@@ -1,6 +1,8 @@
-// Jordan: the transaction-import household. Two files: a Chase credit card
-// export (jordan-chase.csv) and a generic checking export (jordan-checking.csv).
-// Every number below was worked out by hand from the two files.
+// Hand-computed expected answers for Jordan, the transaction-import demo household: what the
+// CSV import, the kind classifier, the detections and the chart data (top merchants, day of
+// week, size vs count) must produce. Read by tests/transactions.test.js. The sources are
+// jordan.json and the two exports beside it, a Chase credit card export (jordan-chase.csv) and
+// a generic checking export (jordan-checking.csv).
 
 // KINDS (30 rows): card payments 3 (two "Payment Thank You", one "CRD AUTOPAY"),
 // transfer 1 (to savings), income 4 (payroll), reimbursements 2 (Venmo from Alex,
@@ -66,5 +68,7 @@ export default {
   weekdays: [15.49, 3.00, 232.10, 106.99, 131.99, 46.25, 295.60],
   weekdayTotal: 831.42, weekend: 341.85, weekday: 489.57, weekendShare: 0.411164, perWeekendDay: 170.93, perWeekday: 97.91,
   sizeVsCount: { 'SHELL OIL': [3, 41.00], 'TRADER JOE S': [2, 61.30], 'WHOLE FOODS MARKET': [3, 77.37] },
+  // Food's September actual as budgetModel reads it from the log: groceries 218.20 + eating out 16.00 = 234.20.
+  // The key's name dates from the confirm step that S-087 removed; there is no apply step now.
   foodActualAfterApplying: 234.20
 };

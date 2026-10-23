@@ -1,5 +1,9 @@
 // Part 1 of the monthly loop: accounts and month balances (S-084). Every
 // expected number is worked out by hand in the comments.
+// Depends on the store (schema, value, migrate, validate, accounts, edits, log) to build households, on
+// the engines balances.js (monthBalance, balancesFor, cashOnHand, linkedCardBalance, cardMap),
+// breakdown.js (debtsByType), eras.js (eraTimeline) and summary.js (buildSummary), and on ui/nav.js
+// (whereFor). Reads the reference data through helpers.js and the October fixture (fixtures/october.js).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -189,7 +193,7 @@ test('investments are never cash on hand', () => {
   setBalance(d, '2026-10', 'chk', 'end', one(1000));
   setBalance(d, '2026-10', 'sav', 'start', one(2000));
   setBalance(d, '2026-10', 'fid', 'end', one(10000));
-  // What you have and owe is the net worth now (S-111, test/networth.test.js). Cash is checking 1,000 + savings 2,000 only.
+  // What you have and owe is the net worth now (S-111, tests/networth.test.js). Cash is checking 1,000 + savings 2,000 only.
   assert.equal(cashOnHand(migrate(d)).amount, 3000);
 });
 

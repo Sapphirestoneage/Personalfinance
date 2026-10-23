@@ -1,6 +1,9 @@
 // Net worth charts (S-112, S-114): the net worth bridge as a waterfall (start to end, "not explained
 // yet" drawn as an outline), for net worth or FI net worth and any month. Read-only; the month and
-// which net worth are pickers. Data from calc/networth-bridge.js.
+// which net worth are pickers. Also the three tiles for today, both net worths by month, have vs owe,
+// what it is made of, and milestones. Data from src/engines/networth-bridge.js (netWorthBridge,
+// netWorthBridgeRows) and src/engines/networth.js (netWorthAt, netWorthByMonth, milestones, seriesChange);
+// the how panel reads engines/explain.js. Builds on dom, format, svg, catalog, jump, and how.
 
 import { h, options } from '../dom.js';
 import { money, signedMoney, monthLabel, todayIso } from '../format.js';
@@ -38,6 +41,7 @@ export function netWorthBridgeCard(ctx, s) {
       h('b', { class: 'num' }, signedMoney(l.amount)))),
     h('li', { class: 'small' }, h('b', {}, 'Explained end'), h('b', { class: 'num', 'data-key': 'nwb-explained' }, money(b.explained))),
     h('li', { class: 'small' }, h('span', {}, 'Actual end'), h('b', { class: 'num', 'data-key': 'nwb-actual' }, money(b.actual))),
+    // The sub-line gives the first reason that applies: stale balances, then a missing start or end, then a tie.
     h('li', { class: 'small' }, h('span', {}, 'Not explained yet', h('div', { class: 'xs muted' }, b.stale.length ? b.stale.map((x) => x.name + (x.last ? ' last updated ' + x.last : ' never updated')).join(', ') : b.unexplained === null ? 'Needs every cash and card balance at the start and end' : b.ties ? 'Ties: within ' + money(nb.within) : '')),
       h('b', { class: 'num', 'data-key': 'nwb-unexplained' }, signedMoney(b.unexplained))));
   return card(ctx, {
@@ -51,6 +55,7 @@ export function netWorthBridgeCard(ctx, s) {
 // The three net worths today, each one opening how it was worked out (jump to source, S-108).
 export function netWorthTiles(ctx, s) {
   const nw = netWorthAt(ctx.doc, todayIso());
+  // One how panel at a time; ctx.ui.how names the tile that is open.
   const open = ['nwTotal', 'nwFI', 'nwLocked'].includes(ctx.ui.how) ? ctx.ui.how : null;
   const tile = (key, label, value, sub, dk) => h('div', { class: 'tile', 'data-key': dk }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, howButton(ctx, key, money(value))), h('div', { class: 'sub' }, sub));
   return h('div', { id: 'nw-tiles', style: 'grid-column:1 / -1' },
@@ -84,6 +89,7 @@ export function assetsDebtsCard(ctx) {
   const series = netWorthByMonth(ctx.doc).slice(-12);
   return card(ctx, {
     id: 'nw-assets-debts', title: 'What you have and what you owe, by month',
+    // Debts are drawn negative so they run left on the diverging bars; the axis formatter drops the sign.
     svg: series.length ? hbars({ mode: 'diverging', rows: series.map((x) => ({ label: short(x.month), values: [{ v: x.assets, color: 'var(--good)', tip: 'Have ' + money(x.assets) }, { v: x.debts === null ? null : -x.debts, color: 'var(--bad)', tip: 'Owe ' + money(x.debts) }] })), width: chartWidth(true), fmt: (v) => money(Math.abs(v)) }) : null,
     legendItems: [['What you have', 'var(--good)'], ['What you owe', 'var(--bad)']],
     reading: series.length ? 'Last 12 month ends: what you have to the right, what you owe to the left.' : 'Add balances to see this.'

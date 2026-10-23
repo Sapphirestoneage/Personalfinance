@@ -1,7 +1,10 @@
-// Part 3 of the monthly loop: the cash flow calendar (S-086). One small
-// household worked out by hand, day by day.
-//
-// Today is Sat 2026-10-10. Accounts at the start of October: checking 1,000,
+// Part 3 of the monthly loop: the cash flow calendar (S-086), checked against one small household
+// worked out by hand, day by day: scheduled items, the daily projection, cushion and safe to spend,
+// moved and skipped items, balance checks, the saved forecast, and the month so far. Uses the store
+// (schema, value, validate, migrate, accounts, edits, log, cashflow), the income and calendar engines,
+// and the helpers, which load the reference data in src/data (the tax constants feed incomeSummary).
+
+// The household. Today is Sat 2026-10-10. Accounts at the start of October: checking 1,000,
 // savings 2,000, Visa (a card) 300 owed. The calendar's cash is checking only (S-094),
 // so savings never moves the line.
 // Pay: biweekly, 1,500 a paycheck, next pay date Oct 16, so paychecks land
@@ -84,7 +87,7 @@ test('past days show the log, today takes the waiting paycheck, the future is sc
   const doc = household();
   const inc = logged(doc);
   const cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
-  // Range: Oct 1 (first month with balances) to Nov 9 (today + 30)
+  // Range: Oct 1 (first month with balances) to Nov 9 (today + 30): 31 days of October + 9 = 40
   assert.deepEqual([cal.start, cal.end, cal.days.length], ['2026-10-01', '2026-11-09', 40]);
   // Oct 1: checking 1,000 - 1,200 rent = -200
   money(cashOn(cal, '2026-10-01'), -200, 'Oct 1');
@@ -208,6 +211,8 @@ test('this month so far: plan vs logged per category', () => {
   const doc = household();
   logged(doc);
   const rows = Object.fromEntries(monthSoFar(doc, '2026-10', TODAY).map((r) => [r.id, [r.plan, r.logged, r.left]]));
+  // Plan is the estimate, logged is the log so far: rent 1,200 confirmed, groceries 80 + 40 = 120 of 400,
+  // and nothing yet against the phone (60, due the 18th).
   assert.deepEqual(rows, { housing: [1200, 1200, 0], food: [400, 120, 280], bills: [60, 0, 60] });
 });
 

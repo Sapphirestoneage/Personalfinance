@@ -1,5 +1,7 @@
 // Insights, Over time (S-106): guesses, plans, and actuals for one category,
 // and the 80/20 for a range. A closed month's saved review is on Review.
+// Numbers from src/engines/estimates.js (estimateHistory) and src/engines/pareto.js (paretoLevels,
+// rangeMonths); this file only lays them out. Builds on dom, format, svg (paretoChart), and catalog.
 
 import { h, options } from '../dom.js';
 import { monthLabel } from '../format.js';

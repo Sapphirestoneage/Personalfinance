@@ -1,6 +1,8 @@
 // Insights, Cash: the budget-to-cash bridge for one month (S-088). The waterfall runs
 // from the budget surplus to the change in cash; every step lists its amount,
-// where it came from, and a link to it. Data from src/engines/bridge.js.
+// where it came from, and a link to it. Data from src/engines/bridge.js (bridgeFor,
+// TIES_WITHIN); this file only lays it out. Builds on dom, format, svg (waterfall),
+// catalog (card, chartWidth), and jump.
 
 import { h, options } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
@@ -9,6 +11,7 @@ import { card, chartWidth } from './catalog.js';
 import { bridgeFor, TIES_WITHIN } from '../../engines/bridge.js';
 import { jumpLink } from '../components/jump.js';
 
+// Where each kind of step gets fixed; a kind without a place of its own points at the log.
 const LINKS = { actual: ['Review, fill gaps', 'actual'], balances: ['Setup, Accounts', 'balances'], log: ['The log on Track', 'log'] };
 
 export function linkTo(ctx, to) {
@@ -21,6 +24,8 @@ export function bridgeMonths(doc) {
   return [...new Set([...Object.keys(doc.balances || {}), doc.currentMonth, ...doc.months.map((m) => m.key)])].sort().reverse();
 }
 
+// Waterfall rows: totals stand on the baseline, steps run from the running total. "Not explained yet"
+// gets a bar only when it is at least half a cent, so a rounding crumb does not draw as a step.
 export function bridgeRows(br) {
   const rows = [{ label: 'Budget surplus', from: 0, to: br.surplus, kind: 'total' }];
   let run = br.surplus;
@@ -40,6 +45,7 @@ export function materialityInput(ctx) {
     h('input', { type: 'text', inputmode: 'decimal', style: 'width:6em', 'data-key': 'materiality', value: v === undefined || v === null ? '' : String(v),
       onchange: (e) => {
         const t = e.target.value.trim().replace(/[$,]/g, '');
+        // Blank means the engine's default (TIES_WITHIN); it is stored as a number either way.
         const n = t === '' ? TIES_WITHIN : Number(t);
         if (!Number.isFinite(n) || n < 0) return ctx.toast('That needs a dollar amount, 0 or more');
         ctx.update('Materiality', (d) => { d.settings.materiality = n; });
@@ -50,6 +56,7 @@ export function bridgeCard(ctx, s, month, opts = {}) {
   const br = bridgeFor(ctx.doc, s.income, month);
   const months = bridgeMonths(ctx.doc);
   const picker = opts.picker === false ? null : h('select', { 'aria-label': 'Month', 'data-key': 'bridge-month', 'data-picker': 'range', onchange: (e) => { ctx.ui.bridgeMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month));
+  // No surplus yet (the engine wants take-home and the month's actuals): the card is only the picker and its reading.
   if (br.surplus === null) return card(ctx, { id: 'bridge', title: 'Budget to cash', extra: picker, reading: br.reading });
   const list = h('ul', { class: 'plain', 'data-key': 'bridge-steps' },
     h('li', { class: 'small' }, h('span', {}, 'Budget surplus', h('div', { class: 'xs muted' }, 'Take-home ' + money(br.takeHome) + ' less spending and savings')), h('b', { class: 'num' }, signedMoney(br.surplus))),

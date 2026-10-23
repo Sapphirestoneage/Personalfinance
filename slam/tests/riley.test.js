@@ -3,8 +3,12 @@
 // 2026 closed, October 2026 open, today October 17, 2026.
 //
 // Every expected number below is worked out by hand from the inputs (the
-// events written out in tools/riley.mjs and the balances in riley.json),
-// never by running the code.
+// events written out in tools/riley.mjs and the balances in
+// src/data/households/riley.json), never by running the code.
+//
+// Uses the summary, bridge, calendar, pareto, trends, totals, plan, balances and log engines, the
+// store (validate, edits, value, schema), and the helpers, which load the reference data in src/data
+// and the Riley demo household (riley.json above, run through migrate).
 //
 // RILEY, as set up:
 //   Pay: Northwind Labs, biweekly Fridays, 1,500 a paycheck (1,500 x 26 / 12 = 3,250 a month).

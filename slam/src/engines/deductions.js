@@ -1,6 +1,9 @@
 // Paycheck deductions: retirement (as a % of gross or a dollar amount), health
 // insurance, HSA or FSA, transportation, Roth, and anything else. Each one is
-// worked out per paycheck, month, and year, with its tax treatment.
+// worked out per paycheck, month, and year, with its tax treatment. Depends on
+// normalize.js (toMonthly, and the paychecks a year for each pay frequency).
+// Dollars a month unless a field says annual or perPaycheck; a percent deduction
+// is a percent number like 6.
 
 import { toMonthly, PAYCHECKS_PER_YEAR } from './normalize.js';
 
@@ -20,16 +23,26 @@ export const DEDUCTION_KINDS = {
   other: { label: 'Other', incomeTax: null, fica: null, retirement: false }
 };
 
+// A named kind has its tax treatment fixed; "other" takes it from the pretax box the client ticked.
 function treatment(d) {
   const k = DEDUCTION_KINDS[d.kind] || DEDUCTION_KINDS.other;
   if (d.kind === 'other') return { incomeTax: !!d.pretax, fica: !!d.pretax, retirement: false };
   return k;
 }
 
-// Monthly amount: % of gross pay, or the typed amount in any cadence.
-// Empty stays empty: a % with no gross pay, or a blank amount, is null.
+/**
+ * One row per deduction on an income: its monthly amount (% of gross pay, or the typed
+ * amount in any cadence) with its tax treatment. Empty stays empty: a % with no gross
+ * pay, or a blank amount, is null.
+ * @param {object} inc an income record (payFrequency, deductions as typed).
+ * @param {number|null} grossMonthly gross pay in dollars a month, null when not known.
+ * @returns {Array<object>} per deduction: monthly and annual (dollars), perPaycheck (dollars, null when the pay
+ *   frequency has no paycheck count), percent (a percent number, null for an amount), status ('computed' for a % with a
+ *   number), lowersIncomeTax, lowersFica, retirement.
+ */
 export function deductionRows(inc, grossMonthly) {
   const freq = inc.payFrequency;
+  // An unknown pay frequency gives no per-paycheck figure (null) rather than guessing 12.
   const n = PAYCHECKS_PER_YEAR[freq] || null;
   return (inc.deductions || []).map((d) => {
     let monthly;
@@ -40,13 +53,19 @@ export function deductionRows(inc, grossMonthly) {
       id: d.id, kind: d.kind, label: d.label || (DEDUCTION_KINDS[d.kind] || DEDUCTION_KINDS.other).label, accountId: d.accountId || null,
       mode: d.mode, percent: d.mode === 'percent' ? d.percent : null,
       monthly, annual: monthly === null ? null : monthly * 12, perPaycheck: monthly === null || !n ? null : (monthly * 12) / n,
+      // A percent deduction has no typed status: it is computed once a number comes out of it.
       status: d.mode === 'percent' ? (monthly === null ? null : 'computed') : d.amount.status,
       lowersIncomeTax: t.incomeTax, lowersFica: t.fica, retirement: t.retirement
     };
   });
 }
 
-// Totals used by the tax estimate and the budget. Missing amounts are counted, not zeroed.
+/**
+ * Totals used by the tax estimate and the budget. Missing amounts are counted, not zeroed.
+ * @param {Array<object>} rows from deductionRows.
+ * @returns {{all: number, retirement: number, incomeTaxFree: number, ficaFree: number, missing: number}} dollars a
+ *   month, added over the rows that have a number; missing is how many rows had none.
+ */
 export function deductionTotals(rows) {
   const add = (test) => rows.filter((r) => r.monthly !== null && test(r)).reduce((a, r) => a + r.monthly, 0);
   return {

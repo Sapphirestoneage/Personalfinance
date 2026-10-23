@@ -1,5 +1,9 @@
-// Maya, 26, single renter in NYC. Every number below was worked out by hand
-// from maya.json, step by step. None of it was produced by running the code.
+// Hand-computed expected answers for Maya, 26, single renter in NYC, the worked example household:
+// one W-2 job paid biweekly, a student loan, every category with an actual, rated lines, a plan
+// and a review month. Read by tests/households.test.js and tests/coverage.test.js, which compare
+// them with buildSummary over maya.json, and by tools/screens-check.mjs, which checks the screens
+// against them in a browser. The dream column is not read from here: tests/dreams.test.js checks
+// it in Eras with its own hand-worked numbers.
 
 // INCOME
 // Take-home 1,800 per paycheck, biweekly: 1,800 x 26 / 12 = 3,900.00 a month.
@@ -7,7 +11,7 @@
 // Hours: 40 a week x 52 / 12 = 173.333 hours a month. Hourly = 3,900 / 173.333 = 22.50.
 
 // CATEGORY TOTALS (estimate / dream / actual), all from lines. The budget checks estimate and
-// actual only (S-097); the dream column is checked in Eras (test/dream-life.test.js).
+// actual only (S-097); the dream column is listed for the record, not checked from here.
 // Housing:   rent 1600/1600/1600 + utilities 80/80/110 + internet 40/40/40 = 1720 / 1720 / 1750
 // Food:      groceries 300/280/380 + eating out 200/150/340 + delivery 50/0/120 = 550 / 430 / 840
 // Transport: MetroCard 132/132/132 = 132 / 132 / 132

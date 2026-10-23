@@ -2,7 +2,7 @@
 // Track, Review, Insights, Setup (plus Clients, and Future when it is on). Every
 // section has exactly one home; this file is the only map of them, so a link,
 // the Next card, a checklist "Fix", a search result, and a field path all land
-// in the same place.
+// in the same place. Imports nothing; whereFor and nameFor read the client document itself.
 
 // Accounts comes right after Today (S-136): the foundation, built step by step.
 export const SCREENS = [['today', 'Today'], ['accounts', 'Accounts'], ['plan', 'Plan'], ['track', 'Track'], ['review', 'Review'], ['insights', 'Insights'], ['setup', 'Setup']];
@@ -60,8 +60,10 @@ export function whereFor(doc, path) {
   const [a, id, c] = path;
   const catOf = (lineId) => (doc.categories.find((x) => x.lines.some((l) => l.id === lineId)) || {}).id;
   const dream = c === 'dream' || c === 'dreamLong';
+  // Order matters: the special homes (a premium line, a dream line) are tested before the general line and category rules.
   if (a === 'gut') return ['gut', []];
   if (a === 'profile') return ['setup:basics', []];
+  // Filing status and living arrangement sit on the Basics card; the other household facts are behind its "More" fold.
   if (a === 'household') return ['setup:basics', id === 'filingStatus' || id === 'livingWith' ? [] : ['basics-more']];
   // Take-home is asked in Your estimates (S-123), except for hourly pay (worked out in Setup).
   if (a === 'income' && c === 'takeHome' && (doc.income.find((i) => i.id === id) || {}).payBasis !== 'hourly') return ['estimates', []];
@@ -84,9 +86,11 @@ export function whereFor(doc, path) {
   if (a === 'line' && (c === 'dueDay' || c === 'dueMonth')) return ['setup:bills', []];
   if (a === 'line' && (c === 'openingAhead' || c === 'openingAheadMonths')) return ['setup:bills', ['opening:' + id]];
   if (a === 'line') return ['setup:categories', ['line:' + id]];
+  // Anything unmapped lands on Your estimates, where most facts are answered.
   return ['estimates', []];
 }
 
+// Clients and Future are not in SCREENS (one is the coach's list, the other is parked), so they are named here.
 export function screenLabel(id) {
   if (id === 'clients') return 'Clients';
   if (id === 'future') return 'Future';
@@ -94,6 +98,7 @@ export function screenLabel(id) {
 }
 
 // Every chart and card worth finding by name (S-108 search): [anchor id, name, where it lives].
+// One anchor can appear under several names (nw-tiles) so search finds it by any of them.
 export const CHARTS = [
   ['cash-strip', 'Cash, next 30 days', 'today'],
   ['chart-cf-chart', 'Cash by day (the calendar)', 'track'], ['chart-cf-paylater', 'Bills that land before the paycheck', 'track'],

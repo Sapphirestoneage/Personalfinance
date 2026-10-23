@@ -1,7 +1,9 @@
 // Setup (S-106): one-time setup, never mixed with weekly use. A short list of
 // sections; one is open at a time. Basics, Income and paychecks, Accounts,
 // Debts, Bills and due dates, Categories and lines, Tags, Cushion and coach
-// settings, Coach notes, and the parked Future tools switch.
+// settings, Coach notes, and the parked Future tools switch. The list itself is SETUP_SECTIONS (nav.js).
+// Depends on setup-basics.js for Basics and Income, the store (edits, accounts, schema, types), and the
+// ui components (cashflow, lines, coverage, type-select, name-edit, status) and charts (cash, bridge).
 
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';
@@ -23,15 +25,18 @@ import { addLine, addCategory, findLine, renameLine } from '../../store/edits.js
 function categoryEditor(ctx, summary, cat) {
   const row = summary.rows.find((r) => r.id === cat.id);
   if (!row) return null;
+  // A category marked "doesn't apply" (summary.rows) has nothing to edit here; the answer lives in Your estimates.
   if (row.notForMe) {
     return h('div', { class: 'rv-cat spread', id: 'cat-' + cat.id }, h('span', { class: 'small' }, cat.name, ' ', statusChip('not-for-me')),
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Your estimates'));
   }
   const catHasAnswer = cat.estimate.status !== null;
+  // A line added for a later month (addedFor) is not shown until that month.
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
   const archived = cat.lines.filter((l) => l.state === 'archived');
   // One row per category until tapped (S-106).
   const key = 'set-cat:' + cat.id;
+  // Also open when one of its lines is: a jump to a line's details lands in an open category.
   const open = ctx.ui.expanded.has(key) || live.some((l) => ctx.ui.expanded.has('line:' + l.id));
   const bar = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: () => {
     if (open) { ctx.ui.expanded.delete(key); live.forEach((l) => ctx.ui.expanded.delete('line:' + l.id)); } else ctx.ui.expanded.add(key);
@@ -56,6 +61,7 @@ function categoryEditor(ctx, summary, cat) {
     }),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived (' + archived.length + ')'),
       archived.map((l) => h('div', { class: 'spread small' }, l.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore line', (d) => { findLine(d, l.id).line.state = 'active'; }) }, 'Restore')))) : null,
+    // ctx.update runs the edit at once, so the new line's id is known here and its name field can take focus.
     h('button', { class: 'btn small ghost', onclick: () => {
       let id;
       ctx.update('Add line', (d) => { id = addLine(d, cat.id, 'New line').id; });
@@ -64,6 +70,8 @@ function categoryEditor(ctx, summary, cat) {
 }
 
 function categoriesSection(ctx, summary) {
+  // Two categories are not edited here: Debt payments is built from the debts (Accounts), and
+  // "everything" is the single total's own category (Your estimates).
   const cats = ctx.doc.categories.filter((c) => c.state !== 'archived' && c.id !== 'debt' && c.id !== 'everything');
   return h('div', { id: 'categories-setup' },
     h('div', { class: 'card' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Tap a category to rename it, its lines, and their details (fixed or variable, need, path, joy, stress).'),
@@ -90,6 +98,7 @@ function coachSection(ctx) {
     h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, 'Bridge: counts as tied when within'), h('div', { class: 'hint' }, 'The budget-to-cash bridge ties when the part not explained is this small. Default $25.')),
       materialityInput(ctx)),
     h('div', { class: 'qa', 'data-key': 'own-return-row' }, h('div', { class: 'q' }, h('div', {}, 'Assumption: what a home\'s equity could earn elsewhere'), h('div', { class: 'hint' }, 'A year, after inflation. Used in "Owning vs the alternative". Default 5%.')),
+      // Stored as a ratio (DEFAULT_OWN_RETURN when never set); shown and typed as a percent with one decimal. setOwnReturn stores a ratio again.
       h('input', { type: 'text', inputmode: 'decimal', style: 'width:5em', 'data-key': 'own-return', value: String(Math.round(((ctx.doc.settings.ownReturn === undefined ? DEFAULT_OWN_RETURN : ctx.doc.settings.ownReturn)) * 1000) / 10),
         onchange: (e) => {
           const n = Number(e.target.value.trim().replace('%', ''));
@@ -101,6 +110,7 @@ function coachSection(ctx) {
 const SECTIONS = {
   basics: (ctx, s) => renderProfile(ctx, s),
   coverage: (ctx, s) => coverageSection(ctx, s),
+  // Paydays sit with Income and the what-if calendar with Bills, so a date is set where its money is.
   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
   bills: (ctx, s) => h('div', {}, billsCard(ctx), whatIfCard(ctx, s, calendarFor(ctx, s, ctx.ui.cfHorizon || 30))),
   categories: categoriesSection,

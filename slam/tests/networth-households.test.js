@@ -1,7 +1,10 @@
 // Net worth on the test households (S-115): Riley (rents; a 401(k), a Roth IRA, a used car with a
 // loan) and Dana (owns a condo with a mortgage; a 401(k), a car with no loan, a Visa). Every expected
 // number is worked out by hand below from the balances typed in tools/riley.mjs and tools/dana.mjs
-// (Riley's checking, savings, and Visa ends are the ones in test/riley.test.js).
+// (Riley's checking, savings, and Visa ends are the ones in tests/riley.test.js). Runs the net worth,
+// net worth bridge, cash bridge, contributions and owning engines over riley.json and dana.json in
+// src/data/households (through helpers.js, with the reference data in src/data), with the store's
+// migrate, validate, accounts, value and schema modules; the last test reads fixtures/riley-schema9.json.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,6 +40,7 @@ test('Riley: both net worths and the locked-in part at two month ends', () => {
   // Locked in: the car 9,000 - its loan 5,146.97 = 3,853.03.
   // Paid ahead (S-119): the 960 of car insurance paid March 14 covers 12 months, 80 a month: 880 left at
   // March's end. It is an asset (tier 4), not FI. Net worth 28,992.90 + 880 = 29,872.90; assets 35,672.46.
+  // Locked in with it: the car's 3,853.03 + the 880 paid ahead = 4,733.03.
   const mar = netWorthAt(d, '2026-03-31');
   assert.deepEqual([mar.assetsTotal, mar.debtsTotal, mar.total, mar.fi, mar.locked], [35672.46, 5799.56, 29872.9, 25139.87, 4733.03]);
   assert.deepEqual(mar.lockedRows.map((r) => [r.name, r.value, r.debt, r.equity]), [['Car', 9000, 5146.97, 3853.03], ['Paid ahead: Car insurance', 880, 0, 880]]);
@@ -55,7 +59,7 @@ test('Riley: March\'s net worth bridge, line by line (it ties)', () => {
   // Start (February 28): checking 3,793.11 + savings 450 + 401(k) 13,465 + Roth 7,910 + car 9,100 = 34,718.11,
   // less the Visa 586.35 and the loan 5,459.67: 28,672.09.
   // Surplus -451.89 (the actual income 3,220, S-118) and timing -865 (yearly), from the cash bridge
-  // (test/riley.test.js). Before S-118 these were -171.89 and -1,145 (with -280 of income vs take-home): the same sum.
+  // (tests/riley.test.js). Before S-118 these were -171.89 and -1,145 (with -280 of income vs take-home): the same sum.
   // Saved: the savings lines 200 + 400 + 50 = 650, + the 401(k) from the paycheck 150 x 26 / 12 = 325: 975.
   // Debt paid down: the Visa minimum 35 + the loan 5,459.67 - 5,146.97 = 312.70: 347.70.
   // Market: 401(k) 14,065 - 13,465 - 325 = 275; Roth 8,450 - 7,910 - 400 moved in on the 28th = 140: 415.
@@ -79,7 +83,7 @@ test('Riley: June\'s net worth bridge, with the $60 of ATM cash not explained', 
   // Start (May 31): 2,822.03 + 200 + 15,165 + 9,475 + 8,800 = 36,462.03, plus the insurance paid ahead
   // 960 - 3 x 80 = 720, less 707.62 and 4,516.86: 31,957.55.
   // Surplus -376.35 (the actual income 3,150, S-118); timing: yearly +95, paid back +60, and paid ahead
-  // 720 -> 640 = -80: 75 (test/riley.test.js).
+  // 720 -> 640 = -80: 75 (tests/riley.test.js).
   // Saved 650 + 325 = 975. Paid down 35 + (4,516.86 - 4,199.44 = 317.42) = 352.42.
   // Market: 401(k) 15,340 - 15,165 - 325 = -150; Roth 9,800 - 9,475 - 400 = -75: -225. The car 8,800 -> 8,700: -100.
   assert.deepEqual(lines(b.total), { surplus: -376.35, timing: 75, saved: 975, 'paid-down': 352.42, market: -225, value: -100 });
@@ -129,6 +133,7 @@ test('Dana: both net worths at the start and end of the year, and at two month e
   assert.deepEqual([start.total, start.fi, start.locked], [52600, -6400, 59000]);
   // October 31: 2,400 + 1,500 + 6,460 = 10,360 - 15,560 = FI -5,200. The condo has no new value yet
   // (285,000); the mortgage 239,500: 45,500. The car 14,000. Locked in 59,500; net worth 54,300.
+  // Assets 2,400 + 1,500 + 6,460 + 285,000 + 14,000 = 309,360; owed 15,560 + 239,500 = 255,060.
   const oct = netWorthAt(d, '2025-10-31');
   assert.deepEqual([oct.assetsTotal, oct.debtsTotal, oct.total, oct.fi, oct.locked], [309360, 255060, 54300, -5200, 59500]);
   assert.deepEqual(oct.lockedRows.map((r) => [r.name, r.equity]), [['Condo', 45500], ['Car', 14000]]);

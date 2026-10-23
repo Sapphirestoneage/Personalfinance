@@ -1,5 +1,9 @@
 // Editors for categories, lines, tags, and debts (S-106): set up once in Setup,
 // Categories and lines / Tags / Debts. Moved from the Actual pass, unchanged.
+// Writes go through store/edits.js. The debt card reads engines/debts.js (the paying line, the interest and
+// principal split, card interest, promo months left) and engines/balances.js (a linked card's balance, dated
+// observations); a premium line defers to coverage (PREMIUM_LINE_TYPES, coverageNote). Builds on dom, format,
+// question (value-input.js), name-edit, type-select, and the debt type list from debt-quick.
 
 import { h, options } from '../dom.js';
 import { money, monthLabel, dateLabel } from '../format.js';
@@ -51,6 +55,8 @@ export function catName(ctx, cat) {
   return nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, cat.id).name = v; }, 'Category name');
 }
 
+// A select bound to one line field. Joy and stress are stored as numbers, null for "not rated"; every other
+// field keeps the option's string.
 function lineSelect(ctx, line, field, list, label) {
   return h('label', { class: 'field' }, h('span', { class: 'lbl' }, label),
     h('select', { 'data-key': 'line:' + line.id + ':' + field, onchange: (e) => ctx.update(label, (d) => {
@@ -92,6 +98,7 @@ function payingLine(ctx, debt, summary) {
       options([['', 'No: its own minimum, in Debt payments'], ...cands.map((c) => [c.id, c.name + ' (' + c.category + ')'])], line ? line.id : '')));
   if (!line) return h('div', {}, pick, h('p', { class: 'muted xs' }, 'Pick the line if the payment is already in the budget (a Car payment line, say), so it is counted once.'));
   const row = summary ? summary.rows.flatMap((r) => r.lines).find((l) => l.id === line.id) : null;
+  // The split uses this month's actual when there is one, else the estimate; splitPayment (engines/debts.js) does the arithmetic.
   const payment = row ? (row.actual !== null ? row.actual : row.estimate) : null;
   const sp = splitPayment(ctx.doc, debt, ctx.doc.currentMonth, payment);
   return h('div', {}, pick,
@@ -134,6 +141,7 @@ export function debtCard(ctx, debt, summary) {
         ? h('p', { class: 'small warn' }, 'Not counting (paid off or set aside). ', h('button', { class: 'btn small', onclick: () => ctx.update('Count debt again', (d) => { d.debts.find((x) => x.id === debt.id).state = 'active'; }) }, 'Count it again'))
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     payingLine(ctx, debt, summary),
+    // With a paying line, the minimum is that line's estimate (payingLine says so), so it is not asked twice.
     linkedLine(ctx.doc, debt) ? null : question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
     linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the card "' + linked.name + '" (its Today box above).')
       // Dated balances (S-110) own the balance once there is one; it is never asked twice.
@@ -143,6 +151,7 @@ export function debtCard(ctx, debt, summary) {
     // A card or line of credit is credit you have (S-137): its limit shows what is available.
     debt.type === 'credit-card' || debt.type === 'line-of-credit' ? question(ctx, 'Credit limit', 'What can be borrowed on it in all', p('creditLimit'), debt.creditLimit, { cadence: false }) : null,
     cardPromo(ctx, debt),
+    // Likewise the due day of a loan paid by a line is the line's (Setup, Bills and due dates).
     linkedLine(ctx.doc, debt) ? null : question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
 }
 

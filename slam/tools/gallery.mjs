@@ -2,6 +2,9 @@
 // desktop, light and dark, for Riley and Maya (the clock on October 17, 2026),
 // in one page that scrolls like a slide deck, each with a caption.
 //
+// Depends on Playwright and on node's fs and child_process; nothing from src/. It reads
+// tools/gallery-approved/*.jpg and writes tools/gallery/ (the changed shots and gallery.html).
+//
 // The last approved set lives in tools/gallery-approved/. A screenshot that
 // matches it is shown from there; one that differs (or is new) is saved in
 // tools/gallery/ and marked "Changed since approved". To approve the current set:
@@ -17,8 +20,10 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync, rmSync
 
 const require = createRequire(import.meta.url);
 let playwright;
+// Playwright is not in package.json: take it from this folder's node_modules, or from the global install.
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
+// URL here is the site's address, so the URL class is reached through globalThis.
 const URL = process.env.SLAM_URL || 'http://localhost:8765/';
 const OUT = new globalThis.URL('./gallery/', import.meta.url).pathname;
 const APPROVED = new globalThis.URL('./gallery-approved/', import.meta.url).pathname;
@@ -44,6 +49,7 @@ const SHOTS = [
 
 mkdirSync(OUT, { recursive: true });
 mkdirSync(APPROVED, { recursive: true });
+// Start tools/gallery/ clean, so after the run it holds only what differs from the approved set.
 for (const f of readdirSync(OUT)) if (f.endsWith('.jpg')) rmSync(OUT + f);
 
 const browser = await playwright.chromium.launch();
@@ -52,6 +58,7 @@ for (const [who, button] of PEOPLE) {
   for (const [view, size] of VIEWS) {
     for (const theme of THEMES) {
       const page = await browser.newPage({ viewport: size, colorScheme: theme });
+      // The demo clock: with the date fixed, a shot differs only when the screen does.
       await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
       await page.goto(URL + '#clients');
       await page.getByText(button).first().click();
@@ -60,10 +67,14 @@ for (const [who, button] of PEOPLE) {
         await page.evaluate((x) => { location.hash = x; }, hash);
         await page.waitForSelector('#main[data-screen="' + hash + '"]');
         if (click) await page.click('[data-key="' + click + '"]');
+        // The shot is the viewport, not the whole page.
         await page.waitForTimeout(200);
         await page.evaluate(() => window.scrollTo(0, 0));
         const name = [who, view, theme, part].join('-') + '.jpg';
         const shot = await page.screenshot({ type: 'jpeg', quality: 80 });
+        // Changed or not is decided byte for byte: no approved file of this name, or JPEG bytes that
+        // differ (no tolerance, so a one-pixel shift counts). With --approve the shot becomes the
+        // approved file and nothing is marked changed.
         const before = existsSync(APPROVED + name) ? readFileSync(APPROVED + name) : null;
         const changed = !before || !before.equals(shot);
         if (approve) writeFileSync(APPROVED + name, shot);
@@ -78,6 +89,8 @@ await browser.close();
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const changedCount = slides.filter((s) => s.changed).length;
+// The page shows an unchanged shot from the approved folder (not copied) and a changed one from
+// tools/gallery/, marked in red; the arrow keys move one slide at a time.
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SLAM gallery</title>

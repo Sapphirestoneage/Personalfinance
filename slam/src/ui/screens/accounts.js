@@ -1,10 +1,9 @@
-// Accounts (S-136): the foundation, first step. Cash accounts (checking, savings, cash), each with its
-// current balance, the day it was read, and an Update box; tap one for its details and history. When every
-// cash account has a balance from the last 30 days the step is done and folds to one line, with Review to
-// open it again. Numbers come from calc/balances.js accountsStatus; this file only lays them out.
-// Credit and debt (S-137) comes next: every card and loan, with what is owed, and for a card its limit,
-// what is available, and how much is used; a paid-off card is still credit. Investments and things you own
-// (step 4) sit below, folded, until their step.
+// Accounts (S-136): the first step. Cash accounts (checking, savings, cash), each with its current balance, the day it was
+// read, and an Update box; tap one for its details and history. When every cash account has a balance from the last 30 days
+// (FRESH_DAYS) the step is done and folds to one line, with Review to open it again. Credit and debt (S-137) comes next: every
+// card and loan, what is owed, and for a card its limit and what is available; a paid-off card is still credit. Investments
+// and things you own sit below, folded, until their step. Numbers come from engines/balances.js (accountsStatus, creditStatus)
+// and engines/networth.js (netWorthAt); edits go through store/accounts.js and store/edits.js. This file only lays them out.
 
 import { h, options } from '../dom.js';
 import { money, pct, todayIso, dayLabel, dateLabel } from '../format.js';
@@ -21,6 +20,7 @@ import { interestChart } from '../charts/interest-chart.js';
 import { ACCOUNT_TYPE_INFO, CASH_ACCOUNT_TYPES } from '../../store/schema.js';
 
 const CASH_OPTIONS = CASH_ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
+// What the Update box holds when nothing was typed today: a null amount, not entered (never 0).
 const blank = { amount: null, cadence: 'one-off', status: null, source: 'client', asOf: null, note: '' };
 
 function ago(x) {
@@ -51,6 +51,7 @@ function creditRow(ctx, summary, r, today) {
   const key = 'credit-open:' + r.key;
   const open = ctx.ui.expanded.has(key);
   const debt = r.debtId ? ctx.doc.debts.find((x) => x.id === r.debtId) : null;
+  // The Update box takes the cash-row shape; r.key is where creditStatus keeps this balance (the card's account, else the debt).
   const x = { id: r.key, name: r.name, latest: r.latest };
   return h('div', { class: 'acct-cash' + (r.fresh ? '' : ' stale'), 'data-key': 'credit-row:' + r.key },
     h('div', { class: 'qa' },
@@ -66,6 +67,7 @@ function creditSection(ctx, summary, today) {
   const doc = ctx.doc;
   const st = creditStatus(doc, today);
   const reviewing = ctx.ui.expanded.has('credit-review');
+  // Done (creditStatus.done): every card and loan read in the last FRESH_DAYS, or none and "No debts" checked. Review reopens it.
   if (st.done && !reviewing) {
     return h('div', { class: 'card spread', id: 'credit-card', 'data-key': 'credit-done' },
       h('span', {}, h('span', { class: 'chip st-known' }, 'Done'), ' Credit and debt: ' + (st.rows.length ? st.rows.length + (st.rows.length === 1 ? ' card or loan, ' : ' cards and loans, ') + money(st.owed, true) + ' owed' +
@@ -77,6 +79,7 @@ function creditSection(ctx, summary, today) {
     h('p', { class: 'muted small' }, 'Every card, line of credit, and loan. A card with nothing owed is still credit you have. Type each balance as of today; the minimums add up to Debt payments.' +
       (st.available !== null ? ' Available on your cards: ' + money(st.available, true) + ' of ' + money(st.limit, true) + ' (' + pct(st.used) + ' used).' : '') +
       (st.stale.length && st.rows.length ? ' Out of date: ' + st.stale.join(', ') + '.' : '')),
+    // With no cards or loans nothing can be "up to date", so the step needs a yes: doc.noDebts counts as complete.
     st.rows.length ? null : h('label', { class: 'check', 'data-path': JSON.stringify(['debts']) }, h('input', { type: 'checkbox', checked: !!doc.noDebts, 'data-key': 'no-debts',
       'data-path': JSON.stringify(['debts']), onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No cards or loans (counts as complete)'),
     interestChart(ctx, summary),
@@ -137,6 +140,7 @@ export function renderAccounts(ctx, summary) {
     ctx.update('Add account', (d) => { id = addAccount(d, { name: ACCOUNT_TYPE_INFO[type].label, type }).id; });
     if (id) { ctx.ui.expanded.add('acct-open:' + id); ctx.ui.focusKey = 'acct:' + id + ':name'; ctx.rerender(); }
   };
+  // Done (accountsStatus.done): at least one cash account and every one read in the last FRESH_DAYS; Review reopens the card.
   const cashCard = st.done && !reviewing
     ? h('div', { class: 'card spread', id: 'cash-card', 'data-key': 'cash-done' },
       h('span', {}, h('span', { class: 'chip st-known' }, 'Done'), ' Cash: ' + st.cash.length + (st.cash.length === 1 ? ' account, ' : ' accounts, ') + money(st.cashTotal, true) + ', all updated in the last ' + FRESH_DAYS + ' days.'),
@@ -149,6 +153,7 @@ export function renderAccounts(ctx, summary) {
       st.cash.map((x) => cashRow(ctx, x, today)),
       h('div', { class: 'row' }, CASH_ACCOUNT_TYPES.map((t) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + t, onclick: () => add(t) }, '+ ' + ACCOUNT_TYPE_INFO[t].label)),
         st.done ? h('button', { class: 'btn small ghost', 'data-key': 'accounts-fold', onclick: () => { ctx.ui.expanded.delete('accounts-review'); ctx.rerender(); } }, 'Done') : null));
+  // Cards already show under Credit and debt; what is left (investments, retirement, property) folds below until its step.
   const others = doc.accounts.filter((a) => a.state !== 'archived' && !CASH_ACCOUNT_TYPES.includes(a.type) && a.type !== 'credit-card');
   return h('div', {},
     h('h1', {}, 'Accounts'),

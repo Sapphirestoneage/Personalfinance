@@ -1,6 +1,8 @@
 // Part 9 of the monthly loop: trends (S-092), small cases by hand. Riley's
-// year (test/riley.test.js) checks the month-over-month bridge, fixed floor,
+// year (tests/riley.test.js) checks the month-over-month bridge, fixed floor,
 // and volatility on a real pair of months.
+// Depends on the trends engine and buildSummary, the store's schema and log modules (to build
+// small households and add entries), the October fixture, and tests/helpers.js.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,6 +47,9 @@ test('card float and cash not explained, October', () => {
   const d = october({ atm: true });
   // Charged on the Visa: groceries 300. Paid to cards from checking: 450.
   assert.deepEqual(tr.cardFloat(d, ['2026-10']), [{ month: '2026-10', charged: 300, paid: 450, gap: -150 }]);
+  // The 60 ATM withdrawal has no line, so no budget actual carries it and checking ends 60 lower
+  // than the bridge's steps explain: actual less explained is -60, and the same 60 is the ATM total.
+  // Nothing in the log is tagged Venmo, Zelle or Cash App.
   const ne = tr.notExplained(d, buildSummary(d, refs).income, ['2026-10']);
   assert.deepEqual(ne, { bridge: -60, months: 1, atm: 60, p2p: 0 });
 });

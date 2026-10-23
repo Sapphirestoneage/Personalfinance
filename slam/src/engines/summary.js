@@ -1,5 +1,8 @@
 // One call that computes everything the screens show. Screens read this
-// object and format it; they never do math of their own.
+// object and format it; they never do math of their own. Depends on nearly every other engine (income,
+// model, totals, compare, history, lenses, completion, guesses, plan, happiness, debts, eras, dream life,
+// next stage, tags, breakdown, tx-analysis) and on store/records.js for the live view of a file with
+// deletions. Reference data (tax constants, benchmarks, averages) arrives as refs. Dollars a month.
 
 import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
@@ -25,11 +28,13 @@ function pctBlock(e, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
 }
 
+// One row per category with its lines: the model's numbers plus gaps, accuracy, and shares of take-home and spending.
 function tableRows(model, totals) {
   const th = totals.takeHome;
   return model.categories.map((c) => {
     const basis = totals.bases[c.id];
     const lines = c.lines.map((l) => {
+      // A line's basis is its actual when one exists, else its estimate (totals.js does the same for a category).
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
         id: l.id, name: l.name, type: l.type, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
@@ -56,6 +61,13 @@ function tableRows(model, totals) {
   });
 }
 
+/**
+ * The whole summary for the month being worked on.
+ * @param {object} full the household file: the live view, or a full file with deleted records still in it.
+ * @param {object} refs reference data from src/data: tax constants, benchmarks, spending averages, and the rest.
+ * @returns {object} dollars a month throughout: income, model, totals, rows, allocation, history, lenses, completion, plan,
+ *   tags, eras, dreamLife, nextStage, transactions and more; every share is a ratio 0 to 1.
+ */
 export function buildSummary(full, refs) {
   // The store hands calc the live view already; a full file with deleted records is trimmed here too (S-096).
   const doc = hasDeleted(full) ? liveView(full) : full;
@@ -98,6 +110,8 @@ export function buildSummary(full, refs) {
     guesses: availableGuesses(doc, refs),
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
+  // Order matters from here: the plan and shares need rows and totals, the dream life needs the summary, Eras
+  // reads the dream life, and since-last reads the finished totals.
   summary.tags = tagTotals(doc, model);
   addPlanAndShares(summary, doc, model, totals);
   summary.lineIdeas = lineIdeas(doc, refs);
@@ -161,7 +175,13 @@ function addPlanAndShares(summary, doc, model, totals) {
   summary.totals.planOutflow = plan ? plan.outflow : null;
 }
 
-// The small set of numbers kept in doc.snapshots for "since last time".
+/**
+ * The small set of numbers kept in doc.snapshots for "since last time".
+ * @param {object} summary what buildSummary returns.
+ * @param {?string} dateIso when the snapshot is taken (an ISO date or timestamp); null for a comparison.
+ * @returns {{date: ?string, takeHome: ?number, spending: ?number, surplus: ?number, savingsRate: ?number, blindSpot: ?number,
+ *   completion: ?number}} dollars a month; the last three are ratios 0 to 1.
+ */
 export function snapshotOf(summary, dateIso) {
   return {
     date: dateIso,
@@ -174,6 +194,13 @@ export function snapshotOf(summary, dateIso) {
   };
 }
 
+/**
+ * The change since the last saved snapshot, number by number.
+ * @param {object} doc the household file (doc.snapshots).
+ * @param {object} summary what buildSummary returns.
+ * @returns {?object} { date, takeHome, spending, surplus, savingsRate, blindSpot, completion }: now minus then, in the units
+ *   of snapshotOf, null where either side is missing; null altogether when no snapshot was saved yet.
+ */
 export function sinceLast(doc, summary) {
   const last = doc.snapshots[doc.snapshots.length - 1];
   if (!last) return null;
@@ -183,7 +210,11 @@ export function sinceLast(doc, summary) {
   return out;
 }
 
-// The month's income (S-118) is saved with it: estimate, plan, and actual per source.
+/**
+ * What a month keeps when it is closed. The month's income (S-118) is saved with it: estimate, plan, and actual per source.
+ * @param {object} summary what buildSummary returns.
+ * @returns {object} the history.js monthSnapshot of the model and income, with income set to totals.income; dollars a month.
+ */
 export function closeMonthSnapshot(summary) {
   return { ...monthSnapshot(summary.model, summary.income), income: summary.totals.income };
 }

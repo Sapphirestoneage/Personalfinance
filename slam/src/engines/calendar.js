@@ -1,12 +1,11 @@
-// The cash flow calendar (S-086): cash day by day, past and future, on one
-// line. Past days (up to today) show the log; future days show what is
-// scheduled: paychecks from each income's next pay date and frequency, bills
-// on their due days, card and loan payments on the debt's due day, and the
-// rest of each month's plan spread evenly over the days left ("spread across
-// the month"), shrinking as real entries for those lines come in.
-// A typed month start, month end, or balance check resets an account to that
-// real number. Cash here is checking only (S-094); cards are what is owed.
-// Short range only (days). Eras is the long view (months and years).
+// The cash flow calendar (S-086): cash day by day, past and future, on one line. Past days (up to today)
+// show the log; future days show what is scheduled: paychecks from each income's next pay date and frequency,
+// bills on their due days, card and loan payments on the debt's due day, and the rest of each month's plan
+// spread evenly over the days left ("spread across the month"), shrinking as real entries for those lines
+// come in. A typed month start, month end, or balance check resets an account to that real number. Cash here
+// is checking only (S-094); cards are what is owed. Short range only (days); Eras is the long view.
+// Dollars on each day. Depends on plan.js (the month's model and plan), log.js (counted entries, amountClose),
+// balances.js (isCashAccount), normalize.js (toMonthly), debts.js (linkedLine, cardInterest), money.js (r2).
 
 import { modelForMonth, planView } from './plan.js';
 import { counted } from './log.js';
@@ -20,35 +19,62 @@ import { linkedLine, cardInterest } from './debts.js';
 import { r2 } from './money.js';
 
 const DAY = 86400000;
+// Paychecks a year by frequency, and the days between paychecks for the two that repeat on a fixed step
+// (semimonthly uses its two pay days, monthly the day of the month).
 const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
 const STEP_DAYS = { weekly: 7, biweekly: 14 };
+// Entry kinds that count as spending on a line, net of refunds and reimbursements (negative amounts).
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 
+/**
+ * The day n days after a day (n may be negative), in UTC so a time zone never skips a day.
+ * @param {string} iso 'YYYY-MM-DD'
+ * @param {number} n days
+ * @returns {string} 'YYYY-MM-DD'
+ */
 export function addDays(iso, n) {
   return new Date(Date.parse(iso + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
 }
+/**
+ * Days from a to b, negative when b is earlier.
+ * @param {string} a 'YYYY-MM-DD'
+ * @param {string} b 'YYYY-MM-DD'
+ * @returns {number} whole days
+ */
 export function daysBetween(a, b) {
   return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / DAY);
 }
+/**
+ * How many days a month has (day 0 of the next month is this month's last).
+ * @param {string} month 'YYYY-MM'
+ * @returns {number} 28 to 31
+ */
 export function daysInMonth(month) {
   const [y, m] = month.split('-').map(Number);
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 const monthOf = (iso) => iso.slice(0, 7);
 const dateIn = (month, day) => month + '-' + String(Math.min(day, daysInMonth(month))).padStart(2, '0');
+// Every month from a to b, both included. The 28th plus 7 days always lands in the next month.
 function monthsBetween(a, b) {
   const out = [];
   for (let m = a; m <= b; m = addDays(dateIn(m, 28), 7).slice(0, 7)) out.push(m);
   return out;
 }
 
-// The account a scheduled item or an entry with no account lands in: the first checking account.
+/**
+ * The account a scheduled item or an entry with no account lands in: the first checking account, else the
+ * first cash account, else the first account of any kind.
+ * @param {object} doc the household file
+ * @returns {?string} an account id, or null with no live accounts
+ */
 export function defaultAccount(doc) {
   const live = (doc.accounts || []).filter((a) => a.state !== 'archived');
   const a = live.find((x) => x.type === 'checking') || live.find(isCashAccount) || live[0];
   return a ? a.id : null;
 }
 
+// The number in a value, or null: not entered and "not for me" both give no amount.
 const amountOfValue = (v) => (v && v.amount !== null && v.amount !== undefined && v.status !== 'not-for-me' ? v.amount : null);
 
 // One month's planned amount per line (monthly), from the plan, else the estimate.
@@ -58,6 +84,8 @@ function lineAmounts(doc, month) {
   const units = [];
   const byLine = {};
   for (const c of model.categories) {
+    // Savings lines stay in your accounts (no cash leaves), debt payments are scheduled from the debt
+    // itself, and a "not for me" category has nothing to spread.
     if (c.savings || c.isDebt || c.notForMe) continue;
     const pc = plan ? plan.cats[c.id] : null;
     const catLevel = pc ? pc.byCategory : c.estimate.from === 'category';
@@ -70,23 +98,30 @@ function lineAmounts(doc, month) {
   return { units, byLine };
 }
 
-// The paydays of one income in a month, from its pay schedule (S-117: a biweekly month can have 3).
-// Null when the schedule is not known yet (no next pay date).
+/**
+ * The paydays of one income in a month, from its pay schedule (S-117: a biweekly month can have 3).
+ * @param {object} inc an income record: payFrequency, nextPayDate, payDays, and benefitWeeksLeft for unemployment
+ * @param {string} month 'YYYY-MM'
+ * @returns {?string[]} days 'YYYY-MM-DD' in order; null when the schedule is not known yet (no next pay date)
+ */
 export function payDates(inc, month) {
   const first = month + '-01';
   const last = dateIn(month, 31);
   const dates = [];
   if (inc.payFrequency === 'semimonthly') {
+    // Semimonthly needs no next pay date: its two pay days, the 1st and 15th unless typed.
     const days = inc.payDays && inc.payDays.length === 2 ? inc.payDays : [1, 15];
     for (const d of days) dates.push(dateIn(month, d));
     return dates.sort();
   }
   const d0 = inc.nextPayDate && inc.nextPayDate.date;
   if (!d0) return null;
+  // Monthly: the same day of the month as the next pay date (dateIn clamps a 31st to a shorter month).
   if (inc.payFrequency === 'monthly') dates.push(dateIn(month, Number(d0.slice(8))));
   else {
     const step = STEP_DAYS[inc.payFrequency];
     if (!step) return null;
+    // Step back from the next pay date in whole periods to before the month, then walk forward through it.
     let d = addDays(d0, -step * Math.ceil(Math.max(0, daysBetween(first, d0)) / step));
     while (d < first) d = addDays(d, step);
     for (; d <= last; d = addDays(d, step)) dates.push(d);
@@ -99,8 +134,15 @@ export function payDates(inc, month) {
   return dates.sort();
 }
 
-// Every scheduled item in one month: paychecks, bills, debt payments.
-// key = kind:id:original date. A move (doc.cashflow.moves[key]) changes the date or skips it.
+/**
+ * Every scheduled item in one month: paychecks, bills, debt payments. key = kind:id:original date. A move
+ * (doc.cashflow.moves[key]) changes the date or skips it.
+ * @param {object} doc the household file
+ * @param {string} month 'YYYY-MM'
+ * @param {object} income the income summary (summary.income); takeHomeMonthly per source in dollars a month
+ * @returns {{items: object[], amounts: object}} items by date, each { key, kind, dir 'in' or 'out', amount in
+ *   dollars (null when unknown), account, planned, date, moved, skipped }; amounts is the month's plan per line
+ */
 export function scheduledItems(doc, month, income) {
   const items = [];
   const first = month + '-01';
@@ -116,6 +158,7 @@ export function scheduledItems(doc, month, income) {
   for (const inc of doc.income) {
     if (inc.state === 'archived') continue;
     const src = (income.sources || []).find((s) => s.id === inc.id);
+    // One paycheck = monthly take-home * 12 / paychecks a year; null until the frequency is known.
     const per = src && src.takeHomeMonthly !== null && PER_YEAR[inc.payFrequency] ? r2((src.takeHomeMonthly * 12) / PER_YEAR[inc.payFrequency]) : null;
     const acct = inc.accountId || def;
     const dates = payDates(inc, month);
@@ -133,6 +176,7 @@ export function scheduledItems(doc, month, income) {
       if (!day) continue;
       const yearly = dm !== null;
       if (yearly && Number(month.slice(5)) !== dm) continue;
+      // A yearly bill is the monthly share times 12, placed in its due month.
       const monthly = amts.byLine[l.id];
       const amount = monthly === null ? null : r2(yearly ? monthly * 12 : monthly);
       const d = dateIn(month, day);
@@ -167,6 +211,7 @@ function confirmItems(items, entries) {
   for (const it of items) {
     if (it.skipped) continue;
     let hit = entries.find((e) => e.scheduleKey === it.key);
+    // Income entries are negative (money in), so a paycheck matches on the negated amount.
     if (!hit && it.amount !== null) {
       hit = entries.find((e) => !used.has(e.id) && !e.scheduleKey && Math.abs(daysBetween(e.date, it.date)) <= 3 && (
         (it.kind === 'bill' && e.lineId === it.lineId && amountClose(e.amount, it.amount)) ||
@@ -194,11 +239,15 @@ function spreadFor(doc, month, today, sched, entries) {
   for (const c of doc.categories) for (const l of c.lines) if (amountOfValue(l.dueDay) && amountOfValue(l.dueMonth) !== null) yearlyLines.add(l.id);
   const logged = loggedByLine(entries, month, today);
   const first = month + '-01';
+  // The spread starts tomorrow (today's spending is in the log), or on the 1st of a month still ahead;
+  // a month already over has no days left and spreads nothing.
   const startDay = today >= first ? addDays(today, 1) : first;
   const daysLeft = monthOf(startDay) === month ? daysInMonth(month) - Number(startDay.slice(8)) + 1 : 0;
   const def = defaultAccount(doc);
   const out = [];
   for (const u of sched.amounts.units) {
+    // A category planned as one number spreads what is left after its scheduled bills; a line-level one
+    // spreads each unscheduled line. Yearly bills never spread.
     const parts = u.catLevel
       ? [{ name: u.name, ids: u.lines.filter((l) => !scheduledLines.has(l.id) && !yearlyLines.has(l.id)).map((l) => l.id), plan: u.amount === null ? null : Math.max(0, u.amount - u.lines.filter((l) => scheduledLines.has(l.id)).reduce((a, l) => a + (sched.amounts.byLine[l.id] || 0), 0)), account: def }]
       : u.lines.filter((l) => !scheduledLines.has(l.id) && !yearlyLines.has(l.id)).map((l) => {
@@ -208,6 +257,7 @@ function spreadFor(doc, month, today, sched, entries) {
     for (const p of parts) {
       if (p.plan === null || p.plan === undefined || p.plan <= 0) continue;
       const soFar = p.ids.reduce((a, id) => a + (logged[id] || 0), 0);
+      // What is left never goes below 0: overspending does not turn into a negative spread.
       const left = Math.max(0, p.plan - soFar);
       out.push({ name: p.name, lineIds: p.ids, plan: p.plan, logged: r2(soFar), left: r2(left), perDay: daysLeft ? left / daysLeft : 0, from: startDay, account: p.account });
     }
@@ -220,7 +270,15 @@ function effect(acct, flow) {
   return acct && acct.type === 'credit-card' ? -flow : flow;
 }
 
-// opts: { today: 'YYYY-MM-DD', horizon: 30 | 60 | 90, cushion }
+/**
+ * Cash by day, from the first month with a typed balance through today plus the horizon.
+ * @param {object} doc the household file
+ * @param {object} income the income summary (summary.income)
+ * @param {{today: string, horizon: number, cushion: number}} opts today 'YYYY-MM-DD'; horizon in days (30, 60,
+ *   or 90; 30 when not given); cushion in dollars, else the file's cushion, else 0
+ * @returns {object} { days, todayCash, lowest, safeToSpend, shortfall, nextPayday, paydays, waiting, scheduled,
+ *   spreads, payLater, unknownStart, ... }: dollars on each day (cash is checking only, cards what is owed)
+ */
 export function cashCalendar(doc, income, opts) {
   const today = opts.today;
   const horizon = opts.horizon || 30;
@@ -229,6 +287,7 @@ export function cashCalendar(doc, income, opts) {
   const def = defaultAccount(doc);
   const cf = doc.cashflow || {};
   const cushion = opts.cushion !== undefined ? opts.cushion : (cf.cushion && cf.cushion.amount !== null ? cf.cushion.amount : 0);
+  // Start the line at the earliest month with any typed balance, so it begins on a real number; else this month.
   const balMonths = Object.keys(doc.balances || {}).filter((m) => Object.entries(doc.balances[m]).some(([id, b]) => byId[id] && ((b.start && b.start.amount !== null) || (b.end && b.end.amount !== null)))).sort();
   const firstMonth = balMonths.length && balMonths[0] < monthOf(today) ? balMonths[0] : monthOf(today);
   const start = firstMonth + '-01';
@@ -288,14 +347,17 @@ export function cashCalendar(doc, income, opts) {
       if (a) bal[a.id] = bal[a.id] + effect(a, flow);
       items.push({ ...it, account: a ? a.id : null, flow, cash: a ? inCalendar(a) : false });
     };
+    // Entry amounts are positive for money out, so the flow into the account is the negative.
     if (d <= today) {
       for (const e of entries) if (e.date === d) add({ type: 'entry', id: e.id, name: e.description || e.note || e.kind, kind: e.kind, source: e.source || 'import', lineId: e.lineId }, e.account || def, -e.amount);
     }
+    // Items still waiting are shown on today at their amount: the line assumes they clear now.
     if (d === today) for (const it of waiting) if (it.amount !== null) add({ type: 'waiting', key: it.key, kind: it.kind, name: it.name, date: it.date }, it.account, it.dir === 'in' ? it.amount : -it.amount);
     if (d > today) {
       for (const it of future) {
         if (it.date !== d || it.amount === null) continue;
         add({ type: 'scheduled', key: it.key, kind: it.kind, name: it.name }, it.account, it.dir === 'in' ? it.amount : -it.amount);
+        // A card payment from checking also lowers what the card owes: a mirror item on the card, not cash.
         if (it.kind === 'debt' && it.card && it.card !== it.account) add({ type: 'scheduled', key: it.key, kind: 'debt', name: it.name + ' (paid)', mirror: true }, it.card, it.amount);
       }
       for (const it of interestOn[d] || []) add({ type: it.type, key: it.key, kind: it.kind, name: it.name }, it.card, -it.amount);
@@ -350,8 +412,15 @@ export function cashCalendar(doc, income, opts) {
   };
 }
 
-// A bill that lands while cash is below the cushion is really paid by the next
-// paycheck after it: "Rent is due the 1st, paid the 5th".
+/**
+ * A bill that lands while cash is below the cushion is really paid by the next paycheck after it:
+ * "Rent is due the 1st, paid the 5th". The biggest bill of the day is the one named.
+ * @param {object[]} days the calendar's days
+ * @param {object[]} future scheduled items still ahead
+ * @param {number} cushion dollars
+ * @returns {Array<{name: string, key: string, due: string, paidBy: string, gap: number, cashThatDay: number, amount: number}>}
+ *   gap in days; amounts in dollars
+ */
 export function payLaterFlags(days, future, cushion) {
   const pays = future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort();
   const out = [];
@@ -366,8 +435,15 @@ export function payLaterFlags(days, future, cushion) {
   return out;
 }
 
-// The month's predicted end cash as of the 1st: start cash + paychecks - bills
-// and payments from cash accounts - the whole plan spread (nothing logged yet).
+/**
+ * The month's predicted end cash as of the 1st: start cash + paychecks - bills and payments from cash
+ * accounts - the whole plan spread (nothing logged yet).
+ * @param {object} doc the household file
+ * @param {object} income the income summary (summary.income)
+ * @param {string} month 'YYYY-MM'
+ * @returns {?number} dollars; null when any checking account has neither a typed start for the month nor an
+ *   end for the month before (the start carried forward)
+ */
 export function forecastFor(doc, income, month) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
   const byId = Object.fromEntries(accts.map((a) => [a.id, a]));
@@ -381,6 +457,7 @@ export function forecastFor(doc, income, month) {
     startCash += s;
   }
   const s = scheduledItems(doc, month, income);
+  // The spread as seen from the day before the 1st with an empty log: the whole plan is still ahead.
   const sp = spreadFor(doc, month, addDays(month + '-01', -1), s, []);
   const cashOf = (id) => { const a = byId[id] || byId[def]; return !!a && inCalendar(a); };
   let net = 0;
@@ -389,7 +466,13 @@ export function forecastFor(doc, income, month) {
   return r2(startCash + net);
 }
 
-// Predicted on the 1st (saved) against the real end balance.
+/**
+ * Predicted on the 1st (saved in doc.cashflow.forecasts) against the real end balance.
+ * @param {object} doc the household file
+ * @param {string} month 'YYYY-MM'
+ * @returns {{month: string, predicted: ?number, actual: ?number, diff: ?number}} dollars; actual needs every
+ *   checking account's month end; diff = actual - predicted
+ */
 export function forecastCheck(doc, month) {
   const saved = ((doc.cashflow || {}).forecasts || {})[month];
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && inCalendar(a));
@@ -399,11 +482,19 @@ export function forecastCheck(doc, month) {
   return { month, predicted, actual, diff: predicted === null || actual === null ? null : r2(actual - predicted) };
 }
 
-// This month so far: plan (or estimate) vs logged per category, and what is left.
+/**
+ * This month so far: plan (or estimate) vs logged per category, and what is left.
+ * @param {object} doc the household file
+ * @param {string} month 'YYYY-MM'
+ * @param {string} today 'YYYY-MM-DD'; entries after it do not count
+ * @returns {Array<{id: string, name: string, plan: ?number, logged: number, left: ?number}>} dollars a month;
+ *   categories with nothing planned and nothing logged are left out
+ */
 export function monthSoFar(doc, month, today) {
   const { units, byLine } = lineAmounts(doc, month);
   const logged = loggedByLine(counted(doc.transactions), month, today);
   return units.map((u) => {
+    // A line-level plan adds the lines that have a number; null when none has one (not 0).
     const plan = u.catLevel ? u.amount : u.lines.reduce((a, l) => (byLine[l.id] === null || byLine[l.id] === undefined ? a : (a === null ? 0 : a) + byLine[l.id]), null);
     const soFar = r2(u.lines.reduce((a, l) => a + (logged[l.id] || 0), 0));
     return { id: u.catId, name: u.name, plan, logged: soFar, left: plan === null ? null : r2(plan - soFar) };
@@ -415,14 +506,22 @@ const nth = (iso) => { const d = Number(iso.slice(8)); const s = d % 10 === 1 &&
 
 const shortDay = (iso) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(iso.slice(5, 7)) - 1] + ' ' + Number(iso.slice(8));
 
-// The safe-to-spend line for the screens (S-095).
+/**
+ * The safe-to-spend line for the screens (S-095).
+ * @param {object} cal what cashCalendar returns
+ * @returns {string} empty when there is no number yet
+ */
 export function safeReading(cal) {
   if (cal.safeToSpend === null) return '';
   if (cal.shortfall) return 'Nothing safe to spend right now. You\'ll be ' + dollars(cal.shortfall.amount) + ' under your cushion on ' + shortDay(cal.shortfall.date) + '.';
   return dollars(cal.safeToSpend) + ' is safe to spend: the lowest point ahead stays at or above your cushion.';
 }
 
-// One or two plain sentences, no verdicts.
+/**
+ * One or two plain sentences on the calendar, no verdicts.
+ * @param {object} cal what cashCalendar returns
+ * @returns {string}
+ */
 export function calendarReading(cal) {
   if (!cal.lowest) return 'Add a balance for an account to see cash by day.';
   const out = [];
@@ -433,19 +532,26 @@ export function calendarReading(cal) {
   return out.join(' ');
 }
 
-// So far and expected by month end (S-128), for the open month only. Never counts money that has not
-// arrived as actual:
-//   so far   = income logged up to today - spending logged up to today (spending lines, not savings)
-//   expected = so far + paychecks still to come this month - bills and loan payments still to come
-//              - the rest of the plan for each spread line (plan - logged, never below 0)
-// "Still to come" is the calendar's own projection (cashCalendar): its waiting and scheduled items and
-// its spread, never a second engine. A card payment is left out: the charges were spending when logged.
-// A closed month, or a day outside the open month, gives null (one number, as before).
+/**
+ * So far and expected by month end (S-128), for the open month only. Money that has not arrived is never
+ * counted as actual:
+ *   so far   = income logged up to today - spending logged up to today (spending lines, not savings)
+ *   expected = so far + paychecks still to come this month - bills and loan payments still to come
+ *              - the rest of the plan for each spread line (plan - logged, never below 0)
+ * "Still to come" is the calendar's own projection (cashCalendar): its waiting and scheduled items and
+ * its spread, never a second engine. A card payment is left out: the charges were spending when logged.
+ * @param {object} doc the household file
+ * @param {object} income the income summary (summary.income)
+ * @param {string} today 'YYYY-MM-DD'
+ * @returns {?object} dollars for the month: { soFar, expected, incomeSoFar, spentSoFar, paychecks, bills,
+ *   planLeft, items, rest, noPayDate }; null for a closed month or a day outside the open month
+ */
 export function monthOutlook(doc, income, today) {
   const month = monthOf(today);
   if (month !== doc.currentMonth || (doc.months || []).some((m) => m.key === month)) return null;
   const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
   const entries = counted(doc.transactions || []).filter((e) => !e.adjust && monthOf(e.date) === month && e.date <= today);
+  // Income entries are negative (money in), so the sum is negated.
   const incomeSoFar = r2(entries.filter((e) => e.kind === 'income').reduce((a, e) => a - e.amount, 0));
   const spentSoFar = r2(entries.filter((e) => COUNTS.has(e.kind) && e.lineId && !savingsLines.has(e.lineId)).reduce((a, e) => a + e.amount, 0));
   const soFar = r2(incomeSoFar - spentSoFar);

@@ -1,4 +1,7 @@
-// Phase 4: chart data comes from calc. Checked by hand against Maya.
+// Phase 4: chart data comes from the engines, never the screens: the spending donut, the sankey, the
+// gut-check bars and the variance list (slam/src/engines/chart-data.js), checked by hand against Maya.
+// Uses the summary engine and the helpers, which load the reference data in src/data and Maya's demo
+// household (src/data/households/maya.json; her hand-worked totals are in maya.expected.js beside it).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,6 +23,7 @@ test('donut keeps the 7 biggest categories and folds the rest into Other', () =>
 
 test('sankey: a shortfall becomes a second source on the left', () => {
   // right: 6 biggest + Other(annual 120 + bills 107 + giving 50 = 277) + Savings 150; left: take-home 3,900 + shortfall 64
+  // The shortfall: spending 3,814 + savings 150 = 3,964 going out against 3,900 coming in, 64 short.
   const k = sankeyData(s);
   assert.deepEqual(k.left.map((x) => [x.id, x.amount]), [['take-home', 3900], ['shortfall', 64]]);
   assert.equal(k.right.find((x) => x.other).amount, 277);
@@ -28,7 +32,9 @@ test('sankey: a shortfall becomes a second source on the left', () => {
 });
 
 test('gut bars and variance order', () => {
-  // Gut 2,800 vs sum of estimates 3,157 vs actual 3,814 (S-097: no dreams in the gut check).
+  // Gut 2,800 vs sum of estimates 3,157 vs actual 3,814 (S-097: no dreams in the gut check); both sums
+  // are added up line by line in maya.expected.js.
   assert.deepEqual(gutBars(s).map((x) => x.amount), [2800, 3157, 3814]);
+  // Overage, actual less estimate, biggest first: food 840 - 550 = 290, fun 370 - 100 = 270.
   assert.deepEqual(variance(s).slice(0, 2).map((x) => [x.id, x.amount]), [['food', 290], ['fun', 270]]);
 });

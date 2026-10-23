@@ -1,4 +1,7 @@
-// So far and expected by month end (S-128), by hand, on Riley's October 17, 2026.
+// So far and expected by month end (S-128): monthOutlook in engines/calendar.js, by hand, on
+// Riley's October 17, 2026. Depends on buildSummary (engines/summary.js) for the income rows, and
+// on helpers.js for the reference data in src/data and Riley's demo household
+// (src/data/households/riley.json).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -1,6 +1,9 @@
 // SLAM app shell: loads reference data, opens the store, routes between the
 // screens of the monthly loop (S-106: Today, Plan, Track, Review, Insights,
 // Setup, plus Clients), and re-renders after every change. Undo and redo live here.
+// Depends on the store (store, storage, edits, visibility, session), two engines (summary
+// for every number on screen, model for the pay frequency), and the ui helpers: dom, nav,
+// format, refs, the components, and one render function per screen.
 
 import { createStore } from '../store/store.js';
 import { createStorage, localStorageBackend } from '../store/storage.js';
@@ -35,6 +38,7 @@ const futureOn = () => storage.getSetting('futureTools') === 'on';
 const screensNow = () => (futureOn() ? [...SCREENS, ['future', 'Future']] : SCREENS);
 const known = (id) => id === 'clients' || screensNow().some(([k]) => k === id);
 
+// Screen state that is never saved: which screen is open, what to focus after a render, open drawers, sort, lens.
 const ui = {
   screen: 'clients', focusPath: null, focusKey: null, dreamTerm: 'short', expanded: new Set(), sort: { key: null, dir: -1 },
   lens: 'dollars', blind: false, units: {}, previewHandler: null, toast: null,
@@ -59,6 +63,7 @@ const ctx = {
   get role() { return displayRole(); },
   say: (key) => say(key, displayRole()),
   get payFrequency() { return store.doc ? primaryPayFrequency(store.doc) : null; },
+  // One history entry per screen change, so the browser's Back button walks screens (see popstate below).
   go(screen, opts = {}) {
     ui.crumbItem = null;
     Object.assign(ui, opts);
@@ -149,6 +154,8 @@ function render() {
   root.replaceChildren(...parts);
   window.scrollTo(0, scroll);
 
+  // Focus, in this order: a place to scroll to (jump), a requested key (a button or field), a requested
+  // field path (goToField), else whatever had focus before the render, with its text selection.
   if (ui.anchor) {
     const el = document.getElementById(ui.anchor);
     ui.anchor = null;
@@ -182,7 +189,6 @@ function topbar() {
   const asClient = displayRole() === 'client';
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-inner' },
     h('span', { class: 'brand' }, 'SLAM'),
-    // Clients are reached from the client name (S-106); a client never sees the list.
     // The client name opens all clients and the coach notes (S-106); a client never sees either.
     doc && !asClient
       ? h('span', { class: 'client-wrap' },
@@ -203,9 +209,11 @@ function topbar() {
       h('button', { class: 'btn small icon-btn', title: 'Light or dark', 'aria-label': 'Switch light or dark', onclick: cycleTheme }, '\u25d0'))));
 }
 
-// Where you are (S-108): "Riley > Review > October 2026 > Groceries". Each step but the last opens.
+// Where you are (S-108): "Riley > Review > October 2026 > Groceries". The screen step links back
+// to the top of its screen when there is a step after it; the other steps are plain text.
 function crumbs() {
   const doc = store.doc;
+  // Demo names carry a parenthetical, like "Dana (demo, owns a condo)"; the crumb shows just "Dana".
   const name = doc.profile.name.replace(/ \(.*\)$/, '');
   const pick = (list, id) => (list.find(([k]) => k === id) || [null, null])[1];
   const sub = ui.screen === 'insights' ? pick(INSIGHT_TABS, ui.insightsTab || 'where')
@@ -242,6 +250,7 @@ function cycleTheme() {
   ctx.toast('Theme: ' + next);
 }
 
+// 'auto' means no data-theme attribute, so the stylesheet follows the system setting.
 function applyTheme() {
   const t = storage.getSetting('theme') || 'auto';
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
@@ -253,6 +262,7 @@ document.addEventListener('keydown', (e) => {
   const inField = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
   // "/" jumps to search (S-108), anywhere but a text box.
   if (e.key === '/' && !inField && !ui.qe && store.doc) { const box = document.getElementById('search'); if (box) { e.preventDefault(); box.focus(); } return; }
+  // Inside a text box the browser's own undo applies, not the store's.
   if (inField || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
   e.preventDefault();
   if (e.shiftKey) store.redo(); else store.undo();
@@ -270,6 +280,7 @@ window.addEventListener('popstate', () => {
 
 async function boot() {
   applyTheme();
+  // fetch() of the JSON files fails on file://, which is the usual reason this message shows.
   try {
     refs = await loadRefs();
   } catch (e) {

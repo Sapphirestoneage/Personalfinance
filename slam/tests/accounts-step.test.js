@@ -1,4 +1,9 @@
-// The Accounts step (S-136), by hand: cash accounts, their latest balances, and when the step is done.
+// The Accounts step (S-136), by hand: cash accounts, their latest balances, and when the step is done;
+// then Credit and debt (S-137): what is owed on cards and loans, and what a limit leaves available.
+// Reads the Riley demo household (src/data/households/riley.json, numbers from tools/riley.mjs) through
+// helpers.js and calls accountsStatus, creditStatus and observations in engines/balances.js. The other
+// households start blank (store/schema.js, store/migrate.js); store/accounts.js adds accounts and
+// balances, and store/value.js makes the one-off values.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

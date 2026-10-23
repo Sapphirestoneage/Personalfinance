@@ -1,4 +1,8 @@
 // Names are the client's own; types are what the math follows (S-068).
+// Checks that renaming keeps a type, that a type decides what counts toward FAT and spending by
+// type, how a new line's type is guessed from its name, and that files from before types get one.
+// Depends on the store (schema, value, edits, validate, migrate, types), buildSummary from the
+// summary engine, and tests/helpers.js for the reference data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

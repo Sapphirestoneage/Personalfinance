@@ -2,6 +2,7 @@
 // the role here, and nothing else in the app decides it. The display role is
 // separate: "View as client" shows what the client would see, but edits are
 // still made (and stamped) by the signed-in role.
+// No imports. store.js reads currentRole() when it stamps a record; app.js sets the display role.
 
 export const ROLES = ['coach', 'client'];
 

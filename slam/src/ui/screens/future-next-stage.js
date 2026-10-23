@@ -1,6 +1,7 @@
-// Future, Next stage (parked, S-105): one drastic change (a new job, school, a move)
-// that costs money in the short term but is better on other measures.
-// Results are in the charts under it on the Future screen.
+// Future, Next stage (parked, S-105): one drastic change (a new job, school, a move) that costs money in the
+// short term but is better on other measures. Results are in the charts under it on the Future screen.
+// Numbers come from summary.nextStage (engines/next-stage.js nextStage; DEFAULT_METRICS seeds the measures)
+// and engines/balances.js cashOnHand; edits go through store/edits.js, with store/value.js makeValue for amounts.
 
 import { cashOnHandNote } from '../components/accounts.js';
 import { cashOnHand } from '../../engines/balances.js';
@@ -17,6 +18,7 @@ function numberField(ctx, label, value, set, key) {
     h('input', { type: 'text', inputmode: 'decimal', value: value === null || value === undefined ? '' : String(value), 'data-key': key, style: 'width:7em',
       onchange: (e) => {
         const t = e.target.value.trim();
+        // A cleared box stores null (not entered); only a typed 0 is zero.
         const n = t === '' ? null : Number(t);
         if (n !== null && !Number.isFinite(n)) return ctx.toast('That needs a number');
         ctx.update(label, (d) => set(d.nextStage, n));
@@ -27,6 +29,7 @@ function numberField(ctx, label, value, set, key) {
 // The best case is stored under the key "dream" (cases.dream, item.dream): the old
 // name, kept so files load unchanged (S-097). On screen "Dream" means only the dream life in Eras.
 function lensBox(ctx, label, value, likelyText, onSet, key) {
+  // A lens is a value ({ amount, cadence }) for money or a plain number for hours and months; clearing a value keeps its cadence.
   const isValue = value && typeof value === 'object';
   const shown = isValue ? value.amount : value;
   return h('input', {
@@ -66,6 +69,7 @@ function itemList(ctx, ns, list, title, hint, addLabel, amountLabel) {
     ns[list].map((it) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('input', { type: 'text', value: it.label, placeholder: 'What is it?', 'data-key': 'ns-' + it.id + ':label',
         onchange: (e) => ctx.update('Rename', (d) => { d.nextStage[list].find((x) => x.id === it.id).label = e.target.value; }) })),
+      // Only the input half of question(): the item's own name box stands in for the label. One-time costs have no cadence.
       question(ctx, amountLabel, null, ['nextStage', list, it.id, 'amount'], it.amount, { cadence: list !== 'oneOffCosts' }).lastChild,
       h('div', { class: 'row xs muted' }, 'Disaster', lensBox(ctx, (it.label || 'Item') + ' disaster', it.disaster, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).disaster = v; }, 'lens-disaster-' + it.id),
         'Best case', lensBox(ctx, (it.label || 'Item') + ' best case', it.dream, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).dream = v; }, 'lens-dream-' + it.id)),
@@ -74,6 +78,7 @@ function itemList(ctx, ns, list, title, hint, addLabel, amountLabel) {
 }
 
 function metricsCard(ctx, ns, summary) {
+  // ns.metrics is the typed list; the hours measure that nextStage computes from income is left to the charts.
   const rows = summary.nextStage ? summary.nextStage.metrics : [];
   return h('div', { class: 'card' },
     h('h3', {}, 'The other measures'), h('p', { class: 'muted xs' }, 'Why the change is worth it. Now vs after the change. Add your own.'),
@@ -88,6 +93,7 @@ function metricsCard(ctx, ns, summary) {
         h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Better is'),
           h('select', { 'data-key': 'met-' + m.id + ':better', onchange: (e) => ctx.update('Measure direction', (d) => set('better')(d.nextStage, e.target.value)) },
             options([['higher', 'Higher'], ['lower', 'Lower']], m.better))),
+        // Better or Worse is nextStage's verdict for this measure; null (a blank side, or no change) shows nothing.
         r.better === true ? h('span', { class: 'good small' }, 'Better') : r.better === false ? h('span', { class: 'bad small' }, 'Worse') : null,
         h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove measure', (d) => removeNextStageItem(d, 'metrics', m.id)) }, 'Remove'));
     }),

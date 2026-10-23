@@ -1,6 +1,8 @@
 // Part 1 of the net worth statement (S-110): every account in one place, dated balances for every
 // account and debt, and contributions worked out from the log and the paycheck. Every expected number
-// is worked out by hand in the comments.
+// is worked out by hand in the comments. Depends on the store (schema, value, migrate, validate,
+// accounts, edits, cashflow, log, store, storage), on the engines balances.js, contributions.js and
+// summary.js, and reads every demo household in src/data/households/ and the reference data (helpers.js).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

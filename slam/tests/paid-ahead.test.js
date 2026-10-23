@@ -1,6 +1,8 @@
 // Paid ahead (S-119), by hand: a yearly bill paid for months still to come is an asset that runs down
 // by its monthly share. Riley pays his car insurance (960, March 14) and car registration (180, July 10)
-// once a year.
+// once a year. Uses the paid-ahead, net worth, summary and bridge engines, the store (value, log, edits),
+// the October fixture (tests/fixtures/october.js) for the uneven-share case, and the helpers, which load
+// the reference data in src/data and the Riley demo household in src/data/households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -66,7 +68,8 @@ test('Riley: net worth for February, March, and April, before and after Paid ahe
   assert.deepEqual(at('2026-02-28'), [28672.09, 0]);
   assert.deepEqual(at('2026-03-31'), [29872.9, 880]);
   assert.deepEqual(at('2026-04-30'), [31154, 800]);
-  // FI net worth does not count it: March's FI stays 25,139.87.
+  // FI net worth does not count it: March's FI stays 25,139.87 (checking 2,577.46 + savings 700 + 401(k) 14,065
+  // + Roth 8,450 = 25,792.46, less the Visa 652.59; the car and its loan are not FI assets or debts).
   assert.equal(netWorthAt(d, '2026-03-31').fi, 25139.87);
   // The cash bridge still shows the 960 going out in March: yearly 95 - 960 = -865.
   assert.equal(bridgeFor(d, buildSummary(d, refs).income, '2026-03').steps.find((x) => x.key === 'yearly').amount, -865);

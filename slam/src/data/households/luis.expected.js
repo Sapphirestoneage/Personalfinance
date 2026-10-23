@@ -1,6 +1,8 @@
-// Luis, 33, Ohio. W-2 plus a side hustle, car loan, two credit cards, one
-// buy-now-pay-later, actuals for about half the categories, a speeding ticket
-// tagged mistake. Worked out by hand from luis.json, not by running the code.
+// Hand-computed expected answers for Luis, 33, Ohio: W-2 plus a side hustle, car loan, two credit
+// cards, one buy-now-pay-later, actuals for about half the categories, a speeding ticket tagged
+// mistake. Read by tests/households.test.js and tests/coverage.test.js, which compare them with
+// buildSummary over luis.json, and by tools/screens-check.mjs, which checks the screens against
+// them in a browser.
 
 // INCOME
 // Warehouse: 2,000 per paycheck, semimonthly: 2,000 x 24 / 12 = 4,000 take-home a month

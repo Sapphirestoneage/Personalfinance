@@ -1,4 +1,8 @@
-// Quick lines (S-122): several sub-categories typed at once.
+// Quick lines (S-122): several sub-categories typed at once, how they become lines, archiving a removed
+// line (S-123), and split lines (S-134, S-138). Uses parseQuickLines in engines/quick-lines.js, splitOf in
+// engines/split.js, budgetModel and buildSummary, the store (schema, migrate, validate, edits, value), the
+// October fixture (tests/fixtures/october.js), and the helpers, which load the reference data in src/data
+// and the Luis demo household in src/data/households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -76,7 +80,8 @@ test('a split you pay in full: your part counts, the rest is paid back (S-138)',
   line.splitPeople = one(null);
   assert.deepEqual([splitOf(line, 84).yours, splitOf(line, 84).paidBack], [84, null]);
   // In the budget (Luis): utilities 160 typed as the whole bill, split with 1 other: share 50%, your part
-  // 160 x 0.5 = 80. Spending basis 3,828.46 - 160 + 80 = 3,748.46; surplus 571.54 + 80 = 651.54.
+  // 160 x 0.5 = 80. Spending basis 3,828.46 - 160 + 80 = 3,748.46; surplus 571.54 + 80 = 651.54 (3,828.46
+  // and 571.54 are Luis's spending and surplus, worked out in src/data/households/luis.expected.js).
   const d = loadHousehold('luis');
   const u = d.categories.find((c) => c.id === 'housing').lines.find((l) => l.id === 'utilities');
   Object.assign(u, { shared: true, splitPays: 'whole', splitPeople: one(1) });

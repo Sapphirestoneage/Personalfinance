@@ -1,6 +1,9 @@
-// Sam, 24, between jobs and a student, on unemployment, no debt, lives with
-// parents, mostly "not for me", and gave one total instead of categories.
-// Tests that "none" counts as complete. Worked out by hand.
+// Hand-computed expected answers for Sam, 24, Michigan, between jobs and a student: unemployment
+// benefits of 400 a week, no debt, living with parents, most categories "not for me", and one
+// rough total (Everything else) in place of category estimates. Tests that "none" counts as
+// complete and that actuals found inside the single total come out of it. Read by
+// tests/households.test.js and tests/coverage.test.js, which compare them with buildSummary over
+// sam.json, and by tools/screens-check.mjs, which checks the screens against them in a browser.
 
 // INCOME: 400 a week x 52 / 12 = 1,733.333333 a month (unemployment, typed take-home)
 

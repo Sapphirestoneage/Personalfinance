@@ -1,4 +1,8 @@
-// Next stage: a drastic change worked out by hand.
+// Next stage: a drastic change (a new job at lower pay, months of little income while switching,
+// one-off costs, a raise later) worked out by hand against buildSummary(...).nextStage, which
+// engines/summary.js fills from engines/next-stage.js. Uses the store's schema (newHousehold,
+// newNextStage), value, edits, migrate and validate modules, and helpers.js for the reference data
+// in src/data and the cash on hand (withCashOnHand puts it in a checking account, S-084).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -63,12 +67,13 @@ test('next stage: stay vs change breaks even in month 113', () => {
   const n = buildSummary(migrate(household()), refs).nextStage;
   assert.equal(n.path.breakEven, 113);
   assert.equal(n.path.change[24] - n.path.stay[24], -35400);
-  assert.equal(n.path.change[113] - n.path.stay[113], 200);
+  assert.equal(n.path.change[113] - n.path.stay[113], 200); // 89 x 400 - 35,400 = 200
 });
 
 test('next stage: other measures, and a shortfall that needs a cut', () => {
   const d = household();
   const n = buildSummary(migrate(d), refs).nextStage;
+  // Hours 50 -> 40 = -10, stress 8 -> 4 = -4, meaning 3 -> 8 = +5: each moved the way it should.
   assert.deepEqual(n.metrics.map((m) => [m.change, m.better]), [[-10, true], [-4, true], [5, true]]);
   d.nextStage.takeHome = v(2000); // 2,000 - 2,400 = -400 a month
   const n2 = buildSummary(migrate(d), refs).nextStage;
@@ -121,5 +126,5 @@ test('three lenses: disaster, likely, dream, with cash on hand and runway', () =
   assert.equal(r.monthsToSaveWhole, 3);
   assert.equal(r.cash.gap, 5600);
   assert.equal(r.path.breakEven, 27);
-  assert.equal(r.path.change[27] - r.path.stay[27], 800);
+  assert.equal(r.path.change[27] - r.path.stay[27], 800); // 15 x 900 - 12,700 = 800
 });

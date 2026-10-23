@@ -1,6 +1,9 @@
 // Income in Plan and Actual from the log (S-118), by hand. Riley: biweekly paychecks of 1,500 (take-home,
 // typed once a paycheck in Setup, Income), Fridays from October 10, 2025, and dog walking (side income,
-// 250 a month estimated).
+// 250 a month estimated). Uses the store (value, log, edits, plans), the income-month, calendar, summary,
+// bridge, net worth bridge, net worth and loop engines, the October fixture (tests/fixtures/october.js),
+// and the helpers, which load the reference data in src/data and the demo households (Riley, Dana, and
+// every household for the last test).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -129,5 +132,6 @@ test('both bridges tie every month, for every household', () => {
       if (nb.total.unexplained !== null) assert.equal(Math.round((nb.total.explained + nb.total.unexplained) * 100), Math.round(nb.total.actual * 100), name + ' ' + m + ' net worth');
     }
   }
+  // Today that is Riley's 12 months and Dana's 12: 24. A floor, so a new household only adds to it.
   assert.ok(checked >= 24, 'checked ' + checked);
 });

@@ -1,5 +1,9 @@
-// Phase 2 unit tests for the pure math functions. Expected numbers are
-// worked by hand in the comments.
+// Phase 2 unit tests for the pure math engines: cadences (normalize.js), federal tax (tax.js), income
+// and paycheck deductions (income.js), the budget model (model.js), guesses, lenses, compare, money,
+// rent share (totals.js), the allocation and buildSummary (summary.js). Expected numbers are worked by
+// hand in the comments. Builds households from store/schema.js, store/edits.js and store/value.js, runs
+// one old shape through store/migrate.js, reads the reference data (tax-constants.json and the rest)
+// through helpers.js, and loads the Luis demo household and the October fixture for two tests.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,6 +46,7 @@ test('money helpers keep empty separate from zero', () => {
 });
 
 test('bracket tax: single, 43,900 taxable = 1,240 + 3,780 = 5,020', () => {
+  // 10% of the first 12,400 = 1,240; 12% of the other 31,500 = 3,780 (tax-constants.json, single brackets).
   assert.equal(Math.round(bracketTax(43900, refs.tax.brackets.single) * 100) / 100, 5020);
   assert.equal(bracketTax(0, refs.tax.brackets.single), 0);
 });
@@ -91,7 +96,7 @@ test('unemployment: one benefit number, set-aside when not withheld, 10% option'
   // 45,188 - 16,100 = 29,088 taxable: 1,240 + (29,088 - 12,400) x 12% = 3,242.56; / 52 = 62.356923 a week.
   assert.ok(near(u.unemployment.estTaxAnnual, 3242.56));
   assert.ok(near(u.unemployment.setAsideWeekly, 62.356923));
-  // 10 weeks from Oct 15 is Dec 24: ends around December 2026; 8,690 still to come.
+  // 10 weeks from Oct 15 is Dec 24: ends around December 2026; 869 x 10 = 8,690 still to come.
   assert.equal(u.unemployment.endsAround, 'December 2026');
   assert.ok(near(u.unemployment.stillToCome, 8690));
   d.income[0].withholding = 'ten-percent';
@@ -154,6 +159,7 @@ test('single total is carved by later category estimates without losing the tota
   useSingleTotal(d).estimate = v(2000);
   findCategory(d, 'food').estimate = v(600);
   const ev = budgetModel(d).categories.find((c) => c.id === 'everything');
+  // 2,000 - 600 for food = 1,400 left in "everything".
   assert.equal(ev.estimate.amount, 1400);
   assert.equal(ev.estimate.total, 2000);
   assert.equal(findCategory(d, 'everything').estimate.amount, 2000, 'stored total unchanged');
@@ -187,6 +193,7 @@ test('guesses: the national average for the household size, labeled Guess with i
 });
 
 test('hours of work and the lens toggle', () => {
+  // 450 / 22.5 an hour = 20 hours; 400 / 4,000 take-home = 0.1; 400 / 20 an hour = 20 hours; no rate, no answer.
   assert.equal(hoursOfWork(450, 22.5), 20);
   const totals = { takeHome: 4000 };
   assert.equal(inUnit(400, 'percent', totals, { hourlyTakeHome: 20 }), 0.1);
@@ -215,6 +222,7 @@ test('since last time compares with the latest stored snapshot', () => {
   d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
   d.snapshots.push({ date: '2026-08-01', takeHome: 2500, spending: null, surplus: null, savingsRate: null, blindSpot: null, completion: 0 });
   const s = buildSummary(d, refs);
+  // 3,000 now - 2,500 in the August snapshot = 500; spending is blank in both, so no change to report.
   assert.equal(s.sinceLast.takeHome, 500);
   assert.equal(s.sinceLast.spending, null);
 });

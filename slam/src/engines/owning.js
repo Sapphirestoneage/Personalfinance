@@ -1,7 +1,59 @@
-// What owning really costs (S-113): a read-only lens on each home and vehicle. Its monthly cost you
-// never get back, next to the alternative the coach entered. The client's own budget lines come
-// first; a Guess (with its source) only fills a number that is missing; anything else missing is
-// named, never counted as 0.
+// What owning really costs (S-113): a read-only lens on each home and vehicle, its monthly cost you
+// never get back next to the alternative the coach entered (rent, or the trips without the car).
+// Depends on balances.js (dated values, the balance on a day, an account's kind), debts.js (the linked
+// loan's minimum), money.js (r2) and store/schema.js (DEFAULT_OWN_RETURN). Dollars a month; an APR is a
+// percent number a year like 6.5; the return assumption is a ratio a year like 0.05; a day is 'YYYY-MM-DD'.
+
+import { observations, balanceAt } from './balances.js';
+import { kindOf } from './balances.js';
+import { DEFAULT_OWN_RETURN } from '../store/schema.js';
+import { minimumAmount } from './debts.js';
+import { r2 } from './money.js';
+
+const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
+export const DEFAULT_RETURN = DEFAULT_OWN_RETURN;
+// The two Guesses this lens can fill in, each with the source shown beside it; a rate is a share of the value a year.
+export const GUESS = {
+  homeMaintenance: { rate: 0.01, source: 'Guess: 1% of the value a year, a common rule of thumb for upkeep' },
+  vehicleDepreciation: { rate: 0.15, source: 'Guess: 15% of the value a year, typical for a used car' }
+};
+const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
+
+// A typical month: the estimate, else the budget's own amount (the actual). A month still in
+// progress has only part of its actual (S-115).
+const monthly = (x) => (x.estimate !== null && x.estimate !== undefined ? x.estimate : x.basis);
+
+// The budget lines of some types (in categories of some types), a typical month. Null when there are none.
+function fromBudget(summary, lineTypes, catTypes) {
+  const rows = summary.rows.filter((r) => !catTypes || catTypes.includes(r.type));
+  const lines = rows.flatMap((r) => r.lines.filter((l) => lineTypes.includes(l.lineType || l.type) && monthly(l) !== null));
+  return lines.length ? { amount: add(lines.map(monthly)), lines: lines.map((l) => l.name) } : null;
+}
+
+/**
+ * Depreciation from dated values: the fall from the earliest value in the last 12 months to the latest, per month.
+ * @param {Array<{date: string, amount: number}>} obs dated values, oldest first (balances.js observations).
+ * @param {string} date 'YYYY-MM-DD', the end of the year looked at.
+ * @returns {?{amount: number, from: object, to: object, months: number}} dollars a month (negative when the value rose);
+ *   null when there are not two values at least a month apart.
+ */
+export function depreciationFromValues(obs, date) {
+  const from = new Date(Date.parse(date + 'T00:00:00Z') - 365 * 86400000).toISOString().slice(0, 10);
+  const inYear = obs.filter((o) => o.date <= date && o.date >= from);
+  if (inYear.length < 2) return null;
+  const a = inYear[0];
+  const b = inYear[inYear.length - 1];
+  // Month end to month end counts whole months; any other pair of days, days / 30.4375.
+  const isEnd = (d) => new Date(Date.parse(d + 'T00:00:00Z') + 86400000).getUTCDate() === 1;
+  const [y1, m1] = a.date.split('-').map(Number);
+  const [y2, m2] = b.date.split('-').map(Number);
+  const months = isEnd(a.date) && isEnd(b.date) ? (y2 - y1) * 12 + (m2 - m1) : (Date.parse(b.date) - Date.parse(a.date)) / (86400000 * 30.4375);
+  if (months < 1) return null;
+  return { amount: r2((a.amount - b.amount) / months), from: a, to: b, months: r2(months) };
+}
+
+// The client's own budget lines come first; a Guess (with its source) only fills a number that is
+// missing; anything else missing is named, never counted as 0.
 //
 // Every budget amount is a typical month: the line's estimate, else its actual.
 //
@@ -21,51 +73,18 @@
 //   Compared with: rideshare + transit + an occasional rental, a month (entered by the coach).
 //
 // When there is more than one home (or vehicle), the budget lines go with the first one.
-
-import { observations, balanceAt } from './balances.js';
-import { kindOf } from './balances.js';
-import { DEFAULT_OWN_RETURN } from '../store/schema.js';
-import { minimumAmount } from './debts.js';
-import { r2 } from './money.js';
-
-const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
-export const DEFAULT_RETURN = DEFAULT_OWN_RETURN;
-export const GUESS = {
-  homeMaintenance: { rate: 0.01, source: 'Guess: 1% of the value a year, a common rule of thumb for upkeep' },
-  vehicleDepreciation: { rate: 0.15, source: 'Guess: 15% of the value a year, typical for a used car' }
-};
-const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
-
-// A typical month: the estimate, else the budget's own amount (the actual). A month still in
-// progress has only part of its actual (S-115).
-const monthly = (x) => (x.estimate !== null && x.estimate !== undefined ? x.estimate : x.basis);
-
-// The budget lines of some types (in categories of some types), a typical month. Null when there are none.
-function fromBudget(summary, lineTypes, catTypes) {
-  const rows = summary.rows.filter((r) => !catTypes || catTypes.includes(r.type));
-  const lines = rows.flatMap((r) => r.lines.filter((l) => lineTypes.includes(l.lineType || l.type) && monthly(l) !== null));
-  return lines.length ? { amount: add(lines.map(monthly)), lines: lines.map((l) => l.name) } : null;
-}
-
-// Depreciation from dated values: the fall from the earliest value in the last 12 months to the
-// latest, per month. Null when there are not two values at least a month apart.
-export function depreciationFromValues(obs, date) {
-  const from = new Date(Date.parse(date + 'T00:00:00Z') - 365 * 86400000).toISOString().slice(0, 10);
-  const inYear = obs.filter((o) => o.date <= date && o.date >= from);
-  if (inYear.length < 2) return null;
-  const a = inYear[0];
-  const b = inYear[inYear.length - 1];
-  // Month end to month end counts whole months; any other pair of days, days / 30.4375.
-  const isEnd = (d) => new Date(Date.parse(d + 'T00:00:00Z') + 86400000).getUTCDate() === 1;
-  const [y1, m1] = a.date.split('-').map(Number);
-  const [y2, m2] = b.date.split('-').map(Number);
-  const months = isEnd(a.date) && isEnd(b.date) ? (y2 - y1) * 12 + (m2 - m1) : (Date.parse(b.date) - Date.parse(a.date)) / (86400000 * 30.4375);
-  if (months < 1) return null;
-  return { amount: r2((a.amount - b.amount) / months), from: a, to: b, months: r2(months) };
-}
-
+/**
+ * Every live home and vehicle with what owning it costs a month, next to the alternative.
+ * @param {object} doc the household file.
+ * @param {object} summary what buildSummary returns (its rows give the budget lines by type).
+ * @param {string} date 'YYYY-MM-DD', the day the value and the loan balance are read on.
+ * @returns {Array<object>} one per account { id, name, type, value, debt, equity, rate, parts, neverBack, missing, hold,
+ *   alternative, reading }: dollars a month, null where an input is missing; each part's from says where its number came
+ *   from ('budget', 'guess', 'debt', 'values' or 'assumption').
+ */
 export function owningCosts(doc, summary, date) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && (a.type === 'home' || a.type === 'vehicle'));
+  // The equity's return: the coach's setting when typed, else the 5% a year default (an assumption, never a fact).
   const rate = typeof (doc.settings || {}).ownReturn === 'number' ? doc.settings.ownReturn : DEFAULT_RETURN;
   const firstOf = (type) => accts.find((a) => a.type === type);
   return accts.map((a) => {
@@ -73,11 +92,13 @@ export function owningCosts(doc, summary, date) {
     const value = v ? v.amount : null;
     const debt = a.securedDebtId ? (doc.debts || []).find((d) => d.id === a.securedDebtId) : null;
     const owed = debt ? balanceAt(doc, debt.id, date) : null;
+    // No loan means nothing owed, a real 0 (the equity is the whole value); a loan with no balance yet is blank.
     const balance = debt ? (owed ? owed.amount : null) : 0;
     const apr = debt && typed(debt.apr) ? debt.apr.amount : null;
     const interest = !debt ? 0 : balance === null || apr === null ? null : r2((balance * apr) / 100 / 12);
     const payment = debt ? minimumAmount(doc, debt) : null;
     const equity = value === null || balance === null ? null : r2(value - balance);
+    // Only the first home (or vehicle) takes the budget lines; a second would count the same lines twice.
     const ownsLines = firstOf(a.type) === a;
     const parts = [];
     const part = (key, label, amount, from, note) => parts.push({ key, label, amount: amount === null ? null : r2(amount), from, note: note || '' });
@@ -93,6 +114,7 @@ export function owningCosts(doc, summary, date) {
       budget('tax', 'Property tax', ['taxes'], ['housing']);
       budget('insurance', 'Home insurance', ['home-insurance'], ['housing']);
       budget('maintenance', 'Maintenance', ['home-garden'], ['housing'], value === null ? null : { amount: (value * GUESS.homeMaintenance.rate) / 12, source: GUESS.homeMaintenance.source });
+      // Equity under water earns nothing elsewhere, so it is floored at 0 before the return is applied.
       part('opportunity', 'What the equity could earn elsewhere', equity === null ? null : (Math.max(0, equity) * rate) / 12, 'assumption', 'Assumption: ' + (rate * 100).toFixed(1).replace(/\.0$/, '') + '% a year, after inflation (Setup, Cushion and coach settings)');
       const rent = a.rentAlt && typed(a.rentAlt) ? a.rentAlt.amount : null;
       alternative = { amount: rent, parts: [{ key: 'rent', label: 'Rent for a similar place', amount: rent }], set: rent !== null };
@@ -117,6 +139,7 @@ export function owningCosts(doc, summary, date) {
       debt: debt ? { id: debt.id, name: debt.label, balance, apr, interest, payment, principal: payment === null || interest === null ? null : r2(payment - interest) } : null,
       equity, rate, parts, neverBack, missing: parts.filter((p) => p.amount === null).map((p) => p.label),
       // What the home costs to hold: every Housing line, plus the mortgage payment (it sits in Debt payments).
+      // With no loan there is no payment, so its 0 is real; a loan whose minimum is blank keeps the total blank.
       hold: housing ? { lines: monthly(housing), payment, total: monthly(housing) === null || (debt && payment === null) ? null : r2(monthly(housing) + (payment || 0)) } : null,
       alternative,
       notes: a.notes || ''
@@ -126,7 +149,11 @@ export function owningCosts(doc, summary, date) {
 
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 
-// Descriptive, never a verdict.
+/**
+ * The plain sentence under each asset: descriptive, never a verdict.
+ * @param {object} x one row from owningCosts.
+ * @returns {string} whole dollars; names what was left out of the count.
+ */
 export function owningReading(x) {
   if (x.neverBack === null) return 'Needs a value and the costs of holding it first.';
   const head = (x.type === 'home' ? 'Owning costs you about ' : 'The ' + (x.name.toLowerCase().includes('car') ? 'car' : 'vehicle') + ' costs about ') + whole(x.neverBack) + ' a month you\'ll never get back' + (x.missing.length ? ' (not counting ' + x.missing.join(', ').toLowerCase() + ')' : '') + '.';
@@ -136,4 +163,9 @@ export function owningReading(x) {
   return head + ' Your trips by ' + (names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + ' would be about ' + whole(x.alternative.amount) + '.';
 }
 
+/**
+ * The things you own that are locked in: homes, vehicles and other valued property (kind 'valued' in balances.js).
+ * @param {object} doc the household file.
+ * @returns {Array<object>} the live accounts of that kind.
+ */
 export const lockedIn = (doc) => (doc.accounts || []).filter((a) => a.state !== 'archived' && kindOf(a) === 'valued');

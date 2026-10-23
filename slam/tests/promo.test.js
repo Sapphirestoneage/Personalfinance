@@ -1,6 +1,8 @@
 // Dana's 0% promo ends (S-127), by hand. Her Visa is 24.99% with 0% until May 31, 2026; she pays 440 a
 // month throughout. tools/dana.mjs works the balances out step by step; every number below is from there
-// or worked out here, never from running the code.
+// or worked out here, never from running the code. Uses the summary, bridge, net worth bridge, debts and
+// calendar engines, and the helpers, which load the reference data in src/data and the Dana demo
+// household in src/data/households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

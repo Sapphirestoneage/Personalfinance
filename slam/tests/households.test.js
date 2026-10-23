@@ -1,5 +1,9 @@
-// Loads each synthetic household and checks the full summary against the
-// hand-computed expected file next to it (test/households/*.expected.js).
+// Loads four of the demo households and checks the full summary against the hand-computed expected
+// file next to it (src/data/households/<name>.expected.js): income, estimate vs actual, totals and
+// shares, compares, the DRAFTT, happiness, plan, review, stress, income statement, completion, joy
+// and history. Runs for Maya, Luis, Tasha and Sam (Jordan's file is checked in transactions.test.js).
+// Uses the summary, history, lenses, plan and happiness engines and the helpers, which load the
+// reference data in src/data and the households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

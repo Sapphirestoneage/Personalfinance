@@ -1,10 +1,13 @@
 // The shape of one household document, its enums, and the default budget tree.
-// newHousehold() builds a fresh, empty client.
+// newHousehold() builds a fresh, empty client. Every amount is a Value (value.js); a date with a
+// status is a makeDate (below). Needs value.js, types.js (the starting type of each default line),
+// and ids.js. migrate.js reads SCHEMA_VERSION and the factories here to bring older files up to date.
 
 import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
+// Bumped with every change to the stored shape; migrate.js needs a step for each bump.
 export const SCHEMA_VERSION = 20;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
@@ -15,6 +18,8 @@ export const PAY_BASES = ['salary', 'hourly'];
 export const PAY_FREQUENCIES = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
 export const ITEM_STATES = ['active', 'hidden', 'archived'];
 export const LINE_KINDS = ['fixed', 'variable'];
+// How a line is paid: personal; linked to an income source (linkedIncomeId); or reimbursable, someone pays
+// the client back (owedBack, owed until marked received).
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
@@ -117,6 +122,7 @@ export function newLine(fields = {}) {
     path: fields.path || 'personal',
     linkedIncomeId: fields.linkedIncomeId || null,
     tag: fields.tag || 'planned',
+    // Joy it brings, 1 to 10 (engines/happiness.js). null = not rated, never 0.
     joy: fields.joy === undefined ? null : fields.joy,
     // How much this drains the client, 1 to 10 (S-082). null = not rated, never 0.
     stress: fields.stress === undefined ? null : fields.stress,
@@ -161,6 +167,8 @@ export function newCategory(fields = {}) {
   };
 }
 
+// A default category's type is its id (Housing is 'housing'); its lines take their type from types.js
+// and inherit the category's savings flag and tag.
 export function defaultCategories() {
   return TREE.map(([id, name, kind, need, savings, tag, lines]) => {
     const cat = newCategory({ id, name, type: id, kind, need, savings, tag });
@@ -175,6 +183,7 @@ export function newIncome(fields = {}) {
     id: fields.id || newId('inc'),
     type: fields.type || 'w2',
     label: fields.label || 'Paycheck',
+    // Take-home is asked per paycheck (what the stub shows); gross per year, as pay is usually quoted.
     takeHome: makeValue(null, { cadence: 'paycheck' }),
     gross: makeValue(null, { cadence: 'year' }),
     payFrequency: fields.payFrequency || 'biweekly',
@@ -210,9 +219,11 @@ export function newDeduction(fields = {}) {
     id: fields.id || newId('ded'),
     kind,
     label: fields.label || '',
+    // Retirement and Roth are usually set as a percent of gross; the rest are dollar amounts on the stub.
     mode: fields.mode || (kind === 'retirement' || kind === 'roth' ? 'percent' : 'amount'),
     percent: fields.percent === undefined ? null : fields.percent,
     amount: makeValue(null, { cadence: 'paycheck' }),
+    // A named kind has its tax treatment fixed in engines/deductions.js; only 'other' reads this box.
     pretax: fields.pretax === undefined ? true : fields.pretax,
     // The account it goes into (S-110), so a 401(k) or Roth deduction counts as money moved into it.
     accountId: fields.accountId || null
@@ -284,6 +295,8 @@ export function newAccount(fields = {}) {
     institution: fields.institution || '',
     state: fields.state || 'active',
     debtId: fields.debtId || null,
+    // Copied from the type's defaults at creation so the coach can change them per account; tierOf and
+    // countsForFI above cover older accounts that have neither.
     tier: fields.tier === undefined ? info.tier : fields.tier,
     countsForFI: fields.countsForFI === undefined ? info.fi : fields.countsForFI,
     ...(SECURED_TYPES.includes(type) ? securedFields(fields) : {}),
@@ -334,6 +347,7 @@ export function newEra(fields = {}) {
     id: fields.id || newId('era'),
     template: fields.template || 'custom',
     name: fields.name || 'My own era',
+    // Six months is a starting length to edit, not a guess about anything.
     months: fields.months === undefined ? 6 : fields.months,
     gapMonths: fields.gapMonths || 0,
     takeHome: makeValue(), spending: makeValue(),
@@ -342,6 +356,8 @@ export function newEra(fields = {}) {
   };
 }
 
+// The UTC month of a Date, 'YYYY-MM' (newHousehold's first month and engines/income.js). Engines that
+// start from a 'YYYY-MM-DD' string take its first seven characters instead.
 export function monthKey(date) {
   return date.toISOString().slice(0, 7);
 }
@@ -377,15 +393,20 @@ export function newHousehold(name, now = new Date()) {
       roommates: { count: null, totalRent: makeValue() }
     },
     income: [],
+    // The client's gut number for monthly spending, compared with estimates and actuals (engines/compare.js).
     gut: makeValue(),
     categories: defaultCategories(),
     debts: [],
+    // The client said they have no debts: a typed answer, different from an empty list nobody has asked about.
     noDebts: false,
     currentMonth: monthKey(now),
     months: [],
     transactions: [],
+    // Bank import: merchant key to line id, learned as the coach maps entries (engines/tx-import.js).
     merchantMemory: {},
+    // Small sets of numbers saved for "since last time" (engines/summary.js snapshotOf).
     snapshots: [],
+    // Blind rounds: the client's guesses by category before seeing the numbers (engines/compare.js).
     blindRounds: [],
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
@@ -409,7 +430,9 @@ export function newHousehold(name, now = new Date()) {
     tags: [],
     // Monthly plans, separate from estimate, dream, and actual (S-076). See store/plans.js.
     plans: {},
-    // materiality: the bridge "ties" when not explained is under this many dollars (coach-only, S-096).
+    // singleTotal: one Everything total stands in for category estimates (EVERYTHING_CATEGORY_ID). lens: kept
+    // for older files; the screens keep the lens in their own state. materiality: the bridge "ties" when not
+    // explained is under this many dollars (coach-only, S-096).
     settings: { singleTotal: false, lens: 'dollars', materiality: 25 },
     // The coach's own notes about the client; coach-only (S-096).
     coachNotes: '',

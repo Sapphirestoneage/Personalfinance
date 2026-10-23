@@ -1,5 +1,7 @@
 // Future, Eras: your dream life next to today (S-097), then the blocks, cash month by month through every era next to
-// staying in regular life, and each era's money. Numbers from src/engines/eras.js.
+// staying in regular life, and each era's money. Numbers from src/engines/eras.js (s.eras) and
+// src/engines/dream-life.js (s.dreamLife); this file only draws them. The era strip, the era colors, and the
+// dream-life compare come from the Future, Eras screen (screens/future-eras.js). Builds on dom, format, svg, catalog.
 
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
@@ -32,6 +34,7 @@ export function eraCards(ctx, s) {
   const n = t.path.length;
   // A label every few months, and the last month unless it would crowd the one before.
   const xs = t.path.map((p, i) => (i % every === 0 && n - 1 - i >= every / 2 ? short(p.key) : i === n - 1 ? short(p.key) : ''));
+  // Without a starting cash balance the line is the change in cash, not cash itself.
   const cashLabel = t.cashKnown ? 'Cash' : 'Change in cash';
   const chart = card(ctx, {
     id: 'eras-cash', title: cashLabel + ' through the eras',
@@ -51,6 +54,7 @@ export function eraCards(ctx, s) {
     extra: h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
       h('thead', {}, h('tr', {}, ['Era', 'When', 'A month', 'Whole era'].map((x) => h('th', {}, x)))),
       h('tbody', {}, t.eras.map((e, i) => h('tr', {},
+        // "(guess)" marks an era whose income or spending is an app guess, not the client's own number.
         h('td', {}, h('span', { class: 'swatch', style: 'background:' + eraColor(i) }), ' ' + e.name, e.incomeGuess || e.spendGuess ? h('span', { class: 'xs st-guess' }, ' (guess)') : null),
         h('td', { class: 'small' }, short(e.start) + ' to ' + short(e.end)),
         h('td', { class: 'num' + (e.net < 0 ? ' bad' : '') }, signedMoney(e.net)),

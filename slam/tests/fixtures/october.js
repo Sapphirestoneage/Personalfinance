@@ -1,5 +1,8 @@
-// The October household used by the bridge and loop tests (worked out by hand
-// in test/bridge.test.js). opts.atm adds 60 of ATM cash no line explains.
+// The October 2026 household shared by the monthly-loop tests and any test that needs a worked month,
+// every number worked out by hand in tests/bridge.test.js: a job paying 4,000 take-home, checking, savings
+// and a Visa with start and end balances, a yearly car insurance due Oct 14, and a month of log entries.
+// opts.atm adds 60 of ATM cash no line explains; opts.noSavingsEnd leaves the savings end balance blank.
+// Built through the store modules schema, value, migrate, accounts, edits and log.
 
 import { newHousehold } from '../../src/store/schema.js';
 import { makeValue } from '../../src/store/value.js';
@@ -44,6 +47,7 @@ export function october(opts = {}) {
   addEntry(d, { date: '2026-10-25', amount: 450, kind: 'card-payment', account: 'chk' });
   addEntry(d, { date: '2026-10-25', amount: -450, kind: 'card-payment', account: 'visa' });
   if (opts.atm) addEntry(d, { date: '2026-10-28', amount: 60, account: 'chk', merchant: 'ATM withdrawal' });
+  // Checking end is the 2,480 from the bridge test's arithmetic, less the 60 when the ATM cash is in.
   setBalance(d, '2026-10', 'chk', 'end', one(opts.atm ? 2420 : 2480));
   if (!opts.noSavingsEnd) setBalance(d, '2026-10', 'sav', 'end', one(5200));
   setBalance(d, '2026-10', 'visa', 'end', one(350));

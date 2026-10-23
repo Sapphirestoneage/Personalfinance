@@ -11,6 +11,10 @@
 // It prints the inventory (height, sections, charts, inputs, buttons) before
 // the S-106 menu (tools/inventory-before.json) and now.
 //
+// Depends on Playwright only when run on its own (screens-check.mjs hands it an open browser), and
+// on node's fs to read tools/inventory-before.json. Nothing from src/. screens-check.mjs imports
+// layoutCheck.
+//
 // Run from the repo root, with the slam folder served:
 //   (cd slam && python3 -m http.server 8765 &) ; node slam/tools/layout-check.mjs
 
@@ -37,7 +41,12 @@ const LIMIT_FILL_GAPS_RILEY = 2;
 const SETUP_KEY = /^(payday:|nextpay:|acct-inc:|acct-line:|acct-debt:|paywith:|add-acct-|future-tools|coach-notes|materiality|no-debts|add-debt|sit-|profile-state|living-with|filing)/;
 const SETUP_PATH = /^\["(balances|income|debts|profile|household|cashflow|accounts)"|"(dueDay|dueMonth)"\]$/;
 
-// What one screen holds, counted the same way as the inventory taken before S-106.
+// What one screen holds, counted the same way as the inventory taken before S-106:
+//   height is the page's scroll height over the viewport height (phone screens, one decimal);
+//   sections are top-level cards (a card inside a card is part of its parent); inputs and buttons
+//   count only when visible (offsetParent set), and a file picker is never an input; headings are
+//   the visible h2s and card titles; dataInputs are inputs without data-picker; setupInputs match
+//   SETUP_KEY or SETUP_PATH; fillGaps is that section's height in phone screens, null when absent.
 async function measure(page) {
   return page.evaluate(([setupKey, setupPath]) => {
     const m = document.querySelector('#main');
@@ -89,6 +98,7 @@ export async function layoutCheck(browser, url) {
       await visit(page, st);
       const x = await measure(page);
       after[id][st[0]] = x;
+      // Over a limit fails; at the limit passes. The height limit is per state where one is set.
       const limit = LIMIT_BY_STATE[st[0]] || LIMIT_SCREENS;
       if (x.height > limit) fail(id + ', ' + st[0] + ': ' + x.height + ' phone screens tall (limit ' + limit + ')');
       if (x.sections > LIMIT_SECTIONS) fail(id + ', ' + st[0] + ': ' + x.sections + ' sections (limit ' + LIMIT_SECTIONS + ')');
@@ -97,16 +107,19 @@ export async function layoutCheck(browser, url) {
       // Lesson 7 (S-116): Today shows numbers, not charts, and links to every chart tab in one tap.
       if (st[1] === 'today') {
         if (x.charts) fail(id + ', Today: ' + x.charts + ' charts (Today shows numbers, not charts)');
+        // The tab a link opens is the part of its data-key after "today-chart:"; every tab in TABS needs one.
         const links = await page.$$eval('[data-key^="today-chart:"]', (bs) => bs.map((b) => b.getAttribute('data-key').slice(12)));
         const missing = TABS.filter((t) => !links.includes(t));
         if (missing.length) fail(id + ', Today: no one-tap link to Insights ' + missing.join(', '));
       }
       if (st[0] !== 'Setup: coverage' && x.coverageInputs.length) fail(id + ', ' + st[0] + ': a health coverage question outside Setup, Health coverage: ' + x.coverageInputs.join(', '));
+      // Only Riley has gaps to fill at the demo date; a null fillGaps (no section) is not over any limit.
       if (st[1] === 'review' && id === 'riley' && x.fillGaps > LIMIT_FILL_GAPS_RILEY) fail('riley, fill gaps: ' + x.fillGaps + ' phone screens (limit ' + LIMIT_FILL_GAPS_RILEY + ')');
       // The same section can be visited twice (Plan has two views); a heading counts once per state.
       for (const t of new Set(x.headings)) (seen[t] = seen[t] || []).push(st[0]);
       for (const t of x.headings.filter((v, i, a) => a.indexOf(v) !== i)) fail(id + ', ' + st[0] + ': heading "' + t + '" twice on one screen');
     }
+    // Across the app: a heading seen in more than one state fails.
     for (const [t, where] of Object.entries(seen)) {
       const screens = [...new Set(where.map((w) => w.split(':')[0]))];
       // Plan's two views share the page header; anything else is a second copy.
@@ -114,7 +127,8 @@ export async function layoutCheck(browser, url) {
     }
     await page.close();
   }
-  // The inventory, before (Clients / Fill in / Budget / Analyze) and after (the loop).
+  // The inventory, before (Clients / Fill in / Budget / Analyze) and after (the loop). The before file
+  // holds Riley and Maya only, keyed by their client buttons; it is printed, not checked.
   const before = JSON.parse(readFileSync(new URL('./inventory-before.json', import.meta.url), 'utf8'));
   for (const [id, key] of [['riley', 'Riley, 31'], ['maya', 'Maya, 26']]) {
     console.log('\nInventory, ' + id + ', phone (390 x 844). Before:');
@@ -126,7 +140,8 @@ export async function layoutCheck(browser, url) {
   return { failures, after };
 }
 
-// Run on its own.
+// Run on its own: argv[1] is this file only when node was started on it, not when screens-check.mjs
+// imports it. Playwright is not in package.json: this folder's node_modules, or the global install.
 if (process.argv[1] && process.argv[1].endsWith('layout-check.mjs')) {
   const require = createRequire(import.meta.url);
   let playwright;

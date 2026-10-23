@@ -1,5 +1,8 @@
 // Making the budget personal: items inside one amount, "12+30+8" sums,
-// renaming, added categories, and the client's own tags.
+// renaming, added categories, the client's own tags, Rough break down and Rough debts, and items with
+// their own cadence. Uses the store (schema, value, edits, validate, migrate), editValue and parseAmounts
+// from the value input component (src/ui/components/value-input.js), buildSummary, and the helpers,
+// which load the reference data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

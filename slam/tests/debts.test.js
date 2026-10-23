@@ -1,5 +1,8 @@
 // Debts and the budget (S-116), by hand: a loan paid by a budget line, card interest computed and never
-// typed, and the account types the coach still has to pick.
+// typed, and the account types the coach still has to pick. Uses the store (schema, value, migrate,
+// validate, accounts, edits), the summary, model, bridge, net worth bridge, debts, owning, completion
+// and loop engines, the October fixture (tests/fixtures/october.js), and the helpers, which load the
+// reference data in src/data and the Riley and Luis demo households in src/data/households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,7 +60,7 @@ test('Riley: March\'s car payment split into interest and principal', () => {
   assert.equal(paid.amount, 347.7);
   assert.equal(paid.from, 'Card payments $35, Auto loan $312.70 (Car payment $340: interest $27.30, principal $312.70)');
   // The car next to its alternative: the payment is the line's 340; at September's end the loan is
-  // 3,237.64, so 16.19 is interest and 340 - 16.19 = 323.81 principal.
+  // 3,237.64, so 3,237.64 x 6% / 12 = 16.19 is interest and 340 - 16.19 = 323.81 principal.
   const [car] = owningCosts(d, buildSummary(d, refs), '2026-10-17');
   assert.deepEqual([car.debt.payment, car.debt.interest, car.debt.principal], [340, 16.19, 323.81]);
 });
@@ -78,7 +81,7 @@ test('one line pays one debt; unlinking brings back its own minimum', () => {
 });
 
 test('card interest: computed from the balance going into the month, and both bridges still tie', () => {
-  // The October household (test/bridge.test.js) with the Visa at 24% and not paid in full: interest
+  // The October household (tests/bridge.test.js) with the Visa at 24% and not paid in full: interest
   // 500 (the balance going into October) x 24% / 12 = 10.00, charged on the card, so it ends at
   // 500 + 300 - 450 + 10 = 360.
   const d = october();
@@ -168,7 +171,7 @@ test('Luis: computed interest as soon as a card has its APR and a balance; the t
   setBalance(d, '2026-09', 'chase', 'start', one(4000));
   setBalance(d, '2026-09', 'discover', 'start', one(1200));
   assert.deepEqual(debtLines(d).filter(([id]) => id.startsWith('interest:')), [['interest:debt-chase', 83.3], ['interest:debt-discover', 22.9]]);
-  // Spending 3,765 - 45 + 106.20 = 3,826.20; surplus 4,600 - 3,826.20 - 200 = 573.80.
+  // Debt payments 685 + 106.20 = 791.20. Spending 3,765 - 45 + 106.20 = 3,826.20; surplus 4,600 - 3,826.20 - 200 = 573.80.
   const s1 = buildSummary(d, refs);
   assert.deepEqual([c(s1.rows.find((r) => r.id === 'debt').actual), c(s1.totals.spending), c(s1.totals.surplus)], [791.2, 3826.2, 573.8]);
   // A card missing its APR shows a blank line (empty is not zero); the other still computes.

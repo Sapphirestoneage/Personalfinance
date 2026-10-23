@@ -1,6 +1,8 @@
 // Insights, Over time, Trends (S-092): a range picker (last 3, 6, 12 months, all) and a
 // focus picker (a category, a line, or a merchant). Every number comes from
-// src/engines/trends.js; each chart has a one-line, descriptive reading.
+// src/engines/trends.js; each chart has a one-line, descriptive reading. Depends on
+// dom.js and format.js, the SVG primitives in svg.js, card() and chartWidth() from
+// catalog.js, and reads the pickers' state from ctx.ui.trendRange and ctx.ui.trendFocus.
 
 import { h, options } from '../dom.js';
 import { money, pct, signedMoney, monthLabel, dayLabel, todayIso } from '../format.js';
@@ -12,6 +14,8 @@ const short = (m) => monthLabel(m).slice(0, 3) + " '" + m.slice(2, 4);
 const RANGES = [['3', 'Last 3'], ['6', 'Last 6'], ['12', 'Last 12'], ['all', 'All']];
 
 function pickers(ctx, s, months, focusKey) {
+  // Focus is spending only: savings and debt rows are left out. Merchants come largest first
+  // from tr.merchantsIn, capped at 25 to keep the select short.
   const cats = s.rows.filter((r) => !r.savings && !r.isDebt);
   const merchants = tr.merchantsIn(ctx.doc, months).slice(0, 25);
   return h('div', { class: 'card', id: 'trend-pickers' }, h('div', { class: 'row' },
@@ -24,6 +28,7 @@ function pickers(ctx, s, months, focusKey) {
 
 function seriesCard(ctx, ms, name) {
   const xs = ms.rows.map((r) => short(r.month));
+  // ms comes from tr.monthlySeries.
   const series = [
     { name: 'Actual', color: 'var(--series-actual)', values: ms.rows.map((r) => r.actual) },
     { name: 'Estimate at close', color: 'var(--series-estimate)', values: ms.rows.map((r) => r.estimate) },
@@ -42,6 +47,8 @@ function seriesCard(ctx, ms, name) {
 function merchantCards(ctx, months, merchant) {
   const p = tr.merchantPrices(ctx.doc, merchant, months);
   const v = tr.merchantVisits(ctx.doc, merchant, months);
+  // The x axis is days since the first day of the range, so charges spread out by real date; the
+  // tick labels are blank and the axis caption names the range instead.
   const t0 = months.length ? Date.parse(months[0] + '-01') : 0;
   const day = (d) => (Date.parse(d) - t0) / 86400000;
   const range = tr.merchantRange(v);
@@ -61,6 +68,7 @@ function merchantCards(ctx, months, merchant) {
 
 function chargesCard(ctx, months, catId, name) {
   const pts = tr.categoryCharges(ctx.doc, catId, months);
+  // Same day-count x axis as the merchant price chart.
   const t0 = months.length ? Date.parse(months[0] + '-01') : 0;
   const big = pts.slice().sort((a, b) => b.amount - a.amount)[0];
   return card(ctx, {
@@ -85,6 +93,7 @@ function gridCards(ctx, s, months) {
 
 function periodCards(ctx, s, months) {
   const doc = ctx.doc;
+  // Month over month ends at the last month in range with a month record (or the month being worked on).
   const withData = months.filter((m) => s.history.allKeys.includes(m) || m === doc.currentMonth);
   const to = withData[withData.length - 1];
   const mom = tr.monthOverMonth(doc, s.history, to);
@@ -95,6 +104,8 @@ function periodCards(ctx, s, months) {
   rows.push({ label: short(mom.to), from: 0, to: wf.after, kind: 'total' });
   const pace = tr.pacing(doc, doc.currentMonth, s.totals.planSpending);
   const now = todayIso();
+  // Which day the pacing reading stops at: today's day of the month when pacing the current calendar
+  // month, the whole month when it is already past, and 0 (not started) when it is still ahead.
   const today = now.slice(0, 7) === pace.month ? Number(now.slice(8)) : now.slice(0, 7) > pace.month ? pace.days : 0;
   const dom = tr.dayOfMonth(doc, months);
   const peak = dom.slice().sort((a, b) => b.average - a.average)[0];
@@ -154,6 +165,8 @@ function statCards(ctx, s, months) {
 export function trendCards(ctx, s) {
   const months = tr.trendMonths(ctx.doc, s.history, ctx.ui.trendRange || '12');
   const cats = s.rows.filter((r) => !r.savings && !r.isDebt);
+  // Default focus is the food category, else the first spending category. The key is kind:id and the
+  // id is rejoined after the first colon, because a merchant name may itself contain one.
   const fallback = 'cat:' + ((cats.find((c) => c.id === 'food') || cats[0] || { id: 'food' }).id);
   const focusKey = ctx.ui.trendFocus || fallback;
   const [kind, ...rest] = focusKey.split(':');

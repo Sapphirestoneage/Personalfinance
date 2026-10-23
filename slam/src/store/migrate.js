@@ -1,7 +1,9 @@
 // Brings any saved or imported household up to the current schema version,
 // then fills missing keys with defaults so every screen can trust the shape.
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
-// write a compatibility note in DECISIONS.md.
+// write a compatibility note in DECISIONS.md. Uses schema.js (the version number
+// and blank-record factories), value.js and types.js (Values, category and line types),
+// records.js (bookkeeping stamps) and one engine, normalize.js, for step 7's toMonthly.
 
 import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate, newCoverage } from './schema.js';
 import { normalizeValue, isBlank, makeValue } from './value.js';
@@ -90,6 +92,8 @@ const STEPS = {
   19: (doc) => ({ ...doc, schemaVersion: 20, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({ ...l, splitPays: l.splitPays || 'part' })) })) })
 };
 
+// Entry kinds that count toward a line's actual (S-087). Refunds and reimbursements are stored as
+// negative amounts, so a plain sum nets them.
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 
 // S-123: Fees folds into Bills and subscriptions (or the first spending category when there is none).
@@ -97,6 +101,7 @@ function withoutFees(doc) {
   const cats = (doc.categories || []).map((c) => ({ ...c, lines: [...(c.lines || [])] }));
   const fees = cats.find((c) => c.id === 'fees');
   if (!fees) return cats;
+  // Answered means an amount or a status: a typed 0 and "doesn't apply" both count, blank does not.
   const answered = (v) => !!v && ((v.amount !== null && v.amount !== undefined) || (v.status !== null && v.status !== undefined));
   const used = new Set([
     ...(doc.transactions || []).map((t) => t.lineId),
@@ -131,6 +136,7 @@ function autoLink(doc, d) {
   const has = (v) => !!v && v.amount !== null && v.amount !== undefined;
   const hits = (doc.categories || []).filter((c) => !c.savings && c.id !== 'debt').flatMap((c) => c.lines || [])
     .filter((l) => types.includes(l.type || DEFAULT_LINE_TYPES[l.id]) && l.state !== 'archived' && (has(l.estimate) || has(l.actual)));
+  // Two candidates is no link: picking one would be a silent choice.
   return hits.length === 1 ? hits[0].id : null;
 }
 
@@ -138,12 +144,17 @@ function logOwnsActuals(doc) {
   const out = { ...doc, schemaVersion: 8 };
   const txs = (doc.transactions || []).map((t) => ({ ...t }));
   const first = (doc.income || []).find((i) => i.state !== 'archived');
+  // A paycheck-cadence actual converts with the first active income's pay frequency; biweekly is the
+  // schema default when none was set. With no income at all it cannot convert and stays as typed.
   const freq = first ? first.payFrequency || 'biweekly' : null;
   const closed = new Set((doc.months || []).map((m) => m.key));
+  // What the log says for a line in a month: logged kinds only, and not a row still waiting on a
+  // possible-match answer. Summed to the cent.
   const sumFor = (lineId, month) => {
     const list = txs.filter((t) => t.lineId === lineId && t.date && t.date.startsWith(month) && LOGGED.has(t.kind) && !(t.possible && t.possible.length));
     return { n: list.length, total: Math.round(list.reduce((a, t) => a + t.amount, 0) * 100) / 100 };
   };
+  // Returns the typed Value to keep it, or null to clear it once the log owns that line and month.
   const keep = (line, month, typed) => {
     const lineId = line.id;
     const s = sumFor(lineId, month);
@@ -153,10 +164,14 @@ function logOwnsActuals(doc) {
     // A typed reimbursable line marked received counted only the client's share.
     const owed = line.path === 'reimbursable' && line.owedBackReceived ? toMonthly(normalizeValue(line.owedBack), freq) : null;
     if (owed !== null) monthly -= owed;
+    // Dollars, rounded to the cent; a typed actual that already matches the log needs no make-up entry.
     const diff = Math.round((monthly - s.total) * 100) / 100;
     if (diff !== 0) {
       const [y, m] = month.split('-').map(Number);
+      // Day 0 of the next month is the last day of this one.
       const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
+      // A spend when the client typed more than the log holds, a refund (negative) when less.
+      // adjust marks it so the budget-to-cash bridge leaves it out.
       txs.push({ id: 'tx-kept-' + lineId + '-' + month, date: last, amount: diff, description: '', account: null, kind: diff > 0 ? 'spend' : 'refund',
         merchant: '', lineId, bnpl: false, source: 'manual', note: 'Kept your typed actual when the log took over', adjust: true });
     }
@@ -168,16 +183,20 @@ function logOwnsActuals(doc) {
   }) }));
   const lineById = Object.fromEntries((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => [l.id, l])));
   out.incomeActuals = Object.fromEntries(Object.entries(doc.incomeActuals || {}).map(([k, src]) => [k, Object.fromEntries(Object.entries(src).map(([id, v]) => [id, normalizeValue(v)]))]));
+  // Other open months get the same treatment; a month left with no typed actuals is dropped.
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([month, lines]) => [month,
     Object.fromEntries(Object.entries(lines).filter(([id, v]) => !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)))]).filter(([, lines]) => Object.keys(lines).length));
   out.transactions = txs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return out;
 }
 
+// A first guess at an account's type from words in its imported name; checking when nothing matches.
 const guessAccountType = (name) => (/card|visa|amex|master|discover|credit/i.test(name) ? 'credit-card' : /saving/i.test(name) ? 'savings' : /cash|wallet/i.test(name) ? 'cash' : 'checking');
 
 function logWithAccounts(doc) {
   const accounts = [...(doc.accounts || [])];
+  // Old imports named the account by text. Match an existing id, then a name (case does not matter),
+  // else make the account with an id slugged from the name.
   const idFor = (name) => {
     if (!name) return null;
     if (accounts.some((a) => a.id === name)) return name;
@@ -198,6 +217,7 @@ function cashIntoAccounts(doc) {
   const out = { ...doc, accounts: doc.accounts || [], balances: doc.balances || {}, schemaVersion: 5 };
   if (doc.nextStage) out.nextStage = ns;
   if (doc.eras) out.eras = eras;
+  // Older files held either a Value or a bare number.
   const typed = (v) => (v && typeof v === 'object' && v.amount !== null && v.amount !== undefined ? v : typeof v === 'number' ? { amount: v } : null);
   const found = [[typed(cashOnHand), 'Next stage cash on hand'], [typed(cashNow), 'Eras cash now']].filter(([v]) => v);
   if (!found.length || !/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) return out;
@@ -207,6 +227,7 @@ function cashIntoAccounts(doc) {
   kept.forEach(([v, from], i) => {
     const acct = newAccount({ id: 'acct-cash-on-hand' + (i ? '-2' : ''), name: i ? 'Cash on hand (' + from + ')' : 'Cash on hand', type: 'cash', state: i ? 'archived' : 'active' });
     out.accounts = [...out.accounts, acct];
+    // Status and source default to known and client: the client typed this number.
     const start = { amount: v.amount, cadence: 'one-off', status: v.status || 'known', source: v.source || 'client', asOf: v.asOf || null, note: 'Moved from ' + from };
     out.balances[doc.currentMonth][acct.id] = { start, end: null };
   });
@@ -215,6 +236,7 @@ function cashIntoAccounts(doc) {
 
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Not a household document');
+  // Work on a copy so the caller's object is untouched.
   let doc = JSON.parse(JSON.stringify(raw));
   let v = doc.schemaVersion || 0;
   if (v > SCHEMA_VERSION) throw new Error('This file is from a newer version of SLAM (schema ' + v + ')');
@@ -235,11 +257,16 @@ function unemploymentCompat(inc) {
   if (isBlank(g)) {
     inc.gross = { ...t, cadence: t.cadence === 'paycheck' ? cadenceOf(inc.payFrequency) : t.cadence };
   } else if (inc.withholding === null && t.amount !== null && g.amount) {
+    // Both as a yearly figure so the two cadences can differ: a paycheck amount times paychecks a
+    // year by pay frequency, anything else by its own cadence.
     const per = (v) => (v.cadence === 'paycheck' ? v.amount * ({ weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[inc.payFrequency] || 0) : v.amount * ({ week: 52, month: 12, year: 1 }[v.cadence] || 0));
     const r = per(t) / per(g);
+    // Within one percent of 90% reads as the 10% federal withholding, within half a percent of equal
+    // as none; anything else leaves withholding unanswered.
     if (Math.abs(r - 0.9) < 0.01) inc.withholding = 'ten-percent';
     else if (Math.abs(r - 1) < 0.005) inc.withholding = 'none';
   }
+  // Take-home is cleared, not deleted: the income engine works it out from gross and withholding.
   inc.takeHome = { ...t, amount: null, status: null, cadence: 'paycheck' };
 }
 
@@ -247,6 +274,7 @@ function cadenceOf(freq) {
   return freq === 'weekly' ? 'week' : freq === 'monthly' ? 'month' : 'paycheck';
 }
 
+// A record over its factory defaults, with the named Value fields normalized so each has every key.
 function withDefaults(base, given, valueKeys) {
   const out = { ...base, ...given };
   for (const k of valueKeys) out[k] = normalizeValue(given[k] === undefined ? base[k] : given[k]);
@@ -260,6 +288,7 @@ export function normalizeHousehold(doc) {
   out.profile = { ...base.profile, ...(doc.profile || {}) };
   out.household = { ...base.household, ...(doc.household || {}) };
   const cv = doc.coverage || {};
+  // The deductible and out-of-pocket max are plan-year limits, so their cadence defaults to year.
   out.coverage = { ...newCoverage(), ...cv, premium: normalizeValue(cv.premium), deductible: { ...normalizeValue(cv.deductible), cadence: (cv.deductible && cv.deductible.cadence) || 'year' }, outOfPocketMax: { ...normalizeValue(cv.outOfPocketMax), cadence: (cv.outOfPocketMax && cv.outOfPocketMax.cadence) || 'year' } };
   out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
   // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
@@ -286,10 +315,12 @@ export function normalizeHousehold(doc) {
   });
   out.debts = (doc.debts || []).map((d) => {
     const debt = withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay', 'promoApr']);
+    // A rate is not a flow: one-off cadence keeps it out of any monthly total.
     debt.promoApr = { ...debt.promoApr, cadence: 'one-off' };
     return debt;
   });
   const cf = doc.cashflow || {};
+  // The cushion is a balance to keep and a check is a balance read, not monthly flows, so both are one-off.
   out.cashflow = { ...newCashflow(), ...cf, cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' }, moves: cf.moves || {}, forecasts: cf.forecasts || {},
     checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } })) };
   out.categories = (doc.categories || base.categories).map((c) => {
@@ -317,6 +348,7 @@ export function normalizeHousehold(doc) {
     ...(p.income ? { income: Object.fromEntries(Object.entries(p.income).map(([k, v]) => [k, nv(v)])) } : {}),
     lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
       ...meta(e),
+      // Plans saved before start existed use the amount as the start.
       amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',
       reviewed: !!e.reviewed, note: e.note || '', stop: !!e.stop
     }]))
@@ -340,6 +372,7 @@ export function normalizeHousehold(doc) {
     for (const k of ['rentAlt', 'rideshareAlt', 'transitAlt', 'rentalAlt']) if (acct[k]) acct[k] = { ...normalizeValue(acct[k]), cadence: acct[k].cadence || 'month' };
     return acct;
   });
+  // A balance is a point-in-time figure, so start and end are one-off Values.
   out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
     ...meta(b || {}),
     start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' },
@@ -347,7 +380,8 @@ export function normalizeHousehold(doc) {
     ...(b && b.startOn ? { startOn: b.startOn } : {}), ...(b && b.endOn ? { endOn: b.endOn } : {})
   }]))]));
   out.schemaVersion = SCHEMA_VERSION;
-  // Any record still without bookkeeping gets it now (S-096).
+  // Any record still without bookkeeping gets it now (S-096), dated from the file's last save, or a
+  // fixed date when the file has none, so loading never depends on the clock.
   stampAll(out, doc.updatedAt || doc.createdAt || '2026-01-01T00:00:00.000Z');
   return out;
 }

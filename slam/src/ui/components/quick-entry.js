@@ -1,8 +1,8 @@
-// Quick entry (S-085): log one amount in a few taps, phone first. Amount,
-// line (recent lines first, search by name), date (today), and optional
-// merchant, note, and account (the last one used). Spending, refund, or
-// income. The sheet keeps what was typed in ctx.ui.qe, so a re-render (a
-// toast, say) puts every box back as it was.
+// Quick entry (S-085): log one amount in a few taps, phone first. Amount, line (recent lines
+// first, search by name), date (today), and optional merchant, note, and account (the last one
+// used). Spending, refund, or income. The sheet keeps what was typed in ctx.ui.qe, so a re-render
+// (a toast, say) puts every box back as it was. Recent lines and the last account come from
+// engines/log.js; an entry is saved with addEntry (store/log.js); the amount is read by parseAmount (value-input.js).
 
 import { h, options } from '../dom.js';
 import { money, todayIso } from '../format.js';
@@ -23,6 +23,7 @@ export function quickEntryButton(ctx, label = '+ Quick entry', preset) {
 function linesOf(doc) {
   const out = [];
   for (const c of doc.categories) {
+    // The debt category is left out: its payments come from the debts (Accounts, Credit and debt), not from entries logged to a line here.
     if (c.state === 'archived' || c.id === 'debt') continue;
     for (const l of c.lines) if (l.state !== 'archived') out.push({ id: l.id, name: l.name, cat: c.name });
   }
@@ -38,6 +39,8 @@ export function quickEntrySheet(ctx) {
   const ordered = [...recent, ...all.filter((l) => !recent.includes(l))];
   const close = () => { ctx.ui.qe = null; ctx.rerender(); };
   const chips = h('div', { class: 'qe-lines', role: 'listbox', 'aria-label': 'Line' });
+  // The chips are redrawn in place rather than through a full rerender, so the search box keeps its focus
+  // and caret while you type.
   const drawChips = () => {
     const term = q.search.trim().toLowerCase();
     const list = q.kind === 'income'
@@ -53,12 +56,14 @@ export function quickEntrySheet(ctx) {
     const a = parseAmount(q.amount);
     if (a === null || a === undefined || a === 0) return ctx.toast('Type an amount');
     if (q.kind !== 'income' && !q.lineId) return ctx.toast('Pick a line');
+    // The log's sign convention: spending is positive, a refund or income is negative; a typed minus sign is ignored.
     const amount = q.kind === 'spend' ? Math.abs(a) : -Math.abs(a);
     let saved;
     ctx.update('Quick entry', (d) => { saved = addEntry(d, { date: q.date, amount, kind: q.kind, lineId: q.kind === 'income' ? null : q.lineId, incomeId: q.kind === 'income' ? q.incomeId : null, merchant: q.merchant, note: q.note, account: q.account }); });
     if (!saved) return;
     const where = q.kind === 'income' ? 'income' : (all.find((l) => l.id === q.lineId) || {}).name;
     ctx.toast('Logged ' + money(Math.abs(amount), true) + (where ? ' to ' + where : ''));
+    // "Save and add another" keeps the kind, date, and account; amount, line, merchant, and note start blank.
     if (again) openQuickEntry(ctx, { kind: q.kind, date: q.date, account: q.account });
     else close();
   };

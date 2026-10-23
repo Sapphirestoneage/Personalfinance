@@ -1,6 +1,9 @@
 // Phase 6: transaction import. Checks the Jordan household's two CSV files
-// against the hand-computed answers in households/jordan.expected.js, plus
-// format detection for Amex and Capital One.
+// (src/data/households/jordan-chase.csv and jordan-checking.csv) against the hand-computed
+// answers in src/data/households/jordan.expected.js, plus format detection for Amex and Capital One.
+// Depends on the tx-import, tx-analysis, csv and model engines, the store's edits, accounts,
+// validate and log modules, the October fixture, and tests/helpers.js for the merchant rules
+// and the Jordan household file.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -97,7 +100,8 @@ test('Jordan: September and August actuals, double counting removed', () => {
 
 test('Jordan: actuals come from the log, with no confirm step (S-087)', () => {
   const { doc } = loadJordan();
-  // Groceries was typed as 300, but September has 3 grocery entries: the log owns it, 218.20.
+  // Groceries was typed as 300, but September has 3 grocery entries: the log owns it,
+  // 95.60 + 61.30 + 61.30 = 218.20 (the same-day Trader Joe's repeat is kept until someone removes it).
   const food = budgetModel(doc).categories.find((c) => c.id === 'food');
   const g = food.lines.find((l) => l.id === 'groceries');
   money(g.actual, 218.2, 'groceries');

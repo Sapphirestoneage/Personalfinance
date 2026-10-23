@@ -1,4 +1,4 @@
-// Journey tests (S-109): how easy SLAM is to use, measured in taps. Three
+// Journey tests (S-109): how easy SLAM is to use, measured in taps. Four
 // journeys, each on a phone (390 x 844) and a desktop (1280 x 900):
 //   a. First session (under 60 taps): new client, gut, basics, one income, rent,
 //      rough estimates for every category, one account, then Today.
@@ -13,6 +13,11 @@
 // or a text box to put the cursor in). A dropdown is 2 taps (open it, pick). Typing and
 // the keyboard's own keys (Tab, Enter) are not taps; a phone keyboard has them too.
 //
+// Depends on Playwright, on the UI's formatters (src/ui/format.js: money, signedMoney, pct) so an
+// expected number is spelled the way the screen spells it, and, for journey b only, on the store
+// modules (schema, value, accounts, edits, migrate, transfer) to build that month's household as an
+// export file. Nothing on disk is read or written.
+//
 // Run from the repo root, with the slam folder served:
 //   (cd slam && python3 -m http.server 8765 &) ; node slam/tools/journeys.mjs
 
@@ -22,6 +27,7 @@ import { money, signedMoney, pct } from '../src/ui/format.js';
 
 const require = createRequire(import.meta.url);
 let playwright;
+// Playwright is not in package.json: take it from this folder's node_modules, or from the global install.
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
 const URL = process.env.SLAM_URL || 'http://localhost:8765/';
@@ -29,6 +35,7 @@ const VIEWS = [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280
 let failures = 0;
 const results = [];
 
+// Counts taps as the header defines them.
 function counter(page, phone) {
   const t = { n: 0, steps: [], at: 0 };
   t.tap = async (sel) => { await page.click(sel); t.n += 1; };
@@ -45,6 +52,8 @@ function counter(page, phone) {
   return t;
 }
 
+// A number check passes only when the shown text (trimmed) is exactly the expected string; both
+// sides are formatted by the same functions the screen uses, so "$2,600" is compared, not 2600.
 function check(journey, label, shown, expected) {
   const ok = shown === expected;
   if (!ok) failures += 1;
@@ -53,12 +62,17 @@ function check(journey, label, shown, expected) {
 
 // Quick entry puts the cursor in the amount by itself; wait for it before typing.
 const amountReady = (page) => page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('data-key') === 'qe-amount');
+// An element that is not there reads as "missing", so the check fails with a readable line instead of
+// the run throwing. settled() gives the screen up to 3 seconds to show the wanted text, then reports
+// whatever is shown: a slow or wrong screen fails its check, it does not stop the other journeys.
 const text = (page, sel) => page.$eval(sel, (e) => e.textContent.trim()).catch(() => 'missing');
 async function settled(page, sel, want) {
   await page.waitForFunction(([q, w]) => { const e = document.querySelector(q); return e && e.textContent.trim() === w; }, [sel, want], { timeout: 3000 }).catch(() => null);
   return text(page, sel);
 }
 
+// A step fails when its taps are over its limit. The journey's total fails when it is not under the
+// limit: "under 60" means 59 or fewer, so a total equal to the limit fails. Each failure counts once.
 function report(journey, view, t, limit) {
   console.log('\n' + journey + ' (' + view + '): ' + t.n + ' taps' + (limit ? ' (limit ' + limit + ')' : ''));
   for (const s of t.steps) {
@@ -121,6 +135,7 @@ async function firstSession(browser, view, size) {
   await t.go('today');
   await page.waitForSelector('#headline');
   t.step('See Today');
+  // The first-session card leaves Today once every step is done; counts and booleans are compared as strings.
   check(J, 'First session done', String(await page.$$eval('#first-session', (x) => x.length)), '0');
   check(J, 'Take-home', await text(page, '[data-key="how:takeHome"]'), money(2600));
   check(J, 'Spending', await text(page, '[data-key="how:spending"]'), money(2000));
@@ -256,7 +271,7 @@ async function month(browser, view, size) {
   await page.close();
 }
 
-// c. Six questions from Today, on Riley (October 17, 2026; numbers by hand in test/riley.test.js).
+// c. Six questions from Today, on Riley (October 17, 2026; numbers by hand in tests/riley.test.js).
 async function questions(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -283,7 +298,7 @@ async function questions(browser, view, size) {
   t.step('Safe to spend', 0);
 
   // 3. Why cash dropped last month: September's bridge. September ended with checking 4,001.03 and
-  // savings 150 = 4,151.03 (test/riley.test.js); explained + not explained = the actual change.
+  // savings 150 = 4,151.03 (tests/riley.test.js); explained + not explained = the actual change.
   await t.go('insights');
   await t.tap('[data-key="tab-cash"]');
   await page.waitForSelector('#chart-bridge');
@@ -292,6 +307,7 @@ async function questions(browser, view, size) {
   check(J, 'September ends at', String(/to \$4,151/.test(cashLine)), 'true');
   const num = async (k) => Number((await text(page, '[data-key="' + k + '"]')).replace(/[$,+]/g, ''));
   const [ex, un, ac] = [await num('bridge-explained'), await num('bridge-unexplained'), await num('bridge-actual')];
+  // The three are read back from the screen in whole dollars, so the identity is allowed one dollar of rounding.
   check(J, 'Explained + not explained = actual', String(Math.abs(ex + un - ac) <= 1), 'true');
   t.step('Why cash dropped last month (the bridge)', 3);
   await home();
@@ -316,7 +332,7 @@ async function questions(browser, view, size) {
   await home();
 
   // 6. What's my FI net worth (S-115): Insights, Net worth (under More on a phone). Today it is
-  // September's ends: 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323 (test/networth-households.test.js).
+  // September's ends: 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323 (tests/networth-households.test.js).
   if (view === 'phone') { await t.tap('[data-key="more"]'); await t.tap('.more-menu a[data-nav="insights:networth"]'); }
   else { await t.go('insights'); await t.tap('[data-key="tab-networth"]'); }
   check(J, 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));

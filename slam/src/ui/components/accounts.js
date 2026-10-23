@@ -1,7 +1,9 @@
 // Accounts and their balances for one month (S-084): name, type, start, end.
 // A start that was not typed shows last month's end, "carried from last
 // month", and typing a number replaces it. Set up once and updated at
-// month-end (Setup, Accounts). Numbers come from calc/balances.js; this file only lays them out.
+// month-end (Setup, Accounts). Numbers come from engines/balances.js (balancesFor, balanceAt), networth.js,
+// and paid-ahead.js; this file only lays them out. Writes go through store/accounts.js; account types, secured
+// types, and the alternative fields come from store/schema.js. Builds on dom, format, value-input, name-edit, jump.
 
 import { h, options } from '../dom.js';
 import { money, monthLabel, todayIso, dayLabel } from '../format.js';
@@ -22,6 +24,7 @@ const TIER_OPTIONS = [['1', '1: cash now'], ['2', '2: can sell within days'], ['
 const QUICK_TYPES = ['checking', 'savings'];
 
 // A balance box writes through setBalance (the month and account may be new).
+// preview: null turns off the keystroke preview; the box only commits on change.
 function balanceInput(ctx, month, acct, which, stored, label) {
   const sub = { ...ctx, preview: null, commit: (path, value, l) => ctx.update(l || label, (d) => setBalance(d, month, acct.id, which, value)) };
   // A home's or vehicle's value is "roughly" unless said otherwise (S-110): it comes from an estimate.
@@ -31,14 +34,16 @@ function balanceInput(ctx, month, acct, which, stored, label) {
 // The day a balance was read (S-100): the month's first or last day unless another is picked.
 function balanceDate(ctx, month, a, which) {
   const b = (ctx.doc.balances[month] || {})[a.id] || {};
+  // Day 0 of the next month is the last day of this one.
   const last = month + '-' + String(new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate()).padStart(2, '0');
   const plain = which === 'start' ? month + '-01' : last;
+  // Picking the default day again stores null, so the date keeps following the month instead of becoming a typed fact.
   return h('label', { class: 'xs muted balance-date' }, 'on ',
     h('input', { type: 'date', min: month + '-01', max: last, value: b[which + 'On'] || plain, 'data-key': 'acct:' + a.id + ':' + which + 'On', 'aria-label': a.name + ' ' + which + ' balance date',
       onchange: (e) => ctx.update('Balance date', (d) => setBalanceDate(d, month, a.id, which, !e.target.value || e.target.value === plain ? null : e.target.value)) }));
 }
 
-// One account: name, bank, type, the debt a card pays down, and its start and end balances with their days.
+// One account: name, bank, type, the debt a card is linked to, and its start and end balances with their days.
 function accountRow(ctx, month, r, stored) {
   const doc = ctx.doc;
   const a = doc.accounts.find((x) => x.id === r.id);
@@ -57,6 +62,8 @@ function accountRow(ctx, month, r, stored) {
           })], a.debtId || '')) : null,
         h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
       linked ? h('div', { class: 'hint' }, 'APR, minimum, and due day stay on the debt "' + linked.label + '".') : null,
+      // A card gets no details block: it is money owed, so a liquidity tier and the FI flag do not apply (its type has
+      // tier null in store/schema.js), and APR, minimum, and due day live on the linked debt, as the hint above says.
       a.type === 'credit-card' ? null : accountDetails(ctx, a)),
     h('div', { class: 'balance-pair' },
       h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, a, 'start', stored(a.id, 'start'), a.name + ' start'), balanceDate(ctx, month, a, 'start'),
@@ -132,6 +139,7 @@ export function accountsCard(ctx, month, opts = {}) {
   const mine = b.rows.filter((r) => r.type !== 'credit-card' && !skip.includes(r.type));
   const byBank = ctx.ui.acctGroup === 'institution';
   const instOf = (r) => ((doc.accounts.find((a) => a.id === r.id) || {}).institution || '').trim();
+  // By bank: accounts with no bank named sort last, then A to Z. By type: the schema's groups, cards left out.
   const groups = byBank
     ? [...new Set(mine.map(instOf))].sort((x, y) => (!x) - (!y) || x.localeCompare(y)).map((name) => ['inst:' + (name || 'none'), name || 'No bank named', mine.filter((r) => instOf(r) === name), name])
     : ACCOUNT_GROUPS.filter(([gid]) => gid !== 'card').map(([gid, glabel, types]) => [gid, glabel, mine.filter((r) => types.includes(r.type)), null]);
@@ -159,6 +167,7 @@ export function accountsCard(ctx, month, opts = {}) {
 }
 
 // Paid ahead (S-119): computed from the log, never typed. Each yearly bill paid, with its schedule.
+// Only schedules with something left as of today are listed; scheduleAt (engines/paid-ahead.js) says how much.
 function paidAheadBlock(ctx) {
   const today = todayIso();
   const list = paidAheadSchedules(ctx.doc).map((x) => ({ ...x, left: scheduleAt(x, today) })).filter((x) => x.left > 0);
@@ -181,6 +190,8 @@ export function netWorthCard(ctx) {
 }
 
 // The latest balance and the day it was read (S-114), for every account and debt.
+// With no dated reading, balanceAt (engines/balances.js) falls back to the balance typed on the debt itself; that one
+// has a day only when it carries an asOf, and "as given on the debt" covers the case where it does not.
 function latestLine(ctx, key) {
   const b = balanceAt(ctx.doc, key, todayIso());
   return h('div', { class: 'xs muted', 'data-key': 'latest:' + key }, b ? 'Latest: ' + money(b.amount, true) + (b.date ? ' on ' + dayLabel(b.date) : ' (as given on the debt)') : 'No balance yet');

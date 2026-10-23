@@ -1,8 +1,9 @@
-// Monthly plans (S-076): doc.plans['YYYY-MM'] = { createdFrom, lines: { key: entry } }.
+// Monthly plans (S-076): doc.plans['YYYY-MM'] = { createdFrom, lines: { key: entry }, income? }.
 // key is a line id, or 'cat:<categoryId>' for a category planned as one number.
 // entry = { amount: Value, start: Value, decision, reviewed, note, stop }.
-// Plans are the only place plan amounts live; estimates are never touched here.
-// No math here: amounts arrive as Values worked out by calc.
+// Plans are the only place plan amounts live; estimates are never touched here. No math here:
+// amounts arrive as Values worked out by the engines (planStartValues in engines/plan.js). Needs
+// value.js (blank Values), edits.js (adding and finding lines) and months.js (nextMonthKey).
 
 import { makeValue } from './value.js';
 import { addLine, addCategory, findLine } from './edits.js';
@@ -11,6 +12,7 @@ import { nextMonthKey } from './months.js';
 export const PLAN_DECISIONS = ['keep', 'cut', 'change', 'new'];
 const copy = (v) => JSON.parse(JSON.stringify(v));
 
+// start is the amount when the plan began, kept so "keep" can go back to it after a change.
 function entry(value, decision = 'keep') {
   const v = value ? copy(value) : makeValue();
   return { amount: v, start: copy(v), decision, reviewed: false, note: '', stop: false };
@@ -20,13 +22,15 @@ export function getPlan(doc, month) {
   return (doc.plans || {})[month] || null;
 }
 
-// Start a month's plan from a set of Values (from calc: last plan, actuals, or estimates; older plans may say they came from dreams).
+// Start a month's plan from a set of Values (from the engines: last plan, actuals, or estimates; older plans may say they came from dreams).
 export function startPlan(doc, month, createdFrom, values) {
   if (getPlan(doc, month)) throw new Error('There is already a plan for ' + month);
   doc.plans[month] = { createdFrom, lines: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, entry(v)])) };
   return doc.plans[month];
 }
 
+// A key touched before any plan exists starts a manual plan; with no starting amount to keep,
+// its entry begins as a change.
 function ensure(doc, month, key) {
   if (!doc.plans[month]) doc.plans[month] = { createdFrom: 'manual', lines: {} };
   const p = doc.plans[month];
@@ -60,6 +64,7 @@ export function setPlanDecision(doc, month, key, decision) {
   const e = ensure(doc, month, key);
   e.decision = decision;
   if (decision === 'keep') e.amount = copy(e.start);
+  // A cut is a typed 0 (an answer), not a blank. A stop rides on a cut; any other decision clears it.
   if (decision === 'cut') e.amount = makeValue(0, { cadence: 'month' });
   if (decision !== 'cut') e.stop = false;
 }
@@ -104,6 +109,7 @@ export function copyPlanForward(doc, month) {
   if (!p) throw new Error('No plan for ' + month);
   const next = nextMonthKey(month);
   if (getPlan(doc, next)) throw new Error('There is already a plan for ' + next);
+  // Stopped lines are left out: they are archived when the month starts.
   const values = Object.fromEntries(Object.entries(p.lines).filter(([, e]) => !e.stop).map(([k, e]) => [k, e.amount]));
   return startPlan(doc, next, 'plan:' + month, values);
 }
@@ -113,6 +119,7 @@ export function applyPlanStops(doc, month) {
   const p = getPlan(doc, month);
   if (!p) return;
   for (const [k, e] of Object.entries(p.lines)) {
+    // Only lines are archived; a category planned as one number has nothing to stop.
     if (!e.stop || k.startsWith('cat:')) continue;
     const hit = findLine(doc, k);
     if (hit) hit.line.state = 'archived';

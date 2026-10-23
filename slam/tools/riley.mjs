@@ -7,11 +7,19 @@
 // balances are what really happened, logged or not.
 //
 // Deterministic: a fixed seed for the filler months; December, February,
-// March, June, and October 2026 are written out by hand (test/riley.test.js
+// March, June, and October 2026 are written out by hand (tests/riley.test.js
 // checks them by hand). Run from the slam folder:
 //   node tools/riley.mjs
 // Writes src/data/households/riley.json and the CSV files it imported
 // (src/data/households/riley-YYYY-MM-<account>.csv).
+//
+// Depends on the store modules (store, storage, value, schema, edits, accounts,
+// log, cashflow, plans) to make the same edits the screens make, and on the
+// engines (plan, tx-import, log, calendar, income, summary, loop) for the CSV
+// import and match, the calendar, the summary, and the month review. Reads the
+// reference data in src/data (tax constants, benchmarks, spending averages,
+// merchant rules, subcategory ideas, era templates): buildSummary takes all of
+// it, importCSV the merchant rules, incomeSummary the tax constants.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createStore } from '../src/store/store.js';
@@ -59,6 +67,8 @@ const pick = (xs) => xs[Math.floor(rand() * xs.length)];
 const CLOSED = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
 const OPEN = '2026-10';
 const TODAY = '2026-10-17';
+// Opening balances on October 1, 2025. START.chk also sets the size of September's car repair
+// (see septemberWithRepair), which is why its error message says to tune START.
 const START = { chk: 2900, sav: 700, visa: 412.37 };
 const VISA_LINES = ['groceries', 'eating-out', 'gas', 'shopping', 'entertainment', 'gifts'];
 
@@ -151,6 +161,8 @@ upd('Setup', (d) => {
 // ---- The bank, and applying one month's events ----
 const bank = { ...START };
 const ends = {};
+// The lowest checking balance seen all year, printed at the end: a quick eye check that the story
+// never overdraws checking (it bottoms out at 109.16 on January 1, above the 100 cushion).
 let lowChecking = { amount: Infinity, date: null };
 const csvFiles = [];
 
@@ -167,6 +179,8 @@ function applyEvents(month, events, csvAccounts) {
     if (ev.how === 'scheduled') {
       const key = ev.key + ':' + ev.date;
       const item = scheduledItems(store.doc, month, incomeSummary(store.doc, refs.tax)).items.find((i) => i.key === key);
+      // The calendar keys an item as kind:id:date. No item means the event list and the plan disagree
+      // (a due day or pay date moved), so stop rather than confirm a bill the app never expected.
       if (!item) throw new Error('No scheduled item ' + key);
       upd('It happened', (d) => confirmScheduled(d, item, Math.abs(ev.amt), ev.date));
     }
@@ -178,6 +192,7 @@ function applyEvents(month, events, csvAccounts) {
         if (ev.ref) ev.ref.id = e.id;
       });
     }
+    // Bank rows only for the accounts that get a file this month, in the bank's sign: money out is negative.
     if ((ev.how === 'csv' || ev.how === 'both') && csvAccounts.includes(ev.acct)) {
       const [y, m, dd] = ev.date.split('-');
       (rows[ev.acct] = rows[ev.acct] || []).push(m + '/' + dd + '/' + y + ',' + ev.desc + ',' + (-ev.amt).toFixed(2));
@@ -186,6 +201,9 @@ function applyEvents(month, events, csvAccounts) {
   return rows;
 }
 
+// Writes each account's CSV, imports it on the evening of the last day (after every quick entry, so
+// the matcher sees the whole month) and merges the result. The match summary is printed, not checked
+// here; tests/riley.test.js checks March's by hand.
 function importRows(month, rows, after) {
   for (const [acct, list] of Object.entries(rows)) {
     const text = 'Date,Description,Amount\n' + list.join('\n') + '\n';
@@ -201,6 +219,9 @@ function importRows(month, rows, after) {
   if (after) after();
 }
 
+// Month end in the order the coach works: typed actuals (each a makeValue, so a typed 0 is an answer),
+// real end balances from the bank, the net worth balances from NW_ENDS, then next month's plan copied
+// forward with any estimate tweaks.
 function monthEnd(month, typed, planTweaks) {
   at(lastDay(month) + 'T20:00:00Z');
   for (const [lineId, amount, note] of typed) upd('Actual', (d) => setField(d, ['line', lineId, 'actual'], makeValue(amount, { note: note || '' })));
@@ -212,6 +233,10 @@ function monthEnd(month, typed, planTweaks) {
   upd('Plan ' + next, (d) => { copyPlanForward(d, month); for (const [k, v] of planTweaks || []) setPlanAmount(d, next, k, makeValue(v)); });
 }
 
+// Closes on the morning of the 1st, as the app does: the review is as of the month's last day, then the
+// snapshot and next month's forecast are saved. The printed line is the run's check: "ties" means the
+// bridge explains every dollar of the balance change. Only June is meant to be off (by the 60 of ATM
+// cash); an "off by" in any other month means an event or an NW_ENDS figure is wrong.
 function close(month) {
   at(nextKey(month) + '-01T08:00:00Z');
   const s = buildSummary(store.doc, refs);
@@ -242,6 +267,8 @@ function paydays(month) {
 }
 
 const day = (month, d) => month + '-' + String(d).padStart(2, '0');
+// The Visa is paid in full on the 25th: last month's end balance (the statement), or the opening balance
+// in the first month.
 const statement = (month) => { const prev = CLOSED[CLOSED.indexOf(month) - 1]; return prev ? ends[prev].visa : START.visa; };
 
 // Checking: rent, the savings transfer, utilities (typed later), the car payment, phone, Visa, and paychecks.
@@ -262,6 +289,9 @@ function checkingEvents(month, o = {}) {
   for (const p of paydays(month)) ev.push({ date: p, acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job', desc: 'PAYROLL NORTHWIND' });
   if (o.utilities !== undefined) ev.push({ date: day(month, 8), acct: 'chk', amt: o.utilities, how: o.csv ? 'csv' : 'bank', desc: 'PGE ELECTRIC BILL', lineId: 'utilities' });
   for (const [d, a] of o.side || []) ev.push({ date: day(month, d), acct: 'chk', amt: -a, how: 'manual', kind: 'income', incomeId: 'side', note: 'Dog walking' });
+  // With a checking CSV, scheduled items are still tapped "It happened" and also need a bank row.
+  // applyEvents skips this marker (no confirm, no row), so the caller has to rename it to
+  // 'scheduled+csv' and hand the list to applyScheduledCsv, as June does.
   if (o.csv) for (const e of ev) if (e.how === 'scheduled') e.how = 'scheduled-csv';
   return ev;
 }
@@ -287,6 +317,9 @@ function visaFiller(month, how) {
 // Savings back to checking: an internal move, not logged.
 const sweep = (month, d, amount) => [{ date: day(month, d), acct: 'sav', amt: amount, how: 'bank' }, { date: day(month, d), acct: 'chk', amt: -amount, how: 'bank' }];
 
+// In the closed months checkingEvents builds, the 250 to savings on the 3rd is an internal move and is
+// not logged (October, the open month, logs it as a transfer on both sides), so the two savings lines
+// are typed at month end instead: 200 + 50 = 250.
 const SAVINGS_TYPED = [['emergency-fund', 200], ['other-goals', 50]];
 
 function fillerMonth(month, o = {}) {
@@ -298,6 +331,7 @@ function fillerMonth(month, o = {}) {
   const rows = applyEvents(month, ev, o.csvVisa ? ['visa'] : []);
   importRows(month, rows, o.afterImport);
   const typed = [['utilities', utilities], ...SAVINGS_TYPED];
+  // Empty is not zero: a month with no gift gets a typed 0 and a note, so the line reads as answered.
   if (!vf.gift && !(o.extra || []).some((e) => e.lineId === 'gifts')) typed.push(['gifts', 0, 'None this month']);
   return typed;
 }
@@ -350,11 +384,13 @@ for (const month of CLOSED) {
     typed = [['utilities', 88.10], ...SAVINGS_TYPED, ['gifts', 0, 'None this month']];
     tweaks = [['shopping', 60]];
   } else if (month === '2026-03') {
-    // March by hand: the month checked start to finish in test/riley.test.js.
+    // March by hand: the month checked start to finish in tests/riley.test.js.
     const coffee = { id: null };
     const c = (date, amt, desc, how = 'csv', more = {}) => ({ date: day(month, date), acct: 'visa', amt, how, desc, ...more });
     const ev = [...checkingEvents(month, { utilities: 84.30, side: [[9, 120], [23, 100]] }),
       { date: day(month, 14), acct: 'chk', amt: 960, how: 'manual', merchant: 'Geico', lineId: 'car-insurance' },
+      // 'both' rows test the matcher: same amount and shop on the same day (Mar 2) or a day apart (logged
+      // Mar 16, posted Mar 17) merge on their own.
       c(2, 82.40, 'TRADER JOE S #552', 'both', { merchant: "Trader Joe's", lineId: 'groceries' }),
       c(4, 13.50, 'CHIPOTLE 1234'), c(5, 4.75, 'CORNER COFFEE'), c(6, 45.00, 'SHELL OIL 5744'), c(7, 4.75, 'CORNER COFFEE'),
       c(9, 96.10, 'SAFEWAY 0412'), c(11, 15.25, 'SWEETGREEN'), c(12, 4.75, 'CORNER COFFEE'), c(14, 38.99, 'TARGET T-1234'),
@@ -362,6 +398,8 @@ for (const month of CLOSED) {
       c(17, 74.25, 'TRADER JOE S #552', 'both', { loggedOn: day(month, 16), merchant: "Trader Joe's", lineId: 'groceries' }),
       c(19, 4.75, 'CORNER COFFEE'),
       c(20, 42.00, 'THAI BASIL', 'both', { merchant: 'Thai Basil', lineId: 'eating-out' }),
+      // Logged as "coffee" 4.50 with no account or merchant: the Mar 19 and Mar 21 bank rows are both within
+      // 3 days and a dollar, so the matcher offers 2 possible matches and the coach decides (below).
       c(21, 4.75, 'CORNER COFFEE', 'both', { logAmt: 4.50, logAcct: null, note: 'coffee', lineId: 'eating-out', ref: coffee }),
       c(23, 61.80, 'WHOLE FOODS MKT'), c(24, 48.30, 'SHELL OIL 5744'), c(25, 24.50, 'AMAZON MKTPL'), c(26, 4.75, 'CORNER COFFEE'),
       c(29, 54.00, 'WALMART')];
@@ -387,12 +425,15 @@ for (const month of CLOSED) {
     // June by hand: both CSVs; $60 of ATM cash no line explains; Sam pays back the concert.
     const c = (date, amt, desc) => ({ date: day(month, date), acct: 'visa', amt, how: 'csv', desc });
     const ev = [...checkingEvents(month, { utilities: 79.60, csv: true }),
+      // Cash no line explains: a bank row with no entry, so June's bridge is off by 60 and closes with it open.
       { date: day(month, 12), acct: 'chk', amt: 60, how: 'csv', desc: 'ATM WITHDRAWAL 0612' },
       { date: day(month, 14), acct: 'chk', amt: -60, how: 'csv', desc: 'ZELLE FROM SAM' },
       { date: day(month, 20), acct: 'chk', amt: -150, how: 'both', desc: 'ZELLE FROM PAT', kind: 'income', incomeId: 'side', note: 'Dog walking' },
       c(2, 93.40, 'TRADER JOE S #552'), c(4, 4.75, 'CORNER COFFEE'), c(6, 49.90, 'SHELL OIL 5744'), c(9, 88.75, 'SAFEWAY 0412'),
       c(11, 4.75, 'CORNER COFFEE'), c(13, 14.25, 'CHIPOTLE 1234'), c(16, 81.20, 'TRADER JOE S #552'), c(18, 4.75, 'CORNER COFFEE'),
       c(20, 46.10, 'SHELL OIL 5744'), c(23, 77.35, 'WHOLE FOODS MKT'), c(25, 4.75, 'CORNER COFFEE'), c(27, 41.80, 'TARGET')];
+    // checkingEvents marks its scheduled items 'scheduled-csv' but applyScheduledCsv looks for
+    // 'scheduled+csv'; without the rename applyEvents would skip them (no confirm, no bank row).
     for (const e of ev) if (e.how === 'scheduled-csv') e.how = 'scheduled+csv';
     applyScheduledCsv(month, ev);
     // Sam's Zelle settles May's concert.
@@ -417,6 +458,8 @@ for (const month of CLOSED) {
 // June: every checking row is in the bank file, and scheduled ones were also tapped "It happened".
 function applyScheduledCsv(month, ev) {
   for (const e of ev) if (e.how === 'scheduled+csv') { e.how = 'scheduled'; e.alsoCsv = true; }
+  // applyEvents confirms the scheduled items but writes rows only for 'csv' and 'both', so their bank
+  // rows are added here, then sorted by date so the file reads like a real export.
   const rows = applyEvents(month, ev, ['chk', 'visa']);
   for (const e of ev.filter((x) => x.alsoCsv)) {
     const [y, m, dd] = e.date.split('-');
@@ -431,7 +474,8 @@ function septemberWithRepair(month) {
   const side = [[9, between(60, 160)]];
   const vf = visaFiller(month, 'csv');
   const ev = [...checkingEvents(month, { utilities, side }), ...vf.ev];
-  // Most of savings moves to checking on the 29th to cover the repair bill and rent (an internal move).
+  // Most of savings moves to checking on the 29th to cover the repair bill and rent (an internal move):
+  // what is there now, plus the 250 that arrives on the 3rd, less 150 left behind.
   const move = cents(Math.max(0, bank.sav + 250 - 150));
   ev.push({ date: day(month, 29), acct: 'sav', amt: move, how: 'bank' }, { date: day(month, 29), acct: 'chk', amt: -move, how: 'bank' });
   // Checking at the end of September does not depend on the repair (it is on the card).
@@ -443,6 +487,8 @@ function septemberWithRepair(month) {
   // V is September's Visa statement. For Nov 1 to be $71.20, V = checking - 1,183.
   const repair = cents(checking - 1183 - purchases);
   console.log('  checking before repair ' + cents(checking) + ', purchases ' + cents(purchases) + ', repair ' + repair);
+  // The check: the repair has to read as a real brakes-and-tires bill, 400 to 3,000. Outside that range the
+  // opening balances no longer produce the story, so stop instead of writing a household that misleads.
   if (repair < 400 || repair > 3000) throw new Error('Car repair out of range: ' + repair + ' (tune START)');
   ev.push({ date: day(month, 12), acct: 'visa', amt: repair, how: 'both', desc: 'BRAKE AND TIRE CO', merchant: 'Brake and Tire Co', lineId: 'maintenance', note: 'Brakes and tires' });
   importRows(month, applyEvents(month, ev, ['visa']));
@@ -471,10 +517,13 @@ const oct = [
 ];
 applyEvents(OPEN, oct, []);
 at(TODAY + 'T18:00:00Z');
+// The paycheck after today: October 9 plus 14 days.
 upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-23'); });
 
 const doc = store.doc;
 writeFileSync(new URL('src/data/households/riley.json', root), JSON.stringify(doc, null, 1) + '\n');
 console.log('Wrote riley.json: ' + doc.transactions.length + ' log entries, ' + doc.months.length + ' closed months, ' + doc.estimateLog.length + ' estimate changes, CSVs ' + csvFiles.join(', '));
+// Printed for the hand checks in tests/riley.test.js: the September Visa statement and checking balance
+// are the inputs to October's calendar story.
 console.log('Lowest checking: ' + lowChecking.amount + ' on ' + lowChecking.date + '; September Visa statement ' + octV + '; Sep-end checking ' + ends['2026-09'].chk);
 console.log('Balances at each month end: ' + JSON.stringify(ends));

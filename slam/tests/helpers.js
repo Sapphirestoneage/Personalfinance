@@ -1,4 +1,7 @@
-// Shared test helpers: load reference data and test households from disk.
+// Shared test helpers: load the reference data (src/data/*.json) and the demo households
+// (src/data/households/*.json, run through the store's migrate so an older file loads as the app
+// would load it), compare numbers to a given number of places, and put cash on hand in a checking
+// account (store/accounts.js, store/value.js).
 
 import { readFileSync } from 'node:fs';
 import { migrate } from '../src/store/migrate.js';
@@ -27,7 +30,9 @@ export function readText(p) {
   return readFileSync(new URL(p, root), 'utf8');
 }
 
-// Cents-level comparison for money; 4 decimals for ratios.
+// Half a unit in the last place, plus float slack: 2 places (cents) for money by default; callers
+// pass 5 or 6 for ratios and per-hour or per-paycheck figures. null only matches null (not entered
+// is not zero).
 export function near(actual, expected, places = 2) {
   if (expected === null) return actual === null;
   if (actual === null || actual === undefined) return false;

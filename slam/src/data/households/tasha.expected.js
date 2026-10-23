@@ -1,6 +1,8 @@
-// Tasha, 29, Texas. Gross pay only (tests the take-home guess), credit card
-// debt, only a gut number and rough estimates, several "dont-know" values, and
-// a proof of cash that is off by more than 15%. Worked out by hand.
+// Hand-computed expected answers for Tasha, 29, Texas, a hospital admin: gross pay only (60,000 a
+// year, so take-home is a guess), one credit card with an unknown APR, a gut number and rough
+// estimates but no actuals, several "dont-know" values, and a proof of cash off by more than 15%.
+// Read by tests/households.test.js and tests/coverage.test.js, which compare them with buildSummary
+// over tasha.json, and by tools/screens-check.mjs, which checks the screens against them in a browser.
 
 // TAKE-HOME GUESS (2026 federal, single, W-2, gross 60,000 a year)
 // taxable = 60,000 - standard deduction 16,100 = 43,900
@@ -60,7 +62,10 @@
 // NEXT: unchanged. A blank dream scored 1 x 1.0 = 1, below every item in the top three.
 // NEXT: rent actual (3 x 1 = 3), take-home guess (3 x 0.7 = 2.1), then four items at 2.0 with
 // blanks ranked before the Health estimate (which has a 400 guess): groceries actual first by order.
-// ROUGH LIST: 10 values. GUESSES offered: the national average for a household of 1, used as is (S-070):
+// ROUGH LIST: 10 values (status roughly, dont-know or will-email): the five "roughly" estimates (Housing, Food,
+//   Transportation, Bills, Savings), the "dont-know" Health and Personal and fun, the "will-email" Annual, and the
+//   card's balance (roughly) and APR (dont-know) = 5 + 2 + 1 + 2. The gut number and the gross pay have no status.
+// GUESSES offered: the national average for a household of 1, used as is (S-070):
 // spending-averages.json, household of 1: Health 400, Personal and fun 300, Annual 100.
 
 // FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,400 + 500 + 400 = 2,300; 27,600 / 50,390 = 0.547728

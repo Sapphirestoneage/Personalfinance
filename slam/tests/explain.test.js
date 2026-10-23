@@ -1,6 +1,8 @@
-// How a number was worked out (S-108): the inputs shown under a headline number.
-// A small household by hand: one paycheck of 3,000 a month take-home, Housing 1,000
-// and Food 500 (estimates, no actuals yet), savings 200, every other category "doesn't apply".
+// How a number was worked out (S-108): the inputs shown under a headline number, from the explain
+// engine (slam/src/engines/explain.js) reading a buildSummary. A small household by hand: one paycheck
+// of 3,000 a month take-home, Housing 1,000 and Food 500 (estimates, no actuals yet), savings 200,
+// every other category "doesn't apply". Uses the store (schema, migrate, value, edits) and the
+// helpers, which load the reference data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

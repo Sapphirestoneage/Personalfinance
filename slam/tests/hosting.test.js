@@ -1,9 +1,9 @@
-// Groundwork for a shared, hosted version (S-096): records with ids,
-// timestamps, author, and version; no hard deletes; one async storage
-// interface; one visibility map; merge (not replace) on import; and a guard
-// that no real contact details reach the public repo.
-//
-// Every expected number is worked out by hand in the comments.
+// Groundwork for a shared, hosted version (S-096): records with ids, timestamps, author, and version;
+// no hard deletes; one async storage interface; one visibility map; merge (not replace) on import; and
+// a guard that no real contact details reach the public repo. Every expected number is worked out by
+// hand. Uses most of the store (store, storage with the in-memory backend, records, merge, visibility,
+// session, log, transfer, schema, migrate, edits), the summary, calendar and log engines, Riley's
+// schema-9 file in tests/fixtures, and the helpers, which load src/data and six of the demo households.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

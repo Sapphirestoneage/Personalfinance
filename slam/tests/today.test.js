@@ -1,5 +1,9 @@
 // Today (S-106): which step of the loop is now, and the first-session checklist.
 // Every expected answer is worked out by hand in the comments.
+// Exercises loopStep, firstSession and reviewRows from the loop engine on top of buildSummary,
+// building households with the store (schema, migrate, value, edits, accounts) and the shared
+// October fixture; the last test checks the value-input component's status rule. Reference data
+// comes from tests/helpers.js.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

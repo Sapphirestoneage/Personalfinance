@@ -1,6 +1,9 @@
 // The budget table: Estimate | Plan | Actual per category (the dream life is in Eras, S-097), expandable to
-// lines, with gaps, accuracy, share of take-home, and status chips. Sortable.
-// Every number comes from the summary (or calc's inUnit for the lens toggle).
+// lines, with gaps, accuracy, share of take-home, and status chips. Sortable. Also the read-only table of a
+// closed month, where a late entry becomes a revision. Every number comes from the summary (buildSummary),
+// or from inUnit in engines/lenses.js when the lens toggle shows something other than dollars.
+// Builds on dom, format, the status chip, the outlook line, sourceLink (how.js), parseAmount (value-input.js),
+// and incomeTableRows (income-month.js) for the income rows on top.
 
 import { h } from '../dom.js';
 import { outlookLine } from './outlook.js';
@@ -53,6 +56,9 @@ function gapClass(x, savings) {
   return (x > 0) !== !!savings ? 'bad' : 'good';
 }
 
+// Happiness cell: the share, with the rating and joy per $100 behind it. A line shows its own rating out of 10;
+// a category's rating and joy per $100 are the ones the summary takes from the joy lens (engines/summary.js,
+// engines/lenses.js). A middle dot stands in when joy per $100 cannot be worked out.
 function joyText(hp, isLine) {
   if (!hp) return h('span', { class: 'muted xs' }, 'not rated');
   const per = hp.per100 === null || hp.per100 === undefined ? (hp.noCost ? 'no cost' : '\u00b7') : hp.per100.toFixed(2) + ' per $100';
@@ -73,6 +79,7 @@ function cells(ctx, row, unit, summary, isLine, savings, catId, isDebt) {
   const g = row.gaps;
   const plan = !!summary.plan;
   const src = sources(row, isLine, catId, isDebt);
+  // A value not entered gets no source link: there is nothing to jump to.
   const link = (x, col) => (x === null || x === undefined ? L(x) : sourceLink(ctx, L(x), src[col]));
   return [
     h('td', { class: 'num wide' }, isLine && row.estimate === null && row.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : link(row.estimate, 'estimate')),
@@ -103,6 +110,7 @@ export function budgetTable(ctx, summary) {
   // "Doesn't apply" categories get no row (lesson 12); they are named once under the table.
   const rows = summary.rows.filter((r) => !r.notForMe);
   if (ui.sort.key) {
+    // Not-entered values sort last in either direction.
     rows.sort((a, b) => {
       const x = sortValue(a, ui.sort.key);
       const y = sortValue(b, ui.sort.key);
@@ -114,6 +122,7 @@ export function budgetTable(ctx, summary) {
   }
   const COLUMNS = columns(summary);
   const cols = COLUMNS;
+  // A first click sorts names A to Z and every other column biggest first; a second click flips it.
   const head = h('tr', {}, cols.map(([key, label, cls]) => h('th', {
     class: cls, scope: 'col', 'aria-sort': ui.sort.key === key ? (ui.sort.dir > 0 ? 'ascending' : 'descending') : null,
     onclick: () => { ui.sort = { key, dir: ui.sort.key === key ? -ui.sort.dir : (key === 'name' ? 1 : -1) }; ctx.rerender(); }
@@ -134,6 +143,7 @@ export function budgetTable(ctx, summary) {
     if (open) body.push(narrowDetail(r, summary, COLUMNS.length));
     if (open) {
       for (const l of r.lines) {
+        // A computed line (card interest) has no box to go to, so clicking its name does nothing.
         body.push(h('tr', { class: 'line' },
           h('td', {}, h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); if (!l.computed) ctx.goToField(['line', l.id, 'actual']); } }, l.name),
             l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null,
@@ -156,7 +166,8 @@ export function budgetTable(ctx, summary) {
     skipped.length ? h('p', { class: 'muted xs' }, "Doesn't apply: " + skipped.join(', ') + '.') : null);
 }
 
-// A closed month, read-only except late entries (stored as revisions).
+// A closed month, read-only except late entries (stored as revisions). reviseMonth (store/months.js) keeps the
+// original and throws when the month is not closed or the line was not in it; its message becomes the toast.
 export function closedMonthTable(ctx, rows, key) {
   const body = [];
   for (const r of rows) {

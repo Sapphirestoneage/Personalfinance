@@ -1,4 +1,7 @@
-// Part 7 of the monthly loop: estimate history (S-090).
+// Part 7 of the monthly loop: estimate history (S-090). The store writes every estimate change to
+// doc.estimateLog, the log is never edited, and the estimates engine reads it back per category.
+// Uses the store (store, storage with the in-memory backend, schema, value, migrate, edits, plans),
+// the estimates and summary engines, and the helpers, which load the reference data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -1,4 +1,8 @@
-// Part 4 of the monthly loop: actuals come from the log (S-087).
+// Part 4 of the monthly loop: actuals come from the log (S-087). A line with entries takes its actual
+// from the log and cannot be typed over; a yearly line's actual is its monthly share; migration keeps
+// every month's typed actual. Depends on the store (schema, value, migrate, validate, store, storage,
+// edits, log), on the engines model.js (budgetModel, primaryPayFrequency), plan.js (modelForMonth) and
+// normalize.js (toMonthly), and reads five demo households straight from src/data/households/*.json.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -1,5 +1,7 @@
-// Part 2 of the monthly loop: the log, quick entry, and matching an import
-// against what was already logged (S-085). Expected numbers by hand.
+// Part 2 of the monthly loop: the log, quick entry, and matching an import against what was already
+// logged (S-085). Expected numbers by hand. Uses the store (schema, migrate, validate, accounts, log),
+// the log, tx-import and tx-analysis engines, and the helpers, which load the reference data in
+// src/data (the merchant rules map bank descriptions to lines).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -63,6 +65,7 @@ test('quick entry: a manual entry, the merchant remembers its line, recent lines
   // Last account used: the income on 10-06 went to checking
   assert.equal(lastAccount(d), 'chk');
   const ml = monthLog(d, '2026-10');
+  // 5 entries so far (a, b, the refund, the income, the groceries), all typed by hand.
   assert.deepEqual([ml.count, ml.bySource.manual, ml.last], [5, 5, '2026-10-07']);
   assert.throws(() => addEntry(d, { date: '2026-10-07' }), /amount/);
   assert.deepEqual(validateHousehold(d), []);
@@ -100,6 +103,7 @@ test('merging keeps the bank date, amount, and merchant, and the logged line and
   const before = actualsFromTransactions(d.transactions, '2026-10').byLine;
   assert.deepEqual(before, { groceries: 54.2, gas: 40, 'eating-out': 19.5, shopping: 30, transit: 20 });
   const out = mergeImport(d, matchImport(d.transactions, imported(d)));
+  // 7 rows: the 2 clear matches merge into the logged entries; the 2 new and the 3 possible are added, the possible ones waiting.
   assert.deepEqual(out, { added: 5, merged: 2, waiting: 3 });
   // 6 logged - 2 merged + 7 imported = 11 entries
   assert.equal(d.transactions.length, 11);
@@ -111,6 +115,7 @@ test('merging keeps the bank date, amount, and merchant, and the logged line and
   // groceries 54.20 + 80.10 = 134.30; shopping 31 (bank amount); eating out still 19.50; transit still 20
   const after = actualsFromTransactions(d.transactions, '2026-10').byLine;
   assert.deepEqual(after, { groceries: 134.3, gas: 40, 'eating-out': 19.5, shopping: 31, transit: 20 });
+  // 11 entries less the 3 possible matches still waiting = 8 counted.
   assert.equal(counted(d.transactions).length, 8);
   assert.deepEqual(validateHousehold(d), []);
 

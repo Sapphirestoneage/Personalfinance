@@ -3,14 +3,26 @@
 // the rating as entered, % of happiness (rating / sum of ratings, adds to 100%
 // across rated lines), and joy per $100 (rating / (monthly amount / 100)).
 // No rating is "not rated" (null), never 0. A rated line at $0 is "no cost".
+// No imports. A line's amount is its monthly actual, else its estimate (summary.js builds the list); a share is a ratio 0 to 1.
 
+/**
+ * Joy per $100 spent: rating / (amount / 100).
+ * @param {number|null} rating 1 to 10 (null = not rated).
+ * @param {number|null} amount dollars a month.
+ * @returns {number|null} points per $100; null when either side is missing or the amount is $0 or less (a free thing has no rate).
+ */
 export function joyPer100(rating, amount) {
   if (rating === null || rating === undefined || amount === null || amount === undefined) return null;
   if (amount <= 0) return null;
   return rating / (amount / 100);
 }
 
-// lines: [{ id, joy, amount }]. Returns { byId: { id: { rating, share, per100, noCost } }, points }.
+/**
+ * Each rated line's joy three ways.
+ * @param {Array<{id: string, joy: number|null, amount: number|null}>} lines amount in dollars a month.
+ * @returns {{byId: Object<string, {rating: number, share: number|null, per100: number|null, noCost: boolean}>, points: number, ratedCount: number}}
+ *   share is rating / sum of ratings (0 to 1, adds to 1 across rated lines); points is that sum.
+ */
 export function happinessOf(lines) {
   const rated = lines.filter((l) => l.joy !== null && l.joy !== undefined);
   const points = rated.reduce((a, l) => a + l.joy, 0);
@@ -21,7 +33,12 @@ export function happinessOf(lines) {
   return { byId, points, ratedCount: rated.length };
 }
 
-// Share of dollars going to lines rated 7 or above, out of all dollars in the column.
+/**
+ * Share of dollars going to lines rated 7 or above, out of all dollars in the column.
+ * @param {Array<{joy: number|null, amount: number|null}>} lines amount in dollars a month.
+ * @param {number|null} total the column's total in dollars a month (the denominator).
+ * @returns {number|null} a ratio 0 to 1; null when the total is missing or 0, or no line has both a rating and an amount.
+ */
 export function happySpendShare(lines, total) {
   if (!total || !lines.some((l) => l.joy !== null && l.joy !== undefined && l.amount !== null)) return null;
   return lines.filter((l) => l.joy !== null && l.joy !== undefined && l.joy >= 7 && l.amount !== null).reduce((a, l) => a + l.amount, 0) / total;
@@ -34,6 +51,14 @@ export function happySpendShare(lines, total) {
 // (stress - joy) x (monthly amount / 100), so big stressful dollars come first.
 export const LEAN_GAP = 3;
 
+/**
+ * Each stress-rated line, with net and lean where joy is rated too, plus the ranked lists for the card.
+ * @param {Array<{id: string, name: string, joy: number|null, stress: number|null, amount: number|null}>} lines amount in dollars a month.
+ * @returns {{byId: object, points: number, ratedCount: number, lookFirst: object[], moreOf: object[], lessOf: object[], stressOnly: object[]}}
+ *   byId[id] = { stress, share (0 to 1), per100 (stress per $100), net (joy - stress), lean ('more', 'less', 'even', or null),
+ *   drain ((stress - joy) x amount / 100; null unless stress exceeds joy on a line with an amount) }; lookFirst is by drain,
+ *   biggest first; moreOf by joy per $100, highest first; stressOnly names lines with stress but no joy rating.
+ */
 export function stressOf(lines) {
   const rated = lines.filter((l) => l.stress !== null && l.stress !== undefined);
   const points = rated.reduce((a, l) => a + l.stress, 0);
@@ -50,13 +75,18 @@ export function stressOf(lines) {
   const named = (id) => lines.find((l) => l.id === id);
   const lookFirst = Object.entries(byId).filter(([, x]) => x.drain !== null).sort((a, b) => b[1].drain - a[1].drain).map(([id, x]) => ({ id, name: named(id).name, ...x, joy: named(id).joy, amount: named(id).amount }));
   const moreOf = Object.entries(byId).filter(([, x]) => x.lean === 'more').map(([id, x]) => ({ id, name: named(id).name, ...x, joy: named(id).joy, amount: named(id).amount, joyPer100: joyPer100(named(id).joy, named(id).amount) }))
+    // A line with no joy per $100 (no amount, or $0) sorts last.
     .sort((a, b) => (b.joyPer100 === null ? -1 : b.joyPer100) - (a.joyPer100 === null ? -1 : a.joyPer100));
   const lessOf = Object.entries(byId).filter(([, x]) => x.lean === 'less').map(([id, x]) => ({ id, name: named(id).name, ...x }));
   const stressOnly = rated.filter((l) => l.joy === null || l.joy === undefined).map((l) => ({ id: l.id, name: l.name }));
   return { byId, points, ratedCount: rated.length, lookFirst, moreOf, lessOf, stressOnly };
 }
 
-// The plain reading for the satisfaction and stress card.
+/**
+ * The plain reading for the satisfaction and stress card: what to look at first, what is worth more of.
+ * @param {object} s what stressOf returns.
+ * @returns {string} one to three sentences; a prompt to rate stress when nothing is rated.
+ */
 export function stressReading(s) {
   const money = (x) => '$' + Math.round(x).toLocaleString('en-US');
   const list = (xs) => (xs.length < 3 ? xs.join(' and ') : xs.slice(0, -1).join(', ') + ', and ' + xs[xs.length - 1]);

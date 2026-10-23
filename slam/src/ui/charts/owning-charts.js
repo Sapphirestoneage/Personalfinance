@@ -1,7 +1,8 @@
 // Owning vs the alternative (S-113): one card per home or vehicle, read-only. Its equity (it counts
 // in net worth), what it costs a month that you never get back, and the alternative, side by side.
-// Descriptive only: no verdicts, no "you should". Numbers from calc/owning.js; the inputs are in
-// Setup, Accounts (each asset's details) and Setup, Cushion and coach settings (the return).
+// Descriptive only: no verdicts, no "you should". Numbers from src/engines/owning.js (owningCosts); the
+// inputs are in Setup, Accounts (each asset's details) and Setup, Cushion and coach settings (the return).
+// Builds on dom, format, jump, and the status chip.
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
@@ -10,6 +11,7 @@ import { jumpLink } from '../components/jump.js';
 import { statusChip } from '../components/status.js';
 import { todayIso } from '../format.js';
 
+// Where each part's number came from, in words. A guessed part gets the Guess chip instead (see row).
 const FROM = { budget: 'from your budget', guess: 'Guess', debt: 'from the debt', values: 'from its values', assumption: 'assumption' };
 
 function owningCard(ctx, x) {
@@ -24,6 +26,7 @@ function owningCard(ctx, x) {
       h('div', { class: 'tile' }, h('div', { class: 'label' }, x.type === 'home' ? 'Renting a similar place' : 'Your trips without it'), h('div', { class: 'value', 'data-key': 'own-alt:' + x.id }, x.alternative.set ? money(x.alternative.amount) : 'not set'), h('div', { class: 'sub' }, 'a month'))),
     h('ul', { class: 'plain', 'data-key': 'own-parts:' + x.id }, x.parts.map((p) => row(p.label, p.amount, p.from, p.note, 'own-part:' + x.id + ':' + p.key))),
     x.type === 'home' && x.debt && x.debt.principal !== null ? h('p', { class: 'small' }, 'Of the ' + money(x.debt.payment) + ' payment, ' + money(x.debt.principal) + ' builds equity a month.' + (x.hold && x.hold.total !== null ? ' To hold it in all: ' + money(x.hold.total) + ' a month (every Housing line and the payment).' : '')) : null,
+    // A vehicle's alternative is itemized (the trips without it); a home's is one rent number in the tile above.
     x.type === 'vehicle' && x.alternative.set ? h('ul', { class: 'plain xs muted' }, x.alternative.parts.filter((p) => p.amount !== null).map((p) => h('li', {}, h('span', {}, p.label), h('span', { class: 'num' }, money(p.amount))))) : null,
     ctx.role !== 'client' && x.notes ? h('p', { class: 'small', 'data-key': 'own-notes:' + x.id }, h('b', {}, 'Coach notes: '), x.notes) : null,
     h('p', { class: 'reading' }, x.reading),

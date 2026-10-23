@@ -2,7 +2,13 @@
 // has a 401(k) from the paycheck, a car with no loan, and a Visa on a 0% balance transfer that ends
 // May 31, 2026 (S-127), after which the card's 24.99% applies. October
 // 2025 to September 2026 closed, October 2026 open. Every month's actuals are typed (no log), so the
-// budget is the same each month; only the balances move. test/dana.test.js checks it by hand.
+// budget is the same each month; only the balances move. tests/networth-households.test.js and
+// tests/promo.test.js check the result against the arithmetic below.
+//
+// Depends on the store (createStore over an in-memory backend, with the value, schema, edits, accounts
+// and plans modules) to build the household the way the screens would, and on the engines (plan,
+// summary, loop) to close each month the way the app does. Reference data comes from tests/helpers.js
+// loadRefs (src/data/*.json). Nothing else is read.
 //
 // Run from the slam folder:
 //   node tools/dana.mjs
@@ -33,6 +39,7 @@ Math.random = ((seed) => () => {
 })(34);
 
 const CLOSED = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'];
+// Balances, rates, prices and due days are one-off values: there is no cadence to turn into a monthly amount.
 const one = (n, opts = {}) => makeValue(n, { cadence: 'one-off', ...opts });
 
 // The balances, typed by hand (none of them from a formula):
@@ -75,6 +82,7 @@ const ENDS = {
 };
 const ROUGHLY = new Set(['condo', 'car']);
 
+// The store takes its clock from here, so every edit and every close is stamped at a believable time.
 let now = new Date('2025-10-01T09:00:00Z');
 const at = (iso) => { now = new Date(iso); };
 const store = createStore(createStorage(memoryBackend()), () => now);
@@ -121,6 +129,10 @@ upd('Setup', (d) => {
   startPlan(d, '2025-10', 'estimates', planStartValues(d, null, 'estimates', null, '2025-10'));
 });
 
+// Each closed month, in the order a coach would do it: on the last day, type the end balances (a null
+// in ENDS means no reading that month, so the account keeps its last one) and start next month's plan
+// from this one; then, with the clock on the 1st of the new month, close with the summary's snapshot
+// and the month review, exactly what the Review screen's close button saves.
 CLOSED.forEach((month, i) => {
   at(lastDay(month) + 'T20:00:00Z');
   upd('End balances', (d) => {
@@ -133,6 +145,8 @@ CLOSED.forEach((month, i) => {
   store.closeMonth({ ...closeMonthSnapshot(s), review: monthReview(store.doc, s, lastDay(month)) });
 });
 
+// The demo clock is October 17, 2026 (the date the screen tests and screenshots use); the pay date
+// moves into the open month so Today has a paycheck ahead of it.
 at('2026-10-17T18:00:00Z');
 upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-31'); });
 writeFileSync(new URL('src/data/households/dana.json', root), JSON.stringify(store.doc, null, 1) + '\n');

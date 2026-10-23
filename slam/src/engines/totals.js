@@ -2,6 +2,8 @@
 // needs vs wants vs savings, savings rate, housing share, roommate worst case,
 // mistake cost, and money others owe back.
 // "Basis" = the actual when one exists, otherwise the estimate (and we say so).
+// Depends on money.js (sumKnown, ratio, minus), income-month.js (the month's income from the log) and
+// normalize.js (toMonthly). Dollars a month; every share is a ratio 0 to 1 (housingBand too).
 
 import { sumKnown, ratio, minus } from './money.js';
 import { incomeMonth } from './income-month.js';
@@ -9,6 +11,7 @@ import { toMonthly } from './normalize.js';
 
 export const FAT_CATEGORIES = ['food', 'housing', 'transport'];
 
+// One contributor to a category's basis: a line, or the category itself when it was answered as one number.
 function part(src, amount, cat) {
   return {
     lineId: src === cat ? null : src.id, name: src.name, amount,
@@ -18,7 +21,15 @@ function part(src, amount, cat) {
   };
 }
 
+/**
+ * A category's basis: the actual when one exists, else the estimate, with the parts that make it up.
+ * @param {object} cat a category from budgetModel.
+ * @returns {{amount: ?number, from: ?string, parts: object[]}} dollars a month; from is 'actual', 'estimate', 'in-total'
+ *   (counted inside the Everything else total, so not again here) or null when nothing is entered.
+ */
 export function basisFor(cat) {
+  // A category whose spending sits inside the single Everything else total has no basis of its own until an actual
+  // is typed, or it would count twice.
   if (cat.insideTotal && cat.actual.amount === null) return { amount: null, from: 'in-total', parts: [] };
   if (cat.isEverything && cat.actual.amount === null && cat.estimate.amount !== null) {
     // What is left of the single total after actuals found inside it.
@@ -45,11 +56,21 @@ function answeredTotal(list, key) {
   return real ? sumKnown(vals).total : null;
 }
 
+// Over basis parts, which always carry a number; an empty set is a real 0 (nothing in that bucket).
 function addUp(parts, test) {
   return parts.filter(test).reduce((a, p) => a + p.amount, 0);
 }
 
-// month: the month the model is for (the month being worked on unless given).
+/**
+ * Every total and share for the budget model of a month.
+ * @param {object} model what budgetModel returns.
+ * @param {object} income what incomeSummary returns (take-home, pre-tax retirement).
+ * @param {object} doc the household file (roommates, and the log for the month's income).
+ * @param {number} [housingBand=0.35] the housing share above which housingOver is true, a ratio 0 to 1 (benchmarks.json).
+ * @param {string} [month=doc.currentMonth] 'YYYY-MM', the month the model is for (the month being worked on unless given).
+ * @returns {object} dollars a month and ratios 0 to 1: takeHome, spending, savings, outflow, surplus, surplusRate, fixed,
+ *   variable, needs, wants, fat, savingsRate, housing, roommateWorstCase, mistakeMonthly, owedBack, bases, typeBases, spendByType.
+ */
 export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc.currentMonth) {
   const cats = model.categories.map((c) => ({ cat: c, basis: basisFor(c) }));
   const spending = cats.filter((x) => !x.cat.savings);
@@ -58,6 +79,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
   const spendingBasis = sumKnown(spending.map((x) => x.basis.amount)).total;
   const savingsBasis = sumKnown(saving.map((x) => x.basis.amount)).total;
   const outflow = sumKnown([spendingBasis, savingsBasis]).total;
+  // Take-home, not gross: the budget is paid from what lands.
   const takeHome = income.takeHome;
   const incomeMonthOf = incomeMonth(doc, income, month);
   const spendParts = spending.flatMap((x) => x.basis.parts);
@@ -67,6 +89,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
   const variable = addUp(spendParts, (p) => p.kind !== 'fixed');
   const needs = addUp(spendParts, (p) => p.need);
   const wants = addUp(spendParts, (p) => !p.need);
+  // For the shares below, no savings entered counts as 0 of take-home; totals.savings keeps the null.
   const savings = savingsBasis === null ? 0 : savingsBasis;
 
   // FAT is strict: Food + Accommodation (Housing) + Transportation, by what each
@@ -83,6 +106,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
   const housingCats = cats.filter((x) => x.cat.type === 'housing');
   const housingBasis = housingCats.length ? typeBases.housing : null;
   // Your share of the rent is the rent line itself (never asked twice).
+  // Worst case if the roommates left: housing as it is, less your share of the rent, plus the whole rent.
   const rm = doc.household.roommates;
   const totalRent = toMonthly(rm.totalRent, 'monthly');
   const rentLine = housingCats.flatMap((x) => x.cat.lines).find((l) => l.type === 'rent') || null;
@@ -142,9 +166,14 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
   return totals;
 }
 
-// Total rent, then your share (S-123). The total is asked in Basics; your share is the Rent line in
-// Housing (its one owner). An even split is offered while your share is blank:
-//   even split = total rent / (roommates + 1), to the cent.
+/**
+ * Total rent, then your share (S-123). The total is asked in Basics; your share is the Rent line in
+ * Housing (its one owner). An even split is offered while your share is blank:
+ *   even split = total rent / (roommates + 1), to the cent.
+ * @param {object} doc the household file.
+ * @returns {{total: ?number, line: ?object, lineId: ?string, yours: ?number, even: ?number}} dollars a month; yours is the
+ *   Rent line's estimate; even is null without a total or without roommates.
+ */
 export function rentShare(doc) {
   const rm = doc.household.roommates;
   const total = toMonthly(rm.totalRent, 'monthly');
@@ -159,14 +188,24 @@ export function rentShare(doc) {
 // last three are the Savings lines, grouped by type; what is not allocated yet stays surplus.
 //   allocated = the Savings estimates; not allocated yet = surplus - allocated
 // Blank (null) until take-home and at least one spending estimate are in (empty is not zero).
+// Which of the three ways each Savings line type counts as; a type not listed is plain saving.
 const ALLOCATE = { 'emergency-fund': 'saving', 'savings-goal': 'saving', retirement: 'investing', investing: 'investing', 'extra-debt': 'debt' };
+/**
+ * The surplus and where the Savings lines send it.
+ * @param {object} model what budgetModel returns.
+ * @param {object} totals what budgetTotals returns (estimateTotal, savingsEstimate, takeHome, retirementDeductions).
+ * @returns {object} dollars a month to the cent and ratios 0 to 1: { surplus, spending, takeHome, groups: { saving, investing,
+ *   debt }, lines, allocated, unallocated, surplusRate, unallocatedRate, savingsRate, boost, possibleSavingsRate }.
+ */
 export function surplusAllocation(model, totals) {
   const lines = model.categories.filter((c) => c.savings).flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name, to: ALLOCATE[l.type] || 'saving', amount: l.estimate })));
   const sum = (to) => sumKnown(lines.filter((l) => l.to === to).map((l) => l.amount)).total;
+  // The surplus is from the estimate column (the budget as planned), not the basis.
   const spending = totals.estimateTotal;
   const surplus = totals.takeHome === null || spending === null ? null : Math.round((totals.takeHome - spending) * 100) / 100;
   const allocated = totals.savingsEstimate;
   const unallocated = surplus === null ? null : allocated === null ? surplus : Math.round((surplus - allocated) * 100) / 100;
+  // The savings rate's base is take-home plus pre-tax retirement: that money was saved before it landed.
   const base = totals.takeHome === null ? null : totals.takeHome + totals.retirementDeductions;
   return {
     surplus, spending, takeHome: totals.takeHome,

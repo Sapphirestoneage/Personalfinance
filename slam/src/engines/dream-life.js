@@ -1,13 +1,9 @@
 // The dream life (S-097), shown at the top of Eras: what the client would like
 // to spend, short term (this year, or the next step) and long term (the life
 // they are building toward), next to today. The budget never reads the dream
-// columns; this file is the only calc that does, through columnModel.
-//
-// Today, per category, is the budget's actual, falling back to the estimate
-// (and saying so). A category with no long-term dream follows its short-term
-// one (line by line: a blank line follows its short-term dream); a category
-// with no dream at all follows today. Totals are spending only (savings
-// categories are shown, never added in), the same as the budget's spending.
+// columns; this file is the only engine that does, through columnModel (model.js).
+// Also depends on money.js (null-safe ratio, minus, sumKnown). Dollars a month;
+// a share is a ratio of take-home, 0 to 1.
 
 import { columnModel } from './model.js';
 import { ratio, minus, sumKnown } from './money.js';
@@ -16,8 +12,14 @@ import { ratio, minus, sumKnown } from './money.js';
 // separate so no stored dream figure changes sign or shape; see KNOWN_ISSUES.md.
 const r2 = (x) => (x === null ? null : Math.round(x * 100) / 100);
 
-// "The pay this dream needs": the monthly take-home that pays for this spending and still
-// saves the same share of take-home as today. spending / (1 - savingsShare).
+/**
+ * "The pay this dream needs": the monthly take-home that pays for this spending and still
+ * saves the same share of take-home as today. spending / (1 - savingsShare).
+ * @param {number|null} spending dollars a month.
+ * @param {number|null} savingsShare savings over take-home today, 0 to 1.
+ * @returns {number|null} dollars a month to the cent; null when either is missing, or when everything is saved (a
+ *   share of 1 or more has no pay that works).
+ */
 export function takeHomeFor(spending, savingsShare) {
   if (spending === null || savingsShare === null || savingsShare >= 1) return null;
   return r2(spending / (1 - savingsShare));
@@ -31,21 +33,43 @@ function todayOf(row) {
 
 const names = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
 
-// One sentence on how a dream compares with today. diffs: [{ name, diff }].
+/**
+ * One sentence on how a dream compares with today.
+ * @param {string} label 'short-term dream' or 'long-term dream'.
+ * @param {number|null} total the dream's spending, dollars a month.
+ * @param {number|null} today today's spending, dollars a month.
+ * @param {Array<{name: string, diff: number|null}>} diffs per category, dream minus today in dollars a month.
+ * @returns {string|null} the sentence, naming up to the two categories that move it most; null when either total is
+ *   missing.
+ */
 export function dreamReading(label, total, today, diffs) {
   const d = minus(total, today);
   if (d === null) return null;
   const dollars = '$' + Math.round(Math.abs(d)).toLocaleString('en-US');
+  // Under half a dollar would print as $0, so say "about the same" instead.
   if (Math.abs(d) < 0.5) return 'Your ' + label + ' costs about the same as today.';
   const up = d > 0;
   const top = diffs.filter((x) => (up ? x.diff > 0 : x.diff < 0)).sort((a, b) => (up ? b.diff - a.diff : a.diff - b.diff)).slice(0, 2).map((x) => x.name);
   return 'Your ' + label + ' costs ' + dollars + ' a month ' + (up ? 'more' : 'less') + ' than today' + (top.length ? ', mostly ' + names(top) : '') + '.';
 }
 
-// summary: the budget summary (rows and totals). Returns the comparison, totals, and readings.
+// Today, per category, is the budget's actual, falling back to the estimate
+// (and saying so). A category with no long-term dream follows its short-term
+// one (line by line: a blank line follows its short-term dream); a category
+// with no dream at all follows today. Totals are spending only (savings
+// categories are shown, never added in), the same as the budget's spending.
+/**
+ * The dream life next to today: a row per category, totals, the pay the dream needs, and readings.
+ * @param {object} doc the household document.
+ * @param {object} summary the budget summary (rows and totals), dollars a month.
+ * @returns {object} rows (today, short, long, where each came from, shares of take-home and diffs), today, shortTotal
+ *   and longTotal (dollars a month), savingsShare (0 to 1), pay {needed, short} in dollars a month, readings (a
+ *   sentence or null each), and entry for the dream entry screen.
+ */
 export function dreamLife(doc, summary) {
   const th = summary.totals.takeHome;
   const short = columnModel(doc, 'dream');
+  // The long-term column falls back to the short-term one, line by line, inside columnModel.
   const long = columnModel(doc, 'dreamLong', 'dream');
   const hasShort = short.some((c) => c.own && !c.isDebt && !c.notForMe);
   const hasLong = long.some((c) => c.own && !c.isDebt && !c.notForMe);
@@ -53,6 +77,7 @@ export function dreamLife(doc, summary) {
   const rows = [];
   for (const s of short) {
     const b = summary.rows.find((x) => x.id === s.id);
+    // A single-total row with no total typed has nothing to compare.
     if (!b || s.isEverything && b.estimate === null) continue;
     const l = long.find((x) => x.id === s.id);
     const today = todayOf(b);
@@ -115,9 +140,15 @@ function entryOf(summary, short, long, th) {
   return { rows, dream: column(short), dreamLong: column(long) };
 }
 
-// Where an era's blank spending starts (S-097, ERA_SPEND_FROM): today's budget, a dream,
-// or null for the template's share of today (the default).
-// With no dream life (or none passed in), a dream start falls back to the template's share.
+/**
+ * Where an era's blank spending starts (S-097, ERA_SPEND_FROM): today's budget, a dream,
+ * or null for the template's share of today (the default). With no dream life (or none
+ * passed in), a dream start falls back to the template's share.
+ * @param {object|null} dl the dreamLife result, or null.
+ * @param {string} from 'today' | 'dream' | 'dreamLong' | 'template'.
+ * @param {number|null} baseSpend today's spending, dollars a month.
+ * @returns {number|null} dollars a month, or null to let the template's share decide.
+ */
 export function eraSpendBase(dl, from, baseSpend) {
   if (from === 'today') return baseSpend;
   if (!dl || !dl.any) return null;

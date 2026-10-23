@@ -1,9 +1,9 @@
-// The dream life (S-097): short-term dream (this year, or the next step) and
-// long-term dream (everything after) are two answers on every category and
-// line (S-075). They moved out of the budget into Eras: the budget is
-// estimate vs actual (and the plan), and no budget number reads a dream.
-//
-// Every expected number is worked out by hand in the comments.
+// The dream life (S-097): short-term dream (this year, or the next step) and long-term dream
+// (everything after) are two answers on every category and line (S-075). They moved out of the
+// budget into Eras: the budget is estimate vs actual (and the plan), and no budget number reads a dream.
+// Every expected number is worked out by hand in the comments. Uses the store (schema, value, edits,
+// validate, migrate, records), the summary and dream-life engines, and the helpers, which load the
+// reference data in src/data and the demo households in src/data/households (Maya is the worked example).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -176,8 +176,8 @@ test('no budget number reads dream or dreamLong', () => {
   const budget = (s) => { const { dreamLife, eras, ...rest } = s; return JSON.parse(JSON.stringify(rest)); };
   assert.deepEqual(budget(sb), budget(sa));
   assert.notDeepEqual(sb.dreamLife.longTotal, sa.dreamLife.longTotal);
-  // And no calc file but the dream life and Eras (and Next stage, whose "dream" lens key is its own) reads a
-  // dream column: no .dream, .dreamLong, 'dream', or 'dreamLong' anywhere else in src/calc.
+  // And no engine file but the dream life and Eras (and Next stage, whose "dream" lens key is its own) reads a
+  // dream column: no .dream, .dreamLong, 'dream', or 'dreamLong' anywhere else in src/engines.
   const dir = new URL('../src/engines/', import.meta.url);
   for (const f of readdirSync(dir)) {
     if (['dream-life.js', 'eras.js', 'next-stage.js'].includes(f)) continue;

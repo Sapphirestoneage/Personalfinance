@@ -1,11 +1,13 @@
-// Phase 5 screen tie-out. Loads each test household in a real browser and
-// checks that the numbers Today, Plan, Track, Review, Insights, and Setup SHOW
-// match the hand-computed expected files (the menu follows the loop, S-106). Not part of `node --test` (it needs a browser).
+// Phase 5 screen tie-out. Loads each demo household in a real browser and checks that the numbers Today, Plan,
+// Track, Review, Insights, and Setup SHOW match the hand-computed answers in src/data/households/*.expected.js
+// (the menu follows the loop, S-106). Not part of `node --test`. Expected strings go through the same
+// src/ui/format.js the screens use, so every check is text against text. The bridge scenario builds its import
+// file with the store modules (schema, value, accounts, edits, log, migrate, transfer), the merge scenario reads
+// riley.json from disk, and layout-check.mjs runs at the end and adds its failures to the tally.
 //
-// Run from the slam folder:
+// Run from the slam folder, with Playwright (npm i -g playwright) and a Chromium it can find:
 //   python3 -m http.server 8765 &
 //   node tools/screens-check.mjs
-// Needs Playwright (npm i -g playwright) and a Chromium it can find.
 
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -16,10 +18,12 @@ let playwright;
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
 const URL = process.env.SLAM_URL || 'http://localhost:8765/';
+// Expected-file name to the button text on the Clients screen.
 const DEMOS = { maya: 'Maya, 26', luis: 'Luis, 33', tasha: 'Tasha, 29', sam: 'Sam, 24' };
 let failures = 0;
 
-// The October household from test/bridge.test.js, plus 60 of ATM cash, as an export file.
+// The October household from tests/bridge.test.js, plus 60 of ATM cash, as an export file. Built in Node with
+// the store modules and handed to the Clients import box, so the browser works on the same document the test does.
 async function buildBridgeDoc() {
   const { newHousehold } = await import('../src/store/schema.js');
   const { makeValue } = await import('../src/store/value.js');
@@ -60,17 +64,25 @@ async function go(page, screen) {
   await page.click('[data-key="more"]');
   await page.click('.more-menu a[data-nav="' + screen + '"]');
 }
+// Insights tabs, Setup sections and Plan views: open the screen, click the tab, wait for its section to render.
+// A Plan view's section depends on the view (sec-plan for the plan, sec-income, sec-spending and sec-debt for the
+// estimates), so plan() only waits a beat and the caller waits for the section it needs. tilesOf reads a tile
+// strip as { label: value }.
 async function insights(page, tab) { await go(page, 'insights'); await page.click('[data-key="tab-' + tab + '"]'); await page.waitForSelector('#tab-' + tab); }
 async function setup(page, section) { await go(page, 'setup'); await page.click('[data-key="setup-' + section + '"]'); await page.waitForSelector('#setup-' + section); }
 async function plan(page, view) { await go(page, 'plan'); await page.click('[data-key="plan-view-' + view + '"]'); await page.waitForTimeout(100); }
 const tilesOf = (page, sel) => page.$$eval(sel + ' .tile', (ts) => Object.fromEntries(ts.map((t) => [t.querySelector('.label').textContent.trim(), t.querySelector('.value').textContent.trim()])));
 
-// The text of an element once it settles on what is expected (or what it is after 3 seconds).
+// The text of an element once it settles on what is expected (or what it is after 3 seconds). It never throws: a
+// slow render passes once the text arrives, a wrong one fails showing what was there, a missing element fails as "missing".
 async function settled(page, sel, want) {
   await page.waitForFunction(([q, w]) => { const e = document.querySelector(q); return e && e.textContent === w; }, [sel, want], { timeout: 3000 }).catch(() => null);
   return page.$eval(sel, (e) => e.textContent).catch(() => 'missing');
 }
 
+// Every check is an exact text match. A miss prints both sides and adds one to the tally, which sets the exit code
+// at the end. A yes-or-no check passes String(condition) against 'true' or 'false', a count passes String(n), so
+// one printout serves every kind. name is the scenario; it is not printed, the heading above the block is.
 function check(name, label, shown, expected) {
   const ok = shown === expected;
   if (!ok) failures += 1;
@@ -78,6 +90,10 @@ function check(name, label, shown, expected) {
 }
 
 const browser = await playwright.chromium.launch();
+// One page per demo, at desktop width. Page errors and console errors are collected all the way through and the
+// scenario's last check wants none. Checks that need an optional part of the expected file (plan, shares,
+// happiness, incomeStatement, review, stress, draftt, dreamNone) run only when it is there, so a demo without it
+// is not a failure.
 for (const [name, button] of Object.entries(DEMOS)) {
   const { default: exp } = await import('../src/data/households/' + name + '.expected.js');
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -101,6 +117,7 @@ for (const [name, button] of Object.entries(DEMOS)) {
   // Lesson 7 (S-116): Today shows numbers, not charts.
   check(name, 'No charts on Today', String(await page.$$eval('#main .chart svg', (x) => x.length)), '0');
   await insights(page, 'where');
+  // A reading is a sentence; only its opening is pinned, so the rest can change without breaking the check.
   check(name, 'Housing share (gauges)', String((await page.$eval('#chart-gauges .reading', (p) => p.textContent)).startsWith('Housing is ' + pct(exp.housingShare) + ' of take-home')), 'true');
   await insights(page, 'compared');
   check(name, 'Blind spot tile', (await tilesOf(page, '#tab-compared'))['Blind spot'], pct(exp.blindSpot));
@@ -116,6 +133,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Plan column shown', String(col('Plan') >= 0), String(!!exp.plan));
   if (exp.plan) check(name, 'Table plan total', total[col('Plan')], money(exp.plan.spending));
 
+  // A category's row is found by the start of its name, lowercased, since ids and names differ (fun is "Personal
+  // and fun", debt is "Debt payments"); the expand arrow in front of the name is stripped first.
   for (const [id, [e, a]] of Object.entries(exp.categories)) {
     const row = await page.$$eval('tr.cat', (trs) => trs.map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())));
     const name2 = (await page.$$eval('tr.cat td:first-child', (tds) => tds.map((td) => td.textContent)));
@@ -124,10 +143,14 @@ for (const [name, button] of Object.entries(DEMOS)) {
       // "Doesn't apply" categories have no row; they must be named under the table instead.
       const na = await page.$$eval('p.muted.xs', (ps) => (ps.find((p) => p.textContent.startsWith("Doesn't apply")) || { textContent: '' }).textContent.toLowerCase());
       const word = { fun: 'personal', transport: 'transport', bills: 'bills', annual: 'annual', debt: 'debt' }[id] || id;
+      // A category hidden from the table must be a true zero on both sides: "doesn't apply" counts as 0
+      // (engines/normalize.js), so a hand-computed estimate or actual that is not 0 is a number the table dropped.
       check(name, id + ' listed as doesn\'t apply', na.includes(word) && e === 0 && a === 0 ? 'listed' : 'missing', 'listed');
       continue;
     }
     check(name, id + ' estimate', row[idx][col('Estimate')], money(e));
+    // A category whose lines are not all entered shows " partial" after its actual; strip the tag, the number
+    // is what counts.
     check(name, id + ' actual', row[idx][col('Actual')].replace(' partial', ''), money(a));
     if (exp.shares && exp.shares.categories[id]) {
       check(name, id + ' % of income', row[idx][col('% of income')], pct(exp.shares.categories[id][0]));
@@ -148,10 +171,15 @@ for (const [name, button] of Object.entries(DEMOS)) {
   const proof = await page.$$eval('.card.flag h3', (hs) => hs.length > 0);
   check(name, 'Proof of cash flag shown', String(proof), String(exp.proofOfCash.flagged));
 
+  // The pattern for a figure inside a sentence: the shown side collapses to "mentions 1.2x" when the ratio is in the
+  // reading, otherwise it stays the whole reading so the failure line shows what was said. "reads" and "graded"
+  // below work the same way.
   const gutReading = await page.$eval('#chart-gut .reading', (p) => p.textContent);
   check(name, 'Gut check reading', gutReading.includes(times(exp.gut.ratio)) ? 'mentions ' + times(exp.gut.ratio) : gutReading, 'mentions ' + times(exp.gut.ratio));
   if (exp.incomeStatement) {
     await insights(page, 'you');
+    // tr.total collects both total rows (Take-home, then Net); Net is last, and its monthly figure is the cell
+    // before the yearly one.
     const net = await page.$$eval('#chart-statement tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'Income statement net', net[net.length - 2], signedMoney(exp.incomeStatement.net));
   }
@@ -174,6 +202,7 @@ for (const [name, button] of Object.entries(DEMOS)) {
     // DRAFTT is descriptive (S-072): the reading names proportions, never a verdict.
     const dr = await page.$eval('#chart-draftt .reading', (p) => p.textContent);
     check(name, 'DRAFTT reading', dr, exp.draftt.reading);
+    // Any grading word anywhere on the card fails. In the total row, the third cell is the share of the base.
     const words = await page.$eval('#chart-draftt', (c) => c.textContent.toLowerCase());
     check(name, 'DRAFTT has no grades', /healthy|outside the|band|\(high\)|\(low\)/.test(words) ? 'graded' : 'none', 'none');
     const totalRow = await page.$$eval('#chart-draftt tr.cat td', (tds) => tds.map((td) => td.textContent.trim()));
@@ -186,7 +215,7 @@ for (const [name, button] of Object.entries(DEMOS)) {
   await go(page, 'future');
   await page.waitForSelector('#dream-entry');
   if (name === 'maya') {
-    // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
+    // Maya by hand (tests/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
     // decreases Food (-410) and Personal and fun (-290). No long-term dreams, so long follows short (3,052)
     // and only the short-term sentence is said.
     // The pay this dream needs: 3,052 / (1 - 150 / 3,900) = 3,052 x 1.04 = 3,174.08; she brings home 3,900, 725.92 more.
@@ -260,6 +289,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.click('[data-key="qe-save"]');
   check('loop', 'Quick entry saved', await settled(page, '.toast', 'Logged $54.20 to Groceries'), 'Logged $54.20 to Groceries');
   await go(page, 'track');
+  // The bank file is dated in the same month as the quick entry (M/D/YYYY, as banks write it): one row that
+  // matches it a day later and one new one.
   const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
   await page.waitForSelector('[data-key="match-summary"]');
@@ -284,10 +315,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
   await go(page, 'review');
-  // Filled categories are one row each until tapped (S-106).
+  // Filled categories are one row each until tapped (S-106). ▸ is the expand triangle in front of a folded one.
   check('loop', 'Food summary row', await settled(page, '[data-key="rv-cat:food"]', '\u25b8 Food: ' + money(134.3) + ' from 2 entries'), '\u25b8 Food: ' + money(134.3) + ' from 2 entries');
   await page.click('[data-key="rv-cat:food"]');
   await page.waitForSelector('[data-key="from-log:groceries"]');
+  // The from-the-log figure is shown to the cent, unlike the whole-dollar tiles.
   check('loop', 'Groceries from the log', await page.$eval('[data-key="from-log:groceries"]', (b) => b.textContent), money(134.3, true));
   await page.click('[data-key="from-log:groceries"]');
   await page.waitForFunction(() => { const t = document.querySelector('.toast'); return t && t.textContent.startsWith('This comes'); }, null, { timeout: 3000 }).catch(() => null);
@@ -295,7 +327,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Console errors', String(errors.length), '0');
   await page.close();
 }
-// The budget-to-cash bridge (S-088): the October household from test/bridge.test.js
+// The budget-to-cash bridge (S-088): the October household from tests/bridge.test.js
 // with $60 of ATM cash unmapped. By hand: explained +680, cash 7,000 -> 7,620 = +620, not explained -60.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -311,6 +343,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('bridge', 'Explained', await settled(page, '[data-key="bridge-explained"]', signedMoney(680)), signedMoney(680));
   check('bridge', 'Actual change', await settled(page, '[data-key="bridge-actual"]', signedMoney(620)), signedMoney(620));
   check('bridge', 'Not explained yet', await settled(page, '[data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
+  // "Drawn" checks only count SVG shapes (here, enough bars for the steps of the waterfall), never their sizes.
   check('bridge', 'Waterfall drawn', String(await page.$$eval('#chart-bridge svg rect', (r) => r.length >= 8)), 'true');
   // The loop (S-089). By hand: 10 entries (3 paychecks, 2 groceries, Geico, the card payment, ATM, the concert, the couch),
   // the yearly car insurance confirmed by its entry, every balance in (3 accounts x start and end), the bridge off by 60.
@@ -318,6 +351,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#loop-strip');
   check('loop strip', 'Review step', await settled(page, '[data-key="loop-review"] .small', '0 lines still empty, 6 of 6 balances in, bridge off by $60'), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
   check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28, scheduled 1 of 1 confirmed'), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
+  // Closing the month asks to confirm; accept every dialog from here on.
   page.on('dialog', (dl) => dl.accept());
   await go(page, 'review');
   await page.click('[data-key="open-checklist"]');
@@ -335,11 +369,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('review', 'Tracking', await settled(page, '#just-closed [data-key="review-tracking"]', '23% ($460 logged, $1,500 typed)'), '23% ($460 logged, $1,500 typed)');
   await insights(page, 'time');
   check('months', 'Estimate, plan, actual by month drawn', String(await page.$$eval('#chart-trend-series svg path', (p) => p.length > 0)), 'true');
+  // 80/20 counts purchases and fees only: 6 entries (2 groceries, Geico, ATM, the concert, the couch), one bar each;
+  // the 3 paychecks and the card payment are not spending.
   check('months', '80/20 reading', await settled(page, '#chart-pareto .reading', '50% of your entries (3 of 6) made up 80% of your spending.'), '50% of your entries (3 of 6) made up 80% of your spending.');
   check('months', '80/20 chart', String(await page.$$eval('#chart-pareto svg rect', (r) => r.length === 6)), 'true');
   // Trends (S-092): every card drawn, and two of the one-line stats by hand.
   await page.waitForSelector('#chart-trend-heat');
   for (const id of ['trend-series', 'trend-charges', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('trends', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length === 1)), 'true');
+  // By hand: 300 charged on the Visa (groceries), 450 paid to it; the 60 not explained is all ATM cash.
   check('trends', 'Card float', await page.$eval('#stat-float .reading', (p) => p.textContent), "Oct '26 charged $300, paid $450.");
   check('trends', 'Not explained yet', await page.$eval('#stat-unexplained .reading', (p) => p.textContent), '-$60 over 1 bridged month; ATM cash $60; Venmo or Zelle with no line $0.');
   await go(page, 'review');
@@ -349,7 +386,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
-// Riley, a year of the loop (Part 10), with the clock on October 17, 2026. Numbers by hand in test/riley.test.js.
+// Riley, a year of the loop (Part 10), with the clock on October 17, 2026. Numbers by hand in tests/riley.test.js.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -368,6 +405,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // Safe to spend (S-095): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0 and a message.
   check('riley', 'Safe to spend', await settled(page, '[data-key="safe-to-spend"]', money(0)), money(0));
   check('riley', 'Shortfall message', await settled(page, '[data-key="safe-short"]', "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5."), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
+  // Only the reading's first text node: the sentence, not the "See the calendar" link after it.
   check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
   check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15, scheduled 3 of 6 confirmed'), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
   // Past months are on Review; the bridge history and the 80/20 are in Insights (S-106).
@@ -395,20 +433,20 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.selectOption('[data-key="bridge-month"]', '2026-06');
   await page.waitForTimeout(150);
   check('riley', 'June not explained', await settled(page, '#chart-bridge [data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
-  // Net worth (S-115, by hand in test/networth-households.test.js). Today every balance is September's end:
+  // Net worth (S-115, by hand in tests/networth-households.test.js). Today every balance is September's end:
   // FI 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323; the car 8,400 - its loan 3,237.64 = 5,162.36
-  // and paid ahead (S-119, test/paid-ahead.test.js) 400 + 135 = 535 locked in: 5,697.36; net worth 35,020.36.
+  // and paid ahead (S-119, tests/paid-ahead.test.js) 400 + 135 = 535 locked in: 5,697.36; net worth 35,020.36.
   await insights(page, 'networth');
   check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(35020.36)), money(35020.36));
   check('riley', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
   check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5697.36)), money(5697.36));
   await page.selectOption('[data-key="nw-month"]', '2026-03');
-  // With the insurance paid ahead (S-119): up 1,200.81, saved -451.89 + 15 + 975 = 538.11 (test/networth-households.test.js).
+  // With the insurance paid ahead (S-119): up 1,200.81, saved -451.89 + 15 + 975 = 538.11 (tests/networth-households.test.js).
   const marNW = 'Net worth rose $1,201. $538 you saved, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
   check('riley', 'March net worth bridge', await settled(page, '#chart-nw-bridge .reading', marNW), marNW);
   const carRead = 'The car costs about $316 a month you\'ll never get back (not counting maintenance, parking and tolls). Your trips by Uber, transit and a rental would be about $350.';
   check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
-  // The auto loan is paid by the Car payment line (S-116, by hand in test/debts.test.js): October's 340,
+  // The auto loan is paid by the Car payment line (S-116, by hand in tests/debts.test.js): October's 340,
   // on the loan going into October (September's end, 3,237.64): 16.19 interest, 323.81 principal.
   // Paid ahead, with investments and things you own on the Accounts tab (S-136): the car insurance, 400 left today.
   await go(page, 'accounts');
@@ -477,6 +515,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('coverage', 'Split mark shown', String(await page.$$eval('#est-bills [data-key^="split-tag:"]', (x) => x.length)), '1');
   // Who pays the bill (S-138): Spotify's 21 is the whole bill on your card, with 3 others. Share 100 / 4
   // = 25%; your part 21 x 0.25 = 5.25; paid back 21 - 5.25 = 15.75.
+  // Quick lines get their ids at runtime, so Spotify's id is read back from its name's data-key.
   const spot = await page.$$eval('#est-bills [data-key^="line-name:"]', (xs) => xs.find((x) => x.textContent === 'Spotify').getAttribute('data-key').slice('line-name:'.length));
   await page.click('[data-key=\'["line","' + spot + '","estimate"]:more\']');
   await page.selectOption('[data-key="split-pays:' + spot + '"]', 'whole');
@@ -489,7 +528,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('coverage', 'Console errors', String(errors.length), '0');
   await page.close();
 }
-// Dana (S-115): a condo with a mortgage, at phone width on October 17, 2026. By hand in test/networth-households.test.js.
+// Dana (S-115): a condo with a mortgage, at phone width on October 17, 2026. By hand in tests/networth-households.test.js.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -524,6 +563,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // June's review: the promo ended; interest 12,480 x 24.99 / 1,200 = 259.896, $259.90 (S-127).
   await page.selectOption('[data-key="months-pick"]', '2026-06');
   const promoLine = 'Your 0% promo ended. Interest this month: $259.90.';
+  // The readings are joined into one paragraph; only the opening sentence is pinned.
   check('dana', 'June promo reading', await settled(page, '[data-key="review-readings"]', promoLine).then((t) => (t || '').slice(0, promoLine.length)), promoLine);
   check('dana', 'Console errors', String(errors.length), '0');
   await page.close();
@@ -555,9 +595,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('search', 'FI net worth found', await settled(page, '.search-head', 'Net worth'), 'Net worth');
   await page.press('[data-key="search"]', 'Enter');
   await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
+  // Both sides come from the page: the panel's result with its cents stripped against the tile's whole-dollar text.
+  // A missing panel and a missing tile fail with different words, so the printout says which one was absent.
   check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
-  // October is open (S-128): so far and expected by month end, by hand in test/outlook.test.js:
+  // October is open (S-128): so far and expected by month end, by hand in tests/outlook.test.js:
   // so far 1,630 - 2,369.25 = -739.25; expected -739.25 + 1,500 - 65 - 694.75 = 1.00.
   await go(page, 'today');
   await page.waitForSelector('[data-key="how:soFar"]');
@@ -626,7 +668,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForTimeout(150);
   check('client view', 'Back to coach', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'View as client');
   // A file from Riley's copy, shared before the coach's edit, where Riley set the Shopping estimate to 80:
-  // Shopping was changed on both copies, so the coach picks.
+  // Shopping was changed on both copies, so the coach picks. Riley's file is read and edited in Node; the browser
+  // only sees the export.
   const { migrate } = await import('../src/store/migrate.js');
   const { versionsOf } = await import('../src/store/merge.js');
   const { exportHousehold } = await import('../src/store/transfer.js');
@@ -642,6 +685,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('merge', 'Conflict heading', await page.$eval('#merge-conflicts h2', (x) => x.textContent), 'Merging Riley (demo, a year of the loop): 1 to pick');
   const mine = await page.$eval('[data-key="side:local:line:shopping"]', (x) => x.textContent);
   const file = await page.$eval('[data-key="side:incoming:line:shopping"]', (x) => x.textContent);
+  // Each side is a sentence ending in a timestamp, so it is matched by pattern: this copy tagged a mistake (by the
+  // coach), the file set the estimate to $80 (by the client).
   check('merge', 'This copy', String(/^This copy: Shopping, .*tag mistake.* \(coach, /.test(mine)), 'true');
   check('merge', 'The file', String(/^The file: Shopping, .*estimate \$80.* \(client, /.test(file)), 'true');
   await page.check('[data-key="pick:incoming:line:shopping"]');

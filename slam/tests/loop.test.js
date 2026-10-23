@@ -1,7 +1,9 @@
 // Part 6 of the monthly loop: the Plan, Track, Review strip, the month-end
-// checklist, and the month in review saved at close (S-089). By hand, on the
-// October household from fixtures/october.js (see test/bridge.test.js), with
-// $60 of ATM cash unmapped and a plan for October:
+// checklist, and the month in review saved at close (S-089), from engines/loop.js.
+// Uses buildSummary and closeMonthSnapshot (engines/summary.js), the store's plans.js
+// and months.js, the reference data in src/data through helpers.js, and the October
+// household from fixtures/october.js (worked out by hand in tests/bridge.test.js),
+// here with $60 of ATM cash unmapped and a plan for October:
 //   rent 1,500, groceries 350, shopping 200, car insurance 100 (a month).
 // Actuals: rent 1,500 (typed), groceries 400 (log), shopping 60 (log: the 120
 // concert less 60 owed back; the couch is a one-off), car insurance 100 (its share).
@@ -38,6 +40,7 @@ test('the loop strip for October', () => {
   // 13 entries: 3 income, 2 groceries, Geico, 2 transfers, concert, couch, 2 card payments, ATM; last Oct 28.
   // Scheduled: the yearly car insurance on Oct 14, confirmed by the Geico entry (same line, same day, 1,200).
   assert.deepEqual(s.track, { entries: 13, last: '2026-10-28', confirmed: 1, scheduled: 1 });
+  // Balances: checking, savings and the Visa, a start and an end each, 6; the -60 is the ATM cash the cash bridge cannot place.
   assert.deepEqual(s.review, { empty: 0, balancesMissing: 0, balancesTotal: 6, ties: false, unexplained: -60 });
   assert.equal(s.nextPlan, 'not started');
 });
@@ -82,7 +85,7 @@ test('the month in review, saved at close, never changes after', () => {
   assert.equal(r.readings[0], 'Personal and fun came in $140 under plan.');
   assert.equal(r.readings[1], 'Groceries was $50 over.');
   assert.equal(r.readings[2], 'Income came in $300 more than planned.');
-  // The 80/20 saved with the review (worked out in test/pareto.test.js)
+  // The 80/20 saved with the review (worked out in tests/pareto.test.js)
   assert.equal(r.pareto.reading, '50% of your entries (3 of 6) made up 80% of your spending.');
   assert.equal(r.openItems.summary, 'Closed with 3 open items: off by $60, 1 reimbursement owed, next month\'s plan not started');
 

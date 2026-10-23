@@ -2,7 +2,8 @@
 // of Today (the step for now highlighted, S-106), the month-end checklist that
 // opens from "Close month" on Review, and the month in review card (right after
 // closing, and for any closed month on Review, from the saved snapshot).
-// Numbers come from calc/loop.js.
+// Numbers come from engines/loop.js (loopStrip, loopStep, monthEndChecklist, monthReview); closing also uses
+// engines/summary.js, calendar.js (the forecast), and store/cashflow.js; the net worth tiles read engines/networth-bridge.js and networth.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney, pct, monthLabel, dayLabel, todayIso } from '../format.js';
@@ -26,6 +27,7 @@ export function loopStripCard(ctx, summary) {
   const t = s.track;
   return h('div', { class: 'card loop', id: 'loop-strip' },
     h('div', { class: 'spread' }, h('b', {}, monthLabel(s.month) + ': plan, track, review'),
+      // The shortcut shows once a month has been closed and the open month has no plan of its own yet.
       ctx.doc.months.some((m) => m.key < s.month) && !(ctx.doc.plans || {})[s.month] ? h('button', { class: 'btn small primary', 'data-key': 'start-plan', onclick: () => ctx.jump('plan') }, 'Start next month\'s plan') : null),
     h('div', { class: 'loop-steps' },
       step('1', 'Plan', 'Plan: ' + s.plan.state, 'plan', 'Next month\'s plan'),
@@ -38,11 +40,12 @@ export function checklistCard(ctx, summary) {
   const doc = ctx.doc;
   const c = monthEndChecklist(doc, summary, todayIso());
   const close = () => {
+    // The review is worked out before the store closes the month, so it describes the month as it stood.
     const review = monthReview(doc, summary, todayIso());
     const snap = { ...closeMonthSnapshot(summary), review };
     const key = ctx.store.closeMonth(snap);
     ctx.update('Save snapshot', (d) => { d.snapshots.push(snapshotOf(summary, new Date().toISOString())); });
-    // The new month's predicted end cash, as of its 1st (S-086).
+    // The new month's predicted end cash, as of its 1st (S-086); closeMonth has already moved currentMonth on.
     const next = ctx.doc.currentMonth;
     ctx.update('Save forecast', (d) => saveForecast(d, next, forecastFor(d, summary.income, next), new Date().toISOString()));
     ctx.ui.closing = false;
@@ -52,6 +55,8 @@ export function checklistCard(ctx, summary) {
   return h('div', { class: 'card', id: 'checklist' },
     h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'Before closing ' + monthLabel(c.month)), h('button', { class: 'btn small ghost', onclick: () => { ctx.ui.closing = false; ctx.rerender(); } }, 'Not now')),
     h('ul', { class: 'plain' }, c.items.map((i) => h('li', { class: 'small', 'data-key': 'check-' + i.key },
+      // Chip colors borrow the value statuses (Done reads as known, Open as don't know). The owed item is
+      // worded for whoever is looking, coach or client (ctx.say).
       h('span', { style: 'flex:1 1 220px' }, h('span', { class: 'chip ' + (i.open ? 'st-dont-know' : 'st-known') }, i.open ? 'Open' : 'Done'), ' ', i.key === 'owed' ? ctx.say('owed-label') : i.label,
         i.names && i.names.length ? h('div', { class: 'xs muted' }, i.names.slice(0, 6).join(', ') + (i.names.length > 6 ? ', and more' : '')) : null,
         i.stale && i.stale.length ? h('div', { class: 'xs muted', 'data-key': 'check-stale' }, 'Optional, not updated this month: ' + i.stale.map((x) => x.name + (x.last ? ' (since ' + dayLabel(x.last) + ')' : ' (never)')).join(', ')) : null),
@@ -70,6 +75,7 @@ const groupList = (title, rows, sign) => h('div', {}, h('h4', {}, title + ' (' +
 export function reviewCard(ctx, rec, opts = {}) {
   const r = rec.snapshot.review;
   if (!r) return h('div', { class: 'card' }, h('h3', {}, monthLabel(rec.key)), h('p', { class: 'muted small' }, 'Closed before month reviews were saved.'));
+  // Past months start light (S-129); "See the full review" adds the month to ui.expanded.
   if (opts.compact && !ctx.ui.expanded.has('review-full:' + rec.key)) return reviewHeadline(ctx, rec, opts);
   const t = r.totals;
   const diff = (x) => (x.diff > 0 ? '+' : '-') + money(Math.abs(x.diff));
@@ -108,6 +114,8 @@ export function reviewCard(ctx, rec, opts = {}) {
 function reviewHeadline(ctx, rec, opts) {
   const r = rec.snapshot.review;
   const t = r.totals;
+  // Net worth is live from the balances, not from the snapshot (see netWorthBlock); a milestone crossed
+  // this month gets its own card (milestones, engines/networth.js).
   const nw = opts.summary ? netWorthBridge(ctx.doc, opts.summary.income, rec.key) : null;
   const crossed = milestones(netWorthByMonth(ctx.doc)).filter((m) => m.celebrate && m.month === rec.key);
   const tile = (label, value, sub, key) => h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value', 'data-key': key }, value), h('div', { class: 'sub' }, sub));

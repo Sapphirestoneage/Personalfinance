@@ -1,5 +1,7 @@
-// DRAFTT is descriptive (S-072): proportions, no bands. The base is take-home
-// plus pre-tax retirement when there is any, so the parts add to 100%.
+// DRAFTT is descriptive (S-072): proportions, no bands. The base is take-home plus pre-tax retirement
+// when there is any, so the parts add to 100%. Checked on a made-up household: take-home 3,000 a month,
+// housing 1,200, food 400, no debts. Uses the store (schema, value, edits), the summary engine (the
+// draftt lens), and the helpers, which load the reference data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,7 +40,7 @@ test('without pre-tax retirement, the base is take-home', () => {
   const d = buildSummary(household(0), refs).lenses.draftt;
   assert.equal(d.base.amount, 3000);
   assert.equal(d.base.label, 'take-home');
-  // 1,600 / 3,000 = 0.533333; everything else 0; left over 1,400 / 3,000 = 0.466667
+  // housing 1,200 + food 400 = 1,600; 1,600 / 3,000 = 0.533333; everything else 0; left over 1,400 / 3,000 = 0.466667
   assert.ok(Math.abs(d.totalShare - 0.533333) < 5e-7);
   assert.ok(Math.abs(d.totalShare + d.everythingElseShare + d.leftOverShare - 1) < 1e-9);
   assert.equal(d.taxes, null, 'no gross, so no taxes line');

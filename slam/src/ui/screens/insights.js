@@ -1,6 +1,7 @@
-// Insights (S-106): read only. Every chart and lens appears exactly once, in
-// six tabs (Net worth added by S-114). The only inputs are range, focus, and unit pickers (marked
-// data-picker); anything that edits lives on its own screen, linked from the chart.
+// Insights (S-106): read only. Every chart and lens appears exactly once, in six tabs (Net worth added by
+// S-114). The only inputs are range, focus, and unit pickers (marked data-picker); anything that edits lives
+// on its own screen, linked from the chart. The tab list is nav.js INSIGHT_TABS; the cards come from
+// ui/charts/* and ui/components/ and read the summary from buildSummary. Nothing is computed here.
 
 import { h } from '../dom.js';
 import { pct, monthLabel } from '../format.js';
@@ -24,6 +25,7 @@ function lensToggle(ctx) {
 
 // The table of every category: estimate, plan, actual, shares, happiness, gaps.
 function tableCard(ctx, s) {
+  // The hours lens needs hourlyTakeHome (engines/income.js), which needs hours worked on an income source.
   const hoursMissing = ctx.ui.lens === 'hours' && s.income.hourlyTakeHome === null;
   return h('div', { class: 'card', id: 'budget-table', style: 'grid-column:1 / -1' },
     h('div', { class: 'spread' }, h('h3', { style: 'margin:0' }, 'Category by category'), lensToggle(ctx)),
@@ -31,6 +33,8 @@ function tableCard(ctx, s) {
     budgetTable(ctx, s));
 }
 
+// summary.blindSpot (engines/compare.js): the share of actual spending with no estimate behind it. Above 10% the
+// tile turns warn; that cutoff only picks the color.
 function blindSpot(s) {
   return h('div', { class: 'strip three', style: 'grid-column:1 / -1' }, h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Blind spot'),
     h('div', { class: 'value ' + (s.blindSpot.pct > 0.1 ? 'warn' : '') }, pct(s.blindSpot.pct)), h('div', { class: 'sub' }, 'of actual spending not in the estimates')));

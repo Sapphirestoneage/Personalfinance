@@ -1,6 +1,9 @@
 // Income on screen (S-118): rows before expenses, everywhere a month's budget shows. Estimate (Setup,
 // Income), plan (scheduled pay from the real paydays; side income changeable for the month), and actual
-// from the log. Numbers come from calc/income-month.js.
+// from the log. Numbers come from incomeMonth in engines/income-month.js (also as summary.totals.income)
+// and minus in engines/money.js. Writes go through store/edits.js (a typed actual), store/plans.js (a
+// month's planned side income), and store/log.js (giving a loose entry its source).
+// Builds on dom, format, value-input, the status chip, and quick-entry.
 
 import { h, options } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
@@ -14,6 +17,8 @@ import { setPlanIncome } from '../../store/plans.js';
 import { editEntry } from '../../store/log.js';
 import { makeValue } from '../../store/value.js';
 
+// x.from says where a source's actual came from: 'log' (summed from entries), 'typed', 'none' (the client
+// said none this month), or null (still empty). It is the wording behind the row's title and hint.
 const actualText = (x) => (x.from === 'log' ? 'from your log, ' + x.count + (x.count === 1 ? ' entry' : ' entries') : x.from === 'typed' ? 'typed' : x.from === 'none' ? 'none this month' : 'still empty');
 
 // Read-only rows, one line each: source, estimate, plan, actual, actual vs plan.
@@ -36,6 +41,8 @@ export function incomePlanCard(ctx, summary, month, editable) {
     h('h3', {}, 'Income, ' + monthLabel(month)),
     h('ul', { class: 'plain' }, im.sources.map((x) => h('li', { class: 'small', 'data-key': 'plan-income:' + x.id },
       h('span', { style: 'flex:1 1 180px' }, x.label, h('div', { class: 'xs muted' }, 'estimate ' + money(x.estimate) + ' a month' + (x.planNote ? ', ' + x.planNote : ''))),
+      // Scheduled pay is read-only here: it comes from the paydays. Only side or variable income takes a plan for
+      // the month, and clearing that box removes the month's override instead of storing an empty value.
       x.scheduled || !editable ? h('b', { class: 'num', 'data-key': 'plan-income-amt:' + x.id }, money(x.plan))
         : valueInput({ ...ctx, preview: null, commit: (path, value) => ctx.update('Plan ' + x.label, (d) => setPlanIncome(d, month, x.id, value.amount === null ? null : value)) },
           ['plans', month, 'income', x.id], ((((ctx.doc.plans || {})[month] || {}).income || {})[x.id]) || makeValue(x.plan), { label: x.label + ' plan', cadence: false }))),
@@ -48,9 +55,11 @@ export function incomeFillCard(ctx, summary) {
   const month = ctx.doc.currentMonth;
   const im = summary.totals.income;
   const typedOf = (id) => ((ctx.doc.incomeActuals || {})[month] || {})[id] || makeValue();
+  // Clearing a typed actual removes it (back to "still empty") instead of storing an empty value.
   const sub = (x) => ({ ...ctx, preview: null, commit: (path, value) => ctx.update('Income ' + x.label, (d) => setIncomeActual(d, month, x.id, value.amount === null ? null : value)) });
   const row = (x) => h('div', { class: 'qa', 'data-key': 'income-row:' + x.id },
     h('div', { class: 'q' }, h('div', {}, x.label), h('div', { class: 'hint' }, 'plan ' + money(x.plan) + (x.planNote ? ' (' + x.planNote + ')' : ''))),
+    // With log entries the actual is computed and no box is offered, so the log stays the one source.
     x.from === 'log' ? h('div', { class: 'value-input' }, h('b', { class: 'num', 'data-key': 'income-actual:' + x.id }, money(x.actual, true)), statusChip('computed'), h('span', { class: 'xs muted' }, actualText(x)))
       : h('div', { class: 'value-input' },
         valueInput(sub(x), ['incomeActuals', month, x.id], typedOf(x.id), { label: x.label + ' actual', cadence: false }),
@@ -67,6 +76,7 @@ export function incomeFillCard(ctx, summary) {
       : h('li', { class: 'small' }, row(x)))) : null,
     empty.length ? h('div', { 'data-key': 'income-empty' }, h('p', { class: 'small' }, h('b', {}, 'Still empty (' + empty.length + ')'), ' Add an entry, type an amount, or none this month.'), empty.map(row)) : null,
     loose.length ? h('div', { 'data-key': 'income-loose' }, h('p', { class: 'small' }, h('b', {}, loose.length + ' income entr' + (loose.length === 1 ? 'y' : 'ies') + ' with no source'), ' (counted; say whose it is)'),
+      // Log amounts are positive for money out, so an income entry is flipped for display.
       loose.map((t) => h('div', { class: 'qa' }, h('div', { class: 'q' }, (t.description || t.note || 'Deposit') + ', ' + t.date + ', ' + money(-t.amount, true)),
         h('select', { 'aria-label': 'Which income', 'data-key': 'income-source:' + t.id, onchange: (e) => ctx.update('Income source', (d) => editEntry(d, t.id, { incomeId: e.target.value || null })) },
           options([['', 'Pick the income'], ...ctx.doc.income.filter((i) => i.state !== 'archived').map((i) => [i.id, i.label])], ''))))) : null,

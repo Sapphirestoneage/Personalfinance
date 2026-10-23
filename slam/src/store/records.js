@@ -1,12 +1,9 @@
-// Records (S-096): every thing a person creates or edits carries a stable id,
-// createdAt and updatedAt (UTC ISO timestamps), createdBy and updatedBy
-// ("coach" or "client"), and a version that goes up by one on each edit.
-// Nothing is hard-deleted: removing a record leaves it in the file with
-// deleted: true, deletedAt, and deletedBy. Calc and screens only ever see the
-// live view, with deleted records left out.
-//
-// Edits keep working on plain documents: the store compares the document
-// before and after an edit (stamp) and writes the bookkeeping itself.
+// Records (S-096): every thing a person creates or edits carries a stable id, createdAt and
+// updatedAt (UTC ISO timestamps), createdBy and updatedBy ("coach" or "client"), and a version
+// that goes up by one on each edit. Nothing is hard-deleted: a removed record stays in the file
+// with deleted: true, deletedAt and deletedBy; the engines and screens only ever see the live
+// view, with deleted records left out. Edits keep working on plain documents: the store compares
+// the document before and after an edit (stamp) and writes the bookkeeping itself. Needs ids.js.
 
 import { newId } from './ids.js';
 
@@ -14,6 +11,7 @@ export const META = ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', '
 
 // Where records live. kind 'array': a list of records with ids; 'nested': a list inside each record
 // of a parent collection; 'map': records keyed by a path (they get a random id of their own).
+// Both maps are two deep: balances[month][accountId] and plans[month].lines[key].
 export const COLLECTIONS = [
   { name: 'category', kind: 'array', get: (d) => d.categories, set: (d, v) => { d.categories = v; }, children: ['lines'] },
   { name: 'line', kind: 'nested', parent: 'category', field: 'lines' },
@@ -81,6 +79,8 @@ function ensureIds(doc, fromPlace = false) {
   return doc;
 }
 
+// First bookkeeping for a record that has none. A map record also needs an id of its own, since its
+// key is its path, not an id.
 function fresh(rec, nowIso, role, idNeeded) {
   if (idNeeded && !rec.id) rec.id = newId('rec');
   if (rec.version === undefined) Object.assign(rec, { createdAt: nowIso, updatedAt: nowIso, createdBy: role, updatedBy: role, version: 1 });
@@ -121,8 +121,11 @@ export function stamp(prev, draft, nowIso, role) {
     const p = before[key];
     const kids = childrenOf(x.coll);
     if (!p) { fresh(x.rec, nowIso, role, x.coll.kind === 'map'); continue; }
+    // Same content on a live record keeps its version; a record brought back from deleted counts as changed.
     const same = contentOf(p.rec, kids) === contentOf(x.rec, kids) && !p.rec.deleted;
+    // Identity and creation come from before, even when the draft lost them.
     for (const k of ['id', 'createdAt', 'createdBy']) if (p.rec[k] !== undefined) x.rec[k] = p.rec[k];
+    // A record never stamped (from an older file) is stamped fresh, not bumped.
     if (p.rec.version === undefined) { fresh(x.rec, nowIso, role, x.coll.kind === 'map'); continue; }
     if (same) {
       for (const k of ['updatedAt', 'updatedBy', 'version']) x.rec[k] = p.rec[k];
@@ -170,7 +173,8 @@ export function stampAll(doc, atIso, role = 'coach') {
   return doc;
 }
 
-// The record's bookkeeping left out, for comparisons and tests.
+// The record's bookkeeping left out, for comparisons and tests. An array record keeps its id (other
+// records refer to it by that); a map record's id is bookkeeping only, since its key is its path.
 export function stripMeta(doc) {
   const d = clone(doc);
   for (const x of Object.values(flatten(d))) for (const k of META) if (k !== 'id' || x.coll.kind === 'map') delete x.rec[k];

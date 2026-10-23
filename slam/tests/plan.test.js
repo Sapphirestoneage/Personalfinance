@@ -1,5 +1,8 @@
 // The monthly plan store (S-076): create, edit, carry forward, stop tracking,
-// migration, and the rule that nothing in review ever changes an estimate.
+// migration, and the rule that nothing in review ever changes an estimate. Uses the store (schema,
+// value, edits, months, plans, validate, migrate), planStartValues and planView in engines/plan.js,
+// buildSummary, and the helpers, which load the reference data in src/data and the Maya demo
+// household in src/data/households (the one with two saved plans).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

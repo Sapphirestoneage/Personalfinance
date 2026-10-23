@@ -1,7 +1,7 @@
 // Who sees what (S-096), decided in this one map. Every record type and field
 // is shared with the client unless it is listed here as coach-only. A future
 // sign-in uses the same map for permissions; today "View as client" uses it to
-// show what the client would see.
+// show what the client would see. No imports; app.js and the screens read it.
 
 export const COACH_ONLY = {
   coachNotes: 'The coach\'s notes about the client (Setup, Coach notes).',
@@ -26,17 +26,20 @@ export function canSee(field, role) {
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
 // The document as someone in this role sees it. Edits still go to the real document.
+// Coach-only fields are blanked, not removed, so the view keeps the stored shape and still validates.
 export function viewFor(doc, role) {
   if (!doc || role === 'coach') return doc;
   const d = clone(doc);
   d.coachNotes = '';
   for (const a of d.accounts || []) if (a.notes) a.notes = '';
   for (const p of Object.values(d.plans || {})) for (const e of Object.values(p.lines || {})) if (e && e.note) e.note = '';
+  // An unshared mistake reads as a planned line; a tag the client ticked is shared at once (S-096).
   for (const c of d.categories || []) for (const l of c.lines || []) if (l.tag === 'mistake' && !l.mistakeShared) l.tag = 'planned';
   return d;
 }
 
-// Words that differ for the coach and the client. Everything else reads the same to both.
+// Words that differ for the coach and the client, as [coach wording, client wording].
+// Everything else reads the same to both.
 const WORDS = {
   'owed-label': ['Reimbursements still owed to the client', 'Reimbursements still owed to you'],
   'completion-note': ['This is about the data, not how the client is doing.', 'This is about the data, not how you are doing.'],
@@ -44,6 +47,7 @@ const WORDS = {
   'view-toggle': ['View as client', 'Back to the coach view']
 };
 
+// A key with no entry comes back as itself, so a typo shows text rather than nothing.
 export function say(key, role) {
   const w = WORDS[key];
   if (!w) return key;

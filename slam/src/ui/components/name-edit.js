@@ -1,5 +1,6 @@
 // A name you can tap and retype in place (categories, lines, tags), so the
 // budget reads in the client's own words. An empty name keeps the old one.
+// Saving goes through ctx.update with the caller's save(doc, name), a store edit. Built with dom.js.
 
 import { h } from '../dom.js';
 

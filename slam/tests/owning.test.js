@@ -1,4 +1,9 @@
-// What owning really costs (S-113), by hand: a condo and a car, each next to its alternative.
+// What owning really costs (S-113), by hand: a condo and a car, each next to its alternative,
+// from owningCosts and depreciationFromValues in engines/owning.js, fed by buildSummary
+// (engines/summary.js). The Guess rates (1% upkeep, 15% depreciation) are constants in that
+// engine; the 5% return assumption is DEFAULT_OWN_RETURN in store/schema.js. Uses the store's
+// schema, value, migrate, validate, visibility (coach-only notes), accounts and edits modules to
+// build the owner household, and helpers.js for the reference data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

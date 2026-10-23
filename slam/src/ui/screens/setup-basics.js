@@ -1,6 +1,9 @@
 // Setup, Basics and Income (S-106): profile, situation, household; then each
 // income source (take-home, gross, deductions, taxes, the paycheck check).
 // Only the fields that apply are shown (no roommates = no roommate fields; family only when living with family).
+// Every paycheck number here is read from summary.income.sources, built by incomeSummary (engines/income.js).
+// Depends on the engines (deductions for the kinds list, balances, totals), the store (edits, value, accounts),
+// and the ui helpers (dom, format, the value-input, status, tax-walk, and jump components).
 
 import { h, options } from '../dom.js';
 import { money, pct } from '../format.js';
@@ -28,6 +31,7 @@ function setIncomeType(inc, type) {
   inc.type = type;
   if (type !== 'unemployment') return;
   if (/^Income \d+$/.test(inc.label) || inc.label === 'Paycheck') inc.label = 'Unemployment benefits';
+  // Only an untouched gross (no amount, no status) switches to weekly; a typed value is the client's own and stays.
   if (inc.gross.amount === null && inc.gross.status === null) inc.gross.cadence = 'week';
 }
 
@@ -39,6 +43,7 @@ function textField(ctx, label, path, value, opts = {}) {
       inputmode: opts.numeric ? 'numeric' : null, style: opts.width ? 'width:' + opts.width : null,
       onchange: (e) => {
         let v = e.target.value.trim();
+        // An emptied field stores null (not entered), never 0.
         if (opts.numeric) v = v === '' ? null : Number(v);
         if (opts.numeric && v !== null && !Number.isFinite(v)) return ctx.toast('That needs a number');
         ctx.update(label, (d) => opts.set(d, v === '' ? null : v));
@@ -58,6 +63,7 @@ function defaultIncomeType(situation) {
   return 'not-taxable';
 }
 
+// The source note beside each tax line; l.from is set by taxBreakdown (engines/income.js).
 function taxNote(l) {
   if (l.from === 'paystub') return 'paystub';
   if (l.from === 'not estimated') return 'not estimated yet';
@@ -90,6 +96,7 @@ function payTable(ctx, row) {
           onclick: () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); } }, (open ? '\u25be ' : '\u25b8 ') + l.label) : l.label;
         return h('tr', { class: 'line', 'data-key': 'tax-line:' + l.key },
           h('td', {}, name, h('span', { class: 'xs muted' }, ' (' + taxNote(l) + ')')),
+          // A tax not estimated (null) shows a dot in each column, never $0.
           ...(l.monthly === null ? [h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7')]
             : [cell(-l.perPaycheck, exact), cell(-l.monthly, exact), cell(-l.annual, exact)]), h('td', {}));
       }) : null,
@@ -100,7 +107,8 @@ function payTable(ctx, row) {
 }
 
 // Paycheck deductions: retirement as a % of gross or an amount, plus health,
-// HSA or FSA, transportation, Roth, and other. Amounts come from calc.
+// HSA or FSA, transportation, Roth, and other. Amounts come from deductionRows
+// (engines/deductions.js), read here as row.deductions.
 const INTO_ACCOUNT = ['retirement', 'roth', 'hsa'];
 
 function deductionsBlock(ctx, inc, row) {
@@ -122,6 +130,7 @@ function deductionsBlock(ctx, inc, row) {
           h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove deduction', (doc) => removeDeduction(doc, inc.id, d.id)) }, 'Remove')),
         d.mode === 'percent'
           ? textField(ctx, 'Percent of gross pay', [...path, 'percent'], d.percent, { numeric: true, width: '6em', set: (doc, v) => {
+            // Throwing inside an update rejects the change: ctx.update shows the message and keeps the old value.
             if (v !== null && (v < 0 || v > 100)) throw new Error('Use a percent from 0 to 100');
             setD(d.id, 'percent')(doc, v);
           } })
@@ -136,6 +145,8 @@ function deductionsBlock(ctx, inc, row) {
           ? h('p', { class: 'small num' }, exact(r.perPaycheck) + ' a paycheck, ' + exact(r.monthly) + ' a month, ' + exact(r.annual) + ' a year')
           : h('p', { class: 'small muted' }, d.mode === 'percent' ? 'Needs a percent and gross pay (or an hourly rate and hours).' : 'Enter the amount.'));
   };
+  // Pre or post tax is decided by deductionRows (lowersIncomeTax). When this income has no summary row
+  // (rows is empty), every deduction is listed as pre-tax so none drops off the screen.
   const pre = inc.deductions.filter((d) => (rows.find((x) => x.id === d.id) || { lowersIncomeTax: true }).lowersIncomeTax);
   const post = inc.deductions.filter((d) => !pre.includes(d));
   const add = (kinds, label) => h('select', { class: 'add-select', 'aria-label': label, 'data-key': 'add-ded:' + inc.id + ':' + label,
@@ -173,6 +184,7 @@ function withheldBlock(ctx, inc, row) {
       h('p', { class: 'small' }, 'Estimated tax for the year: federal income tax ', h('b', { class: 'num' }, money(t.estIncomeTaxAnnual)), ' + Social Security and Medicare ',
         h('b', { class: 'num' }, money(t.estFicaAnnual)), ' = ', h('b', { class: 'num' }, money(t.estTotalAnnual)), ', about ', exact(t.estTotalPerPaycheck), ' a paycheck (',
         pct(t.estRate, 1), ' of gross).', h('span', { class: 'muted xs' }, ' State tax not estimated. Tax year ' + t.taxYear + '.')),
+      // Within a dollar either way reads as a match; t.gapAnnual comes from taxCheck (engines/income.js).
       gap === null ? null : h('p', { class: 'small ' + (gap < -1 ? 'warn' : '') },
         gap >= 1 ? 'Withholding is about ' + money(gap) + ' more than the estimate for the year, so a refund is likely.'
           : gap <= -1 ? 'Withholding is about ' + money(-gap) + ' short of the estimate for the year. That could be owed at tax time' + (t.withheldFrom === 'paystub' ? '.' : ', or the take-home typed is higher than the real paycheck.') + ' Setting aside ' + exact(-t.gapPerPaycheck) + ' a paycheck covers it.'
@@ -184,10 +196,13 @@ function withheldBlock(ctx, inc, row) {
     // Extra federal tax the client asked for on the W-4 (S-101); a paystub's federal line already includes it.
     question(ctx, 'Additional withholding (W-4, step 4c)', 'Extra federal tax asked for on the W-4, taken out of each paycheck. Blank if none.',
       ['income', inc.id, 'extraWithholding'], inc.extraWithholding || makeValue(null, { cadence: 'paycheck' })),
+    // The paystub lines open on their own once any has a value; otherwise the toggle is remembered in ui.expanded.
     h('details', { open: entered || ctx.ui.expanded.has('withheld:' + inc.id) ? true : null,
       ontoggle: (e) => { if (e.target.open) ctx.ui.expanded.add('withheld:' + inc.id); else ctx.ui.expanded.delete('withheld:' + inc.id); } },
       h('summary', { class: 'field-label' }, 'Taxes withheld (copy from the paystub, optional)'),
       h('p', { class: 'muted xs' }, 'Each tax line on the paystub, per paycheck. With the first three, take-home is worked out if it is blank. Add any other line the paystub shows (state, local, SDI, paid leave); remove any that is not there.'),
+      // Shown: the three core lines, any line with a value, and any added from the picker. The added line's
+      // ui.expanded key stays until Remove is clicked (or the ui resets), so it shows while still blank.
       WITHHELD_LABELS.filter(([k]) => CORE_TAX.includes(k) || inc.withheld[k].status !== null || ctx.ui.expanded.has('tax:' + inc.id + ':' + k)).map(([k, label]) =>
         h('div', { class: 'tax-line' }, question(ctx, label, null, ['income', inc.id, 'withheld', k], inc.withheld[k]),
           CORE_TAX.includes(k) ? null : h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove ' + label, onclick: () => {
@@ -223,6 +238,7 @@ function archivedNote(ctx, inc) {
 function benefitCard(ctx, inc, row) {
   const p = (k) => ['income', inc.id, k];
   const set = (k) => (d, v) => { d.income.find((x) => x.id === inc.id)[k] = v; };
+  // Every figure in the plan (what lands, the set-aside, the end date) is row.unemployment from incomeSummary.
   const u = row && row.unemployment;
   const exact = (x) => money(x, true);
   let plan = null;
@@ -276,6 +292,7 @@ function paycheckBlock(ctx, inc, row, askActual) {
     est === null ? h('p', { class: 'small muted' }, 'Add the pay above to work out the paycheck.')
       : h('table', { class: 'budget' }, h('tbody', {}, steps.map(([k, v], i) => h('tr', { class: i === steps.length - 1 ? 'total' : '' }, h('td', {}, k), h('td', { class: 'num' }, v))))),
     askActual ? question(ctx, 'Actual paycheck (optional)', 'From a real paystub, to check the estimate. Leave blank to budget with the estimate', ['income', inc.id, 'takeHome'], inc.takeHome) : null,
+    // Under a dollar either way counts as a match; the gap is row.paycheckGapPerPaycheck from incomeSummary.
     gap === null ? null : Math.abs(gap) < 1 ? h('p', { class: 'small' }, 'The actual paycheck matches the estimate.')
       : h('div', { class: 'small' },
         h('p', { class: 'warn' }, 'Doesn\'t add up: the actual paycheck is ' + exact(Math.abs(gap)) + ' ' + (gap > 0 ? 'more' : 'less') + ' than the estimate.'),
@@ -294,6 +311,7 @@ function incomeCard(ctx, inc, row) {
     w2: 'Tax is withheld from this pay.', '1099': 'Nothing is withheld; self-employment tax applies.', side: 'Nothing is withheld; self-employment tax applies.',
 family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable': 'No tax.'
   }[inc.type];
+  // Work income (W-2, 1099, side) has a pay basis and deductions; benefits, family help, and not-taxable money do not.
   const isWork = inc.type !== 'unemployment' && inc.type !== 'not-taxable' && inc.type !== 'family';
   const hourly = isWork && inc.payBasis === 'hourly';
   const open = ctx.ui.expanded.has('inc-more:' + inc.id);
@@ -310,6 +328,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     hourly ? null : h('div', { class: 'qa', 'data-key': 'setup-takehome:' + inc.id }, h('div', { class: 'q' }, 'Take-home pay', h('div', { class: 'hint' }, 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below.')),
       h('span', { class: 'row' }, inc.takeHome.amount === null ? h('span', { class: 'muted small' }, 'Not entered') : [statusChip(inc.takeHome.status), ' ', h('b', { class: 'num' }, money(inc.takeHome.amount, true)), inc.takeHome.cadence === 'paycheck' ? ' a paycheck' : ' a ' + inc.takeHome.cadence],
         jumpLink(ctx, 'estimates', inc.takeHome.amount === null ? 'Enter in Your estimates' : 'Change in Your estimates', 'setup-takehome-go:' + inc.id))),
+    // A guess (from gross) or a computed take-home (from the paystub lines) says so; hourly pay gets the paycheck block instead.
     hourly ? null : row && row.takeHomeStatus === 'guess'
       ? h('p', { class: 'small' }, statusChip('guess'), ' Estimated take-home from gross: ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' / month. ' + row.takeHomeNote + '. Tax year ' + row.estimate.taxYear + '.')
       : row && row.takeHomeStatus === 'computed'
@@ -328,18 +347,19 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
       isWork && !hourly ? textField(ctx, 'Hours worked per week (optional, for per-hour pay and the hours-of-work lens)', p('hoursPerWeek'), inc.hoursPerWeek, { numeric: true, width: '6em', set: set('hoursPerWeek') }) : null,
       isWork ? deductionsBlock(ctx, inc, row) : null,
       inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
+      // The paycheck steps always show for hourly pay; for salary only once an actual paycheck gives a gap to explain.
       hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
       row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null) : null);
 }
 
-// Basics (S-106): six things open (name, birth year, state, situation, who you live with,
-// filing status); the rest sits behind "More details", which says how many are inside.
 // Total rent, then your share (S-123). Your share is the Rent line in Housing (its one owner), shown
 // here read-only with a link. While it is blank, an even split is offered as a rough start.
 function yourRentShare(ctx) {
   const r = rentShare(ctx.doc);
   const rm = ctx.doc.household.roommates;
   const people = rm.count + 1;
+  // Taking the split (rentShare, engines/totals.js) writes it as the Rent line's own estimate, marked roughly:
+  // it comes from the client's total rent, not from app data, so it is not a Guess.
   const useEven = r.line && r.yours === null && r.even !== null ? h('button', { class: 'btn small', 'data-key': 'rent-share-even', onclick: () => ctx.update('Your share of the rent', (d) => {
     findLine(d, r.lineId).line.estimate = makeValue(r.even, { status: 'roughly' });
   }) }, 'Use ' + money(r.even) + ' (split ' + people + ' ways)') : null;
@@ -352,6 +372,8 @@ function yourRentShare(ctx) {
       jumpLink(ctx, 'estimates', r.yours !== null ? 'Change in Plan, Housing' : 'Enter it in Plan, Housing', 'rent-share-go')));
 }
 
+// Basics (S-106): six things open (name, birth year, state, situation, who you live with,
+// filing status); the rest sits behind "More details", which says how many are inside.
 export function renderProfile(ctx, summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
@@ -371,11 +393,13 @@ export function renderProfile(ctx, summary) {
 
   return h('div', { class: 'card', id: 'basics-card' },
     h('div', { class: 'grid two' },
+      // A blank name falls back to "Client" so the client list and headings always have a word.
       textField(ctx, 'Name', ['profile', 'name'], pr.name, { set: (d, v) => { d.profile.name = v || 'Client'; } }),
       textField(ctx, 'Birth year', ['profile', 'birthYear'], pr.birthYear, { numeric: true, width: '7em', set: setProfile('birthYear') }),
       selectField(ctx, 'State', pr.state || '', [['', 'Pick a state'], ...STATES.map((s) => [s, s])], (d, v) => { d.profile.state = v || null; }, 'profile-state'),
       selectField(ctx, 'Who do you live with?', hh.livingWith || '', LIVING_WITH, (d, v) => {
         d.household.livingWith = v || null;
+        // Leaving roommates also clears their count, so the rent split and roommate fields go away.
         if (v !== 'roommates') d.household.roommates.count = 0;
       }, 'living-with'),
       selectField(ctx, 'Filing status', hh.filingStatus, FILING, (d, v) => { d.household.filingStatus = v; }, 'filing')),
@@ -403,6 +427,7 @@ export function futureToolsCard(ctx) {
 
 function addIncomeButton(ctx) {
   return h('button', { class: 'btn small', 'data-path': JSON.stringify(['income']), onclick: () => ctx.update('Add income', (d) => {
+    // The type goes through setIncomeType rather than addIncome so a benefits income also gets its label and weekly cadence.
     const inc = addIncome(d, { type: 'w2', label: 'Income ' + (d.income.length + 1) });
     setIncomeType(inc, defaultIncomeType(d.situation));
   }) }, '+ Add income source');

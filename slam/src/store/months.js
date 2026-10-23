@@ -2,10 +2,12 @@
 // open month keeps them in monthActuals[YYYY-MM], so each fact lives in one place.
 // A closed month is a locked snapshot of estimate and actual per line and
 // category. The snapshot is never edited; late entries go into a separate
-// "revised" record next to it.
+// "revised" record next to it. Needs plans.js (applyPlanStops, run whenever a month becomes the
+// one being worked on); plans.js imports nextMonthKey back (a harmless cycle: no call at load time).
 
 import { applyPlanStops } from './plans.js';
 
+// A Value with no amount and no status is not entered; a typed 0 or "doesn't apply" is an answer.
 const blank = () => ({ amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' });
 const isBlankValue = (v) => !v || (v.amount === null && v.status === null);
 
@@ -47,6 +49,8 @@ export function copyFixedFromLastMonth(doc) {
   const rec = doc.months.find((m) => m.key === from);
   let copied = 0;
   for (const l of allLines(doc)) {
+    // Only blank fixed lines are filled; a typed actual is never overwritten. A snapshot holds plain
+    // numbers, so a copy from a closed month is rebuilt as a known Value; an open month's Value is copied whole.
     if (l.kind !== 'fixed' || !isBlankValue(l.actual)) continue;
     const v = rec ? (rec.snapshot.lines[l.id] && rec.snapshot.lines[l.id].actual !== null ? { ...blank(), amount: rec.snapshot.lines[l.id].actual, status: 'known', note: 'Copied from ' + from } : null)
       : (doc.monthActuals[from][l.id] ? { ...doc.monthActuals[from][l.id], note: 'Copied from ' + from } : null);
@@ -62,7 +66,7 @@ export function nextMonthKey(key) {
   return y + '-' + String(m).padStart(2, '0');
 }
 
-// snapshot comes from calc (monthSnapshot) so the store never does math.
+// snapshot comes from the engines (monthSnapshot in engines/history.js) so the store never does math.
 export function closeMonth(doc, snapshot, nowIso) {
   const key = doc.currentMonth;
   if (doc.months.some((m) => m.key === key)) throw new Error('Month ' + key + ' is already closed');
@@ -76,7 +80,8 @@ export function closeMonth(doc, snapshot, nowIso) {
   return key;
 }
 
-// Record a late actual for one line of a closed month. The original stays as it was.
+// Record a late actual for one line of a closed month. The original stays as it was. amount is a
+// plain number; engines/history.js reads it in place of the snapshot's line actual.
 export function reviseMonth(doc, key, lineId, amount, nowIso) {
   const rec = doc.months.find((m) => m.key === key);
   if (!rec) throw new Error('Month ' + key + ' is not closed');
@@ -84,6 +89,8 @@ export function reviseMonth(doc, key, lineId, amount, nowIso) {
   rec.revised.lines[lineId] = { amount, at: nowIso };
 }
 
+// A detached copy: the snapshot shares nothing with the live document. Nothing is Object.frozen;
+// the store simply never writes to it.
 function deepFreezeCopy(obj) {
   return JSON.parse(JSON.stringify(obj));
 }

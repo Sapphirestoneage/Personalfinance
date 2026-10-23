@@ -1,5 +1,8 @@
 // The net worth bridge (S-112): why net worth changed in a month, like the budget-to-cash bridge
 // (bridge.js) but for the balance sheet. Every line is sourced and linked.
+// Dollars for the month, rounded to the cent. Depends on bridge.js (the cash bridge), balances.js
+// (balances on a day), contributions.js (money moved into investments), networth.js (both net worths),
+// log.js, store/schema.js (what counts toward FI), debts.js (loans a line pays), paid-ahead.js, and money.js.
 //
 //   start net worth                         (every account and debt at the start of the month)
 // + surplus                                 (the budget's: take-home - spending - savings)
@@ -41,12 +44,16 @@ import { r2 } from './money.js';
 
 const prevDay = (date) => new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
 const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
+// The cash bridge's steps that are timing, not spending: the yearly share vs the payment, money owed and paid
+// back, one-off spending, and income landed vs take-home.
 const TIMING = ['yearly', 'owed', 'received', 'one-off', 'income'];
+// Entry kinds that count as paid on a budget line (refunds and reimbursements carry negative amounts).
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 
 // monthStartOf and monthEndOf live with the other balance helpers (balances.js).
 export { monthStartOf, monthEndOf };
 
+// One account's or debt's start and end for the month, in dollars on those days (null when not known).
 // Updated this month: an end typed for it, or a balance checked during it.
 function span(doc, key, month) {
   const s = monthStartOf(doc, key, month);
@@ -55,10 +62,20 @@ function span(doc, key, month) {
   return { start: s ? s.amount : null, end: e ? e.amount : null, updated, last: e ? e.date : null };
 }
 
+/**
+ * The net worth bridge for one month, for net worth and for FI net worth.
+ * @param {object} doc the household file
+ * @param {object} income the income summary (summary.income)
+ * @param {string} month 'YYYY-MM'
+ * @returns {object} { month, total, fi, parts, within, missingStart, missingEnd, reading, fiReading }: total and
+ *   fi each { start, lines, explained, actual, change, unexplained, ties, stale, market, value, paid, added },
+ *   dollars for the month; parts says where the unexplained amount comes from; within is the materiality in dollars
+ */
 export function netWorthBridge(doc, income, month) {
   const br = bridgeFor(doc, income, month);
   const contrib = contributionsFor(doc, income, month);
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
+  // Each secured debt belongs to the first asset that names it (the same rule as networth.js).
   const securedBy = {};
   for (const a of accts) if (a.securedDebtId && !securedBy[a.securedDebtId]) securedBy[a.securedDebtId] = a;
   const startNW = netWorthAt(doc, month + '-01', (key) => monthStartOf(doc, key, month), prevDay(month + '-01'));
@@ -69,20 +86,24 @@ export function netWorthBridge(doc, income, month) {
 
   const invested = accts.filter((a) => kindOf(a) === 'invested').map((a) => ({ a, ...span(doc, a.id, month), c: contrib.byAccount[a.id] }));
   const valued = accts.filter((a) => kindOf(a) === 'valued').map((a) => ({ a, ...span(doc, a.id, month) }));
+  // Debts other than cards (a card's change is already inside the cash bridge).
   const debts = liabilities(doc).filter((l) => !l.account).map((l) => {
     const by = securedBy[l.debtId] || null;
     // A loan a budget line pays (S-116): the line's actual is the payment, split into interest and principal.
     const debt = (doc.debts || []).find((x) => x.id === l.debtId);
     const line = debt ? linkedLine(doc, debt) : null;
     const split = line ? { line: line.name, ...splitPayment(doc, debt, month, br.lineActuals[line.id] === undefined ? null : br.lineActuals[line.id]) } : null;
+    // fi: the debt counts toward FI unless the asset securing it does not (the mortgage goes with the home).
     return { l, ...span(doc, l.key, month), fi: !(by && !countsForFI(by)), split };
   });
   // Savings-line entries out of your accounts this month (the budget counted them as savings).
   const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
   const savEntries = add(counted(doc.transactions || []).filter((t) => t.date.slice(0, 7) === month && savingsLines.has(t.lineId) && COUNTS.has(t.kind) && !t.oneOff).map((t) => t.amount));
 
+  // A cash-bridge step that was left out (under half a cent) reads as 0.
   const step = (key) => (br.steps.find((x) => x.key === key) || { amount: 0 }).amount;
   const timing = br.steps.filter((x) => TIMING.includes(x.key));
+  // Card minimums paid from the budget are debt paid down; the cash bridge already counted them against the cards.
   const cardMin = step('card-min');
 
   const build = (fiOnly) => {
@@ -90,10 +111,14 @@ export function netWorthBridge(doc, income, month) {
     const val = valued.filter((x) => !fiOnly || countsForFI(x.a));
     const dbt = debts.filter((x) => !fiOnly || x.fi);
     const known = (x) => x.start !== null && x.end !== null;
+    // Market change needs an account updated this month: end - start - what was put in. An account not
+    // updated has no market line; its contributions are listed as stale instead.
     const market = inv.filter((x) => known(x) && x.updated).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start - x.c.total), start: x.start, end: x.end, contributions: x.c.total }));
     const value = val.filter((x) => known(x) && x.end !== x.start).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(x.end - x.start), start: x.start, end: x.end }));
+    // A debt's balance going down is principal paid (the interest was spent); going up is debt added.
     const paid = dbt.filter((x) => known(x) && x.end < x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.start - x.end), split: x.split }));
     const added = dbt.filter((x) => known(x) && x.end > x.start).map((x) => ({ name: x.l.name, key: x.l.key, amount: r2(x.end - x.start) }));
+    // Paycheck deductions into an account (a 401(k)) never passed through cash, so the surplus does not hold them.
     const deductions = add(inv.map((x) => x.c.deductions));
     // FI only: money moved into accounts that do not count leaves FI net worth.
     const movedOut = fiOnly ? invested.filter((x) => !countsForFI(x.a)).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(-x.c.transfers) })).filter((x) => x.amount) : [];
@@ -115,10 +140,11 @@ export function netWorthBridge(doc, income, month) {
     const v = add(value.map((x) => x.amount));
     if (v) line('value', 'Value change on things you own', v, value.map((x) => x.name + ' ' + signed(x.amount)).join(', '), { to: 'balances' });
     const up = add(added.map((x) => x.amount));
+    // Negative: more owed lowers net worth.
     if (up) line('debt-added', 'Debt added, not from payments (interest, new borrowing)', -up, added.map((x) => x.name + ' +' + money(x.amount)).join(', '), { to: 'balances' });
     const start = fiOnly ? startNW.fi : startNW.total;
     const actualEnd = fiOnly ? endNW.fi : endNW.total;
-    // The surplus is needed; without it nothing is explained.
+    // Explained end = start + every line. The surplus is needed; without it nothing is explained.
     const explained = start === null || br.surplus === null ? null : r2(start + add(lines.map((x) => x.amount)));
     // Cash and cards must be in to know the actual change (as in the cash bridge).
     const cashKnown = br.actual !== null && !br.missing.length;
@@ -136,6 +162,7 @@ export function netWorthBridge(doc, income, month) {
     within: br.within,
     missingStart: startNW.missing, missingEnd: endNW.missing
   };
+  // Ties within the cash bridge's materiality (the coach's setting, 25 when not set); null while a balance is missing.
   out.total.ties = out.total.unexplained === null ? null : Math.abs(out.total.unexplained) < br.within;
   out.fi.ties = out.fi.unexplained === null ? null : Math.abs(out.fi.unexplained) < br.within;
   out.reading = reading(out.total, br.within);
@@ -157,10 +184,18 @@ function splitText(x) {
 }
 const whole = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 
-// One plain sentence or two, no judgment. "Net worth rose $1,240. $650 you saved, $410 the market added, $180 of debt paid down."
+/**
+ * One plain sentence or two, no judgment. "Net worth rose $1,240. $650 you saved, $410 the market added, $180 of debt paid down."
+ * @param {object} b total or fi from netWorthBridge
+ * @param {number} [within] the materiality in dollars; 25 when not given
+ * @param {string} [name='Net worth'] the subject of the sentence
+ * @returns {string}
+ */
 export function reading(b, within, name = 'Net worth') {
   if (b.change === null) return name + ' needs a balance for every account at the start and end of the month.';
   const amt = (k) => (b.lines.find((x) => x.key === k) || { amount: 0 }).amount;
+  // "You saved" is everything that came from the budget side: surplus, timing, savings lines, and money moved
+  // out of FI. A part under 50 cents is not mentioned.
   const saved = r2(amt('surplus') + amt('timing') + amt('saved') + amt('moved-out'));
   const bits = [];
   if (Math.round(saved)) bits.push(saved > 0 ? whole(saved) + ' you saved' : whole(saved) + ' more went out than came in');
@@ -173,7 +208,12 @@ export function reading(b, within, name = 'Net worth') {
   return head + (bits.length ? ' ' + bits.join(', ').replace(/^./, (c) => c.toUpperCase()) + '.' : '') + tail;
 }
 
-// The waterfall: start, each line, explained, not explained yet (drawn apart), actual end.
+/**
+ * The waterfall: start, each line, explained, not explained yet (drawn apart), actual end.
+ * @param {object} b total or fi from netWorthBridge
+ * @returns {Array<{label: string, from: number, to: number, kind: string}>} dollars; kind 'total', 'step', or
+ *   'unexplained'; empty without a start, and an unexplained part under half a cent is not drawn
+ */
 export function netWorthBridgeRows(b) {
   if (b.start === null) return [];
   const rows = [{ label: 'Start', from: 0, to: b.start, kind: 'total' }];

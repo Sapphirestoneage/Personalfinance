@@ -1,7 +1,9 @@
 // Insights, Cash (S-106): top 5 merchants and their share, spending by
 // weekday with the weekend split, small-and-frequent vs big-and-rare, the
 // subscriptions list with yearly cost, and what the transactions show (moved
-// from the Cash flow pass). Data from src/engines/tx-analysis.js.
+// from the Cash flow pass). Data is s.transactions, built by buildSummary from
+// src/engines/tx-analysis.js. Depends on dom.js, format.js, the SVG primitives in
+// svg.js, card() and chartWidth() from catalog.js, and emptyState() from components/jump.js.
 
 import { h } from '../dom.js';
 import { money, pct } from '../format.js';
@@ -11,12 +13,15 @@ import { emptyState } from '../components/jump.js';
 
 export function transactionCards(ctx, s) {
   const tx = s.transactions;
+  // buildSummary leaves transactions null when the log is empty; the card then points at import.
   if (!tx) return [h('div', { class: 'card', id: 'chart-tx-none' }, emptyState(ctx, 'Log a few entries or import a bank CSV to see merchants and habits.', 'import', 'Import a CSV'))];
+  // Dollars or percent for the top-5 bars, the same ctx.ui.units slot the card's toggle writes.
   const u = ctx.ui.units['tx-top'] || 'dollars';
   const top = tx.top;
   const w = tx.weekdays;
   const sc = tx.sizeVsCount;
   const d = tx.detections;
+  // sizeVsCount comes largest total first; "biggest" here is the most frequent merchant, which is what the reading names.
   const biggest = sc.slice().sort((a, b) => b.count - a.count)[0];
   return [
     card(ctx, {
@@ -29,6 +34,7 @@ export function transactionCards(ctx, s) {
       svg: heatRow({ cells: w.days, width: chartWidth(true), fmt: money }),
       reading: 'Weekends are ' + pct(w.weekendShare) + ' of spending: ' + money(w.perWeekendDay) + ' per weekend day vs ' + money(w.perWeekday) + ' per weekday.'
     }),
+    // Only the six biggest merchants by total get a point label; every point still has a hover tip.
     card(ctx, {
       id: 'tx-size', title: 'Small and frequent vs big and rare',
       svg: scatter({ points: sc.map((m, i) => ({ x: m.count, y: m.average, label: i < 6 ? m.merchant : null, color: 'var(--series-actual)', tip: m.merchant + ': ' + m.count + ' charges, average ' + money(m.average, true) })),

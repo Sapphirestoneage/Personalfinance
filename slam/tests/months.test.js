@@ -1,5 +1,8 @@
-// Per-month actuals: pick a month, enter actuals, switch, and come back.
-// Trends use every month with actuals, not only closed ones.
+// Per-month actuals: pick a month, enter actuals, switch, and come back (switchMonth and
+// copyFixedFromLastMonth in the store's months.js). Trends use every month with actuals, not
+// only closed ones: checked through buildSummary (engines/summary.js) and trendData
+// (engines/chart-data.js). Uses the store's schema, value, edits and validate modules, and
+// the reference data in src/data through helpers.js.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

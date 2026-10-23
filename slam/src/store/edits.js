@@ -1,5 +1,7 @@
 // Small structural changes to a household draft (used inside store.update).
-// No math here: just finding things and adding or moving them.
+// No math here: just finding things and adding or moving them. Depends on the
+// record constructors and constants in schema.js, newId (ids.js), guessLineType
+// and DEFAULT_LINE_TYPES (types.js), and makeValue (value.js).
 
 import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID, FEE_LINES } from './schema.js';
 import { newId } from './ids.js';
@@ -31,6 +33,7 @@ export function removeLine(doc, lineId) {
   const hit = findLine(doc, lineId);
   if (!hit) throw new Error('No line ' + lineId);
   hit.line.state = 'archived';
+  // A debt this line paid goes back to its own minimum (see setDebtLine).
   for (const d of doc.debts || []) if (d.lineId === lineId) d.lineId = null;
 }
 
@@ -48,11 +51,12 @@ export function feeLine(doc, id) {
   return line;
 }
 
-// Several lines at once (S-122), from calc/quick-lines.js: each a name and an amount a month (or blank),
+// Several lines at once (S-122), from parseQuickLines (src/engines/quick-lines.js): each a name and an amount a month (or blank),
 // "roughly" in Your estimates, and marked split with someone when the client said so.
 export function addLines(doc, catId, items, status = 'roughly') {
   return items.map((it) => {
     const line = addLine(doc, catId, it.name);
+    // A blank amount leaves the estimate blank (not entered), never 0.
     if (it.amount !== null && it.amount !== undefined) line.estimate = makeValue(it.amount, { status });
     if (it.shared) line.shared = true;
     return line;
@@ -107,6 +111,7 @@ export function useOneNumber(doc, catId, monthly) {
   cat.split = false;
   if (cat.estimate.amount !== null || cat.estimate.status !== null) return;
   if (monthly === null) return;
+  // monthly is dollars a month from the engine. Rounded to the cent and marked roughly: a total of rough numbers is rough.
   cat.estimate = { amount: Math.round(monthly * 100) / 100, cadence: 'month', status: 'roughly', source: 'client', asOf: null, note: 'Total of the sub-categories' };
 }
 
@@ -150,6 +155,7 @@ export function addIncome(doc, fields) {
 export function addDebt(doc, fields) {
   const d = newDebt(fields);
   doc.debts.push(d);
+  // "No debts" is an answer of its own (the debt total reads 0, not blank); a debt withdraws it.
   doc.noDebts = false;
   return d;
 }
@@ -173,6 +179,7 @@ export function setIncomeActual(doc, month, incomeId, value) {
   doc.incomeActuals = doc.incomeActuals || {};
   const m = doc.incomeActuals[month] = doc.incomeActuals[month] || {};
   if (value === null) delete m[incomeId];
+  // "None this month" is a typed 0 with status not-for-me: an answer, unlike a blank.
   else if (value === 'none') m[incomeId] = { amount: 0, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: 'None this month' };
   else m[incomeId] = { ...value, cadence: 'month' };
   if (!Object.keys(m).length) delete doc.incomeActuals[month];
@@ -186,7 +193,7 @@ export function setPromoEnds(doc, debtId, date) {
 }
 
 // One total instead of categories: the total lives on an "Everything else"
-// category. Category estimates entered later are carved out of it by calc,
+// category. Category estimates entered later are carved out of it by the engines,
 // so the client's original total is never overwritten.
 export function useSingleTotal(doc) {
   doc.settings.singleTotal = true;
@@ -235,6 +242,8 @@ export function setField(doc, path, value) {
 }
 
 // The log owns the money (S-087): a line with entries this month is not typed over.
+// Spending, fees, refunds, and reimbursements count; transfers, card payments, and income are not spending.
+// An import still waiting on a possible match (t.possible) is not counted yet.
 const LOGGED_KINDS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 export function logEntriesFor(doc, lineId, month) {
   return (doc.transactions || []).filter((t) => t.lineId === lineId && t.date.startsWith(month) && LOGGED_KINDS.has(t.kind) && !(t.possible && t.possible.length));
@@ -252,7 +261,7 @@ export function startBlindRound(doc, dateIso) {
 }
 
 // Transactions: add new ones (skipping any already imported) and re-map one
-// (optionally remembering the merchant). Actuals come from the log in calc (S-087).
+// (optionally remembering the merchant). Actuals come from the log in the engines (S-087).
 export function addTransactions(doc, txs) {
   const have = new Set(doc.transactions.map((t) => t.id));
   const fresh = txs.filter((t) => !have.has(t.id)).map((t) => ({ source: 'import', note: '', ...t }));
@@ -299,6 +308,7 @@ export function startNextStage(doc, metrics) {
 }
 
 export function addNextStageItem(doc, list, label) {
+  // A measure is { now, next, better }: today's number, the next stage's, and whether 'higher' or 'lower' is the good way.
   const item = list === 'metrics'
     ? { id: newNextStageItem().id, label: label || 'New measure', now: null, next: null, better: 'higher' }
     : newNextStageItem(label);

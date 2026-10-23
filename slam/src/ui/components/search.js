@@ -1,8 +1,9 @@
-// Search (S-108): one box in the header ("/" jumps to it). It finds lines,
-// categories, merchants, entries, net worth numbers, accounts (with the latest balance), debts, charts, settings, months,
-// and screens by name, grouped by type, and each result jumps to its one home
-// (nav.js). Keyboard: arrows move, Enter opens, Escape closes. Results are big
-// enough to tap. Parked tools only show when Future tools are on.
+// Search (S-108): one box in the header ("/" jumps to it). It finds lines, categories, merchants,
+// entries, net worth numbers, accounts (with the latest balance), debts, charts, settings, months,
+// and screens by name, grouped by type, and each result jumps to its one home (nav.js). Keyboard:
+// arrows move, Enter opens, Escape closes. Results are big enough to tap. Parked tools only show when
+// Future tools are on. Places and the chart registry come from nav.js; the net worth numbers from
+// netWorthAt (engines/networth.js) and each account's latest balance from balanceAt (engines/balances.js).
 
 import { h } from '../dom.js';
 import { money, monthLabel, dayLabel, todayIso } from '../format.js';
@@ -20,6 +21,8 @@ function index(ctx) {
   const live = (xs) => xs.filter((x) => x.state !== 'archived');
   const out = [];
   for (const c of live(doc.categories)) {
+    // The one total ('everything', settings.singleTotal) is not listed. Debt payments is left out of
+    // Categories because its amount is computed from the debts on the Accounts screen, not typed on Your estimates.
     if (c.id === 'everything') continue;
     if (c.id !== 'debt') out.push(['Categories', c.name, 'Your estimates', { where: 'estimates', open: 'rough:' + c.id, anchor: 'est-' + c.id, item: c.name }]);
     for (const l of live(c.lines)) out.push(['Lines', l.name, c.name, { where: 'review', open: 'rv-cat:' + c.id, anchor: 'rv-cat-' + c.id, item: l.name }]);
@@ -27,10 +30,12 @@ function index(ctx) {
   const merchants = new Map();
   for (const t of doc.transactions || []) {
     if (t.deleted) continue;
+    // description is the merchant as typed or imported; merchant is its normalized key (store/log.js), the fallback.
     const m = t.description || t.merchant;
     if (m) merchants.set(m, (merchants.get(m) || 0) + 1);
   }
   for (const [m, n] of merchants) out.push(['Merchants', m, n + ' entr' + (n === 1 ? 'y' : 'ies'), { where: 'insights:time', ui: { trendFocus: 'm:' + m }, anchor: 'trend-pickers', item: m }]);
+  // Only the latest 400 entries are indexed, which keeps the index small on a long log.
   for (const t of (doc.transactions || []).filter((x) => !x.deleted).slice(-400)) {
     const name = t.description || t.note || 'Entry';
     out.push(['Entries', name, dayLabel(t.date) + ', ' + money(Math.abs(t.amount), true), { where: 'log', ui: { txMonth: t.date.slice(0, 7) }, open: 'entry:' + t.id, item: name + ', ' + dayLabel(t.date), extra: money(Math.abs(t.amount), true) }]);
@@ -45,9 +50,11 @@ function index(ctx) {
   for (const d of live(doc.debts)) out.push(['Debts', d.label, 'Debt', { where: 'setup:debts', item: d.label }]);
   for (const [anchor, name, where] of CHARTS) out.push(['Charts', name, where.replace('insights:', 'Insights, ').replace('setup:', 'Setup, '), { where, anchor, item: name }]);
   for (const [id, name] of SETUP_SECTIONS) out.push(['Settings', name, 'Setup', { where: 'setup:' + id, item: name }]);
+  // Two settings people look for by name that are not sections of their own.
   out.push(['Settings', 'Cushion', 'Setup, coach settings', { where: 'setup:coach', item: 'Cushion' }], ['Settings', 'Paydays', 'Setup, income', { where: 'setup:income', anchor: 'paydays-card', item: 'Paydays' }]);
   for (const m of doc.months) out.push(['Months', monthLabel(m.key), 'Closed', { where: 'months', ui: { monthsPick: m.key }, item: monthLabel(m.key) }]);
   out.push(['Months', monthLabel(doc.currentMonth), 'Working on it', { where: 'review', item: monthLabel(doc.currentMonth) }]);
+  // Insights opens on Where it goes; the fallthrough sends Setup, and Accounts too, to Setup, Basics.
   for (const [id, name] of SCREENS) out.push(['Screens', name, 'Screen', { where: id === 'review' ? 'review' : id === 'today' ? 'today' : id === 'track' ? 'track' : id === 'plan' ? 'plan' : id === 'insights' ? 'insights:where' : 'setup:basics' }]);
   for (const [id, name] of INSIGHT_TABS) out.push(['Screens', 'Insights, ' + name, 'Tab', { where: 'insights:' + id }]);
   if (ctx.future) {
@@ -72,6 +79,7 @@ export function searchResults(ctx, q) {
   return out;
 }
 
+// Opening a result clears the box, expands the target's row (ui.expanded), and names it in the breadcrumb (S-108).
 function open(ctx, target) {
   const st = ctx.ui.search;
   st.q = '';
@@ -88,6 +96,7 @@ export function searchBox(ctx) {
     results.length ? GROUPS.filter((g) => results.some((r) => r[0] === g)).map((g) => h('div', { class: 'search-group' },
       h('div', { class: 'xs muted search-head' }, g),
       results.map((r, i) => (r[0] !== g ? null : h('button', { class: 'search-hit', role: 'option', 'aria-selected': i === sel ? 'true' : 'false', 'data-key': 'sr:' + i,
+        // mousedown is swallowed so the box keeps focus and the list stays open until the click lands.
         onmousedown: (e) => e.preventDefault(), onclick: () => open(ctx, r[3]) }, h('span', {}, r[1]), h('span', { class: 'xs muted' }, r[2]))))))
       : h('p', { class: 'small muted', style: 'padding:8px 12px;margin:0' }, 'Nothing by that name. Try a line, a merchant, or a month.')) : null;
   return h('div', { class: 'search' },
@@ -97,6 +106,7 @@ export function searchBox(ctx) {
       onkeydown: (e) => {
         if (e.key === 'ArrowDown') { e.preventDefault(); st.sel = Math.min(sel + 1, results.length - 1); ctx.rerender(); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); st.sel = Math.max(sel - 1, 0); ctx.rerender(); }
+        // Enter and Escape blur the box so a phone keyboard goes away.
         else if (e.key === 'Enter' && results[sel]) { e.preventDefault(); e.target.blur(); open(ctx, results[sel][3]); }
         else if (e.key === 'Escape') { st.q = ''; e.target.blur(); ctx.rerender(); }
       } }),

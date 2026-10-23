@@ -1,4 +1,8 @@
-// Part 8 of the monthly loop: 80/20 (S-091), by hand.
+// Part 8 of the monthly loop: 80/20 (S-091), by hand: the smallest set of the biggest items that reaches
+// 80% of spending, at three levels (entries, merchants, lines), and the sentence that reads it out.
+// Uses paretoCut, paretoReading and paretoLevels in engines/pareto.js, buildSummary for the history the
+// levels read, the October fixture (tests/fixtures/october.js), and the helpers, which load the reference
+// data in src/data.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,7 +39,7 @@ test('three levels for October', () => {
   const s = buildSummary(d, refs);
   const p = paretoLevels(d, s.history, ['2026-10']);
   // Entries (purchases and fees): Geico 1,200, groceries 300, couch 250, groceries 100, concert 60 (120 less 60 owed), ATM 60.
-  // Total 1,970; 80% is 1,576. 1,200 + 300 = 1,500 is short; + 250 = 1,750: 3 of 6.
+  // Total 1,970; 80% is 1,576. 1,200 + 300 = 1,500 is short; + 250 = 1,750: 3 of 6. 1,750 / 1,970 = 0.888325.
   assert.deepEqual([p.entries.count, p.entries.of, p.entries.amount, p.entries.total], [3, 6, 1750, 1970]);
   assert.ok(near(p.entries.amountShare, 0.888325, 6));
   assert.equal(p.entries.reading, '50% of your entries (3 of 6) made up 80% of your spending.');

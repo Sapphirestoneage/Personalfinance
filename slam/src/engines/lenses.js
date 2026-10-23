@@ -1,9 +1,19 @@
 // Lenses re-read the same numbers in different ways. No new data comes in here.
 // 50/30/20, DRAFTT, hours of work, the personal income statement, and joy.
+// Inputs are the budget model (model.js), its totals (totals.js: bases, needs, wants, surplus) and the
+// income summary (income.js); helpers from money.js (ratio, sumKnown) and happiness.js (joyPer100).
+// Dollars a month; a share is a ratio 0 to 1; the income statement also gives the same numbers a year.
 
 import { ratio, sumKnown } from './money.js';
 import { joyPer100 } from './happiness.js';
 
+/**
+ * 50/30/20: needs, wants and savings as shares of take-home, next to the targets.
+ * @param {object} totals budgetTotals (totals.js), dollars a month.
+ * @param {{needs: number, wants: number, savings: number}} targets ratios (0.5, 0.3, 0.2 from benchmarks.json).
+ * @returns {{takeHome: number|null, rows: Array<{key: string, amount: number|null, share: number|null, target: number}>, unassigned: number|null, unassignedShare: number|null}}
+ *   amounts in dollars a month, shares ratios of take-home; unassigned is the surplus, what no bucket claimed.
+ */
 export function fiftyThirtyTwenty(totals, targets) {
   const row = (key, amount, target) => ({ key, amount, share: ratio(amount, totals.takeHome), target });
   return {
@@ -51,7 +61,17 @@ function letterAmount(model, key, partsOf) {
   return { amount: hits.length ? sumKnown(hits.map((p) => p.amount)).total : null, usesEstimate: hits.some((p) => p.from === 'estimate') };
 }
 
+/**
+ * DRAFTT, descriptive (see the note above LETTERS): each letter as dollars and as a share of the base.
+ * @param {object} model the budget model (model.js).
+ * @param {object} totals budgetTotals (totals.js), dollars a month.
+ * @param {object} income the income summary (income.js): retirementDeductions, gross, deductions.
+ * @returns {{rows: object[], total: number|null, totalShare: number|null, everythingElse: number|null, everythingElseShare: number|null, leftOver: number|null, leftOverShare: number|null, base: object, taxes: ?object}}
+ *   dollars a month; a row is { key, label, letter, amount, usesEstimate, estimateAmount, share, shareOfDraftt, estimateShare,
+ *   actualShare, change }, shares ratios of the base (take-home + pre-tax retirement), change = actual share - estimate share.
+ */
 export function draftt(model, totals, income) {
+  // No retirement deduction listed means none taken out (deductions.js sums only the rows that exist).
   const pretax = income.retirementDeductions || 0;
   const th = totals.takeHome;
   const base = th === null ? null : th + pretax;
@@ -82,6 +102,7 @@ export function draftt(model, totals, income) {
     r.actualShare = r.share;
     r.change = r.actualShare === null || r.estimateShare === null ? null : r.actualShare - r.estimateShare;
   }
+  // Taxes = gross - deductions - take-home, so state tax is in here even though it is never estimated.
   const taxes = income.gross !== null && th !== null ? income.gross - income.deductions - th : null;
   return {
     rows,
@@ -94,12 +115,23 @@ export function draftt(model, totals, income) {
   };
 }
 
-// Any monthly amount as hours of take-home pay.
+/**
+ * Any monthly amount as hours of take-home pay.
+ * @param {number|null} amount dollars a month.
+ * @param {number|null} hourlyTakeHome dollars an hour (income.hourlyTakeHome).
+ * @returns {number|null} hours a month; null when either side is missing or the rate is 0.
+ */
 export function hoursOfWork(amount, hourlyTakeHome) {
   return ratio(amount, hourlyTakeHome);
 }
 
-// Re-expresses an amount in the unit the lens toggle asks for.
+/**
+ * Re-expresses an amount in the unit the lens toggle asks for.
+ * @param {number|null} amount dollars a month.
+ * @param {string} unit 'percent', 'hours', or anything else for dollars.
+ * @param {object} totals budgetTotals (takeHome); income the income summary (hourlyTakeHome).
+ * @returns {number|null} dollars a month, a ratio of take-home, or hours of work.
+ */
 export function inUnit(amount, unit, totals, income) {
   if (unit === 'percent') return ratio(amount, totals.takeHome);
   if (unit === 'hours') return hoursOfWork(amount, income.hourlyTakeHome);
@@ -113,8 +145,14 @@ const STATEMENT_GROUPS = [
   ['savings', 'Savings and investing']
 ];
 
-// Income by type, minus taxes and pre-tax deductions, equals take-home,
-// minus expenses grouped like an income statement, equals net (surplus).
+/**
+ * Income by type, minus taxes and pre-tax deductions, equals take-home, minus expenses grouped like an
+ * income statement, equals net (surplus).
+ * @param {object} model the budget model; totals budgetTotals (bases per category); income the income summary.
+ * @returns {{monthly: object, annual: object, hasGross: boolean, revenueIncludesTakeHomeOnly: boolean}} monthly in dollars a
+ *   month, annual the same x 12: { revenueByType, revenue, taxes, deductions, takeHome, expenses: [{ key, label, amount }],
+ *   totalExpenses, net }; revenueIncludesTakeHomeOnly flags a source with no gross (its take-home stands in as revenue).
+ */
 export function incomeStatement(model, totals, income) {
   const byType = {};
   let taxes = 0;
@@ -125,6 +163,7 @@ export function incomeStatement(model, totals, income) {
     byType[s.type] = (byType[s.type] || 0) + revenue;
     if (s.grossMonthly !== null) {
       deductions += s.deductionsMonthly;
+      // Taxes are everything between gross, deductions and take-home, state included.
       taxes += s.grossMonthly - s.deductionsMonthly - s.takeHomeMonthly;
     }
   }
@@ -132,6 +171,7 @@ export function incomeStatement(model, totals, income) {
   const groups = { needs: 0, debt: 0, wants: 0, savings: 0 };
   for (const c of model.categories) {
     const basis = totals.bases[c.id];
+    // Each basis part (the actual, else the estimate) goes by its line's need flag; savings and debt are sorted first.
     for (const p of basis.parts) {
       if (c.savings) groups.savings += p.amount;
       else if (c.isDebt) groups.debt += p.amount;
@@ -156,12 +196,18 @@ export function incomeStatement(model, totals, income) {
   return { monthly, annual, hasGross: income.sources.some((s) => s.grossMonthly !== null), revenueIncludesTakeHomeOnly: income.sources.some((s) => s.grossMonthly === null && s.takeHomeMonthly !== null) };
 }
 
-// Joy vs spend per category (spend-weighted joy of rated lines), and the
-// categories with the lowest joy per $100 (candidates to cut first).
+/**
+ * Joy vs spend per category: the spend-weighted joy of its rated lines, and the categories with the lowest
+ * joy per $100 (candidates to cut first).
+ * @param {object} model the budget model; totals budgetTotals (bases).
+ * @returns {{rows: Array<{id: string, name: string, joy: number, spend: number, joyPer100: number}>, lowest: object[]}} spend in
+ *   dollars a month, joy 1 to 10 weighted by dollars, joyPer100 = joy / (spend / 100); lowest is up to three rows, lowest first.
+ */
 export function joyLens(model, totals) {
   const rows = [];
   for (const c of model.categories) {
     if (c.savings) continue;
+    // Only rated lines with money on them: a $0 line has no joy per dollar.
     const parts = totals.bases[c.id].parts.filter((p) => p.joy !== null && p.amount > 0);
     if (!parts.length) continue;
     const spend = sumKnown(parts.map((p) => p.amount)).total;
@@ -172,7 +218,11 @@ export function joyLens(model, totals) {
   return { rows, lowest };
 }
 
-// The plain reading under the DRAFTT charts: what is there, never a verdict.
+/**
+ * The plain reading under the DRAFTT charts: what is there, never a verdict.
+ * @param {object} d what draftt returns.
+ * @returns {string} two to five sentences; a prompt to add take-home when the base is unknown.
+ */
 export function drafttReading(d) {
   const p = (x) => Math.round(x * 100) + '%';
   if (d.totalShare === null) return 'Add take-home to see how DRAFTT sits in the budget.';
@@ -180,6 +230,7 @@ export function drafttReading(d) {
   const known = d.rows.filter((r) => r.amount !== null && r.shareOfDraftt !== null);
   const big = known.slice().sort((a, b) => b.amount - a.amount)[0];
   if (big) out.push(big.label + ' is the biggest letter at ' + p(big.shareOfDraftt) + ' of DRAFTT.');
+  // A move under half a percentage point is noise, and a letter standing on an estimate has not moved.
   const moved = known.filter((r) => !r.usesEstimate && r.change !== null && Math.abs(r.change) >= 0.005).sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0];
   if (moved) out.push(moved.label + "'s share went from " + p(moved.estimateShare) + ' estimated to ' + p(moved.actualShare) + ' actual.');
   const stand = known.filter((r) => r.usesEstimate).map((r) => r.label);

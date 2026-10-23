@@ -1,5 +1,7 @@
-// Phase 1 tests: schema, validation, migrations, save and load, client list,
-// export and import (with the automatic pre-import backup), undo and redo, month close.
+// Phase 1 tests for the store: schema, validation, migrations, save and load, client list,
+// export and import (with the automatic pre-import backup), undo and redo, month close, the
+// single-total category, and field paths. Uses the store alone (store, storage with the in-memory
+// backend, records, schema, validate, migrate, value, months, edits): no engines and no data files.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,7 +56,7 @@ test('validation catches bad enums, joy out of range, and duplicate ids', () => 
 test('migration upgrades an unversioned document and fills defaults', () => {
   const old = { id: 'hh-old', profile: { name: 'Old' }, gut: { amount: 2000 }, categories: [{ id: 'food', name: 'Food', lines: [{ id: 'g', actual: 300 }] }] };
   const d = migrate(old);
-  assert.equal(d.schemaVersion, SCHEMA_VERSION); // 2 since S-070
+  assert.equal(d.schemaVersion, SCHEMA_VERSION); // was 2 when S-070 bumped the schema; the constant has moved on since
   assert.equal(d.gut.cadence, 'month');
   assert.equal(d.categories[0].lines[0].actual.amount, 300);
   assert.equal(d.categories[0].lines[0].estimate.amount, null);
@@ -128,6 +130,7 @@ test('export, then import of the same client merges by record (S-096), with a ba
   await s.importText(text);
   assert.equal(s.doc.categories[0].lines[0].estimate.amount, 1500);
   const backups = s.listBackups();
+  // One backup per import, and the test imported twice.
   assert.equal(backups.length, 2);
   assert.match(backups[0].reason, /Before import/);
 });
@@ -141,7 +144,7 @@ test('import rejects junk with a plain message', async () => {
 test('month close locks a snapshot, advances the month, and keeps revisions separate', () => {
   const s = fresh();
   s.create('Months');
-  assert.equal(s.doc.currentMonth, '2026-09');
+  assert.equal(s.doc.currentMonth, '2026-09'); // the month of fixedClock
   const snap = { takeHome: 4000, categories: { food: { name: 'Food', estimate: 500, actual: 600 } }, lines: { groceries: { name: 'Groceries', categoryId: 'food', estimate: 400, actual: 450 } } };
   const key = s.closeMonth(snap);
   assert.equal(key, '2026-09');

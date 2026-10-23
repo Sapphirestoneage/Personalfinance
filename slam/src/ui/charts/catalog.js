@@ -1,6 +1,8 @@
 // Every chart in SLAM, as a card: title, optional dollars/percent toggle, the
 // SVG, a legend, and a one-line plain-English reading. Data comes from
-// src/engines/chart-data.js; this file only lays it out and words it.
+// src/engines/chart-data.js and the summary (lenses, stress, tags, completion, the income statement);
+// this file only lays it out and words it. The DRAFTT and stress readings come from engines/lenses.js
+// and engines/happiness.js. Builds on dom, format, svg, store/types, store/edits, and jump.
 
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, signedPct, monthLabel, less } from '../format.js';
@@ -16,12 +18,15 @@ import { changeIn } from '../components/jump.js';
 const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', plan: 'var(--series-dream)', actual: 'var(--series-actual)' };
 const NWS = { needs: 'var(--need)', wants: 'var(--want)', savings: 'var(--save)', unassigned: 'var(--unassigned)' };
 
+// Two half-width cards sit side by side from 728px of content (the grid's 760px breakpoint less the
+// page gutter); narrower, a half card takes the whole row. The 34 is the card's padding and border.
 export function chartWidth(half) {
   const vw = Math.min(document.documentElement.clientWidth, 1180) - 32;
   const w = half && vw >= 728 ? (vw - 12) / 2 : vw;
   return Math.max(260, Math.floor(w - 34));
 }
 
+// A category's color slot comes from colorSlots (eight, reused in order); "other" has its own color.
 function slotColor(slots, id) {
   return id === 'other' ? 'var(--chart-other)' : 'var(--chart-' + (slots[id] || 8) + ')';
 }
@@ -141,6 +146,7 @@ export function varianceCard(ctx, s) {
   const over = d.filter((x) => x.amount > 0 && !x.savings);
   return card(ctx, {
     id: 'variance', title: 'Over and under the estimate', unitToggle: true,
+    // Over the estimate is bad for spending and good for savings, so the color flips with x.savings.
     svg: d.length ? hbars({ mode: 'diverging', rows: d.map((x) => ({ label: x.name, values: [{ v: u === 'percent' ? x.share : x.amount, color: (x.amount > 0) !== x.savings ? 'var(--bad)' : 'var(--good)', tip: x.name + ': ' + signedMoney(x.amount) }] })), width: chartWidth(true), fmt }) : null,
     reading: over.length ? 'Biggest overage: ' + over[0].name + ', ' + signedMoney(over[0].amount) + ' a month over the estimate.' : 'No category came in over its estimate yet.'
   });
@@ -209,6 +215,7 @@ export function draftCard(ctx, s) {
       h('div', { class: 'chart', style: 'width:auto', html: donut({ slices: rows.map((r) => ({ name: r.label, amount: Math.max(0, r.amount), color: LETTER_COLORS[r.key] })), size: 160, center: money(d.total), centerSub: 'a month', fmt: money, label: 'DRAFTT letters' }) }),
       h('ul', { class: 'plain small' }, rows.map((r) => h('li', {}, h('span', {}, h('i', { class: 'swatch', style: 'background:' + LETTER_COLORS[r.key] }), ' ' + r.label),
         h('span', { class: 'num' }, pct(r.shareOfDraftt) + ', ' + money(r.amount)))))));
+  // Click a header to sort: numbers start descending, the letter column ascending, blanks always last.
   const sort = ctx.ui.drafttSort || { key: null, dir: -1 };
   const sorted = rows.slice();
   if (sort.key) sorted.sort((a, b) => { const x = a[sort.key]; const y = b[sort.key]; if (x === y) return 0; if (x === null) return 1; if (y === null) return -1; return (x < y ? -1 : 1) * sort.dir; });
@@ -285,6 +292,8 @@ export function joyCard(ctx, s) {
 export function mistakePicker(ctx, s) {
   const asClient = ctx.role === 'client';
   const shared = (id) => { const f = findLine(ctx.doc, id); return !!(f && f.line.mistakeShared); };
+  // Only spending with a real amount can be a mistake: savings, debt payments, computed lines, and blank
+  // or zero lines are left out. Ticked lines float to the top.
   const lines = s.rows.filter((r) => !r.savings && !r.isDebt).flatMap((r) => r.lines.filter((l) => !l.computed && l.basis !== null && l.basis > 0).map((l) => ({ ...l, category: r.name })))
     .sort((a, b) => (b.tag === 'mistake') - (a.tag === 'mistake'));
   return h('div', { class: 'mistake-pick' },
@@ -317,6 +326,7 @@ export function mistakeCard(ctx, s) {
 // Spending by standard type (like Rocket Money's categories), whatever the lines are called.
 export function typesCard(ctx, s) {
   const rows = s.totals.spendByType;
+  // A category entered as one number has no lines, so it is listed under its category type.
   const label = (t) => (t.startsWith('cat:') ? categoryTypeLabel(t.slice(4)) + ' (one number)' : lineTypeLabel(t));
   const top = rows[0];
   return card(ctx, {
@@ -342,6 +352,7 @@ export function tagsCard(ctx, s) {
       h('thead', {}, h('tr', {}, ['Tag', 'Lines', 'Estimate', 'Actual'].map((x) => h('th', {}, x)))),
       h('tbody', {}, rows.map((t) => h('tr', {}, h('td', {}, '#' + t.name, h('div', { class: 'xs muted' }, t.lines.join(', '))),
         h('td', { class: 'num' }, String(t.count)), h('td', { class: 'num' }, exact(t.estimate)),
+        // "(partial)": some of the tag's lines have no actual yet, so the total is not the whole tag.
         h('td', { class: 'num' }, exact(t.actual) + (t.actualMissing && t.actual !== null ? ' (partial)' : ''))))))) : null,
     reading: !s.tags.length ? 'No tags yet. Add them on any line in Setup, Categories and lines (Subscription, Travel, anything you like).'
       : !rows.length ? 'Tags are made but not on any line yet.'

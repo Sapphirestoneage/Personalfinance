@@ -1,4 +1,9 @@
-// The net worth bridge (S-112), by hand, on the October household (test/bridge.test.js), with:
+// The net worth bridge (S-112): netWorthBridge and netWorthBridgeRows in engines/networth-bridge.js,
+// by hand, on the October household (fixtures/october.js, worked out in tests/bridge.test.js). Uses
+// the cash bridge (engines/bridge.js), contributionsFor (engines/contributions.js), balanceMonths
+// (engines/networth.js), buildSummary (engines/summary.js), the store's accounts, edits, log, value
+// and validate modules, and helpers.js for the reference data in src/data and every demo household
+// in src/data/households (the last test reads that folder). Here the October household also has:
 //   a Roth IRA: 6,000 at the start, 6,500 at the end, 300 a month from the paycheck (a Roth deduction);
 //   a car: worth 9,000 at the start, 8,850 at the end;
 //   an auto loan on the car (no account): 6,000 owed at the start, 5,780 at the end; its 250 payment
@@ -132,5 +137,6 @@ test('the bridge always ties, for every month of every household file', () => {
       }
     }
   }
+  // 24 is one household's worth: Riley and Dana each add 24 (twelve months, total and FI); the other demos have no balances to check.
   assert.ok(checked >= 24, 'checked ' + checked);
 });

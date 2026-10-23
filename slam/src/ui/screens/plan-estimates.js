@@ -1,6 +1,9 @@
 // Plan, Your estimates (the Rough pass), and Your dream life at the top of Eras (S-097): one number per top-level category.
-// Rough also offers: one total instead, labeled guesses, last month's actual,
-// the personal correction, and a blind-guess round for revisit sessions.
+// Rough also offers: one total instead, labeled guesses, last month's actual, the personal correction, and a blind-guess
+// round for revisit sessions. Rows, allocation, guesses, corrections, line ideas, the blind comparison, and the dream
+// entry all come from buildSummary (engines/summary.js); health coverage from engines/coverage.js, quick-add parsing
+// from engines/quick-lines.js, last actuals from engines/history.js. Edits go through store/edits.js and store/plans.js.
+// Nothing is computed here.
 
 import { h } from '../dom.js';
 import { money, pct, monthLabel, signedMoney } from '../format.js';
@@ -30,6 +33,8 @@ function incomeCard(ctx, summary) {
   return h('div', { class: 'card', id: 'sec-income' }, h('div', { class: 'spread' }, h('h3', {}, 'Take-home pay'), jumpLink(ctx, 'setup:income', 'Pay details in Setup', 'est-income-go')),
     incomes.length ? incomes.map((inc) => {
       const row = rowOf(inc);
+      // Shown, not asked, when Setup already works it out (engines/income.js incomeSummary): hourly pay, unemployment, or a
+      // guess or computed take-home with nothing typed.
       const derived = row && (row.takeHomeStatus === 'guess' || row.takeHomeStatus === 'computed') && inc.takeHome.amount === null;
       return derived || inc.payBasis === 'hourly' || inc.type === 'unemployment'
         ? h('div', { class: 'qa', 'data-key': 'est-income:' + inc.id }, h('div', { class: 'q' }, 'Take-home, ' + inc.label, h('div', { class: 'hint' }, 'Worked out from the paycheck details in Setup.')),
@@ -42,7 +47,7 @@ function incomeCard(ctx, summary) {
 
 // Surplus first, then allocate it (S-132): the surplus (take-home less spending), the Savings lines
 // that allocate it (saving, investing, extra on debt), and what is not allocated yet. Numbers from
-// calc/totals.js surplusAllocation; only the allocations are typed.
+// engines/totals.js surplusAllocation; only the allocations are typed.
 function surplusHead(ctx, summary) {
   const a = summary.allocation;
   return h('div', { class: 'qa', 'data-key': 'rough-surplus' },
@@ -58,6 +63,7 @@ function surplusFoot(ctx, summary) {
   if (a.surplus === null) return null;
   const parts = [['Saving', a.groups.saving], ['Investing', a.groups.investing], ['Extra on debt', a.groups.debt]].filter(([, x]) => x);
   return h('div', { class: 'qa', 'data-key': 'rough-unallocated' },
+    // The savings-rate sentence shows only when surplusAllocation found room to raise it (boost not null).
     h('div', { class: 'q' }, 'Not allocated yet', h('div', { class: 'hint' }, (parts.length ? 'Allocated: ' + parts.map(([k, x]) => k + ' ' + money(x)).join(', ') + '. ' : '') + 'Until it is allocated, it stays surplus' +
       (a.boost === null ? '.' : ' and is not in your savings rate. Allocate it to saving to raise your savings rate from ' + pct(a.savingsRate) + ' to ' + pct(a.possibleSavingsRate) + '.'))),
     h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' + (a.unallocated < 0 ? ' bad' : ''), 'data-key': 'unallocated-amount' }, signedMoney(a.unallocated)),
@@ -66,7 +72,7 @@ function surplusFoot(ctx, summary) {
 
 // A split line (S-134): with how many other people, and your share (blank = even). Who pays the bill
 // (S-138): only your part (the amount is your part), or the whole bill on your card (the amount is the
-// whole bill; the others pay you back). The numbers come from calc/split.js through the line's row.
+// whole bill; the others pay you back). The numbers come from engines/split.js through the line's row.
 function splitBox(ctx, l, r) {
   const row = r.lines.find((x) => x.id === l.id);
   const sp = row ? row.split : null;
@@ -101,7 +107,7 @@ function insuranceRow(ctx) {
 }
 
 // Several sub-categories at once (S-122): "claude 216 spotify 21 youtube 27", with "split" after an
-// amount for one split with someone. Parsed in calc/quick-lines.js.
+// amount for one split with someone. Parsed in engines/quick-lines.js.
 function quickLines(ctx, catId) {
   const add = (input) => {
     const items = parseQuickLines(input.value);
@@ -160,6 +166,7 @@ function blindSection(ctx, summary) {
   const doc = ctx.doc;
   const round = doc.blindRounds.find((r) => r.id === ctx.ui.blindRoundId);
   if (!round) return null;
+  // Debt payments are computed and "doesn't apply" rows are settled, so neither is asked blind; the one-total row is no category.
   const cats = summary.rows.filter((r) => !r.isDebt && !r.notForMe && !r.isEverything);
   return h('div', { class: 'card' },
     h('h2', {}, 'Blind guess'),
@@ -183,7 +190,7 @@ export function renderEstimates(ctx, summary, key) {
   const doc = ctx.doc;
   const isRough = key === 'estimate';
   if (isRough && ctx.ui.blind) return blindSection(ctx, summary);
-  // The dream entry reads its rows from the dream life (calc/dream-life.js), never from the budget.
+  // The dream entry reads its rows from the dream life (engines/dream-life.js), never from the budget.
   const rows = isRough ? summary.rows : summary.dreamLife.entry.rows;
   const ev = rows.find((r) => r.isEverything);
 
@@ -264,10 +271,11 @@ export function renderEstimates(ctx, summary, key) {
         key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
     // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
     const longByLines = key === 'dreamLong' && cat.dreamLong.amount === null && cat.dreamLong.status !== 'not-for-me' && (r.estimateFrom === 'lines' || r.dreamFrom === 'lines');
+    // A category once split into lines (cat.split) stays line by line in Rough unless it is marked "doesn't apply".
     const fromLines = longByLines || (isRough ? r.estimateFrom : r[key + 'From']) === 'lines' || (isRough && cat.split && cat.estimate.status !== 'not-for-me');
     if (fromLines) {
-      // Already given line by line: show it, never ask it a second time.
-      // Given line by line: each line is asked here (never a second category number).
+      // Given line by line: each line is asked here and the category adds up; its one number is never asked a second time.
+      // A line added for a later month waits for that month; in Rough, premium lines are left to insuranceRow above.
       const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth) && !(isRough && PREMIUM_LINE_TYPES.includes(l.type)));
       // The client's own first number, kept as they said it (older files kept it as a note).
       const first = !isRough || !cat.split ? '' : cat.estimate.amount !== null ? 'First guess ' + money(toMonthly(cat.estimate, ctx.payFrequency)) + ' a month.'
@@ -305,6 +313,8 @@ export function renderEstimates(ctx, summary, key) {
         !open ? null : h('div', { class: 'row' }, isRough ? null : addLineButton(ctx, cat.id),
           isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
+    // Health and transport already taken out of the paycheck (engines/income.js fromPaycheckByLineType) are noted so the
+    // client counts only what is paid on top; the same for a parent's plan (engines/coverage.js parentsPlan).
     const fromPay = summary.income.fromPaycheckByLineType[r.type];
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;

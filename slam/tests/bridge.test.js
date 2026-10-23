@@ -1,4 +1,7 @@
 // Part 5 of the monthly loop: the budget-to-cash bridge (S-088), by hand.
+// Depends on bridgeFor in engines/bridge.js, buildSummary and closeMonthSnapshot in engines/summary.js,
+// the store's log.js, months.js and validate.js, the October fixture (fixtures/october.js) that holds the
+// month below, and the reference data through helpers.js.
 //
 // October 2026. Take-home 4,000 a month. Accounts at the start: checking 2,000,
 // savings 5,000, Visa 500 owed (linked to the Visa debt, minimum 40).

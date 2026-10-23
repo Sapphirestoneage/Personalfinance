@@ -1,4 +1,7 @@
-// Loads the reference tables from data/ once, for the browser.
+// Loads the reference tables from src/data/ once, for the browser, and names the demo
+// households and their sample bank files in src/data/households/. Imports nothing; everything
+// here is fetch(), so the app must be served over http (fetch fails on file://).
+// Paths are relative to slam/index.html, the page that loads the app.
 
 const FILES = {
   tax: 'src/data/tax-constants.json',
@@ -18,6 +21,7 @@ export async function loadRefs() {
   return Object.fromEntries(entries);
 }
 
+// Shown as buttons on the Clients screen. The id is the file name: src/data/households/<id>.json.
 export const DEMO_HOUSEHOLDS = [
   ['maya', 'Maya, 26, NYC renter with a roommate'],
   ['luis', 'Luis, 33, Ohio, W-2 plus side hustle'],

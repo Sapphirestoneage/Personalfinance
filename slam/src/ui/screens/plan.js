@@ -1,7 +1,8 @@
-// Plan (S-106): what the month should look like. The gut number (first for a new
-// client, then one line with the answer), the start of the month, next month's
-// plan (moved here from Analyze), and the client's own estimates (the Rough pass).
-// A toggle shows the plan or the estimates, so each stays short.
+// Plan (S-106): what the month should look like. The gut number (first for a new client, then one line with
+// the answer), the start of the month, next month's plan (moved here from Analyze), and the client's own
+// estimates (the Rough pass, plan-estimates.js). A toggle shows the plan or the estimates, so each stays short.
+// Reads summary.totals and summary.dreamLife.entry from buildSummary; the plan cards are plan-table.js
+// reviewCards with month-picker.js. runningBar is exported for the Future screen.
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
@@ -13,6 +14,7 @@ import { renderEstimates } from './plan-estimates.js';
 
 function gutCard(ctx) {
   const g = ctx.doc.gut;
+  // Answered means a status was set: "don't know" counts, so the big question steps aside for any answer, not only a number.
   const answered = g.status !== null;
   if (answered && !ctx.ui.gutOpen) {
     return h('div', { class: 'card gut-line', id: 'gut-card' }, h('div', { class: 'spread' },
@@ -33,6 +35,7 @@ export function runningBar(ctx, summary, pass) {
   const left = h('b', {});
   // Eras opens with the dream life, so its bar follows the dream being typed (S-097).
   if (pass === 'eras') pass = 'dream';
+  // Next stage has no column being typed, so its bar shows spending and savings as they stand.
   if (pass === 'next') pass = 'actual';
   const colLabel = pass === 'dream' ? (ctx.ui.dreamTerm === 'long' ? 'Long-term dream' : 'Short-term dream') : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
@@ -43,6 +46,8 @@ export function runningBar(ctx, summary, pass) {
     else { col.textContent = money(t.estimateOutflow); left.textContent = money(t.estimateLeft); }
   };
   fill(summary);
+  // While a value box is being typed, ctx.preview (app.js) runs buildSummary on a scratch copy and hands it here, so
+  // the bar moves on every keystroke without a rerender and nothing is saved until the change commits.
   ctx.ui.previewHandler = fill;
   return h('div', { class: 'running', 'aria-live': 'polite' }, h('div', { class: 'running-inner' },
     h('span', {}, 'Take-home ', take, ' / month'),

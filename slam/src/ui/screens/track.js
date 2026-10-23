@@ -1,9 +1,9 @@
-// Track (S-106): weekly use only, no setup. In loop order: today's scheduled
-// items to confirm, Quick entry, the log for this month, the cash calendar,
-// then import a bank or card CSV (matched to what was logged), and a real
-// balance check. Accounts, paydays, bill dates, and the cushion live in Setup;
-// when one is missing, a one-line prompt links there.
-// Line actuals come from the log on their own (S-087); there is no confirm step.
+// Track (S-106): weekly use only, no setup. In loop order: today's scheduled items to
+// confirm, Quick entry, the log for this month, the cash calendar, then import a bank or
+// card CSV (matched to what was logged), and a real balance check. Accounts, paydays, bill
+// dates, and the cushion live in Setup; when one is missing, a one-line prompt links there.
+// Line actuals come from the log on their own (S-087); there is no confirm step. Depends on the engines
+// (tx-import, log), the store (edits, log), refs for the merchant rules, and the ui helpers (dom, format, cash-charts, and the cashflow, jump, value-input, quick-entry components).
 
 import { h, options } from '../dom.js';
 import { waitingCard, checkBalancesCard } from '../components/cashflow.js';
@@ -22,6 +22,7 @@ const SOURCE_LABELS = { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank'
 const acctName = (doc, id) => (doc.accounts.find((a) => a.id === id) || { name: 'Unknown account' }).name;
 
 // Imported entries that may be something already logged: same, or different?
+// mergeImport (store/log.js) flags them with possible; isPending (engines/log.js) reads the flag, and confirmMatch and rejectMatch settle them.
 function possibleCard(ctx) {
   const doc = ctx.doc;
   const waiting = doc.transactions.filter(isPending);
@@ -46,6 +47,8 @@ function entryMore(ctx, t) {
   if (!open) return toggle;
   const purchases = ctx.doc.transactions.filter((x) => x.owed && x.id !== t.id);
   return h('div', { class: 'row small', style: 'flex-basis:100%' }, toggle,
+    // Owed back and one-off apply to money out only (a positive amount is money out, store/log.js).
+    // Owed is a flag as much as an amount: blank or 0 clears it (null).
     t.amount > 0 ? h('label', { class: 'row' }, 'Someone owes me back', h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6em', 'data-key': 'owed:' + t.id, value: t.owed ? String(t.owed) : '',
       onchange: (e) => { const a = parseAmount(e.target.value); ctx.update('Owed back', (d) => editEntry(d, t.id, { owed: a || null })); } })) : null,
     t.amount > 0 ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!t.oneOff, 'data-key': 'oneoff:' + t.id, onchange: (e) => ctx.update('One-off', (d) => editEntry(d, t.id, { oneOff: e.target.checked })) }), 'One-off (kept out of the monthly budget)') : null,
@@ -71,14 +74,17 @@ function lineOptions(doc) {
 function importCard(ctx) {
   const ui = ctx.ui;
   const live = ctx.doc.accounts.filter((a) => a.state !== 'archived');
+  // Import state lives in ui, not in the document: nothing is saved until "Add to the log".
+  // The checking account is the usual source of a file, so it is preselected.
   ui.txImport = ui.txImport || { account: (live.find((a) => a.type === 'checking') || live[0] || {}).id || '', format: 'auto', flip: false, pending: null, error: null };
   const st = ui.txImport;
   const file = h('input', { type: 'file', accept: '.csv,text/csv', class: 'sr-only', id: 'tx-file', onchange: async (e) => {
     const f = e.target.files[0];
     if (!f) return;
     try {
+      // Merchant rules are reference data (refs); merchantMemory is this client's own past fixes.
       st.pending = importCSV(await f.text(), { account: st.account || null, format: st.format, flip: st.flip, rulesData: ctx.refs.merchantRules, memory: ctx.doc.merchantMemory });
-      // Line the file up with what was already logged (calc decides; nothing is saved yet).
+      // Line the file up with what was already logged (matchImport in engines/log.js decides; nothing is saved yet).
       st.pending.match = matchImport(ctx.doc.transactions, st.pending.transactions);
       st.error = null;
     } catch (err) { st.error = err.message; st.pending = null; }
@@ -113,12 +119,15 @@ function logCard(ctx, summary, month, months) {
   const doc = ctx.doc;
   const ui = ctx.ui;
   const lines = lineOptions(doc);
+  // Duplicates come from summary.transactions.detections (engines/tx-analysis.js). The first entry of each
+  // group is left alone; the later ones get the flag and the "Both are real" answer.
   const dups = summary.transactions ? summary.transactions.detections.duplicates : [];
   const dupIds = new Set(dups.flatMap((x) => x.ids.slice(1)));
   const dupPairs = Object.fromEntries(dups.map((x) => [x.ids[1], x.ids]));
   const showAll = ui.txShowAll !== false;
   const remember = ui.txRemember !== false;
   const inMonth = doc.transactions.filter((t) => t.date.startsWith(month));
+  // Only spending, fees, and refunds need a budget line; income, transfers, card payments, and reimbursements do not.
   const needs = inMonth.filter((t) => !isPending(t) && !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
   // The latest entries first; the rest of a long month is one tap away (S-109).
   const all = (showAll ? inMonth : needs).slice().sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
@@ -138,10 +147,12 @@ function logCard(ctx, summary, month, months) {
       h('div', { class: 'toggle' },
         h('button', { 'aria-pressed': !showAll ? 'true' : 'false', onclick: () => { ui.txShowAll = false; ctx.rerender(); } }, 'Needs a line (' + needs.length + ')'),
         h('button', { 'aria-pressed': showAll ? 'true' : 'false', onclick: () => { ui.txShowAll = true; ctx.rerender(); } }, 'All (' + inMonth.length + ')'))),
+    // "Remember my fixes" passes through to setTransactionLine, which keeps the merchant-to-line choice in merchantMemory.
     h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: remember, 'data-key': 'tx-remember', onchange: (e) => { ui.txRemember = e.target.checked; } }), 'Remember my fixes for each merchant'),
     list.length ? h('ul', { class: 'plain' }, list.map((t) => h('li', {},
       h('div', { style: 'flex:1 1 220px;min-width:0' },
         h('div', {}, h('b', {}, t.description || '(no merchant)'), h('span', { class: 'src-chip' }, SOURCE_LABELS[sourceOf(t)] + (t.mergedFrom ? ', merged' : '')),
+          // Chip colors borrow the value statuses: a possible match or BNPL reads as "will email" (waiting on an answer), a likely duplicate as "don't know".
           isPending(t) ? h('span', { class: 'chip st-will-email', style: 'margin-left:6px' }, 'Possible match') : null,
           dupIds.has(t.id) ? h('span', { class: 'chip st-dont-know', style: 'margin-left:6px' }, 'Likely duplicate') : null,
           dupIds.has(t.id) ? h('button', { class: 'btn small ghost', 'data-key': 'not-dup-' + t.id, onclick: () => ctx.update('Both charges are real', (d) => markNotDuplicate(d, dupPairs[t.id])) }, 'Both are real') : null,
@@ -168,6 +179,7 @@ function setupPrompts(ctx) {
   const live = (xs) => xs.filter((x) => x.state !== 'archived');
   const out = [];
   if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the calendar knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
+  // Twice-a-month pay has fixed days, so only the other frequencies need a next payday (payDates, engines/calendar.js).
   const noPayday = live(doc.income).filter((i) => i.payFrequency !== 'semimonthly' && !i.nextPayDate.date);
   if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the calendar knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
   return out.length ? h('div', { class: 'card prompts' }, out) : null;

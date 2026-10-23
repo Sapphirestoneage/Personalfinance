@@ -1,7 +1,9 @@
 // Cash flow on screen (S-086): the inputs the calendar needs (pay dates, due
 // days, the cushion; all in Setup, S-106), scheduled items waiting on "It
 // happened" and a real balance check (Track), and the compact 30-day strip on Today.
-// Every number comes from calc/calendar.js; this file only lays it out.
+// Every number comes from engines/calendar.js (cashCalendar, calendarReading, safeReading); paid-ahead.js,
+// balances.js, coverage.js, debts.js, and explain.js feed the rows around it. This file only lays it out.
+// Writes go through store/cashflow.js. Builds on dom, format, value-input, quick-entry, jump, and how.
 
 import { h, options } from '../dom.js';
 import { money, todayIso, dayLabel, monthLabel } from '../format.js';
@@ -37,6 +39,8 @@ function accountSelect(ctx, key, value, onPick, label) {
 const ANNUAL = (cat, line) => cat.type === 'annual' || line.estimate.cadence === 'year';
 
 // Paydays (Setup, Income and paychecks): put paychecks on the calendar.
+// Twice a month means two day boxes, each clamped to 1 to 31 (blank or junk becomes the 1st); every other
+// frequency takes one next pay date and the calendar repeats it.
 export function paydaysCard(ctx) {
   const incomes = ctx.doc.income.filter((i) => i.state !== 'archived');
   return h('div', { class: 'card', id: 'paydays-card' },
@@ -58,6 +62,7 @@ export function billsCard(ctx) {
   const dayBox = (line, field, max, label) => valueInput({ ...ctx, preview: null }, ['line', line.id, field], line[field], { label, cadence: false, placeholder: max === 12 ? 'month' : 'day' });
   const bills = [];
   for (const c of doc.categories) {
+    // Savings has no due date and the Debt category is covered by the debts listed below, so neither is a bill.
     if (c.state === 'archived' || c.savings || c.id === 'debt') continue;
     // A premium is a bill only when it is paid directly (S-117); a loan's line is its bill (S-116).
     for (const l of c.lines) if (l.state !== 'archived' && (l.kind === 'fixed' || ANNUAL(c, l)) && !(PREMIUM_LINE_TYPES.includes(l.type) && premiumFor(doc).from !== 'direct')) bills.push({ c, l, annual: ANNUAL(c, l) });
@@ -107,6 +112,7 @@ export function cushionRow(ctx) {
 export function waitingCard(ctx, summary) {
   const cal = calendarFor(ctx, summary);
   if (!cal.waiting.length) return null;
+  // Draft state per item (the typed amount, a new date) lives on ctx.ui so it survives rerenders.
   const st = ctx.ui.waitEdit = ctx.ui.waitEdit || {};
   return h('div', { class: 'card flag', id: 'waiting-card' },
     h('h2', {}, 'Scheduled, on or before today (' + cal.waiting.length + ')'),
@@ -124,6 +130,7 @@ export function waitingCard(ctx, summary) {
         s.moving ? h('span', { class: 'row' },
           h('input', { type: 'date', 'aria-label': 'New date', 'data-key': 'move-to:' + it.key, value: s.to, onchange: (e) => { s.to = e.target.value; } }),
           h('button', { class: 'btn small', onclick: () => ctx.update('Moved', (d) => moveItem(d, it.key, s.to, new Date().toISOString())) }, 'Move'),
+          // A null date tells moveItem the item is skipped this month, not moved.
           h('button', { class: 'btn small ghost', 'data-key': 'skip:' + it.key, onclick: () => ctx.update('Skipped this month', (d) => moveItem(d, it.key, null, new Date().toISOString())) }, 'Skip this month'))
           : h('button', { class: 'btn small ghost', 'data-key': 'didnt:' + it.key, onclick: () => { s.moving = true; ctx.rerender(); } }, "Didn't happen / moved"),
         it.moved ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Back to its date', (d) => clearMove(d, it.key)) }, 'Undo move') : null);
@@ -153,6 +160,7 @@ export function checkBalancesCard(ctx) {
 // Today's compact strip, numbers only: today, the lowest point in the next 30 days, and safe to spend.
 export function budgetCashStrip(ctx, summary) {
   const cal = calendarFor(ctx, summary, 30);
+  // Nothing to project when there is no lowest point or no live account has a starting balance (unknownStart).
   if (!cal.lowest || cal.unknownStart.length === ctx.doc.accounts.filter((a) => a.state !== 'archived').length) {
     return h('div', { class: 'card cash-strip' }, h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
       emptyState(ctx, 'Add a checking balance to see cash by day and what is safe to spend.', 'balances', 'Add a balance'));

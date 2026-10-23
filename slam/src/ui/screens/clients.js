@@ -1,4 +1,8 @@
-// Screen 1, Clients: list, new client, open, export, import, demo households.
+// Screen 1, Clients: list, new client, open, export, import, demo households. Import also handles a file that
+// was changed on both copies: the merge card lets the coach pick a side per record (S-096). Everything stored
+// goes through ctx.store (store/store.js: list, create, open, importText, backups). The demos are the made-up
+// files in src/data/households/ (ui/refs.js); a demo's sample CSVs are read with engines/tx-import.js importCSV,
+// matched against the log with engines/log.js matchImport, and merged with store/log.js mergeImport.
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
@@ -28,6 +32,7 @@ export function exportClient(ctx) {
 
 // A record in a few words, for the merge screen.
 // One side of a conflict: the record's name and date, then each field that differs from the other side.
+// Bookkeeping fields and nested lists are left out of the differences; they are not what the coach picks between.
 const SKIP = ['id', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'version', 'deleted', 'deletedAt', 'deletedBy', 'lines', 'deductions'];
 function shown(v) {
   if (typeof v === 'number') return money(Math.abs(v), true);
@@ -41,6 +46,7 @@ function brief(rec, other) {
   if (rec.date) parts.push(rec.date);
   if (rec.name || rec.label || rec.description) parts.push(rec.name || rec.label || rec.description);
   const diff = Object.keys({ ...rec, ...other }).filter((k) => !SKIP.includes(k) && JSON.stringify(rec[k]) !== JSON.stringify(other[k]));
+  // Against a deleted other side every field differs, so list none; "deleted" on that side says enough.
   for (const k of other.deleted ? [] : diff) parts.push(k + ' ' + shown(rec[k]));
   return parts.join(', ') || 'changed';
 }
@@ -50,6 +56,7 @@ const stampOf = (side) => (side.by || 'coach') + ', ' + (side.at ? new Date(side
 function mergeCard(ctx) {
   const r = ctx.store.pendingImport();
   if (!r) return null;
+  // Picks live in ui state until Finish merge; a conflict left unpicked keeps this copy (local).
   const picks = ctx.ui.mergePicks = ctx.ui.mergePicks || {};
   return h('div', { class: 'card flag', id: 'merge-conflicts' },
     h('h2', {}, 'Merging ' + r.doc.profile.name + ': ' + r.conflicts.length + ' to pick'),
@@ -83,6 +90,7 @@ export function renderClients(ctx) {
       if (!file) return;
       try {
         const res = await store.importText(await file.text());
+        // Conflicts keep the coach on this screen, where mergeCard shows them; otherwise straight to Today.
         if (res.merged && res.conflicts.length) { ctx.ui.mergePicks = {}; ctx.toast(res.conflicts.length + ' change' + (res.conflicts.length === 1 ? '' : 's') + ' made on both copies: pick which to keep.'); ctx.rerender(); return; }
         ctx.toast(res.merged ? 'Merged: ' + res.added + ' added, ' + res.fromIncoming + ' taken from the file, ' + res.fromLocal + ' kept from here. Backup ' + res.backupId + '.' : 'Imported. A backup of everything was saved first (' + res.backupId + ').');
         ctx.go('today');
@@ -125,6 +133,8 @@ export function renderClients(ctx) {
       h('div', { class: 'row' }, DEMO_HOUSEHOLDS.map(([id, label]) => h('button', { class: 'btn small', onclick: async () => {
         try {
           store.add(await loadDemo(id));
+          // A demo with sample bank files is imported the way a coach would: the account is found by name or made first,
+          // then each CSV goes through importCSV, matchImport (already imported or matched entries), and mergeImport.
           for (const [file, name, type] of DEMO_CSVS[id] || []) {
             let account = (store.doc.accounts.find((a) => a.name === name) || {}).id;
             if (!account) store.update('Add account', (d) => { account = addAccount(d, { name, type }).id; });
