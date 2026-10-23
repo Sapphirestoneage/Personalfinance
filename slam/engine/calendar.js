@@ -17,7 +17,7 @@
 
 import { valueOf as v, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, toDay, fromDay, dayIn, daysInMonth, isFact } from './spine.js';
 import { cashflow, streamWeight } from './cashflow.js';
-import { project } from './projection.js';
+import { cashsim } from './cashsim.js';
 import { promoDeadlines } from './debt.js';
 import { yearTax } from './tax.js';
 import { nextCharge, isSubscription } from './subscriptions.js';
@@ -160,14 +160,41 @@ function setAsidePath(spine, cf) {
   return ty && ty.setAside ? 'taxYears.' + ty.id + '.setAside' : null;
 }
 
+// The day-by-day cash line behind a month (S-203): checking and total cash at the end
+// of each day from the cash simulation, read by date.
+function cashLineFor(sim, ym) {
+  if (!sim) return [];
+  return sim.daily.filter((d) => d.date.slice(0, 7) === ym).map((d) => ({ date: d.date, cash: d.cash, primary: d.primary, debt: d.debt, in: d.in, out: d.out }));
+}
+
+// The month-end cash number and how it was reached (S-203): the start-of-month
+// checking balance plus every event on the checking account in the month, by kind.
+export function monthCashTerms(sim, ym) {
+  if (!sim) return null;
+  const days = sim.daily.filter((d) => d.date.slice(0, 7) === ym);
+  if (!days.length) return null;
+  const pid = sim.model.accounts.find((a) => a.primary);
+  if (!pid) return null;
+  const before = sim.daily[sim.daily.indexOf(days[0]) - 1];
+  const start = before ? before.primary : pid.balance / 100;
+  const groups = {};
+  for (const d of days) for (const e of d.events) {
+    if (e.account !== pid.id || e.kind === 'shortfall' || e.kind === 'statement' || e.amount === null) continue;
+    const k = e.kind === 'income' || e.kind === 'maybe-in' ? 'Pay and money in' : e.kind === 'everyday' ? 'Everyday spending, spread by day' : e.kind === 'card-payment' || e.kind === 'extra-payment' ? 'Card payments' : e.kind === 'loan-payment' || e.kind === 'paylater' ? 'Loan and plan payments' : e.kind === 'transfer' ? 'Saving and the tax set-aside' : e.kind === 'auto-cover' ? 'Topped up from the cushion' : e.kind === 'sweep' ? 'Month-end sweep' : 'Bills';
+    groups[k] = (groups[k] || 0) + e.amount;
+  }
+  return { start: round2(start), startDate: before ? before.date : sim.start, end: days[days.length - 1].primary, endDate: days[days.length - 1].date, groups: Object.entries(groups).map(([label, amount]) => ({ label, amount: round2(amount) })) };
+}
+
 // The calendar from a month, for a number of months.
-export function calendar(spine, rules, { from = null, months = 1, mode = 'expected', asOf = spine.meta.asOf } = {}) {
+export function calendar(spine, rules, { from = null, months = 1, mode = 'expected', asOf = spine.meta.asOf, maybeMode = 'weighted' } = {}) {
   const asOfYm = monthKey(asOf);
   const start = from || asOfYm;
   const last = addMonths(start, months - 1);
   const taxCache = new Map();
-  // Month-end cash from the projection (expected mode, like the Dashboard's years to FI).
-  const proj = last > asOfYm ? project(spine, rules, { asOf, mode, endYm: last }) : null;
+  // The day-by-day cash line from the simulation (S-203), as far as the last month asked for.
+  const span = (+last.slice(0, 4) - +asOfYm.slice(0, 4)) * 12 + (+last.slice(5) - +asOfYm.slice(5)) + 1;
+  const sim = last >= asOfYm ? cashsim(spine, rules, { asOf, months: span, maybeMode }) : null;
   const sheet = balanceSheet(spine);
   const out = [];
   const all = tracker();
@@ -181,19 +208,22 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     const sum = (dir) => round2(events.filter((e) => e.direction === dir && e.amount !== null && e.counted).reduce((x, e) => x + e.amount, 0));
     const inn = sum('in'), outt = sum('out');
     let cash;
-    if (ym === asOfYm) cash = { value: sheet.cash.value, kind: sheet.cash.kind, note: 'cash today, every cash account added up', path: sheet.cash.from[0] || null, when: 'now' };
-    else if (ym < asOfYm) cash = { value: null, kind: 'missing', note: 'a month before the as-of date: the projection does not look back', path: null, when: 'past' };
-    else { const row = proj && proj.months.find((m) => m.ym === ym); cash = row ? { value: row.cash, kind: proj.kind, note: 'cash at the end of the month, from the projection (' + mode + ' income, only minimums paid, surplus kept as cash)', path: null, when: 'end' } : { value: null, kind: 'missing', note: 'beyond the ' + rules.get('APP_PROJ_MONTHS', +ym.slice(0, 4)) + ' months the projection reports month by month', path: null, when: 'end' }; }
-    if (proj) all.absorb({ value: 0, from: proj.from, rough: proj.rough, missing: proj.missing, rules: proj.rules });
+    const line = cashLineFor(sim, ym);
+    const lastDay = line.length ? line[line.length - 1] : null;
+    if (ym < asOfYm) cash = { value: null, kind: 'missing', note: 'a month before the as-of date: the simulation does not look back', path: null, when: 'past', today: null };
+    else cash = { value: lastDay ? lastDay.primary : null, total: lastDay ? lastDay.cash : null, kind: lastDay ? sim.kind : 'missing', note: lastDay ? 'checking at the end of ' + (ym === asOfYm ? 'this month' : 'the month') + ', from the day-by-day simulation (' + maybeMode + ' maybe money, the floor guard ' + (sim.floor.guard ? 'on' : 'off') + ')' : 'no day of this month is in the simulation', path: sheet.cash.from[0] || null, when: ym === asOfYm ? 'now' : 'end', today: ym === asOfYm ? sheet.cash.value : null };
+    if (sim) all.absorb({ value: 0, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules });
     const snap = t.snapshot();
+    const low = sim && sim.monthly[ym] ? sim.monthly[ym].low : null;
     out.push({
-      ym, days, undated: events.filter((e) => !e.date), events, in: inn, out: outt, net: round2(inn - outt), cash,
+      ym, days, undated: events.filter((e) => !e.date), events, in: inn, out: outt, net: round2(inn - outt), cash, line, low,
+      monthCash: monthCashTerms(sim, ym),
       surplus: cf.surplus, kind: snap.missing.length ? 'incomplete' : snap.rough.length || events.some((e) => e.rough) ? 'rough' : 'computed', rough: snap.rough, missing: snap.missing
     });
   }
   all.rule(rules, 'EST_Q1', +start.slice(0, 4)); all.rule(rules, 'EST_Q2', +start.slice(0, 4)); all.rule(rules, 'EST_Q3', +start.slice(0, 4)); all.rule(rules, 'EST_Q4', +start.slice(0, 4)); all.rule(rules, 'TAX_RETURN_DUE', +start.slice(0, 4));
   const snap = all.snapshot();
-  return { asOf, mode, from: start, months: out, ...snap };
+  return { asOf, mode, maybeMode, from: start, months: out, sim, ...snap };
 }
 
 // The first day of the week (0 Sunday) a month starts on, for a grid.

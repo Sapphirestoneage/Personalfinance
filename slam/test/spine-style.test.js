@@ -9,7 +9,8 @@ import { SLAM } from './spine-helpers.js';
 const EM = String.fromCharCode(0x2014);
 
 const files = [
-  ...['engine', 'ui'].flatMap((d) => readdirSync(SLAM + d).map((f) => d + '/' + f)),
+  // engine/vendor/ holds byte copies of another app's files (S-203), checked for drift, not style.
+  ...['engine', 'ui'].flatMap((d) => readdirSync(SLAM + d).filter((f) => f.endsWith('.js') || f.endsWith('.css')).map((f) => d + '/' + f)),
   ...readdirSync(SLAM + 'test').filter((f) => /^(spine-|rules\.|schema\.|eli\.golden|demo\.golden)/.test(f)).map((f) => 'test/' + f),
   'ledger.html', 'dashboard.html', 'calendar.html', 'windfall.html', 'data/rules-2026.json', 'fixtures/demo.json',
   'CONTRACTS.md', 'BOARD.md', 'QUESTIONS.md', 'DECISIONS.md', 'README.md'

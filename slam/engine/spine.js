@@ -50,6 +50,8 @@ export function setAt(root, path, next) {
       out[idx] = copy(node[idx], i + 1);
       return out;
     }
+    // A missing container along the way (a new optional section such as debtPlan) is created.
+    if (node === undefined) node = {};
     if (node === null || typeof node !== 'object') throw new Error('Cannot set ' + path);
     return { ...node, [seg]: copy(node[seg], i + 1) };
   };

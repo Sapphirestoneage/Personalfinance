@@ -7,7 +7,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { editIncome, editExpense, editPayment, editFact, putFact } from '../engine/edits.js';
 import { calendar, payDatesIn } from '../engine/calendar.js';
 import { cashflow } from '../engine/cashflow.js';
-import { project } from '../engine/projection.js';
+import { cashsim } from '../engine/cashsim.js';
 import { readJson, loadRules } from './spine-helpers.js';
 
 const R = loadRules();
@@ -48,12 +48,18 @@ test('the demo month: each item on its day, the rest sometime this month, totals
   // Days add up to the month.
   near(m.days.reduce((x, d) => x + d.in, 0) + m.undated.filter((e) => e.direction === 'in').reduce((x, e) => x + e.amount, 0), m.in);
   // This month's cash is cash today; a later month's is the projection's month-end cash.
-  assert.equal(m.cash.value, 12000);
+  assert.equal(m.cash.today, 12000, 'cash today, every cash account');
   assert.equal(m.cash.when, 'now');
+  assert.equal(typeof m.cash.value, 'number', 'checking at the end of this month from the simulation');
+  // Month-end cash is checking at the end of the month's last day, from the day-by-day simulation (S-203).
   const later = calendar(demo(), R, { from: '2026-12', months: 1 }).months[0];
-  const p = project(demo(), R, { endYm: '2026-12' });
-  assert.equal(later.cash.value, p.months.find((x) => x.ym === '2026-12').cash);
+  const sim = cashsim(demo(), R, { months: 3 });
+  assert.equal(later.cash.value, sim.daily.find((x) => x.date === '2026-12-31').primary);
   assert.equal(later.cash.when, 'end');
+  assert.equal(later.line.length, 31, 'a cash line for every day of the month');
+  assert.equal(later.low, sim.monthly['2026-12'].low);
+  const terms = later.monthCash;
+  near(terms.start + terms.groups.reduce((x, g) => x + g.amount, 0), terms.end, 'the month-end checking balance is the start plus every event on the account', 0.05);
   // Every event with a field links to it; every event has a kind and a label.
   for (const e of m.events) { assert.ok(e.kind && e.label, e.id); if (e.path) assert.ok(/^[a-z]+\./.test(e.path)); }
 });

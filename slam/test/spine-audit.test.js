@@ -12,6 +12,7 @@ import { summarize } from '../engine/summary.js';
 import { METRICS, DASHBOARD_MATH, UNITS, metricById, explainMetric, flagMath, showNumber } from '../engine/math.js';
 import { setSectionSharing, editExpense } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
+import { calendar } from '../engine/calendar.js';
 import { money } from '../src/ui/format.js';
 import { readJson, exists, loadRules, SLAM } from './spine-helpers.js';
 
@@ -25,10 +26,10 @@ const households = () => {
   list.push(['demo, shared and missing', d]);
   if (exists('fixtures/eli.local.json')) list.push(['local profile', applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R)]);
   // Each household also gets a windfall of $5,000 with tax taken out, so the Windfall steps are audited too (S-201).
-  return list.map(([name, spine]) => { const s = summarize(spine, R); return { name, spine, s, windfall: windfall(spine, R, s, { amount: 5000, taxed: true }) }; });
+  return list.map(([name, spine]) => { const s = summarize(spine, R); return { name, spine, s, windfall: windfall(spine, R, s, { amount: 5000, taxed: true }), month: calendar(spine, R, { from: '2026-11', months: 1 }).months[0] }; });
 };
 const ALL = households();
-const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.items.map((c) => 'cardUtil:' + c.id), ...h.spine.expenses.map((e) => 'expenseCost:' + e.id), ...h.windfall.steps.map((x) => 'windfall:' + x.id)];
+const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.items.map((c) => 'cardUtil:' + c.id), ...h.spine.expenses.map((e) => 'expenseCost:' + e.id), ...h.windfall.steps.map((x) => 'windfall:' + x.id), 'calendar:monthCash'];
 
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');
@@ -44,7 +45,7 @@ test('a. every Dashboard number and every flag has a formula, inputs and rules',
   }
   for (const h of ALL) {
     for (const ids of Object.values(DASHBOARD_MATH)) for (const id of ids) {
-      const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall });
+      const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall, month: h.month });
       assert.ok(e, h.name + ': ' + id + ' explains');
       assert.ok(Array.isArray(e.rules), id + ' lists its rules');
       if (e.value !== null) assert.ok(e.terms.length, h.name + ': ' + id + ' names its inputs');
@@ -59,7 +60,7 @@ test('a. every Dashboard number and every flag has a formula, inputs and rules',
 
 test('b. recomputing every metric from its shown inputs gives the displayed value, to the cent', () => {
   for (const h of ALL) for (const id of idsFor(h)) {
-    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall });
+    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall, month: h.month });
     if (e.value === null) { assert.equal(e.recomputed, null, h.name + ': ' + id + ' is missing both ways'); continue; }
     assert.notEqual(e.recomputed, null, h.name + ': ' + id + ' recomputes');
     const tol = e.unit === 'ratio' || e.unit === 'months' || e.unit === 'years' ? 0.0005 : 0.005;
@@ -71,7 +72,7 @@ test('c. units are declared and never mixed', () => {
   const ratioOK = { 'usd|usd': 'ratio', 'usd/month|usd/month': 'ratio', 'usd|usd/month': 'months', 'usd/month|ratio': 'usd' };
   for (const h of ALL) for (const id of idsFor(h)) {
     const m = metricById(id);
-    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall });
+    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall, month: h.month });
     for (const t of e.terms) assert.ok(UNITS.includes(t.unit), id + ': ' + t.label + ' declares a unit');
     if (m.op === 'sum') for (const t of e.terms) assert.equal(t.unit, m.unit, h.name + ': ' + id + ' adds ' + t.unit + ' to ' + m.unit + ' (' + t.label + ')');
     if (m.op === 'ratio') {
@@ -95,7 +96,7 @@ test('d. missing never shows as $0', () => {
   assert.equal(showNumber(null, 'usd'), 'missing');
   assert.equal(showNumber(null, 'usd', 'notForMe'), 'does not apply', 'not for me is not missing');
   for (const h of ALL) for (const id of idsFor(h)) {
-    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall });
+    const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s, windfall: h.windfall, month: h.month });
     for (const t of e.terms) if (t.value === null) assert.ok(!/\$0\.00/.test(showNumber(t.value, t.unit)), id + ': ' + t.label);
     const anyMissing = e.terms.some((t) => t.kind === 'missing' && t.value === null) || (e.missingBecause && e.missingBecause.length && e.value !== null && false);
     if (anyMissing) assert.notEqual(e.kind, 'computed', h.name + ': ' + id + ' is built on a missing input, so it cannot read as complete');

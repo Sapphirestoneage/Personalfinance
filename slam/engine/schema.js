@@ -31,6 +31,7 @@ export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pe
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
 export const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 export const FAT = ['food', 'accommodation', 'transportation'];
+export const DEBT_PLAN_FIELDS = ['extra', 'day', 'strategy', 'stopAtHi', 'hiRate', 'rollFreed'];
 export const TAX_YEAR_FIELDS = ['estimatedPaidFederal', 'estimatedPaidState', 'capitalGainsLong', 'qualifiedDividends', 'otherIncome', 'setAside'];
 
 // ---------------------------------------------------------------- families
@@ -70,7 +71,9 @@ export const FAMILIES = {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',
       statementCloseDay: 'int', secured: 'bool', payoffDate: 'date', federal: 'bool', plan: 'text', stress: 'int', reasonsToKeep: 'list',
-      business: 'bool', reportsToPersonalCredit: 'bool', paidFrom: 'link', payPolicy: 'choice:minimum|statement'
+      business: 'bool', reportsToPersonalCredit: 'bool', paidFrom: 'link', payPolicy: 'choice:minimum|statement',
+      // The everyday (float) card is paid in full and held flat; a debt paid last waits for the others (S-203).
+      everydayCard: 'bool', payLast: 'bool'
     }
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
@@ -340,6 +343,22 @@ export function validate(spine) {
       else checkFact(p + '.' + k, ty[k], 'money');
     }
   }
+
+  // The debt plan (S-203): the extra at the debt and how it is aimed. Every field optional.
+  const dp = spine.debtPlan || {};
+  checkFact('debtPlan.extra', dp.extra, 'money', false); checkFact('debtPlan.day', dp.day, 'int', false);
+  checkFact('debtPlan.strategy', dp.strategy, 'choice:avalanche|snowball', false); checkFact('debtPlan.stopAtHi', dp.stopAtHi, 'bool', false);
+  checkFact('debtPlan.hiRate', dp.hiRate, 'rate', false); checkFact('debtPlan.rollFreed', dp.rollFreed, 'bool', false);
+  for (const k of Object.keys(dp)) if (!DEBT_PLAN_FIELDS.includes(k)) err('debtPlan.' + k, 'not a debt plan field');
+  // Calendar timing decisions (S-203): overrides of one occurrence, the maybe tray, locks, two switches. Plain values, not Facts: a decision, not a fact about the household.
+  const cal = spine.calendar || {};
+  for (const [key, o] of Object.entries(cal.overrides || {})) {
+    if (!/^[^|]+\|\d{4}-\d{2}-\d{2}$/.test(key)) err('calendar.overrides.' + key, 'key is sourceId|YYYY-MM-DD');
+    if (o.date !== undefined && !isDate(o.date)) err('calendar.overrides.' + key, 'date is not a date');
+    if (o.amount !== undefined && typeof o.amount !== 'number') err('calendar.overrides.' + key, 'amount must be a number');
+  }
+  if (cal.maybe !== undefined) { if (!Array.isArray(cal.maybe)) err('calendar.maybe', 'a list'); else { uniqueIds('calendar.maybe', cal.maybe); for (const m of cal.maybe) { const p = 'calendar.maybe.' + m.id; if (typeof m.label !== 'string') err(p, 'needs a label'); if (typeof m.amount !== 'number') err(p, 'amount must be a number'); if (m.date !== null && m.date !== undefined && !isDate(m.date)) err(p, 'date is not a date'); if (m.likelihood !== undefined && (typeof m.likelihood !== 'number' || m.likelihood < 0 || m.likelihood > 1)) err(p, 'likelihood is 0 to 1'); if (m.direction !== undefined && !['in', 'out'].includes(m.direction)) err(p, 'direction is in or out'); } } }
+  for (const k of ['guard', 'autoCover']) if (cal[k] !== undefined && typeof cal[k] !== 'boolean') err('calendar.' + k, 'true or false');
 
   // assumptions
   const as = spine.assumptions || {};

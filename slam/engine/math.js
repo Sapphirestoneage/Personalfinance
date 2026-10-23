@@ -115,7 +115,7 @@ def({ id: 'cliffCosts', label: 'Costs once certain income stops', unit: 'usd/mon
   explain: ({ s }) => { const c = s.cliff; if (!c) return out(null, []); return out({ value: Math.round(c.costs * 100) / 100, kind: c.spending.kind === 'computed' && c.minimums.kind === 'computed' ? 'computed' : 'rough', rules: [], rough: [], missing: [] }, [{ label: 'Spending', value: c.spending.value, unit: 'usd/month', kind: c.spending.kind, role: 'plus', group: 'E' }, { label: 'Minimum payments', value: c.minimums.value, unit: 'usd/month', kind: c.minimums.kind, role: 'plus', group: 'D' }, { label: 'Tax set-aside', value: c.setAside.value, unit: 'usd/month', kind: c.setAside.kind, role: 'plus', group: 'T' }]); } });
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id);
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
 function expenseCostMetric(id) {
@@ -175,6 +175,23 @@ function windfallMetric(id) {
       return out(r, terms);
     },
     recompute: (t) => (t[0].value === null ? null : Math.round(Math.max(0, Math.min(t[0].value, Math.max(0, t[1].value))) * 100) / 100) };
+}
+
+// The calendar's month-end cash ("calendar:monthCash", S-203): checking at the end of
+// the month = checking at the start + every event on the account in the month, by kind,
+// from the day-by-day simulation. ctx.month is the calendar month (the page puts it there).
+function calendarMetric(id) {
+  if (id !== 'calendar:monthCash') return null;
+  return { id, label: 'Checking at the end of the month', unit: 'usd', op: 'sum', screens: ['calendar'], formula: 'Checking at month end = checking at the start of the month + pay in - bills - card and loan payments - everyday spending - saving and the set-aside + top-ups from the cushion',
+    explain: ({ month, s }) => {
+      const t = month && month.monthCash;
+      if (!t) return out(null, []);
+      const kind = month.cash.kind === 'computed' ? 'computed' : month.cash.kind;
+      return out({ value: t.end, kind, from: [], rough: [], missing: [], rules: [] }, [
+        { label: 'Checking at the start (' + t.startDate + ')', value: t.start, unit: 'usd', kind: s.sheet.cash.kind === 'computed' ? 'known' : s.sheet.cash.kind, role: 'plus', group: 'A' },
+        ...t.groups.map((g) => ({ label: g.label, value: Math.abs(g.amount), unit: 'usd', kind: 'computed', role: g.amount < 0 ? 'minus' : 'plus', group: null }))
+      ]);
+    } };
 }
 
 // Per-card utilization, one metric per card ("cardUtil:<id>").

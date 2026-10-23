@@ -38,6 +38,7 @@ export function typeFor(spine, path) {
   }
   if (s[0] === 'goals') return 'money';
   if (s[0] === 'assumptions') return s[1] === 'lifeExpectancy' || s[1] === 'coastAge' ? 'int' : 'rate';
+  if (s[0] === 'debtPlan') return s[1] === 'extra' ? 'money' : s[1] === 'day' ? 'int' : s[1] === 'strategy' ? 'choice:avalanche|snowball' : s[1] === 'hiRate' ? 'rate' : 'bool';
   return 'text';
 }
 

@@ -8,6 +8,8 @@ import { calendar, weekdayOf } from '../engine/calendar.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
+import { mathButton } from './math-panel.js';
+import { summarize } from '../engine/summary.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 
 const app = document.getElementById('app');
@@ -63,14 +65,16 @@ function grid(m, today) {
     h('div', { class: 'grid', role: 'list' }, cells));
 }
 
-function summary(m) {
+function summary(m, mathCtx) {
   const cash = m.cash;
-  const cashWords = cash.value === null ? cash.note : (cash.when === 'now' ? 'Cash today: ' : 'Cash at the end of the month: ') + money(cash.value) + '.';
+  const cashWords = cash.value === null ? cash.note : 'Checking at the end of the month: ' + money(cash.value) + (cash.total !== null && cash.total !== cash.value ? ' (every cash account: ' + money(cash.total) + ')' : '') + '.';
   return h('section', { class: 'card month-sum', 'aria-label': 'This month in one line' },
     h('p', { class: 'flow-total' }, (m.net >= 0 ? money(m.net) + ' more comes in than goes out' : money(-m.net) + ' more goes out than comes in') + ' on the calendar this month.'),
     h('p', { class: 'tile-sub' }, 'Comes in ' + money(m.in) + '; goes out ' + money(m.out) + ' (bills, minimums, saving and the tax set-aside). Lines with no amount or marked "not added" are not in these totals.'),
-    h('p', { class: 'tile-sub' }, chip(cash.kind === 'computed' ? 'known' : cash.kind), ' ', cashWords, cash.path ? [' ', h('a', { href: ledgerHref(cash.path) }, 'View in the Ledger')] : null),
-    h('p', { class: 'tile-note' }, 'A rough tag means the day or the amount is a guess (a house default, or a rough number). The totals use what is on the calendar; the month-end cash uses the whole month from the projection, undated items included.'));
+    cash.today !== null ? h('p', { class: 'tile-sub' }, 'Cash today: ' + money(cash.today) + ' across every cash account.', cash.path ? [' ', h('a', { href: ledgerHref(cash.path) }, 'View in the Ledger')] : null) : null,
+    h('p', { class: 'tile-sub' }, chip(cash.kind === 'computed' ? 'known' : cash.kind), ' ', cashWords, m.low !== null ? ' Lowest day: ' + money(m.low) + '.' : ''),
+    m.monthCash ? mathButton(['calendar:monthCash'], mathCtx) : null,
+    h('p', { class: 'tile-note' }, 'A rough tag means the day or the amount is a guess (a house default, or a rough number). The totals use what is on the calendar; the month-end checking balance comes from the day-by-day simulation, where an item with no day is spread evenly across the month and cards are paid on their due days.'));
 }
 
 function undated(m) {
@@ -91,6 +95,7 @@ function render() {
   const spine = withScenario(base, rules, pickedScenario());
   const c = calendar(spine, rules, { from: ym, months: 1 });
   const m = c.months[0];
+  const mathCtx = () => ({ spine, rules, s: summarize(spine, rules, { flags: false }), month: m });
   const today = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
   const asOfYm = c.asOf.slice(0, 7);
   const go = (n) => { ym = addMonths(ym, n); keep(); render(); window.scrollTo({ top: 0 }); };
@@ -104,7 +109,7 @@ function render() {
       h('h2', { class: 'month-h', 'aria-live': 'polite' }, longMonth(ym), ym === asOfYm ? h('span', { class: 'stage-chip stage-green' }, 'This month') : null),
       h('button', { type: 'button', class: 'btn', onclick: () => go(1) }, monthWords(addMonths(ym, 1)) + ' ›'),
       ym !== asOfYm ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { ym = asOfYm; keep(); render(); } }, 'Back to this month') : null),
-    summary(m),
+    summary(m, mathCtx),
     h('section', { class: 'card cal', 'aria-labelledby': 'cal-h' },
       h('h2', { id: 'cal-h' }, 'On the days'),
       h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([cc]) => used.has(cc)).map(([cc, t]) => h('li', {}, h('span', { class: 'sw ' + cc, 'aria-hidden': 'true' }), t)), m.events.some((e) => e.rough) ? h('li', {}, h('span', { class: 'ev-tag' }, 'rough'), ' a guessed day or amount') : null),
@@ -112,7 +117,7 @@ function render() {
       h('div', { class: 'cal-list-only' }, dayList(m, today))),
     undated(m),
     listTwin(m),
-    h('p', { class: 'muted' }, 'Shows the ' + c.mode + ' view: maybe money counts at how likely it is. Only minimum payments are paid; the surplus stays in cash. Cash at month end follows the assumption set picked on the Dashboard.'));
+    h('p', { class: 'muted' }, 'Maybe money is weighted by how likely it is. Cards are paid by their pay setting on their due days; the extra at the debt follows the debt plan in the Ledger.'));
 }
 
 const KEY = 'slam-calendar:v1';

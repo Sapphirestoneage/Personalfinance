@@ -103,6 +103,8 @@ export function ledgerTree(spine, inst) {
   // Goals and assumptions
   const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label || UNNAMED, r, { collection: 'goals', id: g.id }); });
   const gSections = [node('G:goals', 'Goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } }), node('G:assumptions', 'Assumptions', [item('assumptions', 'Assumptions', take(byPrefix('assumptions')))])];
+  const plan = take(byPrefix('debtPlan'));
+  if (plan.length) gSections.push(node('G:debtPlan', 'Debt plan', [item('debtPlan', 'The extra at the debt', plan)]));
 
   // Anything not placed above still shows (nothing is ever hidden by the tree).
   const rest = rows.filter((r) => !used.has(r.path));

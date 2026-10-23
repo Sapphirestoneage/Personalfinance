@@ -1611,6 +1611,86 @@
       "notes": "Tax on the money itself (when it is still owed), the year's tax bill, cash up to the stage 1 floor, promo balances the surplus cannot clear in time, cards charging interest now (highest rate first), cash up to the Rule of 5 target, the year's Roth IRA room, then what is left. Change the order here, not in code.",
       "source": "SLAM house assumption (Phase 2, S-201)",
       "verified": "assumption"
+    },
+    {
+      "id": "CARD_GRACE_DAYS",
+      "rule": "Days from a card's statement close to its due date (the grace period)",
+      "value": 24,
+      "unit": "days",
+      "appliesTo": "Cash simulation: cards",
+      "notes": "Used to place the statement close when only the due day is known; issuers give 21 to 25 days",
+      "source": "CFPB card agreement conventions, as remembered by the builder",
+      "verified": "verify"
+    },
+    {
+      "id": "CARD_LATE_FEE",
+      "rule": "Late fee charged when a card payment is missed",
+      "value": 40,
+      "unit": "$",
+      "appliesTo": "Cash simulation: cards",
+      "notes": "A typical first late fee; the simulation adds it to the balance the day a minimum cannot be paid",
+      "source": "Issuer agreements as remembered by the builder (v44 used $40)",
+      "verified": "verify"
+    },
+    {
+      "id": "CARD_PENALTY_APR",
+      "rule": "Penalty rate after a missed card payment",
+      "value": 0.2999,
+      "unit": "rate",
+      "appliesTo": "Cash simulation: cards",
+      "notes": "Charged for CARD_PENALTY_MONTHS after a miss",
+      "source": "Issuer agreements as remembered by the builder",
+      "verified": "verify"
+    },
+    {
+      "id": "CARD_PENALTY_MONTHS",
+      "rule": "Months the penalty rate lasts after a missed payment",
+      "value": 6,
+      "unit": "months",
+      "appliesTo": "Cash simulation: cards",
+      "notes": "",
+      "source": "SLAM house assumption (v44 used 6)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_HI_RATE",
+      "rule": "Debt at or above this rate counts as high-interest for the extra at the debt (stopAtHi) and the high-interest-free date",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Cash simulation: the extra at the debt",
+      "notes": "",
+      "source": "SLAM house assumption (v44 used 10%)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_LIKELY_THRESHOLD",
+      "rule": "Maybe money at or above this likelihood counts in full in the likely-only view",
+      "value": 0.6,
+      "unit": "ratio",
+      "appliesTo": "Cash simulation: maybe money",
+      "notes": "The weighted view multiplies by the likelihood; the ignore view leaves it out",
+      "source": "SLAM design setting (v44 used 60%)",
+      "verified": "app"
+    },
+    {
+      "id": "APP_REIMBURSE_DAYS",
+      "rule": "Days after a shared bill you pay in full that the others' part comes back",
+      "value": 3,
+      "unit": "days",
+      "appliesTo": "Cash simulation: shared bills paid whole",
+      "notes": "",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_EXTRA_DAY",
+      "rule": "Day of the month the extra at the debt lands when the debt plan does not say",
+      "value": 14,
+      "unit": "day",
+      "appliesTo": "Cash simulation: the extra at the debt",
+      "notes": "",
+      "source": "SLAM house assumption (v44 used the 14th)",
+      "verified": "assumption"
     }
   ]
 }

@@ -130,6 +130,16 @@ In the Ledger, an income stream now shows how much, how often, since when,
 until when and the day it is paid on one row, edited in one panel; an
 expense's panel has start and end dates under "When does it run?".
 
+### The day-by-day simulation (Batch A, S-203)
+
+The calendar's cash line and month-end checking balance come from a day-by-day
+run of the cashflow v44 engine, which Money Rooms v3 already ports
+(`money-rooms-v3/engine/cashcal.js`). SLAM does not rewrite it: `engine/vendor/`
+holds a byte copy with a drift test, and `engine/cashsim.js` is the adapter
+that builds the engine's model from the spine and reads the run back as numbers
+with a kind. The parity matrix for the whole calendar is
+`docs/CALENDAR_PARITY.md`.
+
 ### Where things are
 
 | Path | What it is |

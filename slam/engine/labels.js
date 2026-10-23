@@ -18,7 +18,8 @@ const FIELD = {
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
   paidFrom: 'paid from', payDay: 'day paid', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
-  need: 'a need (not a want)', covered: 'paid by someone else',
+  need: 'a need (not a want)', covered: 'paid by someone else', everydayCard: 'everyday card (paid in full, held flat)', payLast: 'paid last',
+  extra: 'extra at the debt a month', day: 'day the extra lands', strategy: 'aimed at', stopAtHi: 'stop once nothing is high-interest', hiRate: 'high-interest rate line', rollFreed: 'a finished plan rolls into the extra',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
@@ -57,6 +58,7 @@ export function labelFor(spine, path) {
     }
     case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label || UNNAMED : s[1]) + ': ' + words(s[2]); }
     case 'assumptions': return ASSUME[s[1]] || words(s[1]);
+    case 'debtPlan': return 'Debt plan: ' + words(s[1]);
     case 'taxYears': return s[1] + ' ' + words(s[2]);
     default: return path;
   }
