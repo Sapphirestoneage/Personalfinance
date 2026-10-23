@@ -146,7 +146,6 @@ export function payDates(inc, month) {
 export function scheduledItems(doc, month, income) {
   const items = [];
   const first = month + '-01';
-  const last = dateIn(month, 31);
   const def = defaultAccount(doc);
   const moves = (doc.cashflow && doc.cashflow.moves) || {};
   const push = (it) => {

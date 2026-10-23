@@ -13,7 +13,7 @@ import { migrate } from '../src/store/migrate.js';
 import { validateHousehold } from '../src/store/validate.js';
 import { viewFor } from '../src/store/visibility.js';
 import { addAccount, setBalance, setAccountField, setAlternative, setAccountNotes, setOwnReturn } from '../src/store/accounts.js';
-import { addDebt, addLine, findLine, findCategory } from '../src/store/edits.js';
+import { addDebt, addLine, findLine } from '../src/store/edits.js';
 import { owningCosts, depreciationFromValues } from '../src/engines/owning.js';
 import { buildSummary } from '../src/engines/summary.js';
 import { loadRefs } from './helpers.js';

@@ -119,7 +119,7 @@ test('month-end: cash and cards are needed, investments and things you own are o
   const chk = addAccount(d, { name: 'Checking', type: 'checking' });
   const visa = addAccount(d, { name: 'Visa', type: 'credit-card' });
   const k = addAccount(d, { name: '401(k)', type: '401k' });
-  const car = addAccount(d, { name: 'Car', type: 'vehicle' });
+  addAccount(d, { name: 'Car', type: 'vehicle' });
   for (const a of [chk, visa]) { setBalance(d, '2026-10', a.id, 'start', one(100)); setBalance(d, '2026-10', a.id, 'end', one(100)); }
   setBalance(d, '2026-09', k.id, 'end', one(20000, { status: 'roughly' }));
   const b = balancesFor(d, '2026-10');

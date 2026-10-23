@@ -315,7 +315,7 @@ export function renderEstimates(ctx, summary, key) {
     }
     // Health and transport already taken out of the paycheck (engines/income.js fromPaycheckByLineType) are noted so the
     // client counts only what is paid on top; the same for a parent's plan (engines/coverage.js parentsPlan).
-    const fromPay = summary.income.fromPaycheckByLineType[r.type];
+    const fromPay = r.type === 'health' || r.type === 'transport' ? summary.income.fromPaycheckByLineType[r.type] : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null },

@@ -13,7 +13,7 @@ export function parseCSV(text) {
   let field = '';
   let quoted = false;
   // Excel writes a byte order mark ahead of the first field; without this the first header would not match.
-  const s = String(text).replace(/^﻿/, '');
+  const s = String(text).replace(/^\uFEFF/, '');
   for (let i = 0; i < s.length; i++) {
     const c = s[i];
     if (quoted) {

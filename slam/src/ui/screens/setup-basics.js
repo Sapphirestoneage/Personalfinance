@@ -374,7 +374,7 @@ function yourRentShare(ctx) {
 
 // Basics (S-106): six things open (name, birth year, state, situation, who you live with,
 // filing status); the rest sits behind "More details", which says how many are inside.
-export function renderProfile(ctx, summary) {
+export function renderProfile(ctx, _summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
   const hh = doc.household;

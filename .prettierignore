@@ -1,0 +1,13 @@
+# Only the current build is formatted (slam/src, slam/tests, slam/tools); the archive is history.
+archive/
+node_modules/
+slam/tools/gallery/
+slam/tools/gallery-approved/
+# Demo households are written by slam/tools/riley.mjs and dana.mjs with their own indentation.
+slam/src/data/households/*.json
+*.md
+package-lock.json
+# Reference tables, fixtures and tool snapshots are data, each with its source; their layout is left as written.
+slam/src/data/*.json
+slam/tests/fixtures/*.json
+slam/tools/*.json

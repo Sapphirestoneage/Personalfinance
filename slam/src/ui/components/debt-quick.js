@@ -3,7 +3,7 @@
 // editor's Type select. debtTypeTotals lays out summary.debtsByType (debtsByType in engines/breakdown.js), though no
 // screen calls it at the moment. Builds on dom and format.
 
-import { h, options } from '../dom.js';
+import { h } from '../dom.js';
 import { money } from '../format.js';
 
 export const DEBT_TYPE_OPTIONS = [['credit-card', 'Credit card'], ['line-of-credit', 'Line of credit'], ['student-loan', 'Student loan'], ['car-loan', 'Car loan'],

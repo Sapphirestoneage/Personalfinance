@@ -3,7 +3,7 @@
 // Numbers from src/engines/estimates.js (estimateHistory) and src/engines/pareto.js (paretoLevels,
 // rangeMonths); this file only lays them out. Builds on dom, format, svg (paretoChart), and catalog.
 
-import { h, options } from '../dom.js';
+import { h } from '../dom.js';
 import { monthLabel } from '../format.js';
 import { card } from './catalog.js';
 import { paretoChart } from './svg.js';

@@ -6,7 +6,7 @@
 // types in store/schema.js, sumKnown in money.js, and weakestStatus in model.js.
 
 import { CASH_ACCOUNT_TYPES, typeInfo } from '../store/schema.js';
-import { sumKnown, minus } from './money.js';
+import { sumKnown } from './money.js';
 import { weakestStatus } from './model.js';
 
 /**

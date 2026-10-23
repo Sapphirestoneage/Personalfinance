@@ -9,7 +9,7 @@ import { money, pct, times, signedMoney, signedPct, monthLabel, less } from '../
 import * as cd from '../../engines/chart-data.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { findLine } from '../../store/edits.js';
-import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } from './svg.js';
+import { hbars, donut, sankey, gauge, ring, scatter, stack, shareBar } from './svg.js';
 import { drafttReading } from '../../engines/lenses.js';
 import { stressReading } from '../../engines/happiness.js';
 import { changeIn } from '../components/jump.js';

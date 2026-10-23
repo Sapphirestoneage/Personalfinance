@@ -18,7 +18,6 @@ import { mergeDocs, resolveMerge } from '../src/store/merge.js';
 import { viewFor, canSee, COACH_ONLY, RECORDS, say } from '../src/store/visibility.js';
 import { setRole } from '../src/store/session.js';
 import { addEntry } from '../src/store/log.js';
-import { exportHousehold } from '../src/store/transfer.js';
 import { newHousehold } from '../src/store/schema.js';
 import { migrate } from '../src/store/migrate.js';
 import { findLine } from '../src/store/edits.js';
@@ -35,7 +34,6 @@ function ticking(startIso) {
   return () => { t += 60000; return new Date(t); };
 }
 const storeAt = (iso) => createStore(createStorage(memoryBackend()), ticking(iso));
-const fileOf = (doc) => exportHousehold(doc, '2026-10-17T18:00:00.000Z');
 const entry = (doc, id) => doc.transactions.find((t) => t.id === id);
 const spentOn = (doc, lineId, month) => Math.round(counted(doc.transactions)
   .filter((t) => t.lineId === lineId && t.date.startsWith(month) && t.kind === 'spend').reduce((a, t) => a + t.amount, 0) * 100) / 100;

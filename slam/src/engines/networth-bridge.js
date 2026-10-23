@@ -33,7 +33,7 @@
 // the same amount as the total's.
 
 import { bridgeFor } from './bridge.js';
-import { balanceAt, liabilities, lastDayOf, kindOf, monthStartOf, monthEndOf } from './balances.js';
+import { liabilities, lastDayOf, kindOf, monthStartOf, monthEndOf } from './balances.js';
 import { contributionsFor } from './contributions.js';
 import { netWorthAt } from './networth.js';
 import { counted } from './log.js';

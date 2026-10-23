@@ -4,7 +4,6 @@
 // src/data/subcategory-ideas.json, handed in as refs.subcategoryIdeas.
 
 import { linkedCardBalance } from './balances.js';
-import { toMonthly } from './normalize.js';
 import { sumKnown } from './money.js';
 import { minimumAmount } from './debts.js';
 

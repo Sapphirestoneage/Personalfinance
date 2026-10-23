@@ -97,7 +97,7 @@ export function liveView(doc) {
       for (const parent of c.get(d)) for (const field of childrenOf(c)) parent[field] = keep(parent[field]);
     }
     if (c.kind === 'map') {
-      for (const [a, inner] of Object.entries(c.get(d) || {})) {
+      for (const [_a, inner] of Object.entries(c.get(d) || {})) {
         const level = c.inner ? (inner || {})[c.inner] : inner;
         if (!level) continue;
         for (const [b, r] of Object.entries(level)) if (r && r.deleted) delete level[b];

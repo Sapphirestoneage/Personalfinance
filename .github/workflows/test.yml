@@ -8,6 +8,19 @@ on:
   pull_request:
   workflow_call:
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: ESLint and Prettier over the current build (archive/ is never linted)
+        run: |
+          npm ci
+          npm run lint
+          npm run format:check
   unit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -16,9 +29,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: SLAM unit tests (slam/README.md)
-        working-directory: slam
-        run: node --test
+      - name: SLAM unit tests (npm test, slam/README.md)
+        run: npm test
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30

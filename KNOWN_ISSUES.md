@@ -56,6 +56,10 @@ on that date. Nothing here is hidden behind a nicer word.
     (`slam/src/ui/charts/cash-charts.js`, `screens/setup-basics.js`, `screens/insights.js`). The
     cleanup moved every computed figure into the engines; these thresholds are wording choices and
     stayed where the wording is. If they start to feel like rules, they belong in an engine constant.
+    Two fallbacks moved from a chart into `engines/trends.js` exactly as they were: the heat grid's
+    row total and the month-over-month waterfall's start and end treat a month with no actuals as 0
+    (`|| 0`). The numbers on screen did not change; the house rule "empty is not zero" says an
+    engine should carry `null` and let the chart decide.
 13. **Playwright checks hard-code port 8765.** `tools/screens-check.mjs`, `journeys.mjs` and
     `layout-check.mjs` expect `slam/` served at `http://localhost:8765/` unless `SLAM_URL` is set.
     The archived SPARKS gates hard-code the same port for a different root, so the two cannot run at

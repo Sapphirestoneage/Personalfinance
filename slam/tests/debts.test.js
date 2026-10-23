@@ -26,7 +26,6 @@ import { loadRefs, loadHousehold } from './helpers.js';
 const refs = loadRefs();
 const one = (a) => makeValue(a, { cadence: 'one-off' });
 const debtLines = (d) => budgetModel(d).categories.find((c) => c.id === 'debt').lines.map((l) => [l.id, l.actual]);
-const lines = (b) => Object.fromEntries(b.lines.map((l) => [l.key, l.amount]));
 
 test('Riley: the auto loan is paid by the Car payment line, counted once', () => {
   const d = loadHousehold('riley');

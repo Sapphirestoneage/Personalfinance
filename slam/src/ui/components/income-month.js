@@ -89,7 +89,7 @@ export function incomeTableRows(summary, cols) {
   const cell = (key, x) => {
     if (key === 'name') return h('td', {}, x.label || 'Income');
     const val = { estimate: money(x.estimate), plan: summary.plan ? money(x.plan) : null, actual: money(x.actual), gap: x.gapFromEstimate === null ? '' : signedMoney(x.gapFromEstimate), planGap: x.gapFromPlan === null ? '' : signedMoney(x.gapFromPlan) }[key];
-    return h('td', { class: 'num ' + (cols.find((c) => c[0] === key) || [, , ''])[2] }, val === undefined || val === null ? '' : val);
+    return h('td', { class: 'num ' + (cols.find((c) => c[0] === key) || ['', '', ''])[2] }, val === undefined || val === null ? '' : val);
   };
   return [
     ...im.sources.map((x) => h('tr', { class: 'income-row', 'data-key': 'tbl-income:' + x.id }, cols.map(([key]) => cell(key, x)))),

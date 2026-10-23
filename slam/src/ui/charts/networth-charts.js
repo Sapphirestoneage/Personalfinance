@@ -69,7 +69,7 @@ export function netWorthTiles(ctx, s) {
 
 const short = (m) => monthLabel(m).slice(0, 3) + " '" + m.slice(2, 4);
 
-export function netWorthOverTimeCard(ctx, s) {
+export function netWorthOverTimeCard(ctx, _s) {
   const series = netWorthByMonth(ctx.doc);
   const xs = series.map((x) => short(x.month));
   const lineSeries = [

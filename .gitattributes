@@ -1,0 +1,7 @@
+# Checkouts use LF everywhere, whatever the contributor's core.autocrlf says. The SPARKS unit
+# suite compares files byte for byte and failed on a Windows checkout with CRLF (2026-10-23).
+* text=auto eol=lf
+*.png binary
+*.woff2 binary
+*.xlsx binary
+*.ico binary

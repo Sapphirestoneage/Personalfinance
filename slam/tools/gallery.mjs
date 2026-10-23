@@ -16,7 +16,7 @@
 
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync, rmSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 
 const require = createRequire(import.meta.url);
 let playwright;

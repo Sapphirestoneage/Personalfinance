@@ -5,6 +5,14 @@
   "scripts": {
     "test": "node --test \"slam/tests/**/*.test.js\"",
     "test:browser": "cd slam && node tools/screens-check.mjs && node tools/journeys.mjs && node tools/layout-check.mjs",
-    "serve": "cd slam && python3 -m http.server 8765"
+    "serve": "cd slam && python3 -m http.server 8765",
+    "lint": "eslint slam/src slam/tests slam/tools",
+    "format": "prettier --write slam/src slam/tests slam/tools",
+    "format:check": "prettier --check slam/src slam/tests slam/tools"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.1",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2"
   }
 }
