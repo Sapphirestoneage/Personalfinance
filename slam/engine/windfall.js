@@ -18,6 +18,7 @@ import { valueOf as v, tracker, round2, ageOn, monthKey } from './spine.js';
 import { rateOn } from './debt.js';
 import { money } from '../src/ui/format.js';
 import { longDate } from './flags.js';
+import { earnedIncome } from './tax.js';
 
 const pct = (x) => Math.round(x * 10000) / 100 + '%';
 const ROTH_PO = { single: 'ROTH_PO_S', hoh: 'ROTH_PO_S', mfj: 'ROTH_PO_J' };
@@ -69,7 +70,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       t.absorb({ ...s.tax.marginal, value: undefined });
       // A 1099 lump sum owes self-employment tax on top (answer 24): the year's marginal SE rate, else the statutory rate on the SE base.
       let se = 0, seWords = '';
-      if (source === '1099') { const seLine = L.marginalSe && L.marginalSe.value !== null ? L.marginalSe : null; if (seLine) { se = seLine.value; t.absorb({ ...seLine, value: undefined }); } else { se = t.rule(rules, 'SE_FACTOR', year) * (t.rule(rules, 'SE_SS_RATE', year) + t.rule(rules, 'SE_MED_RATE', year)); t.addRough('income'); } seWords = ' + ' + pct(se) + ' self-employment tax'; }
+      if (source === '1099') { const seLine = L.marginalSe && L.marginalSe.value !== null ? L.marginalSe : null; if (seLine) { se = seLine.value; t.absorb({ ...seLine, value: undefined }); } else { se = t.rule(rules, 'SE_FACTOR', year) * (t.rule(rules, 'SE_SS_RATE', year) + t.rule(rules, 'SE_MED_RATE', year)); for (const p of s.tax.balanceDue.missing.length ? s.tax.balanceDue.missing : ['household.filingStatus']) t.addRough(p); } seWords = ' + ' + pct(se) + ' self-employment tax'; }
       const rate = (fed.value || 0) + ((st && st.value) || 0) + se;
       const floor = L.marginalFederal && L.marginalFederal.value !== null ? '' : ' (a floor: the year\'s tax cannot be figured yet)';
       return { need: amount * rate, why: 'Nothing withholds tax from it, so ' + pct(rate) + ' (' + pct(fed.value || 0) + ' federal' + (st && st.value ? ' + ' + pct(st.value) + ' state' : '') + seWords + ', your marginal rate' + floor + ') is held back for the ' + year + ' return.', path: 'household.filingStatus', rate };
@@ -123,7 +124,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (!accts.length) return { need: 0, why: 'No workplace account has an employer match entered, so this step is skipped.' };
       const w2 = s.cashflow.income.streams.filter((x) => x.type === 'w2' && x.included !== false);
       t.absorb({ ...s.cashflow.income.gross, value: undefined });
-      if (!w2.length || w2.some((x) => x.gross === null)) { for (const x of w2) if (x.gross === null) t.addMissing('income.' + x.id + '.amount'); return { need: null, why: 'Needs the W-2 gross pay the match is figured on.', path: w2.length ? 'income.' + w2[0].id + '.amount' : 'income' }; }
+      if (!w2.length || w2.some((x) => x.gross === null)) { for (const x of w2) if (x.gross === null) t.addMissing('income.' + x.id + '.amount'); return { need: null, why: 'Needs the W-2 gross pay the match is figured on' + (w2.length ? '.' : ': no W-2 pay is coming in this month.'), path: w2.length ? 'income.' + w2[0].id + '.amount' : null }; }
       const grossYear = w2.reduce((a, x) => a + x.gross, 0) * 12;
       const monthsLeft = 12 - monthsSoFar(asOf) + 1;
       let gap = 0, left = 0, miss = null; const parts = [];
@@ -182,16 +183,17 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
         else if (agi !== null && agi >= lo) { room = round2(room * (hi - agi) / (hi - lo)); phase = ' Income of ' + money(agi) + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the room is reduced.'; t.addRough(base + '.contributions'); }
         else if (agi === null) { phase = ' Whether income is under the ' + money(lo) + ' phase-out cannot be checked until the year\'s tax can be figured.'; t.addRough(base + '.contributions'); }
       }
-      // Capped at known earned income (answer 25): W-2, 1099 and tips this year; while any of it is missing the step reads missing.
-      const earners = s.cashflow.income.streams.filter((x) => ['w2', '1099', 'tips'].includes(x.type) && x.included !== false);
-      const earnedKnown = earners.length && earners.every((x) => x.gross !== null);
-      if (!earnedKnown) { for (const x of earners) if (x.gross === null) t.addMissing('income.' + x.id + '.amount'); if (!earners.length) t.addMissing('income'); return { need: null, why: 'Missing: earned income. A Roth contribution needs earned income to cover it, and the year\'s W-2, 1099 or tips amount is not known.', path: earners.length ? 'income.' + earners[0].id + '.amount' : 'income' }; }
-      const earned = round2(earners.reduce((a, x) => a + x.gross, 0) * 12);
+      // Capped at the year's earned income (answer 25): W-2, tips and 1099 for the calendar year, one
+      // function for every reader (S-210); while any of it is missing the step reads missing.
+      const ei = earnedIncome(spine, rules, year);
+      t.absorb({ ...ei, value: undefined });
+      if (ei.value === null) return { need: null, why: 'Missing: ' + ei.label + '. A Roth contribution needs earned income to cover it, and ' + (ei.none ? 'no income is in the Ledger yet.' : 'a W-2, 1099 or tips amount for ' + year + ' is not known.'), path: ei.missing[0] || null, earned: ei };
+      const earned = ei.value;
       const roomBefore = room;
       room = Math.max(0, Math.min(room, earned - soFar));
-      const capWords = room < roomBefore ? ' Capped at earned income (' + money(earned) + ' a year less what is in).' : '';
+      const capWords = room < roomBefore ? ' Capped at ' + year + ' earned income (' + money(earned) + ' less what is in).' : '';
       if (monthly) room = round2(room / Math.max(1, 12 - monthsSoFar(asOf) + 1));
-      return { need: room, why: 'The ' + year + ' limit is ' + money(limit) + (age !== null && age >= 50 ? ' (with the age 50 catch-up)' : '') + '; ' + soFarWords + ', so ' + money(room) + ' of room is left.' + phase + capWords + (monthly ? ' Spread over the months left this year.' : ' A contribution for ' + year + ' can be made until the return is due.'), path: base + '.contributions', limit, soFar };
+      return { need: room, why: 'The ' + year + ' limit is ' + money(limit) + (age !== null && age >= 50 ? ' (with the age 50 catch-up)' : '') + '; ' + soFarWords + ', so ' + money(room) + ' of room is left.' + phase + capWords + (monthly ? ' Spread over the months left this year.' : ' A contribution for ' + year + ' can be made until the return is due.'), path: base + '.contributions', limit, soFar, earned: ei };
     });
     else if (id === 'left') run(id, () => ({ need: Math.max(0, remaining), why: remaining > 0.005 ? money(remaining) + ' has no job yet. It stays as cash until it is given one: invest it, start a sinking fund, or add it to a goal.' : 'Every dollar is assigned.', path: null }));
     const last = steps[steps.length - 1];

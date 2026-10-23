@@ -17,6 +17,18 @@ const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
 const rateLine = (value, rules = []) => ({ value, rules });
 
+// Self-employment tax on a year's 1099 profit: net x SE_FACTOR, Social Security
+// up to what is left of the wage base after W-2 wages, Medicare on all of it,
+// nothing under SE_MIN; half is deductible. One formula, used by the tax and
+// by earned income.
+export const SE_RULES = ['SE_FACTOR', 'SE_MIN', 'SE_SS_RATE', 'SE_MED_RATE', 'SS_WAGE', 'SE_DEDUCT_SHARE'];
+export function seTaxFor(seNet, ficaWages, R, year) {
+  const g = (rid) => R.get(rid, year);
+  const base = (seNet || 0) * g('SE_FACTOR');
+  const tax = base >= g('SE_MIN') ? Math.min(base, Math.max(0, g('SS_WAGE') - (ficaWages || 0))) * g('SE_SS_RATE') + base * g('SE_MED_RATE') : 0;
+  return { base, tax, deduction: tax * g('SE_DEDUCT_SHARE') };
+}
+
 // computeTax(inputs, rules, year): numbers in, lines out. No spine here.
 // inputs: { filingStatus, state, wages, ficaWages, seNet, unemployment,
 //   otherOrdinary, conversions, ltcg, qualifiedDividends,
@@ -33,11 +45,9 @@ export function computeTax(inp, R, year) {
   const fica = line(Math.min(ficaWages, wageBase) * ssRate + ficaWages * medRate, ['FICA_SS_RATE', 'FICA_MED_RATE', 'SS_WAGE']);
 
   // Self-employment tax.
-  const seBase = n(inp.seNet) * g('SE_FACTOR');
-  let seTax = 0;
-  if (seBase >= g('SE_MIN')) seTax = Math.min(seBase, Math.max(0, wageBase - ficaWages)) * g('SE_SS_RATE') + seBase * g('SE_MED_RATE');
+  const { base: seBase, tax: seTax, deduction: seDed } = seTaxFor(inp.seNet, ficaWages, R, year);
   const se = line(seTax, ['SE_FACTOR', 'SE_MIN', 'SE_SS_RATE', 'SE_MED_RATE', 'SS_WAGE']);
-  const seDeduction = line(seTax * g('SE_DEDUCT_SHARE'), ['SE_DEDUCT_SHARE']);
+  const seDeduction = line(seDed, ['SE_DEDUCT_SHARE']);
 
   const pref = n(inp.ltcg) + n(inp.qualifiedDividends);
   const grossIncome = n(inp.wages) + n(inp.seNet) + n(inp.unemployment) + n(inp.otherOrdinary) + n(inp.conversions) + pref;
@@ -124,6 +134,8 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   const miss = { wages: [], income: [], withholding: [], other: [] };
   const notModeled = [];
   const known = { wages: 0, ficaWages: 0, seNet: 0, unemployment: 0, otherOrdinary: 0, conversions: 0, ltcg: 0, qualifiedDividends: 0, withheldFederal: 0, withheldState: 0, estimatedFederal: 0, estimatedState: 0 };
+  // The earning lines (W-2, tips, 1099) and the pre-tax payroll saving taken off them, for earnedIncome.
+  const earned = { from: [], lines: [], pretax: [] };
   const status = t.read(spine, 'household.filingStatus');
   if (status === null) miss.other.push('household.filingStatus');
   const state = t.read(spine, 'household.state');
@@ -142,15 +154,22 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (s.type === 'ss') { notModeled.push('Social Security benefits (' + s.label + ')'); continue; }
     const amt = t.useFact(base + '.amount', s.amount);
     const paid = amt === null ? null : paidBetween(amt, s.cadence, s.start, s.end, from, to) * (w ?? 1);
+    let beLine = null;
     if (amt === null) (s.type === 'w2' || s.type === 'tips' ? miss.wages : miss.income).push(base + '.amount');
     else if (s.type === 'w2' || s.type === 'tips') { known.wages += paid; known.ficaWages += paid; }
     else if (s.type === '1099') {
       // Profit = gross less business expenses (S-179); none entered means none.
       const be = s.businessExpenses ? t.useFact(base + '.businessExpenses', s.businessExpenses) : null;
-      known.seNet += paid - (be === null ? 0 : paidBetween(be, s.cadence, s.start, s.end, from, to) * (w ?? 1));
+      const beYear = be === null ? 0 : paidBetween(be, s.cadence, s.start, s.end, from, to) * (w ?? 1);
+      known.seNet += paid - beYear;
+      if (be !== null) beLine = { id: s.id, type: s.type, label: s.label + ': business expenses', path: base + '.businessExpenses', amount: -beYear };
     }
     else if (s.type === 'unemployment') known.unemployment += paid;
     else known.otherOrdinary += paid;
+    if (s.type === 'w2' || s.type === 'tips' || s.type === '1099') {
+      earned.from.push(base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : []));
+      earned.lines.push({ id: s.id, type: s.type, label: s.label, path: base + '.amount', amount: paid }, ...(beLine ? [beLine] : []));
+    }
     if (s.type === 'w2' || s.type === 'tips') {
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
       w2Months = Math.max(w2Months, (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1);
@@ -168,6 +187,8 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (!pre || !a.monthlyContribution || !w2Months) continue;
     const c = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
     if (c !== null) known.wages -= c * w2Months;
+    earned.from.push('accounts.' + a.id + '.monthlyContribution');
+    earned.pretax.push({ id: a.id, label: (v(a.name) || a.id) + ': pre-tax saving from pay (' + w2Months + ' month' + (w2Months === 1 ? '' : 's') + ')', path: 'accounts.' + a.id + '.monthlyContribution', amount: c === null ? null : -c * w2Months });
   }
   // Roth conversions in the year are ordinary income.
   for (const a of spine.accounts || []) {
@@ -190,7 +211,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known[key] += x;
     }
   }
-  return { inputs: { filingStatus: status, state, ...known }, tracker: t, missing: miss, notModeled, notes };
+  return { inputs: { filingStatus: status, state, ...known }, tracker: t, missing: miss, notModeled, notes, earned };
 }
 
 // Words for what is missing: "2026 W-2 wages and withholding".
@@ -246,6 +267,37 @@ export function taxForYear(spine, R, year, { asOf = spine.meta.asOf, mode = 'com
     partial: partial && { federalIncomeTax: partial.lines.federalIncomeTax, federalTotal: partial.lines.federalTotal, stateTax: partial.lines.stateTax, total: partial.lines.total, marginalFederal: partial.lines.marginalFederal, marginalState: partial.lines.marginalState, marginalSe: partial.lines.marginalSe },
     nextEstimated: nextEstimatedDate(asOf, R)
   };
+}
+
+// ---------------------------------------------------------------- earned income (S-210)
+// A year's earned income, what IRA room is capped at: W-2 and tips wages for
+// the part of the year each line runs, less pre-tax payroll saving (the wages
+// a W-2 shows), plus 1099 profit less half its self-employment tax.
+// Unemployment, rental, pensions, Social Security and other income are not
+// earned, and a 1099 loss never lowers wages. Committed mode by default: maybe money counts only at likelihood 1.
+// An earning line in the year with no amount makes it missing, naming that
+// line's amount; a household with no income lines at all is missing too,
+// named "<year> earned income". Never a bare collection path (S-210).
+// earnedIncome(spine, R, year) -> Result + { year, label, lines: [{ label, path, amount }], seDeduction, wages, seNet }
+export function earnedIncome(spine, R, year, { mode = 'committed' } = {}) {
+  const { inputs, earned } = taxInputs(spine, R, year, mode);
+  const t = tracker();
+  for (const p of earned.from) t.read(spine, p);
+  const label = year + ' earned income';
+  const lines = [...earned.lines, ...earned.pretax].map((l) => ({ label: l.label, path: l.path, amount: l.amount === null ? null : round2(l.amount) }));
+  if (!(spine.income || []).length) return { ...t.out(null), year, label, lines, seDeduction: null, wages: null, seNet: null, none: true };
+  if (t.snapshot().missing.length) return { ...t.out(null), year, label, lines, seDeduction: null, wages: null, seNet: null };
+  let seDeduction = 0;
+  if (inputs.seNet > 0) {
+    for (const r of SE_RULES) t.rule(R, r, year);
+    seDeduction = round2(seTaxFor(inputs.seNet, inputs.ficaWages, R, year).deduction);
+  }
+  if (seDeduction) lines.push({ label: 'Half the self-employment tax (deductible)', path: null, amount: -seDeduction });
+  // A self-employment loss never lowers wages (Publication 590-A): the 1099 part counts at no less than $0.
+  const sePart = round2(lines.filter((l) => l.path === null || /\.businessExpenses$/.test(l.path) || (spine.income || []).some((x) => x.type === '1099' && l.path === 'income.' + x.id + '.amount')).reduce((a, l) => a + (l.amount || 0), 0));
+  if (sePart < 0) lines.push({ label: 'A 1099 loss is left out (it never lowers wages)', path: null, amount: -sePart });
+  const value = round2(lines.reduce((a, l) => a + (l.amount || 0), 0));
+  return { ...t.out(Math.max(0, value)), year, label, lines, seDeduction, wages: round2(inputs.wages), seNet: round2(inputs.seNet) };
 }
 
 // ---------------------------------------------------------------- monthly tax set-aside (S-172, S-180)

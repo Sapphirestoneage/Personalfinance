@@ -10,6 +10,8 @@ import { loadHousehold } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { summarize } from '../engine/summary.js';
 import { METRICS, DASHBOARD_MATH, UNITS, metricById, explainMetric, flagMath, showNumber } from '../engine/math.js';
+import { labelFor, namedPath, unnamedLabel } from '../engine/labels.js';
+import { earnedIncome } from '../engine/tax.js';
 import { setSectionSharing, editExpense } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { calendar, rangeCashTerms } from '../engine/calendar.js';
@@ -30,6 +32,12 @@ const households = () => {
   d = editExpense(d, 'phone', { amount: 60, cadence: 'monthly', coveredBy: 'Parents' }, '2026-10-23');
   d = { ...d, expenses: d.expenses.map((e) => (e.id === 'gym' ? { ...e, amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : e)) };
   list.push(['demo, shared and missing', d]);
+  // The shape of a profile once its W-2 has ended (S-210): no earning line runs this month, and the next one,
+  // a 1099 from January, has a blank amount (a 0 written next to kind missing). The Roth step reads earned
+  // income for the year from the W-2 months that did run, and the blank is named by its own path.
+  let e = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  e = { ...e, income: e.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-06-30' } : x.id === 'tutoring' ? { ...x, start: '2027-01-01', amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : x)) };
+  list.push(['demo, W-2 ended and a blank 1099', e]);
   if (exists('fixtures/eli.local.json')) list.push(['local profile', applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R)]);
   // Each household also gets a windfall of $5,000 with tax taken out, so the Windfall steps are audited too (S-201).
   return list.map(([name, spine]) => {
@@ -147,4 +155,60 @@ test('e. spending lists every line that makes it up, a covered bill at $0 and a 
   assert.equal(e.terms.find((t) => /Phone/.test(t.label)).value, 0);
   assert.equal(e.terms.find((t) => /^Rent/.test(t.label)).value, 900, 'half of 1,800 with housing shared by 2');
   assert.ok(e.terms.every((t) => t.path && t.path.startsWith('expenses.')), 'each line opens its Ledger field');
+});
+
+test('f. every path a number reads is a field the Ledger can name, never a bare collection (S-210)', () => {
+  const bad = [];
+  for (const h of ALL) {
+    for (const id of idsFor(h)) {
+      const raw = metricById(id).explain(h.ctx);
+      for (const p of [...(raw.rough || []), ...(raw.missing || [])]) if (!namedPath(p)) bad.push(h.name + ': ' + id + ' names ' + JSON.stringify(p));
+      for (const t of raw.terms) if (t.path && !namedPath(t.path)) bad.push(h.name + ': ' + id + ' links ' + JSON.stringify(t.path));
+      const e = explainMetric(id, h.ctx);
+      for (const w of [...e.roughBecause, ...e.missingBecause]) if (w.startsWith(unnamedLabel('').split(' (')[0])) bad.push(h.name + ': ' + id + ' says ' + w);
+    }
+    for (const st of h.windfall.steps) for (const p of [...st.from, ...(st.path ? [st.path] : [])]) if (!namedPath(p)) bad.push(h.name + ': windfall ' + st.id + ' reads ' + JSON.stringify(p));
+    for (const r of h.ctx.plan.foo.rungs) for (const p of [...r.from, ...(r.path ? [r.path] : [])]) if (!namedPath(p)) bad.push(h.name + ': FOO ' + r.id + ' reads ' + JSON.stringify(p));
+  }
+  assert.deepEqual(bad, []);
+});
+
+test('g. labelFor never throws: an unknown path reads as a plain fallback', () => {
+  const spine = ALL[0].spine;
+  for (const p of ['income', 'income.salary', 'expenses', 'accounts.roth', 'nothing.here', '', null, undefined, 'income..amount']) {
+    assert.doesNotThrow(() => labelFor(spine, p), String(p));
+    assert.equal(labelFor(spine, p), unnamedLabel(p), String(p));
+    assert.equal(namedPath(p), false, String(p));
+  }
+  assert.equal(labelFor(spine, 'income.salary.amount'), 'Salary at Hudson Valley Health: amount');
+  assert.equal(labelFor(spine, 'rule:PSLF_PAYMENTS'), 'Rule PSLF_PAYMENTS');
+});
+
+test('h. the Roth step with the W-2 ended and a blank 1099: earned income is the W-2 months, the blank is named (S-210)', () => {
+  const h = ALL.find((x) => x.name === 'demo, W-2 ended and a blank 1099');
+  const ei = earnedIncome(h.spine, R, 2026);
+  // Six months of $6,000 less six months of $500 pre-tax 401(k) saving.
+  assert.equal(ei.value, 33000);
+  assert.equal(ei.kind, 'computed');
+  const roth = h.windfall.steps.find((x) => x.id === 'roth');
+  assert.equal(roth.need, 4500, '$7,500 less about $3,000 put in so far');
+  assert.ok(!roth.missing.includes('income'));
+  const e = explainMetric('windfall:roth', h.ctx);
+  assert.ok(e.terms.some((t) => t.metric === 'earned:2026'));
+  // 2027: the 1099 runs from January with no amount, so earned income is missing and names that line.
+  const next = earnedIncome(h.spine, R, 2027);
+  assert.equal(next.value, null);
+  assert.deepEqual(next.missing, ['income.tutoring.amount']);
+  const m = explainMetric('earned:2027', { spine: h.spine, rules: R, s: h.s });
+  assert.equal(m.value, null);
+  assert.ok(m.missingBecause.includes('Weekend tutoring: amount'));
+  // A 1099 loss never lowers wages: $72,000 of salary less $6,000 pre-tax, with a $6,000 tutoring loss left out.
+  const loss = { ...ALL[0].spine, income: ALL[0].spine.income.map((x) => (x.id === 'tutoring' ? { ...x, businessExpenses: { value: 1000, kind: 'known', asOf: null, source: 'test' } } : x)) };
+  assert.equal(earnedIncome(loss, R, 2026).value, 66000);
+  // No income in the Ledger at all: missing, named, never $0.
+  const none = earnedIncome({ ...h.spine, income: [] }, R, 2026);
+  assert.equal(none.value, null);
+  assert.equal(none.label, '2026 earned income');
+  const em = explainMetric('earned:2026', { spine: { ...h.spine, income: [] }, rules: R, s: h.s });
+  assert.ok(em.missingBecause.some((x) => x.startsWith('2026 earned income')));
 });

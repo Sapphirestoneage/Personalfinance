@@ -28,14 +28,31 @@ const FIELD = {
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
 const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week' };
-const words = (k) => FIELD[k] || k.replace(/([A-Z])/g, ' $1').toLowerCase();
+const words = (k) => FIELD[k] || String(k ?? '').replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
 // A duplicate starts with no name until one is typed (S-190).
 export const UNNAMED = 'No name yet';
 const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
 
+// How many segments a path needs to name one field, by its first segment
+// ("income.salary.amount": the collection, the item id, the field).
+const NEEDS = { household: 2, income: 3, expenses: 3, accounts: 3, debts: 3, goals: 3, assumptions: 2, debtPlan: 2, taxYears: 3 };
+// A path labelFor can name: a known root with every segment it needs, or a
+// rule reference ("rule:PSLF_PAYMENTS"). Anything else is a bug in the engine
+// that emitted it; the self-audit fails on it (S-210).
+export function namedPath(path) {
+  if (typeof path !== 'string' || !path) return false;
+  if (/^rule:[A-Z0-9_]+$/.test(path)) return true;
+  const s = path.split('.');
+  return !!NEEDS[s[0]] && s.length >= NEEDS[s[0]] && s.every((x) => x !== '' && x !== 'undefined' && x !== 'null');
+}
+// What an unnamed path reads as: never a crash, and plainly not a field name.
+export const unnamedLabel = (path) => 'An input with no name yet (' + (typeof path === 'string' && path ? path : 'no path') + ')';
+
 export function labelFor(spine, path) {
+  if (!namedPath(path)) return unnamedLabel(path);
+  if (path.startsWith('rule:')) return 'Rule ' + path.slice(5);
   const s = path.split('.');
   const item = (coll, id) => getAt(spine, coll + '.' + id);
   switch (s[0]) {
@@ -75,6 +92,7 @@ export const GROUPS = [
 ];
 
 export function groupFor(path) {
+  if (typeof path !== 'string') return 'G';
   const s = path.split('.');
   if (s[0] === 'debts') return 'D';
   if (s[0] === 'accounts') return 'A';

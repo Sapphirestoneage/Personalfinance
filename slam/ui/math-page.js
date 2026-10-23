@@ -5,7 +5,7 @@
 
 import { mountPage } from './page.js';
 import { summarize } from '../engine/summary.js';
-import { METRICS, explainMetric, showNumber } from '../engine/math.js';
+import { METRICS, metricById, explainMetric, showNumber } from '../engine/math.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
@@ -19,10 +19,10 @@ const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashb
 // Units in words, not codes.
 const UNIT_WORDS = { usd: 'dollars', 'usd/month': 'dollars a month', 'usd/year': 'dollars a year', ratio: 'percent', months: 'months', years: 'years', age: 'age', count: 'count' };
 
-function metricCard(m, ctx) {
+function metricCard(m, ctx, anchor = m.id) {
   const e = explainMetric(m.id, ctx);
-  return h('section', { class: 'card metric', id: 'metric-' + m.id, 'aria-labelledby': 'mh-' + m.id },
-    h('h2', { id: 'mh-' + m.id }, m.label, ' ', h('span', { class: 'unit' }, UNIT_WORDS[m.unit] || m.unit)),
+  return h('section', { class: 'card metric', id: 'metric-' + anchor, 'aria-labelledby': 'mh-' + anchor },
+    h('h2', { id: 'mh-' + anchor }, m.label, ' ', h('span', { class: 'unit' }, UNIT_WORDS[m.unit] || m.unit)),
     h('p', { class: 'math-formula' }, m.formula),
     h('p', { class: 'math-plugged' }, h('code', {}, e.plugged)),
     e.note ? h('p', { class: 'math-note' }, e.note) : null,
@@ -65,6 +65,8 @@ loadAll().then(({ spine: base, rules, source }) => {
     h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card, one cost per expense, and one per Windfall step (shown on the Windfall page). Each formula is followed by the same formula with today\'s numbers.'),
     h('nav', { class: 'card jump', 'aria-label': 'Jump to a number' }, METRICS.map((m) => h('a', { href: '#metric-' + m.id }, m.label)), h('a', { href: '#rules' }, 'Rules')),
     ...METRICS.map((m) => metricCard(m, ctx)),
+    // Numbers that come one per year or per account (S-210): this year's, under the family's name.
+    ...[['earned', 'earned:' + s.asOf.slice(0, 4)]].map(([anchor, id]) => metricCard(metricById(id), ctx, anchor)),
     rulesTable(rules));
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
 }).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The math page could not load: ' + err.message)); });

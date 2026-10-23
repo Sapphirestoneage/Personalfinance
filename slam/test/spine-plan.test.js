@@ -62,7 +62,7 @@ test('answer 25: the Roth step is capped at known earned income and reads missin
   const gone = putFact(s, 'income.salary.amount', null, 'missing', T);
   const r = windfall(gone, R, S(gone), { amount: 5000 }).steps.find((x) => x.id === 'roth');
   assert.equal(r.need, null);
-  assert.match(r.why, /^Missing: earned income/);
+  assert.match(r.why, /^Missing: 2026 earned income/);
   assert.ok(r.missing.includes('income.salary.amount'));
   assert.equal(r.kind, 'missing');
   // Earned income below the limit caps the room.
@@ -70,7 +70,7 @@ test('answer 25: the Roth step is capped at known earned income and reads missin
   tiny = putFact(tiny, 'income.tutoring.amount', 0, 'known', T);
   const c = windfall(tiny, R, S(tiny), { amount: 5000 }).steps.find((x) => x.id === 'roth');
   assert.ok(c.need <= 2400, 'capped at a year of earned income: ' + c.need);
-  assert.match(c.why, /Capped at earned income/);
+  assert.match(c.why, /Capped at 2026 earned income/);
 });
 
 test('the FOO ladder: nine rungs in the rule order, a completion month per rung, three setup questions', () => {
