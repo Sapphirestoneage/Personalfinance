@@ -46,7 +46,7 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
   tests and log (`coach/README.md`). Nothing outside `coach/` changes for it.
 - Exception (D-340): `marketing/` is a separate app the same way (`marketing/README.md`).
 - Exception (D-341): `money-rooms-v3/` is a separate app the same way (`money-rooms-v3/README.md`).
-- Exception (S-202 in `slam/DECISIONS.md`): `slam/` is a separate app the same way (`slam/README.md`).
+- Exception (D-342): `slam/` is a separate app the same way (`slam/README.md`).
 
 ## Affordances, Don't Make Me Think
 

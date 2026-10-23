@@ -17396,6 +17396,29 @@ SPARKS device backup neither carries nor removes `mr3:` keys.
 **Verified.** `node test/run.js`; `node money-rooms-v3/tests/run.js`;
 `node money-rooms-v3/tests/ui.js`.
 
+## D-342 — SLAM is its own app in slam/, a lane beside SPARKS like coach/
+
+**Why.** SLAM (Stress Less About Money) is coach-operated planning software built
+on its own household record (the spine), its own engines and pages, with its own
+tests, log and house style. Phase 1 and Phase 2 add pages inside `slam/` on their
+own branches while the SPARKS freeze holds. The other three apps have this line;
+SLAM did not (slam/QUESTIONS.md, question 27).
+
+**Decision.** `slam/` is a separate app: plain HTML, CSS and ES modules, no build
+step, its own storage keys (`slam-*`, never `slaf.`), its own tests (`node --test`
+in `slam/`, run by the root suite as before), its own tokens (`slam/src/ui/tokens.css`)
+and its own log (`slam/DECISIONS.md`, `S-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it. The root suite's CSS token check already
+resolves files under `slam/` against that app's tokens (slam/DECISIONS.md S-156).
+Its copy of another app's engine lives under `slam/engine/vendor/` with a drift test.
+
+**Replaces or removes.** Nothing in SPARKS. SLAM is the coach's instrument on a
+call; SPARKS stays the household's self-serve rooms.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key.
+
+**Verified.** `node test/run.js`; `node --test` in `slam/`.
+
 ---
 
 # The Dungeons & Dividends entries
