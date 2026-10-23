@@ -1,4 +1,4 @@
-# Walkthrough: Carlos Reyes, single, early 20s, negative net worth
+# Walkthrough, Single, early 20s, negative net worth: Carlos Reyes (persona 06)
 
 Method and shared findings: `UI-NOTES.md`. Hand math: `../golden/households/card-carlos.expected.md`.
 

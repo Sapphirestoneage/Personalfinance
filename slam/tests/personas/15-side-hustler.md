@@ -1,4 +1,4 @@
-# Persona 15: Casey Rivera, 32, side hustler (made up)
+# Side hustler: Casey Rivera (persona 15, 32, made up)
 
 Reuses the app's own demo household, `../../fixtures/demo.json` (hand math in
 `../../test/demo.golden.test.js`). Walkthrough: `15-side-hustler-walkthrough.md`.

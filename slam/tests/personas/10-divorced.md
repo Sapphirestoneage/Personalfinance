@@ -1,4 +1,4 @@
-# Persona 10: Marcus Bell, 44, divorced with two kids (made up)
+# Divorced: Marcus Bell (persona 10, 44, made up)
 
 File: `households/10-divorced.json`. Walkthrough: `10-divorced-walkthrough.md`.
 

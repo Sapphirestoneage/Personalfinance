@@ -1,4 +1,4 @@
-# Hand math: Ruth Castellano (persona 11, widowed in June 2026)
+# Hand math, Widow: Ruth Castellano (persona 11)
 
 As of 2026-10-22, October 2026, tax year 2026 (married filing jointly, the year of death). Conventions: `../golden/CONVENTIONS.md`.
 Test: `11-widow.golden.test.js`.

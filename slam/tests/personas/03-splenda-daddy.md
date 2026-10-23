@@ -1,4 +1,4 @@
-# Persona 3: Devin Marsh, 41, Splenda daddy (made up)
+# Splenda daddy: Devin Marsh (persona 03, 41, made up)
 
 File: `households/03-splenda-daddy.json`. Walkthrough: `03-splenda-daddy-walkthrough.md`.
 

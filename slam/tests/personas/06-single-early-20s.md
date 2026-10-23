@@ -1,4 +1,4 @@
-# Persona 6: Carlos Reyes, 23, starting from negative net worth (made up)
+# Single, early 20s, negative net worth: Carlos Reyes (persona 06, 23, made up)
 
 Reuses the golden household `../golden/households/card-carlos.json` (hand
 math in `../golden/households/card-carlos.expected.md`, engine comparison in

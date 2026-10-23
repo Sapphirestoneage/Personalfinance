@@ -1,4 +1,4 @@
-# Persona 18: Grace and Daniel Park, 49 and 50, Chubby FI (made up)
+# Chubby FIRE: Grace and Daniel Park (persona 18, 49 and 50, made up)
 
 File: `households/18-chubby-fi.json`. Walkthrough: `18-chubby-fi-walkthrough.md`.
 

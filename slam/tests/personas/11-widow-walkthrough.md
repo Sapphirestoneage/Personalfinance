@@ -1,4 +1,4 @@
-# Walkthrough: Ruth Castellano, widow
+# Walkthrough, Widow: Ruth Castellano (persona 11)
 
 Method and shared findings: `UI-NOTES.md`. Hand math: `11-widow.expected.md`.
 

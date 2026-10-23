@@ -1,4 +1,4 @@
-# Hand math: Tess Nakamura and Omar Haddad, with Lin Zhao (persona 7)
+# Hand math, Polyamorous household: Tess Nakamura, Omar Haddad and Lin Zhao (persona 07)
 
 As of 2026-10-22, October 2026, tax year 2026, Tess and Omar's view (married filing jointly). Conventions: `../golden/CONVENTIONS.md`.
 Test: `07-polyamorous-household.golden.test.js`.

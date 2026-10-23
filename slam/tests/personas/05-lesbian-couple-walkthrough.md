@@ -1,4 +1,4 @@
-# Walkthrough: Priya Raman and Naomi Katz, lesbian couple
+# Walkthrough, Lesbian couple: Priya Raman and Naomi Katz (persona 05)
 
 Method and shared findings: `UI-NOTES.md`.
 

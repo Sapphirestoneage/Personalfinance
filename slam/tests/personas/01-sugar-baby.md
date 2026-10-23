@@ -1,4 +1,4 @@
-# Persona 1: Mila Soto, 24, sugar baby (made up)
+# Sugar baby: Mila Soto (persona 01, 24, made up)
 
 File: `households/01-sugar-baby.json`. Walkthrough: `01-sugar-baby-walkthrough.md`.
 

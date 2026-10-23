@@ -1,4 +1,4 @@
-# Persona 12: Dev Okonkwo, 31, partially employed (made up)
+# Partially employed: Dev Okonkwo (persona 12, 31, made up)
 
 File: `households/12-partially-employed.json`. Walkthrough: `12-partially-employed-walkthrough.md`.
 

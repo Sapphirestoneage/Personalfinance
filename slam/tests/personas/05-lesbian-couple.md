@@ -1,4 +1,4 @@
-# Persona 5: Priya Raman and Naomi Katz, 34 and 36, lesbian couple (made up)
+# Lesbian couple: Priya Raman and Naomi Katz (persona 05, 34 and 36, made up)
 
 File: `households/05-lesbian-couple.json`. Walkthrough: `05-lesbian-couple-walkthrough.md`.
 

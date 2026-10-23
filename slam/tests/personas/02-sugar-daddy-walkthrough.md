@@ -1,4 +1,4 @@
-# Walkthrough: Raymond Feld, sugar daddy
+# Walkthrough, Sugar daddy: Raymond Feld (persona 02)
 
 Method and shared findings: `UI-NOTES.md`.
 

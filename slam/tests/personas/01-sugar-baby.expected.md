@@ -1,4 +1,4 @@
-# Hand math: Mila Soto (persona 1, sugar baby)
+# Hand math, Sugar baby: Mila Soto (persona 01)
 
 As of 2026-10-22, October 2026, tax year 2026. Conventions: `../golden/CONVENTIONS.md`.
 Test: `01-sugar-baby.golden.test.js`.

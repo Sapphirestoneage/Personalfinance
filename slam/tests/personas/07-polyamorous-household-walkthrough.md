@@ -1,4 +1,4 @@
-# Walkthrough: Tess, Omar and Lin, polyamorous household
+# Walkthrough, Polyamorous household: Tess Nakamura, Omar Haddad and Lin Zhao (persona 07)
 
 Method and shared findings: `UI-NOTES.md`. Hand math: `07-polyamorous-household.expected.md`.
 

@@ -1,4 +1,4 @@
-# Persona 7: Tess, Omar and Lin, a polyamorous household (made up)
+# Polyamorous household: Tess Nakamura, Omar Haddad and Lin Zhao (persona 07, made up)
 
 File: `households/07-polyamorous-household.json` (Tess and Omar's view).
 Walkthrough: `07-polyamorous-household-walkthrough.md`.

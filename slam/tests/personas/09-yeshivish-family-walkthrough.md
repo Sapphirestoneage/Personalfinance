@@ -1,4 +1,4 @@
-# Walkthrough: the Weinbergs, yeshivish family
+# Walkthrough, Yeshivish family: the Weinbergs (persona 09)
 
 Method and shared findings: `UI-NOTES.md`.
 

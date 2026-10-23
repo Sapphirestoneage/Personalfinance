@@ -1,4 +1,4 @@
-# Persona 9: the Weinbergs, a yeshivish family in Lakewood (made up)
+# Yeshivish family: the Weinbergs (persona 09, made up)
 
 File: `households/09-yeshivish-family.json`. Walkthrough: `09-yeshivish-family-walkthrough.md`.
 

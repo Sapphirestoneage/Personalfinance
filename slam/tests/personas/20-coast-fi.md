@@ -1,4 +1,4 @@
-# Persona 20: Sofia Bianchi, 36, Coast FI (made up)
+# Coast FIRE: Sofia Bianchi (persona 20, 36, made up)
 
 File: `households/20-coast-fi.json`. Walkthrough: `20-coast-fi-walkthrough.md`.
 

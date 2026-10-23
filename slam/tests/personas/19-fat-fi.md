@@ -1,4 +1,4 @@
-# Persona 19: Victor Lam, 54, Fat FI (made up)
+# Fat FIRE: Victor Lam (persona 19, 54, made up)
 
 File: `households/19-fat-fi.json`. Walkthrough: `19-fat-fi-walkthrough.md`.
 

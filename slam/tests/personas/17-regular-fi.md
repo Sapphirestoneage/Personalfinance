@@ -1,4 +1,4 @@
-# Persona 17: Wes Delgado, 38, regular FI (made up)
+# Regular FIRE: Wes Delgado (persona 17, 38, made up)
 
 Reuses the golden household `../golden/households/w2-wes.json` (hand math in
 `../golden/households/w2-wes.expected.md`, engine comparison in

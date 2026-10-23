@@ -1,4 +1,4 @@
-# Persona 4: Jordan Avery, 28, trans (made up)
+# Trans person: Jordan Avery (persona 04, 28, made up)
 
 File: `households/04-trans-person.json`. Walkthrough: `04-trans-person-walkthrough.md`.
 

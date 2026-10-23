@@ -1,4 +1,4 @@
-# Walkthrough: Sofia Bianchi, Coast FI
+# Walkthrough, Coast FIRE: Sofia Bianchi (persona 20)
 
 Method and shared findings: `UI-NOTES.md`.
 

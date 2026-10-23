@@ -1,4 +1,4 @@
-# Walkthrough: Grace and Daniel Park, Chubby FI
+# Walkthrough, Chubby FIRE: Grace and Daniel Park (persona 18)
 
 Method and shared findings: `UI-NOTES.md`.
 

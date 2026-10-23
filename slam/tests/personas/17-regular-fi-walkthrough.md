@@ -1,4 +1,4 @@
-# Walkthrough: Wes Delgado, regular FI
+# Walkthrough, Regular FIRE: Wes Delgado (persona 17)
 
 Method and shared findings: `UI-NOTES.md`. Hand math: `../golden/households/w2-wes.expected.md`.
 

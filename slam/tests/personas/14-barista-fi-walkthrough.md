@@ -1,4 +1,4 @@
-# Walkthrough: Theo Marsh, Barista FI
+# Walkthrough, Barista FIRE: Theo Marsh (persona 14)
 
 Method and shared findings: `UI-NOTES.md`.
 

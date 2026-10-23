@@ -1,4 +1,4 @@
-# Persona 13: Ana Reyes, 45, Lean FI (made up)
+# Lean FIRE: Ana Reyes (persona 13, 45, made up)
 
 File: `households/13-lean-fi.json`. Walkthrough: `13-lean-fi-walkthrough.md`.
 

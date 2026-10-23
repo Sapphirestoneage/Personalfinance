@@ -1,4 +1,4 @@
-# Walkthrough: Ana Reyes, Lean FI
+# Walkthrough, Lean FIRE: Ana Reyes (persona 13)
 
 Method and shared findings: `UI-NOTES.md`.
 

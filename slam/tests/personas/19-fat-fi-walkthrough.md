@@ -1,4 +1,4 @@
-# Walkthrough: Victor Lam, Fat FI
+# Walkthrough, Fat FIRE: Victor Lam (persona 19)
 
 Method and shared findings: `UI-NOTES.md`.
 

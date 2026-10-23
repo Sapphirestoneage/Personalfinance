@@ -1,4 +1,4 @@
-# Walkthrough: the Adlers, Modern Orthodox family
+# Walkthrough, Modern Orthodox family: the Adlers (persona 08)
 
 Method and shared findings: `UI-NOTES.md`.
 

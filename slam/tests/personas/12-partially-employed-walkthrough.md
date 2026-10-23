@@ -1,4 +1,4 @@
-# Walkthrough: Dev Okonkwo, partially employed
+# Walkthrough, Partially employed: Dev Okonkwo (persona 12)
 
 Method and shared findings: `UI-NOTES.md`.
 

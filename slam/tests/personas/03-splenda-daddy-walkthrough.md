@@ -1,4 +1,4 @@
-# Walkthrough: Devin Marsh, Splenda daddy
+# Walkthrough, Splenda daddy: Devin Marsh (persona 03)
 
 Method and shared findings: `UI-NOTES.md`.
 

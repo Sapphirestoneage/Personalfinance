@@ -1,4 +1,4 @@
-# Walkthrough: Mila Soto, sugar baby
+# Walkthrough, Sugar baby: Mila Soto (persona 01)
 
 Method and the findings shared by every persona: `UI-NOTES.md`.
 

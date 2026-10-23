@@ -1,4 +1,4 @@
-# Persona 2: Raymond Feld, 58, sugar daddy (made up)
+# Sugar daddy: Raymond Feld (persona 02, 58, made up)
 
 File: `households/02-sugar-daddy.json`. Walkthrough: `02-sugar-daddy-walkthrough.md`.
 

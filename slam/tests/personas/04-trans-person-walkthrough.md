@@ -1,4 +1,4 @@
-# Walkthrough: Jordan Avery, trans
+# Walkthrough, Trans person: Jordan Avery (persona 04)
 
 Method and shared findings: `UI-NOTES.md`.
 

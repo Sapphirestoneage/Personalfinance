@@ -1,4 +1,4 @@
-# Persona 8: the Adlers, a Modern Orthodox family in Teaneck (made up)
+# Modern Orthodox family: the Adlers (persona 08, made up)
 
 File: `households/08-modern-orthodox-family.json`. Walkthrough: `08-modern-orthodox-family-walkthrough.md`.
 

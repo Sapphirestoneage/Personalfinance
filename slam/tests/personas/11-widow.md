@@ -1,4 +1,4 @@
-# Persona 11: Ruth Castellano, 63, widowed in June (made up)
+# Widow: Ruth Castellano (persona 11, 63, made up)
 
 File: `households/11-widow.json`. Walkthrough: `11-widow-walkthrough.md`.
 

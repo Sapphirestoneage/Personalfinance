@@ -1,4 +1,4 @@
-# Walkthrough: Maya Lindgren, Slow FI
+# Walkthrough, Slow FIRE: Maya Lindgren (persona 16)
 
 Method and shared findings: `UI-NOTES.md`.
 

@@ -1,4 +1,4 @@
-# Walkthrough: Casey Rivera, side hustler (the demo household)
+# Walkthrough, Side hustler: Casey Rivera (persona 15)
 
 Method and shared findings: `UI-NOTES.md`. Hand math: `../../test/demo.golden.test.js` and `../../SIGNOFF.md`.
 

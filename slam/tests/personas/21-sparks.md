@@ -1,4 +1,4 @@
-# Persona 21: Kai Nakamura-Reyes, 26, SPARKS (made up)
+# SPARKS: Kai Nakamura-Reyes (persona 21, 26, made up)
 
 File: `households/21-sparks.json`. Walkthrough: `21-sparks-walkthrough.md`.
 

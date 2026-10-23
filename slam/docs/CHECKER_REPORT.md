@@ -30,7 +30,7 @@ todo.
 | carloan-cat | 36, head of household | a car loan whose last payment lands in September 2027, a 529 |
 | near-fi-nina | 47 and 45, married | 1.5 million invested against a 1.6 million goal, a small mortgage, gains and dividends |
 
-**Twenty-one personas** (`tests/personas/<id>.md`: who they are, every number
+**Twenty-one personas**, each titled label first, then name (Lean FIRE: Ana Reyes) (`tests/personas/<id>.md`: who they are, every number
 they would enter, what they would want the app to tell them;
 `<id>-walkthrough.md`: what happened when they were entered). Eighteen new
 household files; three reuse Carlos (persona 6), the demo household Casey
@@ -128,29 +128,29 @@ pages to open.
 "As shipped" is what the pages do today. "Crash fixed" is the rating if the
 Dashboard loaded for everyone (finding 1), with nothing else changed.
 
-| # | Persona | As shipped | Crash fixed | The one thing that decides it |
+| # | Label: name | As shipped | Crash fixed | The one thing that decides it |
 | --- | --- | --- | --- | --- |
-| 1 | Sugar baby | doesn't work | doesn't work | the allowance is taxed as neither a gift nor compensation; nothing varies, nothing is in kind |
-| 2 | Sugar daddy | doesn't work | works with workarounds | crash; FICA per stream; the Amex paid in full; no gift tax, NIIT or city tax |
-| 3 | Splenda daddy | doesn't work | works well | crash only; the numbers are right and stark |
-| 4 | Trans person | doesn't work | works with workarounds | crash; dates only in the file; no medical total; the surgery fund counts as runway |
-| 5 | Lesbian couple | works with workarounds | same | a second person only in the file; the IVF fund counts as runway; the Visa double count |
-| 6 | Single, early 20s, negative net worth | works well | same | this is the household the app was built for |
-| 7 | Polyamorous household | works with workarounds | same | two-thirds shares work as percents; a third adult has no place; Omar's deductions and expenses |
-| 8 | Modern Orthodox family | doesn't work | works with workarounds | crash; New Jersey gets no tax number; four children change nothing; tuition and maaser are "everything else" |
-| 9 | Yeshivish family | doesn't work | doesn't work | a gift, benefits and a stipend taxed; six children and the credits invisible; no state tax |
-| 10 | Divorced | works with workarounds | same | child support taxed; no credits; the FI flag counts alimony that ends |
-| 11 | Widow | doesn't work | doesn't work | Social Security untaxed and ignored by the FI number; no filing-status change, RMDs or Medicare |
-| 12 | Partially employed | works with workarounds | same | dated and seasonal streams only in the file; no hours times a rate; the 24-month projection is not on any page |
-| 13 | Lean FI | works with workarounds | same | her goal is flagged red; the app's Lean number is a different definition |
-| 14 | Barista FI | doesn't work | doesn't work | no draw, no decumulation: "cash runs out" with 690,000 invested |
-| 15 | Side hustler | works well | same | the demo; only the quarterly amount is missing |
-| 16 | Slow FI | doesn't work | works with workarounds | crash; the FI date she typed is ignored; a sabbatical is two streams in the file |
-| 17 | Regular FI | works with workarounds | same | the card paid in full and the match |
-| 18 | Chubby FI | works with workarounds | same | accumulation is right; health insurance before 65, NIIT and drawdown are out of scope |
-| 19 | Fat FI | doesn't work | works with workarounds | crash; the Amex "never pays off" with two billion of interest; FICA per stream; no NIIT or city tax |
-| 20 | Coast FI | works well | same | the coast number is right; "reached" is left for her to notice |
-| 21 | SPARKS | works with workarounds | same | no way to compare the three moves; the Visa double count; a blank FI number is handled well |
+| 1 | Sugar baby: Mila Soto | doesn't work | doesn't work | the allowance is taxed as neither a gift nor compensation; nothing varies, nothing is in kind |
+| 2 | Sugar daddy: Raymond Feld | doesn't work | works with workarounds | crash; FICA per stream; the Amex paid in full; no gift tax, NIIT or city tax |
+| 3 | Splenda daddy: Devin Marsh | doesn't work | works well | crash only; the numbers are right and stark |
+| 4 | Trans person: Jordan Avery | doesn't work | works with workarounds | crash; dates only in the file; no medical total; the surgery fund counts as runway |
+| 5 | Lesbian couple: Priya Raman and Naomi Katz | works with workarounds | same | a second person only in the file; the IVF fund counts as runway; the Visa double count |
+| 6 | Single, early 20s, negative net worth: Carlos Reyes | works well | same | this is the household the app was built for |
+| 7 | Polyamorous household: Tess Nakamura, Omar Haddad and Lin Zhao | works with workarounds | same | two-thirds shares work as percents; a third adult has no place; Omar's deductions and expenses |
+| 8 | Modern Orthodox family: the Adlers | doesn't work | works with workarounds | crash; New Jersey gets no tax number; four children change nothing; tuition and maaser are "everything else" |
+| 9 | Yeshivish family: the Weinbergs | doesn't work | doesn't work | a gift, benefits and a stipend taxed; six children and the credits invisible; no state tax |
+| 10 | Divorced: Marcus Bell | works with workarounds | same | child support taxed; no credits; the FI flag counts alimony that ends |
+| 11 | Widow: Ruth Castellano | doesn't work | doesn't work | Social Security untaxed and ignored by the FI number; no filing-status change, RMDs or Medicare |
+| 12 | Partially employed: Dev Okonkwo | works with workarounds | same | dated and seasonal streams only in the file; no hours times a rate; the 24-month projection is not on any page |
+| 13 | Lean FIRE: Ana Reyes | works with workarounds | same | her goal is flagged red; the app's Lean number is a different definition |
+| 14 | Barista FIRE: Theo Marsh | doesn't work | doesn't work | no draw, no decumulation: "cash runs out" with 690,000 invested |
+| 15 | Side hustler: Casey Rivera | works well | same | the demo; only the quarterly amount is missing |
+| 16 | Slow FIRE: Maya Lindgren | doesn't work | works with workarounds | crash; the FI date she typed is ignored; a sabbatical is two streams in the file |
+| 17 | Regular FIRE: Wes Delgado | works with workarounds | same | the card paid in full and the match |
+| 18 | Chubby FIRE: Grace and Daniel Park | works with workarounds | same | accumulation is right; health insurance before 65, NIIT and drawdown are out of scope |
+| 19 | Fat FIRE: Victor Lam | doesn't work | works with workarounds | crash; the Amex "never pays off" with two billion of interest; FICA per stream; no NIIT or city tax |
+| 20 | Coast FIRE: Sofia Bianchi | works well | same | the coast number is right; "reached" is left for her to notice |
+| 21 | SPARKS: Kai Nakamura-Reyes | works with workarounds | same | no way to compare the three moves; the Visa double count; a blank FI number is handled well |
 
 Totals as shipped: 3 work well, 9 work with workarounds, 9 do not work. With
 the crash fixed: 4, 13, 4.

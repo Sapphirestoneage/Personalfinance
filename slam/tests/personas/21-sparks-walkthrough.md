@@ -1,4 +1,4 @@
-# Walkthrough: Kai Nakamura-Reyes, SPARKS
+# Walkthrough, SPARKS: Kai Nakamura-Reyes (persona 21)
 
 Method and shared findings: `UI-NOTES.md`.
 

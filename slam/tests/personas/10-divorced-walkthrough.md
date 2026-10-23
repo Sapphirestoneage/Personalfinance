@@ -1,4 +1,4 @@
-# Walkthrough: Marcus Bell, divorced
+# Walkthrough, Divorced: Marcus Bell (persona 10)
 
 Method and shared findings: `UI-NOTES.md`.
 

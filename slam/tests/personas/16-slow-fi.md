@@ -1,4 +1,4 @@
-# Persona 16: Maya Lindgren, 33, Slow FI (made up)
+# Slow FIRE: Maya Lindgren (persona 16, 33, made up)
 
 File: `households/16-slow-fi.json`. Walkthrough: `16-slow-fi-walkthrough.md`.
 

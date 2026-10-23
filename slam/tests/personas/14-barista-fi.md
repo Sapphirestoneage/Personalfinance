@@ -1,4 +1,4 @@
-# Persona 14: Theo Marsh, 52, Barista FI (made up)
+# Barista FIRE: Theo Marsh (persona 14, 52, made up)
 
 File: `households/14-barista-fi.json`. Walkthrough: `14-barista-fi-walkthrough.md`.
 
