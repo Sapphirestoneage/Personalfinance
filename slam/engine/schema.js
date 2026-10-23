@@ -12,6 +12,9 @@ export const COVERAGES = ['employer', 'parent_plan', 'own_plan', 'marketplace', 
 // HSA-eligible plan types (HDHP_MIN_S notes: bronze and catastrophic count from 2026).
 export const PLAN_TYPES = ['hdhp', 'bronze', 'catastrophic', 'other'];
 export const HSA_ELIGIBLE_PLANS = ['hdhp', 'bronze', 'catastrophic'];
+// How a card is paid each month (S-189): the new charges plus the minimum on
+// the balance carried, or the full statement balance.
+export const PAY_POLICIES = ['minimum', 'statement'];
 // Federal student loan repayment plans (S-181): suggestions, not a closed list,
 // so a plan typed under "Other" is kept as typed. Plan names change with the
 // law (RAP opened July 2026; SAVE, PAYE and ICR are closing): check them yearly.
@@ -38,7 +41,7 @@ export const FAMILIES = {
     label: 'Base', fields: {
       name: 'text', institution: 'text', owner: 'choice:me|partner|joint|child', balance: 'money',
       taxTreatment: 'choice:pretax|roth|taxable|tripleTaxFree|na', liquidity: 'choice:instant|days|penalty|locked|na',
-      monthlyContribution: 'money', linkedGoal: 'text'
+      monthlyContribution: 'money', linkedGoal: 'text', fundedFrom: 'link'
     }
   },
   cash: { label: 'Cash', fields: { apy: 'rate', minBalance: 'money', monthlyFee: 'money', role: 'choice:spending|emergency|sinking|holding' } },
@@ -67,7 +70,7 @@ export const FAMILIES = {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',
       statementCloseDay: 'int', secured: 'bool', payoffDate: 'date', federal: 'bool', plan: 'text', stress: 'int', reasonsToKeep: 'list',
-      business: 'bool', reportsToPersonalCredit: 'bool'
+      business: 'bool', reportsToPersonalCredit: 'bool', paidFrom: 'link', payPolicy: 'choice:minimum|statement'
     }
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
@@ -170,6 +173,8 @@ export function validate(spine) {
     else if (type === 'date') { if (!isDate(v)) err(path, 'not a date'); }
     else if (type === 'bool') { if (typeof v !== 'boolean') err(path, 'must be true or false'); }
     else if (type === 'text') { if (typeof v !== 'string') err(path, 'must be text'); }
+    // A link names an account or card by id, or "paycheck" (S-189).
+    else if (type === 'link') { if (typeof v !== 'string' || !v) err(path, 'must name an account'); }
     else if (type === 'list') { if (!Array.isArray(v)) err(path, 'must be a list'); }
     else if (type.startsWith('choice:')) { if (!type.slice(7).split('|').includes(v)) err(path, 'not one of ' + type.slice(7)); }
   }
@@ -199,6 +204,8 @@ export function validate(spine) {
   checkFact('household.state', h.state, 'text');
   checkFact('household.county', h.county, 'text');
   checkFact('household.nycResident', h.nycResident, 'bool');
+  // How every card is paid unless a card says otherwise (S-189).
+  checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
   if (h.payers !== undefined && (!Array.isArray(h.payers) || h.payers.some((x) => typeof x !== 'string' || !x.trim()))) err('household.payers', 'a list of names');
   // A section's sharing default (S-175): food, accommodation, transportation, other.
@@ -243,6 +250,7 @@ export function validate(spine) {
       if (s.start && s.end && s.end < s.start) err(p + '.end', 'ends before it starts');
       checkFact(p + '.likelihood', s.likelihood, 'rate', false);
       checkFact(p + '.businessExpenses', s.businessExpenses, 'money', false);
+      checkFact(p + '.depositTo', s.depositTo, 'link', false);
       if (s.likelihood && s.likelihood.value !== null && (s.likelihood.value < 0 || s.likelihood.value > 1)) err(p + '.likelihood', 'between 0 and 1');
       if (s.type === 'maybeMoney' && !s.likelihood) err(p + '.likelihood', 'maybe money needs a likelihood');
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
@@ -265,6 +273,10 @@ export function validate(spine) {
     checkFact(p + '.need', e.need, 'bool', false);
     checkFact(p + '.covered', e.covered, 'bool', false);
     checkFact(p + '.coveredBy', e.coveredBy, 'text', false);
+    // Paid from an account or card, on a day of the month (S-189).
+    checkFact(p + '.paidFrom', e.paidFrom, 'link', false);
+    checkFact(p + '.payDay', e.payDay, 'int', false);
+    if (e.payDay && e.payDay.value !== null && (e.payDay.value < 1 || e.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
     // Shared with other people (S-175).
     checkFact(p + '.shared', e.shared, 'bool', false);
     checkFact(p + '.sharedWith', e.sharedWith, 'int', false);

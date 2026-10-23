@@ -28,6 +28,22 @@ export function applyDefaults(spine, rules) {
     const paysSomething = d.type !== 'family_iou' || (valueOf(d.minimum) ?? 0) > 0;
     if (paysSomething && blank(d.dueDay)) out = setAt(out, base + '.dueDay', rough(rules.get('DEFAULT_DUE_DAY', year), 'DEFAULT_DUE_DAY', 'house assumption until the real due day is entered'));
   }
+  // Links (S-189): until said otherwise, money comes in and goes out through
+  // the main checking account, as a guess. A covered expense is paid by
+  // someone else, so it has no link. Pre-tax retirement is paid in from the
+  // paycheck. Every card follows one pay setting, the minimum to start.
+  const main = mainChecking(spine);
+  const via = (note) => rough(main, 'mainChecking', note);
+  if (main) {
+    for (const e of spine.expenses || []) if (!(e.covered && valueOf(e.covered) === true) && blank(e.paidFrom)) out = setAt(out, 'expenses.' + e.id + '.paidFrom', via('assumed paid from the main checking account'));
+    for (const s of spine.income || []) if (blank(s.depositTo)) out = setAt(out, 'income.' + s.id + '.depositTo', via('assumed paid into the main checking account'));
+    for (const d of spine.debts || []) if (blank(d.paidFrom) && (d.type !== 'family_iou' || (valueOf(d.minimum) ?? 0) > 0)) out = setAt(out, 'debts.' + d.id + '.paidFrom', via('assumed paid from the main checking account'));
+    for (const a of spine.accounts || []) {
+      if (a.family === 'cash' || !a.monthlyContribution || valueOf(a.monthlyContribution) === null || !blank(a.fundedFrom)) continue;
+      out = setAt(out, 'accounts.' + a.id + '.fundedFrom', PAYROLL.includes(a.family) ? rough('paycheck', 'mainChecking', 'assumed taken from the paycheck') : via('assumed paid in from the main checking account'));
+    }
+  }
+  if ((spine.debts || []).some((d) => d.type === 'credit_card') && blank(spine.household.cardPayPolicy)) out = setAt(out, 'household.cardPayPolicy', rough('minimum', 'cardPayPolicy', 'assumed: new charges plus the minimum on the balance carried'));
   // A cash account with no APY earns DEFAULT_APY (0.01%), unless it is
   // high-yield savings, which asks for its real rate (S-185).
   for (const a of spine.accounts || []) {
@@ -40,6 +56,14 @@ export function applyDefaults(spine, rules) {
   }
   return out;
 }
+
+// The main checking account: the first checking account, else the first cash account.
+export function mainChecking(spine) {
+  const cash = (spine.accounts || []).filter((a) => a.family === 'cash');
+  const c = cash.find((a) => a.type === 'checking') || cash[0];
+  return c ? c.id : null;
+}
+const PAYROLL = ['employerRetirement', 'hsaFsa'];
 
 // A phone bill, by its name.
 export const isPhone = (e) => /\b(phone|cell|mobile|wireless)\b/i.test((e.label || '') + ' ' + (e.id || ''));

@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -18,17 +18,21 @@ export function typeFor(spine, path) {
     if (s[1] === 'people') return 'date';
     if (s[1] === 'filingStatus') return 'choice:' + FILING_STATUSES.join('|');
     if (s[1] === 'nycResident') return 'bool';
+    if (s[1] === 'cardPayPolicy') return 'choice:' + PAY_POLICIES.join('|');
     if (s[1] === 'situation') return 'choice:' + SITUATIONS.join('|');
     if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
-  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : 'money';
-  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' ? 'bool' : 'money';
+  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : 'money';
+  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : 'money';
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
     // A federal loan's plan: pick from the plans, or type another (S-181).
     if (s[2] === 'plan' && item && item.type === 'student_loan') return 'suggest:' + LOAN_PLANS.join('|');
+    // Links (S-189): a debt is paid from cash; money is paid into an account from cash or the paycheck.
+    if (s[2] === 'paidFrom') return 'link:cash';
+    if (s[2] === 'fundedFrom') return 'link:cash|paycheck';
     return (item && fieldsFor(item.family)[s[2]]) || 'text';
   }
   if (s[0] === 'goals') return 'money';
@@ -92,6 +96,7 @@ export function previewCost(amount, cadence, shared, people, share) {
 // an expense's sharing fields on its amount row).
 export function rowPathFor(spine, path) {
   const s = path.split('.');
+  if (s[0] === 'expenses' && s[2] === 'payDay') return 'expenses.' + s[1] + '.paidFrom';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
   if (s[0] === 'expenses' && SHARE_FIELDS.includes(s[2])) return 'expenses.' + s[1] + '.amount';
   return path;
@@ -109,11 +114,47 @@ export function ledgerRows(spine) {
       if (s[2] === 'amount') rows.push(expenseRow(spine, getAt(spine, 'expenses.' + s[1])));
       continue;
     }
+    // An expense's account and day are one row: "Chase checking, on the 5th" (S-189).
+    if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay')) {
+      if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
+      continue;
+    }
     // A section's sharing default is set on the section, not as a row.
     if (s[0] === 'household' && s[1] === 'expenseDefaults') continue;
-    rows.push({ path, label: labelFor(spine, path), group: groupFor(path), type: typeFor(spine, path), fact });
+    const type = typeFor(spine, path);
+    rows.push({ path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) });
   }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));
+}
+
+// ---------------------------------------------------------------- links (S-189)
+// What a link may point at: cash accounts, cards, or the paycheck.
+export function linkOptions(spine, type) {
+  const want = type.slice(5).split('|');
+  const out = [];
+  if (want.includes('cash')) for (const a of spine.accounts || []) if (a.family === 'cash') out.push({ value: a.id, label: valueOf(a.name) || a.id, group: 'Accounts' });
+  if (want.includes('card')) for (const d of spine.debts || []) if (d.type === 'credit_card') out.push({ value: d.id, label: valueOf(d.name) || d.id, group: 'Cards' });
+  if (want.includes('paycheck')) out.push({ value: 'paycheck', label: 'Taken from my paycheck', group: 'Paycheck' });
+  return out;
+}
+// The name of what a link points at; an id that is gone says so.
+export function linkName(spine, id) {
+  if (id === 'paycheck') return 'Taken from the paycheck';
+  const x = (spine.accounts || []).find((a) => a.id === id) || (spine.debts || []).find((d) => d.id === id);
+  return x ? valueOf(x.name) || id : 'an account no longer here (' + id + ')';
+}
+const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+// An expense's payment row: the account or card, and the day when it is known.
+export function paymentRow(spine, e) {
+  const path = 'expenses.' + e.id + '.paidFrom';
+  const from = e.paidFrom ? e.paidFrom.value : null, day = e.payDay ? e.payDay.value : null;
+  const kind = !e.paidFrom ? 'missing' : e.paidFrom.kind;
+  return {
+    path, label: labelFor(spine, path), group: 'E', type: 'payment',
+    fact: { value: from === null ? null : { from, day }, kind },
+    display: from === null ? null : linkName(spine, from) + (day ? ', on the ' + ordinal(day) : ''),
+    members: [path, 'expenses.' + e.id + '.payDay']
+  };
 }
 
 // The headline numbers a guess is measured against, each with a scale so a

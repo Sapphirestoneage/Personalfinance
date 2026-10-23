@@ -313,3 +313,67 @@ test('your part of a shared bill: an even split, a percent, or the dollars you p
   const d = editExpense(s, e.id, { amount: e.amount.value, cadence: e.cadence, sharing: { shared: true, sharedWith: 3, yourShare: share, whoPays: 'part' } }, '2026-10-22');
   assert.ok(Math.abs(shareOf(d, d.expenses.find((x) => x.id === e.id)).share * e.amount.value - 17.5) < 1e-9);
 });
+
+// ------------------------------------------------------------------ links and the card pay setting (S-189)
+import { editPayment, duplicateItem } from '../engine/edits.js';
+import { paymentRow, linkOptions } from '../engine/ledger.js';
+import { mainChecking } from '../engine/defaults.js';
+import { minimumsTotal } from '../engine/debt.js';
+
+test('links: until said otherwise, money goes through the main checking, as a guess', () => {
+  const s = applyDefaults(demo(), R);
+  const main = mainChecking(s);
+  assert.equal(s.accounts.find((a) => a.id === main).type, 'checking');
+  for (const e of s.expenses) if (!(e.covered && e.covered.value)) assert.deepEqual([e.paidFrom.value, e.paidFrom.kind], [main, 'rough'], e.id);
+  for (const x of s.income) assert.deepEqual([x.depositTo.value, x.depositTo.kind], [main, 'rough'], x.id);
+  for (const d of s.debts) assert.equal(d.paidFrom.value, main, d.id);
+  assert.deepEqual([s.household.cardPayPolicy.value, s.household.cardPayPolicy.kind], ['minimum', 'rough']);
+  assert.ok(validate(s).ok, validate(s).errors.map((x) => x.path + ' ' + x.message).join('\n'));
+  // A 401(k) contribution comes out of the paycheck.
+  const k = s.accounts.find((a) => a.family === 'employerRetirement' && a.monthlyContribution);
+  if (k) assert.equal(k.fundedFrom.value, 'paycheck');
+});
+
+test('an expense\'s payment: the account or card and the day, one row', () => {
+  const s0 = applyDefaults(demo(), R);
+  const card = s0.debts.find((d) => d.type === 'credit_card');
+  const e = s0.expenses[0];
+  assert.ok(linkOptions(s0, 'link:cash|card').some((o) => o.value === card.id && o.group === 'Cards'));
+  const s = editPayment(s0, e.id, { from: card.id, day: 5 }, '2026-10-23');
+  const row = paymentRow(s, s.expenses[0]);
+  assert.deepEqual(row.fact.value, { from: card.id, day: 5 });
+  assert.equal(row.display, card.name.value + ', on the 5th');
+  assert.ok(validate(s).ok);
+  const cleared = editPayment(s, e.id, { from: card.id, day: null }, '2026-10-23');
+  assert.equal(cleared.expenses[0].payDay, undefined, 'a blank day clears it');
+});
+
+test('the card pay setting: the full statement pays off what a card carries', () => {
+  const s = applyDefaults(demo(), R);
+  const card = s.debts.find((d) => d.type === 'credit_card' && d.balance.value > 0);
+  const iso = '2026-11-01';
+  const before = minimumsTotal(s, R, iso).items.find((x) => x.id === card.id).amount;
+  assert.ok(before < card.balance.value, 'the minimum to start');
+  const all = { ...s, household: { ...s.household, cardPayPolicy: { value: 'statement', kind: 'known', asOf: '2026-10-23', source: 'test' } } };
+  assert.equal(minimumsTotal(all, R, iso).items.find((x) => x.id === card.id).amount, card.balance.value, 'every card: the statement');
+  const one = { ...s, debts: s.debts.map((d) => (d.id === card.id ? { ...d, payPolicy: { value: 'statement', kind: 'known', asOf: '2026-10-23', source: 'test' } } : d)) };
+  assert.equal(minimumsTotal(one, R, iso).items.find((x) => x.id === card.id).amount, card.balance.value, 'one card overrides');
+  assert.ok(validate(one).ok);
+});
+
+test('duplicate: a copy keeps everything but its name and amount', () => {
+  const s = applyDefaults(demo(), R);
+  const src = s.expenses.find((e) => e.amount.value > 0);
+  const r = duplicateItem(s, 'expenses', src.id, '2026-10-23', 'Netflix');
+  const copy = r.spine.expenses.find((e) => e.id === r.id);
+  assert.equal(copy.label, 'Netflix');
+  assert.deepEqual([copy.amount.value, copy.amount.kind], [null, 'missing']);
+  assert.equal(copy.cadence, src.cadence);
+  assert.deepEqual(copy.paidFrom, src.paidFrom);
+  assert.equal(r.firstPath, 'expenses.' + r.id + '.amount');
+  assert.ok(validate(r.spine).ok);
+  const card = s.debts.find((d) => d.type === 'credit_card');
+  const c = duplicateItem(s, 'debts', card.id, '2026-10-23', 'New card');
+  const cc = c.spine.debts.find((d) => d.id === c.id);
+  assert.deepEqual([cc.name.value, cc.balance.value, cc.apr.value], ['New card', null, card.apr.value]);
+});

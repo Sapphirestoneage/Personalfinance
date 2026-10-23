@@ -2,7 +2,7 @@
 // number arrives already computed by the engines.
 
 import { money, pct } from '../src/ui/format.js';
-import { LOAN_PLAN_WORDS } from '../engine/schema.js';
+import { LOAN_PLAN_WORDS, PAY_POLICIES } from '../engine/schema.js';
 
 export { money, pct };
 
@@ -22,6 +22,9 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export const shortDate = (iso) => (iso ? MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : '');
 export const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 export const words = (s) => String(s).replace(/_/g, ' ');
+
+// How a card is paid (S-189), in words.
+export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what I carry', statement: 'The full statement balance' };
 
 // A stored value, worded by its field type.
 export function showValue(value, type) {
@@ -48,6 +51,7 @@ export function showValue(value, type) {
     if (!value.length) return 'none';
     return value.map((x) => (typeof x === 'object' ? (x.year ? x.year + ': ' : '') + money(x.amount) + (x.taxable !== undefined && x.taxable !== x.amount ? ' (taxable ' + money(x.taxable) + ')' : '') : x)).join(', ');
   }
+  if (type === 'choice:' + PAY_POLICIES.join('|')) return PAY_POLICY_WORDS[value] || words(value);
   if (type.startsWith('choice:')) return words(value);
   if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
   return String(value);

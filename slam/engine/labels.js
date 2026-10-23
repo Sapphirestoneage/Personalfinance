@@ -17,14 +17,17 @@ const FIELD = {
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
+  paidFrom: 'paid from', payDay: 'day paid', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
   need: 'a need (not a want)', covered: 'paid by someone else',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
-const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City' };
+const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid' };
 const words = (k) => FIELD[k] || k.replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
+// A duplicate starts with no name until one is typed (S-190).
+export const UNNAMED = 'No name yet';
 const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
 
 export function labelFor(spine, path) {
@@ -42,17 +45,17 @@ export function labelFor(spine, path) {
     }
     case 'income': {
       const x = item('income', s[1]);
-      const name = x ? x.label : s[1];
+      const name = x ? x.label || UNNAMED : s[1];
       if (s[2] === 'withholding') return name + ': ' + s[3] + ' tax withheld';
       return name + ': ' + words(s[2]);
     }
-    case 'expenses': { const x = item('expenses', s[1]); const name = x ? x.label : s[1]; return s[2] === 'amount' ? name : name + ': ' + words(s[2]); }
+    case 'expenses': { const x = item('expenses', s[1]); const name = x ? x.label || UNNAMED : s[1]; return s[2] === 'amount' ? name : name + ': ' + words(s[2]); }
     case 'accounts': case 'debts': {
       const x = item(s[0], s[1]);
       const name = x ? valueOf(x.name) || s[1] : s[1];
       return name + ': ' + ((x && x.type === 'credit_card' && CARD_FIELD[s[2]]) || words(s[2]));
     }
-    case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label : s[1]) + ': ' + words(s[2]); }
+    case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label || UNNAMED : s[1]) + ': ' + words(s[2]); }
     case 'assumptions': return ASSUME[s[1]] || words(s[1]);
     case 'taxYears': return s[1] + ' ' + words(s[2]);
     default: return path;
@@ -72,7 +75,7 @@ export function groupFor(path) {
   if (s[0] === 'income') return s[2] === 'withholding' ? 'T' : 'I';
   if (s[0] === 'taxYears') return 'T';
   if (s[0] === 'expenses') return 'E';
-  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' ? 'E' : 'T';
+  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' ? 'E' : s[1] === 'cardPayPolicy' ? 'D' : 'T';
   return 'G';
 }
 

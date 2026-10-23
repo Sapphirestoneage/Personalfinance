@@ -34,11 +34,13 @@ export const DEFAULT_MIN_SOURCE = 'APP_CARD_MIN_FLOOR';
 // default (stored rough by engine/defaults.js) is recomputed for the balance at
 // hand, so it falls as the balance falls; so is a card with no minimum at all.
 // Any other debt with no minimum is missing.
-export function minimumPayment(debt, rules, iso, balance = v(debt.balance)) {
+export function minimumPayment(debt, rules, iso, balance = v(debt.balance), policy = 'minimum') {
   const t = tracker();
   t.useFact(P(debt, 'balance'), debt.balance);
   if (balance === null) return t.out(null);
   if (balance <= 0) return t.out(0);
+  // A card paid by its full statement pays off the balance carried (S-189).
+  if (policy === 'statement' && debt.type === 'credit_card') return t.out(balance, { estimated: false, statement: true });
   const isDefault = debt.minimum && debt.minimum.source === DEFAULT_MIN_SOURCE;
   const known = t.useFact(P(debt, 'minimum'), debt.minimum);
   if (known !== null && !isDefault) return t.out(Math.min(known, balance), { estimated: false });
@@ -255,6 +257,13 @@ export function dueDateIn(debt, ym) {
   return day === null ? null : dayIn(ym, day);
 }
 
+// How a debt is paid each month (S-189): a card's own setting, else the
+// household's setting for every card, else new charges plus the minimum.
+export function payPolicyOf(spine, d) {
+  if (d.type !== 'credit_card') return 'minimum';
+  return v(d.payPolicy) || (spine.household && v(spine.household.cardPayPolicy)) || 'minimum';
+}
+
 // Minimums due in a month across all debts with a balance, each on its due day.
 export function minimumsTotal(spine, rules, iso) {
   const t = tracker();
@@ -263,7 +272,7 @@ export function minimumsTotal(spine, rules, iso) {
   for (const d of spine.debts || []) {
     const b = v(d.balance);
     if (b !== null && b <= 0) continue;
-    const m = minimumPayment(d, rules, iso);
+    const m = minimumPayment(d, rules, iso, v(d.balance), payPolicyOf(spine, d));
     t.absorb({ ...m, value: undefined });
     if (m.value !== null) sum += m.value;
     items.push({ id: d.id, name: v(d.name), amount: m.value, estimated: !!m.estimated, dueDate: dueDateIn(d, iso.slice(0, 7)) });
@@ -296,7 +305,7 @@ export function debtSchedule(spine, rules, asOf, untilYm) {
     for (const s of states) {
       if (s.bal <= 0.005) continue;
       interest += accrueMonth(s, iso, asOf, t);
-      const m = minimumPayment(s.d, rules, iso, s.bal);
+      const m = minimumPayment(s.d, rules, iso, s.bal, payPolicyOf(spine, s.d));
       t.absorb({ ...m, value: undefined });
       if (m.value === null) t.addMissing(P(s.d, 'minimum'));
       const pay = Math.min(s.bal, m.value ?? 0);

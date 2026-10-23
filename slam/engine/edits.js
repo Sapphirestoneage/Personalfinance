@@ -1,7 +1,7 @@
 // Editing the spine: one Fact at a time, and an undo/redo history of whole
 // documents (households are small; S-003 does the same for the Budget).
 
-import { getAt, setAt, isFact } from './spine.js';
+import { getAt, setAt, isFact, valueOf } from './spine.js';
 import { PRESETS, INCOME_TYPES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
@@ -229,6 +229,37 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
     first = 'goals.' + id + (item.type === 'fi' ? '.fiNumber' : '.target');
   } else throw new Error('Cannot add to ' + collection);
   return { spine: { ...spine, [collection]: [...list, item] }, id, firstPath: first };
+}
+
+// An expense's payment (S-189): the account or card, and the day (blank clears it).
+export function editPayment(spine, id, { from, day = null, kind = 'known' }, today) {
+  const base = 'expenses.' + id;
+  if (!getAt(spine, base)) throw new Error('No expense ' + id);
+  const stamp = { asOf: today, source: 'ledger' };
+  let s = setAt(spine, base + '.paidFrom', { value: from, kind, ...stamp });
+  const e = getAt(s, base);
+  if (day === null) { if (e.payDay) { const next = { ...e }; delete next.payDay; s = setAt(s, base, next); } }
+  else s = setAt(s, base + '.payDay', { value: day, kind, ...stamp });
+  return s;
+}
+
+// Duplicate an item (S-190): everything copied (how often, sharing, who
+// pays, links, rates) except its name, which is the one given (blank when none
+// is), and its amount, which starts missing so the Ledger asks for it.
+// Returns { spine, id, firstPath }: firstPath is the amount to fill in.
+const AMOUNT_OF = { accounts: 'balance', debts: 'balance', income: 'amount', expenses: 'amount' };
+export function duplicateItem(spine, collection, id, today, name = '') {
+  const list = spine[collection] || [];
+  const src = list.find((x) => x.id === id);
+  if (!src) throw new Error('No ' + collection + ' item ' + id);
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = newId(list, name || (typeof src.label === 'string' ? src.label : valueOf(src.name) || id) + ' copy');
+  const stamp = { asOf: today, source: 'ledger' };
+  const amount = collection === 'goals' ? ('fiNumber' in copy ? 'fiNumber' : 'target') : AMOUNT_OF[collection];
+  if (amount && amount in copy) copy[amount] = { value: null, kind: 'missing', ...stamp, note: 'duplicated: fill this in' };
+  if (typeof copy.label === 'string') copy.label = name;
+  if (copy.name && isFact(copy.name)) copy.name = name ? { value: name, kind: 'known', ...stamp } : { value: null, kind: 'missing', ...stamp };
+  return { spine: { ...spine, [collection]: [...list, copy] }, id: copy.id, firstPath: collection + '.' + copy.id + '.' + amount };
 }
 
 // Remove one item (undo brings it back).

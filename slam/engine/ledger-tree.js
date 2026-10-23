@@ -6,6 +6,7 @@
 import { valueOf } from './spine.js';
 import { PRESETS, FAMILIES, INCOME_TYPES, FAT } from './schema.js';
 import { ledgerRows } from './ledger.js';
+import { UNNAMED } from './labels.js';
 
 const v = valueOf;
 const PLURAL = { 'Credit card': 'Credit cards', 'Federal student loan': 'Federal student loans', 'Private student loan': 'Private student loans', 'Auto loan': 'Auto loans', 'Personal loan': 'Personal loans', Mortgage: 'Mortgages', 'Medical debt': 'Medical debt', 'Family IOU': 'Family IOUs' };
@@ -58,6 +59,9 @@ export function ledgerTree(spine, inst) {
     if (t === 'credit_card') {
       const names = [...new Set(ds.map((d) => institutionOf(d, inst) || 'Other'))];
       children = names.map((n) => node('D:' + t + ':' + n, n, ds.filter((d) => (institutionOf(d, inst) || 'Other') === n).map(itemOf)));
+      // The pay setting every card follows unless it says otherwise (S-189) leads the cards.
+      const every = take(byPrefix('household.cardPayPolicy'));
+      if (every.length) children.unshift(item('household.cardPayPolicy', 'Every card', every));
     } else children = ds.map(itemOf);
     return node('D:' + t, label, children, { add: { collection: 'debts', types: [t] } });
   });
@@ -75,7 +79,7 @@ export function ledgerTree(spine, inst) {
   // Income: type > each stream (amount, how likely); the situation timeline
   const incomeTypes = [...new Set((spine.income || []).map((s) => s.type))];
   const incomeSections = incomeTypes.map((t) => node('I:' + t, INCOME_LABEL[t] || t,
-    spine.income.filter((s) => s.type === t).map((s) => { const r = take(byPrefix('income.' + s.id).filter((x) => !x.path.includes('.withholding.'))); return item('income.' + s.id, s.label, r, { collection: 'income', id: s.id, summary: 'income.' + s.id + '.amount' }); }),
+    spine.income.filter((s) => s.type === t).map((s) => { const r = take(byPrefix('income.' + s.id).filter((x) => !x.path.includes('.withholding.'))); return item('income.' + s.id, s.label || UNNAMED, r, { collection: 'income', id: s.id, summary: 'income.' + s.id + '.amount' }); }),
     { add: { collection: 'income', types: [t] } }));
   const situation = take(byPrefix('household.situation'));
   if (situation.length) incomeSections.push(node('I:situation', 'Your situation', [item('household.situation', 'Situation over time', situation)]));
@@ -83,7 +87,7 @@ export function ledgerTree(spine, inst) {
   // Taxes: filing and you; withholding per stream; each tax year
   const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident'].includes(r.path) || r.path.startsWith('household.people.')));
   const taxSections = [node('T:filing', 'Filing', [item('household.filing', 'You and where you file', filing)])];
-  const wh = (spine.income || []).map((s) => item('withholding.' + s.id, s.label, take(byPrefix('income.' + s.id + '.withholding')))).filter((x) => x.rows.length);
+  const wh = (spine.income || []).map((s) => item('withholding.' + s.id, s.label || UNNAMED, take(byPrefix('income.' + s.id + '.withholding')))).filter((x) => x.rows.length);
   if (wh.length) taxSections.push(node('T:withholding', 'Tax withheld', wh));
   const years = (spine.taxYears || []).map((y) => item('taxYears.' + y.id, y.year + ' tax year', take(byPrefix('taxYears.' + y.id))));
   if (years.length) taxSections.push(node('T:years', 'Tax years', years));
@@ -91,13 +95,13 @@ export function ledgerTree(spine, inst) {
   // Expenses: FAT tag > each expense (one row each); health coverage
   const expSections = [...FAT, 'other'].map((tag) => {
     const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag);
-    return list.length ? node('E:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label, r, { collection: 'expenses', id: e.id, single: false, summary: 'expenses.' + e.id + '.amount' }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
+    return list.length ? node('E:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, single: false, summary: 'expenses.' + e.id + '.amount' }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
   }).filter(Boolean);
   const health = take(byPrefix('household.healthCoverage'));
   if (health.length) expSections.push(node('E:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
 
   // Goals and assumptions
-  const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label, r, { collection: 'goals', id: g.id }); });
+  const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label || UNNAMED, r, { collection: 'goals', id: g.id }); });
   const gSections = [node('G:goals', 'Goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } }), node('G:assumptions', 'Assumptions', [item('assumptions', 'Assumptions', take(byPrefix('assumptions')))])];
 
   // Anything not placed above still shows (nothing is ever hidden by the tree).

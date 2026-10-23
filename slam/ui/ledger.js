@@ -4,17 +4,18 @@
 // confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
-import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost } from '../engine/ledger.js';
+import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
+import { editPayment, duplicateItem } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
-import { h, chip, showValue, money, words, shortDate } from './view.js';
+import { h, chip, showValue, money, words, shortDate, PAY_POLICY_WORDS } from './view.js';
 
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -352,15 +353,57 @@ function suggestEditor(row) {
       h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
+// A pick list of the household's accounts (and cards, or the paycheck) for a link (S-189).
+function linkSelect(type, current, id) {
+  const opts = linkOptions(hist.present, type);
+  const groups = [...new Set(opts.map((o) => o.group))];
+  return h('select', { id }, h('option', { value: '' }, 'Choose'),
+    ...groups.map((g) => h('optgroup', { label: g }, opts.filter((o) => o.group === g).map((o) => h('option', { value: o.value, selected: current === o.value }, o.label)))));
+}
+
+// An expense's payment (S-189): the account or card it comes out of, and the
+// day of the month when there is one. One Save writes both.
+function paymentEditor(row) {
+  const id = row.path.split('.')[1];
+  const e = getAt(hist.present, 'expenses.' + id);
+  const cur = row.fact.value || {};
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const from = linkSelect('link:cash|card', cur.from ?? null, 'edit-input');
+  const day = h('input', { id: 'pay-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
+  day.value = cur.day ? String(cur.day) : '';
+  const doSet = (kind) => {
+    if (!from.value) { msg.textContent = 'Pick where it is paid from'; from.focus(); return; }
+    const d = day.value.trim() === '' ? { ok: true, value: null } : parseInput('int', day.value);
+    if (!d.ok || (d.value !== null && (d.value < 1 || d.value > 31))) { msg.textContent = 'Day: a number from 1 to 31, or leave it blank'; day.focus(); return; }
+    open = null;
+    const label = from.selectedOptions[0].textContent;
+    apply(editPayment(hist.present, id, { from: from.value, day: d.value, kind }, today()), e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (kind === 'rough' ? ' (a guess)' : ''));
+  };
+  return editorForm(() => doSet('known'),
+    h('label', { for: 'edit-input', class: 'edit-label' }, 'Paid from'), from,
+    h('p', { class: 'edit-hint' }, 'A card here means it goes on the card; the card is then paid from its own account.'),
+    h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day,
+    h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'),
+    msg,
+    h('div', { class: 'edit-actions' },
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label + ': paid from', 'confirmed'); } }, 'Confirm'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+}
+
 function editor(row) {
   if (row.type === 'cardRate') return cardRateEditor(row);
   if (row.type === 'expense') return expenseEditor(row);
+  if (row.type === 'payment') return paymentEditor(row);
   const f = getAt(hist.present, row.path);
   if (row.type.startsWith('suggest:')) return suggestEditor(row);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   let input;
-  if (row.type.startsWith('choice:') || row.type === 'bool') {
-    const opts = row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, words(x)]);
+  if (row.type.startsWith('link:')) {
+    input = linkSelect(row.type, f.value, 'edit-input');
+  } else if (row.type.startsWith('choice:') || row.type === 'bool') {
+    const opts = row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
     input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
   } else if (row.type === 'list') {
     input = h('textarea', { id: 'edit-input', rows: 3 });
@@ -372,6 +415,7 @@ function editor(row) {
   const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? 'A list, for example [{"year": 2026, "amount": 4000}]' : null;
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;
+    if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
     const p = parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
     open = null;
@@ -393,7 +437,7 @@ function editor(row) {
 
 function rowEl(row) {
   const f = row.fact;
-  const shown = f.kind === 'notForMe' ? 'Does not apply' : f.value === null ? 'Not given yet' : showValue(f.value, row.type);
+  const shown = f.kind === 'notForMe' ? 'Does not apply' : f.value === null ? 'Not given yet' : row.display || showValue(f.value, row.type);
   const isOpen = open === row.path && !selecting;
   const label = row.field || row.label;
   if (selecting) {
@@ -566,6 +610,26 @@ function itemEl(it) {
       h('button', { type: 'button', class: 'btn ghost', onclick: () => render() }, 'Keep'));
     e.currentTarget.replaceWith(box);
   } }, 'Remove') : null;
+  // Duplicate (S-190): the copy keeps everything but its name and amount.
+  const dup = it.collection ? h('button', { type: 'button', class: 'btn small', onclick: (e) => {
+    if (!canLeave()) return;
+    const name = h('input', { id: 'dup-name', type: 'text', autocomplete: 'off' });
+    const form = h('form', { class: 'confirm dup-form', onsubmit: (ev) => {
+      ev.preventDefault();
+      const nm = name.value.trim();
+      if (!nm) { name.focus(); return; }
+      const r = duplicateItem(hist.present, it.collection, it.id, today(), nm);
+      openItems.add(it.collection + '.' + r.id);
+      apply(r.spine, 'Copied ' + it.label + ' as ' + nm, null);
+      openField(r.firstPath);
+    } },
+      h('label', { for: 'dup-name', class: 'edit-label' }, 'Name for the copy'), name,
+      h('button', { type: 'submit', class: 'btn primary' }, 'Make the copy'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: () => render() }, 'Cancel'),
+      h('p', { class: 'edit-hint' }, 'It keeps how often, who pays, sharing and where it is paid from. The amount starts blank.'));
+    e.currentTarget.replaceWith(form);
+    name.focus();
+  } }, 'Duplicate') : null;
   const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select these') : null;
   return h('li', { class: 'item' + (isOpen ? ' open' : ''), id: 'item-' + it.key },
     h('div', { class: 'item-head' },
@@ -573,7 +637,7 @@ function itemEl(it) {
         h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, isOpen ? '-' : '+'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
-    isOpen && !selecting ? h('div', { class: 'item-actions' }, remove) : null);
+    isOpen && !selecting ? h('div', { class: 'item-actions' }, dup, remove) : null);
 }
 
 // A section or sub-section: its label and counts, its add button, its children.
