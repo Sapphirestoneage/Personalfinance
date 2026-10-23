@@ -237,7 +237,9 @@ function maxitMetric(id) {
       const r = rowOf(ctx); const p = r && r.paychecks;
       if (!p || p.perPaycheck === null || !r.fillable) return out(null, []);
       const terms = [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term('Paychecks from ' + (p.streams.join(' and ') || 'pay') + ' to ' + r.deadline.date + ' (' + p.dates.join(', ') + ')', p.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })];
-      if (r.deadline.payrollOnly) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthlyContribution', p.current, 'usd', 'plus', 'What already comes out of each paycheck for it (the monthly amount x 12 / ' + p.perYear + ' paychecks a year)'), key: 'now' }, term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
+      // With two or more pay lines the amount is new money a paycheck, on top of what each already puts in.
+      if (r.deadline.payrollOnly && !p.multi) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthlyContribution', p.current, 'usd', 'plus', 'What already comes out of each paycheck for it (the monthly amount x 12 / ' + p.perYear + ' paychecks a year)'), key: 'now' });
+      if (r.deadline.payrollOnly) terms.push(term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
       return out(res(r, p.perPaycheck), terms, [], lastNote(r, p.last, p.perPaycheck));
     },
     recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };
@@ -271,6 +273,18 @@ function earnedMetric(id) {
   const m = /^earned:(\d{4})(?::(.+))?$/.exec(id || '');
   if (!m) return null;
   const year = +m[1], personId = m[2] || null;
+  // A couple ("earned:<year>:<one>+<other>", S-217): each spouse's own earned income, added (what a spousal IRA reads).
+  if (personId && personId.includes('+')) {
+    const ids = personId.split('+');
+    return { id, label: year + ' earned income, the couple\'s', unit: 'usd', op: 'sum', blockOnMissing: true, screens: ['ledger', 'plan'], formula: 'The couple\'s earned income = each spouse\'s own earned income for the year',
+      explain: ({ spine, rules }) => {
+        const es = ids.map((p) => earnedIncome(spine, rules, year, { personId: p }));
+        const name = (p) => ((spine.household.people || []).find((x) => x.id === p) || {}).name || p;
+        const terms = es.map((e, i) => metric('earned:' + year + ':' + ids[i], name(ids[i]) + ': ' + year + ' earned income', e, 'usd', 'plus'));
+        const value = es.some((e) => e.value === null) ? null : Math.round(es.reduce((s, e) => s + e.value, 0) * 100) / 100;
+        return out({ value, kind: value === null ? 'missing' : es.some((e) => e.kind === 'rough') ? 'rough' : 'computed', rules: es.flatMap((e) => e.rules || []), rough: es.flatMap((e) => e.rough || []), missing: es.flatMap((e) => e.missing || []) }, terms);
+      } };
+  }
   return { id, label: year + ' earned income', unit: 'usd', op: 'sum', blockOnMissing: true, screens: ['windfall', 'ledger', 'plan'], formula: 'Earned income = W-2 and tips pay for the year - pre-tax saving from that pay + 1099 profit (gross - business expenses) - half the self-employment tax (a 1099 loss never lowers wages); unemployment and other income do not count',
     explain: ({ spine, rules }) => {
       const e = earnedIncome(spine, rules, year, { personId });

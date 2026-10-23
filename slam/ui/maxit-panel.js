@@ -42,6 +42,7 @@ function mainOf(r) {
   if (r.main === 'paycheck') {
     if (p && p.blank) return { big: null, sub: 'Missing: ' + p.blank.label + ' ' + p.blank.what + ', so the paychecks before ' + longDay(r.deadline.date) + ' cannot be counted.', blank: p.blank };
     if (!p || p.perPaycheck === null) return { big: null, sub: 'No paycheck lands before ' + longDay(r.deadline.date) + '.' };
+    if (p.multi) return { big: cash(p.perPaycheck) + ' more a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + ': this much more on each paycheck than comes out of it now' + lastWords(p.last, p.perPaycheck) };
     return { big: cash(p.perPaycheck) + ' a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + (p.current ? ': set the deferral to this, ' + cash(p.extra) + ' more than the ' + cash(p.current) + ' that comes out now' : '') + lastWords(p.last, p.perPaycheck) };
   }
   if (r.perMonth === null) return { big: null, sub: '' };

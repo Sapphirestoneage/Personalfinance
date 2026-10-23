@@ -43,7 +43,8 @@ export const RUNG_LABELS = {
   deductibles: 'Deductibles covered', employerMatch: 'The employer match', highInterest: 'High-interest debt gone', reserves: 'Emergency reserves',
   rothHsa: 'Roth and HSA room', maxRetirement: 'Retirement maxed', hyper: 'Hyper-accumulation', prepaid: 'Prepaid future expenses', lowInterest: 'Low-interest debt'
 };
-export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
+// sim (optional): the day-by-day run "How much to max it?" reads (maxItSim), so the rungs read the same rows as its card.
+export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null } = {}) {
   const year = +asOf.slice(0, 4);
   const all = tracker();
   const order = all.rule(rules, 'FOO_RUNGS', year);
@@ -51,7 +52,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   all.absorb({ ...s.cashflow.surplus, value: undefined });
   const w = windfall(spine, rules, s, { amount: 0, taxed: true, monthly: true });
   let mxMemo = null;
-  const mx = () => mxMemo || (mxMemo = maxIt(spine, rules, { asOf }));
+  const mx = () => mxMemo || (mxMemo = maxIt(spine, rules, { asOf, sim }));
   const step = (id) => w.steps.find((x) => x.id === id) || null;
   const cash = s.sheet.cash.value;
   const hi = rules.get('APP_HI_RATE', year);

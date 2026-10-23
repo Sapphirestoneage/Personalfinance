@@ -7,6 +7,7 @@ import { cashsim } from '../engine/cashsim.js';
 import { clearDates } from '../engine/debtview.js';
 import { safeToSpend } from '../engine/spending.js';
 import { fooLadder } from '../engine/plan.js';
+import { maxItFor } from './maxit-panel.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
@@ -21,7 +22,7 @@ loadAll().then(({ spine: base, rules, source }) => {
   const spine = withScenario(base, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
-  const cd = clearDates(sim), safe = safeToSpend(sim), foo = fooLadder(spine, rules, s);
+  const cd = clearDates(sim), safe = safeToSpend(sim), foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   app.replaceChildren(
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending')),

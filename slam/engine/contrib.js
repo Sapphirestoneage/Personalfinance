@@ -41,11 +41,14 @@ export function payDatesOf(s, from, to) {
 // The owner's pay lines of these types that pay something (a line known to pay $0 holds no deferral).
 export const earningFor = (spine, pid, types = ['w2', 'tips']) => (spine.income || []).filter((s) => types.includes(s.type) && incomeOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0));
 // A line's pay dates from `from` to `to` as the calendar has them: by its schedule, less the ones skipped, with the
-// moved ones on their new day (a payday moved in from up to two months away counts; one moved out does not).
+// moved ones on their new day, and one logged as happened on the day it happened (a payday moved in from up to two
+// months away counts; one moved out does not).
 export const paydaysOf = (spine, s, from, to) => {
   const ov = (spine.calendar && spine.calendar.overrides) || {};
   const at = (d) => ov[s.id + '|' + d] || {};
-  return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => at(d).date || d).filter((d) => d >= from && d <= to))].sort();
+  const key = 'sched:' + s.id + '|';
+  const logged = new Map((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith(key) && x.date).map((x) => [x.importKey.slice(key.length), x.date]));
+  return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => logged.get(d) || at(d).date || d).filter((d) => d >= from && d <= to))].sort();
 };
 // Whether the owner has a W-2 or tips line that pays (payroll saving needs pay to come out of).
 export const hasPay = (spine, pid) => earningFor(spine, pid).length > 0;

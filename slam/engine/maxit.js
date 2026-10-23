@@ -63,8 +63,16 @@ const lineOwner = incomeOwner;
 // Whether an account has a yearly limit to fill here: a 529 only in New York (its deduction; a blank state is
 // missing, not outside New York), an HSA unless its plan is not eligible.
 export const appliesTo = (spine, a) => (a.type === 'k529' ? [null, 'NY'].includes(v(spine.household.state)) : !(a.type === 'hsa' && a.planEligible && v(a.planEligible) === 'no'));
+// An account whose owner is not one person in the household: a child's, a joint one, or a partner's with no partner
+// in the household. Its limit is not the first person's, so it shares no pool with theirs (S-217).
+export function oddOwner(spine, a) {
+  if (a.type === 'k529' || !a.owner) return null;
+  const o = v(a.owner);
+  if (o === 'child' || o === 'joint') return o;
+  return o === 'partner' && people(spine).length < 2 ? 'noPartner' : null;
+}
 export function poolsOf(spine, a) {
-  const p = (ownerOf(spine, a) || {}).id;
+  const p = oddOwner(spine, a) ? 'acct-' + a.id : (ownerOf(spine, a) || {}).id;
   if (IRA.includes(a.type)) return [{ key: 'ira:' + p, part: 'all' }];
   if (DEFERRAL.includes(a.type) || a.type === 'simple_ira') return [{ key: 'deferral:' + p, part: 'all' }];
   if (a.type === 'solo_k401') return [{ key: 'deferral:' + p, part: 'employee' }, { key: 'employer:' + p, part: 'employer' }];
@@ -215,6 +223,17 @@ function deferralLimit(rules, age, year, t) {
 // The Roth IRA limit at the year's modified AGI (AGI less Roth conversion income): the lesser of the limit and
 // compensation (Worksheet 2-2 line 6), reduced in the phase-out range, rounded up to the next $10, and never under
 // $200 while above $0 (Publication 590-A).
+// The Roth limit for a base (the lesser of the limit and pay) at a phase-out already figured: the base under it, $0
+// past it, inside it the base reduced in proportion, rounded up to the step, never under the floor (Pub 590-A
+// Worksheet 2-2). An unknown phase-out leaves the base.
+export function rothReduced(rules, year, base, ph) {
+  if (!ph || ph.unknown || ph.lo == null || ph.magi <= ph.lo) return base;
+  if (ph.magi >= ph.hi) return 0;
+  const step = rules.get('ROTH_PO_ROUND', year), floor = rules.get('ROTH_PO_MIN', year);
+  let r = Math.ceil((base - base * (ph.magi - ph.lo) / (ph.hi - ph.lo)) / step - 1e-9) * step;
+  if (r > 0 && r < floor) r = floor;
+  return Math.min(base, r);
+}
 function rothLimit(spine, rules, year, limit, t, path) {
   const status = v(spine.household.filingStatus);
   let tx = yearTax(spine, rules, year);
@@ -233,9 +252,8 @@ function rothLimit(spine, rules, year, limit, t, path) {
   if (magi <= lo) return { limit, magi, words: null };
   if (magi >= hi) return { limit: 0, magi, lo, hi, words: 'modified AGI of ' + money(magi) + conv + ' is over the ' + money(hi) + ' phase-out, so there is no Roth room (a backdoor Roth is not modeled)' };
   const step = t.rule(rules, 'ROTH_PO_ROUND', year), floor = t.rule(rules, 'ROTH_PO_MIN', year);
-  let reduced = Math.ceil((limit - limit * (magi - lo) / (hi - lo)) / step - 1e-9) * step;
-  if (reduced > 0 && reduced < floor) reduced = floor;
-  return { limit: Math.min(limit, reduced), base: limit, magi, lo, hi, words: 'modified AGI of ' + money(magi) + conv + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the Roth limit is ' + money(Math.min(limit, reduced)) + ' (' + money(limit) + ' reduced, rounded up to $' + step + ', never under $' + floor + ')' };
+  const reduced = rothReduced(rules, year, limit, { magi, lo, hi });
+  return { limit: reduced, base: limit, magi, lo, hi, words: 'modified AGI of ' + money(magi) + conv + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the Roth limit is ' + money(Math.min(limit, reduced)) + ' (' + money(limit) + ' reduced, rounded up to $' + step + ', never under $' + floor + ')' };
 }
 
 // Why a year's earned income cannot be figured, naming each blank it waits on: an earning line's amount, or the
@@ -281,6 +299,11 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     lump: null, perMonth: null, months: { count: 0, dates: [], last: null }, paychecks: null, cap: null, phase: null, over: null, overWords: null, aboveCap: null, missingLabel: null, notes: [] };
   const done = (extra) => { const snap = t.snapshot(); const r = { ...row, ...extra }; const kind = r.room === null || r.room === undefined ? 'missing' : snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed'; return { ...r, kind, from: snap.from, rough: snap.rough, missing: snap.missing, rules: snap.rules }; };
 
+  // A child's account rests on the child's own pay, which the Ledger does not hold; a limit is one person's, so a joint
+  // account, or a partner's with no partner in the household, waits on whose it is.
+  const odd = oddOwner(spine, a);
+  if (odd === 'child') { t.useFact('accounts.' + a.id + '.owner', a.owner); return done({ applies: false, room: null, why: 'A child\'s ' + typeLabel + ' rests on the child\'s own earned income, which is not in the Ledger, so its room is not figured here (it never shares a parent\'s limit).' }); }
+  if (odd) { t.useFact('accounts.' + a.id + '.owner', null); return done({ room: null, why: 'A ' + typeLabel + '\'s limit is one person\'s, and ' + (odd === 'joint' ? 'this one is set as joint' : 'it is set as the partner\'s, with no partner in the household') + '. Choose whose it is.', missingLabel: 'missing: whose ' + typeLabel + ' this is' }); }
   // A 529 has a yearly limit to fill only where a state deduction is modeled (New York); an HSA only on an eligible plan.
   if (!appliesTo(spine, a) && a.type === 'k529') { const state = t.read(spine, 'household.state'); return done({ applies: false, room: null, why: 'A 529 has no yearly limit to fill; the state deduction for ' + state + ' is not modeled (only New York\'s is).' }); }
   if (!appliesTo(spine, a)) { t.useFact('accounts.' + a.id + '.planEligible', a.planEligible); return done({ applies: false, room: 0, why: 'Not eligible: the health plan on this account is not HSA-eligible, so nothing can go in for ' + year + '.' }); }
@@ -343,7 +366,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     // The spouse who earns more is held to their own pay, and the two together to the couple's: what the other spouse
     // may put in comes off what this row may add. An excess past their own pay is still measured against their own pay.
     const roomCap = higher ? Math.min(ei.value, round2(couple - counted)) : comp;
-    cap = { value: comp, kind: ei.kind, label: joint ? 'the couple\'s ' + year + ' earned income, less ' + money(counted) + ' ' + other.name + ' put in or has set to go in' : ei.label, metric: joint ? 'earned:' + year : earnedId(ei), joint, couple, otherIn: joint ? otherIn : 0, otherStill: joint ? otherStill : 0 };
+    cap = { value: comp, kind: ei.kind, label: joint ? 'the couple\'s ' + year + ' earned income, less ' + money(counted) + ' ' + other.name + ' put in or has set to go in' : ei.label, metric: joint ? 'earned:' + year + ':' + pid + '+' + other.id : earnedId(ei), joint, couple, otherIn: joint ? otherIn : 0, otherStill: joint ? otherStill : 0 };
     // Under married filing jointly with unequal pay, the two spouses' IRAs share the couple's earned income.
     const theirs = eo && eo.value !== ei.value ? accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === other.id) : [];
     for (const n of theirs.map((x) => v(x.name) || x.id)) if (!row.sharedWith.includes(n)) row.sharedWith.push(n);
@@ -367,20 +390,11 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
       ownPart[pools[0].key] = round2(Math.max(0, phase ? Math.min(phase.limit - rothIn, ownCeil - contributed.value) : ownCeil - contributed.value));
     }
     if (theirs.length) {
-      // Together: each spouse's money counts only up to their own limit (the dollar limit; their own pay for the one who
-      // earns more; the Roth phase-out for one whose IRAs are all Roths). What both may still add is the couple's pay
-      // less that, and no more than both limits' room left.
-      const allRoth = (list) => list.length > 0 && list.every((x) => x.type === 'roth_ira');
-      const mineIra = accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === pid);
-      let myLim = Math.min(lim.value, higher ? ei.value : Infinity);
-      if (phase && !phase.unknown && allRoth(mineIra)) myLim = Math.min(myLim, phase.limit);
-      let theirCap = Math.min(theirLim ?? lim.value, joint ? eo.value : Infinity);
-      if (allRoth(theirs)) { const ph = rothLimit(spine, rules, year, theirCap, tracker(), 'accounts.' + theirs[0].id + '.contributions'); if (!ph.unknown) theirCap = Math.min(theirCap, ph.limit); }
-      const myIn = contributed.value, myStill = poolStill(spine, accts, pools[0].key, year, asOf, t).value;
-      const bothIn = round2(myIn + otherIn), bothStill = round2(myStill + otherStill);
-      const together = round2(Math.max(0, Math.min(couple - Math.min(myIn + myStill, myLim) - Math.min(otherIn + otherStill, theirCap), Math.max(0, myLim - myIn - myStill) + Math.max(0, theirCap - otherIn - otherStill))));
+      // What both may still add is the Plan's count for the two IRAs (poolTotals, set by maxIt): this row alone says
+      // only whose pay it shares.
+      const myStill = poolStill(spine, accts, pools[0].key, year, asOf, t).value;
       const names = theirs.map((x) => v(x.name) || x.id);
-      row.couple = { value: couple, with: other.name, names, together, words: 'Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (names.length === 1 ? names[0] : 'IRAs') + ': together at most ' + money(together) + ' more' + (bothIn + bothStill ? ' (' + money(bothIn) + ' in, ' + money(bothStill) + ' still set to go in)' : '') + '.' };
+      row.couple = { value: couple, with: other.name, withId: other.id, names, bothIn: round2(contributed.value + otherIn), bothStill: round2(myStill + otherStill), together: null, words: 'Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (names.length === 1 ? names[0] : 'IRAs') + '.' };
       words.push(row.couple.words);
     }
     if (phase && phase.words) words.push(cap1(phase.words) + '.');
@@ -526,20 +540,25 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
       const ds = useRun ? inRun.map((i) => ({ date: i.date, cents: i.cents, s })) : sched.map((d) => ({ date: d, cents: null, s }));
       list.push(...ds);
     }
-    const byDate = [...new Set(list.map((x) => x.date))].sort();
+    // A plan filled from pay counts every paycheck (two jobs paying on one day are two); the rest count days money comes.
+    const lines = [...new Set(list.map((x) => x.s))];
+    const multi = payrollOnly && lines.length > 1;
+    const byDate = payrollOnly ? list.map((x) => x.date).sort() : [...new Set(list.map((x) => x.date))].sort();
     const landedList = list.filter((x) => x.cents !== null).map((x) => x.cents / 100);
     // What lands from a paycheck, never below $0 (withholding past the pay leaves nothing, not a debt).
     const landed = landedList.length ? round2(Math.max(0, Math.min(...landedList))) : null;
     const main = streams.find((s) => list.some((x) => x.s === s)) || null;
     const perYear = main && PER_YEAR[main.cadence] ? PER_YEAR[main.cadence] : 12;
-    const nowPer = payrollOnly && a.monthlyContribution && v(a.monthlyContribution) ? round2(v(a.monthlyContribution) * 12 / perYear) : 0;
+    // What comes out of a paycheck now: one line's monthly amount over its paychecks. With two or more pay lines each
+    // paycheck carries a different share, so the amount is new money a paycheck on top of what each holds now.
+    const nowPer = multi ? null : payrollOnly && a.monthlyContribution && v(a.monthlyContribution) ? round2(v(a.monthlyContribution) * 12 / perYear) : 0;
     // A few cents over many paydays takes fewer of them (no installment is ever below a cent).
     const sp = split(toFill, byDate.length);
     const n = sp.count, extra = sp.per, extraLast = sp.last;
     if (n < byDate.length) byDate.length = n;
     // A payroll-only account: the deferral to set is the new money a paycheck plus what already comes out of it.
-    const per = extra === null ? null : payrollOnly ? round2(extra + nowPer) : extra;
-    paychecks = { count: n, dates: byDate, streams: [...new Set(list.map((x) => x.s.label))], perPaycheck: per, extra, last: extraLast === null ? null : payrollOnly ? round2(extraLast + nowPer) : extraLast, current: nowPer, perYear, landed, holds: landed === null ? null : round2(landed + nowPer), tooBig: payrollOnly && extra !== null && landed !== null && extra > landed, blank };
+    const per = extra === null ? null : payrollOnly ? round2(extra + (nowPer || 0)) : extra;
+    paychecks = { count: n, dates: byDate, streams: [...new Set(list.map((x) => x.s.label))], multi, perPaycheck: per, extra, last: extraLast === null ? null : payrollOnly ? round2(extraLast + (nowPer || 0)) : extraLast, current: nowPer, perYear, landed, holds: landed === null ? null : round2(landed + (nowPer || 0)), tooBig: payrollOnly && extra !== null && landed !== null && extra > landed, blank };
     if (blank && payrollOnly) { t.useFact(blank.path, null); row.blankLabel = 'missing: ' + blank.label + ' ' + blank.what; }
     // A payroll-only account fills only on paydays: its months are the months that hold one.
     if (payrollOnly) dates = [...new Set(byDate.map((d) => monthKey(d)))].map((ym) => byDate.find((d) => monthKey(d) === ym));
@@ -579,6 +598,15 @@ export function maxIt(spine, rules, { asOf = spine.meta.asOf, sim = null, years 
   const ira = deadlineOf(rules, 'roth_ira', y - 1);
   const window = { both, years: [...new Set(rows.map((r) => r.year))].sort(), words: both && ira ? 'From January 1 to ' + longDay(ira.date) + ', money put into an IRA or HSA can count for ' + (y - 1) + ' or ' + y + '. Say which year when you put it in; the account records it for that year.' : null };
   const pools = poolTotals(spine, rules, rows, { asOf });
+  // A spouse's IRA: together, the two spouses may add what the Plan counts for their two IRA pools that year.
+  for (const r of rows) {
+    if (!r.couple) continue;
+    const keys = ['ira:' + r.person, 'ira:' + r.couple.withId];
+    const together = round2(pools.list.filter((p) => p.year === r.year && keys.includes(p.key) && !p.spill).reduce((x, p) => x + p.fill, 0));
+    const old = r.couple.words, c = r.couple;
+    r.couple = { ...c, together, words: old.replace(/\.$/, ': together at most ' + money(together) + ' more' + (c.bothIn + c.bothStill ? ' (' + money(c.bothIn) + ' in, ' + money(c.bothStill) + ' still set to go in)' : '') + '.') };
+    r.why = r.why.replace(old, r.couple.words);
+  }
   // Missing: no room, or a payroll-only row whose pay amount or pay dates are blank.
   const missingRows = rows.filter((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const unfillable = rows.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
@@ -617,6 +645,15 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
     const need = Math.min(J.room, stillOf(J));
     if (jr < need) { const give = Math.min(need - jr, Math.max(0, O.room - stillOf(O))); O.room = round2(O.room - give); O.sharedCap = true; jr = round2(jr + give); }
     if (J.room > jr) { J.room = jr; J.sharedCap = true; }
+    // When the lower earner's IRAs are all Roths, their phase-out runs on the couple's pay left after the higher
+    // earner's year (what is in plus the room counted), not on the pay before it.
+    const jAccts = (spine.accounts || []).filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === J.row.person);
+    if (J.row.phase && !J.row.phase.unknown && jAccts.length && jAccts.every((x) => x.type === 'roth_ira')) {
+      const oYear = Math.min(round2(O.row.contributed.value + O.room), O.row.limit.value, O.row.cap ? O.row.cap.value : Infinity);
+      const lim = rothReduced(rules, year, Math.max(0, Math.min(J.row.limit.value, round2(J.row.cap.couple - oYear))), J.row.phase);
+      const cut = round2(Math.max(0, lim - J.row.contributed.value));
+      if (J.room > cut) { J.room = cut; J.sharedCap = true; }
+    }
   }
   const short = [];
   // New money: the row's own new money in the pool (its part, less its own still to come, within the pool's room left

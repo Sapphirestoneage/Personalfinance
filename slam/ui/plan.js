@@ -13,7 +13,7 @@ import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { mathButton } from './math-panel.js';
-import { maxItCard } from './maxit-panel.js';
+import { maxItCard, maxItFor } from './maxit-panel.js';
 import { loadAll, save, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
@@ -42,7 +42,8 @@ const keepScenarios = (list) => { try { localStorage.setItem(SCEN_KEY, JSON.stri
 
 // ---------------------------------------------------------------- cards
 function ladderCard(spine, s, ctx) {
-  const f = fooLadder(spine, rules, s);
+  // The rungs read the same "How much to max it?" rows as its card (one run).
+  const f = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const ded = h('input', { id: 'foo-ded', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'the biggest one' });
   ded.value = f.setup.deductible === null ? '' : String(f.setup.deductible);
@@ -238,7 +239,7 @@ function render() {
   const spine = withScenario(hist.present, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
-  const ctx = (extra = {}) => ({ spine, rules, s, sim, plan: { foo: fooLadder(spine, rules, s), wage: realHourlyWage(spine, rules, s), draftt: draftt(spine, rules, s), floor: fixedFloor(spine, rules, s, null), goals: goalsView(spine, rules, s), alloc: allocator(spine, rules, sim, s) }, ...extra });
+  const ctx = (extra = {}) => ({ spine, rules, s, sim, plan: { foo: fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim }), wage: realHourlyWage(spine, rules, s), draftt: draftt(spine, rules, s), floor: fixedFloor(spine, rules, s, null), goals: goalsView(spine, rules, s), alloc: allocator(spine, rules, sim, s) }, ...extra });
   app.replaceChildren(...[
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },

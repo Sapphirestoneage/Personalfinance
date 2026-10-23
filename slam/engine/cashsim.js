@@ -124,13 +124,16 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       st = later.income.streams.find((x) => x.id === s.id); sh = payrollShares(spine, later);
     }
     const base = 'income.' + s.id, path = base + '.amount';
-    // A line that ended before this tax year, or starts after the run, pays nothing in it (and does not set its tax).
-    if ((s.end && s.end < year + '-01-01') || (s.start && s.start > end)) continue;
+    // A line that ended before this tax year (a one-time line on its own day), or starts after the run, pays nothing in
+    // it and does not set its tax; one whose payday was moved into the run still pays that day.
+    const movedIn = Object.entries(cal.overrides || {}).some(([k, o]) => k.startsWith(s.id + '|') && o && !o.skip && o.date && o.date >= asOf);
+    const last = s.cadence === 'once' ? s.start : s.end;
+    if (!movedIn && ((last && last < year + '-01-01') || (s.start && s.start > end))) continue;
     const amt = t.useFact(path, s.amount);
     if (amt === null) { needs.push({ path, what: s.label + ': amount' }); continue; }
     // A line typed as $0 pays nothing: nothing lands, and nothing is missing.
     if (amt === 0) continue;
-    if (s.end && s.end < asOf) continue;
+    if (s.end && s.end < asOf && !movedIn) continue;
     const w = streamWeight(s, 'expected') ?? 1;
     if (w === 0) continue;
     // Net per dollar of gross, from the same cash flow the Dashboard uses; the payroll saving share comes off W-2 pay.

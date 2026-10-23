@@ -12,7 +12,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { makeRules } from '../engine/rules.js';
-import { putFact, addContribution, editIncome, recordContribution, skipOccurrence, logSpend, confirmOccurrence } from '../engine/edits.js';
+import { putFact, addContribution, editIncome, recordContribution, skipOccurrence, logSpend, confirmOccurrence, moveOccurrence } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { fooLadder } from '../engine/plan.js';
 import { calendar } from '../engine/calendar.js';
@@ -944,4 +944,50 @@ test('round 5 (S-216): pay is tested when the surplus gets there; the couple\'s 
   // Show the math gives the cents: "The last one is $0.05, ... add up to $0.50" (not "$0 ... $1").
   const x8 = { ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7499.5 }]) } : a)) };
   assert.equal(explainMetric('maxit:roth:2026:month', { spine: x8, rules: R, maxit: maxIt(x8, R) }).note, 'The last one is $0.05, what is left, so they add up to $0.50.');
+});
+
+test('round 6 (S-217): a couple\'s Roth phase-out after the higher earner fills; a child\'s or joint IRA; two pay lines; old and moved paychecks; the FOO reads the run', () => {
+  const d = demo(), c = couple(d);
+  // MFJ, Casey earns $7,500, Sam nothing, modified AGI $247,000 (inside the $242,000 to $252,000 phase-out), both Roths
+  // empty. Casey: $7,500 x (252,000 - 247,000) / 10,000 = $3,750. Sam's base is then $7,500 - $3,750 = $3,750, reduced
+  // the same way to $1,875, rounded up to $1,880. Together $5,630 (not $7,500).
+  const s15 = { ...c, income: [{ ...c.income[0], amount: F(625) }, { id: 'rent', type: 'rental', label: 'Rent', personId: 'casey', amount: F(239500 / 12), cadence: 'monthly', start: '2024-01-01', end: null, withholding: { federal: F(0), state: F(0) } }], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 0 }]) })] };
+  const m15 = maxIt(s15, R);
+  assert.deepEqual([row(m15, 'roth:2026').phase.magi, m15.totals.lump, row(m15, 'roth:2026').couple.together, row(m15, 'sr:2026').couple.together], [247000, 5630, 5630, 5630]);
+  // A child's Roth IRA is not figured and never takes Casey's limit; a joint IRA waits on whose it is.
+  const ch = { ...d, accounts: [...d.accounts, acct('kid', 'roth_ira', 'ira', { owner: F('child'), contributions: F([{ year: 2026, amount: 2000 }]) })] };
+  const mch = maxIt(ch, R);
+  assert.deepEqual([row(mch, 'roth:2026').room, row(mch, 'kid:2026').applies], [4500, false]);
+  const jt = { ...d, accounts: [...d.accounts, acct('jnt', 'traditional_ira', 'ira', { owner: F('joint') })] };
+  const rj = row(maxIt(jt, R), 'jnt:2026');
+  assert.deepEqual([row(maxIt(jt, R), 'roth:2026').room, rj.room, rj.missingLabel, rj.missing], [4500, null, 'missing: whose Traditional IRA this is', ['accounts.jnt.owner']]);
+  // A second job every two weeks: 7 paychecks (October 30 to December 25, and the salary's November 15 and December 15).
+  // Each carries $2,642.86 more than comes out of it now (the last $2,642.84): $18,500 of new money, on top of the
+  // $1,125 already set to go in, exactly the $24,500 limit.
+  const two = { ...d, income: [...d.income, { ...w2('job2', 'casey', 2000), label: 'Second job', cadence: 'biweekly', start: '2026-01-09' }] };
+  const p3 = row(maxIt(two, R, { sim: maxItSim(two, R) }), 'k401:2026').paychecks;
+  assert.deepEqual([p3.count, p3.multi, p3.perPaycheck, p3.last, p3.current], [7, true, 2642.86, 2642.84, null]);
+  // A one-time bonus from November 2025 with no amount cannot pay in the run: the cash check reads as without it.
+  const x4 = { ...d, income: [...d.income, { ...w2('bonus', 'casey', 0), label: 'Signing bonus', cadence: 'once', start: '2025-11-01', amount: F(null, 'missing') }] };
+  const s4 = maxItSim(x4, R), s0 = maxItSim(d, R);
+  assert.equal(maxItCash(x4, R, maxIt(x4, R, { sim: s4 }), { sim: s4 }).words, maxItCash(d, R, maxIt(d, R, { sim: s0 }), { sim: s0 }).words);
+  // The salary ended October 20, but its October 15 payday was moved to October 25: one paycheck left, in the run and on
+  // the schedule.
+  const x5 = moveOccurrence({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-10-20' } : x)) }, 'salary|2026-10-15', '2026-10-25');
+  const k5 = row(maxIt(x5, R, { sim: maxItSim(x5, R) }), 'k401:2026'), k5n = row(maxIt(x5, R), 'k401:2026');
+  assert.deepEqual([k5.fillable, k5.paychecks.dates, k5n.fillable, k5n.paychecks.dates], [true, ['2026-10-25'], true, ['2026-10-25']]);
+  // As of December 12, the December 15 paycheck was logged as happened on December 11: none is left, and nothing is
+  // still set to go in.
+  const x6 = confirmOccurrence({ ...d, meta: { ...d.meta, asOf: '2026-12-12' } }, 'salary|2026-12-15', { amount: 4211, date: '2026-12-11' });
+  const k6 = row(maxIt(x6, R), 'k401:2026');
+  assert.deepEqual([k6.fillable, k6.room, k6.still.value], [false, 18500, 0]);
+  // Imported a day early instead: the run knows it, and the FOO reads the run as the card does (the steady month, not
+  // $18,500 in December).
+  const x6b = logSpend({ ...d, debts: [], meta: { ...d.meta, asOf: '2026-12-12' }, accounts: d.accounts.map((a) => (a.id === 'hysa' ? { ...a, balance: F(80000) } : a)) }, { amount: 4211, date: '2026-12-11', kind: 'income', source: 'import', importKey: 'bank:2026-12-11:payroll', merchant: 'HUDSON VALLEY HEALTH PAYROLL' }).spine;
+  assert.equal(fooLadder(x6b, R, summarize(x6b, R, { flags: false }), { sim: maxItSim(x6b, R) }).rungs.find((x) => x.id === 'maxRetirement').need, 1541.67);
+  // The spousal cap's Show the math adds each spouse's own earned income ($1,200 + $66,000), not the household's.
+  const g = { ...c, income: [c.income[0], w2('samjob', 'sam', 100)], accounts: [...c.accounts, acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
+  const st = row(maxIt(g, R), 'st:2026');
+  const ex = explainMetric(st.cap.metric, { spine: g, rules: R });
+  assert.deepEqual([st.cap.metric, ex.value, ex.terms.map((x) => x.value)], ['earned:2026:sam+casey', 67200, [1200, 66000]]);
 });
