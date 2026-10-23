@@ -184,12 +184,24 @@ trials; a check-in that records real balances against the forecast and
 re-anchors the household (drift, momentum, a staleness banner after ten
 days); and the month-end sweep. The log is a record, never a formula.
 
+### The feed and estimated vs actual (Batch E, S-207)
+
+The spine feeds the Budget; the Budget's log and your statements feed the
+spine's log back. On the Spending page, paste a statement (Chase, Amex,
+Capital One, or date, description, amount) or read the Budget app's
+households saved in this browser: each line is proposed as matched to a
+planned line (within 2% and 5 days), recurring, new, already in, or skipped
+(a card payment is not spending); nothing lands until you apply, and nothing
+lands twice. Estimated vs actual then reads the plan against the log per line
+and per tag over the window, income logged against planned, and the savings
+rate from the real ledger; the Dashboard carries this month's reading.
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, windfall |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, feed, compare, windfall |
 | `ui/` | the Ledger, Dashboard, Calendar (with its Debt tab), Spending and Windfall views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |

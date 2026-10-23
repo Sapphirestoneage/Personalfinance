@@ -93,7 +93,7 @@ levels or archetypes (links instead).
 | 65 | Check-in: real balances prefilled with the forecast; re-anchor to today (4.9) | in SLAM | `slam/engine/spending.js` checkInForecast; `slam/engine/edits.js` checkIn (re-anchors meta.asOf) | D |
 | 66 | Drift recorded: bias vs noise across check-ins (4.9, 7 batch 2) | in SLAM | `slam/engine/spending.js` drift (the vendored engine's reading) | D |
 | 67 | Staleness banner after 10 days (4.9) | in SLAM | `slam/engine/spending.js` staleness; `slam/ui/spending.js` staleBanner | D |
-| 68 | CSV statement import: matched within 5 days and 2%, recurring for 3+, new; nothing applies until Apply; no duplicates (4.9) | old Budget only | `slam/src/calc/tx-import.js`, `src/ui/screens/track.js` | E (the log feeds the spine) |
+| 68 | CSV statement import: matched within 5 days and 2%, recurring for 3+, new; nothing applies until Apply; no duplicates (4.9) | in SLAM | `slam/engine/feed.js` proposeCsv, applyImport (5 days, 2%, recurring for 3+, import keys) | E (the log feeds the spine) |
 | 69 | "Still to fill" checklist of every placeholder (4.9) | in SLAM (Still guessing) | `slam/engine/ledger.js` stillGuessing | done |
 | 70 | Google Sheets export, nine tab-separated tables (4.10) | missing | none | F (CSV export) |
 | 71 | Plan files, JSON to and from a coach (4.10) | in SLAM (Save to profile file, Load profile file) | `slam/ui/profile-file.js` | done; F (versioned, snapshot, migration) |
@@ -143,7 +143,7 @@ levels or archetypes (links instead).
 | 110 | Month-end sweep with hard reset (v34) | in SLAM | `slam/engine/edits.js` setSweep; `slam/engine/spending.js` sweepReading | D |
 | 111 | Can I spend this: hours of life and goal delays (v34) | in SLAM | `slam/engine/spending.js` canISpend | D |
 | 112 | Momentum from check-in snapshots (v34) | in SLAM | `slam/engine/spending.js` momentum | D |
-| 113 | Savings rate from the real ledger (v34) | old Budget only (income statement) | `slam/src/calc/summary.js` | E |
+| 113 | Savings rate from the real ledger (v34) | in SLAM | `slam/engine/compare.js` estimatedVsActual (savingsRate.real) | E |
 | 114 | Income shock simulation (v34) | in cashcal.js | cashcal.js incomeShock | F |
 | 115 | Sankey money flow (v34) | in SLAM | `slam/engine/flow.js`, `slam/ui/flow-chart.js` | done |
 | 116 | FOO setup reduced to three questions (v34, section 8) | missing | none | F |
@@ -178,20 +178,20 @@ levels or archetypes (links instead).
 | 140 | DRAFTT scorecard with the 35% housing line (L002) | old Budget only (DRAFTT on Insights) | `slam/src/calc/lenses.js` | F |
 | 141 | Fixed floor: total fixed commitments, what if income stopped (L018) | in SLAM (the income cliff flag, costs then) | `slam/engine/summary.js` incomeCliff | F |
 | 142 | Goals with deadline, priority, linked account, sinking-fund flag, FI date cost (F009) | in SLAM (target, by) / missing (the rest) | `slam/engine/schema.js` goals | F |
-| 143 | Estimated vs actual per line and tag from the Budget log, on the Dashboard (R004) | old Budget only (Insights, Compared) | `slam/src/calc/compare.js` | E |
+| 143 | Estimated vs actual per line and tag from the Budget log, on the Dashboard (R004) | in SLAM | `slam/engine/compare.js`; `slam/ui/dashboard.js` tile compare; `slam/ui/spending.js` compareCard | E |
 
 ## Totals (recounted at FINISH)
 
 | Status | Rows |
 | --- | --- |
-| in SLAM | 72 (some also in cashcal.js for the daily form) |
-| old Budget only | 4 |
+| in SLAM | 75 (some also in cashcal.js for the daily form) |
+| old Budget only | 1 |
 | in cashcal.js | 43 |
 | missing | 21 |
 | excluded | 3 |
 | rows in all | 143 |
 
-After Batch D (2026-10-23): in SLAM 72, old Budget only 4, in cashcal.js 43, missing 21, excluded 3. After Batch C (2026-10-23): in SLAM 56, old Budget only 10, in cashcal.js 46, missing 28, excluded 3. After Batch B: in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
+After Batch E (2026-10-23): in SLAM 75, old Budget only 1, in cashcal.js 43, missing 21, excluded 3. After Batch D (2026-10-23): in SLAM 72, old Budget only 4, in cashcal.js 43, missing 21, excluded 3. After Batch C (2026-10-23): in SLAM 56, old Budget only 10, in cashcal.js 46, missing 28, excluded 3. After Batch B: in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
 
 The brief counted 87 features in sections 3, 4 and 7; this list has 129 there because
 each return value, each burn tier, each pill set and each self-test assertion is its own

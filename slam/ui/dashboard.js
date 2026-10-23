@@ -8,11 +8,13 @@ import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
+import { estimatedVsActual } from '../engine/compare.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
 const app = document.getElementById('app');
+const monthLabel = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
 // What a number was built from: a link per field, and a note when an input is rough or missing.
@@ -80,7 +82,8 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 function render(base, rules, source) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
-  mathCtx = { spine, rules, s };
+  const compare = estimatedVsActual(spine, rules, { months: 1 });
+  mathCtx = { spine, rules, s, compare };
   const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
   const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
 
@@ -122,6 +125,16 @@ function render(base, rules, source) {
         'Lean FI ' + money(fi.leanFi.value) + '. Coast FI by ' + fi.coastAge + ': ' + money(fi.coastFi.value) + '.',
         fi.yearsToFi.value !== null ? 'At this pace, FI in about ' + fi.yearsToFi.value.toFixed(1) + ' years (from the projection).' : fi.yearsToFi.note ? 'Years to FI: ' + fi.yearsToFi.note + '.' : null,
         ['Assumption set: ' + scenario + ' (' + scenarioText(base, rules, scenario) + '). ', h('a', { href: '#scenario' }, 'Change it')]
+      ]
+    }),
+    tile(spine, {
+      id: 'compare', label: 'Estimated vs actual, ' + monthLabel(compare.to), result: { value: compare.spend.diff, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.rough, missing: compare.monthsLogged.length ? compare.missing : ['log'] },
+      shown: (compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing logged this month yet',
+      lines: [
+        compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + ' entries).' : null,
+        compare.income.actual !== null ? 'Income logged ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' take-home planned' : '') + '.' : 'No income logged yet.',
+        compare.savingsRate.real !== null ? 'Savings rate from the real ledger: ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' against ' + pct(compare.savingsRate.plan, 1) + ' planned' : '') + '.' : compare.savingsRate.note,
+        [h('a', { href: 'spending.html' }, 'Log a spend, import a statement, or see every line ›')]
       ]
     }),
     tile(spine, {

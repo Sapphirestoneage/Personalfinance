@@ -182,6 +182,19 @@
     <p><span class="verdict yes">Yes</span> <span class="verdict tight">Tight</span> <span class="verdict no">No</span></p>
     <form class="checkin-grid" onsubmit="return false"><label class="edit-label" for="d-ci-chk">Checking, forecast $2,925, now $3,100</label><input id="d-ci-chk" type="text" inputmode="decimal" placeholder="2925"><button type="button" class="btn primary">Save the check-in</button></form>
   </section>
+  <section class="card" aria-labelledby="p2e-h">
+    <h2 id="p2e-h">The feed and estimated vs actual (Phase 2, Batch E)</h2>
+    <p class="muted">A statement pastes into a bordered box; each proposed line has a checkbox, its status as a pill (matched, recurring, new, already in, skip) and why in small words; nothing lands until Apply. Estimated vs actual is a table; a tag over the plan is a tinted row.</p>
+    <form class="tool-form" onsubmit="return false"><label class="edit-label" for="d-csv">A statement</label><textarea id="d-csv" rows="3">Date,Description,Amount
+2026-10-05,CRUNCH FITNESS 44,-50.00</textarea><div class="edit-actions"><button type="button" class="btn primary">Read the statement</button><button type="button" class="btn">Read the Budget app: Riley (312)</button></div></form>
+    <div class="tablewrap"><table class="data-table"><thead><tr><th>Take</th><th>Day</th><th>Where</th><th class="num">Amount</th><th>Line</th><th>Status</th></tr></thead><tbody>
+      <tr><td><input type="checkbox" checked aria-label="Take Crunch Fitness"></td><td>Oct 5, 2026</td><td>Crunch Fitness</td><td class="num">-$50</td><td>Gym</td><td><span class="pill">matched</span> <span class="choice-sub">the amount and the day fit this line</span></td></tr>
+      <tr class="tight"><td><input type="checkbox" checked aria-label="Take Blue Bottle"></td><td>Oct 6, 2026</td><td>Blue Bottle</td><td class="num">-$7.25</td><td>Everything else</td><td><span class="pill pill-maybe">new</span> <span class="choice-sub">nothing like it in the plan</span></td></tr>
+      <tr><td><input type="checkbox" disabled aria-label="Take Payment Thank You"></td><td>Oct 7, 2026</td><td>Payment Thank You</td><td class="num">+$500</td><td></td><td><span class="pill pill-done">skip</span> <span class="choice-sub">a card payment, not spending</span></td></tr>
+    </tbody></table></div>
+    <div class="edit-actions"><button type="button" class="btn primary">Apply what is ticked</button><button type="button" class="btn ghost">Discard</button></div>
+    <div class="tablewrap"><table class="data-table"><thead><tr><th>Tag</th><th class="num">Planned</th><th class="num">Logged</th><th class="num">Difference</th></tr></thead><tbody><tr class="tight"><td>Food</td><td class="num">$700</td><td class="num">$765</td><td class="num">+$65 over</td></tr><tr><td>Housing</td><td class="num">$1,950</td><td class="num">$1,950</td><td class="num">on the plan</td></tr></tbody></table></div>
+  </section>
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>

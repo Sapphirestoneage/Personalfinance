@@ -8,6 +8,8 @@
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
+import { estimatedVsActual } from '../engine/compare.js';
+import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS } from '../engine/feed.js';
 import { logSpend, removeLog, checkIn, setSweep, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { FAT } from '../engine/schema.js';
@@ -25,10 +27,10 @@ const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
 
-let hist, rules, source, lastSaved = null;
+let hist, rules, source, lastSaved = null, merchantRules = { kindRules: {}, rules: [] };
 let window_ = pickedWindow();
 // What the page's forms hold between renders.
-const form = { amount: '', tag: 'other', paidWith: 'cash', merchant: '', expenseId: '', date: todayIso(), dropped: new Set(), towardDebt: false, askAmount: '', askWith: 'cash', checkDate: todayIso(), sweepOn: null, sweepTo: '', sweepKeep: '' };
+const form = { csv: '', csvFormat: 'auto', csvWith: 'cash', proposals: null, picks: null, importWords: '', amount: '', tag: 'other', paidWith: 'cash', merchant: '', expenseId: '', date: todayIso(), dropped: new Set(), towardDebt: false, askAmount: '', askWith: 'cash', checkDate: todayIso(), sweepOn: null, sweepTo: '', sweepKeep: '' };
 
 function apply(next, label) {
   hist = commit(hist, applyDefaults(next, rules), label);
@@ -235,6 +237,52 @@ function sweepCard(c, spine, vw, ctx) {
     sw.on ? [h('p', { class: 'tile-sub' }, sw.moves.length ? 'Inside the window: ' + sw.moves.map((m) => money(m.amount) + ' on ' + shortDate(m.date) + (m.toName ? ' to ' + m.toName : '')).join('; ') + ' (' + money(sw.total) + ' in all).' : 'Nothing above the floor and the keep at a month end inside the window.'), mathButton(['spend:sweep'], ctx)] : h('p', { class: 'muted' }, 'Off.'));
 }
 
+// Estimated vs actual (S-207): the plan month by month against the log, over the selector's window.
+function compareCard(spine, ctx) {
+  const c = estimatedVsActual(spine, rules, { months: window_ });
+  const cctx = () => ({ ...ctx(), compare: c });
+  const win = monthWords(c.from) + (c.from === c.to ? '' : ' to ' + monthWords(c.to));
+  const diffWords = (d) => (d === null ? 'missing' : d > 0 ? '+' + money(d) + ' over' : d < 0 ? money(-d) + ' under' : 'on the plan');
+  return h('section', { class: 'card', 'aria-labelledby': 'cmp-h' },
+    h('h2', { id: 'cmp-h' }, 'Estimated vs actual, ' + win),
+    c.monthsSilent.length ? h('p', { class: 'muted' }, 'Nothing logged in ' + c.monthsSilent.map(monthWords).join(', ') + ': ' + (c.monthsSilent.length === c.months.length ? 'the window is empty so far.' : 'those months read as nothing spent, not as zero.')) : null,
+    h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spending: logged ' + money(c.spend.actual) + ' against ' + (c.spend.planned === null ? 'a plan with a missing line' : money(c.spend.planned) + ' planned') + ' (' + diffWords(c.spend.diff) + '). Income: ' + (c.income.actual === null ? 'nothing logged' : money(c.income.actual) + ' logged against ' + (c.income.planned === null ? 'a plan with a missing stream' : money(c.income.planned) + ' planned')) + '. ' + (c.savingsRate.real !== null ? 'Savings rate from the real ledger ' + Math.round(c.savingsRate.real * 1000) / 10 + '%' + (c.savingsRate.plan !== null ? ' against ' + Math.round(c.savingsRate.plan * 1000) / 10 + '% planned' : '') + '.' : c.savingsRate.note)),
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Tag'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
+      h('tbody', {}, c.tags.map((r) => h('tr', { class: r.diff !== null && r.diff > 0 ? 'tight' : '' }, h('td', {}, r.label, r.unassigned ? h('span', { class: 'choice-sub' }, ' (' + money(r.unassigned) + ' not on a line)') : null), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff))))))),
+    h('details', { class: 'flow-list' }, h('summary', {}, 'Every line (' + c.lines.length + ')'),
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Line'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
+        h('tbody', {}, c.lines.map((r) => h('tr', {}, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), ' ', h('span', { class: 'choice-sub' }, r.entries + (r.entries === 1 ? ' entry' : ' entries'))), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff)))))))),
+    mathButton(['compare:spend', 'compare:income', 'compare:savingsReal', ...c.tags.map((r) => 'compare:tag:' + r.tag)], cctx));
+}
+
+// The feed (S-207): a statement pasted in, or the old Budget's households saved in this browser; nothing lands until Apply.
+function importCard(spine, merchantRules) {
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const text = h('textarea', { id: 'csv-text', rows: 5, placeholder: 'Paste the CSV from your bank or card here (Chase, Amex, Capital One, or date, description, amount)', 'aria-label': 'Statement CSV' });
+  text.value = form.csv;
+  const fmt = h('select', { id: 'csv-format' }, h('option', { value: 'auto' }, 'Tell the format from the headers'), ...Object.entries(FORMATS).map(([k, f]) => h('option', { value: k }, f.label)));
+  fmt.value = form.csvFormat;
+  const paid = h('select', { id: 'csv-with' }, h('option', { value: 'cash' }, 'Checking or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
+  paid.value = form.csvWith;
+  let docs = [];
+  try { docs = budgetDocsFromStorage((k) => localStorage.getItem(k), Object.keys(localStorage)); } catch { docs = []; }
+  const p = form.proposals;
+  const picks = form.picks;
+  return h('section', { class: 'card', id: 'import', 'aria-labelledby': 'imp-h' },
+    h('h2', { id: 'imp-h' }, 'Feed the log'),
+    h('p', { class: 'muted' }, 'Real dates and amounts come in from a statement or from the Budget app\'s log. Each line is matched to the plan (within 2% and 5 days), called recurring (a merchant seen three times), or new; card payments and transfers are not spending. Nothing lands until you apply, and nothing lands twice.'),
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); form.csv = text.value; form.csvFormat = fmt.value; form.csvWith = paid.value; try { form.proposals = proposeCsv(spine, rules, text.value, { format: fmt.value, paidWith: paid.value, merchantRules }); form.picks = null; form.importWords = ''; } catch (err) { msg.textContent = err.message; return; } render(); } },
+      h('label', { for: 'csv-text', class: 'edit-label' }, 'A statement'), text,
+      h('label', { for: 'csv-format', class: 'edit-label' }, 'Format'), fmt,
+      h('label', { for: 'csv-with', class: 'edit-label' }, 'This statement is for'), paid, msg,
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Read the statement'), ...docs.map((d) => h('button', { type: 'button', class: 'btn', onclick: () => { form.proposals = proposeBudget(spine, rules, d.doc, { merchantRules }); form.picks = null; form.importWords = ''; render(); } }, 'Read the Budget app: ' + d.name + ' (' + d.transactions + ')')))),
+    form.importWords ? h('p', { class: 'tool-result' }, form.importWords) : null,
+    p ? [h('p', { class: 'tile-sub' }, (p.label ? p.label + ': ' : '') + p.words + (p.skippedRows && p.skippedRows.length ? ' Rows skipped (no date, amount or words): ' + p.skippedRows.join(', ') + '.' : '')),
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
+        h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } })), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + money(x.amount, !Number.isInteger(x.amount))), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => { const picked = picks || p.proposals.filter((y) => y.include).map((y) => y.key); let r = null; const ok = tryApply((s) => { r = applyImport(s, p.proposals, { picks: picked }); return r.spine; }, 'Imported ' + picked.length + ' entr' + (picked.length === 1 ? 'y' : 'ies')); if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in the log, or not spending).' : ''; render(); } } }, 'Apply what is ticked'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; render(); } }, 'Discard'))] : null);
+}
+
 // ---------------------------------------------------------------- render
 function render() {
   const spine = withScenario(hist.present, rules, pickedScenario());
@@ -257,6 +305,8 @@ function render() {
     safeCard(vw, ctx),
     loggerCard(vw, spine, ctx),
     tagsCard(vw, ctx),
+    compareCard(spine, ctx),
+    importCard(spine, merchantRules),
     tiersCard(tiers, ctx),
     donutCard(vw, spine, render, ctx),
     askCard(c, spine, render, ctx),
@@ -264,13 +314,14 @@ function render() {
     pricesCard(vw, ctx),
     checkinCard(c, spine, vw, ctx),
     sweepCard(c, spine, vw, ctx),
-    h('p', { class: 'muted' }, 'The log is what happened; the plan is the Ledger. Estimated against actual, per line and tag, is on the Dashboard once the feed lands (Batch E).')
+    h('p', { class: 'muted' }, 'The log is what happened; the plan is the Ledger. Estimated against actual for this month is on the Dashboard too.')
   ].filter(Boolean));
   if (focusId === 'log-merchant') { const i = document.getElementById('log-merchant'); if (i) i.focus({ preventScroll: true }); }
 }
 
-loadAll().then((loaded) => {
+loadAll().then(async (loaded) => {
   hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
+  try { const r = await fetch(new URL('../data/merchant-rules.json', import.meta.url), { cache: 'no-store' }); if (r.ok) merchantRules = await r.json(); } catch { /* the house rules are optional: without them every line is new */ }
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
 }).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Spending page could not load: ' + err.message)); });

@@ -117,7 +117,7 @@ def({ id: 'cliffCosts', label: 'Costs once certain income stops', unit: 'usd/mon
   explain: ({ s }) => { const c = s.cliff; if (!c) return out(null, []); return out({ value: Math.round(c.costs * 100) / 100, kind: c.spending.kind === 'computed' && c.minimums.kind === 'computed' ? 'computed' : 'rough', rules: [], rough: [], missing: [] }, [{ label: 'Spending', value: c.spending.value, unit: 'usd/month', kind: c.spending.kind, role: 'plus', group: 'E' }, { label: 'Minimum payments', value: c.minimums.value, unit: 'usd/month', kind: c.minimums.kind, role: 'plus', group: 'D' }, { label: 'Tax set-aside', value: c.setAside.value, unit: 'usd/month', kind: c.setAside.kind, role: 'plus', group: 'T' }]); } });
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id);
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
 function expenseCostMetric(id) {
@@ -291,11 +291,32 @@ function spendMetric(id) {
   return null;
 }
 
+// Estimated vs actual (S-207): one family, "compare:<what>[:<id>]", read from ctx.compare.
+const COMPARE_SCREENS = ['dashboard#tile-compare', 'spending'];
+function compareMetric(id) {
+  if (!id || !id.startsWith('compare:')) return null;
+  const [, what, key] = id.split(':');
+  const win = (c) => monthWordsShort(c.from) + (c.from === c.to ? '' : ' to ' + monthWordsShort(c.to));
+  if (what === 'line') return { id, label: 'Actual against the plan for the line', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = what the log shows for the line in the window - what the plan has for it month by month',
+    explain: ({ spine, compare: c }) => { const r = c && c.lines.find((x) => x.id === key); return r ? out({ value: r.diff, kind: r.kind, from: [r.path], rough: [], missing: r.missing ? [r.path] : [], rules: [] }, [term('Logged to ' + r.label + ', ' + win(c) + ' (' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies') + ')', r.actual, 'usd', 'known', 'plus'), field(spine, r.path, r.missing ? null : r.planned, 'usd', 'minus', r.label + ' planned, ' + win(c))]) : out(null, []); } };
+  if (what === 'tag') return { id, label: 'Actual against the plan for the tag', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = everything logged under the tag in the window (lines and loose entries) - the plan for its lines month by month',
+    explain: ({ compare: c }) => { const r = c && c.tags.find((x) => x.tag === key); return r ? out({ value: r.diff, kind: r.kind, from: [], rough: [], missing: [], rules: [] }, [term('Logged under ' + r.label + ', ' + win(c) + (r.unassigned ? ' (' + money(r.unassigned) + ' not on a line)' : ''), r.actual, 'usd', 'known', 'plus'), term(r.label + ' planned, ' + win(c), r.missing ? null : r.planned, 'usd', r.missing ? 'missing' : 'computed', 'minus')]) : out(null, []); } };
+  if (what === 'spend') return { id, label: 'Spending logged against the plan', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = everything logged as spending in the window, less refunds - every planned line month by month',
+    explain: ({ compare: c }) => (c ? out({ value: c.spend.diff, kind: c.kind, from: c.from_, rough: c.rough, missing: c.missing, rules: c.rules }, [term('Spending logged, ' + win(c) + ' (' + c.spend.entries + ' entries)', c.spend.actual, 'usd', 'known', 'plus'), term('Spending planned, ' + win(c), c.spend.planned, 'usd', c.spend.planned === null ? 'missing' : 'computed', 'minus')]) : out(null, [])) };
+  if (what === 'income') return { id, label: 'Income logged against the plan', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = income logged in the window - take-home planned month by month',
+    explain: ({ compare: c }) => (c ? out({ value: c.income.diff, kind: c.income.diff === null ? 'missing' : c.kind, from: c.from_, rough: c.rough, missing: c.income.actual === null ? [] : c.missing, rules: c.rules }, [term('Income logged, ' + win(c) + (c.income.entries ? ' (' + c.income.entries + ' entries)' : ' (none)'), c.income.actual, 'usd', c.income.actual === null ? 'missing' : 'known', 'plus'), term('Take-home planned, ' + win(c), c.income.planned, 'usd', c.income.planned === null ? 'missing' : 'computed', 'minus')]) : out(null, [])) };
+  if (what === 'savingsReal') return { id, label: 'Savings rate from the real ledger', unit: 'ratio', op: 'custom', screens: COMPARE_SCREENS, formula: 'Real savings rate = (income logged - spending logged) / income logged, over the window',
+    explain: ({ compare: c }) => (c ? out({ value: c.savingsRate.real, kind: c.savingsRate.real === null ? 'missing' : 'known', from: [], rough: [], missing: [], rules: [] }, [term('Income logged, ' + win(c), c.income.actual, 'usd', c.income.actual === null ? 'missing' : 'known', 'arg'), term('Spending logged, ' + win(c), c.spend.actual, 'usd', 'known', 'arg')]) : out(null, [])),
+    recompute: (t) => (t[0].value === null || !t[0].value ? null : Math.round((t[0].value - t[1].value) / t[0].value * 10000) / 10000) };
+  return null;
+}
+const monthWordsShort = (ym) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
+
 // The metric(s) behind each Dashboard tile and flag.
 export const DASHBOARD_MATH = {
   'tile-networth': ['netWorth'], 'tile-runway': ['runway', 'runwayFat', 'ruleOf5Dollars', 'rothBasis'], 'tile-surplus': ['surplus'],
   'tile-savings': ['savingsRateGross', 'savingsRateNet'], 'tile-cards': ['cards', 'promoTotal', 'promoMonthly', 'personalUtil', 'overallUtil'],
-  'tile-fi': ['fiPercent', 'fiNumber', 'impliedFi', 'leanFi', 'coastFi'], 'tile-tax': ['taxBalanceDue']
+  'tile-fi': ['fiPercent', 'fiNumber', 'impliedFi', 'leanFi', 'coastFi'], 'tile-tax': ['taxBalanceDue'], 'tile-compare': ['compare:spend', 'compare:income', 'compare:savingsReal']
 };
 export function flagMath(flag) {
   const id = flag.id;

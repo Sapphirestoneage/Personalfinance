@@ -392,6 +392,8 @@ export function validate(spine) {
       if (x.expenseId !== null && x.expenseId !== undefined && !(spine.expenses || []).some((e) => e.id === x.expenseId)) err(p + '.expenseId', 'an expense id or null');
     }
   }
+  // The feed's memory (S-207): a merchant learned to a line.
+  if (spine.feed !== undefined) { if (typeof spine.feed !== 'object' || spine.feed === null) err('feed', 'an object'); else for (const [m, id] of Object.entries(spine.feed.memory || {})) if (!(spine.expenses || []).some((e) => e.id === id)) err('feed.memory.' + m, 'an expense id'); }
   // Check-ins (S-206): real balances against the forecast, by day.
   const checkins = spine.checkins || [];
   if (!Array.isArray(checkins)) err('checkins', 'a list');

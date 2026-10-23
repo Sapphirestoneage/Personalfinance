@@ -417,13 +417,13 @@ export function removeMaybe(spine, id) {
 // paid it. A check-in records real balances against the forecast and
 // re-anchors the household to that day.
 const nextId = (list, prefix) => prefix + ((list || []).reduce((m, x) => Math.max(m, +String(x.id).replace(/^\D+/, '') || 0), 0) + 1);
-export function logSpend(spine, { amount, date, kind = 'spend', tag = null, expenseId = null, merchant = null, note = null, paidWith = null, source = 'typed' }) {
+export function logSpend(spine, { amount, date, kind = 'spend', tag = null, expenseId = null, merchant = null, note = null, paidWith = null, source = 'typed', importKey = null }) {
   if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new Error('An amount is a number, zero or more');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('A day is YYYY-MM-DD');
   if (!['spend', 'refund', 'income'].includes(kind)) throw new Error('spend, refund or income');
   const list = spine.log || [];
   const id = nextId(list, 'l');
-  const entry = { id, date, amount: Math.round(amount * 100) / 100, kind, tag, expenseId, merchant: merchant ? String(merchant).trim() || null : null, note: note ? String(note).trim() || null : null, paidWith, source };
+  const entry = { id, date, amount: Math.round(amount * 100) / 100, kind, tag, expenseId, merchant: merchant ? String(merchant).trim() || null : null, note: note ? String(note).trim() || null : null, paidWith, source, ...(importKey ? { importKey } : {}) };
   return { spine: { ...spine, log: [...list, entry] }, id };
 }
 export function removeLog(spine, id) { return { ...spine, log: (spine.log || []).filter((x) => x.id !== id) }; }

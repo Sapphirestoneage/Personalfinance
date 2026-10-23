@@ -550,6 +550,7 @@ details.pay-fold > summary::-webkit-details-marker { display: none; }
 .deadline-chip.ok { color: var(--st-known); background: var(--good-soft); }
 /* Forms on the tab (which card, balance transfer, the target solver): bordered inputs, a label above. */
 .tool-form { display: grid; gap: var(--space-2); grid-template-columns: 1fr; max-width: 520px; margin: 0 0 var(--space-2); }
+.tool-form textarea { min-height: 120px; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; font-family: var(--font-num); font-size: var(--text-sm); background: var(--surface); color: var(--text); }
 .tool-form input, .tool-form select { min-height: var(--tap); padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
 .tool-result { padding: var(--space-2) var(--space-3); border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: var(--radius-sm); margin: 0 0 var(--space-2); }
 .tool-result.bad { border-left-color: var(--bad); }
