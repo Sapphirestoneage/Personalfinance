@@ -10,6 +10,7 @@ import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
+import { waiting } from '../engine/calendar-views.js';
 import { realHourlyWage, hoursOf } from '../engine/plan.js';
 import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS } from '../engine/feed.js';
 import { logSpend, removeLog, checkIn, setSweep, parseInput, createHistory, commit, undo, canUndo, undoLabel } from '../engine/edits.js';
@@ -253,7 +254,7 @@ function sweepCard(c, spine, vw, ctx) {
 
 // So far and expected by month end (S-209, the Budget's open-month reading): the log so far, then the run.
 function outlookCard(spine, sim, ctx) {
-  const o = monthOutlook(spine, rules, sim, { today: todayIso() });
+  const o = monthOutlook(spine, rules, sim, { today: todayIso(), waiting: waiting(spine, rules, { today: todayIso() }) });
   const sign = (x) => (x === null ? 'missing' : (x < 0 ? '-' : '+') + money(Math.abs(x)));
   if (o.stale) return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' }, h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
     h('p', { class: 'muted' }, 'The balances are from ' + shortDate(o.asOf) + ', before this month. Check in with today\'s balances to see this month so far and where it ends.'),
@@ -267,7 +268,7 @@ function outlookCard(spine, sim, ctx) {
     o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'No first pay date yet for ' + o.noPayDate.join(', ') + ', so expected by month end waits on it.') : null,
     o.guessedPayDay.length ? h('p', { class: 'muted' }, 'The pay day for ' + o.guessedPayDay.join(', ') + ' is a guess, so its paycheck is on a guessed day.') : null,
     h('details', { class: 'flow-list' }, h('summary', {}, 'What is still to come this month (' + (o.items.length + o.rest.length) + ')'),
-      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : ''))),
+      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet, so counted as still to come)' : ''))),
         o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true) + ', with ' + money(r.logged, true) + ' logged'))),
         o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened, so it is in so far')) : null)),
     h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is the day-by-day run from the as-of date, ' + shortDate(o.asOf) + ', on. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),

@@ -12,7 +12,7 @@ import { moneyFlow } from '../engine/flow.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
 import { cashsim } from '../engine/cashsim.js';
 import { safeToSpend } from '../engine/spending.js';
-import { cashReading } from '../engine/calendar-views.js';
+import { cashReading, waiting } from '../engine/calendar-views.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
@@ -93,7 +93,7 @@ function render(base, rules, source) {
   const safe = safeToSpend(sim);
   const reading = cashReading(sim, spine.meta.asOf.slice(0, 7));
   const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  const outlook = monthOutlook(spine, rules, sim, { today: todayIso() });
+  const outlook = monthOutlook(spine, rules, sim, { today: todayIso(), waiting: waiting(spine, rules, { today: todayIso() }) });
   mathCtx = { spine, rules, s, compare, spend: { safe }, monthOut: outlook };
   const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
   const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
@@ -144,8 +144,8 @@ function render(base, rules, source) {
       lines: [
         safe.shortfall ? 'Nothing safe to spend: checking runs ' + money(safe.shortfall.amount) + ' short by ' + shortDate(safe.shortfall.date) + (safe.shortfall.covered ? ', and the cushion covers ' + money(safe.shortfall.covered) + ' of it' : '') + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + ', keeping the floor of ' + money(safe.floor) + '.' : null,
         reading && reading.today ? 'Checking on ' + shortDate(reading.today.date) + ': ' + money(reading.today.amount) + '.' : null,
-        safe.low ? 'Lowest point ahead: ' + money(safe.low.amount) + ' on ' + shortDate(safe.low.date) + '.' : null,
-        [h('a', { href: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : '') }, 'See cash by day ›'), ' ', h('a', { href: 'spending.html#checkin' }, 'Check in balances ›')]
+        safe.low ? (safe.low.covered ? 'Lowest point ahead, before the cushion tops checking up: ' : 'Lowest point ahead: ') + money(safe.low.amount) + ' on ' + shortDate(safe.low.date) + '.' : null,
+        [h('a', { href: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : '') }, 'See cash by day ›'), ' ', h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Log a spend ›')]
       ]
     }),
     tile(spine, {

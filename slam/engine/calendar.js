@@ -79,7 +79,12 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     const net = st.takeHome === null ? null : round2(st.takeHome - deducted);
     const amountRough = roughFact(s.amount);
     const perPay = (n) => (net === null ? null : net / n);
-    const common = { kind: 'pay', label: s.label + likely, direction: 'in', path, id: 'pay:' + s.id, sourceId: s.id, repeats: s.cadence !== 'once', movable: true, note: deducted ? 'after tax, Social Security and Medicare, and ' + money(deducted) + ' saved from pay' : 'after tax', gross: st ? round2(st.gross) : null, withheld: st ? round2(st.withheld) : null, fica: st ? round2(st.fica) : null, saved: round2(deducted) };
+    // Paid into an account that is not checking (S-209 review): in the month's plan, not in checking's day.
+    const intoId = s.depositTo ? v(s.depositTo) : null;
+    const intoAcct = intoId ? (spine.accounts || []).find((a) => a.id === intoId) : null;
+    const off = intoAcct && intoAcct.family === 'cash' && intoAcct.type !== 'checking' ? { offChecking: true } : {};
+    const lands = off.offChecking ? 'lands in ' + (v(intoAcct.name) || intoAcct.id) : null;
+    const common = { ...off, kind: 'pay', label: s.label + likely, direction: 'in', path, id: 'pay:' + s.id, sourceId: s.id, repeats: s.cadence !== 'once', movable: true, note: (deducted ? 'after tax, Social Security and Medicare, and ' + money(deducted) + ' saved from pay' : 'after tax') + (off.offChecking ? '; lands in ' + (v(intoAcct.name) || intoAcct.id) : ''), gross: st ? round2(st.gross) : null, withheld: st ? round2(st.withheld) : null, fica: st ? round2(st.fica) : null, saved: round2(deducted) };
     if (s.cadence === 'once') { add({ ...common, date: s.start, amount: net, rough: amountRough }); continue; }
     if (STEP[s.cadence]) {
       const dates = payDatesIn(s.start, s.cadence, s.end, ym);
@@ -99,8 +104,8 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
       const [d1, d2] = C.paydays('semimonthly', dayIn(ym, day), monthStart(ym), monthEnd(ym));
       const half = { gross: common.gross === null ? null : round2(common.gross / 2), withheld: common.withheld === null ? null : round2(common.withheld / 2), fica: common.fica === null ? null : round2(common.fica / 2), saved: round2(common.saved / 2) };
       add({ ...common, ...half, date: d1, amount: perPay(2), rough: amountRough || dayRough });
-      add({ ...common, ...half, date: d2, amount: perPay(2), rough: amountRough || dayRough, note: 'the second pay of the month' });
-    } else add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: s.cadence === 'monthly' ? null : 'counted as its monthly share' });
+      add({ ...common, ...half, date: d2, amount: perPay(2), rough: amountRough || dayRough, note: ['the second pay of the month', lands].filter(Boolean).join('; ') });
+    } else add({ ...common, date: dayIn(ym, day), amount: net, rough: amountRough || dayRough, note: [s.cadence === 'monthly' ? null : 'counted as its monthly share', lands].filter(Boolean).join('; ') || null });
   }
 
   // ------------------------------------------------------------ bills and subscriptions
@@ -242,7 +247,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     const lg = e.key ? loggedKeys.get(e.key) : null;
     e.logged = lg ? { id: lg.id, amount: lg.amount, date: lg.date } : null;
     e.confirmable = !!(e.key && (e.kind === 'pay' || e.kind === 'bill' || e.kind === 'subscription'));
-    e.pills = [...(e.kind === 'subscription' ? ['sub'] : []), ...(e.yearly ? ['yearly'] : []), ...(e.plan ? ['plan'] : []), ...(e.repeats ? ['repeat'] : []), ...(e.locked ? ['locked'] : []), ...(e.logged ? ['logged'] : e.date && e.date < asOf ? ['done'] : []), ...(e.kind === 'maybe' ? ['maybe'] : [])];
+    e.pills = [...(e.kind === 'subscription' ? ['sub'] : []), ...(e.yearly ? ['yearly'] : []), ...(e.plan ? ['plan'] : []), ...(e.repeats ? ['repeat'] : []), ...(e.locked ? ['locked'] : []), ...(e.logged ? ['logged'] : e.date && e.date < asOf ? (e.confirmable ? ['waiting'] : ['done']) : []), ...(e.kind === 'maybe' ? ['maybe'] : [])];
   }
   return { events: kept, cf, tracker: t, first, last };
 }
@@ -307,7 +312,7 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     }
     const dated = events.filter((e) => e.date).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.kind.localeCompare(b.kind)));
     const days = [];
-    for (const e of dated) { let d = days.find((x) => x.date === e.date); if (!d) { d = { date: e.date, day: e.day, events: [], in: 0, out: 0 }; days.push(d); } d.events.push(e); if (e.amount !== null && e.counted && !e.card) d[e.direction === 'in' ? 'in' : e.direction === 'out' ? 'out' : 'skip'] += e.amount; }
+    for (const e of dated) { let d = days.find((x) => x.date === e.date); if (!d) { d = { date: e.date, day: e.day, events: [], in: 0, out: 0 }; days.push(d); } d.events.push(e); if (e.amount !== null && e.counted && !e.card && !e.offChecking) d[e.direction === 'in' ? 'in' : e.direction === 'out' ? 'out' : 'skip'] += e.amount; }
     for (const d of days) { d.in = round2(d.in); d.out = round2(d.out); delete d.skip; }
     const sum = (dir) => round2(events.filter((e) => e.direction === dir && e.amount !== null && e.counted).reduce((x, e) => x + e.amount, 0));
     const inn = sum('in'), outt = sum('out');

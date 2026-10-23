@@ -29,6 +29,8 @@ export const liveHeadline = (text) => h('p', { class: 'headline', 'aria-live': '
 
 // No cash account with a balance, or some without one (S-209): said once at the top, with the field to fill.
 export function gapsCard(spine, sim) {
+  // A month before the as-of date has no run; that is not a missing account.
+  if (!sim) return null;
   const g = accountGaps(spine, sim);
   if (g.none) return h('section', { class: 'card', 'aria-labelledby': 'gaps-h' }, h('h2', { id: 'gaps-h' }, 'No cash by day yet'),
     h('p', {}, 'Add a checking account and its balance to see cash by day. Nothing is guessed, so until then the days show no balance.'),

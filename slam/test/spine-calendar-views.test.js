@@ -222,7 +222,7 @@ test('the month cash reading in words: checking today, the lowest day and the da
   const { cashReading } = await import('../engine/calendar-views.js');
   const sim = cashsim(demo(), R, { months: 2 });
   const oct = cashReading(sim, '2026-10');
-  assert.deepEqual(oct.today, { date: '2026-10-22', amount: sim.daily[0].primary });
+  assert.deepEqual(oct.today, { date: '2026-10-22', amount: 3000 }, 'checking as checked in, before the day\'s items');
   const nov = cashReading(sim, '2026-11');
   assert.equal(nov.today, null);
   assert.equal(nov.low.amount, Math.min(...sim.daily.filter((d) => d.date.slice(0, 7) === '2026-11').map((d) => d.primary)));
@@ -435,4 +435,40 @@ test('by date: a payment the floor held back is shown but never leaves checking,
     if (on.length) near(on[on.length - 1].after, d.end, d.date);
     assert.ok(d.events.filter((e) => e.kind === 'shortfall').every((e) => e.after === null));
   }
+});
+
+test('a day\'s in and out are checking\'s own: card charges and held-back payments are not checking money (S-209 review)', () => {
+  let s = putFact(demo(), 'expenses.phone.paidFrom', 'visa', 'known', '2026-10-23');
+  const sim = cashsim(s, R, { months: 2 });
+  for (const d of sim.daily) {
+    const on = d.events.filter((e) => sim.checking.ids.includes(e.account) && !e.card && e.kind !== 'shortfall' && e.kind !== 'statement');
+    near(d.in, on.filter((e) => e.amount > 0).reduce((a, e) => a + e.amount, 0), d.date + ' in');
+    near(d.out, -on.filter((e) => e.amount < 0).reduce((a, e) => a + e.amount, 0), d.date + ' out');
+  }
+  const nov20 = sim.daily.find((d) => d.date === '2026-11-20');
+  assert.ok(nov20.events.some((e) => e.label === 'Phone' && e.card === 'visa'));
+  assert.ok(!nov20.out || nov20.out < 60, 'the phone on the Visa is not checking out');
+});
+
+test('It happened on a bill paid by card logs it on the card; no checking balance hides the run-dry milestone (S-209 review)', async () => {
+  const { confirmOccurrence } = await import('../engine/edits.js');
+  const s = putFact(demo(), 'expenses.phone.paidFrom', 'visa', 'known', '2026-10-23');
+  const hap = confirmOccurrence(s, 'phone|2026-10-20', { amount: 60 });
+  assert.equal(hap.log.find((x) => x.importKey === 'sched:phone|2026-10-20').paidWith, 'visa');
+  const none = putFact(demo(), 'accounts.chk.balance', null, 'missing', '2026-10-23');
+  const sim = cashsim(none, R, { months: 3 });
+  assert.ok(!milestones(none, R, sim, []).some((m) => m.kind === 'dry'));
+});
+
+test('an unmarked paycheck or bill before the as-of date reads not marked yet, not done; pay into savings is not checking\'s day (S-209 review)', () => {
+  const m = calendar(demo(), R, { from: '2026-10', months: 1 }).months[0];
+  const rent = m.events.find((e) => e.key === 'rent|2026-10-01');
+  assert.ok(rent.pills.includes('waiting') && !rent.pills.includes('done'));
+  const s = putFact(demo(), 'income.salary.depositTo', 'hysa', 'known', '2026-10-23');
+  const nov = calendar(s, R, { from: '2026-11', months: 1 }).months[0];
+  const pay = nov.events.find((e) => e.sourceId === 'salary');
+  assert.equal(pay.offChecking, true);
+  assert.match(pay.note, /lands in/);
+  assert.equal(nov.days.find((d) => d.date === pay.date).in, 0);
+  assert.equal(nov.in, calendar(demo(), R, { from: '2026-11', months: 1 }).months[0].in, 'still in the month plan');
 });

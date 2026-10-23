@@ -683,3 +683,5 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .pos { color: var(--st-known); font-weight: 600; }
 /* The waiting card (S-209): full-width rows on a phone. */
 .waiting-list { list-style: none; margin: 0; padding: 0; }
+/* A paycheck or bill before the as-of date nobody has marked (S-209 review). */
+.pill-waiting { border-style: dashed; border-color: var(--st-dont-know); color: var(--st-dont-know); }

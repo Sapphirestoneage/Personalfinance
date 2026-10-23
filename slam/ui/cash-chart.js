@@ -74,7 +74,7 @@ function chart(line, width) {
   return svg;
 }
 
-export function cashChartCard(line, { back = false, onBack = null, width = 640 } = {}) {
+export function cashChartCard(line, { back = false, onBack = null, width = 640, preCover = null } = {}) {
   if (!line) return null;
   const legend = [
     ['viz-3', 'Checking ahead (the day-by-day run)'],
@@ -84,7 +84,7 @@ export function cashChartCard(line, { back = false, onBack = null, width = 640 }
   ];
   return h('section', { class: 'card cash-chart', 'aria-labelledby': 'cashline-h' },
     h('h2', { id: 'cashline-h' }, 'Cash by day'),
-    h('p', { class: 'tile-sub' }, 'Lowest point ahead: ' + money(line.low.amount) + ' on ' + shortDate(line.low.date) + (line.low.beforePayday ? ', the day before payday' : '') + ', through ' + shortDate(line.days[line.days.length - 1].date) + '.' + (line.low.toppedFrom ? ' From ' + shortDate(line.low.toppedFrom) + ' the cushion tops checking up, so the line stops at zero; safe to spend on the Spending page counts what it covers.' : '')),
+    h('p', { class: 'tile-sub' }, 'Lowest point ahead: ' + money(line.low.amount) + ' on ' + shortDate(line.low.date) + (line.low.beforePayday ? ', the day before payday' : '') + ', through ' + shortDate(line.days[line.days.length - 1].date) + '.' + (line.low.toppedFrom ? ' From ' + shortDate(line.low.toppedFrom) + ' the cushion tops checking up, so the line stops at zero' + (preCover ? '; before the top-ups the lowest point is ' + money(preCover.amount) + ' on ' + shortDate(preCover.date) + ', the figure safe to spend reads' : '') + '.' : '')),
     line.backTo ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', checked: back ? 'checked' : null, onchange: (e) => onBack && onBack(e.target.checked) }), ' Back to ' + MONTHS[+line.backTo.slice(5, 7) - 1] + ' ' + line.backTo.slice(0, 4) + ' (the first check-in)') : null,
     h('div', { class: 'cl-wrap' }, chart(line, width)),
     h('ul', { class: 'cl-legend', 'aria-label': 'What the colors mean' }, legend.map(([c, words]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), words)), h('li', {}, h('span', { class: 'cl-sw-dot viz-3', 'aria-hidden': 'true' }), 'Payday'), h('li', {}, h('span', { class: 'cl-sw-dot viz-1', 'aria-hidden': 'true' }), 'A bill of $100 or more')),

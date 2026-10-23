@@ -114,7 +114,7 @@ export function milestones(spine, rules, sim, months = []) {
   if (sim.clearDates.cardsFree && sim.clearDates.cardsFree > sim.start) add(sim.clearDates.cardsFree, 'Every card clear', 'cardsFree');
   if (sim.clearDates.hiFree && sim.clearDates.hiFree > sim.start) add(sim.clearDates.hiFree, 'High-interest free (nothing above ' + Math.round(sim.clearDates.hiRate * 100) + '%)', 'hiFree');
   if (sim.clearDates.allFree && sim.clearDates.allFree > sim.start) add(sim.clearDates.allFree, 'Debt free', 'allFree');
-  if (sim.dryDate) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up falls under the floor');
+  if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up falls under the floor');
   for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path);
   const seen = new Set();
   return out.filter((m) => { const k = m.date + '|' + m.label; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -226,7 +226,8 @@ export function cashReading(sim, ym) {
   const floor = sim.floor.amount;
   const below = days.filter((d) => d.primary < 0), under = days.filter((d) => d.primary < floor), topped = days.filter((d) => d.events.some((e) => e.kind === 'auto-cover' && cushion.some((a) => e.label.startsWith('From ' + a.name))));
   return {
-    ym, today: sim.daily[0].date.slice(0, 7) === ym ? { date: sim.daily[0].date, amount: sim.daily[0].primary } : null,
+    // Checking as it was checked in, before that day's items (S-209 review), so a fresh check-in reads back as typed.
+    ym, today: sim.daily[0].date.slice(0, 7) === ym ? { date: sim.daily[0].date, amount: sim.checking.open } : null,
     low: { date: low.date, amount: low.primary, beforePayday: pays.has(addDays(low.date, 1)) },
     belowZero: { days: below.length, first: below.length ? below[0].date : null },
     underFloor: { days: floor > 0 ? under.length : 0, first: floor > 0 && under.length ? under[0].date : null, floor },
@@ -251,7 +252,8 @@ export function pillsFor(e, asOf, cal = {}) {
   if (e.kind === 'debt' && e.plan) pills.push('plan');
   if (e.repeats) pills.push('repeat');
   if (e.key && cal.locks && cal.locks[e.key]) pills.push('locked');
-  if (e.logged) pills.push('logged'); else if (e.date && e.date < asOf) pills.push('done');
+  // A paycheck or bill before the as-of date that nobody has marked is waiting, not done (S-209 review).
+  if (e.logged) pills.push('logged'); else if (e.date && e.date < asOf) pills.push(e.confirmable ? 'waiting' : 'done');
   if (e.kind === 'maybe') pills.push('maybe');
   return pills;
 }

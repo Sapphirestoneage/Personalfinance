@@ -159,3 +159,18 @@ test('the month reading counts the as-of day, keeps a held-back bill, and waits 
   assert.equal(n.expected, null);
   assert.ok(n.missing.includes('accounts.chk.balance'));
 });
+
+test('a paycheck or bill before the as-of date that nobody marked is still to come in the month reading (S-209 review)', async () => {
+  const { monthOutlook } = await import('../engine/compare.js');
+  const { cashsim } = await import('../engine/cashsim.js');
+  const { waiting } = await import('../engine/calendar-views.js');
+  const s = demo();
+  const sim = cashsim(s, R, { months: 1 });
+  const w = waiting(s, R, { today: T });
+  const plain = monthOutlook(s, R, sim, { asOf: T });
+  const o = monthOutlook(s, R, sim, { asOf: T, waiting: w });
+  const rent = o.items.find((i) => i.label === 'Rent' && i.waiting);
+  assert.deepEqual([rent.date, rent.amount], ['2026-10-01', -1800]);
+  assert.equal(o.bills, Math.round((plain.bills + w.filter((e) => e.direction === 'out').reduce((a, e) => a + e.amount, 0)) * 100) / 100);
+  assert.equal(o.expected, Math.round((plain.expected + w.reduce((a, e) => a + (e.direction === 'in' ? e.amount : -e.amount), 0)) * 100) / 100);
+});

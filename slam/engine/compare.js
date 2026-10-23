@@ -67,7 +67,7 @@ export function estimatedVsActual(spine, rules, { months = 1, asOf = spine.meta.
 //              - what is left of each spread line's plan (its month less what is logged to it, never below 0)
 // "Still to come" is the one day-by-day run after today; a card payment is left out (the charges were
 // spending when they were logged), and so are saving transfers. A month with nothing logged is said so.
-export function monthOutlook(spine, rules, sim, { asOf = spine.meta.asOf, today = asOf } = {}) {
+export function monthOutlook(spine, rules, sim, { asOf = spine.meta.asOf, today = asOf, waiting = [] } = {}) {
   const ym = monthKey(today);
   const t = tracker();
   const month = (spine.log || []).filter((e) => e.date.slice(0, 7) === ym);
@@ -93,6 +93,12 @@ export function monthOutlook(spine, rules, sim, { asOf = spine.meta.asOf, today 
   for (const c of fromLog) {
     const i = run.findIndex((r, n) => !taken.has(n) && r.label === c.label && r.date === c.date);
     if (i >= 0) taken.add(i);
+  }
+  // Not marked yet (S-209 review, the Budget's waiting rule): a paycheck or bill this month before the as-of
+  // date that nobody marked is counted as still to come, at its planned amount, so expected does not read high.
+  for (const w of waiting) {
+    if (!w.date || w.date >= asOf || w.date.slice(0, 7) !== ym || w.amount === null) continue;
+    run.push({ date: w.date, label: w.label, kind: w.kind === 'pay' ? 'income' : 'bill', amount: w.direction === 'in' ? w.amount : -w.amount, card: w.card || null, waiting: true });
   }
   const items = run.filter((r, n) => !taken.has(n));
   const claimed = run.filter((r, n) => taken.has(n));

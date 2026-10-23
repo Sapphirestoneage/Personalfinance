@@ -13,6 +13,7 @@ import { mountPage, gapsCard } from './page.js';
 import { calendar, weekdayOf, rangeCashTerms } from '../engine/calendar.js';
 import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashReading, cashLine, waiting } from '../engine/calendar-views.js';
 import { cashChartCard } from './cash-chart.js';
+import { safeToSpend } from '../engine/spending.js';
 import { summarize } from '../engine/summary.js';
 import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe, parseInput, createHistory, commit, undo, canUndo, undoLabel, redo, canRedo, redoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
@@ -36,7 +37,7 @@ const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + St
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
 const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
-const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', maybe: 'maybe', yearly: 'yearly' };
+const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
 const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
 
 // ---------------------------------------------------------------- state
@@ -60,7 +61,7 @@ function apply(next, label) {
 function tryApply(fn, label) { try { apply(fn(hist.present), label); return true; } catch (err) { lastSaved = err.message; render(); return false; } }
 
 // ---------------------------------------------------------------- pieces
-const SMALL_PILLS = ['sub', 'plan', 'locked', 'logged', 'maybe'];
+const SMALL_PILLS = ['sub', 'plan', 'locked', 'logged', 'waiting', 'maybe'];
 const pills = (e, small = false) => (e.pills || []).filter((p) => !small || SMALL_PILLS.includes(p)).map((p) => h('span', { class: 'pill pill-' + p }, PILL_WORDS[p] || p));
 const amt = (e) => (e.amount === null ? null : (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount, !Number.isInteger(e.amount)));
 
@@ -203,7 +204,7 @@ function waitingCard(spine, today) {
     h('h2', { id: 'waiting-h' }, 'Scheduled, on or before today ', h('span', { class: 'count' }, String(list.length))),
     h('p', { class: 'muted' }, 'Did these happen? Marking one keeps the log true; one that did not happen comes off the calendar this time.'),
     h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened' },
-      h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + money(e.amount, !Number.isInteger(e.amount)))),
+      h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + money(e.amount, !Number.isInteger(e.amount)))),
       h('div', { class: 'edit-actions' },
         e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => tryApply((s) => confirmOccurrence(s, e.key, { amount: e.amount }), e.label + ' happened: ' + money(e.amount, !Number.isInteger(e.amount))) }, 'It happened'),
         h('button', { type: 'button', class: 'btn', onclick: () => tryApply((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
@@ -229,7 +230,8 @@ function payLaterLines(c, m) {
   const pl = payLaterFlags(c.sim);
   const here = pl.flags.filter((f) => f.due.slice(0, 7) === m.ym);
   if (!here.length) return [h('p', { class: 'tile-note' }, 'Every bill in ' + longMonth(m.ym) + ' lands with checking at or above ' + money(pl.line) + ' (the floor plus a week of everyday spending): none is paid before the paycheck that covers it.')];
-  return [here.length > 4 ? h('p', { class: 'tile-sub' }, here.length + ' bills land while checking is under ' + money(pl.line) + '; the first four:') : null, h('ul', { class: 'paylater', 'aria-label': 'Paid before the paycheck that covers it' }, here.slice(0, 4).map((f) => h('li', {}, h('span', { class: 'pill' }, 'pay-later'), ' ', f.label + ' (' + money(f.amount) + ') lands ' + shortDate(f.due) + ', ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck on ' + shortDate(f.paidBy) + ' that covers it; checking that day ' + money(f.cashThatDay) + '.'))),
+  const flagLine = (f) => h('li', {}, h('span', { class: 'pill' }, 'pay-later'), ' ', f.label + ' (' + money(f.amount) + ') lands ' + shortDate(f.due) + ', ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck on ' + shortDate(f.paidBy) + ' that covers it; checking that day ' + money(f.cashThatDay) + '.');
+  return [here.length > 4 ? h('p', { class: 'tile-sub' }, here.length + ' bills land while checking is under ' + money(pl.line) + '; the first four, then the rest:') : null, here.length > 4 ? h('details', { class: 'flow-list' }, h('summary', {}, 'The other ' + (here.length - 4)), h('ul', { class: 'paylater' }, here.slice(4).map(flagLine))) : null, h('ul', { class: 'paylater', 'aria-label': 'Paid before the paycheck that covers it' }, here.slice(0, 4).map((f) => h('li', {}, h('span', { class: 'pill' }, 'pay-later'), ' ', f.label + ' (' + money(f.amount) + ') lands ' + shortDate(f.due) + ', ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck on ' + shortDate(f.paidBy) + ' that covers it; checking that day ' + money(f.cashThatDay) + '.'))),
     h('p', { class: 'tile-note' }, 'Flagged when checking sits under ' + money(pl.line) + ' (the floor plus a week of everyday spending) on the day it lands. Bill timing below says which due day would help most.')];
 }
 
@@ -266,7 +268,8 @@ function monthTab(c, today, ms, mathCtx) {
   const spine = hist.present;
   const first = cashLine(spine, c.sim);
   const line = first && first.backTo && backToFirst ? cashLine(spine, c.sim, { from: first.backTo + '-01' }) : first;
-  parts.push(cashChartCard(line, { back: backToFirst, onBack: (on) => { backToFirst = on; keep(BACK_KEY, on ? '1' : '0'); render(); }, width: chartWidth || Math.min(960, (app.clientWidth || 360) - 66) }));
+  const pre = c.sim && c.sim.checking.known ? safeToSpend(c.sim).low : null;
+  parts.push(cashChartCard(line, { preCover: pre && pre.covered ? pre : null, back: backToFirst, onBack: (on) => { backToFirst = on; keep(BACK_KEY, on ? '1' : '0'); render(); }, width: chartWidth || Math.min(960, (app.clientWidth || 360) - 66) }));
   for (const m of c.months) {
     const used = new Set(m.events.map((e) => CAT[e.kind] || 'viz-0'));
     parts.push(
@@ -477,6 +480,15 @@ function render() {
 let resizing = null;
 window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(() => { if (hist) { chartWidth = null; render(); } }, 200); });
 
+// Undo and Redo from the keyboard, as on the Ledger (S-209 review).
+document.addEventListener('keydown', (e) => {
+  if (!hist || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+  if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  e.preventDefault();
+  const before = hist;
+  hist = e.shiftKey ? redo(hist) : undo(hist);
+  if (hist !== before) { save(hist.present); lastSaved = (e.shiftKey ? 'Redone: ' + redoLabel(before) : 'Undone: ' + undoLabel(before)) + '.'; render(); }
+});
 document.addEventListener('keydown', (e) => {
   if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
   const i = document.getElementById('cal-search'); if (i) { e.preventDefault(); i.focus(); }

@@ -467,7 +467,10 @@ export function confirmOccurrence(spine, key, { amount, date = null } = {}) {
   const label = inc ? inc.label : exp.label;
   // With no date given it happened on the day it is on the calendar: the moved day if it was moved.
   const moved = ((spine.calendar || {}).overrides || {})[key];
-  return logSpend(spine, { amount, date: date || (moved && moved.date) || orig, kind: inc ? 'income' : 'spend', tag: null, expenseId: exp ? exp.id : null, merchant: null, note: label, paidWith: null, source: 'scheduled', importKey: occurrenceLogKey(key) }).spine;
+  // A bill paid on a card was charged to the card, not paid from checking (S-209 review).
+  const payer = exp && exp.paidFrom ? valueOf(exp.paidFrom) : null;
+  const onCard = payer && (spine.debts || []).some((d) => d.id === payer && d.type === 'credit_card') ? payer : null;
+  return logSpend(spine, { amount, date: date || (moved && moved.date) || orig, kind: inc ? 'income' : 'spend', tag: null, expenseId: exp ? exp.id : null, merchant: null, note: label, paidWith: onCard, source: 'scheduled', importKey: occurrenceLogKey(key) }).spine;
 }
 export function unconfirmOccurrence(spine, key) {
   return { ...spine, log: (spine.log || []).filter((x) => x.importKey !== occurrenceLogKey(key)) };
