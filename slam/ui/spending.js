@@ -270,7 +270,7 @@ function outlookCard(spine, sim, ctx) {
       h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : ''))),
         o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true) + ', with ' + money(r.logged, true) + ' logged'))),
         o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened, so it is in so far')) : null)),
-    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is the day-by-day run after the as-of date, ' + shortDate(o.asOf) + '. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
+    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is the day-by-day run from the as-of date, ' + shortDate(o.asOf) + ', on. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
     mathButton(['compare:soFar', 'compare:expected'], () => ({ ...ctx(), monthOut: o })));
 }
 

@@ -25,6 +25,7 @@ import { shareOf, coverOf } from './sharing.js';
 import { balanceSheet } from './networth.js';
 import { money } from '../src/ui/format.js';
 import * as C from './vendor/cashcal.js';
+import { matchOccurrence } from './feed.js';
 
 const STEP = { weekly: 7, biweekly: 14 };
 const roughFact = (f) => !f || f.kind !== 'known';
@@ -223,6 +224,18 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
   // A typed entry the run matched to an occurrence (engine/cashsim.js logIntoRun) counts the same way.
   const loggedKeys = new Map((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith('sched:')).map((x) => [x.importKey.slice(6), x]));
   for (const c of claims) { const lg = (spine.log || []).find((x) => x.id === c.logId); if (lg && !loggedKeys.has(c.key)) loggedKeys.set(c.key, lg); }
+  // Before the as-of date the run never sees an occurrence (the balance holds it), so a typed or imported entry
+  // for one is matched here by the same rule (feed.js matchOccurrence), and the waiting card does not ask again.
+  const claimedIds = new Set(claims.map((c) => c.logId));
+  const before = kept.filter((e) => e.key && e.date && e.date < asOf && !loggedKeys.has(e.key) && e.amount !== null && (e.kind === 'pay' || e.kind === 'bill' || e.kind === 'subscription'))
+    .map((e) => ({ key: e.key, kind: e.kind === 'pay' ? 'income' : 'bill', source: e.sourceId, date: e.date, amount: e.amount }));
+  if (before.length) {
+    const taken = new Set(loggedKeys.keys());
+    for (const x of (spine.log || []).filter((y) => !claimedIds.has(y.id)).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))) {
+      const o = matchOccurrence(x, before, taken);
+      if (o) { taken.add(o.key); loggedKeys.set(o.key, x); }
+    }
+  }
   for (const e of kept) {
     e.day = e.date ? +e.date.slice(8, 10) : null;
     e.locked = !!(e.key && cal.locks && cal.locks[e.key]);
@@ -258,14 +271,15 @@ export function rangeCashTerms(sim, from, to) {
   if (!sim) return null;
   const days = sim.daily.filter((d) => d.date >= from && d.date <= to);
   if (!days.length) return null;
-  const pid = sim.model.accounts.find((a) => a.primary);
-  if (!pid) return null;
+  // Checking is every checking account together (S-209), the same set the line adds up.
+  if (!sim.checking || !sim.checking.known) return null;
+  const ids = sim.checking.ids;
   const before = sim.daily[sim.daily.indexOf(days[0]) - 1];
-  const start = before ? before.primary : pid.balance / 100;
+  const start = before ? before.primary : sim.checking.open;
   const groups = {};
   for (const d of days) for (const e of d.events) {
-    if (e.account !== pid.id || e.kind === 'shortfall' || e.kind === 'statement' || e.amount === null) continue;
-    const k = e.kind === 'income' || e.kind === 'maybe-in' ? 'Pay and money in' : e.kind === 'everyday' ? 'Everyday spending, spread by day' : e.kind === 'card-payment' || e.kind === 'extra-payment' ? 'Card payments' : e.kind === 'loan-payment' || e.kind === 'paylater' ? 'Loan and plan payments' : e.kind === 'transfer' ? 'Saving and the tax set-aside' : e.kind === 'auto-cover' ? 'Topped up from the cushion' : e.kind === 'sweep' ? 'Month-end sweep' : e.kind === 'log' ? 'From the log (what the spread did not already take)' : 'Bills';
+    if (!ids.includes(e.account) || e.card || e.kind === 'shortfall' || e.kind === 'statement' || e.amount === null) continue;
+    const k = e.kind === 'income' || e.kind === 'maybe-in' ? 'Pay and money in' : e.kind === 'everyday' ? 'Everyday spending, spread by day' : e.kind === 'card-payment' || e.kind === 'extra-payment' ? 'Card payments' : e.kind === 'loan-payment' || e.kind === 'paylater' ? 'Loan and plan payments' : e.kind === 'transfer' ? 'Saving and the tax set-aside' : e.kind === 'auto-cover' ? 'Topped up from the cushion' : e.kind === 'sweep' ? 'Month-end sweep' : e.kind === 'log' ? 'From the log (what the spread did not already take)' : e.kind === 'transfer-in' ? 'Moved in from another account' : 'Bills';
     groups[k] = (groups[k] || 0) + e.amount;
   }
   return { start: round2(start), startDate: before ? before.date : sim.start, end: days[days.length - 1].primary, endDate: days[days.length - 1].date, groups: Object.entries(groups).map(([label, amount]) => ({ label, amount: round2(amount) })) };

@@ -146,6 +146,25 @@ export function matchExpense(spine, { merchant = null, lineId = null, name = nul
 
 function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
 export const amountClose = (a, b, share = MATCH_SHARE) => Math.abs(a - b) <= Math.max(1, share * Math.max(Math.abs(a), Math.abs(b))) + 1e-9;
+
+// One rule for "this typed entry is that scheduled item" (S-209), used by the run (cashsim.js logIntoRun)
+// and the calendar (before the as-of date): an income entry is a paycheck within MATCH_DAYS and MATCH_SHARE
+// of it; an entry on a bill's own line is that bill within MATCH_DAYS and BILL_MATCH_SHARE; the nearest open
+// occurrence wins. A "happened" entry names its own occurrence and is never matched here.
+// occs: [{ key, kind: 'income' or 'bill', source (the spine id), date, amount (dollars) }]
+export function matchOccurrence(e, occs, taken) {
+  if (e.importKey && String(e.importKey).startsWith('sched:')) return null;
+  const ok = e.kind === 'income' ? (o) => o.kind === 'income' && amountClose(e.amount, o.amount)
+    : e.kind !== 'refund' && e.expenseId ? (o) => o.kind === 'bill' && o.source === e.expenseId && amountClose(e.amount, o.amount, BILL_MATCH_SHARE) : null;
+  if (!ok) return null;
+  let best = null;
+  for (const o of occs) {
+    if (taken.has(o.key) || o.amount === null || o.amount === undefined || !ok(o)) continue;
+    const gap = Math.abs(daysBetween(o.date, e.date));
+    if (gap <= MATCH_DAYS && (!best || gap < best.gap)) best = { o, gap };
+  }
+  return best ? best.o : null;
+}
 const dayGap = (iso, day) => { if (!day) return null; const d = +iso.slice(8, 10); return Math.min(Math.abs(d - day), 31 - Math.abs(d - day)); };
 
 // A planned line that this charge looks like: the amount within 2% of a per-charge amount, the day within 5 of the pay day or the next charge.

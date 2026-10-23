@@ -137,3 +137,25 @@ test('the month reading counts a card-charged bill still to come, flags a month 
   const g = monthOutlook(guessed, R, cashsim(guessed, R, { months: 1 }), { asOf: T });
   assert.ok(g.guessedPayDay.some((x) => /^Salary/.test(x)));
 });
+
+test('the month reading counts the as-of day, keeps a held-back bill, and waits for a checking balance (S-209 review)', async () => {
+  const { monthOutlook } = await import('../engine/compare.js');
+  const { cashsim } = await import('../engine/cashsim.js');
+  // As of the 15th, nothing logged: the paycheck on the 15th is still to come.
+  const mid = { ...demo(), meta: { ...demo().meta, asOf: '2026-10-15' } };
+  const o = monthOutlook(mid, R, cashsim(mid, R, { months: 1 }), { asOf: '2026-10-15' });
+  assert.ok(o.items.some((i) => i.date === '2026-10-15' && i.kind === 'income' && i.amount === 4211));
+  // Checking at 10 dollars as of Oct 2: the floor holds bills back, but they are still owed this month.
+  const poor = putFact({ ...demo(), meta: { ...demo().meta, asOf: '2026-10-02' } }, 'accounts.chk.balance', 10, 'known', '2026-10-02');
+  const noCushion = putFact(poor, 'accounts.hysa.balance', 0, 'known', '2026-10-02');
+  const sim = cashsim(noCushion, R, { months: 1 });
+  const p = monthOutlook(noCushion, R, sim, { asOf: '2026-10-02' });
+  const held = sim.shortfalls.filter((x) => x.kind === 'bill' && x.date.slice(0, 7) === '2026-10');
+  assert.ok(held.length > 0, 'something is held back');
+  for (const x of held) assert.equal(p.items.filter((i) => i.label === x.label && i.date === x.date).reduce((a, i) => a + i.amount, 0), -x.amount - (sim.daily.find((d) => d.date === x.date).events.filter((e) => e.label === x.label && e.kind === x.kind).reduce((a, e) => a - e.amount, 0)));
+  // No checking balance: expected is missing, never a number without the bills.
+  const none = putFact(demo(), 'accounts.chk.balance', null, 'missing', '2026-10-23');
+  const n = monthOutlook(none, R, cashsim(none, R, { months: 1 }), { asOf: T });
+  assert.equal(n.expected, null);
+  assert.ok(n.missing.includes('accounts.chk.balance'));
+});

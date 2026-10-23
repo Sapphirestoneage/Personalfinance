@@ -23,7 +23,7 @@ import { shareOf, coverOf } from './sharing.js';
 import { isSubscription, nextCharge } from './subscriptions.js';
 import { DEFAULT_MIN_SOURCE, payPolicyOf, minimumPayment } from './debt.js';
 import * as C from './vendor/cashcal.js';
-import { MATCH_DAYS, BILL_MATCH_SHARE, amountClose } from './feed.js';
+import { MATCH_DAYS, matchOccurrence } from './feed.js';
 import { TAG_WORDS } from './spending.js';
 
 const cents = (x) => (x === null || x === undefined ? null : Math.round(x * 100));
@@ -322,11 +322,10 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   for (const [key, o] of Object.entries(cal.overrides || {})) { const ov = {}; if (o.date) ov.date = o.date; if (typeof o.amount === 'number') ov.cents = cents(o.amount); if (o.skip) ov.skip = true; model.overrides[key] = { ...(model.overrides[key] || {}), ...ov }; }
   // Moved from before the as-of date to on or after it (S-209): it had not gone out (or come in) yet, so the
   // as-of balance does not hold it. The engine only makes occurrences from the as-of date on, so it is added
-  // on its new day, once, unless it was logged as happened.
-  const happened = new Set((spine.log || []).filter((x) => x.importKey && x.importKey.startsWith('sched:')).map((x) => x.importKey.slice(6)));
+  // on its new day, once, carrying its calendar key; the log can then claim it like any other occurrence.
   for (const [key, o] of Object.entries(cal.overrides || {})) {
     const [src, orig] = key.split('|');
-    if (o.skip || !o.date || !orig || orig >= asOf || o.date < asOf || o.date > end || happened.has(key)) continue;
+    if (o.skip || !o.date || !orig || orig >= asOf || o.date < asOf || o.date > end) continue;
     const it = model.bills.find((b) => b.id === src && b.cadence !== 'spread') || model.incomes.find((x) => x.id === src);
     if (!it) continue;
     const isIn = model.incomes.includes(it);
@@ -348,25 +347,27 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
 export function logIntoRun(spine, model, asOf, end, cardIds) {
   const incomeIds = new Set((spine.income || []).map((x) => x.id));
   const lineOf = new Map((spine.expenses || []).map((x) => [x.id, x]));
-  const planned = C.schedule(model, { maybeMode: 'ignore' }).filter((it) => (it.kind === 'income' && incomeIds.has(it.sourceId)) || (it.kind === 'bill' && lineOf.has(it.sourceId)));
-  const keyOf = (it) => it.sourceId + '|' + it.origDate;
+  // A moved occurrence from before the as-of date is an extra that carries its calendar key (late).
+  const srcOf = (it) => (it.late ? it.late.split('|')[0] : it.sourceId);
+  const planned = C.schedule(model, { maybeMode: 'ignore' }).filter((it) => (it.kind === 'income' && incomeIds.has(srcOf(it))) || (it.kind === 'bill' && lineOf.has(srcOf(it))));
+  const keyOf = (it) => it.late || it.sourceId + '|' + it.origDate; // the calendar's key
+  const ovKey = (it) => it.sourceId + '|' + it.origDate; // the key the engine reads an override by
   const byKey = new Map(planned.map((it) => [keyOf(it), it]));
+  const occs = planned.map((it) => ({ key: keyOf(it), kind: it.kind, source: srcOf(it), date: it.date, amount: dollars(it.cents), it }));
   const taken = new Set(), claims = [], entries = [];
   const claim = (it, e) => {
     const key = keyOf(it); taken.add(key);
-    model.overrides[key] = e.date >= asOf ? { date: e.date, cents: cents(e.amount) } : { skip: true };
+    model.overrides[ovKey(it)] = e.date >= asOf ? { date: e.date, cents: cents(e.amount) } : { skip: true };
     claims.push({ key, logId: e.id, date: e.date, label: it.label, kind: it.kind, amount: e.amount, planned: dollars(it.cents), inRun: e.date >= asOf && e.date <= end });
   };
   const log = (spine.log || []).filter((e) => e.date <= end).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   for (const e of log) if (e.importKey && e.importKey.startsWith('sched:')) { const it = byKey.get(e.importKey.slice(6)); if (it && !taken.has(keyOf(it))) claim(it, e); }
-  const near = (e, ok) => planned.filter((it) => !taken.has(keyOf(it)) && ok(it) && Math.abs(daysBetween(it.date, e.date)) <= MATCH_DAYS).sort((a, b) => Math.abs(daysBetween(a.date, e.date)) - Math.abs(daysBetween(b.date, e.date)))[0];
   const rest = [];
   for (const e of log) {
     if (e.importKey && e.importKey.startsWith('sched:')) continue;
     if (daysBetween(e.date, asOf) > MATCH_DAYS) continue;
-    const it = e.kind === 'income' ? near(e, (x) => x.kind === 'income' && amountClose(e.amount, dollars(x.cents)))
-      : e.kind !== 'refund' && e.expenseId ? near(e, (x) => x.kind === 'bill' && x.sourceId === e.expenseId && amountClose(e.amount, dollars(x.cents), BILL_MATCH_SHARE)) : null;
-    if (it) claim(it, e);
+    const o = matchOccurrence(e, occs, taken);
+    if (o) claim(o.it, e);
     else if (e.date >= asOf) rest.push(e);
   }
   const spread = model.bills.filter((b) => b.cadence === 'spread');
@@ -409,7 +410,21 @@ export function logIntoRun(spine, model, asOf, end, cardIds) {
 export function cashsim(spine, rules, opts = {}) {
   const { model, needs, from, rough, missing, rules: ruleIds, cf, claims, fromLog } = cashModel(spine, rules, opts);
   const mode = opts.maybeMode || 'weighted';
-  const run = C.simulate(model, { maybeMode: mode, penaltyMonths: rules.get('CARD_PENALTY_MONTHS', +model.start.slice(0, 4)) });
+  const simOpts = { maybeMode: mode, penaltyMonths: rules.get('CARD_PENALTY_MONTHS', +model.start.slice(0, 4)) };
+  let run = C.simulate(model, simOpts);
+  // A carried statement the floor held back (S-209 review): it left the card's opening balance, so the unpaid
+  // part goes back on the card on its due day with the late fee, and interest runs on it from there.
+  let chargedBack = false;
+  for (const c of model.cards) {
+    if (!c.carried) continue;
+    const label = (model.extras.find((x) => x.id === 'carry:' + c.id) || {}).label;
+    const unpaid = run.shortfalls.filter((x) => x.date === c.carried.due && x.label === label).reduce((a, x) => a + x.cents, 0);
+    if (!unpaid) continue;
+    c.carried.unpaid = dollars(unpaid);
+    model.extras.push({ id: 'carry-unpaid:' + c.id, kind: 'late-fee', label: c.name + ': ' + (unpaid < cents(c.carried.amount) ? 'part of the payment' : 'the payment') + ' not made, back on the card with the late fee', cents: unpaid + (c.lateFee || 0), cadence: 'once', date: c.carried.due, direction: 'out', paidWith: c.id, category: 'card' });
+    chargedBack = true;
+  }
+  if (chargedBack) run = C.simulate(model, simOpts);
   const ev = (e) => ({ kind: e.kind, label: e.label, amount: dollars(e.cents), account: e.account || null, card: e.card || null, statement: e.stmt !== undefined ? dollars(e.stmt) : undefined, due: e.due || undefined, partial: !!e.partial, guarded: !!e.guarded });
   // A carried statement (S-209) left the card's opening balance so the engine would not charge it twice;
   // until checking pays it on its due day it is still owed, so the debt reading carries it back.
@@ -437,15 +452,16 @@ export function cashsim(spine, rules, opts = {}) {
     start: model.start, days: model.days, mode, model, run, needs, cf, claims, fromLog,
     // Empty is not zero (S-209): with no balance on main checking the engine's "checking" is every cash account,
     // savings included, so nothing that reads checking is shown until it has one.
-    checking: { known: model.accounts.some((a) => a.primary), path: model.checkingPath, ids: model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) },
+    checking: { known: model.accounts.some((a) => a.primary), path: model.checkingPath, ids: checkingIds || [], open: checkingIds ? dollars(checkingIds.reduce((x, id) => x + model.accounts.find((a) => a.id === id).balance, 0)) : null },
     daily: days,
-    low: { date: run.low.date, amount: dollars(run.low.cents) },
+    // The lowest day is read off the checking line (every checking account together), like the line itself.
+    low: days.length ? (() => { const d = days.reduce((m, x) => (x.primary < m.primary ? x : m)); return { date: d.date, amount: d.primary }; })() : { date: run.low.date, amount: dollars(run.low.cents) },
     floor: { amount: dollars(model.floor), target: dollars(model.floorTarget ?? null), cushionCash: dollars(model.cushionCash ?? 0), source: model.floorSource, guard: model.guard },
     firstBelowFloor: run.firstBelowFloor, firstBelowZero: run.firstBelowZero, dryDate: run.firstDryTotal, raidDate: raid ? raid.date : null,
     cards, loans, clearDates: { cardsFree, hiFree, loansFree, allFree, hiRate: hi, perCard: Object.fromEntries(cardList.map((c) => [c.id, clearedOf(c)])) },
     interest: { total: dollars(run.interest.total), byCard: Object.fromEntries(Object.entries(run.interest.byCard).map(([k, x]) => [k, dollars(x)])), byMonth: Object.fromEntries(Object.entries(run.interest.byMonth).map(([ym, m]) => [ym, Object.fromEntries(Object.entries(m).map(([k, x]) => [k, dollars(x)]))])) },
     lateFees: dollars(run.lateFees), shortfalls: run.shortfalls.map((s) => ({ ...s, amount: dollars(s.cents) })), extraPaid: dollars(run.extraPaid), extraLog: run.extraLog.map((x) => ({ ...x, amount: dollars(x.cents) })),
-    monthly: Object.fromEntries(Object.entries(run.monthly).map(([ym, m]) => [ym, { in: dollars(m.in), out: dollars(m.out), net: dollars(m.net), low: dollars(m.low), interest: dollars(m.interest) }])),
+    monthly: Object.fromEntries(Object.entries(run.monthly).map(([ym, m]) => { const inMonth = days.filter((d) => d.date.slice(0, 7) === ym); return [ym, { in: dollars(m.in), out: dollars(m.out), net: dollars(m.net), low: inMonth.length ? Math.min(...inMonth.map((d) => d.primary)) : dollars(m.low), interest: dollars(m.interest) }]; })),
     safeToSpend: { today: dollars(run.safeToSpend.today), committed: dollars(run.safeToSpend.committed), nextIncome: run.safeToSpend.nextIncome, excludesCushion: run.safeToSpend.excludesCushion, byDay: run.safeToSpend.byDay.map((d) => ({ date: d.date, amount: dollars(d.cents), committed: dollars(d.committed), nextIncome: d.nextIncome })) },
     paychecks: run.paychecks.map((p) => ({ date: p.date, label: p.label, amount: dollars(p.cents), until: p.until, left: dollars(p.left), bills: p.bills.map((b) => ({ date: b.date, label: b.label, amount: dollars(b.cents), kind: b.kind })) })),
     totals: { in: dollars(run.totals.in), out: dollars(run.totals.out) }, everydayPerDay: dollars(run.everydayPerDay),

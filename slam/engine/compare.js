@@ -75,10 +75,17 @@ export function monthOutlook(spine, rules, sim, { asOf = spine.meta.asOf, today 
   const incomeSoFar = round2(log.filter((e) => e.kind === 'income').reduce((a, e) => a + e.amount, 0));
   const spentSoFar = round2(log.filter((e) => e.kind !== 'income').reduce((a, e) => a + (e.kind === 'refund' ? -e.amount : e.amount), 0));
   const soFar = round2(incomeSoFar - spentSoFar);
-  const later = sim.daily.filter((d) => d.date > asOf && d.date.slice(0, 7) === ym);
+  // From the as-of day on: the as-of balance does not hold that day's items yet (the run moves them on day 0).
+  const later = sim.daily.filter((d) => d.date >= asOf && d.date.slice(0, 7) === ym);
   // A bill charged to a card still counts: it is spending this month when it is logged. Card payments
   // and card interest are not in this list (the charges were the spending).
   const run = later.flatMap((d) => d.events.filter((e) => (e.kind === 'income' || ['bill', 'loan-payment', 'paylater'].includes(e.kind)) && e.amount).map((e) => ({ date: d.date, label: e.label, kind: e.kind, amount: e.amount, card: e.card || null })));
+  // A payment the floor held back is still owed this month: its unpaid part goes back with it.
+  for (const s of sim.shortfalls || []) {
+    if (s.date < asOf || s.date.slice(0, 7) !== ym || !['bill', 'loan-payment', 'paylater'].includes(s.kind)) continue;
+    const same = run.find((r) => r.date === s.date && r.label === s.label && r.kind === s.kind);
+    if (same) same.amount = round2(same.amount - s.amount); else run.push({ date: s.date, label: s.label, kind: s.kind, amount: round2(-s.amount), card: null });
+  }
   // What the log put in the run and is already in so far (the run's own claims, engine/cashsim.js logIntoRun):
   // a paycheck or bill logged as happened, or claimed by a typed entry, and typed income. Not still to come.
   const fromLog = [...(sim.claims || []).filter((c) => c.inRun), ...(sim.fromLog || []).filter((x) => x.kind === 'income')].filter((x) => x.date <= today);
@@ -109,7 +116,10 @@ export function monthOutlook(spine, rules, sim, { asOf = spine.meta.asOf, today 
     const logged = round2(log.filter((e) => e.kind !== 'income' && tagOfEntry(spine, e) === tag && (!e.expenseId || spreadIds.has(e.expenseId))).reduce((a, e) => a + (e.kind === 'refund' ? -e.amount : e.amount), 0));
     return { id: tag, label: TAG_WORDS[tag], lines: its.map((i) => i.label), plan, logged, left: plan === null ? null : Math.max(0, round2(plan - logged)), path: 'expenses.' + (its.find((i) => i.amount === null || gapIds.has(i.id)) || its[0]).id + '.amount' };
   }).filter(Boolean);
-  const anyMissing = gaps.length > 0 || rest.some((r) => r.left === null);
+  // No checking balance: the run cannot take bills from checking, so what is still to come is not known (empty is not zero).
+  const noChecking = !!(sim.checking && !sim.checking.known);
+  if (noChecking && sim.checking.path) t.addMissing(sim.checking.path);
+  const anyMissing = noChecking || gaps.length > 0 || rest.some((r) => r.left === null);
   const planLeft = round2(rest.reduce((a, r) => a + (r.left ?? 0), 0));
   // Incomes the run cannot date are left out of paychecks still to come; ones on a guessed day are in, and named.
   const noPayDate = [...new Set((sim.needs || []).filter((n) => /: first pay date$/.test(n.what)).map((n) => n.what.replace(/: first pay date$/, '')))];

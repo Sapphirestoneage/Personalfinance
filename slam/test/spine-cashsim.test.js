@@ -328,3 +328,41 @@ test('checking is every checking account together: a paycheck paid into a second
   near(d.primary, d.balances.chk + d.balances.chk2);
   assert.deepEqual(sim.checking.ids.sort(), ['chk', 'chk2']);
 });
+
+test('a moved occurrence from before the as-of date is claimed like any other: happened re-prices it, a typed entry claims it, nothing counts twice (S-209 review)', async () => {
+  const { moveOccurrence, confirmOccurrence, logSpend } = await import('../engine/edits.js');
+  const day = (x, d) => x.daily.find((y) => y.date === d);
+  const rents = (x, d) => day(x, d).events.filter((e) => e.label === 'Rent').reduce((a, e) => a + e.amount, 0);
+  const moved = moveOccurrence(demo(), 'rent|2026-10-01', '2026-10-25');
+  // (a) It happened, no date: logged on the moved day; the run keeps it there at the logged amount.
+  const hap = cashsim(confirmOccurrence(moved, 'rent|2026-10-01', { amount: 1750 }), R, { months: 2 });
+  assert.equal(rents(hap, '2026-10-25'), -1750);
+  assert.deepEqual(hap.claims.map((c) => c.key), ['rent|2026-10-01']);
+  assert.equal(rents(hap, '2026-11-01'), -1800, 'November is its own rent');
+  // (b) Typed on the moved day instead: it claims the moved rent, so Oct 25 has one rent, not two.
+  const typed = cashsim(logSpend(moved, { amount: 1800, date: '2026-10-25', expenseId: 'rent' }).spine, R, { months: 2 });
+  assert.equal(rents(typed, '2026-10-25'), -1800);
+  assert.ok(!day(typed, '2026-10-25').events.some((e) => e.kind === 'log'));
+  // (c) Moved to Oct 28 and typed that day: the nearest occurrence is the moved one, not November's.
+  const m28 = moveOccurrence(demo(), 'rent|2026-10-01', '2026-10-28');
+  const t28 = cashsim(logSpend(m28, { amount: 1800, date: '2026-10-28', expenseId: 'rent' }).spine, R, { months: 2 });
+  assert.equal(rents(t28, '2026-10-28'), -1800);
+  assert.equal(rents(t28, '2026-11-01'), -1800);
+  // Logged before the as-of date: the balance holds it, so it is not in the run at all.
+  const early = cashsim(confirmOccurrence(moved, 'rent|2026-10-01', { amount: 1800, date: '2026-10-20' }), R, { months: 2 });
+  assert.equal(rents(early, '2026-10-25'), 0);
+});
+
+test('a carried statement the floor holds back goes back on the card with the late fee, so the debt never drops by money not paid (S-209 review)', () => {
+  let s = putFact(demo(), 'accounts.chk.balance', 10, 'known', '2026-10-23');
+  s = putFact(s, 'accounts.hysa.balance', 0, 'known', '2026-10-23');
+  const sim = cashsim(s, R, { months: 1 });
+  const visa = sim.model.cards.find((c) => c.id === 'visa');
+  assert.ok(visa.carried.unpaid > 0, 'the floor held the Visa payment back');
+  const back = sim.daily.find((d) => d.date === visa.carried.due).events.find((e) => e.kind === 'late-fee' && e.card === 'visa');
+  near(-back.amount, visa.carried.unpaid + R.get('CARD_LATE_FEE', 2026));
+  // On the due day the reading stops adding the carried amount and the card holds the unpaid part instead.
+  const before = sim.daily.find((d) => d.date === '2026-11-11'), on = sim.daily.find((d) => d.date === visa.carried.due);
+  const onCard = on.events.filter((e) => e.card && e.card !== 'visa').reduce((a, e) => a - e.amount, 0);
+  near(on.cardDebt - before.cardDebt - onCard, R.get('CARD_LATE_FEE', 2026) + (visa.carried.unpaid - visa.carried.amount) + on.events.filter((e) => e.card === 'visa' && e.kind !== 'late-fee').reduce((a, e) => a - e.amount, 0));
+});

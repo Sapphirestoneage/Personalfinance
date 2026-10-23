@@ -396,3 +396,43 @@ test('by date: each movement with checking after it, ending at the day\'s balanc
   assert.equal(day('2026-11-15').events.find((e) => e.kind === 'income').source, 'happened');
   assert.equal(day('2026-11-01').events.find((e) => e.label === 'Rent').source, 'scheduled');
 });
+
+test('waiting does not ask about a bill already typed or imported before the as-of date, and It happened cannot log it twice (S-209 review)', async () => {
+  const { waiting } = await import('../engine/calendar-views.js');
+  const { logSpend } = await import('../engine/edits.js');
+  const typed = logSpend(demo(), { amount: 1800, date: '2026-10-02', expenseId: 'rent' }).spine;
+  assert.ok(!waiting(typed, R, { today: '2026-10-23' }).some((e) => e.key === 'rent|2026-10-01'));
+  const rent = calendar(typed, R, { from: '2026-10', months: 1 }).months[0].events.find((e) => e.key === 'rent|2026-10-01');
+  assert.deepEqual([rent.logged.amount, rent.logged.date], [1800, '2026-10-02']);
+  // A dollar on the rent line is not the rent: it is still asked about.
+  const dollar = logSpend(demo(), { amount: 1, date: '2026-10-02', expenseId: 'rent' }).spine;
+  assert.ok(waiting(dollar, R, { today: '2026-10-23' }).some((e) => e.key === 'rent|2026-10-01'));
+});
+
+test('with two checking accounts the month breakdown adds up, and the lowest days read the same line (S-209 review)', async () => {
+  const { rangeCashTerms, monthCashTerms } = await import('../engine/calendar.js');
+  let s = demo();
+  s = { ...s, accounts: [...s.accounts, { ...s.accounts.find((a) => a.id === 'chk'), id: 'joint', name: { value: 'Joint checking', kind: 'known', asOf: '2026-10-22', source: 'user' } }] };
+  s = putFact(s, 'accounts.joint.balance', 2000, 'known', '2026-10-23');
+  s = putFact(s, 'income.salary.depositTo', 'joint', 'known', '2026-10-23');
+  const sim = cashsim(s, R, { months: 3 });
+  for (const ym of ['2026-10', '2026-11', '2026-12']) {
+    const t = monthCashTerms(sim, ym);
+    near(t.start + t.groups.reduce((a, g) => a + g.amount, 0), t.end, ym);
+    near(sim.monthly[ym].low, Math.min(...sim.daily.filter((d) => d.date.slice(0, 7) === ym).map((d) => d.primary)), ym + ' low');
+  }
+  near(sim.low.amount, Math.min(...sim.daily.map((d) => d.primary)));
+  const w = weeks(sim);
+  near(w[0].start, sim.checking.open);
+});
+
+test('by date: a payment the floor held back is shown but never leaves checking, so each day ends where it says (S-209 review)', () => {
+  const s = putFact(demo(), 'accounts.chk.balance', 100, 'known', '2026-10-23');
+  const sim = cashsim(s, R, { months: 2 });
+  assert.ok(sim.daily.some((d) => d.events.some((e) => e.kind === 'shortfall')), 'the floor holds something back');
+  for (const d of agenda(sim, sim.daily.length)) {
+    const on = d.events.filter((e) => e.after !== null);
+    if (on.length) near(on[on.length - 1].after, d.end, d.date);
+    assert.ok(d.events.filter((e) => e.kind === 'shortfall').every((e) => e.after === null));
+  }
+});

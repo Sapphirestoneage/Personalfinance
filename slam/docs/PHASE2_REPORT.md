@@ -70,6 +70,12 @@ Batch G in more detail, all on the SLAM pages:
 - **No balance is never $0**: with no checking balance, nothing that reads
   checking shows a number; a card says what to add, with a button to it.
 
+A review of Batch G (three reviewers and a skeptic per finding) found nine
+defects in this new code, and all nine are fixed with tests. Among them: a
+moved bill could drop out of the cash line or count twice; two checking
+accounts broke the month's Show the math; the waiting card could ask about a
+bill you had already typed in.
+
 ## Test results
 
 | After | SLAM tests (`node --test` in `slam/`) | Repository suite (`node test/run.js`) | Browser, 375px and 1024px |
@@ -83,6 +89,7 @@ Batch G in more detail, all on the SLAM pages:
 | Batch E | 518 pass | 35,909 checks | paste, apply, estimated vs actual |
 | Batch F | 532 pass | 35,909 checks | the Plan page and the one-pager |
 | Batch G | 560 pass, 2 skipped, 0 fail | 35,909 checks | calendar, spending, dashboard, plan, one-pager, affordances |
+| Batch G review fixes | 566 pass, 2 skipped, 0 fail | 35,909 checks | the same pages, again |
 
 The 2 skipped are your local golden tests (no profile here). The Budget app's
 own browser checks (`tools/screens-check.mjs`, `journeys.mjs`,

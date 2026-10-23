@@ -29,7 +29,7 @@ export function weeks(sim) {
     out.push({
       from: first.date, to: last.date,
       in: round2(slice.reduce((x, d) => x + d.in, 0)), out: round2(slice.reduce((x, d) => x + d.out, 0)),
-      start: round2(i > 0 ? days[i - 1].primary : sim.model.accounts.find((a) => a.primary) ? sim.model.accounts.find((a) => a.primary).balance / 100 : first.primary),
+      start: round2(i > 0 ? days[i - 1].primary : sim.checking.known ? sim.checking.open : first.primary),
       end: last.primary, low: { date: lowest.date, amount: lowest.primary }, underFloor: lowest.primary < sim.floor.amount,
       hasLow: slice.some((d) => d.date === sim.low.date),
       events: slice.flatMap((d) => d.events.filter((e) => e.kind !== 'everyday' && e.kind !== 'statement').map((e) => ({ date: d.date, ...e })))
@@ -46,7 +46,7 @@ export function agenda(sim, n = 14) {
   const primary = sim.model.accounts.find((a) => a.primary) || null;
   const pid = primary ? primary.id : null;
   const tagged = (date, label, list) => (list || []).some((x) => x.date === date && x.label === label);
-  let prev = primary && sim.checking.known ? round2(sim.checking.ids.reduce((x, id) => x + sim.model.accounts.find((a) => a.id === id).balance, 0) / 100) : null;
+  let prev = primary && sim.checking.known ? sim.checking.open : null;
   const out = [];
   for (const d of sim.daily.slice(0, n)) {
     const cashDaily = round2(d.events.filter((e) => e.kind === 'everyday' && !e.card).reduce((x, e) => x + e.amount, 0));
@@ -56,7 +56,7 @@ export function agenda(sim, n = 14) {
     if (cardDaily) events.push({ kind: 'everyday', label: 'Everyday spending on cards, spread by day', amount: cardDaily, card: true });
     let run = prev;
     const rows = events.map((e) => {
-      const onChecking = run !== null && sim.checking.ids.includes(e.account) && !e.card && typeof e.amount === 'number';
+      const onChecking = run !== null && e.kind !== 'shortfall' && e.kind !== 'statement' && sim.checking.ids.includes(e.account) && !e.card && typeof e.amount === 'number';
       if (onChecking) run = round2(run + e.amount);
       const source = e.kind === 'log' || tagged(d.date, e.label, (sim.fromLog || []).filter((x) => x.kind === 'income')) ? 'logged' : tagged(d.date, e.label, (sim.claims || []).filter((c) => c.inRun)) ? 'happened' : e.kind === 'maybe-in' ? 'maybe' : 'scheduled';
       return { ...e, after: onChecking ? run : null, source };
@@ -168,7 +168,7 @@ export function cashLine(spine, sim, { from = null } = {}) {
   }
   // Checking is every checking account together (S-209): a check-in anchors the past only when it has all of them.
   const ids = sim.checking.ids;
-  const anchors = [...(spine.checkins || []).filter((c) => c.date < asOf && ids.every((id) => typeof (c.balances || {})[id] === 'number')).map((c) => ({ date: c.date, amount: round2(ids.reduce((x, id) => x + c.balances[id], 0)) })), { date: asOf, amount: round2(ids.reduce((x, id) => x + sim.model.accounts.find((a) => a.id === id).balance, 0) / 100) }].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const anchors = [...(spine.checkins || []).filter((c) => c.date < asOf && ids.every((id) => typeof (c.balances || {})[id] === 'number')).map((c) => ({ date: c.date, amount: round2(ids.reduce((x, id) => x + c.balances[id], 0)) })), { date: asOf, amount: sim.checking.open }].sort((a, b) => (a.date < b.date ? -1 : 1));
   const start = from || asOf.slice(0, 7) + '-01';
   const past = [];
   for (let d = start; d < asOf; d = addDays(d, 1)) {
