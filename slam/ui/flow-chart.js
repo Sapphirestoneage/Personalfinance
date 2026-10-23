@@ -120,6 +120,8 @@ export function flowSection(flow, { open, onToggle, month }) {
     const box = wrap.querySelector('.flow-box');
     if (!box) return;
     const w = Math.round(box.clientWidth);
+    // The phone form has its own split rows, so the buttons above would say it twice.
+    if (w < NARROW) wrap.querySelector('.flow-secs')?.setAttribute('hidden', '');
     box.append(w < NARROW ? barList(flow, onToggle) : sankey(flow, w, onToggle));
   });
   return wrap;

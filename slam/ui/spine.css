@@ -1,6 +1,8 @@
 /* Ledger and Dashboard. Every color and size comes from src/ui/tokens.css. Mobile first. */
 
 * { box-sizing: border-box; }
+/* Hidden always wins over a display style. */
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: var(--text-md); line-height: 1.45; }
 #app { max-width: 880px; margin: 0 auto; padding: var(--space-4); }
 h1 { font-size: var(--text-xl); margin: 0; }
@@ -344,3 +346,10 @@ button.dot::after { content: ""; position: absolute; inset: -11px -4px; }
 .item-fold { min-width: 0; }
 .item-name { min-width: 0; overflow-wrap: anywhere; }
 .group-counts { flex: none; gap: var(--space-3); }
+
+/* A Still guessing link underlines the field's name, not its chip. */
+.guess-list a { text-decoration: none; }
+.guess-list a .g-label { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Disabled says why, so its words stay readable: muted ink on a flat face, a dashed edge. */
+.btn:disabled, .btn.primary:disabled { opacity: 1; color: var(--text-muted); background: var(--surface-2); border: 1.5px dashed var(--border); box-shadow: none; filter: none; transform: none; }

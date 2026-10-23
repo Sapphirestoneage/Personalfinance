@@ -11,12 +11,16 @@ import { pickedScenario, scenarioText } from './scenario.js';
 import { h, chip, ledgerHref, shortDate } from './view.js';
 
 const app = document.getElementById('app');
-const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard') : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : h('span', {}, 'this page');
+const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
+const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Dashboard, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Dashboard flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Ledger') : h('span', {}, 'this page');
+
+// Units in words, not codes.
+const UNIT_WORDS = { usd: 'dollars', 'usd/month': 'dollars a month', 'usd/year': 'dollars a year', ratio: 'percent', months: 'months', years: 'years', age: 'age', count: 'count' };
 
 function metricCard(m, ctx) {
   const e = explainMetric(m.id, ctx);
   return h('section', { class: 'card metric', id: 'metric-' + m.id, 'aria-labelledby': 'mh-' + m.id },
-    h('h2', { id: 'mh-' + m.id }, m.label, ' ', h('span', { class: 'unit' }, m.unit)),
+    h('h2', { id: 'mh-' + m.id }, m.label, ' ', h('span', { class: 'unit' }, UNIT_WORDS[m.unit] || m.unit)),
     h('p', { class: 'math-formula' }, m.formula),
     h('p', { class: 'math-plugged' }, h('code', {}, e.plugged)),
     e.note ? h('p', { class: 'math-note' }, e.note) : null,

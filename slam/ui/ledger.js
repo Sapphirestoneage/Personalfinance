@@ -549,7 +549,7 @@ function guessList() {
     h('h2', { id: 'g-title' }, 'Still guessing ', h('span', { class: 'count' }, String(items.length))),
     h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last edit...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
     h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
-      h('a', { href: '#' + it.path, onclick: (e) => { e.preventDefault(); openField(it.path); } }, chip(it.kind), ' ', it.label),
+      h('a', { href: '#' + it.path, onclick: (e) => { e.preventDefault(); openField(it.path); } }, chip(it.kind), ' ', h('span', { class: 'g-label' }, it.label)),
       h('span', { class: 'why' }, why(it))))),
     items.length > 8 && h('button', { class: 'btn ghost', onclick: () => { showAll = !showAll; render(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
     setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
