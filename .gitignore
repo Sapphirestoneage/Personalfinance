@@ -30,3 +30,6 @@ money-rooms-v3/screenshots/level-stage/
 # SLAM Phase 1 (S-142): a real household profile stays on this machine.
 # The app loads fixtures/eli.local.json when it exists, else fixtures/demo.json.
 **/fixtures/*.local.json
+# Real-data sign-off notes and screenshots stay on this machine (SIGNOFF.local.md, signoff.local/).
+**/signoff.local/
+**/*.local.md

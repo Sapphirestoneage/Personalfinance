@@ -101,6 +101,12 @@ The file can be a profile (the shape of `eli.profile.json`, read by
 `engine/normalize.js`) or a spine (`slam-spine/1`, the shape of
 `fixtures/demo.json`). Both are checked by `engine/schema.js`.
 
+### Design and sign-off
+
+- `DESIGN.md`: the visual design rules (layout, color, charts, phone width); the affordance rules are in the repository's CLAUDE.md.
+- `affordances.html`: every component in every state.
+- `SIGNOFF.md`: the hand-check list for Phase 1 with phone-width screenshots of the demo household.
+
 ### Where things are
 
 | Path | What it is |

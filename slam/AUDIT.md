@@ -1,5 +1,7 @@
 # Phase 1 spine self-audit (2026-10-22)
 
+Close-out run, 2026-10-23: 472 SLAM tests pass, including the recompute audit (now with the subscriptions metric and the tax set-aside from the balance due). The repository suite has the same 17 failures as `main` on this Windows machine, none in SLAM. A privacy scan of every tracked SLAM file against the local profile found no real values (two coincidences: a NY bracket boundary and the demo rent).
+
 Run with every test pass (`test/spine-audit.test.js`), on the demo household, the
 demo with shared housing, a covered bill and a blank amount, and the local profile
 when it is on the machine. Personal numbers are not written here; this file is public.

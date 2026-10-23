@@ -18,6 +18,14 @@
 - [x] Debt schedule, tax set-aside, needs and wants, one withdrawal rate, years to FI from the projection
 - [x] Show the math, math.html and the self-audit (AUDIT.md)
 
+## Done: catch-up and close-out (2026-10-23)
+
+- [x] Tax set-aside from the balance due; per-field kinds; 1099 business expenses; answers applied
+- [x] Triple D assumption sets (Likely by default); FI stage rule tested
+- [x] Account links, the card pay setting, the money-flow diagram, subscriptions, Duplicate, Pick what you have, Not now, profile file save and load
+- [x] Defaults: 0.01% APY, standard phone plan, cars lose 15% a year
+- [x] Affordance rules (CLAUDE.md), DESIGN.md, affordances.html, a phone-width self-check, SIGNOFF.md
+
 ## Next: Phase 2
 
 1. **Windfall room**: where a lump sum goes (promo balances before their deadline, the cushion, the Roth, the tax bill), read from the spine and the engines.
@@ -26,10 +34,10 @@
 
 ## Waiting on Eli
 
-The open questions are in QUESTIONS.md. The ones that change numbers most:
-the 2026 W-2 wages and withholding (the tax bill), card minimums and limits
-(surplus, runway, utilization), and the 1099 contract's amount and likelihood
-(next year's outlook).
+Sign-off: `SIGNOFF.md` (your numbers in `SIGNOFF.local.md`, on your machine only).
+The open questions are in QUESTIONS.md. The ones that change numbers most now:
+confirming the rough W-2 numbers (the tax bill), card minimums (surplus,
+runway), and the 1099 contract's amount and likelihood (next year's outlook).
 
 ## Future rounds
 
