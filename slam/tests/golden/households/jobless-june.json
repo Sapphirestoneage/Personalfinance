@@ -1,0 +1,609 @@
+{
+  "schema": "slam-spine/1",
+  "meta": {
+    "name": "June Okafor (golden, made up)",
+    "asOf": "2026-10-22",
+    "demo": true,
+    "from": "tests/golden/households/jobless-june.json"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "p1",
+        "name": "June Okafor",
+        "birthDate": {
+          "value": "1991-06-15",
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    ],
+    "filingStatus": {
+      "value": "single",
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    },
+    "state": {
+      "value": "NY",
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    },
+    "county": {
+      "value": "Monroe",
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    },
+    "nycResident": {
+      "value": false,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    },
+    "situation": [
+      {
+        "id": "now",
+        "from": null,
+        "value": {
+          "value": "between_jobs",
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    ],
+    "healthCoverage": [
+      {
+        "id": "now",
+        "from": null,
+        "personId": "p1",
+        "value": {
+          "value": "marketplace",
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        },
+        "planType": {
+          "value": "bronze",
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    ]
+  },
+  "income": [
+    {
+      "id": "oldjob",
+      "type": "w2",
+      "label": "Salary at Finger Lakes Logistics (ended)",
+      "personId": "p1",
+      "amount": {
+        "value": 5500,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2024-01-01",
+      "end": "2026-08-31",
+      "withholding": {
+        "federal": {
+          "value": 380,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 200,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    },
+    {
+      "id": "ui",
+      "type": "unemployment",
+      "label": "NY unemployment",
+      "personId": "p1",
+      "amount": {
+        "value": 504,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "weekly",
+      "start": "2026-09-07",
+      "end": "2027-03-07",
+      "withholding": {
+        "federal": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    },
+    {
+      "id": "newjob",
+      "type": "maybeMoney",
+      "label": "Likely new job (offer pending)",
+      "personId": "p1",
+      "amount": {
+        "value": 5800,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "rough"
+      },
+      "cadence": "monthly",
+      "start": "2027-02-01",
+      "end": null,
+      "likelihood": {
+        "value": 0.5,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "rough"
+      },
+      "withholding": {
+        "federal": {
+          "value": 650,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 270,
+          "asOf": "2026-10-22",
+          "source": "golden (made up)",
+          "kind": "known"
+        }
+      }
+    }
+  ],
+  "expenses": [
+    {
+      "id": "rent",
+      "label": "Rent",
+      "amount": {
+        "value": 1400,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "accommodation"
+    },
+    {
+      "id": "utilities",
+      "label": "Utilities",
+      "amount": {
+        "value": 120,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "accommodation"
+    },
+    {
+      "id": "groceries",
+      "label": "Groceries",
+      "amount": {
+        "value": 450,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "food"
+    },
+    {
+      "id": "dining",
+      "label": "Eating out",
+      "amount": {
+        "value": 100,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "food"
+    },
+    {
+      "id": "carins",
+      "label": "Car insurance",
+      "amount": {
+        "value": 110,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "transportation"
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "amount": {
+        "value": 90,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": "transportation"
+    },
+    {
+      "id": "phone",
+      "label": "Phone",
+      "amount": {
+        "value": 55,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "health",
+      "label": "Marketplace health plan",
+      "amount": {
+        "value": 310,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2026-09-01",
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "streaming",
+      "label": "Streaming",
+      "amount": {
+        "value": 25,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "other",
+      "label": "Everything else",
+      "amount": {
+        "value": 250,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "rough"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    }
+  ],
+  "accounts": [
+    {
+      "id": "chk",
+      "family": "cash",
+      "type": "checking",
+      "name": {
+        "value": "Checking",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 2200,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "role": {
+        "value": "spending",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "sav",
+      "family": "cash",
+      "type": "hysa",
+      "name": {
+        "value": "High-yield savings",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 6800,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "apy": {
+        "value": 0.038,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "role": {
+        "value": "emergency",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "k401",
+      "family": "employerRetirement",
+      "type": "k401",
+      "name": {
+        "value": "Old employer 401(k)",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 38000,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "car",
+      "family": "otherAssets",
+      "type": "car",
+      "name": {
+        "value": "2018 Civic",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 9000,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "appreciationRate": {
+        "value": -0.15,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "debts": [
+    {
+      "id": "visa",
+      "family": "debt",
+      "type": "credit_card",
+      "name": {
+        "value": "Visa",
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 2400,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "apr": {
+        "value": 0.2399,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "limit": {
+        "value": 6000,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "minimum": {
+        "value": 75,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "dueDay": {
+        "value": 18,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "stress": {
+        "value": 5,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "business": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "reportsToPersonalCredit": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "goals": [
+    {
+      "id": "fi",
+      "type": "fi",
+      "label": "Financial independence",
+      "annualSpending": {
+        "value": 36000,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "assumptions": {
+    "inflation": {
+      "value": 0.03,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "rough"
+    },
+    "realReturn": {
+      "value": 0.05,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "rough"
+    },
+    "withdrawalRate": {
+      "value": 0.04,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    },
+    "lifeExpectancy": {
+      "value": 90,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "rough"
+    },
+    "coastAge": {
+      "value": 65,
+      "asOf": "2026-10-22",
+      "source": "golden (made up)",
+      "kind": "known"
+    }
+  },
+  "taxYears": [
+    {
+      "id": "2026",
+      "year": 2026,
+      "estimatedPaidFederal": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "estimatedPaidState": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      },
+      "setAside": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "golden (made up)",
+        "kind": "known"
+      }
+    }
+  ]
+}
