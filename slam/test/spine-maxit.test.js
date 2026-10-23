@@ -58,6 +58,10 @@ test('deadlines are rules found by account type, with their sources, marked veri
   // Rollover and inherited IRAs have no limit to fill, so no deadline and no button.
   assert.equal(deadlineOf(R, 'rollover_ira', 2026), null);
   assert.ok(!maxItTypes(R, 2026).includes('inherited_ira'));
+  // A filing-day deadline on a weekend says the IRS deadline moves (April 15, 2028 is a Saturday); December 31 never moves.
+  assert.match(deadlineOf(R, 'roth_ira', 2027).words, /April 15, 2028 is a Saturday, so the IRS deadline is the next business day/);
+  assert.equal(deadlineOf(R, 'roth_ira', 2026).weekend, false);
+  assert.equal(deadlineOf(R, 'k401', 2028).weekend, false, 'December 31, 2028 is a Sunday, but payroll has no filing day');
   // A date changes in data, not code.
   const reg = readJson('data/rules-2026.json');
   const moved = makeRules({ ...reg, rules: reg.rules.map((r) => (r.id === 'DEADLINE_IRA' ? { ...r, value: '05-17' } : r)) });
@@ -360,6 +364,21 @@ test('missing stays missing: a blank filing status for a New York 529, a blank m
   const k = row(maxIt(putFact(demo(), 'accounts.k401.monthlyContribution', null, 'missing', T), R), 'k401:2026');
   assert.deepEqual([k.room, k.kind, k.contributed.parts[0].kind], [24500, 'incomplete', 'missing']);
   assert.ok(k.missing.includes('accounts.k401.monthlyContribution'));
+  // It is also what the year's earned income waits on (it comes off the pay), so the IRA names it, not an earning line.
+  const roth = row(maxIt(putFact(demo(), 'accounts.k401.monthlyContribution', null, 'missing', T), R), 'roth:2026');
+  assert.equal(roth.missingLabel, 'missing: 2026 earned income');
+  assert.match(roth.why, /Work 401\(k\): monthly contribution is not entered\.$/);
+  // A blank pay amount: the paychecks still come from its schedule, the panel names the blank, and the cash check says
+  // it is incomplete, since that pay is not in the run.
+  const noPay = putFact(demo(), 'income.salary.amount', null, 'missing', T);
+  const noSim = maxItSim(noPay, R);
+  const noMx = maxIt(noPay, R, { sim: noSim });
+  const pay = row(noMx, 'k401:2026');
+  assert.deepEqual([pay.paychecks.count, pay.paychecks.blank.path], [2, 'income.salary.amount']);
+  const c = maxItCash(noPay, R, noMx, { sim: noSim, rows: [pay] });
+  assert.match(c.words, /^Incomplete: Salary at Hudson Valley Health has no amount, so that pay is not in the run\./);
+  assert.equal(c.kind, 'incomplete');
+  assert.ok(c.missing.includes('income.salary.amount'));
 });
 
 test('over the limit says so; a passed deadline says the year closed, with no amount', () => {

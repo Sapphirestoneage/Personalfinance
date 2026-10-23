@@ -32,6 +32,7 @@ import { activeDays, streamWeight } from './cashflow.js';
 import { cashsim } from './cashsim.js';
 import * as C from './vendor/cashcal.js';
 import { money as fmt } from '../src/ui/format.js';
+import { labelFor } from './labels.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
 const money = (x) => (x === null || x === undefined ? 'missing' : fmt(x, Math.round(x) !== Math.round(x * 100) / 100));
@@ -83,7 +84,10 @@ export function deadlineOf(rules, type, taxYear) {
   if (!id) return null;
   const m = rules.meta(id, taxYear);
   const date = (taxYear + (m.yearOffset || 0)) + '-' + m.value;
-  const out = { date, rule: id, words: m.notes, when: longDay(date) + ' for ' + taxYear, label: m.rule, main: m.main || 'month', payrollOnly: !!m.payrollOnly, verified: m.verified, source: m.source };
+  // A filing-day deadline (the year after) that lands on a weekend moves to the next business day; the date stays, the words say so.
+  const dow = new Date(date + 'T00:00:00Z').getUTCDay();
+  const weekend = m.yearOffset && (dow === 0 || dow === 6) ? ' ' + longDay(date) + ' is a ' + (dow === 6 ? 'Saturday' : 'Sunday') + ', so the IRS deadline is the next business day; the amounts here count to ' + longDay(date) + '.' : '';
+  const out = { date, rule: id, words: m.notes + weekend, weekend: !!weekend, when: longDay(date) + ' for ' + taxYear, label: m.rule, main: m.main || 'month', payrollOnly: !!m.payrollOnly, verified: m.verified, source: m.source };
   // A Solo 401(k)'s employee deferral is elected by December 31, funded later (DEADLINE_SOLO_ELECT).
   if (type === 'solo_k401' && rules.has('DEADLINE_SOLO_ELECT', taxYear)) { const e = rules.meta('DEADLINE_SOLO_ELECT', taxYear); const d = (taxYear + (e.yearOffset || 0)) + '-' + e.value; out.elect = { date: d, rule: 'DEADLINE_SOLO_ELECT', words: e.notes, when: longDay(d) + ' for ' + taxYear }; }
   return out;
@@ -264,6 +268,15 @@ function rothLimit(spine, rules, year, limit, t, path) {
   return { limit: Math.min(limit, reduced), magi, lo, hi, words: 'modified AGI of ' + money(magi) + conv + ' is inside the ' + money(lo) + ' to ' + money(hi) + ' phase-out, so the Roth limit is ' + money(reduced) + ' (rounded up to $' + step + ', never under $' + floor + ')' };
 }
 
+// Why a year's earned income cannot be figured, naming each blank it waits on: an earning line's amount, or the
+// pre-tax saving taken off the pay (S-211).
+function eiGap(spine, e) {
+  if (e.none) return 'no income is in the Ledger yet';
+  if (!e.missing.length) return 'the earnings cannot be figured';
+  const names = e.missing.map((p) => labelFor(spine, p));
+  return (names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' are' : names[0] + ' is') + ' not entered';
+}
+
 // ---------------------------------------------------------------- one account, one tax year
 // sim (optional) is a day-by-day run long enough to reach the deadline; its pay dates make the per-paycheck amount.
 export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = null, all = null } = {}) {
@@ -297,7 +310,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   const earnedId = (e) => 'earned:' + year + (people(spine).length > 1 && e.personId ? ':' + e.personId : '');
   const lim = limitOf(spine, rules, a, year, t, se);
   row.limit = lim;
-  if (lim.value === null) { if (lim.missingPath) t.useFact(lim.missingPath, null); if (lim.earnedMissing) t.absorb({ ...ei, value: undefined }); return done({ room: null, why: lim.earnedMissing ? 'A SEP IRA for the self-employed is a share of the year\'s 1099 profit, and ' + (ei.missing.length ? ei.missing.length === 1 ? 'one earning line has no amount' : 'earning lines have no amount' : 'the earnings cannot be figured') + '.' : 'The limit cannot be figured without ' + lim.missing + '.', missingLabel: 'missing: ' + lim.missing, ei, eiMetric: lim.earnedMissing ? earnedId(ei) : null }); }
+  if (lim.value === null) { if (lim.missingPath) t.useFact(lim.missingPath, null); if (lim.earnedMissing) t.absorb({ ...ei, value: undefined }); return done({ room: null, why: lim.earnedMissing ? 'A SEP IRA for the self-employed is a share of the year\'s 1099 profit, and ' + eiGap(spine, ei) + '.' : 'The limit cannot be figured without ' + lim.missing + '.', missingLabel: 'missing: ' + lim.missing, ei, eiMetric: lim.earnedMissing ? earnedId(ei) : null }); }
   const mine = poolIn(spine, accts, pools[0].key, year, asOf, t);
   const own = mine.parts.filter((p) => p.id === a.id);
   const contributed = { value: mine.value, parts: mine.parts, estimated: mine.parts.some((p) => p.estimated) };
@@ -313,7 +326,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const eo = joint ? earnedIncome(spine, rules, year, { personId: other.id }) : null;
     if (eo) t.absorb({ ...eo, value: undefined });
     const missingEi = ei.value === null ? ei : eo && eo.value === null ? eo : null;
-    if (missingEi) return done({ room: null, why: 'An IRA contribution can be no more than the year\'s earned income (W-2, tips and 1099; unemployment does not count), and ' + (missingEi.none ? 'no income is in the Ledger yet.' : missingEi.missing.length === 1 ? 'one earning line for ' + year + ' has no amount.' : 'earning lines for ' + year + ' have no amount.'), missingLabel: 'missing: ' + missingEi.label, ei: missingEi, eiMetric: earnedId(missingEi) });
+    if (missingEi) return done({ room: null, why: 'An IRA contribution can be no more than the year\'s earned income (W-2, tips and 1099; unemployment does not count), and ' + eiGap(spine, missingEi) + '.', missingLabel: 'missing: ' + missingEi.label, ei: missingEi, eiMetric: earnedId(missingEi) });
     // Under married filing jointly the couple's earned income, less what the other spouse put into IRAs, covers both.
     const otherIn = joint ? poolIn(spine, accts, 'ira:' + other.id, year, asOf, t).value : 0;
     const comp = joint ? round2(ei.value + eo.value - otherIn) : ei.value;
@@ -348,7 +361,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     if (dl.value - contributed.value < lim.value - simpleIn) words.push('Capped by the 401(k) deferral limit it shares (' + money(dl.value) + ' across every plan).');
   } else if (a.type === 'solo_k401') {
     t.absorb({ ...ei, value: undefined });
-    if (ei.value === null) return done({ room: null, why: 'A Solo 401(k) is figured on self-employment earnings, and ' + (ei.missing.length === 1 ? 'one earning line has no amount.' : 'earning lines have no amount.'), missingLabel: 'missing: ' + ei.label, ei, eiMetric: earnedId(ei) });
+    if (ei.value === null) return done({ room: null, why: 'A Solo 401(k) is figured on self-employment earnings, and ' + eiGap(spine, ei) + '.', missingLabel: 'missing: ' + ei.label, ei, eiMetric: earnedId(ei) });
     const seAmt = ei.seEarnings;
     const share = t.rule(rules, 'SE_EMPLOYER_SHARE', year);
     const emp = poolIn(spine, accts, 'employer:' + pid, year, asOf, t);
@@ -569,7 +582,10 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
   const worst = moved.length ? moved.reduce((m, p) => (p.days > m.days ? p : m)) : null;
   const measurable = payoff.some((p) => p.before || p.after);
   const total = round2(net.reduce((x, fl) => x + fl.amount, 0));
+  // Payroll money whose pay amount is blank is not in the run: the check says so and is incomplete.
+  const blank = chosen.filter((p) => p.row.deadline.payrollOnly && p.row.paychecks && p.row.paychecks.blank).map((p) => p.row.paychecks.blank);
   const words = [];
+  if (blank.length && net.length) words.push('Incomplete: ' + [...new Set(blank.map((x) => x.label))].join(' and ') + ' has no amount, so that pay is not in the run.');
   if (!net.length) words.push('Nothing more leaves checking: what already goes in covers it.');
   else {
     words.push(money(total) + ' more leaves checking by ' + longDay(net[net.length - 1].date) + '.');
@@ -583,5 +599,5 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
     else if (measurable) words.push('No card or loan payoff date moves.');
     else if (payoff.length) words.push('Whether a payoff date moves cannot be measured: no card or loan is paid off inside the run (to ' + longDay(end) + ') either way.');
   }
-  return { floor, floorSource: before.floor.source, pools: chosen.map((p) => p.key + '|' + p.year), flows: net, total, before: b, after: f, under, underBefore, newShortfalls: newShort, shortMore, pulled: round2(Math.max(0, f.pull - b.pull)), lowDrop: b.low && f.low ? round2(b.low.cash - f.low.cash) : null, breaks, payoff, measurable, pushed: worst && worst.days > 0 ? worst : null, end, words: words.join(' '), kind: before.kind, from: before.from, rough: before.rough, missing: before.missing, rules: [...new Set([...before.rules, 'STAGE_RUNWAY_RED_MONTHS'])] };
+  return { floor, floorSource: before.floor.source, pools: chosen.map((p) => p.key + '|' + p.year), flows: net, total, before: b, after: f, under, underBefore, newShortfalls: newShort, shortMore, pulled: round2(Math.max(0, f.pull - b.pull)), lowDrop: b.low && f.low ? round2(b.low.cash - f.low.cash) : null, breaks, payoff, measurable, pushed: worst && worst.days > 0 ? worst : null, end, words: words.join(' '), kind: blank.length ? 'incomplete' : before.kind, from: before.from, rough: before.rough, missing: [...new Set([...before.missing, ...blank.map((x) => x.path)])], rules: [...new Set([...before.rules, 'STAGE_RUNWAY_RED_MONTHS'])] };
 }
