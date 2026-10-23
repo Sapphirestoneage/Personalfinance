@@ -39,6 +39,21 @@ way, the file is named. Amounts are dollars a month unless a term says otherwise
 | **Emergency fund** | Cash set aside for a lost job or a big surprise, measured in months of spending. A savings line type in SLAM; a metric in the archived generations. |
 | **Runway** | How many months cash would last at the current burn. `engines/next-stage.js` for a job change; the archived apps used it widely. |
 | **Cushion** | The cash balance the coach never wants the account to fall below. `cashflow.cushion`, coach-only; "safe to spend" is measured against it. |
+| **AGI, taxable income** | Adjusted gross income is pay after pre-tax deductions (and half of self-employment tax); taxable income is AGI less the standard deduction. The tax walk shows each step (`engines/income.js taxWalk`). |
+| **Additional withholding** | An extra per-paycheck amount a W-2 worker asks the employer to hold back (W-4 step 4c). A prepayment, so the year's estimate does not change (S-101). |
+| **Refund likely, owed at tax time** | The Tax check's verdict: more withheld than the year's estimate means a refund is likely; less means setting aside about so much a paycheck covers it. |
+| **SDI, PFL, SUI** | Optional paystub lines: state disability insurance, paid family or medical leave, the employee share of state unemployment. `income[].withheld`. |
+| **QBI deduction** | The qualified business income deduction on some self-employment income. Not included in SLAM's tax guess (S-013). |
+| **FSA** | Flexible spending account: pre-tax money for health costs, mostly use it or lose it each year. The HSA/FSA deduction kind lowers income tax and FICA. |
+| **529, cash value life insurance** | A tax-advantaged college savings account; the savings part of a permanent life policy. Both account types, tier 3. |
+| **Account kind, tier, counts for FI** | Every account type has a kind (cash; invested, which can rise or fall; valued, a thing you own and use; owed, a card), a liquidity tier (1 cash now, 2 sell within days, 3 retirement rules or a penalty, 4 not liquid) and whether it counts toward FI. `store/schema.js ACCOUNT_TYPE_INFO`. |
+| **Cash on hand** | Checking plus savings plus cash, each at its latest month end (S-084). |
+| **Credit limit, available, used** | A card's limit, what is left of it, and the share used (S-137). |
+| **Statement balance** | What the latest card bill says is due; a card can be paid at its statement balance or at the minimum (`debts[].payWith`). |
+| **Equity, never back, depreciation** | For a home or vehicle: what is owned outright; the monthly cost never recovered (interest, tax, insurance, maintenance, depreciation, the return the equity could earn); the value lost each year (a Guess at 15% for a vehicle without values, S-113). |
+| **Accrual** | A yearly cost counts as a twelfth every month instead of all in the month it is paid (`engines/normalize.js`). The payment itself appears in the bridge. |
+| **Coverage choices** | Health coverage from an employer, a parent, the marketplace (ACA), public coverage (Medicaid, Medicare), school, or none (`coverage.how`). COBRA, keeping a former employer's plan, is only in the parking lot. |
+| **Deductible, out-of-pocket max** | What you pay before insurance pays; the most you can pay in a year. Yearly Values in Setup, Health coverage. |
 
 ## The budget
 
@@ -77,6 +92,18 @@ way, the file is named. Amounts are dollars a month unless a term says otherwise
 | **Lens** | A re-reading of the same numbers in another unit or frame (dollars, hours of work, 50/30/20, DRAFTT, the income statement, joy). No new data comes in (`engines/lenses.js`). |
 | **Hours of work** | A dollar amount expressed as hours of the client's own take-home pay (`hourlyTakeHome`). |
 | **Income statement** | Gross to take-home to spending to what is left, like a company's, for one month. |
+| **Basis** | The number a total uses for a category: the actual when one exists, otherwise the estimate, and the screen says which (`engines/totals.js basisFor`). |
+| **Break down, Use one number** | Rough can split a category into sub-categories whose lines then carry the estimate; "Use one number instead" brings the client's own number back (S-078). |
+| **Quick lines** | One box that adds several sub-categories at once ("claude 216 spotify 21 youtube 27"), `engines/quick-lines.js`. |
+| **Small stuff** | Anything under 100 dollars a year is not asked about one by one (S-018). |
+| **Keep, cut, change, new** | The decision on each plan line in review: keep it, cut it to zero (the line stays so a comeback shows), change it by typing an amount, or add a new one (`plans[].lines[].decision`). |
+| **Not allocated yet, Extra on debt** | Savings lines allocate the surplus to saving, investing or extra on debt; what is left is "not allocated yet" and never counts in the savings rate (S-138). |
+| **Proof of cash** | Entered spending (without debt payments) compared with take-home less savings less debt payments; flagged when the gap is above 15% (S-014). |
+| **Accuracy, x off** | Actual divided by estimate for a month: "1.07x off this month". |
+| **Culprits** | The categories whose actual ran furthest over the estimate, in Insights, Compared. |
+| **Blind guess, blind round** | The client estimates again without seeing their earlier numbers, in a revisit session; kept in `blindRounds[]` as their own words. |
+| **Housing share, the 35% line** | Housing as a share of take-home against a reference line of 35% (`src/data/benchmarks.json housingBand`). |
+| **Cost-of-living tiers** | HCOL, MCOL, LCOL multipliers on the Guess averages, removed from SLAM because they added false precision (S-070). |
 
 ## The monthly loop
 
@@ -111,6 +138,15 @@ way, the file is named. Amounts are dollars a month unless a term says otherwise
 | **First session** | The checklist Today shows a new client until the basics, one income, rough estimates, one account and paid-ahead bills are in. |
 | **Journeys, taps** | The four coaching journeys `tools/journeys.mjs` walks on a phone and a desktop, counting taps against limits (S-109). |
 | **Gallery** | Screenshots of every screen and tab, phone and desktop, light and dark, compared with an approved set (`tools/gallery.mjs`). |
+| **Loop strip, the step for now** | Plan, Track, Review at the top of Today with one highlighted: Review from the month's third-to-last day, Plan while there is no plan and nothing logged, otherwise Track (`engines/loop.js`). |
+| **Transaction kinds** | spend, fee, refund, reimbursement, card-payment, transfer, income; stored with positive meaning money out. Card payments, transfers and income never count as spending. |
+| **Likely duplicate, possible match** | A duplicate is flagged, not removed. A possible match waits for "Same, merge" or "Different"; until then the imported row does not count. |
+| **Balance check** | A balance typed on a day inside the month, which resets the calendar's projection to the real number (`cashflow.checks`). |
+| **Stale balance** | An investment or a thing you own with no new balance for 35 days; shown as stale rather than counted as current (S-110). |
+| **So far, expected by month end** | So far is income logged less spending logged up to today; expected adds the paychecks still to come and takes off the bills and the rest of the plan. |
+| **Fixed floor, lifestyle creep, card float** | Trends readings: fixed lines plus debt minimums; the change per month in spending against take-home; what was charged to cards against what was paid to them from cash (`engines/trends.js`). |
+| **Subscription, price creep** | The same merchant in two or more months, at most one charge a month, 25 to 35 days apart, amounts within 20%; price creep is that charge going up (`engines/tx-analysis.js`). |
+| **The 5-task test** | Hand the Riley demo to a real person and time five tasks, writing down every pause or wrong turn (`slam/README.md`). Not yet run. |
 
 ## People, roles and sharing
 
@@ -150,13 +186,16 @@ All seven are made up. They are both the demo data and the test data (S-025).
 | **Lean FI, Fat FI, Barista FI, Coast FI** | FI on a tight budget; on a generous one; with a part-time job covering some spending; already saved enough that growth alone reaches FI by a target age. The "FI ladder" in Money Rooms v3. |
 | **Rule of 5** | A Money Rooms v3 target for the emergency fund: age divided by five, in months of spending. |
 | **Triple D** | Drawdown, duration, depth: the shaded band on a long-run projection chart in SPARKS (D-176). |
+| **Chubby FI** | Money Rooms v3's step between Lean and Fat: about 25% more than you spend now. |
+| **20/3/8 rule** | A car rule of thumb named in the archive: 20% down, a loan of at most three years, car costs under 8% of income. |
+| **SWAN, VPW** | SPARKS only: the self-reported sleep-at-night target; variable percentage withdrawal, year by year to the plan age. |
 
 ## Project names
 
 | Term | Meaning |
 | --- | --- |
 | **SLAM** | Stress Less About Money, the current build (`slam/`). |
-| **SPARKS, SLAF** | The September 2026 generation of many small rooms sharing one household (`archive/sparks/`). |
+| **SPARKS, SLAF** | The September 2026 generation of many small rooms sharing one household (`archive/sparks/`). The repository never spells out either acronym. |
 | **Rooms** | SPARKS's screens, each answering one question. 93 at the peak, 37 at the end. |
 | **Ledger, Spheres, Blocks, Lenses, Levers, Solar System, planets** | SPARKS and Money Rooms v3 vocabulary: every number as a row; nine life areas; a hypothetical laid on the household; re-readings; six levers; the Money Rooms v3 hub of readings grouped into planets. Defined in `archive/sparks/docs/ARCHITECTURE.md` and `archive/money-rooms-v3/README.md`. |
 | **Money Rooms v2, v3** | The two generations before SLAM: v2 a separate repository, v3 in `archive/money-rooms-v3/`. |
@@ -164,3 +203,6 @@ All seven are made up. They are both the demo data and the test data (S-025).
 | **Coach Mode, Marketing Scoreboard** | Two more apps built on SPARKS: the first coach console, and a content log with a small CRM. |
 | **Lane 2** | SPARKS's second test harness: property tests, a synthetic household corpus, data and glossary checks (`archive/sparks/tests/`). |
 | **S-###, D-###, DD-###, CD-###, MD-###** | Decision row numbers: SLAM, SPARKS, Dungeons & Dividends, Coach Mode, Marketing Scoreboard. |
+| **Money date, discovery call, Presenting, Scoreboard** | Money Rooms v3 words: a fifteen-minute call; the first call; a mode that locks the app to the client view; a screen of six numbers. |
+| **MR-###** | Money Rooms v3's decision rows (`archive/money-rooms-v3/DECISIONS.md`). |
+| **Eli** | The owner: a money coach building with Claude Code. Many decision rows record "Eli's answer". |
