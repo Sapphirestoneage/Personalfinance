@@ -73,7 +73,9 @@ export function recordContribution(spine, accountId, { year, amount, kind = 'con
   const f = getAt(spine, path);
   const part = (c) => (kind === 'employer' ? c.kind === 'employer' : !c.kind || c.kind === 'contribution');
   const kept = (isFact(f) && Array.isArray(f.value) ? f.value : []).filter((c) => !(c.year === year && part(c)));
-  return setAt(spine, path, { value: [...kept, { year, amount, ...(kind === 'employer' ? { kind } : {}) }], kind: 'known', asOf: today, source: 'ledger' });
+  // The total is through the household's as-of date: the monthly amount adds what goes in after it (S-214).
+  const through = (spine.meta && spine.meta.asOf) || today;
+  return setAt(spine, path, { value: [...kept, { year, amount, ...(kind === 'employer' ? { kind } : {}), through }], kind: 'known', asOf: today, source: 'ledger' });
 }
 
 // ---------------------------------------------------------------- card rate

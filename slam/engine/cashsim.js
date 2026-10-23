@@ -117,7 +117,12 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   // Each paycheck's share of payroll saving: its owner's accounts, by gross (S-211).
   const shares = payrollShares(spine, cf);
   for (const s of spine.income || []) {
-    const st = cf.income.streams.find((x) => x.id === s.id);
+    let st = cf.income.streams.find((x) => x.id === s.id), sh = shares;
+    // A line that starts after this month: its own first month's cash flow says what each paycheck keeps.
+    if ((!st || !st.included) && s.start && monthKey(s.start) > ym && s.start <= end) {
+      const later = cashflow(spine, rules, monthKey(s.start), { mode: 'expected' });
+      st = later.income.streams.find((x) => x.id === s.id); sh = payrollShares(spine, later);
+    }
     const base = 'income.' + s.id, path = base + '.amount';
     const amt = t.useFact(path, s.amount);
     if (amt === null) { needs.push({ path, what: s.label + ': amount' }); continue; }
@@ -127,7 +132,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     // Net per dollar of gross, from the same cash flow the Dashboard uses; the payroll saving share comes off W-2 pay.
     const ratio = st && st.included && st.gross ? st.takeHome / st.gross : (s.type === 'w2' || s.type === 'tips' ? null : 1);
     if (ratio === null) { if (!st || !st.included) continue; needs.push({ path, what: s.label + ': this month\'s pay' }); continue; }
-    const deducted = st ? shares[s.id] || 0 : 0;
+    const deducted = st ? sh[s.id] || 0 : 0;
     const perMonthNet = (st ? (st.gross / Math.max(w, 1e-9)) * ratio : amt * PER_YEAR[s.cadence] / 12) - deducted;
     const estimatedDay = !s.payDay || roughFact(s.payDay);
     const label = s.label;

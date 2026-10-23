@@ -41,26 +41,18 @@ import { cashsim } from './cashsim.js';
 import * as C from './vendor/cashcal.js';
 import { money as fmt } from '../src/ui/format.js';
 import { labelFor } from './labels.js';
+import { DEFERRAL, FROM_PAY, CONTRIBUTION_KINDS, payDatesOf, earningFor, paydaysOf, contributedOn, stillOn, coverageOf as coverage, familyHsa, hsaLimit } from './contrib.js';
+export { payDatesOf, CONTRIBUTION_KINDS };
 
 // Whole dollars read as whole dollars, anything else to the cent.
 const money = (x) => (x === null || x === undefined ? 'missing' : fmt(x, Math.round(x) !== Math.round(x * 100) / 100));
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const longDay = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + (+iso.slice(8, 10)) + ', ' + iso.slice(0, 4);
 const ceil2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
-const round4 = (x) => Math.round(x * 10000) / 10000;
 const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-const pad = (n) => String(n).padStart(2, '0');
-// "9 months", "9.5 months of pay".
-const nMonths = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1)) + ' month' + (n === 1 ? '' : 's');
 
 const IRA = ['traditional_ira', 'roth_ira', 'spousal_ira'];
-const DEFERRAL = ['k401', 'roth_k401', 'k403b', 'tsp'];
-// Plans filled only from a paycheck (an HSA with pay is too, else from take-home; a Solo 401(k) and a SEP never are).
-const FROM_PAY = [...DEFERRAL, 'k457b', 'simple_ira', 'after_tax_k401'];
 const SUPER = { K401_CU50: 'K401_CU6063', SIMPLE_CU50: 'SIMPLE_CU6063' };
-// Entries in a contributions list: rollovers and conversions never count; a 529 rolled into a Roth IRA does; employer marks a Solo 401(k)'s or SEP's employer part.
-export const CONTRIBUTION_KINDS = ['contribution', 'rollover', 'conversion', 'from529', 'employer'];
-const counts = (c, year) => c.year === year && c.kind !== 'rollover' && c.kind !== 'conversion';
 
 // ---------------------------------------------------------------- whose, and which pools
 const people = (spine) => spine.household.people || [];
@@ -68,13 +60,9 @@ const people = (spine) => spine.household.people || [];
 // owner the partner's, else the first person's.
 export const ownerOf = accountOwner;
 const lineOwner = incomeOwner;
-const coverage = (a) => (a.coverageLevel ? v(a.coverageLevel) : null);
 // Whether an account has a yearly limit to fill here: a 529 only in New York (its deduction; a blank state is
 // missing, not outside New York), an HSA unless its plan is not eligible.
 export const appliesTo = (spine, a) => (a.type === 'k529' ? [null, 'NY'].includes(v(spine.household.state)) : !(a.type === 'hsa' && a.planEligible && v(a.planEligible) === 'no'));
-// Family coverage on any HSA in the household puts every HSA under the family limit (a spouse with family coverage
-// makes both spouses family, Publication 969).
-const familyHsa = (spine) => (spine.accounts || []).some((x) => x.type === 'hsa' && appliesTo(spine, x) && coverage(x) === 'family');
 export function poolsOf(spine, a) {
   const p = (ownerOf(spine, a) || {}).id;
   if (IRA.includes(a.type)) return [{ key: 'ira:' + p, part: 'all' }];
@@ -120,60 +108,7 @@ export function openYears(rules, type, asOf) {
 }
 
 // ---------------------------------------------------------------- pay dates and months
-// A stream's pay dates from `from` to `to` by its schedule, as the day-by-day run lays them out
-// (engine/cashsim.js): weekly and biweekly from the start date, semimonthly from the pay day, the rest on the pay day.
-export function payDatesOf(s, from, to) {
-  const lo = s.start && s.start > from ? s.start : from, hi = s.end && s.end < to ? s.end : to;
-  if (lo > hi || s.cadence === 'once') return s.cadence === 'once' && s.start >= from && s.start <= to ? [s.start] : [];
-  const day = s.payDay ? v(s.payDay) : null;
-  if (s.cadence === 'weekly' || s.cadence === 'biweekly') return s.start ? C.paydays(s.cadence, s.start, lo, hi) : [];
-  if (s.cadence === 'semimonthly') return C.paydays('semimonthly', dayIn(monthKey(lo), day || 15), lo, hi);
-  return C.paydays('monthly', dayIn(monthKey(lo), day || 1), lo, hi);
-}
-// The owner's pay lines of these types that pay something (a line known to pay $0 holds no deferral).
-const earningFor = (spine, pid, types = ['w2', 'tips']) => (spine.income || []).filter((s) => types.includes(s.type) && lineOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0));
-// A line's pay dates by its schedule, less the ones skipped on the calendar.
-const paydaysOf = (spine, s, from, to) => { const ov = (spine.calendar && spine.calendar.overrides) || {}; return payDatesOf(s, from, to).filter((d) => !(ov[s.id + '|' + d] || {}).skip); };
-// Whether the owner has a W-2 or tips line at all (payroll saving needs pay to come out of).
-const hasPay = (spine, pid) => earningFor(spine, pid).length > 0;
-// Money that goes in from the owner's pay: a payroll-only plan always, an HSA while the owner has pay.
-const fromPayOf = (spine, a, pid) => FROM_PAY.includes(a.type) || (a.type === 'hsa' && hasPay(spine, pid));
-// The share of a month's pay (the owner's W-2 and tips paydays by schedule) on days that pass `keep` and are not
-// skipped on the calendar; null when pay runs that month but its days are not known (a weekly or biweekly line with
-// no first pay date).
-function payShare(spine, pid, ym, keep) {
-  const runs = earningFor(spine, pid).filter((s) => activeDays(s.start, s.end, ym) > 0);
-  if (!runs.length) return 0;
-  const all = runs.flatMap((s) => payDatesOf(s, monthStart(ym), monthEnd(ym)));
-  if (!all.length) return null;
-  return runs.flatMap((s) => paydaysOf(spine, s, monthStart(ym), monthEnd(ym))).filter(keep).length / all.length;
-}
-// Months of the owner's pay in a year before asOf: payroll saving is in for paydays before asOf (a payday on asOf is
-// still to come). An earlier month with pay counts whole; the as-of month counts the share of its paydays gone by.
-function payMonthsBefore(spine, pid, year, asOf) {
-  let n = 0;
-  for (let m = 1; m <= 12; m++) {
-    const ym = year + '-' + pad(m);
-    if (ym > monthKey(asOf)) break;
-    n += ym < monthKey(asOf) ? (payShare(spine, pid, ym, () => true) === 0 ? 0 : 1) : payShare(spine, pid, ym, (d) => d < asOf) || 0;
-  }
-  return round4(n);
-}
-// Months of the owner's pay from asOf through December 31 of the year: what payroll saving already set up still puts in.
-function payMonthsFrom(spine, pid, year, asOf) {
-  let n = 0;
-  for (let m = 1; m <= 12; m++) {
-    const ym = year + '-' + pad(m);
-    if (ym < monthKey(asOf)) continue;
-    const share = payShare(spine, pid, ym, (d) => d >= asOf);
-    n += share === null ? (ym === monthKey(asOf) ? 0 : 1) : share;
-  }
-  return round4(n);
-}
-// Months of a year through asOf (money from take-home goes in every month), and the months after this one to
-// December (money put in from January on counts for the new year unless it is assigned to the old one).
-const monthsIn = (year, asOf) => (year < +asOf.slice(0, 4) ? 12 : year > +asOf.slice(0, 4) ? 0 : +asOf.slice(5, 7));
-const monthsAfter = (year, asOf) => (year === +asOf.slice(0, 4) ? 12 - +asOf.slice(5, 7) : 0);
+// The owner's paydays, pay months and what goes in each year are engine/contrib.js's (one count for here and for tax).
 
 // One contribution a month from asOf (the same day of the month) through the deadline.
 export function monthlyDates(asOf, deadline) {
@@ -189,45 +124,6 @@ export function monthlyDates(asOf, deadline) {
 }
 
 // ---------------------------------------------------------------- what is in, and what is still set to go in
-// What is already in for the year on one account, for one part of it (a Solo
-// 401(k)'s employee or employer money): the contributions list's entries for the
-// year, else the monthly amount for the months gone by (a guess, rough), else
-// nothing recorded (rough). A monthly amount that is blank is named as missing.
-// Only entries that count replace the guess (a rollover alone leaves it).
-function contributedOn(spine, a, year, asOf, t, part = 'all') {
-  const base = 'accounts.' + a.id;
-  const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) : null;
-  const mine = (c) => part === 'all' || (part === 'employer') === (c.kind === 'employer');
-  const entries = (list || []).filter((c) => counts(c, year) && mine(c));
-  const name = v(a.name) || a.id;
-  if (entries.length) { const x = round2(entries.reduce((s, c) => s + c.amount, 0)); return { id: a.id, name, value: x, words: money(x) + ' recorded for ' + year, path: base + '.contributions', estimated: false, kind: a.contributions.kind }; }
-  if ((list || []).some((c) => counts(c, year) && mine(c))) return { id: a.id, name, value: 0, words: 'nothing recorded for ' + year + (part === 'employer' ? ' as the employer part' : ' as the employee deferral'), path: base + '.contributions', estimated: false, kind: a.contributions.kind };
-  const pid = (ownerOf(spine, a) || {}).id;
-  const payroll = fromPayOf(spine, a, pid);
-  // A plan filled only from pay has had nothing come out of pay that never came.
-  const n = payroll ? (hasPay(spine, pid) ? payMonthsBefore(spine, pid, year, asOf) : 0) : monthsIn(year, asOf);
-  if (part !== 'employer' && a.monthlyContribution && n > 0) {
-    const m = t.useFact(base + '.monthlyContribution', a.monthlyContribution);
-    if (m === null) return { id: a.id, name, value: 0, words: 'the monthly amount is not entered, so nothing is counted as in', path: base + '.monthlyContribution', estimated: true, kind: 'missing' };
-    t.addRough(base + '.contributions');
-    return { id: a.id, name, value: round2(m * n), words: 'about ' + money(m * n) + ' (' + money(m) + ' a month for ' + nMonths(n) + (payroll ? ' of pay' : '') + ' in ' + year + ', a guess until it is recorded)', path: base + '.contributions', estimated: true, monthly: m, months: n, kind: 'rough' };
-  }
-  const past = year <= +asOf.slice(0, 4);
-  if (past) t.addRough(base + '.contributions');
-  return { id: a.id, name, value: 0, words: 'nothing recorded for ' + year, path: base + '.contributions', estimated: past, kind: past ? 'rough' : 'computed' };
-}
-// What the account's monthly amount still puts in for the year from asOf: on the owner's paydays through December 31
-// for money from pay, in each month after this one to December for money from take-home. Null when nothing will.
-function stillOn(spine, a, year, asOf, t, part = 'all') {
-  if (part === 'employer' || !a.monthlyContribution) return null;
-  const m = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
-  if (!m) return null;
-  const pid = (ownerOf(spine, a) || {}).id;
-  const payroll = fromPayOf(spine, a, pid);
-  const n = payroll ? (hasPay(spine, pid) ? payMonthsFrom(spine, pid, year, asOf) : 0) : monthsAfter(year, asOf);
-  if (!(n > 0)) return null;
-  return { id: a.id, name: v(a.name) || a.id, monthly: m, months: n, value: round2(m * n), fromPay: payroll, path: 'accounts.' + a.id + '.monthlyContribution', words: money(m) + ' a month' + (payroll ? ' from pay' : '') + ' for ' + nMonths(n) + ' more of ' + year };
-}
 // Everything in for the year in one pool, across every account in it, and what the pool's monthly amounts still put
 // in. An HSA's employer money counts against its limit.
 function poolIn(spine, accts, key, year, asOf, t) {
@@ -275,16 +171,15 @@ function limitOf(spine, rules, a, year, t, se) {
     out.baseRule = fs === 'mfj' ? 'NY_529_DED_J' : 'NY_529_DED_S';
     out.words.push('the New York deduction cap (' + (fs === 'mfj' ? 'married filing jointly' : 'one taxpayer') + ')');
   } else if (a.type === 'hsa') {
-    const level = coverage(a), fam = familyHsa(spine);
+    // The limit is engine/contrib.js's hsaLimit (the tax engine caps the HSA deduction with the same one).
+    const level = coverage(a), L = hsaLimit(spine, rules, a, year, t);
     t.useFact('accounts.' + a.id + '.coverageLevel', a.coverageLevel);
-    if (level === null && !fam) t.addRough('accounts.' + a.id + '.coverageLevel');
-    out.baseRule = fam ? 'HSA_FAM' : 'HSA_SELF';
-    out.family = fam;
-    out.words.push(fam ? (level === 'family' ? 'family coverage' : 'family coverage (an HSA in the household has family coverage, so every HSA is under the family limit)') : level === 'self' ? 'self-only coverage' : 'self-only coverage (a guess: the coverage is not entered)');
-    const cu = catchUp(rules, 'HSA_CU55', age, year, t);
-    Object.assign(out, { catchUp: cu.amount, catchUpRule: cu.rule });
-    const months = a.monthsEligible ? t.useFact('accounts.' + a.id + '.monthsEligible', a.monthsEligible) : null;
-    if (months !== null && months < 12) { out.months = months; out.words.push(months + ' of 12 months eligible'); }
+    if (level === null && !L.family) t.addRough('accounts.' + a.id + '.coverageLevel');
+    out.baseRule = L.baseRule;
+    out.family = L.family;
+    out.words.push(L.family ? (level === 'family' ? 'family coverage' : 'family coverage (an HSA in the household has family coverage, so every HSA is under the family limit)') : level === 'self' ? 'self-only coverage' : 'self-only coverage (a guess: the coverage is not entered)');
+    Object.assign(out, { catchUp: L.catchUp, catchUpRule: L.catchUpRule });
+    if (L.months !== undefined) { out.months = L.months; out.words.push(L.months + ' of 12 months eligible'); }
   } else if (a.type === 'sep_ira') {
     out.baseRule = 'SEP_MAX';
   } else {
@@ -355,7 +250,7 @@ function eiGap(spine, e) {
 // taken out; an excess deferral is paid back by the plan by April 15 of the next year or it is taxed twice.
 function overWords(type, year, over) {
   const head = 'Over the ' + year + ' limit by ' + money(over) + ': ';
-  return [...FROM_PAY, 'solo_k401'].includes(type) ? head + 'an excess deferral. Have the plan pay it back, with what it earned, by April 15, ' + (year + 1) + ', or it is taxed twice.' : head + 'an excess contribution. Take it out, with what it earned, by the deadline to avoid the 6% tax on it.';
+  return [...FROM_PAY, 'solo_k401'].includes(type) ? head + 'an excess deferral. Have the plan pay it back, with what it earned, by April 15, ' + (year + 1) + ', or it is taxed twice.' : head + 'an excess contribution. Take it out, with what it earned, by the ' + year + ' tax filing due date, extensions included, to avoid the 6% tax on it.';
 }
 
 // ---------------------------------------------------------------- one account, one tax year
@@ -381,6 +276,10 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   if (!appliesTo(spine, a) && a.type === 'k529') { const state = t.read(spine, 'household.state'); return done({ applies: false, room: null, why: 'A 529 has no yearly limit to fill; the state deduction for ' + state + ' is not modeled (only New York\'s is).' }); }
   if (!appliesTo(spine, a)) { t.useFact('accounts.' + a.id + '.planEligible', a.planEligible); return done({ applies: false, room: 0, why: 'Not eligible: the health plan on this account is not HSA-eligible, so nothing can go in for ' + year + '.' }); }
 
+  // What the record form starts at (read on its own, so it never changes this row's facts): the account's own
+  // contribution total counted now, without a 529 rolled in (counted on its own), and a Solo's employer part.
+  const rc = contributedOn(spine, a, year, asOf, tracker(), 'own');
+  row.record = { total: round2(rc.value - (rc.events || 0)), events: rc.events || 0, estimated: !!rc.estimated && rc.kind !== 'missing', employer: a.type === 'solo_k401' ? contributedOn(spine, a, year, asOf, tracker(), 'employer').value : 0 };
   // Earned income: the owner's, and under married filing jointly the couple's for the spouse who earns less (the spousal IRA rule).
   const ei = earnedIncome(spine, rules, year, { personId: pid });
   // The Show the math id of a person's earned income for the year (no person part with one person).
@@ -391,7 +290,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   if (lim.value === null) { if (lim.missingPath) t.useFact(lim.missingPath, null); if (lim.earnedMissing) t.absorb({ ...ei, value: undefined }); return done({ room: null, why: lim.earnedMissing ? 'A SEP IRA for the self-employed is a share of the year\'s 1099 profit, and ' + eiGap(spine, ei) + '.' : 'The limit cannot be figured without ' + lim.missing + '.', missingLabel: 'missing: ' + lim.missing, ei, eiMetric: lim.earnedMissing ? earnedId(ei) : null }); }
   // A plan filled only from pay, in a household of two where no pay line is the owner's: whose pay it is, is missing.
   const payLines = (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && streamWeight(s, 'committed') !== 0);
-  if (deadline && deadline.payrollOnly && people(spine).length > 1 && !hasPay(spine, pid) && payLines.length) {
+  if (deadline && deadline.payrollOnly && people(spine).length > 1 && payLines.length && !payLines.some((s) => incomeOwner(spine, s) === pid)) {
     t.useFact('income.' + payLines[0].id + '.personId', null);
     return done({ room: null, why: 'A ' + typeLabel + ' fills only through pay, and no W-2 or tips line in the Ledger is ' + (person.name || 'the owner') + '\'s. Open the pay line that is ' + (person.name || 'theirs') + ' and choose whose pay it is.', missingLabel: 'missing: whose pay is ' + (person.name || 'the owner') + '\'s' });
   }
@@ -399,6 +298,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   const own = mine.parts.filter((p) => p.id === a.id);
   const contributed = { value: mine.value, parts: mine.parts, estimated: mine.parts.some((p) => p.estimated) };
   row.contributed = contributed;
+
   const words = [];
   let room = null, ceiling = null, cap = null, phase = null, over = 0;
   // Each pool's room left for the year across every account in it, where it differs from this row's part.
@@ -421,26 +321,39 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const otherStill = joint ? poolStill(spine, accts, 'ira:' + other.id, year, asOf, t).value : 0;
     const couple = eo ? round2(ei.value + eo.value) : null;
     const comp = joint ? round2(couple - otherIn - otherStill) : ei.value;
+    // The spouse who earns more is held to their own pay, and the two together to the couple's: what the other spouse
+    // put in and still has set to go in comes off what this row may add. An excess past their own pay is theirs.
+    const higher = !!eo && eo.value < ei.value;
+    const hIn = higher ? poolIn(spine, accts, 'ira:' + other.id, year, asOf, t).value : 0;
+    const hStill = higher ? poolStill(spine, accts, 'ira:' + other.id, year, asOf, t).value : 0;
+    const roomCap = higher ? Math.min(ei.value, round2(couple - hIn - hStill)) : comp;
     cap = { value: comp, kind: ei.kind, label: joint ? 'the couple\'s ' + year + ' earned income, less ' + money(otherIn + otherStill) + ' ' + other.name + ' put in or has set to go in' : ei.label, metric: joint ? 'earned:' + year : earnedId(ei), joint, couple, otherIn, otherStill };
     // Under married filing jointly with unequal pay, the two spouses' IRAs share the couple's earned income.
     if (eo && eo.value !== ei.value) {
       const theirs = accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === other.id).map((x) => v(x.name) || x.id);
       for (const n of theirs) if (!row.sharedWith.includes(n)) row.sharedWith.push(n);
-      if (theirs.length) words.push('Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (theirs.length === 1 ? theirs[0] : 'IRAs') + ': together no more than that.');
+      if (theirs.length) {
+        // Together: the couple's pay less what both put in and both still have set to go in.
+        const bothIn = round2(contributed.value + (joint ? otherIn : hIn)), bothStill = round2(poolStill(spine, accts, pools[0].key, year, asOf, t).value + (joint ? otherStill : hStill));
+        const together = round2(Math.max(0, couple - bothIn - bothStill));
+        row.couple = { value: couple, with: other.name, names: theirs, together, words: 'Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (theirs.length === 1 ? theirs[0] : 'IRAs') + ': together at most ' + money(together) + ' more' + (bothIn + bothStill ? ' (' + money(bothIn) + ' in, ' + money(bothStill) + ' still set to go in)' : '') + '.' };
+        words.push(row.couple.words);
+      }
     }
     if (a.type === 'spousal_ira' && !joint) words.push(fs === 'mfj' ? 'A spousal IRA counts the couple\'s earned income only for the spouse who earns less; here its owner\'s own earned income is the cap.' : 'A spousal IRA rests on married filing jointly; without it, its owner\'s own earned income is the cap.');
-    ceiling = Math.min(lim.value, comp);
+    ceiling = Math.min(lim.value, roomCap);
     left[pools[0].key] = round2(ceiling - contributed.value);
     if (a.type === 'roth_ira') {
       // The Roth limit is reduced by the phase-out from the lesser of the limit and compensation; every IRA
       // contribution still counts against the full limit.
-      phase = rothLimit(spine, rules, year, ceiling, t, 'accounts.' + a.id + '.contributions');
+      phase = rothLimit(spine, rules, year, Math.min(lim.value, comp), t, 'accounts.' + a.id + '.contributions');
       const rothIn = round2(mine.parts.filter((p) => (accts.find((x) => x.id === p.id) || {}).type === 'roth_ira').reduce((s, p) => s + p.value, 0));
       room = round2(Math.max(0, Math.min(phase.limit - rothIn, ceiling - contributed.value)));
       if (!phase.unknown) over = Math.max(over, rothIn - phase.limit);
     } else room = round2(Math.max(0, ceiling - contributed.value));
-    over = Math.max(over, contributed.value - ceiling);
+    over = Math.max(over, contributed.value - Math.min(lim.value, comp));
     if (comp < lim.value) words.push('Capped at ' + cap.label + ' (' + money(comp) + ').');
+    else if (roomCap < lim.value) words.push('Capped at the couple\'s ' + year + ' earned income, less ' + money(hIn + hStill) + ' ' + other.name + ' put in or has set to go in (' + money(roomCap) + ').');
     if (phase && phase.words) words.push(cap1(phase.words) + '.');
   } else if (a.type === 'hsa' && lim.family) {
     // Family coverage: one family limit for the household, and each spouse's own age-55 catch-up on top. Money a spouse
@@ -534,7 +447,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   const passed = !deadline || deadline.date < asOf;
   // In each pool: new money fits both this row's own part (less its own monthly amount still to come) and the pool's
   // room left (less every account's still to come). Still to come past the room is an excess on the way (overSoon).
-  const still = { value: 0, parts: [], byPool: {}, soon: 0 };
+  const still = { value: 0, parts: [], byPool: {}, newByPool: {}, soon: 0 };
   let toFill = 0, overSoon = 0;
   for (const [key, part] of Object.entries(row.parts)) {
     const s = key.startsWith('hsa55:') ? { value: 0, parts: [] } : poolStill(spine, accts, key, year, asOf, t);
@@ -542,14 +455,20 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const poolLeft = Math.max(0, left[key] ?? part);
     still.byPool[key] = s.value;
     still.parts.push(...s.parts.map((p) => ({ ...p, pool: key })));
-    toFill += Math.max(0, Math.min(part - ownStill, poolLeft - s.value));
+    still.newByPool[key] = round2(Math.max(0, Math.min(part - ownStill, poolLeft - s.value)));
+    toFill += still.newByPool[key];
     overSoon += Math.max(0, s.value - poolLeft, ownStill - part);
   }
   toFill = round2(toFill);
   still.value = round2(room - toFill);
   still.soon = round2(Object.values(still.byPool).reduce((x, y) => x + y, 0));
   row.still = still;
-  if (overSoon > 0.005 && !passed) { row.overSoon = round2(overSoon); row.overSoonWords = 'What is set up already puts ' + money(still.soon) + ' more in by December 31, ' + year + ', ' + money(row.overSoon) + ' over the ' + year + ' limit: lower or stop it before then.'; }
+  // Already over and set to go further over: the year-end excess is both.
+  if (overSoon > 0.005 && !passed) {
+    row.overSoon = round2(overSoon);
+    row.overByYearEnd = round2((row.over || 0) + row.overSoon);
+    row.overSoonWords = 'What is set up already puts ' + money(still.soon) + ' more in by December 31, ' + year + ', ' + (row.over ? 'making it ' + money(row.overByYearEnd) : money(row.overSoon)) + ' over the ' + year + ' limit: lower or stop it before then.';
+  }
 
   // The three amounts.
   const payrollOnly = deadline && deadline.payrollOnly;
@@ -573,7 +492,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
       if (runs && (s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start) blank = blank || { label: s.label, what: 'first pay date', path: 'income.' + s.id + '.payDay' };
       if (sched.length && (!s.amount || v(s.amount) === null)) blank = blank || { label: s.label, what: 'amount', path: 'income.' + s.id + '.amount' };
       // The run decides when it reaches the deadline and the line has an amount (skipped or moved paydays as the calendar has them).
-      const useRun = sim && reach && reach >= end && s.amount && v(s.amount) !== null;
+      const useRun = sim && reach && reach >= end && s.amount && v(s.amount) !== null && (inRun.length > 0 || !sched.length);
       const ds = useRun ? inRun.map((i) => ({ date: i.date, cents: i.cents, s })) : sched.map((d) => ({ date: d, cents: null, s }));
       list.push(...ds);
     }
@@ -665,17 +584,22 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
     if (J.room > jr) { J.room = jr; J.sharedCap = true; }
   }
   const short = [];
+  // New money: the row's own new money in the pool (its part, less its own still to come, within the pool's room left
+  // less every account's still to come), unless the couple's pay cut the room; then the room less the still to come.
   const fillOf = (p) => {
-    p.still = round2(Math.min(p.room, stillOf(p)));
-    p.fill = round2(Math.max(0, p.room - p.still));
+    const nb = (p.row.still.newByPool || {})[p.key];
+    if (!p.sharedCap && nb !== undefined) { p.fill = round2(Math.min(p.room, nb)); p.still = round2(p.room - p.fill); }
+    else { p.still = round2(Math.min(p.room, stillOf(p))); p.fill = round2(Math.max(0, p.room - p.still)); }
     p.perMonth = p.row.months.count ? ceil2(p.fill / p.row.months.count) : null;
     p.deadline = p.row.deadline.date;
   };
   for (const p of [...list]) {
     fillOf(p);
     const pc = p.row.paychecks;
-    if (!(p.row.deadline.payrollOnly && pc && pc.landed !== null && pc.count && p.fill > pc.landed * pc.count)) continue;
-    p.fill = round2(pc.landed * pc.count); p.capped = true; short.push(p.row.id);
+    // What a paycheck holds is never below $0 (withholding past the pay leaves nothing, not a debt).
+    const holds = pc && pc.landed !== null ? Math.max(0, pc.landed) : null;
+    if (!(p.row.deadline.payrollOnly && holds !== null && pc.count && p.fill > holds * pc.count)) continue;
+    p.fill = round2(holds * pc.count); p.capped = true; short.push(p.row.id);
     p.perMonth = p.row.months.count ? ceil2(p.fill / p.row.months.count) : null;
     const spare = round2(p.room - p.still - p.fill);
     const other = rows.filter((r) => countable(r) && r !== p.row && r.year === p.year && !r.deadline.payrollOnly && (r.parts[p.key] || 0) > 0).sort((x, y) => y.parts[p.key] - x.parts[p.key])[0];
@@ -717,7 +641,7 @@ export function maxItDeadlines(spine, rules, from, to, { asOf = spine.meta.asOf 
       if (date < from || date > to) continue;
       const passed = date < asOf;
       const r = passed ? null : maxItRow(spine, rules, a, ty, { asOf });
-      const room = passed ? (rule === d.rule ? 'The ' + ty + ' year closed on this day' : 'The day to elect the ' + ty + ' employee deferral has passed; the employer part stays open to ' + longDay(d.date)) : r.room === null ? cap1(r.missingLabel || 'missing') : r.over ? 'Over the ' + ty + ' limit by ' + money(r.over) : r.overSoon ? 'Set to go over the ' + ty + ' limit by ' + money(r.overSoon) : r.room > 0 ? money(r.room) + ' of room left for ' + ty + (r.kind === 'rough' ? ' (rough)' : '') : 'The ' + ty + ' room is full';
+      const room = passed ? (rule === d.rule ? 'The ' + ty + ' year closed on this day' : 'The day to elect the ' + ty + ' employee deferral has passed; the employer part stays open to ' + longDay(d.date)) : r.room === null ? cap1(r.missingLabel || 'missing') : r.over ? 'Over the ' + ty + ' limit by ' + money(r.over) + (r.overByYearEnd ? ', ' + money(r.overByYearEnd) + ' by December 31 if nothing changes' : '') : r.overSoon ? 'Set to go over the ' + ty + ' limit by ' + money(r.overSoon) : r.room > 0 ? money(r.room) + ' of room left for ' + ty + (r.kind === 'rough' ? ' (rough)' : '') : 'The ' + ty + ' room is full';
       out.push({ id: 'maxit:' + a.id + ':' + ty + ':' + rule, kind: 'maxDeadline', label: name + ': ' + what, date, amount: !passed && rule === d.rule && r.room ? r.room : null, direction: null, counted: false, rough: !!r && r.kind === 'rough', path: 'accounts.' + a.id + '.contributions', note: room + '. ' + rules.meta(rule, ty).notes, source: rule, accountId: a.id, taxYear: ty, passed, missing: !!r && r.room === null });
     }
   }
@@ -780,12 +704,22 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
   // Payroll money whose pay amount or pay dates are blank cannot be run (that pay is not in the run): it is left out,
   // the check says so and is incomplete.
   const blank = (rows || mx.rows).filter((r) => !r.passed && r.blankLabel).map((r) => r.paychecks.blank);
+  // A pay line the run left out (no amount, no first pay date): the run is short that pay, so it gives no verdict.
+  const gaps = (before.needs || []).filter((n) => n.path && /^income\.[^.]+\.(amount|payDay)$/.test(n.path)).map((n) => {
+    const id = n.path.split('.')[1], line = (spine.income || []).find((x) => x.id === id);
+    return { label: line ? line.label : id, what: n.path.endsWith('.amount') ? 'amount' : 'first pay date', path: n.path };
+  });
   const capped = chosen.filter((p) => p.capped);
   const words = [];
-  const blankWords = [...new Set(blank.map((x) => x.label + (x.what === 'amount' ? ' has an amount' : ' has a first pay date')))].join(' and ');
-  if (blank.length) words.push((flows.length ? 'Incomplete: the payroll money is left out until ' : 'Cannot be checked against cash until ') + blankWords + '.');
-  if (!flows.length) { if (!blank.length) words.push('Nothing more leaves checking: what already goes in covers it.'); }
-  else {
+  const has = (x) => x.label + (x.what === 'amount' ? ' has an amount' : ' has a first pay date');
+  const blankWords = [...new Set(blank.map(has))].join(' and ');
+  if (gaps.length) {
+    words.push('Cannot be checked against cash until ' + [...new Set([...gaps, ...blank].map(has))].join(' and ') + ': that pay is not in the run.');
+    if (flows.length) words.push(money(total) + ' more would leave checking by ' + longDay(flows[flows.length - 1].date) + '.');
+  } else if (blank.length) words.push((flows.length ? 'Incomplete: the payroll money is left out until ' : 'Cannot be checked against cash until ') + blankWords + '.');
+  // A run that is short a paycheck gives no verdict.
+  if (!gaps.length && !flows.length) { if (!blank.length) words.push('Nothing more leaves checking: what already goes in covers it.'); }
+  else if (!gaps.length) {
     words.push(money(total) + ' more leaves checking by ' + longDay(flows[flows.length - 1].date) + (capped.length ? ' (' + capped.map((p) => p.row.name).join(' and ') + ' only what a paycheck holds)' : '') + '.');
     if (floor === null) words.push('The cash floor cannot be figured until monthly spending is known.');
     else if (breaks) {
@@ -797,5 +731,5 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
     else if (measurable) words.push('No card or loan payoff date moves.');
     else if (payoff.length) words.push('Whether a payoff date moves cannot be measured: no card or loan is paid off inside the run (to ' + longDay(end) + ') either way.');
   }
-  return { floor, floorSource: before.floor.source, pools: chosen.map((p) => p.key + '|' + p.year), flows, total, before: b, after: f, under, underBefore, newShortfalls: newShort, shortMore, pulled: round2(Math.max(0, f.pull - b.pull)), lowDrop: b.low && f.low ? round2(b.low.cash - f.low.cash) : null, breaks: !flows.length && blank.length ? null : breaks, payoff, measurable, pushed: worst && worst.days > 0 ? worst : null, end, words: words.join(' '), kind: blank.length ? 'incomplete' : before.kind, unchecked: !flows.length && blank.length > 0, from: before.from, rough: before.rough, missing: [...new Set([...before.missing, ...blank.map((x) => x.path)])], rules: [...new Set([...before.rules, 'STAGE_RUNWAY_RED_MONTHS'])] };
+  return { floor, floorSource: before.floor.source, pools: chosen.map((p) => p.key + '|' + p.year), flows, total, before: b, after: f, under, underBefore, newShortfalls: newShort, shortMore, pulled: round2(Math.max(0, f.pull - b.pull)), lowDrop: b.low && f.low ? round2(b.low.cash - f.low.cash) : null, breaks: gaps.length || (!flows.length && blank.length) ? null : breaks, payoff, measurable, pushed: worst && worst.days > 0 ? worst : null, end, words: words.join(' '), kind: blank.length || gaps.length ? 'incomplete' : before.kind, unchecked: gaps.length > 0 || (!flows.length && blank.length > 0), from: before.from, rough: before.rough, missing: [...new Set([...before.missing, ...blank.map((x) => x.path), ...gaps.map((x) => x.path)])], rules: [...new Set([...before.rules, 'STAGE_RUNWAY_RED_MONTHS'])] };
 }

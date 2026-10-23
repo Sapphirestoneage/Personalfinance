@@ -339,7 +339,10 @@ export function validate(spine) {
       // A contribution entry may say what it was (S-211): a rollover or a conversion never counts against a limit, a 529
       // rolled into a Roth IRA does (from529), and employer marks a Solo 401(k)'s or SEP's employer part.
       const cl = a.contributions && a.contributions.value;
-      if (Array.isArray(cl)) cl.forEach((x, i) => { if (x.kind !== undefined && !['contribution', 'rollover', 'conversion', 'from529', 'employer'].includes(x.kind)) err(p + '.contributions[' + i + '].kind', 'contribution, rollover, conversion, from529 or employer'); });
+      if (Array.isArray(cl)) cl.forEach((x, i) => {
+        if (x.kind !== undefined && !['contribution', 'rollover', 'conversion', 'from529', 'employer'].includes(x.kind)) err(p + '.contributions[' + i + '].kind', 'contribution, rollover, conversion, from529 or employer');
+        if (x.through !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(x.through)) err(p + '.contributions[' + i + '].through', 'a date (YYYY-MM-DD)');
+      });
     }
   }
 

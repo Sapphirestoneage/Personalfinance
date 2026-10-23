@@ -6,13 +6,14 @@
 // the monthly plan (engine/debt.js), the FI engine or the waterfall
 // (engine/windfall.js). Views only format what comes back.
 
-import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetween, fact, ageOn, incomeOwner } from './spine.js';
+import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetween, fact, ageOn } from './spine.js';
 // Rounded up to the cent (a month that fills a limit by its deadline).
 const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
 import { yearsToTarget } from './fi.js';
 import { payoffPlan, rateOn } from './debt.js';
 import { windfall } from './windfall.js';
 import { maxIt, longDay, steadyMonth } from './maxit.js';
+import { paysAfter } from './contrib.js';
 import { paychecks } from './calendar-views.js';
 import { FAT, PRESETS } from './schema.js';
 import { upgradeSpine } from './normalize.js';
@@ -89,13 +90,16 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
       const miss = mine.filter((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
       const off = mine.filter((r) => !r.applies);
       const over = mine.filter((r) => r.over || r.overSoon);
-      // A payroll-only limit with no paycheck left counts as closed while its owner still has pay (next year's room).
-      const paysOn = (r, d) => (spine.income || []).some((x) => (x.type === 'w2' || x.type === 'tips') && incomeOwner(spine, x) === r.person && (!x.end || x.end >= d));
+      // A payroll-only limit with no paycheck left counts as closed while its owner still has a payday after its
+      // deadline (next year's room); a line that pays $0 or never pays again does not count.
+      const paysOn = (r) => paysAfter(spine, r.person, r.deadline.date);
       const shut = mine.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
       // Each limit counted from the rung's start: its dates left from then; none left means its deadline passes first.
-      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = p.row.months.dates.filter((d) => d >= from).length; return { ...p, left: n, perMonth: n ? c2(p.fill / n) : null }; });
+      // A payroll pool counts the months that still hold a paycheck (any payday in the month, not only the first).
+      const monthsLeft = (p) => (p.row.deadline.payrollOnly && p.row.paychecks ? new Set(p.row.paychecks.dates.filter((d) => d >= from).map((d) => d.slice(0, 7))).size : p.row.months.dates.filter((d) => d >= from).length);
+      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = monthsLeft(p); return { ...p, left: n, perMonth: n ? c2(p.fill / n) : null }; });
       const open = sized.filter((p) => p.left > 0);
-      const closed = [...sized.filter((p) => p.left === 0), ...shut.filter((r) => paysOn(r, from)).map((r) => ({ key: r.pools[0], year: r.year, room: r.room, row: r, deadline: r.deadline.date }))];
+      const closed = [...sized.filter((p) => p.left === 0), ...shut.filter((r) => paysOn(r)).map((r) => ({ key: r.pools[0], year: r.year, room: r.room, row: r, deadline: r.deadline.date }))];
       // A limit whose deadline passes first: its steady month, once per pool (a later year still open sizes it instead).
       const later = closed.filter((p, i) => !open.some((o) => o.key === p.key) && closed.findIndex((c) => c.key === p.key) === i).map((p) => ({ ...p, perMonth: steadyMonth(spine, p), steady: true }));
       if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
@@ -103,12 +107,14 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
         const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '');
         const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
         const when = start ? 'before the surplus reaches this rung (about ' + longDay(start) + ')' : 'before the surplus reaches this rung';
+        // A payroll pool whose deadline is after the start closes on its last payday, not on the deadline.
+        const lastPay = (p) => (p.row.deadline.payrollOnly && p.row.paychecks && p.deadline >= from ? p.row.paychecks.dates.filter((d) => d < from).pop() || null : null);
         const why = [
           miss.length ? miss.map((r) => r.name + ' ' + r.year + ': ' + (r.missingLabel || r.blankLabel)).join('; ') + '.' : '',
-          over.length ? over.map((r) => r.name + ' ' + r.year + ': ' + (r.over ? 'over the limit by ' + money(r.over) : 'set to go over the limit by ' + money(r.overSoon))).join('; ') + '.' : '',
+          over.length ? over.map((r) => r.name + ' ' + r.year + ': ' + (r.over ? 'over the limit by ' + money(r.over) + (r.overByYearEnd ? ', ' + money(r.overByYearEnd) + ' by December 31 if nothing changes' : '') : 'set to go over the limit by ' + money(r.overSoon))).join('; ') + '.' : '',
           [...open, ...later].map(line).join('; ') + (open.length || later.length ? '.' : ''),
-          closed.length ? closed.map((p) => p.row.name + ' ' + p.year + (p.row.fillable ? ' closes on ' + longDay(p.deadline) + ', ' + when : ' has no paycheck left before ' + longDay(p.deadline))).join('; ') + '.' : '',
-          shut.filter((r) => !paysOn(r, from)).map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ')
+          closed.length ? closed.map((p) => p.row.name + ' ' + p.year + (!p.row.fillable ? ' has no paycheck left before ' + longDay(p.deadline) : lastPay(p) ? ': its last payday before ' + longDay(p.deadline) + ' is ' + longDay(lastPay(p)) + ', ' + when : ' closes on ' + longDay(p.deadline) + ', ' + when)).join('; ') + '.' : '',
+          shut.filter((r) => !paysOn(r)).map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ')
         ].filter(Boolean).join(' ');
         const first = miss[0] || over[0] || (sized[0] && sized[0].row);
         push(id, t, { need: miss.length ? null : need, flow: true, why: why.trim(), path: (miss[0] && ((miss[0].ei && miss[0].ei.missing[0]) || (miss[0].paychecks && miss[0].paychecks.blank && miss[0].paychecks.blank.path))) || (first ? 'accounts.' + first.accountId + '.contributions' : null), done: miss.length ? null : over.length ? false : need <= 0 });

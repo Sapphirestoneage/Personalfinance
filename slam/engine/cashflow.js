@@ -63,20 +63,28 @@ const isActive = (item, ym) => activeDays(item.start, item.end, ym) > 0 && (item
 // Accounts whose monthly contribution comes out of a paycheck before take-home.
 const PAYROLL_FAMILIES = ['employerRetirement', 'hsaFsa'];
 
+// The people with a W-2 or tips line, whatever it pays. Payroll saving comes out of its owner's pay; only an owner
+// with no such line at all has it come out of the household's pay (S-213, S-214).
+const payOwners = (spine) => new Set((spine.income || []).filter((s) => s.type === 'w2' || s.type === 'tips').map((s) => incomeOwner(spine, s)));
+
 // Each paycheck's share of the month's payroll saving (S-211): an account's monthly amount comes off its owner's W-2
-// and tips pay, split by gross; when its owner has no such pay this month, off all the household's W-2 and tips pay.
-// cf is this month's cashflow(); the shares add up to cf.saving.payroll whenever any pay has an amount.
+// and tips pay, split by gross; when its owner has no such pay line at all, off all the household's W-2 and tips pay.
+// An owner whose pay is not coming this month has nothing taken. cf is this month's cashflow(); the shares add up to
+// cf.saving.payroll whenever the pay it comes from has an amount.
 export function payrollShares(spine, cf) {
   const pays = cf.income.streams.filter((x) => x.included && (x.type === 'w2' || x.type === 'tips') && x.gross);
   const owner = Object.fromEntries((spine.income || []).map((s) => [s.id, incomeOwner(spine, s)]));
+  const lines = payOwners(spine);
   const share = {};
   if (!pays.length) return share;
   for (const a of spine.accounts || []) {
     if (!PAYROLL_FAMILIES.includes(a.family) || !a.monthlyContribution) continue;
     const m = valueOf(a.monthlyContribution);
     if (!m) continue;
-    const mine = pays.filter((x) => owner[x.id] === (accountOwner(spine, a) || {}).id);
-    const from = mine.length ? mine : pays;
+    const who = (accountOwner(spine, a) || {}).id;
+    const mine = pays.filter((x) => owner[x.id] === who);
+    const from = mine.length ? mine : lines.has(who) ? [] : pays;
+    if (!from.length) continue;
     const g = from.reduce((s, x) => s + x.gross, 0);
     for (const x of from) share[x.id] = (share[x.id] || 0) + m * x.gross / g;
   }
@@ -91,7 +99,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   const iso = monthStart(ym);
   const g = tracker(), wh = tracker(), fi = tracker(), th = tracker(), uw = tracker();
   let gross = 0, withheld = 0, fica = 0, unwithheld = 0, w2Active = false;
-  const streams = [];
+  const streams = [], paid = new Set();
   for (const s of spine.income || []) {
     if (!isActive(s, ym)) continue;
     const base = 'income.' + s.id;
@@ -115,6 +123,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     let sf = 0;
     if (s.type === 'w2' || s.type === 'tips') {
       w2Active = true;
+      if (sg !== 0) paid.add(incomeOwner(spine, s));
       if (sg !== null) {
         const ss = Math.min(sg, fi.rule(rules, 'SS_WAGE', year) / 12) * fi.rule(rules, 'FICA_SS_RATE', year);
         sf = ss + sg * fi.rule(rules, 'FICA_MED_RATE', year);
@@ -127,15 +136,16 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   }
   for (const r of fi.snapshot().rules) th.rule(rules, r, year);
 
-  // Saving: payroll contributions (only while a paycheck is coming in) and
-  // after-tax contributions paid from take-home.
-  const pay = tracker(), after = tracker();
+  // Saving: payroll contributions (only while its owner's paycheck is coming in, or any paycheck for an owner with
+  // no pay line) and after-tax contributions paid from take-home.
+  const pay = tracker(), after = tracker(), lines = payOwners(spine);
   let payroll = 0, afterTax = 0;
   for (const a of spine.accounts || []) {
     if (!a.monthlyContribution) continue;
     const path = 'accounts.' + a.id + '.monthlyContribution';
     if (PAYROLL_FAMILIES.includes(a.family)) {
-      if (!w2Active) continue;
+      const who = (accountOwner(spine, a) || {}).id;
+      if (!(lines.has(who) ? paid.has(who) : w2Active)) continue;
       const x = pay.useFact(path, a.monthlyContribution);
       if (x !== null) payroll += x;
     } else if (a.family !== 'cash') {

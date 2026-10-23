@@ -12,6 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, counts } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -31,7 +32,7 @@ export function seTaxFor(seNet, ficaWages, R, year) {
 
 // computeTax(inputs, rules, year): numbers in, lines out. No spine here.
 // inputs: { filingStatus, state, wages, ficaWages, seNet, unemployment,
-//   otherOrdinary, conversions, ltcg, qualifiedDividends, hsaDeduction,
+//   otherOrdinary, conversions, ltcg, qualifiedDividends, hsaDeduction, sePeople: [{ seNet, ficaWages }],
 //   withheldFederal, withheldState, estimatedFederal, estimatedState }
 export function computeTax(inp, R, year) {
   const fs = inp.filingStatus;
@@ -45,7 +46,8 @@ export function computeTax(inp, R, year) {
   const fica = line(Math.min(ficaWages, wageBase) * ssRate + ficaWages * medRate, ['FICA_SS_RATE', 'FICA_MED_RATE', 'SS_WAGE']);
 
   // Self-employment tax.
-  const { base: seBase, tax: seTax, deduction: seDed } = seTaxFor(inp.seNet, ficaWages, R, year);
+  const per = inp.sePeople && inp.sePeople.length ? inp.sePeople.map((p) => seTaxFor(p.seNet, p.ficaWages, R, year)) : [seTaxFor(inp.seNet, ficaWages, R, year)];
+  const seBase = per.reduce((x, p) => x + p.base, 0), seTax = per.reduce((x, p) => x + p.tax, 0), seDed = per.reduce((x, p) => x + p.deduction, 0);
   const se = line(seTax, ['SE_FACTOR', 'SE_MIN', 'SE_SS_RATE', 'SE_MED_RATE', 'SS_WAGE']);
   const seDeduction = line(seDed, ['SE_DEDUCT_SHARE']);
 
@@ -147,7 +149,9 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   t.read(spine, 'household.nycResident');
 
   let w2Months = 0;
-  const payMonths = {};
+  // Each person's months of pay, wages, FICA wages and self-employment profit (S-213, S-214).
+  const payMonths = {}, wagesBy = {}, ficaBy = {}, seBy = {};
+  const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   for (const s of spine.income || []) {
     if ((s.start && s.start > to) || (s.end && s.end < from)) continue;
     if (s.cadence === 'once' && !(s.start >= from && s.start <= to)) continue;
@@ -159,12 +163,13 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     const paid = amt === null ? null : paidBetween(amt, s.cadence, s.start, s.end, from, to) * (w ?? 1);
     let beLine = null;
     if (amt === null) (s.type === 'w2' || s.type === 'tips' ? miss.wages : miss.income).push(base + '.amount');
-    else if (s.type === 'w2' || s.type === 'tips') { known.wages += paid; known.ficaWages += paid; }
+    else if (s.type === 'w2' || s.type === 'tips') { known.wages += paid; known.ficaWages += paid; add(wagesBy, incomeOwner(spine, s), paid); add(ficaBy, incomeOwner(spine, s), paid); }
     else if (s.type === '1099') {
       // Profit = gross less business expenses (S-179); none entered means none.
       const be = s.businessExpenses ? t.useFact(base + '.businessExpenses', s.businessExpenses) : null;
       const beYear = be === null ? 0 : paidBetween(be, s.cadence, s.start, s.end, from, to) * (w ?? 1);
       known.seNet += paid - beYear;
+      add(seBy, incomeOwner(spine, s), paid - beYear);
       if (be !== null) beLine = { id: s.id, type: 'be', label: s.label + ': business expenses', path: base + '.businessExpenses', amount: -beYear, personId: s.personId || null, reads: [] };
     }
     else if (s.type === 'unemployment') known.unemployment += paid;
@@ -172,9 +177,10 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (s.type === 'w2' || s.type === 'tips' || s.type === '1099') {
       // Each line keeps whose it is and, for pay, the months of the year it runs (pre-tax saving comes out of those).
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
-      earned.lines.push({ id: s.id, type: s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
+      earned.lines.push({ id: s.id, type: s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: amt === 0 ? 0 : (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
     }
-    if (s.type === 'w2' || s.type === 'tips') {
+    // A line known to pay $0 has no months of pay: nothing comes out of it.
+    if ((s.type === 'w2' || s.type === 'tips') && amt !== 0) {
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
       const months = (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1;
       w2Months = Math.max(w2Months, months);
@@ -189,32 +195,68 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known[key] += paidBetween(x, s.cadence, s.start, s.end, from, to) * (w ?? 1);
     }
   }
-  // Pre-tax payroll contributions lower W-2 wages while its owner's paycheck runs. An HSA or FSA through payroll is a
-  // cafeteria plan, so it lowers FICA wages too (Publication 969; a 401(k) deferral does not). An HSA put in directly
-  // (no monthly amount from its owner's pay) is a deduction on the return instead (Form 8889, S-211): the year's
-  // recorded entries plus what its monthly amount still puts in by December, or a whole year of the monthly amount.
+  // Pre-tax payroll saving lowers its owner's W-2 wages (never below $0): the recorded total for the year when there
+  // is one (plus what the monthly amount still puts in), else the monthly amount for the owner's months of pay. An HSA
+  // or FSA through payroll is a cafeteria plan, so it lowers FICA wages too (Publication 969; a 401(k) deferral does
+  // not). An HSA put in directly is a deduction on the return (Form 8889). HSA money, through pay or not, counts only up
+  // to the HSA limit less employer money (S-212, S-214).
   const asOf = spine.meta && spine.meta.asOf ? spine.meta.asOf : to;
+  const ownerOf = (a) => (accountOwner(spine, a) || {}).id;
+  const takeOff = (a, owner, amount, cafeteria, months) => {
+    const x = round2(Math.max(0, Math.min(amount, wagesBy[owner] || 0)));
+    wagesBy[owner] = (wagesBy[owner] || 0) - x;
+    known.wages -= x;
+    if (cafeteria) { known.ficaWages -= x; add(ficaBy, owner, -x); }
+    earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + (months ? '.monthlyContribution' : '.contributions'), yearly: x, months, ownerId: owner, cafeteria });
+  };
+  const hsas = [];
   for (const a of spine.accounts || []) {
     const pretax = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax';
     const cafeteria = a.family === 'hsaFsa' && (a.type === 'hsa' || pretax);
     const pre = cafeteria || (pretax && a.family === 'employerRetirement');
-    const om = payMonths[(accountOwner(spine, a) || {}).id] || 0;
-    // An HSA is through payroll only with a monthly amount and its owner's pay; otherwise it is put in directly.
-    if (a.type === 'hsa' && !(om && a.monthlyContribution)) {
-      const base = 'accounts.' + a.id;
-      const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) || [] : [];
-      const rec = list.filter((c) => c.year === year && !['rollover', 'conversion', 'employer'].includes(c.kind));
-      const m = a.monthlyContribution ? t.useFact(base + '.monthlyContribution', a.monthlyContribution) : null;
-      const after = year === +asOf.slice(0, 4) ? 12 - +asOf.slice(5, 7) : year > +asOf.slice(0, 4) ? 12 : 0;
-      if (rec.length) known.hsaDeduction += rec.reduce((x, c) => x + c.amount, 0) + (m || 0) * after;
-      else if (m) { known.hsaDeduction += m * 12; t.addRough(base + '.contributions'); }
+    const owner = ownerOf(a);
+    const om = payMonths[owner] || 0;
+    const fromPay = !!(om && a.monthlyContribution);
+    if (a.type === 'hsa') {
+      // HSA money for the year: the recorded total and what the monthly amount still adds, else the monthly forecast.
+      // Employer money (a recorded employer total, else the yearly employer amount) comes off the limit, not off pay.
+      const y = hasTotal(a, year) || !fromPay ? yearAmount(spine, a, year, asOf, t, 'own') : null;
+      if (y && y.in.kind === 'missing') t.addRough('accounts.' + a.id + '.monthlyContribution');
+      const c = fromPay && !y ? t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution) : null;
+      const list = a.contributions ? v(a.contributions) || [] : [];
+      const emp = list.filter((x) => counts(x, year) && x.kind === 'employer');
+      const seed = emp.length ? (t.read(spine, 'accounts.' + a.id + '.contributions'), emp.reduce((s, x) => s + x.amount, 0))
+        : a.employerSeed && year <= +asOf.slice(0, 4) ? t.useFact('accounts.' + a.id + '.employerSeed', a.employerSeed) || 0 : 0;
+      if (fromPay && !y && c === null) earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', yearly: null, months: om, ownerId: owner, cafeteria: true });
+      else hsas.push({ a, owner, fromPay, amount: y ? y.value : c * om, months: y ? null : om, seed });
       continue;
     }
-    if (!pre || !a.monthlyContribution || !om) continue;
+    if (!pre || !om) continue;
+    if (hasTotal(a, year)) { takeOff(a, owner, yearAmount(spine, a, year, asOf, t, 'own').value, cafeteria, null); continue; }
+    if (!a.monthlyContribution) continue;
     const c = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
-    if (c !== null) { known.wages -= c * om; if (cafeteria) known.ficaWages -= c * om; }
-    earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', monthly: c, owner: v(a.owner) });
+    if (c !== null) takeOff(a, owner, c * om, cafeteria, om);
+    else earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', yearly: null, months: om, ownerId: owner, cafeteria });
   }
+  // The HSA limit: per owner for self-only coverage, one family limit plus each owner's catch-up for family coverage.
+  // Money through pay counts first; employer money comes off the limit.
+  const fam = familyHsa(spine);
+  for (const key of [...new Set(hsas.map((x) => (fam ? 'family' : x.owner)))]) {
+    const group = hsas.filter((x) => (fam ? 'family' : x.owner) === key);
+    const L = group.map((x) => ({ ...hsaLimit(spine, R, x.a, year, t), owner: x.owner }));
+    const owners = [...new Set(L.map((l) => l.owner))];
+    const limit = fam ? Math.max(...L.map((l) => l.base * l.share)) + owners.reduce((s, o) => s + Math.max(...L.filter((l) => l.owner === o).map((l) => l.catchUp * l.share)), 0) : Math.max(...L.map((l) => l.value));
+    const seed = group.reduce((s, x) => s + x.seed, 0);
+    let left = Math.max(0, round2(limit - seed));
+    for (const x of [...group.filter((g) => g.fromPay), ...group.filter((g) => !g.fromPay)]) {
+      const amt = round2(Math.max(0, Math.min(x.amount, left)));
+      left = round2(left - amt);
+      if (x.fromPay) takeOff(x.a, x.owner, amt, true, x.months);
+      else known.hsaDeduction += amt;
+    }
+  }
+  // Self-employment tax is each person's own (Schedule SE), against their own W-2 and tips FICA wages.
+  known.sePeople = Object.keys(seBy).map((o) => ({ seNet: seBy[o], ficaWages: Math.max(0, ficaBy[o] || 0) }));
   // Roth conversions in the year are ordinary income.
   for (const a of spine.accounts || []) {
     const list = a.conversions ? t.useFact('accounts.' + a.id + '.conversions', a.conversions) : null;
@@ -314,18 +356,16 @@ export function earnedIncome(spine, R, year, { mode = 'committed', personId = nu
   const whose = (pid) => pid || first;
   const mine = (pid) => personId === null || whose(pid) === personId;
   const own = earned.lines.filter((l) => mine(l.personId));
-  const pre = earned.pretax.filter((p) => mine(p.owner === 'partner' && partner ? partner : first));
+  const pre = earned.pretax.filter((p) => mine(p.ownerId));
   for (const l of own) for (const p of l.reads) t.read(spine, p);
   const person = personId && people.length > 1 ? people.find((x) => x.id === personId) : null;
   const label = year + ' earned income' + (person ? ', ' + person.name : '');
   // Pre-tax saving comes off the owner's pay for the months their W-2 or tips run.
   const lines = own.map((l) => ({ label: l.label, path: l.path, amount: l.amount === null ? null : round2(l.amount), type: l.type }));
+  // What the tax engine took off each owner's wages (capped at those wages): the same amount here.
   for (const p of pre) {
-    const pid = p.owner === 'partner' && partner ? partner : first;
-    const months = Math.max(0, ...earned.lines.filter((l) => (l.type === 'w2' || l.type === 'tips') && whose(l.personId) === pid).map((l) => l.months));
-    if (!months) continue;
     t.read(spine, p.path);
-    lines.push({ label: p.name + ': pre-tax saving from pay (' + months + ' month' + (months === 1 ? '' : 's') + ')', path: p.path, amount: p.monthly === null ? null : round2(-p.monthly * months), type: 'pretax' });
+    lines.push({ label: p.name + ': pre-tax saving from pay' + (p.months ? ' (' + p.months + ' month' + (p.months === 1 ? '' : 's') + ')' : ' (recorded for ' + year + ')'), path: p.path, amount: p.yearly === null ? null : round2(-p.yearly), type: 'pretax', cafeteria: p.cafeteria });
   }
   const base = { year, label, personId, seDeduction: null, wages: null, seNet: null, seEarnings: null };
   if (!(spine.income || []).length) return { ...t.out(null), ...base, lines, none: true };
@@ -335,7 +375,9 @@ export function earnedIncome(spine, R, year, { mode = 'committed', personId = nu
   let seDeduction = 0;
   if (seNet > 0) {
     for (const r of SE_RULES) t.rule(R, r, year);
-    seDeduction = round2(seTaxFor(seNet, gross, R, year).deduction);
+    // FICA wages: the W-2 and tips pay less what a cafeteria plan (an HSA or FSA through pay) took off.
+    const fica = round2(gross + lines.filter((l) => l.cafeteria).reduce((a, l) => a + (l.amount || 0), 0));
+    seDeduction = round2(seTaxFor(seNet, fica, R, year).deduction);
   }
   if (seDeduction) lines.push({ label: 'Half the self-employment tax (deductible)', path: null, amount: -seDeduction, type: 'seTax' });
   // A self-employment loss never lowers wages (Publication 590-A): the 1099 part counts at no less than $0.
