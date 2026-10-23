@@ -12,6 +12,7 @@
 // by DAITE with subtotals, why the number is rough, and a recompute from the terms.
 
 import { getAt, valueOf } from './spine.js';
+import { scenarioRule } from './scenarios.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { INVESTED_FAMILIES } from './schema.js';
 import { project } from './projection.js';
@@ -22,10 +23,15 @@ import { monthlyAmount } from './cashflow.js';
 const v = valueOf;
 export const UNITS = ['usd', 'usd/month', 'usd/year', 'months', 'years', 'ratio', 'age', 'count'];
 const kindOf = (spine, path) => { const f = getAt(spine, path); return f && f.kind ? f.kind : 'missing'; };
-const field = (spine, path, value, unit, role = 'plus', label = null) => ({ label: label || labelFor(spine, path), value, unit, kind: kindOf(spine, path), role, path, group: groupFor(path) });
+// An assumption a Triple D set put in place links to its rule, not the Ledger field (S-183).
+const field = (spine, path, value, unit, role = 'plus', label = null) => {
+  const rule = path.startsWith('assumptions.') ? scenarioRule(getAt(spine, path)) : null;
+  if (rule) return { label: (label || labelFor(spine, path)) + ' (' + (rule.includes('WORST') ? 'worst' : 'likely') + ' set)', value, unit, kind: 'known', role, rule, group: groupFor(path) };
+  return { label: label || labelFor(spine, path), value, unit, kind: kindOf(spine, path), role, path, group: groupFor(path) };
+};
 const metric = (id, label, r, unit, role = 'plus') => ({ label, value: r ? r.value : null, unit, kind: r ? r.kind : 'missing', role, metric: id, group: null });
 const ruleTerm = (rules, id, year, role, label, unit = 'ratio') => ({ label: label + ' (rule ' + id + ')', value: rules.get(id, year), unit, kind: 'known', role, rule: id, group: null });
-const out = (r, terms, rules = [], extra = {}) => ({ value: r ? r.value : null, kind: r ? r.kind : 'missing', terms, rules: [...new Set([...(r && r.rules) || [], ...rules])], rough: r ? r.rough || [] : [], missing: r ? r.missing || [] : [], ...extra });
+const out = (r, terms, rules = [], extra = {}) => ({ value: r ? r.value : null, kind: r ? r.kind : 'missing', terms, rules: [...new Set([...(r && r.rules) || [], ...rules, ...terms.filter((t) => t.rule).map((t) => t.rule)])], rough: r ? r.rough || [] : [], missing: r ? r.missing || [] : [], ...extra });
 
 // ---------------------------------------------------------------- the metrics
 const M = [];

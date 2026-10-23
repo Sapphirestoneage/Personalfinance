@@ -102,12 +102,14 @@ export function putFact(spine, path, value, kind, today) {
 // is not copied onto the expense, so the expense keeps following the default.
 // coveredBy: a name when someone else covers it (counts $0), null when not; a
 // name not on the household's list is added to it.
-export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known' }, today) {
+export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known', label = null }, today) {
   const base = 'expenses.' + id;
   const e = getAt(spine, base);
   if (!e) throw new Error('No expense ' + id);
   const F = (value, k = kind) => ({ value, kind: value === null ? 'missing' : k, asOf: today, source: 'ledger' });
   let s = setAt(spine, base + '.amount', F(amount));
+  // A new name keeps the id, so links and history still point at it.
+  if (label && label.trim() && label.trim() !== e.label) s = setAt(s, base, { ...getAt(s, base), label: label.trim() });
   if (cadence && cadence !== e.cadence) s = setAt(s, base + '.cadence', cadence);
   if (sharing) {
     const def = (spine.household.expenseDefaults || {})[e.fat || 'other'] || {};

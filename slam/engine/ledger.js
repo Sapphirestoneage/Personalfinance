@@ -155,7 +155,10 @@ function blockedBy(sum) {
 // results each one blocks. Then rough numbers, by how far the results move
 // when the number moves by APP_GUESS_SWING. Each item carries the moves in
 // dollars (surplus a month, net worth) so the list can say why it ranks.
-export function stillGuessing(spine, rules) {
+// The same ranking a field at a time (S-184): the Ledger runs it in short
+// slices between taps, so a Save never waits on it. Yields after each field it
+// moves; returns { swing, items }.
+export function* stillGuessingSteps(spine, rules) {
   const sum = measure(spine, rules);
   const swing = rules.get('APP_GUESS_SWING', +sum.asOf.slice(0, 4));
   const blocks = blockedBy(sum);
@@ -170,10 +173,20 @@ export function stillGuessing(spine, rules) {
         const a = get(sum).value, b = get(alt).value;
         if (typeof a === 'number' && typeof b === 'number') { const d = b - a; item.moves[name] = d; item.score += Math.abs(d) / scale; }
       }
+      items.push(item);
+      yield;
+      continue;
     }
     items.push(item);
   }
   items.sort((a, b) => (a.kind !== b.kind ? (a.kind === 'missing' ? -1 : 1) : a.kind === 'missing' ? b.blocks.length - a.blocks.length || a.path.localeCompare(b.path) : b.score - a.score));
   return { swing, items };
+}
+
+export function stillGuessing(spine, rules) {
+  const it = stillGuessingSteps(spine, rules);
+  let r;
+  while (!(r = it.next()).done);
+  return r.value;
 }
 

@@ -1502,6 +1502,66 @@
       "notes": "Certain income is streams with no likelihood or likelihood 1",
       "source": "Eli house assumption",
       "verified": "assumption"
+    },
+    {
+      "id": "SCENARIO_LIKELY_RETURN",
+      "rule": "Real return in the likely assumption set",
+      "value": 0.06,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (Triple D)",
+      "notes": "Triple D: the default set on the Dashboard; best is the household's own assumptions",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "SCENARIO_LIKELY_WR",
+      "rule": "Withdrawal rate in the likely assumption set",
+      "value": 0.04,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (Triple D)",
+      "notes": "Triple D: the default set on the Dashboard",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "SCENARIO_WORST_RETURN",
+      "rule": "Real return in the worst assumption set",
+      "value": 0.04,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (Triple D)",
+      "notes": "Triple D",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "SCENARIO_WORST_WR",
+      "rule": "Withdrawal rate in the worst assumption set",
+      "value": 0.035,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (Triple D)",
+      "notes": "Triple D",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "DEFAULT_APY",
+      "rule": "APY used when a cash account (not high-yield savings) has none",
+      "value": 0.0001,
+      "unit": "rate",
+      "appliesTo": "Cash accounts",
+      "notes": "0.01%, about what a regular checking or savings account pays; filled in at load and after each Ledger edit, stored as rough. High-yield savings is left blank so the real rate is asked for",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "DEFAULT_PHONE_PLAN_1",
+      "rule": "Monthly cost of a standard phone plan for one line, used when a phone expense has no amount",
+      "value": 70,
+      "unit": "usd/month",
+      "appliesTo": "Expenses (phone)",
+      "notes": "A single-line unlimited plan at a major carrier with taxes and fees, roughly $65 to $80 in 2026; prepaid plans cost less. For a phone someone else covers, it is what it would cost you. Stored as rough",
+      "source": "Eli house assumption",
+      "verified": "assumption"
     }
   ]
 }

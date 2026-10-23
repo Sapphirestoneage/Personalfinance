@@ -628,3 +628,42 @@ test('flags: no em dashes and no instructions in flag text', () => {
     assert.ok(!/\byou should\b/i.test(f.detail));
   }
 });
+
+// ------------------------------------------------------------------ Triple D (S-183)
+import { withScenario, scenarioAssumptions, SCENARIOS } from '../engine/scenarios.js';
+
+test('Triple D: best is the household\'s own assumptions; likely and worst come from the rules', () => {
+  const s = mini({
+    income: [stream('job', 'w2', 6000, 'monthly', { fed: 900, st: 300 })],
+    expenses: [expense('rent', 3100)],
+    assumptions: { inflation: K(0.03), realReturn: K(0.08), withdrawalRate: K(0.05), lifeExpectancy: K(90) }
+  });
+  assert.deepEqual(SCENARIOS, ['best', 'likely', 'worst']);
+  assert.equal(withScenario(s, R, 'best'), s, 'best changes nothing');
+  const rate = (id) => { const a = scenarioAssumptions(s, R, id); return [a.realReturn.value, a.withdrawalRate.value]; };
+  assert.deepEqual(rate('best'), [0.08, 0.05]);
+  assert.deepEqual(rate('likely'), [R.get('SCENARIO_LIKELY_RETURN', 2026), R.get('SCENARIO_LIKELY_WR', 2026)]);
+  assert.deepEqual(rate('worst'), [R.get('SCENARIO_WORST_RETURN', 2026), R.get('SCENARIO_WORST_WR', 2026)]);
+  // Every FI number follows the set: implied FI is yearly spending / the set's withdrawal rate.
+  for (const id of SCENARIOS) {
+    const sum = summarize(withScenario(s, R, id), R);
+    near(sum.fi.implied.value, 3100 * 12 / rate(id)[1], 1);
+  }
+  const fiYears = (id) => summarize(withScenario(s, R, id), R).fi.yearsToFi.value;
+  assert.ok(fiYears('best') <= fiYears('likely') && fiYears('likely') <= fiYears('worst'), 'the projection follows the set');
+  assert.equal(scenarioAssumptions(s, R, 'likely').realReturn.source, 'SCENARIO_LIKELY_RETURN');
+});
+
+test('house defaults: 0.01% APY on cash that is not high-yield; a standard plan for a phone with no amount', async () => {
+  const { applyDefaults, isPhone } = await import('../engine/defaults.js');
+  const s = mini({
+    accounts: [{ id: 'chk', family: 'cash', type: 'checking', name: K('Checking'), balance: K(500) }, { id: 'hy', family: 'cash', type: 'hysa', name: K('HYSA'), balance: K(500) }],
+    expenses: [{ ...expense('phone', 0), label: 'Phone', amount: M() }, { ...expense('gym', 0), amount: M() }]
+  });
+  const d = applyDefaults(s, R);
+  assert.deepEqual([d.accounts[0].apy.value, d.accounts[0].apy.kind, d.accounts[0].apy.source], [0.0001, 'rough', 'DEFAULT_APY']);
+  assert.equal(d.accounts[1].apy, undefined, 'high-yield savings asks for its real rate');
+  assert.deepEqual([d.expenses[0].amount.value, d.expenses[0].amount.kind], [R.get('DEFAULT_PHONE_PLAN_1', 2026), 'rough']);
+  assert.equal(d.expenses[1].amount.value, null, 'only a phone gets the standard plan');
+  assert.ok(isPhone({ label: 'Cell plan' }) && !isPhone({ label: 'Microphone fund' }));
+});

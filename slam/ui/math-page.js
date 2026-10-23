@@ -6,6 +6,8 @@
 import { summarize } from '../engine/summary.js';
 import { METRICS, explainMetric, showNumber } from '../engine/math.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
+import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
+import { pickedScenario, scenarioText } from './scenario.js';
 import { h, chip, ledgerHref, shortDate } from './view.js';
 
 const app = document.getElementById('app');
@@ -41,13 +43,17 @@ function rulesTable(rules) {
     })));
 }
 
-loadAll().then(({ spine, rules, source }) => {
+loadAll().then(({ spine: base, rules, source }) => {
+  // The Triple D set picked on the Dashboard (S-183).
+  const set = pickedScenario();
+  const spine = withScenario(base, rules, set);
   const s = summarize(spine, rules);
   const ctx = { spine, rules, s };
   app.replaceChildren(
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'How every number is figured'),
-        h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
+        h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]),
+        h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'dashboard.html' }, 'change it on the Dashboard'), '.')),
       h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'ledger.html' }, 'Ledger'), h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Dashboard'))),
     h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card and one cost per expense. Each formula is followed by the same formula with today\'s numbers.'),
     h('nav', { class: 'card jump', 'aria-label': 'Jump to a number' }, METRICS.map((m) => h('a', { href: '#metric-' + m.id }, m.label)), h('a', { href: '#rules' }, 'Rules')),

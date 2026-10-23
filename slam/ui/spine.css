@@ -194,3 +194,21 @@ button.dot { border: 1px solid currentColor; font: inherit; font-size: var(--tex
 .rule { border-top: 1px solid var(--border); padding-top: var(--space-2); }
 .rule-head, .rule-body { margin: 0; font-size: var(--text-sm); }
 .rule:target, .metric:target { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* Triple D set picker (S-183): three real buttons; the picked one is filled. */
+.scenario-h { font-size: var(--text-md); margin: 0 0 var(--space-2); }
+.segmented { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.seg-btn { flex: 1 1 9rem; min-height: var(--tap); display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: var(--space-2) var(--space-3); border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.seg-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.seg-label { font-weight: 700; }
+.seg-sub { font-size: var(--text-xs); }
+.seg-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.scenario-note { margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+
+/* Choice cards (S-186): a radio answer in plain sight, the whole card is the target. */
+.choice-group { border: 0; padding: 0; margin: 0 0 var(--space-3); display: grid; gap: var(--space-2); }
+.choice-card { display: flex; align-items: center; gap: var(--space-3); min-height: var(--tap); padding: var(--space-2) var(--space-3); border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.choice-card:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.choice-card input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.choice-text { display: flex; flex-direction: column; }
+.choice-sub { font-size: var(--text-xs); color: var(--text-muted); }

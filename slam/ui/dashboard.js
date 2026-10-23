@@ -6,6 +6,8 @@ import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
 import { mathButton } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
+import { withScenario } from '../engine/scenarios.js';
+import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
 const app = document.getElementById('app');
@@ -64,7 +66,11 @@ function creditNote(cs) {
     cs.smallest && cs.personalAfter.value !== null ? h('p', { class: 'tile-sub' }, 'Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + ') would bring personal utilization to ' + pct(cs.personalAfter.value, 1) + '.') : null);
 }
 
-function render(spine, rules, source) {
+// The picked Triple D set (S-183) replaces the real return and withdrawal rate
+// before anything is figured, so every FI number and the projection follow it.
+let scenario = pickedScenario();
+function render(base, rules, source) {
+  const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
   mathCtx = { spine, rules, s };
   const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
@@ -88,7 +94,7 @@ function render(spine, rules, source) {
     }),
     tile(spine, { id: 'surplus', label: 'Monthly surplus', result: cf.surplus, shown: money(cf.surplus.value), lines: [
         'Take-home ' + money(cf.income.takeHome.value) + ' less expenses ' + money(cf.expenses.total.value) + ', minimum payments ' + money(cf.debtMinimums.total.value) + (cf.saving.afterTax.value ? ', ' + money(cf.saving.afterTax.value) + ' saved from take-home' : '') + (cf.taxSetAside.total.value ? ' and a tax set-aside of ' + money(cf.taxSetAside.total.value) : '') + '.',
-        cf.taxSetAside.lines.length ? 'Tax set-aside: ' + cf.taxSetAside.lines.map((l) => l.label + ' ' + money(l.amount) + ' (' + pct(l.rate, 1) + ' of ' + money(l.base) + (l.months ? ' over ' + l.months + ' months' : '') + ')').join('; ') + '.' : null
+        cf.taxSetAside.lines.length ? 'Tax set-aside: ' + cf.taxSetAside.lines.map((l) => l.kind === 'balance' ? l.label + ' ' + money(l.base) + (l.held ? ' less ' + money(l.held) + ' already set aside' : '') + ', over ' + l.months + ' months: ' + money(l.amount) + ' a month' : l.label + ' ' + money(l.amount) + ' (' + pct(l.rate, 1) + ' of ' + money(l.base) + (l.months ? ' over ' + l.months + ' months' : '') + ')').join('; ') + '.' : null
       ] }),
     tile(spine, { id: 'savings', label: 'Savings rate', result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
     tile(spine, {
@@ -105,7 +111,9 @@ function render(spine, rules, source) {
       lines: [
         'Of an FI number of ' + money(fi.fiNumber.value) + (fi.goalSource === 'direct' ? ' (your goal)' : fi.goalSource === 'spending' ? ' (goal spending at the withdrawal rate)' : ' (today\'s spending)') + '; invested ' + money(sh.invested.value) + '.',
         fi.goalSource ? 'Today\'s spending implies ' + money(fi.implied.value) + '.' : null,
-        'Lean FI ' + money(fi.leanFi.value) + '. Coast FI by ' + fi.coastAge + ': ' + money(fi.coastFi.value) + '.'
+        'Lean FI ' + money(fi.leanFi.value) + '. Coast FI by ' + fi.coastAge + ': ' + money(fi.coastFi.value) + '.',
+        fi.yearsToFi.value !== null ? 'At this pace, FI in about ' + fi.yearsToFi.value.toFixed(1) + ' years (from the projection).' : fi.yearsToFi.note ? 'Years to FI: ' + fi.yearsToFi.note + '.' : null,
+        'Assumption set: ' + scenario + ' (' + scenarioText(base, rules, scenario) + ').'
       ]
     }),
     tile(spine, {
@@ -123,6 +131,7 @@ function render(spine, rules, source) {
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Ledger'))),
+    scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); }),
     h('div', { class: 'tiles' }, tiles),
     flagsSection(spine, s.flags)
   );

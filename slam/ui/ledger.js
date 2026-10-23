@@ -4,14 +4,14 @@
 // confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
-import { ledgerRows, stillGuessing, rowPathFor, previewCost } from '../engine/ledger.js';
+import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost } from '../engine/ledger.js';
 import { payersOf, shareOf } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { summarize } from '../engine/summary.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
-import { applyDefaults } from '../engine/defaults.js';
+import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
 import { h, chip, showValue, money, words, shortDate } from './view.js';
@@ -25,7 +25,8 @@ let openItems = new Set(), adding = null, selecting = false, selected = new Set(
 // dirty: something was typed in the open editor and not saved yet (S-164).
 // lastSaved: the line under the header that says what was just saved.
 let dirty = false, lastSaved = null;
-const today = () => new Date().toISOString().slice(0, 10);
+// Today in the person's own time zone, not UTC (an evening edit is today's).
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const app = document.getElementById('app');
 
 function apply(next, label, shown = null) {
@@ -35,14 +36,33 @@ function apply(next, label, shown = null) {
   const ok = save(hist.present);
   dirty = false;
   lastSaved = ok ? 'Saved in this browser: ' + label + (shown ? ' is ' + shown : '') + '.' : 'Could not save in this browser (storage is blocked), so this edit lasts only until the page closes.';
-  guess = null;
   render();
+  refreshGuess();
 }
 
 function step(fn, verb) {
   const before = hist;
   hist = fn(hist);
-  if (hist !== before) { save(hist.present); source = 'saved'; guess = null; dirty = false; lastSaved = verb; render(); }
+  if (hist !== before) { save(hist.present); source = 'saved'; dirty = false; lastSaved = verb; render(); refreshGuess(); }
+}
+
+// The still-guessing ranking takes about a second, so it runs in slices of a
+// few milliseconds after the page has redrawn (S-184); taps are never held up.
+// Until it finishes, the last list shows with "Updating". Only the list's own
+// section is replaced; it holds no inputs.
+let guessJob = 0, guessFor = null;
+function refreshGuess() {
+  const job = ++guessJob, spine = hist.present;
+  const it = stillGuessingSteps(spine, rules);
+  const run = () => {
+    if (job !== guessJob) return;
+    const end = performance.now() + 8;
+    let r;
+    while (!(r = it.next()).done) if (performance.now() > end) { setTimeout(run, 0); return; }
+    guess = r.value; guessFor = spine;
+    document.querySelector('section.guessing')?.replaceWith(guessList());
+  };
+  setTimeout(run, 0);
 }
 
 // Leaving an editor with unsaved typing is refused with a message, never silent.
@@ -134,10 +154,18 @@ function expenseEditor(row) {
   amount.value = inputText('money', valueOf(e.amount));
   const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
   const startMode = cur.covered ? 'covered' : sh.shared ? 'shared' : 'me';
-  const mode = h('select', { id: 'exp-mode' },
-    h('option', { value: 'me', selected: startMode === 'me' }, 'I pay all of it'),
-    h('option', { value: 'shared', selected: startMode === 'shared' }, 'I share it with others'),
-    h('option', { value: 'covered', selected: startMode === 'covered' }, 'Someone else covers it'));
+  // Who pays comes first, as three choices in plain sight (S-186); `mode.value` reads the picked one.
+  const choice = (v, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'exp-mode', value: v, checked: startMode === v }), h('span', { class: 'choice-text' }, h('strong', {}, text), sub ? h('span', { class: 'choice-sub' }, sub) : null));
+  const modeBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Who pays?'),
+    choice('me', 'I pay all of it'),
+    choice('shared', 'I share it with others', 'Roommates, a partner'),
+    choice('covered', 'Someone else covers it', 'Parents, a partner, an employer: costs you $0'));
+  const mode = { get value() { return (modeBox.querySelector('input:checked') || { value: 'me' }).value; } };
+  const name = h('input', { id: 'exp-name', type: 'text', autocomplete: 'off' });
+  name.value = e.label;
+  // A phone: one tap fills a standard plan for one line, saved as a guess.
+  const std = isPhone(e) ? rules.get('DEFAULT_PHONE_PLAN_1', +hist.present.meta.asOf.slice(0, 4)) : null;
+  let usedStd = false;
   // Shared details
   const people = h('input', { id: 'exp-people', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   people.value = sh.shared && sh.people ? String(sh.people) : '2';
@@ -163,22 +191,26 @@ function expenseEditor(row) {
     h('legend', {}, 'Covered'),
     h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, other,
     h('p', { class: 'edit-hint' }, 'A covered expense counts $0 toward your spending.'));
-  const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startMode === 'shared' ? 'How much is the whole bill?' : 'How much is it?');
+  const AMOUNT_Q = { me: 'How much is it?', shared: 'How much is the whole bill?', covered: 'What would it cost if you paid it yourself?' };
+  const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, AMOUNT_Q[startMode]);
+  const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'It counts $0 now. Keeping the real cost shows what you would pay if the cover ends.');
+  const stdBtn = std === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => { amount.value = String(std); often.value = 'monthly'; usedStd = true; preview(); amount.focus(); } }, 'Use a standard plan for 1 line (' + money(std) + ' a month)');
   const yours = h('p', { class: 'edit-preview', 'aria-live': 'polite' });
   const readShare = () => { const p = parseInput('int', people.value); const y = share.value.trim() ? parseInput('rate', share.value) : { ok: true, value: null }; return { people: p.ok ? p.value : null, share: y.ok ? y.value : null }; };
   const preview = () => {
     const a = parseInput('money', amount.value);
     if (!a.ok) { yours.textContent = ''; return; }
-    if (mode.value === 'covered') { yours.textContent = 'Costs you $0 a month.'; return; }
+    if (mode.value === 'covered') { const m = previewCost(a.value, often.value, false, null, null); yours.textContent = 'Costs you $0 a month' + (m ? ' (' + money(m) + ' a month if you paid it).' : '.'); return; }
     const r = readShare();
     const m = previewCost(a.value, often.value, mode.value === 'shared', r.people, r.share);
     yours.textContent = m === null ? '' : 'Costs you ' + money(m) + ' a month.';
   };
-  mode.addEventListener('change', () => {
-    sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered';
-    amountLabel.textContent = mode.value === 'shared' ? 'How much is the whole bill?' : 'How much is it?';
+  modeBox.addEventListener('change', () => {
+    sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered'; amountHint.hidden = mode.value !== 'covered';
+    amountLabel.textContent = AMOUNT_Q[mode.value];
     preview();
   });
+  amount.addEventListener('input', () => { usedStd = false; });
   for (const el of [amount, often, people, share]) el.addEventListener('input', preview);
   often.addEventListener('change', preview);
   preview();
@@ -197,12 +229,15 @@ function expenseEditor(row) {
       sharing = null;
     }
     open = null;
-    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind }, today()), e.label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (kind === 'rough' ? ' (a guess)' : ''));
+    // The standard phone plan is a guess even when Save is tapped.
+    const k = usedStd ? 'rough' : kind;
+    const label = name.value.trim() || e.label;
+    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
   };
   return editorForm(() => doSet('known'),
-    h('p', { class: 'edit-title' }, e.label),
-    amountLabel, h('div', { class: 'amount-row' }, amount, often),
-    h('label', { for: 'exp-mode', class: 'edit-label' }, 'Who pays?'), mode,
+    h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
+    modeBox,
+    amountLabel, h('div', { class: 'amount-row' }, amount, often), amountHint, stdBtn,
     sharedBox, coveredBox, yours, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -358,7 +393,8 @@ function rowEl(row) {
 }
 
 function guessList() {
-  if (!guess) guess = stillGuessing(hist.present, rules);
+  if (!guess) return h('section', { class: 'card guessing', 'aria-labelledby': 'g-title' }, h('h2', { id: 'g-title' }, 'Still guessing'), h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
+  const stale = guessFor !== hist.present;
   const items = guess.items;
   const list = showAll ? items : items.slice(0, 8);
   const why = (it) => {
@@ -368,7 +404,7 @@ function guessList() {
   };
   return h('section', { class: 'card guessing', 'aria-labelledby': 'g-title' },
     h('h2', { id: 'g-title' }, 'Still guessing ', h('span', { class: 'count' }, String(items.length))),
-    h('p', { class: 'muted' }, 'Missing first, then rough numbers, biggest effect on the results first.'),
+    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last edit...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
     h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
       h('a', { href: '#' + it.path, onclick: (e) => { e.preventDefault(); openField(it.path); } }, chip(it.kind), ' ', it.label),
       h('span', { class: 'why' }, why(it))))),
@@ -383,6 +419,8 @@ function openField(path) {
   selecting = false;
   for (const key of itemKeysFor(path)) openItems.add(key);
   render();
+  // A link always lands: when the filter hides the field, show everything.
+  if (!document.getElementById('f-' + path)) { view = { ...view, kinds: [...KIND_ORDER], q: '' }; keepView(); render(); }
   const el = document.getElementById('f-' + path);
   if (el) { el.scrollIntoView({ block: 'center' }); const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
 }
@@ -616,6 +654,7 @@ async function start() {
   rules = loaded.rules; source = loaded.source; inst = loaded.institutions; hist = createHistory(loaded.spine); guess = null; open = null;
   if (loaded.problem) lastSaved = loaded.problem;
   render();
+  refreshGuess();
   const p = decodeURIComponent(location.hash.slice(1));
   if (p && getAt(hist.present, rowPathFor(hist.present, p))) openField(p);
 }
