@@ -107,13 +107,36 @@ The file can be a profile (the shape of `eli.profile.json`, read by
 - `affordances.html`: every component in every state.
 - `SIGNOFF.md`: the hand-check list for Phase 1 with phone-width screenshots of the demo household.
 
+## Phase 2: the calendar and the Windfall room
+
+Two more pages on the same spine and engines (branch `claude/slam-phase-2`,
+report in `docs/PHASE2_REPORT.md`):
+
+- http://localhost:8000/calendar.html : the month's money on the days it
+  moves. Paychecks on their pay dates, bills on the day they are paid, minimums
+  on their due days, subscriptions on the day they charge, promo rates ending,
+  tax dates, and anything starting or ending. Items with no day yet are
+  listed under "sometime this month". Month-end cash comes from the
+  projection. Enter pay days and bill days in the Ledger to fill it in.
+- http://localhost:8000/windfall.html : type a lump sum, say whether tax is
+  still owed on it, and see where it goes in the house order (the
+  `WINDFALL_ORDER` rule): tax on it, the year's tax bill, cash up to the
+  stage 1 floor, promo balances the surplus cannot clear in time, cards
+  charging interest, the Rule of 5 cushion, this year's Roth IRA room, then
+  what is left. Every step has Show the math and a Ledger link. Nothing is
+  written to the household.
+
+In the Ledger, an income stream now shows how much, how often, since when,
+until when and the day it is paid on one row, edited in one panel; an
+expense's panel has start and end dates under "When does it run?".
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits |
-| `ui/` | the Ledger and Dashboard views (formatting only) |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, windfall |
+| `ui/` | the Ledger, Dashboard, Calendar and Windfall views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |
 | `BOARD.md`, `QUESTIONS.md` | what is done and next; open questions for Eli |

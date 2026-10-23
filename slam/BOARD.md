@@ -26,11 +26,17 @@
 - [x] Defaults: 0.01% APY, standard phone plan, cars lose 15% a year
 - [x] Affordance rules (CLAUDE.md), DESIGN.md, affordances.html, a phone-width self-check, SIGNOFF.md
 
-## Next: Phase 2
+## Done: Phase 2, first pass (2026-10-23, branch `claude/slam-phase-2`)
 
-1. **Windfall room**: where a lump sum goes (promo balances before their deadline, the cushion, the Roth, the tax bill), read from the spine and the engines.
-2. **Budget, estimated vs actual**: connect the Budget's monthly log to the spine's expenses (S-140 left open whether the spine feeds the Budget or replaces its store).
-3. **Cash flow calendar**: the projection's months and events (pay dates, due days, promo ends, estimated tax dates) on a calendar.
+- [x] Income panel: amount, how often, start, end and the day paid on one row; expense start and end dates (S-199)
+- [x] Cash flow calendar: `calendar.html`, every dated item on its day, the rest named, month-end cash from the projection (S-200)
+- [x] Windfall room: `windfall.html`, a lump sum assigned in the `WINDFALL_ORDER` house order, every step with Show the math (S-201)
+- [x] Report: `docs/PHASE2_REPORT.md` (what was built, tests, what to check against real data, questions)
+
+## Next: Phase 2, what is left
+
+1. **Budget, estimated vs actual**: connect the Budget's monthly log to the spine's expenses. Not started: it rests on S-140 (does the spine feed the Budget or replace its store?), which needs Eli's call. The two options are laid out in `docs/PHASE2_REPORT.md`.
+2. **Calendar follow-ups** (after the S-140 call): a day-by-day cash line and the lowest point, once every item has a day or the Budget's log supplies the real dates.
 
 ## Waiting on Eli
 

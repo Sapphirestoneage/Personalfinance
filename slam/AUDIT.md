@@ -1,3 +1,7 @@
+# Phase 2 run (2026-10-23)
+
+Branch `claude/slam-phase-2`: 466 SLAM tests pass (2 skip themselves without the local profile), the repository suite passes (35,885 checks), and the self-audit now also recomputes every Windfall step (`windfall:<step>`, S-201) to the cent on the demo household with a $5,000 windfall. The calendar's month adds up to the same cash flow as the Dashboard (`test/spine-calendar.test.js`): every paycheck to take-home, every bill, minimum, saving line and set-aside to the month's outgoings, and what is left to the surplus. Every new page was looked at in a headless browser at 375px and 1024px with no console errors and no horizontal scroll; screenshots are in `docs/phase2/`. The local profile was not on this machine, so the real-data checks are listed in `docs/PHASE2_REPORT.md`.
+
 # Phase 1 spine self-audit (2026-10-22)
 
 Close-out run, 2026-10-23: 472 SLAM tests pass, including the recompute audit (now with the subscriptions metric and the tax set-aside from the balance due). The repository suite has the same 17 failures as `main` on this Windows machine, none in SLAM. A privacy scan of every tracked SLAM file against the local profile found no real values (two coincidences: a NY bracket boundary and the demo rent).
