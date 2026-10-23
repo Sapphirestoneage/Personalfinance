@@ -9,6 +9,7 @@
 import { valueOf as v, tracker, round2, monthKey, addMonths, daysBetween } from './spine.js';
 import { order, orderDetail, payoffPlan, rateOn, minimumPayment } from './debt.js';
 import * as C from './vendor/cashcal.js';
+import { yearTax } from './tax.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
@@ -208,11 +209,13 @@ export function idr(spine, rules, d, s = null, asOf = spine.meta.asOf) {
   if (federal === false) return { ...base, federal: false, note: 'Not a federal loan: income-driven plans and forgiveness do not apply.', payment: null, missingRules: [], ...t.out(null), value: undefined, kind: 'notForMe' };
   const missingRules = IDR_RULES.filter((id) => !rules.has(id, year));
   const size = t.useFact('household.householdSize', spine.household.householdSize);
-  const agiLine = s && s.tax && s.tax.lines && s.tax.lines.agi ? s.tax.lines.agi : null;
+  const agiLine = s && s.tax && s.tax.lines && s.tax.lines.agi ? s.tax.lines.agi : yearTax(spine, rules, year).lines.agi || null;
   let agi = null, agiSource = null;
+  // While the year's AGI cannot be figured, the inputs it is waiting on are named, never the bare income list (S-210).
+  const waiting = agiLine ? agiLine.missing : [];
   if (agiLine && agiLine.value !== null) { agi = agiLine.value; agiSource = 'tax'; t.absorb({ ...agiLine, value: undefined }); }
-  else if (s && s.cashflow.income.gross.value !== null) { agi = round2(s.cashflow.income.gross.value * 12); agiSource = 'cashflow'; t.absorb({ ...s.cashflow.income.gross, value: undefined }); t.addRough('income'); }
-  else t.addMissing('income');
+  else if (s && s.cashflow.income.gross.value !== null) { agi = round2(s.cashflow.income.gross.value * 12); agiSource = 'cashflow'; t.absorb({ ...s.cashflow.income.gross, value: undefined }); for (const p of waiting.length ? waiting : s.cashflow.income.gross.from.slice(0, 1)) t.addRough(p); }
+  else for (const p of [...waiting, ...(s ? s.cashflow.income.gross.missing : [])]) t.addMissing(p);
   let poverty = null, discretionary = null, payment = null;
   if (!missingRules.length && size !== null && agi !== null) {
     poverty = t.rule(rules, 'POVERTY_LINE_1', year) + t.rule(rules, 'POVERTY_LINE_EACH', year) * Math.max(0, size - 1);

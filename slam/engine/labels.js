@@ -45,7 +45,9 @@ export function namedPath(path) {
   if (typeof path !== 'string' || !path) return false;
   if (/^rule:[A-Z0-9_]+$/.test(path)) return true;
   const s = path.split('.');
-  return !!NEEDS[s[0]] && s.length >= NEEDS[s[0]] && s.every((x) => x !== '' && x !== 'undefined' && x !== 'null');
+  // A few fields sit one level deeper: a section default, a dated household entry, a stream's withholding.
+  const need = s[0] === 'household' ? (s[1] === 'expenseDefaults' ? 4 : ['people', 'situation', 'healthCoverage'].includes(s[1]) ? 3 : 2) : s[0] === 'income' && s[2] === 'withholding' ? 4 : NEEDS[s[0]];
+  return !!need && s.length >= need && s.every((x) => x !== '' && x !== 'undefined' && x !== 'null');
 }
 // What an unnamed path reads as: never a crash, and plainly not a field name.
 export const unnamedLabel = (path) => 'An input with no name yet (' + (typeof path === 'string' && path ? path : 'no path') + ')';

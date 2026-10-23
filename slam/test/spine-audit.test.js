@@ -38,6 +38,12 @@ const households = () => {
   let e = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
   e = { ...e, income: e.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-06-30' } : x.id === 'tutoring' ? { ...x, start: '2027-01-01', amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : x)) };
   list.push(['demo, W-2 ended and a blank 1099', e]);
+  // The local profile's whole shape (S-210): the W-2 ended in June, a 1099 running this year with a blank amount (a 0 next
+  // to kind missing), unemployment running, and a federal student loan, so the year's tax and earned income cannot be figured.
+  let p = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  p = { ...p, income: [...p.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-06-30' } : x.id === 'tutoring' ? { ...x, amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : x)),
+    { id: 'ui', type: 'unemployment', label: 'Unemployment benefits', personId: 'casey', amount: { value: 450, kind: 'known', asOf: null, source: 'test' }, cadence: 'weekly', start: '2026-07-06', end: '2026-12-28', withholding: { federal: { value: 0, kind: 'known', asOf: null, source: 'test' }, state: { value: 0, kind: 'known', asOf: null, source: 'test' } } }] };
+  list.push(['demo, the local profile shape', p]);
   if (exists('fixtures/eli.local.json')) list.push(['local profile', applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R)]);
   // Each household also gets a windfall of $5,000 with tax taken out, so the Windfall steps are audited too (S-201).
   return list.map(([name, spine]) => {
@@ -175,7 +181,7 @@ test('f. every path a number reads is a field the Ledger can name, never a bare 
 
 test('g. labelFor never throws: an unknown path reads as a plain fallback', () => {
   const spine = ALL[0].spine;
-  for (const p of ['income', 'income.salary', 'expenses', 'accounts.roth', 'nothing.here', '', null, undefined, 'income..amount']) {
+  for (const p of ['income', 'income.salary', 'expenses', 'accounts.roth', 'nothing.here', '', null, undefined, 'income..amount', 'household.expenseDefaults', 'household.expenseDefaults.food', 'income.salary.withholding', 'household.situation']) {
     assert.doesNotThrow(() => labelFor(spine, p), String(p));
     assert.equal(labelFor(spine, p), unnamedLabel(p), String(p));
     assert.equal(namedPath(p), false, String(p));
@@ -211,4 +217,17 @@ test('h. the Roth step with the W-2 ended and a blank 1099: earned income is the
   assert.equal(none.label, '2026 earned income');
   const em = explainMetric('earned:2026', { spine: { ...h.spine, income: [] }, rules: R, s: h.s });
   assert.ok(em.missingBecause.some((x) => x.startsWith('2026 earned income')));
+});
+
+test('i. the local profile shape: earned income and the Roth room read missing and name the blank 1099, and the Debt tab names it too (S-210)', () => {
+  const h = ALL.find((x) => x.name === 'demo, the local profile shape');
+  const ei = earnedIncome(h.spine, R, 2026);
+  assert.equal(ei.value, null);
+  assert.deepEqual(ei.missing, ['income.tutoring.amount']);
+  const roth = h.windfall.steps.find((x) => x.id === 'roth');
+  assert.equal(roth.need, null);
+  assert.match(roth.why, /^Missing: 2026 earned income/);
+  const sl = h.ctx.debt.loans.find((l) => l.id === 'sl');
+  assert.ok(sl && sl.missing.concat(sl.rough).includes('income.tutoring.amount'), 'the student loan names the blank line');
+  assert.ok(!sl.missing.concat(sl.rough).includes('income'));
 });
