@@ -1,0 +1,826 @@
+{
+  "schema": "slam-spine/1",
+  "meta": {
+    "name": "Chaim and Rivky Weinberg (made up)",
+    "asOf": "2026-10-22",
+    "demo": true,
+    "from": "tests/personas/households/09-yeshivish-family.json"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "p1",
+        "name": "Chaim Weinberg",
+        "birthDate": {
+          "value": "1993-03-15",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p2",
+        "name": "Rivky Weinberg",
+        "birthDate": {
+          "value": "1995-08-02",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p3",
+        "name": "Shloimy",
+        "birthDate": {
+          "value": "2014-10-01",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p4",
+        "name": "Miri",
+        "birthDate": {
+          "value": "2016-05-11",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p5",
+        "name": "Yanky",
+        "birthDate": {
+          "value": "2018-12-20",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p6",
+        "name": "Esti",
+        "birthDate": {
+          "value": "2021-02-14",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p7",
+        "name": "Dovid",
+        "birthDate": {
+          "value": "2023-07-30",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      {
+        "id": "p8",
+        "name": "Baby",
+        "birthDate": {
+          "value": "2025-09-08",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      }
+    ],
+    "filingStatus": {
+      "value": "mfj",
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    },
+    "state": {
+      "value": "NJ",
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    },
+    "county": {
+      "value": "Ocean",
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    },
+    "nycResident": {
+      "value": false,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    },
+    "situation": [
+      {
+        "id": "now",
+        "from": null,
+        "value": {
+          "value": "mixed",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      }
+    ],
+    "healthCoverage": [
+      {
+        "id": "now",
+        "from": null,
+        "personId": "p1",
+        "value": {
+          "value": "medicaid",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "planType": {
+          "value": "other",
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      }
+    ]
+  },
+  "income": [
+    {
+      "id": "kollel",
+      "type": "other",
+      "label": "Kollel stipend",
+      "personId": "p1",
+      "amount": {
+        "value": 1200,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2017-09-01",
+      "end": null,
+      "withholding": {
+        "federal": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      "notes": "Paid monthly by the kollel; no W-2 or 1099. Whether it is taxable is a question."
+    },
+    {
+      "id": "rivky",
+      "type": "w2",
+      "label": "Rivky: teaching at a girls' school",
+      "personId": "p2",
+      "amount": {
+        "value": 3400,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2016-09-01",
+      "end": null,
+      "withholding": {
+        "federal": {
+          "value": 150,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 60,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      }
+    },
+    {
+      "id": "parents",
+      "type": "other",
+      "label": "Help from parents (both sides)",
+      "personId": "p1",
+      "amount": {
+        "value": 1500,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2017-09-01",
+      "end": null,
+      "withholding": {
+        "federal": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      "notes": "A gift, not income."
+    },
+    {
+      "id": "tutoring",
+      "type": "1099",
+      "label": "Tutoring (cash)",
+      "personId": "p1",
+      "amount": {
+        "value": 400,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "rough"
+      },
+      "cadence": "monthly",
+      "start": "2024-01-01",
+      "end": null,
+      "withholding": {
+        "federal": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      }
+    },
+    {
+      "id": "snap",
+      "type": "other",
+      "label": "SNAP and WIC (benefits, not money in the bank)",
+      "personId": "p1",
+      "amount": {
+        "value": 600,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": "2022-01-01",
+      "end": null,
+      "withholding": {
+        "federal": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        },
+        "state": {
+          "value": 0,
+          "asOf": "2026-10-22",
+          "source": "checker (made up)",
+          "kind": "known"
+        }
+      },
+      "notes": "Benefits, not taxable income; entered as income because there is nowhere else to put them."
+    }
+  ],
+  "expenses": [
+    {
+      "id": "rent",
+      "label": "Rent",
+      "amount": {
+        "value": 1900,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "accommodation"
+    },
+    {
+      "id": "utilities",
+      "label": "Utilities",
+      "amount": {
+        "value": 280,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "accommodation"
+    },
+    {
+      "id": "groceries",
+      "label": "Groceries (kosher, eight people)",
+      "amount": {
+        "value": 1400,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "food"
+    },
+    {
+      "id": "dining",
+      "label": "Takeout",
+      "amount": {
+        "value": 80,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "food"
+    },
+    {
+      "id": "tuition",
+      "label": "Tuition, four children (scholarship rate)",
+      "amount": {
+        "value": 15000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "yearly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "maaser",
+      "label": "Maaser",
+      "amount": {
+        "value": 500,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "shul",
+      "label": "Shul",
+      "amount": {
+        "value": 1200,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "yearly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "yomtov",
+      "label": "Yom tov and simchas",
+      "amount": {
+        "value": 3000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "yearly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "phone",
+      "label": "Phones",
+      "amount": {
+        "value": 90,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "amount": {
+        "value": 150,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "transportation"
+    },
+    {
+      "id": "carins",
+      "label": "Car insurance",
+      "amount": {
+        "value": 160,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": "transportation"
+    },
+    {
+      "id": "kids",
+      "label": "Baby and kids: diapers, clothes, shoes",
+      "amount": {
+        "value": 300,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    },
+    {
+      "id": "other",
+      "label": "Everything else",
+      "amount": {
+        "value": 400,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "rough"
+      },
+      "cadence": "monthly",
+      "start": null,
+      "end": null,
+      "fixed": null,
+      "need": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "fat": null
+    }
+  ],
+  "accounts": [
+    {
+      "id": "chk",
+      "family": "cash",
+      "type": "checking",
+      "name": {
+        "value": "Checking",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 1400,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "role": {
+        "value": "spending",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "sav",
+      "family": "cash",
+      "type": "savings",
+      "name": {
+        "value": "Savings",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 3200,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "roth",
+      "family": "ira",
+      "type": "roth_ira",
+      "name": {
+        "value": "Rivky Roth IRA",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 4000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "basis": {
+        "value": 4000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "owner": {
+        "value": "partner",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "car",
+      "family": "otherAssets",
+      "type": "car",
+      "name": {
+        "value": "Minivan (2014)",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 8000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "debts": [
+    {
+      "id": "visa",
+      "family": "debt",
+      "type": "credit_card",
+      "name": {
+        "value": "Visa",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 2900,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "apr": {
+        "value": 0.2499,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "limit": {
+        "value": 5000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "minimum": {
+        "value": 85,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "dueDay": {
+        "value": 12,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "stress": {
+        "value": 7,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "business": {
+        "value": false,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "reportsToPersonalCredit": {
+        "value": true,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    },
+    {
+      "id": "gemach",
+      "family": "debt",
+      "type": "family_iou",
+      "name": {
+        "value": "Gemach loan (interest free)",
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "balance": {
+        "value": 5000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "apr": {
+        "value": null,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "notForMe"
+      },
+      "minimum": {
+        "value": 100,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "dueDay": {
+        "value": 1,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "goals": [
+    {
+      "id": "simcha",
+      "type": "savings",
+      "label": "Simcha fund",
+      "target": {
+        "value": 10000,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    }
+  ],
+  "assumptions": {
+    "inflation": {
+      "value": 0.03,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "rough"
+    },
+    "realReturn": {
+      "value": 0.05,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "rough"
+    },
+    "withdrawalRate": {
+      "value": 0.04,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    },
+    "lifeExpectancy": {
+      "value": 90,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "rough"
+    },
+    "coastAge": {
+      "value": 65,
+      "asOf": "2026-10-22",
+      "source": "checker (made up)",
+      "kind": "known"
+    }
+  },
+  "taxYears": [
+    {
+      "id": "2026",
+      "year": 2026,
+      "estimatedPaidFederal": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "estimatedPaidState": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      },
+      "setAside": {
+        "value": 0,
+        "asOf": "2026-10-22",
+        "source": "checker (made up)",
+        "kind": "known"
+      }
+    }
+  ]
+}
