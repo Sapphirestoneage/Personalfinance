@@ -102,12 +102,16 @@ export function putFact(spine, path, value, kind, today) {
 // is not copied onto the expense, so the expense keeps following the default.
 // coveredBy: a name when someone else covers it (counts $0), null when not; a
 // name not on the household's list is added to it.
-export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known', label = null, subscription = undefined }, today) {
+export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known', label = null, subscription = undefined, start = undefined, end = undefined }, today) {
   const base = 'expenses.' + id;
   const e = getAt(spine, base);
   if (!e) throw new Error('No expense ' + id);
   const F = (value, k = kind) => ({ value, kind: value === null ? 'missing' : k, asOf: today, source: 'ledger' });
   let s = setAt(spine, base + '.amount', F(amount));
+  // When it starts and ends (S-199): dates on the item, null for open-ended.
+  if (start !== undefined) s = setAt(s, base + '.start', checkDate(start, 'start'));
+  if (end !== undefined) s = setAt(s, base + '.end', checkDate(end, 'end'));
+  if (getAt(s, base).start && getAt(s, base).end && getAt(s, base).end < getAt(s, base).start) throw new Error('It ends before it starts');
   // A subscription (S-191) asks when it next charges and when it was last
   // reviewed; unmarking it drops all three.
   if (subscription !== undefined) {
@@ -154,6 +158,41 @@ export function editExpense(spine, id, { amount, cadence, sharing = null, covere
 }
 const SHARE_KEYS = ['shared', 'sharedWith', 'yourShare', 'whoPays'];
 const PAYERS = ['Parents', 'Partner', 'Roommate', 'Employer', 'Family'];
+
+// A date typed in a panel: YYYY-MM-DD, or null (blank) for open-ended.
+function checkDate(d, what) {
+  if (d === null || d === '') return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d))) throw new Error(what + ': use YYYY-MM-DD');
+  return d;
+}
+
+// One income stream, as its panel saves it (S-199): the amount and how often,
+// when it starts and ends (blank is open-ended), and the day of the month it
+// is paid (payDay, for monthly and less often; weekly and biweekly pay dates
+// follow the start date). A new name keeps the id.
+export function editIncome(spine, id, { amount, cadence, start = undefined, end = undefined, payDay = undefined, kind = 'known', label = null }, today) {
+  const base = 'income.' + id;
+  const x = getAt(spine, base);
+  if (!x) throw new Error('No income ' + id);
+  const stamp = { asOf: today, source: 'ledger' };
+  let s = setAt(spine, base + '.amount', { value: amount, kind: amount === null ? 'missing' : kind, ...stamp });
+  const next = { ...getAt(s, base) };
+  if (cadence) next.cadence = cadence;
+  if (start !== undefined) next.start = checkDate(start, 'start');
+  if (end !== undefined) next.end = checkDate(end, 'end');
+  if ((next.cadence === 'total' || next.cadence === 'once') && !next.start) throw new Error(next.cadence === 'once' ? 'A one-time amount needs the date it is paid' : 'A total needs the dates it runs from and to');
+  if (next.cadence === 'total' && !next.end) throw new Error('A total needs the date it runs to');
+  if (next.start && next.end && next.end < next.start) throw new Error('It ends before it starts');
+  if (label && label.trim() && label.trim() !== x.label) next.label = label.trim();
+  if (payDay !== undefined) {
+    if (payDay === null) delete next.payDay;
+    else {
+      if (!Number.isInteger(payDay) || payDay < 1 || payDay > 31) throw new Error('Day paid: 1 to 31');
+      next.payDay = { value: payDay, kind, ...stamp };
+    }
+  }
+  return setAt(s, base, next);
+}
 
 // A section's sharing default; new and untouched expenses there follow it.
 export function setSectionSharing(spine, tag, { shared, sharedWith = null, yourShare = null, whoPays = 'part' }, today) {

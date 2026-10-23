@@ -14,7 +14,7 @@ import { downloadProfile, readProfile, matchesFile, setBaseline, FILE_NAME } fro
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { editPayment, duplicateItem } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
@@ -220,6 +220,8 @@ function expenseEditor(row) {
     h('legend', {}, 'Covered'),
     h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, other,
     h('p', { class: 'edit-hint' }, 'A covered expense counts $0 toward your spending.'));
+  // When it starts and ends (S-199): blank is open-ended; a past start is fine.
+  const dates = dateFields(e.start, e.end, 'exp');
   const AMOUNT_Q = { me: 'How much is it?', shared: 'How much is the whole bill?', covered: 'What would it cost if you paid it yourself?' };
   const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, AMOUNT_Q[startMode]);
   const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'It counts $0 now. Keeping the real cost shows what you would pay if the cover ends.');
@@ -272,23 +274,110 @@ function expenseEditor(row) {
       if (!coveredBy) { msg.textContent = 'Who covers it?'; other.focus(); return; }
       sharing = null;
     }
+    const d = dates.read();
+    if (d.problem) { msg.textContent = d.problem; return; }
     open = null;
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
-    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
+    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
     modeBox,
     amountLabel, h('div', { class: 'amount-row' }, amount, often), amountHint, stdBtn,
     h('label', { class: 'check-row', for: 'exp-sub' }, subBox, h('span', {}, h('strong', {}, 'This is a subscription'), h('span', { class: 'choice-sub' }, 'It renews on its own, so it gets a regular look'))),
-    sharedBox, coveredBox, yours, msg,
+    sharedBox, coveredBox, dates.box, yours, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
       row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label, 'confirmed'); } }, 'Confirm'),
       row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), e.label, 'not for me'); } }, 'Not for me'),
+      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+}
+
+// Start and end dates for an income stream or an expense (S-199), folded
+// under "When does it run?" so an open-ended item asks nothing. Blank means
+// open-ended. read() gives { start, end, problem }.
+function dateFields(start, end, prefix, { label = 'When does it run?', startWords = 'Starts (optional)', endWords = 'Ends (optional)' } = {}) {
+  const from = h('input', { id: prefix + '-start', type: 'date' });
+  from.value = start || '';
+  const to = h('input', { id: prefix + '-end', type: 'date' });
+  to.value = end || '';
+  const box = h('details', { class: 'when', open: !!(start || end) || null },
+    h('summary', {}, label, ' ', h('span', { class: 'when-now' }, start || end ? (start ? 'from ' + shortDate(start) : 'from the start') + (end ? ' to ' + shortDate(end) : '') : 'no dates: it is ongoing')),
+    h('div', { class: 'sub-fields' },
+      h('label', { for: prefix + '-start', class: 'edit-label' }, startWords), from,
+      h('label', { for: prefix + '-end', class: 'edit-label' }, endWords), to,
+      h('p', { class: 'edit-hint' }, 'Leave a date blank when it is open-ended. The month-by-month numbers, the calendar and the flags follow these dates.')));
+  return {
+    box, from, to,
+    read: () => {
+      const a = from.value || null, b = to.value || null;
+      if (a && b && b < a) return { start: a, end: b, problem: 'It ends before it starts' };
+      return { start: a, end: b, problem: null };
+    }
+  };
+}
+
+// The income panel (S-199): the name, how much and how often, when it starts
+// and ends, and for pay that comes monthly or less often, the day of the month
+// it lands. Weekly and biweekly pay dates follow the start date, so they ask
+// for the first pay date instead.
+const INCOME_OFTEN = [['monthly', 'a month'], ['semimonthly', 'twice a month'], ['biweekly', 'every two weeks'], ['weekly', 'a week'], ['quarterly', 'a quarter'], ['yearly', 'a year'], ['once', 'once'], ['total', 'in total, over a period']];
+const BY_START = ['weekly', 'biweekly'];
+function incomeEditor(row) {
+  const id = row.path.split('.')[1];
+  const x = getAt(hist.present, 'income.' + id);
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const name = h('input', { id: 'inc-name', type: 'text', autocomplete: 'off' });
+  name.value = x.label;
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+  amount.value = inputText('money', valueOf(x.amount));
+  const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
+  const day = h('input', { id: 'inc-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
+  day.value = x.payDay && valueOf(x.payDay) ? String(valueOf(x.payDay)) : '';
+  const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day of the month it lands (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Twice a month: the first of the two days. Leave blank if it varies; the calendar then lists it under "sometime this month".'));
+  const words = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
+  const dates = dateFields(x.start, x.end, 'inc', { label: 'When does it run?' });
+  const startLabel = dates.box.querySelector('label[for="inc-start"]'), endLabel = dates.box.querySelector('label[for="inc-end"]');
+  const sync = () => {
+    const c = often.value;
+    dayBox.hidden = BY_START.includes(c) || c === 'once' || c === 'total';
+    startLabel.textContent = BY_START.includes(c) ? 'First pay date (pay dates count from it)' : words[c] || 'Starts (optional)';
+    endLabel.textContent = c === 'total' ? 'To' : c === 'once' ? 'Ends (leave blank)' : 'Ends (optional)';
+    if (c === 'once' || c === 'total' || BY_START.includes(c)) dates.box.open = true;
+  };
+  often.addEventListener('change', sync);
+  sync();
+  const doSet = (kind) => {
+    const a = parseInput('money', amount.value);
+    if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
+    const d = dates.read();
+    if (d.problem) { msg.textContent = d.problem; return; }
+    let payDay = null;
+    if (!dayBox.hidden && day.value.trim() !== '') {
+      const p = parseInput('int', day.value);
+      if (!p.ok || p.value < 1 || p.value > 31) { msg.textContent = 'Day paid: a number from 1 to 31, or leave it blank'; day.focus(); return; }
+      payDay = p.value;
+    }
+    const label = name.value.trim() || x.label;
+    try {
+      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, kind, label }, today());
+      open = null;
+      apply(next, label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay }, 'income') + (kind === 'rough' ? ' (a guess)' : ''));
+    } catch (err) { msg.textContent = err.message; }
+  };
+  return editorForm(() => doSet('known'),
+    h('label', { for: 'inc-name', class: 'edit-label' }, 'Name'), name,
+    h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
+    h('p', { class: 'edit-hint' }, 'Gross pay, before anything is taken out. Tax withheld has its own rows under Taxes.'),
+    dayBox, dates.box, msg,
+    h('div', { class: 'edit-actions' },
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), x.label, 'confirmed'); } }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), x.label, 'not for me'); } }, 'Not for me'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
@@ -415,6 +504,7 @@ function paymentEditor(row) {
 function editor(row) {
   if (row.type === 'cardRate') return cardRateEditor(row);
   if (row.type === 'expense') return expenseEditor(row);
+  if (row.type === 'income') return incomeEditor(row);
   if (row.type === 'payment') return paymentEditor(row);
   const f = getAt(hist.present, row.path);
   if (row.type.startsWith('suggest:')) return suggestEditor(row);
@@ -688,7 +778,7 @@ function itemEl(it) {
   const main = it.summary && it.rows.find((r) => r.path === it.summary);
   const stream = it.collection === 'income' ? (hist.present.income || []).find((x) => x.id === it.id) : null;
   const often = stream ? { weekly: ' a week', biweekly: ' every two weeks', semimonthly: ' twice a month', monthly: ' a month', quarterly: ' a quarter', yearly: ' a year', total: ' in total', once: ' once' }[stream.cadence] || '' : '';
-  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type) + often) : '';
+  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type) + (main.type === 'income' ? '' : often)) : '';
   if (it.single) return rows.map(rowEl).map((li) => { li.querySelector('.row-label').textContent = it.label; return li; });
   const toggle = () => { if (!canLeave()) return; if (openItems.has(it.key)) openItems.delete(it.key); else openItems.add(it.key); render(); };
   const remove = it.collection ? h('button', { type: 'button', class: 'btn ghost small', onclick: (e) => {

@@ -24,7 +24,7 @@ export function typeFor(spine, path) {
     if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
-  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : 'money';
+  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' ? 'int' : 'money';
   if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
@@ -86,6 +86,20 @@ export function expenseRow(spine, e) {
   };
 }
 
+// An income stream's amount, how often, when it starts and ends, and the day
+// it is paid are one row (S-199): "$6,000 a month, since Jan 1, 2024, on the 15th".
+// Its value: { amount, cadence, start, end, payDay }.
+export function incomeRow(spine, x) {
+  const path = 'income.' + x.id + '.amount';
+  const kind = combinedKind([x.amount, ...(x.payDay ? [x.payDay] : [])]);
+  const amount = valueOf(x.amount);
+  return {
+    path, label: labelFor(spine, path), group: 'I', type: 'income',
+    fact: { value: amount === null && x.amount.kind !== 'notForMe' ? null : { amount, cadence: x.cadence, start: x.start || null, end: x.end || null, payDay: x.payDay ? valueOf(x.payDay) : null }, kind: x.amount.kind === 'notForMe' ? 'notForMe' : kind },
+    members: [path, 'income.' + x.id + '.payDay']
+  };
+}
+
 // A month amount for a typed amount and how often (the expense panel's preview).
 export function previewCost(amount, cadence, shared, people, share) {
   if (amount === null) return null;
@@ -98,6 +112,7 @@ export function previewCost(amount, cadence, shared, people, share) {
 export function rowPathFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'expenses' && s[2] === 'payDay') return 'expenses.' + s[1] + '.paidFrom';
+  if (s[0] === 'income' && s[2] === 'payDay') return 'income.' + s[1] + '.amount';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
   if (s[0] === 'expenses' && (SHARE_FIELDS.includes(s[2]) || s[2] === 'subscription')) return 'expenses.' + s[1] + '.amount';
   return path;
@@ -113,6 +128,11 @@ export function ledgerRows(spine) {
     }
     if (s[0] === 'expenses' && (s[2] === 'amount' || s[2] === 'subscription' || SHARE_FIELDS.includes(s[2]))) {
       if (s[2] === 'amount') rows.push(expenseRow(spine, getAt(spine, 'expenses.' + s[1])));
+      continue;
+    }
+    // An income stream's amount, how often, dates and pay day are one row (S-199).
+    if (s[0] === 'income' && (s[2] === 'amount' || s[2] === 'payDay')) {
+      if (s[2] === 'amount') rows.push(incomeRow(spine, getAt(spine, 'income.' + s[1])));
       continue;
     }
     // An expense's account and day are one row: "Main checking, on the 5th" (S-189).

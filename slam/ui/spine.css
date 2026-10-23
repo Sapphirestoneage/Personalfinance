@@ -353,3 +353,14 @@ button.dot::after { content: ""; position: absolute; inset: -11px -4px; }
 
 /* Disabled says why, so its words stay readable: muted ink on a flat face, a dashed edge. */
 .btn:disabled, .btn.primary:disabled { opacity: 1; color: var(--text-muted); background: var(--surface-2); border: 1.5px dashed var(--border); box-shadow: none; filter: none; transform: none; }
+
+/* When an item runs (S-199): dates fold away unless set, so an ongoing item asks nothing. */
+details.when { max-width: 420px; }
+details.when > summary { min-height: var(--tap); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; cursor: pointer; font-weight: 600; font-size: var(--text-sm); list-style: none; }
+details.when > summary::-webkit-details-marker { display: none; }
+/* The summary shows a chevron, turned down when open, like every fold (CLAUDE.md affordance 5). */
+details.when > summary::before { content: "\203A"; font-size: 1.3rem; line-height: 1; color: var(--text-muted); transition: transform 0.15s ease; }
+details.when[open] > summary::before { transform: rotate(90deg); }
+details.when > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.when-now { font-weight: 400; color: var(--text-muted); }
+details.when .sub-fields { margin-top: var(--space-2); }

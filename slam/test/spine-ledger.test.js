@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { loadHousehold } from '../engine/normalize.js';
 import { validate } from '../engine/schema.js';
 import { ledgerRows, stillGuessing, typeFor } from '../engine/ledger.js';
-import { parseInput, editFact, parseCardRate, editCardRate, createHistory, commit, undo, redo, canUndo, canRedo } from '../engine/edits.js';
+import { parseInput, editFact, parseCardRate, editCardRate, createHistory, commit, undo, redo, canUndo, canRedo, editIncome } from '../engine/edits.js';
 import { cardRateRow, rowPathFor } from '../engine/ledger.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { fact } from '../engine/spine.js';
@@ -408,4 +408,44 @@ test('the profile file: a saved Ledger loads back the same, and its fingerprint 
   assert.ok(validate(back).ok);
   assert.equal(fingerprint(back), fingerprint(edited));
   assert.notEqual(fingerprint(s), fingerprint(edited), 'an edit changes the fingerprint');
+});
+
+// S-199: an income stream's amount, how often, dates and pay day are one row with one panel.
+test('income: one row says how much, how often, since when and the day paid; the panel edits all of it', () => {
+  let s = demo();
+  const row = ledgerRows(s).flatMap((g) => g.rows).find((r) => r.path === 'income.salary.amount');
+  assert.equal(row.type, 'income');
+  assert.deepEqual(row.fact.value, { amount: 6000, cadence: 'monthly', start: '2024-01-01', end: null, payDay: null });
+  s = editIncome(s, 'salary', { amount: 6200, cadence: 'semimonthly', start: '2024-01-01', end: '2027-06-30', payDay: 15, kind: 'known', label: 'Salary (new title)' }, '2026-10-23');
+  const x = s.income.find((i) => i.id === 'salary');
+  assert.deepEqual([x.amount.value, x.cadence, x.start, x.end, x.payDay.value, x.label], [6200, 'semimonthly', '2024-01-01', '2027-06-30', 15, 'Salary (new title)']);
+  assert.ok(validate(s).ok);
+  // The pay day lives on the amount's row, never as a row of its own; every Fact still shows once.
+  const rows = ledgerRows(s).flatMap((g) => g.rows);
+  assert.equal(rows.filter((r) => r.path.startsWith('income.salary.')).some((r) => r.path.endsWith('.payDay')), false);
+  assert.equal(rowPathFor(s, 'income.salary.payDay'), 'income.salary.amount');
+  assert.equal(rows.length, listFacts(s).length - 2 - 1, 'the two card intro facts and the pay day fold into their rows');
+  // A blank clears a date; a pay day of null drops the field; bad dates are refused.
+  s = editIncome(s, 'salary', { amount: 6200, cadence: 'monthly', end: null, payDay: null }, '2026-10-23');
+  assert.equal(s.income.find((i) => i.id === 'salary').end, null);
+  assert.equal('payDay' in s.income.find((i) => i.id === 'salary'), false);
+  assert.throws(() => editIncome(s, 'salary', { amount: 1, cadence: 'monthly', start: '2027-01-01', end: '2026-01-01' }, '2026-10-23'), /ends before/);
+  assert.throws(() => editIncome(s, 'salary', { amount: 1, cadence: 'once', start: null }, '2026-10-23'), /date it is paid/);
+  assert.throws(() => editIncome(s, 'salary', { amount: 1, cadence: 'monthly', payDay: 40 }, '2026-10-23'), /1 to 31/);
+  // The month-by-month numbers follow the dates: a salary that ends in June is gone in July.
+  s = editIncome(s, 'salary', { amount: 6000, cadence: 'monthly', end: '2027-06-30' }, '2026-10-23');
+  assert.equal(cashflow(s, R, '2027-07').income.gross.value, 500, 'only the tutoring is left');
+});
+
+test('expense: the panel sets when it starts and ends; blank is open-ended', () => {
+  let s = demo();
+  s = editExpense(s, 'gym', { amount: 50, cadence: 'monthly', start: '2027-01-01', end: '2027-12-31' }, '2026-10-23');
+  const e = s.expenses.find((x) => x.id === 'gym');
+  assert.deepEqual([e.start, e.end], ['2027-01-01', '2027-12-31']);
+  assert.equal(cashflow(s, R, '2026-11').expenses.items.some((i) => i.id === 'gym'), false, 'not yet');
+  assert.equal(cashflow(s, R, '2027-03').expenses.items.find((i) => i.id === 'gym').amount, 50);
+  s = editExpense(s, 'gym', { amount: 50, cadence: 'monthly', start: null, end: '' }, '2026-10-23');
+  assert.deepEqual([s.expenses.find((x) => x.id === 'gym').start, s.expenses.find((x) => x.id === 'gym').end], [null, null]);
+  assert.throws(() => editExpense(s, 'gym', { amount: 50, cadence: 'monthly', start: '2027-05-01', end: '2027-01-01' }, '2026-10-23'), /ends before/);
+  assert.ok(validate(s).ok);
 });

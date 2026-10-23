@@ -22,6 +22,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export const shortDate = (iso) => (iso ? MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : '');
 export const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 export const words = (s) => String(s).replace(/_/g, ' ');
+export const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 
 // How a card is paid (S-189), in words.
 export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what I carry', statement: 'The full statement balance' };
@@ -37,6 +38,15 @@ export function showValue(value, type) {
     if (value.covered) return base + ', covered by ' + (value.coveredBy || 'someone else') + ' ($0 to you)' + sub;
     if (value.shared) return base + ', shared by ' + (value.people || '?') + (value.yourMonthly !== null ? ': you pay ' + money(value.yourMonthly) + ' a month' : '') + sub;
     return base + sub;
+  }
+  // An income stream: how much, how often, since when, until when, and the day paid (S-199).
+  if (type === 'income') {
+    const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';
+    const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
+    const when = value.cadence === 'once' ? (value.start ? ' on ' + shortDate(value.start) : '')
+      : (value.start ? (value.cadence === 'total' ? ' from ' : ', since ') + shortDate(value.start) : '') + (value.end ? (value.cadence === 'total' ? ' to ' : ', until ') + shortDate(value.end) : '');
+    const day = value.payDay && !['weekly', 'biweekly', 'once', 'total'].includes(value.cadence) ? ', paid on the ' + ordinal(value.payDay) : '';
+    return base + when + day;
   }
   // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".
   if (type === 'cardRate') {

@@ -251,6 +251,9 @@ export function validate(spine) {
       checkFact(p + '.likelihood', s.likelihood, 'rate', false);
       checkFact(p + '.businessExpenses', s.businessExpenses, 'money', false);
       checkFact(p + '.depositTo', s.depositTo, 'link', false);
+      // The day of the month it is paid (S-199), for monthly and less often.
+      checkFact(p + '.payDay', s.payDay, 'int', false);
+      if (s.payDay && s.payDay.value !== null && (s.payDay.value < 1 || s.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
       if (s.likelihood && s.likelihood.value !== null && (s.likelihood.value < 0 || s.likelihood.value > 1)) err(p + '.likelihood', 'between 0 and 1');
       if (s.type === 'maybeMoney' && !s.likelihood) err(p + '.likelihood', 'maybe money needs a likelihood');
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
