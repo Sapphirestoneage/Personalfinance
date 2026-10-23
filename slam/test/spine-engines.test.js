@@ -730,3 +730,15 @@ test('money flow: from income through accounts and cards to where it goes, addin
   assert.ok(f3.nodes.some((n) => n.id === 'exp:' + food.id) && !f3.nodes.some((n) => n.id === 'sec:food'));
   assert.ok(f.nodes.every((n) => n.amount > 0), 'no empty places');
 });
+
+// ------------------------------------------------------------------ vehicles depreciate (S-196)
+test('a car with no rate loses 15% a year (rough), and the net worth projection uses it', () => {
+  const s = applyDefaults(mini({ accounts: [{ id: 'chk', family: 'cash', type: 'checking', name: K('Checking'), balance: K(1000) }, { id: 'car', family: 'otherAssets', type: 'car', name: K('Car'), balance: K(10000) }] }), R);
+  assert.deepEqual([s.accounts[1].appreciationRate.value, s.accounts[1].appreciationRate.kind, s.accounts[1].appreciationRate.source], [-0.15, 'rough', 'DEFAULT_VEHICLE_DEPRECIATION']);
+  const p = project(s, R, { mode: 'committed', endYm: '2027-10' });
+  const oct27 = p.months.find((m) => m.ym === '2027-10');
+  near(oct27.otherAssets, 8500, 1);
+  // A rate someone enters wins.
+  const own = applyDefaults(setAt(s, 'accounts.car.appreciationRate', K(-0.1)), R);
+  near(project(own, R, { mode: 'committed', endYm: '2027-10' }).months.find((m) => m.ym === '2027-10').otherAssets, 9000, 1);
+});

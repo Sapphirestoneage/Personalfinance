@@ -36,10 +36,13 @@ function tile(spine, { id, label, result, shown, missingText, lines = [], extra 
   const first = (result.from || [])[0];
   const value = result.value === null
     ? h('p', { class: 'tile-value missing-text' }, missingText || 'Not enough to figure yet')
-    : h('a', { class: 'tile-value', href: first ? ledgerHref(first) : '#' }, shown);
+    : h('p', { class: 'tile-value' }, shown);
+  // The number is plain; a link under it says where it opens (CLAUDE.md affordances 4 and 5).
+  const view = first ? h('a', { class: 'tile-view', href: ledgerHref(first) }, 'View in the Ledger ›') : null;
   return h('section', { class: 'tile', id: 'tile-' + id, 'aria-labelledby': 'tl-' + id },
     h('h2', { class: 'tile-label', id: 'tl-' + id }, label),
     value,
+    view,
     ...lines.filter(Boolean).map((l) => h('p', { class: 'tile-sub' }, ...[].concat(l))),
     extra,
     ...provenance(spine, result));

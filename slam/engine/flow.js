@@ -14,8 +14,8 @@ import { payPolicyOf } from './debt.js';
 
 const SECTION = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' };
 const PAYROLL = ['employerRetirement', 'hsaFsa'];
-// Where-it-goes order, top to bottom.
-const ORDER = ['spend', 'debt', 'save', 'tax', 'left'];
+// Where-it-goes order, top to bottom: debt first, so card payments cross nothing.
+const ORDER = ['debt', 'spend', 'save', 'tax', 'left'];
 
 export function moneyFlow(spine, rules, cf, { open = [] } = {}) {
   const nodes = new Map(), links = [];
@@ -102,7 +102,7 @@ export function moneyFlow(spine, rules, cf, { open = [] } = {}) {
     const inn = links.filter((l) => l.to === n.id).reduce((x, l) => x + l.amount, 0);
     const out = links.filter((l) => l.from === n.id).reduce((x, l) => x + l.amount, 0);
     if (inn - out > 0.004) { left += inn - out; link(n.id, node('left', { label: 'Left over', col: 3, kind: 'left' }), inn - out); }
-    if (out - inn > 0.004) { short += out - inn; link(node('short:' + n.id, { label: 'From what is in ' + n.label, col: 0, kind: 'short', path: n.path }), n.id, out - inn); }
+    if (out - inn > 0.004) { short += out - inn; link(node('short:' + n.id, { label: 'From ' + n.label, col: 0, kind: 'short', path: n.path }), n.id, out - inn); }
   }
 
   // One band per pair: bills from the same account to the same section add up; a guess anywhere makes it rough.

@@ -38,7 +38,8 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
     if (a.family === 'cash') cash += b;
     else if (INVESTED_FAMILIES.includes(a.family)) invested += b;
     else {
-      const rate = a.appreciationRate ? v(a.appreciationRate) : null;
+      // Read as a Fact, so a rough rate (the house car default) makes the projection rough.
+      const rate = a.appreciationRate ? t.useFact('accounts.' + a.id + '.appreciationRate', a.appreciationRate) : null;
       if (a.family === 'otherAssets' && rate === null) t.addRough('accounts.' + a.id + '.appreciationRate');
       others.push({ id: a.id, value: b, monthly: rate === null ? 0 : Math.pow(1 + rate, 1 / 12) - 1 });
     }

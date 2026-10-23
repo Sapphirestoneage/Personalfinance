@@ -1582,6 +1582,16 @@
       "notes": "Time to cancel before the next charge",
       "source": "Eli house assumption",
       "verified": "assumption"
+    },
+    {
+      "id": "DEFAULT_VEHICLE_DEPRECIATION",
+      "rule": "Yearly change in a vehicle's value when none is entered",
+      "value": -0.15,
+      "unit": "rate",
+      "appliesTo": "Other assets (car)",
+      "notes": "A car loses about 15% of its value a year; stored on the car as rough so it shows yellow, and the net worth projection uses it",
+      "source": "Eli house assumption",
+      "verified": "assumption"
     }
   ]
 }

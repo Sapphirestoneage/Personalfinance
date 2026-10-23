@@ -23,3 +23,13 @@ test('the demo household is marked made up', () => {
   const demo = JSON.parse(readFileSync(SLAM + 'fixtures/demo.json', 'utf8'));
   assert.equal(demo.meta.demo, true);
 });
+
+// Affordances (CLAUDE.md, S-188): the reference page shows every component, and no button is under 44px.
+test('affordances: the reference page shows every component; tap targets are 44px', () => {
+  const page = readFileSync(SLAM + 'affordances.html', 'utf8');
+  for (const c of ['btn primary', 'btn ghost', 'btn danger', 'btn small', 'is-pressed', 'is-focus', 'disabled', 'row-main', 'edit-hint', 'choice-card', 'check-row', 'switch', 'seg-btn', 'filter-chip', 'chip-missing', 'stage-chip', 'file-banner', 'later-tag'])
+    assert.ok(page.includes(c), 'affordances.html shows ' + c);
+  const css = readFileSync(SLAM + 'ui/spine.css', 'utf8');
+  assert.match(css, /--tap: 44px/);
+  for (const m of css.matchAll(/min-height: (\d+)px/g)) assert.ok(+m[1] >= 44 || /switch-track|knob/.test(css.slice(Math.max(0, m.index - 120), m.index)), 'a min-height of ' + m[1] + 'px: tap targets are 44px');
+});

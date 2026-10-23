@@ -1,0 +1,125 @@
+<!doctype html>
+<!-- SLAM affordances (S-188, CLAUDE.md "Affordances, Don't Make Me Think"):
+     every component in every state, drawn with the same stylesheet as the app.
+     Forced states use the is-* classes; nothing on this page saves anything. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>SLAM Affordances</title>
+  <link rel="stylesheet" href="src/ui/tokens.css">
+  <link rel="stylesheet" href="ui/spine.css">
+  <style>
+    .demo-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin: var(--space-2) 0 var(--space-3); }
+    .demo-cap { font-size: var(--text-xs); color: var(--text-muted); display: block; margin-top: var(--space-1); }
+    .demo-cell { display: grid; gap: var(--space-1); justify-items: start; }
+    .rules { margin: 0; padding-left: var(--space-5); }
+  </style>
+</head>
+<body>
+<main id="app">
+  <header class="top">
+    <div><h1>Affordances</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
+    <nav class="top-actions"><a class="btn" href="ledger.html">Ledger</a><a class="btn primary" href="dashboard.html">Back to the Dashboard</a></nav>
+  </header>
+
+  <section class="card" aria-labelledby="r-h">
+    <h2 id="r-h">The rules</h2>
+    <ol class="rules">
+      <li>Buttons look like buttons: filled, a visible border, a slight shadow, a verb label. Never clickable plain text.</li>
+      <li>One primary per screen; secondary is outlined; destructive is a red outline and always undoable.</li>
+      <li>Editable fields: a bordered box, the label above, a format hint. Read-only never looks like an input.</li>
+      <li>Links are underlined and colored; nothing else uses that look.</li>
+      <li>A tappable card or number shows a chevron or "View"; the whole card is the target.</li>
+      <li>No hover-only cues: hover may add lift, never information.</li>
+      <li>Tap targets at least 44 by 44 pixels, with space between them.</li>
+      <li>Pressed, focus and disabled states are visible; a disabled control says why.</li>
+      <li>Kind chips are labels; a tappable chip follows rule 1.</li>
+      <li>This page shows every component in every state.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="b-h">
+    <h2 id="b-h">Buttons</h2>
+    <p class="muted">Rest, pressed, focus and disabled. Hover only lifts a button a little on a mouse.</p>
+    <div class="demo-row">
+      <span class="demo-cell"><button class="btn primary" type="button">Save</button><span class="demo-cap">Primary, rest</span></span>
+      <span class="demo-cell"><button class="btn primary is-pressed" type="button">Save</button><span class="demo-cap">Primary, pressed</span></span>
+      <span class="demo-cell"><button class="btn primary is-focus" type="button">Save</button><span class="demo-cap">Primary, focus</span></span>
+      <span class="demo-cell"><button class="btn primary" type="button" disabled>Tick what you have first</button><span class="demo-cap">Primary, disabled (says why)</span></span>
+    </div>
+    <div class="demo-row">
+      <span class="demo-cell"><button class="btn" type="button">Save as a guess</button><span class="demo-cap">Secondary, rest</span></span>
+      <span class="demo-cell"><button class="btn is-pressed" type="button">Save as a guess</button><span class="demo-cap">Secondary, pressed</span></span>
+      <span class="demo-cell"><button class="btn is-focus" type="button">Save as a guess</button><span class="demo-cap">Secondary, focus</span></span>
+      <span class="demo-cell"><button class="btn" type="button" disabled>Nothing to undo</button><span class="demo-cap">Secondary, disabled (says why)</span></span>
+    </div>
+    <div class="demo-row">
+      <span class="demo-cell"><button class="btn ghost" type="button">Cancel</button><span class="demo-cap">Quiet: still a button</span></span>
+      <span class="demo-cell"><button class="btn danger" type="button">Remove</button><span class="demo-cap">Destructive: red outline, undoable</span></span>
+      <span class="demo-cell"><button class="btn small" type="button">Duplicate</button><span class="demo-cap">Small: still 44px tall</span></span>
+      <span class="demo-cell"><button class="btn add" type="button">+ Add a credit card</button><span class="demo-cap">Add</span></span>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="l-h">
+    <h2 id="l-h">Links and tappable rows</h2>
+    <p><a href="math.html">This formula on the math page</a>: a link, underlined and colored.</p>
+    <ul class="rows">
+      <li class="row kind-rough"><button class="row-main" type="button" aria-expanded="false"><span class="row-label">Interest rate</span><span class="row-value">25%</span><span class="chip chip-rough">Rough</span></button></li>
+      <li class="row kind-missing"><button class="row-main" type="button" aria-expanded="true"><span class="row-label">Repayment plan</span><span class="row-value empty">Not given yet</span><span class="chip chip-missing">Missing</span></button></li>
+    </ul>
+    <span class="demo-cap">A row is one big target with a chevron; an open one turns it down.</span>
+  </section>
+
+  <section class="card" aria-labelledby="f-h">
+    <h2 id="f-h">Fields</h2>
+    <form class="editor" onsubmit="return false">
+      <label class="edit-label" for="d-amt">How much is it?</label>
+      <div class="amount-row"><input id="d-amt" type="text" inputmode="decimal" value="70"><select aria-label="How often"><option>a month</option><option>a year</option></select></div>
+      <p class="edit-hint">Dollars, for example 70.</p>
+      <label class="edit-label" for="d-rate">Interest rate</label>
+      <input id="d-rate" type="text" class="is-focus" value="24.99">
+      <p class="edit-hint">As a percent: 25 means 25%. (Shown with focus.)</p>
+      <label class="edit-label" for="d-plan">Repayment plan</label>
+      <select id="d-plan"><option>Choose a plan</option><option>Standard (same payment, 10 years)</option><option>Not sure</option><option>Other (type it)</option><option>I only know my monthly payment</option></select>
+      <p class="edit-msg" role="alert">Type a number</p>
+      <p class="muted">Read-only text is plain, never boxed: <span class="row-value">$70 a month, covered by Parents ($0 to you)</span></p>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="c-h">
+    <h2 id="c-h">Choices</h2>
+    <fieldset class="choice-group"><legend class="edit-label">Who pays?</legend>
+      <label class="choice-card"><input type="radio" name="d-who"><span class="choice-text"><strong>I pay all of it</strong></span></label>
+      <label class="choice-card"><input type="radio" name="d-who" checked><span class="choice-text"><strong>I share it with others</strong><span class="choice-sub">Roommates, a partner</span></span></label>
+      <label class="choice-card"><input type="radio" name="d-who"><span class="choice-text"><strong>Someone else covers it</strong><span class="choice-sub">Parents, a partner, an employer: costs you $0</span></span></label>
+    </fieldset>
+    <label class="check-row" for="d-sub"><input type="checkbox" id="d-sub" checked><span><strong>This is a subscription</strong><span class="choice-sub">It renews on its own, so it gets a regular look</span></span></label>
+    <div class="switch-row" style="margin-top: var(--space-3)"><span class="edit-label">Has an intro rate?</span><button type="button" class="switch" role="switch" aria-checked="true"><span class="switch-track"><span class="switch-knob"></span></span>Yes</button></div>
+    <div class="segmented" role="group" aria-label="Assumption set" style="margin-top: var(--space-3)">
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Best</span><span class="seg-sub">8% real return, 5% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Likely</span><span class="seg-sub">6% real return, 4% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Worst</span><span class="seg-sub">4% real return, 3.5% withdrawal</span></button>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="k-h">
+    <h2 id="k-h">Chips</h2>
+    <p class="muted">Kind chips are labels:</p>
+    <div class="demo-row"><span class="chip chip-known">Known</span><span class="chip chip-rough">Rough</span><span class="chip chip-missing">Missing</span><span class="chip chip-computed">Computed</span><span class="chip chip-notForMe">Not for me</span><span class="later-tag">Not now</span></div>
+    <p class="muted">Tappable chips are buttons (shown only, shown alone, hidden):</p>
+    <div class="demo-row"><button class="filter-chip chip-missing" type="button" aria-pressed="false">Missing 18</button><button class="filter-chip chip-rough" type="button" aria-pressed="true">Only rough 69</button><button class="filter-chip chip-known off" type="button" aria-pressed="false">Known 73</button><button class="dot dot-missing" type="button">1 missing</button></div>
+    <p class="muted">Stages, always with words:</p>
+    <div class="demo-row"><span class="stage-chip stage-red">Stage 1 of 3</span><span class="stage-chip stage-yellow">Stage 2 of 3</span><span class="stage-chip stage-green">Stage 3</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="n-h">
+    <h2 id="n-h">Notices</h2>
+    <p class="saved-line">Saved in this browser: Utilities is $40.</p>
+    <div class="file-banner" role="status"><span>You have edits not in your profile file.</span><button type="button" class="btn small">Save to profile file</button></div>
+  </section>
+</main>
+</body>
+</html>

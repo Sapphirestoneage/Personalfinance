@@ -49,6 +49,11 @@ export function applyDefaults(spine, rules) {
   for (const a of spine.accounts || []) {
     if (a.family === 'cash' && a.type !== 'hysa' && blank(a.apy)) out = setAt(out, 'accounts.' + a.id + '.apy', rough(rules.get('DEFAULT_APY', year), 'DEFAULT_APY', 'house assumption: a regular account pays about 0.01%'));
   }
+  // A car with no rate of change loses DEFAULT_VEHICLE_DEPRECIATION (15%) a year,
+  // which the net worth projection uses (S-196).
+  for (const x of spine.accounts || []) {
+    if (x.family === 'otherAssets' && x.type === 'car' && blank(x.appreciationRate)) out = setAt(out, 'accounts.' + x.id + '.appreciationRate', rough(rules.get('DEFAULT_VEHICLE_DEPRECIATION', year), 'DEFAULT_VEHICLE_DEPRECIATION', 'house assumption: a car loses about 15% of its value a year'));
+  }
   // A phone with no amount costs a standard plan for one line, covered or not
   // (for a covered phone it is what it would cost you) (S-186).
   for (const e of spine.expenses || []) {

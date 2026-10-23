@@ -1,9 +1,10 @@
-// The money-flow diagram (S-192), drawn from engine/flow.js: bands as wide as
-// the dollars they carry, from income on the left, through accounts and cards,
-// to where it goes on the right. Drawn at the page's own width so the words
-// stay readable on a phone. A dashed band rests on a guessed link. Section
-// buttons above split a section into its expenses; every place links to its
-// Ledger field; the same flows are listed below for reading without the chart.
+// The money-flow diagram (S-192, redrawn by DESIGN.md): bands as wide as the
+// dollars they carry, from income on the left, through accounts and cards, to
+// where it goes on the right. Labels sit in gutters beside the chart, never on
+// a band; text is ink, never a data color; a legend names the colors; guessed
+// routes are lighter with a dashed edge. Below 600px the same flows show as a
+// bar list, which reads on a phone. The list twin under both has every flow
+// with a link to its Ledger field.
 
 import { h, money } from './view.js';
 
@@ -14,22 +15,26 @@ const s = (tag, attrs = {}, ...kids) => {
   for (const k of kids.flat()) if (k !== null && k !== undefined) el.append(typeof k === 'string' ? document.createTextNode(k) : k);
   return el;
 };
-const KIND_CLASS = { spend: 'fl-spend', debt: 'fl-debt', save: 'fl-save', tax: 'fl-tax', left: 'fl-left', short: 'fl-short', account: 'fl-acct', card: 'fl-card', income: 'fl-income' };
+// Categories (fixed order, validated in light and dark): one color per kind of destination.
+const CAT = { spend: 'viz-1', debt: 'viz-2', save: 'viz-3', left: 'viz-3', tax: 'viz-4', short: 'viz-5' };
+const LEGEND = [['viz-1', 'Spending'], ['viz-2', 'Debt payments'], ['viz-3', 'Saving and left over'], ['viz-4', 'Tax'], ['viz-5', 'Taken from what you have']];
+const NARROW = 600;
 
-// Positions: each column stacks its places top to bottom, sized by dollars.
+// ---------------------------------------------------------------- wide: the Sankey
 function layout(flow, width) {
-  const nodes = flow.nodes.map((n) => ({ ...n, size: n.amount }));
+  const nodes = flow.nodes.map((n) => ({ ...n }));
   const hasCards = nodes.some((n) => n.col === 2);
-  const nw = 10, gap = 14;
-  const xs = hasCards ? [0, width * 0.26, width * 0.47, width - nw] : [0, width * 0.38, null, width - nw];
+  const nw = 8, gutL = 170, gutR = 170, gap = 24;
+  const inner = width - gutL - gutR;
+  const xs = hasCards ? [gutL, gutL + inner * 0.38, gutL + inner * 0.7, width - gutR - nw] : [gutL, gutL + inner * 0.5, null, width - gutR - nw];
   const cols = [0, 1, 2, 3].map((c) => nodes.filter((n) => n.col === c));
-  // Dollars to pixels: the fullest column fills the space its places leave free.
-  const room = Math.max(320, Math.max(...cols.map((c) => c.length)) * 44);
-  const scale = Math.min(...cols.filter((c) => c.length).map((c) => (room - gap * (c.length - 1) - 16 * c.filter((n) => n.size === 0).length) / c.reduce((x, n) => x + n.size, 0)));
-  // Each place takes at least a line of text, so small ones do not crowd their labels.
+  const room = Math.max(300, Math.max(...cols.map((c) => c.length)) * 46);
+  const scale = Math.min(...cols.filter((c) => c.length).map((c) => (room - gap * (c.length - 1)) / c.reduce((x, n) => x + n.amount, 0)));
+  // Middle columns keep a line of room above each place for its label.
+  const top = (c) => (c === 1 || c === 2 ? 18 : 0);
   let height = 0;
-  for (const c of cols) { let y = 0; for (const n of c) { n.x = xs[n.col]; n.y = y; n.h = Math.max(2, n.size * scale); y += Math.max(n.h, 16) + gap; } height = Math.max(height, y - gap); }
-  // Bands leave and arrive in order of where they go and come from, to cross less.
+  // Cards start two lines down, so their labels clear the account label above them.
+  for (const c of cols) { let y = c.length && c[0].col === 2 ? 36 : 0; for (const n of c) { y += top(n.col); n.x = xs[n.col]; n.y = y; n.h = Math.max(3, n.amount * scale); y += n.h + gap; } height = Math.max(height, y - gap); }
   const at = new Map(nodes.map((n) => [n.id, n]));
   const outY = new Map(nodes.map((n) => [n.id, n.y])), inY = new Map(nodes.map((n) => [n.id, n.y]));
   const bands = [...flow.links].sort((a, b) => at.get(a.to).y - at.get(b.to).y || at.get(a.from).y - at.get(b.from).y).map((l) => {
@@ -37,45 +42,85 @@ function layout(flow, width) {
     const y0 = outY.get(a.id); outY.set(a.id, y0 + w);
     return { ...l, a, b, w, y0 };
   });
-  for (const band of [...bands].sort((p, q) => p.a.y - q.a.y)) { band.y1 = inY.get(band.b.id); inY.set(band.b.id, band.y1 + band.w); }
+  for (const band of [...bands].sort((p, q) => p.a.y - q.a.y || p.y0 - q.y0)) { band.y1 = inY.get(band.b.id); inY.set(band.b.id, band.y1 + band.w); }
   return { nodes, bands, height, nw };
 }
 
-function chart(flow, width, onToggle) {
+function sankey(flow, width, onToggle) {
   const { nodes, bands, height, nw } = layout(flow, width);
-  const svg = s('svg', { class: 'flow-svg', viewBox: '0 0 ' + width + ' ' + (height + 4), width: '100%', role: 'img', 'aria-label': 'Where the money goes this month' });
+  const svg = s('svg', { class: 'flow-svg', viewBox: '0 0 ' + width + ' ' + (height + 6), width: '100%', role: 'img', 'aria-label': 'Where the money goes this month; the same flows are listed below the chart' });
+  // The destination's color carries each band; a lighter band with a dashed edge is a guessed route.
   for (const b of bands) {
     const x0 = b.a.x + nw, x1 = b.b.x, xm = (x0 + x1) / 2;
     const d = 'M' + x0 + ',' + b.y0 + ' C' + xm + ',' + b.y0 + ' ' + xm + ',' + b.y1 + ' ' + x1 + ',' + b.y1 + ' L' + x1 + ',' + (b.y1 + b.w) + ' C' + xm + ',' + (b.y1 + b.w) + ' ' + xm + ',' + (b.y0 + b.w) + ' ' + x0 + ',' + (b.y0 + b.w) + ' Z';
-    svg.append(s('path', { d, class: 'fl-band ' + (KIND_CLASS[b.b.kind] || '') + (b.rough ? ' fl-rough' : '') }, s('title', {}, b.a.label + ' to ' + b.b.label + ': ' + money(b.amount, true) + ' a month' + (b.rough ? ' (a guessed route)' : ''))));
+    const cat = CAT[b.b.kind] || CAT[b.a.kind] || 'viz-0';
+    svg.append(s('path', { d, class: 'fl-band ' + cat + (b.rough ? ' fl-rough' : '') }, s('title', {}, b.a.label + ' to ' + b.b.label + ': ' + money(b.amount, true) + ' a month' + (b.rough ? ' (a guessed route)' : ''))));
   }
   for (const n of nodes) {
-    const right = n.col === 3;
-    // A place that opens something says so: › for a Ledger field, + or - for a section.
-    const label = n.label + ' ' + money(n.amount) + (n.path ? ' ›' : n.section ? (n.open ? ' -' : ' +') : '');
-    const g = s('g', { class: 'fl-node ' + (KIND_CLASS[n.kind] || '') },
-      s('rect', { x: n.x, y: n.y, width: nw, height: n.h, rx: 2 }),
-      s('text', { x: right ? n.x - 6 : n.x + nw + 6, y: n.y + Math.min(n.h / 2, 18) + 4, 'text-anchor': right ? 'end' : 'start' }, label));
-    if (n.section && !n.path) { g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', 'Split ' + n.label + ' into its expenses'); g.classList.add('fl-tap'); g.addEventListener('click', () => onToggle(n.section)); g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(n.section); } }); }
-    svg.append(n.path ? s('a', { href: 'ledger.html#' + encodeURIComponent(n.path) }, g) : g);
+    const cat = CAT[n.kind];
+    const g = s('g', { class: 'fl-node' }, s('rect', { x: n.x, y: n.y, width: nw, height: n.h, rx: 2, class: cat ? 'fl-bar ' + cat : 'fl-bar fl-pass' }));
+    // Labels: left gutter for income, right gutter for destinations, above the bar in the middle.
+    const name = n.label, amt = money(n.amount);
+    const mid = n.y + Math.min(n.h / 2, 14);
+    if (n.col === 0) g.append(s('text', { x: n.x - 8, y: mid - 2, 'text-anchor': 'end', class: 'fl-name' }, name), s('text', { x: n.x - 8, y: mid + 12, 'text-anchor': 'end', class: 'fl-amt' }, amt));
+    else if (n.col === 3) {
+      const tap = n.section && !n.path;
+      g.append(s('text', { x: n.x + nw + 8, y: mid - 2, class: 'fl-name' }, name + (tap ? (n.open ? '  −' : '  +') : '')), s('text', { x: n.x + nw + 8, y: mid + 12, class: 'fl-amt' }, amt + ' a month'));
+      if (tap) {
+        g.classList.add('fl-tap');
+        g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', (n.open ? 'Join ' : 'Split ') + name);
+        g.prepend(s('rect', { x: n.x - 4, y: n.y - 4, width: 180, height: Math.max(n.h + 8, 44), class: 'fl-hit' }));
+        g.addEventListener('click', () => onToggle(n.section));
+        g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(n.section); } });
+      }
+    } else if (n.col === 2) g.append(s('text', { x: n.x + nw, y: n.y - 6, 'text-anchor': 'end', class: 'fl-name fl-small' }, name + '  ' + amt));
+    else g.append(s('text', { x: n.x, y: n.y - 6, class: 'fl-name fl-small' }, name + '  ' + amt));
+    svg.append(g);
   }
   return svg;
 }
 
-// The section: buttons that split or join each section, the chart, a legend, the list.
+// ---------------------------------------------------------------- narrow: a bar list
+function barList(flow, onToggle) {
+  const ins = flow.nodes.filter((n) => n.col === 0), outs = flow.nodes.filter((n) => n.col === 3);
+  const max = Math.max(...flow.nodes.filter((n) => n.col === 0 || n.col === 3).map((n) => n.amount));
+  const row = (n) => {
+    const tap = n.section && !n.path;
+    const head = h('div', { class: 'fb-head' }, h('span', { class: 'fb-name' }, n.label), h('span', { class: 'fb-amt' }, money(n.amount) + ' a month'));
+    const bar = h('div', { class: 'fb-track' }, h('div', { class: 'fb-bar ' + (CAT[n.kind] || 'fl-pass'), style: 'width:' + Math.max(2, Math.round(n.amount / max * 100)) + '%' }));
+    return tap ? h('li', {}, h('button', { type: 'button', class: 'fb-row fb-tap', 'aria-expanded': String(!!n.open), onclick: () => onToggle(n.section) }, head, bar, h('span', { class: 'fb-more' }, n.open ? 'Join' : 'Split into expenses')))
+      : h('li', {}, h('div', { class: 'fb-row' }, head, bar));
+  };
+  const through = flow.nodes.filter((n) => n.col === 1 || n.col === 2);
+  return h('div', { class: 'flow-bars' },
+    h('h3', { class: 'fb-h' }, 'Comes in'), h('ul', { class: 'fb-list' }, ins.map(row)),
+    through.length ? h('p', { class: 'muted fb-through' }, 'Through ' + through.map((n) => n.label + ' (' + money(n.amount) + ')').join(', ') + '.') : null,
+    h('h3', { class: 'fb-h' }, 'Goes out'), h('ul', { class: 'fb-list' }, outs.map(row)));
+}
+
+// ---------------------------------------------------------------- the section
 export function flowSection(flow, { open, onToggle, month }) {
   const wrap = h('section', { class: 'card flow', id: 'flow', 'aria-labelledby': 'flow-h' },
     h('h2', { id: 'flow-h' }, 'Where the money goes in ' + month));
   if (flow.problem) { wrap.append(h('p', { class: 'muted' }, flow.problem)); return wrap; }
   const secs = [...new Set(flow.nodes.filter((n) => n.section).map((n) => n.section))];
+  const used = new Set(flow.nodes.map((n) => CAT[n.kind]).filter(Boolean));
+  const name = (id) => flow.nodes.find((n) => n.id === id);
   wrap.append(
-    h('p', { class: 'muted' }, 'Bands are as wide as the dollars. Dashed bands go through your main checking as a guess until you link where a bill is paid from in the Ledger.'),
+    h('p', { class: 'flow-total' }, flow.short > 0 ? money(flow.short, true) + ' a month more goes out than comes in.' : money(flow.left, true) + ' a month is left over.'),
+    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' },
+      LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t)),
+      flow.links.some((l) => l.rough) ? h('li', {}, h('span', { class: 'sw sw-rough', 'aria-hidden': 'true' }), 'Lighter: a guessed route (main checking until you link it)') : null),
     h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec]))),
     h('div', { class: 'flow-box' }),
-    h('p', { class: 'flow-total muted' }, flow.short > 0 ? money(flow.short, true) + ' a month more goes out than comes in; it comes from what is in your accounts.' : money(flow.left, true) + ' a month is left over.'),
-    h('details', { class: 'flow-list' }, h('summary', {}, 'See it as a list'),
-      h('ul', {}, flow.links.map((l) => { const a = flow.nodes.find((n) => n.id === l.from), b = flow.nodes.find((n) => n.id === l.to); return h('li', {}, a.label + ' to ' + b.label + ': ' + money(l.amount, true) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
+    h('details', { class: 'flow-list' }, h('summary', {}, 'Every flow, with links to the Ledger'),
+      h('ul', {}, flow.links.map((l) => { const a = name(l.from), b = name(l.to), p = b.path || a.path; return h('li', {}, p ? h('a', { href: 'ledger.html#' + encodeURIComponent(p) }, a.label + ' to ' + b.label) : a.label + ' to ' + b.label, ': ' + money(l.amount, true) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
   // Drawn once the section is on the page, at its real width.
-  requestAnimationFrame(() => { const box = wrap.querySelector('.flow-box'); if (box) box.append(chart(flow, Math.max(300, Math.round(box.clientWidth)), onToggle)); });
+  requestAnimationFrame(() => {
+    const box = wrap.querySelector('.flow-box');
+    if (!box) return;
+    const w = Math.round(box.clientWidth);
+    box.append(w < NARROW ? barList(flow, onToggle) : sankey(flow, w, onToggle));
+  });
   return wrap;
 }

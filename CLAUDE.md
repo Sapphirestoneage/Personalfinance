@@ -47,6 +47,21 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Exception (D-340): `marketing/` is a separate app the same way (`marketing/README.md`).
 - Exception (D-341): `money-rooms-v3/` is a separate app the same way (`money-rooms-v3/README.md`).
 
+## Affordances, Don't Make Me Think
+
+1. Buttons look like buttons: filled, a visible border, a slight shadow, a verb label. Never clickable plain text.
+2. One primary per screen; secondary is outlined; destructive is a red outline and always undoable.
+3. Editable fields: a bordered box, the label above, a format hint. Read-only never looks like an input.
+4. Links are underlined and colored; nothing else uses that look.
+5. A tappable card or number shows a chevron or "View"; the whole card is the target.
+6. No hover-only cues: hover may add lift, never information.
+7. Tap targets at least 44x44px, with space between them.
+8. Pressed, focus and disabled states are visible; a disabled control says why.
+9. Kind chips are labels; a tappable chip follows rule 1.
+10. `slam/affordances.html` shows every component in every state; add any new one there.
+
+Visual design (layout, color, charts, phone width): follow `slam/DESIGN.md`.
+
 ## Stop and ask instead of guessing
 
 - The change would give a room a private copy of a household number, or let a
