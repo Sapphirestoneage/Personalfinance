@@ -1,5 +1,7 @@
 # Decisions
 
+> Paths named below are as they were when each entry was written. On 2026-10-23 the folders were renamed: `src/calc/` is now `src/engines/`, `test/` is `tests/`, `data/` is `src/data/`, and `test/households/` is `src/data/households/`. The entries themselves are unchanged.
+
 One entry per decision: number, date, decision, why. Newest at the bottom.
 
 | # | Date | Decision | Why |

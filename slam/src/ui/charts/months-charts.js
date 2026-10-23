@@ -5,10 +5,10 @@ import { h, options } from '../dom.js';
 import { monthLabel } from '../format.js';
 import { card } from './catalog.js';
 import { paretoChart } from './svg.js';
-import { paretoLevels, rangeMonths } from '../../calc/pareto.js';
+import { paretoLevels, rangeMonths } from '../../engines/pareto.js';
 import { chartWidth } from './catalog.js';
 import { money, dayLabel } from '../format.js';
-import { estimateHistory } from '../../calc/estimates.js';
+import { estimateHistory } from '../../engines/estimates.js';
 
 // When a category's estimate changed (S-090). The estimate, plan, and actual by month
 // are drawn once, in the focus series above (S-106); this card lists the changes for

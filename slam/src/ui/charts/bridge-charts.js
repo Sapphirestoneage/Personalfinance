@@ -1,12 +1,12 @@
 // Insights, Cash: the budget-to-cash bridge for one month (S-088). The waterfall runs
 // from the budget surplus to the change in cash; every step lists its amount,
-// where it came from, and a link to it. Data from src/calc/bridge.js.
+// where it came from, and a link to it. Data from src/engines/bridge.js.
 
 import { h, options } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
 import { waterfall } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import { bridgeFor } from '../../calc/bridge.js';
+import { bridgeFor, TIES_WITHIN } from '../../engines/bridge.js';
 import { jumpLink } from '../components/jump.js';
 
 const LINKS = { actual: ['Review, fill gaps', 'actual'], balances: ['Setup, Accounts', 'balances'], log: ['The log on Track', 'log'] };
@@ -40,7 +40,7 @@ export function materialityInput(ctx) {
     h('input', { type: 'text', inputmode: 'decimal', style: 'width:6em', 'data-key': 'materiality', value: v === undefined || v === null ? '' : String(v),
       onchange: (e) => {
         const t = e.target.value.trim().replace(/[$,]/g, '');
-        const n = t === '' ? 25 : Number(t);
+        const n = t === '' ? TIES_WITHIN : Number(t);
         if (!Number.isFinite(n) || n < 0) return ctx.toast('That needs a dollar amount, 0 or more');
         ctx.update('Materiality', (d) => { d.settings.materiality = n; });
       } }));

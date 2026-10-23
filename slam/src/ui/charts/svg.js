@@ -1,5 +1,5 @@
 // Small inline-SVG chart primitives. Each takes chart-ready data (from
-// src/calc/chart-data.js) and returns SVG markup. Colors are CSS variables
+// src/engines/chart-data.js) and returns SVG markup. Colors are CSS variables
 // from tokens.css, so light and dark mode both work. Hover a mark for its value.
 
 import { esc } from '../dom.js';

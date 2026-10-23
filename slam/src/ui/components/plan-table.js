@@ -10,7 +10,7 @@ import { makeValue } from '../../store/value.js';
 import { parseAmount } from './value-input.js';
 import { nameEdit } from './name-edit.js';
 import { sourceLink } from './how.js';
-import { reviewSummary, planStartValues, prevMonthKey } from '../../calc/plan.js';
+import { reviewSummary, planStartValues, prevMonthKey } from '../../engines/plan.js';
 import { startPlan, setPlanAmount, setPlanDecision, setPlanReviewed, setPlanStop, addPlanLine, addPlanCategory, planLineByLine, copyPlanForward, getPlan } from '../../store/plans.js';
 import { nextMonthKey } from '../../store/months.js';
 import { findCategory, renameLine } from '../../store/edits.js';

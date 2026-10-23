@@ -3,7 +3,7 @@
 
 import { h, options } from '../dom.js';
 import { statusPicker, statusChip } from './status.js';
-import { toMonthly } from '../../calc/normalize.js';
+import { toMonthly } from '../../engines/normalize.js';
 import { money, CADENCE_LABELS } from '../format.js';
 import { sumParts, PART_CADENCES } from '../../store/value.js';
 

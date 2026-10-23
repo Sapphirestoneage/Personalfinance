@@ -79,7 +79,7 @@ function check(name, label, shown, expected) {
 
 const browser = await playwright.chromium.launch();
 for (const [name, button] of Object.entries(DEMOS)) {
-  const { default: exp } = await import('../test/households/' + name + '.expected.js');
+  const { default: exp } = await import('../src/data/households/' + name + '.expected.js');
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -631,7 +631,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   const { versionsOf } = await import('../src/store/merge.js');
   const { exportHousehold } = await import('../src/store/transfer.js');
   const { readFileSync } = await import('node:fs');
-  const theirs = migrate(JSON.parse(readFileSync(new globalThis.URL('../test/households/riley.json', import.meta.url), 'utf8')));
+  const theirs = migrate(JSON.parse(readFileSync(new globalThis.URL('../src/data/households/riley.json', import.meta.url), 'utf8')));
   theirs.sync = { versions: versionsOf(theirs), at: '2026-10-17T18:00:00.000Z' };
   const shop = theirs.categories.flatMap((c) => c.lines).find((l) => l.id === 'shopping');
   Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: (shop.version || 1) + 1 });

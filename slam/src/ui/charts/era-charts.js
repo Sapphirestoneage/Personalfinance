@@ -1,5 +1,5 @@
 // Future, Eras: your dream life next to today (S-097), then the blocks, cash month by month through every era next to
-// staying in regular life, and each era's money. Numbers from src/calc/eras.js.
+// staying in regular life, and each era's money. Numbers from src/engines/eras.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';

@@ -7,12 +7,12 @@ import { money, pct } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addIncome, addDeduction, removeDeduction, findLine } from '../../store/edits.js';
-import { DEDUCTION_KINDS } from '../../calc/deductions.js';
+import { DEDUCTION_KINDS } from '../../engines/deductions.js';
 import { makeValue } from '../../store/value.js';
 import { taxWalkView } from '../components/tax-walk.js';
 import { setDeductionAccount } from '../../store/accounts.js';
-import { kindOf } from '../../calc/balances.js';
-import { rentShare } from '../../calc/totals.js';
+import { kindOf } from '../../engines/balances.js';
+import { rentShare } from '../../engines/totals.js';
 import { jumpLink } from '../components/jump.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
@@ -165,18 +165,17 @@ function withheldBlock(ctx, inc, row) {
   const entered = Object.values(inc.withheld).some((v) => v.status !== null);
   let check = null;
   if (t) {
-    const per = (annual) => exact(annual / (row.grossPerPaycheck ? (row.grossAnnual / row.grossPerPaycheck) : 12));
     const gap = t.gapAnnual;
     check = h('div', { class: 'card', style: 'margin:8px 0' },
       h('div', { class: 'field-label' }, 'Tax check'),
       h('p', { class: 'small' }, 'Withheld: ', h('b', { class: 'num' }, exact(row.withheldPerPaycheck)), ' a paycheck (', pct(t.withheldRate, 1), ' of gross), ',
         t.withheldFrom === 'paystub' ? 'from the paystub lines.' : 'worked out as gross minus deductions minus take-home, so it includes any state tax.'),
       h('p', { class: 'small' }, 'Estimated tax for the year: federal income tax ', h('b', { class: 'num' }, money(t.estIncomeTaxAnnual)), ' + Social Security and Medicare ',
-        h('b', { class: 'num' }, money(t.estFicaAnnual)), ' = ', h('b', { class: 'num' }, money(t.estTotalAnnual)), ', about ', per(t.estTotalAnnual), ' a paycheck (',
+        h('b', { class: 'num' }, money(t.estFicaAnnual)), ' = ', h('b', { class: 'num' }, money(t.estTotalAnnual)), ', about ', exact(t.estTotalPerPaycheck), ' a paycheck (',
         pct(t.estRate, 1), ' of gross).', h('span', { class: 'muted xs' }, ' State tax not estimated. Tax year ' + t.taxYear + '.')),
       gap === null ? null : h('p', { class: 'small ' + (gap < -1 ? 'warn' : '') },
         gap >= 1 ? 'Withholding is about ' + money(gap) + ' more than the estimate for the year, so a refund is likely.'
-          : gap <= -1 ? 'Withholding is about ' + money(-gap) + ' short of the estimate for the year. That could be owed at tax time' + (t.withheldFrom === 'paystub' ? '.' : ', or the take-home typed is higher than the real paycheck.') + ' Setting aside ' + per(-gap) + ' a paycheck covers it.'
+          : gap <= -1 ? 'Withholding is about ' + money(-gap) + ' short of the estimate for the year. That could be owed at tax time' + (t.withheldFrom === 'paystub' ? '.' : ', or the take-home typed is higher than the real paycheck.') + ' Setting aside ' + exact(-t.gapPerPaycheck) + ' a paycheck covers it.'
             : 'Withholding matches the estimate.'),
       t.stubMismatchMonthly !== null && Math.abs(t.stubMismatchMonthly) >= 1 ? h('p', { class: 'small warn' },
         'The paystub lines leave ' + money(Math.abs(t.stubMismatchMonthly)) + ' a month ' + (t.stubMismatchMonthly > 0 ? 'less' : 'more') + ' than the take-home typed. Something may be missing (another deduction or tax).') : null);
@@ -229,7 +228,7 @@ function benefitCard(ctx, inc, row) {
   let plan = null;
   if (u) {
     const lands = u.withholding === 'ten-percent'
-      ? [exact(u.benefitWeekly * 0.9) + ' a week lands after the 10%, about ' + money(u.takeHomeMonthly) + ' a month.']
+      ? [exact(u.takeHomeWeekly) + ' a week lands after the 10%, about ' + money(u.takeHomeMonthly) + ' a month.']
       : [exact(u.benefitWeekly) + ' a week, about ' + money(u.takeHomeMonthly) + ' a month.'];
     const taxLine = u.estTaxAnnual === 0
       ? 'At this amount, no federal income tax is likely.'

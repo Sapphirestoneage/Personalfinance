@@ -5,13 +5,13 @@ import { h, options } from '../dom.js';
 import { money, monthLabel, dateLabel } from '../format.js';
 import { question } from './value-input.js';
 import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag, setDebtLine, setPromoEnds } from '../../store/edits.js';
-import { linkedLine, linkCandidates, splitPayment, cardInterest, promoMonthsLeft } from '../../calc/debts.js';
-import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+import { linkedLine, linkCandidates, splitPayment, cardInterest, promoMonthsLeft } from '../../engines/debts.js';
+import { PREMIUM_LINE_TYPES } from '../../engines/coverage.js';
 import { coverageNote } from './coverage.js';
 import { nameEdit } from './name-edit.js';
 import { lineTypeSelect } from './type-select.js';
 import { DEBT_TYPE_OPTIONS } from './debt-quick.js';
-import { linkedCardBalance, observations } from '../../calc/balances.js';
+import { linkedCardBalance, observations } from '../../engines/balances.js';
 
 export const STATES = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const TAG_IDEAS = ['Subscription', 'Travel', 'Gifts', 'Work', 'Self-care', 'Kids', 'Pets', 'Date night'];

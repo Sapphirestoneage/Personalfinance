@@ -7,8 +7,8 @@
 import { h } from '../dom.js';
 import { money, monthLabel, dayLabel, todayIso } from '../format.js';
 import { SCREENS, INSIGHT_TABS, SETUP_SECTIONS, CHARTS } from '../nav.js';
-import { netWorthAt, LABELS, typeLabel } from '../../calc/networth.js';
-import { balanceAt } from '../../calc/balances.js';
+import { netWorthAt, LABELS, typeLabel } from '../../engines/networth.js';
+import { balanceAt } from '../../engines/balances.js';
 
 const GROUPS = ['Lines', 'Categories', 'Merchants', 'Entries', 'Net worth', 'Accounts', 'Debts', 'Charts', 'Settings', 'Months', 'Screens', 'Future'];
 const PER_GROUP = 5;

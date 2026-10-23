@@ -6,7 +6,7 @@
 import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate, newCoverage } from './schema.js';
 import { normalizeValue, isBlank, makeValue } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
-import { toMonthly } from '../calc/normalize.js';
+import { toMonthly } from '../engines/normalize.js';
 import { stampAll, META } from './records.js';
 
 // STEPS[n] turns a version n document into version n + 1.

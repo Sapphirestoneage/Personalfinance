@@ -3,7 +3,7 @@
 // calc/log.js and only applied here.
 
 import { newId } from './ids.js';
-import { merchantKey } from '../calc/tx-import.js';
+import { merchantKey } from '../engines/tx-import.js';
 import { FEE_LINES } from './schema.js';
 import { findLine, feeLine } from './edits.js';
 

@@ -5,7 +5,7 @@
 // from calc (summary.dreamLife, summary.eras); this screen only asks and words it.
 
 import { cashOnHandNote } from '../components/accounts.js';
-import { cashOnHand } from '../../calc/balances.js';
+import { cashOnHand } from '../../engines/balances.js';
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
@@ -73,7 +73,7 @@ function eraCard(ctx, s, e, i, count) {
     e.net !== null ? h('p', { class: 'small' },
       (e.incomeGuess || e.spendGuess) ? statusChip('guess') : null, ' ',
       h('b', { class: 'num' }, signedMoney(e.net)), ' a month, ', h('b', { class: 'num' }, signedMoney(e.total)), ' for the whole era' + (e.oneTimeBlank ? ' (one-time costs not entered yet)' : ' with one-time costs') + '. ',
-      t.cashKnown ? 'Cash ' + money(e.cashStart) + ' at the start, ' + money(e.cashEnd) + ' at the end.' : 'Cash changes by ' + signedMoney(e.cashEnd - e.cashStart) + ' over it.') : null,
+      t.cashKnown ? 'Cash ' + money(e.cashStart) + ' at the start, ' + money(e.cashEnd) + ' at the end.' : 'Cash changes by ' + signedMoney(e.cashChange) + ' over it.') : null,
     warn.map((w) => h('p', { class: 'small warn' }, w)));
 }
 

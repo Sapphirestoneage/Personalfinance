@@ -1,5 +1,5 @@
 // Future, Next stage: what the change would take, now vs next, stay vs
-// change over time, and the other measures. Numbers from src/calc/next-stage.js.
+// change over time, and the other measures. Numbers from src/engines/next-stage.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney } from '../format.js';

@@ -1,15 +1,15 @@
 // Every chart in SLAM, as a card: title, optional dollars/percent toggle, the
 // SVG, a legend, and a one-line plain-English reading. Data comes from
-// src/calc/chart-data.js; this file only lays it out and words it.
+// src/engines/chart-data.js; this file only lays it out and words it.
 
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, signedPct, monthLabel, less } from '../format.js';
-import * as cd from '../../calc/chart-data.js';
+import * as cd from '../../engines/chart-data.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { findLine } from '../../store/edits.js';
 import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } from './svg.js';
-import { drafttReading } from '../../calc/lenses.js';
-import { stressReading } from '../../calc/happiness.js';
+import { drafttReading } from '../../engines/lenses.js';
+import { stressReading } from '../../engines/happiness.js';
 import { changeIn } from '../components/jump.js';
 
 // --series-dream is the third series color; it draws the plan here (the dream life has its own card in Eras).

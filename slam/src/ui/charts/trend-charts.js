@@ -1,12 +1,12 @@
 // Insights, Over time, Trends (S-092): a range picker (last 3, 6, 12 months, all) and a
 // focus picker (a category, a line, or a merchant). Every number comes from
-// src/calc/trends.js; each chart has a one-line, descriptive reading.
+// src/engines/trends.js; each chart has a one-line, descriptive reading.
 
 import { h, options } from '../dom.js';
 import { money, pct, signedMoney, monthLabel, dayLabel, todayIso } from '../format.js';
 import { lines, scatter, waterfall, heatGrid, columns } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import * as tr from '../../calc/trends.js';
+import * as tr from '../../engines/trends.js';
 
 const short = (m) => monthLabel(m).slice(0, 3) + " '" + m.slice(2, 4);
 const RANGES = [['3', 'Last 3'], ['6', 'Last 6'], ['12', 'Last 12'], ['all', 'All']];
@@ -44,8 +44,7 @@ function merchantCards(ctx, months, merchant) {
   const v = tr.merchantVisits(ctx.doc, merchant, months);
   const t0 = months.length ? Date.parse(months[0] + '-01') : 0;
   const day = (d) => (Date.parse(d) - t0) / 86400000;
-  const visits = v.reduce((a, x) => a + x.visits, 0);
-  const total = v.reduce((a, x) => a + x.total, 0);
+  const range = tr.merchantRange(v);
   return [
     card(ctx, {
       id: 'trend-price', title: merchant + ': price over time',
@@ -55,7 +54,7 @@ function merchantCards(ctx, months, merchant) {
     card(ctx, {
       id: 'trend-visits', title: merchant + ': visits per month',
       svg: columns({ values: v.map((x) => ({ label: short(x.month), v: x.visits })), width: chartWidth(true), fmt: (n) => String(Math.round(n)), every: Math.max(1, Math.ceil(v.length / 6)) }),
-      reading: visits ? visits + ' visits, an average ticket of ' + money(total / visits, true) + '.' : 'No visits in this range.'
+      reading: range.visits ? range.visits + ' visits, an average ticket of ' + money(range.averageTicket, true) + '.' : 'No visits in this range.'
     })
   ];
 }
@@ -74,7 +73,7 @@ function chargesCard(ctx, months, catId, name) {
 // Categories by month, once (S-106: the sparkline copy of the same grid is gone).
 function gridCards(ctx, s, months) {
   const g = tr.categoryGrid(ctx.doc, s.history, months);
-  const top = g.rows.map((r) => ({ name: r.name, total: r.values.reduce((a, v) => a + (v || 0), 0) })).sort((a, b) => b.total - a.total)[0];
+  const top = g.top;
   return [
     card(ctx, {
       id: 'trend-heat', title: 'Categories by month',
@@ -89,11 +88,11 @@ function periodCards(ctx, s, months) {
   const withData = months.filter((m) => s.history.allKeys.includes(m) || m === doc.currentMonth);
   const to = withData[withData.length - 1];
   const mom = tr.monthOverMonth(doc, s.history, to);
-  const rows = [{ label: short(mom.from), from: 0, to: mom.before || 0, kind: 'total' }];
-  let run = mom.before || 0;
-  for (const x of mom.steps.slice(0, 8)) { rows.push({ label: x.name, from: run, to: run + x.change, kind: 'step' }); run += x.change; }
-  if (mom.steps.length > 8) { const rest = mom.steps.slice(8).reduce((a, x) => a + x.change, 0); rows.push({ label: 'Everything else', from: run, to: run + rest, kind: 'step' }); run += rest; }
-  rows.push({ label: short(mom.to), from: 0, to: mom.after || 0, kind: 'total' });
+  const wf = tr.waterfallSteps(mom, 8);
+  const rows = [{ label: short(mom.from), from: 0, to: wf.before, kind: 'total' }];
+  for (const x of wf.steps) rows.push({ label: x.name, from: x.from, to: x.to, kind: 'step' });
+  if (wf.rest) rows.push({ label: 'Everything else', from: wf.rest.from, to: wf.rest.to, kind: 'step' });
+  rows.push({ label: short(mom.to), from: 0, to: wf.after, kind: 'total' });
   const pace = tr.pacing(doc, doc.currentMonth, s.totals.planSpending);
   const now = todayIso();
   const today = now.slice(0, 7) === pace.month ? Number(now.slice(8)) : now.slice(0, 7) > pace.month ? pace.days : 0;

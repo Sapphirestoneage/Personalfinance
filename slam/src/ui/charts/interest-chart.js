@@ -4,10 +4,11 @@
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
+import { cardInterestTotal } from '../../engines/debts.js';
 
 function bars(rows) {
   const max = Math.max(0, ...rows.map((r) => r.amount || 0));
-  const total = rows.reduce((a, r) => (r.amount === null ? a : a + r.amount), 0);
+  const total = cardInterestTotal(rows);
   return h('div', {},
     rows.map((r) => h('div', { class: 'ibar-row', 'data-key': 'ibar:' + r.id },
       h('span', { class: 'ibar-name small' }, r.name),

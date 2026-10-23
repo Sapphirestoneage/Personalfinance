@@ -1,12 +1,12 @@
 // Loads the reference tables from data/ once, for the browser.
 
 const FILES = {
-  tax: 'data/tax-constants.json',
-  benchmarks: 'data/benchmarks.json',
-  averages: 'data/spending-averages.json',
-  merchantRules: 'data/merchant-rules.json',
-  subcategoryIdeas: 'data/subcategory-ideas.json',
-  eraTemplates: 'data/era-templates.json'
+  tax: 'src/data/tax-constants.json',
+  benchmarks: 'src/data/benchmarks.json',
+  averages: 'src/data/spending-averages.json',
+  merchantRules: 'src/data/merchant-rules.json',
+  subcategoryIdeas: 'src/data/subcategory-ideas.json',
+  eraTemplates: 'src/data/era-templates.json'
 };
 
 export async function loadRefs() {
@@ -33,13 +33,13 @@ export const DEMO_HOUSEHOLDS = [
 export const DEMO_CSVS = { jordan: [['jordan-chase.csv', 'Chase card', 'credit-card'], ['jordan-checking.csv', 'Checking', 'checking']] };
 
 export async function loadDemoCSV(file) {
-  const res = await fetch('test/households/' + file);
+  const res = await fetch('src/data/households/' + file);
   if (!res.ok) throw new Error('Could not load ' + file);
   return res.text();
 }
 
 export async function loadDemo(name) {
-  const res = await fetch('test/households/' + name + '.json');
+  const res = await fetch('src/data/households/' + name + '.json');
   if (!res.ok) throw new Error('Could not load demo ' + name);
   return res.json();
 }

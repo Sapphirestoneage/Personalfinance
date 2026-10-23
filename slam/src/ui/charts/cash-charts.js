@@ -2,7 +2,7 @@
 // future on one line, today marked, paydays and big bills labeled, days under the
 // cushion shaded), pay-later flags, the list by date, a month grid, and this month
 // so far. The forecast check is in Insights, Cash; the what-if (move a bill's due
-// day) is in Setup, Bills and due dates. Data from src/calc/calendar.js.
+// day) is in Setup, Bills and due dates. Data from src/engines/calendar.js.
 
 import { h, options } from '../dom.js';
 import { money, dayLabel, monthLabel, todayIso } from '../format.js';
@@ -11,7 +11,7 @@ import { card, chartWidth } from './catalog.js';
 import { calendarFor } from '../components/cashflow.js';
 import { emptyState } from '../components/jump.js';
 import { quickEntryButton } from '../components/quick-entry.js';
-import { cashCalendar, calendarReading, safeReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
+import { cashCalendar, calendarReading, safeReading, monthSoFar, daysInMonth, forecastCheck } from '../../engines/calendar.js';
 import { findLine } from '../../store/edits.js';
 import { makeValue } from '../../store/value.js';
 
@@ -56,15 +56,13 @@ function listCard(ctx, cal) {
     h('div', { class: 'num', style: 'text-align:right' }, h('div', {}, flow > 0 ? h('span', { class: 'in' }, '+' + money(flow, true)) : flow < 0 ? '-' + money(-flow, true) : ''), h('div', { class: 'xs muted' }, cash)));
   for (const d of cal.days) {
     if (d.date < from) continue;
-    let run = d.cash - d.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
     for (const it of d.items) {
       if (it.mirror || it.type === 'spread') continue;
-      if (it.cash) run += it.flow;
       const src = it.type === 'entry' ? SOURCE[it.source] || it.source : it.type === 'waiting' ? 'Waiting' : 'Scheduled';
-      rows.push(row(d.date, it.name, it.flow, it.cash ? 'cash ' + money(run) : 'on the card', src + ', ' + acct(it.account), d.today ? 'today-row' : null));
+      rows.push(row(d.date, it.name, it.flow, it.cash ? 'cash ' + money(it.cashAfter) : 'on the card', src + ', ' + acct(it.account), d.today ? 'today-row' : null));
     }
     const spread = d.items.filter((i) => i.type === 'spread');
-    if (spread.length) rows.push(row(d.date, 'Spread across the month', spread.reduce((a, i) => a + i.flow, 0), 'cash ' + money(d.cash), 'Plan, ' + spread.map((i) => i.name).join(', '), 'muted'));
+    if (spread.length) rows.push(row(d.date, 'Spread across the month', d.spreadTotal, 'cash ' + money(d.cash), 'Plan, ' + spread.map((i) => i.name).join(', '), 'muted'));
   }
   return h('div', { class: 'card', id: 'chart-cf-list' },
     h('h3', { style: 'margin:0' }, 'By date'),

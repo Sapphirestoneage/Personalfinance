@@ -3,10 +3,10 @@
 import { h } from '../dom.js';
 import { money } from '../format.js';
 import { DEMO_HOUSEHOLDS, DEMO_CSVS, loadDemo, loadDemoCSV } from '../refs.js';
-import { importCSV } from '../../calc/tx-import.js';
+import { importCSV } from '../../engines/tx-import.js';
 import { addAccount } from '../../store/accounts.js';
 import { mergeImport } from '../../store/log.js';
-import { matchImport } from '../../calc/log.js';
+import { matchImport } from '../../engines/log.js';
 
 function download(filename, text) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));

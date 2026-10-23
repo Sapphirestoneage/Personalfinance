@@ -5,7 +5,7 @@ import { h, options } from '../dom.js';
 import { money } from '../format.js';
 import { question } from './value-input.js';
 import { jumpLink } from './jump.js';
-import { coverageSummary, parentsPlan, PARENTS_PLAN_MAX_AGE, HOW_LABELS } from '../../calc/coverage.js';
+import { coverageSummary, parentsPlan, PARENTS_PLAN_MAX_AGE, HOW_LABELS } from '../../engines/coverage.js';
 import { COVERAGE_HOW } from '../../store/schema.js';
 
 // "Covered by a parent's plan. No premium. Change in Setup"

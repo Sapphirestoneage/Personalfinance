@@ -7,23 +7,23 @@
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
-import { minimumAmount, linkedLine } from '../../calc/debts.js';
+import { minimumAmount, linkedLine } from '../../engines/debts.js';
 import { valueInput } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { findCategory } from '../../store/edits.js';
 import { coverageNote } from '../components/coverage.js';
 import { incomeFillCard } from '../components/income-month.js';
-import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+import { PREMIUM_LINE_TYPES } from '../../engines/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
 import { outlookLine } from '../components/outlook.js';
 import { closedMonthTable } from '../components/budget-table.js';
-import { monthRows } from '../../calc/history.js';
-import { bridgeFor } from '../../calc/bridge.js';
+import { monthRows } from '../../engines/history.js';
+import { bridgeFor } from '../../engines/bridge.js';
 import { mistakePicker } from '../charts/catalog.js';
 import { jumpLink } from '../components/jump.js';
 import { monthLabel } from '../format.js';
 import { openQuickEntry } from '../components/quick-entry.js';
-import { gapLines, reviewRows } from '../../calc/loop.js';
+import { gapLines, reviewRows } from '../../engines/loop.js';
 import { logEntriesFor, removeTransaction } from '../../store/edits.js';
 import { editEntry } from '../../store/log.js';
 import { makeValue } from '../../store/value.js';

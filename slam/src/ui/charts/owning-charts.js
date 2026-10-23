@@ -5,7 +5,7 @@
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
-import { owningCosts } from '../../calc/owning.js';
+import { owningCosts } from '../../engines/owning.js';
 import { jumpLink } from '../components/jump.js';
 import { statusChip } from '../components/status.js';
 import { todayIso } from '../format.js';

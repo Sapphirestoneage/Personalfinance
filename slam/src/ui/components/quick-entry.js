@@ -8,7 +8,7 @@ import { h, options } from '../dom.js';
 import { money, todayIso } from '../format.js';
 import { parseAmount } from './value-input.js';
 import { addEntry } from '../../store/log.js';
-import { recentLines, lastAccount } from '../../calc/log.js';
+import { recentLines, lastAccount } from '../../engines/log.js';
 
 export function openQuickEntry(ctx, preset = {}) {
   ctx.ui.qe = { kind: 'spend', amount: '', lineId: null, incomeId: null, date: todayIso(), merchant: '', note: '', account: lastAccount(ctx.doc), search: '', ...preset };

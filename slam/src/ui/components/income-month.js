@@ -7,7 +7,8 @@ import { money, signedMoney, monthLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { statusChip } from './status.js';
 import { openQuickEntry } from './quick-entry.js';
-import { incomeMonth } from '../../calc/income-month.js';
+import { incomeMonth } from '../../engines/income-month.js';
+import { minus } from '../../engines/money.js';
 import { setIncomeActual } from '../../store/edits.js';
 import { setPlanIncome } from '../../store/plans.js';
 import { editEntry } from '../../store/log.js';
@@ -18,7 +19,7 @@ const actualText = (x) => (x.from === 'log' ? 'from your log, ' + x.count + (x.c
 // Read-only rows, one line each: source, estimate, plan, actual, actual vs plan.
 // rows: [{ id, name, estimate, plan, planNote, actual, from, count }].
 export function incomeRowsList(rows, total, key = 'income-rows') {
-  const vs = (r) => (r.actual === null || r.plan === null ? '' : signedMoney(r.actual - r.plan));
+  const vs = (r) => { const g = minus(r.actual, r.plan); return g === null ? '' : signedMoney(g); };
   return h('div', { class: 'table-wrap' }, h('table', { class: 'budget tight', 'data-key': key },
     h('thead', {}, h('tr', {}, ['Income', 'Estimate', 'Plan', 'Actual', 'Vs plan'].map((x) => h('th', {}, x)))),
     h('tbody', {},
@@ -77,11 +78,11 @@ export function incomeTableRows(summary, cols) {
   const im = summary.totals.income;
   const cell = (key, x) => {
     if (key === 'name') return h('td', {}, x.label || 'Income');
-    const val = { estimate: money(x.estimate), plan: summary.plan ? money(x.plan) : null, actual: money(x.actual), gap: x.actual === null || x.estimate === null ? '' : signedMoney(x.actual - x.estimate), planGap: x.actual === null || x.plan === null ? '' : signedMoney(x.actual - x.plan) }[key];
+    const val = { estimate: money(x.estimate), plan: summary.plan ? money(x.plan) : null, actual: money(x.actual), gap: x.gapFromEstimate === null ? '' : signedMoney(x.gapFromEstimate), planGap: x.gapFromPlan === null ? '' : signedMoney(x.gapFromPlan) }[key];
     return h('td', { class: 'num ' + (cols.find((c) => c[0] === key) || [, , ''])[2] }, val === undefined || val === null ? '' : val);
   };
   return [
     ...im.sources.map((x) => h('tr', { class: 'income-row', 'data-key': 'tbl-income:' + x.id }, cols.map(([key]) => cell(key, x)))),
-    h('tr', { class: 'income-total' }, cols.map(([key]) => cell(key, { label: 'Income' + (im.tracked ? '' : ' (not tracked this month)'), estimate: im.estimate, plan: im.plan, actual: im.actual })))
+    h('tr', { class: 'income-total' }, cols.map(([key]) => cell(key, { label: 'Income' + (im.tracked ? '' : ' (not tracked this month)'), estimate: im.estimate, plan: im.plan, actual: im.actual, gapFromEstimate: im.gapFromEstimate, gapFromPlan: im.gapFromPlan })))
   ];
 }

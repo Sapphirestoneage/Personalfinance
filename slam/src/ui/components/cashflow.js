@@ -5,16 +5,16 @@
 
 import { h, options } from '../dom.js';
 import { money, todayIso, dayLabel, monthLabel } from '../format.js';
-import { paidAheadSchedules, firstMonth } from '../../calc/paid-ahead.js';
+import { paidAheadSchedules, firstMonth } from '../../engines/paid-ahead.js';
 import { valueInput, parseAmount } from './value-input.js';
 import { quickEntryButton } from './quick-entry.js';
 import { jumpLink, emptyState } from './jump.js';
 import { howButton, howPanel, sourceLink } from './how.js';
-import { explain } from '../../calc/explain.js';
-import { liabilities } from '../../calc/balances.js';
-import { PREMIUM_LINE_TYPES, premiumFor } from '../../calc/coverage.js';
-import { linkedLine } from '../../calc/debts.js';
-import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
+import { explain } from '../../engines/explain.js';
+import { liabilities } from '../../engines/balances.js';
+import { PREMIUM_LINE_TYPES, premiumFor } from '../../engines/coverage.js';
+import { linkedLine } from '../../engines/debts.js';
+import { cashCalendar, calendarReading, safeReading } from '../../engines/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
 

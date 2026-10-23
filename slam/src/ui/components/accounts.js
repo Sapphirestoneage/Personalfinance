@@ -8,11 +8,11 @@ import { money, monthLabel, todayIso, dayLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
 import { addAccount, setBalance, setAccountField, setBalanceDate, setPurchase, setAlternative, setAccountNotes } from '../../store/accounts.js';
-import { balancesFor, ACCOUNT_GROUPS, kindOf, balanceAt } from '../../calc/balances.js';
-import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
+import { balancesFor, ACCOUNT_GROUPS, kindOf, balanceAt } from '../../engines/balances.js';
+import { netWorthAt, LABELS as NW_LABELS } from '../../engines/networth.js';
 import { jumpLink } from './jump.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
-import { paidAheadSchedules, scheduleAt } from '../../calc/paid-ahead.js';
+import { paidAheadSchedules, scheduleAt } from '../../engines/paid-ahead.js';
 
 // "Type not set" is never picked; it only shows on an account that still has it (S-116).
 export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.filter((t) => t !== 'unset').map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);

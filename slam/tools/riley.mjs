@@ -10,8 +10,8 @@
 // March, June, and October 2026 are written out by hand (test/riley.test.js
 // checks them by hand). Run from the slam folder:
 //   node tools/riley.mjs
-// Writes test/households/riley.json and the CSV files it imported
-// (test/households/riley-YYYY-MM-<account>.csv).
+// Writes src/data/households/riley.json and the CSV files it imported
+// (src/data/households/riley-YYYY-MM-<account>.csv).
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createStore } from '../src/store/store.js';
@@ -23,19 +23,19 @@ import { addAccount, setBalance, setAccountField, setDeductionAccount, setAltern
 import { addEntry, editEntry, mergeImport, confirmMatch } from '../src/store/log.js';
 import { confirmScheduled, saveForecast } from '../src/store/cashflow.js';
 import { startPlan, copyPlanForward, setPlanAmount } from '../src/store/plans.js';
-import { planStartValues } from '../src/calc/plan.js';
-import { importCSV } from '../src/calc/tx-import.js';
-import { matchImport, matchSummary } from '../src/calc/log.js';
-import { scheduledItems, forecastFor } from '../src/calc/calendar.js';
-import { incomeSummary } from '../src/calc/income.js';
-import { buildSummary, closeMonthSnapshot, snapshotOf } from '../src/calc/summary.js';
-import { monthReview, lastDay } from '../src/calc/loop.js';
+import { planStartValues } from '../src/engines/plan.js';
+import { importCSV } from '../src/engines/tx-import.js';
+import { matchImport, matchSummary } from '../src/engines/log.js';
+import { scheduledItems, forecastFor } from '../src/engines/calendar.js';
+import { incomeSummary } from '../src/engines/income.js';
+import { buildSummary, closeMonthSnapshot, snapshotOf } from '../src/engines/summary.js';
+import { monthReview, lastDay } from '../src/engines/loop.js';
 
 const root = new URL('../', import.meta.url);
 const json = (p) => JSON.parse(readFileSync(new URL(p, root), 'utf8'));
 const refs = {
-  tax: json('data/tax-constants.json'), benchmarks: json('data/benchmarks.json'), averages: json('data/spending-averages.json'),
-  merchantRules: json('data/merchant-rules.json'), subcategoryIdeas: json('data/subcategory-ideas.json'), eraTemplates: json('data/era-templates.json')
+  tax: json('src/data/tax-constants.json'), benchmarks: json('src/data/benchmarks.json'), averages: json('src/data/spending-averages.json'),
+  merchantRules: json('src/data/merchant-rules.json'), subcategoryIdeas: json('src/data/subcategory-ideas.json'), eraTemplates: json('src/data/era-templates.json')
 };
 
 // A small seeded random number generator (mulberry32), so every run is the same.
@@ -190,7 +190,7 @@ function importRows(month, rows, after) {
   for (const [acct, list] of Object.entries(rows)) {
     const text = 'Date,Description,Amount\n' + list.join('\n') + '\n';
     const file = 'riley-' + month + '-' + acct + '.csv';
-    writeFileSync(new URL('test/households/' + file, root), text);
+    writeFileSync(new URL('src/data/households/' + file, root), text);
     csvFiles.push(file);
     at(lastDay(month) + 'T18:00:00Z');
     const res = importCSV(text, { account: acct, rulesData: refs.merchantRules, memory: store.doc.merchantMemory });
@@ -474,7 +474,7 @@ at(TODAY + 'T18:00:00Z');
 upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-23'); });
 
 const doc = store.doc;
-writeFileSync(new URL('test/households/riley.json', root), JSON.stringify(doc, null, 1) + '\n');
+writeFileSync(new URL('src/data/households/riley.json', root), JSON.stringify(doc, null, 1) + '\n');
 console.log('Wrote riley.json: ' + doc.transactions.length + ' log entries, ' + doc.months.length + ' closed months, ' + doc.estimateLog.length + ' estimate changes, CSVs ' + csvFiles.join(', '));
 console.log('Lowest checking: ' + lowChecking.amount + ' on ' + lowChecking.date + '; September Visa statement ' + octV + '; Sep-end checking ' + ends['2026-09'].chk);
 console.log('Balances at each month end: ' + JSON.stringify(ends));

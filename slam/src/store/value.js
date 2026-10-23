@@ -1,6 +1,11 @@
 // The Value: every amount in SLAM is one of these. An amount plus how it was
 // given (cadence), how sure we are (status), and who said it (source).
 
+import { PART_CADENCES, sumParts } from '../engines/normalize.js';
+
+// Re-exported so the pieces that always read them from here keep working; the math lives in the engines.
+export { PART_CADENCES, sumParts };
+
 export const CADENCES = ['paycheck', 'week', 'month', 'year', 'one-off'];
 export const STATUSES = ['known', 'roughly', 'will-email', 'dont-know', 'not-for-me', 'guess', 'computed'];
 export const SOURCES = ['client', 'coach', 'lookup', 'app'];
@@ -18,23 +23,6 @@ export function makeValue(amount = null, opts = {}) {
   // Optional items inside one amount (Uber, bus, subway); the amount is their sum.
   if (Array.isArray(opts.parts) && opts.parts.length) v.parts = opts.parts.map((p) => ({ name: String(p.name || ''), amount: p.amount === undefined ? null : p.amount, ...(p.cadence ? { cadence: p.cadence } : {}) }));
   return v;
-}
-
-// The amount of a split value: the sum of the items that have a number, or
-// null when none do (empty is not zero).
-// Items can each have their own cadence (S-074): week, month, or year. An item
-// with none is in the value's own cadence. Mixed items are added up a year at a
-// time and turned into the value's cadence, to the cent.
-export const PART_CADENCES = { week: 52, month: 12, year: 1 };
-
-export function sumParts(parts, cadence) {
-  const known = parts.filter((p) => p.amount !== null);
-  if (!known.length) return null;
-  const mixed = known.some((p) => p.cadence && p.cadence !== cadence);
-  const total = mixed && PART_CADENCES[cadence]
-    ? known.reduce((a, p) => a + p.amount * PART_CADENCES[p.cadence || cadence], 0) / PART_CADENCES[cadence]
-    : known.reduce((a, p) => a + p.amount, 0);
-  return Math.round(total * 100) / 100;
 }
 
 // Fill in missing keys so compact test files and older exports load cleanly.

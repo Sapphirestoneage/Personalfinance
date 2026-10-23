@@ -6,7 +6,7 @@ import { h } from '../dom.js';
 import { outlookLine } from './outlook.js';
 import { money, pct, signedMoney, signedPct, times, inLens } from '../format.js';
 import { statusChip } from './status.js';
-import { inUnit } from '../../calc/lenses.js';
+import { inUnit } from '../../engines/lenses.js';
 import { parseAmount } from './value-input.js';
 import { sourceLink } from './how.js';
 import { incomeTableRows } from './income-month.js';

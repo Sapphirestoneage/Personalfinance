@@ -1,7 +1,7 @@
 // Insights, Cash (S-106): top 5 merchants and their share, spending by
 // weekday with the weekend split, small-and-frequent vs big-and-rare, the
 // subscriptions list with yearly cost, and what the transactions show (moved
-// from the Cash flow pass). Data from src/calc/tx-analysis.js.
+// from the Cash flow pass). Data from src/engines/tx-analysis.js.
 
 import { h } from '../dom.js';
 import { money, pct } from '../format.js';

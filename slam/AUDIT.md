@@ -1,5 +1,7 @@
 # Phase 5 self-audit (2026-10-15)
 
+> Paths named below are as they were when each entry was written. On 2026-10-23 the folders were renamed: `src/calc/` is now `src/engines/`, `test/` is `tests/`, `data/` is `src/data/`, and `test/households/` is `src/data/households/`. The entries themselves are unchanged.
+
 ## Tests
 
 - `node --test`: 83 tests, all passing (store, math, chart data, four households, and the Jordan transaction household added in Phase 6).

@@ -6,7 +6,7 @@
 //
 // Run from the slam folder:
 //   node tools/dana.mjs
-// Writes test/households/dana.json.
+// Writes src/data/households/dana.json.
 
 import { writeFileSync } from 'node:fs';
 import { createStore } from '../src/store/store.js';
@@ -16,10 +16,10 @@ import { makeDate } from '../src/store/schema.js';
 import { addIncome, addDebt, addDeduction, addLine, findLine, setField } from '../src/store/edits.js';
 import { addAccount, setBalance, setAccountField, setDeductionAccount, setAlternative, setPurchase } from '../src/store/accounts.js';
 import { startPlan, copyPlanForward } from '../src/store/plans.js';
-import { planStartValues } from '../src/calc/plan.js';
-import { buildSummary, closeMonthSnapshot } from '../src/calc/summary.js';
-import { monthReview, lastDay } from '../src/calc/loop.js';
-import { loadRefs } from '../test/helpers.js';
+import { planStartValues } from '../src/engines/plan.js';
+import { buildSummary, closeMonthSnapshot } from '../src/engines/summary.js';
+import { monthReview, lastDay } from '../src/engines/loop.js';
+import { loadRefs } from '../tests/helpers.js';
 
 const root = new URL('../', import.meta.url);
 const refs = loadRefs();
@@ -135,5 +135,5 @@ CLOSED.forEach((month, i) => {
 
 at('2026-10-17T18:00:00Z');
 upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate = makeDate('2026-10-31'); });
-writeFileSync(new URL('test/households/dana.json', root), JSON.stringify(store.doc, null, 1) + '\n');
+writeFileSync(new URL('src/data/households/dana.json', root), JSON.stringify(store.doc, null, 1) + '\n');
 console.log('Wrote dana.json: ' + store.doc.months.length + ' closed months, now on ' + store.doc.currentMonth);

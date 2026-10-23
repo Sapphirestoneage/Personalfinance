@@ -6,12 +6,12 @@
 
 import { h } from '../dom.js';
 import { money, signedMoney, pct, monthLabel, dayLabel, todayIso } from '../format.js';
-import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../calc/loop.js';
-import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
-import { forecastFor } from '../../calc/calendar.js';
+import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../engines/loop.js';
+import { closeMonthSnapshot, snapshotOf } from '../../engines/summary.js';
+import { forecastFor } from '../../engines/calendar.js';
 import { saveForecast } from '../../store/cashflow.js';
-import { netWorthBridge } from '../../calc/networth-bridge.js';
-import { milestones, netWorthByMonth } from '../../calc/networth.js';
+import { netWorthBridge } from '../../engines/networth-bridge.js';
+import { milestones, netWorthByMonth } from '../../engines/networth.js';
 import { incomeRowsList } from './income-month.js';
 
 const link = (ctx, where, text) => h('a', { href: '#', 'data-key': 'go-' + where, onclick: (e) => { e.preventDefault(); ctx.jump(where); } }, text);

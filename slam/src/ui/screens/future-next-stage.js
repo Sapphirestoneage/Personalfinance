@@ -3,14 +3,14 @@
 // Results are in the charts under it on the Future screen.
 
 import { cashOnHandNote } from '../components/accounts.js';
-import { cashOnHand } from '../../calc/balances.js';
+import { cashOnHand } from '../../engines/balances.js';
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
 import { makeValue } from '../../store/value.js';
 import { parseAmount } from '../components/value-input.js';
 import { question } from '../components/value-input.js';
 import { startNextStage, addNextStageItem, removeNextStageItem } from '../../store/edits.js';
-import { DEFAULT_METRICS } from '../../calc/next-stage.js';
+import { DEFAULT_METRICS } from '../../engines/next-stage.js';
 
 function numberField(ctx, label, value, set, key) {
   return h('label', { class: 'field' }, h('span', { class: 'lbl' }, label),

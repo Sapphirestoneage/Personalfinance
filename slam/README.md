@@ -73,10 +73,10 @@ against the log first. The Jordan demo comes with two sample files; Riley's year
 | Folder | What lives there |
 | --- | --- |
 | `src/store/` | number store: schema, validation, migrations, save and load, client list, export and import, undo and redo, month close |
-| `src/calc/` | pure math functions. Every number on every screen comes from here |
+| `src/engines/` | pure math functions. Every number on every screen comes from here |
 | `src/ui/` | the screens (`nav.js` maps where everything lives), components, SVG charts, and `tokens.css` (every color and font) |
-| `data/` | reference tables (tax constants, averages, the 50/30/20 and housing reference lines, merchant rules), each with source and year |
-| `test/` | unit tests, plus `test/households/` with synthetic households and hand-computed expected answers |
+| `src/data/` | reference tables (tax constants, averages, the 50/30/20 and housing reference lines, merchant rules), each with source and year, and `src/data/households/`: the demo households (also the test households) with their hand-computed expected answers |
+| `tests/` | unit tests (`node --test`), with `tests/fixtures/` for older export shapes |
 
 ## The screens
 

@@ -3,7 +3,7 @@
 
 import { h } from '../dom.js';
 import { signedMoney, money, todayIso } from '../format.js';
-import { monthOutlook } from '../../calc/calendar.js';
+import { monthOutlook } from '../../engines/calendar.js';
 
 // opts.short: the two numbers alone (Review, where the page is already long).
 export function outlookLine(ctx, summary, key, opts = {}) {

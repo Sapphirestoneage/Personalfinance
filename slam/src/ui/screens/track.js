@@ -10,11 +10,11 @@ import { waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { cashflowCards } from '../charts/cash-charts.js';
 import { emptyState } from '../components/jump.js';
 import { money, monthLabel } from '../format.js';
-import { importCSV, FORMATS } from '../../calc/tx-import.js';
+import { importCSV, FORMATS } from '../../engines/tx-import.js';
 import { setTransactionLine, setTransactionKind, removeTransaction } from '../../store/edits.js';
 import { mergeImport, confirmMatch, rejectMatch, markNotDuplicate, editEntry } from '../../store/log.js';
 import { parseAmount } from '../components/value-input.js';
-import { matchImport, matchSummary, isPending, sourceOf } from '../../calc/log.js';
+import { matchImport, matchSummary, isPending, sourceOf } from '../../engines/log.js';
 import { quickEntryButton } from '../components/quick-entry.js';
 import { dayLabel } from '../format.js';
 

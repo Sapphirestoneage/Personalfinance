@@ -6,9 +6,9 @@ import { h, options } from '../dom.js';
 import { money, signedMoney, monthLabel, todayIso } from '../format.js';
 import { waterfall, lines, hbars } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import { netWorthBridge, netWorthBridgeRows } from '../../calc/networth-bridge.js';
-import { balanceMonths, netWorthAt, netWorthByMonth, milestones, seriesChange, LABELS, EXPLAIN } from '../../calc/networth.js';
-import { explain } from '../../calc/explain.js';
+import { netWorthBridge, netWorthBridgeRows } from '../../engines/networth-bridge.js';
+import { balanceMonths, netWorthAt, netWorthByMonth, milestones, seriesChange, LABELS, EXPLAIN } from '../../engines/networth.js';
+import { explain } from '../../engines/explain.js';
 import { jumpLink } from '../components/jump.js';
 import { howButton, howPanel } from '../components/how.js';
 

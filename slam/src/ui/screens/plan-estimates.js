@@ -8,15 +8,15 @@ import { question, valueInput } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
 import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber, removeLine, addIncome, setSplitPays } from '../../store/edits.js';
-import { parseQuickLines } from '../../calc/quick-lines.js';
+import { parseQuickLines } from '../../engines/quick-lines.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageNote } from '../components/coverage.js';
-import { parentsPlan, premiumFor, coverageSummary, PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
+import { parentsPlan, premiumFor, coverageSummary, PREMIUM_LINE_TYPES } from '../../engines/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { jumpLink } from '../components/jump.js';
-import { lastActual } from '../../calc/history.js';
-import { toMonthly } from '../../calc/normalize.js';
+import { lastActual } from '../../engines/history.js';
+import { toMonthly } from '../../engines/normalize.js';
 import { setPlanAmount } from '../../store/plans.js';
 import { nextMonthKey } from '../../store/months.js';
 
@@ -305,8 +305,7 @@ export function renderEstimates(ctx, summary, key) {
         !open ? null : h('div', { class: 'row' }, isRough ? null : addLineButton(ctx, cat.id),
           isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
-    const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
-      : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
+    const fromPay = summary.income.fromPaycheckByLineType[r.type];
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null },

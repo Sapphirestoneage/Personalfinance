@@ -12,10 +12,10 @@ import { budgetCashStrip } from '../components/cashflow.js';
 import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
 import { INSIGHT_TABS } from '../nav.js';
-import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
-import { promoWarnings } from '../../calc/debts.js';
-import { monthOutlook } from '../../calc/calendar.js';
-import { explain } from '../../calc/explain.js';
+import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../engines/loop.js';
+import { promoWarnings } from '../../engines/debts.js';
+import { monthOutlook } from '../../engines/calendar.js';
+import { explain } from '../../engines/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
 function tile(label, value, sub, cls) {
