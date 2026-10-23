@@ -23,7 +23,7 @@ function metricCard(m, ctx) {
     h('details', { class: 'inputs' }, h('summary', {}, 'Inputs (' + e.terms.length + ')'),
       h('ul', { class: 'math-terms' }, e.terms.map((t) => h('li', { class: 'math-term' }, chip(t.kind), ' ',
         t.path ? h('a', { href: ledgerHref(t.path) }, t.label) : t.metric ? h('a', { href: '#metric-' + t.metric.split(':')[0] }, t.label) : t.rule ? h('a', { href: '#rule-' + t.rule }, t.label) : t.label,
-        ' ', h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit)))))),
+        ' ', h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind)))))),
     e.rules.length ? h('p', { class: 'math-rules' }, 'Rules: ', ...e.rules.flatMap((r, i) => [i ? ', ' : '', h('a', { href: '#rule-' + r }, r)])) : null);
 }
 

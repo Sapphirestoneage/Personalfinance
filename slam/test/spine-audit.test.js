@@ -91,6 +91,7 @@ test('c. units are declared and never mixed', () => {
 test('d. missing never shows as $0', () => {
   assert.notEqual(money(null), '$0');
   assert.equal(showNumber(null, 'usd'), 'missing');
+  assert.equal(showNumber(null, 'usd', 'notForMe'), 'does not apply', 'not for me is not missing');
   for (const h of ALL) for (const id of idsFor(h)) {
     const e = explainMetric(id, { spine: h.spine, rules: R, s: h.s });
     for (const t of e.terms) if (t.value === null) assert.ok(!/\$0\.00/.test(showNumber(t.value, t.unit)), id + ': ' + t.label);

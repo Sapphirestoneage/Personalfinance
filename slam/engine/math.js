@@ -165,8 +165,9 @@ export function flagMath(flag) {
 
 // ---------------------------------------------------------------- explain, plug in, recompute
 const UNIT_FMT = { usd: (x) => money(x, true), 'usd/month': (x) => money(x, true), 'usd/year': (x) => money(x, true), months: (x) => (Math.round(x * 100) / 100) + ' months', years: (x) => (Math.round(x * 10) / 10) + ' years', ratio: (x) => (Math.round(x * 10000) / 100) + '%', age: (x) => String(x), count: (x) => String(x) };
-// One number in its unit; a missing one reads "missing", never $0.
-export const showNumber = (x, unit) => (x === null || x === undefined ? 'missing' : (UNIT_FMT[unit] || String)(x));
+// One number in its unit; a missing one reads "missing" and one marked not for
+// me reads "does not apply", never $0.
+export const showNumber = (x, unit, kind = null) => (kind === 'notForMe' ? 'does not apply' : x === null || x === undefined ? 'missing' : (UNIT_FMT[unit] || String)(x));
 
 export function recompute(m, terms, ctx) {
   const val = (t) => t.value;
@@ -191,7 +192,7 @@ export function recompute(m, terms, ctx) {
 }
 
 function plugged(m, terms, value) {
-  const f = (t) => showNumber(t.value, t.unit);
+  const f = (t) => showNumber(t.value, t.unit, t.kind);
   let left;
   if (m.op === 'sum') left = terms.map((t, i) => (i === 0 ? (t.role === 'minus' ? '- ' : '') : t.role === 'minus' ? ' - ' : ' + ') + f(t)).join('') || '0';
   else if (m.op === 'ratio') {

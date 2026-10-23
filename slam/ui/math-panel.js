@@ -10,7 +10,7 @@ import { h, chip, ledgerHref } from './view.js';
 const KIND_TEXT = { known: 'known', rough: 'rough', missing: 'missing', computed: 'computed', incomplete: 'incomplete', notForMe: 'not for me' };
 
 function termEl(t, ctx, depth) {
-  const value = h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit));
+  const value = h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind));
   const label = t.path ? h('a', { href: ledgerHref(t.path), title: 'Open this field in the Ledger' }, t.label)
     : t.rule ? h('a', { href: 'math.html#rule-' + t.rule, title: 'See this rule' }, t.label) : h('span', {}, t.label);
   const li = h('li', { class: 'math-term' }, chip(t.kind), ' ', label, ' ', value);
