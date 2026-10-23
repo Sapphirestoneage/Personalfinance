@@ -45,7 +45,8 @@ export function showValue(value, type) {
     return (value.intro.rate === null ? 'intro rate not given' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given)') + ', then ' + after;
   }
   if (type === 'money') return money(value, !Number.isInteger(value));
-  if (type === 'rate') return pct(value, Math.abs(value * 100 - Math.round(value * 100)) > 1e-9 ? 2 : 0);
+  // Whole percents plain, others to two places without a trailing zero (3.5%, 24.99%).
+  if (type === 'rate') { const p = Math.abs(value * 100 - Math.round(value * 100)) > 1e-9; return p ? pct(value, 2).replace(/(\.\d)0%$/, '$1%') : pct(value, 0); }
   if (type === 'bool') return value ? 'Yes' : 'No';
   if (type === 'date') return shortDate(value);
   if (type === 'list') {

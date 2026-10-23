@@ -326,3 +326,21 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 /* Tiles (DESIGN.md 2, 15): the big number in the same sans, plain figures; a link under it says where it opens. */
 .tile-value { font-family: var(--font-ui); font-variant-numeric: normal; letter-spacing: -0.01em; margin: var(--space-1) 0; }
 .tile-view { font-size: var(--text-sm); font-weight: 600; min-height: var(--tap); display: inline-flex; align-items: center; justify-self: start; }
+
+/* Page links above the title (DESIGN.md 6): navigation is a link, never a button. */
+.page-links { display: flex; gap: var(--space-4); margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 600; }
+.page-links a { min-height: var(--tap); display: inline-flex; align-items: center; }
+
+/* Fold marks are the row chevron, turned down when open (CLAUDE.md affordance 5). */
+.fold-mark { font-family: var(--font-ui); font-size: 1.3rem; line-height: 1; transition: transform 0.15s ease; }
+.fold[aria-expanded="true"] .fold-mark { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .fold-mark { transition: none; } }
+
+/* Count buttons (S-168) look small but tap at 44px: an invisible margin of
+   touch around a compact pill, so they sit on the item's own line on a phone. */
+button.dot { position: relative; min-height: 0; min-width: 0; padding: 2px var(--space-2); line-height: 1.4; }
+button.dot::after { content: ""; position: absolute; inset: -11px -4px; }
+.node-head, .item-head { flex-wrap: nowrap; }
+.item-fold { min-width: 0; }
+.item-name { min-width: 0; overflow-wrap: anywhere; }
+.group-counts { flex: none; gap: var(--space-3); }

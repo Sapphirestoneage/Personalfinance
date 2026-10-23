@@ -659,7 +659,14 @@ function addForm(n) {
 function addButton(n) {
   if (!n.add || selecting) return null;
   if (adding === n.key) return addForm(n);
-  const what = n.add.types && n.add.types.length === 1 && PRESETS[n.add.types[0]] ? 'a ' + PRESETS[n.add.types[0]].label.toLowerCase() : ADD_WORDS[n.add.collection];
+  // "an auto loan", "a Roth IRA": the article by sound, names keep their capitals.
+  const name = n.add.types && n.add.types.length === 1 && PRESETS[n.add.types[0]] ? PRESETS[n.add.types[0]].label : null;
+  const lower = name && !/^[A-Z0-9]{2}|^[A-Z][a-z]*\b [A-Z]/.test(name) && !/\b(IRA|HSA|FSA|ABLE|ESPP|RSU|CD|TSP|SEP|SIMPLE|HELOC|BNPL|IOU|401|403|457|529)\b/.test(name) ? name.toLowerCase() : name;
+  const noun = lower && ['cash', 'taxable'].includes(PRESETS[n.add.types[0]].family) && !/account/i.test(lower) ? lower + ' account' : lower;
+  // Spelled-out letters that start with a vowel sound take "an" (an HSA, an IRA).
+  const acronym = noun && /^[A-Z]{2}/.test(noun);
+  const an = noun && (acronym ? 'AEFHILMNORSX'.includes(noun[0]) : /^[aeiou]/i.test(noun) && !/^(Roth|Uni)/.test(noun));
+  const what = noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
   return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; render(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
 }
 
@@ -679,7 +686,9 @@ function itemEl(it) {
   if (filtering() && !rows.length) return null;
   const isOpen = openItems.has(it.key) || (filtering() && rows.length > 0) || it.single;
   const main = it.summary && it.rows.find((r) => r.path === it.summary);
-  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type)) : '';
+  const stream = it.collection === 'income' ? (hist.present.income || []).find((x) => x.id === it.id) : null;
+  const often = stream ? { weekly: ' a week', biweekly: ' every two weeks', semimonthly: ' twice a month', monthly: ' a month', quarterly: ' a quarter', yearly: ' a year', total: ' in total', once: ' once' }[stream.cadence] || '' : '';
+  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type) + often) : '';
   if (it.single) return rows.map(rowEl).map((li) => { li.querySelector('.row-label').textContent = it.label; return li; });
   const toggle = () => { if (!canLeave()) return; if (openItems.has(it.key)) openItems.delete(it.key); else openItems.add(it.key); render(); };
   const remove = it.collection ? h('button', { type: 'button', class: 'btn ghost small', onclick: (e) => {
@@ -712,7 +721,7 @@ function itemEl(it) {
   return h('li', { class: 'item' + (isOpen ? ' open' : ''), id: 'item-' + it.key },
     h('div', { class: 'item-head' },
       h('button', { type: 'button', class: 'fold item-fold', 'aria-expanded': String(isOpen), onclick: toggle },
-        h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, isOpen ? '-' : '+'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
+        h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
     isOpen && !selecting ? h('div', { class: 'item-actions' }, dup, remove) : null);
@@ -729,7 +738,7 @@ function nodeEl(n, depth) {
   const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const rows = n.allRows.filter(shows); const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select all here') : null;
   return h('li', { class: 'node depth-' + depth, id: 'node-' + n.key },
     h('div', { class: 'node-head' },
-      h(Tag, {}, h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold }, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-'), n.label)),
+      h(Tag, {}, h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold }, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), n.label)),
       countBtns(n.counts), pickAll),
     folded ? null : sectionSharing(n),
     folded ? null : h('ul', { class: 'tree' }, kids),
@@ -743,7 +752,7 @@ function groupEl(g) {
   const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== g.key) : [...view.folded, g.key] });
   return h('section', { class: 'card group', id: 'group-' + g.key, 'aria-labelledby': 'h-' + g.key },
     h('h2', { id: 'h-' + g.key },
-      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.key), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-')),
+      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.key), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›')),
       countBtns(g.counts)),
     folded ? null : h('ul', { class: 'tree' }, kids.length ? kids : h('li', { class: 'muted' }, 'Nothing here yet.')),
     folded ? null : addButton(g));
@@ -771,19 +780,21 @@ function render() {
   const caret = focusId === 'ledger-search' ? document.activeElement.selectionStart : null;
   // Empty slots (no picker, no banner) are left out, never drawn as text.
   app.replaceChildren(...[
+    // Going somewhere is a link; doing something is a button (CLAUDE.md affordances 1 and 4).
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {},
         h('h1', {}, 'Ledger'),
         h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' },
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
-        h('button', { class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : null, onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, canRedo(hist) ? 'Redo' : 'Nothing to redo'),
+        // Redo shows only when there is something to redo.
+        canRedo(hist) ? h('button', { class: 'btn', title: 'Redo ' + redoLabel(hist), onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo') : null,
         h('button', { type: 'button', class: matchesFile(spine) ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
         h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
         h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
         h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); render(); document.getElementById('picker')?.scrollIntoView({ block: 'start' }); } }, 'Pick what you have'),
-        h('a', { class: 'btn', href: 'math.html' }, 'All formulas'),
-        h('a', { class: 'btn', href: 'dashboard.html' }, 'Dashboard'))),
+        )),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
     picking ? pickerCard() : null,

@@ -77,7 +77,12 @@ export function buildFlags(spine, rules, s) {
   const nextDate = tax.nextEstimated;
   let taxStage, taxNext = null;
   const setAsidePath = ty && ty.setAside ? 'taxYears.' + ty.id + '.setAside' : null;
-  const coverGoal = (stageWord) => goal(asOf, stageWord + 'set aside ' + money(Math.ceil(Math.max(0, due))) + ' for the ' + year + ' tax by ' + longDate(nextDate.date) + (setAside ? ' (' + money(Math.ceil(Math.max(0, due - setAside))) + ' more than the ' + money(setAside) + ' set aside)' : ''), { target: Math.ceil(Math.max(0, due)), gap: Math.max(0, due - (setAside || 0)), by: nextDate.date, path: setAsidePath });
+  // The goal matches the monthly tax set-aside (S-180): the balance due, by the return date,
+  // at the set-aside's own monthly amount, so the flag and the surplus line agree.
+  const returnDue = (year + 1) + '-' + R('TAX_RETURN_DUE');
+  const line = (s.cashflow.taxSetAside.lines || []).find((l) => l.kind === 'balance' && l.taxYear === year);
+  const pace = line && line.amount ? ' (' + money(Math.ceil(line.amount)) + ' a month, the tax set-aside)' : '';
+  const coverGoal = (stageWord) => goal(asOf, stageWord + 'set aside ' + money(Math.ceil(Math.max(0, due))) + ' for the ' + year + ' tax by ' + longDate(returnDue) + (setAside ? ', ' + money(Math.ceil(Math.max(0, due - setAside))) + ' more than the ' + money(setAside) + ' set aside' : '') + pace, { target: Math.ceil(Math.max(0, due)), gap: Math.max(0, due - (setAside || 0)), path: setAsidePath });
   if (due === null) {
     taxStage = 'red';
     const first = tax.balanceDue.missing[0];
@@ -87,9 +92,9 @@ export function buildFlags(spine, rules, s) {
     if (taxStage === 'yellow') taxNext = goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + (tax.balanceDue.rough.length > 1 ? ' (and ' + (tax.balanceDue.rough.length - 1) + ' more rough inputs)' : ''), { path: tax.balanceDue.rough[0] });
   } else {
     taxStage = 'yellow';
-    taxNext = tax.balanceDue.kind === 'rough' ? goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + ', and ' + coverGoal('').text, { path: tax.balanceDue.rough[0], gap: Math.max(0, due - (setAside || 0)), by: nextDate.date }) : coverGoal('Next: ');
+    taxNext = tax.balanceDue.kind === 'rough' ? goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + ', and ' + coverGoal('').text, { path: tax.balanceDue.rough[0], gap: Math.max(0, due - (setAside || 0)) }) : coverGoal('Next: ');
   }
-  const taxGreen = goal(asOf, 'Stage 3: every ' + year + ' tax input known, and the balance due set aside by ' + longDate(nextDate.date), { target: due === null ? null : Math.ceil(due), gap: due === null ? null : Math.max(0, due - (setAside || 0)), by: nextDate.date, path: setAsidePath });
+  const taxGreen = goal(asOf, 'Stage 3: every ' + year + ' tax input known, and the balance due set aside by ' + longDate(returnDue) + pace, { target: due === null ? null : Math.ceil(due), gap: due === null ? null : Math.max(0, due - (setAside || 0)), path: setAsidePath });
   const taxBits = { stage: taxStage, next: taxStage === 'green' ? null : taxNext, green: taxStage === 'green' ? null : taxGreen };
   add({
     id: 'tax-' + year, ...taxBits,
@@ -180,7 +185,7 @@ export function buildFlags(spine, rules, s) {
       title: stage === 'green' ? 'Every promo balance is paid off' : money(pr.total.value) + ' in promo balances due by ' + longDate(last),
       detail: stage === 'green' ? 'Nothing is left on a 0% intro rate.' : 'Clearing them in time takes about ' + money(pr.monthly.value, true) + ' a month: ' + lines.join('; ') + '.',
       next: stage === 'red'
-        ? goal(asOf, 'Next: ' + money(Math.ceil(pr.monthly.value - (surplus ?? 0))) + ' more a month toward the promos' + (surplus === null ? ' (the monthly surplus is not known yet)' : ' than the ' + money(surplus) + ' monthly surplus') + '; ' + money(Math.ceil(pr.monthly.value)) + ' a month clears them', { target: Math.ceil(pr.monthly.value), gap: pr.monthly.value - (surplus ?? 0), path })
+        ? goal(asOf, 'Next: free up ' + money(Math.ceil(pr.monthly.value - (surplus ?? 0))) + ' a month: clearing the promos takes ' + money(Math.ceil(pr.monthly.value)) + ' a month' + (surplus === null ? ' and the monthly surplus is not known yet' : ' and the monthly surplus is ' + money(surplus)), { target: Math.ceil(pr.monthly.value), gap: pr.monthly.value - (surplus ?? 0), path })
         : stage === 'yellow' ? allPaid('Next: ') : null,
       green: stage === 'green' ? null : allPaid('Stage 3: '),
       from: pr.total.from

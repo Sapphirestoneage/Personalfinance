@@ -22,7 +22,7 @@ export function scenarioText(spine, rules, id) {
 
 // Three real buttons, one pressed; a line says what the picked set uses.
 export function scenarioBar(spine, rules, current, onPick) {
-  return h('section', { class: 'card scenario', 'aria-labelledby': 'scenario-h' },
+  return h('section', { class: 'card scenario', id: 'scenario', 'aria-labelledby': 'scenario-h' },
     h('h2', { id: 'scenario-h', class: 'scenario-h' }, 'Assumption set for FI numbers and the projection'),
     h('div', { class: 'segmented', role: 'group', 'aria-labelledby': 'scenario-h' },
       SCENARIOS.map((id) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(id === current), onclick: () => { if (id === current) return; pick(id); onPick(id); } },
@@ -30,5 +30,6 @@ export function scenarioBar(spine, rules, current, onPick) {
         h('span', { class: 'seg-sub' }, scenarioText(spine, rules, id))))),
     h('p', { class: 'muted scenario-note' }, current === 'best'
       ? 'Best uses your own assumptions from the Ledger.'
-      : SCENARIO_WORDS[current] + ' uses house assumptions (rules ' + scenarioAssumptions(spine, rules, current).rules.join(', ') + '). Best uses your own from the Ledger.'));
+      : SCENARIO_WORDS[current] + ' uses house assumptions, the same for everyone. Best uses your own from the Ledger.',
+      current === 'best' ? null : ' ', current === 'best' ? null : h('a', { href: 'math.html#rule-' + scenarioAssumptions(spine, rules, current).rules[0] }, 'See the rules')));
 }

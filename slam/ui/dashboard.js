@@ -121,7 +121,7 @@ function render(base, rules, source) {
         fi.goalSource ? 'Today\'s spending implies ' + money(fi.implied.value) + '.' : null,
         'Lean FI ' + money(fi.leanFi.value) + '. Coast FI by ' + fi.coastAge + ': ' + money(fi.coastFi.value) + '.',
         fi.yearsToFi.value !== null ? 'At this pace, FI in about ' + fi.yearsToFi.value.toFixed(1) + ' years (from the projection).' : fi.yearsToFi.note ? 'Years to FI: ' + fi.yearsToFi.note + '.' : null,
-        'Assumption set: ' + scenario + ' (' + scenarioText(base, rules, scenario) + ').'
+        ['Assumption set: ' + scenario + ' (' + scenarioText(base, rules, scenario) + '). ', h('a', { href: '#scenario' }, 'Change it')]
       ]
     }),
     tile(spine, {
@@ -136,11 +136,12 @@ function render(base, rules, source) {
   ];
 
   app.replaceChildren(
+    // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source])),
-      h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Open the Ledger'))),
-    scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); }),
+      h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('div', { class: 'tiles' }, tiles),
+    scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); document.getElementById('scenario')?.scrollIntoView({ block: 'nearest' }); }),
     flowPart(spine, rules, s),
     flagsSection(spine, s.flags)
   );
