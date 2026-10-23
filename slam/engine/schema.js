@@ -190,6 +190,15 @@ export function validate(spine) {
   checkFact('household.state', h.state, 'text');
   checkFact('household.county', h.county, 'text');
   checkFact('household.nycResident', h.nycResident, 'bool');
+  // Names that cover bills, beyond the built-in ones (S-176).
+  if (h.payers !== undefined && (!Array.isArray(h.payers) || h.payers.some((x) => typeof x !== 'string' || !x.trim()))) err('household.payers', 'a list of names');
+  // A section's sharing default (S-175): food, accommodation, transportation, other.
+  for (const [tag, d] of Object.entries(h.expenseDefaults || {})) {
+    if (![...FAT, 'other'].includes(tag)) err('household.expenseDefaults.' + tag, 'not a section');
+    const p = 'household.expenseDefaults.' + tag;
+    checkFact(p + '.shared', d.shared, 'bool', false); checkFact(p + '.sharedWith', d.sharedWith, 'int', false);
+    checkFact(p + '.yourShare', d.yourShare, 'rate', false); checkFact(p + '.whoPays', d.whoPays, 'choice:part|whole', false);
+  }
   for (const [key, values, extra] of [['situation', SITUATIONS], ['healthCoverage', COVERAGES, true]]) {
     const tl = h[key];
     if (!Array.isArray(tl) || !tl.length) { err('household.' + key, 'a dated list with at least one entry'); continue; }
@@ -245,6 +254,12 @@ export function validate(spine) {
     // Need or want, and paid by someone else, are Facts (S-171): a missing tag shows in the Ledger.
     checkFact(p + '.need', e.need, 'bool', false);
     checkFact(p + '.covered', e.covered, 'bool', false);
+    checkFact(p + '.coveredBy', e.coveredBy, 'text', false);
+    // Shared with other people (S-175).
+    checkFact(p + '.shared', e.shared, 'bool', false);
+    checkFact(p + '.sharedWith', e.sharedWith, 'int', false);
+    checkFact(p + '.yourShare', e.yourShare, 'rate', false);
+    checkFact(p + '.whoPays', e.whoPays, 'choice:part|whole', false);
   }
 
   // accounts and debts: shells of a family, with preset types

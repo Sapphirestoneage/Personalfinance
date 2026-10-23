@@ -7,6 +7,8 @@ import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES } from '.
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
+import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
+import { monthlyAmount } from './cashflow.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool, choice:a|b, list.
 export function typeFor(spine, path) {
@@ -59,10 +61,37 @@ export function cardRateRow(spine, card) {
   return { path, label: labelFor(spine, path), group: 'D', type: 'cardRate', fact: { value: value && (value.apr !== null || value.intro) ? value : null, kind }, members: CARD_RATE.map((k) => 'debts.' + card.id + '.' + k) };
 }
 
-// The Ledger row a field lives on (a card's intro fields live on its rate row).
+// An expense's amount, how often, and how it is shared are one row (S-175).
+// Its value: { amount, cadence, shared, people, share, whoPays, fromDefault, yourMonthly }.
+export function expenseRow(spine, e) {
+  const path = 'expenses.' + e.id + '.amount';
+  const sh = shareOf(spine, e);
+  const own = SHARE_FIELDS.map((k) => e[k]).filter(Boolean);
+  const kind = combinedKind([e.amount, ...own]);
+  const amount = valueOf(e.amount);
+  const monthly = amount === null ? null : monthlyAmount(amount, e.cadence === 'total' || e.cadence === 'once' ? 'monthly' : e.cadence, null, null, '2001-01');
+  const cover = coverOf(e);
+  return {
+    path, label: labelFor(spine, path), group: 'E', type: 'expense',
+    fact: { value: amount === null && e.amount.kind !== 'notForMe' && !cover.covered ? null : { amount, cadence: e.cadence, covered: cover.covered, coveredBy: cover.by, shared: !cover.covered && sh.shared, people: sh.people, share: sh.share, whoPays: sh.whoPays, fromDefault: sh.fromDefault, yourMonthly: cover.covered ? 0 : sh.shared ? yourCost(monthly, sh.share) : monthly }, kind: e.amount.kind === 'notForMe' ? 'notForMe' : kind },
+    members: [path, ...SHARE_FIELDS.map((k) => 'expenses.' + e.id + '.' + k)]
+  };
+}
+
+// A month amount for a typed amount and how often (the expense panel's preview).
+export function previewCost(amount, cadence, shared, people, share) {
+  if (amount === null) return null;
+  const m = monthlyAmount(amount, cadence === 'total' || cadence === 'once' ? 'monthly' : cadence, null, null, '2001-01');
+  return shared ? yourCost(m, share ?? (people ? 1 / people : null)) : m;
+}
+
+// The Ledger row a field lives on (a card's intro fields live on its rate row;
+// an expense's sharing fields on its amount row).
 export function rowPathFor(spine, path) {
   const s = path.split('.');
-  return s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2]) ? 'debts.' + s[1] + '.apr' : path;
+  if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
+  if (s[0] === 'expenses' && SHARE_FIELDS.includes(s[2])) return 'expenses.' + s[1] + '.amount';
+  return path;
 }
 
 export function ledgerRows(spine) {
@@ -73,6 +102,12 @@ export function ledgerRows(spine) {
       if (s[2] === 'apr') rows.push(cardRateRow(spine, getAt(spine, 'debts.' + s[1])));
       continue;
     }
+    if (s[0] === 'expenses' && (s[2] === 'amount' || SHARE_FIELDS.includes(s[2]))) {
+      if (s[2] === 'amount') rows.push(expenseRow(spine, getAt(spine, 'expenses.' + s[1])));
+      continue;
+    }
+    // A section's sharing default is set on the section, not as a row.
+    if (s[0] === 'household' && s[1] === 'expenseDefaults') continue;
     rows.push({ path, label: labelFor(spine, path), group: groupFor(path), type: typeFor(spine, path), fact });
   }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));

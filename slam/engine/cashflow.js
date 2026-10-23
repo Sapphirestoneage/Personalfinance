@@ -6,6 +6,7 @@ import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, add
 import { PER_YEAR } from './schema.js';
 import { minimumsTotal, debtSchedule } from './debt.js';
 import { taxSetAside } from './tax.js';
+import { shareOf } from './sharing.js';
 
 const v = valueOf;
 
@@ -136,14 +137,20 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     const covered = !!e.covered && v(e.covered) === true;
     if (covered) { ex.useFact(base + '.covered', e.covered); items.push({ id: e.id, label: e.label, amount: 0, covered: true, fat: e.fat, need: v(e.need), fixed: e.fixed }); continue; }
     const amt = ex.useFact(path, e.amount);
-    const m = monthlyAmount(amt, e.cadence, e.start, e.end, ym);
+    const full = monthlyAmount(amt, e.cadence, e.start, e.end, ym);
+    // A shared bill counts your share (S-175).
+    const sh = shareOf(spine, e);
+    for (const p of sh.from) ex.useFact(p, null === p ? null : { value: 1, kind: 'known' });
+    for (const p of sh.rough || []) ex.addRough(p);
+    for (const p of sh.missing || []) ex.addMissing(p);
+    const m = full === null || !sh.shared ? full : sh.share === null ? null : full * sh.share;
     if (m !== null) total += m;
     const isNeed = v(e.need);
     if (e.fat) { fat.useFact(path, e.amount); if (m !== null) fatSum += m; }
     if (isNeed === true) { anyNeed = true; need.useFact(path, e.amount); need.useFact(base + '.need', e.need); if (m !== null) needSum += m; }
     else if (isNeed === null) need.addMissing(base + '.need');
     if (e.fat && isNeed !== false) { lean.useFact(path, e.amount); if (isNeed === null) lean.addMissing(base + '.need'); if (m !== null) leanSum += m; }
-    items.push({ id: e.id, label: e.label, amount: round2(m), fat: e.fat, need: isNeed, fixed: e.fixed });
+    items.push({ id: e.id, label: e.label, amount: round2(m), full: round2(full), shared: sh.shared, share: sh.share, people: sh.people, whoPays: sh.whoPays, fat: e.fat, need: isNeed, fixed: e.fixed });
   }
 
   // Minimums: this month from today's balances; a later month from the debt

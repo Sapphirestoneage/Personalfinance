@@ -226,3 +226,48 @@ test('bulk: confirm, mark rough, not for me across several fields', () => {
   assert.equal(getAt(n, 'expenses.groceries.amount').kind, 'notForMe');
   assert.ok(validate(r2).ok);
 });
+
+// ------------------------------------------------------------------ shared and covered expenses (S-175, S-176)
+import { editExpense, setSectionSharing } from '../engine/edits.js';
+import { shareOf } from '../engine/sharing.js';
+import { cashflow } from '../engine/cashflow.js';
+
+test('sharing: not shared unless the expense or its section says so; your cost is your share', () => {
+  let s = demo();
+  const rent = () => getAt(s, 'expenses.rent');
+  assert.equal(shareOf(s, rent()).shared, false, 'default: not shared');
+  s = setSectionSharing(s, 'accommodation', { shared: true, sharedWith: 2, whoPays: 'part' }, '2026-10-23');
+  assert.deepEqual([shareOf(s, rent()).shared, shareOf(s, rent()).share, shareOf(s, rent()).fromDefault], [true, 0.5, true]);
+  const items = Object.fromEntries(cashflow(s, R, '2026-10').expenses.items.map((i) => [i.id, i]));
+  assert.equal(items.rent.amount, 900, 'half of 1,800');
+  assert.equal(items.rent.full, 1800);
+  assert.equal(items.utilities.amount, 75, 'every housing bill follows the default');
+  s = editExpense(s, 'utilities', { amount: 150, cadence: 'monthly', sharing: { shared: false } }, '2026-10-23');
+  assert.equal(shareOf(s, getAt(s, 'expenses.utilities')).shared, false, 'one bill can opt out');
+  s = editExpense(s, 'rent', { amount: 1800, cadence: 'monthly', sharing: { shared: true, sharedWith: 2, yourShare: null, whoPays: 'part' } }, '2026-10-23');
+  assert.equal(getAt(s, 'expenses.rent.shared'), undefined, 'a choice that matches the default is not copied');
+  s = editExpense(s, 'rent', { amount: 1800, cadence: 'monthly', sharing: { shared: true, sharedWith: 3, yourShare: 0.4, whoPays: 'whole' } }, '2026-10-23');
+  assert.deepEqual([shareOf(s, rent()).people, shareOf(s, rent()).share, shareOf(s, rent()).whoPays], [3, 0.4, 'whole']);
+  assert.ok(validate(s).ok);
+});
+
+test('covered by: a pick list with an Other that adds a name; covered counts $0', () => {
+  let s = demo();
+  s = editExpense(s, 'phone', { amount: 60, cadence: 'monthly', coveredBy: 'Grandma' }, '2026-10-23');
+  assert.deepEqual(s.household.payers, ['Grandma'], 'a new name joins the list');
+  assert.equal(getAt(s, 'expenses.phone.coveredBy').value, 'Grandma');
+  assert.equal(cashflow(s, R, '2026-10').expenses.items.find((i) => i.id === 'phone').amount, 0);
+  s = editExpense(s, 'gym', { amount: 50, cadence: 'monthly', coveredBy: 'Parents' }, '2026-10-23');
+  assert.deepEqual(s.household.payers, ['Grandma'], 'built-in names are not added again');
+  s = editExpense(s, 'phone', { amount: 60, cadence: 'monthly', coveredBy: null }, '2026-10-23');
+  assert.equal(getAt(s, 'expenses.phone.covered'), undefined);
+  assert.ok(validate(s).ok);
+});
+
+test('an expense row says how much, how often and who pays', () => {
+  let s = setSectionSharing(demo(), 'accommodation', { shared: true, sharedWith: 2 }, '2026-10-23');
+  const row = ledgerRows(s).flatMap((g) => g.rows).find((r) => r.path === 'expenses.rent.amount');
+  assert.equal(row.type, 'expense');
+  assert.deepEqual([row.fact.value.amount, row.fact.value.cadence, row.fact.value.shared, row.fact.value.yourMonthly], [1800, 'monthly', true, 900]);
+  assert.equal(rowPathFor(s, 'expenses.rent.coveredBy'), 'expenses.rent.amount');
+});

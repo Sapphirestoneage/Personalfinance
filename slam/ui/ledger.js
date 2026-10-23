@@ -4,12 +4,13 @@
 // confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
-import { ledgerRows, stillGuessing, rowPathFor } from '../engine/ledger.js';
+import { ledgerRows, stillGuessing, rowPathFor, previewCost } from '../engine/ledger.js';
+import { payersOf, shareOf } from '../engine/sharing.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
+import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
-import { getAt } from '../engine/spine.js';
+import { getAt, valueOf } from '../engine/spine.js';
 import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
 import { h, chip, showValue, money, words, shortDate } from './view.js';
 
@@ -115,8 +116,129 @@ function cardRateEditor(row) {
     ));
 }
 
+// The expense panel (S-175, S-176): one question at a time. How much, and how
+// often. Who pays: I pay all of it; I share it (how many people, my share, who
+// pays the bill); or someone else covers it (pick who, or add a name). A live
+// line says what it costs you a month. The switch between answers shows and
+// hides fields in place, so nothing typed is lost.
+const HOW_OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every two weeks'], ['semimonthly', 'twice a month'], ['quarterly', 'a quarter'], ['yearly', 'a year']];
+function expenseEditor(row) {
+  const id = row.path.split('.')[1];
+  const e = getAt(hist.present, 'expenses.' + id);
+  const cur = row.fact.value || {};
+  const sh = shareOf(hist.present, e);
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+  amount.value = inputText('money', valueOf(e.amount));
+  const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
+  const startMode = cur.covered ? 'covered' : sh.shared ? 'shared' : 'me';
+  const mode = h('select', { id: 'exp-mode' },
+    h('option', { value: 'me', selected: startMode === 'me' }, 'I pay all of it'),
+    h('option', { value: 'shared', selected: startMode === 'shared' }, 'I share it with others'),
+    h('option', { value: 'covered', selected: startMode === 'covered' }, 'Someone else covers it'));
+  // Shared details
+  const people = h('input', { id: 'exp-people', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
+  people.value = sh.shared && sh.people ? String(sh.people) : '2';
+  const share = h('input', { id: 'exp-share', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'even split' });
+  share.value = sh.shared && valueOf(e.yourShare) !== null && e.yourShare ? inputText('rate', valueOf(e.yourShare)) : '';
+  const whole = h('input', { type: 'radio', name: 'exp-who', value: 'whole', checked: sh.whoPays === 'whole' });
+  const part = h('input', { type: 'radio', name: 'exp-who', value: 'part', checked: sh.whoPays !== 'whole' });
+  const sharedBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'shared' },
+    h('legend', {}, 'Sharing it'),
+    h('label', { for: 'exp-people', class: 'edit-label' }, 'How many people share it, you included?'), people,
+    h('label', { for: 'exp-share', class: 'edit-label' }, 'Your share, as a percent'), share,
+    h('p', { class: 'edit-hint' }, 'Leave blank for an even split.'),
+    h('span', { class: 'edit-label' }, 'Who pays the bill?'),
+    h('label', { class: 'radio' }, part, ' Each of us pays our own part'),
+    h('label', { class: 'radio' }, whole, ' I pay all of it and get paid back'),
+    sh.fromDefault ? h('p', { class: 'edit-hint' }, 'Bills in this section are shared by default.') : null);
+  // Covered by
+  const payers = payersOf(hist.present);
+  const by = h('select', { id: 'exp-by' }, payers.map((p) => h('option', { value: p, selected: cur.coveredBy === p }, p)), h('option', { value: '__other' }, 'Other / add a name...'));
+  const other = h('input', { id: 'exp-other', type: 'text', autocomplete: 'off', placeholder: 'Who covers it?', hidden: true, 'aria-label': 'Who covers it' });
+  by.addEventListener('change', () => { other.hidden = by.value !== '__other'; if (!other.hidden) other.focus(); });
+  const coveredBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'covered' },
+    h('legend', {}, 'Covered'),
+    h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, other,
+    h('p', { class: 'edit-hint' }, 'A covered expense counts $0 toward your spending.'));
+  const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startMode === 'shared' ? 'How much is the whole bill?' : 'How much is it?');
+  const yours = h('p', { class: 'edit-preview', 'aria-live': 'polite' });
+  const readShare = () => { const p = parseInput('int', people.value); const y = share.value.trim() ? parseInput('rate', share.value) : { ok: true, value: null }; return { people: p.ok ? p.value : null, share: y.ok ? y.value : null }; };
+  const preview = () => {
+    const a = parseInput('money', amount.value);
+    if (!a.ok) { yours.textContent = ''; return; }
+    if (mode.value === 'covered') { yours.textContent = 'Costs you $0 a month.'; return; }
+    const r = readShare();
+    const m = previewCost(a.value, often.value, mode.value === 'shared', r.people, r.share);
+    yours.textContent = m === null ? '' : 'Costs you ' + money(m) + ' a month.';
+  };
+  mode.addEventListener('change', () => {
+    sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered';
+    amountLabel.textContent = mode.value === 'shared' ? 'How much is the whole bill?' : 'How much is it?';
+    preview();
+  });
+  for (const el of [amount, often, people, share]) el.addEventListener('input', preview);
+  often.addEventListener('change', preview);
+  preview();
+  const doSet = (kind) => {
+    const a = amount.value.trim() === '' && mode.value === 'covered' ? { ok: true, value: valueOf(e.amount) } : parseInput('money', amount.value);
+    if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
+    let sharing = null, coveredBy = null;
+    if (mode.value === 'shared') {
+      const r = readShare();
+      if (!r.people || r.people < 2) { msg.textContent = 'How many people: 2 or more, you included'; people.focus(); return; }
+      sharing = { shared: true, sharedWith: r.people, yourShare: r.share, whoPays: whole.checked ? 'whole' : 'part' };
+    } else if (mode.value === 'me') sharing = { shared: false };
+    if (mode.value === 'covered') {
+      coveredBy = by.value === '__other' ? other.value.trim() : by.value;
+      if (!coveredBy) { msg.textContent = 'Who covers it?'; other.focus(); return; }
+      sharing = null;
+    }
+    open = null;
+    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind }, today()), e.label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (kind === 'rough' ? ' (a guess)' : ''));
+  };
+  return editorForm(() => doSet('known'),
+    h('p', { class: 'edit-title' }, e.label),
+    amountLabel, h('div', { class: 'amount-row' }, amount, often),
+    h('label', { for: 'exp-mode', class: 'edit-label' }, 'Who pays?'), mode,
+    sharedBox, coveredBox, yours, msg,
+    h('div', { class: 'edit-actions' },
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label, 'confirmed'); } }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), e.label, 'not for me'); } }, 'Not for me'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+}
+
+// A section's sharing default (S-175): "Bills here are just mine" or "shared",
+// with the details new and untouched expenses here follow.
+let sharingOpen = null;
+function sectionSharing(n) {
+  const tag = n.key.startsWith('E:') ? n.key.slice(2) : null;
+  if (!tag || tag === 'health' || selecting) return null;
+  const d = (hist.present.household.expenseDefaults || {})[tag];
+  const on = !!d && d.shared && d.shared.value === true;
+  const words = on ? 'Shared by default with ' + ((d.sharedWith && d.sharedWith.value) || '?') + ' people' : 'Not shared by default';
+  if (sharingOpen !== tag) return h('p', { class: 'section-default' }, words, ' ', h('button', { type: 'button', class: 'btn ghost small', onclick: () => { if (!canLeave()) return; sharingOpen = tag; render(); } }, 'Change'));
+  const people = h('input', { type: 'text', inputmode: 'numeric', 'aria-label': 'People sharing, you included' });
+  people.value = on && d.sharedWith && d.sharedWith.value ? String(d.sharedWith.value) : '2';
+  const sw = h('select', { 'aria-label': 'Default for this section' }, h('option', { value: 'no', selected: !on }, 'Just mine'), h('option', { value: 'yes', selected: on }, 'Shared'));
+  const whole = h('select', { 'aria-label': 'Who pays the bill' }, h('option', { value: 'part' }, 'Each pays their own part'), h('option', { value: 'whole', selected: on && d.whoPays && d.whoPays.value === 'whole' }, 'I pay it all and get paid back'));
+  const details = h('div', { class: 'sub-fields', hidden: !on }, h('label', { class: 'edit-label' }, 'People sharing, you included'), people, h('label', { class: 'edit-label' }, 'Who pays the bills'), whole);
+  sw.addEventListener('change', () => { details.hidden = sw.value !== 'yes'; });
+  return h('form', { class: 'editor section-default-form', onsubmit: (ev) => {
+    ev.preventDefault();
+    const p = parseInput('int', people.value);
+    if (sw.value === 'yes' && (!p.ok || p.value < 2)) return;
+    sharingOpen = null;
+    apply(setSectionSharing(hist.present, tag, { shared: sw.value === 'yes', sharedWith: sw.value === 'yes' ? p.value : null, whoPays: whole.value }, today()), n.label + ' bills', sw.value === 'yes' ? 'shared by default' : 'not shared by default');
+  } }, h('label', { class: 'edit-label' }, n.label + ' bills are'), sw, details,
+  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { sharingOpen = null; render(); } }, 'Cancel')));
+}
+
 function editor(row) {
   if (row.type === 'cardRate') return cardRateEditor(row);
+  if (row.type === 'expense') return expenseEditor(row);
   const f = getAt(hist.present, row.path);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   let input;
@@ -325,7 +447,7 @@ function itemEl(it) {
         h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, isOpen ? '-' : '+'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
-    isOpen && !selecting ? h('div', { class: 'item-actions' }, coveredBtn(it), remove) : null);
+    isOpen && !selecting ? h('div', { class: 'item-actions' }, remove) : null);
 }
 
 // A section or sub-section: its label and counts, its add button, its children.
@@ -341,6 +463,7 @@ function nodeEl(n, depth) {
     h('div', { class: 'node-head' },
       h(Tag, {}, h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold }, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, folded ? '+' : '-'), n.label)),
       countBtns(n.counts), pickAll),
+    folded ? null : sectionSharing(n),
     folded ? null : h('ul', { class: 'tree' }, kids),
     folded ? null : addButton(n));
 }

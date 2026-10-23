@@ -96,6 +96,59 @@ export function putFact(spine, path, value, kind, today) {
   return setAt(spine, path, { value, kind, asOf: today, source: 'ledger' });
 }
 
+// One expense, as its panel saves it (S-175, S-176): amount and how often, and
+// who pays. sharing: null (keep), or { shared, sharedWith, yourShare, whoPays };
+// yourShare null means an even split. A choice that matches the section default
+// is not copied onto the expense, so the expense keeps following the default.
+// coveredBy: a name when someone else covers it (counts $0), null when not; a
+// name not on the household's list is added to it.
+export function editExpense(spine, id, { amount, cadence, sharing = null, coveredBy = undefined, kind = 'known' }, today) {
+  const base = 'expenses.' + id;
+  const e = getAt(spine, base);
+  if (!e) throw new Error('No expense ' + id);
+  const F = (value, k = kind) => ({ value, kind: value === null ? 'missing' : k, asOf: today, source: 'ledger' });
+  let s = setAt(spine, base + '.amount', F(amount));
+  if (cadence && cadence !== e.cadence) s = setAt(s, base + '.cadence', cadence);
+  if (sharing) {
+    const def = (spine.household.expenseDefaults || {})[e.fat || 'other'] || {};
+    const dv = (k) => (def[k] ? def[k].value : null);
+    const want = { shared: !!sharing.shared, sharedWith: sharing.shared ? sharing.sharedWith ?? null : null, yourShare: sharing.shared ? sharing.yourShare ?? null : null, whoPays: sharing.shared ? sharing.whoPays || 'part' : null };
+    const sameAsDefault = want.shared === (dv('shared') === true) && (!want.shared || (want.sharedWith === dv('sharedWith') && want.yourShare === dv('yourShare') && want.whoPays === (dv('whoPays') || 'part')));
+    const cur = getAt(s, base);
+    const next = { ...cur };
+    for (const k of SHARE_KEYS) delete next[k];
+    if (!sameAsDefault) {
+      next.shared = F(want.shared, 'known');
+      if (want.shared) {
+        next.sharedWith = F(want.sharedWith, 'known');
+        if (want.yourShare !== null) next.yourShare = F(want.yourShare, 'known');
+        next.whoPays = F(want.whoPays, 'known');
+      }
+    }
+    s = setAt(s, base, next);
+  }
+  if (coveredBy !== undefined) {
+    const next = { ...getAt(s, base) };
+    if (coveredBy) {
+      next.covered = F(true, 'known'); next.coveredBy = F(coveredBy, 'known');
+      for (const k of SHARE_KEYS) delete next[k];
+      const known = spine.household.payers || [];
+      if (!PAYERS.includes(coveredBy) && !known.includes(coveredBy)) s = { ...s, household: { ...s.household, payers: [...known, coveredBy] } };
+    } else { delete next.covered; delete next.coveredBy; }
+    s = setAt(s, base, next);
+  }
+  return s;
+}
+const SHARE_KEYS = ['shared', 'sharedWith', 'yourShare', 'whoPays'];
+const PAYERS = ['Parents', 'Partner', 'Roommate', 'Employer', 'Family'];
+
+// A section's sharing default; new and untouched expenses there follow it.
+export function setSectionSharing(spine, tag, { shared, sharedWith = null, yourShare = null, whoPays = 'part' }, today) {
+  const F = (value) => ({ value, kind: value === null ? 'missing' : 'known', asOf: today, source: 'ledger' });
+  const d = shared ? { shared: F(true), sharedWith: F(sharedWith), whoPays: F(whoPays), ...(yourShare !== null ? { yourShare: F(yourShare) } : {}) } : { shared: F(false) };
+  return { ...spine, household: { ...spine.household, expenseDefaults: { ...(spine.household.expenseDefaults || {}), [tag]: d } } };
+}
+
 // ---------------------------------------------------------------- history
 export const MAX_STEPS = 200;
 

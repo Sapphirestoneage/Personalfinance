@@ -101,6 +101,7 @@ export function fromProfile(p) {
       fat: e.fat || null
     };
     if (typeof e.covered === 'boolean') out.covered = F(e.covered, 'known');
+    if (e.coveredBy) out.coveredBy = F(e.coveredBy, 'known');
     if (e.notes) out.notes = e.notes;
     return out;
   });

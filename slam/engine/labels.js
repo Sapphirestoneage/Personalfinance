@@ -17,7 +17,8 @@ const FIELD = {
   matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled',
-  need: 'a need (not a want)', covered: 'paid by someone else'
+  need: 'a need (not a want)', covered: 'paid by someone else',
+  coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
 const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City' };
@@ -32,6 +33,7 @@ export function labelFor(spine, path) {
   switch (s[0]) {
     case 'household': {
       if (HOUSE[s[1]]) return HOUSE[s[1]];
+      if (s[1] === 'expenseDefaults') return ({ food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' }[s[2]] || s[2]) + ' bills by default: ' + words(s[3]);
       if (s[1] === 'people') { const p = item('household.people', s[2]); return (p ? p.name : s[2]) + ': birth date'; }
       const e = item('household.' + s[1], s[2]);
       const what = s[1] === 'situation' ? 'Situation' : 'Health coverage';
