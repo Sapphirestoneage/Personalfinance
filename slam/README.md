@@ -171,13 +171,26 @@ calendar, and the billing cycle on every card tile. Federal student loans get
 the income-driven payment and the forgiveness dates from the rules registry;
 a rule that is not in the registry shows as a missing row, never a number.
 
+### The Spending page (Batch D, S-206)
+
+`spending.html` keeps the plan true: safe to spend today and a day; a
+five-second logger (amount, a tag, where, paid with) that writes the spine's
+spend log; budgets by tag with what is left, the pace and a running-hot chip;
+the four burn tiers; where the money goes as a donut, with a cut simulator
+that drops lines as a what-if and can aim the saving at the debt; a bill
+autopsy ranked by yearly cost; "can I spend this" on the same day-by-day run
+(yes, tight or no, the new low, hours of life); price increases and free
+trials; a check-in that records real balances against the forecast and
+re-anchors the household (drift, momentum, a staleness banner after ten
+days); and the month-end sweep. The log is a record, never a formula.
+
 ### Where things are
 
 | Path | What it is |
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
-| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, windfall |
-| `ui/` | the Ledger, Dashboard, Calendar and Windfall views (formatting only) |
+| `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, windfall |
+| `ui/` | the Ledger, Dashboard, Calendar (with its Debt tab), Spending and Windfall views (formatting only) |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |
 | `BOARD.md`, `QUESTIONS.md` | what is done and next; open questions for Eli |

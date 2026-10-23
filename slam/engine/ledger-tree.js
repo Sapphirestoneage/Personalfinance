@@ -85,7 +85,7 @@ export function ledgerTree(spine, inst) {
   if (situation.length) incomeSections.push(node('I:situation', 'Your situation', [item('household.situation', 'Situation over time', situation)]));
 
   // Taxes: filing and you; withholding per stream; each tax year
-  const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident'].includes(r.path) || r.path.startsWith('household.people.')));
+  const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident', 'household.householdSize', 'household.workHoursPerWeek'].includes(r.path) || r.path.startsWith('household.people.')));
   const taxSections = [node('T:filing', 'Filing', [item('household.filing', 'You and where you file', filing)])];
   const wh = (spine.income || []).map((s) => item('withholding.' + s.id, s.label || UNNAMED, take(byPrefix('income.' + s.id + '.withholding')))).filter((x) => x.rows.length);
   if (wh.length) taxSections.push(node('T:withholding', 'Tax withheld', wh));

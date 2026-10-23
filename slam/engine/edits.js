@@ -410,3 +410,40 @@ export function removeMaybe(spine, id) {
   const cal = calOf(spine);
   return withCal(spine, { ...cal, maybe: cal.maybe.filter((m) => m.id !== id) });
 }
+
+// ---------------------------------------------------------------- the spend log and check-ins (S-206)
+// A log entry is a record of what happened, plain values: the amount typed,
+// the day, a tag or the expense it belongs to, the merchant (cleaned), what
+// paid it. A check-in records real balances against the forecast and
+// re-anchors the household to that day.
+const nextId = (list, prefix) => prefix + ((list || []).reduce((m, x) => Math.max(m, +String(x.id).replace(/^\D+/, '') || 0), 0) + 1);
+export function logSpend(spine, { amount, date, kind = 'spend', tag = null, expenseId = null, merchant = null, note = null, paidWith = null, source = 'typed' }) {
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) throw new Error('An amount is a number, zero or more');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('A day is YYYY-MM-DD');
+  if (!['spend', 'refund', 'income'].includes(kind)) throw new Error('spend, refund or income');
+  const list = spine.log || [];
+  const id = nextId(list, 'l');
+  const entry = { id, date, amount: Math.round(amount * 100) / 100, kind, tag, expenseId, merchant: merchant ? String(merchant).trim() || null : null, note: note ? String(note).trim() || null : null, paidWith, source };
+  return { spine: { ...spine, log: [...list, entry] }, id };
+}
+export function removeLog(spine, id) { return { ...spine, log: (spine.log || []).filter((x) => x.id !== id) }; }
+export function checkIn(spine, { date, balances, forecast = {} }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('A day is YYYY-MM-DD');
+  const ids = Object.keys(balances || {});
+  if (!ids.length) throw new Error('At least one balance');
+  let out = spine;
+  for (const id of ids) {
+    const amt = balances[id];
+    if (typeof amt !== 'number' || !Number.isFinite(amt)) throw new Error('A balance is a number');
+    if (!(out.accounts || []).some((a) => a.id === id)) throw new Error('No account ' + id);
+    out = putFact(out, 'accounts.' + id + '.balance', Math.round(amt * 100) / 100, 'known', date);
+  }
+  const entry = { id: nextId(out.checkins, 'c'), date, balances: Object.fromEntries(ids.map((id) => [id, Math.round(balances[id] * 100) / 100])), forecast: Object.fromEntries(ids.map((id) => [id, forecast[id] === undefined || forecast[id] === null ? null : Math.round(forecast[id] * 100) / 100])) };
+  // Re-anchor: the household is now as of this day.
+  return { ...out, meta: { ...out.meta, asOf: date }, checkins: [...(out.checkins || []), entry] };
+}
+export function setSweep(spine, { on, to = null, keep = 0 }) {
+  if (typeof keep !== 'number' || !Number.isFinite(keep) || keep < 0) throw new Error('Keep is a number, zero or more');
+  const cal = { ...(spine.calendar || {}), sweep: { on: on === true, to: to || null, keep: Math.round(keep * 100) / 100 } };
+  return { ...spine, calendar: cal };
+}

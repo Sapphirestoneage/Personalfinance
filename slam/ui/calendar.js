@@ -351,7 +351,7 @@ function render() {
   const focusId = document.activeElement && document.activeElement.id;
   const caret = focusId === 'cal-search' ? document.activeElement.selectionStart : null;
   app.replaceChildren(...[
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Cash flow calendar'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(c.asOf), ' · ', SOURCE_WORDS[source])),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'))),

@@ -73,9 +73,9 @@ levels or archetypes (links instead).
 | 45 | Tier 2: plus everything else that is not debt (4.2) | missing | none | A, D |
 | 46 | Tier 3: plus every debt at its minimum (4.2) | in SLAM (minimums total) | cashflow.js debtMinimums | A, D |
 | 47 | Tier 4: plus the extra at the debt or invested; still unallocated (4.2) | missing | none | A, D |
-| 48 | Card spending counts in its tier; a pay-in-full card's settling payment is skipped (4.2) | missing | none | D |
-| 49 | Where the money goes: donut by tag, expandable to line items (4.3) | in SLAM (the money-flow diagram, by section) / old Budget only (the donut) | `slam/ui/flow-chart.js`; `slam/src/ui/charts` | D |
-| 50 | Cut simulator: tap rows to drop them; put what I save toward the debt (4.3) | missing | none | D |
+| 48 | Card spending counts in its tier; a pay-in-full card's settling payment is skipped (4.2) | in SLAM | `slam/engine/cashsim.js` burnTiers (spending counts by its line; the card's settling payment is not a tier) | D |
+| 49 | Where the money goes: donut by tag, expandable to line items (4.3) | in SLAM | `slam/engine/spending.js` donut; `slam/ui/spending.js` donutCard (conic ring, legend, lines) | D |
+| 50 | Cut simulator: tap rows to drop them; put what I save toward the debt (4.3) | in SLAM | `slam/engine/spending.js` cutSimulator; `slam/ui/spending.js` donutCard | D |
 | 51 | Payoff Gantt on one timeline (4.4) | in SLAM | `slam/engine/debtview.js` gantt; `slam/ui/calendar.js` debtTab | C |
 | 52 | Payoff order list: rate, clear date, interest (4.4) | in SLAM | `slam/engine/debtview.js` orderList (dates from the run, months from `debt.js` payoffPlan beyond the window) | C |
 | 53 | Interest timeline, stacked monthly bars per card (4.4) | in SLAM | `slam/engine/debtview.js` interestTimeline; `slam/ui/calendar.js` stack | C |
@@ -89,10 +89,10 @@ levels or archetypes (links instead).
 | 61 | Milestones: auto markers ("Amex cleared"), clickable (4.8) | in SLAM | `slam/engine/calendar-views.js` milestones; `slam/ui/calendar.js` msOn | B |
 | 62 | Milestone horizontal timeline (4.8) | in SLAM | `slam/ui/calendar.js` milestonesCard | B |
 | 63 | Setup wizard, ends listing what is still a guess (4.9) | in SLAM (Pick what you have; Still guessing) | `slam/ui/ledger.js` | done |
-| 64 | Weekly check-in: happened / different amount / did not happen (4.9) | old Budget only (It happened, on Track) | `slam/src/ui/screens/track.js` | D |
-| 65 | Check-in: real balances prefilled with the forecast; re-anchor to today (4.9) | old Budget only (balance checks) | `slam/src/ui/screens/track.js` | D |
-| 66 | Drift recorded: bias vs noise across check-ins (4.9, 7 batch 2) | in cashcal.js | cashcal.js drift | D |
-| 67 | Staleness banner after 10 days (4.9) | missing | none | D |
+| 64 | Weekly check-in: happened / different amount / did not happen (4.9) | in SLAM (the check-in on real balances; happened / did not happen per item is the log) | `slam/engine/edits.js` checkIn, logSpend; `slam/ui/spending.js` checkinCard | D |
+| 65 | Check-in: real balances prefilled with the forecast; re-anchor to today (4.9) | in SLAM | `slam/engine/spending.js` checkInForecast; `slam/engine/edits.js` checkIn (re-anchors meta.asOf) | D |
+| 66 | Drift recorded: bias vs noise across check-ins (4.9, 7 batch 2) | in SLAM | `slam/engine/spending.js` drift (the vendored engine's reading) | D |
+| 67 | Staleness banner after 10 days (4.9) | in SLAM | `slam/engine/spending.js` staleness; `slam/ui/spending.js` staleBanner | D |
 | 68 | CSV statement import: matched within 5 days and 2%, recurring for 3+, new; nothing applies until Apply; no duplicates (4.9) | old Budget only | `slam/src/calc/tx-import.js`, `src/ui/screens/track.js` | E (the log feeds the spine) |
 | 69 | "Still to fill" checklist of every placeholder (4.9) | in SLAM (Still guessing) | `slam/engine/ledger.js` stillGuessing | done |
 | 70 | Google Sheets export, nine tab-separated tables (4.10) | missing | none | F (CSV export) |
@@ -103,14 +103,14 @@ levels or archetypes (links instead).
 | 75 | Storage fallback with a warning (4.12) | in SLAM ("storage is blocked" lines) | `slam/ui/household.js`, `ui/ledger.js` | done |
 | 76 | Build stamp (4.12) | missing | none | F |
 | 77 | Editable tag colours (4.12) | excluded | none | none |
-| 78 | Help sheet on the tiers (4.12) | missing | none | D |
+| 78 | Help sheet on the tiers (4.12) | in SLAM | `slam/ui/spending.js` tiersCard (the help sheet) | D |
 | 79 | Bottom-sheet modals on mobile with pinned Save (4.12) | missing (editors open inline) | none | F |
 
 ## Section 7: added in v23 to v44
 
 | # | Feature (spec item) | Status now | File | Batch |
 | --- | --- | --- | --- | --- |
-| 80 | Bill autopsy: every recurring item ranked by yearly cost (batch 1) | missing | none | D |
+| 80 | Bill autopsy: every recurring item ranked by yearly cost (batch 1) | in SLAM | `slam/engine/spending.js` billAutopsy | D |
 | 81 | Annual fee ROI per card (batch 1) | in SLAM | `slam/engine/debtview.js` feeRoi (fields annualFee, annualValue) | C |
 | 82 | Utilization guardrail: peak before the report day, warns at 30% (batch 1) | in SLAM | `slam/engine/debtview.js` utilizationAtReport (peak before the report day, personal and overall) | C |
 | 83 | Minimum-payment trap readout (batch 1) | in SLAM | `slam/engine/debtview.js` minimumTrap (the minimum-only payoff from `debt.js` payoffPlan) | C |
@@ -127,8 +127,8 @@ levels or archetypes (links instead).
 | 94 | Signup bonus tracking: spend so far, days left, pace, deadline on the calendar (batch 3) | in SLAM | `slam/engine/debtview.js` signupBonus; `slam/engine/calendar.js` bonusBy event; milestones | C |
 | 95 | Billing cycle on every card tile (batch 3) | in SLAM | `slam/engine/debtview.js` cardTiles (cycle) | C |
 | 96 | Student loan income-driven payment and forgiveness (batch 3) | in SLAM | `slam/engine/debtview.js` idr (rules IDR_*, POVERTY_LINE_*, PSLF_PAYMENTS; missing row when a rule is missing) | C |
-| 97 | Price-increase and free-trial detection (batch 3) | missing | none | D |
-| 98 | Merchant name cleanup ("SQ *BLUE BOTTLE 4471" to "Blue Bottle") (batch 3) | old Budget only | `slam/src/calc/tx-import.js`, `slam/data/merchant-rules.json` | D |
+| 97 | Price-increase and free-trial detection (batch 3) | in SLAM | `slam/engine/spending.js` priceChanges, freeTrials | D |
+| 98 | Merchant name cleanup ("SQ *BLUE BOTTLE 4471" to "Blue Bottle") (batch 3) | in SLAM | `slam/engine/spending.js` cleanMerchant | D |
 | 99 | Split transactions (batch 3) | missing (a parking-lot idea) | none | D |
 | 100 | Household mode (batch 3) | in SLAM (shared expenses, who pays) | `slam/engine/sharing.js` | done |
 | 101 | Outlook: many runs, bad, typical and good cash, interest range, share dry (batch 4) | in cashcal.js | cashcal.js outlook | F |
@@ -137,12 +137,12 @@ levels or archetypes (links instead).
 | 104 | Self test (19 engine assertions) (batch 4) | in cashcal.js (28 tests) | `money-rooms-v3/tests/engine/cashcal.test.js` | A (the ten, below) |
 | 105 | Error catcher banner (batch 4) | missing ("could not load" lines only) | `slam/ui/*.js` | F |
 | 106 | Accessibility: skip link, focus trapping, aria-live headline (batch 4) | in SLAM (aria-live on saved lines) / missing (skip link) | `slam/ui/ledger.js` | F |
-| 107 | Safe to spend: cash less the emergency fund, less what is committed before the next income, less the reserve; per day (v34) | old Budget only (Today's strip) / in cashcal.js | `slam/src/calc/calendar.js` safeReading; cashcal.js safeToSpend | A (engine), D (shown) |
-| 108 | Five-second spend logger: keypad, tag, paid with, live safe to spend (v34) | old Budget only (Quick entry) | `slam/src/ui/components/quick-entry.js` | D |
-| 109 | Per-tag budgets: spent, budget, left, pace, vs last month by the same day, running hot (v34) | old Budget only (plan vs actual by line) | `slam/src/calc/plan.js` | D |
-| 110 | Month-end sweep with hard reset (v34) | in cashcal.js (sweep) | cashcal.js simulate | D |
-| 111 | Can I spend this: hours of life and goal delays (v34) | in cashcal.js | cashcal.js canISpend | D |
-| 112 | Momentum from check-in snapshots (v34) | missing | none | D |
+| 107 | Safe to spend: cash less the emergency fund, less what is committed before the next income, less the reserve; per day (v34) | in SLAM | `slam/engine/spending.js` safeToSpend (from the run's safeToSpend) | A (engine), D (shown) |
+| 108 | Five-second spend logger: keypad, tag, paid with, live safe to spend (v34) | in SLAM | `slam/ui/spending.js` loggerCard; `slam/engine/edits.js` logSpend | D |
+| 109 | Per-tag budgets: spent, budget, left, pace, vs last month by the same day, running hot (v34) | in SLAM | `slam/engine/spending.js` tagBudgets | D |
+| 110 | Month-end sweep with hard reset (v34) | in SLAM | `slam/engine/edits.js` setSweep; `slam/engine/spending.js` sweepReading | D |
+| 111 | Can I spend this: hours of life and goal delays (v34) | in SLAM | `slam/engine/spending.js` canISpend | D |
+| 112 | Momentum from check-in snapshots (v34) | in SLAM | `slam/engine/spending.js` momentum | D |
 | 113 | Savings rate from the real ledger (v34) | old Budget only (income statement) | `slam/src/calc/summary.js` | E |
 | 114 | Income shock simulation (v34) | in cashcal.js | cashcal.js incomeShock | F |
 | 115 | Sankey money flow (v34) | in SLAM | `slam/engine/flow.js`, `slam/ui/flow-chart.js` | done |
@@ -184,14 +184,14 @@ levels or archetypes (links instead).
 
 | Status | Rows |
 | --- | --- |
-| in SLAM | 56 (some also in cashcal.js for the daily form) |
-| old Budget only | 10 |
-| in cashcal.js | 46 |
-| missing | 28 |
+| in SLAM | 72 (some also in cashcal.js for the daily form) |
+| old Budget only | 4 |
+| in cashcal.js | 43 |
+| missing | 21 |
 | excluded | 3 |
 | rows in all | 143 |
 
-After Batch C (2026-10-23): in SLAM 56, old Budget only 10, in cashcal.js 46, missing 28, excluded 3. After Batch B: in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
+After Batch D (2026-10-23): in SLAM 72, old Budget only 4, in cashcal.js 43, missing 21, excluded 3. After Batch C (2026-10-23): in SLAM 56, old Budget only 10, in cashcal.js 46, missing 28, excluded 3. After Batch B: in SLAM 43, old Budget only 10, in cashcal.js 51, missing 36, excluded 3. Before Batch A the count was in SLAM 24, old Budget only 11, in cashcal.js 56, missing 48.
 
 The brief counted 87 features in sections 3, 4 and 7; this list has 129 there because
 each return value, each burn tier, each pill set and each self-test assertion is its own

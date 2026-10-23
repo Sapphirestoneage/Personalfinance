@@ -19,12 +19,13 @@ const FIELD = {
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
   paidFrom: 'paid from', payDay: 'day paid', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
   need: 'a need (not a want)', covered: 'paid by someone else', everydayCard: 'everyday card (paid in full, held flat)', payLast: 'paid last',
+  trialEnds: 'free trial ends', workHoursPerWeek: 'hours worked a week',
   reportDay: 'reports to the bureaus on day', annualFee: 'annual fee', annualValue: 'what it gives back a year (rewards and credits)', rewardsRate: 'rewards on everyday spending', bonusSpend: 'signup bonus: spend required', bonusBy: 'signup bonus: by', bonusSpent: 'signup bonus: spent so far', bonusValue: 'signup bonus: worth', pslf: 'on track for Public Service Loan Forgiveness',
   extra: 'extra at the debt a month', day: 'day the extra lands', strategy: 'aimed at', stopAtHi: 'stop once nothing is high-interest', hiRate: 'high-interest rate line', rollFreed: 'a finished plan rolls into the extra',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
-const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household' };
+const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week' };
 const words = (k) => FIELD[k] || k.replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };

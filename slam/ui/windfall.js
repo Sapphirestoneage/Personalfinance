@@ -82,7 +82,7 @@ function render() {
   const spine = withScenario(base, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   app.replaceChildren(
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Windfall'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),

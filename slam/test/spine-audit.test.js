@@ -15,6 +15,8 @@ import { windfall } from '../engine/windfall.js';
 import { calendar, rangeCashTerms } from '../engine/calendar.js';
 import { weeks, paychecks } from '../engine/calendar-views.js';
 import { debtView, balanceTransfer, solvePayoff, whichCard } from '../engine/debtview.js';
+import { spendingView, cutSimulator, canISpend } from '../engine/spending.js';
+import { burnTiers } from '../engine/cashsim.js';
 import { money } from '../src/ui/format.js';
 import { readJson, exists, loadRules, SLAM } from './spine-helpers.js';
 
@@ -37,6 +39,7 @@ const households = () => {
     const debt = debtView(spine, R, c.sim, s);
     const firstCard = c.sim.model.cards.find((x) => x.balance > 0);
     const ctx = { spine, rules: R, s, windfall: windfall(spine, R, s, { amount: 5000, taxed: true }), month: c.months[0], range: { terms: rangeCashTerms(c.sim, w[0].from, w[w.length - 1].to), kind: c.sim.kind }, paycheck: paychecks(spine, R, c.sim, s)[0] || null,
+      spend: spendingView(spine, R, c.sim, s, { today: spine.meta.asOf }), tiers: burnTiers(spine, R, s.cashflow, { extra: 0 }), cut: cutSimulator(spine, R, s, { dropped: [spine.expenses[0].id], towardDebt: true }), ask: canISpend(spine, R, c.sim, { amount: 50 }),
       sim: c.sim, debt, bt: firstCard ? balanceTransfer(spine, R, { cardId: firstCard.id }) : null, solve: firstCard ? solvePayoff(spine, R, c.sim, { target: firstCard.id, byDate: '2027-06-01' }) : null, which: whichCard(spine, R, c.sim, { amount: 100 }) };
     return { name, spine, s, windfall: ctx.windfall, month: ctx.month, ctx };
   });
@@ -46,7 +49,10 @@ const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.item
   'debt:interestWindow', 'debt:utilPersonal', 'debt:utilOverall',
   ...h.ctx.debt.cards.flatMap((c) => [c.trap ? 'debt:interestMonth:' + c.id : null, c.trap ? 'debt:minOnly:' + c.id : null, c.util && c.util.limit !== null ? 'debt:utilReport:' + c.id : null, c.fee ? 'debt:feeRoi:' + c.id : null, c.bonus ? 'debt:bonus:' + c.id : null].filter(Boolean)),
   ...h.ctx.debt.loans.filter((l) => l.federal !== false).map((l) => 'debt:idr:' + l.id),
-  ...(h.ctx.bt && h.ctx.bt.value !== null ? ['debt:bt'] : []), ...(h.ctx.solve && !h.ctx.solve.impossible ? ['debt:solve'] : []), ...h.ctx.which.rows.map((r) => 'debt:whichCard:' + r.id)];
+  ...(h.ctx.bt && h.ctx.bt.value !== null ? ['debt:bt'] : []), ...(h.ctx.solve && !h.ctx.solve.impossible ? ['debt:solve'] : []), ...h.ctx.which.rows.map((r) => 'debt:whichCard:' + r.id),
+  'spend:safeToday', ...(h.ctx.spend.safe.daysUntil ? ['spend:safePerDay'] : []), ...h.ctx.spend.tags.rows.flatMap((r) => ['spend:tagBudget:' + r.tag, 'spend:tagSpent:' + r.tag, ...(r.pace !== null ? ['spend:pace:' + r.tag] : [])]),
+  ...h.ctx.tiers.tiers.map((x) => 'spend:tier:' + x.id), 'spend:cut', ...(h.ctx.cut.debt && h.ctx.cut.debt.interestSaved !== null ? ['spend:cutDebt'] : []), 'spend:ask', ...h.ctx.spend.autopsy.rows.slice(0, 3).map((r) => 'spend:autopsy:' + r.id),
+  ...h.ctx.spend.prices.rows.map((r) => 'spend:priceChange:' + r.id), ...(h.ctx.spend.drift.count ? ['spend:drift'] : []), ...(h.ctx.spend.momentum.perMonth !== null ? ['spend:momentum'] : []), ...(h.ctx.spend.sweep.on ? ['spend:sweep'] : [])];
 
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');

@@ -1781,6 +1781,66 @@
       "notes": "2025 HHS guideline; replace with the 2026 figure when published and verified",
       "source": "HHS poverty guidelines, 2025",
       "verified": "verify"
+    },
+    {
+      "id": "APP_STALE_DAYS",
+      "rule": "Days without a check-in before the numbers are called stale",
+      "value": 10,
+      "unit": "days",
+      "appliesTo": "Spending page: the staleness banner",
+      "notes": "Spec 4.9: a banner after 10 days",
+      "source": "SLAM house assumption (spec 4.9)",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_RUNNING_HOT",
+      "rule": "A tag is running hot when what is spent so far exceeds this multiple of what the budget expects by today",
+      "value": 1.1,
+      "unit": "multiple",
+      "appliesTo": "Spending page: per-tag budgets",
+      "notes": "10% over the pace",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_PRICE_DRIFT",
+      "rule": "A logged charge this much above the planned amount counts as a price increase",
+      "value": 0.02,
+      "unit": "rate",
+      "appliesTo": "Spending page: price-increase detection",
+      "notes": "2%, so a rounding difference is not a flag",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_TRIAL_WARN_DAYS",
+      "rule": "Days before a free trial converts that the warning shows",
+      "value": 14,
+      "unit": "days",
+      "appliesTo": "Spending page: free-trial detection",
+      "notes": "",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_MOMENTUM_FLAT",
+      "rule": "Cash moving less than this a month between check-ins reads as flat",
+      "value": 50,
+      "unit": "$/month",
+      "appliesTo": "Spending page: momentum from check-in snapshots",
+      "notes": "",
+      "source": "SLAM house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "APP_WEEKS_PER_MONTH",
+      "rule": "Weeks in a month, for hours of life from hours a week",
+      "value": 4.3333,
+      "unit": "weeks",
+      "appliesTo": "Spending page: can I spend this (hours of life)",
+      "notes": "52 / 12",
+      "source": "Arithmetic",
+      "verified": "yes"
     }
   ]
 }

@@ -214,6 +214,8 @@ export function validate(spine) {
   checkFact('household.nycResident', h.nycResident, 'bool');
   // People in the household for the poverty line (S-205): adults and dependents together.
   checkFact('household.householdSize', h.householdSize, 'int', false);
+  // Hours worked a week, for hours of life (S-206).
+  checkFact('household.workHoursPerWeek', h.workHoursPerWeek, 'int', false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
@@ -293,6 +295,8 @@ export function validate(spine) {
     checkFact(p + '.subscription', e.subscription, 'bool', false);
     checkFact(p + '.renews', e.renews, 'date', false);
     checkFact(p + '.reviewed', e.reviewed, 'date', false);
+    // A free trial that converts on a day (S-206).
+    checkFact(p + '.trialEnds', e.trialEnds, 'date', false);
     if (e.payDay && e.payDay.value !== null && (e.payDay.value < 1 || e.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
     // Shared with other people (S-175).
     checkFact(p + '.shared', e.shared, 'bool', false);
@@ -367,6 +371,40 @@ export function validate(spine) {
   if (cal.maybe !== undefined) { if (!Array.isArray(cal.maybe)) err('calendar.maybe', 'a list'); else { uniqueIds('calendar.maybe', cal.maybe); for (const m of cal.maybe) { const p = 'calendar.maybe.' + m.id; if (typeof m.label !== 'string') err(p, 'needs a label'); if (typeof m.amount !== 'number') err(p, 'amount must be a number'); if (m.date !== null && m.date !== undefined && !isDate(m.date)) err(p, 'date is not a date'); if (m.likelihood !== undefined && (typeof m.likelihood !== 'number' || m.likelihood < 0 || m.likelihood > 1)) err(p, 'likelihood is 0 to 1'); if (m.direction !== undefined && !['in', 'out'].includes(m.direction)) err(p, 'direction is in or out'); } } }
   for (const k of ['guard', 'autoCover']) if (cal[k] !== undefined && typeof cal[k] !== 'boolean') err('calendar.' + k, 'true or false');
   for (const [key, on] of Object.entries(cal.locks || {})) { if (!/^[^|]+\|\d{4}-\d{2}-\d{2}$/.test(key)) err('calendar.locks.' + key, 'key is sourceId|YYYY-MM-DD'); if (on !== true) err('calendar.locks.' + key, 'a lock is true or absent'); }
+
+  // The month-end sweep (S-206): on, to an account, keeping an amount above the floor.
+  if (cal.sweep !== undefined) {
+    if (typeof cal.sweep !== 'object' || cal.sweep === null) err('calendar.sweep', 'an object');
+    else { if (typeof cal.sweep.on !== 'boolean') err('calendar.sweep.on', 'true or false'); if (cal.sweep.to !== null && cal.sweep.to !== undefined && !(spine.accounts || []).some((a) => a.id === cal.sweep.to)) err('calendar.sweep.to', 'an account id or null'); if (cal.sweep.keep !== undefined && (typeof cal.sweep.keep !== 'number' || cal.sweep.keep < 0)) err('calendar.sweep.keep', 'a number, zero or more'); }
+  }
+
+  // The spend log (S-206): plain records of what happened.
+  const log = spine.log || [];
+  if (!Array.isArray(log)) err('log', 'a list');
+  else {
+    uniqueIds('log', log);
+    for (const x of log) {
+      const p = 'log.' + x.id;
+      if (!isDate(x.date)) err(p + '.date', 'not a date (YYYY-MM-DD)');
+      if (typeof x.amount !== 'number' || !Number.isFinite(x.amount) || x.amount < 0) err(p + '.amount', 'a number, zero or more');
+      if (!['spend', 'refund', 'income'].includes(x.kind)) err(p + '.kind', 'spend, refund or income');
+      if (x.tag !== null && x.tag !== undefined && ![...FAT, 'other'].includes(x.tag)) err(p + '.tag', 'food, accommodation, transportation, other or null');
+      if (x.expenseId !== null && x.expenseId !== undefined && !(spine.expenses || []).some((e) => e.id === x.expenseId)) err(p + '.expenseId', 'an expense id or null');
+    }
+  }
+  // Check-ins (S-206): real balances against the forecast, by day.
+  const checkins = spine.checkins || [];
+  if (!Array.isArray(checkins)) err('checkins', 'a list');
+  else {
+    uniqueIds('checkins', checkins);
+    for (const c of checkins) {
+      const p = 'checkins.' + c.id;
+      if (!isDate(c.date)) err(p + '.date', 'not a date (YYYY-MM-DD)');
+      if (typeof c.balances !== 'object' || c.balances === null) err(p + '.balances', 'an object of account id to amount');
+      else for (const [id, amt] of Object.entries(c.balances)) if (typeof amt !== 'number') err(p + '.balances.' + id, 'a number');
+      if (c.forecast !== undefined && (typeof c.forecast !== 'object' || c.forecast === null)) err(p + '.forecast', 'an object of account id to amount or null');
+    }
+  }
 
   // assumptions
   const as = spine.assumptions || {};

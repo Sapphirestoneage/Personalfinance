@@ -137,7 +137,7 @@ function render(base, rules, source) {
 
   app.replaceChildren(
     // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
+    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
     h('div', { class: 'tiles' }, tiles),

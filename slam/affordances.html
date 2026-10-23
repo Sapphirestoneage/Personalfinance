@@ -166,6 +166,22 @@
     <div class="tool-result">$410 a month more clears the Visa by Apr 1, 2027.</div>
     <div class="tool-result bad">$1,200 a month more clears it by Jan 1, 2027, but checking goes under the floor twice.</div>
   </section>
+  <section class="card" aria-labelledby="p2d-h">
+    <h2 id="p2d-h">Spending (Phase 2, Batch D)</h2>
+    <p class="muted">The staleness banner carries its one action. Safe to spend is one big number. The logger is a big amount box, tag chips that press, and bordered boxes. A tag's budget is a bar with a mark where the budget expects you to be today; running hot is a chip.</p>
+    <div class="stale-banner" role="alert"><span><strong>Stale: </strong>Last anchored 12 days ago: the numbers are stale.</span><a class="btn primary" href="#checkin">Check in</a></div>
+    <div class="stale-banner fresh" role="status"><span><strong>Fresh: </strong>Checked in today.</span><a class="btn" href="#checkin">Check in</a></div>
+    <div class="safe-row"><p class="safe-big">$412</p><span class="muted">until the next paycheck in 9 days: $45 a day</span></div>
+    <form class="logger" onsubmit="return false"><label class="edit-label" for="d-log-amt">How much</label><input id="d-log-amt" class="amount-box" type="text" inputmode="decimal" value="42.50"><div class="tag-chips" role="group" aria-label="Tag"><button type="button" class="tag-chip" aria-pressed="true">Food</button><button type="button" class="tag-chip" aria-pressed="false">Housing</button><button type="button" class="tag-chip" aria-pressed="false">Transportation</button><button type="button" class="tag-chip" aria-pressed="false">Everything else</button></div><label class="edit-label" for="d-log-where">Where</label><input id="d-log-where" type="text" value="SQ *BLUE BOTTLE 4471"><p class="merchant-hint">Reads as Blue Bottle</p><div class="edit-actions"><button type="button" class="btn primary">Add it</button><button type="button" class="btn">It was a refund</button></div></form>
+    <ul class="log-list"><li><span>Oct 20, 2026</span><span><strong>Blue Bottle</strong> (food)</span><span class="pill">Visa</span><span class="log-amt">-$42.50</span><button type="button" class="btn ghost small">Remove</button></li></ul>
+    <p>Food <span class="hot-chip">running hot</span> &nbsp; Housing <span class="hot-chip fine">on track</span></p>
+    <div class="budget-bar" role="img" aria-label="$600 of $700"><div class="fill hot" style="width: 86%"></div><span class="mark" style="left: 71%"></span></div>
+    <ol class="tiers"><li><span>Core burn: food, housing, transportation</span><span class="tier-amt">$2,780</span><span class="tier-cum">so far $2,780</span></li><li><span>Plus everything else that is not debt</span><span class="tier-amt">$450</span><span class="tier-cum">so far $3,230</span></li></ol>
+    <div class="donut-wrap"><div class="donut" role="img" aria-label="Where the money goes" style="background: conic-gradient(var(--c-1, #2a78d6) 0% 40%, var(--c-2, #eb6834) 40% 65%, var(--c-3, #1baf7a) 65% 100%)"></div><ul class="donut-list"><li><span class="sw viz-1" aria-hidden="true"></span>Housing<span class="d-amt">$1,950 (40%)</span></li><li><span class="sw viz-2" aria-hidden="true"></span>Food<span class="d-amt">$700 (25%)</span></li></ul></div>
+    <div class="cut-row dropped"><button type="button" class="btn small" aria-pressed="true">Put back</button><span class="cut-name"><a href="ledger.html">Streaming</a></span><span class="cut-amt">$40 a month</span></div>
+    <p><span class="verdict yes">Yes</span> <span class="verdict tight">Tight</span> <span class="verdict no">No</span></p>
+    <form class="checkin-grid" onsubmit="return false"><label class="edit-label" for="d-ci-chk">Checking, forecast $2,925, now $3,100</label><input id="d-ci-chk" type="text" inputmode="decimal" placeholder="2925"><button type="button" class="btn primary">Save the check-in</button></form>
+  </section>
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>

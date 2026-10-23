@@ -76,6 +76,12 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   const cf = cashflow(spine, rules, ym, { mode: 'expected' });
   t.absorb({ ...cf.income.takeHome, value: undefined });
   model.surplusMonthly = cents(cf.surplus.value);
+  // The month-end sweep (S-206): on, to an account, keeping an amount above the floor.
+  const sw = cal.sweep || {};
+  model.sweep = sw.on === true; model.sweepTo = sw.to || null; model.sweepKeep = cents(sw.keep ?? 0);
+  // Hours of life (S-206): take-home per hour worked, until Batch F's real hourly wage.
+  const hours = spine.household.workHoursPerWeek ? t.useFact('household.workHoursPerWeek', spine.household.workHoursPerWeek) : null;
+  model.realHourlyWage = hours && cf.income.takeHome.value ? Math.round(cents(cf.income.takeHome.value) / (hours * R('APP_WEEKS_PER_MONTH'))) : null;
 
   // ------------------------------------------------------------ cash accounts
   const main = mainChecking(spine);
