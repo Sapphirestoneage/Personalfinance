@@ -112,7 +112,8 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   const pool = m.mx.pools.find((x) => x.key === r.pools[0] && x.year === r.year && x.sharedCap);
   const kv = [
     ['Room left for ' + r.year, cash(r.room)],
-    r.still.value > 0 || r.overSoon ? ['Already set to go in', cash(r.overSoon ? r.still.soon : r.still.value) + ' (' + stillNames.map((x) => (stillNames.length > 1 ? x.name + ' ' : '') + x.words).join('; ') + ')'] : null,
+    // All that is set to go in, when it is more than the room (the part past it is an excess, here or a spouse's).
+    r.still.value > 0 || r.overSoon || r.still.soon > r.room ? ['Already set to go in', cash(r.overSoon || r.still.soon > r.room ? r.still.soon : r.still.value) + ' (' + stillNames.map((x) => (stillNames.length > 1 ? x.name + ' ' : '') + x.words).join('; ') + ')'] : null,
     r.lump !== null ? ['Lump sum today', cash(r.lump) + (r.still.value > 0 ? ' (new money)' : '')] : null,
     r.main === 'paycheck' ? (r.perMonth !== null ? ['A month', cash(r.perMonth) + ' more (' + plural(r.months.count, 'month') + ' with a paycheck' + lastWords(r.months.last, r.perMonth) + ')'] : null) : ['A paycheck', p && p.blank ? 'missing: ' + p.blank.label + ' ' + p.blank.what : p && p.perPaycheck !== null ? cash(p.perPaycheck) + ' (' + plural(p.count, 'paycheck') + lastWords(p.last, p.perPaycheck) + ')' : 'no paycheck before the deadline'],
     ['The limit', cash(L.value) + (L.words.length ? ', ' + L.words.join(', ') : '')],

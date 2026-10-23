@@ -301,7 +301,8 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   // Any W-2 or tips line counts here, a maybe line or a $0 one too (as in engine/cashflow.js): only a household with no
   // pay line of the owner's at all is asked. The link goes to a line no one is named on, if there is one.
   const payLines = (spine.income || []).filter((s) => s.type === 'w2' || s.type === 'tips');
-  if (deadline && deadline.payrollOnly && people(spine).length > 1 && payLines.length && !payLines.some((s) => incomeOwner(spine, s) === pid)) {
+  // The first person is never asked: a line no one is named on is theirs, so every line not theirs names someone else.
+  if (deadline && deadline.payrollOnly && people(spine).length > 1 && pid !== people(spine)[0].id && payLines.length && !payLines.some((s) => incomeOwner(spine, s) === pid)) {
     t.useFact('income.' + (payLines.find((s) => !s.personId) || payLines[0]).id + '.personId', null);
     return done({ room: null, why: 'A ' + typeLabel + ' fills only through pay, and no W-2 or tips line in the Ledger is ' + (person.name || 'the owner') + '\'s. Open the pay line that is ' + (person.name ? person.name + '\'s' : 'theirs') + ' and choose whose pay it is.', missingLabel: 'missing: whose pay is ' + (person.name || 'the owner') + '\'s' });
   }
@@ -344,17 +345,8 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const roomCap = higher ? Math.min(ei.value, round2(couple - counted)) : comp;
     cap = { value: comp, kind: ei.kind, label: joint ? 'the couple\'s ' + year + ' earned income, less ' + money(counted) + ' ' + other.name + ' put in or has set to go in' : ei.label, metric: joint ? 'earned:' + year : earnedId(ei), joint, couple, otherIn: joint ? otherIn : 0, otherStill: joint ? otherStill : 0 };
     // Under married filing jointly with unequal pay, the two spouses' IRAs share the couple's earned income.
-    if (eo && eo.value !== ei.value) {
-      const theirs = accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === other.id).map((x) => v(x.name) || x.id);
-      for (const n of theirs) if (!row.sharedWith.includes(n)) row.sharedWith.push(n);
-      if (theirs.length) {
-        // Together: the couple's pay less what both put in and both still have set to go in.
-        const bothIn = round2(contributed.value + otherIn), bothStill = round2(poolStill(spine, accts, pools[0].key, year, asOf, t).value + otherStill);
-        const together = round2(Math.max(0, couple - bothIn - bothStill));
-        row.couple = { value: couple, with: other.name, names: theirs, together, words: 'Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (theirs.length === 1 ? theirs[0] : 'IRAs') + ': together at most ' + money(together) + ' more' + (bothIn + bothStill ? ' (' + money(bothIn) + ' in, ' + money(bothStill) + ' still set to go in)' : '') + '.' };
-        words.push(row.couple.words);
-      }
-    }
+    const theirs = eo && eo.value !== ei.value ? accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === other.id) : [];
+    for (const n of theirs.map((x) => v(x.name) || x.id)) if (!row.sharedWith.includes(n)) row.sharedWith.push(n);
     if (a.type === 'spousal_ira' && !joint) words.push(fs === 'mfj' ? 'A spousal IRA counts the couple\'s earned income only for the spouse who earns less; here its owner\'s own earned income is the cap.' : 'A spousal IRA rests on married filing jointly; without it, its owner\'s own earned income is the cap.');
     ceiling = Math.min(lim.value, roomCap);
     left[pools[0].key] = round2(ceiling - contributed.value);
@@ -373,6 +365,23 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
       const ownCeil = Math.min(lim.value, ei.value);
       ownLeft[pools[0].key] = round2(ownCeil - contributed.value);
       ownPart[pools[0].key] = round2(Math.max(0, phase ? Math.min(phase.limit - rothIn, ownCeil - contributed.value) : ownCeil - contributed.value));
+    }
+    if (theirs.length) {
+      // Together: each spouse's money counts only up to their own limit (the dollar limit; their own pay for the one who
+      // earns more; the Roth phase-out for one whose IRAs are all Roths). What both may still add is the couple's pay
+      // less that, and no more than both limits' room left.
+      const allRoth = (list) => list.length > 0 && list.every((x) => x.type === 'roth_ira');
+      const mineIra = accts.filter((x) => IRA.includes(x.type) && (ownerOf(spine, x) || {}).id === pid);
+      let myLim = Math.min(lim.value, higher ? ei.value : Infinity);
+      if (phase && !phase.unknown && allRoth(mineIra)) myLim = Math.min(myLim, phase.limit);
+      let theirCap = Math.min(theirLim ?? lim.value, joint ? eo.value : Infinity);
+      if (allRoth(theirs)) { const ph = rothLimit(spine, rules, year, theirCap, tracker(), 'accounts.' + theirs[0].id + '.contributions'); if (!ph.unknown) theirCap = Math.min(theirCap, ph.limit); }
+      const myIn = contributed.value, myStill = poolStill(spine, accts, pools[0].key, year, asOf, t).value;
+      const bothIn = round2(myIn + otherIn), bothStill = round2(myStill + otherStill);
+      const together = round2(Math.max(0, Math.min(couple - Math.min(myIn + myStill, myLim) - Math.min(otherIn + otherStill, theirCap), Math.max(0, myLim - myIn - myStill) + Math.max(0, theirCap - otherIn - otherStill))));
+      const names = theirs.map((x) => v(x.name) || x.id);
+      row.couple = { value: couple, with: other.name, names, together, words: 'Shares the couple\'s ' + money(couple) + ' of ' + year + ' earned income with ' + other.name + '\'s ' + (names.length === 1 ? names[0] : 'IRAs') + ': together at most ' + money(together) + ' more' + (bothIn + bothStill ? ' (' + money(bothIn) + ' in, ' + money(bothStill) + ' still set to go in)' : '') + '.' };
+      words.push(row.couple.words);
     }
     if (phase && phase.words) words.push(cap1(phase.words) + '.');
   } else if (a.type === 'hsa' && lim.family) {
@@ -506,14 +515,14 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const list = [];
     let blank = null;
     for (const s of streams) {
-      const inRun = sim ? sim.run.items.filter((i) => i.kind === 'income' && !i.maybe && i.sourceId === s.id && i.date >= asOf && i.date <= end) : [];
+      const inRun = sim ? sim.run.items.filter((i) => i.kind === 'income' && !i.maybe && (i.sourceId === s.id || String(i.sourceId || '').startsWith('late:' + s.id + '|')) && i.date >= asOf && i.date <= end) : [];
       const sched = paydaysOf(spine, s, asOf, end);
       const runs = !s.end || s.end >= asOf;
       // A weekly or biweekly line with no first pay date has no dates to count from; a line with no amount pays nothing in the run.
       if (runs && (s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start) blank = blank || { label: s.label, what: 'first pay date', path: 'income.' + s.id + '.payDay' };
       if (sched.length && (!s.amount || v(s.amount) === null)) blank = blank || { label: s.label, what: 'amount', path: 'income.' + s.id + '.amount' };
       // The run decides when it reaches the deadline and the line has an amount (skipped or moved paydays as the calendar has them).
-      const useRun = sim && reach && reach >= end && s.amount && v(s.amount) !== null && (inRun.length > 0 || !sched.length);
+      const useRun = sim && reach && reach >= end && s.amount && v(s.amount) !== null;
       const ds = useRun ? inRun.map((i) => ({ date: i.date, cents: i.cents, s })) : sched.map((d) => ({ date: d, cents: null, s }));
       list.push(...ds);
     }
@@ -601,7 +610,8 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
     if (!J || !O) continue;
     // The spouse who earns more takes their room first (it rests on their own pay), the other what is left, never less
     // than what their own monthly amount still puts in (that gap comes off the first).
-    const leftAll = round2(Math.max(0, J.row.cap.couple - J.row.contributed.value - O.row.contributed.value));
+    // Each spouse's money counts only up to their own limit (the dollar limit; the higher earner's own pay too).
+    const leftAll = round2(Math.max(0, J.row.cap.couple - Math.min(J.row.contributed.value, J.row.limit.value) - Math.min(O.row.contributed.value, O.row.limit.value, O.row.cap ? O.row.cap.value : Infinity)));
     if (O.room > leftAll) { O.room = leftAll; O.sharedCap = true; }
     let jr = round2(Math.max(0, leftAll - O.room));
     const need = Math.min(J.room, stillOf(J));
@@ -702,15 +712,16 @@ export function maxItSim(spine, rules, { asOf = spine.meta.asOf } = {}) {
 export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx.asOf } = {}) {
   const chosen = rows ? poolTotals(spine, rules, rows, { asOf }).list : mx.pools;
   const before = sim || maxItSim(spine, rules, { asOf });
+  // One split per account year (its pools' new money together), on its dates, so the amounts match its row.
   const flows = [];
-  for (const p of chosen) {
-    const r = p.row;
-    if (!p.fill || !r.fillable) continue;
+  const byRow = new Map();
+  for (const p of chosen) { if (!p.fill || !p.row.fillable) continue; const x = byRow.get(p.row) || { keys: [], fill: 0 }; x.keys.push(p.key); x.fill = round2(x.fill + p.fill); byRow.set(p.row, x); }
+  for (const [r, x] of byRow) {
     const pc = r.paychecks;
     const dates = r.deadline.payrollOnly ? (pc ? pc.dates : []) : r.months.dates;
     if (!dates.length) continue;
-    const sp = split(p.fill, dates.length);
-    dates.slice(0, sp.count).forEach((d, i) => { const amt = i === sp.count - 1 ? sp.last : sp.per; if (amt > 0) flows.push({ pool: p.key, row: r.id, date: d, amount: amt, label: 'More into ' + r.name + (r.deadline.payrollOnly ? ' from pay' : '') }); });
+    const sp = split(x.fill, dates.length);
+    dates.slice(0, sp.count).forEach((d, i) => { const amt = i === sp.count - 1 ? sp.last : sp.per; if (amt > 0) flows.push({ pool: x.keys.join('+'), row: r.id, date: d, amount: amt, label: 'More into ' + r.name + (r.deadline.payrollOnly ? ' from pay' : '') }); });
   }
   flows.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
   const after = cashsim(spine, rules, { asOf, days: before.days, adjust: (model) => {

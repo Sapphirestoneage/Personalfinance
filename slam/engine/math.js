@@ -153,7 +153,9 @@ function maxitMetric(id) {
   const k = (t, key) => t.filter((x) => x.key === key);
   const one = (t, key) => (k(t, key).length ? k(t, key)[0].value : null);
   const sum = (list) => list.reduce((a, x) => a + (x.value || 0), 0);
-  const lastNote = (r, last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? { note: 'The last one is ' + money(last) + ', what is left, so they add up to ' + money(r.toFill) + '.' } : {});
+  // Max-it amounts to the cent when they have cents (a whole-dollar round could read as over a limit).
+  const cents = (x) => money(x, Math.round(x * 100) % 100 !== 0);
+  const lastNote = (r, last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? { note: 'The last one is ' + cents(last) + ', what is left, so they add up to ' + cents(r.toFill) + '.' } : {});
   if (what === 'room') return { ...base, label: 'Room left for the year', op: 'custom',
     explain: (ctx) => {
       const r = rowOf(ctx);
@@ -241,13 +243,14 @@ function maxitMetric(id) {
     recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };
   // Every account together: each shared limit (a pool) once, filled by the row that holds most of it. A pool that
   // counts less than its row alone says so, since its link shows the row alone.
-  const poolTerms = (mx, f) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + POOL_WORDS(p.key) + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + (f === 'fill' && p.still ? ', ' + money(p.room) + ' of room less ' + money(p.still) + ' already set to go in' : '') + (p.capped ? ', only what a paycheck holds' : '') + (p.row.lump !== null && p.fill < p.row.lump && !p.spill ? '; the account alone could take ' + money(p.row.lump) : '') + ')', p[f], 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':lump' }));
+  const rowFill = (mx, r) => mx.pools.filter((q) => q.row === r).reduce((s, q) => s + q.fill, 0);
+  const poolTerms = (mx, f) => mx.pools.map((p) => term(p.row.name + ', ' + p.year + ' (' + POOL_WORDS(p.key) + (p.sharedCap ? ', what is left of the couple\'s earned income' : '') + (f === 'fill' && p.still ? ', ' + cents(p.room) + ' of room less ' + cents(p.still) + ' already set to go in' : '') + (p.capped ? ', only what a paycheck holds' : '') + (p.row.lump !== null && !p.spill && rowFill(mx, p.row) < p.row.lump - 0.005 ? '; the account alone could take ' + cents(p.row.lump) : '') + ')', p[f], 'usd', p.row.kind === 'missing' ? 'missing' : p.row.kind, 'plus', { metric: 'maxit:' + p.row.accountId + ':' + p.year + ':lump' }));
   // A month: each account year once, its pools' new money over its months.
-  const monthTerms = (mx) => (mx.totals.months || []).map((x) => term(x.row.name + ', ' + x.row.year + ' (' + x.pools.map(POOL_WORDS).join(' and ') + ', to ' + x.until + (x.perMonth !== x.row.perMonth && x.row.perMonth !== null ? '; the account alone ' + money(x.row.perMonth) + ' a month' : '') + ')', x.perMonth, 'usd/month', x.row.kind === 'missing' ? 'missing' : x.row.kind, 'plus', { metric: 'maxit:' + x.row.accountId + ':' + x.row.year + ':month' }));
+  const monthTerms = (mx) => (mx.totals.months || []).map((x) => term(x.row.name + ', ' + x.row.year + ' (' + x.pools.map(POOL_WORDS).join(' and ') + ', to ' + x.until + (x.perMonth !== x.row.perMonth && x.row.perMonth !== null ? '; the account alone ' + cents(x.row.perMonth) + ' a month' : '') + ')', x.perMonth, 'usd/month', x.row.kind === 'missing' ? 'missing' : x.row.kind, 'plus', { metric: 'maxit:' + x.row.accountId + ':' + x.row.year + ':month' }));
   if (what === 'lump' && all) return { ...base, label: 'Every account, the new money', op: 'sum',
     explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.lump, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, poolTerms(mx, 'fill')) : out(null, []); } };
   if (what === 'month' && all) return { ...base, label: 'Every account, a month to its deadline', op: 'sum',
-    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, monthTerms(mx), [], mx.totals.steps.length > 1 ? { note: 'The total changes as deadlines pass: ' + mx.totals.steps.map((s) => money(s.perMonth) + ' a month to ' + s.until).join(', then ') + '.' } : {}) : out(null, []); } };
+    explain: (ctx) => { const mx = ctx.maxit; return mx && mx.pools.length ? out({ value: mx.totals.perMonth, kind: mx.kind, from: mx.from, rough: mx.rough, missing: mx.missing, rules: mx.rules }, monthTerms(mx), [], mx.totals.steps.length > 1 ? { note: 'The total changes as deadlines pass: ' + mx.totals.steps.map((s) => cents(s.perMonth) + ' a month to ' + s.until).join(', then ') + '.' } : {}) : out(null, []); } };
   // The cash check: the lowest day of cash, and the payoff date moved, with the new money in the run.
   const cashOf = (ctx) => (ctx.maxitCash ? ctx.maxitCash(all ? 'all' : acct + ':' + year) : null);
   if (what === 'low') return { ...base, label: 'Lowest day of cash with it', op: 'custom',

@@ -63,9 +63,10 @@ const isActive = (item, ym) => activeDays(item.start, item.end, ym) > 0 && (item
 // Accounts whose monthly contribution comes out of a paycheck before take-home.
 const PAYROLL_FAMILIES = ['employerRetirement', 'hsaFsa'];
 
-// The people with a W-2 or tips line, whatever it pays. Payroll saving comes out of its owner's pay; only an owner
-// with no such line at all has it come out of the household's pay (S-213, S-214).
-const payOwners = (spine) => new Set((spine.income || []).filter((s) => s.type === 'w2' || s.type === 'tips').map((s) => incomeOwner(spine, s)));
+// The people whose payroll saving comes only out of their own pay: everyone with a W-2 or tips line, whatever it
+// pays, and the first person (a line no one is named on is theirs, so every line not theirs names someone else).
+// Only a later person with no such line has it come out of the household's pay (S-213, S-214, S-216).
+const payOwners = (spine) => new Set([...(spine.income || []).filter((s) => s.type === 'w2' || s.type === 'tips').map((s) => incomeOwner(spine, s)), (((spine.household && spine.household.people) || [])[0] || {}).id].filter(Boolean));
 
 // Each paycheck's share of the month's payroll saving (S-211): an account's monthly amount comes off its owner's W-2
 // and tips pay, split by gross; when its owner has no such pay line at all, off all the household's W-2 and tips pay.

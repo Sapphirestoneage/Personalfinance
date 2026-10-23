@@ -124,6 +124,8 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       st = later.income.streams.find((x) => x.id === s.id); sh = payrollShares(spine, later);
     }
     const base = 'income.' + s.id, path = base + '.amount';
+    // A line that ended before this tax year, or starts after the run, pays nothing in it (and does not set its tax).
+    if ((s.end && s.end < year + '-01-01') || (s.start && s.start > end)) continue;
     const amt = t.useFact(path, s.amount);
     if (amt === null) { needs.push({ path, what: s.label + ': amount' }); continue; }
     // A line typed as $0 pays nothing: nothing lands, and nothing is missing.

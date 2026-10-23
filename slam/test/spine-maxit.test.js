@@ -12,7 +12,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { makeRules } from '../engine/rules.js';
-import { putFact, addContribution, editIncome, recordContribution, skipOccurrence } from '../engine/edits.js';
+import { putFact, addContribution, editIncome, recordContribution, skipOccurrence, logSpend, confirmOccurrence } from '../engine/edits.js';
 import { windfall } from '../engine/windfall.js';
 import { fooLadder } from '../engine/plan.js';
 import { calendar } from '../engine/calendar.js';
@@ -860,10 +860,10 @@ test('round 4 (S-214): an ineligible HSA lowers nothing; a payroll plan with no 
   const r1 = row(maxIt(hi, R), 'roth:2026');
   assert.deepEqual([r1.phase.magi, r1.phase.limit, r1.room], [161576.11, 3220, 220]);
   // The salary ends December 31 (last payday December 15): when the surplus reaches the rung in 2028 the 401(k) can take
-  // nothing, so no steady month is asked for.
+  // nothing, so no steady month is asked for. Pay is tested from the day the surplus gets there (S-216).
   const e = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-12-31' } : x)) };
   const f = fooLadder(e, R, summarize(e, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
-  assert.deepEqual([f.need, f.done, f.why], [0, true, 'Work 401(k) 2026: no paycheck after December 31, 2026, so nothing goes in once the surplus reaches this rung.']);
+  assert.deepEqual([f.need, f.done, f.why], [0, true, 'Work 401(k) 2026: no paycheck after July 22, 2028, so nothing goes in once the surplus reaches this rung.']);
   // MFJ: Casey earns $9,000 with $5,000 in a Roth and $400 a month (November, December); Sam earns $2,400 with $6,000 in
   // a traditional IRA and $300 a month. Casey's $5,800 is under Casey's own $7,500: not over. Sam may put in $11,400 -
   // $5,800 = $5,600: $400 over now, $1,000 by December 31.
@@ -900,4 +900,48 @@ test('cents (S-214): a few cents over many months takes fewer of them, never a n
   const so = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] };
   const sim = maxItSim(so, R), mx = maxIt(so, R, { sim });
   assert.deepEqual([mx.totals.steps[mx.totals.steps.length - 1].perMonth, row(mx, 'solo:2026').perMonth], [464.68, 464.68]);
+});
+
+test('round 5 (S-216): pay is tested when the surplus gets there; the couple\'s numbers count each spouse only to their limit; the first person\'s pay is never a spouse\'s; idle lines and early paychecks', () => {
+  const d = demo(), c = couple(d);
+  const hysa = (s, bal) => ({ ...s, accounts: s.accounts.map((a) => (a.id === 'hysa' ? { ...a, balance: F(bal) } : a)) });
+  const rung = (s) => fooLadder(s, R, summarize(s, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
+  // The salary ends January 31, 2027 and the surplus reaches the rung about August 22, 2027: no pay then, nothing asked.
+  const j = hysa({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2027-01-31' } : x)) }, 17000);
+  assert.deepEqual([rung(j).need, rung(j).why], [0, 'Work 401(k) 2026: no paycheck after August 22, 2027, so nothing goes in once the surplus reaches this rung.']);
+  // The salary ends November 20 and a new job starts January 15, 2028, before the rung's start (about April 22, 2028):
+  // there is pay then, so the steady month stands.
+  const rv = { ...d, income: [...d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-11-20' } : x)), { ...d.income[0], id: 'newjob', label: 'New job', start: '2028-01-15', end: null }] };
+  assert.equal(rung(rv).need, 1541.67);
+  // Casey earns $72,000 with $2,000 in a Roth; Sam earns $1,200 with an empty IRA. Each may add up to their own limit:
+  // $5,500 + $7,500 = $13,000 together (not $73,200 - $2,000).
+  const g3 = { ...c, income: [c.income[0], w2('samjob', 'sam', 100)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 2000 }]) } : a)), acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
+  assert.deepEqual([row(maxIt(g3, R), 'roth:2026').couple.together, row(maxIt(g3, R), 'st:2026').couple.together], [13000, 13000]);
+  // Sam (pay $3,000) has $9,000 in a Roth, past Sam's own $7,500: only $7,500 of it uses the couple's $15,000, so the
+  // Plan counts Casey's full $7,500.
+  const a3 = { ...c, income: [{ ...c.income[0], amount: F(1000) }, w2('samjob', 'sam', 250)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 9000 }]) })] };
+  assert.equal(maxIt(a3, R).totals.lump, 7500);
+  // Casey (the first person) has only the tutoring, and every pay line names Sam: Casey's 401(k) cannot be filled (not
+  // "whose pay"), and its $500 a month never comes out of Sam's paycheck.
+  const x4 = { ...c, income: [c.income[1], { ...w2('samjob', 'sam', 6000), payDay: F(15) }] };
+  const r4 = row(maxIt(x4, R), 'k401:2026'), cf4 = cashflow(x4, R, '2026-11');
+  assert.deepEqual([r4.fillable, r4.missingLabel, cf4.saving.payroll.value, payrollShares(x4, cf4)], [false, null, 0, {}]);
+  // An old job that ended in 2025 with no amount: it cannot pay in the run, so the cash check reads as without it.
+  const x5 = { ...d, income: [...d.income, { ...w2('old', 'casey', 0), label: 'Old job', amount: F(null, 'missing'), end: '2025-12-31' }] };
+  const s5 = maxItSim(x5, R), s0 = maxItSim(d, R), mx5 = maxIt(x5, R, { sim: s5 }), mx0 = maxIt(d, R, { sim: s0 });
+  assert.equal(maxItCash(x5, R, mx5, { sim: s5, rows: [row(mx5, 'k401:2026')] }).words, maxItCash(d, R, mx0, { sim: s0, rows: [row(mx0, 'k401:2026')] }).words);
+  // As of December 15, the December 15 paycheck came in a day early and was imported: no 2026 paycheck is left.
+  const a6 = logSpend({ ...d, meta: { ...d.meta, asOf: '2026-12-15' } }, { amount: 4211, date: '2026-12-14', kind: 'income', source: 'import', importKey: 'bank:2026-12-14:payroll', merchant: 'HUDSON VALLEY HEALTH PAYROLL' }).spine;
+  const s6 = maxItSim(a6, R), m6 = maxIt(a6, R, { sim: s6 });
+  assert.deepEqual([row(m6, 'k401:2026').fillable, m6.totals.unfillable], [false, ['k401:2026']]);
+  const a6b = confirmOccurrence({ ...d, meta: { ...d.meta, asOf: '2026-12-14' } }, 'salary|2026-12-15', { amount: 4100, date: '2026-12-11' });
+  assert.equal(row(maxIt(a6b, R, { sim: maxItSim(a6b, R) }), 'k401:2026').fillable, false);
+  // A Solo 401(k)'s cash check pays its two pools as one: $464.68 a month and a last $464.63, as on its row.
+  const so = { ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] };
+  const ssim = maxItSim(so, R), smx = maxIt(so, R, { sim: ssim }), sr = row(smx, 'solo:2026');
+  const fl = maxItCash(so, R, smx, { sim: ssim, rows: [sr] }).flows;
+  assert.deepEqual([fl.length, fl[0].amount, fl[fl.length - 1].amount], [12, sr.perMonth, sr.months.last]);
+  // Show the math gives the cents: "The last one is $0.05, ... add up to $0.50" (not "$0 ... $1").
+  const x8 = { ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7499.5 }]) } : a)) };
+  assert.equal(explainMetric('maxit:roth:2026:month', { spine: x8, rules: R, maxit: maxIt(x8, R) }).note, 'The last one is $0.05, what is left, so they add up to $0.50.');
 });

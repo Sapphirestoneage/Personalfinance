@@ -91,8 +91,10 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
       const off = mine.filter((r) => !r.applies);
       const over = mine.filter((r) => r.over || r.overSoon);
       // A payroll-only limit with no paycheck left counts as closed while its owner still has a payday after its
-      // deadline (next year's room); a line that pays $0 or never pays again does not count.
-      const paysOn = (r) => paysAfter(spine, r.person, r.deadline.date);
+      // deadline and after the surplus reaches the rung (next year's room); a line that pays $0 or never pays again does
+      // not count.
+      const payFrom = (r) => (start && start > r.deadline.date ? start : r.deadline.date);
+      const paysOn = (r) => paysAfter(spine, r.person, payFrom(r));
       const shut = mine.filter((r) => r.applies && r.room !== null && !r.passed && !r.fillable);
       // Each limit counted from the rung's start: its dates left from then; none left means its deadline passes first.
       // A payroll pool counts the months that still hold a paycheck (any payday in the month, not only the first).
@@ -116,7 +118,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
           over.length ? over.map((r) => r.name + ' ' + r.year + ': ' + (r.over ? 'over the limit by ' + money(r.over) + (r.overByYearEnd ? ', ' + money(r.overByYearEnd) + ' by December 31 if nothing changes' : '') : 'set to go over the limit by ' + money(r.overSoon))).join('; ') + '.' : '',
           [...open, ...later].map(line).join('; ') + (open.length || later.length ? '.' : ''),
           closed.some((p) => !gone.includes(p)) ? closed.filter((p) => !gone.includes(p)).map((p) => p.row.name + ' ' + p.year + (!p.row.fillable ? ' has no paycheck left before ' + longDay(p.deadline) : lastPay(p) ? ': its last payday before ' + longDay(p.deadline) + ' is ' + longDay(lastPay(p)) + ', ' + when : ' closes on ' + longDay(p.deadline) + ', ' + when)).join('; ') + '.' : '',
-          gone.map((p) => p.row.name + ' ' + p.year + ': no paycheck after ' + longDay(p.deadline) + ', so nothing goes in once the surplus reaches this rung.').join(' '),
+          gone.map((p) => p.row.name + ' ' + p.year + ': no paycheck after ' + longDay(payFrom(p.row)) + ', so nothing goes in once the surplus reaches this rung.').join(' '),
           shut.filter((r) => !paysOn(r)).map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ')
         ].filter(Boolean).join(' ');
         const first = miss[0] || over[0] || (sized[0] && sized[0].row);
