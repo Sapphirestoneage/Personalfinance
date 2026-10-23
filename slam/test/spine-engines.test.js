@@ -700,3 +700,33 @@ test('subscriptions: cost a month and a year, next charge, and a yellow flag unt
   assert.equal(nextCharge('2026-01-31', 'yearly', '2026-10-22'), '2027-01-31');
   assert.ok(validate(r).ok);
 });
+
+// ------------------------------------------------------------------ money flow (S-192)
+import { moneyFlow } from '../engine/flow.js';
+import { applyDefaults } from '../engine/defaults.js';
+import { loadHousehold } from '../engine/normalize.js';
+import { readJson } from './spine-helpers.js';
+
+test('money flow: from income through accounts and cards to where it goes, adding up to the surplus', () => {
+  const s = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  const cf = cashflow(s, R, '2026-10');
+  const f = moneyFlow(s, R, cf);
+  near(f.left - f.short, cf.surplus.value);
+  // Every place balances: what comes into an account or card goes out of it.
+  for (const n of f.nodes.filter((x) => x.kind === 'account' || x.kind === 'card')) {
+    const inn = f.links.filter((l) => l.to === n.id).reduce((x, l) => x + l.amount, 0), out = f.links.filter((l) => l.from === n.id).reduce((x, l) => x + l.amount, 0);
+    near(inn, out, 0.02);
+  }
+  assert.ok(f.links.some((l) => l.rough), 'unlinked routes are guesses');
+  // A bill put on a card: the card carries it, and its account pays the card for it.
+  const card = s.debts.find((d) => d.type === 'credit_card');
+  const food = s.expenses.find((e) => e.fat === 'food');
+  const s2 = setAt(s, 'expenses.' + food.id + '.paidFrom', K(card.id));
+  const f2 = moneyFlow(s2, R, cashflow(s2, R, '2026-10'));
+  assert.ok(f2.links.some((l) => l.from === 'card:' + card.id && l.to === 'sec:food' && !l.rough));
+  near(f2.left - f2.short, cf.surplus.value, 0.01);
+  // A section opened shows each expense.
+  const f3 = moneyFlow(s, R, cf, { open: ['food'] });
+  assert.ok(f3.nodes.some((n) => n.id === 'exp:' + food.id) && !f3.nodes.some((n) => n.id === 'sec:food'));
+  assert.ok(f.nodes.every((n) => n.amount > 0), 'no empty places');
+});

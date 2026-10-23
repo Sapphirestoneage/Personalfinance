@@ -266,3 +266,26 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .check-row:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .check-row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 .check-row > span { display: flex; flex-direction: column; }
+
+/* Money flow (S-192): bands colored by where the money goes; dashed is a guessed route. */
+.flow-secs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); }
+.flow-box { width: 100%; overflow: hidden; }
+.flow-svg { display: block; font-family: var(--font-ui); font-size: 12px; }
+.fl-band { fill-opacity: 0.32; stroke: none; transition: fill-opacity 0.12s ease; }
+.fl-band:hover { fill-opacity: 0.55; }
+.fl-band.fl-rough { stroke: currentColor; stroke-opacity: 0.55; stroke-width: 1; stroke-dasharray: 4 3; }
+.fl-spend { color: var(--accent); fill: var(--accent); }
+.fl-debt { color: var(--bad); fill: var(--bad); }
+.fl-save, .fl-left { color: var(--good); fill: var(--good); }
+.fl-tax { color: var(--warn); fill: var(--warn); }
+.fl-short { color: var(--bad); fill: var(--bad); }
+.fl-acct, .fl-card, .fl-income { color: var(--text-muted); fill: var(--text-muted); }
+.fl-node text { fill: var(--text); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; font-weight: 600; }
+.fl-node rect { fill: currentColor; }
+.flow-svg a .fl-node text, .fl-tap text { fill: var(--accent); }
+.fl-tap { cursor: pointer; }
+.fl-tap:focus-visible, .flow-svg a:focus-visible { outline: 3px solid var(--focus); }
+.flow-total { font-weight: 600; color: var(--text); }
+.flow-list ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); font-size: var(--text-sm); }
+.flow-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .fl-band { transition: none; } }

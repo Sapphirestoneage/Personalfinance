@@ -7,6 +7,8 @@ import { mathButton } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
 import { loadAll, SOURCE_WORDS } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
+import { moneyFlow } from '../engine/flow.js';
+import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
@@ -69,6 +71,9 @@ function creditNote(cs) {
 // The picked Triple D set (S-183) replaces the real return and withdrawal rate
 // before anything is figured, so every FI number and the projection follow it.
 let scenario = pickedScenario();
+// Sections of the money flow split into their expenses (S-192), for this page only.
+let flowOpen = [];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function render(base, rules, source) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
@@ -133,8 +138,18 @@ function render(base, rules, source) {
       h('nav', { class: 'top-actions' }, h('a', { class: 'btn', href: 'math.html' }, 'All formulas'), h('a', { class: 'btn primary', href: 'ledger.html' }, 'Open the Ledger'))),
     scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); }),
     h('div', { class: 'tiles' }, tiles),
+    flowPart(spine, rules, s),
     flagsSection(spine, s.flags)
   );
+}
+
+// The money flow (S-192); a split or join redraws only this section.
+function flowPart(spine, rules, s) {
+  const el = flowSection(moneyFlow(spine, rules, s.cashflow, { open: flowOpen }), {
+    open: flowOpen, month: MONTH_NAMES[+s.ym.slice(5, 7) - 1],
+    onToggle: (sec) => { flowOpen = flowOpen.includes(sec) ? flowOpen.filter((x) => x !== sec) : [...flowOpen, sec]; el.replaceWith(flowPart(spine, rules, s)); }
+  });
+  return el;
 }
 
 // A goal line: a link to the Ledger field it depends on when there is one.
