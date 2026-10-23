@@ -167,12 +167,29 @@ Two smaller ones, not in `QUESTIONS.md`:
   tile (next paycheck, next bill, the big one coming), or keep the calendar on
   its own page?
 
+## Answers recorded (2026-10-23, S-202)
+
+Eli answered questions 21 to 28 the same day. They are recorded in
+`QUESTIONS.md` and as S-202 in `DECISIONS.md`; nothing from them is built yet,
+by Eli's instruction to wait for sign-off.
+
+| # | Answer | What it means for the next build |
+| --- | --- | --- |
+| 21 | Feed | The spine is the source of truth, the Budget reads from it, and the Budget's transaction log supplies actuals back as Facts. |
+| 22 | The spine calendar survives | The Budget calendar is to be retired; what that touches is listed below. Nothing removed yet. |
+| 23 | The windfall order is right, cards included | An `employerMatch` step goes before `cards` whenever a paycheck has a match. The match is a text field today (`matchFormula`); the build needs it as numbers. |
+| 24 | Yes | A 1099 windfall adds the self-employment rate to the tax step. |
+| 25 | Cap at known earned income | The Roth step is capped at the year's known earned income and reads rough when that income is rough or missing. |
+| 26 | Leave it | Commit 452b444 stays in history. |
+| 27 | Yes | `slam/` is now in CLAUDE.md as a separate app. The line points at S-202 in SLAM's own log rather than a new root D-number, because root entry headings must carry an em dash by the root suite's own check and SLAM's style forbids one. Say the word if you want a root D-342 anyway. |
+| 28 | Yes | Calendar paychecks stay net of payroll saving. |
+
 ## Open decisions and things I did not do
 
 - The $869 commit stays in history (question 26).
 - Nothing was merged to `main`; GitHub Pages still shows Phase 0 (the Budget).
-- Phase 2 item 2 (Budget estimated vs actual) is not started (question 21).
-- The repository `CLAUDE.md` was not changed (question 27).
+- Phase 2 item 2 (Budget estimated vs actual) is not started; the feed model is decided (question 21).
+- The repository `CLAUDE.md` gained the `slam/` exception line (question 27).
 
 ## Suggested next step
 

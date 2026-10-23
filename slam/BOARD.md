@@ -33,10 +33,11 @@
 - [x] Windfall room: `windfall.html`, a lump sum assigned in the `WINDFALL_ORDER` house order, every step with Show the math (S-201)
 - [x] Report: `docs/PHASE2_REPORT.md` (what was built, tests, what to check against real data, questions)
 
-## Next: Phase 2, what is left
+## Next: Phase 2, second pass (answers in S-202; waiting on Eli's sign-off before building)
 
-1. **Budget, estimated vs actual**: connect the Budget's monthly log to the spine's expenses. Not started: it rests on S-140 (does the spine feed the Budget or replace its store?), which needs Eli's call. The two options are laid out in `docs/PHASE2_REPORT.md`.
-2. **Calendar follow-ups** (after the S-140 call): a day-by-day cash line and the lowest point, once every item has a day or the Budget's log supplies the real dates.
+1. **Windfall**: an `employerMatch` step before `cards` whenever a paycheck has a match (the match must become numbers: the account's `matchFormula` is text today); the `taxOnIt` step adds the self-employment rate for 1099 money; the `roth` step is capped at the year's known earned income and reads rough when that income is rough or missing.
+2. **Budget, estimated vs actual, the feed model**: the Budget reads its estimates from the spine's expenses; its transaction log supplies the month's actuals back to the spine as Facts; the Dashboard shows estimate, actual and the gap per line.
+3. **Retire the Budget calendar**: the list of what it touches is in `docs/PHASE2_REPORT.md`; the spine calendar takes the log's real pay and bill dates first, then the old one goes.
 
 ## Waiting on Eli
 
