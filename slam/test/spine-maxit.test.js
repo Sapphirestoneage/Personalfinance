@@ -879,6 +879,40 @@ test('round 20 (S-225): months of pay by paydays, a blank spouse never lifts the
   assert.deepEqual([yearTax(f2, R, 2026).lines.agi.value, yearTax(f2, R, 2026, 'expected').lines.agi.value], [47769.21, 47769.21]);
 });
 
+test('round 21 (S-225): saving from pay never more than a month\'s pay; a yearly line; a Solo employer total; the Solo reserve within 402(g)', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
+  const fills = (mx) => Object.fromEntries(mx.pools.map((p) => [p.row.id + ' ' + p.key + (p.spill ? ' spill' : ''), p.fill]));
+  const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
+  const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
+  const earned = (s, mode = 'committed') => earnedIncome(s, R, 2026, { mode }).value;
+  // A job to June 30 with $250 to a 401(k) and $150 to an HSA a month; a one-time $200 check in September holds at most
+  // $200 of that saving, so earned income does not go down.
+  const a0 = at({ ...bare(), income: [w2('job', 'casey', 1500, { end: '2026-06-30' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(250) }), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(150) })] }, '2026-03-01');
+  const a1 = { ...a0, income: [...a0.income, w2('x', 'casey', 200, { cadence: 'once', start: '2026-09-15' })] };
+  assert.deepEqual([earned(a0), earned(a1)], [6600, 6600]);
+  // A job from May 11 paid on the 7th, a one-time $5,000 in January, $2,300 a month to a 401(k): no month's saving is more
+  // than its pay, so the IRA gets the $4,100 the paychecks leave ($22,500 - $18,400).
+  const p = at({ ...bare(), income: [w2('job', 'casey', 2500, { start: '2026-05-11', payDay: F(7) }), w2('once', 'casey', 5000, { cadence: 'once', start: '2026-01-08' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(2300) }), acct('ti', 'traditional_ira', 'ira')] }, '2026-04-01');
+  assert.deepEqual([earned(p), fills(run(p))['ti:2026 ira:casey']], [4100, 4100]);
+  // A salary and a yearly bonus line: $500 a month from pay is $6,000, not 12 times more.
+  const b = at({ ...bare(), income: [w2('sal', 'casey', 5000), w2('bonus', 'casey', 12000, { cadence: 'yearly' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] }, '2026-03-01');
+  assert.deepEqual(earnedIncome(b, R, 2026).lines.filter((l) => /pre-tax/.test(l.label)).map((l) => l.amount), [-6000]);
+  // A Solo at $1,000 a month on $13,940.28 of self-employment pay: recording a $1 employer amount keeps the deferral's
+  // monthly guess, so the IRA's pay stays $1,940.28 less that $1.
+  const e0 = at({ ...bare(), income: [gig('g', 'casey', 1250)], accounts: [...bare().accounts, acct('so', 'solo_k401', 'employerRetirement', { monthlyContribution: F(1000) }), acct('ti', 'traditional_ira', 'ira')] }, '2026-07-01');
+  const e1 = { ...e0, accounts: e0.accounts.map((x) => (x.id === 'so' ? { ...x, contributions: F([{ year: 2026, amount: 1, kind: 'employer' }]) } : x)) };
+  assert.deepEqual([row(run(e0), 'ti:2026').cap.value, row(run(e1), 'ti:2026').cap.value], [1940.28, 1939.28]);
+  // $200,000 of 1099 pay and a Solo at $3,000 a month ($36,000, $11,500 past the $24,500 deferral limit): the deferral
+  // keeps only the $15,500 of limit it can use, so the employer part keeps all of its 20% ($37,176.57).
+  const so = run(at({ ...bare(), income: [gig('g', 'casey', 200000 / 12)], accounts: [...bare().accounts, acct('so', 'solo_k401', 'employerRetirement', { monthlyContribution: F(3000) })] }, '2026-03-01'));
+  assert.deepEqual([row(so, 'so:2026').parts['employer:casey'], row(so, 'so:2026').overSoon], [37176.57, 11500]);
+  // Casey's IRA rests on the couple's pay; Sam's $13,852.50 of 401(k) money, not her $58.70 of Solo money, is the cause.
+  let mj = couple(bare());
+  mj = at({ ...mj, income: [gig('cg', 'casey', 2000 / 12), w2('sj', 'sam', 1500)], accounts: [...mj.accounts, acct('cso', 'solo_k401', 'employerRetirement', { monthlyContribution: F(150) }), acct('ci', 'traditional_ira', 'ira'), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') })] }, '2026-03-01');
+  assert.equal(row(run(mj), 'ci:2026').counted.why, 'pre');
+});
+
 test('set to go over: money a monthly amount still puts in past the limit is named before it happens', () => {
   const d = demo();
   const r = row(maxIt({ ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 7500 }]) } : a)) }, R), 'roth:2026');

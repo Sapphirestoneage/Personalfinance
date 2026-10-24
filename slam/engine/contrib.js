@@ -91,7 +91,8 @@ function payChecks(spine, pid, year) {
   for (const s of lines) for (const d of paydaysOf(spine, s, year + '-01-01', year + '-12-31')) {
     const ym = monthKey(d);
     const G = lines.filter((x) => activeDays(x.start, x.end, ym) > 0).reduce((a, x) => a + g(x), 0);
-    if (G) out.push({ date: d, w: (g(s) / G) * 12 / PER_YEAR[s.cadence] });
+    // A quarterly or yearly line is spread over the months, as payDatesOf and the tax figures have it: monthly dates.
+    if (G) out.push({ date: d, w: (g(s) / G) * 12 / (s.cadence === 'quarterly' || s.cadence === 'yearly' ? 12 : PER_YEAR[s.cadence]) });
   }
   return out;
 }

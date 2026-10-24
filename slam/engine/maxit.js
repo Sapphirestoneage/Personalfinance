@@ -165,6 +165,9 @@ const ageOf = (spine, person, year, t) => {
   const birth = person ? t.useFact('household.people.' + person.id + '.birthDate', person.birthDate) : null;
   return birth ? ageOn(birth, year + '-12-31') : null;
 };
+// What is in an account for the year: a Solo 401(k)'s employee part and employer part each (a recorded employer total
+// never hides the employee part's monthly guess), else the account's own count.
+const inAll = (spine, a, year, asOf, t) => (a.type === 'solo_k401' ? round2(contributedOn(spine, a, year, asOf, t, 'employee').value + contributedOn(spine, a, year, asOf, t, 'employer').value) : contributedOn(spine, a, year, asOf, t).value);
 // What the tax figures took off a person's W-2 wages for their own Solo 401(k) (engine/tax.js takes it off last).
 // The pay an IRA can count takes Solo money off self-employment pay instead, so this is added back once.
 const soloOffWages = (spine, e, who) => round2(-(e.lines || []).filter((l) => l.path && (spine.accounts || []).some((a) => a.type === 'solo_k401' && !oddOwner(spine, a) && (ownerOf(spine, a) || {}).id === who && l.path.startsWith('accounts.' + a.id + '.'))).reduce((x, l) => x + (l.amount || 0), 0));
@@ -371,7 +374,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     // Self-employment pay counts for an IRA less what goes into that person's own Solo 401(k) or SEP (Pub 590-A,
     // Schedule 1 line 16), never more than that pay: what is in and still set to go in comes off here, new money in the
     // Plan (poolTotals). The couple's pay is each spouse's pay counted that way, and who earns less is told by it.
-    const seUsedOf = (who, e) => (e.value === null ? 0 : Math.min(e.seEarnings || 0, round2(accts.filter((x) => (x.type === 'solo_k401' || x.type === 'sep_ira') && !oddOwner(spine, x) && (ownerOf(spine, x) || {}).id === who).reduce((x, p) => x + contributedOn(spine, p, year, asOf, t).value + ((stillOn(spine, p, year, asOf, t) || {}).value || 0), 0))));
+    const seUsedOf = (who, e) => (e.value === null ? 0 : Math.min(e.seEarnings || 0, round2(accts.filter((x) => (x.type === 'solo_k401' || x.type === 'sep_ira') && !oddOwner(spine, x) && (ownerOf(spine, x) || {}).id === who).reduce((x, p) => x + inAll(spine, p, year, asOf, t) + ((stillOn(spine, p, year, asOf, t) || {}).value || 0), 0))));
     const seUsed = seUsedOf(pid, ei), theirSe = eo ? seUsedOf(other.id, eo) : 0;
     // Solo money the tax figures took off W-2 wages comes off self-employment pay here instead: counted once.
     const mySolo = soloOffWages(spine, ei, pid), theirSolo = eo ? soloOffWages(spine, eo, other.id) : 0;
@@ -498,9 +501,9 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     ceiling = total;
     cap = { value: seAmt, kind: ei.kind, label: year + ' self-employment earnings', metric: earnedId(ei), employee, employer, employeeCounted: emplCounted, total, share, employerIn: emp.value, sepIn, soloAll, electGone };
     // The employer part first: no other plan can take it, while a W-2 401(k) can take the deferral. What this Solo's own
-    // monthly amount still puts in as deferral keeps its place first.
+    // monthly amount still puts in as deferral keeps its place first, up to the deferral room left.
     const ownDeferStill = round2(poolStill(spine, accts, 'deferral:' + pid, year, asOf, t).parts.filter((x) => x.id === a.id).reduce((x, q) => x + q.value, 0));
-    row.parts['employer:' + pid] = Math.min(employer, round2(Math.max(0, room - Math.min(ownDeferStill, room))));
+    row.parts['employer:' + pid] = Math.min(employer, round2(Math.max(0, room - Math.min(ownDeferStill, emplCounted, room))));
     row.parts['deferral:' + pid] = round2(room - row.parts['employer:' + pid]);
     left['employer:' + pid] = employer;
     left['deferral:' + pid] = employee;
@@ -696,7 +699,7 @@ function payOf(spine, rules, rows, who, year, asOf, alone = false) {
   if (!e || e.value === null) return null;
   const t = tracker();
   const mine = (x) => !oddOwner(spine, x) && (ownerOf(spine, x) || {}).id === who;
-  const inStill = (xs) => round2(xs.reduce((s, a) => s + contributedOn(spine, a, year, asOf, t).value + ((stillOn(spine, a, year, asOf, t) || {}).value || 0), 0));
+  const inStill = (xs) => round2(xs.reduce((s, a) => s + inAll(spine, a, year, asOf, t) + ((stillOn(spine, a, year, asOf, t) || {}).value || 0), 0));
   const seEarn = e.seEarnings || 0;
   const seUsed = Math.min(seEarn, inStill((spine.accounts || []).filter((x) => (x.type === 'solo_k401' || x.type === 'sep_ira') && mine(x))));
   const iras = (spine.accounts || []).filter((x) => IRA.includes(x.type) && mine(x));
@@ -895,7 +898,7 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
     if (!O) {
       // The spouse who earns more has no IRA here: the other's pay is the couple's less what that spouse's IRAs take.
       const c = own(J, round2(couple - Math.min((payInfo.get(year + '|' + hiId) || {}).iraUsed || 0, hiPay)), loId);
-      if (J.room > c) { J.room = c; mark(J, year, [loId], pair); }
+      if (J.room > c) { J.room = c; const [big, small] = [...pair].sort((x, y) => offOf(year, y) - offOf(year, x)); mark(J, year, [big], [small]); }
       continue;
     }
     // The spouse who earns more takes their room first (it rests on their own pay), the other what is left, never less
