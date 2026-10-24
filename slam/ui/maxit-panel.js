@@ -32,16 +32,6 @@ const VERIFY = 'This date has not been checked against the IRS yet.';
 const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferrals (the total)' : 'Contributions (the total)'], ...(type === 'solo_k401' ? [['employer', 'Employer part (the total)']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
 // "; the last one $483.30" when the last payment is what is left.
 const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? '; the last one ' + cash(last) : '');
-// Why the Plan counts less than the account alone could take (the engine's r.counted.why).
-const COUNTED_WHY = {
-  couple: () => 'the couple\'s pay is shared: the spouse who earns more is counted first',
-  phase: (r) => (r.cap && r.cap.joint ? 'the Roth phase-out runs on the couple\'s pay left after ' + (r.couple ? r.couple.with : 'the other spouse') + '\'s year' : 'so ' + (r.couple ? r.couple.with + '\'s' : 'the other spouse\'s') + ' Roth money stays within their limit after the phase-out'),
-  se: () => 'the Solo 401(k) or SEP takes the self-employment pay first',
-  seIra: () => 'IRA money already in or set to go in keeps the self-employment pay it needs',
-  paycheck: () => 'only what the paychecks hold',
-  pool: () => 'another account in the same limit is counted for it'
-};
-const countedWhy = (r) => COUNTED_WHY[r.counted.why](r);
 // A blank the row waits on that the Ledger can fill (not a rule).
 const canFill = (path) => path && !path.startsWith('rule:');
 
@@ -138,7 +128,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     r.phase && r.phase.lo != null && r.phase.magi > r.phase.lo ? ['Roth limit', cash(r.phase.limit) + ' at modified AGI of ' + cash(r.phase.magi)] : null,
     ownShared.length ? ['Shares its limit with', ownShared.join(', ')] : null,
     r.couple ? ['Shares the couple\'s pay', r.couple.words] : null,
-    r.counted ? ['Counted in the Plan', cash(r.counted.fill) + ' (' + countedWhy(r) + ')'] : null,
+    r.counted ? ['Counted in the Plan', cash(r.counted.fill) + ' (' + r.counted.words + ')'] : null,
     ['The deadline', r.deadline.when + '. ' + r.deadline.words + ' ' + VERIFY]
   ].filter(Boolean);
   return h('div', { class: 'max-year card-tile' }, head,
@@ -184,7 +174,7 @@ export function maxItCard(spine, rules) {
       !r.applies ? h('span', { class: 'muted' }, r.why)
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
-      r.couple || r.counted ? h('span', { class: 'tile-sub' }, [r.couple ? r.couple.words : null, r.counted ? 'Counted in the Plan: ' + cash(r.counted.fill) + ' (' + countedWhy(r) + ').' : null].filter(Boolean).join(' ')) : null,
+      r.couple || r.counted ? h('span', { class: 'tile-sub' }, [r.couple ? r.couple.words : null, r.counted ? 'Counted in the Plan: ' + cash(r.counted.fill) + ' (' + r.counted.words + ').' : null].filter(Boolean).join(' ')) : null,
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
       r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);

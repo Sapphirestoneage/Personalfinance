@@ -9,7 +9,7 @@
 import { valueOf as v, round2, monthKey, dayIn, monthStart, monthEnd, addDays, accountOwner, incomeOwner, ageOn } from './spine.js';
 import { activeDays, streamWeight } from './cashflow.js';
 import * as C from './vendor/cashcal.js';
-import { PER_YEAR } from './schema.js';
+import { PER_YEAR, PRESETS } from './schema.js';
 import { money as fmt } from '../src/ui/format.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
@@ -22,6 +22,9 @@ export const nMonths = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1)) +
 export const DEFERRAL = ['k401', 'roth_k401', 'k403b', 'tsp'];
 // Plans filled only from a paycheck (an HSA with pay is too, else from take-home; a Solo 401(k) and a SEP never are).
 export const FROM_PAY = [...DEFERRAL, 'k457b', 'simple_ira', 'after_tax_k401'];
+// The ones the tax figures take off W-2 wages (pre-tax, filed with the 401(k)s; not a SIMPLE IRA, question 50):
+// their new money is not pay an IRA can count either.
+export const OFF_WAGES = FROM_PAY.filter((t) => PRESETS[t].taxTreatment === 'pretax' && PRESETS[t].family === 'employerRetirement');
 // Entries in a contributions list: rollovers and conversions never count; a 529 rolled into a Roth IRA does; employer marks a Solo 401(k)'s or SEP's employer part.
 export const CONTRIBUTION_KINDS = ['contribution', 'rollover', 'conversion', 'from529', 'employer'];
 export const counts = (c, year) => c.year === year && c.kind !== 'rollover' && c.kind !== 'conversion';

@@ -100,7 +100,10 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
       // Each limit counted from the rung's start: its dates left from then; none left means its deadline passes first.
       // A payroll pool counts the months that still hold a paycheck (any payday in the month, not only the first).
       const monthsLeft = (p) => (p.row.deadline.payrollOnly && p.row.paychecks ? new Set(p.row.paychecks.dates.filter((d) => d >= from).map((d) => d.slice(0, 7))).size : p.row.months.dates.filter((d) => d >= from).length);
-      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = monthsLeft(p); return { ...p, left: n, perMonth: n ? c2(p.fill / n) : null }; });
+      // The Roth and HSA rung comes before the retirement rung: an IRA the Plan cut only for new money into a 401(k), Solo
+      // 401(k) or SEP (which it fills first, question 63) is sized here by what it alone could take.
+      const ahead = (p) => id === 'rothHsa' && !p.spill && p.row.counted && (p.row.counted.why === 'pre' || p.row.counted.why === 'se') && p.row.lump !== null;
+      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = monthsLeft(p), fill = ahead(p) ? p.row.lump : p.fill; return { ...p, plan: p.fill, ahead: ahead(p), left: n, perMonth: n ? c2(fill / n) : null }; });
       const open = sized.filter((p) => p.left > 0);
       const closed = [...sized.filter((p) => p.left === 0), ...shut.filter((r) => paysOn(r)).map((r) => ({ key: r.pools[0], year: r.year, room: r.room, row: r, deadline: r.deadline.date }))];
       // A limit whose deadline passes first: its steady month, once per pool (a later year still open sizes it instead).
@@ -109,7 +112,8 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
       const later = closed.filter((p, i) => !gone.includes(p) && !open.some((o) => o.key === p.key) && closed.findIndex((c) => c.key === p.key) === i).map((p) => ({ ...p, perMonth: steadyMonth(spine, p), steady: true }));
       if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
       else {
-        const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '');
+        // The Plan's count, with why it is less than the account alone could take (another limit or rung uses the pay first).
+        const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '') + (p.ahead ? ' (ahead of the retirement rung; the Plan, which fills that rung first, counts ' + money(p.plan) + ': ' + p.row.counted.words + ')' : p.row.counted && !p.spill ? ' (less than the account alone could take: ' + p.row.counted.words + ')' : '');
         const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
         const when = start ? 'before the surplus reaches this rung (about ' + longDay(start) + ')' : 'before the surplus reaches this rung';
         // A payroll pool whose deadline is after the start closes on its last payday, not on the deadline.

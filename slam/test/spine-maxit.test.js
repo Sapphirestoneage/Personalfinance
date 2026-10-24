@@ -438,13 +438,14 @@ test('recording what went in: one entry for the year; a rollover is kept but doe
 
 // A W-2 line for a test household, and a married couple.
 const w2 = (id, pid, amt, extra = {}) => ({ id, type: 'w2', label: id, personId: pid, amount: F(amt), cadence: 'monthly', start: '2024-01-01', end: null, withholding: { federal: F(0), state: F(0) }, ...extra });
+const noK401 = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401') }; };
 const couple = (s, name = 'Sam') => ({ ...s, household: { ...s.household, filingStatus: F('mfj'), people: [...s.household.people, { id: 'sam', name, birthDate: F('1995-05-05') }] } });
 
 test('married filing jointly: the spouse who earns more is held to their own pay; the Roth phase-out starts from the lesser of the limit and pay', () => {
   // Casey earns $400 a month ($4,800), Sam $250 ($3,000). Casey's Roth: $4,800, Casey's own pay. Sam's IRA counts the
-  // couple's $7,800, but together only $7,800 can go in: $4,800 + $3,000.
-  let s = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
-  s = couple(s);
+  // couple's $7,800, but together only $7,800 can go in: $4,800 + $3,000. No 401(k): its new money from pay would come
+  // off Casey's pay first (S-225).
+  let s = couple(noK401());
   s = { ...s, income: [{ ...s.income[0], amount: F(400) }, { ...s.income[1], amount: F(0) }, w2('samjob', 'sam', 250)], accounts: [...s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined } : a)), acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
   const mx = maxIt(s, R);
   assert.deepEqual([row(mx, 'roth:2026').room, row(mx, 'roth:2026').cap.joint], [4800, false]);
@@ -620,9 +621,8 @@ test('HSA money lowers AGI, so the Roth phase-out reads it; a conversion with no
 test('a couple\'s IRAs: the spouse who earns less counts what the other put in and still has set to go in; together never past the couple\'s pay', () => {
   // Casey earns $500 a month ($6,000), Sam $300 ($3,600): $9,600 together. Casey's Roth has $3,000 in and $300 a month
   // still to come ($600). Casey: $6,000 - $3,000 = $3,000 of room, $2,400 new. Sam: $9,600 - $3,000 - $600 = $6,000
-  // alone, but together only $6,600 is left, so Sam's part of the total is $3,600.
-  let s = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
-  s = couple(s);
+  // alone, but together only $6,600 is left, so Sam's part of the total is $3,600. No 401(k), as above.
+  let s = couple(noK401());
   s = { ...s, income: [{ ...s.income[0], amount: F(500) }, { ...s.income[1], amount: F(0) }, w2('samjob', 'sam', 300)], accounts: [...s.accounts, acct('st', 'roth_ira', 'ira', { owner: F('partner') })] };
   const mx = maxIt(s, R);
   const c = row(mx, 'roth:2026'), j = row(mx, 'st:2026');
@@ -633,6 +633,171 @@ test('a couple\'s IRAs: the spouse who earns less counts what the other put in a
   // Sam already put in $3,000 and Casey nothing (and no monthly amount): $6,600 left; Casey's own $6,000 first, Sam $600.
   const s8 = { ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a.id === 'st' ? { ...a, contributions: F([{ year: 2026, amount: 3000 }]) } : a)) };
   assert.deepEqual(maxIt(s8, R).pools.filter((p) => p.key.startsWith('ira')).map((p) => [p.key, p.room]), [['ira:casey', 6000], ['ira:sam', 600]]);
+});
+
+test('new pre-tax money from pay is not pay an IRA can count: IRA money already in keeps its pay, the 401(k) comes next, a new IRA amount gets the rest', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const plan = (s) => { const mx = maxIt(s, R, { sim: maxItSim(s, R) }); return [...mx.pools.map((p) => [p.key, p.fill]), ...mx.rows.filter((r) => r.counted).map((r) => [r.id, r.counted.why])]; };
+  // Casey earns $1,000 a month ($12,000), nothing withheld. On February 1, 11 paychecks are left, each landing $923.50
+  // after Social Security and Medicare: the empty 401(k) takes all of it, $10,158.50, which is not in box 1, so the Roth
+  // gets the $1,841.50 of pay left (it counted $7,500 before: $5,658.50 over).
+  let s = putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
+  s = at({ ...s, income: [{ ...s.income[0], amount: F(1000), withholding: { federal: F(0), state: F(0) } }, { ...s.income[1], amount: F(0) }, ...s.income.slice(2)], accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined } : a)) }, '2026-02-01');
+  assert.deepEqual(plan(s), [['deferral:casey', 10158.5], ['ira:casey', 1841.5], ['k401:2026', 'paycheck'], ['roth:2026', 'pre']]);
+  // $5,000 already in the Roth keeps $5,000 of the pay: the 401(k) takes the other $7,000, the Roth nothing more.
+  const kept = { ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 5000 }]) } : a)) };
+  assert.deepEqual(plan(kept), [['deferral:casey', 7000], ['ira:casey', 0], ['k401:2026', 'preIra'], ['roth:2026', 'pre']]);
+  // A couple: Casey earns $2,500 a month ($30,000) with $7,000 in the Roth, Sam $200 a month ($2,400). After $24,500 into
+  // the 401(k), Casey still earns more ($5,500 against $2,400), so Casey's Roth rests on Casey's own pay: the 401(k)
+  // gives way by $1,500, to $23,000.
+  let c = couple(putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T));
+  c = at({ ...c, income: [{ ...c.income[0], amount: F(2500), withholding: { federal: F(0), state: F(0) } }, { ...c.income[1], amount: F(0) }, w2('samjob', 'sam', 200)], accounts: c.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7000 }]) } : a)) }, '2026-02-01');
+  const both = [['deferral:casey', 23000], ['ira:casey', 0], ['k401:2026', 'preIra'], ['roth:2026', 'pre']];
+  assert.deepEqual(plan(c), both);
+  // A third person's pay is their own, never the couple's: the same.
+  const three = { ...c, household: { ...c.household, people: [...c.household.people, { id: 'riley', name: 'Riley', birthDate: F('2004-03-03') }] }, income: [...c.income, w2('rileyjob', 'riley', 1000)] };
+  assert.deepEqual(plan(three), both);
+});
+
+test('round 15 (S-225): a Solo 401(k) counts once, a couple never depends on the order, the cash check and the FOO ladder follow the cut, separate filers keep the reduced Roth limit, 27 paydays', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => { const sim = maxItSim(s, R); return { sim, mx: maxIt(s, R, { sim }) }; };
+  const fills = (mx) => Object.fromEntries(mx.pools.filter((p) => !p.spill).map((p) => [p.row.id, p.fill]));
+  const empty401 = () => putFact(demo(), 'accounts.k401.monthlyContribution', 0, 'known', T);
+  const pay = (s, amt) => ({ ...s.income[0], amount: F(amt), withholding: { federal: F(0), state: F(0) } });
+  // $12,000 of W-2 pay and $40,000 of 1099 pay with $12,000 already in a Solo 401(k): the tax figures take the Solo off
+  // the W-2 wages, so it came off twice. Counted once, the 401(k) keeps all its paychecks hold ($10,158.50) and the
+  // Roth's pay is $12,000 + $37,174.09 - $12,000 = $37,174.09 (not $25,174.09).
+  let s = empty401();
+  s = at({ ...s, income: [pay(s, 1000), { ...s.income[1], amount: F(40000 / 12), start: '2024-01-01' }], accounts: [...s.accounts, acct('solo', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 12000 }]) })] }, '2026-02-01');
+  const one = run(s).mx;
+  assert.deepEqual([fills(one)['k401:2026'], row(one, 'roth:2026').cap.value, row(one, 'roth:2026').cap.seUsed], [10158.5, 37174.09, 0]);
+  // A couple, as of January 5, nothing withheld: Casey $1,000 a month and an empty 401(k); Sam $2,500 a month, an empty
+  // 401(k) and $7,000 in a Roth. Sam's 401(k) stops at $23,000 so his own $7,000 of pay holds his Roth; Casey keeps all
+  // her paychecks hold. The same with the accounts listed the other way.
+  const two = (flip) => {
+    const c = couple(demo()), mine = [acct('ck', 'k401', 'employerRetirement'), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') }), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 7000 }]) })];
+    return fills(run(at({ ...c, income: [w2('cj', 'casey', 1000), w2('sj', 'sam', 2500)], accounts: [...c.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth'), ...(flip ? mine.reverse() : mine)] }, '2026-01-05')).mx);
+  };
+  assert.deepEqual([two(false), two(true)].map((f) => [f['ck:2026'], f['sk:2026'], f['sr:2026']]), [[10158.5, 23000, 0], [10158.5, 23000, 0]]);
+  // Casey's $7,000 Roth is already over her own $6,000 and Sam ($3,000) can never earn more: cutting his 401(k) cannot
+  // help, so it keeps what his paychecks hold; her row says she is over.
+  let o = couple(demo());
+  o = at({ ...o, income: [w2('cj', 'casey', 500), w2('sj', 'sam', 250)], accounts: [...o.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7000 }]) } : a)), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') })] }, '2026-01-05');
+  const over = run(o).mx;
+  assert.deepEqual([fills(over)['sk:2026'], over.totals.over], [2539.68, ['roth:2026']]);
+  // Married filing separately, Casey's $3,000 of pay and $1,500 in a Roth: the Roth limit is reduced ($0 to $10,000
+  // phase-out at $3,000 of modified AGI, 70%), so the $1,500 needs $2,128.58 of pay; the 401(k) takes the other $871.42.
+  let m = { ...couple(demo()) };
+  m = at({ ...m, household: { ...m.household, filingStatus: F('mfs') }, income: [w2('cj', 'casey', 250), w2('sj', 'sam', 4000)], accounts: [...m.accounts.filter((a) => a.id !== 'roth').map((a) => (a.id === 'k401' ? { ...a, monthlyContribution: F(0) } : a)), acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 1500 }]) })] }, '2026-02-01');
+  const mfs = run(m).mx;
+  assert.deepEqual([fills(mfs)['k401:2026'], fills(mfs)['cr:2026'], mfs.totals.over], [871.42, 0, []]);
+  // The cash check moves what the Plan counts: $5,000 in the Roth leaves the 401(k) $7,000 over 11 paychecks.
+  let k = empty401();
+  k = at({ ...k, income: [pay(k, 1000), { ...k.income[1], amount: F(0) }, ...k.income.slice(2)], accounts: k.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 5000 }]) } : a)) }, '2026-02-01');
+  const kr = run(k), cash = maxItCash(k, R, kr.mx, { sim: kr.sim });
+  assert.deepEqual([kr.mx.totals.lump, cash.total, cash.flows.length, cash.flows[0].amount, cash.flows[10].amount], [7000, 7000, 11, 636.36, 636.37]);
+  assert.doesNotMatch(cash.words, /only what a paycheck holds/);
+  // A cut of a few cents ($1,841.53 in the Roth leaves the 401(k) $10,158.47): the paychecks still add up to the cent.
+  const tiny = { ...k, accounts: k.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 1841.53 }]) } : a)) };
+  const tr = run(tiny);
+  assert.deepEqual([tr.mx.totals.lump, maxItCash(tiny, R, tr.mx, { sim: tr.sim }).total], [10158.47, 10158.47]);
+  // The FOO ladder's Roth rung comes before the retirement rung: it is sized by what the Roth alone could take ($3,900
+  // over 15 months), and says the Plan, which fills the 401(k) first, counts $0 and why. Never 'done' while it has room.
+  let f = empty401();
+  f = at({ ...f, income: [{ ...pay(f, 1500), withholding: { federal: F(0), state: F(50) } }, { ...f.income[1], amount: F(0) }, ...f.income.slice(2)] }, '2026-02-01');
+  const rung = fooLadder(f, R, summarize(f, R, { flags: false }), { sim: maxItSim(f, R) }).rungs.find((r) => r.id === 'rothHsa');
+  assert.match(rung.why, /Roth IRA 2026: \$260 a month to April 15, 2027 \(ahead of the retirement rung; the Plan, which fills that rung first, counts \$0: new pre-tax money from pay into a 401\(k\), 403\(b\), 457\(b\) or TSP is not pay an IRA can count\)/);
+  let g = empty401();
+  g = at({ ...g, income: [pay(g, 1000), { ...g.income[1], amount: F(0) }, ...g.income.slice(2)], accounts: g.accounts.map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 1000 }]) } : a)) }, '2026-05-01');
+  const gr = fooLadder(g, R, summarize(g, R, { flags: false }), { sim: maxItSim(g, R) }).rungs.find((r) => r.id === 'rothHsa');
+  assert.notEqual(gr.done, true);
+  // 27 biweekly paydays in 2027: $500 a month from pay is $230.77 on each of 27 paychecks, $6,230.79 off wages (not $6,000).
+  let b = putFact(demo(), 'accounts.k401.monthlyContribution', 500, 'known', T);
+  b = at({ ...b, income: [{ ...pay(b, 1000), cadence: 'biweekly', start: '2024-01-05' }, { ...b.income[1], amount: F(0) }] }, '2027-02-01');
+  assert.equal(earnedIncome(b, R, 2027).value, 27000 - 6230.79);
+});
+
+test('round 16 (S-225): no account order decides the Plan, a Solo never crowds pay money out, a couple keeps the gap it has, an excess never grows', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
+  const fills = (mx) => Object.fromEntries(mx.pools.filter((p) => !p.spill).map((p) => [p.row.id + ' ' + p.key, p.fill]));
+  const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
+  const round2 = (x) => Math.round(x * 100) / 100;
+  const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
+  const both = (accts, make) => [false, true].map((flip) => fills(run(make(flip ? [...accts].reverse() : accts))));
+  // $7,200 of W-2 pay with $1,800 into an HSA through pay ($5,400 in box 1), $24,000 of 1099 pay and $13,000 in a Solo
+  // 401(k): the tax figures take the Solo off the wages last, so the HSA still comes out of pay. The Roth gets the
+  // $5,400 of W-2 pay; the Solo's new $9,304.45 uses all the self-employment pay left.
+  const a = run(at({ ...bare(), income: [w2('job', 'casey', 600), gig('gig', 'casey', 2000)], accounts: [...bare().accounts, acct('solo', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 13000 }]) }), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(150) }), acct('r', 'roth_ira', 'ira')] }, '2026-02-01'));
+  assert.deepEqual([fills(a)['r:2026 ira:casey'], round2(fills(a)['solo:2026 deferral:casey'] + fills(a)['solo:2026 employer:casey'])], [5400, 9304.45]);
+  // A Solo listed before or after a 401(k) at $100 a month: the same Plan (the Roth gets $820.75 either way).
+  const solo = [acct('solo', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 7000 }]) }), acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(100) }), acct('r', 'roth_ira', 'ira')];
+  const [s1, s2] = both(solo, (xs) => at({ ...bare(), income: [w2('job', 'casey', 500), gig('gig', 'casey', 750)], accounts: [...bare().accounts, ...xs] }, '2026-02-01'));
+  assert.deepEqual([s1, s1['r:2026 ira:casey']], [s2, 820.75]);
+  // An empty 401(k) and an empty Roth 401(k) tie for the one deferral limit: the Roth 401(k) takes it in either order (it
+  // leaves the Roth IRA its pay).
+  const [t1, t2] = both([acct('k', 'k401', 'employerRetirement'), acct('rk', 'roth_k401', 'employerRetirement'), acct('r', 'roth_ira', 'ira')], (xs) => at({ ...bare(), income: [w2('job', 'casey', 500)], accounts: [...bare().accounts, ...xs] }, '2026-02-01'));
+  assert.deepEqual([t1, t1], [t2, { 'rk:2026 deferral:casey': 5079.25, 'r:2026 ira:casey': 6000 }]);
+  // A couple: Sam earns $3,060, $60 more than Casey, whose $5,000 Roth rests on the couple's pay. His 401(k) gives way so
+  // he still earns $60 more (never less than the gap they already have); her Roth may take $1,060 more.
+  let d = couple(bare());
+  d = at({ ...d, income: [w2('cj', 'casey', 250), w2('sj', 'sam', 255)], accounts: [...d.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 5000 }]) }), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') })] }, '2026-01-05');
+  assert.deepEqual([fills(run(d)), run(d).totals.over], [{ 'cr:2026 ira:casey': 1060, 'sk:2026 deferral:sam': 0 }, []]);
+  // Casey's $7,000 Roth is already $539.11 over the couple's pay and Sam earns more from 1099 pay: his Solo takes nothing,
+  // so the excess does not grow.
+  let e = couple(bare());
+  e = at({ ...e, income: [w2('cj', 'casey', 2000 / 12), gig('sg', 'sam', 400)], accounts: [...e.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 7000 }]) }), acct('ss', 'solo_k401', 'employerRetirement', { owner: F('partner') })] }, '2026-01-05');
+  const em = run(e);
+  assert.deepEqual([round2(fills(em)['ss:2026 deferral:sam'] + fills(em)['ss:2026 employer:sam']), row(em, 'cr:2026').over], [0, 539.11]);
+  // Married filing separately past the top of the Roth phase-out: no pay can make the $3,000 Roth fit, so the 401(k) is
+  // not cut for it (it takes what the paychecks hold).
+  let g = couple(bare());
+  g = at({ ...g, household: { ...g.household, filingStatus: F('mfs') }, income: [w2('cj', 'casey', 1500), w2('sj', 'sam', 3000)], accounts: [...g.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 3000 }]) }), acct('ck', 'k401', 'employerRetirement')] }, '2026-02-01');
+  assert.deepEqual(row(run(g), 'ck:2026').counted.why, 'paycheck');
+  // A pay line counted as likely (90%): the expected tax still takes its 401(k) money off the wages.
+  const h = { ...bare(), income: [{ ...w2('job', 'casey', 5000), likelihood: F(0.9) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
+  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 48000);
+});
+
+test('round 17 (S-225): the least excess on the gap terms, new IRA money keeps the gap, reasons that match, a fixed fill and cut order', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
+  const fills = (mx) => Object.fromEntries(mx.pools.map((p) => [p.row.id + ' ' + p.key + (p.spill ? ' spill' : ''), p.fill]));
+  const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
+  const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
+  // Casey earns $3,220 with $7,500 already in her Roth, Sam $2,870; both have empty 401(k)s. Nothing makes the Roth fit
+  // (it is $4,280 over): Casey's 401(k) takes $450, so Sam earns $100 more and her Roth rests on the couple's pay, $1,860
+  // over, the least it can be.
+  let c = couple(bare());
+  c = at({ ...c, income: [w2('cj', 'casey', 3220 / 12), w2('sj', 'sam', 2870 / 12)], accounts: [...c.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 7500 }]) }), acct('ck', 'k401', 'employerRetirement'), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') })] }, '2026-01-05');
+  const cm = fills(run(c));
+  assert.deepEqual([cm['ck:2026 deferral:casey'], cm['sk:2026 deferral:sam']], [450, 0]);
+  // No IRA money yet; Sam earned $150 more and his 401(k) leaves him $25.16 ahead: too close, so Casey's new Roth amount
+  // rests on her own $3,000, not the couple's.
+  let g = couple(bare());
+  g = at({ ...g, income: [w2('cj', 'casey', 250), w2('sj', 'sam', 262.5, { withholding: { federal: F(180), state: F(0) } })], accounts: [...g.accounts, acct('cr', 'roth_ira', 'ira'), acct('sk', 'k401', 'employerRetirement', { owner: F('partner') })] }, '2026-10-25');
+  assert.deepEqual(fills(run(g)), { 'cr:2026 ira:casey': 3000, 'sk:2026 deferral:sam': 124.84 });
+  // Married filing separately, $7,000 of pay and $2,500 in a Roth: its limit is $2,100 at any pay from $6,966.67 up ($10
+  // steps), so the 401(k) may take $33.33 without making it more over.
+  let m = couple(bare());
+  m = at({ ...m, household: { ...m.household, filingStatus: F('mfs') }, income: [w2('cj', 'casey', 7000 / 12), w2('sj', 'sam', 4000)], accounts: [...m.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 2500 }]) }), acct('ck', 'k401', 'employerRetirement')] }, '2026-02-01');
+  assert.equal(fills(run(m))['ck:2026 deferral:casey'], 33.33);
+  // No IRA at all: a 401(k) held to the W-2 pay left says so, not that IRA money needs it.
+  const n = at({ ...bare(), income: [w2('job', 'casey', 4000, { start: '2026-07-01' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 20000 }]) })] }, '2026-08-01');
+  assert.deepEqual(row(run(n), 'k:2026').counted, { fill: 4000, why: 'prePay', words: 'money from pay is never more than the W-2 pay left after what already comes out of it' });
+  // A 401(k) fills from pay before a 457(b), and the 457(b) gives way first: $7,500 in the Roth leaves $32,500 of $40,000.
+  const k = at({ ...bare(), income: [w2('job', 'casey', 40000 / 12)], accounts: [...bare().accounts, acct('q', 'k457b', 'employerRetirement'), acct('k', 'k401', 'employerRetirement'), acct('r', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 7500 }]) })] }, '2026-02-01');
+  const km = fills(run(k));
+  assert.deepEqual([km['k:2026 deferral:casey'], km['q:2026 k457b:casey']], [24500, 8000]);
+  // A traditional and a Roth IRA tie: the Roth takes the new money, whatever their ids or order (question 64).
+  assert.deepEqual(fills(run(at({ ...bare(), income: [w2('job', 'casey', 5000)], accounts: [...bare().accounts, acct('a_trad', 'traditional_ira', 'ira'), acct('z_roth', 'roth_ira', 'ira')] }, '2026-02-01'))), { 'z_roth:2026 ira:casey': 7500 });
+  // Two empty Solo 401(k)s: the same Plan in either order, spill included.
+  const sp = (flip) => { const xs = [acct('solo_a', 'solo_k401', 'employerRetirement'), acct('solo_b', 'solo_k401', 'employerRetirement')]; return fills(run(at({ ...bare(), income: [w2('job', 'casey', 500), gig('gig', 'casey', 5000)], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement'), ...(flip ? xs.reverse() : xs)] }, '2026-02-01'))); };
+  assert.deepEqual(sp(true), sp(false));
+  // The expected tax takes a 401(k)'s monthly amount off every month of pay, a likely line's too (as before S-225).
+  const h = { ...bare(), income: [w2('job', 'casey', 5000, { end: '2026-06-30' }), { ...w2('job2', 'casey', 2000), likelihood: F(0.9) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
+  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 45600);
 });
 
 test('set to go over: money a monthly amount still puts in past the limit is named before it happens', () => {
@@ -1114,7 +1279,7 @@ test('round 10 (S-221): IRA money already in keeps the self-employment pay it ne
   assert.deepEqual([b.totals.lump, row(b, 'roth:2026').over || 0], [20380.57, 0]);
   // With the Roth empty, the Solo takes it all and the Plan says why the Roth counts $0.
   const b3 = maxIt(solo(30000, 0), R);
-  assert.deepEqual([b3.totals.lump, row(b3, 'roth:2026').counted], [27880.57, { fill: 0, why: 'se' }]);
+  assert.deepEqual([b3.totals.lump, row(b3, 'roth:2026').counted], [27880.57, { fill: 0, why: 'se', words: 'the Solo 401(k) or SEP takes the self-employment pay first' }]);
   // MFJ: Sam has $36,000 of 1099 pay and a Solo 401(k) ($31,191.34), Casey $4,000 of W-2 pay. The couple's pay for IRAs
   // is $4,000 + $33,456.68 - $31,191.34 = $6,265.34: Sam's own IRA takes the $2,265.34 of Sam's pay left, Casey's $4,000.
   const c = couple(d);
@@ -1172,10 +1337,11 @@ test('round 13 (S-224): the Plan\'s Solo money never makes the spouse with less 
   const solo = acct('se', 'solo_k401', 'employerRetirement', { owner: F('partner') });
   const casey = (roth) => c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, ...roth } : a));
   // Casey earns $6,000 and has a Roth at $625 a month ($7,500, more than her own pay: legal while she earns less). Sam
-  // has $40,000 of 1099 pay ($37,174.09) and an empty Solo. The Solo stops where Sam still earns more than Casey:
-  // $31,174.08, leaving Sam $6,000.01 (filled to $31,934.82 it would leave him $5,239.27 and her Roth $1,500 over).
+  // has $40,000 of 1099 pay ($37,174.09) and an empty Solo. The Solo stops where Sam still earns more than Casey, by the
+  // $100 gap (S-225): $31,074.09, leaving Sam $6,100 (filled to $31,934.82 it would leave him $5,239.27 and her Roth
+  // $1,500 over).
   const m = maxIt({ ...c, income: [{ ...c.income[0], amount: F(500) }, gig('sam', 40000)], accounts: [...casey({ monthlyContribution: F(625) }), solo] }, R);
-  assert.equal(m.totals.lump, 31174.08);
+  assert.equal(m.totals.lump, 31074.09);
   // When her own pay covers her Roth ($10,000), the Solo takes all it may.
   const ctl = maxIt({ ...c, income: [{ ...c.income[0], amount: F(10000 / 12) }, gig('sam', 40000)], accounts: [...casey({ contributions: F([{ year: 2026, amount: 7500 }]) }), solo] }, R);
   assert.equal(ctl.totals.lump, 31934.82);
