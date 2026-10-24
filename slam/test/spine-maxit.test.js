@@ -941,6 +941,14 @@ test('round 22 (S-225): an FSA by paychecks to its election, an employer-only to
   // $183.87; the rest of the year still to come), so its new money is $300 and the year ends at the $4,400 limit.
   const he = row(run(at({ ...bare(), income: [w2('job', 'casey', 2000, { cadence: 'biweekly', start: null })], accounts: [...bare().accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(300), contributions: F([{ year: 2026, amount: 500, kind: 'employer' }]) })] }, '2026-01-20')), 'h:2026');
   assert.deepEqual([he.contributed.value, he.still.value, he.lump], [683.87, 3416.13, 300]);
+  // A SEP's employer total is the whole account (its monthly amount is employer money too): $6,000 through June 30 and
+  // $1,000 a month is $7,000 in and $5,000 still to come, not the monthly amount on top again.
+  const sep = row(run(at({ ...bare(), income: [gig('g', 'casey', 8000)], accounts: [...bare().accounts, acct('sep', 'sep_ira', 'ira', { monthlyContribution: F(1000), contributions: F([{ year: 2026, amount: 6000, kind: 'employer', through: '2026-06-30' }]) })] }, '2026-07-10')), 'sep:2026');
+  assert.deepEqual([sep.contributed.value, sep.still.value, sep.lump, sep.overSoon], [7000, 5000, 5843.56, undefined]);
+  // A 401(k) at $2,000 a month with a $6,000 employer match recorded: the match is not an employee deferral (402(g)),
+  // so $14,000 is in, $10,000 still to come, and $500 of the limit is left.
+  const k = row(run(at({ ...bare(), income: [w2('job', 'casey', 10000)], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(2000), contributions: F([{ year: 2026, amount: 6000, kind: 'employer' }]) })] }, '2026-07-10')), 'k:2026');
+  assert.deepEqual([k.contributed.value, k.still.value, k.lump, k.over], [14000, 10000, 500, null]);
   // An HSA beside a W-2 line goes in from pay: with that job ended, nothing goes in this year, and the Plan, the tax
   // figures and the cash flow agree on it.
   const d = bare();

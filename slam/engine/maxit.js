@@ -76,7 +76,8 @@ export function oddOwner(spine, a) {
 export function poolsOf(spine, a) {
   const p = oddOwner(spine, a) ? 'acct-' + a.id : (ownerOf(spine, a) || {}).id;
   if (IRA.includes(a.type)) return [{ key: 'ira:' + p, part: 'all' }];
-  if (DEFERRAL.includes(a.type) || a.type === 'simple_ira') return [{ key: 'deferral:' + p, part: 'all' }];
+  // The employee deferral limit (402(g)) counts the owner's own deferrals: an employer match recorded on the plan is not one.
+  if (DEFERRAL.includes(a.type) || a.type === 'simple_ira') return [{ key: 'deferral:' + p, part: 'own' }];
   if (a.type === 'solo_k401') return [{ key: 'deferral:' + p, part: 'employee' }, { key: 'employer:' + p, part: 'employer' }];
   if (a.type === 'sep_ira') return [{ key: 'employer:' + p, part: 'all' }];
   if (a.type === 'k457b') return [{ key: 'k457b:' + p, part: 'all' }];

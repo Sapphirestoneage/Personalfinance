@@ -157,10 +157,10 @@ export const monthsAfter = (year, asOf) => (year === +asOf.slice(0, 4) ? 12 - +a
 export function contributedOn(spine, a, year, asOf, t, part = 'all') {
   const base = 'accounts.' + a.id;
   const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) : null;
-  // Only the employer's total recorded for the year: the owner's own part is still counted (its monthly guess), not
-  // hidden by the employer's.
+  // An HSA with only the employer's total recorded for the year: the owner's own part is still counted (its monthly
+  // guess), not hidden by the employer's. (A SEP's employer total is the whole account, its monthly amount included.)
   const yr = (list || []).filter((c) => counts(c, year) && isTotal(c));
-  if (part === 'all' && yr.length && yr.every((c) => c.kind === 'employer')) {
+  if (part === 'all' && a.type === 'hsa' && yr.length && yr.every((c) => c.kind === 'employer')) {
     const own = contributedOn(spine, a, year, asOf, t, 'own'), emp = contributedOn(spine, a, year, asOf, t, 'employer');
     return { ...own, value: round2(own.value + emp.value), words: own.words + '; from the employer: ' + emp.words, kind: own.kind === 'missing' ? 'missing' : own.estimated || emp.estimated ? 'rough' : emp.kind };
   }
