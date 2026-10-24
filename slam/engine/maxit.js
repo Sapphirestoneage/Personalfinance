@@ -752,7 +752,22 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
       // (IRC 219(b)); only the one who earns less may use the couple's (219(c)).
       const newOf = (who) => round2(se.filter((q) => q.row.person === who).reduce((x, q) => x + q.fill, 0));
       const after = (i) => round2(info[i].w2 + info[i].seLeft - Math.min(newOf(unit[i]), info[i].seLeft));
-      if (unit.length === 2) for (const i of [0, 1]) if (after(i) >= after(1 - i) && after(i) < info[i].iraUsed) cut(se.filter((q) => q.row.person === unit[i]), info[i].iraUsed - after(i));
+      // When their own Solo or SEP cannot close the gap (or costs more), the other spouse's new money is cut just enough
+      // that the other still earns more, so this spouse's IRA rests on the couple's pay. Checked until both hold.
+      if (unit.length === 2) for (let round = 0; round < 3; round++) {
+        let moved = false;
+        for (const i of [0, 1]) {
+          const j = 1 - i;
+          if (!(after(i) >= after(j) && after(i) < info[i].iraUsed)) continue;
+          const gap = round2(info[i].iraUsed - after(i)), flip = round2(after(i) - after(j) + 0.01);
+          const ownNew = newOf(unit[i]), theirNew = newOf(unit[j]);
+          if (ownNew >= gap && (gap <= flip || theirNew < flip)) cut(se.filter((q) => q.row.person === unit[i]), gap);
+          else if (theirNew >= flip) cut(se.filter((q) => q.row.person === unit[j]), flip);
+          else { cut(se.filter((q) => q.row.person === unit[i]), Math.min(ownNew, gap)); cut(se.filter((q) => q.row.person === unit[j]), Math.min(theirNew, flip)); }
+          moved = true;
+        }
+        if (!moved) break;
+      }
       for (const who of unit) seInfo.get(year + '|' + who).seNew = newOf(who);
     }
   }

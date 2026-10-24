@@ -1165,3 +1165,18 @@ test('round 12 (S-223): a spouse who still earns more after the Solo money is he
   const m3 = maxIt({ ...c, income: [sal(10000), gig('sam', 30000)], accounts: [...rest, solo({ contributions: F([{ year: 2026, amount: 25000 }]) }), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 7500 }]) })] }, R);
   assert.deepEqual([row(m3, 'sr:2026').over || 0, row(m3, 'sr:2026').cap.joint, row(m3, 'se:2026').over], [0, true, 500]);
 });
+
+test('round 13 (S-224): the Plan\'s Solo money never makes the spouse with less pay the one with more', () => {
+  const d = demo(), c = couple(d);
+  const gig = (pid, yr) => ({ ...d.income[1], id: 'gig' + pid, personId: pid, amount: F(yr / 12) });
+  const solo = acct('se', 'solo_k401', 'employerRetirement', { owner: F('partner') });
+  const casey = (roth) => c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, ...roth } : a));
+  // Casey earns $6,000 and has a Roth at $625 a month ($7,500, more than her own pay: legal while she earns less). Sam
+  // has $40,000 of 1099 pay ($37,174.09) and an empty Solo. The Solo stops where Sam still earns more than Casey:
+  // $31,174.08, leaving Sam $6,000.01 (filled to $31,934.82 it would leave him $5,239.27 and her Roth $1,500 over).
+  const m = maxIt({ ...c, income: [{ ...c.income[0], amount: F(500) }, gig('sam', 40000)], accounts: [...casey({ monthlyContribution: F(625) }), solo] }, R);
+  assert.equal(m.totals.lump, 31174.08);
+  // When her own pay covers her Roth ($10,000), the Solo takes all it may.
+  const ctl = maxIt({ ...c, income: [{ ...c.income[0], amount: F(10000 / 12) }, gig('sam', 40000)], accounts: [...casey({ contributions: F([{ year: 2026, amount: 7500 }]) }), solo] }, R);
+  assert.equal(ctl.totals.lump, 31934.82);
+});
