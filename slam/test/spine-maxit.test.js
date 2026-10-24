@@ -1103,3 +1103,26 @@ test('round 9 (S-220): a split paycheck amount shows with its math; a paycheck l
   const c = { ...couple(d), accounts: [...d.accounts, acct('sp', 'spousal_ira', 'ira', { owner: F('partner') })] };
   assert.ok(row(maxIt(c, R, { sim: maxItSim(c, R) }), 'sp:2026').paychecks.count > 0);
 });
+
+test('round 10 (S-221): IRA money already in keeps the self-employment pay it needs; a couple\'s pay is less each spouse\'s Solo or SEP money; the Plan says what it counts and why', () => {
+  const d = demo();
+  const gig = (pid, yr) => ({ ...d.income[1], id: 'gig' + pid, personId: pid, amount: F(yr / 12) });
+  const solo = (yr, roth, plan = 'solo_k401') => ({ ...d, income: [gig('casey', yr)], accounts: [...d.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: roth }]) } : a)), acct('se', plan, plan === 'sep_ira' ? 'ira' : 'employerRetirement')] });
+  // $30,000 of 1099 pay ($27,880.57 after half the self-employment tax) and $7,500 already in the Roth: the Roth keeps
+  // $7,500 of that pay, so the Solo 401(k) can take $20,380.57, not $27,880.57 (which would make the Roth an excess).
+  const b = maxIt(solo(30000, 7500), R);
+  assert.deepEqual([b.totals.lump, row(b, 'roth:2026').over || 0], [20380.57, 0]);
+  // With the Roth empty, the Solo takes it all and the Plan says why the Roth counts $0.
+  const b3 = maxIt(solo(30000, 0), R);
+  assert.deepEqual([b3.totals.lump, row(b3, 'roth:2026').counted], [27880.57, { fill: 0, why: 'se' }]);
+  // MFJ: Sam has $36,000 of 1099 pay and a Solo 401(k) ($31,191.34), Casey $4,000 of W-2 pay. The couple's pay for IRAs
+  // is $4,000 + $33,456.68 - $31,191.34 = $6,265.34: Sam's own IRA takes the $2,265.34 of Sam's pay left, Casey's $4,000.
+  const c = couple(d);
+  const m2 = { ...c, income: [{ ...c.income[0], amount: F(4000 / 12) }, gig('sam', 36000)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)), acct('se', 'solo_k401', 'employerRetirement', { owner: F('partner') }), acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
+  const mm2 = maxIt(m2, R);
+  assert.deepEqual(mm2.pools.filter((p) => p.key.startsWith('ira')).map((p) => [p.key, p.fill]), [['ira:casey', 4000], ['ira:sam', 2265.34]]);
+  // MFJ: Casey has $15,000 of 1099 pay and a SEP ($2,788.06), Sam none: the couple's IRAs together $11,152.22.
+  const m1 = { ...c, income: [gig('casey', 15000)], accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : a)), acct('se', 'sep_ira', 'ira'), acct('st', 'traditional_ira', 'ira', { owner: F('partner') })] };
+  const mm1 = maxIt(m1, R);
+  assert.equal(Math.round(mm1.pools.filter((p) => p.key.startsWith('ira')).reduce((x, p) => x + p.fill, 0) * 100) / 100, 11152.22);
+});

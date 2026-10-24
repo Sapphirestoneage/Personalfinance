@@ -32,8 +32,16 @@ const VERIFY = 'This date has not been checked against the IRS yet.';
 const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferrals (the total)' : 'Contributions (the total)'], ...(type === 'solo_k401' ? [['employer', 'Employer part (the total)']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
 // "; the last one $483.30" when the last payment is what is left.
 const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? '; the last one ' + cash(last) : '');
-// Why the Plan counts less on a spouse's IRA than the account alone could take.
-const countedWhy = (r, pool) => (pool.phaseCut ? (r.cap && r.cap.joint ? 'the Roth phase-out runs on the couple\'s pay left after ' + r.couple.with + '\'s year' : 'so ' + r.couple.with + '\'s Roth money stays within their limit after the phase-out') : 'the couple\'s pay is shared: the spouse who earns more is counted first');
+// Why the Plan counts less than the account alone could take (the engine's r.counted.why).
+const COUNTED_WHY = {
+  couple: () => 'the couple\'s pay is shared: the spouse who earns more is counted first',
+  phase: (r) => (r.cap && r.cap.joint ? 'the Roth phase-out runs on the couple\'s pay left after ' + (r.couple ? r.couple.with : 'the other spouse') + '\'s year' : 'so ' + (r.couple ? r.couple.with + '\'s' : 'the other spouse\'s') + ' Roth money stays within their limit after the phase-out'),
+  se: () => 'the Solo 401(k) or SEP takes the self-employment pay first',
+  seIra: () => 'IRA money already in or set to go in keeps the self-employment pay it needs',
+  paycheck: () => 'only what the paychecks hold',
+  pool: () => 'another account in the same limit is counted for it'
+};
+const countedWhy = (r) => COUNTED_WHY[r.counted.why](r);
 // A blank the row waits on that the Ledger can fill (not a rule).
 const canFill = (path) => path && !path.startsWith('rule:');
 
@@ -114,7 +122,6 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   const stillNames = [...new Map(r.still.parts.map((x) => [x.id, x])).values()];
   // A spouse's IRA shares the couple's pay, not a limit: it gets its own line, and the Plan's count when that is less.
   const ownShared = r.sharedWith.filter((n) => !(r.couple && r.couple.names.includes(n)));
-  const pool = m.mx.pools.find((x) => x.key === r.pools[0] && x.year === r.year && x.sharedCap);
   const kv = [
     ['Room left for ' + r.year, cash(r.room)],
     // All that is set to go in, when it is more than the room (the part past it is an excess, here or a spouse's).
@@ -131,7 +138,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     r.phase && r.phase.lo != null && r.phase.magi > r.phase.lo ? ['Roth limit', cash(r.phase.limit) + ' at modified AGI of ' + cash(r.phase.magi)] : null,
     ownShared.length ? ['Shares its limit with', ownShared.join(', ')] : null,
     r.couple ? ['Shares the couple\'s pay', r.couple.words] : null,
-    pool && r.lump !== null && pool.fill < r.lump ? ['Counted in the Plan', cash(pool.fill) + ' (' + countedWhy(r, pool) + ')'] : null,
+    r.counted ? ['Counted in the Plan', cash(r.counted.fill) + ' (' + countedWhy(r) + ')'] : null,
     ['The deadline', r.deadline.when + '. ' + r.deadline.words + ' ' + VERIFY]
   ].filter(Boolean);
   return h('div', { class: 'max-year card-tile' }, head,
@@ -171,14 +178,13 @@ export function maxItCard(spine, rules) {
   const line = (r) => {
     const main = r.applies && r.room !== null ? mainOf(r) : null;
     const last = !main || !main.big ? '' : r.main === 'paycheck' ? lastWords(r.paychecks.last, r.paychecks.perPaycheck) : lastWords(r.months.last, r.perMonth);
-    // A spouse's IRA: the couple's pay they share, and what the Plan counts when that is less than the account alone.
-    const pool = r.couple ? m.mx.pools.find((x) => x.key === r.pools[0] && x.year === r.year && x.sharedCap) : null;
+    // A spouse's IRA: the couple's pay they share; any account: what the Plan counts when that is less than it alone.
     return h('li', { class: 'max-row' },
       h('a', { class: 'max-name', href: maxHref(r.accountId) }, r.name + ', ' + r.year + ' ›'),
       !r.applies ? h('span', { class: 'muted' }, r.why)
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
-      r.couple ? h('span', { class: 'tile-sub' }, r.couple.words + (pool && r.lump !== null && pool.fill < r.lump ? ' Counted in the Plan: ' + cash(pool.fill) + ' (' + countedWhy(r, pool) + ').' : '')) : null,
+      r.couple || r.counted ? h('span', { class: 'tile-sub' }, [r.couple ? r.couple.words : null, r.counted ? 'Counted in the Plan: ' + cash(r.counted.fill) + ' (' + countedWhy(r) + ').' : null].filter(Boolean).join(' ')) : null,
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
       r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);
