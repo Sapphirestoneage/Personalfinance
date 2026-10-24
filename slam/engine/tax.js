@@ -210,9 +210,10 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + (months ? '.monthlyContribution' : '.contributions'), yearly: x, months, ownerId: owner, cafeteria });
   };
   // A monthly amount from pay, paycheck by paycheck as engine/contrib.js counts it (27 biweekly paydays hold more than
-  // 12 months); the months of pay when the paydays are not known, or outside the committed mode (a likely pay line's
-  // paydays are not counted there).
-  const byPay = (owner, c) => (mode === 'committed' && hasPay(spine, owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? c * (payMonths[owner] || 0);
+  // 12 months), when every pay line of the owner counts in full or not at all in this mode (contrib.js counts the
+  // certain ones); else, or when the paydays are not known, the months of pay.
+  const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner).every((s) => [0, 1].includes(streamWeight(s, mode)));
+  const byPay = (owner, c) => (hasPay(spine, owner) && firm(owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? c * (payMonths[owner] || 0);
   // One account's pre-tax money: the recorded total for the year, else its monthly amount as amountOf counts it.
   const preTax = (a, owner, om, cafeteria, amountOf) => {
     if (hasTotal(a, year)) return takeOff(a, owner, yearAmount(spine, a, year, asOf, t, 'own').value, cafeteria, null);

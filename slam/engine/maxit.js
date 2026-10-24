@@ -842,18 +842,21 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
           q.fill = round2(q.fill - take); over = round2(over - take); q[why ? why(q) : isSE(q) ? 'seCapped' : 'preCapped'] = true; monthOf(q);
         }
       };
-      unit.forEach((who, i) => { cut(of(pre, who), sum(of(pre, who)) - info[i].w2, () => 'prePay'); cut(of(se, who), sum(of(se, who)) - info[i].seLeft, () => 'sePay'); });
-      const own = (who) => [...of(se, who), ...of(pre, who)];
-      const P = info.map((x) => round2(x.w2 + x.seLeft)), n = unit.map((who) => sum(own(who))), U = info.map((x) => x.need), I = info.map((x) => x.iraUsed);
-      const c = unit.length === 2 ? coupleCuts(P, n, U, I, unit) : [Math.min(n[0], Math.max(0, round2(U[0] - P[0] + n[0])))];
-      unit.forEach((who, i) => cut(own(who), c[i]));
+      // Only while IRA money already in or set to go in needs the pay (a new IRA amount just gets what is left).
+      if (info.some((x) => x.need > 0)) {
+        unit.forEach((who, i) => { cut(of(pre, who), sum(of(pre, who)) - info[i].w2, () => 'prePay'); cut(of(se, who), sum(of(se, who)) - info[i].seLeft, () => 'sePay'); });
+        const own = (who) => [...of(se, who), ...of(pre, who)];
+        const P = info.map((x) => round2(x.w2 + x.seLeft)), n = unit.map((who) => sum(own(who))), U = info.map((x) => x.need), I = info.map((x) => x.iraUsed);
+        const c = unit.length === 2 ? coupleCuts(P, n, U, I, unit) : [Math.min(n[0], Math.max(0, round2(U[0] - P[0] + n[0])))];
+        unit.forEach((who, i) => cut(own(who), c[i]));
+      }
       for (const who of unit) Object.assign(payInfo.get(year + '|' + who), { seNew: sum(of(se, who)), preNew: sum(of(pre, who)) });
     }
   }
-  // A person's new money as it lowers their IRA pay: from pay, and Solo or SEP (never more than their self-employment
-  // pay left). An IRA cut by it says which.
-  const offOf = (year, who) => { const x = payInfo.get(year + '|' + who); return x ? round2(x.preNew + Math.min(x.seNew, x.seLeft)) : 0; };
-  const mark = (p, year, whos) => { p[whos.some((w) => (payInfo.get(year + '|' + w) || {}).preNew > 0) ? 'preCut' : 'seCut'] = true; };
+  // A person's new money as it lowers their IRA pay: from pay (never more than their W-2 pay), and Solo or SEP (never
+  // more than their self-employment pay left). An IRA cut by it says which.
+  const offOf = (year, who) => { const x = payInfo.get(year + '|' + who); return x ? round2(Math.min(x.preNew, x.w2 ?? x.preNew) + Math.min(x.seNew, x.seLeft)) : 0; };
+  const mark = (p, year, whos) => { const has = (k) => whos.some((w) => (payInfo.get(year + '|' + w) || {})[k] > 0); p[has('preNew') ? 'preCut' : has('seNew') ? 'seCut' : 'sharedCap'] = true; };
   // 3. A married couple filing jointly (IRC 219(c)): who earns less is told by pay after each spouse's new money. The
   // one who earns more is held to their own pay; the one who earns less may use the couple's, less what the other's IRAs
   // take, only while the other earns more by the gap step 2 keeps (coupleCuts); closer than that, each is held to their
@@ -877,10 +880,10 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
     const loId = pa < pb ? a : b, hiId = loId === a ? b : a, hiPay = Math.max(pa, pb);
     const before = (who) => { const x = payInfo.get(year + '|' + who); return round2(x.w2 + x.seLeft); };
     const gap = before(hiId) > before(loId) ? Math.min(COUPLE_GAP, round2(before(hiId) - before(loId))) : COUPLE_GAP;
-    if (round2(hiPay - Math.min(pa, pb)) < gap) { for (const [who, pw] of [[a, pa], [b, pb]]) { const p = poolOf(who); if (p && p.room > own(p, pw, who)) { p.room = own(p, pw, who); mark(p, year, [who]); } } continue; }
+    if (round2(hiPay - Math.min(pa, pb)) < gap) { for (const [who, pw] of [[a, pa], [b, pb]]) { const p = poolOf(who); if (p && p.room > own(p, pw, who)) { p.room = own(p, pw, who); mark(p, year, pair); } } continue; }
     const J = poolOf(loId), O = poolOf(hiId);
     const couple = round2(pa + pb);
-    if (O && O.room > own(O, hiPay, hiId)) { O.room = own(O, hiPay, hiId); mark(O, year, [hiId]); }
+    if (O && O.room > own(O, hiPay, hiId)) { O.room = own(O, hiPay, hiId); mark(O, year, pair); }
     if (!J) continue;
     const jAccts = accts(loId), allRoth = allRothOf(loId);
     const ph = phOf(J);
