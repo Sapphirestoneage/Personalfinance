@@ -12,7 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
-import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts } from './contrib.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, fromPayIn } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -217,6 +217,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     known.wages -= x;
     if (cafeteria) { known.ficaWages -= x; add(ficaBy, owner, -x); }
     earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + (months ? '.monthlyContribution' : '.contributions'), yearly: x, months, ownerId: owner, cafeteria });
+    return x;
   };
   // A monthly amount from pay, when every pay line of the owner counts in full or not at all in this mode (always in the
   // committed mode, which the Plan and the pay an IRA can count read): what engine/contrib.js counts for the year, in so
@@ -234,9 +235,11 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   }, 0));
   const payPart = (a, owner, c, om) => {
     if (!firm(owner)) return { value: byMonths(owner, c), months: om };
-    // Its guesses are the Plan's (rough there); here the monthly amount read above is the fact.
+    // A plan the Plan counts (from pay that year): its count. Its guesses are the Plan's (rough there); here the monthly
+    // amount read above is the fact. Anything else from pay (an FSA): paycheck by paycheck, else month by month.
+    if (!fromPayIn(spine, a, owner, year)) return { value: (hasPay(spine, owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? byMonths(owner, c), months: om };
     const y = yearAmount(spine, a, year, asOf, tracker(), 'own'), n = (y.in.months || 0) + ((y.still && y.still.months) || 0);
-    return { value: y.value, months: n ? Math.round(n * 10) / 10 : om };
+    return { value: y.value, months: n ? Math.max(0.1, Math.round(n * 10) / 10) : om };
   };
   // One account's pre-tax money: the recorded total for the year, else its monthly amount as amountOf counts it.
   const preTax = (a, owner, om, cafeteria, amountOf) => {
@@ -290,9 +293,9 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     let left = Math.max(0, round2(limit - seed));
     for (const x of [...group.filter((g) => g.fromPay), ...group.filter((g) => !g.fromPay)]) {
       const amt = round2(Math.max(0, Math.min(x.amount, left)));
-      left = round2(left - amt);
-      if (x.fromPay) takeOff(x.a, x.owner, amt, true, x.months);
-      else known.hsaDeduction += amt;
+      // Money from pay its owner's wages cannot hold does not use the shared limit.
+      if (x.fromPay) left = round2(left - takeOff(x.a, x.owner, amt, true, x.months));
+      else { left = round2(left - amt); known.hsaDeduction += amt; }
     }
   }
   for (const x of solos) preTax(x.a, x.owner, x.om, false, (a, owner, c, om) => ({ value: c * om, months: om }));
