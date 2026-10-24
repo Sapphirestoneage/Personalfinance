@@ -12,7 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
-import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, fromPayIn } from './contrib.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, fromPayOf } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -235,9 +235,10 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   }, 0));
   const payPart = (a, owner, c, om) => {
     if (!firm(owner)) return { value: byMonths(owner, c), months: om };
-    // A plan the Plan counts (from pay that year): its count. Its guesses are the Plan's (rough there); here the monthly
-    // amount read above is the fact. Anything else from pay (an FSA): paycheck by paycheck, else month by month.
-    if (!fromPayIn(spine, a, owner, year)) return { value: (hasPay(spine, owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? byMonths(owner, c), months: om };
+    // A plan the Plan counts (from pay): its count. Its guesses are the Plan's (rough there); here the monthly amount
+    // read above is the fact. Anything else from pay (an FSA): paycheck by paycheck, else month by month, never past the
+    // year's election (12 months of it; 27 paydays do not add one).
+    if (!fromPayOf(spine, a, owner)) return { value: Math.min(round2(12 * c), (hasPay(spine, owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? byMonths(owner, c)), months: om };
     const y = yearAmount(spine, a, year, asOf, tracker(), 'own'), n = (y.in.months || 0) + ((y.still && y.still.months) || 0);
     return { value: y.value, months: n ? Math.max(0.1, Math.round(n * 10) / 10) : om };
   };

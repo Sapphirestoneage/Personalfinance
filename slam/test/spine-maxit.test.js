@@ -925,7 +925,7 @@ test('round 21 (S-225): one count of money from pay; a yearly line; a Solo emplo
   assert.equal(row(run(mj), 'ci:2026').counted.why, 'pre');
 });
 
-test('round 22 (S-225): an FSA by paychecks, an HSA from pay only in a year with pay, a stale one-time line, an ended line, a family HSA', () => {
+test('round 22 (S-225): an FSA by paychecks to its election, an employer-only total, a stale one-time line, an ended line, a family HSA', () => {
   const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
   const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
   const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
@@ -934,12 +934,19 @@ test('round 22 (S-225): an FSA by paychecks, an HSA from pay only in a year with
   // A dependent care FSA at $250 a month on a job that ends June 30: six paychecks, $1,500.
   const fs = at({ ...bare(), income: [w2('job', 'casey', 1500, { end: '2026-06-30', payDay: F(15) })], accounts: [...bare().accounts, acct('fsa', 'dc_fsa', 'hsaFsa', { monthlyContribution: F(250) })] }, '2026-03-01');
   assert.deepEqual(pre(fs), [['fsa: pre-tax saving from pay (6 months)', -1500]]);
-  // A W-2 line that ended in 2025 is still listed; 1099 pay now: the HSA's $300 a month goes in from take-home ($900 in,
-  // $2,700 still to come, a $3,600 deduction), not 'from pay' with nothing counted.
+  // A dependent care FSA at its $625 a month election in a 27-payday year: never past the year's $7,500.
+  const f27 = { ...bare(), income: [w2('job', 'casey', 3000, { cadence: 'biweekly', start: '2026-01-01' })], accounts: [...bare().accounts, acct('f', 'dc_fsa', 'hsaFsa', { monthlyContribution: F(625) })] };
+  assert.deepEqual(pre(f27), [['f: pre-tax saving from pay (12 months)', -7500]]);
+  // An HSA with only the employer's $500 recorded: the owner's own $300 a month still counts (January 1 to 19 is in,
+  // $183.87; the rest of the year still to come), so its new money is $300 and the year ends at the $4,400 limit.
+  const he = row(run(at({ ...bare(), income: [w2('job', 'casey', 2000, { cadence: 'biweekly', start: null })], accounts: [...bare().accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(300), contributions: F([{ year: 2026, amount: 500, kind: 'employer' }]) })] }, '2026-01-20')), 'h:2026');
+  assert.deepEqual([he.contributed.value, he.still.value, he.lump], [683.87, 3416.13, 300]);
+  // An HSA beside a W-2 line goes in from pay: with that job ended, nothing goes in this year, and the Plan, the tax
+  // figures and the cash flow agree on it.
   const d = bare();
   const rt = at({ ...d, household: { ...d.household, people: d.household.people.map((x, i) => (i ? x : { ...x, birthDate: F('1966-01-01') })) }, income: [w2('old', 'casey', 3000, { end: '2025-06-30' }), gig('g', 'casey', 2000)], accounts: [...d.accounts, acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(300) })] }, '2026-03-01');
   const h = row(run(rt), 'h:2026');
-  assert.deepEqual([yearTax(rt, R, 2026).lines.hsaDeduction.value, h.contributed.value, h.still.value], [3600, 900, 2700]);
+  assert.deepEqual([yearTax(rt, R, 2026).lines.hsaDeduction.value, h.contributed.value, h.still.value], [0, 0, 0]);
   // A one-time bonus paid in 2025 does not turn 2026's 27 biweekly paydays into months: $2,000 a month is $24,923.16,
   // $423.16 past the limit, and the tax figures take that much off.
   const o = at({ ...bare(), income: [w2('job', 'casey', 4000, { cadence: 'biweekly', start: '2026-01-01' }), w2('bonus', 'casey', 1000, { cadence: 'once', start: '2025-11-15' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(2000) })] }, '2026-03-01');
