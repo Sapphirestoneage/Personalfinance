@@ -1126,3 +1126,23 @@ test('round 10 (S-221): IRA money already in keeps the self-employment pay it ne
   const mm1 = maxIt(m1, R);
   assert.equal(Math.round(mm1.pools.filter((p) => p.key.startsWith('ira')).reduce((x, p) => x + p.fill, 0) * 100) / 100, 11152.22);
 });
+
+test('round 11 (S-222): a married couple is one unit for self-employment pay; a spousal IRA alone meets the other\'s Solo money; a past IRA year still keeps its pay', () => {
+  const d = demo(), c = couple(d);
+  const gig = (pid, yr) => ({ ...d.income[1], id: 'gig' + pid, personId: pid, amount: F(yr / 12) });
+  const base = (inc, extra, roth = { contributions: F([{ year: 2026, amount: 0 }]) }) => ({ ...c, income: inc, accounts: [...c.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, ...roth } : a)), ...extra] });
+  const soloSam = acct('se', 'solo_k401', 'employerRetirement', { owner: F('partner') });
+  // Sam has $30,000 of 1099 pay and a Solo 401(k); Casey has no pay and an empty Roth (Sam has no IRA). The Solo takes
+  // all of Sam's $27,880.57, so the couple has no pay left for Casey's Roth: $27,880.57 in all (not $35,380.57).
+  assert.equal(maxIt(base([gig('sam', 30000)], [soloSam]), R).totals.lump, 27880.57);
+  // A SEP on $9,000 instead: $1,672.83 to the SEP, $6,691.34 left for Casey's Roth.
+  const sep = maxIt(base([gig('sam', 9000)], [acct('se', 'sep_ira', 'ira', { owner: F('partner') })]), R);
+  assert.deepEqual(sep.pools.map((p) => [p.key, p.fill]), [['ira:casey', 6691.34], ['employer:sam', 1672.83]]);
+  // Casey already has $7,500 in a Roth on the couple's pay: Sam's Solo takes $20,380.57, so Casey's Roth is never over.
+  const two = maxIt(base([gig('sam', 30000)], [soloSam], { contributions: F([{ year: 2026, amount: 7500 }]) }), R);
+  assert.deepEqual([two.totals.lump, two.rows.filter((r) => r.over || r.overSoon).length], [20380.57, 0]);
+  // Single, after the April 15 IRA deadline (as of June 1, 2027): the 2026 Roth has $7,500 in and the 2026 Solo
+  // deferral $24,500. The 2026 employer part, still open to October 15, takes only the $1,456.68 of pay the Roth leaves.
+  const s3 = { ...d, meta: { ...d.meta, asOf: '2027-06-01' }, income: [{ ...gig('casey', 36000), start: '2026-01-01', end: '2026-12-31' }], accounts: [...d.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7500 }]) } : a)), acct('se', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 24500 }]) })] };
+  assert.equal(maxIt(s3, R).pools.find((p) => p.key === 'employer:casey' && p.year === 2026).fill, 1456.68);
+});
