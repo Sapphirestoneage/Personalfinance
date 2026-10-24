@@ -879,22 +879,34 @@ test('round 20 (S-225): months of pay by paydays, a blank spouse never lifts the
   assert.deepEqual([yearTax(f2, R, 2026).lines.agi.value, yearTax(f2, R, 2026, 'expected').lines.agi.value], [47769.21, 47769.21]);
 });
 
-test('round 21 (S-225): saving from pay never more than a month\'s pay; a yearly line; a Solo employer total; the Solo reserve within 402(g)', () => {
+test('round 21 (S-225): one count of money from pay; a yearly line; a Solo employer total; the Solo reserve within 402(g)', () => {
   const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
   const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
   const fills = (mx) => Object.fromEntries(mx.pools.map((p) => [p.row.id + ' ' + p.key + (p.spill ? ' spill' : ''), p.fill]));
   const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
   const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
   const earned = (s, mode = 'committed') => earnedIncome(s, R, 2026, { mode }).value;
-  // A job to June 30 with $250 to a 401(k) and $150 to an HSA a month; a one-time $200 check in September holds at most
-  // $200 of that saving, so earned income does not go down.
-  const a0 = at({ ...bare(), income: [w2('job', 'casey', 1500, { end: '2026-06-30' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(250) }), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(150) })] }, '2026-03-01');
+  // With a likely job in the expected mode the saving is counted month by month: a job to June 30 with $250 to a 401(k)
+  // and $150 to an HSA a month, and a one-time $200 check in September, which holds at most $200 of that saving, so
+  // expected earned income does not go down.
+  const a0 = at({ ...bare(), income: [w2('job', 'casey', 1500, { end: '2026-06-30' }), { ...w2('maybe', 'casey', 100, { start: '2026-11-01' }), likelihood: F(0.5) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(250) }), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(150) })] }, '2026-03-01');
   const a1 = { ...a0, income: [...a0.income, w2('x', 'casey', 200, { cadence: 'once', start: '2026-09-15' })] };
-  assert.deepEqual([earned(a0), earned(a1)], [6600, 6600]);
-  // A job from May 11 paid on the 7th, a one-time $5,000 in January, $2,300 a month to a 401(k): no month's saving is more
-  // than its pay, so the IRA gets the $4,100 the paychecks leave ($22,500 - $18,400).
-  const p = at({ ...bare(), income: [w2('job', 'casey', 2500, { start: '2026-05-11', payDay: F(7) }), w2('once', 'casey', 5000, { cadence: 'once', start: '2026-01-08' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(2300) }), acct('ti', 'traditional_ira', 'ira')] }, '2026-04-01');
-  assert.deepEqual([earned(p), fills(run(p))['ti:2026 ira:casey']], [4100, 4100]);
+  assert.ok(earned(a1, 'expected') >= earned(a0, 'expected'));
+  // The tax figures take money from pay off the wages by the Plan's own count, so recording the Plan's 401(k) money
+  // never takes back the IRA pay it counted: following the Plan leaves nothing over (a job ending April 10 and a
+  // one-time payout; a monthly job and a one-time check in November).
+  const follow = (s, mx) => ({ ...s, accounts: s.accounts.map((a) => { const r = mx.rows.find((x) => x.accountId === a.id && x.year === 2026); const add = mx.pools.filter((q) => q.row.accountId === a.id && q.year === 2026).reduce((x, q) => x + q.fill, 0); return r && add ? { ...a, contributions: F([{ year: 2026, amount: Math.round((r.contributed.value + add) * 100) / 100, through: s.meta.asOf }]) } : a; }) });
+  for (const p of [
+    at({ ...bare(), income: [w2('job', 'casey', 5000, { end: '2026-04-10' }), w2('pay', 'casey', 3000, { cadence: 'once', start: '2026-05-15' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(2000) }), acct('ti', 'traditional_ira', 'ira')] }, '2026-03-01'),
+    at({ ...bare(), income: [w2('job', 'casey', 1000), { ...w2('one', 'casey', 6000, { cadence: 'once', start: '2026-11-20' }), withholding: { federal: F(2400), state: F(0) } }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(1500) }), acct('r', 'roth_ira', 'ira')] }, '2026-03-01')
+  ]) assert.deepEqual(run(follow(p, run(p))).totals.over, []);
+  // A salary entered by the year ($72,000) or the quarter: paid monthly, so $500 a month comes out now and the 401(k)
+  // reads $2,350 a paycheck on its 10 paychecks ($18,500 more), not a year's worth a paycheck.
+  for (const [cadence, amount] of [['yearly', 72000], ['quarterly', 18000]]) {
+    const y = at({ ...bare(), income: [w2('sal', 'casey', amount, { cadence })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] }, '2026-03-01');
+    const pc = row(run(y), 'k:2026').paychecks;
+    assert.deepEqual([pc.count, pc.current, pc.perPaycheck], [10, 500, 2350]);
+  }
   // A salary and a yearly bonus line: $500 a month from pay is $6,000, not 12 times more.
   const b = at({ ...bare(), income: [w2('sal', 'casey', 5000), w2('bonus', 'casey', 12000, { cadence: 'yearly' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] }, '2026-03-01');
   assert.deepEqual(earnedIncome(b, R, 2026).lines.filter((l) => /pre-tax/.test(l.label)).map((l) => l.amount), [-6000]);

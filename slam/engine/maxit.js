@@ -583,7 +583,8 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     const each = list.filter((x) => x.cents !== null).map((x) => ({ date: x.date, line: x.s.label, landed: round2(Math.max(0, x.cents / 100)) })).sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
     const holdsTotal = each.length && each.length === list.length ? round2(each.reduce((x, y) => x + y.landed, 0)) : null;
     const main = streams.find((s) => list.some((x) => x.s === s)) || null;
-    const perYear = main && PER_YEAR[main.cadence] ? PER_YEAR[main.cadence] : 12;
+    // A quarterly or yearly line is paid monthly here, as engine/contrib.js counts it (its paydays are monthly).
+    const perYear = main && PER_YEAR[main.cadence] && main.cadence !== 'quarterly' && main.cadence !== 'yearly' ? PER_YEAR[main.cadence] : 12;
     // What comes out of a paycheck now: one line's monthly amount over its paychecks. With two or more pay lines each
     // paycheck carries a different share, so the amount is new money a paycheck on top of what each holds now.
     const nowPer = multi ? null : payrollOnly && a.monthlyContribution && v(a.monthlyContribution) ? round2(v(a.monthlyContribution) * 12 / perYear) : 0;

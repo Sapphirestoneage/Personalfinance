@@ -12,7 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
-import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay } from './contrib.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -218,10 +218,11 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (cafeteria) { known.ficaWages -= x; add(ficaBy, owner, -x); }
     earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + (months ? '.monthlyContribution' : '.contributions'), yearly: x, months, ownerId: owner, cafeteria });
   };
-  // A monthly amount from pay, paycheck by paycheck as engine/contrib.js counts it (27 biweekly paydays hold more than
-  // 12 months), when every pay line of the owner counts in full or not at all in this mode (contrib.js counts the
-  // certain ones); else, or when the paydays are not known, month by month, as certain as that month's pay and never
-  // more than it (adding pay never lowers what is left).
+  // A monthly amount from pay, when every pay line of the owner counts in full or not at all in this mode (always in the
+  // committed mode, which the Plan and the pay an IRA can count read): what engine/contrib.js counts for the year, in so
+  // far and still to come (27 biweekly paydays hold more than 12 months), the same count a recorded total uses, so
+  // recording the Plan's own money never changes the pay. With a likely pay line in the expected mode: month by month,
+  // as certain as that month's pay and never more than it (adding pay never lowers what is left).
   const inYear = (s) => !(s.start && s.start > to) && !(s.end && s.end < from) && (s.cadence !== 'once' || (s.start >= from && s.start <= to));
   const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner && inYear(s) && !(s.amount && valueOf(s.amount) === 0)).every((s) => [0, 1].includes(streamWeight(s, mode)));
   // A month's saving: what its certain pay covers, then the rest as likely as its likely pay, never more than the pay left
@@ -231,19 +232,25 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     x.sureUsed = round2(x.sureUsed + sure); x.likelyUsed = round2(x.likelyUsed + likely);
     return n + sure + likely;
   }, 0));
-  const byPay = (owner, c) => (hasPay(spine, owner) && firm(owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? byMonths(owner, c);
+  const payPart = (a, owner, c, om) => {
+    if (!firm(owner)) return { value: byMonths(owner, c), months: om };
+    // Its guesses are the Plan's (rough there); here the monthly amount read above is the fact.
+    const y = yearAmount(spine, a, year, asOf, tracker(), 'own'), n = (y.in.months || 0) + ((y.still && y.still.months) || 0);
+    return { value: y.value, months: n ? Math.round(n * 10) / 10 : om };
+  };
   // One account's pre-tax money: the recorded total for the year, else its monthly amount as amountOf counts it.
   const preTax = (a, owner, om, cafeteria, amountOf) => {
     if (hasTotal(a, year)) return takeOff(a, owner, yearAmount(spine, a, year, asOf, t, 'own').value, cafeteria, null);
     if (!a.monthlyContribution) return;
     const c = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
-    if (c !== null) takeOff(a, owner, amountOf(owner, c, om), cafeteria, om);
+    if (c !== null) { const x = amountOf(a, owner, c, om); takeOff(a, owner, x.value, cafeteria, x.months); }
     else earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', yearly: null, months: om, ownerId: owner, cafeteria });
   };
   // A Solo 401(k) is filled from take-home, not from the W-2 pay: it comes off the wages last, after every amount that
   // does come out of pay, so it never crowds one out (engine/maxit.js adds back what it took, for the pay an IRA counts).
   const hsas = [], solos = [];
-  for (const a of spine.accounts || []) {
+  // In a fixed order (by id), so what comes off the wages never turns on the order the accounts are listed in.
+  for (const a of [...(spine.accounts || [])].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))) {
     const pretax = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax';
     const cafeteria = a.family === 'hsaFsa' && (a.type === 'hsa' || pretax);
     const pre = cafeteria || (pretax && a.family === 'employerRetirement');
@@ -264,12 +271,12 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       const seed = emp.length ? (t.read(spine, 'accounts.' + a.id + '.contributions'), emp.reduce((s, x) => s + x.amount, 0))
         : a.employerSeed && year <= +asOf.slice(0, 4) ? t.useFact('accounts.' + a.id + '.employerSeed', a.employerSeed) || 0 : 0;
       if (fromPay && !y && c === null) earned.pretax.push({ id: a.id, name: v(a.name) || a.id, path: 'accounts.' + a.id + '.monthlyContribution', yearly: null, months: om, ownerId: owner, cafeteria: true });
-      else hsas.push({ a, owner, fromPay, amount: y ? y.value : byPay(owner, c), months: y ? null : om, seed });
+      else { const x = y ? null : payPart(a, owner, c, om); hsas.push({ a, owner, fromPay, amount: y ? y.value : x.value, months: y ? null : x.months, seed }); }
       continue;
     }
     if (!pre || !om) continue;
     if (a.type === 'solo_k401') { solos.push({ a, owner, om }); continue; }
-    preTax(a, owner, om, cafeteria, byPay);
+    preTax(a, owner, om, cafeteria, payPart);
   }
   // The HSA limit: per owner for self-only coverage, one family limit plus each owner's catch-up for family coverage.
   // Money through pay counts first; employer money comes off the limit.
@@ -288,7 +295,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known.hsaDeduction += amt;
     }
   }
-  for (const x of solos) preTax(x.a, x.owner, x.om, false, (owner, c, om) => c * om);
+  for (const x of solos) preTax(x.a, x.owner, x.om, false, (a, owner, c, om) => ({ value: c * om, months: om }));
   // Self-employment tax is each person's own (Schedule SE), against their own W-2 and tips FICA wages.
   known.sePeople = Object.keys(seBy).map((o) => ({ seNet: seBy[o], ficaWages: Math.max(0, ficaBy[o] || 0) }));
   // Roth conversions in the year are ordinary income.

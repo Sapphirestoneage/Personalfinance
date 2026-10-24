@@ -128,8 +128,9 @@ export function payMonthsFrom(spine, pid, year, asOf) {
   for (let m = 1; m <= 12; m++) {
     const ym = year + '-' + pad(m);
     if (ym < monthKey(asOf)) continue;
+    // A month whose paydays are not known counts whole here (payMonthsBefore leaves the as-of month out then).
     const share = payShare(spine, pid, ym, (d) => d >= asOf);
-    n += share === null ? (ym === monthKey(asOf) ? 0 : 1) : share;
+    n += share === null ? 1 : share;
   }
   return round4(n);
 }
