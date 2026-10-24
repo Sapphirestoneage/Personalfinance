@@ -1146,3 +1146,22 @@ test('round 11 (S-222): a married couple is one unit for self-employment pay; a 
   const s3 = { ...d, meta: { ...d.meta, asOf: '2027-06-01' }, income: [{ ...gig('casey', 36000), start: '2026-01-01', end: '2026-12-31' }], accounts: [...d.accounts.filter((a) => a.id !== 'k401').map((a) => (a.id === 'roth' ? { ...a, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 7500 }]) } : a)), acct('se', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 24500 }]) })] };
   assert.equal(maxIt(s3, R).pools.find((p) => p.key === 'employer:casey' && p.year === 2026).fill, 1456.68);
 });
+
+test('round 12 (S-223): a spouse who still earns more after the Solo money is held to their own pay; who earns less is told by pay after Solo or SEP money', () => {
+  const d = demo(), c = couple(d);
+  const gig = (pid, yr) => ({ ...d.income[1], id: 'gig' + pid, personId: pid, amount: F(yr / 12) });
+  const sal = (yr) => ({ ...c.income[0], amount: F(yr / 12) });
+  const rest = c.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth');
+  const solo = (extra = {}) => acct('se', 'solo_k401', 'employerRetirement', { owner: F('partner'), ...extra });
+  // Casey earns $2,000 (no IRA); Sam has $30,000 of 1099 pay ($27,880.57), an empty Solo and $7,500 in a Roth. Sam
+  // still earns more than Casey after the Solo, so Sam's Roth must rest on Sam's own pay: the Solo takes $20,380.57.
+  const f3 = maxIt({ ...c, income: [sal(2000), gig('sam', 30000)], accounts: [...rest, solo(), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 7500 }]) })] }, R);
+  assert.deepEqual([f3.totals.lump, f3.rows.filter((r) => r.over || r.overSoon).length], [20380.57, 0]);
+  // $35,000 of 1099 pay, a Roth at $625 a month, Casey at $3,000: the Solo takes $25,027.33.
+  const g9 = maxIt({ ...c, income: [sal(3000), gig('sam', 35000)], accounts: [...rest, solo(), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), monthlyContribution: F(625) })] }, R);
+  assert.equal(g9.totals.lump, 25027.33);
+  // Sam already has $25,000 in the Solo, leaving $2,880.57 of pay, less than Casey's $10,000: Sam earns less, so Sam's
+  // $7,500 Roth rests on the couple's pay and is not over (the Solo's own $500 past the deferral limit is).
+  const m3 = maxIt({ ...c, income: [sal(10000), gig('sam', 30000)], accounts: [...rest, solo({ contributions: F([{ year: 2026, amount: 25000 }]) }), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 7500 }]) })] }, R);
+  assert.deepEqual([row(m3, 'sr:2026').over || 0, row(m3, 'sr:2026').cap.joint, row(m3, 'se:2026').over], [0, true, 500]);
+});
