@@ -52,7 +52,10 @@ export const paydaysOf = (spine, s, from, to) => {
   // A paycheck the day-by-day run matched to a logged or imported deposit (engine/cashsim.js claims), when the caller
   // passed the run's claims along (spine.payClaims, a Map of '<line>|<date>' to the day it came).
   if (spine.payClaims) for (const [k, d] of spine.payClaims) if (k.startsWith(s.id + '|') && !logged.has(k.slice(s.id.length + 1))) logged.set(k.slice(s.id.length + 1), d);
-  return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => logged.get(d) || at(d).date || d).filter((d) => d >= from && d <= to))].sort();
+  // A paycheck logged as come has been paid, even when it is logged on the as-of day: it counts as the day before.
+  const today = spine.meta && spine.meta.asOf;
+  const paid = (d) => (today && d >= today ? addDays(today, -1) : d);
+  return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => (logged.has(d) ? paid(logged.get(d)) : at(d).date || d)).filter((d) => d >= from && d <= to))].sort();
 };
 // Whether the owner has a W-2 or tips line that pays (payroll saving needs pay to come out of).
 export const hasPay = (spine, pid) => earningFor(spine, pid).length > 0;
@@ -76,19 +79,28 @@ function payShare(spine, pid, ym, keep) {
 // share of the month's saving (by gross, as engine/cashflow.js payrollShares splits it) over that line's paychecks a
 // month, so 26 biweekly paychecks hold 12 months and three in one month hold more than one (S-219). Null when a line's
 // amount or schedule is not known (the month count stands in then).
-function payCheckMonths(spine, pid, year, keep) {
+function payChecks(spine, pid, year) {
   const lines = earningFor(spine, pid);
-  if (!lines.length) return 0;
+  if (!lines.length) return [];
   if (lines.some((s) => !PER_YEAR[s.cadence] || !s.amount || v(s.amount) === null || ((s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start))) return null;
   const g = (s) => v(s.amount) * PER_YEAR[s.cadence] / 12;
-  let n = 0;
+  const out = [];
   for (const s of lines) for (const d of paydaysOf(spine, s, year + '-01-01', year + '-12-31')) {
-    if (!keep(d)) continue;
     const ym = monthKey(d);
     const G = lines.filter((x) => activeDays(x.start, x.end, ym) > 0).reduce((a, x) => a + g(x), 0);
-    if (G) n += (g(s) / G) * 12 / PER_YEAR[s.cadence];
+    if (G) out.push({ date: d, w: (g(s) / G) * 12 / PER_YEAR[s.cadence] });
   }
-  return round4(n);
+  return out;
+}
+function payCheckMonths(spine, pid, year, keep) {
+  const cs = payChecks(spine, pid, year);
+  return cs === null ? null : round4(cs.filter((c) => keep(c.date)).reduce((a, c) => a + c.w, 0));
+}
+// What a monthly amount from pay puts in on the owner's paychecks that pass `keep`: each paycheck its own amount to the
+// cent (as the day-by-day run deducts it). Null when a line's amount or schedule is not known.
+export function payAmount(spine, pid, year, monthly, keep) {
+  const cs = payChecks(spine, pid, year);
+  return cs === null ? null : round2(cs.filter((c) => keep(c.date)).reduce((a, c) => a + round2(monthly * c.w), 0));
 }
 // Months of the owner's pay in a year before asOf: payroll saving is in for paydays before asOf (a payday on asOf is
 // still to come), counted by the paychecks; with a line not known, an earlier month with pay counts whole and the as-of
@@ -149,7 +161,9 @@ export function contributedOn(spine, a, year, asOf, t, part = 'all') {
     const through = totals.map((c) => c.through).filter(Boolean).sort().pop();
     const more = through && monthly && through < asOf ? round4(monthsTo(asOf) - monthsTo(through)) : 0;
     const m = more > 0 ? t.useFact(base + '.monthlyContribution', monthly) : null;
-    const since = m ? round2(m * more) : 0;
+    // From pay: each paycheck's own amount (to the cent) from the day it was recorded through to asOf.
+    const byPay = m && payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d >= through && d < asOf) : null;
+    const since = m ? (byPay ?? round2(m * more)) : 0;
     if (since) t.addRough(base + '.contributions');
     return { id: a.id, name, value: round2(rec + since + ev), events: ev, words: money(rec) + ' recorded for ' + year + (since ? ' and about ' + money(since) + ' since (' + money(m) + ' a month for ' + nMonths(more) + (payroll ? ' of pay' : '') + ')' : '') + evWords, path: base + '.contributions', estimated: !!since, kind: since ? 'rough' : a.contributions.kind };
   }
@@ -158,7 +172,8 @@ export function contributedOn(spine, a, year, asOf, t, part = 'all') {
     const m = t.useFact(base + '.monthlyContribution', monthly);
     if (m === null) return { id: a.id, name, value: ev, events: ev, words: 'the monthly amount is not entered, so nothing is counted as in' + evWords, path: base + '.monthlyContribution', estimated: true, kind: 'missing' };
     t.addRough(base + '.contributions');
-    return { id: a.id, name, value: round2(m * n + ev), events: ev, words: 'about ' + money(m * n) + ' (' + money(m) + ' a month for ' + nMonths(n) + (payroll ? ' of pay' : '') + ' in ' + year + ', a guess until it is recorded)' + evWords, path: base + '.contributions', estimated: true, monthly: m, months: n, kind: 'rough' };
+    const guess = payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d < asOf) ?? round2(m * n) : round2(m * n);
+    return { id: a.id, name, value: round2(guess + ev), events: ev, words: 'about ' + money(guess) + ' (' + money(m) + ' a month for ' + nMonths(n) + (payroll ? ' of pay' : '') + ' in ' + year + ', a guess until it is recorded)' + evWords, path: base + '.contributions', estimated: true, monthly: m, months: n, kind: 'rough' };
   }
   const past = year <= +asOf.slice(0, 4);
   if (past && !events.length) t.addRough(base + '.contributions');
@@ -174,7 +189,9 @@ export function stillOn(spine, a, year, asOf, t, part = 'all') {
   const payroll = fromPayOf(spine, a, pid);
   const n = payroll ? (hasPay(spine, pid) ? payMonthsFrom(spine, pid, year, asOf) : 0) : monthsAfter(year, asOf);
   if (!(n > 0)) return null;
-  return { id: a.id, name: v(a.name) || a.id, monthly: m, months: n, value: round2(m * n), fromPay: payroll, path: 'accounts.' + a.id + '.monthlyContribution', words: money(m) + ' a month' + (payroll ? ' from pay' : '') + ' for ' + nMonths(n) + ' more of ' + year };
+  // From pay: each paycheck still to come its own amount, to the cent (as the run deducts it).
+  const byPay = payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d >= asOf) : null;
+  return { id: a.id, name: v(a.name) || a.id, monthly: m, months: n, value: byPay ?? round2(m * n), fromPay: payroll, path: 'accounts.' + a.id + '.monthlyContribution', words: money(m) + ' a month' + (payroll ? ' from pay' : '') + ' for ' + nMonths(n) + ' more of ' + year };
 }
 // The year's whole amount on one account: what is in plus what is still set to go in.
 export const yearAmount = (spine, a, year, asOf, t, part = 'all') => { const i = contributedOn(spine, a, year, asOf, t, part); const s = stillOn(spine, a, year, asOf, t, part); return { value: round2(i.value + (s ? s.value : 0)), in: i, still: s }; };

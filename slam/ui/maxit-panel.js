@@ -44,8 +44,8 @@ function mainOf(r) {
   if (r.toFill === 0 && r.main === 'paycheck' && (!p || !p.count)) return { big: null, sub: r.room > 0 ? 'What is set up already fills it: nothing more goes in.' : 'The ' + r.year + ' room is full: nothing more goes in.' };
   if (r.main === 'paycheck') {
     if (p && p.blank) return { big: null, sub: 'Missing: ' + p.blank.label + ' ' + p.blank.what + ', so the paychecks before ' + longDay(r.deadline.date) + ' cannot be counted.', blank: p.blank };
+    if (p && p.multi && p.perLine) return { big: cash(p.perLine[0].per) + ' more a ' + p.perLine[0].line + ' paycheck', sub: p.perLine.map((l) => cash(l.per) + ' more on each of ' + plural(l.count, l.line + ' paycheck')).join(' and ') + ', to ' + longDay(r.deadline.date) + (p.tooBig ? ': all that lands from each, and still not all of it fits' : ': each in proportion to what lands from it, so none takes more than it holds') };
     if (!p || p.perPaycheck === null) return { big: null, sub: 'No paycheck lands before ' + longDay(r.deadline.date) + '.' };
-    if (p.multi && p.perLine) return { big: cash(p.perLine[0].per) + ' more a ' + p.perLine[0].line + ' paycheck', sub: p.perLine.map((l) => cash(l.per) + ' more on each of ' + plural(l.count, l.line + ' paycheck')).join(' and ') + ', to ' + longDay(r.deadline.date) + ': each in proportion to what lands from it, so none takes more than it holds' };
     if (p.multi) return { big: cash(p.perPaycheck) + ' more a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + ': this much more on each paycheck than comes out of it now' + lastWords(p.last, p.perPaycheck) };
     return { big: cash(p.perPaycheck) + ' a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + (p.current ? ': set the deferral to this, ' + cash(p.extra) + ' more than the ' + cash(p.current) + ' that comes out now' : '') + lastWords(p.last, p.perPaycheck) };
   }
@@ -144,7 +144,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     h('dl', { class: 'kv' }, ...kv.flatMap(([k, val]) => [h('dt', {}, k), h('dd', { class: /^[$-]/.test(val) ? '' : 'words' }, val)])),
     h('div', { class: 'edit-actions' }, record),
     c ? h('p', { class: 'tool-result' + (c.breaks ? ' bad' : '') }, h('strong', {}, 'Against cash: '), c.words) : null,
-    mathButton([key + 'room', ...(r.lump !== null ? [key + 'lump'] : []), ...(r.perMonth !== null ? [key + 'month'] : []), ...(p && p.perPaycheck !== null && r.fillable ? [key + 'paycheck'] : []), ...(c ? [key + 'low', ...(c.measurable ? [key + 'payoff'] : [])] : [])], ctxFor(m)));
+    mathButton([key + 'room', ...(r.lump !== null ? [key + 'lump'] : []), ...(r.perMonth !== null ? [key + 'month'] : []), ...(p && (p.perPaycheck !== null || p.perLine) && r.fillable ? [key + 'paycheck'] : []), ...(c ? [key + 'low', ...(c.measurable ? [key + 'payoff'] : [])] : [])], ctxFor(m)));
 }
 
 // The panel under one account in the Ledger.

@@ -235,14 +235,27 @@ function maxitMetric(id) {
   if (what === 'paycheck') return { ...base, label: 'A paycheck to the deadline', op: 'custom',
     explain: (ctx) => {
       const r = rowOf(ctx); const p = r && r.paychecks;
-      if (!p || p.perPaycheck === null || !r.fillable) return out(null, []);
+      if (!p || p.blank || !r.fillable) return out(null, []);
+      // Two or more pay lines split by what lands from each paycheck: the first line's amount, its share of the new money
+      // (or all that lands from it when even all of them cannot hold it).
+      if (p.perLine) {
+        const l = p.perLine[0];
+        const terms = [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term('What lands from a ' + l.line + ' paycheck', l.landed, 'usd', 'computed', 'arg', { key: 'landed' }), term('What all ' + p.count + ' paychecks to ' + r.deadline.date + ' hold together', p.holdsTotal, 'usd', 'computed', 'arg', { key: 'holds' })];
+        return out(res(r, l.per), terms, [], { note: p.tooBig ? 'Even all the paychecks cannot hold the new money, so each gives all that lands from it.' : 'Each paycheck takes the new money in proportion to what lands from it (the cents left go on the largest).' });
+      }
+      if (p.perPaycheck === null) return out(null, []);
       const terms = [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term('Paychecks from ' + (p.streams.join(' and ') || 'pay') + ' to ' + r.deadline.date + ' (' + p.dates.join(', ') + ')', p.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })];
       // With two or more pay lines the amount is new money a paycheck, on top of what each already puts in.
       if (r.deadline.payrollOnly && !p.multi) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthlyContribution', p.current, 'usd', 'plus', 'What already comes out of each paycheck for it (the monthly amount x 12 / ' + p.perYear + ' paychecks a year)'), key: 'now' });
       if (r.deadline.payrollOnly) terms.push(p.multi && p.holdsTotal !== null ? term('What the paychecks to the deadline hold together: what lands from them', p.holdsTotal, 'usd', 'computed', 'arg') : term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
       return out(res(r, p.perPaycheck), terms, [], lastNote(r, p.last, p.perPaycheck));
     },
-    recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };
+    recompute: (t) => {
+      if (one(t, 'lump') === null) return null;
+      // A split by what lands: the line's share, or all it lands when the paychecks cannot hold it all.
+      if (k(t, 'holds').length) { const share = Math.floor(one(t, 'lump') * one(t, 'landed') / one(t, 'holds') * 100) / 100; return one(t, 'holds') >= one(t, 'lump') ? share : one(t, 'landed'); }
+      return !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0));
+    } };
   // Every account together: each shared limit (a pool) once, filled by the row that holds most of it. A pool that
   // counts less than its row alone says so, since its link shows the row alone.
   const rowFill = (mx, r) => mx.pools.filter((q) => q.row === r).reduce((s, q) => s + q.fill, 0);
