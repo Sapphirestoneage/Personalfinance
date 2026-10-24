@@ -32,6 +32,8 @@ const VERIFY = 'This date has not been checked against the IRS yet.';
 const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferrals (the total)' : 'Contributions (the total)'], ...(type === 'solo_k401' ? [['employer', 'Employer part (the total)']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
 // "; the last one $483.30" when the last payment is what is left.
 const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last - per) > 0.005 ? '; the last one ' + cash(last) : '');
+// Why the Plan counts less on a spouse's IRA than the account alone could take.
+const countedWhy = (r, pool) => (pool.phaseCut ? (r.cap && r.cap.joint ? 'the Roth phase-out runs on the couple\'s pay left after ' + r.couple.with + '\'s year' : 'so ' + r.couple.with + '\'s Roth money stays within their limit after the phase-out') : 'the couple\'s pay is shared: the spouse who earns more is counted first');
 // A blank the row waits on that the Ledger can fill (not a rule).
 const canFill = (path) => path && !path.startsWith('rule:');
 
@@ -39,9 +41,11 @@ const canFill = (path) => path && !path.startsWith('rule:');
 function mainOf(r) {
   const p = r.paychecks;
   if (!r.fillable) return { big: null, sub: 'Cannot be filled: no paycheck lands before ' + longDay(r.deadline.date) + ', and this account only takes money through payroll.' };
+  if (r.toFill === 0 && r.main === 'paycheck' && (!p || !p.count)) return { big: null, sub: r.room > 0 ? 'What is set up already fills it: nothing more goes in.' : 'The ' + r.year + ' room is full: nothing more goes in.' };
   if (r.main === 'paycheck') {
     if (p && p.blank) return { big: null, sub: 'Missing: ' + p.blank.label + ' ' + p.blank.what + ', so the paychecks before ' + longDay(r.deadline.date) + ' cannot be counted.', blank: p.blank };
     if (!p || p.perPaycheck === null) return { big: null, sub: 'No paycheck lands before ' + longDay(r.deadline.date) + '.' };
+    if (p.multi && p.perLine) return { big: cash(p.perLine[0].per) + ' more a ' + p.perLine[0].line + ' paycheck', sub: p.perLine.map((l) => cash(l.per) + ' more on each of ' + plural(l.count, l.line + ' paycheck')).join(' and ') + ', to ' + longDay(r.deadline.date) + ': each in proportion to what lands from it, so none takes more than it holds' };
     if (p.multi) return { big: cash(p.perPaycheck) + ' more a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + ': this much more on each paycheck than comes out of it now' + lastWords(p.last, p.perPaycheck) };
     return { big: cash(p.perPaycheck) + ' a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + (p.current ? ': set the deferral to this, ' + cash(p.extra) + ' more than the ' + cash(p.current) + ' that comes out now' : '') + lastWords(p.last, p.perPaycheck) };
   }
@@ -127,7 +131,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     r.phase && r.phase.lo != null && r.phase.magi > r.phase.lo ? ['Roth limit', cash(r.phase.limit) + ' at modified AGI of ' + cash(r.phase.magi)] : null,
     ownShared.length ? ['Shares its limit with', ownShared.join(', ')] : null,
     r.couple ? ['Shares the couple\'s pay', r.couple.words] : null,
-    pool && r.lump !== null && pool.fill < r.lump ? ['Counted in the Plan', cash(pool.fill) + ' (the couple\'s pay is shared: the spouse who earns more is counted first)'] : null,
+    pool && r.lump !== null && pool.fill < r.lump ? ['Counted in the Plan', cash(pool.fill) + ' (' + countedWhy(r, pool) + ')'] : null,
     ['The deadline', r.deadline.when + '. ' + r.deadline.words + ' ' + VERIFY]
   ].filter(Boolean);
   return h('div', { class: 'max-year card-tile' }, head,
@@ -174,9 +178,9 @@ export function maxItCard(spine, rules) {
       !r.applies ? h('span', { class: 'muted' }, r.why)
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
-      r.couple ? h('span', { class: 'tile-sub' }, r.couple.words + (pool && r.lump !== null && pool.fill < r.lump ? ' Counted in the Plan: ' + cash(pool.fill) + ' (the spouse who earns more is counted first).' : '')) : null,
+      r.couple ? h('span', { class: 'tile-sub' }, r.couple.words + (pool && r.lump !== null && pool.fill < r.lump ? ' Counted in the Plan: ' + cash(pool.fill) + ' (' + countedWhy(r, pool) + ').' : '')) : null,
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
-      r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
+      r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);
   };
   const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);

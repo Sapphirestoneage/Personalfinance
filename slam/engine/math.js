@@ -144,7 +144,7 @@ function maxitMetric(id) {
   const year = all ? null : +parts[parts.length - 2];
   const acct = all ? null : parts.slice(1, -2).join(':');
   // A page without the whole max-it result (the Windfall room) still opens one account's numbers.
-  const rowOf = (ctx) => { if (ctx.maxit) return ctx.maxit.rows.find((r) => r.accountId === acct && r.year === year) || null; const a = (ctx.spine.accounts || []).find((x) => x.id === acct); return a && canMaxIt(ctx.rules, a, year) ? maxItRow(ctx.spine, ctx.rules, a, year, { asOf: ctx.s ? ctx.s.asOf : ctx.spine.meta.asOf }) : null; };
+  const rowOf = (ctx) => { if (ctx.maxit) return ctx.maxit.rows.find((r) => r.accountId === acct && r.year === year) || null; const a = (ctx.spine.accounts || []).find((x) => x.id === acct); return a && canMaxIt(ctx.rules, a, year) ? maxItRow(ctx.spine, ctx.rules, a, year, { asOf: ctx.s ? ctx.s.asOf : ctx.spine.meta.asOf, claims: ctx.sim ? ctx.sim.claims : null }) : null; };
   const base = { id, unit: what === 'month' ? 'usd/month' : what === 'payoff' ? 'count' : 'usd', screens: MAXIT_SCREENS, formula: MAXIT_FORMULAS[what] };
   const res = (r, value) => ({ value, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules });
   const roomRes = (r) => res(r, r.room);
@@ -239,7 +239,7 @@ function maxitMetric(id) {
       const terms = [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term('Paychecks from ' + (p.streams.join(' and ') || 'pay') + ' to ' + r.deadline.date + ' (' + p.dates.join(', ') + ')', p.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })];
       // With two or more pay lines the amount is new money a paycheck, on top of what each already puts in.
       if (r.deadline.payrollOnly && !p.multi) terms.push({ ...field(ctx.spine, 'accounts.' + r.accountId + '.monthlyContribution', p.current, 'usd', 'plus', 'What already comes out of each paycheck for it (the monthly amount x 12 / ' + p.perYear + ' paychecks a year)'), key: 'now' });
-      if (r.deadline.payrollOnly) terms.push(term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
+      if (r.deadline.payrollOnly) terms.push(p.multi && p.holdsTotal !== null ? term('What the paychecks to the deadline hold together: what lands from them', p.holdsTotal, 'usd', 'computed', 'arg') : term('What a paycheck holds: what lands from it', p.landed, 'usd', p.landed === null ? 'missing' : 'computed', 'arg'));
       return out(res(r, p.perPaycheck), terms, [], lastNote(r, p.last, p.perPaycheck));
     },
     recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : r2(c2(one(t, 'lump') / one(t, 'count')) + (one(t, 'now') || 0))) };

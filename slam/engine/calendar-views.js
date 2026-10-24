@@ -74,7 +74,7 @@ export function yearStrip(spine, rules, { asOf = spine.meta.asOf, maybeMode = 'w
   const r = sim && sim.days >= 365 ? sim : cashsim(spine, rules, { asOf, months: 12, maybeMode });
   const week = (r.everydayPerDay || 0) * 7;
   // Each month's account deadlines (S-211) ride along, so the strip shows them as chips with a link each.
-  const months = Object.keys(r.monthly).sort().slice(0, 12).map((ym) => { const m = r.monthly[ym]; return { ym, in: m.in, out: m.out, net: m.net, low: m.low, interest: m.interest, tight: m.low < r.floor.amount + week, underFloor: m.low < r.floor.amount, deadlines: maxItDeadlines(spine, rules, ym + '-01', monthEnd(ym), { asOf }) }; });
+  const months = Object.keys(r.monthly).sort().slice(0, 12).map((ym) => { const m = r.monthly[ym]; return { ym, in: m.in, out: m.out, net: m.net, low: m.low, interest: m.interest, tight: m.low < r.floor.amount + week, underFloor: m.low < r.floor.amount, deadlines: maxItDeadlines(spine, rules, ym + '-01', monthEnd(ym), { asOf, claims: r.claims }) }; });
   return { months, floor: r.floor.amount, tightWeek: round2(week), tightCount: months.filter((m) => m.tight).length, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules };
 }
 

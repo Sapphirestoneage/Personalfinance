@@ -9,6 +9,7 @@
 import { valueOf as v, round2, monthKey, dayIn, monthStart, monthEnd, addDays, accountOwner, incomeOwner, ageOn } from './spine.js';
 import { activeDays, streamWeight } from './cashflow.js';
 import * as C from './vendor/cashcal.js';
+import { PER_YEAR } from './schema.js';
 import { money as fmt } from '../src/ui/format.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
@@ -71,9 +72,30 @@ function payShare(spine, pid, ym, keep) {
   if (!all.length) return runs.some((s) => (s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start) ? null : 0;
   return runs.flatMap((s) => paydaysOf(spine, s, monthStart(ym), monthEnd(ym))).filter(keep).length / all.length;
 }
+// The months of payroll saving a set of the owner's paychecks in the year holds: each paycheck carries its line's
+// share of the month's saving (by gross, as engine/cashflow.js payrollShares splits it) over that line's paychecks a
+// month, so 26 biweekly paychecks hold 12 months and three in one month hold more than one (S-219). Null when a line's
+// amount or schedule is not known (the month count stands in then).
+function payCheckMonths(spine, pid, year, keep) {
+  const lines = earningFor(spine, pid);
+  if (!lines.length) return 0;
+  if (lines.some((s) => !PER_YEAR[s.cadence] || !s.amount || v(s.amount) === null || ((s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start))) return null;
+  const g = (s) => v(s.amount) * PER_YEAR[s.cadence] / 12;
+  let n = 0;
+  for (const s of lines) for (const d of paydaysOf(spine, s, year + '-01-01', year + '-12-31')) {
+    if (!keep(d)) continue;
+    const ym = monthKey(d);
+    const G = lines.filter((x) => activeDays(x.start, x.end, ym) > 0).reduce((a, x) => a + g(x), 0);
+    if (G) n += (g(s) / G) * 12 / PER_YEAR[s.cadence];
+  }
+  return round4(n);
+}
 // Months of the owner's pay in a year before asOf: payroll saving is in for paydays before asOf (a payday on asOf is
-// still to come). An earlier month with pay counts whole; the as-of month counts the share of its paydays gone by.
+// still to come), counted by the paychecks; with a line not known, an earlier month with pay counts whole and the as-of
+// month the share of its paydays gone by.
 export function payMonthsBefore(spine, pid, year, asOf) {
+  const byChecks = payCheckMonths(spine, pid, year, (d) => d < asOf);
+  if (byChecks !== null) return byChecks;
   let n = 0;
   for (let m = 1; m <= 12; m++) {
     const ym = year + '-' + pad(m);
@@ -84,6 +106,8 @@ export function payMonthsBefore(spine, pid, year, asOf) {
 }
 // Months of the owner's pay from asOf through December 31 of the year: what payroll saving already set up still puts in.
 export function payMonthsFrom(spine, pid, year, asOf) {
+  const byChecks = payCheckMonths(spine, pid, year, (d) => d >= asOf);
+  if (byChecks !== null) return byChecks;
   let n = 0;
   for (let m = 1; m <= 12; m++) {
     const ym = year + '-' + pad(m);

@@ -1031,3 +1031,40 @@ test('round 7 (S-218): the lower earner\'s Roth money stays within their reduced
   assert.deepEqual([k7.still.value, k7.toFill], [0, 19500]);
   assert.ok(!calendar(x7, R, { start: '2026-11', months: 1 }).months[0].events.some((e) => e.kind === 'pay' && e.date === '2026-11-15'));
 });
+
+test('round 8 (S-219): partners who do not file jointly each read their own income; payroll counts its paychecks; two pay lines split by what each paycheck lands; deadline chips read the run', () => {
+  const d = demo();
+  const two = (fs) => ({ ...d, household: { ...d.household, filingStatus: F(fs), people: [...d.household.people, { id: 'sam', name: 'Sam', birthDate: F('1995-05-05') }] } });
+  const pair = (fs, a, b) => { const c = two(fs); return { ...c, income: [{ ...c.income[0], amount: F(a / 12) }, w2('samjob', 'sam', b / 12)], accounts: [...c.accounts.filter((x) => x.id !== 'k401').map((x) => (x.id === 'roth' ? { ...x, monthlyContribution: undefined, contributions: F([{ year: 2026, amount: 0 }]) } : x)), acct('sr', 'roth_ira', 'ira', { owner: F('partner'), contributions: F([{ year: 2026, amount: 0 }]) })] }; };
+  // Unmarried, each filing single: $120,000 and $60,000 are each under the $153,000 phase-out start, so each has the
+  // full $7,500 (the household's $180,000 together is no one's modified AGI).
+  const m1 = maxIt(pair('single', 120000, 60000), R);
+  assert.deepEqual([row(m1, 'roth:2026').room, row(m1, 'roth:2026').phase.magi, row(m1, 'sr:2026').room, row(m1, 'sr:2026').phase.magi], [7500, 120000, 7500, 60000]);
+  // Married filing separately, $6,000 each: $6,000 x (10,000 - 6,000) / 10,000 = $2,400 each, on each one's own income.
+  const m2 = maxIt(pair('mfs', 6000, 6000), R);
+  assert.deepEqual([row(m2, 'roth:2026').room, row(m2, 'sr:2026').room], [2400, 2400]);
+  assert.match(row(m2, 'roth:2026').phase.words, /^Casey Rivera's modified AGI of \$6,000/);
+  // Biweekly pay with $20,000 recorded: 5 paychecks are left, each already putting in $230.77 (12 x $500 / 26), so
+  // $1,153.85 is still to come; $900 a paycheck ends the year at exactly $24,500.
+  const b3 = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, cadence: 'biweekly', start: '2026-01-13', amount: F(2769.23), withholding: { federal: F(253.85), state: F(129.23) } } : x)), accounts: d.accounts.map((a) => (a.id === 'k401' ? { ...a, contributions: F([{ year: 2026, amount: 20000 }]) } : a)) };
+  const k3 = row(maxIt(b3, R, { sim: maxItSim(b3, R) }), 'k401:2026');
+  assert.deepEqual([k3.still.value, k3.paychecks.count, k3.paychecks.perPaycheck, Math.round((20000 + 5 * k3.paychecks.perPaycheck) * 100) / 100], [1153.85, 5, 900, 24500]);
+  // A weekly $100 stipend beside the salary, $18,000 recorded through October 22: $5,489.65 of new money fits what the
+  // 12 paychecks land ($9,335.16), but not evenly; each takes its share by what lands from it ($2,496.22 on each salary
+  // paycheck, $49.73 on each stipend one), never more than it holds, and the cash check moves the same amounts.
+  const s4 = { ...d, income: [...d.income, { ...w2('stip', 'casey', 100), label: 'Stipend', cadence: 'weekly', start: '2026-01-02' }], accounts: d.accounts.map((a) => (a.id === 'k401' ? { ...a, contributions: F([{ year: 2026, amount: 18000, through: '2026-10-22' }]) } : a)) };
+  const sim4 = maxItSim(s4, R), mx4 = maxIt(s4, R, { sim: sim4 }), p4 = row(mx4, 'k401:2026').paychecks;
+  assert.deepEqual([p4.tooBig, p4.perLine.map((l) => [l.count, l.per]), p4.plan.every((x, i) => x.amount <= p4.each[i].landed)], [false, [[2, 2496.22], [10, 49.73]], true]);
+  assert.equal(Math.round(maxItCash(s4, R, mx4, { sim: sim4, rows: [row(mx4, 'k401:2026')] }).flows.reduce((x, f) => x + f.amount, 0) * 100) / 100, 5489.65);
+  // A 401(k) and a 457(b) take from the same two paychecks: together no more than the $8,422 they land.
+  const s5 = { ...d, accounts: [...d.accounts, acct('g', 'k457b', 'employerRetirement')] };
+  const m5 = maxIt(s5, R, { sim: maxItSim(s5, R) });
+  assert.equal(m5.pools.filter((p) => p.row.deadline.payrollOnly).reduce((x, p) => x + p.fill, 0), 8422);
+  // As of December 15, that day's pay was typed on the 14th: the calendar's deadline chip reads $18,500, as the panel.
+  const s6 = logSpend({ ...d, meta: { ...d.meta, asOf: '2026-12-15' } }, { amount: 4211, date: '2026-12-14', kind: 'income', source: 'typed' }).spine;
+  assert.equal(calendar(s6, R, { start: '2026-12', months: 1 }).months[0].events.find((e) => e.kind === 'maxDeadline' && /401/.test(e.label)).amount, 18500);
+  // The room is full and the salary ended: nothing to fill, so not "cannot be filled".
+  const s7 = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-09-30' } : x)), accounts: d.accounts.map((a) => (a.id === 'k401' ? { ...a, contributions: F([{ year: 2026, amount: 24500 }]) } : a)) };
+  const m7 = maxIt(s7, R, { sim: maxItSim(s7, R) });
+  assert.deepEqual([row(m7, 'k401:2026').fillable, m7.totals.unfillable], [true, []]);
+});
