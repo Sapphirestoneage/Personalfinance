@@ -150,7 +150,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
 
   let w2Months = 0;
   // Each person's months of pay, wages, FICA wages and self-employment profit (S-213, S-214).
-  const payMonths = {}, wagesBy = {}, ficaBy = {}, seBy = {};
+  const payMonths = {}, payMonthSet = {}, wagesBy = {}, ficaBy = {}, seBy = {};
   const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   for (const s of spine.income || []) {
     if ((s.start && s.start > to) || (s.end && s.end < from)) continue;
@@ -184,9 +184,12 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
       const months = (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1;
       w2Months = Math.max(w2Months, months);
-      // Each person's months of pay: payroll saving comes out of its owner's pay (S-211).
+      // Each person's months of pay, any of their lines (a job from January to June and another from July is 12):
+      // payroll saving comes out of its owner's pay (S-211).
       const who = incomeOwner(spine, s);
-      payMonths[who] = Math.max(payMonths[who] || 0, months);
+      payMonthSet[who] = payMonthSet[who] || new Set();
+      for (let m = +a.slice(5, 7); m <= +b.slice(5, 7); m++) payMonthSet[who].add(m);
+      payMonths[who] = payMonthSet[who].size;
     }
     for (const [k, key] of [['federal', 'withheldFederal'], ['state', 'withheldState']]) {
       const f = s.withholding && s.withholding[k];
@@ -212,7 +215,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   // A monthly amount from pay, paycheck by paycheck as engine/contrib.js counts it (27 biweekly paydays hold more than
   // 12 months), when every pay line of the owner counts in full or not at all in this mode (contrib.js counts the
   // certain ones); else, or when the paydays are not known, the months of pay.
-  const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner).every((s) => [0, 1].includes(streamWeight(s, mode)));
+  const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner && !(s.start && s.start > to) && !(s.end && s.end < from) && !(s.amount && valueOf(s.amount) === 0)).every((s) => [0, 1].includes(streamWeight(s, mode)));
   const byPay = (owner, c) => (hasPay(spine, owner) && firm(owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? c * (payMonths[owner] || 0);
   // One account's pre-tax money: the recorded total for the year, else its monthly amount as amountOf counts it.
   const preTax = (a, owner, om, cafeteria, amountOf) => {

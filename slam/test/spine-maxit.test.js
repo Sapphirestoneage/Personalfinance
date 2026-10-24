@@ -816,6 +816,33 @@ test('round 18 (S-225): a couple\'s reason names the money that caused it; the t
   assert.deepEqual([yearTax(j, R, 2026).lines.agi.value, yearTax(j, R, 2026, 'expected').lines.agi.value], [54000, 54000]);
 });
 
+test('round 19 (S-225): Solo money always held to the self-employment pay; money from pay cut only for the pay it removes', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
+  const fills = (mx) => Object.fromEntries(mx.pools.map((p) => [p.row.id + ' ' + p.key + (p.spill ? ' spill' : ''), p.fill]));
+  const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
+  const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
+  // $24,000 of 1099 pay ($22,304.45 to count) and a Solo 401(k) at $200 a month ($2,400): with no IRA at all, the Solo's
+  // new money is still held to the $19,904.45 of self-employment pay left (the deferral spilled from the 401(k) too).
+  const solo = run(at({ ...bare(), income: [w2('job', 'casey', 500), gig('gig', 'casey', 2000)], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement'), acct('so', 'solo_k401', 'employerRetirement', { monthlyContribution: F(200) })] }, '2026-05-01'));
+  const sf = fills(solo);
+  assert.deepEqual([Math.round((sf['so:2026 employer:casey'] + sf['so:2026 deferral:casey spill']) * 100) / 100, solo.totals.over], [19904.45, []]);
+  // Casey's new job's 401(k), with $8,000 in already from a job not in the Ledger: Sam's IRA money rests on his own
+  // $200,000, so her 401(k) keeps all its paychecks hold either way.
+  const u = (amount) => { let c = couple(bare()); c = at({ ...c, income: [w2('cj', 'casey', 1000, { start: '2026-07-01' }), w2('sj', 'sam', 200000 / 12)], accounts: [...c.accounts, acct('ck', 'k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 8000 }]) }), acct('st', 'traditional_ira', 'ira', { owner: F('partner'), ...(amount ? { contributions: F([{ year: 2026, amount }]) } : {}) })] }, '2026-08-01'); return fills(run(c))['ck:2026 deferral:casey']; };
+  assert.deepEqual([u(0), u(1000)], [4617.5, 4617.5]);
+  // The same job alone, with 1099 pay, an empty SEP and an empty Roth: the 401(k) lowers no pay (none is left after the
+  // $8,000), so the Roth's cut is the SEP's, and it says so.
+  const w = run(at({ ...bare(), income: [w2('job', 'casey', 1000, { start: '2026-07-01' }), gig('gig', 'casey', 5000 / 12)], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 8000 }]) }), acct('sep', 'sep_ira', 'ira'), acct('r', 'roth_ira', 'ira')] }, '2026-08-01'));
+  assert.equal(row(w, 'r:2026').counted.why, 'se');
+  // All 2026 pay certain (a likely job only from 2027): both tax modes count the 27 paychecks.
+  const f = { ...bare(), income: [w2('job', 'casey', 2000, { cadence: 'biweekly', start: '2025-12-18' }), { ...w2('later', 'casey', 3000, { start: '2027-01-01' }), likelihood: F(0.8) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
+  assert.deepEqual([yearTax(f, R, 2026).lines.agi.value, yearTax(f, R, 2026, 'expected').lines.agi.value], [47769.21, 47769.21]);
+  // Two jobs, January to June and July on: 12 months of pay, and the line says so.
+  const j = { ...bare(), income: [w2('a', 'casey', 5000, { start: '2026-01-01', end: '2026-06-30' }), w2('b', 'casey', 5000, { start: '2026-07-01' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
+  assert.deepEqual(earnedIncome(j, R, 2026).lines.filter((l) => /pre-tax/.test(l.label)).map((l) => [l.label, l.amount]), [['k: pre-tax saving from pay (12 months)', -6000]]);
+});
+
 test('set to go over: money a monthly amount still puts in past the limit is named before it happens', () => {
   const d = demo();
   const r = row(maxIt({ ...d, accounts: d.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 7500 }]) } : a)) }, R), 'roth:2026');

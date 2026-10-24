@@ -631,7 +631,6 @@ const COUNTED_WHY = {
   se: () => 'the Solo 401(k) or SEP takes the self-employment pay first',
   preIra: () => 'IRA money already in or set to go in keeps the pay it needs',
   seIra: () => 'IRA money already in or set to go in keeps the self-employment pay it needs',
-  prePay: () => 'money from pay is never more than the W-2 pay left after what already comes out of it',
   sePay: () => 'Solo 401(k) or SEP money is never more than the self-employment pay left',
   paycheck: () => 'only what the paychecks hold',
   pool: () => 'another account in the same limit is counted for it'
@@ -660,7 +659,7 @@ export function maxIt(spine, rules, { asOf = spine.meta.asOf, sim = null, years 
     if (r.lump === null || !mine.length) continue;
     const fill = round2(mine.reduce((x, p) => x + p.fill, 0));
     if (fill >= r.lump - 0.005) continue;
-    const why = mine.some((p) => p.phaseCut) ? 'phase' : mine.some((p) => p.sharedCap) ? 'couple' : mine.some((p) => p.preCut) ? 'pre' : mine.some((p) => p.seCut) ? 'se' : mine.some((p) => p.preCapped) ? 'preIra' : mine.some((p) => p.seCapped) ? 'seIra' : mine.some((p) => p.prePay) ? 'prePay' : mine.some((p) => p.sePay) ? 'sePay' : mine.some((p) => p.capped) ? 'paycheck' : 'pool';
+    const why = mine.some((p) => p.phaseCut) ? 'phase' : mine.some((p) => p.sharedCap) ? 'couple' : mine.some((p) => p.preCut) ? 'pre' : mine.some((p) => p.seCut) ? 'se' : mine.some((p) => p.preCapped) ? 'preIra' : mine.some((p) => p.seCapped) ? 'seIra' : mine.some((p) => p.sePay) ? 'sePay' : mine.some((p) => p.capped) ? 'paycheck' : 'pool';
     r.counted = { fill, why, words: COUNTED_WHY[why](r) };
   }
   // A spouse's IRA: together, the two spouses may add what the Plan counts for their two IRA pools that year.
@@ -842,21 +841,29 @@ export function poolTotals(spine, rules, rows, { asOf = spine.meta.asOf } = {}) 
           q.fill = round2(q.fill - take); over = round2(over - take); q[why ? why(q) : isSE(q) ? 'seCapped' : 'preCapped'] = true; monthOf(q);
         }
       };
-      // Only while IRA money already in or set to go in needs the pay (a new IRA amount just gets what is left).
-      if (info.some((x) => x.need > 0)) {
-        unit.forEach((who, i) => { cut(of(pre, who), sum(of(pre, who)) - info[i].w2, () => 'prePay'); cut(of(se, who), sum(of(se, who)) - info[i].seLeft, () => 'sePay'); });
-        const own = (who) => [...of(se, who), ...of(pre, who)];
-        const P = info.map((x) => round2(x.w2 + x.seLeft)), n = unit.map((who) => sum(own(who))), U = info.map((x) => x.need), I = info.map((x) => x.iraUsed);
-        const c = unit.length === 2 ? coupleCuts(P, n, U, I, unit) : [Math.min(n[0], Math.max(0, round2(U[0] - P[0] + n[0])))];
-        unit.forEach((who, i) => cut(own(who), c[i]));
-      }
+      // Solo or SEP money is held to the self-employment pay left. Money from pay lowers the pay an IRA counts by no more
+      // than the W-2 pay: the cuts are worked out on what each one's new money takes off (n), and a cut of money from pay
+      // first drops the part past the W-2 pay (it lowers nothing), so with no IRA money needing the pay nothing is cut.
+      unit.forEach((who, i) => cut(of(se, who), sum(of(se, who)) - info[i].seLeft, () => 'sePay'));
+      const off = (who, i) => ({ se: sum(of(se, who)), pre: Math.min(sum(of(pre, who)), info[i].w2), past: Math.max(0, round2(sum(of(pre, who)) - info[i].w2)) });
+      const offs = unit.map(off);
+      const P = info.map((x) => round2(x.w2 + x.seLeft)), n = offs.map((o) => round2(o.se + o.pre)), U = info.map((x) => x.need), I = info.map((x) => x.iraUsed);
+      const c = unit.length === 2 ? coupleCuts(P, n, U, I, unit) : [Math.min(n[0], Math.max(0, round2(U[0] - P[0] + n[0])))];
+      unit.forEach((who, i) => {
+        const fromSe = Math.min(c[i], offs[i].se), fromPre = round2(c[i] - fromSe);
+        cut(of(se, who), fromSe);
+        if (fromPre > 0.005) cut(of(pre, who), round2(fromPre + offs[i].past));
+      });
       for (const who of unit) Object.assign(payInfo.get(year + '|' + who), { seNew: sum(of(se, who)), preNew: sum(of(pre, who)) });
     }
   }
   // A person's new money as it lowers their IRA pay: from pay (never more than their W-2 pay), and Solo or SEP (never
   // more than their self-employment pay left). An IRA cut by it says which.
   const offOf = (year, who) => { const x = payInfo.get(year + '|' + who); return x ? round2(Math.min(x.preNew, x.w2 ?? x.preNew) + Math.min(x.seNew, x.seLeft)) : 0; };
-  const mark = (p, year, whos) => { const has = (k) => whos.some((w) => (payInfo.get(year + '|' + w) || {})[k] > 0); p[has('preNew') ? 'preCut' : has('seNew') ? 'seCut' : 'sharedCap'] = true; };
+  const mark = (p, year, whos) => {
+    const took = (f) => whos.some((w) => { const x = payInfo.get(year + '|' + w); return !!x && x.w2 !== undefined && f(x) > 0; });
+    p[took((x) => Math.min(x.preNew, x.w2)) ? 'preCut' : took((x) => Math.min(x.seNew, x.seLeft)) ? 'seCut' : 'sharedCap'] = true;
+  };
   // 3. A married couple filing jointly (IRC 219(c)): who earns less is told by pay after each spouse's new money. The
   // one who earns more is held to their own pay; the one who earns less may use the couple's, less what the other's IRAs
   // take, only while the other earns more by the gap step 2 keeps (coupleCuts); closer than that, each is held to their
@@ -1086,7 +1093,7 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
     const id = n.path.split('.')[1], line = (spine.income || []).find((x) => x.id === id);
     return { label: line ? line.label : id, what: n.path.endsWith('.amount') ? 'amount' : 'first pay date', path: n.path };
   });
-  const capped = chosen.filter((p) => p.capped && !p.preCapped && !p.prePay);
+  const capped = chosen.filter((p) => p.capped && !p.preCapped);
   const words = [];
   const has = (x) => x.label + (x.what === 'amount' ? ' has an amount' : ' has a first pay date');
   const blankWords = [...new Set(blank.map(has))].join(' and ');
