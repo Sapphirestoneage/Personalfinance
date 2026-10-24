@@ -751,9 +751,10 @@ test('round 16 (S-225): no account order decides the Plan, a Solo never crowds p
   let g = couple(bare());
   g = at({ ...g, household: { ...g.household, filingStatus: F('mfs') }, income: [w2('cj', 'casey', 1500), w2('sj', 'sam', 3000)], accounts: [...g.accounts, acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 3000 }]) }), acct('ck', 'k401', 'employerRetirement')] }, '2026-02-01');
   assert.deepEqual(row(run(g), 'ck:2026').counted.why, 'paycheck');
-  // A pay line counted as likely (90%): the expected tax still takes its 401(k) money off the wages.
+  // A pay line counted as likely (90%): the expected tax still takes its 401(k) money off the wages, as likely as the pay
+  // ($54,000 of expected wages less 90% of $6,000).
   const h = { ...bare(), income: [{ ...w2('job', 'casey', 5000), likelihood: F(0.9) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
-  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 48000);
+  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 48600);
 });
 
 test('round 17 (S-225): the least excess on the gap terms, new IRA money keeps the gap, reasons that match, a fixed fill and cut order, nothing held back with no IRA', () => {
@@ -795,9 +796,10 @@ test('round 17 (S-225): the least excess on the gap terms, new IRA money keeps t
   // Two empty Solo 401(k)s: the same Plan in either order, spill included.
   const sp = (flip) => { const xs = [acct('solo_a', 'solo_k401', 'employerRetirement'), acct('solo_b', 'solo_k401', 'employerRetirement')]; return fills(run(at({ ...bare(), income: [w2('job', 'casey', 500), gig('gig', 'casey', 5000)], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement'), ...(flip ? xs.reverse() : xs)] }, '2026-02-01'))); };
   assert.deepEqual(sp(true), sp(false));
-  // The expected tax takes a 401(k)'s monthly amount off every month of pay, a likely line's too (as before S-225).
+  // The expected tax takes a 401(k)'s monthly amount off every month of pay, a likely line's months as likely as it is:
+  // $51,600 of expected wages less $3,000 (January to June, certain) and 90% of $3,000 (July to December).
   const h = { ...bare(), income: [w2('job', 'casey', 5000, { end: '2026-06-30' }), { ...w2('job2', 'casey', 2000), likelihood: F(0.9) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
-  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 45600);
+  assert.equal(yearTax(h, R, 2026, 'expected').lines.agi.value, 45900);
 });
 
 test('round 18 (S-225): a couple\'s reason names the money that caused it; the tax modes agree when all pay is certain', () => {
@@ -841,6 +843,40 @@ test('round 19 (S-225): Solo money always held to the self-employment pay; money
   // Two jobs, January to June and July on: 12 months of pay, and the line says so.
   const j = { ...bare(), income: [w2('a', 'casey', 5000, { start: '2026-01-01', end: '2026-06-30' }), w2('b', 'casey', 5000, { start: '2026-07-01' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
   assert.deepEqual(earnedIncome(j, R, 2026).lines.filter((l) => /pre-tax/.test(l.label)).map((l) => [l.label, l.amount]), [['k: pre-tax saving from pay (12 months)', -6000]]);
+});
+
+test('round 20 (S-225): months of pay by paydays, a blank spouse never lifts the Solo hold, a couple cut by dollars, a Solo row keeps its own deferral', () => {
+  const at = (s, asOf) => ({ ...s, meta: { ...s.meta, asOf } });
+  const run = (s) => maxIt(s, R, { sim: maxItSim(s, R) });
+  const fills = (mx) => Object.fromEntries(mx.pools.map((p) => [p.row.id + ' ' + p.key + (p.spill ? ' spill' : ''), p.fill]));
+  const bare = () => { const d = demo(); return { ...d, accounts: d.accounts.filter((a) => a.id !== 'k401' && a.id !== 'roth') }; };
+  const gig = (id, pid, amt) => ({ ...w2(id, pid, amt), type: '1099' });
+  // A job to June 30 and a one-time severance in July: 7 months of pay, so 7 months of 401(k) and HSA money from pay
+  // ($12,000 - $3,500 - $1,400), and the $5,000 IRA is not over.
+  const sv = at({ ...bare(), income: [w2('job', 'casey', 1500, { end: '2026-06-30' }), w2('sev', 'casey', 3000, { cadence: 'once', start: '2026-07-15' })], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) }), acct('h', 'hsa', 'hsaFsa', { coverageLevel: F('self'), monthlyContribution: F(200) }), acct('ti', 'traditional_ira', 'ira', { contributions: F([{ year: 2026, amount: 5000 }]) })] }, '2026-03-01');
+  assert.deepEqual([earnedIncome(sv, R, 2026).value, row(run(sv), 'ti:2026').over], [7100, null]);
+  // Sam's pay amount blank: Casey's Solo is still held to her self-employment pay left ($19,904.45).
+  let ns = couple(bare());
+  ns = at({ ...ns, income: [w2('cj', 'casey', 500), gig('cg', 'casey', 2000), { ...w2('sj', 'sam', 0), amount: F(null, 'missing') }], accounts: [...ns.accounts, acct('k', 'k401', 'employerRetirement'), acct('so', 'solo_k401', 'employerRetirement', { monthlyContribution: F(200) })] }, '2026-05-01');
+  const nf = fills(run(ns));
+  assert.equal(Math.round((nf['so:2026 employer:casey'] + nf['so:2026 deferral:casey spill']) * 100) / 100, 19904.45);
+  // Casey's $2,000 IRA needs $2,000 of pay. Cutting her 401(k) would also drop its $1,617.50 past her W-2 pay; cutting
+  // Sam's Solo by $2,000 costs less, so the Plan does that.
+  let pc = couple(bare());
+  pc = at({ ...pc, income: [w2('cj', 'casey', 1000, { start: '2026-07-01' }), gig('sg', 'sam', 10000 / 12)], accounts: [...pc.accounts, acct('k', 'k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 3000, through: '2026-07-31' }]) }), acct('ci', 'traditional_ira', 'ira', { contributions: F([{ year: 2026, amount: 2000 }]) }), acct('so', 'solo_k401', 'employerRetirement', { owner: F('partner') })] }, '2026-08-01');
+  const pf = fills(run(pc));
+  assert.deepEqual([pf['k:2026 deferral:casey'], Math.round((pf['so:2026 employer:sam'] + pf['so:2026 deferral:sam']) * 100) / 100], [4617.5, 7293.52]);
+  // Sam earns more and his IRA is cut only by his own SEP: the reason is his SEP, not Casey's 401(k).
+  let wh = couple(bare());
+  wh = at({ ...wh, income: [w2('cj', 'casey', 500), gig('sg', 'sam', 8000 / 12)], accounts: [...wh.accounts, acct('k', 'k401', 'employerRetirement'), acct('sep', 'sep_ira', 'ira', { owner: F('partner') }), acct('si', 'traditional_ira', 'ira', { owner: F('partner') })] }, '2026-03-01');
+  assert.equal(row(run(wh), 'si:2026').counted.why, 'se');
+  // A Solo with $7,600 in and $100 a month still to come ($1,000) on $9,293.52 of self-employment pay: its own deferral
+  // keeps its place, so the row offers $693.52 more and is not set to go over.
+  const so = run(at({ ...bare(), income: [gig('g', 'casey', 10000 / 12)], accounts: [...bare().accounts, acct('so', 'solo_k401', 'employerRetirement', { contributions: F([{ year: 2026, amount: 7600 }]), monthlyContribution: F(100) })] }, '2026-02-01'));
+  assert.deepEqual([row(so, 'so:2026').lump, row(so, 'so:2026').overSoon], [693.52, undefined]);
+  // A likely one-time bonus in 2025 leaves 2026's pay certain: both tax modes count the 27 paychecks.
+  const f2 = { ...bare(), income: [w2('job', 'casey', 2000, { cadence: 'biweekly', start: '2025-12-18' }), { ...w2('bonus', 'casey', 1000, { cadence: 'once', start: '2025-12-15' }), likelihood: F(0.5) }], accounts: [...bare().accounts, acct('k', 'k401', 'employerRetirement', { monthlyContribution: F(500) })] };
+  assert.deepEqual([yearTax(f2, R, 2026).lines.agi.value, yearTax(f2, R, 2026, 'expected').lines.agi.value], [47769.21, 47769.21]);
 });
 
 test('set to go over: money a monthly amount still puts in past the limit is named before it happens', () => {

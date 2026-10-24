@@ -12,7 +12,7 @@ import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
-import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay } from './contrib.js';
+import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, payDatesOf } from './contrib.js';
 
 const v = valueOf;
 const line = (value, rules = []) => ({ value: value === null ? null : round2(value), rules });
@@ -150,7 +150,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
 
   let w2Months = 0;
   // Each person's months of pay, wages, FICA wages and self-employment profit (S-213, S-214).
-  const payMonths = {}, payMonthSet = {}, wagesBy = {}, ficaBy = {}, seBy = {};
+  const payMonths = {}, payMonthW = {}, wagesBy = {}, ficaBy = {}, seBy = {};
   const add = (o, k, x) => { o[k] = (o[k] || 0) + x; };
   for (const s of spine.income || []) {
     if ((s.start && s.start > to) || (s.end && s.end < from)) continue;
@@ -184,12 +184,16 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
       const months = (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1;
       w2Months = Math.max(w2Months, months);
-      // Each person's months of pay, any of their lines (a job from January to June and another from July is 12):
-      // payroll saving comes out of its owner's pay (S-211).
+      // Each person's months of pay: the months any of their lines has a payday (a job from January to June and another
+      // from July is 12; a one-time line is its own month; the line's span when its paydays are not known), each month
+      // as certain as its most certain line (in the expected mode a likely line counts by its likelihood). Payroll
+      // saving comes out of its owner's pay (S-211).
       const who = incomeOwner(spine, s);
-      payMonthSet[who] = payMonthSet[who] || new Set();
-      for (let m = +a.slice(5, 7); m <= +b.slice(5, 7); m++) payMonthSet[who].add(m);
-      payMonths[who] = payMonthSet[who].size;
+      const days = payDatesOf(s, from, to);
+      const ms = days.length || s.cadence === 'once' || ((s.cadence !== 'weekly' && s.cadence !== 'biweekly') || s.start) ? days.map((d) => +d.slice(5, 7)) : Array.from({ length: months }, (_, i) => +a.slice(5, 7) + i);
+      payMonthW[who] = payMonthW[who] || {};
+      for (const m of ms) payMonthW[who][m] = Math.max(payMonthW[who][m] || 0, w ?? 1);
+      payMonths[who] = Math.round(Object.values(payMonthW[who]).reduce((x, y) => x + y, 0) * 10000) / 10000;
     }
     for (const [k, key] of [['federal', 'withheldFederal'], ['state', 'withheldState']]) {
       const f = s.withholding && s.withholding[k];
@@ -215,7 +219,8 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   // A monthly amount from pay, paycheck by paycheck as engine/contrib.js counts it (27 biweekly paydays hold more than
   // 12 months), when every pay line of the owner counts in full or not at all in this mode (contrib.js counts the
   // certain ones); else, or when the paydays are not known, the months of pay.
-  const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner && !(s.start && s.start > to) && !(s.end && s.end < from) && !(s.amount && valueOf(s.amount) === 0)).every((s) => [0, 1].includes(streamWeight(s, mode)));
+  const inYear = (s) => !(s.start && s.start > to) && !(s.end && s.end < from) && (s.cadence !== 'once' || (s.start >= from && s.start <= to));
+  const firm = (owner) => (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === owner && inYear(s) && !(s.amount && valueOf(s.amount) === 0)).every((s) => [0, 1].includes(streamWeight(s, mode)));
   const byPay = (owner, c) => (hasPay(spine, owner) && firm(owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? c * (payMonths[owner] || 0);
   // One account's pre-tax money: the recorded total for the year, else its monthly amount as amountOf counts it.
   const preTax = (a, owner, om, cafeteria, amountOf) => {
