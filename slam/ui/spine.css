@@ -638,6 +638,14 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .ladder .rung-when { font-family: var(--font-num); text-align: right; }
 @media (max-width: 639px) { .ladder li { grid-template-columns: 28px 1fr; } .ladder .rung-when { grid-column: 2; text-align: left; } }
 .ladder .rung-why { color: var(--text-muted); display: block; }
+/* The Plan's steps as rows (S-230): a done step shows a check, the next step is filled. Got extra money?'s steps wear
+   their bar color on the number, and a step that gets nothing is quiet. */
+.go-row.is-done .go-mark { background: var(--good-soft); color: var(--st-known); }
+.go-row.is-current .go-mark { background: var(--accent); color: var(--accent-text); }
+.go-row > .wf-num { grid-area: mark; }
+.go-row.zero > .wf-num { background: var(--text-muted); }
+.go-row.zero .go-total { font-weight: 400; color: var(--text-muted); }
+#wf-result { scroll-margin-top: 120px; }
 /* DRAFTT letters: a bar per letter with the reference mark on housing. */
 .letters { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: grid; gap: var(--space-2); }
 .letters li { display: grid; grid-template-columns: 36px 1fr auto; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-sm); }

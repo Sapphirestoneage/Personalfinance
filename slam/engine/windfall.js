@@ -93,7 +93,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (burn === null || cash === null) return { need: null, why: 'Needs monthly spending and cash on hand.', path: s.emergency.tiers.full.burn.missing[0] || s.sheet.cash.missing[0] || null };
       const target = Math.ceil(months * burn);
       const need = Math.max(0, target - cash);
-      const st = { need, why: money(cash) + ' in cash against ' + money(burn) + ' a month; stage 1 ends at ' + months + ' month' + (months === 1 ? '' : 's') + ' (' + money(target) + ')' + (need ? ', so ' + money(need) + ' goes to cash first.' : '), which cash already covers.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
+      const st = { need, why: money(cash) + ' in cash against ' + money(burn) + ' a month; stage 1 ends at ' + months + ' month' + (months === 1 ? '' : 's') + ' (' + money(target) + ')' + (need ? ', so ' + money(need) + ' goes to cash first.' : ', which cash already covers.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
       return st;
     });
     else if (id === 'promos') run(id, (t) => {
@@ -157,7 +157,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
     });
     else if (id === 'roth') run(id, (t) => {
       const roth = (spine.accounts || []).find((a) => a.type === 'roth_ira');
-      if (!roth) return { need: 0, why: 'There is no Roth IRA in the Ledger. Add one under Assets, IRA, to see this year\'s room.' };
+      if (!roth) return { need: 0, why: 'There is no Roth IRA in your numbers. Add one under Assets, IRA, to see this year\'s room.' };
       // The room is the max-it engine's (S-211): the limit and the catch-up for the age on December 31, what is in
       // for the year across every IRA, the income phase-out, and the cap at the owner's earned income (answer 25),
       // so the Windfall room, the FOO ladder and the account's panel read one number. From January 1 to the IRA
