@@ -1,13 +1,13 @@
 <!doctype html>
-<!-- SLAM affordances (S-188, CLAUDE.md "Affordances, Don't Make Me Think"):
-     every component in every state, drawn with the same stylesheet as the app.
-     Forced states use the is-* classes; nothing on this page saves anything. -->
+<!-- SLAM Design kit (S-188, CLAUDE.md "Affordances, Don't Make Me Think"; renamed from Affordances, S-230):
+     every component in every state, drawn with the same stylesheet as the app. A Builder page: the shell adds the
+     tabs (none lit), Back to the Builder and the footer. Forced states use the is-* classes; nothing here saves. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>SLAM Affordances</title>
+  <title>SLAM Design kit</title>
   <link rel="stylesheet" href="src/ui/tokens.css">
   <link rel="stylesheet" href="ui/spine.css">
   <style>
@@ -19,9 +19,8 @@
 </head>
 <body>
 <main id="app">
-  <nav class="page-links" aria-label="Pages"><a href="dashboard.html">Dashboard</a><a href="ledger.html">Ledger</a><a href="calendar.html">Calendar</a><a href="windfall.html">Windfall</a><a href="math.html">All formulas</a></nav>
   <header class="top">
-    <div><h1>Affordances</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
+    <div class="top-title"><h1>Design kit</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
   </header>
 
   <section class="card" aria-labelledby="r-h">
@@ -200,7 +199,7 @@
     <p class="muted">Every page now starts with a skip link (visible when it has focus), ends with the build stamp, and shows an error banner instead of failing silently. On a phone the Save row of any editor stays pinned at the bottom. An amount can carry a second price tag in hours of life.</p>
     <p><a class="skip" href="#app" style="position: static; display: inline-block">Skip to the content</a> &nbsp; <span class="hours-tag">(2.3 h)</span></p>
     <div class="error-banner" role="alert"><strong>Something went wrong. </strong><span class="error-text">A number could not be read.</span> <button type="button" class="btn small">Reload the page</button> <button type="button" class="btn ghost small">Hide</button></div>
-    <footer class="build-stamp" style="margin-top: 8px">SLAM Phase 2, Batch F, 2026-10-23. Numbers are yours; nothing leaves this browser.</footer>
+    <footer class="build-stamp" style="margin-top: 8px"><span>SLAM Phase 2.5, Batch 1, 2026-10-25. Numbers are yours; nothing leaves this browser.</span> <a class="builder-link" href="builder.html">Builder</a></footer>
     <p class="muted">The FOO ladder: a tick for a done rung, a filled number for the current one; each rung says what it needs and the month it completes. The DRAFTT letters are bars with a reference mark on housing, no verdict.</p>
     <ol class="ladder"><li class="done"><span><strong>Deductibles covered</strong><span class="rung-why">Cash covers the biggest deductible ($2,500).</span></span><span class="rung-when">done</span></li><li class="current"><span><strong>High-interest debt gone</strong><span class="rung-why">Visa $3,000 at or above 10%.</span></span><span class="rung-when">$3,000, about Mar 2027</span></li><li><span><strong>Emergency reserves</strong><span class="rung-why">$10,861 to the Rule of 5 target.</span></span><span class="rung-when">$10,861, about Jul 2028</span></li></ol>
     <ul class="letters"><li><span class="letter">A</span><span class="lbar" role="img" aria-label="Accommodation 41%"><span class="lfill" style="width: 100%"></span><span class="lref" style="left: 85%"></span></span><span class="lamt">$1,950 (41.4%)</span></li><li><span class="letter">F</span><span class="lbar" role="img" aria-label="Food 15%"><span class="lfill" style="width: 36%"></span></span><span class="lamt">$700 (14.9%)</span></li></ul>
@@ -277,11 +276,52 @@
     <section class="card" aria-labelledby="problems-h-demo" role="alert"><h2 id="problems-h-demo">From your file: 1 field to look at</h2><p class="muted">These could not be used as the file had them, so each reads missing until you enter it. Nothing else in the file was changed.</p><ul class="flow-list"><li><a href="#">Rent</a>: money must be a number. The file held "1,200".</li></ul><details class="flow-list"><summary>Read another way or kept aside (1)</summary><ul><li><strong>An account (odd)</strong>: type "pillow" is not an account type this app knows; kept aside, not used.</li></ul></details></section>
   </section>
 
+  <section class="card" aria-labelledby="nav-h">
+    <h2 id="nav-h">Getting around (Phase 2.5, Batch 1)</h2>
+    <p class="muted">The tabs, the same six on every page: at the bottom on a phone, at the top on a computer. The current one is filled; a Builder page lights none. Rest, current, pressed and focus.</p>
+    <nav class="tabbar is-sample" aria-label="Sample tabs, Today current"><ul><li><a class="tab" href="dashboard.html" aria-current="page">Today</a></li><li><a class="tab is-pressed" href="session.html">Session</a></li><li><a class="tab is-focus" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
+    <span class="demo-cap">Today current, Session pressed, My numbers with the focus.</span>
+    <nav class="tabbar is-sample" aria-label="Sample tabs on a Builder page"><ul><li><a class="tab" href="dashboard.html">Today</a></li><li><a class="tab" href="session.html">Session</a></li><li><a class="tab" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
+    <span class="demo-cap">On a Builder page no tab is lit.</span>
+    <p class="muted">Screen by screen: every deeper level is its own screen with Back, top left, and the trail. Every step but this screen is a link; Back, the trail and the phone's back all go the same way.</p>
+    <div class="screen-top is-sample"><button type="button" class="btn back-btn" aria-label="Back to Credit cards"><span aria-hidden="true">&#8249;</span>Back</button><nav class="trail" aria-label="Sample trail"><ol><li><a href="#nav-h">My numbers</a></li><li><a href="#nav-h">Debt</a></li><li><a href="#nav-h">Credit cards</a></li><li aria-current="page">Amex Blue</li></ol></nav></div>
+    <div class="demo-row">
+      <span class="demo-cell"><button type="button" class="btn back-btn"><span aria-hidden="true">&#8249;</span>Back</button><span class="demo-cap">Back, rest</span></span>
+      <span class="demo-cell"><button type="button" class="btn back-btn is-pressed"><span aria-hidden="true">&#8249;</span>Back</button><span class="demo-cap">Back, pressed</span></span>
+      <span class="demo-cell"><button type="button" class="btn back-btn is-focus"><span aria-hidden="true">&#8249;</span>Back</button><span class="demo-cap">Back, focus</span></span>
+    </div>
+    <p class="muted">Undo and Redo in every page's header. With nothing to undo or redo the button says so.</p>
+    <div class="demo-row">
+      <span class="demo-cell"><button type="button" class="btn" aria-label="Undo: Rent changed to $1,000">Undo</button><span class="demo-cap">Undo, rest</span></span>
+      <span class="demo-cell"><button type="button" class="btn is-pressed">Undo</button><span class="demo-cap">Undo, pressed</span></span>
+      <span class="demo-cell"><button type="button" class="btn" disabled>Nothing to undo</button><span class="demo-cap">Undo, disabled (says why)</span></span>
+      <span class="demo-cell"><button type="button" class="btn" disabled>Nothing to redo</button><span class="demo-cap">Redo, disabled (says why)</span></span>
+    </div>
+    <p class="muted">After every change a small bar says what changed, with Undo; it fades after a few seconds. After Undo it offers Redo. A message with nothing to undo has no button.</p>
+    <div class="undo-bar is-sample"><span class="undo-text">Rent changed to $1,000.</span><button type="button" class="btn small">Undo</button></div>
+    <div class="undo-bar is-sample"><span class="undo-text">Undone: Rent changed to $1,000.</span><button type="button" class="btn small is-focus">Redo</button></div>
+    <div class="undo-bar is-sample"><span class="undo-text">This browser will not keep rule changes, so nothing changed.</span></div>
+    <p class="muted">A tappable card: the whole card is the target, with a chevron; buttons inside it stay their own.</p>
+    <div class="tiles"><section class="tile has-target" aria-labelledby="kit-tile"><h2 class="tile-label" id="kit-tile"><a class="card-link" href="#nav-h"><span>Net worth</span><span class="chev" aria-hidden="true">&#8250;</span></a></h2><p class="tile-value">$24,310</p><p class="tile-sub">Assets $40,000 less debts $15,690.</p><button type="button" class="btn small">Show the math</button></section></div>
+    <p class="muted">A list of places to go (Session, the Builder): each row is one link with a chevron. Rest, pressed, focus.</p>
+    <ul class="go-list">
+      <li><a class="go-row" href="#nav-h"><span class="go-mark" aria-hidden="true">N</span><span class="go-name">Needs</span><span class="go-sub"><span><span class="go-total">$3,215</span> a month</span></span></a></li>
+      <li><a class="go-row is-pressed" href="#nav-h"><span class="go-mark" aria-hidden="true">D</span><span class="go-name">Debt</span><span class="go-sub"><span><span class="go-total">$15,690</span> owed</span><span class="chip chip-rough">Rough</span></span></a></li>
+      <li><a class="go-row is-focus" href="#nav-h"><span class="go-mark" aria-hidden="true">G</span><span class="go-name">Goals</span><span class="go-sub"><span class="empty">No goals yet</span></span></a></li>
+      <li><a class="go-row plain" href="#nav-h"><span class="go-name">Rules</span><span class="go-sub">Every limit, rate and date, its source, and changes made in this browser.</span></a></li>
+    </ul>
+    <p class="muted">At the bottom of every page, one small link to the Builder (the Design kit, All formulas and Rules): see the footer sample under Plan page and shared pieces.</p>
+  </section>
+
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>
     <div class="file-banner" role="status"><span>You have edits not in your profile file.</span><button type="button" class="btn small">Save to profile file</button></div>
   </section>
 </main>
+<script type="module">
+  import { startPage } from './ui/shell.js';
+  startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'], household: false });
+</script>
 </body>
 </html>

@@ -79,3 +79,22 @@ export const KIND_WORDS = { known: 'Known', rough: 'Rough', missing: 'Missing', 
 export const chip = (kind) => h('span', { class: 'chip chip-' + kind }, KIND_WORDS[kind] || kind);
 
 export const ledgerHref = (path) => 'ledger.html#' + encodeURIComponent(path);
+
+// The words for a change, for the shell's change() and its bar (S-230): said.changed('Rent', '$1,000') is
+// "Rent changed to $1,000"; a date in moved() reads as a day ("Rent moved to Nov 3, 2026").
+const dayWords = (to) => (/^\d{4}-\d{2}-\d{2}$/.test(String(to)) ? shortDate(to) : to);
+export const said = {
+  changed: (what, to) => what + ' changed to ' + to,
+  added: (what) => what + ' added',
+  deleted: (what) => what + ' deleted',
+  moved: (what, to) => what + ' moved to ' + dayWords(to),
+  happened: (what) => what + ' marked as happened'
+};
+
+// A rule's value in words (All formulas and the Rules page). Brackets are [top, rate] pairs; any other list (an order,
+// two ages) reads as a list (S-211); a date rule says which year it falls in.
+export function ruleValueWords(r) {
+  if (Array.isArray(r.value) && r.value.every((x) => Array.isArray(x))) return r.value.map(([top, rate]) => (Math.round(rate * 10000) / 100) + '% to ' + (top === null ? 'the top' : '$' + top.toLocaleString('en-US'))).join('; ');
+  if (Array.isArray(r.value)) return r.value.join(', ');
+  return String(r.value) + (r.yearOffset ? ' of the year after the tax year' : r.yearOffset === 0 ? ' of the tax year' : '');
+}

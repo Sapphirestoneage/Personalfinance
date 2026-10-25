@@ -9,7 +9,7 @@ import { fiReport } from './fi.js';
 import { taxForYear } from './tax.js';
 import { buildFlags } from './flags.js';
 import { subscriptions } from './subscriptions.js';
-import { monthKey, addMonths, addDays, valueOf } from './spine.js';
+import { monthKey, addMonths, addDays, valueOf, tracker, round2 } from './spine.js';
 
 // The income cliff (S-174): the first month within STAGE_CLIFF_MONTHS where
 // certain income (no likelihood, or likelihood 1) is $0, what that month costs
@@ -64,4 +64,18 @@ export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true }
 export function payoffOrders(spine, rules, s) {
   const extra = Math.max(0, s.cashflow.surplus.value || 0);
   return Object.fromEntries(['avalanche', 'snowball', 'stress'].map((k) => [k, payoffPlan(spine, rules, { strategy: k, extra, asOf: s.asOf })]));
+}
+
+// The five steps of a first session, in call order, each with one total (S-230): Needs (spending a month, your
+// share), Debt (owed), Income (a month, before tax), Assets (everything you own), Goals (the amounts set as goals;
+// the FI goal is a number the app figures, so it is not added in). Session shows these; each opens My numbers at its
+// section. A goal with no amount yet makes the total incomplete, never $0.
+export const SESSION_ORDER = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals']];
+export function sessionSteps(spine, s) {
+  const t = tracker();
+  const goals = (spine.goals || []).filter((g) => g.type !== 'fi');
+  let sum = null;
+  for (const g of goals) { const v = t.useFact('goals.' + g.id + '.target', g.target); if (v !== null) sum = round2((sum ?? 0) + v); }
+  const result = { needs: s.cashflow.expenses.total, debt: s.sheet.debts, income: s.cashflow.income.gross, assets: s.sheet.assets, goals: t.out(sum, { count: goals.length }) };
+  return SESSION_ORDER.map(([id, letter, label]) => ({ id, letter, label, result: result[id] }));
 }

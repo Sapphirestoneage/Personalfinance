@@ -86,6 +86,15 @@ pure engines. Start the server as above, then open:
 - http://localhost:8000/math.html : how every number is figured, built from
   the engines when the page loads, with every rule and its source.
 
+Phase 2.5 (S-230): six tabs on every page (Today, Session, My numbers,
+Calendar, Spending, Plan; at the bottom on a phone, at the top on a
+computer). Today is `dashboard.html`; Session (`session.html`) lists the five
+steps of a first call. Every change on any page can be undone from any page
+(the last 25, kept in this browser). The Builder link at the bottom of every
+page opens `builder.html`: the Design kit (`affordances.html`), All formulas
+(`math.html`) and Rules (`rules.html`, rules changed or imported in this
+browser). How a page uses the shell: CONTRACTS.md, "The shell".
+
 ### Loading your own profile
 
 Every page's header says whose numbers they are (S-228). The made-up demo
@@ -113,7 +122,7 @@ of the Ledger with what was wrong; nothing crashes a page.
 ### Design and sign-off
 
 - `DESIGN.md`: the visual design rules (layout, color, charts, phone width); the affordance rules are in the repository's CLAUDE.md.
-- `affordances.html`: every component in every state.
+- `affordances.html` (the Design kit): every component in every state.
 - `SIGNOFF.md`: the hand-check list for Phase 1 with phone-width screenshots of the demo household.
 
 ## Phase 2: the calendar and the Windfall room

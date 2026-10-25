@@ -8,6 +8,7 @@
 import { fetchRules } from '../engine/rules.js';
 import { readHousehold, fileProblems } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
+import { createHistory } from '../engine/edits.js';
 import { readProfile, setBaseline, fingerprint } from './profile-file.js';
 
 const KEY = 'slam-spine:v1';
@@ -32,8 +33,20 @@ async function fetchJson(rel) {
 // What the file held that could not be used, in one line for the page (the Ledger page lists each).
 const needWords = (spine) => { const n = fileProblems(spine).open.length; return n ? n + (n === 1 ? ' thing in your file could not be read, so it shows as missing. Fill it in' : ' things in your file could not be read, so they show as missing. Fill them in') + ' at the top of the Ledger page.' : null; };
 
+// Rules changed in this browser on the Builder's Rules page (S-230): { <year>: { <id>: {...} } }, laid over the
+// rules files by the one loader every page calls (loadRules, through loadAll).
+const RULES_KEY = 'slam-rules:v1';
+export function ruleOverrides() {
+  try { const o = JSON.parse(localStorage.getItem(RULES_KEY) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; }
+}
+export function keepRuleOverrides(o) {
+  try { if (o && Object.values(o).some((y) => y && Object.keys(y).length)) localStorage.setItem(RULES_KEY, JSON.stringify(o)); else localStorage.removeItem(RULES_KEY); return true; } catch { return false; }
+}
+export const loadRules = () => fetchRules(new URL('data/', base), [2026], ruleOverrides());
+export const rulesFile = (year = 2026) => fetchJson('data/rules-' + year + '.json');
+
 export async function loadAll() {
-  const [rules, institutions] = await Promise.all([fetchRules(new URL('data/', base)), fetchJson('data/institutions.json').then((x) => x || { names: [], aliases: {} })]);
+  const [rules, institutions] = await Promise.all([loadRules(), fetchJson('data/institutions.json').then((x) => x || { names: [], aliases: {} })]);
   const saved = readSaved();
   let problem = null;
   if (saved) {
@@ -60,9 +73,41 @@ export function save(spine) {
   try { localStorage.setItem(KEY, JSON.stringify(spine)); return true; } catch { return false; }
 }
 
+// Going back to the file or the example is a different household: its history goes too.
 export function forgetSaved() {
   try { localStorage.removeItem(KEY); } catch { /* storage blocked: nothing saved */ }
+  clearHistory();
 }
+
+// The household history every page shares (S-230): the last 25 changes, kept in this browser beside the household,
+// so Undo and Redo work on any page, in any tab and after a reload. It belongs to the household saved with it (a
+// fingerprint of that text): when the saved household is not the one it was kept for, a page starts a fresh one.
+// Loading a different household (Load my file, going back to the file or the example) clears it.
+const HISTORY_KEY = 'slam-history:v1';
+export const HISTORY_STEPS = 25;
+export function openHistory(spine) {
+  const fresh = createHistory(spine);
+  let kept = null;
+  try { kept = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null'); } catch { return fresh; }
+  const saved = readSaved();
+  if (!kept || !Array.isArray(kept.past) || !Array.isArray(kept.future) || !saved || saved.value === undefined || kept.fp !== fingerprint(saved.value)) return fresh;
+  return { past: kept.past.slice(-HISTORY_STEPS), present: spine, future: kept.future.slice(0, HISTORY_STEPS) };
+}
+// Saves the household and its history. False when the browser will not keep the household; when the history does
+// not fit, the oldest steps go first.
+export function keepHistory(hist) {
+  if (!save(hist.present)) return false;
+  const fp = fingerprint(hist.present);
+  let past = hist.past.slice(-HISTORY_STEPS), future = hist.future.slice(0, HISTORY_STEPS);
+  for (;;) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify({ fp, past, future })); return true; } catch { /* too big for this browser: drop the oldest step */ }
+    if (!past.length && !future.length) { clearHistory(); return true; }
+    if (past.length) past = past.slice(1); else future = future.slice(0, -1);
+  }
+}
+export function clearHistory() { try { localStorage.removeItem(HISTORY_KEY); } catch { /* storage blocked: nothing kept */ } }
+// The keys whose change in another tab means this page's household is out of date.
+export const HOUSEHOLD_KEYS = [KEY, HISTORY_KEY, RULES_KEY];
 
 // Load my file (S-228): the file the person picks is read here, in the browser, by the one loader; nothing is
 // uploaded anywhere. It is saved in this browser only, so every page opens to it. Returns what loadAll returns, so a
@@ -71,6 +116,8 @@ export async function loadMyFile(file, rules) {
   const { spine } = await readProfile(file, { today: todayIso() });
   const ready = applyDefaults(spine, rules);
   const stored = save(ready);
+  // A different household: the last one's changes cannot be undone onto it.
+  clearHistory();
   if (stored) setBaseline(ready);
   const words = needWords(ready);
   return { spine: ready, source: stored ? 'saved' : 'file', problem: stored ? words : 'This browser did not keep ' + file.name + ', so it is open on this page only.' + (words ? ' ' + words : '') };

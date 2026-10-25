@@ -8,7 +8,7 @@ import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 import { loadFailWords } from './profile-file.js';
 
 // The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2, Batch G and How much to max it', date: '2026-10-23' };
+export const BUILD = { label: 'Phase 2.5, Batch 1', date: '2026-10-25' };
 
 let banner = null;
 function showError(text) {
@@ -17,10 +17,13 @@ function showError(text) {
   banner.querySelector('.error-text').textContent = String(text || 'an error with no message');
 }
 
-// Call once at the top of a page's script. Adds the skip link before the app, the stamp after it, and the catcher.
+// Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
+// the app, the stamp and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
+// there, out of the tabs), and the catcher.
 export function mountPage({ app }) {
-  if (!document.querySelector('.skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
-  if (!document.querySelector('.build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, 'SLAM ' + BUILD.label + ', ' + BUILD.date + '. Numbers are yours; nothing leaves this browser.'));
+  // Looked for beside the app, not inside it: the Design kit shows samples of both.
+  if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'SLAM ' + BUILD.label + ', ' + BUILD.date + '. Numbers are yours; nothing leaves this browser.'), ' ', h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };

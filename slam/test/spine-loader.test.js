@@ -232,9 +232,11 @@ test('whose numbers: the made-up household is the example, anyone else is named,
   assert.equal(whose(load(noName).spine).name, 'Pat Example', 'no file name: the first person');
   for (const f of ['dashboard', 'ledger', 'calendar', 'spending', 'plan', 'windfall', 'onepager', 'math-page']) {
     const src = readFileSync(SLAM + 'ui/' + f + '.js', 'utf8');
-    assert.match(src, /whoseLine\(/, f + ' shows whose numbers');
+    // A page on the shell (S-230) gets whose numbers from the shell's header.
+    assert.match(src, /whoseLine\(|startPage\(\{(?![^}]*household: false)/, f + ' shows whose numbers');
     assert.ok(!/SOURCE_WORDS\[source\]/.test(src), f + ' has no header of its own');
   }
+  assert.match(readFileSync(SLAM + 'ui/shell.js', 'utf8'), /whoseLine\(hist\.present, source, \{ rules, reopen:/, 'the shell\'s header says whose numbers');
   // Load my file goes through the one loader: no page reads a file another way.
   const page = readFileSync(SLAM + 'ui/page.js', 'utf8'), hh = readFileSync(SLAM + 'ui/household.js', 'utf8'), pf = readFileSync(SLAM + 'ui/profile-file.js', 'utf8');
   assert.match(page, /Stays in this browser\. Nothing is uploaded\./);

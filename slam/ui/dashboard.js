@@ -1,12 +1,12 @@
-// The Dashboard: the one-pager out. Every number comes from engine/summary.js
-// and links to the Ledger fields it was built from. Formatting only.
+// Today (the Dashboard, S-230): the household at a glance. Every number comes from engine/summary.js; a card whose
+// number was built from your numbers opens them (the whole card is the target, with a chevron). The shell draws the
+// tabs, the header with Undo and Redo, and the bar. Formatting only.
 
-import { mountPage, whoseLine } from './page.js';
+import { startPage, refresh, keep, kept } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
 import { mathButton } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
-import { loadAll } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
@@ -17,8 +17,6 @@ import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar, scenarioText } from './scenario.js';
 import { h, chip, money, pct, shortDate, ledgerHref, showValue } from './view.js';
 
-const app = document.getElementById('app');
-mountPage({ app });
 const monthLabel = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -34,7 +32,8 @@ function provenance(spine, r) {
   return [note, mathCtx && MATH_FOR._m.get(r) ? mathButton(MATH_FOR._m.get(r), mathCtx) : null];
 }
 
-// One tile: a label, the big number (a link to its first field), lines under it.
+// One tile: a label, the big number, lines under it. When the number was built from your numbers, the whole tile opens
+// the first of them in My numbers, and a chevron says so (CLAUDE.md affordance 5).
 // Which metrics each tile's "Show the math" opens (engine/math.js DASHBOARD_MATH).
 let mathCtx = null;
 const MATH_FOR = { _m: new Map() };
@@ -44,12 +43,9 @@ function tile(spine, { id, label, result, shown, missingText, lines = [], extra 
   const value = result.value === null
     ? h('p', { class: 'tile-value missing-text' }, missingText || 'Not enough to figure yet')
     : h('p', { class: 'tile-value' }, shown);
-  // The number is plain; a link under it says where it opens (CLAUDE.md affordances 4 and 5).
-  const view = first ? h('a', { class: 'tile-view', href: ledgerHref(first) }, 'View in the Ledger ›') : null;
-  return h('section', { class: 'tile', id: 'tile-' + id, 'aria-labelledby': 'tl-' + id },
-    h('h2', { class: 'tile-label', id: 'tl-' + id }, label),
+  return h('section', { class: 'tile' + (first ? ' has-target' : ''), id: 'tile-' + id, 'aria-labelledby': 'tl-' + id },
+    h('h2', { class: 'tile-label', id: 'tl-' + id }, first ? h('a', { class: 'card-link', href: ledgerHref(first) }, h('span', {}, label), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A')) : label),
     value,
-    view,
     ...lines.filter(Boolean).map((l) => h('p', { class: 'tile-sub' }, ...[].concat(l))),
     extra,
     ...provenance(spine, result));
@@ -81,10 +77,10 @@ function creditNote(cs) {
 // The picked Triple D set (S-183) replaces the real return and withdrawal rate
 // before anything is figured, so every FI number and the projection follow it.
 let scenario = pickedScenario();
-// Sections of the money flow split into their expenses (S-192), for this page only.
-let flowOpen = [];
+// Sections of the money flow split into their expenses (S-192): kept with this screen, so coming back opens them again.
+const flowOpen = () => kept().flowOpen || [];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-function render(base, rules, source) {
+function render({ spine: base, rules }) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
   const compare = estimatedVsActual(spine, rules, { months: 1 });
@@ -172,29 +168,21 @@ function render(base, rules, source) {
     })
   ];
 
-  app.replaceChildren(
-    // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
-    h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Dashboard'), whoseLine(base, source, { asOf: s.asOf, rules, reopen: boot }))),
+  // The tabs, the header and Undo come from the shell; the Calendar is a tab, and the Windfall opens from Plan.
+  return [
     h('div', { class: 'tiles' }, tiles),
-    // The Phase 2 pages (S-200, S-201): going somewhere is a link, with a line on what is there.
-    h('section', { class: 'card more', 'aria-labelledby': 'more-h' },
-      h('h2', { id: 'more-h' }, 'Also'),
-      h('ul', { class: 'more-list' },
-        h('li', {}, h('a', { href: 'calendar.html' }, 'Cash flow calendar ›'), h('span', { class: 'more-sub' }, 'This month\'s pay, bills and minimums on their days, and the month-end cash.')),
-        h('li', {}, h('a', { href: 'windfall.html' }, 'Windfall ›'), h('span', { class: 'more-sub' }, 'A lump sum coming in: where it goes, step by step.')))),
-    scenarioBar(base, rules, scenario, (id) => { scenario = id; render(base, rules, source); document.getElementById('scenario')?.scrollIntoView({ block: 'nearest' }); }),
+    scenarioBar(base, rules, scenario, (id) => { scenario = id; refresh(); document.getElementById('scenario')?.scrollIntoView({ block: 'nearest' }); }),
     flowPart(spine, rules, s),
     flagsSection(spine, s.flags)
-  );
+  ];
 }
 
 // The money flow (S-192); a split or join redraws only this section.
 function flowPart(spine, rules, s) {
-  const el = flowSection(moneyFlow(spine, rules, s.cashflow, { open: flowOpen }), {
-    open: flowOpen, month: MONTH_NAMES[+s.ym.slice(5, 7) - 1],
-    onToggle: (sec) => { flowOpen = flowOpen.includes(sec) ? flowOpen.filter((x) => x !== sec) : [...flowOpen, sec]; el.replaceWith(flowPart(spine, rules, s)); }
+  const open = flowOpen();
+  const el = flowSection(moneyFlow(spine, rules, s.cashflow, { open }), {
+    open, month: MONTH_NAMES[+s.ym.slice(5, 7) - 1],
+    onToggle: (sec) => { keep({ flowOpen: open.includes(sec) ? open.filter((x) => x !== sec) : [...open, sec] }); el.replaceWith(flowPart(spine, rules, s)); }
   });
   return el;
 }
@@ -225,7 +213,5 @@ function flagsSection(spine, flags) {
     done.length ? h('details', { class: 'done' }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
 }
 
-function boot({ spine, rules, source, problem }) { render(spine, rules, source); if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem)); }
-loadAll().then(boot).catch((err) => {
-  app.replaceChildren(h('p', { class: 'card' }, 'The Dashboard could not load: ' + err.message));
-});
+// The One-pager is a button here; its Back comes back to Today.
+startPage({ tab: 'today', title: 'Today', render, actions: () => h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager') });

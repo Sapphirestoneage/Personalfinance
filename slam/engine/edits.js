@@ -271,9 +271,10 @@ export const MAX_STEPS = 200;
 export function createHistory(doc) {
   return { past: [], present: doc, future: [] };
 }
-export function commit(h, doc, label = '') {
+// max: how many steps back are kept (the shell keeps the household's last 25, S-230).
+export function commit(h, doc, label = '', max = MAX_STEPS) {
   const past = [...h.past, { doc: h.present, label }];
-  return { past: past.slice(-MAX_STEPS), present: doc, future: [] };
+  return { past: past.slice(-max), present: doc, future: [] };
 }
 export function undo(h) {
   if (!h.past.length) return h;

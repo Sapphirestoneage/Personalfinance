@@ -1,33 +1,29 @@
 // The printable one-pager (S-208): the household on one page, from the same
-// summary and run every other page reads. Print it from the browser.
+// summary and run every other page reads. Print it from the browser. It opens
+// from the One-pager button on Today, and its Back returns there (S-230).
 
-import { mountPage, whoseLine } from './page.js';
+import { startPage } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { clearDates } from '../engine/debtview.js';
 import { safeToSpend } from '../engine/spending.js';
 import { fooLadder } from '../engine/plan.js';
 import { maxItFor } from './maxit-panel.js';
-import { loadAll, whose } from './household.js';
+import { whose } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, money, pct, shortDate } from './view.js';
 
-const app = document.getElementById('app');
-mountPage({ app });
 const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 const m = (x) => (x === null || x === undefined ? 'missing' : money(x));
 
-function boot({ spine: base, rules, source, problem }) {
+function render({ spine: base, rules }) {
   const spine = withScenario(base, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
   const cd = clearDates(sim), safe = safeToSpend(sim), foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  app.replaceChildren(
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending')),
-    h('div', { class: 'onepager' },
-      h('header', { class: 'top' }, h('div', {}, h('h1', {}, whose(base).name + ' on one page'), whoseLine(base, source, { rules, reopen: boot })), h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: whose(base).example ? 'btn' : 'btn primary', onclick: () => window.print() }, 'Print'))),
+  return h('div', { class: 'onepager' },
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },
         cell('Net worth', m(sh.netWorth.value), 'assets ' + m(sh.assets.value) + ', debts ' + m(sh.debts.value)),
         cell('Cash', m(sh.cash.value), em.tiers.full.runway.value === null ? 'runway unknown' : em.tiers.full.runway.value.toFixed(1) + ' months at ' + m(em.tiers.full.burn.value) + ' a month'),
@@ -41,7 +37,10 @@ function boot({ spine: base, rules, source, problem }) {
       h('section', { class: 'card' }, h('h2', {}, 'Debt'), h('ul', {}, cd.rows.map((r) => h('li', {}, r.label + ': ' + (r.date ? shortDate(r.date) : 'not inside the next three months'))), h('li', {}, 'Payoff order: ' + s.debt.avalancheCardsDetail.map((x) => x.name).join(', ')))),
       h('section', { class: 'card' }, h('h2', {}, 'The next rung'), foo.current ? h('p', {}, foo.rungs.find((r) => r.id === foo.current).label + ': ' + foo.rungs.find((r) => r.id === foo.current).why) : h('p', {}, foo.rungs.every((r) => r.done) ? 'Every rung is done.' : 'The ladder needs a few answers on the Plan page.'), h('p', { class: 'tile-note' }, 'Rungs done: ' + foo.rungs.filter((r) => r.done).map((r) => r.label).join(', '))),
       h('section', { class: 'card' }, h('h2', {}, 'Spending a month'), h('ul', {}, cf.expenses.items.filter((i) => !i.covered && i.amount).sort((a, b) => b.amount - a.amount).slice(0, 8).map((i) => h('li', {}, i.label + ': ' + money(i.amount)))), h('p', { class: 'tile-note' }, 'The eight biggest lines. Everything else is in the Ledger.')),
-      h('p', { class: 'tile-note' }, 'Every number here is on the Dashboard, the Calendar, the Spending page or the Plan page with Show the math.')));
-  if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem));
+      h('p', { class: 'tile-note' }, 'Every number here is on Today, the Calendar, the Spending page or the Plan page with Show the math.'));
 }
-loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The one-pager could not load: ' + err.message)); });
+
+startPage({
+  tab: 'today', title: 'One-pager', parent: ['Today', 'dashboard.html'], render,
+  actions: ({ spine: base }) => h('button', { type: 'button', class: whose(base).example ? 'btn' : 'btn primary', onclick: () => window.print() }, 'Print')
+});
