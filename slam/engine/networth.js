@@ -50,14 +50,15 @@ export function liquidDefault(a) {
   if (ROTH_IRAS.includes(a.type)) return 'basis';
   return 'none';
 }
-// { value, kind, ..., items: [{ id, name, amount, part }] }: part 'all' or 'contributions'. A blank balance (or a Roth's
+// { value, kind, ..., items: [{ id, name, amount, part }], defaults: { <account id>: 'all' | 'basis' | 'none' } }: part 'all' or 'contributions'. A blank balance (or a Roth's
 // blank basis) leaves the total incomplete, never $0.
 export function liquidAssets(spine) {
   const t = tracker();
-  const items = [];
+  const items = [], defaults = {};
   let sum = 0;
   for (const a of spine.accounts || []) {
     const base = 'accounts.' + a.id;
+    defaults[a.id] = liquidDefault(a);
     const own = a.liquid ? t.useFact(base + '.liquid', a.liquid) : null;
     const how = own === true ? 'all' : own === false ? 'none' : liquidDefault(a);
     if (how === 'none') continue;
@@ -67,7 +68,7 @@ export function liquidAssets(spine) {
     if (amount !== null) sum += amount;
     items.push({ id: a.id, name: valueOf(a.name) || a.id, amount, part: how === 'basis' ? 'contributions' : 'all', path: base + '.balance' });
   }
-  return { ...t.out(round2(sum)), items };
+  return { ...t.out(round2(sum)), items, defaults };
 }
 
 export function balanceSheet(spine) {

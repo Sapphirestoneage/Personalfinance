@@ -37,7 +37,8 @@ test('money from a person: gifts, support and child support are not taxed; alimo
   assert.equal(personTax(person('alimony', { decreeYear: K(2019) })), 'none');
   assert.equal(personTax(person('alimony', { decreeYear: K(2015) })), 'ordinary');
   assert.equal(personTax(person('alimony')), null, 'no decree year: missing, not a guess');
-  assert.equal(personTax(person('allowance')), 'none');
+  assert.equal(personTax(person('allowance')), null, 'gift or pay not answered: missing');
+  assert.equal(personTax(person('allowance', { allowanceMode: K('gift') })), 'none');
   assert.equal(personTax(person('allowance', { allowanceMode: K('time') })), 'se');
   assert.ok(isSelfEmployment(person('allowance', { allowanceMode: K('time') })));
   assert.ok(isSelfEmployment({ type: 'side' }));

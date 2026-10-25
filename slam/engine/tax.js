@@ -135,7 +135,7 @@ export function nextEstimatedDate(asOf, R) {
 export function taxInputs(spine, R, year, mode = 'committed') {
   const from = `${year}-01-01`, to = `${year}-12-31`;
   const t = tracker();
-  const miss = { wages: [], income: [], withholding: [], other: [] };
+  const miss = { wages: [], income: [], withholding: [], other: [], person: [] };
   const notModeled = [];
   const known = { wages: 0, ficaWages: 0, seNet: 0, unemployment: 0, otherOrdinary: 0, conversions: 0, ltcg: 0, qualifiedDividends: 0, hsaDeduction: 0, withheldFederal: 0, withheldState: 0, estimatedFederal: 0, estimatedState: 0 };
   // The earning lines (W-2, tips, 1099) and the pre-tax payroll saving taken off them, for earnedIncome.
@@ -168,7 +168,8 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (s.type === 'person') {
       if (s.purpose) t.useFact(base + '.purpose', s.purpose);
       if (s.purpose && s.purpose.value === 'alimony' && s.decreeYear) t.useFact(base + '.decreeYear', s.decreeYear);
-      if (how === null) { miss.income.push(base + (s.purpose && s.purpose.value === 'alimony' ? '.decreeYear' : '.purpose')); continue; }
+      if (s.purpose && s.purpose.value === 'allowance' && s.allowanceMode) t.useFact(base + '.allowanceMode', s.allowanceMode);
+      if (how === null) { miss.person.push(base + (s.purpose && s.purpose.value === 'alimony' ? '.decreeYear' : s.purpose && s.purpose.value === 'allowance' ? '.allowanceMode' : '.purpose')); continue; }
       if (how === 'none') continue;
     }
     const se = isSelfEmployment(s);
@@ -187,7 +188,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     if (s.type === 'w2' || s.type === 'tips' || se) {
       // Each line keeps whose it is and, for pay, the months of the year it runs (pre-tax saving comes out of those).
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
-      earned.lines.push({ id: s.id, type: se ? '1099' : s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: amt === 0 ? 0 : (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
+      earned.lines.push({ id: s.id, type: se ? '1099' : s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: amt === 0 ? 0 : (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(se && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
     }
     // A line known to pay $0 has no months of pay: nothing comes out of it.
     if ((s.type === 'w2' || s.type === 'tips') && amt !== 0) {
@@ -351,6 +352,7 @@ function missingWords(year, miss) {
   if (miss.income.length) parts.push(miss.wages.length ? 'other income' : 'income amounts');
   if (miss.withholding.length) parts.push('withholding');
   if (miss.other.length) parts.push('filing details');
+  if (miss.person.length) parts.push('what money from a person is for');
   if (!parts.length) return null;
   const last = parts.pop();
   return 'missing: ' + year + ' ' + (parts.length ? parts.join(', ') + ' and ' + last : last);
@@ -362,7 +364,7 @@ function missingWords(year, miss) {
 export function taxForYear(spine, R, year, { asOf = spine.meta.asOf, mode = 'committed' } = {}) {
   const { inputs, tracker: t, missing, notModeled, notes } = taxInputs(spine, R, year, mode);
   const snap = t.snapshot();
-  const incomeMissing = missing.wages.length + missing.income.length + missing.other.length > 0;
+  const incomeMissing = missing.wages.length + missing.income.length + missing.other.length + missing.person.length > 0;
   const withholdingMissing = missing.withholding.length > 0;
   const canCompute = inputs.filingStatus !== null;
   const calc = canCompute ? computeTax(inputs, R, year) : null;

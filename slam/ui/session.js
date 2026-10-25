@@ -12,7 +12,7 @@ import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inpu
 import { setAt, getAt, valueOf as v } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
-import { withScenario } from '../engine/scenarios.js';
+import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { h, chip, money, pct } from './view.js';
 
@@ -26,16 +26,18 @@ const lower = (x) => String(x || '').trim().toLowerCase();
 const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
 
 // ---------------------------------------------------------------- a row's pieces
+// A box saves after the browser has moved the focus on (Tab), so the redraw keeps it on the next box.
+const later = (fn) => setTimeout(fn, 0);
 // A money box: blank is missing (never $0); a typed value is saved when the box is left.
 function moneyBox(id, value, label, onSet, placeholder = '$') {
   const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = inputText('money', value);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { onSet(null); return; }
+    if (t === '') { later(() => onSet(null)); return; }
     const p = parseInput('money', t);
     if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    onSet(p.value);
+    later(() => onSet(p.value));
   });
   return box;
 }
@@ -45,10 +47,10 @@ function intBox(id, value, label, onSet, { placeholder = 'day', min = 1, max = 3
   box.value = value === null || value === undefined ? '' : String(value);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { onSet(null); return; }
+    if (t === '') { later(() => onSet(null)); return; }
     const p = parseInput('int', t);
     if (!p.ok || p.value < min || p.value > max) { say(label + ': a whole number from ' + min + ' to ' + max); box.focus(); return; }
-    onSet(p.value);
+    later(() => onSet(p.value));
   });
   return box;
 }
@@ -58,10 +60,10 @@ function rateBox(id, value, label, onSet) {
   box.value = inputText('rate', value);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { onSet(null); return; }
+    if (t === '') { later(() => onSet(null)); return; }
     const p = parseInput('rate', t);
     if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    onSet(p.value);
+    later(() => onSet(p.value));
   });
   return box;
 }
@@ -75,7 +77,7 @@ const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chi
 // What is open stays open when a change redraws the screen.
 const openMore = new Set();
 function more(label, ...body) {
-  const d = h('details', { class: 'row-more', open: openMore.has(label) || null }, h('summary', { 'aria-label': 'More about ' + label }, 'More'), h('div', { class: 'row-more-body' }, ...body));
+  const d = h('details', { class: 'row-more', open: openMore.has(label) || null }, h('summary', { id: 'more-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), 'aria-label': 'More about ' + label }, 'More'), h('div', { class: 'row-more-body' }, ...body));
   d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openMore.add(label); else openMore.delete(label); });
   return d;
 }
@@ -165,7 +167,8 @@ function presetApply(p) {
   const today = todayIso();
   change((spine) => {
     let s = spine;
-    for (const cat of DATA.needs) for (const item of cat.items.flatMap((x) => [x, ...(x.subs || [])])) {
+    for (const cat of DATA.needs) for (const item of cat.items.flatMap((x) => [x, ...(findExpense(s, x.label) ? [] : x.subs || [])])) {
+      if (findExpense(s, cat.label)) break;
       const amt = p.amounts[item.key];
       if (amt === undefined) continue;
       let e = findExpense(s, item.label);
@@ -190,9 +193,12 @@ function needs(ctx) {
       h('p', { class: 'edit-hint' }, 'Fills empty lines with typical amounts, marked guess. Type over any of them.')),
     ...DATA.needs.map((cat) => {
       const catLine = findExpense(spine, cat.label);
-      const lines = cat.items.flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
+      // One number for the whole category, or its lines: never both, so nothing counts twice.
+      const catOn = !!catLine && v(catLine.amount) !== null;
+      const anyLine = cat.items.some((item) => [item, ...(item.subs || [])].some((x) => { const e = findExpense(spine, x.label); return e && v(e.amount) !== null; }));
+      const lines = catOn ? [] : cat.items.flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
       const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
-      const oneNumber = cat.items.length > 1 ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
+      const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in My numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
       return h('section', { class: 'card', 'aria-labelledby': 'cat-' + cat.id },
         h('h2', { id: 'cat-' + cat.id }, cat.label),
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), oneNumber));
@@ -258,7 +264,7 @@ function personBits(spine, x) {
     h('label', { class: 'mini-label', for: 'pf-' + x.id }, 'Who'),
     pickBox('pf-' + x.id, name + ': who it is from', [['', 'Pick a name'], ...names.map((n) => [n, n])], who || '', (n) => putF(p + '.from', n || null, said.changed(name + ' from', n || 'blank'))),
     h('label', { class: 'mini-label', for: 'pp-' + x.id }, 'What it is for'),
-    pickBox('pp-' + x.id, name + ': what it is for', [['', 'Pick one'], ...Object.entries(PERSON_PURPOSE_WORDS)], purpose || '', (k) => (k === 'loan' ? toLoan() : putF(p + '.purpose', k || null, said.changed(name, k ? PERSON_PURPOSE_WORDS[k].toLowerCase() : 'blank')))),
+    pickBox('pp-' + x.id, name + ': what it is for', [['', 'Pick one'], ...Object.entries(PERSON_PURPOSE_WORDS)], purpose || '', (k) => (k === 'loan' ? toLoan() : change((sp) => { let n = putFact(sp, p + '.purpose', k || null, k ? 'known' : 'missing', today); if (k === 'allowance' && !v(x.allowanceMode)) n = putFact(n, p + '.allowanceMode', 'gift', 'known', today); return n; }, said.changed(name, k ? PERSON_PURPOSE_WORDS[k].toLowerCase() : 'blank')))),
     purpose === 'alimony' ? [h('label', { class: 'mini-label', for: 'py-' + x.id }, 'Year of the divorce decree'), intBox('py-' + x.id, v(x.decreeYear), name + ': year of the decree', (y) => putF(p + '.decreeYear', y, said.changed(name + ' decree year', y === null ? 'blank' : String(y))), { placeholder: 'year', min: 1950, max: 2100 })] : null,
     purpose === 'allowance' ? [h('label', { class: 'mini-label', for: 'pa-' + x.id }, 'It is'), pickBox('pa-' + x.id, name + ': gift or pay', [['gift', 'A gift (not taxed)'], ['time', 'Pay for my time (taxed)']], v(x.allowanceMode) || 'gift', (m) => putF(p + '.allowanceMode', m, said.changed(name, m === 'time' ? 'pay for your time' : 'a gift')))] : null,
     h('p', { class: 'edit-hint' }, taxWords(x)),
@@ -279,7 +285,7 @@ function incomeRows(spine) {
       moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a)))),
       pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1]))),
       x.cadence === 'monthly' || x.cadence === 'semimonthly' ? intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d)))) : null,
-      x.type === 'person' ? more(x.label, ...personBits(spine, x)) : isSelfEmployment(x) ? h('span', { class: 'muted mini-note' }, 'tax set aside') : null);
+      x.type === 'person' && v(x.purpose) === null ? (openMore.add(x.label), more(x.label, ...personBits(spine, x))) : x.type === 'person' ? more(x.label, ...personBits(spine, x)) : isSelfEmployment(x) ? h('span', { class: 'muted mini-note' }, 'tax set aside') : null);
   });
 }
 function income(ctx) {
@@ -332,7 +338,7 @@ function holdings(a) {
         const t = box.value.trim();
         let val = t === '' ? null : t;
         if (val !== null && type === 'rate') { const q = parseInput('rate', t); if (!q.ok) { say(label + ': ' + q.message); return; } val = q.value; }
-        save(list.map((r, j) => (j === i ? { ...r, [k]: k === 'ticker' && val ? val.toUpperCase() : val } : r)), said.changed(name + ' holding ' + (i + 1) + ' ' + label.toLowerCase(), val === null ? 'blank' : String(t)));
+        later(() => save(list.map((r, j) => (j === i ? { ...r, [k]: k === 'ticker' && val ? val.toUpperCase() : val } : r)), said.changed(name + ' holding ' + (i + 1) + ' ' + label.toLowerCase(), val === null ? 'blank' : String(t))));
       });
       return box;
     }), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Remove holding ' + (i + 1), onclick: () => save(list.filter((_, j) => j !== i), name + ': holding ' + (i + 1) + ' removed') }, 'Remove')))),
@@ -348,7 +354,7 @@ function assets(ctx) {
         const name = v(a.name) || a.id, p = 'accounts.' + a.id, part = liquidPart(s, a), on = part !== null;
         return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance)),
           moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x)))),
-          h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => putF(p + '.liquid', !on, said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
+          h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => change((sp) => (!on === (s.sheet.liquid.defaults[a.id] !== 'none') ? setAt(sp, p, drop(getAt(sp, p), 'liquid')) : putFact(sp, p + '.liquid', !on, 'known', today)), said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
           a.family === 'taxable' ? holdings(a) : null);
       })) : h('p', { class: 'muted' }, 'Nothing yet.'),
       h('p', { class: 'edit-hint' }, 'Liquid: money you can reach without a penalty or selling something you live with. Tap to change it.')),
@@ -378,19 +384,19 @@ function goals(ctx) {
       if (!a.ok) { say('Amount: ' + a.message); form.amt.focus(); return; }
       change((sp) => { const r = addItem(sp, { collection: 'goals', type: 'savings', label: name }, today); let n = a.value === null ? r.spine : putFact(r.spine, 'goals.' + r.id + '.target', a.value, 'known', today); if (form.by.value) n = setAt(n, 'goals.' + r.id + '.by', form.by.value); return n; }, said.added('Goal ' + name));
     };
-    const wr = v(spine.assumptions.withdrawalRate);
+    const wr = v(spine.assumptions.withdrawalRate), own = pickedScenario() === 'best';
     return [
       h('section', { class: 'card fi-card', 'aria-label': 'Financial independence' },
         h('h2', {}, 'Financial independence'),
         h('dl', { class: 'kv' },
-          h('dt', {}, 'Yearly spending'), h('dd', {}, yearly === null ? 'missing' : money(yearly) + (fi.goalSource === 'spending' ? ' (your goal)' : '')),
+          h('dt', {}, 'Yearly spending'), h('dd', {}, yearly.kind === 'notForMe' ? 'set by your FI number' : yearly.value === null ? 'missing' : [money(yearly.value) + (fi.goalSource === 'spending' ? ' (your goal)' : ''), yearly.kind === 'rough' || yearly.kind === 'incomplete' ? [' ', chip(yearly.kind)] : null]),
           h('dt', {}, 'FI number'), h('dd', {}, fi.fiNumber.value === null ? 'missing' : money(fi.fiNumber.value)),
           h('dt', {}, 'There so far'), h('dd', {}, fi.fiPercent.value === null ? 'missing' : pct(fi.fiPercent.value, 1)))),
       h('section', { class: 'card', 'aria-labelledby': 'g-h' },
         h('h2', { id: 'g-h' }, 'Goals'),
         h('ul', { class: 'srows' },
           lineRow('', h('span', { class: 'srow-name' }, 'The cushion (Rule of 5)'), h('span', { class: 'srow-val' }, em.targetDollars.value === null ? 'missing a birth date' : money(s.sheet.cash.value) + ' of ' + money(em.targetDollars.value))),
-          lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, cards.value ? money(cards.value) + ' to go' : 'Done')),
+          lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, (cards.missing || []).length ? 'missing a balance' : cards.value ? money(cards.value) + ' to go' : 'Done')),
           ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target)),
             moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
             (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
@@ -400,8 +406,9 @@ function goals(ctx) {
       scenarioBar(spine, rules, pickedScenario(), () => refresh()),
       h('section', { class: 'card', 'aria-labelledby': 'wr-h' },
         h('h2', { id: 'wr-h' }, 'Withdrawal rate'),
-        h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: pickedScenario() === 'best' ? wr === w.rate : !!w.default, onchange: () => { pick('best'); change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)); } }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source)))))),
-        h('p', { class: 'edit-hint' }, 'Picking one uses your own assumptions.'))
+        // Only Your own takes a withdrawal rate of its own; the other sets each have theirs.
+        own ? h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: wr === w.rate, onchange: () => change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)) }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source))))))
+          : [h('p', {}, 'The ' + SCENARIO_WORDS[pickedScenario()].toLowerCase() + ' set uses ' + pct(scenarioAssumptions(spine, rules, pickedScenario()).withdrawalRate.value, 1) + '.'), h('button', { type: 'button', class: 'btn small', onclick: () => { pick('best'); refresh(); } }, 'Choose my own')])
     ];
   });
 }

@@ -39,7 +39,7 @@ export function personTax(s) {
   const purpose = s.purpose ? s.purpose.value : null;
   if (purpose === null) return null;
   if (purpose === 'alimony') { const y = s.decreeYear ? s.decreeYear.value : null; return y === null ? null : y >= 2019 ? 'none' : 'ordinary'; }
-  if (purpose === 'allowance') return s.allowanceMode && s.allowanceMode.value === 'time' ? 'se' : 'none';
+  if (purpose === 'allowance') { const m = s.allowanceMode ? s.allowanceMode.value : null; return m === null ? null : m === 'time' ? 'se' : 'none'; }
   return 'none';
 }
 // total: the amount is spread evenly from start to end (a known total for a window).
