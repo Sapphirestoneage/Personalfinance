@@ -216,8 +216,23 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     const mo = sc.months.get(ym);
     const st = tracker();
     st.absorb({ value: 0, from: sc.from, rough: sc.rough, missing: sc.missing, rules: sc.rules });
-    mins = { total: st.out(mo.paid), items: mo.payments.map((p) => ({ id: p.id, name: p.name, amount: p.amount, estimated: p.estimated, dueDate: p.dueDate, line: p.line, lineLabel: p.lineLabel, path: p.path })) };
+    const due = mo.payments.filter((p) => !p.inFull);
+    mins = { total: st.out(round2(due.reduce((a, p) => a + p.amount, 0))), items: due.map((p) => ({ id: p.id, name: p.name, amount: p.amount, estimated: p.estimated, dueDate: p.dueDate, line: p.line, lineLabel: p.lineLabel, path: p.path })) };
   } else mins = minimumsTotal(spine, rules, iso);
+
+  // A line that pays a debt (answer 35) is paid once, under debt payments, and keeps its place for the readers that
+  // work by category: its tag, need or want, and fixed (Plan vs actual, needs, Lean FI, the DATING shares, where it
+  // goes). `linked` is that payment as the line; it is not added to the expense total, so nothing counts it twice.
+  const linked = [];
+  for (const m of mins.items) {
+    const e = m.line && m.amount !== null ? (spine.expenses || []).find((x) => x.id === m.line) : null;
+    if (!e) continue;
+    const base = 'expenses.' + e.id, isNeed = v(e.need);
+    linked.push({ id: e.id, label: e.label, amount: round2(m.amount), fat: e.fat, need: isNeed, fixed: e.fixed, debt: m.id });
+    if (isNeed === true) { anyNeed = true; need.useFact(base + '.amount', e.amount); need.useFact(base + '.need', e.need); needSum += m.amount; }
+    else if (isNeed === null) need.addMissing(base + '.need');
+    if (e.fat && isNeed !== false) { lean.useFact(base + '.amount', e.amount); if (isNeed === null) lean.addMissing(base + '.need'); leanSum += m.amount; }
+  }
 
   // Tax set-aside (S-172): income with no federal withholding (unemployment,
   // 1099) and this year's Roth conversions set aside tax at the marginal
@@ -236,7 +251,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     ym, mode,
     income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams },
     saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)) },
-    expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items },
+    expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items, linked },
     debtMinimums: mins,
     taxSetAside: setAside,
     surplus: surplusR,

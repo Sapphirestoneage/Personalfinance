@@ -101,6 +101,6 @@ function chartLinks(ctx) {
 function spineLinks(ctx) {
   return h('div', { class: 'card', id: 'cash-moved' },
     h('div', { class: 'spread' }, h('h2', {}, 'Cash calendar, safe to spend, check-in'), quickEntryButton(ctx)),
-    h('p', { class: 'muted' }, 'These moved to SLAM, which reads the same household and feeds this log back. Open them in a new tab:'),
+    h('p', { class: 'muted' }, 'Each opens in a new tab, with the same numbers as this page.'),
     h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-calendar' }, 'Cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-spending' }, 'Spending and check-in'), ' ', h('a', { class: 'btn ghost', href: 'plan.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-plan' }, 'Plan')));
 }

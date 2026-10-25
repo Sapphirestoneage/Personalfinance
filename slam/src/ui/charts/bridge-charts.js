@@ -32,7 +32,7 @@ export function bridgeRows(br) {
 }
 
 // How close counts as "ties" is the coach's setting (S-096), so the client view does not show it.
-// It lives in Setup, Cushion and coach settings (S-106).
+// It lives in Setup, Coach settings (S-106).
 export function materialityInput(ctx) {
   if (ctx.role === 'client') return null;
   const v = ctx.doc.settings.materiality;

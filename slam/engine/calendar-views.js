@@ -117,7 +117,7 @@ export function milestones(spine, rules, sim, months = []) {
   if (sim.clearDates.cardsFree && sim.clearDates.cardsFree > sim.start) add(sim.clearDates.cardsFree, 'Every card clear', 'cardsFree');
   if (sim.clearDates.hiFree && sim.clearDates.hiFree > sim.start) add(sim.clearDates.hiFree, 'High-interest free (nothing above ' + Math.round(sim.clearDates.hiRate * 100) + '%)', 'hiFree');
   if (sim.clearDates.allFree && sim.clearDates.allFree > sim.start) add(sim.clearDates.allFree, 'Debt free', 'allFree');
-  if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up falls under the floor');
+  if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up' + (sim.model.accounts.some((a) => a.earmarked) ? ', less money set aside for a goal,' : '') + ' falls under the floor');
   for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn', 'maxDeadline'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path, e.kind === 'maxDeadline' ? e.note : null, e.accountId || null);
   const seen = new Set();
   return out.filter((m) => { const k = m.date + '|' + m.label; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));

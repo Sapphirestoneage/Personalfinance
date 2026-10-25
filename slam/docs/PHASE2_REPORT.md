@@ -20,12 +20,12 @@ use the computer's address instead of localhost.
 
 ## Where it stands
 
-Batches 0 and A to F are built, tested, committed and pushed. Batch G brought
-what the Budget's calendar does to SLAM, but **the Budget calendar is not
-retired**: a second audit of its own code found a few things SLAM cannot do yet
-without changing the vendored engine, or without a decision from you
-(questions 29 to 39). The retirement is ready as one patch,
-`docs/phase2/batch-g-retire.patch`, and applies cleanly when you say go.
+Batches 0 and A to G are built, tested, committed and pushed. Batch G brought
+what the Budget's calendar does to SLAM. **The Budget calendar is retired**
+(Phase 2.5, answer 39, 2026-10-25): `docs/phase2/batch-g-retire.patch` is
+applied, and the Budget app's Today and Track link to the SLAM Calendar and
+Spending pages. The 28 things it did that SLAM does not are listed below under
+Known differences, each with its answer.
 
 ## What was built
 
@@ -204,8 +204,8 @@ applied, and 22 (retire the Budget calendar) waits on questions 29 to 39.
 
 ## Stopped for your sign-off
 
-This is where the session stops. Look at it on a phone (the steps at the top),
-answer 29 to 39 in any order, and say go for the retirement when you are ready.
+Phase 2 stopped here. Questions 29 to 39 are answered and the retirement is
+done (Phase 2.5); what is left is in Known differences below.
 
 ## Known differences (2026-10-25, after the retirement)
 

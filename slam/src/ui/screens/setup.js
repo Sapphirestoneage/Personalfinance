@@ -1,7 +1,7 @@
 // Setup (S-106): one-time setup, never mixed with weekly use. A short list of
 // sections; one is open at a time. Basics, Income and paychecks, Accounts,
-// Debts, Bills and due dates, Categories and lines, Tags, Cushion and coach
-// settings, Coach notes, and the parked Future tools switch.
+// Debts, Bills and due dates, Categories and lines, Tags, Coach settings,
+// Coach notes, and the parked Future tools switch.
 
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';

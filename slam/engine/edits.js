@@ -2,7 +2,7 @@
 // documents (households are small; S-003 does the same for the Budget).
 
 import { getAt, setAt, isFact, valueOf } from './spine.js';
-import { PRESETS, INCOME_TYPES } from './schema.js';
+import { PRESETS, INCOME_TYPES, PER_YEAR } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
 // ("25" or "25%" is 0.25). Returns { ok, value } or { ok: false, message }.
@@ -43,7 +43,23 @@ export function editFact(spine, path, action, { value, kind = 'known', today }) 
   else if (action === 'notForMe') next = { value: null, kind: 'notForMe', ...stamp };
   else if (action === 'clear') next = { value: null, kind: 'missing', ...stamp };
   else throw new Error('Unknown edit ' + action);
-  return setAt(spine, path, next);
+  const s = setAt(spine, path, next);
+  // An HSA's "paid in from" and its through-payroll switch say the same thing (answer 47).
+  const m = /^accounts\.([^.]+)\.fundedFrom$/.exec(path);
+  const a = m ? getAt(s, 'accounts.' + m[1]) : null;
+  return a && a.type === 'hsa' && action === 'set' ? setAt(s, 'accounts.' + m[1] + '.throughPayroll', { value: value === 'paycheck', kind: 'known', ...stamp }) : s;
+}
+
+// An HSA through payroll or from take-home (answer 47): the switch, with "paid in from" kept in step (from take-home,
+// the house guess of the main checking account fills it again).
+export function setThroughPayroll(spine, id, on, today) {
+  const base = 'accounts.' + id;
+  const a = getAt(spine, base);
+  if (!a) throw new Error('No account ' + id);
+  let s = putFact(spine, base + '.throughPayroll', !!on, 'known', today);
+  if (on) s = putFact(s, base + '.fundedFrom', 'paycheck', 'known', today);
+  else if (a.fundedFrom && valueOf(a.fundedFrom) === 'paycheck') { const next = { ...getAt(s, base) }; delete next.fundedFrom; s = setAt(s, base, next); }
+  return s;
 }
 
 // ---------------------------------------------------------------- contributions by year (S-211)
@@ -158,6 +174,8 @@ export function editExpense(spine, id, { amount, cadence, sharing = null, covere
   // A new name keeps the id, so links and history still point at it.
   if (label && label.trim() && label.trim() !== e.label) s = setAt(s, base, { ...getAt(s, base), label: label.trim() });
   if (cadence && cadence !== e.cadence) s = setAt(s, base + '.cadence', cadence);
+  // A one-time or total line pays no debt (answer 35): changing to one drops the link, so the line counts as itself.
+  if (cadence && !PER_YEAR[cadence] && getAt(s, base).paysDebt) { const next = { ...getAt(s, base) }; delete next.paysDebt; s = setAt(s, base, next); }
   if (sharing) {
     const def = (spine.household.expenseDefaults || {})[e.fat || 'other'] || {};
     const dv = (k) => (def[k] ? def[k].value : null);
@@ -340,6 +358,7 @@ export function editPayment(spine, id, { from, day = null, paysDebt = undefined,
   if (paysDebt === null) { const x = getAt(s, base); if (x.paysDebt) { const next = { ...x }; delete next.paysDebt; s = setAt(s, base, next); } }
   else if (paysDebt !== undefined) {
     if (!(spine.debts || []).some((d) => d.id === paysDebt)) throw new Error('No debt ' + paysDebt);
+    if (!PER_YEAR[getAt(s, base).cadence]) throw new Error('A line that pays a debt repeats: set how often it is paid first');
     const other = (spine.expenses || []).find((x) => x.id !== id && x.paysDebt && x.paysDebt.value === paysDebt);
     if (other) throw new Error('The ' + other.label + ' line already pays that debt');
     s = setAt(s, base + '.paysDebt', { value: paysDebt, kind: 'known', ...stamp });

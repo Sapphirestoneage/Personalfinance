@@ -93,7 +93,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (burn === null || cash === null) return { need: null, why: 'Needs monthly spending and cash on hand.', path: s.emergency.tiers.full.burn.missing[0] || s.sheet.cash.missing[0] || null };
       const target = Math.ceil(months * burn);
       const need = Math.max(0, target - cash);
-      const st = { need, why: money(cash) + ' in cash against ' + money(burn) + ' a month; stage 1 ends at ' + months + ' month' + (months === 1 ? '' : 's') + ' (' + money(target) + ')' + (need ? ', so ' + money(need) + ' goes to cash first.' : '), which cash already covers.'), path: s.sheet.cash.from[0] || null, target };
+      const st = { need, why: money(cash) + ' in cash against ' + money(burn) + ' a month; stage 1 ends at ' + months + ' month' + (months === 1 ? '' : 's') + ' (' + money(target) + ')' + (need ? ', so ' + money(need) + ' goes to cash first.' : '), which cash already covers.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
       return st;
     });
     else if (id === 'promos') run(id, (t) => {
@@ -153,7 +153,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (target === null || cash === null) return { need: null, why: 'The Rule of 5 target needs a birth date and monthly spending.', path: s.emergency.targetDollars.missing[0] || null };
       const have = cash + floorAdded;
       const need = Math.max(0, target - have);
-      return { need, why: 'The Rule of 5 target is ' + money(target) + ' (' + s.emergency.targetMonths.value.toFixed(1) + ' months); cash is ' + money(cash) + (floorAdded ? ' plus ' + money(floorAdded) + ' from the floor step' : '') + (need ? ', so ' + money(need) + ' to go.' : ', which already reaches it.'), path: s.sheet.cash.from[0] || null, target };
+      return { need, why: 'The Rule of 5 target is ' + money(target) + ' (' + s.emergency.targetMonths.value.toFixed(1) + ' months); cash is ' + money(cash) + (floorAdded ? ' plus ' + money(floorAdded) + ' from the floor step' : '') + (need ? ', so ' + money(need) + ' to go.' : ', which already reaches it.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
     });
     else if (id === 'roth') run(id, (t) => {
       const roth = (spine.accounts || []).find((a) => a.type === 'roth_ira');

@@ -11,9 +11,9 @@
 import { valueOf as v, round2 } from './spine.js';
 import { mainChecking } from './defaults.js';
 import { payPolicyOf } from './debt.js';
+import { fromPaycheck } from './schema.js';
 
 const SECTION = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' };
-const PAYROLL = ['employerRetirement', 'hsaFsa'];
 // Where-it-goes order, top to bottom: debt first, so card payments cross nothing.
 const ORDER = ['debt', 'spend', 'save', 'tax', 'left'];
 
@@ -38,7 +38,8 @@ export function moneyFlow(spine, rules, cf, { open = [] } = {}) {
   const streams = cf.income.streams.filter((s) => s.included && s.gross > 0);
   const w2 = streams.filter((s) => s.type === 'w2');
   const w2Gross = w2.reduce((x, s) => x + s.gross, 0);
-  const payrollAccts = (spine.accounts || []).filter((a) => a.monthlyContribution && v(a.monthlyContribution) && (PAYROLL.includes(a.family) || (a.fundedFrom && v(a.fundedFrom) === 'paycheck')));
+  // Out of the paycheck by the cash flow's one rule (engine/schema.js fromPaycheck): an HSA only through payroll (answer 47).
+  const payrollAccts = (spine.accounts || []).filter((a) => a.monthlyContribution && v(a.monthlyContribution) && fromPaycheck(a));
   for (const s of streams) {
     const src = (spine.income || []).find((x) => x.id === s.id) || {};
     const id = node('in:' + s.id, { label: s.label, col: 0, kind: 'income', path: 'income.' + s.id + '.amount' });

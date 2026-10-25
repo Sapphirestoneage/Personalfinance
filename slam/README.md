@@ -238,12 +238,8 @@ paycheck claims its own occurrence, everyday spending moves cash only past the
 plan. Safe to spend is capped at the lowest point ahead. So far and expected
 by month end are on Spending and the Dashboard. No balance never reads as $0.
 
-The Budget keeps its own calendar for now: a few things it does are not in
-SLAM yet (bills paid from a second account, moving a card payment, a typed
-cushion, a forecast saved on the 1st, and three more), so the retirement waits
-on Eli's answers (questions 29 on). It is ready as
-`docs/phase2/batch-g-retire.patch`; from the repository root,
-`git apply slam/docs/phase2/batch-g-retire.patch` applies it.
+The Budget's own calendar is retired (answer 39, Phase 2.5); what it did that
+SLAM does not is listed in `docs/PHASE2_REPORT.md`, Known differences.
 
 ### How much to max it? (S-211)
 

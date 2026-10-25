@@ -12,7 +12,7 @@ export const OLD_HASHES = { budget: 'today', fill: 'plan', analyze: 'insights' }
 export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['networth', 'Net worth'], ['you', 'You']];
 export const SETUP_SECTIONS = [
   ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['bills', 'Bills and due dates'],
-  ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Cushion and coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
+  ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
 ];
 
 // Named destinations: [screen, ui changes, element id to scroll to].

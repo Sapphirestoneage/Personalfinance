@@ -185,11 +185,11 @@ function grid(m, today, ms) {
 
 function summary(m, c, mathCtx) {
   const cash = m.cash;
-  const cashWords = cash.value === null ? cash.note : 'Checking at the end of the month: ' + money(cash.value) + (cash.total !== null && cash.total !== cash.value ? ' (every cash account: ' + money(cash.total) + ')' : '') + '.';
+  const cashWords = cash.value === null ? cash.note : 'Checking at the end of the month: ' + money(cash.value) + (cash.total !== null && cash.total !== cash.value ? ' (' + (cash.apart ? 'cash you can use' : 'every cash account') + ': ' + money(cash.total) + ')' : '') + '.';
   return h('section', { class: 'card month-sum', 'aria-label': 'This month in one line' },
     h('p', { class: 'flow-total' }, (m.net >= 0 ? money(m.net) + ' more comes in than goes out' : money(-m.net) + ' more goes out than comes in') + ' on the calendar in ' + longMonth(m.ym) + '.'),
     h('p', { class: 'tile-sub' }, 'Comes in ' + money(m.in) + '; goes out ' + money(m.out) + ' (bills, minimums, saving and the tax set-aside). Lines with no amount or marked "not added" are not in these totals.'),
-    cash.today !== null ? h('p', { class: 'tile-sub' }, 'Cash today: ' + money(cash.today) + ' across every cash account.', cash.path ? [' ', h('a', { href: ledgerHref(cash.path) }, 'View in the Ledger')] : null) : null,
+    cash.today !== null ? h('p', { class: 'tile-sub' }, 'Cash today: ' + money(cash.today) + (cash.todayNote ? '. ' + cash.todayNote : ' across every cash account.'), cash.path ? [' ', h('a', { href: ledgerHref(cash.path) }, 'View in the Ledger')] : null) : null,
     h('p', { class: 'tile-sub' }, chip(cash.kind === 'computed' ? 'known' : cash.kind), ' ', cashWords, c.sim && c.sim.floor.amount ? ' Floor on checking: ' + money(c.sim.floor.amount) + '.' : ''),
     readingLines(c, m),
     m.monthCash ? mathButton(['calendar:monthCash'], () => ({ ...mathCtx(), month: m })) : null,
@@ -501,13 +501,16 @@ document.addEventListener('keydown', (e) => {
   const i = document.getElementById('cal-search'); if (i) { e.preventDefault(); i.focus(); }
 });
 
+// Drag listeners go on once, like the keys above: boot runs again after Load my file, and a second set would make
+// one drag two undo steps.
+dragSetup(app);
+
 function boot(loaded) {
   hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
   const asOfYm = loaded.spine.meta.asOf.slice(0, 7);
   const want = location.hash.slice(1);
   const saved = read(KEY, (v) => /^\d{4}-\d{2}$/.test(v || ''), null);
   state.ym = /^\d{4}-\d{2}$/.test(want) ? want : saved || asOfYm;
-  dragSetup(app);
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
 }

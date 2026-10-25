@@ -4,7 +4,7 @@
 
 import { fact, setAt, valueOf, getAt } from './spine.js';
 import { estimateCardMinimum, DEFAULT_MIN_SOURCE } from './debt.js';
-import { isEarmarked } from './schema.js';
+import { isEarmarked, fromPaycheck } from './schema.js';
 
 const blank = (f) => !f || f.kind === 'missing';
 
@@ -39,9 +39,13 @@ export function applyDefaults(spine, rules) {
     for (const e of spine.expenses || []) if (!(e.covered && valueOf(e.covered) === true) && blank(e.paidFrom)) out = setAt(out, 'expenses.' + e.id + '.paidFrom', via('assumed paid from the main checking account'));
     for (const s of spine.income || []) if (blank(s.depositTo)) out = setAt(out, 'income.' + s.id + '.depositTo', via('assumed paid into the main checking account'));
     for (const d of spine.debts || []) if (blank(d.paidFrom) && (d.type !== 'family_iou' || (valueOf(d.minimum) ?? 0) > 0)) out = setAt(out, 'debts.' + d.id + '.paidFrom', via('assumed paid from the main checking account'));
+    // Where saving is paid in from follows the cash flow's one rule (engine/schema.js fromPaycheck): an HSA comes from
+    // take-home unless it is through payroll (answer 47). A house guess that no longer matches it is guessed again.
     for (const a of spine.accounts || []) {
-      if (a.family === 'cash' || !a.monthlyContribution || valueOf(a.monthlyContribution) === null || !blank(a.fundedFrom)) continue;
-      out = setAt(out, 'accounts.' + a.id + '.fundedFrom', PAYROLL.includes(a.family) ? rough('paycheck', 'mainChecking', 'assumed taken from the paycheck') : via('assumed paid in from the main checking account'));
+      if (a.family === 'cash' || !a.monthlyContribution || valueOf(a.monthlyContribution) === null) continue;
+      const f = a.fundedFrom, guess = f && f.kind === 'rough' && f.source === 'mainChecking';
+      if (!blank(f) && !(guess && (valueOf(f) === 'paycheck') !== fromPaycheck(a))) continue;
+      out = setAt(out, 'accounts.' + a.id + '.fundedFrom', fromPaycheck(a) ? rough('paycheck', 'mainChecking', 'assumed taken from the paycheck') : via('assumed paid in from the main checking account'));
     }
   }
   if ((spine.debts || []).some((d) => d.type === 'credit_card') && blank(spine.household.cardPayPolicy)) out = setAt(out, 'household.cardPayPolicy', rough('minimum', 'cardPayPolicy', 'assumed: new charges plus the minimum on the balance carried'));
@@ -69,7 +73,6 @@ export function mainChecking(spine) {
   const c = cash.find((a) => a.type === 'checking') || cash[0];
   return c ? c.id : null;
 }
-const PAYROLL = ['employerRetirement', 'hsaFsa'];
 
 // A phone bill, by its name.
 export const isPhone = (e) => /\b(phone|cell|mobile|wireless)\b/i.test((e.label || '') + ' ' + (e.id || ''));

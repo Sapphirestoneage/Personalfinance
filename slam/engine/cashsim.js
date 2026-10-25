@@ -513,7 +513,8 @@ export function cashsim(spine, rules, opts = {}) {
     // The lowest day is read off the checking line (every checking account together), like the line itself.
     low: days.length ? (() => { const d = days.reduce((m, x) => (x.primary < m.primary ? x : m)); return { date: d.date, amount: d.primary }; })() : { date: run.low.date, amount: dollars(run.low.cents) },
     floor: { amount: dollars(model.floor), target: dollars(model.floorTarget ?? null), cushionCash: dollars(model.cushionCash ?? 0), source: model.floorSource, guard: model.guard },
-    firstBelowFloor: run.firstBelowFloor, firstBelowZero: run.firstBelowZero, dryDate: run.firstDryTotal, raidDate: raid ? raid.date : null,
+    // Cash under the floor: every cash account added up, less money set aside for a goal (S-228), like the day's cash.
+    firstBelowFloor: run.firstBelowFloor, firstBelowZero: run.firstBelowZero, dryDate: apart.length ? (run.days.find((d) => d.cash - apartOf(d) < model.floor) || {}).date || null : run.firstDryTotal, raidDate: raid ? raid.date : null,
     cards, loans, clearDates: { cardsFree, hiFree, loansFree, allFree, hiRate: hi, perCard: Object.fromEntries(cardList.map((c) => [c.id, clearedOf(c)])) },
     interest: { total: dollars(run.interest.total), byCard: Object.fromEntries(Object.entries(run.interest.byCard).map(([k, x]) => [k, dollars(x)])), byMonth: Object.fromEntries(Object.entries(run.interest.byMonth).map(([ym, m]) => [ym, Object.fromEntries(Object.entries(m).map(([k, x]) => [k, dollars(x)]))])) },
     lateFees: dollars(run.lateFees), shortfalls: run.shortfalls.map((s) => ({ ...s, amount: dollars(s.cents) })), extraPaid: dollars(run.extraPaid), extraLog: run.extraLog.map((x) => ({ ...x, amount: dollars(x.cents) })),

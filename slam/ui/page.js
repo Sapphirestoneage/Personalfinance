@@ -5,6 +5,7 @@
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
+import { loadFailWords } from './profile-file.js';
 
 // The build stamp: moved by hand with each batch (no build step).
 export const BUILD = { label: 'Phase 2, Batch G and How much to max it', date: '2026-10-23' };
@@ -47,18 +48,22 @@ export function gapsCard(spine, sim) {
 // Whose numbers (S-228): every page's header says whose numbers these are. The made-up household reads "Example
 // household" with a filled "Load my file" button: the file picked is read here, in the browser, and saved in this
 // browser only, and the page reopens on it (reopen gets what loadAll returns). Anyone else's reads their name.
+// The last thing said about Load my file. The header is rebuilt on every render (a resize redraws the Calendar), so the
+// words live here and are written to whichever header is on the page when the file is read.
+let said = '';
+const say = (text) => { said = text; for (const m of document.querySelectorAll('.whose .edit-msg')) m.textContent = text; };
 export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen } = {}) {
   const w = whose(spine);
   const when = ' · numbers as of ' + shortDate(asOf);
   if (!w.example) return h('p', { class: 'muted whose' }, h('strong', { class: 'whose-name' }, w.name), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
-  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const msg = h('p', { class: 'edit-msg', role: 'alert' }, said);
   const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
   input.addEventListener('change', async () => {
     const file = input.files && input.files[0];
     if (!file) return;
-    msg.textContent = 'Reading ' + file.name + '...';
-    try { const loaded = await loadMyFile(file, rules); msg.textContent = ''; reopen({ rules, ...loaded }); }
-    catch (err) { msg.textContent = 'Could not load that file: ' + err.message; }
+    say('Reading ' + file.name + '...');
+    try { const loaded = await loadMyFile(file, rules); say(''); reopen({ rules, ...loaded }); }
+    catch (err) { console.warn(err); say(loadFailWords(err, file.name)); }
     input.value = '';
   });
   return h('div', { class: 'whose whose-example' },

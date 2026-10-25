@@ -4,7 +4,8 @@
 // field shows exactly once. Each node says what can be added there.
 
 import { valueOf } from './spine.js';
-import { PRESETS, FAMILIES, INCOME_TYPES, FAT } from './schema.js';
+import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked } from './schema.js';
+import { setAsideFor, setAsideWords } from './networth.js';
 import { ledgerRows } from './ledger.js';
 import { UNNAMED } from './labels.js';
 
@@ -71,7 +72,7 @@ export function ledgerTree(spine, inst) {
   const assetSections = families.map((f) => {
     const types = [...new Set(spine.accounts.filter((a) => a.family === f).map((a) => a.type))];
     const typeNodes = types.map((t) => node('A:' + f + ':' + t, PRESETS[t] ? PRESETS[t].label : t,
-      spine.accounts.filter((a) => a.type === t).map((a) => { const r = take(byPrefix('accounts.' + a.id)); return item('accounts.' + a.id, v(a.name) || a.id, r, { collection: 'accounts', id: a.id, summary: summaryOf(spine, '', r) }); }),
+      spine.accounts.filter((a) => a.type === t).map((a) => { const r = take(byPrefix('accounts.' + a.id)); return item('accounts.' + a.id, v(a.name) || a.id, r, { collection: 'accounts', id: a.id, summary: summaryOf(spine, '', r), note: isEarmarked(a) ? capital(setAsideWords(setAsideFor(spine, a))) + ', so it is not counted as cash.' : null }); }),
       { add: { collection: 'accounts', types: [t] } }));
     return node('A:' + f, FAMILIES[f] ? FAMILIES[f].label : f, typeNodes, { add: { collection: 'accounts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family === f) } });
   });

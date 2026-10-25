@@ -34,7 +34,7 @@
 // maxItCash(spine, rules, mx, { rows, sim }) -> { floor, before, after, breaks, payoff, words, ... }
 
 import { valueOf as v, tracker, round2, ageOn, addMonths, monthKey, daysBetween, dayIn, monthStart, monthEnd, accountOwner, incomeOwner } from './spine.js';
-import { PRESETS, PER_YEAR } from './schema.js';
+import { PRESETS, PER_YEAR, isEarmarked, throughPayroll } from './schema.js';
 import { earnedIncome, yearTax } from './tax.js';
 import { activeDays, streamWeight, paidBetween, paidThroughGuess } from './cashflow.js';
 import { cashsim } from './cashsim.js';
@@ -375,7 +375,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
   if (blank) {
     t.addMissing('accounts.' + blank.id + '.contributions');
     const bn = v(blank.name) || blank.id;
-    return done({ room: null, why: 'Nothing is recorded as in for ' + year + (blank.id === a.id ? '' : ' on ' + bn) + ', and it has no monthly amount to guess from, so what is left cannot be figured (empty is not zero). Record what went in for ' + year + ', $0 if nothing did.', missingLabel: 'missing: what went in for ' + year + (blank.id === a.id ? '' : ' on ' + bn), blankAccount: blank.id });
+    return done({ room: null, why: 'Nothing is recorded as in for ' + year + (blank.id === a.id ? '' : ' on ' + bn) + ', and it has no monthly amount to guess from, so what is left cannot be figured. Record what went in for ' + year + ', $0 if nothing did.', missingLabel: 'missing: what went in for ' + year + (blank.id === a.id ? '' : ' on ' + bn), blankAccount: blank.id });
   }
   const mine = poolIn(spine, accts, pools[0].key, year, asOf, t);
   const own = mine.parts.filter((p) => p.id === a.id);
@@ -543,7 +543,7 @@ export function maxItRow(spine, rules, a, year, { asOf = spine.meta.asOf, sim = 
     words.push('Employee deferral up to ' + money(employee) + (contributed.value ? ' (after ' + money(contributed.value) + ' of deferrals this year across every plan)' : '') + ', employer part up to ' + money(employer) + ' (' + Math.round(share * 100) + '% of ' + money(seAmt) + '), in all at most ' + money(Math.min(total, seAmt)) + (sepIn ? ' with the ' + money(sepIn) + ' in a SEP' : '') + '.');
     if (electGone) words.push('The employee deferral had to be elected by ' + longDay(deadline.elect.date) + '; only if it was can up to ' + money(employee) + ' more go in, so the room here is the employer part.');
     // Answer 49 (S-227): the employer part only, with one line saying why (whether the deferral was elected is not asked).
-    if (electGone) row.employerOnly = 'Only the employer part counts: the employee deferral had to be elected by ' + longDay(deadline.elect.date) + ', and the app does not know whether it was.';
+    if (electGone) row.employerOnly = 'Only the employer part counts here: the employee part had to be chosen by ' + longDay(deadline.elect.date) + '.';
   }
   if (room === null) room = 0;
   if (!Object.keys(row.parts).length) row.parts[pools[0].key] = room;
@@ -817,12 +817,24 @@ function matchPartOf(spine, q, asOf) {
   const a = (spine.accounts || []).find((x) => x.id === q.row.accountId);
   const rate = a && a.matchRate ? v(a.matchRate) : null, share = a && a.matchCap ? v(a.matchCap) : null;
   if (!rate || !share) return 0;
+  // Only pay still to come can be matched (no year-end true-up is asked about): the paychecks of the lines it is paid
+  // through from asOf on (a payday on asOf is still to come), each its line's amount (a quarterly or yearly line spread
+  // over monthly dates, as payDatesOf has it), less what is already set to go in from them (answer 63).
   const from = q.year + '-01-01', to = q.year + '-12-31';
-  const pay = earningFor(spine, q.row.person, ['w2', 'tips'], a).reduce((x, s) => { const amt = v(s.amount); return amt === null ? x : x + paidBetween(amt, s.cadence, s.start, s.end, from, to); }, 0);
-  const t = tracker(), inn = contributedOn(spine, a, q.year, asOf, t, 'own').value;
-  if (inn === null) return 0;
-  const have = round2(inn + ((stillOn(spine, a, q.year, asOf, t) || {}).value || 0));
-  return round2(Math.min(q.fill, Math.max(0, round2(share * pay) - have)));
+  const start = asOf > from ? asOf : from;
+  if (start > to) return 0;
+  const left = (s) => {
+    const amt = v(s.amount);
+    if (amt === null) return 0;
+    const days = PER_YEAR[s.cadence] ? paydaysOf(spine, s, start, to) : [];
+    if (!days.length) return paidBetween(amt, s.cadence, s.start, s.end, start, to) || 0;
+    return days.length * amt * PER_YEAR[s.cadence] / (s.cadence === 'quarterly' || s.cadence === 'yearly' ? 12 : PER_YEAR[s.cadence]);
+  };
+  const pay = earningFor(spine, q.row.person, ['w2', 'tips'], a).reduce((x, s) => x + left(s), 0);
+  const t = tracker();
+  if (contributedOn(spine, a, q.year, asOf, t, 'own').value === null) return 0;
+  const still = (stillOn(spine, a, q.year, asOf, t) || {}).value || 0;
+  return round2(Math.min(q.fill, Math.max(0, round2(share * pay) - still)));
 }
 // ---------------------------------------------------------------- Roth or pre-tax (answer 64, S-227)
 // A Roth and a pre-tax account that share one limit (a Roth 401(k) and a 401(k), a Roth and a traditional IRA): the Plan
@@ -1143,6 +1155,19 @@ function toCents(raw, caps, total) {
   }
   return out;
 }
+// What a dollar of HSA money through payroll saves in tax (answer 47): it comes off pay before federal and state income
+// tax and FICA (Social Security only under the wage base). The marginal rates of the year's tax, or of the known income
+// while something is missing; null when neither can be figured.
+export function payrollSaving(spine, rules, year) {
+  const tx = yearTax(spine, rules, year), L = tx.lines, P = tx.partial;
+  const pick = (k) => (L[k] && L[k].value !== null ? L[k].value : P && P[k] ? P[k].value : null);
+  const fed = pick('marginalFederal');
+  if (fed === null || fed === undefined) return null;
+  const state = pick('marginalState') ?? 0;
+  const wages = (tx.inputs && (tx.inputs.ficaWages ?? tx.inputs.wages)) ?? 0;
+  const fica = (wages < rules.get('SS_WAGE', year) ? rules.get('FICA_SS_RATE', year) : 0) + rules.get('FICA_MED_RATE', year);
+  return { rate: Math.round((fed + state + fica) * 10000) / 10000, federal: fed, state, fica: Math.round(fica * 10000) / 10000 };
+}
 // The new money run through the day-by-day simulation: each pool's once (what
 // the pool's monthly amounts already put in is in the run already), a
 // payroll-only pool's on its paydays and the rest one payment a month, the last
@@ -1157,6 +1182,18 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
   const flows = [];
   const byRow = new Map();
   for (const p of chosen) { if (!p.fill || !p.row.fillable) continue; const x = byRow.get(p.row) || { keys: [], fill: 0, capped: false }; x.keys.push(p.key); x.fill = round2(x.fill + p.fill); x.capped = x.capped || !!p.capped; byRow.set(p.row, x); }
+  // An HSA through payroll costs checking its new money less the tax it saves (answer 47): it comes off pay before
+  // income tax, Social Security and Medicare. Unknown while the year's tax cannot be figured: then the whole amount.
+  const saved = [];
+  for (const [r, x] of byRow) {
+    const a = (spine.accounts || []).find((y) => y.id === r.accountId);
+    if (!a || !throughPayroll(a)) continue;
+    const ps = payrollSaving(spine, rules, r.year);
+    if (!ps) { saved.push({ row: r, rate: null }); continue; }
+    const cost = round2(x.fill * (1 - ps.rate));
+    saved.push({ row: r, rate: ps.rate, amount: round2(x.fill - cost) });
+    x.fill = cost;
+  }
   for (const [r, x] of byRow) {
     const pc = r.paychecks;
     // Capped at what the paychecks hold: each paycheck gives what lands from it, or, when the Plan counts less (IRA money
@@ -1215,6 +1252,8 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
     words.push('Cannot be checked against cash until ' + [...new Set([...gaps, ...blank].map(has))].join(' and ') + ': that pay is not in the run.');
     if (flows.length) words.push(money(total) + ' more would leave checking by ' + longDay(flows[flows.length - 1].date) + '.');
   } else if (blank.length) words.push((flows.length ? 'Incomplete: the payroll money is left out until ' : 'Cannot be checked against cash until ') + blankWords + '.');
+  // Money set aside for a goal is not in the day's cash (S-228), so the words say whose cash it is.
+  const cashWords = (spine.accounts || []).some(isEarmarked) ? 'cash you can use' : 'cash across every account';
   // A run that is short a paycheck gives no verdict.
   if (!gaps.length && !flows.length) { if (!blank.length) words.push('Nothing more leaves checking: what already goes in covers it.'); }
   else if (!gaps.length) {
@@ -1222,8 +1261,9 @@ export function maxItCash(spine, rules, mx, { rows = null, sim = null, asOf = mx
     if (floor === null) words.push('The cash floor cannot be figured until monthly spending is known.');
     else if (breaks) {
       const shortWords = newShort + ' payment' + (newShort === 1 ? '' : 's') + ' (' + money(shortMore) + ') could not be made in full, because checking cannot go under its floor';
-      words.push('It breaks the cash floor: ' + (under > underBefore ? 'cash across every account dips to ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ', ' + money(under) + ' under the floor of ' + money(floor) + (newShort ? ', and ' + shortWords : '') : shortWords + ' (the lowest day of cash across every account is ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ', against a floor of ' + money(floor) + ')') + '.');
-    } else words.push('It keeps the cash floor: the lowest day of cash across every account is ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ' (' + money(b.low.cash) + ' without it), against a floor of ' + money(floor) + '.');
+      words.push('It breaks the cash floor: ' + (under > underBefore ? cashWords + ' dips to ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ', ' + money(under) + ' under the floor of ' + money(floor) + (newShort ? ', and ' + shortWords : '') : shortWords + ' (the lowest day of ' + cashWords + ' is ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ', against a floor of ' + money(floor) + ')') + '.');
+    } else words.push('It keeps the cash floor: the lowest day of ' + cashWords + ' is ' + money(f.low.cash) + ' on ' + longDay(f.low.date) + ' (' + money(b.low.cash) + ' without it), against a floor of ' + money(floor) + '.');
+    for (const y of saved) words.push(y.rate === null ? 'Through payroll, ' + y.row.name + ' costs less by the tax it saves, which cannot be figured until the year\'s tax can, so the whole amount is counted.' : 'Through payroll, ' + y.row.name + ' costs ' + money(y.amount) + ' less: it comes off pay before ' + Math.round(y.rate * 1000) / 10 + '% of income tax, Social Security and Medicare.');
     if (f.pull > b.pull) words.push(money(f.pull - b.pull) + ' more comes out of the cushion to keep checking above its floor.');
     if (worst && worst.days > 0) words.push(worst.pushedPast ? worst.name + ' was paid off on ' + longDay(worst.before) + '; with this it is not paid off inside the run (to ' + longDay(end) + '), at least ' + worst.days + ' days later.' : 'It pushes the ' + worst.name + ' payoff from ' + longDay(worst.before) + ' to ' + longDay(worst.after) + ', ' + worst.days + ' days later.');
     else if (measurable) words.push('No card or loan payoff date moves.');

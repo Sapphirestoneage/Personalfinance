@@ -241,22 +241,51 @@ export const REPAIR_SOURCE = 'a field the file could not use';
 export function readHousehold(raw, { today = null } = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error(NOT_A_HOUSEHOLD);
   const body = raw.format === 'slam-export/1' && raw.spine && typeof raw.spine === 'object' ? raw.spine : raw;
-  let spine;
+  let spine, skipped = [];
   if (typeof body.schema === 'string' && /^slam-spine\//.test(body.schema)) spine = upgradeSpine(body);
-  else if (body._meta && typeof body.household === 'object' && body.household) spine = fromProfile(body, { today });
+  else if (body._meta && typeof body.household === 'object' && body.household) { spine = fromProfile(body, { today }); skipped = profileSkips(body); }
   else throw new Error(NOT_A_HOUSEHOLD);
-  return repairSpine(spine, { today });
+  const r = repairSpine(spine, { today });
+  if (!skipped.length) return r;
+  // What the profile reader passed over (a list that is not a list, an entry that is not a record) is named and kept
+  // aside the same way the repair keeps a field aside, so nothing in the file disappears without a word.
+  const m = r.spine.meta;
+  const fresh = skipped.filter((x) => !(m.problems || []).some((y) => y.path === x.path));
+  m.unread = { ...(m.unread || {}), ...Object.fromEntries(fresh.map((x) => [x.path, x.held])) };
+  m.problems = [...(m.problems || []), ...fresh];
+  return { spine: r.spine, problems: [...fresh, ...r.problems] };
+}
+
+// The lists a profile is read from. An entry the reader cannot use as a record is passed over there, so it is named here.
+const PROFILE_LISTS = [['income', (p) => p.income], ['expenses', (p) => p.expenses], ['accounts', (p) => p.accounts], ['otherAssets', (p) => p.otherAssets], ['debts', (p) => p.debts], ['goals', (p) => p.goals], ['household.people', (p) => p.household && p.household.people]];
+function profileSkips(p) {
+  const out = [];
+  const keep = (path, held, message) => out.push({ path, message: message + '; kept aside, not used', held: held === undefined ? null : held, aside: true });
+  for (const [path, get] of PROFILE_LISTS) {
+    const x = get(p);
+    if (x === undefined || x === null) continue;
+    if (!Array.isArray(x)) { keep(path, x, 'not a list'); continue; }
+    x.forEach((y, i) => { if (!y || typeof y !== 'object' || Array.isArray(y)) keep(path + '[' + i + ']', y, 'not a record'); });
+  }
+  return out;
 }
 
 // What the file held that could not be used, for the Ledger to list (S-228).
 // Each comes with words for the field (`label`) and, when it is a field the Ledger opens, its path (`link`).
-const ROOT_WORDS = { income: 'An income line', expenses: 'An expense', accounts: 'An account', debts: 'A debt', goals: 'A goal', taxYears: 'A tax year', log: 'A logged entry', checkins: 'A check-in', calendar: 'A calendar choice', household: 'The household', meta: 'The file', debtPlan: 'The debt plan', feed: 'A learned merchant', assumptions: 'The assumptions', '': 'The file' };
+const ROOT_WORDS = { income: 'An income line', expenses: 'An expense', accounts: 'An account', otherAssets: 'An asset', debts: 'A debt', goals: 'A goal', taxYears: 'A tax year', log: 'A logged entry', checkins: 'A check-in', calendar: 'A calendar choice', household: 'The household', meta: 'The file', debtPlan: 'The debt plan', feed: 'A learned merchant', assumptions: 'The assumptions', '': 'The file' };
 export function fileProblems(spine) {
   const all = (spine && spine.meta && Array.isArray(spine.meta.problems)) ? spine.meta.problems.filter((x) => x && typeof x.path === 'string') : [];
   const named = (x) => {
     const field = !x.aside && namedPath(x.path) && getAt(spine, x.path) !== undefined;
-    const label = x.path === 'meta.asOf' ? 'The as-of date' : field ? labelFor(spine, x.path) : (ROOT_WORDS[x.path.split(/[.[]/)[0]] || 'A field') + ' (' + x.path + ')';
-    return { ...x, label, link: field ? x.path : null };
+    const label = x.path === 'meta.asOf' ? 'The as-of date' : field ? labelFor(spine, x.path) : (ROOT_WORDS[x.path.split(/[.[]/)[0]] || 'Something') + nameOf(x);
+    return { ...x, label, words: x.missing ? 'could not be read, so it shows as missing until you enter it again' : x.aside ? 'could not be read, so it is set aside and not used' : 'could not be read as it was, so it was read another way; check it', link: field ? x.path : null };
+  };
+  // The record's own name in words (never its place in the file): the item still in the household, else what the file held.
+  const nameOf = (x) => {
+    const [top, id] = x.path.split(/[.[\]]/);
+    const rec = (Array.isArray(spine && spine[top]) && spine[top].find((r) => r && r.id === id)) || (x.held && typeof x.held === 'object' && !Array.isArray(x.held) ? x.held : null);
+    const nm = !rec ? null : typeof rec.label === 'string' ? rec.label : rec.name && typeof rec.name === 'object' ? rec.name.value : rec.name;
+    return typeof nm === 'string' && nm.trim() ? ' (' + nm.trim() + ')' : '';
   };
   // Open: a field set to missing that has not been entered in the Ledger since (a house default may stand in for it
   // meanwhile). Other: the rest of what the file held that could not be used as it was (kept aside, or read another

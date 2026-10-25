@@ -46,7 +46,7 @@ export function gantt(sim) {
   const frac = (date) => Math.min(1, Math.max(0, daysBetween(from, date) / span));
   const rows = [];
   for (const c of sim.model.cards) {
-    if (!(openingCents(c) > 0)) continue;
+    if (!(openingCents(c) > 0) || c.payInFull) continue;
     const st = sim.cards[c.id];
     const clear = sim.clearDates.perCard[c.id] || null;
     rows.push({ id: c.id, name: c.name, kind: 'card', path: c.path, startBalance: dollars(openingCents(c)), endBalance: st ? st.balance : null, clearDate: clear, beyond: !clear, endsAt: clear || to, fraction: clear ? frac(clear) : 1, interest: sim.interest.byCard[c.id] ?? 0, apr: c.apr, promoEnd: c.promoEnd, revolving: st ? st.revolving : null });
@@ -189,7 +189,7 @@ export function cardTiles(spine, rules, sim, asOf = spine.meta.asOf) {
       everyday: !!c.goalNoInterest, payLast: !!c.payLast, revolving: st ? st.revolving : null, clearDate: sim.clearDates.perCard[c.id] || null, interest: sim.interest.byCard[c.id] ?? 0,
       cycle, util: util.items.find((x) => x.id === c.id) || null,
       why: why ? { code: why.code, text: why.text, minimum: dollars(why.minimum), interest: dollars(why.interest), charged: dollars(why.charged), paid: dollars(why.paid) } : null,
-      trap: d && openingCents(c) > 0 ? minimumTrap(spine, rules, d, asOf) : null,
+      trap: d && openingCents(c) > 0 && !c.payInFull ? minimumTrap(spine, rules, d, asOf) : null,
       fee: d ? feeRoi(d) : null,
       bonus: d ? signupBonus(d, sim, asOf) : null
     };

@@ -10,7 +10,7 @@ import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
 import { isSubscription } from './subscriptions.js';
-import { lineFor, paysDebtOf } from './debt.js';
+import { lineFor, paysDebtOf, linkNote } from './debt.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool,
 // choice:a|b (pick one), suggest:a|b (pick one or type another), list.
@@ -175,12 +175,14 @@ const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st',
 export function paymentRow(spine, e) {
   const path = 'expenses.' + e.id + '.paidFrom';
   const from = e.paidFrom ? e.paidFrom.value : null, day = e.payDay ? e.payDay.value : null;
-  const pays = paysDebtOf(spine, e);
+  // The debt it names stays picked in the editor even while it counts as a bill (linkNote says why).
+  const named = e.paysDebt && (spine.debts || []).some((d) => d.id === valueOf(e.paysDebt)) ? valueOf(e.paysDebt) : null;
+  const note = linkNote(spine, e);
   const kind = !e.paidFrom ? 'missing' : e.paidFrom.kind;
   return {
     path, label: labelFor(spine, path), group: 'E', type: 'payment',
-    fact: { value: from === null ? null : { from, day, paysDebt: pays }, kind },
-    display: from === null ? null : linkName(spine, from) + (day ? ', on the ' + ordinal(day) : '') + (pays ? '; pays ' + linkName(spine, pays) : ''),
+    fact: { value: from === null ? null : { from, day, paysDebt: named }, kind },
+    display: from === null ? null : linkName(spine, from) + (day ? ', on the ' + ordinal(day) : '') + (named ? '; pays ' + linkName(spine, named) + (note ? ' (' + note + ')' : '') : ''),
     members: [path, 'expenses.' + e.id + '.payDay', 'expenses.' + e.id + '.paysDebt']
   };
 }
@@ -190,7 +192,7 @@ function linkedDebtRow(spine, row) {
   if (s[0] !== 'debts' || s[2] !== 'minimum') return row;
   const d = getAt(spine, 'debts.' + s[1]);
   const e = d ? lineFor(spine, d) : null;
-  return e ? { ...row, display: 'Paid by the ' + e.label + ' line, counted once', linked: true } : row;
+  return e ? { ...row, display: 'Paid by the ' + e.label + ' line, counted once', linked: true, linePath: 'expenses.' + e.id + '.paidFrom' } : row;
 }
 
 // The headline numbers a guess is measured against, each with a scale so a

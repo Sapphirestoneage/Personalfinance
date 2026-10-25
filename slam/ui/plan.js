@@ -135,7 +135,7 @@ function floorCard(spine, s, sim, ctx) {
   const f = fixedFloor(spine, rules, s, sim, { months: p.ok ? p.value : null });
   return h('section', { class: 'card', 'aria-labelledby': 'floor-h' },
     h('h2', { id: 'floor-h' }, 'The fixed floor, and if income stopped'),
-    h('p', { class: 'tile-sub' }, kindChip(f.kind), ' ', f.floor === null ? h('span', { class: 'missing-row' }, 'Missing: a fixed line\'s amount') : 'Fixed commitments ' + money(f.floor) + ' a month (' + f.items.map((i) => i.label).join(', ') + (f.items.length ? ', plus' : '') + ' minimums ' + money(f.minimums) + '). ' + (f.runwayMonths === null ? '' : 'Cash (' + money(f.cash) + ') covers it for ' + f.runwayMonths + ' months.')),
+    h('p', { class: 'tile-sub' }, kindChip(f.kind), ' ', f.floor === null ? h('span', { class: 'missing-row' }, 'Missing: a fixed line\'s amount') : 'Fixed commitments ' + money(f.floor) + ' a month (' + f.items.map((i) => i.label).join(', ') + (f.items.length ? ', plus' : '') + ' minimums ' + money(f.minimums) + '). ' + (f.runwayMonths === null ? '' : 'Cash (' + money(f.cash) + ') covers it for ' + f.runwayMonths + ' months.' + (f.setAsideNote ? ' ' + f.setAsideNote : ''))),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const q = months.value.trim() === '' ? { ok: true } : parseInput('int', months.value); if (!q.ok) { msg.textContent = q.message; return; } form.shockMonths = months.value; render(); } },
       h('label', { for: 'shock-months', class: 'edit-label' }, 'If every paycheck stopped for this many months'), months, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Run it'))),

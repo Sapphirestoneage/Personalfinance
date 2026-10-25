@@ -24,6 +24,7 @@ export const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0
 export const words = (s) => String(s).replace(/_/g, ' ');
 export const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 
+export const ROLE_WORDS = { spending: 'Spending money', emergency: 'Emergency cushion', sinking: 'Set aside for a goal', holding: 'Holding' };
 // How a card is paid (S-189), in words.
 export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what I carry', statement: 'The full statement balance' };
 
@@ -66,6 +67,8 @@ export function showValue(value, type) {
     return value.map((x) => (typeof x === 'object' ? (x.year ? x.year + ': ' : '') + money(x.amount, !Number.isInteger(x.amount)) + (x.taxable !== undefined && x.taxable !== x.amount ? ' (taxable ' + money(x.taxable, !Number.isInteger(x.taxable)) + ')' : '') + (KIND[x.kind] || '') : x)).join(', ');
   }
   if (type === 'choice:' + PAY_POLICIES.join('|')) return PAY_POLICY_WORDS[value] || words(value);
+  // A cash account's role, in a client's words (S-228): a sinking fund is money set aside for a goal.
+  if (type === 'choice:spending|emergency|sinking|holding') return ROLE_WORDS[value] || words(value);
   if (type.startsWith('choice:')) return words(value);
   if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
   return String(value);

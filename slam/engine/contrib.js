@@ -47,7 +47,7 @@ export function payDatesOf(s, from, to) {
 // month's end is its last day); else the run's rule from the one day (cashcal.js paydays: a day before the 15th and 15
 // days later, the 16th to the 27th and 15 days earlier, else the 15th and the last day). The calendar, the day-by-day
 // run and the pay counts all place the two days with this, so their keys match.
-export const payDay2Of = (s) => (s.cadence === 'semimonthly' && s.payDay && v(s.payDay) && s.payDay2 && v(s.payDay2) ? v(s.payDay2) : null);
+export const payDay2Of = (s) => (s.cadence === 'semimonthly' && s.payDay && v(s.payDay) && s.payDay2 && v(s.payDay2) && v(s.payDay2) !== v(s.payDay) ? v(s.payDay2) : null);
 export function semimonthlyDates(s, from, to) {
   const day = s.payDay ? v(s.payDay) : null, day2 = payDay2Of(s);
   if (day2 === null) return C.paydays('semimonthly', dayIn(monthKey(from), day || 15), from, to);

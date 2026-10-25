@@ -51,7 +51,7 @@ export function billsCard(ctx) {
   }
   const debts = doc.debts.filter((x) => x.state !== 'archived' && !linkedLine(doc, x));
   return h('div', { class: 'card', id: 'bills-card' },
-    h('p', { class: 'muted small' }, 'Optional. Which account pays each bill, the month a yearly bill is due, and how each card is paid. Due days for the day-by-day cash calendar are in SLAM: ', h('a', { href: 'ledger.html', target: '_blank', rel: 'noopener' }, 'the Ledger'), ' (S-209).'),
+    h('p', { class: 'muted small' }, 'Optional. Which account pays each bill, the month a yearly bill is due, and how each card is paid. Set the day each bill is due in ', h('a', { href: 'ledger.html', target: '_blank', rel: 'noopener' }, 'your numbers'), '.'),
     bills.length ? bills.map(({ l, annual }) => [h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: the month it is due (1 to 12), and the account it is paid from' : 'The account it is paid from')),
       h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null,

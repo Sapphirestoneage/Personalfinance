@@ -50,7 +50,11 @@ const households = () => {
   let c = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
   c = editExpense(c, 'phone', { amount: null, cadence: 'monthly', coveredBy: 'Parents' }, '2026-10-23');
   c = { ...c, expenses: c.expenses.map((e) => (e.id === 'streaming' ? { ...e, amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : e)) };
-  list.push(['demo, a covered bill with no amount', applyDefaults(c, R)]);
+  c = applyDefaults(c, R);
+  // applyDefaults refills the phone with the house default, so a covered bill with no default stays blank here.
+  const F = (value) => ({ value, kind: 'known', asOf: null, source: 'test' });
+  c = { ...c, expenses: [...c.expenses, { id: 'cable', label: 'Cable', amount: { value: null, kind: 'missing', asOf: null, source: 'test' }, cadence: 'monthly', covered: F(true), coveredBy: F('Parents') }] };
+  list.push(['demo, a covered bill with no amount', c]);
   if (exists('fixtures/eli.local.json')) list.push(['local profile', applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R)]);
   // Each household also gets a windfall of $5,000 with tax taken out, so the Windfall steps are audited too (S-201).
   return list.map(([name, spine]) => {
@@ -81,7 +85,7 @@ const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.item
   ...h.ctx.debt.loans.filter((l) => l.federal !== false).map((l) => 'debt:idr:' + l.id),
   ...(h.ctx.bt && h.ctx.bt.value !== null ? ['debt:bt'] : []), ...(h.ctx.solve && !h.ctx.solve.impossible ? ['debt:solve'] : []), ...h.ctx.which.rows.map((r) => 'debt:whichCard:' + r.id),
   'spend:safeToday', ...(h.ctx.spend.safe.daysUntil ? ['spend:safePerDay'] : []), ...h.ctx.spend.tags.rows.flatMap((r) => ['spend:tagBudget:' + r.tag, 'spend:tagSpent:' + r.tag, ...(r.pace !== null ? ['spend:pace:' + r.tag] : [])]),
-  ...h.ctx.tiers.tiers.map((x) => 'spend:tier:' + x.id), 'spend:cut', ...(h.ctx.cut.debt && h.ctx.cut.debt.interestSaved !== null ? ['spend:cutDebt'] : []), 'spend:ask', ...h.ctx.spend.autopsy.rows.slice(0, 3).map((r) => 'spend:autopsy:' + r.id),
+  ...h.ctx.tiers.tiers.map((x) => 'spend:tier:' + x.id), 'spend:cut', ...(h.ctx.cut.debt && h.ctx.cut.debt.interestSaved !== null ? ['spend:cutDebt'] : []), 'spend:ask', ...h.ctx.spend.autopsy.rows.slice(0, 5).map((r) => 'spend:autopsy:' + r.id),
   ...h.ctx.spend.prices.rows.map((r) => 'spend:priceChange:' + r.id), ...(h.ctx.spend.drift.count ? ['spend:drift'] : []), ...(h.ctx.spend.momentum.perMonth !== null ? ['spend:momentum'] : []), ...(h.ctx.spend.sweep.on ? ['spend:sweep'] : []),
   'compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected', ...h.ctx.compare.lines.slice(0, 3).map((r) => 'compare:line:' + r.id), ...h.ctx.compare.tags.map((r) => 'compare:tag:' + r.tag),
   ...h.ctx.plan.foo.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), ...h.ctx.plan.alloc.paychecks.slice(0, 2).map((p) => 'plan:pay:' + p.date + ':' + p.streamId), ...h.ctx.solvers.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id),

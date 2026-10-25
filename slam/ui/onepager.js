@@ -27,7 +27,7 @@ function boot({ spine: base, rules, source, problem }) {
   app.replaceChildren(
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending')),
     h('div', { class: 'onepager' },
-      h('header', { class: 'top' }, h('div', {}, h('h1', {}, whose(base).name + ' on one page'), whoseLine(base, source, { rules, reopen: boot })), h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => window.print() }, 'Print'))),
+      h('header', { class: 'top' }, h('div', {}, h('h1', {}, whose(base).name + ' on one page'), whoseLine(base, source, { rules, reopen: boot })), h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: whose(base).example ? 'btn' : 'btn primary', onclick: () => window.print() }, 'Print'))),
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },
         cell('Net worth', m(sh.netWorth.value), 'assets ' + m(sh.assets.value) + ', debts ' + m(sh.debts.value)),
         cell('Cash', m(sh.cash.value), em.tiers.full.runway.value === null ? 'runway unknown' : em.tiers.full.runway.value.toFixed(1) + ' months at ' + m(em.tiers.full.burn.value) + ' a month'),

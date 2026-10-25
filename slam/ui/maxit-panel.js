@@ -102,13 +102,18 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   const key = 'maxit:' + r.accountId + ':' + r.year + ':';
   const head = h('h3', {}, 'For ' + r.year + ', by ' + longDay(r.deadline.date), ' ', kindChip(r.kind));
   if (!r.applies) return h('div', { class: 'max-year card-tile' }, head, h('p', { class: 'muted' }, r.why));
-  const record = onRecord ? recordButton(r, onRecord) : h('a', { class: 'tile-view', href: maxHref(r.accountId) }, 'Record what went in, in the Ledger ›');
+  const record = onRecord ? recordButton(r, onRecord) : h('a', { class: 'tile-view', href: maxHref(r.accountId) }, 'Record what went in for ' + r.year + ' ›');
   if (r.room === null) {
     const fill = [...(r.ei && r.ei.missing.length ? r.ei.missing : []), ...(r.missing || [])].find(canFill);
+    // A year with nothing recorded (answer 43) is filled in right here: this account's record form, or the panel of
+    // the account sharing the limit that has nothing recorded.
+    const other = r.blankAccount && r.blankAccount !== r.accountId ? (m.mx.accounts.find((x) => x.id === r.blankAccount) || { name: 'the other account' }) : null;
     return h('div', { class: 'max-year card-tile' }, head,
       h('p', { class: 'missing-row' }, cap1(r.missingLabel) + '.'),
       h('p', { class: 'tile-sub' }, r.why),
-      fill ? h('a', { class: 'tile-view', href: ledgerHref(fill) }, 'Fill in ' + labelFor(m.spine, fill) + ' ›') : null,
+      r.blankAccount === r.accountId ? h('div', { class: 'edit-actions' }, record)
+        : other ? h('a', { class: 'tile-view', href: maxHref(r.blankAccount) }, 'Record what went in for ' + other.name + ' ›')
+          : fill ? h('a', { class: 'tile-view', href: ledgerHref(fill) }, 'Fill in ' + labelFor(m.spine, fill) + ' ›') : null,
       mathButton([key + 'room'], ctxFor(m)));
   }
   const main = mainOf(r);

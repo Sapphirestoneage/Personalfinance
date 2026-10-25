@@ -45,7 +45,7 @@ function index(ctx) {
   for (const d of live(doc.debts)) out.push(['Debts', d.label, 'Debt', { where: 'setup:debts', item: d.label }]);
   for (const [anchor, name, where] of CHARTS) out.push(['Charts', name, where.replace('insights:', 'Insights, ').replace('setup:', 'Setup, '), { where, anchor, item: name }]);
   for (const [id, name] of SETUP_SECTIONS) out.push(['Settings', name, 'Setup', { where: 'setup:' + id, item: name }]);
-  out.push(['Settings', 'Cushion', 'Setup, coach settings', { where: 'setup:coach', item: 'Cushion' }], ['Settings', 'Paydays', 'Setup, income', { where: 'setup:income', anchor: 'paydays-card', item: 'Paydays' }]);
+  out.push(['Settings', 'Paydays', 'Setup, income', { where: 'setup:income', anchor: 'paydays-card', item: 'Paydays' }]);
   for (const m of doc.months) out.push(['Months', monthLabel(m.key), 'Closed', { where: 'months', ui: { monthsPick: m.key }, item: monthLabel(m.key) }]);
   out.push(['Months', monthLabel(doc.currentMonth), 'Working on it', { where: 'review', item: monthLabel(doc.currentMonth) }]);
   for (const [id, name] of SCREENS) out.push(['Screens', name, 'Screen', { where: id === 'review' ? 'review' : id === 'today' ? 'today' : id === 'track' ? 'track' : id === 'plan' ? 'plan' : id === 'insights' ? 'insights:where' : 'setup:basics' }]);

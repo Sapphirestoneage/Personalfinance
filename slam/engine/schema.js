@@ -287,6 +287,7 @@ export function validate(spine) {
       // Twice a month, the second day it is paid (S-226): the 1st and the 15th. Optional; without it the run's rule makes it.
       checkFact(p + '.payDay2', s.payDay2, 'int', false);
       if (s.payDay2 && s.payDay2.value !== null && (s.payDay2.value < 1 || s.payDay2.value > 31)) err(p + '.payDay2', 'a day from 1 to 31');
+      else if (s.payDay2 && s.payDay2.value !== null && s.payDay && s.payDay.value === s.payDay2.value) err(p + '.payDay2', 'a different day from the first');
       if (s.likelihood && s.likelihood.value !== null && (s.likelihood.value < 0 || s.likelihood.value > 1)) err(p + '.likelihood', 'between 0 and 1');
       if (s.type === 'maybeMoney' && !s.likelihood) err(p + '.likelihood', 'maybe money needs a likelihood');
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
@@ -313,7 +314,11 @@ export function validate(spine) {
     checkFact(p + '.paidFrom', e.paidFrom, 'link', false);
     // The debt this line pays (S-226): its payment is counted once, under debt payments.
     checkFact(p + '.paysDebt', e.paysDebt, 'link', false);
-    if (e.paysDebt && e.paysDebt.value !== null && !(spine.debts || []).some((d) => d.id === e.paysDebt.value)) err(p + '.paysDebt', 'no such debt');
+    if (e.paysDebt && e.paysDebt.value !== null) {
+      if (!(spine.debts || []).some((d) => d.id === e.paysDebt.value)) err(p + '.paysDebt', 'no such debt');
+      else if (!PER_YEAR[e.cadence]) err(p + '.paysDebt', 'a line that pays a debt repeats');
+      else if (ex.some((x) => x !== e && ex.indexOf(x) < ex.indexOf(e) && x.paysDebt && x.paysDebt.value === e.paysDebt.value)) err(p + '.paysDebt', 'another line already pays this debt');
+    }
     checkFact(p + '.payDay', e.payDay, 'int', false);
     // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
     checkFact(p + '.subscription', e.subscription, 'bool', false);

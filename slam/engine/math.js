@@ -333,7 +333,8 @@ function expenseCostMetric(id) {
       return out({ value: val ? val.yourMonthly === null ? null : Math.round(val.yourMonthly * 100) / 100 : null, kind: row ? row.fact.kind : 'missing', rules: [], rough: [], missing: [] },
         [field(spine, 'expenses.' + eid + '.amount', bill === null ? null : Math.round(bill * 100) / 100, 'usd/month', 'arg', 'The bill a month'), shareTerm]);
     },
-    recompute: (t) => (t[0].value === null || t[1].value === null ? null : Math.round(t[0].value * t[1].value * 100) / 100) };
+    // A bill someone else covers costs you nothing, with or without an amount.
+    recompute: (t) => (t[1] && t[1].value === 0 ? 0 : t[0].value === null || t[1].value === null ? null : Math.round(t[0].value * t[1].value * 100) / 100) };
 }
 
 // One Windfall step ("windfall:<step>", S-201): what the step takes is the
@@ -414,7 +415,8 @@ const term = (label, value, unit, kind, role, extra = {}) => ({ label, value, un
 const ruleOrMissing = (rules, id, year, label, unit) => (rules.has(id, year) ? ruleTerm(rules, id, year, 'arg', label, unit) : term(label + ' (rule ' + id + ', not in the registry)', null, unit, 'missing', 'arg', { rule: id }));
 function debtMetric(id) {
   if (!id || !id.startsWith('debt:')) return null;
-  const [, what, key] = id.split(':');
+  const [, what, ...rest] = id.split(':');
+  const key = rest.length ? rest.join(':') : undefined;
   const cardOf = (d) => d && d.cards.find((c) => c.id === key);
   if (what === 'interestWindow') return { id, label: 'Card interest inside the window', unit: 'usd', op: 'sum', screens: DEBT_SCREENS, formula: 'Card interest in the window = what each card charges at its statement closes, added up',
     explain: ({ debt: d }) => (d ? out(resOf(d, d.interest.total), d.interest.debts.map((x) => term(x.name + ' interest', x.total, 'usd', 'computed', 'plus', { path: (d.cards.find((c) => c.id === x.id) || {}).path || null }))) : out(null, [])) };
@@ -450,7 +452,8 @@ function debtMetric(id) {
 const SPEND_SCREENS = ['spending', 'dashboard#tile-cash'];
 function spendMetric(id) {
   if (!id || !id.startsWith('spend:')) return null;
-  const [, what, key] = id.split(':');
+  const [, what, ...rest] = id.split(':');
+  const key = rest.length ? rest.join(':') : undefined;
   const tagOf = (sp) => sp && sp.tags.rows.find((r) => r.tag === key);
   if (what === 'safeToday') return { id, label: 'Safe to spend today', unit: 'usd', op: 'sum', screens: SPEND_SCREENS, formula: 'Safe to spend = the lower of (cash outside the cushion - what is committed before the next paycheck - the floor on checking) and (the lowest cash outside the cushion in the window - the floor on checking)',
     explain: ({ spend: sp }) => {
@@ -502,7 +505,8 @@ function spendMetric(id) {
 const COMPARE_SCREENS = ['dashboard#tile-compare', 'spending'];
 function compareMetric(id) {
   if (!id || !id.startsWith('compare:')) return null;
-  const [, what, key] = id.split(':');
+  const [, what, ...rest] = id.split(':');
+  const key = rest.length ? rest.join(':') : undefined;
   const win = (c) => monthWordsShort(c.from) + (c.from === c.to ? '' : ' to ' + monthWordsShort(c.to));
   if (what === 'line') return { id, label: 'Actual against the plan for the line', unit: 'usd', op: 'sum', blockOnMissing: true, screens: COMPARE_SCREENS, formula: 'Difference = what the log shows for the line in the window - what the plan has for it month by month',
     explain: ({ spine, compare: c }) => { const r = c && c.lines.find((x) => x.id === key); return r ? out({ value: r.diff, kind: r.kind, from: [r.path], rough: [], missing: r.missing ? [r.path] : [], rules: [] }, [term('Logged to ' + r.label + ', ' + win(c) + ' (' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies') + ')', r.actual, 'usd', 'known', 'plus'), field(spine, r.path, r.missing ? null : r.planned, 'usd', 'minus', r.label + ' planned, ' + win(c))]) : out(null, []); } };

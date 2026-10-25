@@ -1,7 +1,7 @@
 // Owning vs the alternative (S-113): one card per home or vehicle, read-only. Its equity (it counts
 // in net worth), what it costs a month that you never get back, and the alternative, side by side.
 // Descriptive only: no verdicts, no "you should". Numbers from calc/owning.js; the inputs are in
-// Setup, Accounts (each asset's details) and Setup, Cushion and coach settings (the return).
+// Setup, Accounts (each asset's details) and Setup, Coach settings (the return).
 
 import { h } from '../dom.js';
 import { money } from '../format.js';

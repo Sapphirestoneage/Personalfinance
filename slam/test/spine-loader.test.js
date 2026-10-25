@@ -113,7 +113,7 @@ test('a version 4 profile: fields under the spine\'s names are read, unknown one
   assert.match(s.sheet.setAsideNote, /set aside for Surgery/);
   const p = fileProblems(r.spine);
   assert.equal(p.open.length, 0); assert.equal(p.other.length, 1);
-  assert.equal(p.other[0].label, 'An account (accounts.odd)');
+  assert.equal(p.other[0].label, 'An account (pillow)', 'named in words, never by its place in the file');
 });
 
 test('a version 5 profile: plain values and { value, kind } numbers read; what cannot be used reads missing and is named', () => {

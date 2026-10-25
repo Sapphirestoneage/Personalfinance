@@ -320,7 +320,7 @@ test('your part of a shared bill: an even split, a percent, or the dollars you p
 import { editPayment, duplicateItem } from '../engine/edits.js';
 import { paymentRow, linkOptions } from '../engine/ledger.js';
 import { mainChecking } from '../engine/defaults.js';
-import { minimumsTotal } from '../engine/debt.js';
+import { minimumsTotal, debtSchedule } from '../engine/debt.js';
 
 test('links: until said otherwise, money goes through the main checking, as a guess', () => {
   const s = applyDefaults(demo(), R);
@@ -357,10 +357,15 @@ test('the card pay setting: the full statement pays off what a card carries', ()
   const iso = '2026-11-01';
   const before = minimumsTotal(s, R, iso).items.find((x) => x.id === card.id).amount;
   assert.ok(before < card.balance.value, 'the minimum to start');
+  // Paid in full each month (answer 38): the card is not a payment on top of the spending already on it, so it has no
+  // minimum in the cash flow; the statement it carries now is paid once in the months ahead (the debt schedule).
   const all = { ...s, household: { ...s.household, cardPayPolicy: { value: 'statement', kind: 'known', asOf: '2026-10-23', source: 'test' } } };
-  assert.equal(minimumsTotal(all, R, iso).items.find((x) => x.id === card.id).amount, card.balance.value, 'every card: the statement');
+  assert.equal(minimumsTotal(all, R, iso).items.find((x) => x.id === card.id), undefined, 'every card: paid in full, no minimum');
   const one = { ...s, debts: s.debts.map((d) => (d.id === card.id ? { ...d, payPolicy: { value: 'statement', kind: 'known', asOf: '2026-10-23', source: 'test' } } : d)) };
-  assert.equal(minimumsTotal(one, R, iso).items.find((x) => x.id === card.id).amount, card.balance.value, 'one card overrides');
+  assert.equal(minimumsTotal(one, R, iso).items.find((x) => x.id === card.id), undefined, 'one card overrides');
+  assert.ok(minimumsTotal(one, R, iso).items.some((x) => x.id !== card.id), 'the other debts keep their minimums');
+  const nov = debtSchedule(one, R, s.meta.asOf, '2026-12').months.get('2026-11').payments.find((x) => x.id === card.id);
+  assert.deepEqual([nov.amount, nov.inFull], [card.balance.value, true], 'the statement it carries is paid once, in full');
   assert.ok(validate(one).ok);
 });
 

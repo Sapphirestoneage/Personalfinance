@@ -167,7 +167,7 @@ function setupPrompts(ctx) {
   const out = [];
   if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the log knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
   const noPayday = live(doc.income).filter((i) => i.payFrequency !== 'semimonthly' && !i.nextPayDate.date);
-  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the income month knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
+  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so your plan knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
   return out.length ? h('div', { class: 'card prompts' }, out) : null;
 }
 
@@ -188,6 +188,6 @@ export function renderTrack(ctx, summary) {
 // The cash calendar, scheduled items and balance checks moved to SLAM (S-209); the anchor stays so old links land here.
 function calendarMoved() {
   return h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'),
-    h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The day-by-day cash calendar, safe to spend, scheduled items and the balance check-in now live in SLAM, which reads this household and feeds the log back.'),
+    h('div', { class: 'card' }, h('p', { class: 'muted' }, 'See your cash day by day and what is safe to spend, mark bills and paychecks as paid, and check in your balances. Each opens in a new tab.'),
       h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-calendar' }, 'Open the cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-spending' }, 'Check in and log spending'))));
 }

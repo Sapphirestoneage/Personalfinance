@@ -12,12 +12,12 @@ import { maxItPanel } from './maxit-panel.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize } from '../engine/summary.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
-import { downloadProfile, matchesFile, setBaseline, FILE_NAME } from './profile-file.js';
+import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
-import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, recordContribution, TOTAL_KINDS } from '../engine/edits.js';
+import { PRESETS, INCOME_TYPES, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
@@ -43,8 +43,8 @@ mountPage({ app });
 function apply(next, label, shown = null) {
   // House defaults (a card's default APR) refill any blank after every edit.
   hist = commit(hist, applyDefaults(next, rules), label);
-  source = 'saved';
   const ok = save(hist.present);
+  if (ok) source = 'saved';
   dirty = false;
   lastSaved = ok ? 'Saved in this browser: ' + label + (shown ? ' is ' + shown : '') + '.' : 'Could not save in this browser (storage is blocked), so this edit lasts only until the page closes.';
   render();
@@ -54,7 +54,7 @@ function apply(next, label, shown = null) {
 function step(fn, verb) {
   const before = hist;
   hist = fn(hist);
-  if (hist !== before) { save(hist.present); source = 'saved'; dirty = false; lastSaved = verb; render(); refreshGuess(); }
+  if (hist !== before) { if (save(hist.present)) source = 'saved'; dirty = false; lastSaved = verb; render(); refreshGuess(); }
 }
 
 // The still-guessing ranking takes about a second, so it runs in slices of a
@@ -511,7 +511,8 @@ function paymentEditor(row) {
   const day = h('input', { id: 'pay-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day.value = cur.day ? String(cur.day) : '';
   // The debt this line pays (S-226): a car payment that pays the car loan is counted once, under debt payments.
-  const debts = hist.present.debts || [];
+  // Only a line that repeats can pay a debt (answer 35); a one-time or total line is offered no debt.
+  const debts = PER_YEAR[e.cadence] ? hist.present.debts || [] : [];
   const pays = debts.length ? h('select', { id: 'pay-debt' }, h('option', { value: '' }, 'None: an ordinary bill'), ...debts.map((x) => h('option', { value: x.id, selected: cur.paysDebt === x.id }, valueOf(x.name) || x.id))) : null;
   const doSet = (kind) => {
     if (!from.value) { msg.textContent = 'Pick where it is paid from'; from.focus(); return; }
@@ -599,12 +600,17 @@ function rowEl(row) {
   // A computed value in the Ledger (an expense's cost to you) shows its math (S-177).
   const computed = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
+    // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's payment.
+    row.linked ? h('button', { class: 'row-main', onclick: () => openField(row.linePath) },
+      h('span', { class: 'row-label' }, label),
+      h('span', { class: 'row-value' }, shown, ' ', h('span', { class: 'tile-view' }, 'View ›')),
+      chip(f.kind)) :
     h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
       h('span', { class: 'row-label' }, label, later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
       chip(f.kind)),
     computed && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: hist.present, rules, s: summarize(hist.present, rules, { flags: false }) })) : null,
-    isOpen && editor(row));
+    isOpen && !row.linked && editor(row));
 }
 
 // Pick what you have (S-193): tick the accounts, cards, loans, income and
@@ -859,6 +865,7 @@ function itemEl(it) {
       h('button', { type: 'button', class: 'fold item-fold', 'aria-expanded': String(isOpen), onclick: toggle },
         h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
       countBtns(it.counts), pickAll),
+    it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
     isOpen && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dup, remove) : null,
     isOpen && !selecting && maxShown ? maxItPanel(hist.present, rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null);
@@ -875,7 +882,7 @@ function saveContribution(accountId, year, amount, kind) {
 // one undoable edit each.
 function savePayroll(accountId, on) {
   const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
-  apply(putFact(hist.present, 'accounts.' + accountId + '.throughPayroll', on, 'known', today()), (valueOf(acc.name) || accountId) + ': ' + (on ? 'through payroll' : 'from take-home'));
+  apply(setThroughPayroll(hist.present, accountId, on, today()), (valueOf(acc.name) || accountId) + ': ' + (on ? 'through payroll' : 'from take-home'));
 }
 function savePaidThrough(accountId, incomeId) {
   const acc = (hist.present.accounts || []).find((a) => a.id === accountId), job = (hist.present.income || []).find((s) => s.id === incomeId);
@@ -961,7 +968,8 @@ function render() {
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
         // Redo shows only when there is something to redo.
         canRedo(hist) ? h('button', { class: 'btn', title: 'Redo ' + redoLabel(hist), onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo') : null,
-        h('button', { type: 'button', class: matchesFile(spine) ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
+        // One filled button a screen: on the example, Load my file is it.
+        h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
         // The example household loads a file from its header (Load my file); anyone else's loads a different one here.
         whose(spine).example ? null : h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
         whose(spine).example ? null : h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
@@ -996,28 +1004,31 @@ function saveFile() {
 async function loadFile(ev) {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
-  try { took(await loadMyFile(file, rules), file.name); } catch (err) { lastSaved = 'Could not load that file: ' + err.message; render(); }
+  try { took(await loadMyFile(file, rules), file.name); } catch (err) { console.warn(err); lastSaved = loadFailWords(err, file.name); render(); }
   ev.target.value = '';
 }
 function took(loaded, name) {
   open = null;
   apply(loaded.spine, 'Loaded ' + name);
   setBaseline(hist.present);
+  // Where it lives now: saved in this browser, or open on this page only when the browser would not keep it.
+  source = loaded.source;
   lastSaved = 'Loaded ' + name + '. Undo goes back to what you had.' + (loaded.problem ? ' ' + loaded.problem : '');
   render();
 }
 
-// What the file held that could not be used (S-228): each field named, with what was wrong and what the file held.
+// What the file held that could not be used (S-228): each one named in plain words, with what the file had.
 // A field set to missing leaves the list once it is entered; the rest is said once, folded.
 function problemsCard(spine) {
   const p = fileProblems(spine);
   if (!p.open.length && !p.other.length) return null;
-  const held = (x) => (x.held === null || x.held === undefined ? '' : ' The file held ' + (typeof x.held === 'string' ? '"' + x.held + '"' : JSON.stringify(x.held)).slice(0, 80) + '.');
-  const item = (x) => h('li', {}, x.link ? h('a', { href: '#' + encodeURIComponent(x.link) }, x.label) : h('strong', {}, x.label), ': ' + x.message + '.' + held(x));
+  // What the file had, only when it is a plain word or number (never a whole record).
+  const held = (x) => (typeof x.held === 'string' && x.held.trim() ? ' Your file had "' + (x.held.length > 40 ? x.held.slice(0, 37) + '...' : x.held) + '".' : typeof x.held === 'number' && Number.isFinite(x.held) ? ' Your file had ' + x.held + '.' : '');
+  const item = (x) => h('li', {}, x.link ? h('a', { href: '#' + encodeURIComponent(x.link) }, x.label) : h('strong', {}, x.label), ': ' + x.words + '.' + held(x));
   return h('section', { class: 'card', 'aria-labelledby': 'problems-h', role: p.open.length ? 'alert' : null },
-    h('h2', { id: 'problems-h' }, p.open.length ? 'From your file: ' + p.open.length + ' field' + (p.open.length === 1 ? '' : 's') + ' to look at' : 'From your file'),
-    p.open.length ? [h('p', { class: 'muted' }, 'These could not be used as the file had them, so each reads missing until you enter it. Nothing else in the file was changed.'), h('ul', { class: 'flow-list' }, p.open.map(item))] : null,
-    p.other.length ? h('details', { class: 'flow-list' }, h('summary', {}, 'Read another way or kept aside (' + p.other.length + ')'), h('ul', {}, p.other.map(item))) : null);
+    h('h2', { id: 'problems-h' }, p.open.length ? 'From your file: ' + p.open.length + ' to enter again' : 'From your file'),
+    p.open.length ? [h('p', { class: 'muted' }, 'Each shows as missing until you enter it. Nothing else in your file was changed.'), h('ul', { class: 'flow-list' }, p.open.map(item))] : null,
+    p.other.length ? h('details', { class: 'flow-list' }, h('summary', {}, 'Read another way or set aside (' + p.other.length + ')'), h('ul', {}, p.other.map(item))) : null);
 }
 
 function resetAsk(e) {

@@ -54,7 +54,8 @@ export function tagBudgets(spine, rules, cf, { ym, asOf = spine.meta.asOf } = {}
   const prev = addMonths(month, -1);
   const prevSame = spentByTag(spine, monthLog(spine, prev).filter((e) => !inMonth || dayOf(e.date) <= dayOf(asOf)));
   const rows = TAGS.map((tag) => {
-    const items = cf.expenses.items.filter((i) => (i.fat || 'other') === tag && !i.covered);
+    // A line that pays a debt keeps its tag's budget (answer 35), so logging the payment there is on plan.
+    const items = [...cf.expenses.items, ...(cf.expenses.linked || [])].filter((i) => (i.fat || 'other') === tag && !i.covered);
     const anyMissing = items.some((i) => i.amount === null);
     const budget = anyMissing ? null : round2(items.reduce((a, i) => a + (i.amount ?? 0), 0));
     const expected = budget === null ? null : round2(budget * dayFrac);
@@ -154,10 +155,12 @@ export function donut(spine, rules, s) {
   const t = tracker();
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined }); t.absorb({ ...cf.saving.afterTax, value: undefined }); t.absorb({ ...cf.taxSetAside.total, value: undefined });
   const total = cf.income.takeHome.value;
-  const slices = TAGS.map((tag) => { const items = cf.expenses.items.filter((i) => (i.fat || 'other') === tag && !i.covered && i.amount); return { id: tag, label: TAG_WORDS[tag], amount: round2(items.reduce((a, i) => a + i.amount, 0)), items: items.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })) }; }).filter((x) => x.amount > 0);
-  const minimums = cf.debtMinimums.total.value ?? 0;
+  // A line that pays a debt sits in its own tag's slice (answer 35), so it leaves the minimums slice.
+  const linked = cf.expenses.linked || [];
+  const slices = TAGS.map((tag) => { const items = [...cf.expenses.items, ...linked].filter((i) => (i.fat || 'other') === tag && !i.covered && i.amount); return { id: tag, label: TAG_WORDS[tag], amount: round2(items.reduce((a, i) => a + i.amount, 0)), items: items.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })) }; }).filter((x) => x.amount > 0);
+  const minimums = round2((cf.debtMinimums.total.value ?? 0) - linked.reduce((a, i) => a + i.amount, 0));
   const saving = round2((cf.saving.afterTax.value ?? 0) + (cf.taxSetAside.total.value ?? 0));
-  if (minimums > 0) slices.push({ id: 'minimums', label: 'Debt minimums', amount: round2(minimums), items: cf.debtMinimums.items.map((i) => ({ id: i.id, label: i.label || i.name || i.id, amount: i.amount, path: i.path || 'debts.' + i.id + '.minimum' })) });
+  if (minimums > 0) slices.push({ id: 'minimums', label: 'Debt minimums', amount: minimums, items: cf.debtMinimums.items.filter((i) => !(i.line && i.amount !== null)).map((i) => ({ id: i.id, label: i.label || i.name || i.id, amount: i.amount, path: i.path || 'debts.' + i.id + '.minimum' })) });
   if (saving > 0) slices.push({ id: 'saving', label: 'Saving and the tax set-aside', amount: saving, items: [] });
   const spent = round2(slices.reduce((a, x) => a + x.amount, 0));
   const left = total === null ? null : round2(total - spent);

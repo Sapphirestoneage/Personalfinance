@@ -4,14 +4,17 @@ import { valueOf, tracker, round2 } from './spine.js';
 import { INVESTED_FAMILIES, isEarmarked } from './schema.js';
 import { debtTotals } from './debt.js';
 import { money } from '../src/ui/format.js';
+import { listWords } from './labels.js';
 
 // The goal an earmarked account is for (S-228): a goal that links the account, else the account's own "goal it funds"
 // (a goal's id or its name), else none. The words say it the same way on every page.
 export function setAsideFor(spine, a) {
   const goals = spine.goals || [];
-  const linked = goals.find((g) => valueOf(g.linkedAccount) === a.id && valueOf(g.sinkingFund) === true) || goals.find((g) => valueOf(g.linkedAccount) === a.id);
+  // Every goal that links the account, sinking funds first: "Surgery fund and Recovery travel".
+  const linked = goals.filter((g) => valueOf(g.linkedAccount) === a.id).sort((x, y) => (valueOf(y.sinkingFund) === true) - (valueOf(x.sinkingFund) === true));
+  if (linked.length) return listWords(linked.map((g) => g.label || g.id));
   const own = valueOf(a.linkedGoal);
-  const named = linked || (own ? goals.find((g) => g.id === own) : null);
+  const named = own ? goals.find((g) => g.id === own) : null;
   return named ? named.label || named.id : own || null;
 }
 export const setAsideWords = (goal) => 'set aside for ' + (goal || 'a goal');

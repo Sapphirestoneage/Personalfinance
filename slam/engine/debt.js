@@ -134,7 +134,7 @@ export function promoDeadlines(spine, asOf) {
   let total = 0, monthly = 0;
   for (const d of spine.debts || []) {
     const ends = v(d.promoEnds);
-    if (!ends || ends < asOf || v(d.promoApr) === null) continue;
+    if (!ends || ends < asOf || v(d.promoApr) === null || paidInFull(spine, d)) continue;
     const b = t.useFact(P(d, 'balance'), d.balance);
     t.useFact(P(d, 'promoEnds'), d.promoEnds);
     if (!b) continue;
@@ -174,7 +174,7 @@ export const STRATEGIES = {
 };
 
 export function order(spine, strategy, asOf, { cardsOnly = false } = {}) {
-  const list = (spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card'));
+  const list = (spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card') && !paidInFull(spine, d));
   return list.slice().sort(STRATEGIES[strategy](asOf)).map((d) => d.id);
 }
 
@@ -213,7 +213,7 @@ export function accrueMonth(s, iso, asOf, t) {
 export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, asOf, cardsOnly = false, maxMonths = 600 } = {}) {
   const t = tracker();
   const ids = order(spine, strategy, asOf, { cardsOnly });
-  const debts = ids.map((id) => spine.debts.find((d) => d.id === id));
+  const debts = [...ids.map((id) => spine.debts.find((d) => d.id === id)), ...(spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card') && paidInFull(spine, d))];
   const st = debts.map((d) => ({ d, bal: t.useFact(P(d, 'balance'), d.balance), interest: 0, paidYm: null, startBal: v(d.balance), deferredDone: false }));
   let ym = monthKey(asOf);
   let months = 0;
@@ -268,6 +268,8 @@ export function payPolicyOf(spine, d) {
 // A card that pays its full statement never carries a balance, so it never accrues interest (S-226, answer 38):
 // in the debt schedule, the payoff plan and the day-by-day run (engine/cashsim.js) alike.
 export const accrues = (spine, d) => payPolicyOf(spine, d) !== 'statement';
+// Paid in full: the statement setting and no budget line paying it. Not a debt to pay down, not a payment on top of spending.
+export const paidInFull = (spine, d) => !accrues(spine, d) && !lineFor(spine, d);
 
 // A debt paid by a budget line (S-226, answer 35): the expense that names it (expenses.<id>.paysDebt), not covered by
 // someone else, running in the month ym when one is given. Its payment is counted once: under debt payments, at the
@@ -275,10 +277,29 @@ export const accrues = (spine, d) => payPolicyOf(spine, d) !== 'statement';
 // (engine/cashflow.js), and once in the run (engine/cashsim.js).
 const runsIn = (e, ym) => !ym || ((!e.start || e.start <= monthEnd(ym)) && (!e.end || e.end >= monthStart(ym)));
 export function lineFor(spine, d, ym = null) {
-  return (spine.expenses || []).find((e) => e.paysDebt && v(e.paysDebt) === d.id && !(e.covered && v(e.covered) === true) && runsIn(e, ym)) || null;
+  return (spine.expenses || []).find((e) => paysDebtOf(spine, e) === d.id && !(e.covered && v(e.covered) === true) && runsIn(e, ym)) || null;
 }
-// The debt an expense pays, when it names one that is in the household.
-export const paysDebtOf = (spine, e) => { const id = e && e.paysDebt ? v(e.paysDebt) : null; return id && (spine.debts || []).some((d) => d.id === id) ? id : null; };
+// The debt an expense pays, when the link can be paid once: the debt is in the household with a balance entered (until
+// then the line goes out as an ordinary bill, so a payment the person knows is never dropped), the line repeats (a
+// one-time or total line counts as itself), and it is the first line naming that debt (any other counts as itself).
+// engine/schema.js flags the last two in a file.
+export const paysDebtOf = (spine, e) => {
+  const id = e && e.paysDebt ? v(e.paysDebt) : null;
+  if (!id || !PER_YEAR[e.cadence]) return null;
+  const d = (spine.debts || []).find((x) => x.id === id);
+  if (!d || v(d.balance) === null) return null;
+  const first = (spine.expenses || []).find((x) => x.paysDebt && v(x.paysDebt) === id);
+  return first && first.id === e.id ? id : null;
+};
+// Why a line that names a debt counts as itself for now (null when the link is paid), in words for the Ledger.
+export function linkNote(spine, e) {
+  const id = e && e.paysDebt ? v(e.paysDebt) : null;
+  const d = id ? (spine.debts || []).find((x) => x.id === id) : null;
+  if (!d || paysDebtOf(spine, e)) return null;
+  if (!PER_YEAR[e.cadence]) return 'it does not repeat, so it counts as a bill';
+  if (v(d.balance) === null) return 'counted as a bill until the debt has a balance';
+  return 'another line pays this debt, so this one counts as a bill';
+}
 // What a line puts toward its debt a month: its amount at its cadence; null when not entered (or a one-time line).
 export const lineMonthly = (e) => { const a = v(e.amount); return a === null || !PER_YEAR[e.cadence] ? null : round2(a * PER_YEAR[e.cadence] / 12); };
 // The month's payment on a debt: the line that pays it, at its amount (never more than the balance), else the minimum
@@ -303,6 +324,7 @@ export function minimumsTotal(spine, rules, iso) {
   for (const d of spine.debts || []) {
     const b = v(d.balance);
     if (b !== null && b <= 0) continue;
+    if (paidInFull(spine, d)) continue;
     const m = paymentOn(spine, rules, d, iso);
     t.absorb({ ...m, value: undefined });
     if (m.value !== null) sum += m.value;
@@ -341,7 +363,7 @@ export function debtSchedule(spine, rules, asOf, untilYm) {
       if (m.value === null) t.addMissing(P(s.d, 'minimum'));
       const pay = Math.min(s.bal, m.value ?? 0);
       s.bal -= pay; paid += pay;
-      if (pay > 0) payments.push({ id: s.d.id, name: v(s.d.name), amount: round2(pay), estimated: !!m.estimated, dueDate: dueDateIn(s.d, ym), line: m.line || null, lineLabel: m.lineLabel || null, path: m.line ? 'expenses.' + m.line + '.amount' : P(s.d, 'minimum') });
+      if (pay > 0) payments.push({ id: s.d.id, name: v(s.d.name), amount: round2(pay), estimated: !!m.estimated, dueDate: dueDateIn(s.d, ym), line: m.line || null, lineLabel: m.lineLabel || null, path: m.line ? 'expenses.' + m.line + '.amount' : P(s.d, 'minimum'), ...(!accrues(spine, s.d) && !m.line ? { inFull: true } : {}) });
       if (s.bal <= 0.005 && !s.paidYm) { s.bal = 0; s.paidYm = ym; paidOff.push(s.d.id); }
     }
     months.set(ym, { payments, paid: round2(paid), interest: round2(interest), debt: round2(states.reduce((a, s) => a + s.bal, 0)), paidOff });

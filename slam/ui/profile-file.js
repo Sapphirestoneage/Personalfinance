@@ -32,10 +32,16 @@ export function downloadProfile(spine) {
 }
 
 // A chosen file read in this browser as a household (a saved spine, an export or a profile of any version, S-228):
-// { spine, problems }, the fields it could not use named in problems. Throws in words only when it is not a household.
+// { spine, problems }, the fields it could not use named in problems. Throws only when it is not a household, with
+// words for the person (err.plain); the details go to the console.
+export const notOurs = (name) => Object.assign(new Error((name || 'That file') + ' is not a household file from this app.'), { plain: true });
 export async function readProfile(file, { today = null } = {}) {
-  const text = await file.text();
-  let raw;
-  try { raw = JSON.parse(text); } catch { throw new Error(file.name + ' is not a JSON file.'); }
-  return readHousehold(raw, { today });
+  try {
+    return readHousehold(JSON.parse(await file.text()), { today });
+  } catch (err) {
+    console.warn('Load my file: ' + (file && file.name) + ': ' + (err && err.message));
+    throw notOurs(file && file.name);
+  }
 }
+// What to say when a file could not be loaded: the plain words, else the file's name; "Nothing changed" either way.
+export const loadFailWords = (err, name) => (err && err.plain ? err.message : 'Could not read ' + (name || 'that file') + '.') + ' Nothing changed.';

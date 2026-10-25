@@ -668,16 +668,17 @@ test('the Money Guy order (answer 63): the 401(k) up to the match, then the IRA,
   // $5,000 already in the Roth: $2,500 of new Roth money, and the 401(k) still $4,500 ($12,000 - $7,500).
   const kept = { ...s, accounts: s.accounts.map((a) => (a.id === 'roth' ? { ...a, contributions: F([{ year: 2026, amount: 5000 }]) } : a)) };
   assert.deepEqual(plan(kept), [['deferral:casey', 4500], ['ira:casey', 2500], ['k401:2026', 'preIra']]);
-  // $500 a month ($6,000) with a 50% match on up to 6% of pay: the 401(k)'s $360 that gets the match comes first, the
-  // Roth gets the $5,640 of pay left, the rest of the 401(k) nothing. With no match, the Roth takes all $6,000.
+  // $500 a month ($6,000) with a 50% match on up to 6% of pay: only the pay still to come can be matched (11 paychecks
+  // from February 15, $5,500), so the 401(k)'s $330 that gets the match comes first, the Roth gets the $5,670 of pay
+  // left, the rest of the 401(k) nothing. With no match, the Roth takes all $6,000.
   const small = { ...s, income: [{ ...s.income[0], amount: F(500), withholding: { federal: F(0), state: F(0) } }, ...s.income.slice(1)], accounts: s.accounts.map((a) => (a.id === 'k401' ? { ...a, matchRate: F(0.5), matchCap: F(0.06) } : a)) };
-  assert.deepEqual(plan(small), [['deferral:casey', 360], ['ira:casey', 5640], ['k401:2026', 'preIra'], ['roth:2026', 'match']]);
+  assert.deepEqual(plan(small), [['deferral:casey', 330], ['ira:casey', 5670], ['k401:2026', 'preIra'], ['roth:2026', 'match']]);
   const noMatch = { ...small, accounts: small.accounts.map((a) => (a.id === 'k401' ? { ...a, matchRate: undefined, matchCap: undefined } : a)) };
   assert.deepEqual(plan(noMatch), [['deferral:casey', 0], ['ira:casey', 6000], ['k401:2026', 'preIra']]);
-  // The FOO ladder reads the same count: the Roth and HSA rung takes the Roth's $5,640 ($376 a month over the 15 months
-  // to April 15, 2027), the retirement rung the 401(k)'s $360 (each says why it counts less than the account alone).
+  // The FOO ladder reads the same count: the Roth and HSA rung takes the Roth's $5,670 ($378 a month over the 15 months
+  // to April 15, 2027), the retirement rung the 401(k)'s $330 (each says why it counts less than the account alone).
   const sm = summarize(small, R, { flags: false }), foo = fooLadder(small, R, sm, { sim: maxItSim(small, R) });
-  assert.match(foo.rungs.find((r) => r.id === 'rothHsa').why, /Roth IRA 2026: \$376 a month to April 15, 2027 \(less than the account alone could take: the 401\(k\) money up to the employer match comes first/);
+  assert.match(foo.rungs.find((r) => r.id === 'rothHsa').why, /Roth IRA 2026: \$378 a month to April 15, 2027 \(less than the account alone could take: the 401\(k\) money up to the employer match comes first/);
   assert.match(foo.rungs.find((r) => r.id === 'maxRetirement').why, /the IRA comes before the rest of the 401\(k\)/);
   // A couple: Casey earns $2,500 a month ($30,000) with $7,000 in the Roth, Sam $200 a month ($2,400). Casey's Roth takes
   // its last $500 first; her IRA money then rests on $7,500 of her own pay, so the 401(k) takes $22,500.
@@ -1620,7 +1621,7 @@ test('answers 49 and 53: a Solo 401(k) after December 31 counts the employer par
   // 49: on January 10, 2027 the 2026 employee deferral had to be elected by December 31: the room is the employer part.
   const solo = maxIt({ ...d, accounts: [...d.accounts, acct('solo', 'solo_k401', 'employerRetirement')] }, R, { asOf: '2027-01-10' });
   const sr = row(solo, 'solo:2026');
-  assert.equal(sr.employerOnly, 'Only the employer part counts: the employee deferral had to be elected by December 31, 2026, and the app does not know whether it was.');
+  assert.equal(sr.employerOnly, 'Only the employer part counts here: the employee part had to be chosen by December 31, 2026.');
   assert.equal(sr.room, sr.cap.employer);
   // 53: the demo 401(k) needs $9,250 more on each of 2 paychecks; about $4,211 lands from each and $500 comes out now, so
   // the most a $6,000 paycheck can hold is $4,711: raise the contribution to 78% (78.5%, rounded down); the other

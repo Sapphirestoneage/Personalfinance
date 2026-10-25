@@ -10,7 +10,7 @@ import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetwee
 // Rounded up to the cent (a month that fills a limit by its deadline).
 const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
 import { yearsToTarget } from './fi.js';
-import { payoffPlan, rateOn } from './debt.js';
+import { payoffPlan, rateOn, paidInFull } from './debt.js';
 import { windfall } from './windfall.js';
 import { maxIt, longDay, steadyMonth } from './maxit.js';
 import { paysAfter } from './contrib.js';
@@ -72,9 +72,9 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   };
   for (const id of order) {
     const t = tracker();
-    if (id === 'deductibles') { const d = t.useFact('household.deductible', spine.household.deductible); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, d === null ? { need: null, why: 'Needs the biggest insurance deductible (health, car, home), under Filing in the Ledger.', path: 'household.deductible' } : { need: cash === null ? null : d - cash, why: cash === null ? 'Needs cash on hand.' : cash >= d ? 'Cash (' + money(cash) + ') covers the biggest deductible (' + money(d) + ').' : money(d - cash) + ' more cash covers the biggest deductible (' + money(d) + ').', path: 'household.deductible' }); }
+    if (id === 'deductibles') { const d = t.useFact('household.deductible', spine.household.deductible); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, d === null ? { need: null, why: 'Needs the biggest insurance deductible (health, car, home), under Filing in the Ledger.', path: 'household.deductible' } : { need: cash === null ? null : d - cash, why: (cash === null ? 'Needs cash on hand.' : cash >= d ? 'Cash (' + money(cash) + ') covers the biggest deductible (' + money(d) + ').' : money(d - cash) + ' more cash covers the biggest deductible (' + money(d) + ').') + (cash !== null && s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: 'household.deductible' }); }
     else if (id === 'employerMatch') { const st = step('employerMatch'); t.absorb({ ...st, value: undefined }); push(id, t, { need: st.need, flow: true, why: st.why, path: st.path, done: st.need === null ? null : st.need <= 0 }); }
-    else if (id === 'highInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r >= hi && b > 0; }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' at or above ' + Math.round(hi * 100) + '%.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
+    else if (id === 'highInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r >= hi && b > 0 && !paidInFull(spine, d); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' at or above ' + Math.round(hi * 100) + '%.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
     else if (id === 'reserves') { const gap = s.emergency.gap; t.absorb({ ...gap, value: undefined }); push(id, t, { need: gap.value, why: gap.value === null ? 'The Rule of 5 target needs a birth date and monthly spending.' : gap.value > 0 ? money(gap.value) + ' to the Rule of 5 target (' + money(s.emergency.targetDollars.value) + ').' : 'Cash reaches the Rule of 5 target.', path: gap.missing[0] || s.sheet.cash.from[0] || null }); }
     // Roth and HSA room, and retirement maxed (S-211): both read "How much to max it?" (engine/maxit.js), each shared
     // limit once, for every tax year still open: the new money a month that fills the room by each deadline, on top of
@@ -144,7 +144,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     }
     else if (id === 'hyper') { const rate = t.rule(rules, 'FOO_HYPER_RATE', year); const g = s.cashflow.savingsRate.gross; t.absorb({ ...g, value: undefined }); const gross = s.cashflow.income.gross.value; push(id, t, { need: g.value === null || gross === null ? null : Math.max(0, (rate - g.value) * gross), flow: true, why: g.value === null ? 'Needs the gross savings rate.' : g.value >= rate ? 'Saving ' + Math.round(g.value * 100) + '% of gross, past the ' + Math.round(rate * 100) + '% mark.' : 'Saving ' + Math.round(g.value * 100) + '% of gross; ' + money(Math.max(0, (rate - g.value) * gross)) + ' a month more reaches ' + Math.round(rate * 100) + '%.', path: g.missing[0] || s.cashflow.income.gross.from[0] || null }); }
     else if (id === 'prepaid') { const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && g.target); let need = 0, miss = false; for (const g of goals) { const tg = t.useFact('goals.' + g.id + '.target', g.target); if (tg === null) miss = true; else need += tg; } push(id, t, { need: miss ? null : need, why: goals.length ? (miss ? 'A goal has no target.' : money(need) + ' across ' + goals.length + ' goal' + (goals.length === 1 ? '' : 's') + '.') : 'No goals beyond financial independence.', path: goals.length ? 'goals.' + goals[0].id + '.target' : null, done: goals.length ? null : true }); }
-    else if (id === 'lowInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r < hi && b > 0; }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' under ' + Math.round(hi * 100) + '%.' : 'Nothing under ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
+    else if (id === 'lowInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r < hi && b > 0 && !paidInFull(spine, d); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' under ' + Math.round(hi * 100) + '%.' : 'Nothing under ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
   }
   const current = rungs.find((r) => r.done === false) || null;
   const out = all.out(surplus);
@@ -256,10 +256,12 @@ export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.saving.payroll, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined });
   const takeHome = cf.income.takeHome.value, pretax = cf.saving.payroll.value ?? 0;
   const base = takeHome === null ? null : round2(takeHome + pretax);
-  const byTag = (tag) => round2(cf.expenses.items.filter((i) => i.fat === tag && !i.covered).reduce((a, i) => a + (i.amount ?? 0), 0));
+  // A line that pays a debt (answer 35) is shown in its own category (a car payment under transportation), not under D.
+  const linked = cf.expenses.linked || [], linkedSum = round2(linked.reduce((a, i) => a + i.amount, 0));
+  const byTag = (tag) => round2([...cf.expenses.items, ...linked].filter((i) => i.fat === tag && !i.covered).reduce((a, i) => a + (i.amount ?? 0), 0));
   const therapy = cf.expenses.items.filter((i) => /therap|counsel/i.test(i.label) && !i.covered);
   const rows = [
-    { key: 'debt', letter: 'D', label: 'Debt', amount: round2(cf.debtMinimums.total.value ?? 0) },
+    { key: 'debt', letter: 'D', label: 'Debt', amount: round2((cf.debtMinimums.total.value ?? 0) - linkedSum) },
     { key: 'retirement', letter: 'R', label: 'Retirement', amount: round2(pretax + (cf.saving.afterTax.value ?? 0)) },
     { key: 'accommodation', letter: 'A', label: 'Accommodation', amount: byTag('accommodation'), reference: ref, referenceAmount: takeHome === null ? null : round2(takeHome * ref) },
     { key: 'food', letter: 'F', label: 'Food', amount: byTag('food') },
@@ -267,7 +269,7 @@ export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     ...(therapy.length ? [{ key: 'therapy', letter: 'Th', label: 'Therapy', amount: round2(therapy.reduce((a, i) => a + (i.amount ?? 0), 0)) }] : [])
   ].map((r) => ({ ...r, share: base ? round2(r.amount / base * 10000) / 10000 : null, shareOfTakeHome: takeHome ? round2(r.amount / takeHome * 10000) / 10000 : null }));
   const total = round2(rows.reduce((a, r) => a + r.amount, 0));
-  const spentElse = round2((cf.expenses.total.value ?? 0) - byTag('accommodation') - byTag('food') - byTag('transportation') - rows.filter((r) => r.key === 'therapy').reduce((a, r) => a + r.amount, 0));
+  const spentElse = round2((cf.expenses.total.value ?? 0) + linkedSum - byTag('accommodation') - byTag('food') - byTag('transportation') - rows.filter((r) => r.key === 'therapy').reduce((a, r) => a + r.amount, 0));
   const leftOver = base === null ? null : round2(base - total - spentElse - (cf.taxSetAside.total.value ?? 0));
   const out = t.out(base ? round2(total / base * 10000) / 10000 : null);
   return { rows, total, totalShare: out.value, everythingElse: spentElse, leftOver, base: { amount: base, takeHome, pretax, label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home' }, housingReference: ref, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
@@ -290,7 +292,7 @@ export function fixedFloor(spine, rules, s, sim, { months = null, asOf = spine.m
   const shockMonths = months ?? t.rule(rules, 'APP_SHOCK_MONTHS', year);
   const shock = sim ? incomeShock(spine, rules, sim, { months: shockMonths }) : null;
   const out = t.out(floor);
-  return { floor, items: fixed.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })), minimums: cf.debtMinimums.total.value, cash, runwayMonths, shock, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { floor, items: fixed.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })), minimums: cf.debtMinimums.total.value, cash, setAsideNote: s.sheet.setAsideNote, runwayMonths, shock, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 
 // An income shock on the run: every paycheck stops for N months from a date.

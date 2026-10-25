@@ -8,14 +8,18 @@
 import { fetchRules } from '../engine/rules.js';
 import { readHousehold, fileProblems } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
-import { readProfile, setBaseline } from './profile-file.js';
+import { readProfile, setBaseline, fingerprint } from './profile-file.js';
 
 const KEY = 'slam-spine:v1';
 const base = new URL('../', import.meta.url);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
+// What this browser saved: { raw, value }, value undefined when the text is not JSON; null when nothing is saved.
 function readSaved() {
-  try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch { return null; }
+  if (!raw) return null;
+  try { return { raw, value: JSON.parse(raw) }; } catch { return { raw, value: undefined }; }
 }
 
 async function fetchJson(rel) {
@@ -25,8 +29,8 @@ async function fetchJson(rel) {
   } catch { return null; }
 }
 
-// What the file held that could not be used, in one line for the page (the Ledger lists each).
-const needWords = (spine) => { const n = fileProblems(spine).open.length; return n ? n + ' field' + (n === 1 ? '' : 's') + ' from the file could not be used and read missing: the Ledger lists ' + (n === 1 ? 'it' : 'them') + ' at the top.' : null; };
+// What the file held that could not be used, in one line for the page (the Ledger page lists each).
+const needWords = (spine) => { const n = fileProblems(spine).open.length; return n ? n + (n === 1 ? ' thing in your file could not be read, so it shows as missing. Fill it in' : ' things in your file could not be read, so they show as missing. Fill them in') + ' at the top of the Ledger page.' : null; };
 
 export async function loadAll() {
   const [rules, institutions] = await Promise.all([fetchRules(new URL('data/', base)), fetchJson('data/institutions.json').then((x) => x || { names: [], aliases: {} })]);
@@ -35,16 +39,20 @@ export async function loadAll() {
   if (saved) {
     // Edits saved by an earlier version, or with a field this version cannot use, are read, not dropped (S-167, S-228).
     try {
-      const { spine } = readHousehold(saved, { today: todayIso() });
+      if (saved.value === undefined) throw new Error('what this browser saved is not JSON');
+      const { spine } = readHousehold(saved.value, { today: todayIso() });
       return { rules, institutions, spine: applyDefaults(spine, rules), source: 'saved', problem: needWords(spine) };
     } catch (err) {
-      // Not a household at all: keep a copy under its own key so nothing is lost, and say so.
-      try { localStorage.setItem(KEY + ':unreadable:' + new Date().toISOString(), JSON.stringify(saved)); } catch { /* storage blocked */ }
-      problem = 'What this browser saved could not be read (' + err.message + '). A copy is kept in this browser; showing the file instead.';
+      // Not a household at all: keep one copy under a key made from its text, so nothing is lost and opening the page
+      // again does not copy it again, and say so. The details go to the console.
+      console.warn('Saved household: ' + err.message);
+      const copy = KEY + ':unreadable:' + fingerprint(saved.raw);
+      try { if (localStorage.getItem(copy) === null) localStorage.setItem(copy, saved.raw); } catch { /* storage blocked */ }
+      problem = 'What this browser saved could not be read. A copy is kept in this browser, so nothing is lost.';
     }
   }
   const local = await fetchJson('fixtures/eli.local.json');
-  if (local) { try { const { spine } = readHousehold(local, { today: todayIso() }); return { rules, institutions, spine: applyDefaults(spine, rules), source: 'local', problem: problem || needWords(spine) }; } catch (err) { problem = (problem ? problem + ' ' : '') + 'fixtures/eli.local.json could not be read (' + err.message + ').'; } }
+  if (local) { try { const { spine } = readHousehold(local, { today: todayIso() }); return { rules, institutions, spine: applyDefaults(spine, rules), source: 'local', problem: problem || needWords(spine) }; } catch (err) { console.warn('Local file: ' + err.message); problem = (problem ? problem + ' ' : '') + 'Your file on this computer could not be read.'; } }
   return { rules, institutions, spine: applyDefaults(readHousehold(await fetchJson('fixtures/demo.json'), { today: todayIso() }).spine, rules), source: 'demo', problem };
 }
 
@@ -69,16 +77,18 @@ export async function loadMyFile(file, rules) {
 }
 
 // Whose numbers these are (S-228): the made-up household is "Example household"; anything else is the person's.
+// The person's name comes first, then the file's own name for the household.
 export function whose(spine) {
   if (spine.meta && spine.meta.demo === true) return { example: true, name: 'Example household' };
-  const own = spine.meta && typeof spine.meta.name === 'string' && spine.meta.name.trim() && spine.meta.name !== 'Household' ? spine.meta.name.trim() : null;
   const person = ((spine.household && spine.household.people) || [])[0];
-  return { example: false, name: own || (person && person.name) || 'Your household' };
+  const named = person && typeof person.name === 'string' && person.name.trim() ? person.name.trim() : null;
+  const own = spine.meta && typeof spine.meta.name === 'string' && spine.meta.name.trim() && spine.meta.name !== 'Household' ? spine.meta.name.trim() : null;
+  return { example: false, name: named || own || 'Your household' };
 }
 
 export const SOURCE_WORDS = {
   saved: 'Saved in this browser',
-  local: 'Your profile file (fixtures/eli.local.json)',
+  local: 'Your file on this computer',
   file: 'Your file, open on this page only',
   demo: 'Example household (made up)'
 };

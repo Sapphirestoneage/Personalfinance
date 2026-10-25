@@ -26,7 +26,8 @@ export function estimatedVsActual(spine, rules, { months = 1, asOf = spine.meta.
     const cf = cashflow(spine, rules, ym, { mode: 'expected', taxCache });
     t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.income.takeHome, value: undefined });
     if (cf.income.takeHome.value === null) incomeMissing = true; else incomePlanned = round2(incomePlanned + cf.income.takeHome.value);
-    for (const i of cf.expenses.items) {
+    // A line that pays a debt keeps its row and its tag here (answer 35): what is logged to it meets its plan.
+    for (const i of [...cf.expenses.items, ...(cf.expenses.linked || [])]) {
       if (i.covered) continue;
       const tag = i.fat || 'other';
       const row = lines.get(i.id) || { id: i.id, label: i.label, tag, path: 'expenses.' + i.id + '.amount', planned: 0, actual: 0, entries: 0, missing: false };
