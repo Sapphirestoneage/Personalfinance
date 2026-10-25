@@ -1,16 +1,22 @@
 # Life Pyramid
 
-Status: queued for Phase 3. Not built. Answer the open questions at the end before building.
+Status: Phase 3e, after the 3a to 3d items. Not built.
 
 ## What it is
 
-Maslow's hierarchy drawn as a pyramid where every level is also a bar that fills. Three views on one toggle:
+A lens, like DRAFTT: it re-reads the budget lines and adds no questions to the session. Maslow's hierarchy drawn as a pyramid where every level is also a bar that fills. Three views on one toggle:
 
 - **Classic**: the textbook version. A level stays locked at 0 until the one below is full. Creativity is the reward at the end.
 - **Real**: every level is present at every stage, in different amounts. The bottom fills fastest, but nothing above it is ever 0.
-- **You**: the client's own spending share per level, read from the budget, with the Real shape shown as a faint marker behind it.
+- **You**: the client's own spending share per level, read from the budget, with the Real shape shown as a faint marker behind it. Shares only, no verdict, same as DRAFTT.
+
+Classic and Real are each labeled "a reference shape, not a rule".
 
 The point: people have needs throughout the journey, and art or creativity is not just a reward for the end.
+
+## Where it lives
+
+On the Plan tab beside DRAFTT, with the same look and toggle style. A small version goes on the one-pager only if it fits without crowding.
 
 ## Levels (top to bottom)
 
@@ -38,25 +44,26 @@ The client can also tap any stage to preview it.
 - Stage 4: L1 100/100, L2 100/90, L3 100/70, L4 60/65, L5 0/50
 - Stage 5: L1 100/100, L2 100/100, L3 100/75, L4 100/70, L5 80/70
 
-Keep these in a data file (`data/pyramid.json`), never in view code. They are illustrative and get a "reference shape, not a rule" label.
+Keep these in a data file (`data/pyramid.json`), never in view code. They are not bands: nothing is scored against them, and the You view is never graded by them.
 
 ## Data
 
-- Every spending category gets a pyramid level tag (defaults from the list above, editable per line), stored next to the existing Need/Want tag. Untagged lines show as "not sorted yet", never dropped.
+- Each budget line's level is auto-tagged from its category (defaults from the list above) and editable per line, stored next to the existing Need/Want tag. A line with no level shows as "not sorted yet", never dropped.
 - Savings and extra debt payments count toward level 2.
 - If budget lines have happiness ratings, show joy per dollar per level.
 
 ## House rules
 
-- Never red. Gaps read "room to grow here" or "heavier than most at this stage", never a verdict.
+- Never red, and no verdict: the You view states shares, the same as DRAFTT.
 - Every number has Show the math.
 - Empty is not zero. Missing data shows as missing.
 - Views never calculate: math lives in `engine/pyramid.js` with tests.
-- Strong affordances: the Classic / Real / You toggle and the stage picker are real buttons with borders, 44px tap targets.
+- Strong affordances: the Classic / Real / You toggle and the stage picker are real buttons with borders, 44px tap targets, in a card that looks like DRAFTT's. DRAFTT has no toggle yet, so this one sets the style; add it to `affordances.html`.
 - Works at 375px. No em dashes.
 
-## Open questions for Eli (answer before building)
+## Eli's answers (2026-10-25)
 
-- Name: "Life Pyramid" avoids clashing with N = Needs in DATING. OK?
-- Do the reference fills count as soft bands? (Oct 16 decision: DRAFTT has no healthy bands.)
-- Where does it live: Plan tab, One-pager, or both?
+- What it is: a lens like DRAFTT. It re-reads budget lines and adds no questions to the session. Each line's level is auto-tagged from its category and editable.
+- Name: keep "Life Pyramid".
+- Reference fills are not bands. The You view shows shares only, no verdict, same as DRAFTT. Classic and Real are labeled "a reference shape, not a rule".
+- Where it lives: the Plan tab beside DRAFTT, same look and toggle style. A small version goes on the one-pager only if it fits without crowding.

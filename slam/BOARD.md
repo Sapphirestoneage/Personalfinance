@@ -62,9 +62,63 @@ The open questions are in QUESTIONS.md. The ones that change numbers most now:
 confirming the rough W-2 numbers (the tax bill), card minimums (surplus,
 runway), and the 1099 contract's amount and likelihood (next year's outlook).
 
-## Phase 3
+## Phase 3: run the program (in client-stage order)
 
-- Life Pyramid: Maslow as a bar graph, Classic vs Real vs You. Spec: docs/specs/life-pyramid.md
+Not started. Phase 3 starts only when the Phase 2.5 gate passes:
+
+- [ ] Gate: no crashes on Eli's real profile (on Eli's machine; the profile never enters git)
+- [ ] Gate: Eli's five headline numbers match Eli's own math to the cent
+- [ ] Gate: a first session takes under an hour (`CLIENT_TEST.md`, not written yet)
+- [ ] Gate: nothing on a client screen needs explaining
+- [ ] Gate: the one-pager prints with the client's name
+
+Then, one line per item, in the order a client meets them:
+
+- [ ] **3a Before the call**: pre-call homework checklist (last 2 statements as CSV, one paystub, loan logins, account list); uploads land as guesses
+- [ ] **3a Before the call**: discovery call intake (gut number, preset); saves straight into the client's file
+- [ ] **3a Before the call**: onboarding openings
+- [ ] **3b In the call**: client list and switching
+- [ ] **3b In the call**: coach mode
+- [ ] **3b In the call**: statement and CSV import with categorization and recurring detection (import before the call is the main path)
+- [ ] **3b In the call**: coach quick-entry shorthand ("amex 2000 25% due 1" makes the row; house defaults fill the rest as rough)
+- [ ] **3b In the call**: next-question card with materiality
+- [ ] **3b In the call**: session timer by DATING step
+- [ ] **3c After the call**: end-of-session one-pager plus auto recap
+- [ ] **3c After the call**: "will email" items become client to-dos; "look up" items become coach to-dos
+- [ ] **3c After the call**: report output (plan PDF)
+- [ ] **3d Between sessions and the money date**: pre-session prep sheet (what changed, what's stale, biggest variance, next step)
+- [ ] **3d Between sessions and the money date**: month-end close loop, pre-filled from imports and the cash log
+- [ ] **3d Between sessions and the money date**: budget-to-cash bridge
+- [ ] **3d Between sessions and the money date**: money date and monthly check-in
+- [ ] **3d Between sessions and the money date**: refresh and upkeep
+- [ ] **3e Questions clients ask live**: Can I?
+- [ ] **3e Questions clients ask live**: debt order and true cost of debt
+- [ ] **3e Questions clients ask live**: emergency fund and runway
+- [ ] **3e Questions clients ask live**: when it won't all get paid
+- [ ] **3e Questions clients ask live**: variable income smoothing
+- [ ] **3e Questions clients ask live**: advice line and out-of-scope handoff
+- [ ] **3e Questions clients ask live**: get help
+- [ ] **3e Questions clients ask live**: the Life Pyramid lens, on the Plan tab beside DRAFTT; adds no questions (spec: `docs/specs/life-pyramid.md`)
+
+## Phase 4: rooms, added when a client needs one
+
+Not started. Each room waits until a client's situation calls for it.
+
+- [ ] Scenario blocks and compare
+- [ ] Lever ranking
+- [ ] Advice Translator and disregard cards
+- [ ] Every ratio
+- [ ] Lifestyle creep
+- [ ] Annual money calendar
+- [ ] Between Jobs
+- [ ] Earn More
+- [ ] Variable Income room
+- [ ] Tax room
+- [ ] Retirement accounts and Roth choices
+- [ ] FIRE Lab
+- [ ] Shockingly Simple Math
+- [ ] What It Takes
+- [ ] Scenario Planner and Long Way Round
 
 ## Future rounds
 
@@ -74,6 +128,7 @@ Backlog only; not built.
 
 ## Out of scope until later
 
-Monte Carlo, withdrawal sequencing, Social Security, scenario blocks (the
-married scenario), game layers, coach mode, statement import, rooms beyond
-the Ledger and Dashboard.
+Monte Carlo, withdrawal sequencing, Social Security, game layers. (Coach mode
+moved to Phase 3b; statement import, built in Batch E, grows in Phase 3b;
+scenario blocks, including the married scenario, and the rooms listed under
+Phase 4 moved there.)
