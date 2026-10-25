@@ -1,6 +1,7 @@
 // The Debt tab on the calendar page (S-205): formatting of engine/debtview.js.
-// Every number has Show the math; a missing input or rule reads as a missing
-// row in words, never a number. Formatting only.
+// Every number has Show the math; a missing input reads as a missing row in
+// words, never a number. A card or a loan is a whole-card target with a
+// chevron that opens it in My numbers (S-230). Formatting only.
 
 import { debtView, solvePayoff, whichCard, balanceTransfer } from '../engine/debtview.js';
 import { parseInput } from '../engine/edits.js';
@@ -13,15 +14,20 @@ const vizOf = (i) => VIZ[i % VIZ.length];
 const pctWords = (r) => (r === null || r === undefined ? 'rate not entered' : Math.round(r * 10000) / 100 + '%');
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
-// What the tab's small forms hold between renders (this page only).
-const form = { amount: '100', btCard: '', btFee: '', btMonths: '', btPost: '', solveTarget: '', solveBy: '' };
+// What the tab's small forms hold between renders. The page keeps them with its screen (saved, onSave), so coming
+// back to the calendar shows the same answers.
+const FORM = { amount: '100', btCard: '', btFee: '', btMonths: '', btPost: '', solveTarget: '', solveBy: '' };
+const form = { ...FORM };
+const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A');
 
-export function debtTab({ c, spine, rules, mathCtx, rerender }) {
-  if (!c.sim) return [h('p', { class: 'muted' }, 'No simulation for a month before the as-of date.')];
+export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSave = null }) {
+  if (!c.sim) return [h('p', { class: 'muted' }, 'This view starts on the date your numbers are from. Pick that month or a later one.')];
+  if (saved) for (const k of Object.keys(FORM)) if (typeof saved[k] === 'string') form[k] = saved[k];
+  const keepForm = () => (onSave ? onSave({ ...form }) : rerender());
   const base = mathCtx();
   const d = debtView(spine, rules, c.sim, base.s);
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
-  return [clearCard(d), ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, rerender), btCard(c, spine, rules, ctx, rerender), solveCard(c, spine, rules, ctx, rerender), loansCard(d, ctx)].filter(Boolean);
+  return [clearCard(d), ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
 }
 
 function clearCard(d) {
@@ -93,8 +99,10 @@ function cardTile(t, d, ctx) {
   if (t.fee) row('Annual fee', t.fee.value === null ? h('span', { class: 'missing-row' }, money(t.fee.fee) + ' a year; missing: what it gives back a year') : money(t.fee.fee) + ' against ' + money(t.fee.value) + ' back a year: ' + t.fee.verdict + (t.fee.net !== null ? ' (' + (t.fee.net >= 0 ? '+' : '-') + money(Math.abs(t.fee.net)) + ')' : ''), 'words');
   if (t.bonus) row('Signup bonus', t.bonus.left === null ? h('span', { class: 'missing-row' }, 'Missing: ' + t.bonus.missing.map((p) => p.split('.').pop().replace('bonusSpend', 'the spend required').replace('bonusSpent', 'what is spent so far').replace('bonusBy', 'the deadline')).join(', ')) : t.bonus.done ? 'Done: ' + money(t.bonus.spent) + ' of ' + money(t.bonus.required) + ' spent' + (t.bonus.value ? ', worth ' + money(t.bonus.value) : '') : money(t.bonus.left) + ' still to spend' + (t.bonus.by ? ' by ' + shortDate(t.bonus.by) : '') + (t.bonus.daysLeft !== null && t.bonus.daysLeft > 0 ? ' (' + t.bonus.daysLeft + ' days; ' + money(t.bonus.perDayNeeded) + ' a day needed' + (t.bonus.perDayNow !== null ? ', about ' + money(t.bonus.perDayNow) + ' a day goes on it now' : '') + ')' : t.bonus.missed ? ' (the deadline has passed)' : '') + (t.bonus.value ? '; worth ' + money(t.bonus.value) : ''), 'words');
   const ids = [t.trap ? 'debt:interestMonth:' + t.id : null, t.trap ? 'debt:minOnly:' + t.id : null, t.util && t.util.limit !== null ? 'debt:utilReport:' + t.id : null, t.fee ? 'debt:feeRoi:' + t.id : null, t.bonus ? 'debt:bonus:' + t.id : null].filter(Boolean);
-  return h('section', { class: 'card card-tile', 'aria-label': t.name },
-    h('h3', {}, h('a', { href: ledgerHref(t.path) }, t.name), t.revolving ? h('span', { class: 'pill' }, 'revolving') : t.balance > 0 ? h('span', { class: 'pill' }, 'paid in full') : h('span', { class: 'pill' }, 'no balance'), t.everyday ? h('span', { class: 'pill' }, 'everyday card') : null, t.payLast ? h('span', { class: 'pill' }, 'paid last') : null,
+  // The whole card opens the card in My numbers, with a chevron.
+  return h('section', { class: 'card card-tile' + (t.path ? ' has-target' : ''), 'aria-label': t.name },
+    h('h3', {}, t.path ? h('a', { class: 'card-link', href: ledgerHref(t.path) }, h('span', {}, t.name), chev()) : t.name),
+    h('p', { class: 'tile-pills' }, t.revolving ? h('span', { class: 'pill' }, 'revolving') : t.balance > 0 ? h('span', { class: 'pill' }, 'paid in full') : h('span', { class: 'pill' }, 'no balance'), t.everyday ? h('span', { class: 'pill' }, 'everyday card') : null, t.payLast ? h('span', { class: 'pill' }, 'paid last') : null,
       t.bonus && !t.bonus.done ? h('span', { class: 'deadline-chip' + (t.bonus.onPace ? ' ok' : '') }, t.bonus.missed ? 'Bonus deadline passed' : t.bonus.daysLeft !== null ? 'Bonus deadline in ' + t.bonus.daysLeft + ' days' : 'Bonus deadline not entered') : null),
     h('dl', { class: 'kv' }, kv),
     ids.length ? mathButton(ids, ctx) : null);
@@ -119,7 +127,7 @@ function utilCard(d, ctx) {
     mathButton(['debt:utilPersonal', 'debt:utilOverall'], ctx));
 }
 
-function whichCardCard(c, spine, rules, ctx, rerender) {
+function whichCardCard(c, spine, rules, ctx, save) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const amount = h('input', { id: 'which-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   amount.value = form.amount;
@@ -127,7 +135,7 @@ function whichCardCard(c, spine, rules, ctx, rerender) {
   const w = parsed && parsed.ok ? whichCard(spine, rules, c.sim, { amount: parsed.value }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'which-h' },
     h('h2', { id: 'which-h' }, 'Which card should I use?'),
-    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } form.amount = amount.value; rerender(); } },
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } form.amount = amount.value; save(); } },
       h('label', { for: 'which-amount', class: 'edit-label' }, 'A purchase today, in dollars'), amount, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Compare the cards'))),
     w && w.rows.length ? [h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
@@ -137,32 +145,32 @@ function whichCardCard(c, spine, rules, ctx, rerender) {
       mathButton(w.rows.map((r) => 'debt:whichCard:' + r.id), () => ctx({ which: w }))] : h('p', { class: 'muted' }, 'Type an amount to compare the cards.'));
 }
 
-function btCard(c, spine, rules, ctx, rerender) {
+function btCard(c, spine, rules, ctx, save) {
   const cards = c.sim.model.cards.filter((x) => x.balance > 0);
   if (!cards.length) return null;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pick = h('select', { id: 'bt-card' }, cards.map((x) => h('option', { value: x.id }, x.name)));
   pick.value = form.btCard || cards[0].id;
-  const fee = h('input', { id: 'bt-fee', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'house default 3' }); fee.value = form.btFee;
-  const months = h('input', { id: 'bt-months', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'house default 18' }); months.value = form.btMonths;
+  const fee = h('input', { id: 'bt-fee', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'usually 3' }); fee.value = form.btFee;
+  const months = h('input', { id: 'bt-months', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'usually 18' }); months.value = form.btMonths;
   const post = h('input', { id: 'bt-post', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'the card\'s own rate' }); post.value = form.btPost;
   const num = (text, type) => (text.trim() === '' ? { ok: true, value: null } : parseInput(type, text));
   const f = num(form.btFee, 'rate'), m = num(form.btMonths, 'int'), p = num(form.btPost, 'rate');
   const b = f.ok && m.ok && p.ok ? balanceTransfer(spine, rules, { cardId: pick.value, feeShare: f.value, promoMonths: m.value, postApr: p.value }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'bt-h' },
     h('h2', { id: 'bt-h' }, 'A balance transfer'),
-    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); for (const [el, type, what] of [[fee, 'rate', 'The fee'], [months, 'int', 'The months'], [post, 'rate', 'The rate after']]) { const r = num(el.value, type); if (!r.ok) { msg.textContent = what + ': ' + r.message; return; } } form.btCard = pick.value; form.btFee = fee.value; form.btMonths = months.value; form.btPost = post.value; rerender(); } },
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); for (const [el, type, what] of [[fee, 'rate', 'The fee'], [months, 'int', 'The months'], [post, 'rate', 'The rate after']]) { const r = num(el.value, type); if (!r.ok) { msg.textContent = what + ': ' + r.message; return; } } form.btCard = pick.value; form.btFee = fee.value; form.btMonths = months.value; form.btPost = post.value; save(); } },
       h('label', { for: 'bt-card', class: 'edit-label' }, 'Move the balance of'), pick,
       h('label', { for: 'bt-fee', class: 'edit-label' }, 'Transfer fee, as a percent'), fee,
       h('label', { for: 'bt-months', class: 'edit-label' }, 'Months at 0%'), months,
       h('label', { for: 'bt-post', class: 'edit-label' }, 'Rate after the window, as a percent'), post,
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Work it out'))),
     b && b.value !== null ? [h('div', { class: 'tool-result' + (b.worthIt ? '' : ' bad') }, h('strong', {}, b.worthIt ? 'Worth it: ' : 'Not worth it: '), 'moving ' + money(b.balance) + ' from ' + b.name + ' at ' + pctWords(b.apr) + ' costs a ' + money(b.fee) + ' fee and skips ' + money(b.interestSkipped) + ' of interest over ' + b.promoMonths + ' months at 0%, so ' + (b.netSaving >= 0 ? money(b.netSaving) + ' saved' : money(-b.netSaving) + ' lost') + '. Paying ' + money(b.payment) + ' a month, ' + (b.balanceLeftAfterPromo > 0 ? money(b.balanceLeftAfterPromo) + ' is left when the window ends, at ' + pctWords(b.postApr) + '.' : 'nothing is left when the window ends.')),
-      h('p', { class: 'tile-note' }, kindChip(b.kind), ' Offer terms you leave blank use the house defaults.'),
+      h('p', { class: 'tile-note' }, kindChip(b.kind), ' Offer terms you leave blank use the usual ones.'),
       mathButton(['debt:bt'], () => ctx({ bt: b }))] : b ? h('p', { class: 'muted missing-row' }, 'Missing: the card\'s balance.') : null);
 }
 
-function solveCard(c, spine, rules, ctx, rerender) {
+function solveCard(c, spine, rules, ctx, save) {
   const targets = [...c.sim.model.cards.filter((x) => x.balance > 0).map((x) => ({ id: x.id, name: x.name })), ...c.sim.model.loans.filter((x) => x.balance > 0).map((x) => ({ id: x.id, name: x.name }))];
   if (!targets.length) return null;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
@@ -173,7 +181,7 @@ function solveCard(c, spine, rules, ctx, rerender) {
   return h('section', { class: 'card', 'aria-labelledby': 'solve-h' },
     h('h2', { id: 'solve-h' }, 'Paid off by a date'),
     h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, on the same day-by-day run, and whether that extra pushes checking under the floor.'),
-    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; rerender(); } },
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; save(); } },
       h('label', { for: 'solve-target', class: 'edit-label' }, 'Clear'), pick,
       h('label', { for: 'solve-by', class: 'edit-label' }, 'By'), by,
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Work it out'))),
@@ -189,17 +197,19 @@ function loansCard(d, ctx) {
   if (!d.loans.length) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'loans-h' },
     h('h2', { id: 'loans-h' }, 'Student loans: income-driven repayment and forgiveness'),
-    h('p', { class: 'muted' }, 'From the rules registry: the payment is a share of income above a multiple of the poverty line for the household size. A rule that is not in the registry is a missing row.'),
-    d.loans.map((l) => h('section', { class: 'card card-tile', 'aria-label': l.name },
-      h('h3', {}, h('a', { href: ledgerHref(l.path) }, l.name), l.plan ? h('span', { class: 'pill' }, l.plan) : null),
+    h('p', { class: 'muted' }, 'Your payment is based on your income and household size.'),
+    // The whole card opens the loan in My numbers, with a chevron.
+    d.loans.map((l) => h('section', { class: 'card card-tile' + (l.path ? ' has-target' : ''), 'aria-label': l.name },
+      h('h3', {}, l.path ? h('a', { class: 'card-link', href: ledgerHref(l.path) }, h('span', {}, l.name), chev()) : l.name),
+      l.plan ? h('p', { class: 'tile-pills' }, h('span', { class: 'pill' }, l.plan)) : null,
       l.federal === false ? h('p', { class: 'tile-sub' }, kindChip('notForMe'), ' ', l.note) : (() => {
         const kv = [];
         const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
-        for (const id of l.missingRules) row('Missing rule', h('span', { class: 'missing-row' }, id + ' is not in the rules registry'), 'words');
-        row('Income-driven payment', l.payment === null ? h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : labelFor(ctx().spine, p)).join(', ') || 'a rule')) : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
+        if (l.missingRules.length) row('Missing', h('span', { class: 'missing-row' }, (l.missingRules.length === 1 ? 'A figure' : l.missingRules.length + ' figures') + ' this plan needs, not available yet'), 'words');
+        row('Income-driven payment', l.payment === null ? h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : labelFor(ctx().spine, p)).join(', ') || 'a figure this plan needs')) : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
         if (l.payment !== null) row('How', 'income ' + money(l.agi) + (l.agiSource === 'cashflow' ? ' (a year of this month\'s gross, rough)' : ' (this year\'s AGI)') + ', poverty line ' + money(l.povertyLine) + ' for ' + l.householdSize + (l.householdSize === 1 ? ' person' : ' people') + ', discretionary ' + money(l.discretionary), 'words');
-        row('Forgiveness', l.forgivenessYears === null ? h('span', { class: 'missing-row' }, 'Missing: the forgiveness rule') : 'whatever is left after ' + l.forgivenessYears + ' years of payments, about ' + shortDate(l.forgivenessDate), 'words');
-        if (l.pslf) row('Public service', l.pslf.payments === null ? h('span', { class: 'missing-row' }, 'Missing: the PSLF rule') : l.pslf.payments + ' qualifying payments, about ' + shortDate(l.pslf.date), 'words');
-        return [h('dl', { class: 'kv' }, kv), h('p', { class: 'tile-note' }, kindChip(l.kind), ' Any tax on a forgiven amount is not modeled; the Repayment Assistance Plan that opens July 2026 is not modeled yet.'), mathButton(['debt:idr:' + l.id], ctx)];
+        row('Forgiveness', l.forgivenessYears === null ? h('span', { class: 'missing-row' }, 'Missing: when this plan forgives what is left') : 'whatever is left after ' + l.forgivenessYears + ' years of payments, about ' + shortDate(l.forgivenessDate), 'words');
+        if (l.pslf) row('Public service', l.pslf.payments === null ? h('span', { class: 'missing-row' }, 'Missing: how many payments public service forgiveness takes') : l.pslf.payments + ' qualifying payments, about ' + shortDate(l.pslf.date), 'words');
+        return [h('dl', { class: 'kv' }, kv), h('p', { class: 'tile-note' }, kindChip(l.kind), ' Not included: tax on a forgiven amount, and the Repayment Assistance Plan that opens July 2026.'), mathButton(['debt:idr:' + l.id], ctx)];
       })())));
 }

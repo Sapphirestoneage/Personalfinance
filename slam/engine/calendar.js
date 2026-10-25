@@ -330,7 +330,7 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     let cash;
     const line = cashLineFor(sim, ym);
     const lastDay = line.length ? line[line.length - 1] : null;
-    if (ym < asOfYm) cash = { value: null, kind: 'missing', note: 'a month before the as-of date: the simulation does not look back', path: null, when: 'past', today: null };
+    if (ym < asOfYm) cash = { value: null, kind: 'missing', note: 'This month is over. Cash by day starts on the date your numbers are from.', path: null, when: 'past', today: null };
     else if (sim && !sim.checking.known) cash = { value: null, total: null, kind: 'missing', note: 'Checking has no balance yet, so the month-end cash is not figured.', path: sim.checking.path, when: 'ahead', today: null };
     else cash = { value: lastDay ? lastDay.primary : null, total: lastDay ? lastDay.cash : null, kind: lastDay ? sim.kind : 'missing', note: lastDay ? 'checking at the end of ' + (ym === asOfYm ? 'this month' : 'the month') + ', from the day-by-day simulation (' + maybeMode + ' maybe money, the floor guard ' + (sim.floor.guard ? 'on' : 'off') + ')' : 'no day of this month is in the simulation', path: sheet.cash.from[0] || null, when: ym === asOfYm ? 'now' : 'end', today: ym === asOfYm ? sheet.cash.value : null, todayNote: ym === asOfYm ? sheet.setAsideNote : null, apart: sheet.earmarks.length > 0 };
     if (sim) all.absorb({ value: 0, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules });

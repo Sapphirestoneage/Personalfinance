@@ -1,133 +1,273 @@
-// The cash flow calendar (S-200, S-203, S-204): every view is a reading of the
-// household's own dates and the day-by-day simulation. One time selector (1,
-// 3, 6, 12 months) shared with the budget; tabs for the month grid (running
-// cash and debt per day), the weeks, the next 14 days, each paycheck, the
-// year strip; "Sometime this month"; a maybe-money tray; milestones and their
-// timeline; search. An item moves by dragging its grip (pointer events, a
-// drag past 14px moves it) or by the Move button in its editor; it can be
-// skipped once, re-priced, locked, and put back in the tray. Edits are kept in
-// this browser (the same saved household the Ledger edits) and can be undone.
+// The cash flow calendar (S-200, S-203, S-204, S-209), on the shell (S-230): every view is a reading of the
+// household's own dates and the day-by-day run. The shell draws the tabs, the header with Undo and Redo, Back and
+// the trail, and the bar; every change goes through its change() with words ("Rent moved to Nov 3, 2026").
+// Screen by screen: calendar.html is the month (one time picker shared with Spending; views for the month grid, the
+// weeks, the next 14 days, each paycheck, the year and the debts; "Sometime this month"; maybe money; milestones;
+// search). #/<day> is one day, #/<day>/<item> one item with its actions (it happened, move, skip, a different amount
+// this time, lock); an item that cannot move says why. An item also moves by dragging its grip onto a day: one
+// change, so one Undo. What the month screen has open (the month, the view, the time picker, search, folds) is kept
+// with its history entry, so Back, the trail and coming back from another page land where it was.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
-import { mountPage, gapsCard, whoseLine } from './page.js';
+import { startPage, change, said, go, keep, kept, refresh, say } from './shell.js';
 import { calendar, weekdayOf, rangeCashTerms } from '../engine/calendar.js';
-import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashReading, cashLine, waiting } from '../engine/calendar-views.js';
+import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashReading, cashLine, waiting, itemId, itemDay } from '../engine/calendar-views.js';
 import { cashChartCard } from './cash-chart.js';
 import { safeToSpend } from '../engine/spending.js';
 import { summarize } from '../engine/summary.js';
-import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe, parseInput, createHistory, commit, undo, canUndo, undoLabel, redo, canRedo, redoLabel } from '../engine/edits.js';
-import { applyDefaults } from '../engine/defaults.js';
+import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe, parseInput } from '../engine/edits.js';
+import { gapsCard } from './page.js';
 import { mathButton } from './math-panel.js';
-import { loadAll, save } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal } from './view.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
-import { pickedWindow, windowBar } from './window.js';
+import { pickedWindow, windowBar, WINDOWS } from './window.js';
 import { debtTab } from './debt-tab.js';
 import { fooGhosts } from '../engine/plan.js';
 
 const app = document.getElementById('app');
-mountPage({ app });
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const longMonth = (ym) => MONTH_NAMES[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const addMonths = (ym, n) => { const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1 + n; return (y + Math.floor(m / 12)) + '-' + String(((m % 12) + 12) % 12 + 1).padStart(2, '0'); };
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const longDay = (iso) => DOW[weekdayOf(iso)] + ', ' + shortDate(iso);
+const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
 const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax and account deadlines'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
-const TABS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
+const VIEWS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
 
-// ---------------------------------------------------------------- state
-let hist, rules, source, lastSaved = null;
+// Why an item that cannot move stays on its day, in words (tapping it opens its screen, which says this).
+const FIXED = {
+  debt: 'Set by the lender\'s due date. Change the due day in My numbers.',
+  interest: 'Set by the card\'s statement date. It goes on the card, not out of checking.',
+  estimatedTax: 'Set by the tax calendar.',
+  taxReturn: 'Set by the tax calendar.',
+  maxDeadline: 'Set by the account\'s deadline for the year.',
+  promoEnds: 'Set by the date the card\'s intro rate ends.',
+  bonusBy: 'Set by the card\'s signup bonus deadline.',
+  foo: 'A suggestion from your plan for the end of the month. It is not counted, and it follows the plan.'
+};
+const fixedWords = (e) => FIXED[e.kind] || 'Set by its date in My numbers. Change it there to move it.';
+
+// ---------------------------------------------------------------- what the month screen keeps
+// Kept in this browser as well (the month last looked at, the chart's reach back), so a fresh visit opens on them.
 const KEY = 'slam-calendar:v1';
-const read = (k, ok, dflt) => { try { const v = localStorage.getItem(k); return ok(v) ? v : dflt; } catch { return dflt; } };
-const keep = (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage blocked: lasts until the page closes */ } };
 const BACK_KEY = 'slam-cal-back:v1';
-let backToFirst = read(BACK_KEY, (v) => v === '1' || v === '0', '0') === '1';
-let chartWidth = null; // the width the chart is shown at, measured after it is drawn, so its text stays 12px
-let window_ = pickedWindow();
-let simFloor = null;
-let state = { ym: null, tab: 'month', q: '', open: null, maybeMode: 'weighted', timing: false };
+const read = (k, ok, dflt) => { try { const v = localStorage.getItem(k); return ok(v) ? v : dflt; } catch { return dflt; } };
+const store = (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage blocked: lasts until the page closes */ } };
+// An old link to a month (calendar.html#2026-11, from Today and Spending) still opens that month; a link to a day or an
+// item (calendar.html#/2026-11-14/...) opens that day's month when Back reaches the month screen.
+const startHash = location.hash;
+const YM = /^\d{4}-\d{2}$/;
 
-function apply(next, label) {
-  hist = commit(hist, applyDefaults(next, rules), label);
-  source = 'saved';
-  lastSaved = (save(hist.present) ? 'Saved in this browser: ' : 'Could not save in this browser (storage is blocked), so this lasts until the page closes: ') + label + '.';
-  render();
+// The month screen's state: what its history entry kept (keep), else this browser's, else the as-of month.
+function rootState(s, asOfYm) {
+  const linked = /^#\d{4}-\d{2}$/.test(startHash) ? startHash.slice(1) : /^#\/\d{4}-\d{2}-\d{2}/.test(startHash) ? startHash.slice(2, 9) : null;
+  return {
+    ym: YM.test(s.ym || '') ? s.ym : linked || read(KEY, (v) => YM.test(v || ''), null) || asOfYm,
+    view: VIEWS.some(([id]) => id === s.view) ? s.view : 'month',
+    months: WINDOWS.some(([n]) => n === s.months) ? s.months : pickedWindow(),
+    q: typeof s.q === 'string' ? s.q : '',
+    agendaAll: s.agendaAll === true,
+    timing: s.timing === true,
+    back: typeof s.back === 'boolean' ? s.back : read(BACK_KEY, (v) => v === '1' || v === '0', '0') === '1',
+    open: Array.isArray(s.open) ? s.open : [],
+    debt: s.debt && typeof s.debt === 'object' ? s.debt : null
+  };
 }
-function tryApply(fn, label) { try { apply(fn(hist.present), label); return true; } catch (err) { lastSaved = err.message; render(); return false; } }
+const setRoot = (patch) => { keep(patch); refresh(); };
+
+// A fold on the month screen that stays open when the screen is come back to.
+function fold(st, id, cls, summary, ...body) {
+  const d = h('details', { class: cls, open: st.open.includes(id) || null }, h('summary', {}, summary), ...body);
+  d.addEventListener('toggle', () => { const was = kept().open || []; const next = d.open ? [...new Set([...was, id])] : was.filter((x) => x !== id); if (next.length !== was.length) keep({ open: next }); });
+  return d;
+}
+
+// ---------------------------------------------------------------- the months, figured once per household
+// The engines run once for a household, a scenario and a span; the trail's names and the screen read the same result.
+let memo = null;
+function viewOf(base, rules) {
+  const scen = pickedScenario();
+  if (!memo || memo.base !== base || memo.rules !== rules || memo.scen !== scen) memo = { base, rules, scen, spine: withScenario(base, rules, scen), cals: new Map(), s: null };
+  return memo;
+}
+const sumOf = (v) => v.s || (v.s = summarize(v.spine, v.rules, { flags: false }));
+function monthsOf(v, from, n) {
+  const k = from + ':' + n;
+  if (v.cals.has(k)) return v.cals.get(k);
+  const c = calendar(v.spine, v.rules, { from, months: n, maybeMode: 'weighted' });
+  // FOO ghost chips (S-208): the plan's allocation for the month, dashed, tagged Plan, never counted.
+  for (const g of fooGhosts(v.spine, v.rules, sumOf(v), c.months.map((m) => m.ym), { sim: maxItFor(v.spine, v.rules).sim })) {
+    const m = c.months.find((x) => x.ym === g.date.slice(0, 7));
+    if (!m) continue;
+    let d = m.days.find((x) => x.date === g.date);
+    if (!d) { d = { date: g.date, day: +g.date.slice(8, 10), events: [], in: 0, out: 0 }; m.days.push(d); m.days.sort((a, b) => (a.date < b.date ? -1 : 1)); }
+    d.events.push(g); m.events.push(g);
+  }
+  v.cals.set(k, c);
+  return c;
+}
+
+// ---------------------------------------------------------------- screens: a day, an item
+const isDay = (d, spine) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return false;
+  const t = Date.parse(d + 'T00:00:00Z');
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === d && Math.abs(+d.slice(0, 4) - +spine.meta.asOf.slice(0, 4)) <= 10;
+};
+const dayHref = (date) => '#/' + date;
+// Where an item's name leads: its own screen when it has a day, else (no day yet) its numbers, to enter the day.
+const itemHref = (e) => (e.date ? '#/' + e.date + '/' + encodeURIComponent(itemId(e)) : e.path ? ledgerHref(e.path) : null);
+// The item an address names, found on the day it is on now (a moved one on its new day).
+function findItem(base, rules, date, id) {
+  const day = itemDay(base, id, date);
+  if (!day) return null;
+  const v = viewOf(base, rules);
+  const e = monthsOf(v, day.slice(0, 7), 1).months[0].events.find((x) => itemId(x) === id && x.date === day);
+  return e || null;
+}
+const dayName = (date, spine) => (date.slice(0, 4) === spine.meta.asOf.slice(0, 4) ? shortDate(date).replace(/, \d{4}$/, '') : shortDate(date));
+function nameOf(levels, { spine, rules }) {
+  if (levels.length > 2 || !isDay(levels[0], spine)) return null;
+  if (levels.length === 1) return dayName(levels[0], spine);
+  const e = findItem(spine, rules, levels[0], levels[1]);
+  return e ? e.label : null;
+}
 
 // ---------------------------------------------------------------- pieces
 const SMALL_PILLS = ['sub', 'plan', 'locked', 'logged', 'waiting', 'maybe'];
 const pills = (e, small = false) => (e.pills || []).filter((p) => !small || SMALL_PILLS.includes(p)).map((p) => h('span', { class: 'pill pill-' + p }, PILL_WORDS[p] || p));
 const amt = (e) => (e.amount === null ? null : (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount, !Number.isInteger(e.amount)));
+const exact = (n) => money(n, !Number.isInteger(n));
+const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '›');
 
-// One event: the grip (drag), the swatch, the name (a button that opens its editor, or a link), pills, the amount, the note.
-// Where an event's name links: an account's deadline opens its "How much to max it?" panel (S-211), the rest their field.
+// A milestone or a deadline's own place: an account's deadline opens its "How much to max it?" panel (S-211), the rest
+// their numbers.
 const evHref = (e) => (e.kind === 'maxDeadline' && e.accountId ? maxHref(e.accountId) : e.path ? ledgerHref(e.path) : null);
 
-function eventEl(e, { small = false } = {}) {
-  const editable = !!e.key;
-  const name = editable
-    ? h('button', { type: 'button', class: 'ev-tap', 'aria-pressed': String(state.open === e.key), onclick: () => { state.open = state.open === e.key ? null : e.key; render(); } }, e.label)
-    : evHref(e) ? h('a', { href: evHref(e) }, e.label) : h('span', {}, e.label);
-  const li = h('li', { class: 'ev ev-' + e.kind + (e.rough ? ' ev-rough' : '') + (small ? ' ev-small' : '') + ((e.pills || []).includes('done') ? ' ev-done' : ''), 'data-key': e.key || null, 'data-drag': e.movable && !e.locked ? 'event' : null },
-    e.movable && !e.locked ? h('span', { class: 'grip', title: 'Drag to another day', 'aria-hidden': 'true' }, '⋮⋮') : null,
-    h('span', { class: 'sw ' + (CAT[e.kind] || 'viz-0'), 'aria-hidden': 'true' }),
-    h('span', { class: 'ev-name' }, name, e.kind === 'maxDeadline' ? h('span', { class: 'deadline-chip due' }, e.passed ? 'Deadline passed' : e.missing ? 'Deadline, room missing' : 'Deadline') : null, ...pills(e, small), e.rough && !small ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && !small && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null),
-    amt(e) ? h('span', { class: 'ev-amt' }, amt(e)) : null,
-    e.note && !small ? h('span', { class: 'ev-note' }, e.note) : null);
-  return li;
-}
-
-// The editor for a selected occurrence (S-204): move (a date and a Move button, the non-drag path), skip once, re-price, lock, back to the tray.
-function editor(e) {
-  const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const date = h('input', { id: 'mv-date', type: 'date' });
-  date.value = e.date || '';
-  const price = h('input', { id: 'mv-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  price.value = e.amount === null ? '' : String(e.amount);
+// One item: the grip (drag), the swatch, the name, pills, the amount, a chevron in a list, the note. The whole row
+// opens it (its own screen); the grip stays above the row so it drags.
+function eventEl(e, { small = false, drag = true } = {}) {
+  const href = itemHref(e);
   const isMaybe = e.kind === 'maybe';
-  const doMove = () => { if (!date.value) { msg.textContent = 'Pick a day'; return; } state.open = null; tryApply((s) => (isMaybe ? setMaybeDate(s, e.maybeId, date.value) : moveOccurrence(s, e.key, date.value)), e.label + ' moved to ' + shortDate(date.value)); };
-  return h('section', { class: 'card ev-editor', 'aria-labelledby': 'eved-h' },
-    h('h2', { id: 'eved-h' }, e.label, ' ', h('span', { class: 'muted' }, shortDate(e.date) + (amt(e) ? ', ' + amt(e) : ''))),
-    e.moved ? h('p', { class: 'muted' }, 'Moved from ' + shortDate(e.origDate) + '; the rule itself is untouched.') : null,
-    e.confirmable ? happenedRow(e) : null,
-    h('form', { class: 'editor', novalidate: true, onsubmit: (ev) => { ev.preventDefault(); doMove(); } },
-      h('label', { for: 'mv-date', class: 'edit-label' }, 'Move this one to'), date,
-      h('p', { class: 'edit-hint' }, 'Only this occurrence moves. Or drag its grip onto a day.'),
-      !isMaybe && e.movable ? [h('label', { for: 'mv-amount', class: 'edit-label' }, 'Amount this time (optional)'), price, h('p', { class: 'edit-hint' }, 'Blank puts the usual amount back.')] : null,
-      msg,
-      h('div', { class: 'edit-actions' },
-        e.locked ? null : h('button', { type: 'submit', class: 'btn primary' }, 'Move'),
-        e.moved && !e.locked && !isMaybe ? h('button', { type: 'button', class: 'btn', onclick: () => { state.open = null; tryApply((s) => moveOccurrence(s, e.key, e.origDate), e.label + ' back on ' + shortDate(e.origDate)); } }, 'Back to ' + shortDate(e.origDate)) : null,
-        !isMaybe && e.movable && !e.locked ? h('button', { type: 'button', class: 'btn', onclick: () => { const p = price.value.trim() === '' ? { ok: true, value: null } : parseInput('money', price.value); if (!p.ok) { msg.textContent = p.message; return; } state.open = null; tryApply((s) => repriceOccurrence(s, e.key, p.value), e.label + (p.value === null ? ': usual amount' : ': ' + money(p.value) + ' this time')); } }, 'Save the amount') : null,
-        !isMaybe && e.movable && !e.locked ? h('button', { type: 'button', class: 'btn', onclick: () => { state.open = null; tryApply((s) => skipOccurrence(s, e.key, true), e.label + ' skipped on ' + shortDate(e.origDate)); } }, 'Skip this one') : null,
-        !isMaybe && e.movable ? h('button', { type: 'button', class: 'btn', 'aria-pressed': String(!!e.locked), onclick: () => { tryApply((s) => lockOccurrence(s, e.key, !e.locked), e.label + (e.locked ? ' unlocked' : ' locked')); } }, e.locked ? 'Unlock' : 'Lock it here') : null,
-        isMaybe ? h('button', { type: 'button', class: 'btn', onclick: () => { state.open = null; tryApply((s) => setMaybeDate(s, e.maybeId, null), e.label + ' back in the tray'); } }, 'Back to the tray') : null,
-        isMaybe ? h('button', { type: 'button', class: 'btn danger', onclick: () => { state.open = null; tryApply((s) => removeMaybe(s, e.maybeId), e.label + ' removed'); } }, 'Remove') : null,
-        e.path ? h('a', { class: 'btn ghost', href: ledgerHref(e.path) }, 'Open in the Ledger') : null,
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.open = null; render(); } }, 'Close'))),
-    e.kind === 'pay' ? payFold(e) : null);
+  const canDrag = drag && e.movable && !e.locked && !!e.key;
+  return h('li', { class: 'ev ev-' + e.kind + (e.rough ? ' ev-rough' : '') + (small ? ' ev-small' : '') + ((e.pills || []).includes('done') ? ' ev-done' : '') + (href ? ' has-target' : ''), 'data-key': e.key || null, 'data-label': e.label, 'data-drag': canDrag ? (isMaybe ? 'maybe' : 'event') : null, 'data-maybe': isMaybe ? e.maybeId : null },
+    canDrag ? h('span', { class: 'grip', title: 'Drag to another day', 'aria-hidden': 'true' }, '⋮⋮') : null,
+    h('span', { class: 'sw ' + (CAT[e.kind] || 'viz-0'), 'aria-hidden': 'true' }),
+    h('span', { class: 'ev-name' }, href ? h('a', { class: 'ev-go', href }, e.label) : h('span', {}, e.label), e.kind === 'maxDeadline' ? h('span', { class: 'deadline-chip due' }, e.passed ? 'Deadline passed' : e.missing ? 'Deadline, room missing' : 'Deadline') : null, ...pills(e, small), e.rough && !small ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && !small && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null),
+    amt(e) ? h('span', { class: 'ev-amt' }, amt(e)) : null,
+    href && !small ? chev() : null,
+    e.note && !small ? h('span', { class: 'ev-note' }, e.note) : null);
 }
 
-// Did it happen (S-209): it happened at the planned amount, a different amount, or it did not happen (skipped once).
-// Happening writes one entry to the log, so estimated vs actual sees it; Undo, or "Not yet", takes it back.
+// One day as its own screen: what checking ends at, what comes in and goes out, and its items, each opening its own.
+function dayScreen(v, date) {
+  const spine = v.spine, asOf = spine.meta.asOf;
+  const c = monthsOf(v, date.slice(0, 7), 1);
+  const m = c.months[0];
+  const d = m.days.find((x) => x.date === date);
+  const bal = m.line.find((x) => x.date === date);
+  const ms = c.sim ? msOn(milestones(spine, v.rules, c.sim, c.months), date) : [];
+  return h('section', { class: 'card', 'aria-labelledby': 'day-h' },
+    h('h2', { id: 'day-h' }, longDay(date), ' ', date === todayIso() ? h('span', { class: 'stage-chip stage-green' }, 'Today') : null),
+    bal ? h('p', { class: 'tile-sub' }, 'Checking ends the day at ' + money(bal.primary) + (bal.debt ? '; debt ' + money(bal.debt) : '') + '.')
+      : date < asOf ? h('p', { class: 'muted' }, 'Before ' + shortDate(asOf) + ', the date your numbers are from, so there is no balance for this day.') : null,
+    d && (d.in || d.out) ? h('p', { class: 'tile-sub' }, [d.in ? money(d.in) + ' comes in' : null, d.out ? money(d.out) + ' goes out' : null].filter(Boolean).join('; ') + '.') : null,
+    ms.length ? h('p', { class: 'tile-sub' }, ...ms) : null,
+    d && d.events.length ? h('ul', { class: 'ev-list ev-rows' }, d.events.map((e) => eventEl(e, { drag: false }))) : h('p', { class: 'muted' }, 'Nothing lands on this day.'));
+}
+
+let following = null; // the item the screen is on its way to, on its new day
+// One item as its own screen (S-204, S-209): what it is, did it happen, and the changes to this one occurrence.
+// An item that cannot move says why. Its usual amount and day live in My numbers, one tap away.
+function itemScreen(v, date, id) {
+  const e = findItem(v.base, v.rules, date, id);
+  if (!e) return null;
+  // Moved (or moved back by Undo): the screen follows it to its day, so the trail names the day it is on. Once: a
+  // second draw before the move lands must not walk history twice.
+  if (e.date === date) following = null;
+  else if (following !== id + '@' + e.date) { following = id + '@' + e.date; queueMicrotask(() => go([e.date, id])); }
+  const where = e.kind === 'maxDeadline' && e.accountId ? [maxHref(e.accountId), 'How much to max it?', 'The room left and how to fill it by this deadline.'] : e.path ? [ledgerHref(e.path), 'See it in My numbers', 'Change the usual amount, day or anything else about it there.'] : null;
+  return [
+    h('section', { class: 'card', 'aria-labelledby': 'item-h' },
+      h('h2', { id: 'item-h' }, longDay(e.date)),
+      h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : 'No amount entered'),
+      (e.pills || []).length || e.rough || (!e.counted && e.amount !== null && e.kind !== 'maybe') ? h('p', { class: 'ev-name' }, ...pills(e), e.rough ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null) : null,
+      e.note ? h('p', { class: 'tile-sub' }, cap(e.note) + '.') : null,
+      e.moved ? h('p', { class: 'tile-sub' }, 'Moved from ' + shortDate(e.origDate) + '. The other months stay on their usual day.') : null,
+      e.movable ? null : h('p', { class: 'tile-sub why-fixed' }, h('strong', {}, 'Cannot move here. '), fixedWords(e)),
+      e.confirmable ? happenedRow(e) : null,
+      e.kind === 'pay' ? payFold(e) : null),
+    e.movable ? changeCard(e) : null,
+    where ? h('a', { class: 'go-row plain', href: where[0] }, h('span', { class: 'go-name' }, where[1]), h('span', { class: 'go-sub' }, where[2])) : null
+  ];
+}
+
+// Did it happen (S-209): at the planned amount, a different amount, or not (skipped once). Happening writes one entry to
+// the log, so estimated vs actual sees it; Undo, or "Not yet", takes it back.
 function happenedRow(e) {
-  if (e.logged) return h('div', { class: 'happened' }, h('p', { class: 'tile-sub' }, h('span', { class: 'pill pill-logged' }, 'happened'), ' Logged ' + money(e.logged.amount, !Number.isInteger(e.logged.amount)) + ' on ' + shortDate(e.logged.date) + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => tryApply((s) => unconfirmOccurrence(s, e.key), e.label + ': not logged after all') }, 'Not yet')));
+  const day = shortDate(e.date);
+  if (e.logged) return h('div', { class: 'happened' }, h('p', { class: 'tile-sub' }, h('span', { class: 'pill pill-logged' }, 'happened'), ' Logged ' + exact(e.logged.amount) + ' on ' + shortDate(e.logged.date) + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => change((s) => unconfirmOccurrence(s, e.key), e.label + ' on ' + day + ': not happened yet') }, 'Not yet')));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const other = h('input', { id: 'hap-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? '' : String(e.amount) });
   return h('div', { class: 'happened', role: 'group', 'aria-label': 'Did it happen?' },
     h('p', { class: 'edit-label' }, 'Did it happen?'),
     h('div', { class: 'edit-actions' },
-      e.amount === null ? null : h('button', { type: 'button', class: 'btn primary', onclick: () => { state.open = null; tryApply((s) => confirmOccurrence(s, e.key, { amount: e.amount }), e.label + ' happened: ' + money(e.amount, !Number.isInteger(e.amount))); } }, 'It happened'),
-      h('button', { type: 'button', class: 'btn', onclick: () => { state.open = null; tryApply((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)); } }, 'It did not happen')),
+      e.amount === null ? null : h('button', { type: 'button', class: 'btn primary', onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + day) + ': ' + exact(e.amount)) }, 'It happened'),
+      h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + day) }, 'It did not happen')),
     h('label', { for: 'hap-amount', class: 'edit-label' }, 'Or a different amount'), other, msg,
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => { const p = parseInput('money', other.value); if (!p.ok) { msg.textContent = p.message; other.focus(); return; } state.open = null; tryApply((s) => confirmOccurrence(s, e.key, { amount: p.value }), e.label + ' happened: ' + money(p.value, !Number.isInteger(p.value))); } }, 'Log this amount')));
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => { const p = parseInput('money', other.value); if (!p.ok) { msg.textContent = p.message; other.focus(); return; } change((s) => confirmOccurrence(s, e.key, { amount: p.value }), said.happened(e.label + ' on ' + day) + ': ' + exact(p.value)); } }, 'Log this amount')));
+}
+
+// Changes to this one occurrence (S-204): move it (a date and a Move button, the path that needs no drag), a different
+// amount this time, skip it, lock it on its day; a maybe item goes back to the tray or is removed. Delete never asks:
+// the bar offers Undo.
+function changeCard(e) {
+  const isMaybe = e.kind === 'maybe';
+  const day = shortDate(e.date);
+  if (e.locked) return h('section', { class: 'card', 'aria-labelledby': 'mv-h' }, h('h2', { id: 'mv-h' }, 'Locked on this day'),
+    h('p', { class: 'tile-sub' }, 'It cannot be moved, skipped or given a different amount until you unlock it.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', 'aria-pressed': 'true', onclick: () => change((s) => lockOccurrence(s, e.key, false), e.label + ' on ' + day + ' unlocked') }, 'Unlock')));
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const date = h('input', { id: 'mv-date', type: 'date' });
+  date.value = e.date || '';
+  const doMove = () => {
+    if (!date.value) { msg.textContent = 'Pick a day'; return; }
+    if (date.value === e.date) { msg.textContent = 'It is already on ' + day; return; }
+    change((s) => (isMaybe ? setMaybeDate(s, e.maybeId, date.value) : moveOccurrence(s, e.key, date.value)), said.moved(e.label, date.value));
+  };
+  const priceMsg = h('p', { class: 'edit-msg', role: 'alert' });
+  const price = h('input', { id: 'mv-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  price.value = e.amount === null ? '' : String(e.amount);
+  const doPrice = () => {
+    const p = price.value.trim() === '' ? { ok: true, value: null } : parseInput('money', price.value);
+    if (!p.ok) { priceMsg.textContent = p.message; price.focus(); return; }
+    change((s) => repriceOccurrence(s, e.key, p.value), p.value === null ? e.label + ' on ' + day + ' back to its usual amount' : said.changed(e.label + ' on ' + day, exact(p.value)));
+  };
+  return h('section', { class: 'card', 'aria-labelledby': 'mv-h' },
+    h('h2', { id: 'mv-h' }, 'Change this one'),
+    h('form', { class: 'editor', novalidate: true, onsubmit: (ev) => { ev.preventDefault(); doMove(); } },
+      h('label', { for: 'mv-date', class: 'edit-label' }, 'Move it to'), date,
+      h('p', { class: 'edit-hint' }, (isMaybe ? '' : 'Only this one moves. ') + 'Or drag its grip onto a day on the calendar.'),
+      msg,
+      h('div', { class: 'edit-actions' },
+        h('button', { type: 'submit', class: e.confirmable ? 'btn' : 'btn primary' }, 'Move'),
+        e.moved && !isMaybe ? h('button', { type: 'button', class: 'btn', onclick: () => change((s) => moveOccurrence(s, e.key, e.origDate), said.moved(e.label, e.origDate)) }, 'Put it back on ' + shortDate(e.origDate)) : null)),
+    isMaybe ? null : h('form', { class: 'editor', novalidate: true, onsubmit: (ev) => { ev.preventDefault(); doPrice(); } },
+      h('label', { for: 'mv-amount', class: 'edit-label' }, 'Amount this time'), price,
+      h('p', { class: 'edit-hint' }, 'Leave it blank for the usual amount.'),
+      priceMsg,
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Save the amount'))),
+    h('div', { class: 'edit-actions' },
+      isMaybe ? null : h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' skipped on ' + day) }, 'Skip this one'),
+      isMaybe ? null : h('button', { type: 'button', class: 'btn', 'aria-pressed': 'false', onclick: () => change((s) => lockOccurrence(s, e.key, true), e.label + ' locked on ' + day) }, 'Lock it on this day'),
+      isMaybe ? h('button', { type: 'button', class: 'btn', onclick: () => change((s) => setMaybeDate(s, e.maybeId, null), e.label + ' back in maybe money, with no day') }, 'Take it off the calendar') : null,
+      isMaybe ? h('button', { type: 'button', class: 'btn danger', onclick: () => change((s) => removeMaybe(s, e.maybeId), said.deleted(e.label)) }, 'Remove') : null));
 }
 
 // A paycheck's fold-out (answer 28): the gross and what came off it.
@@ -137,32 +277,35 @@ function payFold(e) {
     h('ul', {}, h('li', {}, 'Gross pay: ' + money(e.gross)), e.withheld !== null ? h('li', {}, 'Tax withheld: ' + money(e.withheld)) : null, e.fica !== null ? h('li', {}, 'Social Security and Medicare: ' + money(e.fica)) : null, e.saved ? h('li', {}, 'Saved from pay (payroll contributions): ' + money(e.saved)) : null, h('li', {}, h('strong', {}, 'Lands: ' + money(e.amount)))));
 }
 
-function skippedList(m) {
-  const cal = hist.present.calendar || {};
+// Skipped this month, each with a button to put it back on its day.
+function skippedList(m, spine) {
+  const cal = spine.calendar || {};
   const keys = Object.entries(cal.overrides || {}).filter(([k, o]) => o.skip && k.split('|')[1].slice(0, 7) === m.ym);
   if (!keys.length) return null;
-  return h('p', { class: 'muted' }, 'Skipped this month: ', ...keys.flatMap(([k], i) => [i ? ', ' : '', h('button', { type: 'button', class: 'ev-tap', onclick: () => tryApply((s) => skipOccurrence(s, k, false), k.split('|')[0] + ' put back') }, k.split('|')[0] + ' on ' + shortDate(k.split('|')[1]) + ' (put back)')]));
+  const nameOfKey = (k) => { const id = k.split('|')[0]; const src = (spine.income || []).find((x) => x.id === id) || (spine.expenses || []).find((x) => x.id === id); return src ? src.label : id; };
+  return h('div', { class: 'skipped' }, h('p', { class: 'muted' }, 'Skipped this month:'),
+    h('div', { class: 'edit-actions' }, keys.map(([k]) => h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => skipOccurrence(s, k, false), nameOfKey(k) + ' put back on ' + shortDate(k.split('|')[1])) }, 'Put back ' + nameOfKey(k) + ', ' + shortDate(k.split('|')[1]).replace(/, \d{4}$/, '')))));
 }
 
 function dayHead(d, m, today) {
   const bal = m.line.find((x) => x.date === d.date);
-  return h('p', { class: 'day-head' }, h('strong', {}, DOW[weekdayOf(d.date)] + ' ' + d.day), d.date === today ? h('span', { class: 'stage-chip stage-green' }, 'Today') : null,
+  return h('p', { class: 'day-head' }, h('a', { class: 'day-go', href: dayHref(d.date) }, DOW[weekdayOf(d.date)] + ' ' + d.day), d.date === today ? h('span', { class: 'stage-chip stage-green' }, 'Today') : null,
     h('span', { class: 'day-sum' }, (d.in ? '+' + money(d.in) : '') + (d.in && d.out ? ' ' : '') + (d.out ? '-' + money(d.out) : '')),
     bal ? h('span', { class: 'day-cash' }, 'ends at ' + money(bal.primary) + (bal.debt ? ', debt ' + money(bal.debt) : '')) : null);
 }
 
-// An account deadline is already on its day as an event with its chip (S-211), so its marker is left off the day; it stays on the Milestones card.
-function msOn(ms, date) { return ms.filter((x) => x.date === date && x.kind !== 'maxDeadline').map((x) => h('span', { class: 'ms' }, x.path ? h('a', { href: ledgerHref(x.path) }, x.label) : x.label)); }
+// An account deadline is already on its day as an item with its chip (S-211), so its marker is left off the day; it stays on the Milestones card.
+function msOn(ms, date) { return ms.filter((x) => x.date === date && x.kind !== 'maxDeadline').map((x) => h('span', { class: 'ms' }, evHref(x) ? h('a', { href: evHref(x) }, x.label) : x.label)); }
 
 // The phone form: days as a list.
 function dayList(m, today, ms) {
-  if (!m.days.length) return h('p', { class: 'muted' }, 'Nothing lands on a known day this month. Enter pay days and bill days in the Ledger to see them here.');
+  if (!m.days.length) return h('p', { class: 'muted' }, 'Nothing lands on a known day this month. Enter pay days and bill days in ', h('a', { href: 'ledger.html' }, 'My numbers'), ' to see them here.');
   const low = m.line.length ? m.line.reduce((a, x) => (x.primary < a.primary ? x : a), m.line[0]).date : null;
-  return h('ol', { class: 'day-list' }, m.days.map((d) => h('li', { class: 'day' + (d.date === today ? ' today' : '') + (d.date === low ? ' low' : ''), 'data-date': d.date }, dayHead(d, m, today), ...msOn(ms, d.date), h('ul', { class: 'ev-list' }, d.events.map((e) => eventEl(e))))));
+  return h('ol', { class: 'day-list' }, m.days.map((d) => h('li', { class: 'day' + (d.date === today ? ' today' : '') + (d.date === low ? ' low' : ''), 'data-date': d.date }, dayHead(d, m, today), ...msOn(ms, d.date), h('ul', { class: 'ev-list ev-rows' }, d.events.map((e) => eventEl(e))))));
 }
 
-// The desktop form: a seven-column grid with running cash and debt in every cell.
-function grid(m, today, ms) {
+// The desktop form: a seven-column grid with running cash and debt in every cell; the day's number opens the day.
+function grid(m, today, ms, floor) {
   const first = m.ym + '-01';
   const lead = weekdayOf(first);
   const n = new Date(Date.UTC(+m.ym.slice(0, 4), +m.ym.slice(5, 7), 0)).getUTCDate();
@@ -173,8 +316,8 @@ function grid(m, today, ms) {
     const date = m.ym + '-' + String(day).padStart(2, '0');
     const d = m.days.find((x) => x.date === date);
     const bal = m.line.find((x) => x.date === date);
-    cells.push(h('div', { class: 'cell' + (date === today ? ' today' : '') + (d ? ' has' : '') + (date === low ? ' low' : '') + (bal && simFloor !== null && bal.primary < simFloor ? ' under' : ''), role: 'listitem', 'data-date': date, 'aria-label': DOW[weekdayOf(date)] + ' ' + day + (d ? ', ' + d.events.length + ' item' + (d.events.length === 1 ? '' : 's') : '') + (bal ? ', checking ' + money(bal.primary) : '') },
-      h('p', { class: 'cell-day' }, String(day), date === today ? h('span', { class: 'cell-today' }, 'today') : null),
+    cells.push(h('div', { class: 'cell' + (date === today ? ' today' : '') + (d ? ' has' : '') + (date === low ? ' low' : '') + (bal && floor !== null && bal.primary < floor ? ' under' : ''), role: 'listitem', 'data-date': date, 'aria-label': DOW[weekdayOf(date)] + ' ' + day + (d ? ', ' + d.events.length + ' item' + (d.events.length === 1 ? '' : 's') : '') + (bal ? ', checking ' + money(bal.primary) : '') },
+      h('p', { class: 'cell-day' }, h('a', { class: 'day-go', href: dayHref(date), 'aria-label': longDay(date) }, String(day)), date === today ? h('span', { class: 'cell-today' }, 'today') : null),
       ...msOn(ms, date),
       d ? h('ul', { class: 'ev-list' }, d.events.map((e) => eventEl(e, { small: true }))) : null,
       bal ? h('p', { class: 'cell-cash' }, money(bal.primary)) : null,
@@ -185,35 +328,37 @@ function grid(m, today, ms) {
 
 function summary(m, c, mathCtx) {
   const cash = m.cash;
-  const cashWords = cash.value === null ? cash.note : 'Checking at the end of the month: ' + money(cash.value) + (cash.total !== null && cash.total !== cash.value ? ' (' + (cash.apart ? 'cash you can use' : 'every cash account') + ': ' + money(cash.total) + ')' : '') + '.';
+  const cashWords = cash.value === null ? cap(cash.note) : 'Checking at the end of the month: ' + money(cash.value) + (cash.total !== null && cash.total !== cash.value ? ' (' + (cash.apart ? 'cash you can use' : 'every cash account') + ': ' + money(cash.total) + ')' : '') + '.';
+  const todayLine = cash.today !== null ? 'Cash today: ' + money(cash.today) : null;
+  const todaySub = cash.todayNote ? cash.todayNote : 'Across every cash account.';
   return h('section', { class: 'card month-sum', 'aria-label': 'This month in one line' },
     h('p', { class: 'flow-total' }, (m.net >= 0 ? money(m.net) + ' more comes in than goes out' : money(-m.net) + ' more goes out than comes in') + ' on the calendar in ' + longMonth(m.ym) + '.'),
     h('p', { class: 'tile-sub' }, 'Comes in ' + money(m.in) + '; goes out ' + money(m.out) + ' (bills, minimums, saving and the tax set-aside). Lines with no amount or marked "not added" are not in these totals.'),
-    cash.today !== null ? h('p', { class: 'tile-sub' }, 'Cash today: ' + money(cash.today) + (cash.todayNote ? '. ' + cash.todayNote : ' across every cash account.'), cash.path ? [' ', h('a', { href: ledgerHref(cash.path) }, 'View in the Ledger')] : null) : null,
-    h('p', { class: 'tile-sub' }, chip(cash.kind === 'computed' ? 'known' : cash.kind), ' ', cashWords, c.sim && c.sim.floor.amount ? ' Floor on checking: ' + money(c.sim.floor.amount) + '.' : ''),
+    // Cash today opens the cash accounts in My numbers: the whole row is the target.
+    todayLine ? (cash.path ? h('a', { class: 'go-row plain', href: ledgerHref(cash.path) }, h('span', { class: 'go-name' }, todayLine), h('span', { class: 'go-sub' }, todaySub)) : h('p', { class: 'tile-sub' }, todayLine + '. ' + todaySub)) : null,
+    h('p', { class: 'tile-sub' }, cash.when === 'past' ? null : [chip(cash.kind === 'computed' ? 'known' : cash.kind), ' '], cashWords, c.sim && c.sim.floor.amount ? ' Floor on checking: ' + money(c.sim.floor.amount) + '.' : ''),
     readingLines(c, m),
     m.monthCash ? mathButton(['calendar:monthCash'], () => ({ ...mathCtx(), month: m })) : null,
     ...payLaterLines(c, m),
     m.confirm && m.confirm.scheduled ? h('p', { class: 'tile-sub' }, 'Scheduled: ' + m.confirm.happened + ' of ' + m.confirm.scheduled + ' paychecks and bills marked happened.') : null,
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'spending.html#log' }, 'Log a spend'), h('a', { class: 'btn', href: 'spending.html#checkin' }, 'Check in balances')),
-    h('p', { class: 'tile-note' }, 'A rough tag means the day or the amount is a guess (a house default, or a rough number). The totals use what is on the calendar; the checking balance comes from the day-by-day simulation, where an item with no day is spread evenly across the month and cards are paid on their due days.'));
+    h('p', { class: 'tile-note' }, 'A rough tag means the day or the amount is a guess. The totals use what is on the calendar. For the checking balance, an item with no day is spread evenly across the month, and cards are paid on their due days.'));
 }
 
-
-// Waiting (S-209, the Budget's Track card): due on or before today and not marked yet. One tap each way;
-// Open it goes to its day for a different amount or a move.
-function waitingCard(spine, today) {
+// Waiting (S-209, the Budget's Track card): due on or before today and not marked yet. One tap each way; Open it opens
+// the item's own screen, for a different amount or a move.
+function waitingCard(spine, rules, today) {
   const list = waiting(spine, rules, { today });
   if (!list.length) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'waiting-h' },
     h('h2', { id: 'waiting-h' }, 'Scheduled, on or before today ', h('span', { class: 'count' }, String(list.length))),
     h('p', { class: 'muted' }, 'Did these happen? Marking one keeps the log true; one that did not happen comes off the calendar this time.'),
     h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened' },
-      h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + money(e.amount, !Number.isInteger(e.amount)))),
+      h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
       h('div', { class: 'edit-actions' },
-        e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => tryApply((s) => confirmOccurrence(s, e.key, { amount: e.amount }), e.label + ' happened: ' + money(e.amount, !Number.isInteger(e.amount))) }, 'It happened'),
-        h('button', { type: 'button', class: 'btn', onclick: () => tryApply((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
-        h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.ym = e.date.slice(0, 7); state.tab = 'month'; state.open = e.key; keep(KEY, state.ym); render(); } }, 'Open it'))))));
+        e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'It happened'),
+        h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
+        h('a', { class: 'btn ghost', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Open it'))))));
 }
 
 // The month's cash reading in words (S-209): checking today, the lowest day, and the days in trouble.
@@ -236,45 +381,56 @@ function payLaterLines(c, m) {
   const here = pl.flags.filter((f) => f.due.slice(0, 7) === m.ym);
   if (!here.length) return [h('p', { class: 'tile-note' }, 'Every bill in ' + longMonth(m.ym) + ' lands with checking at or above ' + money(pl.line) + ' (the floor plus a week of everyday spending): none is paid before the paycheck that covers it.')];
   const flagLine = (f) => h('li', {}, h('span', { class: 'pill' }, 'pay-later'), ' ', f.label + ' (' + money(f.amount) + ') lands ' + shortDate(f.due) + ', ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck on ' + shortDate(f.paidBy) + ' that covers it; checking that day ' + money(f.cashThatDay) + '.');
-  return [here.length > 4 ? h('p', { class: 'tile-sub' }, here.length + ' bills land while checking is under ' + money(pl.line) + '; the first four, then the rest:') : null, here.length > 4 ? h('details', { class: 'flow-list' }, h('summary', {}, 'The other ' + (here.length - 4)), h('ul', { class: 'paylater' }, here.slice(4).map(flagLine))) : null, h('ul', { class: 'paylater', 'aria-label': 'Paid before the paycheck that covers it' }, here.slice(0, 4).map((f) => h('li', {}, h('span', { class: 'pill' }, 'pay-later'), ' ', f.label + ' (' + money(f.amount) + ') lands ' + shortDate(f.due) + ', ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck on ' + shortDate(f.paidBy) + ' that covers it; checking that day ' + money(f.cashThatDay) + '.'))),
+  return [here.length > 4 ? h('p', { class: 'tile-sub' }, here.length + ' bills land while checking is under ' + money(pl.line) + '; the first four, then the rest:') : null, here.length > 4 ? h('details', { class: 'flow-list' }, h('summary', {}, 'The other ' + (here.length - 4)), h('ul', { class: 'paylater' }, here.slice(4).map(flagLine))) : null, h('ul', { class: 'paylater', 'aria-label': 'Paid before the paycheck that covers it' }, here.slice(0, 4).map(flagLine)),
     h('p', { class: 'tile-note' }, 'Flagged when checking sits under ' + money(pl.line) + ' (the floor plus a week of everyday spending) on the day it lands. Bill timing below says which due day would help most.')];
 }
 
 // Bill timing (S-209): the due day that raises the lowest point the most, with a script to ask for it.
-function timingCard(c) {
+function timingCard(c, rules, st) {
   if (!c.sim) return null;
-  if (!state.timing) return h('section', { class: 'card', 'aria-labelledby': 'timing-h' }, h('h2', { id: 'timing-h' }, 'Bill timing'), h('p', { class: 'muted' }, 'Tries moving each bill and card due day, every third day, on the same run, and keeps the moves that raise the lowest point.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => { state.timing = true; render(); } }, 'Find better due days')));
+  if (!st.timing) return h('section', { class: 'card', 'aria-labelledby': 'timing-h' }, h('h2', { id: 'timing-h' }, 'Bill timing'), h('p', { class: 'muted' }, 'Tries moving each bill and card due day, every third day, and keeps the moves that raise the lowest point.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', id: 'timing-find', onclick: () => setRoot({ timing: true }) }, 'Find better due days')));
   const t = billTiming(c.sim, rules);
   return h('section', { class: 'card', 'aria-labelledby': 'timing-h' },
     h('h2', { id: 'timing-h' }, 'Bill timing'),
     h('p', { class: 'tile-sub' }, 'Lowest point now: ' + money(t.lowNow.amount) + ' on ' + shortDate(t.lowNow.date) + '. ' + t.tried + ' bills and cards tried.'),
-    t.fixes.length ? h('ul', { class: 'flow-list' }, t.fixes.map((f) => h('li', {}, h('a', { href: ledgerHref(f.path) }, f.label), ': move the due day from the ' + ordinal(f.from) + ' to the ' + ordinal(f.to) + ': the lowest point rises by ' + money(f.gain) + ', to ' + money(f.lowAfter.amount) + (f.shortfallsBefore > f.shortfallsAfter ? ', and ' + (f.shortfallsBefore - f.shortfallsAfter) + ' payment' + (f.shortfallsBefore - f.shortfallsAfter === 1 ? '' : 's') + ' no longer held back' : '') + '. ', h('span', { class: 'ev-note' }, 'To ask: "' + f.script + '"'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => { state.timing = false; tryApply((s) => putFact(s, f.path, f.to, 'known', todayIso()), f.label + ': due day saved as the ' + ordinal(f.to)); } }, 'Save the new due day'))))) : h('p', { class: 'muted' }, 'No due day move raises the lowest point: the timing already works.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.timing = false; render(); } }, 'Hide')));
+    t.fixes.length ? h('ul', { class: 'flow-list' }, t.fixes.map((f) => h('li', {}, h('a', { href: ledgerHref(f.path) }, f.label), ': move the due day from the ' + ordinal(f.from) + ' to the ' + ordinal(f.to) + ': the lowest point rises by ' + money(f.gain) + ', to ' + money(f.lowAfter.amount) + (f.shortfallsBefore > f.shortfallsAfter ? ', and ' + (f.shortfallsBefore - f.shortfallsAfter) + ' payment' + (f.shortfallsBefore - f.shortfallsAfter === 1 ? '' : 's') + ' no longer held back' : '') + '. ', h('span', { class: 'ev-note' }, 'To ask: "' + f.script + '"'),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => { keep({ timing: false }); if (!change((s) => putFact(s, f.path, f.to, 'known', todayIso()), said.changed(f.label + ' due day', 'the ' + ordinal(f.to)))) refresh(); } }, 'Save the new due day'))))) : h('p', { class: 'muted' }, 'No due day move raises the lowest point: the timing already works.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn ghost', id: 'timing-hide', onclick: () => setRoot({ timing: false }) }, 'Hide')));
 }
 
 function undated(m) {
   if (!m.undated.length) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'undated-h-' + m.ym },
     h('h2', { id: 'undated-h-' + m.ym }, 'Sometime in ' + longMonth(m.ym) + ' ', h('span', { class: 'count' }, String(m.undated.length))),
-    h('p', { class: 'muted' }, 'These have no day yet. Open one and enter the day it is paid to put it on the calendar; until then the cash line spreads it across the month.'),
-    h('ul', { class: 'ev-list' }, m.undated.map((e) => eventEl(e))));
+    h('p', { class: 'muted' }, 'These have no day yet. Open one to enter the day it is paid in My numbers; until then the cash line spreads it across the month.'),
+    h('ul', { class: 'ev-list ev-rows' }, m.undated.map((e) => eventEl(e))));
 }
 
-function listTwin(m) {
+function listTwin(m, st) {
   const all = [...m.days.flatMap((d) => d.events), ...m.undated];
-  return h('details', { class: 'flow-list card' }, h('summary', {}, 'Every item in ' + longMonth(m.ym) + ' as a list, with links to the Ledger (' + all.length + ')'),
-    h('ul', {}, all.map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', evHref(e) ? h('a', { href: evHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? 'in ' : e.direction === 'out' ? 'out ' : '') + money(e.amount, !Number.isInteger(e.amount)) : '', e.rough ? ' (rough)' : '', e.note ? ' (' + e.note + ')' : ''))));
+  return fold(st, 'list:' + m.ym, 'flow-list card', 'Every item in ' + longMonth(m.ym) + ' as a list (' + all.length + ')',
+    h('ul', {}, all.map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', itemHref(e) ? h('a', { href: itemHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? 'in ' : e.direction === 'out' ? 'out ' : '') + exact(e.amount) : '', e.rough ? ' (rough)' : '', e.note ? ' (' + e.note + ')' : ''))));
 }
 
-// ---------------------------------------------------------------- tabs
-function monthTab(c, today, ms, mathCtx) {
+// The words for a view that starts on the as-of date, when the month picked is before it.
+const pastWords = (asOf) => h('p', { class: 'muted' }, 'This view starts on ' + shortDate(asOf) + ', the date your numbers are from. Pick that month or a later one.');
+
+// ---------------------------------------------------------------- views
+let chartWidth = null; // the width the chart is shown at, measured after it is drawn, so its text stays 12px
+function measureChart() {
+  const wrap = document.querySelector('.cl-wrap');
+  if (wrap && wrap.clientWidth && Math.abs(wrap.clientWidth - (chartWidth || 0)) > 2) { chartWidth = wrap.clientWidth; refresh(); }
+}
+
+function monthTab(v, c, today, ms, mathCtx, st) {
   const parts = [];
+  const spine = v.spine;
   // Cash by day for the whole window (S-209), above the months.
-  const spine = hist.present;
   const first = cashLine(spine, c.sim);
-  const line = first && first.backTo && backToFirst ? cashLine(spine, c.sim, { from: first.backTo + '-01' }) : first;
+  const line = first && first.backTo && st.back ? cashLine(spine, c.sim, { from: first.backTo + '-01' }) : first;
   const pre = c.sim && c.sim.checking.known ? safeToSpend(c.sim).low : null;
-  parts.push(cashChartCard(line, { preCover: pre && pre.covered ? pre : null, back: backToFirst, onBack: (on) => { backToFirst = on; keep(BACK_KEY, on ? '1' : '0'); render(); }, width: chartWidth || Math.min(960, (app.clientWidth || 360) - 66) }));
+  parts.push(cashChartCard(line, { preCover: pre && pre.covered ? pre : null, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); }, width: chartWidth || Math.min(960, (app.clientWidth || 360) - 66) }));
+  const floor = c.sim ? c.sim.floor.amount : null;
   for (const m of c.months) {
     const used = new Set(m.events.map((e) => CAT[e.kind] || 'viz-0'));
     parts.push(
@@ -282,20 +438,19 @@ function monthTab(c, today, ms, mathCtx) {
       summary(m, c, mathCtx),
       h('section', { class: 'card cal', 'aria-labelledby': 'cal-h-' + m.ym },
         h('h2', { id: 'cal-h-' + m.ym }, 'On the days'),
-        h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([cc]) => used.has(cc)).map(([cc, t]) => h('li', {}, h('span', { class: 'sw ' + cc, 'aria-hidden': 'true' }), t)), m.events.some((e) => e.rough) ? h('li', {}, h('span', { class: 'ev-tag' }, 'rough'), ' a guessed day or amount') : null, h('li', {}, h('span', { class: 'grip', 'aria-hidden': 'true' }, '⋮⋮'), ' drag to move; tap the name to edit')),
-        h('div', { class: 'cal-grid-only' }, grid(m, today, ms)),
+        h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([cc]) => used.has(cc)).map(([cc, t]) => h('li', {}, h('span', { class: 'sw ' + cc, 'aria-hidden': 'true' }), t)), m.events.some((e) => e.rough) ? h('li', {}, h('span', { class: 'ev-tag' }, 'rough'), ' a guessed day or amount') : null, h('li', {}, h('span', { class: 'grip', 'aria-hidden': 'true' }, '⋮⋮'), ' drag to move; tap a name to open it')),
+        h('div', { class: 'cal-grid-only' }, grid(m, today, ms, floor)),
         h('div', { class: 'cal-list-only' }, dayList(m, today, ms)),
-        skippedList(m)),
-      state.open ? (() => { const e = m.events.find((x) => x.key === state.open); return e ? editor(e) : null; })() : null,
+        skippedList(m, v.base)),
       undated(m),
-      listTwin(m));
+      listTwin(m, st));
   }
-  parts.push(timingCard(c));
+  parts.push(timingCard(c, v.rules, st));
   return parts.filter(Boolean);
 }
 
-function weeksTab(c, mathCtx) {
-  if (!c.sim) return h('p', { class: 'muted' }, 'No simulation for a month before the as-of date.');
+function weeksTab(c, mathCtx, asOf) {
+  if (!c.sim) return pastWords(asOf);
   const w = weeks(c.sim);
   return h('section', { class: 'card', 'aria-labelledby': 'weeks-h' },
     h('h2', { id: 'weeks-h' }, 'Week by week'),
@@ -306,62 +461,64 @@ function weeksTab(c, mathCtx) {
     mathButton(['calendar:rangeCash'], () => ({ ...mathCtx(), range: { terms: rangeCashTerms(c.sim, w[0].from, w[w.length - 1].to), kind: c.sim.kind } }), 0, 'Show the math for the whole span'));
 }
 
-function agendaTab(c) {
-  if (!c.sim) return h('p', { class: 'muted' }, 'No simulation for a month before the as-of date.');
-  const all = state.agendaAll === true;
+function agendaTab(c, st, asOf) {
+  if (!c.sim) return pastWords(asOf);
+  const all = st.agendaAll;
   const a = agenda(c.sim, all ? c.sim.daily.length : 14);
   const COLOR = { income: 'viz-3', 'maybe-in': 'viz-5', bill: 'viz-1', paylater: 'viz-2', 'card-payment': 'viz-2', 'loan-payment': 'viz-2', 'extra-payment': 'viz-2', transfer: 'viz-3', interest: 'viz-2', 'late-fee': 'viz-2', statement: 'viz-0', shortfall: 'viz-5', everyday: 'viz-1', log: 'viz-1', 'auto-cover': 'viz-3' };
   const SOURCE = { scheduled: 'scheduled', happened: 'happened', logged: 'logged', maybe: 'maybe' };
   return h('section', { class: 'card', 'aria-labelledby': 'agenda-h' },
     h('h2', { id: 'agenda-h' }, all ? 'Every day with money moving, by date' : 'The next 14 days'),
-    h('p', { class: 'muted' }, 'Each line says where it came from (scheduled from the plan, happened when the log confirmed it, logged from the log) and what checking holds after it.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', 'aria-pressed': String(all), onclick: () => { state.agendaAll = !all; render(); } }, all ? 'Show the next 14 days' : 'Show every day in the window')),
+    h('p', { class: 'muted' }, 'Each line says where it came from (scheduled from the plan, happened when the log confirmed it, logged from the log) and what checking holds after it. Tap a day to open it.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', id: 'agenda-all', 'aria-pressed': String(all), onclick: () => setRoot({ agendaAll: !all }) }, all ? 'Show the next 14 days' : 'Show every day in the window')),
     a.length ? h('div', {}, a.map((d) => h('div', { class: 'agenda-day' + (d.isLow ? ' low' : ''), 'data-date': d.date },
-      h('p', { class: 'day-head' }, h('strong', {}, DOW[weekdayOf(d.date)] + ' ' + shortDate(d.date)), d.isLow ? h('span', { class: 'stage-chip stage-yellow' }, 'Lowest day') : null, d.underFloor ? h('span', { class: 'stage-chip stage-red' }, 'Under the floor') : null, h('span', { class: 'day-cash' }, 'ends at ' + money(d.end))),
+      h('p', { class: 'day-head' }, h('a', { class: 'day-go', href: dayHref(d.date) }, DOW[weekdayOf(d.date)] + ' ' + shortDate(d.date)), d.isLow ? h('span', { class: 'stage-chip stage-yellow' }, 'Lowest day') : null, d.underFloor ? h('span', { class: 'stage-chip stage-red' }, 'Under the floor') : null, h('span', { class: 'day-cash' }, 'ends at ' + money(d.end))),
       h('ul', { class: 'ev-list' }, d.events.map((e) => h('li', { class: 'ev' },
         h('span', { class: 'sw ' + (COLOR[e.kind] || 'viz-0'), 'aria-hidden': 'true' }),
         h('span', { class: 'ev-name' }, e.label + (e.kind === 'statement' ? ' (statement ' + money(e.statement) + ', due ' + shortDate(e.due) + ')' : e.kind === 'shortfall' ? ' (could not be paid without breaching the floor)' : e.card ? ' (on the card)' : ''), e.kind !== 'statement' && e.kind !== 'shortfall' ? h('span', { class: 'pill' + (e.source === 'happened' ? ' pill-logged' : '') }, SOURCE[e.source] || e.source) : null),
         e.amount ? h('span', { class: 'ev-amt' }, (e.amount > 0 ? '+' : '-') + money(Math.abs(e.amount), !Number.isInteger(e.amount))) : null,
-        e.after !== null && e.after !== undefined ? h('span', { class: 'ev-note' }, 'checking then ' + money(e.after, !Number.isInteger(e.after))) : null))))))
+        e.after !== null && e.after !== undefined ? h('span', { class: 'ev-note' }, 'checking then ' + exact(e.after)) : null))))))
       : h('p', { class: 'muted' }, 'Nothing but everyday spending in the next two weeks.'));
 }
 
-function paychecksTab(c, spine, mathCtx) {
-  if (!c.sim) return h('p', { class: 'muted' }, 'No simulation for a month before the as-of date.');
+function paychecksTab(c, spine, rules, mathCtx, asOf) {
+  if (!c.sim) return pastWords(asOf);
   const list = paychecks(spine, rules, c.sim, mathCtx().s);
   const payEvents = c.months.flatMap((m) => m.events.filter((e) => e.kind === 'pay'));
   return h('section', { class: 'card', 'aria-labelledby': 'pay-h' },
     h('h2', { id: 'pay-h' }, 'Paycheck by paycheck ', h('span', { class: 'count' }, String(list.length))),
-    h('p', { class: 'muted' }, 'Each paycheck, what it has to cover until the next one, and what is left. A bonus paycheck is the third biweekly or fifth weekly pay in a month.'),
+    h('p', { class: 'muted' }, 'Each paycheck, what it has to cover until the next one, and what is left. A bonus paycheck is the third biweekly or fifth weekly pay in a month. Tap a paycheck to see its pay in My numbers.'),
     ...list.map((p) => {
       const ev = payEvents.find((e) => e.sourceId === p.streamId && e.date === p.date);
-      return h('section', { class: 'card pay-card', 'aria-label': p.label + ' on ' + shortDate(p.date) },
-        h('div', { class: 'pay-head' }, h('strong', {}, shortDate(p.date) + ': ' + p.label), h('span', { class: 'pay-amt' }, money(p.amount)), p.bonus ? h('span', { class: 'bonus-chip' }, 'Bonus paycheck') : null, h('span', { class: 'muted' }, p.until ? 'until ' + shortDate(p.until) : 'to the end of the window')),
+      const head = shortDate(p.date) + ': ' + p.label;
+      // The whole card opens the pay in My numbers, with a chevron.
+      return h('section', { class: 'card pay-card' + (p.path ? ' has-target' : ''), 'aria-label': p.label + ' on ' + shortDate(p.date) },
+        p.path ? h('a', { class: 'card-link', href: ledgerHref(p.path) }, h('strong', {}, head), chev()) : h('strong', {}, head),
+        h('div', { class: 'pay-head' }, h('span', { class: 'pay-amt' }, money(p.amount)), p.bonus ? h('span', { class: 'bonus-chip' }, 'Bonus paycheck') : null, h('span', { class: 'muted' }, p.until ? 'until ' + shortDate(p.until) : 'to the end of the window')),
         ev ? payFold(ev) : null,
         p.bonus ? h('p', { class: 'tile-sub' }, p.bonusWhy + (p.couldDo ? ' It could go to ' + p.couldDo.label.toLowerCase() + ': ' + money(p.couldDo.amount) + '. ' + p.couldDo.why : '')) : null,
         h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'What it covers'), h('th', {}, 'Date'), h('th', { class: 'num' }, 'Amount'))),
           h('tbody', {}, p.bills.map((b) => h('tr', {}, h('td', {}, b.label), h('td', {}, shortDate(b.date)), h('td', { class: 'num' }, money(b.amount))))),
           h('tfoot', {}, h('tr', {}, h('td', {}, h('span', { class: 'pay-left' + (p.short ? ' short' : '') }, p.short ? 'Short by' : 'Left after these')), h('td', {}), h('td', { class: 'num' }, money(Math.abs(p.left))))))),
-        p.path ? h('a', { href: ledgerHref(p.path) }, 'View in the Ledger ›') : null,
         mathButton(['calendar:paycheckLeft'], () => ({ ...mathCtx(), paycheck: p })));
     }));
 }
 
-function yearTab(c, spine, mathCtx) {
-  const y = yearStrip(spine, rules, { maybeMode: state.maybeMode });
+function yearTab(spine, rules) {
+  const y = yearStrip(spine, rules, { maybeMode: 'weighted' });
   return h('section', { class: 'card', 'aria-labelledby': 'year-h' },
     h('h2', { id: 'year-h' }, 'The year, month by month ', h('span', { class: 'count' }, y.tightCount + ' tight')),
     h('p', { class: 'muted' }, 'A month is tight when its lowest day comes within a week of everyday spending (' + money(y.tightWeek) + ') of the floor' + (y.floor ? ' (' + money(y.floor) + ')' : '') + '; red when it goes under.'),
-    h('div', { class: 'year-strip', role: 'list' }, y.months.map((m) => h('div', { class: 'ys' + (m.underFloor ? ' under' : m.tight ? ' tight' : ''), role: 'listitem', 'aria-label': longMonth(m.ym) + ', lowest ' + money(m.low) + (m.tight ? ', tight' : '') + (m.deadlines.length ? ', ' + m.deadlines.length + ' account deadline' + (m.deadlines.length === 1 ? '' : 's') : '') }, h('b', {}, MONTH_NAMES[+m.ym.slice(5, 7) - 1].slice(0, 3)), h('span', { class: 'ys-low' }, money(m.low)), m.underFloor ? h('span', { class: 'pill' }, 'under') : m.tight ? h('span', { class: 'pill' }, 'tight') : null, m.deadlines.length ? h('span', { class: 'ys-flag', title: m.deadlines.map((d) => d.label).join('; ') }, '\u2691' + (m.deadlines.length > 1 ? ' ' + m.deadlines.length : '')) : null))),
+    h('div', { class: 'year-strip', role: 'list' }, y.months.map((m) => h('div', { class: 'ys' + (m.underFloor ? ' under' : m.tight ? ' tight' : ''), role: 'listitem', 'aria-label': longMonth(m.ym) + ', lowest ' + money(m.low) + (m.tight ? ', tight' : '') + (m.deadlines.length ? ', ' + m.deadlines.length + ' account deadline' + (m.deadlines.length === 1 ? '' : 's') : '') }, h('b', {}, MONTH_NAMES[+m.ym.slice(5, 7) - 1].slice(0, 3)), h('span', { class: 'ys-low' }, money(m.low)), m.underFloor ? h('span', { class: 'pill' }, 'under') : m.tight ? h('span', { class: 'pill' }, 'tight') : null, m.deadlines.length ? h('span', { class: 'ys-flag', title: m.deadlines.map((d) => d.label).join('; ') }, '⚑' + (m.deadlines.length > 1 ? ' ' + m.deadlines.length : '')) : null))),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Month'), h('th', { class: 'num' }, 'In'), h('th', { class: 'num' }, 'Out'), h('th', { class: 'num' }, 'Net'), h('th', { class: 'num' }, 'Lowest day'), h('th', { class: 'num' }, 'Interest'))),
-      h('tbody', {}, y.months.map((m) => h('tr', { class: m.underFloor ? 'under' : m.tight ? 'tight' : '' }, h('td', {}, h('button', { type: 'button', class: 'ev-tap', onclick: () => { state.ym = m.ym; state.tab = 'month'; keep(KEY, state.ym); render(); window.scrollTo({ top: 0 }); } }, longMonth(m.ym))), h('td', { class: 'num' }, money(m.in)), h('td', { class: 'num' }, money(m.out)), h('td', { class: 'num' }, money(m.net)), h('td', { class: 'num' }, money(m.low) + (m.tight ? ' (tight)' : '')), h('td', { class: 'num' }, money(m.interest))))))),
+      h('tbody', {}, y.months.map((m) => h('tr', { class: m.underFloor ? 'under' : m.tight ? 'tight' : '' }, h('td', {}, h('button', { type: 'button', class: 'ev-tap', onclick: () => { store(KEY, m.ym); setRoot({ ym: m.ym, view: 'month' }); window.scrollTo({ top: 0 }); } }, longMonth(m.ym))), h('td', { class: 'num' }, money(m.in)), h('td', { class: 'num' }, money(m.out)), h('td', { class: 'num' }, money(m.net)), h('td', { class: 'num' }, money(m.low) + (m.tight ? ' (tight)' : '')), h('td', { class: 'num' }, money(m.interest))))))),
     // The strip's deadline chips in words, each opening its account's panel (S-211).
-    y.months.some((m) => m.deadlines.length) ? h('div', { class: 'ys-deadlines' }, h('h3', {}, '\u2691 Account deadlines in these twelve months'), h('ul', { class: 'max-list' }, y.months.flatMap((m) => m.deadlines).map((d) => h('li', { class: 'max-row' }, h('a', { class: 'max-name', href: maxHref(d.accountId) }, shortDate(d.date) + ': ' + d.label + ' ›'), h('span', { class: 'tile-sub' }, d.note))))) : null,
-    h('p', { class: 'tile-note' }, chip(y.kind === 'computed' ? 'known' : y.kind), ' Twelve months from the as-of date, from the day-by-day simulation. Tap a month to open it.'));
+    y.months.some((m) => m.deadlines.length) ? h('div', { class: 'ys-deadlines' }, h('h3', {}, '⚑ Account deadlines in these twelve months'), h('ul', { class: 'max-list' }, y.months.flatMap((m) => m.deadlines).map((d) => h('li', { class: 'max-row' }, h('a', { class: 'max-name', href: maxHref(d.accountId) }, shortDate(d.date) + ': ' + d.label + ' ›'), h('span', { class: 'tile-sub' }, d.note))))) : null,
+    h('p', { class: 'tile-note' }, chip(y.kind === 'computed' ? 'known' : y.kind), ' Twelve months from ' + shortDate(spine.meta.asOf) + ', the date your numbers are from. Tap a month to open it.'));
 }
 
 // ---------------------------------------------------------------- the tray, milestones, search
-function trayCard(c) {
+function trayCard(c, st) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const label = h('input', { id: 'tray-label', type: 'text', autocomplete: 'off', placeholder: 'A tax refund, a gift, a side job' });
   const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
@@ -372,7 +529,7 @@ function trayCard(c) {
     ev.preventDefault();
     const a = parseInput('money', amount.value); if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
     const l = likely.value.trim() === '' ? { ok: true, value: 0.5 } : parseInput('rate', likely.value); if (!l.ok || l.value < 0 || l.value > 1) { msg.textContent = 'How likely: 0 to 100'; likely.focus(); return; }
-    tryApply((s) => addMaybe(s, { label: label.value, amount: a.value, likelihood: l.value, direction: dir.value, date: dateIn.value || null }).spine, 'Maybe money: ' + label.value.trim() + (dateIn.value ? ' on ' + shortDate(dateIn.value) : ' in the tray'));
+    change((s) => addMaybe(s, { label: label.value, amount: a.value, likelihood: l.value, direction: dir.value, date: dateIn.value || null }).spine, said.added(label.value.trim()) + (dateIn.value ? ' on ' + shortDate(dateIn.value) : ' to maybe money'));
   } },
     h('label', { for: 'tray-label', class: 'edit-label' }, 'What might come in or go out'), label,
     h('label', { for: 'tray-amount', class: 'edit-label' }, 'How much'), amount,
@@ -381,47 +538,56 @@ function trayCard(c) {
     h('label', { for: 'tray-date', class: 'edit-label' }, 'On a day (optional; blank keeps it in the tray)'), dateIn,
     msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add maybe money')));
+  const item = (m) => {
+    const d = h('input', { type: 'date', 'aria-label': 'Day for ' + m.label });
+    return h('li', { class: 'tray-item', 'data-key': 'maybe:' + m.id, 'data-label': m.label, 'data-drag': 'maybe', 'data-maybe': m.id },
+      h('span', { class: 'grip', title: 'Drag onto a day', 'aria-hidden': 'true' }, '⋮⋮'), h('span', {}, h('strong', {}, m.label), h('span', { class: 'choice-sub' }, ' ' + Math.round(m.likelihood * 100) + '% likely, ' + (m.direction === 'out' ? 'out' : 'in'))), h('span', { class: 'tray-amt' }, money(m.amount)), d,
+      h('button', { type: 'button', class: 'btn small', onclick: () => { if (!d.value) { say('Pick a day for ' + m.label + ' first'); d.focus(); return; } change((s) => setMaybeDate(s, m.id, d.value), said.moved(m.label, d.value)); } }, 'Put it on that day'),
+      h('button', { type: 'button', class: 'btn ghost small', onclick: () => change((s) => removeMaybe(s, m.id), said.deleted(m.label)) }, 'Remove'));
+  };
   return h('section', { class: 'card tray', id: 'tray', 'aria-labelledby': 'tray-h' },
     h('h2', { id: 'tray-h' }, 'Maybe money ', h('span', { class: 'count' }, String(c.tray.length))),
     h('p', { class: 'muted' }, 'Money that might come (or go) and is not in the plan until it has a day. Drag an item\'s grip onto a day, or pick a day and put it there. On the calendar it counts at its likelihood in the cash line.'),
-    c.tray.length ? h('ul', { class: 'tray-list' }, c.tray.map((m) => { const d = h('input', { type: 'date', 'aria-label': 'Day for ' + m.label }); return h('li', { class: 'tray-item', 'data-key': 'maybe:' + m.id, 'data-drag': 'maybe', 'data-maybe': m.id }, h('span', { class: 'grip', title: 'Drag onto a day', 'aria-hidden': 'true' }, '⋮⋮'), h('span', {}, h('strong', {}, m.label), h('span', { class: 'choice-sub' }, ' ' + Math.round(m.likelihood * 100) + '% likely, ' + (m.direction === 'out' ? 'out' : 'in'))), h('span', { class: 'tray-amt' }, money(m.amount)), d, h('button', { type: 'button', class: 'btn small', onclick: () => { if (!d.value) { lastSaved = 'Pick a day for ' + m.label + ' first.'; render(); return; } tryApply((s) => setMaybeDate(s, m.id, d.value), m.label + ' on ' + shortDate(d.value)); } }, 'Put it on that day'), h('button', { type: 'button', class: 'btn ghost small', onclick: () => tryApply((s) => removeMaybe(s, m.id), m.label + ' removed') }, 'Remove')); })) : h('p', { class: 'muted' }, 'The tray is empty.'),
-    h('details', { class: 'later-list' }, h('summary', {}, 'Add maybe money'), form));
+    c.tray.length ? h('ul', { class: 'tray-list' }, c.tray.map(item)) : h('p', { class: 'muted' }, 'The tray is empty.'),
+    fold(st, 'tray-add', 'later-list', 'Add maybe money', form));
 }
 
-function milestonesCard(c, spine) {
+function milestonesCard(c, spine, rules, st) {
   if (!c.sim) return null;
   const ms = milestones(spine, rules, c.sim, c.months);
   return h('section', { class: 'card', 'aria-labelledby': 'ms-h' },
     h('h2', { id: 'ms-h' }, 'Milestones ', h('span', { class: 'count' }, String(ms.length))),
-    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), evHref(x) ? h('a', { href: evHref(x) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + window_ + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + window_ + '-month window. A longer window may show when a card clears.'));
+    ms.length ? [h('ul', { class: 'ms-line', 'aria-label': 'Milestones in date order' }, ms.map((x) => h('li', {}, h('span', { class: 'ms-date' }, shortDate(x.date)), evHref(x) ? h('a', { href: evHref(x) }, x.label) : x.label, x.note ? h('span', { class: 'ev-note' }, x.note) : null))), h('p', { class: 'muted' }, 'Cards cleared, loans paid off, promo rates ending, income starting or ending, inside the ' + st.months + '-month window. Markers sit on their days in the month view.')] : h('p', { class: 'muted' }, 'No milestone falls inside the ' + st.months + '-month window. A longer window may show when a card clears.'));
 }
 
-function searchCard(c) {
+// Search: what is typed is kept with the screen, so coming back shows the same results.
+function searchCard(c, st) {
   const box = h('input', { class: 'search-box', type: 'search', id: 'cal-search', placeholder: 'Find an item by name (press /)', 'aria-label': 'Find an item', autocomplete: 'off' });
-  box.value = state.q;
-  box.addEventListener('input', () => { state.q = box.value; const hits = searchEvents(c.months, state.q); list.replaceChildren(...results(hits)); });
-  const results = (hits) => (state.q && !hits.length ? [h('li', { class: 'muted' }, 'Nothing matches.')] : hits.slice(0, 30).map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', evHref(e) ? h('a', { href: evHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount) : '', e.key ? [' ', h('button', { type: 'button', class: 'ev-tap', onclick: () => { state.open = e.key; state.ym = e.ym; state.tab = 'month'; render(); } }, 'open')] : null)));
-  const list = h('ul', { class: 'flow-list' }, ...results(searchEvents(c.months, state.q)));
+  box.value = st.q;
+  const results = (q, hits) => (q && !hits.length ? [h('li', { class: 'muted' }, 'Nothing matches.')] : hits.slice(0, 30).map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', itemHref(e) ? h('a', { href: itemHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount) : '')));
+  const list = h('ul', { class: 'flow-list' }, ...results(st.q, searchEvents(c.months, st.q)));
+  box.addEventListener('input', () => { keep({ q: box.value }); list.replaceChildren(...results(box.value, searchEvents(c.months, box.value))); });
   return h('section', { class: 'card', 'aria-label': 'Search' }, box, list);
 }
 
 // ---------------------------------------------------------------- drag to reschedule (S-204)
-// Pointer events on a grip: a drag past 14px lifts the item; dropping it on a day moves
-// that one occurrence (or puts a tray item on that day). A tap stays a tap.
+// Pointer events on a grip: a drag past 14px lifts the item; dropping it on a day moves that one occurrence (or puts a
+// maybe item on that day), one change and so one Undo. A tap on the grip says how to move it.
 function dragSetup(root) {
   let drag = null;
   const cellAt = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest('[data-date]') : null; };
   root.addEventListener('pointerdown', (e) => {
     const grip = e.target.closest('.grip'); if (!grip) return;
     const item = grip.closest('[data-drag]'); if (!item) return;
-    drag = { item, kind: item.dataset.drag, key: item.dataset.key, maybeId: item.dataset.maybe, x: e.clientX, y: e.clientY, moving: false, ghost: null, over: null, id: e.pointerId };
+    const from = item.closest('[data-date]');
+    drag = { item, kind: item.dataset.drag, key: item.dataset.key, label: item.dataset.label || 'It', maybeId: item.dataset.maybe, from: from ? from.dataset.date : null, x: e.clientX, y: e.clientY, moving: false, ghost: null, over: null, id: e.pointerId };
     grip.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
   root.addEventListener('pointermove', (e) => {
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.moving) { if (Math.hypot(dx, dy) < 14) return; drag.moving = true; drag.item.classList.add('dragging'); drag.ghost = h('div', { class: 'drag-ghost' }, drag.item.querySelector('.ev-name, strong')?.textContent || 'Item'); document.body.append(drag.ghost); }
+    if (!drag.moving) { if (Math.hypot(dx, dy) < 14) return; drag.moving = true; drag.item.classList.add('dragging'); drag.ghost = h('div', { class: 'drag-ghost' }, drag.label); document.body.append(drag.ghost); }
     drag.ghost.style.left = (e.clientX + 12) + 'px'; drag.ghost.style.top = (e.clientY - 12) + 'px';
     const cell = cellAt(e.clientX, e.clientY);
     if (drag.over && drag.over !== cell) drag.over.classList.remove('drop-target');
@@ -432,86 +598,68 @@ function dragSetup(root) {
     if (!drag) return;
     const d = drag; drag = null;
     d.item.classList.remove('dragging'); if (d.ghost) d.ghost.remove(); if (d.over) d.over.classList.remove('drop-target');
-    if (!d.moving || !drop) return;
+    if (!drop) return;
+    if (!d.moving) { say('To move ' + d.label + ', drag the grip onto another day, or tap its name and pick a day'); return; }
     const cell = cellAt(e.clientX, e.clientY);
-    if (!cell) return;
+    if (!cell || cell.dataset.date === d.from) return;
     const date = cell.dataset.date;
-    if (d.kind === 'maybe') tryApply((s) => setMaybeDate(s, d.maybeId, date), 'Maybe money put on ' + shortDate(date));
-    else tryApply((s) => moveOccurrence(s, d.key, date), d.key.split('|')[0] + ' moved to ' + shortDate(date));
+    if (d.kind === 'maybe') change((s) => setMaybeDate(s, d.maybeId, date), said.moved(d.label, date));
+    else change((s) => moveOccurrence(s, d.key, date), said.moved(d.label, date));
   };
   root.addEventListener('pointerup', (e) => finish(e, true));
   root.addEventListener('pointercancel', (e) => finish(e, false));
+  // The grip in the key of colors moves nothing itself: a tap on it says how moving works.
+  root.addEventListener('click', (e) => { const g = e.target.closest && e.target.closest('.grip'); if (g && !g.closest('[data-drag]')) say('Drag an item\'s grip onto another day to move it, or tap its name and pick a day'); });
 }
 
-// ---------------------------------------------------------------- render
-function render() {
-  const spine = withScenario(hist.present, rules, pickedScenario());
-  const asOfYm = spine.meta.asOf.slice(0, 7);
-  if (!state.ym) state.ym = asOfYm;
-  const c = calendar(spine, rules, { from: state.ym, months: window_, maybeMode: state.maybeMode });
-  simFloor = c.sim ? c.sim.floor.amount : null;
+// ---------------------------------------------------------------- the month screen
+function monthScreen(v, ctx) {
+  const rules = v.rules, spine = v.spine, asOf = spine.meta.asOf, asOfYm = asOf.slice(0, 7);
+  const st = rootState(ctx.state || {}, asOfYm);
+  const c = monthsOf(v, st.ym, st.months);
   const today = todayIso();
-  const mathCtx = () => ({ spine, rules, s: summarize(spine, rules, { flags: false }) });
+  const mathCtx = () => ({ spine, rules, s: sumOf(v) });
   const ms = c.sim ? milestones(spine, rules, c.sim, c.months) : [];
-  // FOO ghost chips (S-208): the plan's allocation for the month, dashed, tagged Plan, never counted.
-  for (const g of fooGhosts(spine, rules, mathCtx().s, c.months.map((m) => m.ym), { sim: maxItFor(spine, rules).sim })) { const m = c.months.find((x) => x.ym === g.date.slice(0, 7)); if (!m) continue; let d = m.days.find((x) => x.date === g.date); if (!d) { d = { date: g.date, day: +g.date.slice(8, 10), events: [], in: 0, out: 0 }; m.days.push(d); m.days.sort((a, b) => (a.date < b.date ? -1 : 1)); } d.events.push(g); m.events.push(g); }
-  const go = (n) => { state.ym = addMonths(state.ym, n); state.open = null; keep(KEY, state.ym); render(); window.scrollTo({ top: 0 }); };
-  const focusId = document.activeElement && document.activeElement.id;
-  const caret = focusId === 'cal-search' ? document.activeElement.selectionStart : null;
-  app.replaceChildren(...[
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
-    h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Cash flow calendar'), whoseLine(hist.present, source, { asOf: c.asOf, rules, reopen: boot })),
-      h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
-        h('button', { type: 'button', class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : 'Nothing undone to redo', onclick: () => { const before = hist; hist = redo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Redone: ' + redoLabel(before) + '.'; render(); } } }, 'Redo'))),
-    h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
-    windowBar(window_, (n) => { window_ = n; render(); }),
+  const toMonth = (ym) => { store(KEY, ym); setRoot({ ym }); window.scrollTo({ top: 0 }); };
+  if (st.view === 'month') requestAnimationFrame(measureChart);
+  const known = !(c.sim && !c.sim.checking.known);
+  const body = !known ? [] : st.view === 'month' ? monthTab(v, c, today, ms, mathCtx, st) : st.view === 'weeks' ? [weeksTab(c, mathCtx, asOf)] : st.view === 'agenda' ? [agendaTab(c, st, asOf)] : st.view === 'paychecks' ? [paychecksTab(c, spine, rules, mathCtx, asOf)]
+    : st.view === 'debt' ? (c.sim ? debtTab({ c, spine, rules, mathCtx, rerender: refresh, saved: st.debt, onSave: (f) => setRoot({ debt: f }) }) : [pastWords(asOf)]) : [yearTab(spine, rules)];
+  return [
+    windowBar(st.months, (n) => setRoot({ months: n })),
     gapsCard(spine, c.sim),
-    waitingCard(spine, today),
+    waitingCard(spine, rules, today),
     h('div', { class: 'month-nav', role: 'group', 'aria-label': 'Pick a month' },
-      h('button', { type: 'button', class: 'btn', onclick: () => go(-1) }, '‹ ' + monthWords(addMonths(state.ym, -1))),
-      h('h2', { class: 'month-h', 'aria-live': 'polite' }, longMonth(state.ym) + (window_ > 1 ? ' and ' + (window_ - 1) + ' more' : ''), state.ym === asOfYm ? h('span', { class: 'stage-chip stage-green' }, 'This month') : null),
-      h('button', { type: 'button', class: 'btn', onclick: () => go(1) }, monthWords(addMonths(state.ym, 1)) + ' ›'),
-      state.ym !== asOfYm ? h('button', { type: 'button', class: 'btn ghost', onclick: () => { state.ym = asOfYm; keep(KEY, state.ym); render(); } }, 'Back to this month') : null),
-    h('div', { class: 'tabs', role: 'group', 'aria-label': 'Views' }, TABS.map(([id, label]) => h('button', { type: 'button', class: 'tab-btn', 'aria-pressed': String(state.tab === id), onclick: () => { state.tab = id; state.open = null; render(); } }, label))),
-    searchCard(c),
-    ...(c.sim && !c.sim.checking.known ? [] : state.tab === 'month' ? monthTab(c, today, ms, mathCtx) : state.tab === 'weeks' ? [weeksTab(c, mathCtx)] : state.tab === 'agenda' ? [agendaTab(c)] : state.tab === 'paychecks' ? [paychecksTab(c, spine, mathCtx)] : state.tab === 'debt' ? debtTab({ c, spine, rules, mathCtx, rerender: render }) : [yearTab(c, spine, mathCtx)]),
-    trayCard(c),
-    milestonesCard(c, spine),
-    h('p', { class: 'muted' }, 'Maybe money is weighted by how likely it is. Cards are paid by their pay setting on their due days; the extra at the debt follows the debt plan in the Ledger.')].filter(Boolean));
-  if (focusId === 'cal-search') { const i = document.getElementById('cal-search'); if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(caret, caret); } }
-  const wrap = app.querySelector('.cl-wrap');
-  if (wrap && wrap.clientWidth && Math.abs(wrap.clientWidth - (chartWidth || 0)) > 2) { chartWidth = wrap.clientWidth; render(); }
+      h('button', { type: 'button', class: 'btn', id: 'cal-prev', onclick: () => toMonth(addMonths(st.ym, -1)) }, '‹ ' + monthWords(addMonths(st.ym, -1))),
+      h('h2', { class: 'month-h', 'aria-live': 'polite' }, longMonth(st.ym) + (st.months > 1 ? ' and ' + (st.months - 1) + ' more' : ''), st.ym === asOfYm ? h('span', { class: 'stage-chip stage-green' }, 'This month') : null),
+      h('button', { type: 'button', class: 'btn', id: 'cal-next', onclick: () => toMonth(addMonths(st.ym, 1)) }, monthWords(addMonths(st.ym, 1)) + ' ›'),
+      st.ym !== asOfYm ? h('button', { type: 'button', class: 'btn ghost', id: 'cal-now', onclick: () => toMonth(asOfYm) }, 'Back to this month') : null),
+    h('div', { class: 'tabs', role: 'group', 'aria-label': 'Views' }, VIEWS.map(([id, label]) => h('button', { type: 'button', class: 'tab-btn', id: 'view-' + id, 'aria-pressed': String(st.view === id), onclick: () => setRoot({ view: id }) }, label))),
+    searchCard(c, st),
+    ...body,
+    trayCard(c, st),
+    milestonesCard(c, spine, rules, st),
+    h('p', { class: 'muted' }, 'Maybe money is weighted by how likely it is. Cards are paid on their due days, the way each is set to pay; any extra for debt follows your debt plan in My numbers.')
+  ];
+}
+
+function render(ctx) {
+  const v = viewOf(ctx.spine, ctx.rules);
+  const [date, id] = ctx.levels;
+  if (ctx.levels.length === 2) return itemScreen(v, date, id);
+  following = null;
+  if (ctx.levels.length === 1) return dayScreen(v, date);
+  return monthScreen(v, ctx);
 }
 
 let resizing = null;
-window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(() => { if (hist) { chartWidth = null; render(); } }, 200); });
-
-// Undo and Redo from the keyboard, as on the Ledger (S-209 review).
-document.addEventListener('keydown', (e) => {
-  if (!hist || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
-  if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-  e.preventDefault();
-  const before = hist;
-  hist = e.shiftKey ? redo(hist) : undo(hist);
-  if (hist !== before) { save(hist.present); lastSaved = (e.shiftKey ? 'Redone: ' + redoLabel(before) : 'Undone: ' + undoLabel(before)) + '.'; render(); }
-});
+window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(() => { chartWidth = null; refresh(); }, 200); });
 document.addEventListener('keydown', (e) => {
   if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
   const i = document.getElementById('cal-search'); if (i) { e.preventDefault(); i.focus(); }
 });
 
-// Drag listeners go on once, like the keys above: boot runs again after Load my file, and a second set would make
-// one drag two undo steps.
+// Drag listeners go on once: the shell redraws inside the same #app, and a second set would make one drag two changes.
 dragSetup(app);
 
-function boot(loaded) {
-  hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
-  const asOfYm = loaded.spine.meta.asOf.slice(0, 7);
-  const want = location.hash.slice(1);
-  const saved = read(KEY, (v) => /^\d{4}-\d{2}$/.test(v || ''), null);
-  state.ym = /^\d{4}-\d{2}$/.test(want) ? want : saved || asOfYm;
-  render();
-  if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}
-loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The calendar could not load: ' + err.message)); });
+startPage({ tab: 'calendar', title: 'Calendar', name: nameOf, render });
