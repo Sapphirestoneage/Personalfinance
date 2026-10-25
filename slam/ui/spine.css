@@ -376,10 +376,29 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .month-h { margin: 0; flex: 1 1 auto; text-align: center; font-size: var(--text-lg); display: inline-flex; justify-content: center; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .month-sum .flow-total { margin-bottom: var(--space-2); }
 .ev-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
-.ev { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-1) var(--space-2); align-items: center; font-size: var(--text-sm); padding: var(--space-1) 0; }
-.ev-name { display: inline-flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.ev { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; font-size: var(--text-sm); padding: var(--space-1) 0; }
+.ev-name { flex: 1 1 8rem; display: inline-flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; min-width: 0; overflow-wrap: anywhere; }
 .ev-amt { font-family: var(--font-num); white-space: nowrap; }
-.ev-note { grid-column: 2 / 4; font-size: var(--text-xs); color: var(--text-muted); }
+.ev-note { flex: 1 1 100%; padding-left: 20px; font-size: var(--text-xs); color: var(--text-muted); }
+.ev[data-drag] .ev-note { padding-left: 50px; }
+/* A calendar item opens its own screen (S-230): the whole row is the target, with a chevron in a list; the grip stays
+   above the row so it still drags. */
+.ev.has-target { position: relative; min-height: var(--tap); border-radius: var(--radius-sm); }
+.ev-go { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.ev-go::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ev-go:focus-visible { outline: none; }
+.ev.has-target:has(.ev-go:focus-visible) { outline: 3px solid var(--focus); outline-offset: 1px; }
+.ev.has-target:has(.ev-go:active) { background: var(--accent-soft); }
+@media (hover: hover) { .ev.has-target:hover { background: var(--surface-2); } }
+.ev .grip, .ev a:not(.ev-go) { position: relative; z-index: 1; }
+.ev-rows > .ev + .ev { border-top: 1px solid var(--border); }
+.day-go { font-weight: 700; min-height: var(--tap); display: inline-flex; align-items: center; }
+.cell-day .day-go { min-height: 0; color: var(--accent); }
+.why-fixed strong { font-weight: 700; }
+.item-amt { margin: 0 0 var(--space-2); font-size: var(--text-lg); font-weight: 600; }
+.item-amt .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.tile-pills { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; }
+.skipped .btn { white-space: normal; }
 .ev-tag { font-size: var(--text-xs); color: var(--st-roughly); border: 1px dashed currentColor; border-radius: var(--radius-pill); padding: 0 var(--space-2); white-space: nowrap; }
 .ev-rough .ev-amt { color: var(--text-muted); }
 .day-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
@@ -400,8 +419,12 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .cell.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .cell-day { margin: 0 0 var(--space-1); font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; }
 .cell-today { font-weight: 600; color: var(--accent); }
-.cell .ev { grid-template-columns: auto 1fr; font-size: var(--text-xs); padding: 1px 0; }
-.cell .ev .ev-amt { grid-column: 2; font-size: var(--text-xs); }
+.cell .ev { font-size: var(--text-xs); padding: 1px 0; gap: 2px var(--space-1); }
+.cell .ev.has-target { min-height: 0; }
+.cell .ev-name { flex: 1 1 0; min-width: 3rem; }
+.cell .ev[data-drag] .ev-name { flex-basis: 100%; }
+.cell .ev-name .pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.cell .ev .ev-amt { flex: 1 1 100%; text-align: right; font-size: var(--text-xs); }
 .cell .ev-name a { overflow-wrap: anywhere; }
 .cell .ev-tag { font-size: 10px; padding: 0 4px; }
 

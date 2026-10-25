@@ -264,4 +264,17 @@ export function pillsFor(e, asOf, cal = {}) {
   return pills;
 }
 
+// One calendar item, as its own screen (S-230, the shell): calendar.html#/<day>/<item>. An occurrence goes by its
+// key, a maybe item by its id, anything else by its id on its day. itemDay says where the item is now, from what is
+// saved: a moved occurrence is on its new day, a maybe item on its own day; null when it was skipped, is back in the
+// tray, or is gone. The page opens the day's month and finds it there.
+export const itemId = (e) => (e.kind === 'maybe' ? 'maybe:' + e.maybeId : e.key || e.id);
+export function itemDay(spine, id, date) {
+  const cal = spine.calendar || {};
+  const day = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? d : null);
+  if (String(id).startsWith('maybe:')) { const m = (cal.maybe || []).find((x) => 'maybe:' + x.id === id); return m ? day(m.date) : null; }
+  if (String(id).includes('|')) { const ov = (cal.overrides || {})[id]; return ov && ov.skip ? null : day(ov && ov.date ? ov.date : String(id).split('|')[1]); }
+  return day(date);
+}
+
 export { daysBetween, addDays };

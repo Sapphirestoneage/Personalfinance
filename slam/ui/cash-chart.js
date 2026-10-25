@@ -77,7 +77,7 @@ function chart(line, width) {
 export function cashChartCard(line, { back = false, onBack = null, width = 640, preCover = null } = {}) {
   if (!line) return null;
   const legend = [
-    ['viz-3', 'Checking ahead (the day-by-day run)'],
+    ['viz-3', 'Checking ahead (expected)'],
     ['cl-sw-past', 'Checking recorded (check-ins and the log)'],
     ['viz-5', 'Savings, shown apart, never added in'],
     ...(line.days.some((d) => d.under) ? [['cl-sw-under', line.floor > 0 ? 'Under the floor of ' + money(line.floor) : 'Below zero']] : [])
@@ -89,6 +89,6 @@ export function cashChartCard(line, { back = false, onBack = null, width = 640, 
     line.setAsideNote ? h('p', { class: 'tile-sub' }, line.setAsideNote + ' It is not in the line.') : null,
     h('div', { class: 'cl-wrap' }, chart(line, width)),
     h('ul', { class: 'cl-legend', 'aria-label': 'What the colors mean' }, legend.map(([c, words]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), words)), h('li', {}, h('span', { class: 'cl-sw-dot viz-3', 'aria-hidden': 'true' }), 'Payday'), h('li', {}, h('span', { class: 'cl-sw-dot viz-1', 'aria-hidden': 'true' }), 'A bill of $100 or more')),
-    h('p', { class: 'tile-note' }, 'Before ' + shortDate(line.asOf) + ' the line is what was recorded: each check-in\'s checking balance, moved by the cash entries in the log. A day with no check-in before it is walked back from the first one. From ' + shortDate(line.asOf) + ' on it is the run.'),
+    h('p', { class: 'tile-note' }, 'Before ' + shortDate(line.asOf) + ' the line is what was recorded: each check-in\'s checking balance, moved by the cash entries in the log. A day with no check-in before it is walked back from the first one. From ' + shortDate(line.asOf) + ' on it is what is expected.'),
     h('details', { class: 'flow-list' }, h('summary', {}, 'Every day as a list (' + line.days.length + ')'), h('ul', {}, line.days.map((d) => h('li', { class: d.under ? 'missing-row' : null }, dayWords(d))))));
 }
