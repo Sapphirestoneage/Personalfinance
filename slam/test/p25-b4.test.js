@@ -40,6 +40,9 @@ test('a blank amount makes its group incomplete, never smaller', () => {
   const food = screens(s).sections.find((x) => x.slug === 'needs').groups.find((g) => g.label === 'Food');
   assert.equal(food.totalIncomplete, true);
   assert.equal(food.items[food.items.length - 1].label, 'Groceries', 'a blank sorts last');
+  const none = editFact(s, 'expenses.dining.amount', 'clear', { today: '2026-10-25' });
+  const f2 = screens(none).sections.find((x) => x.slug === 'needs').groups.find((g) => g.label === 'Food');
+  assert.equal(f2.total, null, 'every line blank: missing, never $0');
 });
 
 test('liquid and total net worth, each with Show the math listing what it counts', () => {
@@ -48,6 +51,6 @@ test('liquid and total net worth, each with Show the math listing what it counts
   const e = explainMetric('liquidAssets', { spine: s, rules: R, s: sum });
   assert.deepEqual(e.terms.map((t) => t.label), ['Checking', 'High-yield savings', 'Roth IRA (contributions)', 'Brokerage']);
   const src = readFileSync(new URL('../ui/ledger.js', import.meta.url), 'utf8');
-  assert.match(src, /one\('liquid', 'Liquid net worth', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth', 'liquidAssets', 'debts'\]\)/);
-  assert.match(src, /one\('total', 'Total net worth', s\.sheet\.netWorth, .*\['netWorth', 'assets', 'debts'\]\)/);
+  assert.match(src, /one\('liquid', 'Liquid net worth', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth'\]\)/);
+  assert.match(src, /one\('total', 'Total net worth', s\.sheet\.netWorth, .*\['netWorth'\]\)/);
 });

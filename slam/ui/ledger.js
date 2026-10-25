@@ -1026,12 +1026,22 @@ function worthPair(spine) {
     h('p', { class: 'tile-sub muted' }, sub, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null),
     mathButton(ids, ctx));
   return h('section', { class: 'card nw-pair', 'aria-label': 'Net worth' },
-    one('liquid', 'Liquid net worth', s.sheet.liquidNetWorth, 'What you can reach, less all you owe', ['liquidNetWorth', 'liquidAssets', 'debts']),
-    one('total', 'Total net worth', s.sheet.netWorth, 'All you own, less all you owe', ['netWorth', 'assets', 'debts']));
+    one('liquid', 'Liquid net worth', s.sheet.liquidNetWorth, 'What you can reach, less all you owe', ['liquidNetWorth']),
+    one('total', 'Total net worth', s.sheet.netWorth, 'All you own, less all you owe', ['netWorth']));
+}
+// An item's figure on a group screen: a bill or a pay line shows what it counts a month (the figure it sorts and adds
+// by) when that differs from its own ("$200 a month, of $2,400 a year"); the FI goal says it is figured, not added.
+function rowFigure(sec, it) {
+  if (sec.slug === 'goals' && it.collection === 'goals' && it.amount === undefined) return h('span', { class: 'empty' }, 'Figured from your spending, not added in');
+  const own = headline(it);
+  if (!['expenses', 'income'].includes(it.collection) || typeof it.amount !== 'number') return own;
+  const words = money(it.amount) + ' a month';
+  return own.textContent.trim() === words ? own : h('span', {}, h('span', { class: 'go-total' }, words), ' (' + own.textContent.trim() + ')');
 }
 // A group's total on its row: incomplete when a line in it has no amount yet.
 function groupTotal(sec, g) {
   if (g.total === undefined || (g.total === null && !g.totalIncomplete)) return g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items'));
+  if (g.total === null) return h('span', {}, chip('missing'), h('span', { class: 'empty' }, ' No amounts yet'));
   return h('span', {}, h('span', { class: 'go-total' }, money(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
 }
 
@@ -1050,7 +1060,7 @@ function sectionScreen(sec) {
 function groupScreen(sec, g) {
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
-    sub: [headline(it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
+    sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
   });
   return [
     sectionSharing(g.node),

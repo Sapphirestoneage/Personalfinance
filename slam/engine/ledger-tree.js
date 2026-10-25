@@ -225,14 +225,16 @@ export function statementOrder(screens, spine, s) {
     for (const g of sec.groups) {
       for (const it of g.items) it.amount = amountOf(it);
       const counted = g.items.filter((it) => it.amount !== undefined);
-      g.total = counted.length ? Math.round(counted.reduce((a, it) => a + (it.amount ?? 0), 0) * 100) / 100 : null;
+      // Only the lines with a number add up; with none, the total is missing, never $0.
+      const known = counted.filter((it) => it.amount !== null);
+      g.total = known.length ? Math.round(known.reduce((a, it) => a + it.amount, 0) * 100) / 100 : null;
       g.totalIncomplete = counted.some((it) => it.amount === null);
       // Items biggest first, inside each part, keeping each item's address with it.
       const slugOf = new Map(g.items.map((it, k) => [it, g.slugs[k]]));
       for (const p of g.parts) p.items.sort(byAmount);
+      if (g.parts.length > 1) g.parts.sort((a, b) => (b.items[0] ? b.items[0].amount ?? -Infinity : -Infinity) - (a.items[0] ? a.items[0].amount ?? -Infinity : -Infinity));
       if (g.parts.length) g.items = g.parts.flatMap((p) => p.items);
       g.slugs = g.items.map((it) => slugOf.get(it));
-      if (g.parts.length > 1) g.parts.sort((a, b) => (b.items[0] ? b.items[0].amount ?? -Infinity : -Infinity) - (a.items[0] ? a.items[0].amount ?? -Infinity : -Infinity));
     }
     sec.groups.sort((a, b) => (b.total ?? -Infinity) - (a.total ?? -Infinity));
   }
