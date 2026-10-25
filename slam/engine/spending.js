@@ -246,7 +246,7 @@ export function staleness(spine, rules, today) {
   const limit = rules.get('APP_STALE_DAYS', year);
   const last = (spine.checkins || []).reduce((m, c) => (c.date > m ? c.date : m), spine.meta.asOf);
   const days = Math.max(0, daysBetween(last, today));
-  return { anchor: last, days, limit, stale: days > limit, words: days === 0 ? 'Checked in today.' : days === 1 ? 'Last anchored yesterday.' : 'Last anchored ' + days + ' days ago' + (days > limit ? ': the numbers are stale. A check-in puts real balances back in.' : '.'), rules: ['APP_STALE_DAYS'] };
+  return { anchor: last, days, limit, stale: days > limit, words: days === 0 ? 'Checked in today.' : days === 1 ? 'Last checked in yesterday.' : 'Last checked in ' + days + ' days ago' + (days > limit ? ': the numbers are stale. A check-in puts real balances back in.' : '.'), rules: ['APP_STALE_DAYS'] };
 }
 
 // Momentum from check-in snapshots: cash (every account checked in) over time, as a change a month.

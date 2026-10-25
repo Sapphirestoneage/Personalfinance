@@ -43,7 +43,7 @@ test('screen by screen: Calendar, a day, an item; the month screen keeps its mon
   assert.match(src, /keep\(\{ q: box\.value \}\)/, 'what is typed in search is kept');
   // An item that cannot move says why; old month links still open their month.
   assert.match(src, /h\('strong', \{\}, 'Cannot move here\. '\), fixedWords\(e\)/);
-  assert.match(src, /'Set by the lender\\'s due date\. Change the due day in My numbers\.'/);
+  assert.match(src, /'Set by the lender\\'s due date\. Change it in My numbers\.'/);
   assert.match(src, /\/\^#\\d\{4\}-\\d\{2\}\$\/\.test\(startHash\)/);
 });
 

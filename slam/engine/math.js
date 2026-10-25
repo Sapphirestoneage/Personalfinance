@@ -134,7 +134,7 @@ const MAXIT_FORMULAS = {
   paycheck: 'A paycheck = the lump sum (the new money) / the owner\'s paychecks from today to the deadline (real pay dates from the day-by-day run), rounded up to the cent; for a payroll-only account, plus what already comes out of each paycheck for it (the deferral to set)',
   raise: 'Contribution to raise to = what a paycheck holds (what lands from it + what already comes out of it for the plan) / the paycheck\'s gross pay, a whole percent rounded down so it never asks more than lands (answer 53: the paycheck cap stays)',
   low: 'Lowest day of cash with it = the lowest day of cash across every account in the day-by-day run with the new money taken out on its dates',
-  payoff: 'Payoff moved = the latest card or loan payoff date with the new money - the same date without it, in days (inside the run)'
+  payoff: 'Payoff moved = the latest card or loan payoff date with the new money - the same date without it, in days (up to the last day figured)'
 };
 function maxitMetric(id) {
   if (!id || !id.startsWith('maxit:')) return null;
@@ -356,7 +356,7 @@ function windfallMetric(id) {
   if (!id || !id.startsWith('windfall:')) return null;
   const stepId = id.slice(9);
   if (!WINDFALL_FORMULAS[stepId]) return null;
-  return { id, label: 'Windfall: ' + stepId.replace(/([A-Z])/g, ' $1').toLowerCase(), unit: 'usd', op: stepId === 'left' ? 'sum' : 'custom', screens: ['windfall'], formula: WINDFALL_FORMULAS[stepId],
+  return { id, label: 'Extra money: ' + stepId.replace(/([A-Z])/g, ' $1').toLowerCase(), unit: 'usd', op: stepId === 'left' ? 'sum' : 'custom', screens: ['windfall'], formula: WINDFALL_FORMULAS[stepId],
     explain: ({ spine, s, rules, windfall: w }) => {
       const st = w && w.steps.find((x) => x.id === stepId);
       if (!st) return out(null, []);
@@ -534,8 +534,8 @@ function planMetric(id) {
   if (!id || !id.startsWith('plan:')) return null;
   const parts = id.split(':');
   const what = parts[1], key = parts.slice(2).join(':');
-  if (what === 'foo') return { id, label: 'FOO rung: what it still needs', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'What the rung needs = the gap the rung names (a balance to clear, cash to reach a target, or an amount a month), from the engine that owns it; the month it completes = today + the months the rungs before it take + this gap / the monthly surplus',
-    explain: ({ plan }) => { const r = plan && plan.foo.rungs.find((x) => x.id === key); return r ? out(resOf(r, r.need), [term(r.label + (r.flow ? ' (a month)' : ''), r.need, 'usd', r.kind === 'missing' ? 'missing' : 'computed', 'arg', r.path ? { path: r.path } : {}), term('Monthly surplus', plan.foo.surplus, 'usd/month', 'computed', 'arg'), ...(r.months === null && r.need !== null ? [] : [term('Months to fill it', r.months, 'months', r.months === null ? 'missing' : 'computed', 'arg')])], [], r.months === null && r.need !== null && !r.done ? { note: 'At this surplus the rung does not fill, so it has no month.' } : {}) : out(null, []); },
+  if (what === 'foo') return { id, label: 'This step: what it still needs', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'What this step still needs = the gap it names (a balance to clear, cash to reach a target, or an amount a month); the month it is done = today + the months the steps before it take + this gap / the monthly surplus',
+    explain: ({ plan }) => { const r = plan && plan.foo.rungs.find((x) => x.id === key); return r ? out(resOf(r, r.need), [term(r.label + (r.flow ? ' (a month)' : ''), r.need, 'usd', r.kind === 'missing' ? 'missing' : 'computed', 'arg', r.path ? { path: r.path } : {}), term('Monthly surplus', plan.foo.surplus, 'usd/month', 'computed', 'arg'), ...(r.months === null && r.need !== null ? [] : [term('Months to fill it', r.months, 'months', r.months === null ? 'missing' : 'computed', 'arg')])], [], r.months === null && r.need !== null && !r.done ? { note: 'At this surplus the step does not fill, so it has no month.' } : {}) : out(null, []); },
     recompute: (t) => t[0].value };
   if (what === 'pay') { const [date, streamId] = key.split(':'); return { id, label: 'Free after this paycheck', unit: 'usd', op: 'sum', screens: PLAN_SCREENS, formula: 'Free = the paycheck - the tax set aside on a 1099 deposit - every envelope due before the next paycheck - everyday spending until then',
     explain: ({ plan }) => { const p = plan && plan.alloc.paychecks.find((x) => x.date === date && String(x.streamId) === streamId); return p ? out({ value: p.free, kind: 'computed', from: [], rough: [], missing: [], rules: [] }, [term('The paycheck ' + p.label + ' on ' + p.date, p.amount, 'usd', 'computed', 'plus', p.path ? { path: p.path } : {}), ...(p.is1099 ? [term('Tax set aside (' + Math.round(p.setAsideRate * 10000) / 100 + '%)', p.setAside, 'usd', p.setAsideMissing ? 'rough' : 'computed', 'minus')] : []), ...p.envelopes.map((e) => term(e.label + ' on ' + e.date, e.amount, 'usd', 'computed', 'minus')), term('Everyday spending until the next paycheck', p.everyday, 'usd', 'computed', 'minus')]) : out(null, []); } }; }

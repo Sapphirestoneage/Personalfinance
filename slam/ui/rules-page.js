@@ -20,15 +20,16 @@ const byId = () => new Map(inUse().rules.map((r) => [r.id, r]));
 const unitWords = (r) => (r.unit ? ' (' + r.unit + ')' : '');
 const shown = (r) => ruleValueWords(r) + unitWords(r);
 
-// Overrides for this year, kept; Undo puts the ones before back.
+// Overrides for this year, kept; Undo (the bar, the header or Ctrl/Cmd+Z) puts the ones before back, and Redo these.
 function keepMine(next, words) {
   const all = ruleOverrides(), before = all[YEAR] || {};
-  const after = { ...all };
-  if (next && Object.keys(next).length) after[YEAR] = next; else delete after[YEAR];
-  if (!keepRuleOverrides(after)) { say('This browser will not keep rule changes, so nothing changed'); return; }
+  const after = next && Object.keys(next).length ? next : {};
+  if (!putYear(after)) { say('This browser will not keep rule changes, so nothing changed'); return; }
   refresh();
-  say(words, () => { const again = { ...ruleOverrides() }; if (Object.keys(before).length) again[YEAR] = before; else delete again[YEAR]; keepRuleOverrides(again); refresh(); });
+  say(words, () => { putYear(before); refresh(); }, () => { putYear(after); refresh(); });
 }
+// This year's overrides, the other years' left as they are.
+function putYear(o) { const again = { ...ruleOverrides() }; if (Object.keys(o).length) again[YEAR] = o; else delete again[YEAR]; return keepRuleOverrides(again); }
 
 // ---------------------------------------------------------------- the list
 function row(r, changed) {

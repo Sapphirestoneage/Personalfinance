@@ -6,7 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
-import { startPage, change, said, go, keep, kept, refresh, say, current, reopen } from './shell.js';
+import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
 import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
@@ -24,7 +24,7 @@ import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, 
 import { isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate } from './view.js';
+import { h, chip, showValue, money, words, shortDate, keyHint } from './view.js';
 
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -53,6 +53,13 @@ let scMemo = { spine: null, inst: null, sc: null };
 function screensOf(spine) {
   if (scMemo.spine !== spine || scMemo.inst !== inst) scMemo = { spine, inst, sc: numbersScreens(ledgerTree(spine, inst || { names: [], aliases: {} })) };
   return scMemo.sc;
+}
+// Every row by its path, once per version of the screens (Still guessing and Subscriptions open a row in place).
+let byPathMemo = { sc: null, map: null };
+function rowByPath(path) {
+  const sc = screensOf(cur());
+  if (byPathMemo.sc !== sc) byPathMemo = { sc, map: new Map(sc.sections.flatMap((g) => g.allRows).map((r) => [r.path, r])) };
+  return byPathMemo.map.get(path) || null;
 }
 // The household's numbers, figured once per version (the section totals and the subscriptions read them).
 let sumMemo = { spine: null, s: null };
@@ -156,7 +163,7 @@ function cardRateEditor(row) {
   apr.value = inputText('rate', cur0.apr);
   const aprLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startOn ? 'Rate after intro' : 'Interest rate (APR)');
   const afterNote = h('span', {}, startOn ? 'Starts the day after the intro ends. ' : '');
-  const aprHint = h('p', { class: 'edit-hint' }, afterNote, 'As a percent: 25 means 25%. Left blank, the house assumption of ' + fallback + ' is used and marked rough.');
+  const aprHint = h('p', { class: 'edit-hint' }, afterNote, 'As a percent: 25 means 25%. Left blank, a typical ' + fallback + ' is used and marked rough.');
   const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   introRate.value = cur0.intro ? inputText('rate', cur0.intro.rate) : '0';
   const introEnds = h('input', { id: 'intro-ends', type: 'date' });
@@ -301,6 +308,8 @@ function expenseEditor(row) {
   for (const el of [amount, often, people, share, mine]) el.addEventListener('input', preview);
   often.addEventListener('change', preview);
   preview();
+  // What it read when it opened, so the bar names what changed: the cost, or only the box, the name or the dates.
+  const was = { yours: yours.textContent, mode: startMode, coveredBy: now.coveredBy || null, sub: isSubscription(e), dates: dates.read() };
   const doSet = (kind) => {
     const a = amount.value.trim() === '' && mode.value === 'covered' ? { ok: true, value: valueOf(e.amount) } : parseInput('money', amount.value);
     if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
@@ -321,7 +330,18 @@ function expenseEditor(row) {
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
-    done(editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), said.changed(label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : '')));
+    done(editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), expenseWords());
+    // The bar's words: the cost when the amount, how often or who pays changed (or nothing else did); else the change.
+    function expenseWords() {
+      const cost = said.changed(label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
+      const costMoved = a.value !== valueOf(e.amount) || often.value !== e.cadence || mode.value !== was.mode || yours.textContent !== was.yours || (mode.value === 'covered' && coveredBy !== was.coveredBy) || (k === 'rough') !== (row.fact.kind === 'rough');
+      const other = [
+        label !== e.label ? e.label + ' renamed to ' + label : null,
+        subBox.checked !== was.sub ? label + (subBox.checked ? ' is now a subscription' : ' is no longer a subscription') : null,
+        d.start !== was.dates.start || d.end !== was.dates.end ? label + '\'s dates changed' : null
+      ].filter(Boolean);
+      return costMoved || !other.length ? [cost, ...other].join('. ') : other.join('. ');
+    }
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
@@ -640,26 +660,29 @@ function pickRow(row, full = false) {
       chip(f.kind)));
 }
 
-// One row on an item's screen: tap it to open its editor in place (one at a time).
-function rowEl(row, openPath) {
-  if (selecting) return pickRow(row);
+// The budget line that pays a linked debt, by its own name ("Gym").
+const lineName = (row) => (rowByPath('expenses.' + String(row.linePath).split('.')[1] + '.amount') || rowByPath(row.linePath)).label;
+// One row: tap it to open its editor in place (one at a time). On an item's screen it reads the field's own name; on
+// Still guessing and Subscriptions (full) the item's too, and why it is listed (note).
+function rowEl(row, openPath, { full = false, note = null } = {}) {
+  if (selecting) return pickRow(row, full);
   const f = row.fact;
   const isOpen = openPath === row.path;
-  const label = row.field || row.label;
+  const label = full ? row.label : row.field || row.label;
+  // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's editor here,
+  // in place, and the screen stays where Back expects it.
+  const line = row.linked ? rowByPath(row.linePath) : null;
+  if (row.linked && !line) return h('li', { class: 'row kind-' + f.kind, id: 'f-' + row.path }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, label), h('span', { class: 'row-value' }, rowValue(row)), chip(f.kind)));
   // A value worked out from others (an expense's cost to you) shows its math (S-177).
   const worked = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
-    // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's payment.
-    row.linked ? h('button', { type: 'button', class: 'row-main', onclick: () => openField(row.linePath) },
-      h('span', { class: 'row-label' }, label),
-      h('span', { class: 'row-value' }, rowValue(row)),
-      chip(f.kind)) :
     h('button', { type: 'button', class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; setOpen(isOpen ? null : row.path); } },
-      h('span', { class: 'row-label' }, label, tags(row)),
-      h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, rowValue(row)),
+      h('span', { class: 'row-label' }, label, row.linked ? null : tags(row)),
+      h('span', { class: 'row-value' + (!row.linked && f.value === null ? ' empty' : '') }, rowValue(row)),
       chip(f.kind)),
+    note && !isOpen ? h('p', { class: 'row-why' }, note) : null,
     worked && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null,
-    isOpen && !row.linked ? openEditor(row) : null);
+    isOpen ? (line ? [h('p', { class: 'row-why' }, 'Set by ' + lineName(row) + ' in Needs. You can change it here.'), openEditor(line)] : openEditor(row)) : null);
 }
 
 // "3 missing", "2 rough": small labels on a row that opens (the filters at the top show only those).
@@ -707,7 +730,8 @@ function filterBar(sc, q) {
   // A chip shows only its kind; tapped again, it shows everything (S-182).
   const solo = (k) => kinds.length === 1 && kinds[0] === k;
   const pick = (k) => setKinds(solo(k) ? [...KIND_ORDER] : [k]);
-  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Search your numbers (press /)', autocomplete: 'off', 'aria-label': 'Search your numbers' });
+  // "/" jumps to the search, so the hint shows where there is a keyboard to press it on.
+  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Search your numbers' + keyHint('press /'), autocomplete: 'off', 'aria-label': 'Search your numbers' });
   search.value = q;
   search.addEventListener('input', () => { keep({ q: search.value }); refresh(); });
   return h('section', { class: 'card filters', 'aria-label': 'Search and show' },
@@ -767,7 +791,9 @@ function refreshGuess(spine) {
     while (!(r = it.next()).done) if (performance.now() > end) { setTimeout(run, 0); return; }
     guess = r.value; guessFor = spine;
     document.getElementById('guess-row')?.closest('li')?.replaceWith(guessRow());
-    document.querySelector('section.guessing')?.replaceWith(guessList());
+    // On its own screen the list holds rows that open in place, so the shell redraws it (an open editor and its typing
+    // stay), then the scroll it was left at, which the short "Working out" screen could not reach, comes back.
+    if (document.querySelector('section.guessing')) { refresh(); restoreScroll(); }
   };
   setTimeout(run, 0);
 }
@@ -787,11 +813,12 @@ function guessList() {
     const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
     return top ? 'Off by ' + Math.round(guess.swing * 100) + '%, moves ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
   };
+  // Each guess opens its editor right here, so the list stays the screen Back comes back to.
+  const open = kept().open || null;
+  const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: why(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label), chip(it.kind)), h('p', { class: 'row-why' }, why(it))); };
   return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' },
     h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last change...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
-    h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
-      fieldLink(it.path, [chip(it.kind), ' ', h('span', { class: 'g-label' }, it.label)]),
-      h('span', { class: 'why' }, why(it))))),
+    h('ul', { class: 'rows guess-rows' }, list.map(row)),
     items.length > 8 && h('button', { type: 'button', class: 'btn ghost', onclick: () => { keep({ all: !showAll }); refresh(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
     setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
       h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
@@ -843,12 +870,13 @@ function subsScreen() {
   const sub = summaryOf(cur()).subs;
   if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None marked yet. Open an expense and tick "This is a subscription" to keep an eye on it.'));
   const when = (i) => i.renews ? 'Next charge ' + shortDate(i.renews) + (i.daysToCharge === 0 ? ' (today)' : ' (in ' + i.daysToCharge + ' day' + (i.daysToCharge === 1 ? '' : 's') + ')') : 'Next charge not given';
+  // Each one opens its editor right here, so the list stays the screen Back comes back to.
+  const open = kept().open || null;
+  const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : h('div', { class: 'sub-main' }, h('span', {}, i.label), h('span', { class: 'sub-cost' }, i.monthly === null ? 'amount not given' : money(i.monthly, true) + ' a month')); };
   return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
     h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year. ' + (sub.toLook.length ? sub.toLook.length + ' to look at: charging within ' + sub.soonDays + ' days or not reviewed in ' + sub.reviewDays + '.' : 'All reviewed recently.')),
     h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub' + (i.soon || i.due ? ' sub-look' : '') },
-      h('div', { class: 'sub-main' },
-        fieldLink('expenses.' + i.id + '.amount', i.label),
-        h('span', { class: 'sub-cost' }, i.monthly === null ? 'amount not given' : money(i.monthly, true) + ' a month')),
+      line(i),
       h('p', { class: 'sub-when' }, when(i), ' · ', i.reviewed ? 'Reviewed ' + shortDate(i.reviewed) : 'Never reviewed', i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
       h('button', { type: 'button', class: 'btn small', onclick: () => change(putFact(cur(), 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ' marked reviewed today') }, 'Reviewed today')))));
 }
@@ -952,10 +980,15 @@ function bulkBar(sc) {
   const rows = sc.sections.flatMap((g) => g.allRows).filter((r) => selected.has(r.path));
   const n = rows.length, lines = n + (n === 1 ? ' line' : ' lines');
   // A line with no number yet cannot be confirmed or marked rough: the bar says so rather than doing nothing.
+  // The picks are cleared before the change redraws the bar, so it reads 0 selected; when nothing changed they stay.
   const run = (action, text) => {
     if (!n) return;
-    if (change(bulkEdit(cur(), rows, action, today()), text)) selected = new Set();
-    else say('Nothing changed: a line with no number yet cannot be ' + (action === 'confirm' ? 'confirmed' : 'marked rough') + '. Fill it in first');
+    const was = selected;
+    selected = new Set();
+    if (change(bulkEdit(cur(), rows, action, today()), text)) return;
+    selected = was;
+    refresh();
+    say('Nothing changed: a line with no number yet cannot be ' + (action === 'confirm' ? 'confirmed' : 'marked rough') + '. Fill it in first');
   };
   return h('div', { class: 'bulk-bar', role: 'region', 'aria-label': 'Selected' },
     h('span', { class: 'bulk-count' }, n + ' selected'),

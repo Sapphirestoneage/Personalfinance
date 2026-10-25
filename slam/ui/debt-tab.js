@@ -35,7 +35,7 @@ function clearCard(d) {
     h('h2', { id: 'clear-h' }, 'Clear dates'),
     h('div', { class: 'clear-grid' }, d.clearDates.rows.map((r) => h('div', { class: 'clear-tile' + (r.beyond ? ' beyond' : ''), role: 'group', 'aria-label': r.label },
       h('span', { class: 'clear-date' }, r.date ? shortDate(r.date) : 'Not inside the window'), h('span', { class: 'clear-label' }, r.label), h('span', { class: 'tile-note' }, r.why)))),
-    h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the day-by-day run over ' + d.window.days + ' days, from ' + shortDate(d.window.from) + '. A date past the window shows once the window is long enough (12 months is the most).'));
+    h('p', { class: 'tile-note' }, kindChip(d.kind), ' Over the next ' + d.window.days + ' days, from ' + shortDate(d.window.from) + '. A date past the window shows once the window is long enough (12 months is the most).'));
 }
 
 function ganttCard(d) {
@@ -89,7 +89,7 @@ function cardTile(t, d, ctx) {
   const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
   row('Balance', t.balance === null ? 'missing' : money(t.balance) + (t.clearDate ? ', clears ' + shortDate(t.clearDate) : t.revolving ? ', revolving' : ''), t.balance === null ? 'words missing-row' : '');
   row('Rate', pctWords(t.apr) + (t.promoApr !== null && t.promoEnd ? ', intro ' + pctWords(t.promoApr) + ' until ' + t.promoEnd : ''), 'words');
-  row('Closes', 'day ' + t.cycle.stmtDay + (t.cycle.closeRough ? ' (a house guess from the due day)' : ''), 'words');
+  row('Closes', 'day ' + t.cycle.stmtDay + (t.cycle.closeRough ? ' (a guess from the due day)' : ''), 'words');
   row('Due', 'day ' + t.cycle.dueDay + ', ' + t.cycle.graceDays + ' days of grace', 'words');
   if (t.cycle.nextClose) row('Next statement', (t.cycle.nextStatement !== null ? money(t.cycle.nextStatement) + ', ' : '') + 'closes ' + shortDate(t.cycle.nextClose) + ', due ' + shortDate(t.cycle.nextDue), 'words');
   row('Pays', t.cycle.autopay === 'statement' ? 'the full statement' : 'the minimum plus new charges', 'words');
@@ -141,7 +141,7 @@ function whichCardCard(c, spine, rules, ctx, save) {
     w && w.rows.length ? [h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Card'), h('th', { class: 'num' }, 'Rewards'), h('th', { class: 'num' }, 'Interest'), h('th', { class: 'num' }, 'Net'), h('th', {}, 'Float'))),
       h('tbody', {}, w.rows.map((r, i) => h('tr', { class: i === 0 ? 'tight' : '' }, h('td', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, i === 0 ? [' ', h('span', { class: 'pill' }, 'best')] : null, r.utilizationWarn ? [' ', h('span', { class: 'pill' }, 'utilization')] : null), h('td', { class: 'num' }, money(r.rewards) + ' (' + pctWords(r.rate) + ')'), h('td', { class: 'num' }, r.revolving ? money(r.interest) + ' a month' : 'none'), h('td', { class: 'num' }, money(r.net)), h('td', {}, r.revolving ? 'revolving, no float' : r.interestFreeDays + ' days interest-free')))))),
-      h('p', { class: 'tile-note' }, kindChip(w.kind), ' Rewards at each card\'s own rate, else the house 1% (rough). A revolving card charges a month of interest on the purchase. Float days run to the next due date.'),
+      h('p', { class: 'tile-note' }, kindChip(w.kind), ' Rewards at each card\'s own rate, else usually 1% (rough). A revolving card charges a month of interest on the purchase. Float days run to the next due date.'),
       mathButton(w.rows.map((r) => 'debt:whichCard:' + r.id), () => ctx({ which: w }))] : h('p', { class: 'muted' }, 'Type an amount to compare the cards.'));
 }
 
@@ -180,7 +180,7 @@ function solveCard(c, spine, rules, ctx, save) {
   const x = form.solveBy ? solvePayoff(spine, rules, c.sim, { target: pick.value, byDate: form.solveBy }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'solve-h' },
     h('h2', { id: 'solve-h' }, 'Paid off by a date'),
-    h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, on the same day-by-day run, and whether that extra pushes checking under the floor.'),
+    h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, with your cash day by day, and whether that extra pushes checking under the floor.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; save(); } },
       h('label', { for: 'solve-target', class: 'edit-label' }, 'Clear'), pick,
       h('label', { for: 'solve-by', class: 'edit-label' }, 'By'), by,

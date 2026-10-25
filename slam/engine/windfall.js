@@ -27,7 +27,7 @@ const cap1 = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 const monthsSoFar = (asOf) => +asOf.slice(5, 7);
 
 export const STEP_LABELS = {
-  taxOnIt: 'Tax on the windfall itself', taxBill: 'The year\'s tax bill', cashFloor: 'Cash up to the stage 1 floor', promos: 'Promo balances before their deadline',
+  taxOnIt: 'Tax on this money', taxBill: 'The year\'s tax bill', cashFloor: 'Cash up to the stage 1 floor', promos: 'Promo balances before their deadline',
   employerMatch: 'The employer match left on the table', cards: 'Cards charging interest now', cushion: 'Cash up to the Rule of 5 target', roth: 'Roth IRA room this year', left: 'Not assigned yet'
 };
 

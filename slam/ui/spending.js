@@ -235,7 +235,7 @@ function donutCard(m) {
   };
   return h('section', { class: 'card', 'aria-labelledby': 'donut-h' },
     h('h2', { id: 'donut-h' }, 'Where the money goes'),
-    h('p', { class: 'muted' }, 'Tap a slice to see its lines. Try cutting something. Nothing is saved until you choose.'),
+    h('p', { class: 'muted' }, 'Tap a row to see its lines. Try cutting something. Nothing is saved until you choose.'),
     h('div', { class: 'donut-wrap' }, ring, h('ul', { class: 'go-list slice-list', 'aria-label': 'The slices' }, d.slices.map(row))),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' ', d.total === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay; shares are of what is planned.') : 'Of ' + money(d.total) + ' take-home a month.' + (d.short ? ' ' + money(d.short) + ' more leaves than comes in.' : '')));
 }
@@ -291,7 +291,7 @@ function askCard(m, state) {
     ask && ask.verdict ? [
       h('p', {}, h('span', { class: 'verdict ' + ask.verdict }, ask.verdict === 'yes' ? 'Yes' : ask.verdict === 'tight' ? 'Tight' : 'No')),
       h('ul', {}, h('li', {}, 'Safe to spend goes from ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'The low point goes from ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', with ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' held back by the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'It delays what the surplus buys by about ' + ask.delayDays + ' days.') : h('li', {}, 'No surplus to delay: this comes out of the cushion or onto a card.')),
-      h('p', { class: 'tile-note' }, kindChip(ask.kind), ' The same day-by-day run with the purchase added today.'),
+      h('p', { class: 'tile-note' }, kindChip(ask.kind), ' Your cash day by day, with the purchase added today.'),
       mathButton(['spend:ask'], () => ({ ...m.ctx(), ask }))] : null);
 }
 
@@ -371,7 +371,7 @@ function outlookCard(m) {
     h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
     h('div', { class: 'clear-grid' },
       h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.soFar)), h('span', { class: 'clear-label' }, 'So far'), h('span', { class: 'tile-note' }, 'income logged ' + money(o.incomeSoFar) + ' less spending logged ' + money(o.spentSoFar))),
-      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'Expected by month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line the run left out'] : []).join(', ') : money(o.paychecks) + ' in paychecks still to come, ' + money(o.bills) + ' in bills still to go out, ' + money(o.planLeft) + ' left of the plan'))),
+      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'Expected by month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line left out'] : []).join(', ') : money(o.paychecks) + ' in paychecks still to come, ' + money(o.bills) + ' in bills still to go out, ' + money(o.planLeft) + ' left of the plan'))),
     o.logged ? null : h('p', { class: 'muted' }, 'Nothing logged this month yet, so so far is zero by the log, not by your bank. Log a spend or import a statement.'),
     o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'No first pay date yet for ' + o.noPayDate.join(', ') + ', so expected by month end waits on it.') : null,
     o.guessedPayDay.length ? h('p', { class: 'muted' }, 'The pay day for ' + o.guessedPayDay.join(', ') + ' is a guess, so its paycheck is on a guessed day.') : null,
@@ -379,7 +379,7 @@ function outlookCard(m) {
       h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet, so counted as still to come)' : ''))),
         o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true) + ', with ' + money(r.logged, true) + ' logged'))),
         o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened, so it is in so far')) : null)),
-    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is the day-by-day run from ' + shortDate(o.asOf) + ' on. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
+    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is what is expected from ' + shortDate(o.asOf) + ' on. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
     mathButton(['compare:soFar', 'compare:expected'], () => ({ ...m.ctx(), monthOut: o })));
 }
 
@@ -424,8 +424,8 @@ function importCard(m) {
     if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in the log, or not spending).' : ''; refresh(); }
   };
   return h('section', { class: 'card', id: 'import', 'aria-labelledby': 'imp-h' },
-    h('h2', { id: 'imp-h' }, 'Feed the log'),
-    h('p', { class: 'muted' }, 'Real dates and amounts come in from a statement or from the Budget app\'s log. Each line is matched to the plan (within 2% and 5 days), called recurring (a merchant seen three times), or new; card payments and transfers are not spending. Nothing lands until you apply, and nothing lands twice.'),
+    h('h2', { id: 'imp-h' }, 'Import a statement'),
+    h('p', { class: 'muted' }, 'Real dates and amounts come in from a statement or from a budget app\'s log. Each line is matched to the plan (within 2% and 5 days), called recurring (a merchant seen three times), or new; card payments and transfers are not spending. Nothing lands until you apply, and nothing lands twice.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); form.csv = text.value; form.csvFormat = fmt.value; form.csvWith = paid.value; try { form.proposals = proposeCsv(spine, rules, text.value, { format: fmt.value, paidWith: paid.value, merchantRules }); form.picks = null; form.importWords = ''; } catch (err) { msg.textContent = err.message; return; } refresh(); } },
       h('label', { for: 'csv-text', class: 'edit-label' }, 'A statement'), text,
       h('label', { for: 'csv-format', class: 'edit-label' }, 'Format'), fmt,

@@ -17,13 +17,16 @@ function showError(text) {
   banner.querySelector('.error-text').textContent = String(text || 'an error with no message');
 }
 
+// The Builder link; on the Builder itself it is where you are, so it is plain words, not a link to the same screen.
+const builderLink = () => (/\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
+
 // Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
 // the app, the stamp and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
 // there, out of the tabs), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
   if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
-  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'SLAM ' + BUILD.label + ', ' + BUILD.date + '. Numbers are yours; nothing leaves this browser.'), ' ', h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder')));
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'SLAM ' + BUILD.label + ', ' + BUILD.date + '. Numbers are yours; nothing leaves this browser.'), ' ', builderLink()));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };

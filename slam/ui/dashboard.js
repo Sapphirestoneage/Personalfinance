@@ -1,11 +1,13 @@
-// Today (the Dashboard, S-230): the household at a glance. Every number comes from engine/summary.js; a card whose
-// number was built from your numbers opens them (the whole card is the target, with a chevron). The shell draws the
-// tabs, the header with Undo and Redo, and the bar. Formatting only.
+// Today (the Dashboard, S-230): the household at a glance. Every number comes from engine/summary.js; each card opens
+// the part of your numbers it is about (the whole card is the target, with a chevron): net worth the top of My numbers,
+// the runway your cash, safe to spend the calendar, and so on. The shell draws the tabs, the header with Undo and
+// Redo, and the bar. What is open here (Show the math, Done, Every flow, a split) is kept with the screen, so coming
+// back by Back or by the tab finds it open. Formatting only.
 
-import { startPage, refresh, keep, kept } from './shell.js';
+import { startPage, refresh, keep, kept, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
-import { mathButton } from './math-panel.js';
+import { keptMath } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
@@ -29,22 +31,23 @@ function provenance(spine, r) {
   const note = missing.length
     ? h('p', { class: 'tile-note' }, chip(r.value === null ? 'missing' : 'incomplete'), ' Needs: ', ...missing.flatMap((p, i) => [i ? ', ' : '', link(p)]))
     : rough.length ? h('p', { class: 'tile-note' }, chip('rough'), ' Built on ' + rough.length + ' rough number' + (rough.length === 1 ? '' : 's')) : null;
-  return [note, mathCtx && MATH_FOR._m.get(r) ? mathButton(MATH_FOR._m.get(r), mathCtx) : null];
+  return [note, mathCtx && MATH_FOR._m.get(r) ? keptMath(MATH_FOR._m.get(r).key, MATH_FOR._m.get(r).ids, mathCtx) : null];
 }
 
-// One tile: a label, the big number, lines under it. When the number was built from your numbers, the whole tile opens
-// the first of them in My numbers, and a chevron says so (CLAUDE.md affordance 5).
+// One tile: a label, the big number, lines under it. The whole tile opens what the card is about (target), and a
+// chevron says so (CLAUDE.md affordance 5); the fields it was built from are the links in its "Needs:" line and in
+// Show the math.
 // Which metrics each tile's "Show the math" opens (engine/math.js DASHBOARD_MATH).
 let mathCtx = null;
 const MATH_FOR = { _m: new Map() };
-function tile(spine, { id, label, result, shown, missingText, lines = [], extra = null }) {
-  MATH_FOR._m.set(result, DASHBOARD_MATH['tile-' + id]);
-  const first = (result.from || [])[0];
+function tile(spine, { id, label, result, shown, missingText, target = null, lines = [], extra = null }) {
+  MATH_FOR._m.set(result, { key: 'tile-' + id, ids: DASHBOARD_MATH['tile-' + id] });
+  const first = target;
   const value = result.value === null
     ? h('p', { class: 'tile-value missing-text' }, missingText || 'Not enough to figure yet')
     : h('p', { class: 'tile-value' }, shown);
   return h('section', { class: 'tile' + (first ? ' has-target' : ''), id: 'tile-' + id, 'aria-labelledby': 'tl-' + id },
-    h('h2', { class: 'tile-label', id: 'tl-' + id }, first ? h('a', { class: 'card-link', href: ledgerHref(first) }, h('span', {}, label), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A')) : label),
+    h('h2', { class: 'tile-label', id: 'tl-' + id }, first ? h('a', { class: 'card-link', href: first }, h('span', {}, label), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A')) : label),
     value,
     ...lines.filter(Boolean).map((l) => h('p', { class: 'tile-sub' }, ...[].concat(l))),
     extra,
@@ -100,9 +103,9 @@ function render({ spine: base, rules }) {
     ...em.backstop.conversions.map((c) => h('p', { class: 'tile-sub' }, money(c.amount) + ' converted in ' + c.year + ': no tax on it; ' + (c.penaltyFree ? 'no penalty.' : 'a ' + pct(c.penaltyRate) + ' penalty if taken before ' + shortDate(c.clockOpens) + ' (its own five-year clock).'))));
 
   const tiles = [
-    tile(spine, { id: 'networth', label: 'Net worth', result: sh.netWorth, shown: money(sh.netWorth.value), lines: ['Assets ' + money(sh.assets.value) + ' less debts ' + money(sh.debts.value) + '.'] }),
+    tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: money(sh.netWorth.value), lines: ['Assets ' + money(sh.assets.value) + ' less debts ' + money(sh.debts.value) + '.'] }),
     tile(spine, {
-      id: 'runway', label: 'Cash runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months',
+      id: 'runway', label: 'Cash runway', target: numbersHref('assets', 'cash'), result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months',
       lines: [
         money(sh.cash.value) + ' in cash at ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments).',
         sh.setAsideNote,
@@ -111,13 +114,13 @@ function render({ spine: base, rules }) {
       ],
       extra: em.backstop.contributions.value || em.backstop.conversions.length ? backstop : null
     }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', result: cf.surplus, shown: money(cf.surplus.value), lines: [
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: numbersHref('needs'), result: cf.surplus, shown: money(cf.surplus.value), lines: [
         'Take-home ' + money(cf.income.takeHome.value) + ' less expenses ' + money(cf.expenses.total.value) + ', minimum payments ' + money(cf.debtMinimums.total.value) + (cf.saving.afterTax.value ? ', ' + money(cf.saving.afterTax.value) + ' saved from take-home' : '') + (cf.taxSetAside.total.value ? ' and a tax set-aside of ' + money(cf.taxSetAside.total.value) : '') + '.',
         cf.taxSetAside.lines.length ? 'Tax set-aside: ' + cf.taxSetAside.lines.map((l) => l.kind === 'balance' ? l.label + ' ' + money(l.base) + (l.held ? ' less ' + money(l.held) + ' already set aside' : '') + ', over ' + l.months + ' months: ' + money(l.amount) + ' a month' : l.label + ' ' + money(l.amount) + ' (' + pct(l.rate, 1) + ' of ' + money(l.base) + (l.months ? ' over ' + l.months + ' months' : '') + ')').join('; ') + '.' : null
       ] }),
-    tile(spine, { id: 'savings', label: 'Savings rate', result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
+    tile(spine, { id: 'savings', label: 'Savings rate', target: numbersHref('income'), result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
     tile(spine, {
-      id: 'cards', label: 'Credit cards', result: sh.cards, shown: money(sh.cards.value),
+      id: 'cards', label: 'Credit cards', target: numbersHref('debt', 'credit-cards'), result: sh.cards, shown: money(sh.cards.value),
       lines: [
         pr.items.length ? money(pr.total.value) + ' in promo balances due by ' + shortDate(promoBy) + '; about ' + money(pr.monthly.value, true) + ' a month clears them in time.' : 'No promo balances.',
         utilLine(ut.personal, 'Personal cards') + ' ' + utilLine(ut.overall, 'All cards, business included'),
@@ -126,7 +129,7 @@ function render({ spine: base, rules }) {
       extra: creditNote(s.debt.creditScore)
     }),
     tile(spine, {
-      id: 'fi', label: 'Financial independence', result: fi.fiPercent, shown: pct(fi.fiPercent.value, 1),
+      id: 'fi', label: 'Financial independence', target: numbersHref('goals'), result: fi.fiPercent, shown: pct(fi.fiPercent.value, 1),
       lines: [
         'Of an FI number of ' + money(fi.fiNumber.value) + (fi.goalSource === 'direct' ? ' (your goal)' : fi.goalSource === 'spending' ? ' (goal spending at the withdrawal rate)' : ' (today\'s spending)') + '; invested ' + money(sh.invested.value) + '.',
         fi.goalSource ? 'Today\'s spending implies ' + money(fi.implied.value) + '.' : null,
@@ -136,29 +139,30 @@ function render({ spine: base, rules }) {
       ]
     }),
     tile(spine, {
-      id: 'cash', label: 'Safe to spend, as of ' + shortDate(spine.meta.asOf), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
+      id: 'cash', label: 'Safe to spend, as of ' + shortDate(spine.meta.asOf), target: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : ''), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
       shown: money(safe.today), missingText: 'Missing: a checking balance',
       lines: [
         safe.shortfall ? 'Nothing safe to spend: checking runs ' + money(safe.shortfall.amount) + ' short by ' + shortDate(safe.shortfall.date) + (safe.shortfall.covered ? ', and the cushion covers ' + money(safe.shortfall.covered) + ' of it' : '') + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + ', keeping the floor of ' + money(safe.floor) + '.' : null,
         reading && reading.today ? 'Checking on ' + shortDate(reading.today.date) + ': ' + money(reading.today.amount) + '.' : null,
         safe.low ? (safe.low.covered ? 'Lowest point ahead, before the cushion tops checking up: ' : 'Lowest point ahead: ') + money(safe.low.amount) + ' on ' + shortDate(safe.low.date) + '.' : null,
         safe.setAsideNote || null,
-        [h('a', { href: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : '') }, 'See cash by day ›'), ' ', h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Log a spend ›')]
+        [h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Log a spend ›')]
       ]
     }),
     tile(spine, {
-      id: 'compare', label: 'Estimated vs actual, ' + monthLabel(compare.to), result: { value: compare.spend.diff, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.rough, missing: compare.monthsLogged.length ? compare.missing : ['log'] },
+      // Nothing logged this month: no number (empty is not zero), and the card says so.
+      id: 'compare', label: 'Estimated vs actual, ' + monthLabel(compare.to), result: { value: compare.monthsLogged.length ? compare.spend.diff : null, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.monthsLogged.length ? compare.rough : [], missing: compare.monthsLogged.length ? compare.missing : [] },
       shown: (compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing logged this month yet',
       lines: [
         compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + (compare.spend.entries === 1 ? ' entry' : ' entries') + ').' : null,
         compare.income.actual !== null ? 'Income logged ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' take-home planned' : '') + '.' : 'No income logged yet.',
-        compare.savingsRate.real !== null ? 'Savings rate from the real ledger: ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' against ' + pct(compare.savingsRate.plan, 1) + ' planned' : '') + '.' : compare.savingsRate.note,
+        compare.savingsRate.real !== null ? 'Savings rate from what you logged: ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' against ' + pct(compare.savingsRate.plan, 1) + ' planned' : '') + '.' : compare.savingsRate.note,
         outlook.stale ? 'Check in with today\'s balances to see this month so far.' : ['So far this month: ', h('span', { class: outlook.soFar < 0 ? 'neg' : 'pos' }, (outlook.soFar < 0 ? '-' : '+') + money(Math.abs(outlook.soFar))), '. Expected by month end: ' + (outlook.expected === null ? 'missing' : (outlook.expected < 0 ? '-' : '+') + money(Math.abs(outlook.expected))) + '.'],
         [h('a', { href: 'spending.html' }, 'Log a spend, import a statement, or see every line ›')]
       ]
     }),
     tile(spine, {
-      id: 'tax', label: tx.year + ' tax balance due (estimate)', result: tx.balanceDue,
+      id: 'tax', label: tx.year + ' tax balance due (estimate)', target: numbersHref('taxes'), result: tx.balanceDue,
       shown: money(tx.balanceDue.value), missingText: tx.missingText ? tx.missingText.charAt(0).toUpperCase() + tx.missingText.slice(1) : null,
       lines: [
         tx.balanceDue.value === null && tx.partial ? 'At least ' + money(tx.partial.federalIncomeTax.value) + ' federal on the ' + tx.year + ' income known so far.' : null,
@@ -182,6 +186,7 @@ function flowPart(spine, rules, s) {
   const open = flowOpen();
   const el = flowSection(moneyFlow(spine, rules, s.cashflow, { open }), {
     open, month: MONTH_NAMES[+s.ym.slice(5, 7) - 1],
+    listOpen: !!kept().flowList, onList: (on) => { if (!!kept().flowList !== on) keep({ flowList: on }); },
     onToggle: (sec) => { keep({ flowOpen: open.includes(sec) ? open.filter((x) => x !== sec) : [...open, sec] }); el.replaceWith(flowPart(spine, rules, s)); }
   });
   return el;
@@ -198,7 +203,7 @@ function flagItem(spine, f) {
     h('p', { class: 'flag-detail' }, f.detail),
     goalLine(f.next, 'goal-next'),
     f.next && f.green && f.green.text.slice(9) !== f.next.text.slice(6) ? goalLine(f.green, 'goal-green') : null,
-    flagMath(f).length ? mathButton(flagMath(f), mathCtx) : null);
+    flagMath(f).length ? keptMath('flag-' + f.id, flagMath(f), mathCtx) : null);
 }
 
 // Red first, then yellow; green folded into "Done" with a count.
@@ -210,7 +215,7 @@ function flagsSection(spine, flags) {
       count('red') ? h('span', { class: 'stage-chip stage-red' }, count('red') + ' at stage 1') : null,
       count('yellow') ? h('span', { class: 'stage-chip stage-yellow' }, count('yellow') + ' at stage 2') : null)),
     open.length ? h('ul', { class: 'flags' }, open.map((f) => flagItem(spine, f))) : h('p', { class: 'muted' }, 'Nothing open.'),
-    done.length ? h('details', { class: 'done' }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
+    done.length ? h('details', { class: 'done', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
 }
 
 // The One-pager is a button here; its Back comes back to Today.

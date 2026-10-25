@@ -189,22 +189,22 @@ export function maxItPanel(spine, rules, accountId, opts = {}) {
     h('div', { class: 'max-years' + (acc.rows.length > 1 ? ' two' : '') }, acc.rows.map((r) => yearBlock(m, r, opts))));
 }
 
-// The Plan page's one card: every account and open year, the new money a month as deadlines pass, and the cash check
-// for all of it together.
+// The Plan's "How much to max it" screen: every account and open year, the new money a month as deadlines pass, and the
+// cash check for all of it together. The screen's own title names it, so the card has no heading of its own; each
+// account is a whole-row target with a chevron (its panel in My numbers).
 export function maxItCard(spine, rules) {
   const m = maxItFor(spine, rules);
   const rows = m.mx.rows;
   const T = m.mx.totals;
-  const title = h('h2', { id: 'maxit-h' }, 'How much to max it ', h('span', { class: 'count' }, String(m.mx.accounts.length)));
-  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-labelledby': 'maxit-h' }, title, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open My numbers ›'));
+  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' }, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open My numbers ›'));
   const all = m.mx.pools.length && T.lump > 0 ? cashFor(m, 'all') : null;
   const firstMissing = rows.find((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const line = (r) => {
     const main = r.applies && r.room !== null ? mainOf(r) : null;
     const last = !main || !main.big ? '' : r.main === 'paycheck' ? lastWords(r.paychecks.last, r.paychecks.perPaycheck) : lastWords(r.months.last, r.perMonth);
     // A spouse's IRA: the couple's pay they share; any account: what the Plan counts when that is less than it alone.
-    return h('li', { class: 'max-row' },
-      h('a', { class: 'max-name', href: maxHref(r.accountId) }, r.name + ', ' + r.year + ' ›'),
+    return h('li', { class: 'max-row has-target' },
+      h('a', { class: 'max-name card-link', href: maxHref(r.accountId) }, h('span', {}, r.name + ', ' + r.year), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A')),
       !r.applies ? h('span', { class: 'muted' }, r.why)
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
@@ -216,7 +216,7 @@ export function maxItCard(spine, rules) {
   };
   const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);
   const steps = T.steps || [];
-  return h('section', { class: 'card', id: 'maxit', 'aria-labelledby': 'maxit-h' }, title,
+  return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' },
     h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in My numbers.'),
     m.mx.pools.length && steps.length ? h('p', { class: 'max-big' }, cash(steps[0].perMonth) + ' a month')
       : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel || firstMissing.blankLabel) : m.mx.pools.length && T.lump === 0 && !leftOut.length ? 'What already goes in fills it' : 'Nothing more can go in before the deadlines'),

@@ -415,7 +415,7 @@ export function fooGhosts(spine, rules, s, months, { sim = null } = {}) {
   const f = fooLadder(spine, rules, s, { sim });
   const cur = f.rungs.find((r) => r.id === f.current) || null;
   if (!cur || !(f.surplus > 0)) return [];
-  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(Math.min(f.surplus, cur.need)) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(Math.min(f.surplus, cur.need)), direction: 'out', counted: false, rough: true, note: 'the FOO rung the surplus funds this month (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
+  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(Math.min(f.surplus, cur.need)) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(Math.min(f.surplus, cur.need)), direction: 'out', counted: false, rough: true, note: 'the step your plan puts this month\'s surplus toward (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
 }
 
 // The spine's FAT tags, for the pages that need them.

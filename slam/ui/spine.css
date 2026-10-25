@@ -41,6 +41,13 @@ a { color: var(--accent); }
 .guess-list a { text-decoration: none; color: var(--text); }
 .guess-list a:hover { text-decoration: underline; }
 .why { display: block; color: var(--text-muted); font-size: var(--text-sm); }
+/* Why a row is listed (Still guessing), under it; a row with nothing to open has no chevron. */
+.row-why { margin: 0 0 var(--space-2); color: var(--text-muted); font-size: var(--text-sm); }
+.row-main.row-still { cursor: default; }
+.row-main.row-still::after { content: none; }
+.row-main.row-still:active { transform: none; box-shadow: none; filter: none; }
+.sub > .rows > .row { border-top: 0; }
+.sub > .rows > .row.open { margin: 0 calc(-1 * var(--space-3)); padding: 0 var(--space-3); }
 
 /* groups and rows */
 .daite { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: var(--text-sm); }
@@ -265,7 +272,7 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .row-main { grid-template-columns: 1fr auto 20px; grid-template-areas: "label chip chev" "value value chev"; border-radius: var(--radius-sm); transition: transform 0.08s ease, background-color 0.12s ease; }
 .row-main::after { content: "\203A"; grid-area: chev; align-self: center; justify-self: end; font-size: 1.4rem; line-height: 1; color: var(--text-muted); transition: transform 0.15s ease; }
 .row-main[aria-expanded="true"]::after { transform: rotate(90deg); }
-@media (hover: hover) { .row-main:hover { background: var(--surface-2); } }
+@media (hover: hover) { .row-main:hover { background: var(--surface-2); } .row-main.row-still:hover { background: transparent; } }
 @media (min-width: 640px) { .row-main { grid-template-columns: 1fr minmax(120px, auto) 92px 20px; grid-template-areas: "label value chip chev"; } }
 .disabled-why { font-size: var(--text-xs); color: var(--text-muted); align-self: center; }
 @media (prefers-reduced-motion: reduce) { .btn, .seg-btn, .filter-chip, button.dot, .choice-card, .row-main, .row-main::after { transition: none; } }
@@ -317,7 +324,7 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .fb-bar { height: 100%; border-radius: 0 5px 5px 0; background: var(--c); }
 .fb-more { font-size: var(--text-xs); color: var(--accent); font-weight: 600; }
 .fb-through { margin: var(--space-2) 0 0; }
-.flow-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.flow-list summary { min-height: var(--tap); display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-weight: 600; list-style: none; }
 .flow-list ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); font-size: var(--text-sm); display: grid; gap: var(--space-1); }
 @media (prefers-reduced-motion: reduce) { .fl-band { transition: none; } }
 
@@ -329,7 +336,12 @@ button.dot { min-height: var(--tap); min-width: var(--tap); padding: 0 var(--spa
 .pick-actions { position: sticky; bottom: 0; padding: var(--space-3) 0; background: var(--surface); }
 .later-tag { margin-left: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); border: 1px dashed var(--text-muted); border-radius: var(--radius-pill); padding: 0 var(--space-2); }
 .later-list { margin-top: var(--space-3); }
-.later-list summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.later-list summary { min-height: var(--tap); display: flex; align-items: center; gap: var(--space-2); cursor: pointer; font-weight: 600; list-style: none; }
+/* A fold says it opens: the same chevron as "When it starts and ends", turned down when open (affordances 1 and 5). */
+.flow-list > summary::-webkit-details-marker, .later-list > summary::-webkit-details-marker { display: none; }
+.flow-list > summary::before, .later-list > summary::before { content: "\203A"; font-size: 1.3rem; line-height: 1; color: var(--text-muted); transition: transform 0.15s ease; }
+.flow-list[open] > summary::before, .later-list[open] > summary::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .flow-list > summary::before, .later-list > summary::before { transition: none; } }
 .later-list ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
 
 /* Edits not in the profile file (S-195). */
@@ -494,9 +506,6 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .drag-ghost { position: fixed; z-index: 50; pointer-events: none; padding: var(--space-1) var(--space-2); border: 1.5px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--btn-shadow-lift); font-size: var(--text-sm); font-weight: 600; }
 .cell.drop-target, .day.drop-target { outline: 3px dashed var(--accent); outline-offset: -3px; background: var(--accent-soft); }
 /* An inline name that opens its editor: text-sized, with a 44px hit area drawn around it. */
-.ev-tap { position: relative; background: none; border: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; }
-.ev-tap::after { content: ""; position: absolute; left: -4px; right: -4px; top: 50%; height: var(--tap); transform: translateY(-50%); }
-.ev-tap[aria-pressed="true"] { font-weight: 700; }
 /* Running cash and debt in a grid cell; the lowest day and days under the floor say so. */
 .cell-cash { margin: var(--space-1) 0 0; font-family: var(--font-num); font-size: var(--text-xs); color: var(--text); }
 .cell-debt { margin: 0; font-family: var(--font-num); font-size: 10px; color: var(--text-muted); }
@@ -626,10 +635,13 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .hot-chip.fine { color: var(--st-known); background: var(--good-soft); }
 /* Burn tiers: four rows that add up, with the cumulative on the right. */
 .tiers { list-style: none; margin: 0 0 var(--space-2); padding: 0; counter-reset: tier; }
-.tiers li { display: grid; grid-template-columns: 1fr auto auto; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); align-items: center; font-size: var(--text-sm); }
+.tiers li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); align-items: center; font-size: var(--text-sm); }
 .tiers li::before { counter-increment: tier; content: counter(tier); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: var(--text-xs); font-weight: 700; margin-right: var(--space-2); }
 .tiers .tier-amt, .tiers .tier-cum { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .tiers .tier-cum { color: var(--text-muted); }
+/* A phone: the running figure goes under the amount, so the words keep their width. */
+@media (max-width: 639px) { .tiers li { grid-template-columns: auto minmax(0, 1fr) auto; } .tiers .tier-cum { grid-column: 3; text-align: right; } .tiers .tier-cum:empty { display: none; } }
+.rung-why { color: var(--text-muted); display: block; font-weight: 400; }
 /* The donut: a conic ring with a legend; the list twin expands to lines. */
 .donut-wrap { display: grid; grid-template-columns: 1fr; gap: var(--space-3); align-items: center; }
 @media (min-width: 640px) { .donut-wrap { grid-template-columns: 180px 1fr; } }
@@ -653,7 +665,6 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 /* A switch button (try without a line, hours of life) shows when it is on. */
 .btn.toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), var(--btn-shadow-press); background: var(--accent-soft); }
 /* A link to a part of the page lands below the tabs on a computer. */
-@media (min-width: 640px) { #log, #import, #checkin { scroll-margin-top: 72px; } }
 /* Check-in: one bordered box per account, the forecast as the placeholder. */
 .checkin-grid { display: grid; gap: var(--space-2); grid-template-columns: 1fr; max-width: 520px; }
 .checkin-grid input { min-height: var(--tap); padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; font-family: var(--font-num); background: var(--surface); color: var(--text); }
@@ -681,7 +692,6 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .ladder li.current::before { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .ladder .rung-when { font-family: var(--font-num); text-align: right; }
 @media (max-width: 639px) { .ladder li { grid-template-columns: 28px 1fr; } .ladder .rung-when { grid-column: 2; text-align: left; } }
-.ladder .rung-why { color: var(--text-muted); display: block; }
 /* The Plan's steps as rows (S-230): a done step shows a check, the next step is filled. Got extra money?'s steps wear
    their bar color on the number, and a step that gets nothing is quiet. */
 .go-row.is-done .go-mark { background: var(--good-soft); color: var(--st-known); }
@@ -689,7 +699,6 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .go-row > .wf-num { grid-area: mark; }
 .go-row.zero > .wf-num { background: var(--text-muted); }
 .go-row.zero .go-total { font-weight: 400; color: var(--text-muted); }
-#wf-result { scroll-margin-top: 120px; }
 /* DRAFTT letters: a bar per letter with the reference mark on housing. */
 .letters { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: grid; gap: var(--space-2); }
 .letters li { display: grid; grid-template-columns: 36px 1fr auto; gap: var(--space-2) var(--space-3); align-items: center; font-size: var(--text-sm); }
@@ -834,7 +843,7 @@ body.has-tabs { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 .card-link:focus-visible { outline: none; }
 .has-target:has(.card-link:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .has-target:has(.card-link:active) { transform: translateY(1px) scale(0.995); box-shadow: var(--btn-shadow-press); }
-.has-target a:not(.card-link), .has-target button, .has-target summary, .has-target input, .has-target select, .has-target .math-panel { position: relative; z-index: 1; }
+.has-target a:not(.card-link):not(.ev-go), .has-target button, .has-target summary, .has-target input, .has-target select, .has-target .math-panel { position: relative; z-index: 1; }
 @media (hover: hover) { .has-target:hover { box-shadow: var(--btn-shadow-lift); } }
 .chev { font-size: 1.4rem; line-height: 1; color: var(--text-muted); flex: none; }
 
@@ -853,7 +862,19 @@ body.has-tabs { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 .go-sub .line { flex-basis: 100%; overflow-wrap: anywhere; }
 .go-row.plain { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name chev" "sub chev"; }
 .lede { margin: 0 0 var(--space-3); max-width: 60ch; }
-.builder-link { margin-left: var(--space-2); min-height: var(--tap); display: inline-flex; align-items: center; }
+.builder-link { margin-left: var(--space-2); min-height: var(--tap); min-width: var(--tap); display: inline-flex; align-items: center; justify-content: center; }
+span.builder-link { font-weight: 600; }
+/* A link to a part of the page, scrollIntoView and the focus stop clear of the tab bar (fixed at the bottom on a phone,
+   sticky at the top on a computer) and of Back and the trail on a deeper level. Set on the content, not the page, so
+   the bars themselves never scroll the page when they take the focus. */
+@media (max-width: 639px) {
+  body.has-tabs #app *:not(.screen-top, .screen-top *) { scroll-margin-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  body.has-tabs #app:has(> .screen-top:not(:empty)) *:not(.screen-top, .screen-top *) { scroll-margin-top: 64px; }
+}
+@media (min-width: 640px) {
+  body.has-tabs #app *:not(.screen-top, .screen-top *) { scroll-margin-top: 72px; }
+  body.has-tabs #app:has(> .screen-top:not(:empty)) *:not(.screen-top, .screen-top *) { scroll-margin-top: 136px; }
+}
 
 /* The Rules page (Builder): each rule a row; a rule changed in this browser says so. */
 .rule-row .go-sub code { font-size: var(--text-xs); }

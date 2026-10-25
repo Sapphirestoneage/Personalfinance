@@ -31,9 +31,9 @@ test('six tabs, the same on every page, in order', () => {
 
 test('levels are real history entries: pushed, never replaced over the trail', () => {
   const src = read('ui/shell.js');
-  assert.match(src, /history\.pushState\(fresh\(lv\), '', hashOf\(lv\)\)/);
+  assert.match(src, /history\.pushState\(fresh\(lv(, at\(lv\))?\), '', hashOf\(lv\)\)/);
   // Every replaceState either leaves the address alone ('') or stamps a fresh entry before its levels are pushed.
-  for (const m of src.matchAll(/history\.replaceState\(([^;]*)\);/g)) assert.ok(/, ''\)?$/.test(m[1]) || /fresh\(\[\]\)/.test(m[1]), 'replaceState: ' + m[1]);
+  for (const m of src.matchAll(/history\.replaceState\(([^;]*)\);/g)) assert.ok(/, ''\)?$/.test(m[1]) || /fresh\(\[\](\)|, at\(\[\]\)\))/.test(m[1]), 'replaceState: ' + m[1]);
   assert.match(src, /history\.scrollRestoration = 'manual'/);
   assert.match(src, /addEventListener\('pagehide', saveScroll\)/);
 });
@@ -43,7 +43,7 @@ test('Today is on the shell: no page-links row, no "View in the Ledger", the who
   assert.match(src, /startPage\(\{ tab: 'today', title: 'Today'/);
   assert.doesNotMatch(src, /page-links|View in the Ledger|windfall\.html|loadAll\(|mountPage\(/);
   assert.match(src, /class: 'tile' \+ \(first \? ' has-target' : ''\)/);
-  assert.match(src, /h\('a', \{ class: 'card-link', href: ledgerHref\(first\) \}/);
+  assert.match(src, /h\('a', \{ class: 'card-link', href: first \}/);
   assert.match(src, /h\('a', \{ class: 'btn', href: 'onepager\.html' \}, 'One-pager'\)/);
   assert.match(read('dashboard.html'), /<title>SLAM Today<\/title>/);
   // The One-pager sits under Today: its Back returns there.

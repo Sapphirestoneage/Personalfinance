@@ -75,7 +75,7 @@ export function showValue(value, type) {
 }
 
 // The kind chip: green known, yellow rough, red missing.
-export const KIND_WORDS = { known: 'Known', rough: 'Rough', missing: 'Missing', computed: 'Computed', notForMe: 'Not for me', incomplete: 'Incomplete' };
+export const KIND_WORDS = { known: 'Known', rough: 'Rough', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me', incomplete: 'Incomplete' };
 export const chip = (kind) => h('span', { class: 'chip chip-' + kind }, KIND_WORDS[kind] || kind);
 
 export const ledgerHref = (path) => 'ledger.html#' + encodeURIComponent(path);
@@ -90,6 +90,29 @@ export const said = {
   moved: (what, to) => what + ' moved to ' + dayWords(to),
   happened: (what) => what + ' marked as happened'
 };
+
+// A keyboard shortcut's hint ("press /") shows only where there is a keyboard to press it on.
+export const keyHint = (words) => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches ? ' (' + words + ')' : ''; } catch { return ''; } };
+
+// A sentence ends once: "...(payroll)." never "...(payroll)..", and a question keeps its question mark.
+export const sentence = (t) => (/[.!?]$/.test(String(t)) ? String(t) : t + '.');
+
+// A rule's words without its id, for client screens (Show the math, S-230): "Catch-up at age 50 (rule K401_CU50)"
+// reads "Catch-up at age 50"; the ids and their links live on the Builder's All formulas and Rules pages.
+export const plainLabel = (s) => String(s)
+  .replace(/ \(rule [A-Z0-9_]+\)/g, '')
+  .replace(/\(rule [A-Z0-9_]+, not in the registry\)/g, '(not set yet)')
+  .replace(/\(rule [A-Z0-9_]+, /g, '(');
+
+// A calendar item's note in words: a moved one's "moved from 2026-11-01" reads "moved from Nov 1, 2026". With moved
+// false, the note less that part (the item's screen says it on its own line), or null when nothing else is left.
+export function itemNote(e, { moved = true } = {}) {
+  if (!e || !e.note) return null;
+  const m = e.moved ? /^moved from (\d{4}-\d{2}-\d{2})(?:; )?/.exec(e.note) : null;
+  if (!m) return e.note;
+  const rest = e.note.slice(m[0].length);
+  return moved ? 'moved from ' + shortDate(m[1]) + (rest ? '; ' + rest : '') : rest || null;
+}
 
 // A rule's value in words (All formulas and the Rules page). Brackets are [top, rate] pairs; any other list (an order,
 // two ages) reads as a list (S-211); a date rule says which year it falls in.

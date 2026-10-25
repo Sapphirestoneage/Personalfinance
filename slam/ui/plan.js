@@ -13,12 +13,13 @@ import { cashsim } from '../engine/cashsim.js';
 import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput } from '../engine/edits.js';
-import { mathButton } from './math-panel.js';
+import { keptMath } from './math-panel.js';
 import { maxItCard, maxItFor } from './maxit-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
-import { h, chip, money, pct, shortDate, monthWords, ledgerHref } from './view.js';
+import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue } from './view.js';
+import { typeFor } from '../engine/ledger.js';
 
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -52,14 +53,8 @@ const allocOf = (m) => m.alloc || (m.alloc = allocator(m.spine, m.rules, m.sim, 
 // What Show the math reads, built when a panel opens.
 const mathCtx = (m) => (extra = {}) => ({ spine: m.spine, rules: m.rules, s: m.s, sim: m.sim, plan: { foo: m.foo, wage: realHourlyWage(m.spine, m.rules, m.s), draftt: draftt(m.spine, m.rules, m.s), floor: fixedFloor(m.spine, m.rules, m.s, null), goals: goalsView(m.spine, m.rules, m.s), alloc: allocOf(m) }, ...extra });
 
-// Show the math, kept open when the screen is come back to (Back, the trail, the browser's back, a reload).
-function math(key, ids, ctx, label) {
-  const el = mathButton(ids, ctx, 0, label);
-  const btn = el.querySelector('button');
-  if ((kept().math || []).includes(key)) btn.click();
-  btn.addEventListener('click', () => { const open = kept().math || []; keep({ math: open.includes(key) ? open.filter((k) => k !== key) : [...open, key] }); });
-  return el;
-}
+// Show the math, kept open when the screen is come back to (Back, the trail, the browser's back, a tab, a reload).
+const math = keptMath;
 
 // A row that opens another screen or page: the whole row is the target, with a chevron.
 const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, ...[name].flat(Infinity)), sub ? h('span', { class: 'go-sub' }, ...[sub].flat(Infinity)) : null));
@@ -173,7 +168,8 @@ function stepScreen(m, r) {
     r.id === f.current ? h('p', {}, h('span', { class: 'pill pill-locked' }, 'Your next step')) : null,
     big,
     when ? h('p', { class: 'tile-sub' }, when) : null,
-    h('p', {}, kindChip(r.kind), ' ', r.why),
+    // The deductible's own box is right below, so its step says to type it there.
+    h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null ? 'Type the biggest deductible below.' : r.why),
     r.flow ? h('p', { class: 'tile-note' }, 'A monthly amount: once the surplus gets here, this much goes to it every month.') : null,
     r.id === 'deductibles' ? deductibleForm(m) : null,
     r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in My numbers (Assets, then the 401(k)).') : null,
@@ -186,7 +182,7 @@ function stepScreen(m, r) {
 function surplusScreen(m) {
   const w = surplusWaterfall(m.spine, m.rules, m.s);
   return h('section', { class: 'card', 'aria-label': SCREENS.surplus },
-    h('p', { class: 'muted' }, 'Each month\'s surplus goes in the same order as Got extra money?: ' + (w.note || money(w.surplus) + ' a month.')),
+    h('p', { class: 'muted' }, 'Each month\'s surplus goes in the same order as Got extra money?' + (w.note ? ' ' + w.note : ' (' + money(w.surplus) + ' a month).')),
     h('ol', { class: 'tiers' }, w.steps.map((st) => h('li', {}, h('span', {}, STEP_LABELS[st.id] || st.id, h('span', { class: 'rung-why' }, st.why)), h('span', { class: 'tier-amt' }, st.need === null ? 'missing' : money(st.amount) + (st.need > (st.amount || 0) ? ' of ' + money(st.need) : '')), h('span', { class: 'tier-cum' }, st.months ? st.months + ' months' : '')))),
     math('surplus', w.steps.map((st) => 'windfall:' + st.id), () => ({ ...mathCtx(m)(), windfall: w })));
 }
@@ -323,12 +319,15 @@ function eventsScreen(m) {
       change((s) => applyLifeEvent(s, t, date.value).spine, said.added(t.label + ' from ' + shortDate(date.value)));
     } },
       h('label', { for: 'event-pick', class: 'edit-label' }, 'Event'), pick,
-      chosen ? h('p', { class: 'edit-hint' }, chosen.summary + ' Lines: ' + chosen.items.map((i) => i.label + ' ' + (i.direction === 'in' ? '+' : '-') + money(i.cents / 100) + (i.cadence === 'once' ? '' : ' ' + i.cadence)).join('; ') + '.') : null,
+      chosen ? h('p', { class: 'edit-hint' }, chosen.summary + ' Lines: ' + chosen.items.map((i) => i.label + ' ' + (i.direction === 'in' ? '+' : '-') + money(i.cents / 100) + (EVENT_OFTEN[i.cadence] || '')).join('; ') + '.') : null,
       h('label', { for: 'event-date', class: 'edit-label' }, 'From'), date, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add it to my numbers'))),
     applied.length ? [h('h3', { class: 'month-h' }, 'In your numbers now'), h('ul', { class: 'restore-list' }, applied.map((id) => h('li', {}, h('strong', {}, labelOf(id)),
       h('button', { type: 'button', class: 'btn danger small', onclick: () => change((s) => removeLifeEvent(s, id), said.deleted(labelOf(id))) }, 'Remove'))))] : null);
 }
+
+// A life event's line, how often, in words ("a month", "every two weeks"); once says nothing.
+const EVENT_OFTEN = { month: ' a month', monthly: ' a month', biweekly: ' every two weeks', weekly: ' a week', semimonthly: ' twice a month', quarterly: ' a quarter', yearly: ' a year', year: ' a year' };
 
 function scenariosScreen(m) {
   const list = readScenarios();
@@ -340,8 +339,9 @@ function scenariosScreen(m) {
   pick.addEventListener('change', () => { keep({ compareWith: pick.value }); refresh(); });
   const other = list.find((x) => x.id === pick.value);
   const diff = other ? diffSpines(other.spine, m.base) : null;
-  // Saved scenarios live in this browser, outside the household: the bar's Undo puts the list back.
-  const putBack = (was, words) => say(words, () => { keepScenarios(was); refresh(); });
+  // Saved scenarios live in this browser, outside the household: Undo (the bar, the header or Ctrl/Cmd+Z) puts the
+  // list back, and Redo the list after the change.
+  const putBack = (was, now, words) => say(words, () => { keepScenarios(was); refresh(); }, () => { keepScenarios(now); refresh(); });
   return h('section', { class: 'card', 'aria-label': SCREENS.scenarios },
     h('p', { class: 'muted' }, 'A scenario is a copy of your numbers as they are now, saved in this browser under a name. Compare one with today, or load it to go back to it.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
@@ -350,19 +350,21 @@ function scenariosScreen(m) {
       const entry = { id: 's' + Date.now(), name: nameBox.value.trim(), savedAt: new Date().toISOString(), spine: m.base };
       if (!keepScenarios([...list, entry])) { msg.textContent = 'This browser will not keep it (storage is blocked)'; return; }
       refresh();
-      putBack(list, said.added('Scenario ' + entry.name));
+      putBack(list, [...list, entry], said.added('Scenario ' + entry.name));
     } },
       h('label', { for: 'scen-name', class: 'edit-label' }, 'Save today as'), nameBox, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the scenario'))),
     list.length ? [h('label', { for: 'scen-pick', class: 'edit-label' }, 'Compare'), pick,
       h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
         h('button', { type: 'button', class: 'btn small', onclick: () => change(() => x.spine, said.changed('Your numbers', 'the scenario ' + x.name)) }, 'Load it'),
-        h('button', { type: 'button', class: 'btn danger small', onclick: () => { keepScenarios(list.filter((y) => y.id !== x.id)); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : null,
+        h('button', { type: 'button', class: 'btn danger small', onclick: () => { const now = list.filter((y) => y.id !== x.id); keepScenarios(now); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, now, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : null,
     diff ? [h('h3', { class: 'month-h' }, other.name + ' against today: ' + plural(diff.length, 'change')), diff.length ? diffList(m.base, other.spine, diff, 60) : h('p', { class: 'muted' }, 'Nothing differs.')] : null);
 }
-const show = (x) => (x === null || x === undefined ? 'missing' : typeof x === 'number' ? (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100)) : typeof x === 'object' ? JSON.stringify(x) : String(x));
+// A value in a diff, worded by its field's type ($1,950, 24%, Nov 3, 2026), as My numbers words it.
+const typeAt = (a, b, p) => { try { const t = typeFor(a, p); return t === 'text' ? typeFor(b, p) : t; } catch { return 'text'; } };
+const show = (x, type) => (x === null || x === undefined ? 'missing' : typeof x === 'object' ? JSON.stringify(x) : typeof x === 'number' && (type === 'text' || type === 'int') ? String(Math.round(x * 100) / 100) : showValue(x, type) || String(x));
 const labelPath = (a, b, p) => { try { return labelFor(a, p) || labelFor(b, p) || p; } catch { return p; } };
-const diffList = (a, b, diff, n) => h('ul', { class: 'diff-list' }, diff.slice(0, n).map((d) => h('li', {}, h('span', { class: 'd-path' }, labelPath(a, b, d.path)), h('span', {}, d.change === 'added' ? 'added: ' + show(d.after) : d.change === 'removed' ? 'removed (was ' + show(d.before) + ')' : show(d.before) + ' to ' + show(d.after)))));
+const diffList = (a, b, diff, n) => h('ul', { class: 'diff-list' }, diff.slice(0, n).map((d) => { const t = typeAt(a, b, d.path); return h('li', {}, h('span', { class: 'd-path' }, labelPath(a, b, d.path)), h('span', {}, d.change === 'added' ? 'added: ' + show(d.after, t) : d.change === 'removed' ? 'removed (was ' + show(d.before, t) + ')' : show(d.before, t) + ' to ' + show(d.after, t))); }));
 
 function fileScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
@@ -376,7 +378,8 @@ function fileScreen(m) {
     h('div', { class: 'file-row' }, h('label', { for: 'import-file', class: 'edit-label' }, 'Read in a household file'), file, h('button', { type: 'button', class: 'btn', onclick: () => { const f = file.files && file.files[0]; if (!f) { msg.textContent = 'Pick a file first'; return; } f.text().then((t) => { pending = { text: t, name: f.name }; refresh(); }); } }, 'Read it')), msg,
     preview ? (preview.ok ? [h('p', { class: 'tile-sub' }, pending.name + ': a household file' + (preview.r.migrated ? ', brought up to date' : '') + (preview.r.exportedAt ? ', downloaded ' + shortDate(preview.r.exportedAt.slice(0, 10)) : '') + '. ' + plural(preview.diff.length, 'change') + ' against today.'),
       preview.diff.length ? diffList(m.base, preview.r.spine, preview.diff, 40) : null,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => { const r = preview.r, fileName = pending.name; pending = null; change(() => r.spine, said.changed('Your numbers', 'the file ' + fileName)); } }, 'Apply the file'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { pending = null; refresh(); } }, 'Discard'))] : h('p', { class: 'edit-msg', role: 'alert' }, pending.name + ': ' + preview.message)) : null);
+      // A file with nothing different has nothing to apply, so it records no step to undo.
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', disabled: !preview.diff.length, onclick: () => { const r = preview.r, fileName = pending.name; pending = null; change(() => r.spine, said.changed('Your numbers', 'the file ' + fileName)); } }, preview.diff.length ? 'Apply the file' : 'Nothing to apply'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { pending = null; refresh(); } }, 'Discard'))] : h('p', { class: 'edit-msg', role: 'alert' }, pending.name + ': ' + preview.message)) : null);
 }
 
 startPage({ tab: 'plan', title: 'Plan', name, render });

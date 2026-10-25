@@ -166,7 +166,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (!m.line) t.useFact('debts.' + d.id + '.minimum', d.minimum);
     const dueRough = roughFact(d.dueDay);
     // A debt paid by a budget line (S-226): the line's amount, once, on the debt's due day.
-    add({ id: 'debt:' + d.id, sourceId: null, repeats: true, plan: d.type === 'bnpl', kind: 'debt', label: (m.name || d.id) + (m.line ? ' payment (the ' + m.lineLabel + ' line)' : m.estimated ? ' (minimum, house default)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a house guess' : null) : 'due day not entered', path: m.path || 'debts.' + d.id + '.minimum' });
+    add({ id: 'debt:' + d.id, sourceId: null, repeats: true, plan: d.type === 'bnpl', kind: 'debt', label: (m.name || d.id) + (m.line ? ' payment (the ' + m.lineLabel + ' line)' : m.estimated ? ' (minimum, a guess)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a guess' : null) : 'due day not entered', path: m.path || 'debts.' + d.id + '.minimum' });
   }
 
   // ------------------------------------------------------------ saving from take-home, the tax set-aside
@@ -319,7 +319,7 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     // Card interest the run charges on each statement day (S-209): on the card, not checking, so it is shown, not added.
     if (sim) for (const d of sim.daily) if (d.date.slice(0, 7) === ym) for (const x of d.events) if (x.kind === 'interest' && x.amount) {
       const debt = (spine.debts || []).find((y) => y.id === x.card);
-      events.push({ id: 'interest:' + x.card + ':' + d.date, kind: 'interest', label: (debt ? v(debt.name) || debt.id : x.card) + ' interest', date: d.date, day: +d.date.slice(8, 10), amount: Math.abs(x.amount), direction: 'out', counted: false, card: x.card, rough: sim.kind !== 'computed', note: 'figured by the run at the statement close; it goes on the card, not out of checking', path: debt ? 'debts.' + debt.id + '.apr' : null, pills: [] });
+      events.push({ id: 'interest:' + x.card + ':' + d.date, kind: 'interest', label: (debt ? v(debt.name) || debt.id : x.card) + ' interest', date: d.date, day: +d.date.slice(8, 10), amount: Math.abs(x.amount), direction: 'out', counted: false, card: x.card, rough: sim.kind !== 'computed', note: 'figured at the statement close; it goes on the card, not out of checking', path: debt ? 'debts.' + debt.id + '.apr' : null, pills: [] });
     }
     const dated = events.filter((e) => e.date).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.kind.localeCompare(b.kind)));
     const days = [];

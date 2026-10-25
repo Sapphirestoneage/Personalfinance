@@ -32,7 +32,7 @@ test('Plan is on the shell: no page-links row, no header or undo of its own, eve
   for (const c of calls) assert.match(code.slice(c.index, code.indexOf('\n', c.index)), /said\.(changed|added|deleted|moved|happened)\(/, 'a change says what changed: ' + code.slice(c.index, c.index + 80));
   // Deleting never asks; saved scenarios (outside the household) offer Undo in the bar.
   assert.doesNotMatch(src, /confirm\(/);
-  assert.match(src, /const putBack = \(was, words\) => say\(words, \(\) => \{ keepScenarios\(was\); refresh\(\); \}\)/);
+  assert.match(src, /const putBack = \(was, now, words\) => say\(words, \(\) => \{ keepScenarios\(was\); refresh\(\); \}, \(\) => \{ keepScenarios\(now\); refresh\(\); \}\)/);
   // The Windfall is reached from Plan as a card whose whole area is the target, with a chevron.
   assert.match(src, /h\('section', \{ class: 'card has-target', 'aria-labelledby': 'extra-h' \}/);
   assert.match(src, /h\('a', \{ class: 'card-link', href: 'windfall\.html' \}, h\('span', \{\}, 'Got extra money\?'\), h\('span', \{ class: 'chev', 'aria-hidden': 'true' \}, '(?:\\u203A|›)'\)\)/);

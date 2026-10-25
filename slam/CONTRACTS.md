@@ -244,12 +244,22 @@ change((s) => removeItem(s, 'expenses', 'gym'), said.deleted('Gym'));
   returning null means that level is gone (deleted, or a bad link): the shell
   goes up to the deepest one that is there.
 - Coming back: the shell saves each entry's scroll and restores it after
-  render, after a full page load too. `keep({ open: 'visa', months: 3 })`
+  render, after a full page load too. A tab tapped reopens its page as it was
+  left in this browser tab (the screen, its scroll and what it kept; kept in
+  sessionStorage, `slam-screens:v1`); the lit tab, tapped, goes to its top. A
+  plain link (`ledger.html`) still opens the top. Back at the top of a page
+  opened from another page of the app (a rule opened on All formulas) goes back
+  there, as the browser's back does. `keep({ open: 'visa', months: 3 })`
   saves what this screen has open, its filters or time picker, in the entry;
   `ctx.state` (or `kept()`) gives it back on the next render.
-- `refresh()` redraws (a resize); `say(words, undoFn)` puts a message in the
-  bar, with Undo when `undoFn` is given (for something outside the household,
-  like a rule); `current()` is `{ spine, rules, source, institutions }`;
+- `refresh()` redraws (a resize); `say(words, undoFn, redoFn)` puts a message
+  in the bar, with Undo when `undoFn` is given (for something outside the
+  household, like a rule or a saved scenario). That step is the latest one
+  until the next change: the header's Undo and Ctrl/Cmd+Z undo it first, on a
+  Builder page too, and with `redoFn` Redo brings it back. `restoreScroll()`:
+  the page calls it when content figured after the first draw lands (Still
+  guessing), so a screen come back to reaches the scroll it was left at;
+  `current()` is `{ spine, rules, source, institutions }`;
   `reopen(loaded, words)` opens a different household the page read itself
   (what `loadAll` or `loadMyFile` returns) with a fresh history, as Load my
   file does (My numbers' Load profile file and Go back to the file).
@@ -277,6 +287,10 @@ time, kept with `keep({ open })`. Subscriptions sit under Needs
 (`#/needs/subscriptions`), Pick what you have is `#/pick`. An old
 `ledger.html#<field path>` or `#max:<account>` link opens the item's screen
 with that row (or the max panel) open. Delete never asks; the bar offers Undo.
+
+Show the math (`ui/math-panel.js`) is on client screens only: a rule reads as
+its words (`plainLabel`), never its id, and nothing in it opens a Builder page;
+`keptMath(key, ids, ctx)` keeps a panel open when its screen is come back to.
 
 The Builder pages and the One-pager: All formulas lists every number with a
 chevron and opens each on its own screen (`math.html#/netWorth`); its rules

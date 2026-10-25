@@ -20,7 +20,7 @@ import { gapsCard } from './page.js';
 import { mathButton } from './math-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
-import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal } from './view.js';
+import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf, keyHint } from './view.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pickedWindow, windowBar, WINDOWS } from './window.js';
 import { debtTab } from './debt-tab.js';
@@ -35,6 +35,7 @@ const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + St
 const longDay = (iso) => DOW[weekdayOf(iso)] + ', ' + shortDate(iso);
 const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 
+
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
 const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax and account deadlines'], ['viz-5', 'Maybe money'], ['viz-0', 'Dates: something starts, ends or changes']];
@@ -43,7 +44,7 @@ const VIEWS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'
 
 // Why an item that cannot move stays on its day, in words (tapping it opens its screen, which says this).
 const FIXED = {
-  debt: 'Set by the lender\'s due date. Change the due day in My numbers.',
+  debt: 'Set by the lender\'s due date. Change it in My numbers.',
   interest: 'Set by the card\'s statement date. It goes on the card, not out of checking.',
   estimatedTax: 'Set by the tax calendar.',
   taxReturn: 'Set by the tax calendar.',
@@ -162,7 +163,7 @@ function eventEl(e, { small = false, drag = true } = {}) {
     h('span', { class: 'ev-name' }, href ? h('a', { class: 'ev-go', href }, e.label) : h('span', {}, e.label), e.kind === 'maxDeadline' ? h('span', { class: 'deadline-chip due' }, e.passed ? 'Deadline passed' : e.missing ? 'Deadline, room missing' : 'Deadline') : null, ...pills(e, small), e.rough && !small ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && !small && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null),
     amt(e) ? h('span', { class: 'ev-amt' }, amt(e)) : null,
     href && !small ? chev() : null,
-    e.note && !small ? h('span', { class: 'ev-note' }, e.note) : null);
+    e.note && !small ? h('span', { class: 'ev-note' }, noteOf(e)) : null);
 }
 
 // One day as its own screen: what checking ends at, what comes in and goes out, and its items, each opening its own.
@@ -192,13 +193,16 @@ function itemScreen(v, date, id) {
   // second draw before the move lands must not walk history twice.
   if (e.date === date) following = null;
   else if (following !== id + '@' + e.date) { following = id + '@' + e.date; queueMicrotask(() => go([e.date, id])); }
-  const where = e.kind === 'maxDeadline' && e.accountId ? [maxHref(e.accountId), 'How much to max it?', 'The room left and how to fill it by this deadline.'] : e.path ? [ledgerHref(e.path), 'See it in My numbers', 'Change the usual amount, day or anything else about it there.'] : null;
+  // A plan suggestion has no usual amount or day of its own: it opens the plan it comes from.
+  const where = e.kind === 'foo' ? ['plan.html', 'See it in your plan', 'The steps your surplus goes to, one at a time.']
+    : e.kind === 'maxDeadline' && e.accountId ? [maxHref(e.accountId), 'How much to max it?', 'The room left and how to fill it by this deadline.'] : e.path ? [ledgerHref(e.path), 'See it in My numbers', 'Change the usual amount, day or anything else about it there.'] : null;
+  const note = noteOf(e, { moved: false });
   return [
     h('section', { class: 'card', 'aria-labelledby': 'item-h' },
       h('h2', { id: 'item-h' }, longDay(e.date)),
       h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : 'No amount entered'),
       (e.pills || []).length || e.rough || (!e.counted && e.amount !== null && e.kind !== 'maybe') ? h('p', { class: 'ev-name' }, ...pills(e), e.rough ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null) : null,
-      e.note ? h('p', { class: 'tile-sub' }, cap(e.note) + '.') : null,
+      note ? h('p', { class: 'tile-sub' }, sentence(cap(note))) : null,
       e.moved ? h('p', { class: 'tile-sub' }, 'Moved from ' + shortDate(e.origDate) + '. The other months stay on their usual day.') : null,
       e.movable ? null : h('p', { class: 'tile-sub why-fixed' }, h('strong', {}, 'Cannot move here. '), fixedWords(e)),
       e.confirmable ? happenedRow(e) : null,
@@ -511,7 +515,7 @@ function yearTab(spine, rules) {
     h('p', { class: 'muted' }, 'A month is tight when its lowest day comes within a week of everyday spending (' + money(y.tightWeek) + ') of the floor' + (y.floor ? ' (' + money(y.floor) + ')' : '') + '; red when it goes under.'),
     h('div', { class: 'year-strip', role: 'list' }, y.months.map((m) => h('div', { class: 'ys' + (m.underFloor ? ' under' : m.tight ? ' tight' : ''), role: 'listitem', 'aria-label': longMonth(m.ym) + ', lowest ' + money(m.low) + (m.tight ? ', tight' : '') + (m.deadlines.length ? ', ' + m.deadlines.length + ' account deadline' + (m.deadlines.length === 1 ? '' : 's') : '') }, h('b', {}, MONTH_NAMES[+m.ym.slice(5, 7) - 1].slice(0, 3)), h('span', { class: 'ys-low' }, money(m.low)), m.underFloor ? h('span', { class: 'pill' }, 'under') : m.tight ? h('span', { class: 'pill' }, 'tight') : null, m.deadlines.length ? h('span', { class: 'ys-flag', title: m.deadlines.map((d) => d.label).join('; ') }, '⚑' + (m.deadlines.length > 1 ? ' ' + m.deadlines.length : '')) : null))),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Month'), h('th', { class: 'num' }, 'In'), h('th', { class: 'num' }, 'Out'), h('th', { class: 'num' }, 'Net'), h('th', { class: 'num' }, 'Lowest day'), h('th', { class: 'num' }, 'Interest'))),
-      h('tbody', {}, y.months.map((m) => h('tr', { class: m.underFloor ? 'under' : m.tight ? 'tight' : '' }, h('td', {}, h('button', { type: 'button', class: 'ev-tap', onclick: () => { store(KEY, m.ym); setRoot({ ym: m.ym, view: 'month' }); window.scrollTo({ top: 0 }); } }, longMonth(m.ym))), h('td', { class: 'num' }, money(m.in)), h('td', { class: 'num' }, money(m.out)), h('td', { class: 'num' }, money(m.net)), h('td', { class: 'num' }, money(m.low) + (m.tight ? ' (tight)' : '')), h('td', { class: 'num' }, money(m.interest))))))),
+      h('tbody', {}, y.months.map((m) => h('tr', { class: m.underFloor ? 'under' : m.tight ? 'tight' : '' }, h('td', {}, h('button', { type: 'button', class: 'btn small', onclick: () => { store(KEY, m.ym); setRoot({ ym: m.ym, view: 'month' }); window.scrollTo({ top: 0 }); } }, longMonth(m.ym))), h('td', { class: 'num' }, money(m.in)), h('td', { class: 'num' }, money(m.out)), h('td', { class: 'num' }, money(m.net)), h('td', { class: 'num' }, money(m.low) + (m.tight ? ' (tight)' : '')), h('td', { class: 'num' }, money(m.interest))))))),
     // The strip's deadline chips in words, each opening its account's panel (S-211).
     y.months.some((m) => m.deadlines.length) ? h('div', { class: 'ys-deadlines' }, h('h3', {}, '⚑ Account deadlines in these twelve months'), h('ul', { class: 'max-list' }, y.months.flatMap((m) => m.deadlines).map((d) => h('li', { class: 'max-row' }, h('a', { class: 'max-name', href: maxHref(d.accountId) }, shortDate(d.date) + ': ' + d.label + ' ›'), h('span', { class: 'tile-sub' }, d.note))))) : null,
     h('p', { class: 'tile-note' }, chip(y.kind === 'computed' ? 'known' : y.kind), ' Twelve months from ' + shortDate(spine.meta.asOf) + ', the date your numbers are from. Tap a month to open it.'));
@@ -562,7 +566,7 @@ function milestonesCard(c, spine, rules, st) {
 
 // Search: what is typed is kept with the screen, so coming back shows the same results.
 function searchCard(c, st) {
-  const box = h('input', { class: 'search-box', type: 'search', id: 'cal-search', placeholder: 'Find an item by name (press /)', 'aria-label': 'Find an item', autocomplete: 'off' });
+  const box = h('input', { class: 'search-box', type: 'search', id: 'cal-search', placeholder: 'Find an item by name' + keyHint('press /'), 'aria-label': 'Find an item', autocomplete: 'off' });
   box.value = st.q;
   const results = (q, hits) => (q && !hits.length ? [h('li', { class: 'muted' }, 'Nothing matches.')] : hits.slice(0, 30).map((e) => h('li', {}, (e.date ? shortDate(e.date) : 'No day yet') + ': ', itemHref(e) ? h('a', { href: itemHref(e) }, e.label) : e.label, e.amount !== null ? ', ' + (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount) : '')));
   const list = h('ul', { class: 'flow-list' }, ...results(st.q, searchEvents(c.months, st.q)));
@@ -616,6 +620,8 @@ function dragSetup(root) {
 function monthScreen(v, ctx) {
   const rules = v.rules, spine = v.spine, asOf = spine.meta.asOf, asOfYm = asOf.slice(0, 7);
   const st = rootState(ctx.state || {}, asOfYm);
+  // The month shown is kept with the screen (a deep link's month too), so coming back shows the same one.
+  if (!YM.test((ctx.state || {}).ym || '')) keep({ ym: st.ym });
   const c = monthsOf(v, st.ym, st.months);
   const today = todayIso();
   const mathCtx = () => ({ spine, rules, s: sumOf(v) });
