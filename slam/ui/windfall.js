@@ -1,29 +1,53 @@
-// The Windfall room (S-201): type a lump sum, say whether tax is still owed on
-// it, and see where it goes in the house order, each step with its amount,
-// why, the Ledger fields behind it and Show the math. The amount and the tax
-// answer are kept in this browser only; nothing is written to the household.
+// Got extra money? (the Windfall page, S-201; on the shell, S-230): type a lump sum, say whether tax is still owed on
+// it and where it came from, and see where it goes, one step at a time. Each step opens as its own screen (Plan › Got
+// extra money? › 3. Cash up to the stage 1 floor) with why, what it reads in My numbers and Show the math. The page
+// sits under Plan, which opens it from a card: its Back returns to Plan where you were. The amount and the answers
+// are kept in this browser only and nothing is written to the household, so nothing here is a change to undo.
 // Formatting only: the engine is engine/windfall.js.
 
-import { mountPage, whoseLine } from './page.js';
+import { startPage, refresh, keep, kept } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { windfall } from '../engine/windfall.js';
 import { mathButton } from './math-panel.js';
 import { parseInput } from '../engine/edits.js';
-import { loadAll } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
-import { h, chip, money, shortDate, ledgerHref } from './view.js';
+import { labelFor } from '../engine/labels.js';
+import { h, chip, money, ledgerHref } from './view.js';
 
-const app = document.getElementById('app');
-mountPage({ app });
 const KEY = 'slam-windfall:v1';
 // One data color per step, in the fixed order (DESIGN.md 8); the tax steps share one, the cash steps share one.
 const COLOR = { taxOnIt: 'viz-4', taxBill: 'viz-4', cashFloor: 'viz-3', promos: 'viz-2', cards: 'viz-2', cushion: 'viz-3', roth: 'viz-5', left: 'viz-0' };
 const LEGEND = [['viz-4', 'Tax'], ['viz-3', 'Cash'], ['viz-2', 'Debt'], ['viz-5', 'Roth IRA'], ['viz-0', 'Not assigned yet']];
+const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 
-let base, rules, source;
 let ask = (() => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v.amount === 'number') return { amount: v.amount, taxed: v.taxed !== false, source: ['w2', '1099', 'other'].includes(v.source) ? v.source : 'other' }; } catch { /* storage blocked */ } return { amount: null, taxed: true, source: 'other' }; })();
-const keep = () => { try { localStorage.setItem(KEY, JSON.stringify(ask)); } catch { /* storage blocked: lasts until the page closes */ } };
+const remember = () => { try { localStorage.setItem(KEY, JSON.stringify(ask)); } catch { /* storage blocked: lasts until the page closes */ } };
+
+// One run per household and answer (a redraw, a level change and the trail's names reuse it).
+let memo = {};
+function model(base, rules) {
+  const scenario = pickedScenario();
+  if (memo.base === base && memo.rules === rules && memo.scenario === scenario && memo.ask === ask) return memo;
+  const spine = withScenario(base, rules, scenario);
+  const s = summarize(spine, rules, { flags: false });
+  memo = { base, rules, scenario, ask, spine, s, w: ask.amount === null ? null : windfall(spine, rules, s, ask) };
+  return memo;
+}
+// A step's screen is its id in words (#/cash-floor).
+const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+const indexOf = (m, level) => (m.w ? m.w.steps.findIndex((st) => slug(st.id) === level) : -1);
+
+// Show the math, kept open when the screen is come back to.
+function math(key, ids, ctx) {
+  const el = mathButton(ids, ctx);
+  const btn = el.querySelector('button');
+  if ((kept().math || []).includes(key)) btn.click();
+  btn.addEventListener('click', () => { const open = kept().math || []; keep({ math: open.includes(key) ? open.filter((k) => k !== key) : [...open, key] }); });
+  return el;
+}
+// A row that opens My numbers: the whole row is the target, with a chevron.
+const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, sub)));
 
 function form() {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
@@ -44,62 +68,76 @@ function form() {
     const p = parseInput('money', amount.value);
     if (!p.ok || p.value <= 0) { msg.textContent = 'How much: ' + (p.ok ? 'more than $0' : p.message); amount.focus(); return; }
     ask = { amount: p.value, taxed: taxBox.querySelector('input:checked').value === 'yes', source: srcBox.querySelector('input:checked').value };
-    keep();
-    render();
+    remember();
+    refresh();
     document.getElementById('wf-result')?.scrollIntoView({ block: 'start' });
   } },
     h('label', { for: 'wf-amount', class: 'edit-label' }, 'How much is coming in?'),
     h('div', { class: 'amount-row' }, h('span', { class: 'unit', 'aria-hidden': 'true' }, '$'), amount),
-    h('p', { class: 'edit-hint' }, 'A lump sum: a bonus, a gift, a tax refund, contract pay, a sale. Nothing here changes the Ledger.'),
+    h('p', { class: 'edit-hint' }, 'A lump sum: a bonus, a gift, a tax refund, contract pay, a sale.'),
     taxBox, srcBox, msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Show where it goes')));
 }
 
-function stepEl(st, i, ctx) {
-  const zero = st.amount === 0 || st.amount === null;
-  // Nothing here: the step needs nothing, or the windfall ran out before it.
-  const amt = st.amount === null ? 'Cannot figure yet' : zero ? (st.need > 0 ? 'Nothing left for it' : 'Nothing needed') : money(st.amount, !Number.isInteger(st.amount));
-  return h('li', { class: 'wf-step ' + COLOR[st.id] + (zero ? ' zero' : ''), id: 'wf-' + st.id },
-    h('span', { class: 'wf-num', 'aria-hidden': 'true' }, String(i + 1)),
-    h('div', { class: 'wf-head' }, h('span', { class: 'wf-label' }, st.label), h('span', { class: 'wf-amt' }, amt)),
-    h('div', { class: 'wf-body' },
-      h('p', { class: 'wf-why' }, chip(st.kind === 'computed' ? 'known' : st.kind), ' ', st.why),
-      st.items && st.items.length > 1 ? h('ul', { class: 'wf-items' }, st.items.map((x) => h('li', {}, h('a', { href: ledgerHref(x.path) }, x.name), ': ' + money(x.pay)))) : null,
-      st.short > 0 ? h('p', { class: 'wf-short' }, 'Short by ' + money(st.short) + ': the windfall runs out here.') : null,
-      st.kind === 'missing' && st.missing.length ? h('p', { class: 'wf-short' }, 'Needs: ', ...st.missing.slice(0, 3).flatMap((p, k) => [k ? ', ' : '', h('a', { href: ledgerHref(p) }, p.split('.').slice(-2).join(' '))])) : null,
-      h('div', { class: 'wf-links' }, st.path ? h('a', { href: ledgerHref(st.path) }, 'View in the Ledger ›') : null),
-      mathButton(['windfall:' + st.id], ctx)));
+// Nothing here: the step needs nothing, or the money ran out before it.
+const amountWords = (st) => (st.amount === null ? 'Cannot figure yet' : st.amount === 0 ? (st.need > 0 ? 'Nothing left for it' : 'Nothing needed') : money(st.amount, !Number.isInteger(st.amount)));
+
+function stepRow(st, i) {
+  const zero = !st.amount;
+  return h('li', {}, h('a', { class: 'go-row' + (zero ? ' zero' : ''), href: '#/' + slug(st.id) },
+    h('span', { class: 'wf-num ' + COLOR[st.id], 'aria-hidden': 'true' }, String(i + 1)),
+    h('span', { class: 'go-name' }, st.label),
+    h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, amountWords(st)), st.short > 0 ? 'short by ' + money(st.short) : null, ['rough', 'incomplete', 'missing'].includes(st.kind) ? kindChip(st.kind) : null)));
 }
 
-function result(spine, s) {
-  if (ask.amount === null) return h('section', { class: 'card', id: 'wf-result' }, h('p', { class: 'muted' }, 'Type an amount above to see where it goes.'));
-  const w = windfall(spine, rules, s, ask);
-  const ctx = { spine, rules, s, windfall: w };
+function result(m) {
+  if (!m.w) return h('section', { class: 'card', id: 'wf-result' }, h('p', { class: 'muted' }, 'Type an amount above to see where it goes.'));
+  const w = m.w;
   const segs = w.steps.filter((x) => x.amount > 0);
   const used = new Set(segs.map((x) => COLOR[x.id]));
   return h('section', { class: 'card', id: 'wf-result', 'aria-labelledby': 'wf-h' },
     h('h2', { id: 'wf-h' }, 'Where ' + money(w.amount) + ' goes'),
-    h('p', { class: 'tile-sub' }, (w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' is assigned' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give a job.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: it says what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
-    h('div', { class: 'wf-bar', role: 'img', 'aria-label': 'The windfall split by step; the same amounts are listed below' }, segs.map((x) => h('span', { class: 'wf-seg ' + COLOR[x.id], style: 'width:' + (x.amount / w.amount * 100) + '%', title: x.label + ': ' + money(x.amount) }))),
+    h('p', { class: 'tile-sub' }, (w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' has a job' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give one.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: open it to see what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
+    h('div', { class: 'wf-bar', role: 'img', 'aria-label': 'The money split by step; the same amounts are listed below' }, segs.map((x) => h('span', { class: 'wf-seg ' + COLOR[x.id], style: 'width:' + (x.amount / w.amount * 100) + '%', title: x.label + ': ' + money(x.amount) }))),
     h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t))),
-    h('ol', { class: 'wf-steps' }, w.steps.map((st, i) => stepEl(st, i, ctx))),
-    h('p', { class: 'tile-note' }, 'The order is a house rule (', h('a', { href: 'math.html#rule-WINDFALL_ORDER' }, 'WINDFALL_ORDER'), '): tax first, then the floor under your cash, then debt that costs the most, then the cushion and the Roth. Every number comes from the Ledger and the same engines as the Dashboard. This is where the money goes under that rule, not advice about your situation.'));
+    h('ol', { class: 'go-list' }, w.steps.map(stepRow)),
+    h('p', { class: 'tile-note' }, 'The order: tax first, then the floor under your cash, then the debt that costs the most, then the cushion and the Roth. This shows where the money goes in that order; it is not advice about your situation.'));
 }
 
-function render() {
-  const spine = withScenario(base, rules, pickedScenario());
-  const s = summarize(spine, rules, { flags: false });
-  app.replaceChildren(
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'math.html' }, 'All formulas')),
-    h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Windfall'), whoseLine(base, source, { asOf: s.asOf, rules, reopen: boot }))),
+function stepScreen(m, st) {
+  const many = st.items && st.items.length > 1 ? st.items : [];
+  const seen = new Set();
+  const once = (p) => (p && !seen.has(p) ? (seen.add(p), true) : false);
+  const rows = [
+    ...many.filter((x) => once(x.path)).map((x) => goRow(ledgerHref(x.path), x.name, money(x.pay) + ' from this money')),
+    ...(st.kind === 'missing' ? st.missing.slice(0, 3) : []).filter(once).map((p) => goRow(ledgerHref(p), labelFor(m.spine, p), 'Missing: fill it in My numbers')),
+    once(st.path) ? goRow(ledgerHref(st.path), labelFor(m.spine, st.path), 'Open it in My numbers') : null
+  ].filter(Boolean);
+  const plain = many.filter((x) => !x.path);
+  return h('section', { class: 'card', 'aria-label': st.label },
+    h('p', { class: 'max-big' + (st.amount === null ? ' missing-text' : '') }, amountWords(st)),
+    h('p', {}, kindChip(st.kind), ' ', st.why),
+    st.short > 0 ? h('p', { class: 'wf-short' }, 'Short by ' + money(st.short) + ': the money runs out here.') : null,
+    plain.length ? h('ul', { class: 'wf-items' }, plain.map((x) => h('li', {}, x.label || x.name))) : null,
+    rows.length ? h('ul', { class: 'go-list' }, rows) : null,
+    math('step', ['windfall:' + st.id], { spine: m.spine, rules: m.rules, s: m.s, windfall: m.w }));
+}
+
+// The words for a level, or null when it is not there (no amount yet, or a step that is gone): the shell goes up.
+function name(levels, { spine, rules }) {
+  if (levels.length !== 1) return null;
+  const m = model(spine, rules), i = indexOf(m, levels[0]);
+  return i < 0 ? null : (i + 1) + '. ' + m.w.steps[i].label;
+}
+
+function render({ spine, rules, levels }) {
+  const m = model(spine, rules);
+  if (levels.length) return stepScreen(m, m.w.steps[indexOf(m, levels[0])]);
+  return [
+    h('p', { class: 'lede' }, 'Type an amount to see where it would go, one step at a time. Nothing here changes your numbers.'),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),
-    result(spine, s));
+    result(m)
+  ];
 }
 
-function boot(loaded) {
-  base = loaded.spine; rules = loaded.rules; source = loaded.source;
-  render();
-  if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}
-loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Windfall room could not load: ' + err.message)); });
+startPage({ tab: 'plan', title: 'Got extra money?', parent: ['Plan', 'plan.html'], name, render });

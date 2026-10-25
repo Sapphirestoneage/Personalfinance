@@ -29,7 +29,6 @@ export function scenarioBar(spine, rules, current, onPick) {
         h('span', { class: 'seg-label' }, SCENARIO_WORDS[id]),
         h('span', { class: 'seg-sub' }, scenarioText(spine, rules, id))))),
     h('p', { class: 'muted scenario-note' }, current === 'best'
-      ? 'Best uses your own assumptions from the Ledger.'
-      : SCENARIO_WORDS[current] + ' uses house assumptions, the same for everyone. Best uses your own from the Ledger.',
-      current === 'best' ? null : ' ', current === 'best' ? null : h('a', { href: 'math.html#rule-' + scenarioAssumptions(spine, rules, current).rules[0] }, 'See the rules')));
+      ? 'Best uses your own assumptions from your numbers.'
+      : SCENARIO_WORDS[current] + ' uses the same assumptions for everyone. Best uses your own from your numbers.'));
 }

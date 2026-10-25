@@ -31,7 +31,9 @@ const monthsToFill = (need, perMonth) => (need <= 0 ? 0 : perMonth > 0 ? Math.ce
 export function surplusWaterfall(spine, rules, s) {
   const surplus = s.cashflow.surplus.value;
   const w = windfall(spine, rules, s, { amount: Math.max(0, surplus ?? 0), taxed: true, monthly: true });
-  return { ...w, surplus, note: surplus === null ? 'The monthly surplus is not known yet.' : surplus <= 0 ? 'There is no monthly surplus to assign: ' + Math.abs(surplus) + ' dollars more goes out than comes in.' : null };
+  // Each step's months to fill at this pace: null when one month fills it or it takes nothing.
+  const steps = w.steps.map((st) => ({ ...st, months: st.amount > 0 && st.need > st.amount ? Math.ceil(st.need / st.amount) : null }));
+  return { ...w, steps, surplus, note: surplus === null ? 'The monthly surplus is not known yet.' : surplus <= 0 ? 'There is no monthly surplus to assign: ' + Math.abs(surplus) + ' dollars more goes out than comes in.' : null };
 }
 
 // ---------------------------------------------------------------- the FOO ladder (E007)
@@ -40,7 +42,7 @@ export function surplusWaterfall(spine, rules, s) {
 // three questions: the biggest deductible, the employer match (on the account), the
 // reserve months (the Rule of 5 target already answers that).
 export const RUNG_LABELS = {
-  deductibles: 'Deductibles covered', employerMatch: 'The employer match', highInterest: 'High-interest debt gone', reserves: 'Emergency reserves',
+  deductibles: 'Deductibles covered', employerMatch: 'The employer match', highInterest: 'High-interest debt', reserves: 'Emergency reserves',
   rothHsa: 'Roth and HSA room', maxRetirement: 'Retirement maxed', hyper: 'Hyper-accumulation', prepaid: 'Prepaid future expenses', lowInterest: 'Low-interest debt'
 };
 // sim (optional): the day-by-day run "How much to max it?" reads (maxItSim), so the rungs read the same rows as its card.
@@ -72,7 +74,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   };
   for (const id of order) {
     const t = tracker();
-    if (id === 'deductibles') { const d = t.useFact('household.deductible', spine.household.deductible); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, d === null ? { need: null, why: 'Needs the biggest insurance deductible (health, car, home), under Filing in the Ledger.', path: 'household.deductible' } : { need: cash === null ? null : d - cash, why: (cash === null ? 'Needs cash on hand.' : cash >= d ? 'Cash (' + money(cash) + ') covers the biggest deductible (' + money(d) + ').' : money(d - cash) + ' more cash covers the biggest deductible (' + money(d) + ').') + (cash !== null && s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: 'household.deductible' }); }
+    if (id === 'deductibles') { const d = t.useFact('household.deductible', spine.household.deductible); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, d === null ? { need: null, why: 'Needs the biggest insurance deductible (health, car, home), under Filing in My numbers.', path: 'household.deductible' } : { need: cash === null ? null : d - cash, why: (cash === null ? 'Needs cash on hand.' : cash >= d ? 'Cash (' + money(cash) + ') covers the biggest deductible (' + money(d) + ').' : money(d - cash) + ' more cash covers the biggest deductible (' + money(d) + ').') + (cash !== null && s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: 'household.deductible' }); }
     else if (id === 'employerMatch') { const st = step('employerMatch'); t.absorb({ ...st, value: undefined }); push(id, t, { need: st.need, flow: true, why: st.why, path: st.path, done: st.need === null ? null : st.need <= 0 }); }
     else if (id === 'highInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); return r !== null && r >= hi && b > 0 && !paidInFull(spine, d); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' at or above ' + Math.round(hi * 100) + '%.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null }); }
     else if (id === 'reserves') { const gap = s.emergency.gap; t.absorb({ ...gap, value: undefined }); push(id, t, { need: gap.value, why: gap.value === null ? 'The Rule of 5 target needs a birth date and monthly spending.' : gap.value > 0 ? money(gap.value) + ' to the Rule of 5 target (' + money(s.emergency.targetDollars.value) + ').' : 'Cash reaches the Rule of 5 target.', path: gap.missing[0] || s.sheet.cash.from[0] || null }); }
@@ -122,7 +124,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
       // A plan filled from pay whose owner has no payday after its deadline takes nothing once the surplus gets there.
       const gone = closed.filter((p) => p.row.deadline.payrollOnly && !paysOn(p.row));
       const later = closed.filter((p, i) => !gone.includes(p) && !open.some((o) => o.key === p.key) && closed.findIndex((c) => c.key === p.key) === i).map((p) => ({ ...p, perMonth: steadyMonth(spine, p), steady: true }));
-      if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
+      if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in your numbers.' : 'No workplace or self-employed retirement account in your numbers.', done: true });
       else {
         // The Plan's count, with why it is less than the account alone could take (another limit or rung uses the pay first).
         const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '') + (p.capFrom ? ' (only what its paychecks from ' + longDay(from) + ' hold)' : '') + (p.row.counted && !p.spill && !(p.capFrom && p.row.counted.why === 'paycheck') ? ' (less than the account alone could take: ' + p.row.counted.words + ')' : '');
@@ -395,7 +397,7 @@ export function importJson(text) {
   let raw;
   try { raw = JSON.parse(text); } catch { throw new Error('Not a JSON file.'); }
   const body = raw && raw.format === EXPORT_FORMAT ? raw.spine : raw;
-  if (!body || body.schema !== 'slam-spine/1') throw new Error('Not a SLAM household file (expected slam-export/1 or slam-spine/1).');
+  if (!body || body.schema !== 'slam-spine/1') throw new Error('Not a SLAM household file: this file is something else, so nothing was read.');
   const up = upgradeSpine(body);
   const check = validate(up);
   if (!check.ok) throw new Error('The file does not validate: ' + check.errors[0].path + ' ' + check.errors[0].message);
