@@ -2,7 +2,7 @@
 // documents (households are small; S-003 does the same for the Budget).
 
 import { getAt, setAt, isFact, valueOf } from './spine.js';
-import { PRESETS, INCOME_TYPES, PER_YEAR } from './schema.js';
+import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
 // ("25" or "25%" is 0.25). Returns { ok, value } or { ok: false, message }.
@@ -292,6 +292,37 @@ export const undoLabel = (h) => (h.past.length ? h.past[h.past.length - 1].label
 export const redoLabel = (h) => (h.future.length ? h.future[0].label : null);
 
 // ---------------------------------------------------------------- add, remove, many at once (S-169)
+// How a pay line is figured (Batch 3): basis 'salary' (yearly salary), 'hourly' (rate x hours a week) or 'lumpy' (the
+// last 12 months' total, paid monthly, a guess). The amount on each payday follows from them, rounded to the cent;
+// any part blank leaves the amount missing, never $0. null for basis clears it (the amount is typed directly).
+// A part left undefined keeps what the line already holds: a salary or a 12-month total starts from the amount it has now.
+export function setPay(spine, id, { basis, salary, hourlyRate, hoursPerWeek, yearTotal, cadence }, today) {
+  const base = 'income.' + id;
+  const x = getAt(spine, base);
+  if (!x) throw new Error('No income ' + id);
+  const F = (value, kind = 'known') => ({ value, kind: value === null ? 'missing' : kind, asOf: today, source: 'session' });
+  const was = (k) => (x[k] ? x[k].value : null);
+  const nowYearly = x.amount && x.amount.value !== null && PER_YEAR[x.cadence] ? Math.round(x.amount.value * PER_YEAR[x.cadence] * 100) / 100 : null;
+  if (salary === undefined) salary = was('salary') ?? nowYearly;
+  if (yearTotal === undefined) yearTotal = was('yearTotal') ?? nowYearly;
+  if (hourlyRate === undefined) hourlyRate = was('hourlyRate');
+  if (hoursPerWeek === undefined) hoursPerWeek = was('hoursPerWeek');
+  const next = { ...x };
+  for (const k of ['payBasis', 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal']) delete next[k];
+  if (!basis) return setAt(spine, base, next);
+  if (!PAY_BASES.includes(basis)) throw new Error('Not a way of being paid: ' + basis);
+  next.payBasis = F(basis);
+  const often = basis === 'lumpy' ? 'monthly' : cadence || x.cadence;
+  if (!PER_YEAR[often]) throw new Error('Paid how often: weekly, every two weeks, twice a month or monthly');
+  next.cadence = often;
+  let yearly = null, kind = 'known';
+  if (basis === 'salary') { next.salary = F(salary); yearly = salary; }
+  if (basis === 'hourly') { next.hourlyRate = F(hourlyRate); next.hoursPerWeek = F(hoursPerWeek); yearly = hourlyRate === null || hoursPerWeek === null ? null : hourlyRate * hoursPerWeek * 52; }
+  if (basis === 'lumpy') { next.yearTotal = F(yearTotal); yearly = yearTotal; kind = 'rough'; }
+  next.amount = F(yearly === null ? null : Math.round(yearly / PER_YEAR[often] * 100) / 100, kind);
+  return setAt(spine, base, next);
+}
+
 // Fields a new item starts with, as missing Facts, by family or collection.
 const STARTING_FIELDS = {
   cash: ['institution', 'balance', 'apy'], fixedTerm: ['institution', 'balance', 'rate', 'maturityDate'],

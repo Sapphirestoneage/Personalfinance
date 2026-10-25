@@ -26,11 +26,11 @@ const FIELD = {
   reportDay: 'reports to the bureaus on day', annualFee: 'annual fee', annualValue: 'what it gives back a year (rewards and credits)', rewardsRate: 'rewards on everyday spending', bonusSpend: 'signup bonus: spend required', bonusBy: 'signup bonus: by', bonusSpent: 'signup bonus: spent so far', bonusValue: 'signup bonus: worth', pslf: 'on track for Public Service Loan Forgiveness',
   extra: 'extra at the debt a month', day: 'day the extra lands', strategy: 'aimed at', stopAtHi: 'stop once nothing is high-interest', hiRate: 'high-interest rate line', rollFreed: 'a finished plan rolls into the extra',
   coveredBy: 'covered by', shared: 'shared', sharedWith: 'people sharing it', yourShare: 'your share', whoPays: 'who pays the bill',
-  from: 'from', purpose: 'what it is for', decreeYear: 'year of the divorce decree', allowanceMode: 'a gift, or pay for my time', liquid: 'counted as liquid', holdings: 'holdings',
+  from: 'from', purpose: 'what it is for', decreeYear: 'year of the divorce decree', allowanceMode: 'a gift, or pay for my time', liquid: 'counted as liquid', holdings: 'holdings', payBasis: 'paid by', salary: 'yearly salary', hourlyRate: 'hourly rate', hoursPerWeek: 'hours a week', yearTotal: 'last 12 months in all',
   coverageLevel: 'coverage (self or family)', throughPayroll: 'through payroll', paidThrough: 'paid through (the job)', monthsEligible: 'months eligible this year', employerSeed: 'employer money in a year', planEligible: 'HSA-eligible plan'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
-const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded' };
+const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded', home: 'Where you live', getAround: 'How you get around' };
 const words = (k) => FIELD[k] || String(k ?? '').replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
@@ -105,7 +105,7 @@ export function groupFor(path) {
   if (s[0] === 'income') return s[2] === 'withholding' ? 'T' : 'I';
   if (s[0] === 'taxYears') return 'T';
   if (s[0] === 'expenses') return 'E';
-  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' ? 'E' : s[1] === 'cardPayPolicy' ? 'D' : 'T';
+  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' || s[1] === 'home' || s[1] === 'getAround' ? 'E' : s[1] === 'cardPayPolicy' ? 'D' : 'T';
   return 'G';
 }
 

@@ -30,6 +30,12 @@ export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pe
 export const PERSON_PURPOSES = ['gift', 'allowance', 'childSupport', 'alimony'];
 export const PERSON_PURPOSE_WORDS = { gift: 'A gift or support', allowance: 'An allowance', childSupport: 'Child support', alimony: 'Alimony', loan: 'A loan' };
 export const ALLOWANCE_MODES = ['gift', 'time'];
+// How a paycheck is figured (Batch 3, the questions): a yearly salary, an hourly rate times hours a week, or for 1099
+// pay that comes in lumps, the last 12 months' total. The amount a payday is figured from these (edits.js setPay).
+export const PAY_BASES = ['salary', 'hourly', 'lumpy'];
+// The Session's first questions on Needs: where you live, how you get around.
+export const HOMES = ['rent', 'own', 'family', 'other'];
+export const GET_AROUND = ['car', 'transit', 'both', 'none'];
 // Pay for your own work with no paycheck: 1099 pay, side money that comes with no 1099, and an allowance that is pay for
 // your time. Each owes self-employment tax and has nothing withheld.
 export const isSelfEmployment = (s) => !!s && (s.type === '1099' || s.type === 'side' || (s.type === 'person' && s.purpose && s.purpose.value === 'allowance' && s.allowanceMode && s.allowanceMode.value === 'time'));
@@ -258,6 +264,8 @@ export function validate(spine) {
   // Batch 3: last year's tax result (a refund is positive, an amount owed negative), and how goals are funded.
   checkFact('household.lastRefund', h.lastRefund, 'money', false);
   checkFact('household.goalOrder', h.goalOrder, ['oneAtATime', 'byDeadline'], false);
+  checkFact('household.home', h.home, HOMES, false);
+  checkFact('household.getAround', h.getAround, GET_AROUND, false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
@@ -317,6 +325,9 @@ export function validate(spine) {
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
       else { checkFact(p + '.withholding.federal', s.withholding.federal, 'money'); checkFact(p + '.withholding.state', s.withholding.state, 'money'); }
       if (s.personId && !(h.people || []).some((x) => x.id === s.personId)) err(p + '.personId', 'no such person');
+      checkFact(p + '.payBasis', s.payBasis, PAY_BASES, false);
+      for (const k of ['salary', 'hourlyRate', 'yearTotal']) checkFact(p + '.' + k, s[k], 'money', false);
+      checkFact(p + '.hoursPerWeek', s.hoursPerWeek, 'money', false);
       if (s.type === 'person') {
         checkFact(p + '.from', s.from, 'text', false);
         checkFact(p + '.purpose', s.purpose, PERSON_PURPOSES);

@@ -43,6 +43,7 @@ const CHANGES = {
   editCardRate: [null, (s) => E.editCardRate(s, 'visa', 'set', { value: card(), today: T })],
   editExpense: [null, (s) => E.editExpense(s, 'rent', { amount: 1100, cadence: 'monthly', sharing: { shared: true, sharedWith: 2, yourShare: 0.5, whoPays: 'part' } }, T)],
   editIncome: [null, (s) => E.editIncome(s, 'salary', { amount: 2600, cadence: 'semimonthly', payDay: 1, payDay2: 15 }, T)],
+  setPay: [null, (s) => E.setPay(s, 'salary', { basis: 'hourly', hourlyRate: 30, hoursPerWeek: 40, cadence: 'biweekly' }, T)],
   setSectionSharing: [null, (s) => E.setSectionSharing(s, 'food', { shared: true, sharedWith: 2, yourShare: 0.5 }, T)],
   addItem: [null, (s) => E.addItem(E.addItem(s, { collection: 'expenses', label: 'Gym bag', fat: null }, T).spine, { collection: 'debts', type: 'credit_card', label: 'Amex Blue' }, T).spine],
   editPayment: [null, (s) => E.editPayment(s, 'rent', { from: 'chk', day: 1 }, T)],

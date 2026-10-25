@@ -88,7 +88,9 @@ test('the Session: five steps with letters, tick lists and presets from data, Ba
   assert.match(src, /'Next: ' \+ next\[2\]/);
   const data = JSON.parse(readFileSync(new URL('../data/session-presets.json', import.meta.url), 'utf8'));
   assert.deepEqual(data.needs.map((c) => c.label), ['Accommodation', 'Food', 'Transportation', 'Health and fitness', 'Subscriptions', 'Miscellaneous']);
-  assert.deepEqual(data.presets.map((p) => p.label), ['High-cost-city renter', 'Lives with parents', 'Self-employed']);
+  assert.deepEqual(Object.keys(data.questions), ['home', 'getAround']);
+  assert.deepEqual(Object.values(data.typical).map((t) => t.label), ['High-cost city', 'Elsewhere']);
+  assert.ok(data.needs.flatMap((c) => c.items).some((i) => i.key === 'pay-family' && i.when.home[0] === 'family'));
   assert.equal(data.withdrawal.find((w) => w.default).rate, 0.04);
   assert.ok(data.withdrawal.every((w) => w.source));
   const starter = readFileSync(new URL('../engine/starter.js', import.meta.url), 'utf8');
@@ -98,4 +100,24 @@ test('the Session: five steps with letters, tick lists and presets from data, Ba
   const x = p.spine.income.find((i) => i.id === p.id);
   assert.equal(x.purpose.kind, 'missing');
   assert.equal(x.withholding.federal.value, 0);
+});
+
+test('how a paycheck is figured: a salary, an hourly rate, or lumpy 1099 pay', async () => {
+  const { setPay } = await import('../engine/edits.js');
+  const s = mini({ income: [stream('job', 'w2', 1, 'monthly')] });
+  const amt = (sp) => sp.income[0].amount;
+  assert.equal(amt(setPay(s, 'job', { basis: 'salary', salary: 78000, cadence: 'biweekly' }, '2026-10-25')).value, 3000);
+  assert.equal(amt(setPay(s, 'job', { basis: 'hourly', hourlyRate: 25, hoursPerWeek: 30, cadence: 'weekly' }, '2026-10-25')).value, 750);
+  const blank = amt(setPay(s, 'job', { basis: 'hourly', hourlyRate: 25, hoursPerWeek: null, cadence: 'weekly' }, '2026-10-25'));
+  assert.deepEqual([blank.value, blank.kind], [null, 'missing'], 'no hours: missing, never $0');
+  const lumpy = setPay(s, 'job', { basis: 'lumpy', yearTotal: 30000 }, '2026-10-25');
+  assert.deepEqual([amt(lumpy).value, amt(lumpy).kind, lumpy.income[0].cadence], [2500, 'rough', 'monthly']);
+  assert.equal(validate(setPay(s, 'job', { basis: 'salary', salary: 78000, cadence: 'biweekly' }, '2026-10-25')).ok, true);
+});
+
+test('picking salary on a line that has an amount keeps it', async () => {
+  const { setPay } = await import('../engine/edits.js');
+  const s = mini({ income: [stream('job', 'w2', 6000, 'monthly')] });
+  const n = setPay(s, 'job', { basis: 'salary', cadence: 'biweekly' }, '2026-10-25');
+  assert.deepEqual([n.income[0].salary.value, n.income[0].amount.value, n.income[0].cadence], [72000, 2769.23, 'biweekly']);
 });

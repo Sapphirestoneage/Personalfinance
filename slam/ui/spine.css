@@ -997,3 +997,16 @@ body.has-tabs { padding-bottom: var(--tabbar-h, 56px); }
 .nw-one .math-btn { font-size: var(--text-xs); }
 .find-fold > summary { font-weight: 600; }
 .nw-one:has(.math-panel) { grid-column: 1 / -1; }
+/* The Session's questions (Batch 3, asked first): a question, then its answers as pressed segments. */
+.qs { display: grid; gap: var(--space-3); }
+.q { display: grid; gap: var(--space-1); }
+.q-label { margin: 0; font-weight: 700; }
+.q-seg .seg-btn { flex: 1 1 7rem; padding: 4px 10px; }
+.q-inline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.q-have { color: var(--text-muted); display: inline-flex; align-items: center; gap: var(--space-2); }
+.srow.asks { align-items: flex-start; }
+.srow-q { flex-basis: 100%; display: grid; gap: var(--space-2); padding: var(--space-1) 0 var(--space-1) var(--space-3); border-left: 3px solid var(--accent-soft); }
+.srow-fields { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.srow-fields .mini-label { flex-basis: 100%; }
+.srow-fields input, .srow-fields select { min-height: var(--btn-h); padding: 4px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+.srow-fields .amt { width: 8rem; } .srow-fields .day-box { width: 4.5rem; } .srow-fields .rate-box { width: 5rem; }

@@ -1,6 +1,6 @@
 {
   "year": 2026,
-  "note": "First-session starter lists and the three presets (Phase 2.5, Batch 3). Preset amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
+  "note": "First-session questions, starter lists and typical amounts (Phase 2.5, Batch 3). Each line says which answers it belongs to (when). Typical amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
   "needs": [
     {
       "id": "accommodation",
@@ -9,15 +9,69 @@
       "items": [
         {
           "key": "rent",
-          "label": "Rent"
+          "label": "Rent",
+          "when": {
+            "home": [
+              "rent",
+              "other"
+            ]
+          }
+        },
+        {
+          "key": "pay-family",
+          "label": "Paid to family for rent",
+          "when": {
+            "home": [
+              "family"
+            ]
+          }
+        },
+        {
+          "key": "mortgage",
+          "label": "Mortgage payment",
+          "when": {
+            "home": [
+              "own"
+            ]
+          }
+        },
+        {
+          "key": "property-tax",
+          "label": "Property tax",
+          "when": {
+            "home": [
+              "own"
+            ]
+          }
+        },
+        {
+          "key": "home-insurance",
+          "label": "Home insurance",
+          "when": {
+            "home": [
+              "own"
+            ]
+          }
         },
         {
           "key": "renters-insurance",
-          "label": "Renter's insurance"
+          "label": "Renter's insurance",
+          "when": {
+            "home": [
+              "rent"
+            ]
+          }
         },
         {
           "key": "utilities",
           "label": "Utilities",
+          "when": {
+            "home": [
+              "rent",
+              "own",
+              "other"
+            ]
+          },
           "subs": [
             {
               "key": "electric",
@@ -39,7 +93,14 @@
         },
         {
           "key": "internet",
-          "label": "Internet"
+          "label": "Internet",
+          "when": {
+            "home": [
+              "rent",
+              "own",
+              "other"
+            ]
+          }
         },
         {
           "key": "phone",
@@ -70,23 +131,63 @@
       "items": [
         {
           "key": "car-payment",
-          "label": "Car payment"
+          "label": "Car payment",
+          "when": {
+            "getAround": [
+              "car",
+              "both"
+            ]
+          }
         },
         {
           "key": "car-insurance",
-          "label": "Car insurance"
+          "label": "Car insurance",
+          "when": {
+            "getAround": [
+              "car",
+              "both"
+            ]
+          }
         },
         {
           "key": "car-gas",
-          "label": "Gas for the car"
+          "label": "Gas for the car",
+          "when": {
+            "getAround": [
+              "car",
+              "both"
+            ]
+          }
         },
         {
           "key": "car-upkeep",
-          "label": "Car upkeep"
+          "label": "Car upkeep",
+          "when": {
+            "getAround": [
+              "car",
+              "both"
+            ]
+          }
         },
         {
           "key": "transit",
-          "label": "Transit"
+          "label": "Transit",
+          "when": {
+            "getAround": [
+              "transit",
+              "both"
+            ]
+          }
+        },
+        {
+          "key": "rides",
+          "label": "Rides and rideshare",
+          "when": {
+            "getAround": [
+              "none",
+              "transit"
+            ]
+          }
         }
       ]
     },
@@ -132,68 +233,6 @@
       ]
     }
   ],
-  "presets": [
-    {
-      "id": "city-renter",
-      "label": "High-cost-city renter",
-      "amounts": {
-        "rent": 2400,
-        "renters-insurance": 15,
-        "electric": 70,
-        "gas-utility": 30,
-        "internet": 70,
-        "phone": 60,
-        "groceries": 450,
-        "eating-out": 300,
-        "transit": 132,
-        "gym": 60,
-        "subscriptions": 40,
-        "miscellaneous": 300
-      }
-    },
-    {
-      "id": "with-parents",
-      "label": "Lives with parents",
-      "covered": {
-        "rent": "Parents",
-        "electric": "Parents",
-        "internet": "Parents"
-      },
-      "amounts": {
-        "rent": 1200,
-        "electric": 60,
-        "internet": 60,
-        "phone": 50,
-        "groceries": 150,
-        "eating-out": 200,
-        "car-insurance": 160,
-        "car-gas": 120,
-        "car-upkeep": 50,
-        "gym": 30,
-        "subscriptions": 30,
-        "miscellaneous": 200
-      }
-    },
-    {
-      "id": "self-employed",
-      "label": "Self-employed",
-      "amounts": {
-        "rent": 1700,
-        "renters-insurance": 15,
-        "electric": 70,
-        "internet": 70,
-        "phone": 80,
-        "groceries": 400,
-        "eating-out": 250,
-        "car-insurance": 140,
-        "car-gas": 120,
-        "car-upkeep": 60,
-        "subscriptions": 60,
-        "miscellaneous": 300
-      },
-      "incomeType": "1099"
-    }
-  ],
   "withdrawal": [
     {
       "rate": 0.04,
@@ -216,5 +255,111 @@
       "label": "3.3%",
       "source": "Morningstar, The State of Retirement Income (2021)"
     }
-  ]
+  ],
+  "questions": {
+    "home": {
+      "label": "Where do you live?",
+      "options": [
+        [
+          "rent",
+          "I rent"
+        ],
+        [
+          "own",
+          "I own"
+        ],
+        [
+          "family",
+          "With parents or family"
+        ],
+        [
+          "other",
+          "Something else"
+        ]
+      ]
+    },
+    "getAround": {
+      "label": "How do you get around?",
+      "options": [
+        [
+          "car",
+          "My own car"
+        ],
+        [
+          "transit",
+          "Transit"
+        ],
+        [
+          "both",
+          "Both"
+        ],
+        [
+          "none",
+          "Walk, bike or rides"
+        ]
+      ]
+    }
+  },
+  "familyCovers": [
+    "rent",
+    "renters-insurance",
+    "utilities",
+    "electric",
+    "gas-utility",
+    "water",
+    "trash",
+    "internet"
+  ],
+  "typical": {
+    "city": {
+      "label": "High-cost city",
+      "amounts": {
+        "rent": 2400,
+        "pay-family": 400,
+        "mortgage": 3200,
+        "property-tax": 700,
+        "home-insurance": 150,
+        "renters-insurance": 15,
+        "utilities": 170,
+        "internet": 70,
+        "phone": 60,
+        "groceries": 450,
+        "eating-out": 300,
+        "car-payment": 500,
+        "car-insurance": 220,
+        "car-gas": 150,
+        "car-upkeep": 80,
+        "transit": 132,
+        "rides": 120,
+        "gym": 60,
+        "subscriptions": 40,
+        "miscellaneous": 300
+      }
+    },
+    "elsewhere": {
+      "label": "Elsewhere",
+      "amounts": {
+        "rent": 1400,
+        "pay-family": 250,
+        "mortgage": 1800,
+        "property-tax": 350,
+        "home-insurance": 120,
+        "renters-insurance": 15,
+        "utilities": 200,
+        "internet": 65,
+        "phone": 60,
+        "groceries": 400,
+        "eating-out": 200,
+        "car-payment": 500,
+        "car-insurance": 150,
+        "car-gas": 180,
+        "car-upkeep": 80,
+        "transit": 70,
+        "rides": 60,
+        "gym": 40,
+        "subscriptions": 40,
+        "miscellaneous": 250
+      }
+    }
+  }
 }
