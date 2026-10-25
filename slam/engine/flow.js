@@ -11,9 +11,9 @@
 import { valueOf as v, round2 } from './spine.js';
 import { mainChecking } from './defaults.js';
 import { payPolicyOf } from './debt.js';
-import { fromPaycheck } from './schema.js';
+import { fromPaycheck, SECTION_WORDS } from './schema.js';
 
-const SECTION = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' };
+const SECTION = SECTION_WORDS;
 // Where-it-goes order, top to bottom: debt first, so card payments cross nothing.
 const ORDER = ['debt', 'spend', 'save', 'tax', 'left'];
 

@@ -81,8 +81,10 @@ export async function startPage(o) {
   baseTitle = document.title;
   try { history.scrollRestoration = 'manual'; } catch { /* an old browser: it restores scroll itself */ }
   mountPage({ app });
-  app.parentNode.insertBefore(tabBar(opts.tab), app);
+  const tabs = tabBar(opts.tab);
+  app.parentNode.insertBefore(tabs, app);
   document.body.classList.add('has-tabs');
+  measureTabs(tabs);
   document.body.append(barEl);
   if (opts.render) app.replaceChildren(topEl, headEl, screenEl); else app.prepend(topEl);
   listen();
@@ -164,6 +166,13 @@ export function tabBar(lit) {
   return h('nav', { class: 'tabbar', 'aria-label': 'Pages' },
     h('ul', {}, TABS.map(([id, words, href]) => h('li', {}, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tap(href) }, words)))));
 }
+// The tab bar's own height, as --tabbar-h: the page's bottom padding on a phone (so nothing hides behind the bar) and
+// where Back and the trail stick on a computer.
+function measureTabs(bar) {
+  const set = () => document.documentElement.style.setProperty('--tabbar-h', Math.ceil(bar.getBoundingClientRect().height) + 'px');
+  set();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(set).observe(bar);
+}
 const samePage = (href) => { try { return new URL(href, location.href).pathname === location.pathname; } catch { return false; } };
 
 // Did the person come here from the parent page (so Back is the browser's back)?
@@ -201,8 +210,8 @@ function header(ctx, title) {
   const own = opts.actions ? [].concat(opts.actions(ctx)).filter(Boolean) : [];
   const u = undoWords(), r = redoWords();
   const undoing = opts.household || side ? [
-    h('button', { type: 'button', class: 'btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : null, onclick: doUndo }, u ? 'Undo' : 'Nothing to undo'),
-    h('button', { type: 'button', class: 'btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : null, onclick: doRedo }, r ? 'Redo' : 'Nothing to redo')
+    h('button', { type: 'button', class: 'btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : null, onclick: doUndo }, 'Undo'),
+    h('button', { type: 'button', class: 'btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : null, onclick: doRedo }, 'Redo')
   ] : [];
   return [
     h('div', { class: 'top-title' }, h('h1', {}, title), opts.household ? whoseLine(hist.present, source, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null),

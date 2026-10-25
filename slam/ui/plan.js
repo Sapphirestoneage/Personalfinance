@@ -107,13 +107,13 @@ function top(m) {
   const events = [...new Set([...(m.base.income || []), ...(m.base.expenses || [])].map((x) => x.lifeEvent).filter(Boolean))];
   const saved = readScenarios();
   return [
-    h('p', { class: 'lede' }, surplus === null ? 'Your monthly surplus is not known yet, so the steps have no dates. Tap a step to see what it needs.'
-      : surplus <= 0 ? 'There is no monthly surplus to put toward the steps yet. Tap a step to see what it needs.'
-        : 'Your monthly surplus of ' + money(surplus) + ' goes to these steps, one at a time. Tap a step to see what it needs.'),
+    h('p', { class: 'lede' }, surplus === null ? 'Your monthly surplus is not known yet, so the steps have no dates.'
+      : surplus <= 0 ? 'No monthly surplus to put toward the steps yet.'
+        : 'Your ' + money(surplus) + ' a month goes to these steps, one at a time.'),
     h('section', { 'aria-labelledby': 'foo-h' },
-      h('h2', { id: 'foo-h' }, 'The Financial Order of Operations'),
+      h('h2', { id: 'foo-h' }, 'Your steps, in order'),
       h('ol', { class: 'go-list' }, f.rungs.map((r) => stepRow(r, f.current))),
-      h('p', { class: 'tile-note' }, kindChip(f.kind), ' A step marked "a month" takes part of the surplus every month; the others are filled once. Dates assume the surplus goes to one step at a time.'),
+      h('p', { class: 'tile-note' }, kindChip(f.kind), ' "A month" steps take some of the surplus every month.'),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
     // The Windfall page sits under Plan: the whole card is the way in.
     h('section', { class: 'card has-target', 'aria-labelledby': 'extra-h' },
@@ -122,17 +122,17 @@ function top(m) {
     h('section', { 'aria-labelledby': 'more-h' },
       h('h2', { id: 'more-h' }, 'More about your plan'),
       h('ul', { class: 'go-list' },
-        goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month, in the same order as Got extra money?']),
+        goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month']),
         a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,
-        goRow('#/max-it', SCREENS['max-it'], 'The room left in each retirement and health account, and by when'),
+        goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
         goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
-        goRow('#/solve', SCREENS.solve, 'What gets you to financial independence by an age you pick'),
-        goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour of life']),
-        goRow('#/draftt', SCREENS.draftt, 'Debt, retirement, housing, food and transportation as shares of take-home'),
-        goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs; what if every paycheck stopped']),
-        goRow('#/outlook', SCREENS.outlook, 'Your next three months many times over, with amounts a little higher or lower'),
-        goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby: see how one changes your plan'),
-        goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save your numbers as they are now, to compare later'),
+        goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
+        goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
+        goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
+        goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']),
+        goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
+        goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'),
+        goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
         goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file')))
   ];
 }
@@ -182,7 +182,7 @@ function stepScreen(m, r) {
 function surplusScreen(m) {
   const w = surplusWaterfall(m.spine, m.rules, m.s);
   return h('section', { class: 'card', 'aria-label': SCREENS.surplus },
-    h('p', { class: 'muted' }, 'Each month\'s surplus goes in the same order as Got extra money?' + (w.note ? ' ' + w.note : ' (' + money(w.surplus) + ' a month).')),
+    w.note ? h('p', { class: 'muted' }, w.note) : null,
     h('ol', { class: 'tiers' }, w.steps.map((st) => h('li', {}, h('span', {}, STEP_LABELS[st.id] || st.id, h('span', { class: 'rung-why' }, st.why)), h('span', { class: 'tier-amt' }, st.need === null ? 'missing' : money(st.amount) + (st.need > (st.amount || 0) ? ' of ' + money(st.need) : '')), h('span', { class: 'tier-cum' }, st.months ? st.months + ' months' : '')))),
     math('surplus', w.steps.map((st) => 'windfall:' + st.id), () => ({ ...mathCtx(m)(), windfall: w })));
 }
@@ -191,7 +191,7 @@ function paychecksScreen(m) {
   const a = allocOf(m);
   if (!a.paychecks.length) return h('p', { class: 'card muted' }, 'No paychecks in the next three months.');
   return [
-    h('p', { class: 'lede' }, 'Each paycheck in the next three months: the bills it covers until the next one, the tax to set aside on 1099 pay, and what is free.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '; the extra paycheck is extra money.' : '')),
+    h('p', { class: 'lede' }, 'What each paycheck covers until the next one.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
     h('ul', { class: 'go-list' }, a.paychecks.map((p) => goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, p.bonus ? [' ', h('span', { class: 'pill' }, 'bonus paycheck')] : null],
       [h('span', { class: 'go-total' }, money(p.amount)), p.short ? h('span', { class: 'missing-row' }, 'short by ' + money(-p.free)) : money(p.free) + ' free'])))
   ];
@@ -210,7 +210,7 @@ function paycheckScreen(m, p) {
 function goalsScreen(m) {
   const g = goalsView(m.spine, m.rules, m.s);
   return h('section', { class: 'card', 'aria-label': SCREENS.goals },
-    h('p', { class: 'muted' }, 'Each goal with its target, the set-aside a month, the account it lives in and by when.' + (g.setAsideTotal ? ' ' + money(g.setAsideTotal) + ' a month goes to goals.' : '')),
+    h('p', { class: 'muted' }, (g.setAsideTotal ? money(g.setAsideTotal) + ' a month goes to goals.' : '')),
     g.rows.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Goal'), h('th', { class: 'num' }, 'Target'), h('th', { class: 'num' }, 'There'), h('th', { class: 'num' }, 'To go'), h('th', {}, 'Reached'), h('th', {}, 'Costs the FI date'))),
       h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? '' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
     h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
@@ -240,7 +240,7 @@ function wageScreen(m) {
   const hours = h('input', { id: 'wage-hours', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '40' }); hours.value = w.hoursWeek === null ? '' : String(w.hoursWeek);
   const commute = h('input', { id: 'wage-commute', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '0' }); commute.value = m.base.household.commuteHoursPerWeek && m.base.household.commuteHoursPerWeek.value !== null ? String(m.base.household.commuteHoursPerWeek.value) : '';
   return h('section', { class: 'card', 'aria-label': SCREENS.wage },
-    h('p', { class: 'muted' }, 'Take-home less the costs of working, over the hours worked plus the commute. Mark a line as a cost of working in My numbers (a bus pass, work clothes, lunches out).'),
+    h('p', { class: 'muted' }, 'What you keep for each hour of work and commute.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const a = parseInput('int', hours.value); if (!a.ok) { msg.textContent = 'Hours: ' + a.message; hours.focus(); return; }
@@ -260,7 +260,7 @@ function drafttScreen(m) {
   if (d.base.amount === null) return h('section', { class: 'card', 'aria-label': SCREENS.draftt }, h('p', { class: 'muted missing-row' }, 'Missing: take-home pay.'));
   const max = Math.max(0.01, ...d.rows.map((r) => r.share));
   return h('section', { class: 'card', 'aria-label': SCREENS.draftt },
-    h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', as shares of ' + d.base.label + '. Shares only, no verdict: the mark on housing is a reference at ' + pct(d.housingReference) + ' of take-home, not a target.'),
+    h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', as shares of ' + d.base.label + '. The mark on housing is ' + pct(d.housingReference) + ', for reference.'),
     h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, (r.referenceAmount / d.base.amount) / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' DRAFTT is ' + pct(d.totalShare, 1) + ' of ' + money(d.base.amount) + '; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
     math('draftt', d.rows.map((r) => 'plan:draftt:' + r.key), mathCtx(m)));
@@ -290,7 +290,7 @@ function outlookScreen(m) {
   const o = outlook(m.spine, m.rules, m.sim, { runs: p.ok && p.value ? Math.min(1000, Math.max(10, p.value)) : null });
   return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },
     h('h2', { id: 'outlook-h' }, o.runs + ' runs'),
-    h('p', { class: 'muted' }, 'Your next three months played out many times, with every amount up to ' + pct(o.wobble) + ' higher or lower and days up to two off. A bad run is worse than nine in ten; a good run is better than nine in ten.'),
+    h('p', { class: 'muted' }, 'Your next three months, run many times with amounts up to ' + pct(o.wobble) + ' higher or lower. A bad run is worse than 9 in 10; a good run is better than 9 in 10.'),
     h('div', { class: 'clear-grid' }, h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, money(o.low.bad)), h('span', { class: 'clear-label' }, 'Lowest day, bad run')), h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, money(o.low.typical)), h('span', { class: 'clear-label' }, 'Lowest day, typical')), h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, money(o.low.good)), h('span', { class: 'clear-label' }, 'Lowest day, good run')), h('div', { class: 'clear-tile' + (o.shareBelowFloor > 0.2 ? ' beyond' : '') }, h('span', { class: 'clear-date' }, pct(o.shareBelowFloor)), h('span', { class: 'clear-label' }, 'of runs go under the floor'))),
     h('p', { class: 'tile-sub' }, kindChip(o.kind), ' Checking at the end: ' + money(o.end.bad) + ' bad, ' + money(o.end.typical) + ' typical, ' + money(o.end.good) + ' good. Card interest ' + money(o.interest.low) + ' to ' + money(o.interest.high) + '.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const q = runs.value.trim() === '' ? { ok: true } : parseInput('int', runs.value); if (!q.ok) { msg.textContent = q.message; return; } keep({ outlookRuns: runs.value.trim() }); refresh(); } }, h('label', { for: 'outlook-runs', class: 'edit-label' }, 'Runs (10 to 1,000)'), runs, msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Run again'))),
@@ -309,7 +309,7 @@ function eventsScreen(m) {
   pick.addEventListener('change', () => { keep({ event: pick.value }); refresh(); });
   date.addEventListener('change', () => keep({ eventDate: date.value }));
   return h('section', { class: 'card', 'aria-label': SCREENS.events },
-    h('p', { class: 'muted' }, 'Pick an event to see how it changes your plan. You can adjust the numbers after. Remove it and its lines go.'),
+    h('p', { class: 'muted' }, 'Pick an event to see how it changes your plan.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const t = templates.find((x) => x.id === pick.value);
@@ -373,7 +373,7 @@ function fileScreen(m) {
   const stamp = todayIso();
   const preview = pending ? (() => { try { const r = importJson(pending.text); return { ok: true, r, diff: diffSpines(m.base, r.spine) }; } catch (err) { return { ok: false, message: err.message }; } })() : null;
   return h('section', { class: 'card', 'aria-label': SCREENS.file },
-    h('p', { class: 'muted' }, 'Download your numbers as a file, or your log and lines as spreadsheets (CSV). Reading in a file shows what would change before anything is applied, and Undo takes it back in one step.'),
+    h('p', { class: 'muted' }, 'Download your numbers, or read in a file. You see what changes before anything is saved.'),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => download(exportJson(m.base, { exportedAt: stamp }), 'slam-household-' + stamp + '.json', 'application/json') }, 'Download my numbers'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'log'), 'slam-log-' + stamp + '.csv', 'text/csv') }, 'Download the log (CSV)'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'lines'), 'slam-lines-' + stamp + '.csv', 'text/csv') }, 'Download the lines (CSV)')),
     h('div', { class: 'file-row' }, h('label', { for: 'import-file', class: 'edit-label' }, 'Read in a household file'), file, h('button', { type: 'button', class: 'btn', onclick: () => { const f = file.files && file.files[0]; if (!f) { msg.textContent = 'Pick a file first'; return; } f.text().then((t) => { pending = { text: t, name: f.name }; refresh(); }); } }, 'Read it')), msg,
     preview ? (preview.ok ? [h('p', { class: 'tile-sub' }, pending.name + ': a household file' + (preview.r.migrated ? ', brought up to date' : '') + (preview.r.exportedAt ? ', downloaded ' + shortDate(preview.r.exportedAt.slice(0, 10)) : '') + '. ' + plural(preview.diff.length, 'change') + ' against today.'),

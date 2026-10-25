@@ -31,6 +31,8 @@ export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pe
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
 export const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 export const FAT = ['food', 'accommodation', 'transportation'];
+// The four spending sections in words, one map for every screen (Batch 2: "Everything else" reads Miscellaneous).
+export const SECTION_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Miscellaneous' };
 export const DEBT_PLAN_FIELDS = ['extra', 'day', 'strategy', 'stopAtHi', 'hiRate', 'rollFreed'];
 export const TAX_YEAR_FIELDS = ['estimatedPaidFederal', 'estimatedPaidState', 'capitalGainsLong', 'qualifiedDividends', 'otherIncome', 'setAside'];
 

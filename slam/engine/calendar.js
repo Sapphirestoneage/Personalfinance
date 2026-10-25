@@ -174,9 +174,9 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (!a.monthlyContribution || a.family === 'cash' || fromPaycheck(a)) continue;
     const x = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
     if (!x) continue;
-    add({ id: 'save:' + a.id, sourceId: 'save:' + a.id, repeats: true, kind: 'saving', label: 'Into ' + (v(a.name) || a.id), date: null, amount: x, direction: 'out', rough: roughFact(a.monthlyContribution), note: 'paid in from take-home; no day entered', path: 'accounts.' + a.id + '.monthlyContribution' });
+    add({ id: 'save:' + a.id, sourceId: 'save:' + a.id, repeats: true, kind: 'saving', label: 'Into ' + (v(a.name) || a.id), date: null, amount: x, direction: 'out', rough: roughFact(a.monthlyContribution), note: 'from take-home; no day yet', path: 'accounts.' + a.id + '.monthlyContribution' });
   }
-  if (cf.taxSetAside.total.value) add({ id: 'setAside', sourceId: 'setAside', repeats: true, kind: 'setAside', label: 'Tax set-aside', date: null, amount: cf.taxSetAside.total.value, direction: 'out', rough: cf.taxSetAside.total.kind !== 'computed', note: 'money to hold back for tax that nothing withholds', path: setAsidePath(spine, cf) });
+  if (cf.taxSetAside.total.value) add({ id: 'setAside', sourceId: 'setAside', repeats: true, kind: 'setAside', label: 'Tax set-aside', date: null, amount: cf.taxSetAside.total.value, direction: 'out', rough: cf.taxSetAside.total.kind !== 'computed', note: 'for tax nothing withholds', path: setAsidePath(spine, cf) });
 
   // ------------------------------------------------------------ dates: promos, tax, starts and ends, changes
   // A signup bonus deadline (S-205): the day the spend has to be done by.

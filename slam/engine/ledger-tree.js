@@ -8,7 +8,7 @@
 // (credit-cards), an item (visa), each its own address (ledger.html#/debt/credit-cards/visa).
 
 import { valueOf } from './spine.js';
-import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked } from './schema.js';
+import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked, SECTION_WORDS } from './schema.js';
 import { setAsideFor, setAsideWords } from './networth.js';
 import { ledgerRows, rowPathFor } from './ledger.js';
 import { UNNAMED } from './labels.js';
@@ -16,7 +16,7 @@ import { UNNAMED } from './labels.js';
 const v = valueOf;
 const PLURAL = { 'Credit card': 'Credit cards', 'Federal student loan': 'Federal student loans', 'Private student loan': 'Private student loans', 'Auto loan': 'Auto loans', 'Personal loan': 'Personal loans', Mortgage: 'Mortgages', 'Medical debt': 'Medical debt', 'Family IOU': 'Family IOUs' };
 const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', unemployment: 'Unemployment', tips: 'Tips', rental: 'Rental income', pension: 'Pension', ss: 'Social Security', maybeMoney: 'Maybe money', other: 'Other income' };
-const FAT_LABEL = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' };
+const FAT_LABEL = SECTION_WORDS;
 
 // The institution a name starts with, from data/institutions.json (display only).
 export function institutionOf(item, inst) {

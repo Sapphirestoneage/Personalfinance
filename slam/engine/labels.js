@@ -2,6 +2,7 @@
 // Used by flags (to name a missing field) and by the Ledger.
 
 import { getAt, valueOf } from './spine.js';
+import { SECTION_WORDS } from './schema.js';
 
 const FIELD = {
   balance: 'balance', apr: 'APR', promoApr: 'promo rate', promoEnds: 'promo ends', deferredInterest: 'deferred interest',
@@ -61,7 +62,7 @@ export function labelFor(spine, path) {
   switch (s[0]) {
     case 'household': {
       if (HOUSE[s[1]]) return HOUSE[s[1]];
-      if (s[1] === 'expenseDefaults') return ({ food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' }[s[2]] || s[2]) + ' bills by default: ' + words(s[3]);
+      if (s[1] === 'expenseDefaults') return (SECTION_WORDS[s[2]] || s[2]) + ' bills by default: ' + words(s[3]);
       if (s[1] === 'people') { const p = item('household.people', s[2]); return (p ? p.name : s[2]) + ': birth date'; }
       const e = item('household.' + s[1], s[2]);
       const what = s[1] === 'situation' ? 'Situation' : 'Health coverage';

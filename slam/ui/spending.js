@@ -109,7 +109,7 @@ function fold(id, cls, summary, ...body) {
 // ---------------------------------------------------------------- pieces of the top screen
 function staleBanner(st) {
   return h('div', { class: 'stale-banner' + (st.stale ? '' : ' fresh'), role: st.stale ? 'alert' : 'status' },
-    h('span', {}, h('strong', {}, st.stale ? 'Stale: ' : 'Fresh: '), st.words),
+    h('span', {}, h('strong', {}, st.stale ? 'Out of date: ' : 'Up to date: '), st.words),
     h('a', { class: 'btn' + (st.stale ? ' primary' : ''), href: '#checkin' }, 'Check in'));
 }
 
@@ -117,14 +117,14 @@ function safeCard(m) {
   const s = m.vw.safe;
   return h('section', { class: 'card', 'aria-labelledby': 'safe-h' },
     h('h2', { id: 'safe-h' }, 'Safe to spend'),
-    s.today === null ? [h('p', { class: 'muted missing-row' }, 'Missing: a checking balance, so nothing is safe to say yet.'), gapsCard(m.spine, m.sim)] : [
+    s.today === null ? [h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'), gapsCard(m.spine, m.sim)] : [
       gapsCard(m.spine, m.sim),
       h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today), hoursTag(s.today)), h('span', { class: 'muted' }, s.shortfall ? 'short by ' + shortDate(s.shortfall.date) : s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
-      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend right now: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + (s.shortfall.covered ? ', and the cushion covers ' + money(s.shortfall.covered) + ' of it' : '') + '.') : null,
+      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend: checking runs ' + money(s.shortfall.amount) + ' short by ' + shortDate(s.shortfall.date) + '.') : null,
       h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
-        ? ' The lowest point ahead decides it: cash outside the cushion falls to ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + (s.low.covered ? ' before the cushion tops it up' : '') + ', less the floor on checking (' + money(s.floor) + '). Spending more today would take that day lower.'
-        : ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + '). The lowest point ahead, through ' + shortDate(s.through) + ', stays above this.', s.excludesCushion ? ' The cushion is not spending money.' : '', s.setAsideNote ? ' ' + s.setAsideNote : ''),
-      s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See cash by day around ' + shortDate(s.low.date) + ' on the calendar')) : null,
+        ? ' Set by the lowest day ahead, ' + shortDate(s.low.date) + '. Spending more today takes that day lower.'
+        : ' Cash, less bills due before then, less the floor.', s.setAsideNote ? ' ' + s.setAsideNote : ''),
+      s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See ' + shortDate(s.low.date) + ' on the calendar')) : null,
       mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], m.ctx)]);
 }
 
@@ -144,13 +144,13 @@ function loggerCard(m) {
   const amount = h('input', { id: 'log-amount', class: 'amount-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0', 'aria-label': 'Amount' });
   amount.value = form.amount;
   amount.addEventListener('input', () => { form.amount = amount.value; });
-  const merchant = h('input', { id: 'log-merchant', type: 'text', autocomplete: 'off', placeholder: 'Where (optional)' });
+  const merchant = h('input', { id: 'log-merchant', type: 'text', autocomplete: 'off', placeholder: 'Store or website' });
   merchant.value = form.merchant;
   const hint = h('p', { class: 'merchant-hint' }, form.merchant && cleanMerchant(form.merchant) && cleanMerchant(form.merchant) !== form.merchant.trim() ? 'Reads as ' + cleanMerchant(form.merchant) : '');
   merchant.addEventListener('input', () => { form.merchant = merchant.value; const c = cleanMerchant(merchant.value); hint.textContent = c && c !== merchant.value.trim() ? 'Reads as ' + c : ''; });
   const paid = h('select', { id: 'log-paid', 'aria-label': 'Paid with', onchange: () => { form.paidWith = paid.value; } }, h('option', { value: 'cash' }, 'Cash or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
   paid.value = form.paidWith;
-  const line = h('select', { id: 'log-line', 'aria-label': 'A line it belongs to', onchange: () => { form.expenseId = line.value; } }, h('option', { value: '' }, 'Just the tag'), ...(spine.expenses || []).map((e) => h('option', { value: e.id }, e.label)));
+  const line = h('select', { id: 'log-line', 'aria-label': 'A line it belongs to', onchange: () => { form.expenseId = line.value; } }, h('option', { value: '' }, 'None'), ...(spine.expenses || []).map((e) => h('option', { value: e.id }, e.label)));
   line.value = form.expenseId;
   const date = h('input', { id: 'log-date', type: 'date', 'aria-label': 'Day', onchange: () => { form.date = date.value; } }); date.value = form.date;
   const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-label': 'Tag' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => { form.tag = t; for (const b of chips.children) b.setAttribute('aria-pressed', String(b.textContent === TAG_WORDS[t])); } }, TAG_WORDS[t])));
@@ -167,22 +167,22 @@ function loggerCard(m) {
   };
   const entries = m.vw.log;
   return h('section', { class: 'card', id: 'log', 'aria-labelledby': 'log-h' },
-    h('h2', { id: 'log-h' }, 'Log a spend ', h('span', { class: 'count' }, String(entries.length) + ' this month')),
+    h('h2', { id: 'log-h' }, 'Add a purchase ', h('span', { class: 'count' }, String(entries.length) + ' this month')),
     h('form', { class: 'logger', novalidate: true, onsubmit: (e) => { e.preventDefault(); submit('spend'); } },
       h('label', { for: 'log-amount', class: 'edit-label' }, 'How much'), amount,
       chips,
-      h('label', { for: 'log-line', class: 'edit-label' }, 'A line it belongs to (optional)'), line,
+      h('label', { for: 'log-line', class: 'edit-label' }, 'Which bill (optional)'), line,
       h('label', { for: 'log-paid', class: 'edit-label' }, 'Paid with'), paid,
-      h('label', { for: 'log-merchant', class: 'edit-label' }, 'Where'), merchant, hint,
+      h('label', { for: 'log-merchant', class: 'edit-label' }, 'Where (optional)'), merchant, hint,
       h('label', { for: 'log-date', class: 'edit-label' }, 'Day'), date,
       msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add it'), h('button', { type: 'button', class: 'btn', onclick: () => submit('refund') }, 'It was a refund'))),
-    entries.length ? h('ul', { class: 'log-list', 'aria-label': 'This month\'s log' }, entries.map((e) => logItem(spine, e))) : h('p', { class: 'muted' }, 'Nothing logged this month. What you log counts against the budgets below.'));
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add it'), h('button', { type: 'button', class: 'btn', onclick: () => submit('refund') }, 'Add as a refund'))),
+    entries.length ? h('ul', { class: 'log-list', 'aria-label': 'This month\'s log' }, entries.map((e) => logItem(spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.'));
 }
 
 // One tag's bar: spent against the budget, with a mark where the budget expects you to be today.
 function budgetCell(r) {
-  if (r.budget === null) return h('span', { class: 'missing-row' }, 'Missing: a line\'s amount');
+  if (r.budget === null) return h('span', { class: 'missing-row' }, 'Missing an amount');
   const spentShare = r.budget ? Math.min(1, r.spent / r.budget) : 0;
   const markShare = r.expected !== null && r.budget ? Math.min(1, r.expected / r.budget) : null;
   const bar = h('div', { class: 'budget-bar', role: 'img', 'aria-label': money(r.spent) + ' of ' + money(r.budget) }, h('div', { class: 'fill' + (r.hot ? ' hot' : ''), style: 'width:' + pc(spentShare) }));
@@ -197,27 +197,27 @@ const tagMath = (r) => ['spend:tagBudget:' + r.tag, 'spend:tagSpent:' + r.tag, .
 function tagsCard(m) {
   const t = m.vw.tags;
   return h('section', { class: 'card', 'aria-labelledby': 'tags-h' },
-    h('h2', { id: 'tags-h' }, 'Budgets by tag, ' + monthWords(t.ym)),
-    h('p', { class: 'muted' }, t.day ? 'Day ' + t.day + ' of ' + t.daysInMonth + '. The bar is what is spent against the budget; the mark is where the budget expects you to be today. Running hot means past that mark by ' + Math.round((t.hotMultiple - 1) * 100) + '% or more. Tap a tag to see its lines.' : 'A past month: spent against the budget. Tap a tag to see its lines.'),
+    h('h2', { id: 'tags-h' }, 'Budgets, ' + monthWords(t.ym)),
+    h('p', { class: 'muted' }, t.day ? 'Day ' + t.day + ' of ' + t.daysInMonth + '. The line in each bar is where you would be today on pace.' : 'Spent against the budget.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
-      h('thead', {}, h('tr', {}, h('th', {}, 'Tag'), h('th', {}, 'Spent of budget'), h('th', { class: 'num' }, 'Left'), h('th', { class: 'num' }, 'At this pace'), h('th', { class: 'num' }, 'Last month, same day'))),
+      h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', {}, 'Spent'), h('th', { class: 'num' }, 'Left'), h('th', { class: 'num' }, 'At this pace'), h('th', { class: 'num' }, 'Last month, same day'))),
       h('tbody', {}, t.rows.map((r) => h('tr', { class: r.hot ? 'tight' : '' },
         h('td', {}, tagName(m, r.tag, r.label), ' ', hotChip(r)),
         h('td', {}, budgetCell(r)),
         h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left), r.left === null ? null : hoursTag(r.left)),
         h('td', { class: 'num' }, r.pace === null ? '' : money(r.pace)),
         h('td', { class: 'num' }, money(r.lastMonthSameDay))))))),
-    h('p', { class: 'tile-note' }, kindChip(t.kind), ' The budget is your planned lines for the month; spent is what you logged. A line with no amount makes its budget missing, not smaller.'),
+    h('p', { class: 'tile-note' }, kindChip(t.kind)),
     mathButton(t.rows.flatMap(tagMath), m.ctx));
 }
 
 function tiersCard(m) {
   const tiers = m.tiers;
   return h('section', { class: 'card', 'aria-labelledby': 'tiers-h' },
-    h('h2', { id: 'tiers-h' }, 'Burn, in four tiers'),
+    h('h2', { id: 'tiers-h' }, 'What goes out, in four layers'),
     h('ol', { class: 'tiers' }, tiers.tiers.map((x) => h('li', {}, h('span', {}, x.label), h('span', { class: 'tier-amt' }, money(x.amount)), h('span', { class: 'tier-cum' }, 'so far ' + money(x.cumulative))))),
-    h('p', { class: 'tile-sub' }, kindChip(tiers.kind), ' ', tiers.takeHome.value === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay') : 'Take-home ' + money(tiers.takeHome.value) + ' a month; ' + (tiers.unallocated.value === null ? 'unallocated unknown' : tiers.unallocated.value >= 0 ? money(tiers.unallocated.value) + ' not yet allocated' : money(-tiers.unallocated.value) + ' short of take-home') + '.'),
-    fold('tiers', 'later-list', 'What the tiers mean', h('ul', {}, h('li', {}, 'Core burn: food, housing and transportation. What it costs to be alive and get to work.'), h('li', {}, 'Everything else: every other line that is not debt.'), h('li', {}, 'Minimums: what every debt demands a month.'), h('li', {}, 'Extra, saving and the set-aside: what goes beyond the minimums, into saving, and aside for tax that nothing withholds.'), h('li', {}, 'The four add up to what leaves; what is left of take-home is unallocated. Card spending counts in its own tier; the card\'s settling payment is not a tier of its own.'))),
+    h('p', { class: 'tile-sub' }, kindChip(tiers.kind), ' ', tiers.takeHome.value === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay') : 'Take-home ' + money(tiers.takeHome.value) + ' a month; ' + (tiers.unallocated.value === null ? 'unallocated unknown' : tiers.unallocated.value >= 0 ? money(tiers.unallocated.value) + ' not given a job yet' : money(-tiers.unallocated.value) + ' short of take-home') + '.'),
+    fold('tiers', 'later-list', 'What the layers mean', h('ul', {}, h('li', {}, 'Core: food, housing and getting around.'), h('li', {}, 'Miscellaneous: everything else that is not debt.'), h('li', {}, 'Minimums: what your debts ask for each month.'), h('li', {}, 'Extra, saving and tax set aside.'))),
     mathButton(tiers.tiers.map((x) => 'spend:tier:' + x.id), m.ctx));
 }
 
@@ -235,9 +235,9 @@ function donutCard(m) {
   };
   return h('section', { class: 'card', 'aria-labelledby': 'donut-h' },
     h('h2', { id: 'donut-h' }, 'Where the money goes'),
-    h('p', { class: 'muted' }, 'Tap a row to see its lines. Try cutting something. Nothing is saved until you choose.'),
+    h('p', { class: 'muted' }, 'Try cutting something. Nothing is saved until you choose.'),
     h('div', { class: 'donut-wrap' }, ring, h('ul', { class: 'go-list slice-list', 'aria-label': 'The slices' }, d.slices.map(row))),
-    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' ', d.total === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay; shares are of what is planned.') : 'Of ' + money(d.total) + ' take-home a month.' + (d.short ? ' ' + money(d.short) + ' more leaves than comes in.' : '')));
+    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' ', d.total === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay.') : 'Of ' + money(d.total) + ' take-home a month.' + (d.short ? ' ' + money(d.short) + ' more leaves than comes in.' : '')));
 }
 
 // The cut simulator's result, on every screen while something is tried without: what it saves, the surplus, the
@@ -256,17 +256,17 @@ function cutCard(m) {
   return h('section', { class: 'card', 'aria-labelledby': 'cut-h' },
     h('h2', { id: 'cut-h' }, 'Trying without ' + listWords(names)),
     h('div', { class: 'tool-result' }, h('strong', {}, money(cut.saved) + ' a month saved'), '. Surplus ' + (cut.surplusBefore === null ? 'unknown' : money(cut.surplusBefore) + ' to ' + money(cut.surplusAfter)) + '.', cut.debt ? (cut.debt.neverAfter ? ' Even so the monthly plan never pays everything off.' : ' Debt free ' + (cut.debt.debtFreeAfter ? monthWords(cut.debt.debtFreeAfter) : 'never') + ' instead of ' + (cut.debt.debtFreeBefore ? monthWords(cut.debt.debtFreeBefore) : 'never') + (cut.debt.monthsSooner ? ', ' + cut.debt.monthsSooner + ' months sooner' : '') + (cut.debt.interestSaved !== null ? ', ' + money(cut.debt.interestSaved) + ' less interest.' : '.')) : ''),
-    h('label', { class: 'check-row', for: 'cut-debt' }, h('input', { type: 'checkbox', id: 'cut-debt', checked: cutPick.towardDebt, onchange: (e) => { keepCut({ ...cutPick, towardDebt: e.target.checked }); refresh(); } }), h('span', {}, h('strong', {}, 'Put what I save toward the debt'), h('span', { class: 'choice-sub' }, 'it joins the extra paid on your debts each month'))),
+    h('label', { class: 'check-row', for: 'cut-debt' }, h('input', { type: 'checkbox', id: 'cut-debt', checked: cutPick.towardDebt, onchange: (e) => { keepCut({ ...cutPick, towardDebt: e.target.checked }); refresh(); } }), h('span', {}, h('strong', {}, 'Put what I save toward debt'))),
     mathButton(['spend:cut', ...(cut.debt && cut.debt.interestSaved !== null ? ['spend:cutDebt'] : [])], () => ({ ...m.ctx(), cut })),
-    h('p', { class: 'muted' }, 'Nothing is saved until you cut them. Cutting takes the lines out of your plan; Undo puts them back.'),
+    h('p', { class: 'muted' }, 'Nothing is saved until you choose. Undo puts them back.'),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger', onclick: save }, 'Cut them from my plan'), h('button', { type: 'button', class: 'btn', onclick: () => { keepCut({ dropped: [], towardDebt: cutPick.towardDebt }); refresh(); } }, 'Put them all back')));
 }
 
 function autopsyCard(m) {
   const a = m.vw.autopsy;
   return h('section', { class: 'card', 'aria-labelledby': 'autopsy-h' },
-    h('h2', { id: 'autopsy-h' }, 'Bill autopsy ', h('span', { class: 'count' }, money(a.yearlyTotal) + ' a year')),
-    h('p', { class: 'muted' }, 'Every recurring item ranked by what it costs a year. A subscription not looked at in a year is stale: open it, then set the day you looked in My numbers.'),
+    h('h2', { id: 'autopsy-h' }, 'Bills by yearly cost ', h('span', { class: 'count' }, money(a.yearlyTotal) + ' a year')),
+    h('p', { class: 'muted' }, 'Biggest first. A subscription you have not looked at in a year is worth a look.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Item'), h('th', { class: 'num' }, 'A month'), h('th', { class: 'num' }, 'A year'), h('th', {}, 'Reviewed'))),
       h('tbody', {}, a.rows.map((r) => { const min = r.id.startsWith('min:'); return h('tr', { class: r.stale && r.subscription ? 'tight' : '' }, h('td', {}, lineLink(m, min ? r.id.slice(4) : r.id, r.label, r.path, min), r.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, r.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null), h('td', { class: 'num' }, money(r.monthly), hoursTag(r.monthly)), h('td', { class: 'num' }, money(r.yearly), hoursTag(r.yearly)), h('td', {}, r.reviewed ? shortDate(r.reviewed) : r.subscription ? h('span', { class: 'missing-row' }, 'never') : '')); })))),
     mathButton(a.rows.slice(0, 5).map((r) => 'spend:autopsy:' + r.id), m.ctx, 0, 'Show the math for the top five'));
@@ -274,7 +274,7 @@ function autopsyCard(m) {
 
 function askCard(m, state) {
   const spine = m.spine;
-  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I spend this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance, so the answer waits for it.'));
+  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I spend this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const asked = state.ask || '', askWith = state.askWith || 'cash';
   const amount = h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' }); amount.value = asked;
@@ -290,8 +290,8 @@ function askCard(m, state) {
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Tell me'))),
     ask && ask.verdict ? [
       h('p', {}, h('span', { class: 'verdict ' + ask.verdict }, ask.verdict === 'yes' ? 'Yes' : ask.verdict === 'tight' ? 'Tight' : 'No')),
-      h('ul', {}, h('li', {}, 'Safe to spend goes from ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'The low point goes from ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', with ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' held back by the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'It delays what the surplus buys by about ' + ask.delayDays + ' days.') : h('li', {}, 'No surplus to delay: this comes out of the cushion or onto a card.')),
-      h('p', { class: 'tile-note' }, kindChip(ask.kind), ' Your cash day by day, with the purchase added today.'),
+      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' bill' + (ask.shortfalls === 1 ? '' : 's') + ' could not be paid' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
+      h('p', { class: 'tile-note' }, kindChip(ask.kind)),
       mathButton(['spend:ask'], () => ({ ...m.ctx(), ask }))] : null);
 }
 
@@ -304,7 +304,7 @@ function pricesCard(m) {
     f.rows.length ? h('ul', { class: 'flow-list' }, f.rows.map((r) => h('li', {}, lineLink(m, r.id, r.label, r.path), ': ' + trialWords(r)))) : null,
     p.rows.length ? mathButton(p.rows.map((r) => 'spend:priceChange:' + r.id), m.ctx) : null);
 }
-const priceWords = (r) => 'the last charge (' + money(r.logged) + ' on ' + shortDate(r.date) + ') is ' + Math.round(r.change * 100) + '% over the planned ' + money(r.planned) + '. Update the line, or cancel it.';
+const priceWords = (r) => money(r.logged) + ' on ' + shortDate(r.date) + ', ' + Math.round(r.change * 100) + '% over the planned ' + money(r.planned) + '.';
 const trialWords = (r) => (r.converted ? 'the free trial ended ' + shortDate(r.trialEnds) + '; it now charges ' + (r.converts === null ? 'an amount not entered' : money(r.converts)) + '.' : 'free trial ends ' + shortDate(r.trialEnds) + ' (' + r.daysLeft + ' days)' + (r.soon ? ', then ' + (r.converts === null ? 'it charges an amount not entered' : money(r.converts)) + '. Cancel it before then, or keep it on purpose.' : '.'));
 
 function checkinCard(m) {
@@ -315,8 +315,8 @@ function checkinCard(m) {
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-labelledby': 'ci-h' },
-    h('h2', { id: 'ci-h' }, 'Check in: real balances'),
-    h('p', { class: 'muted' }, 'Type what each account really holds. The forecast for that day is the hint in the box. Saving moves your numbers to that day and notes how far off the forecast was.'),
+    h('h2', { id: 'ci-h' }, 'Check in balances'),
+    h('p', { class: 'muted' }, 'Type what each account holds today. The grey number is what we expected.'),
     h('form', { class: 'checkin-grid', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const balances = {}, forecast = {};
@@ -326,8 +326,8 @@ function checkinCard(m) {
       change((s) => checkIn(s, { date: form.checkDate, balances, forecast }), said.added('Check-in for ' + shortDate(form.checkDate)));
     } },
       h('label', { for: 'ci-date', class: 'edit-label' }, 'On'), date,
-      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', forecast ' + (f.forecast[a.id] === null ? 'unknown' : money(f.forecast[a.id])) + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
-      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the check-in'))),
+      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ')' : a.cushion ? ' (cushion)' : '')), input]),
+      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save balances'))),
     h('h3', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
     h('h3', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
     math.length ? mathButton(math, m.ctx) : null);
@@ -351,7 +351,7 @@ function sweepCard(m) {
   };
   return h('section', { class: 'card', 'aria-labelledby': 'sweep-h' },
     h('h2', { id: 'sweep-h' }, 'Month-end sweep'),
-    h('p', { class: 'muted' }, 'At each month end, what checking holds above the floor and a keep amount moves to the account picked. A hard reset: the month starts from the floor plus the keep.'),
+    h('p', { class: 'muted' }, 'At month end, extra cash in checking moves to the account you pick.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: submit },
       h('label', { class: 'check-row', for: 'sweep-on' }, on, h('span', {}, h('strong', {}, 'Sweep at month end'))),
       h('label', { for: 'sweep-to', class: 'edit-label' }, 'To'), to,
@@ -365,21 +365,21 @@ function outlookCard(m) {
   const o = monthOutlook(m.spine, rules, m.sim, { today: todayIso(), waiting: waiting(m.spine, rules, { today: todayIso() }) });
   const sign = (x) => (x === null ? 'missing' : (x < 0 ? '-' : '+') + money(Math.abs(x)));
   if (o.stale) return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' }, h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
-    h('p', { class: 'muted' }, 'The balances are from ' + shortDate(o.asOf) + ', before this month. Check in with today\'s balances to see this month so far and where it ends.'),
+    h('p', { class: 'muted' }, 'Balances are from ' + shortDate(o.asOf) + '. Check in to see this month.'),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#checkin' }, 'Check in')));
   return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },
     h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
     h('div', { class: 'clear-grid' },
-      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.soFar)), h('span', { class: 'clear-label' }, 'So far'), h('span', { class: 'tile-note' }, 'income logged ' + money(o.incomeSoFar) + ' less spending logged ' + money(o.spentSoFar))),
-      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'Expected by month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line left out'] : []).join(', ') : money(o.paychecks) + ' in paychecks still to come, ' + money(o.bills) + ' in bills still to go out, ' + money(o.planLeft) + ' left of the plan'))),
-    o.logged ? null : h('p', { class: 'muted' }, 'Nothing logged this month yet, so so far is zero by the log, not by your bank. Log a spend or import a statement.'),
-    o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'No first pay date yet for ' + o.noPayDate.join(', ') + ', so expected by month end waits on it.') : null,
-    o.guessedPayDay.length ? h('p', { class: 'muted' }, 'The pay day for ' + o.guessedPayDay.join(', ') + ' is a guess, so its paycheck is on a guessed day.') : null,
-    fold('to-come', 'flow-list', 'What is still to come this month (' + (o.items.length + o.rest.length) + ')',
-      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet, so counted as still to come)' : ''))),
-        o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true) + ', with ' + money(r.logged, true) + ' logged'))),
-        o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened, so it is in so far')) : null)),
-    h('p', { class: 'tile-note' }, kindChip(o.kind), ' Still to come is what is expected from ' + shortDate(o.asOf) + ' on. A bill charged to a card counts; a card payment does not, because the charges were the spending.'),
+      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.soFar)), h('span', { class: 'clear-label' }, 'So far'), h('span', { class: 'tile-note' }, money(o.incomeSoFar) + ' in, ' + money(o.spentSoFar) + ' out')),
+      h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'By month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line left out'] : []).join(', ') : money(o.paychecks) + ' still to come in, ' + money(o.bills) + ' in bills, ' + money(o.planLeft) + ' left of the plan'))),
+    o.logged ? null : h('p', { class: 'muted' }, 'Nothing added this month yet.'),
+    o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'Missing a pay date: ' + o.noPayDate.join(', ') + '.') : null,
+    o.guessedPayDay.length ? h('p', { class: 'muted' }, 'Pay day is a guess: ' + o.guessedPayDay.join(', ') + '.') : null,
+    fold('to-come', 'flow-list', 'Still to come (' + (o.items.length + o.rest.length) + ')',
+      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet)' : ''))),
+        o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true)))),
+        o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened')) : null)),
+    h('p', { class: 'tile-note' }, kindChip(o.kind)),
     mathButton(['compare:soFar', 'compare:expected'], () => ({ ...m.ctx(), monthOut: o })));
 }
 
@@ -389,10 +389,10 @@ const diffWords = (d) => (d === null ? 'missing' : d > 0 ? '+' + money(d) + ' ov
 function compareCard(m) {
   const c = m.compare;
   return h('section', { class: 'card', 'aria-labelledby': 'cmp-h' },
-    h('h2', { id: 'cmp-h' }, 'Plan vs what you actually spent, ' + windowWords(c)),
-    c.monthsSilent.length ? h('p', { class: 'muted' }, 'Nothing logged in ' + c.monthsSilent.map(monthWords).join(', ') + ': ' + (c.monthsSilent.length === c.months.length ? 'the window is empty so far.' : 'those months read as nothing spent, not as zero.')) : null,
-    h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spending: logged ' + money(c.spend.actual) + ' against ' + (c.spend.planned === null ? 'a plan with a missing line' : money(c.spend.planned) + ' planned') + ' (' + diffWords(c.spend.diff) + '). Income: ' + (c.income.actual === null ? 'nothing logged' : money(c.income.actual) + ' logged against ' + (c.income.planned === null ? 'a plan with a missing stream' : money(c.income.planned) + ' planned')) + '. ' + (c.savingsRate.real !== null ? 'Savings rate from what you logged ' + Math.round(c.savingsRate.real * 1000) / 10 + '%' + (c.savingsRate.plan !== null ? ' against ' + Math.round(c.savingsRate.plan * 1000) / 10 + '% planned' : '') + '.' : c.savingsRate.note)),
-    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Tag'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
+    h('h2', { id: 'cmp-h' }, 'Plan vs spent, ' + windowWords(c)),
+    c.monthsSilent.length ? h('p', { class: 'muted' }, 'Nothing added in ' + c.monthsSilent.map(monthWords).join(', ') + '.') : null,
+    h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spent ' + money(c.spend.actual) + ' of ' + (c.spend.planned === null ? 'a plan with a missing line' : money(c.spend.planned) + ' planned') + ' (' + diffWords(c.spend.diff) + ').'),
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Spent'), h('th', { class: 'num' }, 'Difference'))),
       h('tbody', {}, c.tags.map((r) => h('tr', { class: r.diff !== null && r.diff > 0 ? 'tight' : '' }, h('td', {}, tagName(m, r.tag, r.label), r.unassigned ? h('span', { class: 'choice-sub' }, ' (' + money(r.unassigned) + ' not on a line)') : null), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff))))))),
     fold('lines', 'flow-list', 'Every line (' + c.lines.length + ')',
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Line'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
@@ -404,10 +404,10 @@ function compareCard(m) {
 function importCard(m) {
   const spine = m.spine;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const text = h('textarea', { id: 'csv-text', rows: 5, placeholder: 'Paste the CSV from your bank or card here (Chase, Amex, Capital One, or date, description, amount)', 'aria-label': 'Statement CSV' });
+  const text = h('textarea', { id: 'csv-text', rows: 5, placeholder: 'Paste your bank or card download here', 'aria-label': 'Statement CSV' });
   text.value = form.csv;
   text.addEventListener('input', () => { form.csv = text.value; });
-  const fmt = h('select', { id: 'csv-format' }, h('option', { value: 'auto' }, 'Tell the format from the headers'), ...Object.entries(FORMATS).map(([k, f]) => h('option', { value: k }, f.label)));
+  const fmt = h('select', { id: 'csv-format' }, h('option', { value: 'auto' }, 'Figure it out'), ...Object.entries(FORMATS).map(([k, f]) => h('option', { value: k }, f.label)));
   fmt.value = form.csvFormat;
   const paid = h('select', { id: 'csv-with' }, h('option', { value: 'cash' }, 'Checking or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
   paid.value = form.csvWith;
@@ -421,21 +421,21 @@ function importCard(m) {
     let r = null;
     form.importWords = '';
     const ok = change((s) => { r = applyImport(s, p.proposals, { picks: picked }); return r.spine; }, said.added(picked.length + (picked.length === 1 ? ' entry' : ' entries') + ' from the statement'));
-    if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in the log, or not spending).' : ''; refresh(); }
+    if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in, or not spending).' : ''; refresh(); }
   };
   return h('section', { class: 'card', id: 'import', 'aria-labelledby': 'imp-h' },
     h('h2', { id: 'imp-h' }, 'Import a statement'),
-    h('p', { class: 'muted' }, 'Real dates and amounts come in from a statement or from a budget app\'s log. Each line is matched to the plan (within 2% and 5 days), called recurring (a merchant seen three times), or new; card payments and transfers are not spending. Nothing lands until you apply, and nothing lands twice.'),
+    h('p', { class: 'muted' }, 'Paste a download from your bank or card. You check each line before anything is added, and nothing is added twice.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); form.csv = text.value; form.csvFormat = fmt.value; form.csvWith = paid.value; try { form.proposals = proposeCsv(spine, rules, text.value, { format: fmt.value, paidWith: paid.value, merchantRules }); form.picks = null; form.importWords = ''; } catch (err) { msg.textContent = err.message; return; } refresh(); } },
       h('label', { for: 'csv-text', class: 'edit-label' }, 'A statement'), text,
       h('label', { for: 'csv-format', class: 'edit-label' }, 'Format'), fmt,
-      h('label', { for: 'csv-with', class: 'edit-label' }, 'This statement is for'), paid, msg,
+      h('label', { for: 'csv-with', class: 'edit-label' }, 'Which account'), paid, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Read the statement'), ...docs.map((d) => h('button', { type: 'button', class: 'btn', onclick: () => { form.proposals = proposeBudget(spine, rules, d.doc, { merchantRules }); form.picks = null; form.importWords = ''; refresh(); } }, 'Read the Budget app: ' + d.name + ' (' + d.transactions + ')')))),
     form.importWords ? h('p', { class: 'tool-result' }, form.importWords) : null,
     p ? [h('p', { class: 'tile-sub' }, (p.label ? p.label + ': ' : '') + p.words + (p.skippedRows && p.skippedRows.length ? ' Rows skipped (no date, amount or words): ' + p.skippedRows.join(', ') + '.' : '')),
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
         h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } })), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Apply what is ticked'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; refresh(); } }, 'Discard'))] : null);
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Add the ticked lines'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; refresh(); } }, 'Discard'))] : null);
 }
 
 // The time picker and the hours-of-life switch.
@@ -443,8 +443,8 @@ function controls(m, months) {
   return [
     windowBar(months, (n) => { keep({ months: n }); refresh(); }),
     h('div', { class: 'window-bar', role: 'group', 'aria-label': 'Hours of life' },
-      h('button', { type: 'button', class: 'btn toggle', 'aria-pressed': String(showHours), onclick: () => { showHours = !showHours; try { localStorage.setItem(HOURS_KEY, showHours ? 'on' : 'off'); } catch { /* storage blocked */ } refresh(); } }, showHours ? 'Hours of life: on' : 'Show amounts as hours of life'),
-      wage ? h('span', { class: 'muted' }, 'at ' + money(wage, true) + ' of take-home an hour') : showHours ? h('a', { href: ledgerHref(HOURS_WORK) }, 'Add hours worked a week in My numbers') : null)
+      h('button', { type: 'button', class: 'btn toggle', 'aria-pressed': String(showHours), onclick: () => { showHours = !showHours; try { localStorage.setItem(HOURS_KEY, showHours ? 'on' : 'off'); } catch { /* storage blocked */ } refresh(); } }, showHours ? 'Hours of work: on' : 'Show as hours of work'),
+      wage ? h('span', { class: 'muted' }, 'at ' + money(wage, true) + ' an hour') : showHours ? h('a', { href: ledgerHref(HOURS_WORK) }, 'Add your hours a week') : null)
   ];
 }
 
@@ -468,7 +468,7 @@ function categoryScreen(m, cat) {
     h('section', { class: 'card', 'aria-labelledby': 'cat-lines-h' },
       h('h2', { id: 'cat-lines-h' }, 'Lines'),
       share ? h('p', {}, share) : null,
-      h('p', { class: 'muted' }, cat.id === 'minimums' ? 'Tap a debt to see it.' : 'Tap a line to see it. Try cutting something. Nothing is saved until you choose.'),
+      cat.id === 'minimums' ? null : h('p', { class: 'muted' }, 'Try cutting something. Nothing is saved until you choose.'),
       h('ul', { class: 'go-list line-list' }, cat.lines.map((l) => lineRow(m, cat, l)))),
     cutCard(m),
     r ? h('section', { class: 'card', 'aria-labelledby': 'cat-h' },
@@ -477,11 +477,11 @@ function categoryScreen(m, cat) {
       h('ul', { class: 'flow-list' },
         h('li', {}, 'Left: ' + (r.left === null ? 'missing' : money(r.left)), r.left === null ? null : hoursTag(r.left)),
         r.pace !== null ? h('li', {}, 'At this pace: ' + money(r.pace) + ' by month end') : null,
-        h('li', {}, 'Last month by this day: ' + money(r.lastMonthSameDay))),
+        h('li', {}, 'Last month by today: ' + money(r.lastMonthSameDay))),
       mathButton(tagMath(r), m.ctx)) : null,
     ct ? h('section', { class: 'card', 'aria-labelledby': 'cat-cmp-h' },
-      h('h2', { id: 'cat-cmp-h' }, 'Plan vs what you actually spent, ' + windowWords(m.compare)),
-      h('p', {}, 'Planned ' + (ct.missing ? 'missing' : money(ct.planned)) + ', logged ' + money(ct.actual) + ' (' + diffWords(ct.diff) + ').' + (ct.unassigned ? ' ' + money(ct.unassigned) + ' of it is not on a line.' : '')),
+      h('h2', { id: 'cat-cmp-h' }, 'Plan vs spent, ' + windowWords(m.compare)),
+      h('p', {}, 'Planned ' + (ct.missing ? 'missing' : money(ct.planned)) + ', spent ' + money(ct.actual) + ' (' + diffWords(ct.diff) + ').'),
       mathButton(['compare:tag:' + ct.tag], m.ctx)) : null
   ];
 }
@@ -506,14 +506,14 @@ function lineScreen(m, cat, l) {
       a || price ? mathButton([...(a ? ['spend:autopsy:' + a.id] : []), ...(price ? ['spend:priceChange:' + price.id] : [])], m.ctx) : null),
     h('section', { class: 'card has-target', 'aria-labelledby': 'line-edit-h' },
       h('h2', { id: 'line-edit-h' }, h('a', { class: 'card-link', href: ledgerHref(l.path) }, h('span', {}, 'Change it in My numbers'), chev())),
-      h('p', { class: 'tile-sub' }, min ? 'The minimum, the balance and the rate.' : 'The amount, how often, who pays and when it ends.')),
+      null),
     cl ? h('section', { class: 'card', 'aria-labelledby': 'line-cmp-h' },
-      h('h2', { id: 'line-cmp-h' }, 'Plan vs what you actually spent, ' + windowWords(m.compare)),
-      h('p', {}, 'Planned ' + (cl.missing ? 'missing' : money(cl.planned)) + ', logged ' + money(cl.actual) + ' in ' + cl.entries + (cl.entries === 1 ? ' entry' : ' entries') + ' (' + diffWords(cl.diff) + ').'),
+      h('h2', { id: 'line-cmp-h' }, 'Plan vs spent, ' + windowWords(m.compare)),
+      h('p', {}, 'Planned ' + (cl.missing ? 'missing' : money(cl.planned)) + ', spent ' + money(cl.actual) + ' in ' + cl.entries + (cl.entries === 1 ? ' purchase' : ' purchases') + ' (' + diffWords(cl.diff) + ').'),
       mathButton(['compare:line:' + cl.id], m.ctx)) : null,
     min ? null : h('section', { class: 'card', 'aria-labelledby': 'line-log-h' },
-      h('h2', { id: 'line-log-h' }, 'Logged this month ', h('span', { class: 'count' }, String(logged.length))),
-      logged.length ? h('ul', { class: 'log-list' }, logged.map((e) => logItem(m.spine, e))) : h('p', { class: 'muted' }, 'Nothing logged on this line this month.')),
+      h('h2', { id: 'line-log-h' }, 'Added this month ', h('span', { class: 'count' }, String(logged.length))),
+      logged.length ? h('ul', { class: 'log-list' }, logged.map((e) => logItem(m.spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.')),
     cutCard(m)
   ];
 }

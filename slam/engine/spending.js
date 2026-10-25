@@ -7,14 +7,14 @@
 
 import { valueOf as v, tracker, round2, monthKey, addMonths, daysBetween, daysInMonth } from './spine.js';
 import { payoffPlan } from './debt.js';
-import { FAT, isEarmarked } from './schema.js';
+import { FAT, isEarmarked, SECTION_WORDS } from './schema.js';
 import { setAsideFor, setAsideWords, setAsideNote } from './networth.js';
 import * as C from './vendor/cashcal.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
 const TAGS = [...FAT, 'other'];
-export const TAG_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Everything else' };
+export const TAG_WORDS = SECTION_WORDS;
 const tagOf = (spine, entry) => { if (entry.tag) return entry.tag; const e = entry.expenseId ? (spine.expenses || []).find((x) => x.id === entry.expenseId) : null; return e ? e.fat || 'other' : 'other'; };
 const dayOf = (iso) => +iso.slice(8, 10);
 const dim = (ym) => daysInMonth(+ym.slice(0, 4), +ym.slice(5, 7));
@@ -236,7 +236,7 @@ export function checkInForecast(spine, sim, date = sim.start) {
 export function drift(spine) {
   const list = (spine.checkins || []).filter((c) => c.forecast && Object.values(c.forecast).some((x) => x !== null));
   const r = C.drift(list.map((c) => ({ actual: Object.fromEntries(Object.entries(c.balances).map(([k, x]) => [k, cents(x)])), forecast: Object.fromEntries(Object.entries(c.forecast).map(([k, x]) => [k, x === null ? 0 : cents(x)])) })));
-  const words = r.kind === 'none' ? 'No check-in with a forecast yet.' : r.kind === 'first' ? 'One check-in: the plan was ' + (r.mean >= 0 ? 'under' : 'over') + ' by ' + Math.abs(dollars(r.mean)) + ' dollars. Two or more tell bias from noise.' : r.kind === 'bias' ? 'Bias: real balances run ' + (r.mean >= 0 ? 'above' : 'below') + ' the plan by about ' + Math.abs(dollars(r.mean)) + ' dollars each check-in. Something regular is missing from the plan.' : 'Noise: the misses go both ways (spread ' + dollars(r.sd) + ' dollars around a mean of ' + dollars(r.mean) + '). The plan is not leaning; days just vary.';
+  const words = r.kind === 'none' ? 'No check-ins yet.' : r.kind === 'first' ? 'One check-in: the plan was ' + (r.mean >= 0 ? 'under' : 'over') + ' by ' + Math.abs(dollars(r.mean)) + ' dollars. Two or more tell bias from noise.' : r.kind === 'bias' ? 'Bias: real balances run ' + (r.mean >= 0 ? 'above' : 'below') + ' the plan by about ' + Math.abs(dollars(r.mean)) + ' dollars each check-in. Something regular is missing from the plan.' : 'Noise: the misses go both ways (spread ' + dollars(r.sd) + ' dollars around a mean of ' + dollars(r.mean) + '). The plan is not leaning; days just vary.';
   return { count: r.count, mean: dollars(r.mean), sd: dollars(r.sd), kind: r.kind, words, checkins: list.map((c) => ({ id: c.id, date: c.date, miss: round2(Object.keys(c.balances).reduce((a, k) => a + (c.balances[k] - (c.forecast[k] ?? 0)), 0)) })) };
 }
 
@@ -246,7 +246,7 @@ export function staleness(spine, rules, today) {
   const limit = rules.get('APP_STALE_DAYS', year);
   const last = (spine.checkins || []).reduce((m, c) => (c.date > m ? c.date : m), spine.meta.asOf);
   const days = Math.max(0, daysBetween(last, today));
-  return { anchor: last, days, limit, stale: days > limit, words: days === 0 ? 'Checked in today.' : days === 1 ? 'Last checked in yesterday.' : 'Last checked in ' + days + ' days ago' + (days > limit ? ': the numbers are stale. A check-in puts real balances back in.' : '.'), rules: ['APP_STALE_DAYS'] };
+  return { anchor: last, days, limit, stale: days > limit, words: days === 0 ? 'Checked in today.' : days === 1 ? 'Last checked in yesterday.' : 'Last checked in ' + days + ' days ago' + (days > limit ? '. Time to check in.' : '.'), rules: ['APP_STALE_DAYS'] };
 }
 
 // Momentum from check-in snapshots: cash (every account checked in) over time, as a change a month.

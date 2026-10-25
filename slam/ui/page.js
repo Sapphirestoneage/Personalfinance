@@ -8,7 +8,7 @@ import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 import { loadFailWords } from './profile-file.js';
 
 // The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2.5, Batch 1', date: '2026-10-25' };
+export const BUILD = { label: 'Phase 2.5, Batch 2', date: '2026-10-25' };
 
 let banner = null;
 function showError(text) {
@@ -76,7 +76,7 @@ export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen
     h('p', { class: 'muted' }, h('strong', { class: 'whose-name' }, 'Example household'), ' (made up)', when),
     h('div', { class: 'whose-load' },
       h('button', { type: 'button', class: 'btn primary', onclick: () => input.click() }, 'Load my file'),
-      h('span', { class: 'whose-note' }, 'Stays in this browser. Nothing is uploaded.'),
+      h('span', { class: 'whose-note' }, 'Nothing is uploaded.'),
       input),
     msg);
 }

@@ -55,14 +55,14 @@ function form() {
   amount.value = ask.amount === null ? '' : String(ask.amount);
   const choice = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-taxed', value: val, checked: ask.taxed === (val === 'yes') }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
   const taxBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Is tax already taken out of it?'),
-    choice('yes', 'Yes, or none is owed', 'A bonus with tax withheld, a gift, an inheritance, a tax refund, a sale of your own things'),
-    choice('no', 'No, tax is still owed on it', 'Contract or 1099 pay, a prize, a bonus paid with nothing withheld'));
+    choice('yes', 'Yes, or none is owed', 'A gift, a refund, a bonus with tax taken out'),
+    choice('no', 'No, tax is still owed on it', '1099 pay, a prize'));
   // Where it came from (answer 24): 1099 money owes self-employment tax on top.
   const src = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-source', value: val, checked: ask.source === val }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
   const srcBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Where did it come from?'),
     src('other', 'A gift, a refund, a sale, an inheritance', 'No payroll tax on it'),
     src('w2', 'My job (a bonus or back pay)', 'Payroll tax came off it already'),
-    src('1099', 'Contract or 1099 work', 'Self-employment tax is owed on top of income tax'));
+    src('1099', 'Contract or 1099 work', 'Self-employment tax is owed too'));
   return h('form', { class: 'editor windfall-form', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
     const p = parseInput('money', amount.value);
@@ -74,7 +74,6 @@ function form() {
   } },
     h('label', { for: 'wf-amount', class: 'edit-label' }, 'How much is coming in?'),
     h('div', { class: 'amount-row' }, h('span', { class: 'unit', 'aria-hidden': 'true' }, '$'), amount),
-    h('p', { class: 'edit-hint' }, 'A lump sum: a bonus, a gift, a tax refund, contract pay, a sale.'),
     taxBox, srcBox, msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Show where it goes')));
 }
@@ -91,7 +90,7 @@ function stepRow(st, i) {
 }
 
 function result(m) {
-  if (!m.w) return h('section', { class: 'card', id: 'wf-result' }, h('p', { class: 'muted' }, 'Type an amount above to see where it goes.'));
+  if (!m.w) return h('section', { class: 'card', id: 'wf-result' }, h('p', { class: 'muted' }, 'Where it goes shows here.'));
   const w = m.w;
   const segs = w.steps.filter((x) => x.amount > 0);
   const used = new Set(segs.map((x) => COLOR[x.id]));
@@ -134,7 +133,7 @@ function render({ spine, rules, levels }) {
   const m = model(spine, rules);
   if (levels.length) return stepScreen(m, m.w.steps[indexOf(m, levels[0])]);
   return [
-    h('p', { class: 'lede' }, 'Type an amount to see where it would go, one step at a time. Nothing here changes your numbers.'),
+    h('p', { class: 'lede' }, 'Try an amount and see where it would go. Nothing is saved.'),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),
     result(m)
   ];

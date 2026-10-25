@@ -129,7 +129,8 @@ test('the Calendar: the month is kept; a plan suggestion opens the plan; the deb
 
 test('the Plan: the surplus intro, the deductible, life event words, money in a file\'s differences, nothing to apply', () => {
   const src = code('ui/plan.js');
-  assert.match(src, /'Each month\\'s surplus goes in the same order as Got extra money\?' \+ \(w\.note \? ' ' \+ w\.note : ' \(' \+ money\(w\.surplus\) \+ ' a month\)\.'\)/);
+  // Batch 2's copy pass: the surplus screen says only what is not already on it (its note, when there is one).
+  assert.match(src, /w\.note \? h\('p', \{ class: 'muted' \}, w\.note\) : null,/);
   assert.match(src, /r\.id === 'deductibles' && r\.need === null \? 'Type the biggest deductible below\.' : r\.why/);
   assert.match(src, /money\(i\.cents \/ 100\) \+ \(EVENT_OFTEN\[i\.cadence\] \|\| ''\)/);
   assert.match(src, /showValue\(x, type\)/, 'a value in a file\'s differences is worded by its type ($1,950)');

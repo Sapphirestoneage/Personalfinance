@@ -77,18 +77,17 @@ function chart(line, width) {
 export function cashChartCard(line, { back = false, onBack = null, width = 640, preCover = null } = {}) {
   if (!line) return null;
   const legend = [
-    ['viz-3', 'Checking ahead (expected)'],
-    ['cl-sw-past', 'Checking recorded (check-ins and the log)'],
-    ['viz-5', 'Savings, shown apart, never added in'],
+    ['viz-3', 'Checking, expected'],
+    ['cl-sw-past', 'Checking, recorded'],
+    ['viz-5', 'Savings (not added in)'],
     ...(line.days.some((d) => d.under) ? [['cl-sw-under', line.floor > 0 ? 'Under the floor of ' + money(line.floor) : 'Below zero']] : [])
   ];
   return h('section', { class: 'card cash-chart', 'aria-labelledby': 'cashline-h' },
     h('h2', { id: 'cashline-h' }, 'Cash by day'),
-    h('p', { class: 'tile-sub' }, 'Lowest point ahead: ' + money(line.low.amount) + ' on ' + shortDate(line.low.date) + (line.low.beforePayday ? ', the day before payday' : '') + ', through ' + shortDate(line.days[line.days.length - 1].date) + '.' + (line.low.toppedFrom ? ' From ' + shortDate(line.low.toppedFrom) + ' the cushion tops checking up, so the line stops at zero' + (preCover ? '; before the top-ups the lowest point is ' + money(preCover.amount) + ' on ' + shortDate(preCover.date) + ', the figure safe to spend reads' : '') + '.' : '')),
-    line.backTo ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', checked: back ? 'checked' : null, onchange: (e) => onBack && onBack(e.target.checked) }), ' Back to ' + MONTHS[+line.backTo.slice(5, 7) - 1] + ' ' + line.backTo.slice(0, 4) + ' (the first check-in)') : null,
+    h('p', { class: 'tile-sub' }, 'Lowest point: ' + money(preCover && line.low.toppedFrom ? preCover.amount : line.low.amount) + ' on ' + shortDate(preCover && line.low.toppedFrom ? preCover.date : line.low.date) + (line.low.beforePayday ? ', the day before payday' : '') + '.' + (line.low.toppedFrom ? ' The cushion covers it from ' + shortDate(line.low.toppedFrom) + '.' : '')),
+    line.backTo ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', checked: back ? 'checked' : null, onchange: (e) => onBack && onBack(e.target.checked) }), ' Start at ' + MONTHS[+line.backTo.slice(5, 7) - 1] + ' ' + line.backTo.slice(0, 4)) : null,
     line.setAsideNote ? h('p', { class: 'tile-sub' }, line.setAsideNote + ' It is not in the line.') : null,
     h('div', { class: 'cl-wrap' }, chart(line, width)),
     h('ul', { class: 'cl-legend', 'aria-label': 'What the colors mean' }, legend.map(([c, words]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), words)), h('li', {}, h('span', { class: 'cl-sw-dot viz-3', 'aria-hidden': 'true' }), 'Payday'), h('li', {}, h('span', { class: 'cl-sw-dot viz-1', 'aria-hidden': 'true' }), 'A bill of $100 or more')),
-    h('p', { class: 'tile-note' }, 'Before ' + shortDate(line.asOf) + ' the line is what was recorded: each check-in\'s checking balance, moved by the cash entries in the log. A day with no check-in before it is walked back from the first one. From ' + shortDate(line.asOf) + ' on it is what is expected.'),
     h('details', { class: 'flow-list' }, h('summary', {}, 'Every day as a list (' + line.days.length + ')'), h('ul', {}, line.days.map((d) => h('li', { class: d.under ? 'missing-row' : null }, dayWords(d))))));
 }

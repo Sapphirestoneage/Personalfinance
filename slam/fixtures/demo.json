@@ -371,7 +371,7 @@
     },
     {
       "id": "other",
-      "label": "Everything else",
+      "label": "Miscellaneous",
       "amount": {
         "value": 300,
         "asOf": "2026-10-01",

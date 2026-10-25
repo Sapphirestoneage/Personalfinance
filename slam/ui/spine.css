@@ -882,3 +882,69 @@ span.builder-link { font-weight: 600; }
 .rule-diff li { border-top: 1px solid var(--border); padding-top: var(--space-2); overflow-wrap: anywhere; }
 .rule-edit textarea { min-height: 88px; font-family: var(--font-num); }
 @media print { .tabbar, .screen-top, .undo-bar, .builder-link { display: none !important; } body.has-tabs { padding-bottom: 0; } }
+
+/* ---------------------------------------------------------------- Phase 2.5, Batch 2: smaller and calmer
+   Body 15px; spacing about half; primary buttons 40px tall, row actions 32px, each with a 44px tap area (an invisible
+   ::after around the face, so the target stays 44px while the face is smaller). The page stops at the tab bar's own
+   height (shell.js measures it into --tabbar-h), so nothing hides behind it. Meaning colors are three: good, watch,
+   neutral; red is only for something actually wrong (a balance under zero, an error); the kind chips keep theirs. */
+:root {
+  --text-xs: 0.75rem; --text-sm: 0.8125rem; --text-md: 0.9375rem; --text-lg: 1.0625rem; --text-xl: 1.3125rem; --text-xxl: 1.75rem;
+  --space-3: 8px; --space-4: 12px; --space-5: 16px; --space-6: 24px;
+  --btn-h: 40px; --row-btn-h: 32px;
+  --watch: var(--warn); --watch-ink: var(--st-roughly); --watch-soft: var(--warn-soft);
+}
+h1 { font-size: var(--text-xl); }
+h2 { font-size: var(--text-lg); }
+#app { padding: var(--space-4); }
+.card { padding: 10px var(--space-4); margin: 0 0 var(--space-3); }
+.tiles { gap: 6px; margin-bottom: var(--space-3); }
+.tile { padding: 10px var(--space-4); }
+.top { gap: var(--space-2); margin-bottom: var(--space-3); }
+.lede { margin-bottom: var(--space-2); }
+/* Buttons: a 40px face (32px for a row's own actions), a 44px target. */
+.btn { min-height: var(--btn-h); padding: 0 var(--space-4); }
+.btn.small { min-height: var(--row-btn-h); padding: 0 10px; font-size: var(--text-sm); }
+.btn::after, .filter-chip::after, .tag-chip::after, .seg-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--tap)); transform: translateY(-50%); }
+.filter-chip, .tag-chip, .seg-btn { position: relative; min-height: var(--btn-h); }
+.filter-chip, .tag-chip { min-height: var(--row-btn-h); }
+.choice-card, .check-row { min-height: var(--btn-h); padding: 6px 10px; }
+.editor input, .editor select, .editor textarea, .add-form select, .add-form input, .tool-form input, .tool-form select, .logger input, .logger select, .checkin-grid input, #ledger-search { min-height: var(--btn-h); padding: 6px var(--space-2); }
+.logger .amount-box { min-height: 48px; font-size: var(--text-xl); }
+/* Compact rows. */
+.row-main { min-height: var(--btn-h); padding: var(--space-1) 0; }
+.go-list { gap: 6px; margin-bottom: var(--space-3); }
+.go-row { min-height: var(--tap); padding: 6px 10px; gap: 0 var(--space-2); }
+.go-mark { min-width: 28px; height: 28px; font-size: var(--text-sm); }
+.tile-value { font-size: var(--text-xxl); }
+.math-panel { padding: var(--space-2) 10px; gap: var(--space-2); }
+/* The page ends at the tab bar's own height on a phone. */
+body.has-tabs { padding-bottom: calc(var(--tabbar-h, 56px) + env(safe-area-inset-bottom, 0px)); }
+.tab { min-height: var(--tap); }
+@media (max-width: 639px) {
+  body.has-tabs .bulk-bar, body.has-tabs .pick-actions, body.has-tabs .editor .edit-actions { bottom: var(--tabbar-h, 56px); }
+  body.has-tabs #app *:not(.screen-top, .screen-top *) { scroll-margin-bottom: calc(var(--tabbar-h, 56px) + var(--space-2)); }
+  .undo-bar { bottom: calc(var(--tabbar-h, 56px) + var(--space-2)); }
+}
+@media (min-width: 640px) {
+  body.has-tabs { padding-bottom: 0; }
+  .screen-top { top: var(--tabbar-h, 61px); }
+  /* A computer: a label and its value on one line, the side controls on the right. */
+  .editor { grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr); align-items: center; column-gap: var(--space-4); }
+  .editor > * { grid-column: 1 / -1; }
+  .editor > .edit-label { grid-column: 1; }
+  .editor > .edit-label + input, .editor > .edit-label + select, .editor > .edit-label + .amount-row { grid-column: 2; }
+  .go-row { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "mark name sub chev"; }
+  .go-row.plain { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name sub chev"; }
+  .go-sub { justify-content: flex-end; text-align: right; }
+}
+/* Three meaning colors. Watch, not red, for a level to work on (a flag's stage, running hot, a deadline, a payment not
+   marked yet); red stays for under zero and errors. */
+.flag-red { border-left-color: var(--watch); }
+.stage-red { color: var(--watch-ink); background: var(--watch-soft); }
+.hot-chip, .deadline-chip { color: var(--watch-ink); background: var(--watch-soft); }
+.verdict.tight, .trap-bad, .pay-left.short { color: var(--watch-ink); }
+.pill-waiting { border-color: var(--watch-ink); color: var(--watch-ink); }
+.cell.low .cell-cash::after, .day.low .day-cash::after { color: var(--text-muted); }
+.backstop { border-left-color: var(--border); }
+.safe-big.low { color: var(--bad); }

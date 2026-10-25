@@ -354,7 +354,7 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'input-' + id, stage,
       title: stage === 'red' ? what + ' needs ' + missing.length + ' input' + (missing.length === 1 ? '' : 's') : stage === 'yellow' ? what + ' uses ' + rough.length + ' rough number' + (rough.length === 1 ? '' : 's') : what + ': every input known',
-      detail: stage === 'red' ? 'Needs: ' + fields(missing) + '.' : stage === 'yellow' ? 'Rough: ' + fields(rough) + '.' : 'Built from ' + (r.from || []).length + ' known fields.',
+      detail: stage === 'red' ? 'Needs: ' + fields(missing) + '.' : stage === 'yellow' ? 'Rough: ' + fields(rough) + '.' : 'Every number it uses is known.',
       next: stage === 'red' ? goal(asOf, 'Next: enter ' + labelFor(spine, missing[0]) + (missing.length > 1 ? ' (and ' + (missing.length - 1) + ' more)' : ''), { path: missing[0] })
         : stage === 'yellow' ? goal(asOf, 'Next: confirm ' + labelFor(spine, rough[0]) + (rough.length > 1 ? ' (and ' + (rough.length - 1) + ' more)' : ''), { path: rough[0] }) : null,
       green: stage === 'green' ? null : goal(asOf, 'Stage 3: every input known', { path: missing[0] || rough[0] }),

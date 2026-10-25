@@ -549,10 +549,10 @@ export function burnTiers(spine, rules, cf, { extra = 0 } = {}) {
   const saved = round2((cf.saving.afterTax.value ?? 0) + (cf.taxSetAside.total.value ?? 0) + extra);
   const takeHome = cf.income.takeHome.value;
   const tiers = [
-    { id: 'core', label: 'Core burn: food, housing, transportation', amount: core, cumulative: core },
-    { id: 'rest', label: 'Plus everything else that is not debt', amount: rest, cumulative: round2(core + rest) },
+    { id: 'core', label: 'Core: food, housing, getting around', amount: core, cumulative: core },
+    { id: 'rest', label: 'Plus miscellaneous', amount: rest, cumulative: round2(core + rest) },
     { id: 'minimums', label: 'Plus every debt at its minimum', amount: round2(minimums), cumulative: round2(core + rest + minimums) },
-    { id: 'extra', label: 'Plus the extra at the debt, saving and the tax set-aside', amount: saved, cumulative: round2(core + rest + minimums + saved) }
+    { id: 'extra', label: 'Plus extra on debt, saving and tax', amount: saved, cumulative: round2(core + rest + minimums + saved) }
   ];
   const unallocated = takeHome === null ? null : round2(takeHome - tiers[3].cumulative);
   const anyMissing = items.some((i) => i.amount === null && !i.covered);

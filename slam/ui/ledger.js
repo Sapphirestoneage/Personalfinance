@@ -145,7 +145,7 @@ function setLater(path, on) {
 function laterBtn(row) {
   if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, false); refresh(); say('Asking again: ' + row.label, back); } }, 'Ask me again');
   if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
-  return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, true); closeEditor(); refresh(); say('Not now: ' + row.label + '. It stays ' + (row.fact.kind === 'missing' ? 'missing' : 'a guess') + ', and Still guessing will not ask until you choose Ask me again', back); } }, 'Not now');
+  return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, true); closeEditor(); refresh(); say('Not now: ' + row.label + '. Still guessing will skip it', back); } }, 'Not now');
 }
 const isLater = (path) => !!later[rowPathFor(cur(), path)];
 
@@ -163,7 +163,7 @@ function cardRateEditor(row) {
   apr.value = inputText('rate', cur0.apr);
   const aprLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startOn ? 'Rate after intro' : 'Interest rate (APR)');
   const afterNote = h('span', {}, startOn ? 'Starts the day after the intro ends. ' : '');
-  const aprHint = h('p', { class: 'edit-hint' }, afterNote, 'As a percent: 25 means 25%. Left blank, a typical ' + fallback + ' is used and marked rough.');
+  const aprHint = h('p', { class: 'edit-hint' }, afterNote, '25 means 25%. Blank uses a typical ' + fallback + ', marked as a guess.');
   const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   introRate.value = cur0.intro ? inputText('rate', cur0.intro.rate) : '0';
   const introEnds = h('input', { id: 'intro-ends', type: 'date' });
@@ -273,7 +273,7 @@ function expenseEditor(row) {
   const dates = dateFields(e.start, e.end, 'exp');
   const AMOUNT_Q = { me: 'How much is it?', shared: 'How much is the whole bill?', covered: 'What would it cost if you paid it yourself?' };
   const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, AMOUNT_Q[startMode]);
-  const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'It counts $0 now. Keeping the real cost shows what you would pay if the cover ends.');
+  const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'Counts as $0 now. The real cost shows what you would pay if that stops.');
   const stdBtn = std === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => { amount.value = String(std); often.value = 'monthly'; usedStd = true; preview(); amount.focus(); } }, 'Use a standard plan for 1 line (' + money(std) + ' a month)');
   const yours = h('p', { class: 'edit-preview', 'aria-live': 'polite' });
   // { people, share, problem }: share null means an even split.
@@ -347,7 +347,7 @@ function expenseEditor(row) {
     h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
     modeBox,
     amountLabel, h('div', { class: 'amount-row' }, amount, often), amountHint, stdBtn,
-    h('label', { class: 'check-row', for: 'exp-sub' }, subBox, h('span', {}, h('strong', {}, 'This is a subscription'), h('span', { class: 'choice-sub' }, 'It renews on its own, so it gets a regular look'))),
+    h('label', { class: 'check-row', for: 'exp-sub' }, subBox, h('span', {}, h('strong', {}, 'This is a subscription'), h('span', { class: 'choice-sub' }, 'Renews on its own'))),
     sharedBox, coveredBox, dates.box, yours, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -370,7 +370,7 @@ function dateFields(start, end, prefix, { label = 'When does it run?', startWord
     h('div', { class: 'sub-fields' },
       h('label', { for: prefix + '-start', class: 'edit-label' }, startWords), from,
       h('label', { for: prefix + '-end', class: 'edit-label' }, endWords), to,
-      h('p', { class: 'edit-hint' }, 'Leave a date blank when it is open-ended. The month-by-month numbers, the calendar and the flags follow these dates.')));
+      h('p', { class: 'edit-hint' }, 'Leave blank if it has no end.')));
   return {
     box, from, to,
     read: () => {
@@ -401,11 +401,11 @@ function incomeEditor(row) {
   const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
   const day = h('input', { id: 'inc-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day.value = x.payDay && valueOf(x.payDay) ? String(valueOf(x.payDay)) : '';
-  const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day of the month it lands (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Twice a month: the first of the two days. Leave blank if it varies; the calendar then lists it under "sometime this month".'));
+  const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day of the month it lands (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Leave blank if it varies.'));
   // Twice a month, the second day (S-226): the 1st and the 15th. Blank keeps the usual rule (15 days after the first).
   const day2 = h('input', { id: 'inc-day2', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day2.value = x.payDay2 && valueOf(x.payDay2) ? String(valueOf(x.payDay2)) : '';
-  const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day of the month it lands (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th. Leave blank and the second pay comes 15 days after the first.'));
+  const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day of the month it lands (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th.'));
   const startWords = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
   const dates = dateFields(x.start, x.end, 'inc', { label: 'When does it run?' });
   const startLabel = dates.box.querySelector('label[for="inc-start"]'), endLabel = dates.box.querySelector('label[for="inc-end"]');
@@ -446,7 +446,7 @@ function incomeEditor(row) {
     h('label', { for: 'inc-name', class: 'edit-label' }, 'Name'), name,
     whoseSel ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whoseSel, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
     h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
-    h('p', { class: 'edit-hint' }, 'Gross pay, before anything is taken out. Tax withheld has its own rows under Taxes.'),
+    h('p', { class: 'edit-hint' }, 'Before anything is taken out.'),
     dayBox, day2Box, dates.box, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -501,7 +501,7 @@ function suggestEditor(row) {
   const amount = h('input', { id: 'edit-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   amount.value = pay ? inputText('money', pay.value) : '';
   const ownBox = h('div', { class: 'sub-fields', hidden: !typedOwn }, h('label', { for: 'edit-own', class: 'edit-label' }, 'Plan name'), own);
-  const amountBox = h('div', { class: 'sub-fields', hidden: true }, h('label', { for: 'edit-amount', class: 'edit-label' }, 'Monthly payment'), amount, h('p', { class: 'edit-hint' }, 'Dollars a month, for example 210. The plan is saved as not sure.'));
+  const amountBox = h('div', { class: 'sub-fields', hidden: true }, h('label', { for: 'edit-amount', class: 'edit-label' }, 'Monthly payment'), amount, h('p', { class: 'edit-hint' }, 'Dollars a month, for example 210. Saved as a guess.'));
   pickEl.addEventListener('change', () => {
     ownBox.hidden = pickEl.value !== '__other';
     amountBox.hidden = pickEl.value !== '__amount';
@@ -570,7 +570,7 @@ function paymentEditor(row) {
     h('p', { class: 'edit-hint' }, 'A card here means it goes on the card; the card is then paid from its own account.'),
     h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day,
     h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'),
-    pays ? [h('label', { for: 'pay-debt', class: 'edit-label' }, 'The debt it pays (optional)'), pays, h('p', { class: 'edit-hint' }, 'For example a car payment that pays the car loan. It is then counted once, under debt payments, at this line\'s amount, on the debt\'s due day.')] : null,
+    pays ? [h('label', { for: 'pay-debt', class: 'edit-label' }, 'The debt it pays (optional)'), pays, h('p', { class: 'edit-hint' }, 'For example a car payment that pays the car loan, so it counts once.')] : null,
     msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -739,7 +739,7 @@ function filterBar(sc, q) {
     h('div', { class: 'filter-row' },
       h('span', { class: 'filter-label' }, 'Show:'),
       ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
-    h('p', { class: 'filter-hint muted' }, kinds.length === 1 ? 'Tap it again to show everything.' : 'Tap one to see only those.'),
+    null,
     h('div', { class: 'filter-row' },
       h('button', { type: 'button', class: 'btn', onclick: () => setKinds(KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed')) }, 'Hide known'),
       h('button', { type: 'button', class: 'btn', onclick: () => setKinds(['missing']) }, 'Only missing'),
@@ -799,7 +799,7 @@ function refreshGuess(spine) {
 }
 function guessRow() {
   const n = guess ? guess.items.filter((it) => !isLater(it.path)).length : null;
-  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter most...' : n ? n + ' to look at, the ones that matter most first' : 'Nothing left to look at' });
+  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter most...' : n ? n + ' to firm up, most important first' : 'Nothing left to firm up' });
 }
 function guessList() {
   if (!guess) return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' }, h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
@@ -817,7 +817,7 @@ function guessList() {
   const open = kept().open || null;
   const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: why(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label), chip(it.kind)), h('p', { class: 'row-why' }, why(it))); };
   return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' },
-    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last change...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
+    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last change...' : 'Missing first, then the guesses that matter most.'),
     h('ul', { class: 'rows guess-rows' }, list.map(row)),
     items.length > 8 && h('button', { type: 'button', class: 'btn ghost', onclick: () => { keep({ all: !showAll }); refresh(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
     setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
@@ -852,7 +852,7 @@ function pickerCard() {
     return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
   };
   const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Pick what you have' },
-    h('p', { class: 'muted' }, 'Tick everything that applies; for several of one type, say how many. Each is added with its details blank, then My numbers shows only what is missing so you can fill it in.'),
+    h('p', { class: 'muted' }, 'Tick what you have. Fill in the details after.'),
     ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
     h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; go([]); } }, 'Cancel')));
   sync();
@@ -868,7 +868,7 @@ function subsRow() {
 }
 function subsScreen() {
   const sub = summaryOf(cur()).subs;
-  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None marked yet. Open an expense and tick "This is a subscription" to keep an eye on it.'));
+  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None marked yet. Open a bill and tick This is a subscription.'));
   const when = (i) => i.renews ? 'Next charge ' + shortDate(i.renews) + (i.daysToCharge === 0 ? ' (today)' : ' (in ' + i.daysToCharge + ' day' + (i.daysToCharge === 1 ? '' : 's') + ')') : 'Next charge not given';
   // Each one opens its editor right here, so the list stays the screen Back comes back to.
   const open = kept().open || null;
