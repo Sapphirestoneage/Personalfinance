@@ -13,8 +13,9 @@ A group is one row: a chevron, its name, and one total on the right. Tap the
 row to open it; only one group is open at a time. Inside, the biggest items
 come first. A rough or missing number is a small chip on its row.
 
-Goes on: Enter (the Ledger statement: the six DATING sections, then groups
-such as Credit cards, then items); Spending, See tab (Where it goes: each
+Goes on: My numbers (the statement: the six DATING sections, D Debt, A Assets,
+T Taxes, I Income, N Needs and G Goals, then groups such as Credit cards, then
+items); Spending, See tab (Where it goes: each
 category down to its lines); Plan (each step opens in place).
 
 ## 2. An inline editable row, like a spreadsheet
@@ -23,8 +24,8 @@ The amount is a box on the row. Type a number and it is saved; monthly is the
 default. Everything else (who pays, shared, covered by someone, dates) is a
 small toggle on the right, closed until asked for. Nothing else is required.
 
-Goes on: Enter (every step: Needs, Debt, Income, Assets, Goals); the Ledger
-rows inside each group.
+Goes on: Session (every step: Needs, Debt, Income, Assets, Goals); the rows
+inside each group on My numbers.
 
 ## 3. A review queue for imported transactions
 
@@ -39,7 +40,7 @@ Goes on: Spending, Do tab.
 Two numbers side by side: liquid net worth and total net worth. Tap one to
 see the six DATING sections, then a group, then an account.
 
-Goes on: Enter (the top of the Ledger statement); Today (the Net worth tile,
+Goes on: My numbers (the top of the statement); Today (the Net worth tile,
 which opens the same drill-down); One-pager (both numbers).
 
 ## 5. A small segmented time picker

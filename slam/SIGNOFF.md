@@ -6,7 +6,7 @@ value here is safe to publish. Your own numbers, the same checklist, and
 screenshots of your screens are in `SIGNOFF.local.md` and `signoff.local/`,
 which stay on your machine (gitignored).
 
-**How to look at it on a phone-sized screen:** open the Dashboard, then in the
+**How to look at it on a phone-sized screen:** open Today, then in the
 app's browser pane pick Mobile in the Viewport menu. The local server answers
 on this computer only, so a real phone cannot reach it yet (see the questions in
 the Phase 1 report).
@@ -27,7 +27,7 @@ the Phase 1 report).
 
 1. Switch the assumption set to Best, then Worst: every FI number and years to
    FI change; Likely is the default when the page opens fresh.
-2. In the Ledger, open Phone, choose "Someone else covers it" and pick
+2. In My numbers, open Phone, choose "Someone else covers it" and pick
    Parents: spending drops by $60 and the phone reads "covered by Parents ($0 to you)".
 3. Tap "Missing" in the Show row: only missing fields show, the chip reads
    "Only missing"; tap it again and everything is back.
@@ -43,7 +43,8 @@ the Phase 1 report).
 
 ## 4. What should always hold
 
-- Every big number has "View in the Ledger" and "Show the math", and the math
+- Every big number built from your numbers opens them in My numbers (the whole
+  card is the target, with a chevron) and has "Show the math", and the math
   recomputes to the number shown (the self-audit test checks all of them).
 - Missing never shows as $0; rough numbers say so.
 - Buttons look like buttons, links are underlined, nothing overlaps at 375px

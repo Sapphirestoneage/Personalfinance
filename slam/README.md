@@ -68,27 +68,34 @@ columns. Nothing leaves the browser. Each file goes into an account; its rows ar
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
 `node tools/riley.mjs` rebuilds Riley's year and files (fixed seed); `node tools/dana.mjs` rebuilds Dana's.
 
-## Phase 1: the household spine (Ledger and Dashboard)
+## Phase 1: the household spine (My numbers and Today)
 
 Two pages beside the Budget, built on one household record (the spine) and
 pure engines. Start the server as above, then open:
 
-- http://localhost:8000/ledger.html : every field, grouped Debt, Assets,
-  Income, Taxes, Expenses. Green is known, yellow is rough, red is missing.
+- http://localhost:8000/ledger.html (My numbers): every field, in the six
+  DATING sections: D Debt, A Assets, T Taxes, I Income, N Needs (all
+  spending) and G Goals (goals and the assumptions). The words are new; the
+  stored keys are not (spending is still `expenses`). Green is known, yellow
+  is rough, red is missing.
   Tap a field to edit it, confirm it, or mark it not for me. Undo and Redo
   (or Ctrl+Z, Ctrl+Shift+Z) work for every edit. "Still guessing" at the top
   lists every rough and missing field, the ones that move the results most first.
-- http://localhost:8000/dashboard.html : net worth, cash runway (with the
+- http://localhost:8000/dashboard.html (Today): net worth, cash runway (with the
   Roth basis backstop on its own line), surplus, savings rate, cards and the
   promo deadline, FI number and percent, the year's tax balance due, and the
   flags. Every number has a Show the math button: the formula, the numbers
   plugged in, and every input as a link.
-- http://localhost:8000/math.html : how every number is figured, built from
-  the engines when the page loads, with every rule and its source.
+- http://localhost:8000/math.html (All formulas, in the Builder): every
+  number in a list; each opens on its own screen with its formula, the same
+  formula with today's numbers, its inputs and its rules. The rules
+  themselves, with their sources, are on `rules.html`.
 
 Phase 2.5 (S-230): six tabs on every page (Today, Session, My numbers,
 Calendar, Spending, Plan; at the bottom on a phone, at the top on a
-computer). Today is `dashboard.html`; Session (`session.html`) lists the five
+computer). My numbers (`ledger.html`, once the Ledger) holds the six DATING
+sections. The One-pager opens from a button on Today, and its Back returns
+there. Today is `dashboard.html`; Session (`session.html`) lists the five
 steps of a first call. Every change on any page can be undone from any page
 (the last 25, kept in this browser). The Builder link at the bottom of every
 page opens `builder.html`: the Design kit (`affordances.html`), All formulas
@@ -107,17 +114,17 @@ On your own machine you can instead:
 1. Copy your profile file to `slam/fixtures/eli.local.json` (any name ending
    in `.local.json` in that folder is ignored by git; the pages look for
    this exact name).
-2. Serve the folder and open the Ledger. The header shows your name.
+2. Serve the folder and open My numbers. The header shows your name.
    Without the file the pages load the made-up demo household
    (`fixtures/demo.json`).
 3. Edits are saved in this browser only. "Go back to the file" at the bottom
-   of the Ledger drops them. The file itself is never rewritten.
+   of My numbers drops them. The file itself is never rewritten.
 
 The file can be a profile (the shape of `eli.profile.json`, version 3, 4, 5
 or later), a spine (`slam-spine/1`, the shape of `fixtures/demo.json`) or the
 Plan page's export. One loader reads them all (`engine/normalize.js
 readHousehold`): a field it cannot use reads missing and is listed at the top
-of the Ledger with what was wrong; nothing crashes a page.
+of My numbers with what was wrong; nothing crashes a page.
 
 ### Design and sign-off
 
@@ -135,16 +142,16 @@ report in `docs/PHASE2_REPORT.md`):
   on their due days, subscriptions on the day they charge, promo rates ending,
   tax dates, and anything starting or ending. Items with no day yet are
   listed under "sometime this month". Month-end cash comes from the
-  projection. Enter pay days and bill days in the Ledger to fill it in.
+  projection. Enter pay days and bill days in My numbers to fill it in.
 - http://localhost:8000/windfall.html : type a lump sum, say whether tax is
   still owed on it, and see where it goes in the house order (the
   `WINDFALL_ORDER` rule): tax on it, the year's tax bill, cash up to the
   stage 1 floor, promo balances the surplus cannot clear in time, cards
   charging interest, the Rule of 5 cushion, this year's Roth IRA room, then
-  what is left. Every step has Show the math and a Ledger link. Nothing is
+  what is left. Every step has Show the math and a link to My numbers. Nothing is
   written to the household.
 
-In the Ledger, an income stream now shows how much, how often, since when,
+In My numbers, an income stream now shows how much, how often, since when,
 until when and the day it is paid on one row, edited in one panel; an
 expense's panel has start and end dates under "When does it run?".
 
@@ -171,7 +178,7 @@ and what came off fold out. Drag an item's grip to another day, or open it and
 press Move; skip it once, re-price it this time, lock it. Maybe money waits in
 a tray until it has a day. Milestones (a card cleared, debt free, a promo
 ending) sit on their days and on a timeline. Search finds any item. Edits save
-in this browser like the Ledger's, with Undo. `engine/calendar-views.js` holds
+in this browser like every other change, with Undo. `engine/calendar-views.js` holds
 the readings; `ui/window.js` the selector; `ui/calendar.js` only formats.
 
 ### The Debt tab (Batch C, S-205)
@@ -212,7 +219,7 @@ planned line (within 2% and 5 days), recurring, new, already in, or skipped
 (a card payment is not spending); nothing lands until you apply, and nothing
 lands twice. Estimated vs actual then reads the plan against the log per line
 and per tag over the window, income logged against planned, and the savings
-rate from the real ledger; the Dashboard carries this month's reading.
+rate from the real ledger; Today carries this month's reading.
 
 ### The Plan page (Batch F, S-208)
 
@@ -245,14 +252,14 @@ interest on its day, bill timing with Save the new due day. What you log now
 moves the cash line once: a happened item replaces its plan, a typed bill or
 paycheck claims its own occurrence, everyday spending moves cash only past the
 plan. Safe to spend is capped at the lowest point ahead. So far and expected
-by month end are on Spending and the Dashboard. No balance never reads as $0.
+by month end are on Spending and Today. No balance never reads as $0.
 
 The Budget's own calendar is retired (answer 39, Phase 2.5); what it did that
 SLAM does not is listed in `docs/PHASE2_REPORT.md`, Known differences.
 
 ### How much to max it? (S-211)
 
-Every tax-advantaged account in the Ledger (401(k), Roth 401(k), 403(b),
+Every tax-advantaged account in My numbers (401(k), Roth 401(k), 403(b),
 457(b), TSP, SIMPLE IRA, Solo 401(k), SEP IRA, traditional, Roth and spousal
 IRAs, HSA, 529) has a "How much to max it?" button among its actions. It opens
 a panel with each tax year still open: the year's limit plus the catch-up for
@@ -282,7 +289,7 @@ is.
 | --- | --- |
 | `data/rules-2026.json` | every limit, bracket, rate and threshold, with source and a verified word |
 | `engine/` | pure engines: rules, schema, cashflow, tax, projection, fi, debt, emergency, networth, flags, summary, ledger, edits, calendar, calendar-views, cashsim (over `vendor/`), debtview, spending, feed, compare, plan, windfall |
-| `ui/` | the Ledger, Dashboard, Calendar (with its Debt tab), Spending, Plan, Windfall and one-pager views (formatting only) |
+| `ui/` | Today, Session, My numbers, Calendar (with its Debt tab), Spending, Plan, Windfall, the One-pager and the Builder pages (Design kit, All formulas, Rules), all on one shell (`ui/shell.js`); formatting only |
 | `fixtures/` | `demo.json` (made up) and your `*.local.json` (never committed) |
 | `CONTRACTS.md` | the spine shape and every engine signature |
 | `BOARD.md`, `QUESTIONS.md` | what is done and next; open questions for Eli |

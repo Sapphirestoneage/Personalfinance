@@ -35,7 +35,8 @@ there first.
 12. Thin marks, washes not blocks (bands about 25% opacity). A 1px surface gap
     separates touching marks; no outlines, no dashed grid.
 13. Two or more colors get a legend in words. Every chart has a list twin with
-    every value and its Ledger link; a tooltip is never the only way to a value.
+    every value and its link to My numbers; a tooltip is never the only way to a
+    value.
 14. If the desktop form does not fit at phone width with 12px text, the phone
     gets its own form (a bar list), not a shrunken chart.
 
