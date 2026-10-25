@@ -92,6 +92,8 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
   const mis = tracker();
   mis.absorb(goalR); mis.absorb(implied);
   return {
+    // Yearly spending the FI number rests on (Batch 3): the goal's own when it has one, else today's spending.
+    yearlySpending: goalSource === 'spending' ? round2(goal * wr) : cf.expenses.total.value === null ? null : round2(cf.expenses.total.value * 12),
     fiNumber, goal: goalR, goalSource, implied,
     goalBelowImplied: mis.out(goal === null || implied.value === null ? null : goal < implied.value),
     fiPercent, leanFi, coastFi: coast, coastAge, coastReached: coast.value === null ? null : sheet.invested.value >= coast.value,

@@ -638,7 +638,7 @@ test('Triple D: best is the household\'s own assumptions; likely and worst come 
     expenses: [expense('rent', 3100)],
     assumptions: { inflation: K(0.03), realReturn: K(0.08), withdrawalRate: K(0.05), lifeExpectancy: K(90) }
   });
-  assert.deepEqual(SCENARIOS, ['best', 'likely', 'worst']);
+  assert.deepEqual(SCENARIOS, ['worst', 'likely', 'optimistic', 'best']);
   assert.equal(withScenario(s, R, 'best'), s, 'best changes nothing');
   const rate = (id) => { const a = scenarioAssumptions(s, R, id); return [a.realReturn.value, a.withdrawalRate.value]; };
   assert.deepEqual(rate('best'), [0.08, 0.05]);

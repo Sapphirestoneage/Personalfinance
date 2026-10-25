@@ -1,33 +1,429 @@
-// Session (S-230): the first call, in the order it runs: Needs, Debt, Income, Assets, Goals, each with its DATING
-// letter and one total from the engine (engine/summary.js sessionSteps). Each row opens My numbers at that section.
-// Batch 3 builds the guided flow here; until then the tab is never a dead click. Formatting only.
+// Session (S-230, Batch 3): a first session in under an hour. Five steps in call order, each its own screen
+// (session.html#/needs): Needs, Debt, Income (with the two tax questions), Assets, Goals (with the assumptions). Each
+// step shows its DATING letter and its running total, Back and Next, and the shell's trail. Every step can be skipped.
+// Type a number and it is saved (monthly unless changed); who pays, sharing, a cover and dates sit in a small closed
+// "More" on the right. Needs starts from tick lists (Yes, No, Skip) and three presets whose amounts land as guesses.
+// Every change goes through the shell's change() with words, so Undo takes it back. Formatting only: the totals come
+// from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
-import { startPage, numbersHref } from './shell.js';
+import { startPage, change, said, say, refresh, go } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
-import { h, chip, money } from './view.js';
+import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText } from '../engine/edits.js';
+import { setAt, getAt, valueOf as v } from '../engine/spine.js';
+import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
+import { payersOf } from '../engine/sharing.js';
+import { withScenario } from '../engine/scenarios.js';
+import { pickedScenario, pick, scenarioBar } from './scenario.js';
+import { h, chip, money, pct } from './view.js';
 
-// How each total reads: what the number is, in a client's words.
-const WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' in what you own', goals: ' in goals' };
-const EMPTY = { needs: 'No spending entered yet', debt: 'No debts entered yet', income: 'No income entered yet', assets: 'Nothing you own entered yet', goals: 'No goals yet' };
+// The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
+let DATA = { needs: [], presets: [], withdrawal: [] };
+try { const r = await fetch(new URL('../data/session-presets.json', import.meta.url), { cache: 'no-store' }); if (r.ok) DATA = await r.json(); } catch { /* the steps still list what is in your numbers */ }
 
-function row(step) {
+const STEPS = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals']];
+const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const lower = (x) => String(x || '').trim().toLowerCase();
+const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
+
+// ---------------------------------------------------------------- a row's pieces
+// A money box: blank is missing (never $0); a typed value is saved when the box is left.
+function moneyBox(id, value, label, onSet, placeholder = '$') {
+  const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
+  box.value = inputText('money', value);
+  box.addEventListener('change', () => {
+    const t = box.value.trim();
+    if (t === '') { onSet(null); return; }
+    const p = parseInput('money', t);
+    if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
+    onSet(p.value);
+  });
+  return box;
+}
+// A small whole-number box (a day of the month, a year).
+function intBox(id, value, label, onSet, { placeholder = 'day', min = 1, max = 31 } = {}) {
+  const box = h('input', { id, class: 'day-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder, 'aria-label': label });
+  box.value = value === null || value === undefined ? '' : String(value);
+  box.addEventListener('change', () => {
+    const t = box.value.trim();
+    if (t === '') { onSet(null); return; }
+    const p = parseInput('int', t);
+    if (!p.ok || p.value < min || p.value > max) { say(label + ': a whole number from ' + min + ' to ' + max); box.focus(); return; }
+    onSet(p.value);
+  });
+  return box;
+}
+// A rate box: 25 means 25%.
+function rateBox(id, value, label, onSet) {
+  const box = h('input', { id, class: 'rate-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '%', 'aria-label': label });
+  box.value = inputText('rate', value);
+  box.addEventListener('change', () => {
+    const t = box.value.trim();
+    if (t === '') { onSet(null); return; }
+    const p = parseInput('rate', t);
+    if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
+    onSet(p.value);
+  });
+  return box;
+}
+const pickBox = (id, label, options, value, onPick) => {
+  const s = h('select', { id, class: 'pick-box', 'aria-label': label, onchange: () => onPick(s.value) }, options.map(([val, words]) => h('option', { value: val, selected: val === value }, words)));
+  return s;
+};
+// A guess says so on its row.
+const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, 'guess') : f && f.kind === 'missing' ? chip('missing') : null);
+// A small closed fold on the right of a row: who pays, sharing, a cover, dates.
+// What is open stays open when a change redraws the screen.
+const openMore = new Set();
+function more(label, ...body) {
+  const d = h('details', { class: 'row-more', open: openMore.has(label) || null }, h('summary', { 'aria-label': 'More about ' + label }, 'More'), h('div', { class: 'row-more-body' }, ...body));
+  d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openMore.add(label); else openMore.delete(label); });
+  return d;
+}
+const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...kids);
+
+// ---------------------------------------------------------------- the step frame
+function frame(ctx, id, body) {
+  const s = summarize(ctx.spine, ctx.rules, { flags: false });
+  const steps = sessionSteps(ctx.spine, s);
+  const i = STEPS.findIndex((x) => x[0] === id), step = steps.find((x) => x.id === id);
+  const prev = STEPS[i - 1], next = STEPS[i + 1];
+  return [
+    h('section', { class: 'card step-head', 'aria-label': 'Step ' + (i + 1) + ' of ' + STEPS.length },
+      h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
+      h('span', { class: 'step-name' }, 'Step ' + (i + 1) + ' of ' + STEPS.length + ': ' + STEPS[i][2]),
+      h('span', { class: 'step-total' }, totalWords(step))),
+    ...[].concat(body(s)),
+    h('div', { class: 'step-nav' },
+      h('button', { type: 'button', class: 'btn', onclick: () => go(prev ? [prev[0]] : []) }, '‹ Back'),
+      next ? h('button', { type: 'button', class: 'btn primary', onclick: () => go([next[0]]) }, 'Next: ' + next[2] + ' ›')
+        : h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Done: see Today ›')),
+    h('p', { class: 'muted step-skip' }, 'Nothing here is required. Next skips ahead.')
+  ];
+}
+const WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
+function totalWords(step) {
   const r = step.result;
-  // Missing reads missing, never $0 (empty is not zero).
-  const total = r.value === null
-    ? h('span', { class: 'empty' }, step.id === 'goals' && r.count ? 'Goals with no amount yet' : EMPTY[step.id])
-    : h('span', {}, h('span', { class: 'go-total' }, money(r.value)), WORDS[step.id]);
-  return h('li', {}, h('a', { class: 'go-row', href: numbersHref(step.id) },
-    h('span', { class: 'go-mark', 'aria-hidden': 'true' }, step.letter),
-    h('span', { class: 'go-name' }, step.label),
-    h('span', { class: 'go-sub' }, total, r.value !== null && (r.kind === 'rough' || r.kind === 'incomplete') ? chip(r.kind) : null)));
+  if (r.value === null) return h('span', { class: 'empty' }, 'Nothing yet');
+  return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
 }
 
-function render({ spine, rules }) {
-  const steps = sessionSteps(spine, summarize(spine, rules, { flags: false }));
+// ---------------------------------------------------------------- Needs
+const NO_KEY = 'slam-session-no:v1';
+const noList = () => { try { return JSON.parse(localStorage.getItem(NO_KEY) || '[]'); } catch { return []; } };
+function setNo(key, on) { try { const l = new Set(noList()); if (on) l.add(key); else l.delete(key); localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } refresh(); }
+const findExpense = (spine, label) => (spine.expenses || []).find((e) => lower(e.label) === lower(label)) || null;
+
+// A starter line added: its tag, need or want, and a subscription mark from the list.
+function addLine(spine, item, fat, today) {
+  const r = addItem(spine, { collection: 'expenses', label: item.label, fat }, today);
+  let s = putFact(r.spine, 'expenses.' + r.id + '.need', item.need !== false, 'known', today);
+  if (item.subscription) s = editExpense(s, r.id, { amount: null, subscription: true }, today);
+  return { spine: s, id: r.id };
+}
+function setLineAmount(item, fat, value, kind = 'known') {
+  const today = todayIso();
+  change((spine) => {
+    let s = spine, e = findExpense(spine, item.label);
+    if (!e) { if (value === null) return spine; const r = addLine(s, item, fat, today); s = r.spine; e = getAt(s, 'expenses.' + r.id); }
+    return editExpense(s, e.id, { amount: value, kind }, today);
+  }, value === null ? item.label + ' cleared' : said.changed(item.label, money(value) + ' a month'));
+}
+function setLineDay(e, day) {
+  change((spine) => (day === null ? setAt(spine, 'expenses.' + e.id, drop(getAt(spine, 'expenses.' + e.id), 'payDay')) : putFact(spine, 'expenses.' + e.id + '.payDay', day, 'known', todayIso())), day === null ? e.label + ': day cleared' : said.changed(e.label + ' day', 'the ' + day + suffix(day)));
+}
+const suffix = (n) => (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+function whoPays(spine, e) {
+  const amount = v(e.amount), kind = e.amount ? e.amount.kind : 'missing', today = todayIso();
+  const now = e.covered && v(e.covered) ? 'covered' : e.shared && v(e.shared) ? 'shared' : 'me';
+  const names = payersOf(spine);
+  const cover = (e.coveredBy && v(e.coveredBy)) || names[0];
+  const set = (how, name = cover) => change((s) => editExpense(s, e.id, how === 'covered' ? { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: name } : { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: null, sharing: { shared: how === 'shared', sharedWith: 2, whoPays: 'part' } }, today),
+    said.changed(e.label + ': who pays', how === 'covered' ? name : how === 'shared' ? 'shared, half each' : 'me'));
   return [
-    h('p', { class: 'lede' }, 'Your first session, step by step: tap a step to fill in that part of your numbers.'),
-    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map(row))
+    h('label', { class: 'mini-label', for: 'who-' + e.id }, 'Who pays'),
+    pickBox('who-' + e.id, 'Who pays ' + e.label, [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], now, (x) => set(x)),
+    now === 'covered' ? [h('label', { class: 'mini-label', for: 'by-' + e.id }, 'Covered by'), pickBox('by-' + e.id, e.label + ' covered by', names.map((n) => [n, n]), cover, (x) => set('covered', x))] : null,
+    h('label', { class: 'mini-label', for: 'nw-' + e.id }, 'Need or want'),
+    pickBox('nw-' + e.id, e.label + ': need or want', [['true', 'Need'], ['false', 'Want']], String(v(e.need) !== false), (x) => change((s) => putFact(s, 'expenses.' + e.id + '.need', x === 'true', 'known', today), said.changed(e.label, x === 'true' ? 'a need' : 'a want'))),
+    h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in My numbers'))
+  ];
+}
+// One line: its name, the amount, a day, More; a line not in your numbers yet also offers Yes, No and Skip.
+function needRow(spine, item, fat, key, sub = false) {
+  const e = findExpense(spine, item.label);
+  const no = !e && noList().includes(key);
+  if (no) return null;
+  const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount) : null);
+  const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x));
+  if (!e) return lineRow(sub ? 'sub' : '', name, amt,
+    h('span', { class: 'tick', role: 'group', 'aria-label': item.label + ': do you have it?' },
+      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, item, fat, todayIso()).spine, said.added(item.label)) }, 'Yes'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
+  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), more(item.label, ...whoPays(spine, e)));
+}
+function presetApply(p) {
+  const today = todayIso();
+  change((spine) => {
+    let s = spine;
+    for (const cat of DATA.needs) for (const item of cat.items.flatMap((x) => [x, ...(x.subs || [])])) {
+      const amt = p.amounts[item.key];
+      if (amt === undefined) continue;
+      let e = findExpense(s, item.label);
+      if (e && v(e.amount) !== null) continue;
+      if (!e) { const r = addLine(s, item, cat.fat, today); s = r.spine; e = getAt(s, 'expenses.' + r.id); }
+      const who = p.covered && p.covered[item.key];
+      s = editExpense(s, e.id, { amount: amt, kind: 'rough', ...(who ? { coveredBy: who } : {}) }, today);
+    }
+    if (p.incomeType && !(s.income || []).some((x) => x.type === p.incomeType)) s = addItem(s, { collection: 'income', type: p.incomeType, label: p.incomeType === '1099' ? 'Self-employed work' : p.label }, today).spine;
+    return s;
+  }, p.label + ' guesses added');
+}
+function needs(ctx) {
+  const spine = ctx.spine;
+  const known = new Set(DATA.needs.flatMap((c) => c.items.flatMap((x) => [x, ...(x.subs || [])])).map((x) => lower(x.label)));
+  const extra = (fat) => (spine.expenses || []).filter((e) => !known.has(lower(e.label)) && !DATA.needs.some((c) => lower(c.label) === lower(e.label)) && (fat === 'other' ? !['food', 'accommodation', 'transportation'].includes(e.fat) : e.fat === fat));
+  const hidden = noList().filter((k) => DATA.needs.some((c) => c.items.some((x) => x.key === k || (x.subs || []).some((y) => y.key === k))));
+  return frame(ctx, 'needs', () => [
+    h('section', { class: 'card' },
+      h('p', { class: 'edit-label' }, 'Start from a guess'),
+      h('div', { class: 'edit-actions' }, DATA.presets.map((p) => h('button', { type: 'button', class: 'btn small', onclick: () => presetApply(p) }, p.label))),
+      h('p', { class: 'edit-hint' }, 'Fills empty lines with typical amounts, marked guess. Type over any of them.')),
+    ...DATA.needs.map((cat) => {
+      const catLine = findExpense(spine, cat.label);
+      const lines = cat.items.flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
+      const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
+      const oneNumber = cat.items.length > 1 ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
+      return h('section', { class: 'card', 'aria-labelledby': 'cat-' + cat.id },
+        h('h2', { id: 'cat-' + cat.id }, cat.label),
+        h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), oneNumber));
+    }),
+    hidden.length ? h('p', { class: 'muted' }, hidden.length + ' marked No. ', h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of hidden) setNo(k, false); } }, 'Show them again')) : null
+  ]);
+}
+
+// ---------------------------------------------------------------- Debt
+const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
+const putF = (path, value, words, kind = 'known') => change((s) => (value === null ? putFact(s, path, null, 'missing', todayIso()) : putFact(s, path, value, kind, todayIso())), words);
+function addDebt(type, label) {
+  change((spine) => {
+    const r = addItem(spine, { collection: 'debts', type, label }, todayIso());
+    let s = r.spine;
+    // A car loan takes over a "Car payment" line in Needs, so the payment counts once.
+    const pay = type === 'auto_loan' ? findExpense(s, 'Car payment') : null;
+    if (pay && !pay.paysDebt) s = putFact(s, 'expenses.' + pay.id + '.paysDebt', r.id, 'known', todayIso());
+    return s;
+  }, said.added(label));
+}
+function debt(ctx) {
+  const spine = ctx.spine;
+  const list = spine.debts || [];
+  return frame(ctx, 'debt', () => [
+    h('section', { class: 'card' },
+      list.length ? h('ul', { class: 'srows' }, list.map((d) => {
+        const name = v(d.name) || d.id, p = 'debts.' + d.id;
+        return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance)),
+          moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'owed'),
+          rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2)))),
+          moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'a month'),
+          intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x)))));
+      })) : h('p', { class: 'muted' }, 'No debts yet.'),
+      list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
+    h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Add one'), h('div', { class: 'edit-actions' }, DEBT_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
+  ]);
+}
+
+// ---------------------------------------------------------------- Income (and the two tax questions)
+const INCOME_ADD = [['w2', 'Paycheck (W-2)'], ['1099', '1099 work'], ['unemployment', 'Unemployment'], ['side', 'Side money (not 1099)'], ['person', 'Money from a person']];
+const OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every 2 weeks'], ['semimonthly', 'twice a month'], ['yearly', 'a year']];
+function setIncome(x, patch, words) {
+  change((s) => editIncome(s, x.id, { amount: v(x.amount), cadence: x.cadence, kind: x.amount && x.amount.kind !== 'missing' ? x.amount.kind : 'known', ...patch }, todayIso()), words);
+}
+// Money from a person: who and what for. A loan becomes a debt; money paid straight to a bill covers that bill.
+function personBits(spine, x) {
+  const p = 'income.' + x.id, today = todayIso();
+  const who = v(x.from), purpose = v(x.purpose);
+  const names = payersOf(spine);
+  const name = x.label;
+  const toLoan = () => change((s) => {
+    const amt = v(x.amount);
+    const r = addItem(removeItem(s, 'income', x.id), { collection: 'debts', type: 'family_iou', label: 'Owed to ' + (who || 'a person') }, today);
+    return amt === null ? r.spine : putFact(r.spine, 'debts.' + r.id + '.balance', amt, 'known', today);
+  }, name + ' is a loan now, under Debt');
+  const toBill = (id) => {
+    const e = (spine.expenses || []).find((y) => y.id === id);
+    if (!e) return;
+    change((s) => removeItem(editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: who || names[0] }, today), 'income', x.id), e.label + ' is covered by ' + (who || names[0]) + ' now');
+  };
+  return [
+    h('label', { class: 'mini-label', for: 'pf-' + x.id }, 'Who'),
+    pickBox('pf-' + x.id, name + ': who it is from', [['', 'Pick a name'], ...names.map((n) => [n, n])], who || '', (n) => putF(p + '.from', n || null, said.changed(name + ' from', n || 'blank'))),
+    h('label', { class: 'mini-label', for: 'pp-' + x.id }, 'What it is for'),
+    pickBox('pp-' + x.id, name + ': what it is for', [['', 'Pick one'], ...Object.entries(PERSON_PURPOSE_WORDS)], purpose || '', (k) => (k === 'loan' ? toLoan() : putF(p + '.purpose', k || null, said.changed(name, k ? PERSON_PURPOSE_WORDS[k].toLowerCase() : 'blank')))),
+    purpose === 'alimony' ? [h('label', { class: 'mini-label', for: 'py-' + x.id }, 'Year of the divorce decree'), intBox('py-' + x.id, v(x.decreeYear), name + ': year of the decree', (y) => putF(p + '.decreeYear', y, said.changed(name + ' decree year', y === null ? 'blank' : String(y))), { placeholder: 'year', min: 1950, max: 2100 })] : null,
+    purpose === 'allowance' ? [h('label', { class: 'mini-label', for: 'pa-' + x.id }, 'It is'), pickBox('pa-' + x.id, name + ': gift or pay', [['gift', 'A gift (not taxed)'], ['time', 'Pay for my time (taxed)']], v(x.allowanceMode) || 'gift', (m) => putF(p + '.allowanceMode', m, said.changed(name, m === 'time' ? 'pay for your time' : 'a gift')))] : null,
+    h('p', { class: 'edit-hint' }, taxWords(x)),
+    (spine.expenses || []).length ? [h('label', { class: 'mini-label', for: 'pb-' + x.id }, 'Paid straight to a bill (optional)'), pickBox('pb-' + x.id, name + ': paid straight to a bill', [['', 'No, it comes to me'], ...spine.expenses.map((e) => [e.id, e.label])], '', toBill)] : null
+  ];
+}
+function taxWords(x) {
+  const purpose = v(x.purpose);
+  if (purpose === null) return 'Pick what it is for to see if it is taxed.';
+  if (purpose === 'alimony') { const y = v(x.decreeYear); return y === null ? 'Alimony is taxed only under a decree from before 2019. Add the year.' : y >= 2019 ? 'Not taxed: the decree is from 2019 or later.' : 'Taxed: the decree is from before 2019.'; }
+  if (purpose === 'allowance') return v(x.allowanceMode) === 'time' ? 'Taxed as self-employment, with tax set aside from each payment.' : 'Not taxed.';
+  return 'Not taxed.';
+}
+function incomeRows(spine) {
+  return (spine.income || []).filter((x) => x.type !== 'maybeMoney').map((x) => {
+    const p = 'income.' + x.id;
+    return lineRow('income', h('span', { class: 'srow-name' }, x.label, guessChip(x.amount)),
+      moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a)))),
+      pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1]))),
+      x.cadence === 'monthly' || x.cadence === 'semimonthly' ? intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d)))) : null,
+      x.type === 'person' ? more(x.label, ...personBits(spine, x)) : isSelfEmployment(x) ? h('span', { class: 'muted mini-note' }, 'tax set aside') : null);
+  });
+}
+function income(ctx) {
+  const spine = ctx.spine, hh = spine.household, today = todayIso();
+  const last = v(hh.lastRefund) ?? null;
+  // A refund or an amount owed with no amount yet stays missing (never $0); the choice waits here for the amount.
+  const lastHow = last === null ? (hh.lastRefund && hh.lastRefund.kind === 'notForMe' ? 'none' : lastPending) : last >= 0 ? 'refund' : 'owed';
+  const setLast = (how, amt) => {
+    lastPending = how === 'refund' || how === 'owed' ? how : '';
+    if ((how === 'refund' || how === 'owed') && amt === null) { if (last === null) { refresh(); return; } }
+    change((s) => (how === 'none' ? putFact(s, 'household.lastRefund', null, 'notForMe', today) : how === '' || amt === null ? putFact(s, 'household.lastRefund', null, 'missing', today) : putFact(s, 'household.lastRefund', how === 'owed' ? -Math.abs(amt) : Math.abs(amt), 'known', today)),
+      said.changed('Last year\'s tax', how === 'refund' ? 'a refund of ' + money(Math.abs(amt)) : how === 'owed' ? money(Math.abs(amt)) + ' owed' : how === 'none' ? 'did not file' : 'not sure'));
+  };
+  return frame(ctx, 'income', () => [
+    h('section', { class: 'card' },
+      (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine)) : h('p', { class: 'muted' }, 'No income yet.'),
+      h('p', { class: 'edit-label' }, 'Add one'),
+      h('div', { class: 'edit-actions' }, INCOME_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addItem(s, { collection: 'income', type, label }, today).spine, said.added(label)) }, label)))),
+    h('section', { class: 'card', 'aria-labelledby': 'tax-h' },
+      h('h2', { id: 'tax-h' }, h('span', { class: 'go-mark', 'aria-hidden': 'true' }, 'T'), 'Taxes'),
+      h('ul', { class: 'srows' },
+        lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
+          pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
+        lineRow('', h('label', { class: 'srow-name', for: 't-last' }, 'Last year'),
+          pickBox('t-last', 'Last year\'s tax', [['', 'Not sure'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
+          lastHow === 'refund' || lastHow === 'owed' ? moneyBox('t-last-amt', last === null ? null : Math.abs(last), 'How much', (a) => setLast(lastHow, a)) : null)),
+      h('p', { class: 'edit-hint' }, 'The rest of taxes can wait for a later session.'))
+  ]);
+}
+let lastPending = '';
+const FILING_WORDS = { single: 'Single', mfj: 'Married, filing jointly', mfs: 'Married, filing separately', hoh: 'Head of household' };
+
+// ---------------------------------------------------------------- Assets
+const IRA_TYPES = [['roth_ira', 'Roth'], ['traditional_ira', 'Traditional'], ['sep_ira', 'SEP'], ['simple_ira', 'SIMPLE']];
+const ASSET_ADD = [['checking', 'Checking'], ['savings', 'Savings'], ['hysa', 'High-yield savings'], ['k401', '401(k)'], ['hsa', 'HSA'], ['brokerage', 'Brokerage'], ['car', 'Car'], ['home', 'Home']];
+// Liquid or not, as the balance sheet counts it (summary.js sheet.liquid).
+const liquidPart = (s, a) => { const it = s.sheet.liquid.items.find((x) => x.id === a.id); return it ? it.part : null; };
+const HOLD = [['ticker', 'Ticker', 'text'], ['share', 'Share of the account', 'rate'], ['expenseRatio', 'Expense ratio', 'rate'], ['managedBy', 'Managed by', 'text'], ['advisoryFee', 'Advisory fee', 'rate']];
+function holdings(a) {
+  const p = 'accounts.' + a.id + '.holdings', name = v(a.name) || a.id;
+  const list = v(a.holdings) || [];
+  const save = (next, words) => putF(p, next, words);
+  return more(name + ' holdings',
+    h('p', { class: 'mini-label' }, 'Holdings (optional)'),
+    h('ul', { class: 'srows holds' }, list.map((row, i) => lineRow('hold', ...HOLD.map(([k, label, type]) => {
+      const id = 'h-' + a.id + '-' + i + '-' + k;
+      const box = h('input', { id, class: type === 'rate' ? 'rate-box' : 'text-box', type: 'text', autocomplete: 'off', placeholder: type === 'rate' ? label + ' %' : label, 'aria-label': name + ' holding ' + (i + 1) + ': ' + label });
+      box.value = row[k] === null || row[k] === undefined ? '' : type === 'rate' ? inputText('rate', row[k]) : String(row[k]);
+      box.addEventListener('change', () => {
+        const t = box.value.trim();
+        let val = t === '' ? null : t;
+        if (val !== null && type === 'rate') { const q = parseInput('rate', t); if (!q.ok) { say(label + ': ' + q.message); return; } val = q.value; }
+        save(list.map((r, j) => (j === i ? { ...r, [k]: k === 'ticker' && val ? val.toUpperCase() : val } : r)), said.changed(name + ' holding ' + (i + 1) + ' ' + label.toLowerCase(), val === null ? 'blank' : String(t)));
+      });
+      return box;
+    }), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Remove holding ' + (i + 1), onclick: () => save(list.filter((_, j) => j !== i), name + ': holding ' + (i + 1) + ' removed') }, 'Remove')))),
+    h('button', { type: 'button', class: 'btn small', onclick: () => save([...list, { ticker: null, share: null, expenseRatio: null, managedBy: null, advisoryFee: null }], name + ': a holding added') }, 'Add a holding'));
+}
+function assets(ctx) {
+  const spine = ctx.spine, today = todayIso();
+  let iraPick = 'roth_ira';
+  const addAcct = (type, label) => change((s) => addItem(s, { collection: 'accounts', type, label }, today).spine, said.added(label));
+  return frame(ctx, 'assets', (s) => [
+    h('section', { class: 'card' },
+      (spine.accounts || []).length ? h('ul', { class: 'srows' }, spine.accounts.map((a) => {
+        const name = v(a.name) || a.id, p = 'accounts.' + a.id, part = liquidPart(s, a), on = part !== null;
+        return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance)),
+          moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x)))),
+          h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => putF(p + '.liquid', !on, said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
+          a.family === 'taxable' ? holdings(a) : null);
+      })) : h('p', { class: 'muted' }, 'Nothing yet.'),
+      h('p', { class: 'edit-hint' }, 'Liquid: money you can reach without a penalty or selling something you live with. Tap to change it.')),
+    h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Add one'),
+      h('div', { class: 'edit-actions' }, ASSET_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(type, label) }, label))),
+      h('div', { class: 'edit-actions' },
+        pickBox('a-ira', 'IRA type', IRA_TYPES, iraPick, (x) => { iraPick = x; }),
+        h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(iraPick, PRESETS[iraPick].label) }, 'Add an IRA')))
+  ]);
+}
+
+// ---------------------------------------------------------------- Goals (and the assumptions)
+function goals(ctx) {
+  const spine = ctx.spine, rules = ctx.rules, today = todayIso();
+  return frame(ctx, 'goals', () => {
+    const s = summarize(withScenario(spine, rules, pickedScenario()), rules, { flags: false });
+    const fi = s.fi, em = s.emergency, cards = s.sheet.cards;
+    const yearly = fi.yearlySpending;
+    const list = (spine.goals || []).filter((g) => g.type !== 'fi');
+    const order = v(spine.household.goalOrder) || 'oneAtATime';
+    const form = { name: h('input', { id: 'g-name', type: 'text', autocomplete: 'off', 'aria-label': 'Goal name', placeholder: 'Name' }), amt: h('input', { id: 'g-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', 'aria-label': 'Goal amount in dollars', placeholder: 'Amount ($)' }), by: h('input', { id: 'g-by', type: 'date', 'aria-label': 'By when' }) };
+    const add = (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      if (!name) { say('Give the goal a name'); form.name.focus(); return; }
+      const a = form.amt.value.trim() === '' ? { ok: true, value: null } : parseInput('money', form.amt.value);
+      if (!a.ok) { say('Amount: ' + a.message); form.amt.focus(); return; }
+      change((sp) => { const r = addItem(sp, { collection: 'goals', type: 'savings', label: name }, today); let n = a.value === null ? r.spine : putFact(r.spine, 'goals.' + r.id + '.target', a.value, 'known', today); if (form.by.value) n = setAt(n, 'goals.' + r.id + '.by', form.by.value); return n; }, said.added('Goal ' + name));
+    };
+    const wr = v(spine.assumptions.withdrawalRate);
+    return [
+      h('section', { class: 'card fi-card', 'aria-label': 'Financial independence' },
+        h('h2', {}, 'Financial independence'),
+        h('dl', { class: 'kv' },
+          h('dt', {}, 'Yearly spending'), h('dd', {}, yearly === null ? 'missing' : money(yearly) + (fi.goalSource === 'spending' ? ' (your goal)' : '')),
+          h('dt', {}, 'FI number'), h('dd', {}, fi.fiNumber.value === null ? 'missing' : money(fi.fiNumber.value)),
+          h('dt', {}, 'There so far'), h('dd', {}, fi.fiPercent.value === null ? 'missing' : pct(fi.fiPercent.value, 1)))),
+      h('section', { class: 'card', 'aria-labelledby': 'g-h' },
+        h('h2', { id: 'g-h' }, 'Goals'),
+        h('ul', { class: 'srows' },
+          lineRow('', h('span', { class: 'srow-name' }, 'The cushion (Rule of 5)'), h('span', { class: 'srow-val' }, em.targetDollars.value === null ? 'missing a birth date' : money(s.sheet.cash.value) + ' of ' + money(em.targetDollars.value))),
+          lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, cards.value ? money(cards.value) + ' to go' : 'Done')),
+          ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target)),
+            moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
+            (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
+        h('form', { class: 'goal-form', novalidate: true, onsubmit: add }, form.name, form.amt, form.by, h('button', { type: 'submit', class: 'btn small primary' }, 'Add a goal')),
+        h('p', { class: 'edit-label' }, 'Fund goals'),
+        h('div', { class: 'segmented', role: 'group', 'aria-label': 'Fund goals' }, [['oneAtATime', 'One at a time'], ['byDeadline', 'By deadline']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(order === k), onclick: () => { if (order !== k) putF('household.goalOrder', k, said.changed('Goals', w.toLowerCase())); } }, h('span', { class: 'seg-label' }, w))))),
+      scenarioBar(spine, rules, pickedScenario(), () => refresh()),
+      h('section', { class: 'card', 'aria-labelledby': 'wr-h' },
+        h('h2', { id: 'wr-h' }, 'Withdrawal rate'),
+        h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: pickedScenario() === 'best' ? wr === w.rate : !!w.default, onchange: () => { pick('best'); change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)); } }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source)))))),
+        h('p', { class: 'edit-hint' }, 'Picking one uses your own assumptions.'))
+    ];
+  });
+}
+
+// ---------------------------------------------------------------- the top screen
+function overview(ctx) {
+  const steps = sessionSteps(ctx.spine, summarize(ctx.spine, ctx.rules, { flags: false }));
+  return [
+    h('p', { class: 'lede' }, 'Five steps for a first session. Skip anything.'),
+    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
+      h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
+      h('span', { class: 'go-name' }, st.label),
+      h('span', { class: 'go-sub' }, totalWords(st)))))),
+    h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›'))
   ];
 }
 
-startPage({ tab: 'session', title: 'Session', render });
+const SCREENS = { needs, debt, income, assets, goals };
+function render(ctx) {
+  const id = ctx.levels[0];
+  return id ? SCREENS[id](ctx) : overview(ctx);
+}
+const name = (levels) => (levels.length === 1 ? (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null : null);
+
+startPage({ tab: 'session', title: 'Session', render, name });

@@ -1544,6 +1544,26 @@
       "verified": "assumption"
     },
     {
+      "id": "SCENARIO_OPT_RETURN",
+      "rule": "Real return in the optimistic assumption set",
+      "value": 0.07,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (assumption sets)",
+      "notes": "Batch 3: about the long-run real return of US stocks (1926 on); a return above this is warned about",
+      "source": "Eli house assumption",
+      "verified": "assumption"
+    },
+    {
+      "id": "SCENARIO_OPT_WR",
+      "rule": "Withdrawal rate in the optimistic assumption set",
+      "value": 0.047,
+      "unit": "rate",
+      "appliesTo": "FI engine and projection (assumption sets)",
+      "notes": "Batch 3: Bengen's updated safe rate (A Richer Retirement, 2025); a rate above this is warned about",
+      "source": "William Bengen, A Richer Retirement (2025)",
+      "verified": "verify"
+    },
+    {
       "id": "DEFAULT_APY",
       "rule": "APY used when a cash account (not high-yield savings) has none",
       "value": 0.0001,

@@ -6,7 +6,7 @@
 // named in the problems the Ledger shows.
 
 import { fact, monthEnd, getAt, isFact, isDay, KINDS } from './spine.js';
-import { SCHEMA_ID, PRESETS, FAMILIES, validate } from './schema.js';
+import { SCHEMA_ID, PRESETS, FAMILIES, validate, isSelfEmployment } from './schema.js';
 import { labelFor, namedPath } from './labels.js';
 
 const list = (x) => (Array.isArray(x) ? x.filter((y) => y && typeof y === 'object') : []);
@@ -107,7 +107,8 @@ export function fromProfile(p, { today = null } = {}) {
     // (the profile's "2026 only" W-2 line), not a yearly rate. S-143.
     let cadence = s.cadence;
     if (cadence === 'yearly' && s.start && s.end && (Date.parse(s.end) - Date.parse(s.start)) / 864e5 < 364) cadence = 'total';
-    const noWithholding = s.type === '1099';
+    // Nothing is withheld from self-employment pay or from money from a person (Batch 3).
+    const noWithholding = isSelfEmployment(s) || s.type === 'person';
     const out = {
       // A line names whose it is when the profile says so (personId or person); else the first person's (S-211).
       id: s.id || slug(s.label || 'income', incomeIds), type: s.type, label: typeof s.label === 'string' ? s.label : s.id || 'Income', personId: people.some((x) => x.id === (s.personId || s.person)) ? (s.personId || s.person) : personId,

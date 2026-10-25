@@ -10,7 +10,7 @@
 import { bracketTax, marginalRate } from '../src/calc/tax.js';
 import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
-import { PRESETS, throughPayroll } from './schema.js';
+import { PRESETS, throughPayroll, isSelfEmployment, personTax } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
 import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, fromPayOf } from './contrib.js';
 
@@ -162,9 +162,19 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     const amt = t.useFact(base + '.amount', s.amount);
     const paid = amt === null ? null : paidBetween(amt, s.cadence, s.start, s.end, from, to) * (w ?? 1);
     let beLine = null;
+    // Money from a person (Batch 3): not taxed unless alimony under a decree from before 2019 (ordinary income) or an
+    // allowance that is pay for your time (self-employment). What decides it, not given yet, leaves the tax missing.
+    const how = s.type === 'person' ? personTax(s) : null;
+    if (s.type === 'person') {
+      if (s.purpose) t.useFact(base + '.purpose', s.purpose);
+      if (s.purpose && s.purpose.value === 'alimony' && s.decreeYear) t.useFact(base + '.decreeYear', s.decreeYear);
+      if (how === null) { miss.income.push(base + (s.purpose && s.purpose.value === 'alimony' ? '.decreeYear' : '.purpose')); continue; }
+      if (how === 'none') continue;
+    }
+    const se = isSelfEmployment(s);
     if (amt === null) (s.type === 'w2' || s.type === 'tips' ? miss.wages : miss.income).push(base + '.amount');
     else if (s.type === 'w2' || s.type === 'tips') { known.wages += paid; known.ficaWages += paid; add(wagesBy, incomeOwner(spine, s), paid); add(ficaBy, incomeOwner(spine, s), paid); }
-    else if (s.type === '1099') {
+    else if (se) {
       // Profit = gross less business expenses (S-179); none entered means none.
       const be = s.businessExpenses ? t.useFact(base + '.businessExpenses', s.businessExpenses) : null;
       const beYear = be === null ? 0 : paidBetween(be, s.cadence, s.start, s.end, from, to) * (w ?? 1);
@@ -174,10 +184,10 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     }
     else if (s.type === 'unemployment') known.unemployment += paid;
     else known.otherOrdinary += paid;
-    if (s.type === 'w2' || s.type === 'tips' || s.type === '1099') {
+    if (s.type === 'w2' || s.type === 'tips' || se) {
       // Each line keeps whose it is and, for pay, the months of the year it runs (pre-tax saving comes out of those).
       const a = s.start && s.start > from ? s.start : from, b = s.end && s.end < to ? s.end : to;
-      earned.lines.push({ id: s.id, type: s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: amt === 0 ? 0 : (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
+      earned.lines.push({ id: s.id, type: se ? '1099' : s.type, label: s.label, path: base + '.amount', amount: paid, personId: s.personId || null, months: amt === 0 ? 0 : (+b.slice(5, 7)) - (+a.slice(5, 7)) + 1, reads: [base + '.amount', ...(s.likelihood ? [base + '.likelihood'] : []), ...(s.type === '1099' && s.businessExpenses ? [base + '.businessExpenses'] : [])] }, ...(beLine ? [beLine] : []));
     }
     // A line known to pay $0 has no months of pay: nothing comes out of it.
     if ((s.type === 'w2' || s.type === 'tips') && amt !== 0) {
@@ -511,7 +521,7 @@ export function taxSetAside(spine, R, ym, { mode = 'committed', streams = [], ca
       if (!r) { t.addMissing('household.filingStatus'); continue; }
       t.useFact('income.' + st.id + '.amount', src.amount);
       t.useFact('income.' + st.id + '.withholding.federal', src.withholding.federal);
-      const rr = r.federal + r.state + (src.type === '1099' ? r.se : 0);
+      const rr = r.federal + r.state + (isSelfEmployment(src) ? r.se : 0);
       total += st.gross * rr;
       lines.push({ kind: 'income', id: st.id, label: st.label, base: round2(st.gross), rate: rr, amount: round2(st.gross * rr), taxYear: ty });
     }

@@ -15,7 +15,7 @@ import { windfall } from './windfall.js';
 import { maxIt, longDay, steadyMonth } from './maxit.js';
 import { paysAfter } from './contrib.js';
 import { paychecks } from './calendar-views.js';
-import { FAT, PRESETS } from './schema.js';
+import { FAT, PRESETS, isSelfEmployment } from './schema.js';
 import { upgradeSpine } from './normalize.js';
 import { validate } from './schema.js';
 import { cashsim } from './cashsim.js';
@@ -165,7 +165,7 @@ export function allocator(spine, rules, sim, s) {
   const marginal = s.tax && s.tax.lines && s.tax.lines.marginal ? s.tax.lines.marginal.value : null;
   const out = list.map((p) => {
     const stream = (spine.income || []).find((x) => x.id === p.streamId) || null;
-    const is1099 = stream && (stream.type === '1099' || stream.type === 'tips');
+    const is1099 = stream && (isSelfEmployment(stream) || stream.type === 'tips');
     const setAsideRate = is1099 ? round2(((marginal ?? 0) + (seRate ?? 0)) * 10000) / 10000 : 0;
     const setAside = is1099 ? round2(p.amount * setAsideRate) : 0;
     const envelopes = p.bills.filter((b) => b.kind !== 'everyday').map((b) => ({ date: b.date, label: b.label, amount: b.amount, kind: b.kind }));
@@ -344,7 +344,11 @@ export function goalsView(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     const fiCostMonths = yearsWith === null || yearsNow === null ? null : Math.round((yearsWith - yearsNow) * 12);
     const out = t.out(toGo);
     return { id: g.id, label: g.label, type: g.type, path: p + '.target', target, held, toGo, monthly, linkedAccount: acct, sinking, priority, by, spendOn, repeat, months, reached, onTime, neededMonthly, fiCostMonths, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
-  }).sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99) || String(a.by || '9999').localeCompare(String(b.by || '9999')));
+  });
+  // How goals are funded (Batch 3): one at a time, by priority (the default), or by deadline, soonest first.
+  const byDeadline = v(spine.household && spine.household.goalOrder) === 'byDeadline';
+  const when = (g) => String(g.by || '9999');
+  rows.sort((a, b) => (byDeadline ? when(a).localeCompare(when(b)) || (a.priority ?? 99) - (b.priority ?? 99) : (a.priority ?? 99) - (b.priority ?? 99) || when(a).localeCompare(when(b))));
   return { rows, yearsToFiNow: yearsNow, setAsideTotal: round2(rows.reduce((a, g) => a + (g.monthly ?? 0), 0)) };
 }
 

@@ -1,0 +1,220 @@
+{
+  "year": 2026,
+  "note": "First-session starter lists and the three presets (Phase 2.5, Batch 3). Preset amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
+  "needs": [
+    {
+      "id": "accommodation",
+      "label": "Accommodation",
+      "fat": "accommodation",
+      "items": [
+        {
+          "key": "rent",
+          "label": "Rent"
+        },
+        {
+          "key": "renters-insurance",
+          "label": "Renter's insurance"
+        },
+        {
+          "key": "utilities",
+          "label": "Utilities",
+          "subs": [
+            {
+              "key": "electric",
+              "label": "Electric"
+            },
+            {
+              "key": "gas-utility",
+              "label": "Gas (heat and stove)"
+            },
+            {
+              "key": "water",
+              "label": "Water"
+            },
+            {
+              "key": "trash",
+              "label": "Trash"
+            }
+          ]
+        },
+        {
+          "key": "internet",
+          "label": "Internet"
+        },
+        {
+          "key": "phone",
+          "label": "Phone"
+        }
+      ]
+    },
+    {
+      "id": "food",
+      "label": "Food",
+      "fat": "food",
+      "items": [
+        {
+          "key": "groceries",
+          "label": "Groceries"
+        },
+        {
+          "key": "eating-out",
+          "label": "Eating out",
+          "need": false
+        }
+      ]
+    },
+    {
+      "id": "transportation",
+      "label": "Transportation",
+      "fat": "transportation",
+      "items": [
+        {
+          "key": "car-payment",
+          "label": "Car payment"
+        },
+        {
+          "key": "car-insurance",
+          "label": "Car insurance"
+        },
+        {
+          "key": "car-gas",
+          "label": "Gas for the car"
+        },
+        {
+          "key": "car-upkeep",
+          "label": "Car upkeep"
+        },
+        {
+          "key": "transit",
+          "label": "Transit"
+        }
+      ]
+    },
+    {
+      "id": "health",
+      "label": "Health and fitness",
+      "fat": null,
+      "items": [
+        {
+          "key": "gym",
+          "label": "Gym",
+          "need": false
+        },
+        {
+          "key": "trainer",
+          "label": "Trainer",
+          "need": false
+        }
+      ]
+    },
+    {
+      "id": "subscriptions",
+      "label": "Subscriptions",
+      "fat": null,
+      "items": [
+        {
+          "key": "subscriptions",
+          "label": "Subscriptions",
+          "subscription": true,
+          "need": false
+        }
+      ]
+    },
+    {
+      "id": "misc",
+      "label": "Miscellaneous",
+      "fat": null,
+      "items": [
+        {
+          "key": "miscellaneous",
+          "label": "Miscellaneous"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "id": "city-renter",
+      "label": "High-cost-city renter",
+      "amounts": {
+        "rent": 2400,
+        "renters-insurance": 15,
+        "electric": 70,
+        "gas-utility": 30,
+        "internet": 70,
+        "phone": 60,
+        "groceries": 450,
+        "eating-out": 300,
+        "transit": 132,
+        "gym": 60,
+        "subscriptions": 40,
+        "miscellaneous": 300
+      }
+    },
+    {
+      "id": "with-parents",
+      "label": "Lives with parents",
+      "covered": {
+        "rent": "Parents",
+        "electric": "Parents",
+        "internet": "Parents"
+      },
+      "amounts": {
+        "rent": 1200,
+        "electric": 60,
+        "internet": 60,
+        "phone": 50,
+        "groceries": 150,
+        "eating-out": 200,
+        "car-insurance": 160,
+        "car-gas": 120,
+        "car-upkeep": 50,
+        "gym": 30,
+        "subscriptions": 30,
+        "miscellaneous": 200
+      }
+    },
+    {
+      "id": "self-employed",
+      "label": "Self-employed",
+      "amounts": {
+        "rent": 1700,
+        "renters-insurance": 15,
+        "electric": 70,
+        "internet": 70,
+        "phone": 80,
+        "groceries": 400,
+        "eating-out": 250,
+        "car-insurance": 140,
+        "car-gas": 120,
+        "car-upkeep": 60,
+        "subscriptions": 60,
+        "miscellaneous": 300
+      },
+      "incomeType": "1099"
+    }
+  ],
+  "withdrawal": [
+    {
+      "rate": 0.04,
+      "label": "4%",
+      "source": "William Bengen, Determining Withdrawal Rates Using Historical Data (1994); the Trinity study (Cooley, Hubbard and Walz, 1998)",
+      "default": true
+    },
+    {
+      "rate": 0.037,
+      "label": "3.7%",
+      "source": "Morningstar, The State of Retirement Income (2024): a 30-year retirement"
+    },
+    {
+      "rate": 0.035,
+      "label": "3.5%",
+      "source": "Early Retirement Now, Safe Withdrawal Rate series (2016 on): a 50 to 60 year retirement"
+    },
+    {
+      "rate": 0.033,
+      "label": "3.3%",
+      "source": "Morningstar, The State of Retirement Income (2021)"
+    }
+  ]
+}

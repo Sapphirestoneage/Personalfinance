@@ -330,10 +330,12 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
     first = collection + '.' + id + '.balance';
   } else if (collection === 'income') {
     if (!INCOME_TYPES.includes(type)) throw new Error('Not an income type: ' + type);
-    const noWithholding = type === '1099';
+    // Nothing is withheld from self-employment pay, side money or money from a person (Batch 3).
+    const noWithholding = type === '1099' || type === 'side' || type === 'person';
     item = { id, type, label: label || type, personId: spine.household.people[0].id, amount: M(), cadence, start: null, end: null,
       withholding: { federal: noWithholding ? K(0) : M(), state: noWithholding ? K(0) : M() } };
     if (type === 'maybeMoney') item.likelihood = M();
+    if (type === 'person') Object.assign(item, { from: M(), purpose: M() });
     first = 'income.' + id + '.amount';
   } else if (collection === 'expenses') {
     item = { id, label: label || 'New expense', amount: M(), cadence, start: null, end: null, fixed: null, need: M(), fat };

@@ -948,3 +948,44 @@ body.has-tabs { padding-bottom: var(--tabbar-h, 56px); }
 .cell.low .cell-cash::after, .day.low .day-cash::after { color: var(--text-muted); }
 .backstop { border-left-color: var(--border); }
 .safe-big.low { color: var(--bad); }
+.warn-note { color: var(--watch-ink); }
+
+/* ---------------------------------------------------------------- Session, fast entry (Batch 3)
+   A step: its letter, name and running total on top; rows with the amount, a day and a closed More on the right;
+   Back and Next at the bottom. */
+.step-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.step-name { font-weight: 700; }
+.step-total { margin-left: auto; }
+.step-nav { display: flex; justify-content: space-between; gap: var(--space-2); margin: var(--space-3) 0 var(--space-1); }
+.step-skip { text-align: center; }
+.srows { list-style: none; margin: 0; padding: 0; }
+.srow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); padding: 6px 0; border-top: 1px solid var(--border); }
+.srow:first-child { border-top: 0; }
+.srow.sub { padding-left: var(--space-4); }
+.srow-name { flex: 1 1 9rem; min-width: 0; display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.srow-val { font-variant-numeric: tabular-nums; }
+.srow input, .srow select, .goal-form input { min-height: var(--btn-h); padding: 4px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+.srow .amt { width: 7.5rem; font-variant-numeric: tabular-nums; }
+.srow .day-box { width: 3.5rem; }
+.srow .rate-box { width: 4.5rem; }
+.srow .text-box { width: 7rem; }
+.srow .pick-box { max-width: 12rem; }
+.tick { display: inline-flex; gap: var(--space-1); }
+.row-more { position: relative; }
+.row-more > summary { min-height: var(--row-btn-h); display: inline-flex; align-items: center; padding: 0 10px; border: 1.5px solid var(--btn-line); border-radius: var(--radius-sm); font-size: var(--text-sm); font-weight: 600; cursor: pointer; list-style: none; position: relative; }
+.row-more > summary::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--tap); transform: translateY(-50%); }
+.row-more > summary::-webkit-details-marker { display: none; }
+.row-more[open] { flex-basis: 100%; }
+.row-more-body { display: grid; gap: var(--space-1); padding: var(--space-2) 0 0; max-width: 24rem; }
+.mini-label { font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; }
+.mini-note { font-size: var(--text-xs); }
+.liquid-tag[aria-pressed="false"] { color: var(--text-muted); }
+.goal-form { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.goal-form #g-name { flex: 1 1 10rem; }
+.goal-form #g-amt { width: 8rem; }
+.fi-card .kv { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-4); margin: 0; }
+.fi-card .kv dt { color: var(--text-muted); }
+.fi-card .kv dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.wr-pick { max-width: none; border: 0; padding: 0; min-height: var(--btn-h); }
+.srow .cat-one, .srow.cat-one { background: transparent; }
+@media (min-width: 640px) { .srow { flex-wrap: nowrap; } .srow .row-more[open] { flex-basis: auto; } }

@@ -15,7 +15,7 @@ export const STARTER = [
   { group: 'Cards and loans', items: [D('credit_card', 'Credit card', true), D('student_loan', 'Federal student loan', true), D('private_student_loan', 'Private student loan', true), D('auto_loan', 'Car loan', true), D('mortgage', 'Mortgage'), D('personal_loan', 'Personal loan', true), D('bnpl', 'Buy now, pay later', true), D('medical', 'Medical bill', true), D('family_iou', 'Money owed to family or friends', true)] },
   { group: 'Saving and investing', items: [A('k401', '401(k)'), A('k403b', '403(b)'), A('roth_ira', 'Roth IRA'), A('traditional_ira', 'Traditional IRA'), A('hsa', 'HSA'), A('brokerage', 'Brokerage account', true), A('crypto', 'Crypto'), A('k529', '529 college savings')] },
   { group: 'Things you own', items: [A('car', 'Car', true), A('home', 'Home')] },
-  { group: 'Income', items: [I('w2', 'A paycheck (W-2)'), I('1099', 'Freelance or contract (1099)'), I('unemployment', 'Unemployment'), I('tips', 'Tips'), I('other', 'Other income')] },
+  { group: 'Income', items: [I('w2', 'A paycheck (W-2)'), I('1099', 'Freelance or contract (1099)'), I('unemployment', 'Unemployment'), I('tips', 'Tips'), I('side', 'Side money (not 1099)'), I('person', 'Money from a person')] },
   { group: 'Regular bills', items: [
     E('Rent', 'accommodation'), E('Utilities', 'accommodation'), E('Internet', 'accommodation'), E('Renters insurance', 'accommodation'),
     E('Groceries', 'food'), E('Eating out', 'food'),

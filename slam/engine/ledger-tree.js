@@ -15,7 +15,7 @@ import { UNNAMED } from './labels.js';
 
 const v = valueOf;
 const PLURAL = { 'Credit card': 'Credit cards', 'Federal student loan': 'Federal student loans', 'Private student loan': 'Private student loans', 'Auto loan': 'Auto loans', 'Personal loan': 'Personal loans', Mortgage: 'Mortgages', 'Medical debt': 'Medical debt', 'Family IOU': 'Family IOUs' };
-const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', unemployment: 'Unemployment', tips: 'Tips', rental: 'Rental income', pension: 'Pension', ss: 'Social Security', maybeMoney: 'Maybe money', other: 'Other income' };
+const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', unemployment: 'Unemployment', tips: 'Tips', rental: 'Rental income', pension: 'Pension', ss: 'Social Security', maybeMoney: 'Maybe money', other: 'Other income', side: 'Side money (not 1099)', person: 'Money from a person' };
 const FAT_LABEL = SECTION_WORDS;
 
 // The institution a name starts with, from data/institutions.json (display only).

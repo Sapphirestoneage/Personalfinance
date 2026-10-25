@@ -9,7 +9,7 @@
 import { valueOf as v, round2, monthKey, dayIn, monthStart, monthEnd, addDays, accountOwner, incomeOwner, ageOn } from './spine.js';
 import { activeDays, streamWeight, payLinesFor } from './cashflow.js';
 import * as C from './vendor/cashcal.js';
-import { PER_YEAR, PRESETS, throughPayroll } from './schema.js';
+import { PER_YEAR, PRESETS, throughPayroll, isSelfEmployment } from './schema.js';
 import { money as fmt } from '../src/ui/format.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
@@ -55,7 +55,7 @@ export function semimonthlyDates(s, from, to) {
 }
 // The owner's pay lines of these types that pay something (a line known to pay $0 holds no deferral). plan (optional): a
 // plan from pay, which fills only from the pay it is paid through (engine/cashflow.js payLinesFor, answer 60).
-export const earningFor = (spine, pid, types = ['w2', 'tips'], plan = null) => { const only = plan ? new Set(payLinesFor(spine, plan).map((s) => s.id)) : null; return (spine.income || []).filter((s) => types.includes(s.type) && incomeOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0) && (!only || only.has(s.id))); };
+export const earningFor = (spine, pid, types = ['w2', 'tips'], plan = null) => { const only = plan ? new Set(payLinesFor(spine, plan).map((s) => s.id)) : null; return (spine.income || []).filter((s) => (types.includes(s.type) || (types.includes('1099') && isSelfEmployment(s))) && incomeOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0) && (!only || only.has(s.id))); };
 // A line's pay dates from `from` to `to` as the calendar has them: by its schedule, less the ones skipped, with the
 // moved ones on their new day, and one logged as happened on the day it happened (a payday moved in from up to two
 // months away counts; one moved out does not).

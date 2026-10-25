@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -22,9 +22,15 @@ export function typeFor(spine, path) {
     if (s[1] === 'nycResident') return 'bool';
     if (s[1] === 'cardPayPolicy') return 'choice:' + PAY_POLICIES.join('|');
     if (s[1] === 'situation') return 'choice:' + SITUATIONS.join('|');
+    if (s[1] === 'lastRefund') return 'money';
+    if (s[1] === 'goalOrder') return 'choice:oneAtATime|byDeadline';
     if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
+  if (s[0] === 'income' && s[2] === 'purpose') return 'choice:' + PERSON_PURPOSES.join('|');
+  if (s[0] === 'income' && s[2] === 'allowanceMode') return 'choice:' + ALLOWANCE_MODES.join('|');
+  if (s[0] === 'income' && s[2] === 'from') return 'text';
+  if (s[0] === 'income' && s[2] === 'decreeYear') return 'int';
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' || s[2] === 'payDay2' ? 'int' : 'money';
   if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'paysDebt' ? 'link:debt' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';

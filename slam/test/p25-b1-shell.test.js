@@ -83,8 +83,9 @@ test('Session: the five steps in call order, each with its letter and one total 
   const none = { ...s0, goals: s0.goals.filter((x) => x.type === 'fi') };
   assert.deepEqual([sessionSteps(none, summarize(none, R, { flags: false }))[4].result.value, sessionSteps(none, summarize(none, R, { flags: false }))[4].result.count], [null, 0]);
   const src = read('ui/session.js');
-  assert.match(src, /href: numbersHref\(step\.id\)/, 'each row opens My numbers at its section');
-  assert.match(src, /startPage\(\{ tab: 'session', title: 'Session', render \}\)/);
+  // Batch 3: each row opens its own guided step (session.html#/needs), not My numbers.
+  assert.match(src, /h\('a', \{ class: 'go-row', href: '#\/' \+ st\.id \}/, 'each row opens its step');
+  assert.match(src, /startPage\(\{ tab: 'session', title: 'Session', render, name \}\)/);
 });
 
 test('client words on the new screens follow THE COPY RULE', () => {

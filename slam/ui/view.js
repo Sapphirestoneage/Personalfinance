@@ -2,7 +2,7 @@
 // number arrives already computed by the engines.
 
 import { money, pct } from '../src/ui/format.js';
-import { LOAN_PLAN_WORDS, PAY_POLICIES } from '../engine/schema.js';
+import { LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
 
 export { money, pct };
 
@@ -69,6 +69,9 @@ export function showValue(value, type) {
   if (type === 'choice:' + PAY_POLICIES.join('|')) return PAY_POLICY_WORDS[value] || words(value);
   // A cash account's role, in a client's words (S-228): a sinking fund is money set aside for a goal.
   if (type === 'choice:spending|emergency|sinking|holding') return ROLE_WORDS[value] || words(value);
+  if (type === 'choice:' + PERSON_PURPOSES.join('|')) return PERSON_PURPOSE_WORDS[value] || words(value);
+  if (type === 'choice:' + ALLOWANCE_MODES.join('|')) return value === 'time' ? 'Pay for my time' : 'A gift';
+  if (type === 'choice:oneAtATime|byDeadline') return value === 'byDeadline' ? 'By deadline' : 'One at a time';
   if (type.startsWith('choice:')) return words(value);
   if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
   return String(value);

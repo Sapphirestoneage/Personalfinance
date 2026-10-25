@@ -39,6 +39,37 @@ function sumBalances(accounts, keep) {
   return t.out(round2(sum));
 }
 
+// Liquid (Batch 3): money that can be reached without a penalty or a sale of something you live with. By default cash,
+// taxable investing and short Treasury bills are liquid, and a Roth IRA's contributions (its basis, never more than the
+// balance); pre-tax accounts, a Roth's earnings, an HSA, education accounts, a car and a home are not. An account's own
+// "counted as liquid" yes or no overrides the default, for the whole balance.
+const ROTH_IRAS = ['roth_ira', 'custodial_roth'];
+export function liquidDefault(a) {
+  if (a.family === 'cash' || a.family === 'taxable') return 'all';
+  if (a.family === 'fixedTerm') return a.liquidity && ['instant', 'days'].includes(valueOf(a.liquidity) ?? a.liquidity) ? 'all' : 'none';
+  if (ROTH_IRAS.includes(a.type)) return 'basis';
+  return 'none';
+}
+// { value, kind, ..., items: [{ id, name, amount, part }] }: part 'all' or 'contributions'. A blank balance (or a Roth's
+// blank basis) leaves the total incomplete, never $0.
+export function liquidAssets(spine) {
+  const t = tracker();
+  const items = [];
+  let sum = 0;
+  for (const a of spine.accounts || []) {
+    const base = 'accounts.' + a.id;
+    const own = a.liquid ? t.useFact(base + '.liquid', a.liquid) : null;
+    const how = own === true ? 'all' : own === false ? 'none' : liquidDefault(a);
+    if (how === 'none') continue;
+    const bal = t.useFact(base + '.balance', a.balance);
+    let amount = bal;
+    if (how === 'basis') { const basis = t.useFact(base + '.basis', a.basis); amount = bal === null || basis === null ? null : Math.min(bal, Math.max(0, basis)); }
+    if (amount !== null) sum += amount;
+    items.push({ id: a.id, name: valueOf(a.name) || a.id, amount, part: how === 'basis' ? 'contributions' : 'all', path: base + '.balance' });
+  }
+  return { ...t.out(round2(sum)), items };
+}
+
 export function balanceSheet(spine) {
   const acc = spine.accounts || [];
   // Cash is money the household can fall back on: an account set aside for a goal is not (S-228); it is still an asset.
@@ -50,7 +81,11 @@ export function balanceSheet(spine) {
   const { total: debts, cards } = debtTotals(spine);
   const t = tracker();
   t.absorb(assets); t.absorb(debts);
+  const liquid = liquidAssets(spine);
+  const lt = tracker();
+  lt.absorb(liquid); lt.absorb(debts);
   return {
+    liquid, liquidNetWorth: lt.out(round2(liquid.value - debts.value)),
     cash, setAside, earmarks: list, setAsideNote: setAsideNote(list), invested, assets, debts, cards,
     netWorth: t.out(round2(assets.value - debts.value)),
     byFamily: Object.fromEntries([...new Set(acc.map((a) => a.family))].map((f) => [f, sumBalances(acc, (a) => a.family === f)]))

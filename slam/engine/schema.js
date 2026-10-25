@@ -25,7 +25,23 @@ export const LOAN_PLAN_WORDS = {
   icr: 'Income-Contingent Repayment (ICR)', save: 'SAVE (closing)', paused: 'Paused (deferment or forbearance)', not_sure: 'Not sure'
 };
 
-export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pension', 'ss', 'maybeMoney', 'other'];
+export const INCOME_TYPES = ['w2', '1099', 'unemployment', 'tips', 'rental', 'pension', 'ss', 'maybeMoney', 'other', 'side', 'person'];
+// Money from a person (Batch 3): who it is from and what it is for. A loan is never income: the Session makes it a debt.
+export const PERSON_PURPOSES = ['gift', 'allowance', 'childSupport', 'alimony'];
+export const PERSON_PURPOSE_WORDS = { gift: 'A gift or support', allowance: 'An allowance', childSupport: 'Child support', alimony: 'Alimony', loan: 'A loan' };
+export const ALLOWANCE_MODES = ['gift', 'time'];
+// Pay for your own work with no paycheck: 1099 pay, side money that comes with no 1099, and an allowance that is pay for
+// your time. Each owes self-employment tax and has nothing withheld.
+export const isSelfEmployment = (s) => !!s && (s.type === '1099' || s.type === 'side' || (s.type === 'person' && s.purpose && s.purpose.value === 'allowance' && s.allowanceMode && s.allowanceMode.value === 'time'));
+// How money from a person is taxed: 'none', 'ordinary' (alimony under a decree from before 2019), 'se' (an allowance
+// that is pay for your time), or null when what decides it is not given yet (the purpose, or an alimony decree's year).
+export function personTax(s) {
+  const purpose = s.purpose ? s.purpose.value : null;
+  if (purpose === null) return null;
+  if (purpose === 'alimony') { const y = s.decreeYear ? s.decreeYear.value : null; return y === null ? null : y >= 2019 ? 'none' : 'ordinary'; }
+  if (purpose === 'allowance') return s.allowanceMode && s.allowanceMode.value === 'time' ? 'se' : 'none';
+  return 'none';
+}
 // total: the amount is spread evenly from start to end (a known total for a window).
 // once: paid on the start date.
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
@@ -44,7 +60,9 @@ export const FAMILIES = {
     label: 'Base', fields: {
       name: 'text', institution: 'text', owner: 'choice:me|partner|joint|child', balance: 'money',
       taxTreatment: 'choice:pretax|roth|taxable|tripleTaxFree|na', liquidity: 'choice:instant|days|penalty|locked|na',
-      monthlyContribution: 'money', linkedGoal: 'text', fundedFrom: 'link'
+      monthlyContribution: 'money', linkedGoal: 'text', fundedFrom: 'link',
+      // Counted in liquid net worth (Batch 3): set only to override the default by type (liquidDefault in networth.js).
+      liquid: 'bool'
     }
   },
   cash: { label: 'Cash', fields: { apy: 'rate', minBalance: 'money', monthlyFee: 'money', role: 'choice:spending|emergency|sinking|holding' } },
@@ -74,7 +92,8 @@ export const FAMILIES = {
     }
   },
   education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list' } },
-  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate' } },
+  // holdings (Batch 3): optional rows [{ ticker, share, expenseRatio, managedBy, advisoryFee }]; share and the two fees are rates.
+  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate', holdings: 'list' } },
   debt: {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',
@@ -236,6 +255,9 @@ export function validate(spine) {
   // Batch F (S-208): the biggest insurance deductible (FOO rung 1), the commute (real hourly wage).
   checkFact('household.deductible', h.deductible, 'money', false);
   checkFact('household.commuteHoursPerWeek', h.commuteHoursPerWeek, 'int', false);
+  // Batch 3: last year's tax result (a refund is positive, an amount owed negative), and how goals are funded.
+  checkFact('household.lastRefund', h.lastRefund, 'money', false);
+  checkFact('household.goalOrder', h.goalOrder, ['oneAtATime', 'byDeadline'], false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
@@ -295,6 +317,12 @@ export function validate(spine) {
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
       else { checkFact(p + '.withholding.federal', s.withholding.federal, 'money'); checkFact(p + '.withholding.state', s.withholding.state, 'money'); }
       if (s.personId && !(h.people || []).some((x) => x.id === s.personId)) err(p + '.personId', 'no such person');
+      if (s.type === 'person') {
+        checkFact(p + '.from', s.from, 'text', false);
+        checkFact(p + '.purpose', s.purpose, PERSON_PURPOSES);
+        checkFact(p + '.decreeYear', s.decreeYear, 'int', false);
+        checkFact(p + '.allowanceMode', s.allowanceMode, ALLOWANCE_MODES, false);
+      }
     }
   }
 
