@@ -31,7 +31,7 @@ const SHOTS = [
   ['today', 'Today: the loop, Next, cash for 30 days, four numbers', 'today'],
   ['plan', 'Plan: next month\'s plan', 'plan', 'plan-view-plan'],
   ['estimates', 'Plan: your estimates (the Rough pass)', 'plan', 'plan-view-estimates'],
-  ['track', 'Track: scheduled items, quick entry, the log, the calendar, import', 'track'],
+  ['track', 'Track: quick entry, the log, import (the calendar lives in SLAM)', 'track'],
   ['review', 'Review: fill gaps, close the month, mistakes, past months', 'review'],
   ['insights-where', 'Insights: Where it goes', 'insights', 'tab-where'],
   ['insights-compared', 'Insights: Compared', 'insights', 'tab-compared'],

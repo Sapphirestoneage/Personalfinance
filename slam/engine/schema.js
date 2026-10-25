@@ -2,7 +2,7 @@
 // Source: Account_Shells.xlsx, tabs Shells, Variables and Account Rules.
 // CONTRACTS.md describes the same shape in words.
 
-import { KINDS, isFact, ISO_DATE } from './spine.js';
+import { KINDS, isFact, isDay } from './spine.js';
 
 export const SCHEMA_ID = 'slam-spine/1';
 
@@ -52,7 +52,9 @@ export const FAMILIES = {
       rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
       priorYearFicaWages: 'money', allowsAfterTax: 'bool', allowsLoans: 'bool', employerType: 'choice:private|nonprofit|government|federal|self',
       // What went in for each tax year (S-211), as on an IRA: [{ year, amount, kind? }]; rollovers and conversions never count.
-      contributions: 'list'
+      contributions: 'list',
+      // The job a plan from pay is paid through (S-227, answer 60): one of the owner's W-2 lines; blank, the sponsoring job.
+      paidThrough: 'link'
     }
   },
   ira: {
@@ -64,7 +66,9 @@ export const FAMILIES = {
   hsaFsa: {
     label: 'HSA / FSA', fields: {
       coverageLevel: 'choice:self|family', annualLimit: 'money', investedPortion: 'money', unreimbursedReceipts: 'money',
-      rolloverRule: 'choice:rolls|forfeit', planEligible: 'choice:hdhp|bronze|catastrophic|no', monthsEligible: 'int', employerSeed: 'money', contributions: 'list'
+      rolloverRule: 'choice:rolls|forfeit', planEligible: 'choice:hdhp|bronze|catastrophic|no', monthsEligible: 'int', employerSeed: 'money', contributions: 'list',
+      // An HSA's monthly amount comes out of the paycheck only when this is on (S-227, answer 47); off, from take-home.
+      throughPayroll: 'bool'
     }
   },
   education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list' } },
@@ -148,6 +152,15 @@ export const PRESETS = {
   cash_value_life: P('otherAssets', 'Cash-value life insurance', 'na', 'penalty'),
   annuity: P('otherAssets', 'Annuity', 'na', 'penalty')
 };
+// Money that comes out of a paycheck before take-home (S-227): workplace plans, a SIMPLE IRA (answer 50), an FSA, and
+// an HSA only when it is set to go through payroll (answer 47); any other HSA is paid in from take-home. The cash
+// flow, the day-by-day run, the calendar and the tax figures all read this.
+export const throughPayroll = (a) => !!(a.throughPayroll && a.throughPayroll.value === true);
+export const fromPaycheck = (a) => a.family === 'employerRetirement' || a.type === 'simple_ira' || (a.family === 'hsaFsa' && (a.type !== 'hsa' || throughPayroll(a)));
+// Money set aside for a goal (S-228): an account with the sinking-fund role (a surgery fund, a down payment). It is the
+// household's money (assets and net worth count it) but never emergency cash: runway, the cushion and the floor, and
+// safe to spend leave it out, and wherever cash is listed it reads "set aside for <goal>".
+export const isEarmarked = (a) => !!(a && a.role && a.role.value === 'sinking');
 // Revolving debt types: utilization applies.
 export const REVOLVING = ['credit_card', 'heloc'];
 // Families whose balance counts as invested assets for FI.
@@ -164,7 +177,7 @@ export function fieldsFor(family) {
 export function validate(spine) {
   const errors = [];
   const err = (path, message) => errors.push({ path, message });
-  const isDate = (s) => typeof s === 'string' && ISO_DATE.test(s);
+  const isDate = isDay;
   const optDate = (path, s) => { if (s !== null && s !== undefined && !isDate(s)) err(path, 'not a date (YYYY-MM-DD)'); };
 
   function checkFact(path, f, type, required = true) {
@@ -271,6 +284,9 @@ export function validate(spine) {
       // The day of the month it is paid (S-199), for monthly and less often.
       checkFact(p + '.payDay', s.payDay, 'int', false);
       if (s.payDay && s.payDay.value !== null && (s.payDay.value < 1 || s.payDay.value > 31)) err(p + '.payDay', 'a day from 1 to 31');
+      // Twice a month, the second day it is paid (S-226): the 1st and the 15th. Optional; without it the run's rule makes it.
+      checkFact(p + '.payDay2', s.payDay2, 'int', false);
+      if (s.payDay2 && s.payDay2.value !== null && (s.payDay2.value < 1 || s.payDay2.value > 31)) err(p + '.payDay2', 'a day from 1 to 31');
       if (s.likelihood && s.likelihood.value !== null && (s.likelihood.value < 0 || s.likelihood.value > 1)) err(p + '.likelihood', 'between 0 and 1');
       if (s.type === 'maybeMoney' && !s.likelihood) err(p + '.likelihood', 'maybe money needs a likelihood');
       if (!s.withholding) err(p + '.withholding', 'needs { federal, state } Facts');
@@ -295,6 +311,9 @@ export function validate(spine) {
     checkFact(p + '.coveredBy', e.coveredBy, 'text', false);
     // Paid from an account or card, on a day of the month (S-189).
     checkFact(p + '.paidFrom', e.paidFrom, 'link', false);
+    // The debt this line pays (S-226): its payment is counted once, under debt payments.
+    checkFact(p + '.paysDebt', e.paysDebt, 'link', false);
+    if (e.paysDebt && e.paysDebt.value !== null && !(spine.debts || []).some((d) => d.id === e.paysDebt.value)) err(p + '.paysDebt', 'no such debt');
     checkFact(p + '.payDay', e.payDay, 'int', false);
     // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
     checkFact(p + '.subscription', e.subscription, 'bool', false);
@@ -330,6 +349,7 @@ export function validate(spine) {
         checkFact(p + '.' + k, a[k], fields[k]);
       }
       if (a.stress && a.stress.value !== null && (a.stress.value < 1 || a.stress.value > 10)) err(p + '.stress', '1 to 10');
+      if (a.paidThrough && a.paidThrough.value !== null && !(spine.income || []).some((s) => s.id === a.paidThrough.value && s.type === 'w2')) err(p + '.paidThrough', 'not a W-2 line');
       // A card says whether it is a business card and whether it reports to personal credit (S-157).
       if (a.type === 'credit_card') for (const k of ['business', 'reportsToPersonalCredit']) if (!a[k]) err(p + '.' + k, 'a card carries this (kind missing when unknown)');
       for (const [k, need] of [['contributions', ['year', 'amount']], ['conversions', ['year', 'amount', 'taxable']]]) {

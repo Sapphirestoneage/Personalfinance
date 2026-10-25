@@ -74,7 +74,9 @@ test('paychecks: each one covers the bills until the next; a third biweekly payc
 
 test('milestones: a card cleared, a loan paid off, every card clear, promo ends; sorted by date, no duplicates', () => {
   let s = demo();
-  s = putFact(s, 'debts.visa.payPolicy', 'statement', 'known', '2026-10-23');
+  // The Visa is cleared by the extra at the debt; the store card pays its statement, so it never revolves (answer 38)
+  // and is never a card to clear.
+  s = putFact(s, 'debtPlan.extra', 1500, 'known', '2026-10-23');
   s = putFact(s, 'debts.store.payPolicy', 'statement', 'known', '2026-10-23');
   const c = calendar(s, R, { months: 6 });
   const ms = milestones(s, R, c.sim, c.months);

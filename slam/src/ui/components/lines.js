@@ -142,7 +142,6 @@ export function debtCard(ctx, debt, summary) {
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     // A card or line of credit is credit you have (S-137): its limit shows what is available.
     debt.type === 'credit-card' || debt.type === 'line-of-credit' ? question(ctx, 'Credit limit', 'What can be borrowed on it in all', p('creditLimit'), debt.creditLimit, { cadence: false }) : null,
-    cardPromo(ctx, debt),
-    linkedLine(ctx.doc, debt) ? null : question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
+    cardPromo(ctx, debt));
 }
 

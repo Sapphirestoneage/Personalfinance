@@ -88,18 +88,27 @@ pure engines. Start the server as above, then open:
 
 ### Loading your own profile
 
+Every page's header says whose numbers they are (S-228). The made-up demo
+says "Example household" with a Load my file button: pick your file and it
+is read in the browser and saved in this browser only (nothing is uploaded),
+and every page opens to it from then on. This works in a published page too.
+
+On your own machine you can instead:
+
 1. Copy your profile file to `slam/fixtures/eli.local.json` (any name ending
    in `.local.json` in that folder is ignored by git; the pages look for
    this exact name).
-2. Serve the folder and open the Ledger. The header says
-   "Your profile file". Without the file the pages load the made-up demo
-   household (`fixtures/demo.json`).
+2. Serve the folder and open the Ledger. The header shows your name.
+   Without the file the pages load the made-up demo household
+   (`fixtures/demo.json`).
 3. Edits are saved in this browser only. "Go back to the file" at the bottom
    of the Ledger drops them. The file itself is never rewritten.
 
-The file can be a profile (the shape of `eli.profile.json`, read by
-`engine/normalize.js`) or a spine (`slam-spine/1`, the shape of
-`fixtures/demo.json`). Both are checked by `engine/schema.js`.
+The file can be a profile (the shape of `eli.profile.json`, version 3, 4, 5
+or later), a spine (`slam-spine/1`, the shape of `fixtures/demo.json`) or the
+Plan page's export. One loader reads them all (`engine/normalize.js
+readHousehold`): a field it cannot use reads missing and is listed at the top
+of the Ledger with what was wrong; nothing crashes a page.
 
 ### Design and sign-off
 

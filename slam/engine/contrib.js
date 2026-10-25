@@ -7,9 +7,9 @@
 // both read it, so they count one amount.
 
 import { valueOf as v, round2, monthKey, dayIn, monthStart, monthEnd, addDays, accountOwner, incomeOwner, ageOn } from './spine.js';
-import { activeDays, streamWeight } from './cashflow.js';
+import { activeDays, streamWeight, payLinesFor } from './cashflow.js';
 import * as C from './vendor/cashcal.js';
-import { PER_YEAR, PRESETS } from './schema.js';
+import { PER_YEAR, PRESETS, throughPayroll } from './schema.js';
 import { money as fmt } from '../src/ui/format.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
@@ -20,11 +20,12 @@ const pad = (n) => String(n).padStart(2, '0');
 export const nMonths = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1)) + ' month' + (n === 1 ? '' : 's');
 
 export const DEFERRAL = ['k401', 'roth_k401', 'k403b', 'tsp'];
-// Plans filled only from a paycheck (an HSA with pay is too, else from take-home; a Solo 401(k) and a SEP never are).
+// Plans filled only from a paycheck (an HSA set to go through payroll is too, else from take-home, answer 47; a Solo
+// 401(k) and a SEP never are).
 export const FROM_PAY = [...DEFERRAL, 'k457b', 'simple_ira', 'after_tax_k401'];
-// The ones the tax figures take off W-2 wages (pre-tax, filed with the 401(k)s; not a SIMPLE IRA, question 50):
-// their new money is not pay an IRA can count either.
-export const OFF_WAGES = FROM_PAY.filter((t) => PRESETS[t].taxTreatment === 'pretax' && PRESETS[t].family === 'employerRetirement');
+// The ones the tax figures take off W-2 wages (pre-tax from pay; a SIMPLE IRA too, for income tax, not FICA, answer
+// 50): their new money is not pay an IRA can count either.
+export const OFF_WAGES = FROM_PAY.filter((t) => PRESETS[t].taxTreatment === 'pretax' && (PRESETS[t].family === 'employerRetirement' || t === 'simple_ira'));
 // Entries in a contributions list: rollovers and conversions never count; a 529 rolled into a Roth IRA does; employer marks a Solo 401(k)'s or SEP's employer part.
 export const CONTRIBUTION_KINDS = ['contribution', 'rollover', 'conversion', 'from529', 'employer'];
 export const counts = (c, year) => c.year === year && c.kind !== 'rollover' && c.kind !== 'conversion';
@@ -39,11 +40,22 @@ export function payDatesOf(s, from, to) {
   if (lo > hi || s.cadence === 'once') return s.cadence === 'once' && s.start >= from && s.start <= to ? [s.start] : [];
   const day = s.payDay ? v(s.payDay) : null;
   if (s.cadence === 'weekly' || s.cadence === 'biweekly') return s.start ? C.paydays(s.cadence, s.start, lo, hi) : [];
-  if (s.cadence === 'semimonthly') return C.paydays('semimonthly', dayIn(monthKey(lo), day || 15), lo, hi);
+  if (s.cadence === 'semimonthly') return semimonthlyDates(s, lo, hi);
   return C.paydays('monthly', dayIn(monthKey(lo), day || 1), lo, hi);
 }
-// The owner's pay lines of these types that pay something (a line known to pay $0 holds no deferral).
-export const earningFor = (spine, pid, types = ['w2', 'tips']) => (spine.income || []).filter((s) => types.includes(s.type) && incomeOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0));
+// Twice a month (S-226): with both days entered, those two days each month (the 1st and the 15th; a day past the
+// month's end is its last day); else the run's rule from the one day (cashcal.js paydays: a day before the 15th and 15
+// days later, the 16th to the 27th and 15 days earlier, else the 15th and the last day). The calendar, the day-by-day
+// run and the pay counts all place the two days with this, so their keys match.
+export const payDay2Of = (s) => (s.cadence === 'semimonthly' && s.payDay && v(s.payDay) && s.payDay2 && v(s.payDay2) ? v(s.payDay2) : null);
+export function semimonthlyDates(s, from, to) {
+  const day = s.payDay ? v(s.payDay) : null, day2 = payDay2Of(s);
+  if (day2 === null) return C.paydays('semimonthly', dayIn(monthKey(from), day || 15), from, to);
+  return [...new Set([day, day2].flatMap((d) => C.occurrences({ cadence: 'month', day: d }, from, to)))].sort();
+}
+// The owner's pay lines of these types that pay something (a line known to pay $0 holds no deferral). plan (optional): a
+// plan from pay, which fills only from the pay it is paid through (engine/cashflow.js payLinesFor, answer 60).
+export const earningFor = (spine, pid, types = ['w2', 'tips'], plan = null) => { const only = plan ? new Set(payLinesFor(spine, plan).map((s) => s.id)) : null; return (spine.income || []).filter((s) => types.includes(s.type) && incomeOwner(spine, s) === pid && streamWeight(s, 'committed') !== 0 && !(s.amount && v(s.amount) === 0) && (!only || only.has(s.id))); };
 // A line's pay dates from `from` to `to` as the calendar has them: by its schedule, less the ones skipped, with the
 // moved ones on their new day, and one logged as happened on the day it happened (a payday moved in from up to two
 // months away counts; one moved out does not).
@@ -61,18 +73,19 @@ export const paydaysOf = (spine, s, from, to) => {
   return [...new Set(payDatesOf(s, addDays(from, -62), addDays(to, 62)).filter((d) => !at(d).skip).map((d) => (logged.has(d) ? paid(logged.get(d)) : at(d).date || d)).filter((d) => d >= from && d <= to))].sort();
 };
 // Whether the owner has a W-2 or tips line that pays (payroll saving needs pay to come out of).
-export const hasPay = (spine, pid) => earningFor(spine, pid).length > 0;
+export const hasPay = (spine, pid, plan = null) => earningFor(spine, pid, undefined, plan).length > 0;
 // Whether the owner has a paycheck after `date` (within a year of it): a payroll plan can still be filled then.
 export const paysAfter = (spine, pid, date) => { const end = (+date.slice(0, 4) + 1) + date.slice(4); return earningFor(spine, pid).some((s) => paydaysOf(spine, s, date, end).some((d) => d > date)); };
-// Money that goes in from the owner's pay: a payroll-only plan always, an HSA while the owner has pay.
-export const fromPayOf = (spine, a, pid) => FROM_PAY.includes(a.type) || (a.type === 'hsa' && hasPay(spine, pid));
+// Money that goes in from the owner's pay: a payroll-only plan always, an HSA set to go through payroll while the owner
+// has pay (answer 47: off by default, so an HSA is paid in from take-home).
+export const fromPayOf = (spine, a, pid) => FROM_PAY.includes(a.type) || (a.type === 'hsa' && throughPayroll(a) && hasPay(spine, pid, a));
 // A pay line that pays in the year (a one-time line on its date in it).
 const paysIn = (s, year) => !(s.start && s.start > year + '-12-31') && !(s.end && s.end < year + '-01-01') && (s.cadence !== 'once' || (!!s.start && s.start.slice(0, 4) === String(year)));
 // The share of a month's pay (the owner's W-2 and tips paydays by schedule) on days that pass `keep` and are not
 // skipped on the calendar; null when pay runs that month but its days are not known (a weekly or biweekly line with
 // no first pay date).
-function payShare(spine, pid, ym, keep) {
-  const runs = earningFor(spine, pid).filter((s) => activeDays(s.start, s.end, ym) > 0);
+function payShare(spine, pid, ym, keep, plan = null) {
+  const runs = earningFor(spine, pid, undefined, plan).filter((s) => activeDays(s.start, s.end, ym) > 0);
   if (!runs.length) return 0;
   const all = runs.flatMap((s) => payDatesOf(s, monthStart(ym), monthEnd(ym)));
   // No payday this month: unknown only for a weekly or biweekly line with no first pay date, else none (a line that
@@ -85,12 +98,12 @@ function payShare(spine, pid, ym, keep) {
 // month, so 26 biweekly paychecks hold 12 months and three in one month hold more than one (S-219). Null when a line's
 // amount or schedule is not known (the month count stands in then).
 // The share of a month's days some pay line of the owner runs, from `from` to `to` (either open).
-function daysShare(spine, pid, ym, from, to) {
+function daysShare(spine, pid, ym, from, to, plan = null) {
   const days = activeDays(null, null, ym);
-  return round4(Math.max(0, ...earningFor(spine, pid).map((s) => activeDays(from && (!s.start || from > s.start) ? from : s.start, to && (!s.end || to < s.end) ? to : s.end, ym))) / days);
+  return round4(Math.max(0, ...earningFor(spine, pid, undefined, plan).map((s) => activeDays(from && (!s.start || from > s.start) ? from : s.start, to && (!s.end || to < s.end) ? to : s.end, ym))) / days);
 }
-function payChecks(spine, pid, year) {
-  const lines = earningFor(spine, pid).filter((s) => paysIn(s, year));
+function payChecks(spine, pid, year, plan = null) {
+  const lines = earningFor(spine, pid, undefined, plan).filter((s) => paysIn(s, year));
   if (!lines.length) return [];
   if (lines.some((s) => !PER_YEAR[s.cadence] || !s.amount || v(s.amount) === null || ((s.cadence === 'weekly' || s.cadence === 'biweekly') && !s.start))) return null;
   const g = (s) => v(s.amount) * PER_YEAR[s.cadence] / 12;
@@ -103,33 +116,33 @@ function payChecks(spine, pid, year) {
   }
   return out;
 }
-function payCheckMonths(spine, pid, year, keep) {
-  const cs = payChecks(spine, pid, year);
+function payCheckMonths(spine, pid, year, keep, plan = null) {
+  const cs = payChecks(spine, pid, year, plan);
   return cs === null ? null : round4(cs.filter((c) => keep(c.date)).reduce((a, c) => a + c.w, 0));
 }
 // What a monthly amount from pay puts in on the owner's paychecks that pass `keep`: each paycheck its own amount to the
 // cent (as the day-by-day run deducts it). Null when a line's amount or schedule is not known.
-export function payAmount(spine, pid, year, monthly, keep) {
-  const cs = payChecks(spine, pid, year);
+export function payAmount(spine, pid, year, monthly, keep, plan = null) {
+  const cs = payChecks(spine, pid, year, plan);
   return cs === null ? null : round2(cs.filter((c) => keep(c.date)).reduce((a, c) => a + round2(monthly * c.w), 0));
 }
 // Months of the owner's pay in a year before asOf: payroll saving is in for paydays before asOf (a payday on asOf is
 // still to come), counted by the paychecks; with a line not known, an earlier month with pay counts whole and the as-of
 // month the share of its paydays gone by.
-export function payMonthsBefore(spine, pid, year, asOf) {
-  const byChecks = payCheckMonths(spine, pid, year, (d) => d < asOf);
+export function payMonthsBefore(spine, pid, year, asOf, plan = null) {
+  const byChecks = payCheckMonths(spine, pid, year, (d) => d < asOf, plan);
   if (byChecks !== null) return byChecks;
   let n = 0;
   for (let m = 1; m <= 12; m++) {
     const ym = year + '-' + pad(m);
     if (ym > monthKey(asOf)) break;
-    n += ym < monthKey(asOf) ? (payShare(spine, pid, ym, () => true) === 0 ? 0 : 1) : payShare(spine, pid, ym, (d) => d < asOf) ?? daysShare(spine, pid, ym, null, addDays(asOf, -1));
+    n += ym < monthKey(asOf) ? (payShare(spine, pid, ym, () => true, plan) === 0 ? 0 : 1) : payShare(spine, pid, ym, (d) => d < asOf, plan) ?? daysShare(spine, pid, ym, null, addDays(asOf, -1), plan);
   }
   return round4(n);
 }
 // Months of the owner's pay from asOf through December 31 of the year: what payroll saving already set up still puts in.
-export function payMonthsFrom(spine, pid, year, asOf) {
-  const byChecks = payCheckMonths(spine, pid, year, (d) => d >= asOf);
+export function payMonthsFrom(spine, pid, year, asOf, plan = null) {
+  const byChecks = payCheckMonths(spine, pid, year, (d) => d >= asOf, plan);
   if (byChecks !== null) return byChecks;
   let n = 0;
   for (let m = 1; m <= 12; m++) {
@@ -137,8 +150,8 @@ export function payMonthsFrom(spine, pid, year, asOf) {
     if (ym < monthKey(asOf)) continue;
     // A month whose paydays are not known: whole, the as-of month by the days its pay runs from asOf (payMonthsBefore
     // counts the days before), so an ended line has none still to come.
-    const share = payShare(spine, pid, ym, (d) => d >= asOf);
-    n += share !== null ? share : ym === monthKey(asOf) ? daysShare(spine, pid, ym, asOf, null) : 1;
+    const share = payShare(spine, pid, ym, (d) => d >= asOf, plan);
+    n += share !== null ? share : ym === monthKey(asOf) ? daysShare(spine, pid, ym, asOf, null, plan) : 1;
   }
   return round4(n);
 }
@@ -152,8 +165,11 @@ export const monthsAfter = (year, asOf) => (year === +asOf.slice(0, 4) ? 12 - +a
 // 401(k)'s employee or employer money). A recorded total for the year replaces
 // the guess, and the monthly amount adds the months (or pay months) after the day
 // it was recorded through; a 529 rolled in adds on top. With no total, the monthly
-// amount for the months gone by (a guess, rough), else nothing recorded (rough).
-// A monthly amount that is blank is named as missing.
+// amount for the months gone by (a guess, rough). A year that has started with
+// nothing recorded on the account and no monthly amount is missing, never $0
+// (answer 43, S-227): value null, kind missing. A part with nothing of its own on
+// an account that has something for the year (an employer part not made yet) is
+// none so far (rough). A monthly amount that is blank is named as missing.
 export function contributedOn(spine, a, year, asOf, t, part = 'all') {
   const base = 'accounts.' + a.id;
   const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) : null;
@@ -173,7 +189,7 @@ export function contributedOn(spine, a, year, asOf, t, part = 'all') {
   const pid = (accountOwner(spine, a) || {}).id;
   const payroll = fromPayOf(spine, a, pid);
   // A plan filled only from pay has had nothing come out of pay that never came.
-  const monthsTo = (d) => (payroll ? (hasPay(spine, pid) ? payMonthsBefore(spine, pid, year, d) : 0) : monthsIn(year, d));
+  const monthsTo = (d) => (payroll ? (hasPay(spine, pid, a) ? payMonthsBefore(spine, pid, year, d, a) : 0) : monthsIn(year, d));
   const monthly = part !== 'employer' && a.monthlyContribution ? a.monthlyContribution : null;
   if (totals.length) {
     const rec = round2(totals.reduce((s, c) => s + c.amount, 0));
@@ -182,7 +198,7 @@ export function contributedOn(spine, a, year, asOf, t, part = 'all') {
     const more = through && monthly && through < asOf ? round4(monthsTo(asOf) - monthsTo(through)) : 0;
     const m = more > 0 ? t.useFact(base + '.monthlyContribution', monthly) : null;
     // From pay: each paycheck's own amount (to the cent) from the day it was recorded through to asOf.
-    const byPay = m && payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d >= through && d < asOf) : null;
+    const byPay = m && payroll && hasPay(spine, pid, a) ? payAmount(spine, pid, year, m, (d) => d >= through && d < asOf, a) : null;
     const since = m ? (byPay ?? round2(m * more)) : 0;
     if (since) t.addRough(base + '.contributions');
     return { id: a.id, name, value: round2(rec + since + ev), events: ev, words: money(rec) + ' recorded for ' + year + (since ? ' and about ' + money(since) + ' since (' + money(m) + ' a month for ' + nMonths(more) + (payroll ? ' of pay' : '') + ')' : '') + evWords, path: base + '.contributions', estimated: !!since, kind: since ? 'rough' : a.contributions.kind };
@@ -192,10 +208,12 @@ export function contributedOn(spine, a, year, asOf, t, part = 'all') {
     const m = t.useFact(base + '.monthlyContribution', monthly);
     if (m === null) return { id: a.id, name, value: ev, events: ev, words: 'the monthly amount is not entered, so nothing is counted as in' + evWords, path: base + '.monthlyContribution', estimated: true, kind: 'missing' };
     t.addRough(base + '.contributions');
-    const guess = payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d < asOf) ?? round2(m * n) : round2(m * n);
+    const guess = payroll && hasPay(spine, pid, a) ? payAmount(spine, pid, year, m, (d) => d < asOf, a) ?? round2(m * n) : round2(m * n);
     return { id: a.id, name, value: round2(guess + ev), events: ev, words: 'about ' + money(guess) + ' (' + money(m) + ' a month for ' + nMonths(n) + (payroll ? ' of pay' : '') + ' in ' + year + ', a guess until it is recorded)' + evWords, path: base + '.contributions', estimated: true, monthly: m, months: n, kind: 'rough' };
   }
   const past = year <= +asOf.slice(0, 4);
+  const anything = (list || []).some((c) => counts(c, year)) || !!a.monthlyContribution;
+  if (past && !anything) { t.addMissing(base + '.contributions'); return { id: a.id, name, value: null, events: 0, words: 'missing: nothing recorded for ' + year, path: base + '.contributions', estimated: false, kind: 'missing', nothing: true }; }
   if (past && !events.length) t.addRough(base + '.contributions');
   return { id: a.id, name, value: ev, events: ev, words: (ev ? money(ev) + ' rolled in from a 529 recorded for ' + year : 'nothing recorded for ' + year), path: base + '.contributions', estimated: past && !events.length, kind: past && !events.length ? 'rough' : a.contributions ? a.contributions.kind : 'computed' };
 }
@@ -207,14 +225,15 @@ export function stillOn(spine, a, year, asOf, t, part = 'all') {
   if (!m) return null;
   const pid = (accountOwner(spine, a) || {}).id;
   const payroll = fromPayOf(spine, a, pid);
-  const n = payroll ? (hasPay(spine, pid) ? payMonthsFrom(spine, pid, year, asOf) : 0) : monthsAfter(year, asOf);
+  const n = payroll ? (hasPay(spine, pid, a) ? payMonthsFrom(spine, pid, year, asOf, a) : 0) : monthsAfter(year, asOf);
   if (!(n > 0)) return null;
   // From pay: each paycheck still to come its own amount, to the cent (as the run deducts it).
-  const byPay = payroll && hasPay(spine, pid) ? payAmount(spine, pid, year, m, (d) => d >= asOf) : null;
+  const byPay = payroll && hasPay(spine, pid, a) ? payAmount(spine, pid, year, m, (d) => d >= asOf, a) : null;
   return { id: a.id, name: v(a.name) || a.id, monthly: m, months: n, value: byPay ?? round2(m * n), fromPay: payroll, path: 'accounts.' + a.id + '.monthlyContribution', words: money(m) + ' a month' + (payroll ? ' from pay' : '') + ' for ' + nMonths(n) + ' more of ' + year };
 }
 // The year's whole amount on one account: what is in plus what is still set to go in.
-export const yearAmount = (spine, a, year, asOf, t, part = 'all') => { const i = contributedOn(spine, a, year, asOf, t, part); const s = stillOn(spine, a, year, asOf, t, part); return { value: round2(i.value + (s ? s.value : 0)), in: i, still: s }; };
+// Null when nothing is recorded for the year (answer 43).
+export const yearAmount = (spine, a, year, asOf, t, part = 'all') => { const i = contributedOn(spine, a, year, asOf, t, part); const s = stillOn(spine, a, year, asOf, t, part); return { value: i.value === null ? null : round2(i.value + (s ? s.value : 0)), in: i, still: s }; };
 // Whether a year has a recorded total on the account (then the year's amount comes from the record, not a forecast).
 export const hasTotal = (a, year) => !!(a.contributions && Array.isArray(v(a.contributions)) && v(a.contributions).some((c) => counts(c, year) && isTotal(c) && c.kind !== 'employer'));
 

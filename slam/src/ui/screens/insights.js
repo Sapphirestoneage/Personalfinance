@@ -11,7 +11,6 @@ import { culpritsCard, proofCard, roughCard, extrasCard } from '../components/ca
 import { trendCards } from '../charts/trend-charts.js';
 import { estimateCard, paretoCard } from '../charts/months-charts.js';
 import { bridgeCards } from '../charts/bridge-charts.js';
-import { forecastCard } from '../charts/cash-charts.js';
 import { transactionCards } from '../charts/tx-charts.js';
 import { netWorthTiles, netWorthOverTimeCard, assetsDebtsCard, compositionCard, netWorthBridgeCard, milestonesCard } from '../charts/networth-charts.js';
 import { owningCards } from '../charts/owning-charts.js';
@@ -47,7 +46,7 @@ const TABS = {
   compared: (ctx, s) => [blindSpot(s), tableCard(ctx, s), c.threeColumnCard(ctx, s, true), c.overlapCard(ctx, s), c.varianceCard(ctx, s), c.accuracyCard(ctx, s), c.gutCard(ctx, s),
     culpritsCard(ctx, s), proofCard(s), c.completionCard(ctx, s), roughCard(ctx, s)],
   time: (ctx, s) => [c.varianceByMonthCard(ctx, s), ...trendCards(ctx, s), estimateCard(ctx, s, ctx.ui.trendFocus), paretoCard(ctx, s, paretoAnchor(ctx))],
-  cash: (ctx, s) => [...bridgeCards(ctx, s), forecastCard(ctx), ...transactionCards(ctx, s)],
+  cash: (ctx, s) => [...bridgeCards(ctx, s), ...transactionCards(ctx, s)],
   networth: (ctx, s) => [netWorthTiles(ctx, s), netWorthOverTimeCard(ctx, s), assetsDebtsCard(ctx), compositionCard(ctx), netWorthBridgeCard(ctx, s), ...owningCards(ctx, s), milestonesCard(ctx)],
   you: (ctx, s) => [c.draftCard(ctx, s), c.joyCard(ctx, s), c.stressCard(ctx, s), c.mistakeCard(ctx, s), c.incomeStatementCard(ctx, s), extrasCard(s, ctx.future)]
 };

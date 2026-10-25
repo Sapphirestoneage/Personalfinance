@@ -51,11 +51,6 @@ test('take-home, spending, surplus, and savings rate list their inputs', () => {
   assert.ok(Math.abs(sr.result.amount - 200 / 3000) < 1e-9);
 });
 
-test('safe to spend shows today, the lowest point, and the cushion', () => {
-  // A calendar shaped like Riley's on October 17 (S-095): 3,291.03 today, lowest 60 on Nov 5, cushion 100, so $0.
-  const cal = { todayCash: 3291.03, lowest: { date: '2026-11-05', amount: 60 }, cushion: 100, safeToSpend: 0 };
-  const ex = explain(buildSummary(household(), refs), 'safeToSpend', cal);
-  assert.deepEqual(ex.steps.map((x) => x.amount), [3291.03, 60, -100]);
-  assert.equal(ex.result.amount, 0);
+test('a name it does not know explains nothing', () => {
   assert.equal(explain(buildSummary(household(), refs), 'nothing'), null);
 });

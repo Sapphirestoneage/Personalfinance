@@ -4,6 +4,7 @@
 
 import { fact, setAt, valueOf, getAt } from './spine.js';
 import { estimateCardMinimum, DEFAULT_MIN_SOURCE } from './debt.js';
+import { isEarmarked } from './schema.js';
 
 const blank = (f) => !f || f.kind === 'missing';
 
@@ -62,9 +63,9 @@ export function applyDefaults(spine, rules) {
   return out;
 }
 
-// The main checking account: the first checking account, else the first cash account.
+// The main checking account: the first checking account, else the first cash account; never one set aside for a goal (S-228).
 export function mainChecking(spine) {
-  const cash = (spine.accounts || []).filter((a) => a.family === 'cash');
+  const cash = (spine.accounts || []).filter((a) => a.family === 'cash' && !isEarmarked(a));
   const c = cash.find((a) => a.type === 'checking') || cash[0];
   return c ? c.id : null;
 }

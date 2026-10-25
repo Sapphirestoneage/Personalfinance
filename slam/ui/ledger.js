@@ -4,7 +4,7 @@
 // confirm or mark them at once. Every edit can be undone. The list at the top is
 // every rough and missing field, ordered by how much it changes the results.
 
-import { mountPage } from './page.js';
+import { mountPage, whoseLine } from './page.js';
 import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
@@ -12,8 +12,8 @@ import { maxItPanel } from './maxit-panel.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize } from '../engine/summary.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
-import { validate } from '../engine/schema.js';
-import { downloadProfile, readProfile, matchesFile, setBaseline, FILE_NAME } from './profile-file.js';
+import { downloadProfile, matchesFile, setBaseline, FILE_NAME } from './profile-file.js';
+import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import { PRESETS, INCOME_TYPES, CADENCES, FAT } from '../engine/schema.js';
@@ -21,7 +21,7 @@ import { editPayment, duplicateItem, editIncome, recordContribution, TOTAL_KINDS
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { applyDefaults, isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
-import { loadAll, save, forgetSaved, SOURCE_WORDS } from './household.js';
+import { loadAll, save, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, PAY_POLICY_WORDS } from './view.js';
 
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
@@ -355,12 +355,17 @@ function incomeEditor(row) {
   const day = h('input', { id: 'inc-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day.value = x.payDay && valueOf(x.payDay) ? String(valueOf(x.payDay)) : '';
   const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day of the month it lands (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Twice a month: the first of the two days. Leave blank if it varies; the calendar then lists it under "sometime this month".'));
+  // Twice a month, the second day (S-226): the 1st and the 15th. Blank keeps the usual rule (15 days after the first).
+  const day2 = h('input', { id: 'inc-day2', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
+  day2.value = x.payDay2 && valueOf(x.payDay2) ? String(valueOf(x.payDay2)) : '';
+  const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day of the month it lands (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th. Leave blank and the second pay comes 15 days after the first.'));
   const words = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
   const dates = dateFields(x.start, x.end, 'inc', { label: 'When does it run?' });
   const startLabel = dates.box.querySelector('label[for="inc-start"]'), endLabel = dates.box.querySelector('label[for="inc-end"]');
   const sync = () => {
     const c = often.value;
     dayBox.hidden = BY_START.includes(c) || c === 'once' || c === 'total';
+    day2Box.hidden = c !== 'semimonthly';
     startLabel.textContent = BY_START.includes(c) ? 'First pay date (pay dates count from it)' : words[c] || 'Starts (optional)';
     endLabel.textContent = c === 'total' ? 'To' : c === 'once' ? 'Ends (leave blank)' : 'Ends (optional)';
     if (c === 'once' || c === 'total' || BY_START.includes(c)) dates.box.open = true;
@@ -378,11 +383,18 @@ function incomeEditor(row) {
       if (!p.ok || p.value < 1 || p.value > 31) { msg.textContent = 'Day paid: a number from 1 to 31, or leave it blank'; day.focus(); return; }
       payDay = p.value;
     }
+    let payDay2 = null;
+    if (!day2Box.hidden && day2.value.trim() !== '') {
+      const p = parseInput('int', day2.value);
+      if (!p.ok || p.value < 1 || p.value > 31) { msg.textContent = 'Second day paid: a number from 1 to 31, or leave it blank'; day2.focus(); return; }
+      if (payDay === null) { msg.textContent = 'Second day paid: enter the first day too, or leave both blank'; day.focus(); return; }
+      payDay2 = p.value;
+    }
     const label = name.value.trim() || x.label;
     try {
-      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, personId: whose ? whose.value : undefined, kind, label }, today());
+      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2, personId: whose ? whose.value : undefined, kind, label }, today());
       open = null;
-      apply(next, label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay }, 'income') + (kind === 'rough' ? ' (a guess)' : ''));
+      apply(next, label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2 }, 'income') + (kind === 'rough' ? ' (a guess)' : ''));
     } catch (err) { msg.textContent = err.message; }
   };
   return editorForm(() => doSet('known'),
@@ -390,7 +402,7 @@ function incomeEditor(row) {
     whose ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whose, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
     h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
     h('p', { class: 'edit-hint' }, 'Gross pay, before anything is taken out. Tax withheld has its own rows under Taxes.'),
-    dayBox, dates.box, msg,
+    dayBox, day2Box, dates.box, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
@@ -498,19 +510,26 @@ function paymentEditor(row) {
   const from = linkSelect('link:cash|card', cur.from ?? null, 'edit-input');
   const day = h('input', { id: 'pay-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day.value = cur.day ? String(cur.day) : '';
+  // The debt this line pays (S-226): a car payment that pays the car loan is counted once, under debt payments.
+  const debts = hist.present.debts || [];
+  const pays = debts.length ? h('select', { id: 'pay-debt' }, h('option', { value: '' }, 'None: an ordinary bill'), ...debts.map((x) => h('option', { value: x.id, selected: cur.paysDebt === x.id }, valueOf(x.name) || x.id))) : null;
   const doSet = (kind) => {
     if (!from.value) { msg.textContent = 'Pick where it is paid from'; from.focus(); return; }
     const d = day.value.trim() === '' ? { ok: true, value: null } : parseInput('int', day.value);
     if (!d.ok || (d.value !== null && (d.value < 1 || d.value > 31))) { msg.textContent = 'Day: a number from 1 to 31, or leave it blank'; day.focus(); return; }
-    open = null;
     const label = from.selectedOptions[0].textContent;
-    apply(editPayment(hist.present, id, { from: from.value, day: d.value, kind }, today()), e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (kind === 'rough' ? ' (a guess)' : ''));
+    try {
+      const next = editPayment(hist.present, id, { from: from.value, day: d.value, paysDebt: pays ? pays.value || null : undefined, kind }, today());
+      open = null;
+      apply(next, e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (pays && pays.value ? '; pays ' + pays.selectedOptions[0].textContent : '') + (kind === 'rough' ? ' (a guess)' : ''));
+    } catch (err) { msg.textContent = err.message; }
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, 'Paid from'), from,
     h('p', { class: 'edit-hint' }, 'A card here means it goes on the card; the card is then paid from its own account.'),
     h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day,
     h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'),
+    pays ? [h('label', { for: 'pay-debt', class: 'edit-label' }, 'The debt it pays (optional)'), pays, h('p', { class: 'edit-hint' }, 'For example a car payment that pays the car loan. It is then counted once, under debt payments, at this line\'s amount, on the debt\'s due day.')] : null,
     msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
@@ -565,7 +584,7 @@ function editor(row) {
 
 function rowEl(row) {
   const f = row.fact;
-  const shown = f.kind === 'notForMe' ? 'Does not apply' : f.value === null ? 'Not given yet' : row.display || showValue(f.value, row.type);
+  const shown = f.kind === 'notForMe' ? 'Does not apply' : row.linked ? row.display : f.value === null ? 'Not given yet' : row.display || showValue(f.value, row.type);
   const isOpen = open === row.path && !selecting;
   const label = row.field || row.label;
   if (selecting) {
@@ -842,7 +861,7 @@ function itemEl(it) {
       countBtns(it.counts), pickAll),
     isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
     isOpen && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dup, remove) : null,
-    isOpen && !selecting && maxShown ? maxItPanel(hist.present, rules, it.id, { onRecord: saveContribution }) : null);
+    isOpen && !selecting && maxShown ? maxItPanel(hist.present, rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null);
 }
 
 // "Record what went in for <year>" (S-211): one entry added to the account's contributions by year, one undoable edit.
@@ -850,6 +869,18 @@ function saveContribution(accountId, year, amount, kind) {
   const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
   const what = TOTAL_KINDS.includes(kind) ? (kind === 'employer' ? 'the employer part for ' : 'the total for ') + year + ', ' : 'a ' + ({ rollover: 'rollover', conversion: 'conversion', from529: '529 rollover' }[kind] || 'deposit') + ' for ' + year + ' of ';
   apply(recordContribution(hist.present, accountId, { year, amount, kind }, today()), 'Recorded ' + what + money(amount, !Number.isInteger(amount)) + ', in ' + (valueOf(acc.name) || accountId));
+}
+
+// An HSA through payroll or from take-home (S-227, answer 47), and the job a plan from pay is paid through (answer 60):
+// one undoable edit each.
+function savePayroll(accountId, on) {
+  const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
+  apply(putFact(hist.present, 'accounts.' + accountId + '.throughPayroll', on, 'known', today()), (valueOf(acc.name) || accountId) + ': ' + (on ? 'through payroll' : 'from take-home'));
+}
+function savePaidThrough(accountId, incomeId) {
+  const acc = (hist.present.accounts || []).find((a) => a.id === accountId), job = (hist.present.income || []).find((s) => s.id === incomeId);
+  if (!job) return;
+  apply(putFact(hist.present, 'accounts.' + accountId + '.paidThrough', incomeId, 'known', today()), (valueOf(acc.name) || accountId) + ': paid through ' + job.label);
 }
 
 // A link to ledger.html#max:<account> opens that account and its panel, unfolding its group and showing every kind.
@@ -925,18 +956,20 @@ function render() {
     h('header', { class: 'top' },
       h('div', {},
         h('h1', {}, 'Ledger'),
-        h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
+        whoseLine(spine, source, { rules, reopen: (loaded) => took(loaded, 'your file') })),
       h('nav', { class: 'top-actions' },
         h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
         // Redo shows only when there is something to redo.
         canRedo(hist) ? h('button', { class: 'btn', title: 'Redo ' + redoLabel(hist), onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo') : null,
         h('button', { type: 'button', class: matchesFile(spine) ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
-        h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
-        h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
+        // The example household loads a file from its header (Load my file); anyone else's loads a different one here.
+        whose(spine).example ? null : h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
+        whose(spine).example ? null : h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
         h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); render(); document.getElementById('picker')?.scrollIntoView({ block: 'start' }); } }, 'Pick what you have'),
         )),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
+    problemsCard(spine),
     picking ? pickerCard() : null,
     guessList(),
     subsCard(),
@@ -958,19 +991,33 @@ function saveFile() {
   lastSaved = 'Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ to make it the file the app starts from.';
   render();
 }
+// Both buttons read the file through the one loader (household.js loadMyFile, S-228): a field it cannot use is listed
+// at the top of the Ledger, never a reason to refuse the file.
 async function loadFile(ev) {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
-  try {
-    const next = applyDefaults(await readProfile(file), rules);
-    const check = validate(next);
-    if (!check.ok) throw new Error(file.name + ' has ' + check.errors.length + ' problem' + (check.errors.length === 1 ? '' : 's') + ', starting with ' + check.errors[0].path + ': ' + check.errors[0].message + '.');
-    open = null;
-    apply(next, 'Loaded ' + file.name);
-    setBaseline(hist.present);
-    lastSaved = 'Loaded ' + file.name + '. Undo goes back to what you had.';
-    render();
-  } catch (err) { lastSaved = 'Could not load that file: ' + err.message; render(); }
+  try { took(await loadMyFile(file, rules), file.name); } catch (err) { lastSaved = 'Could not load that file: ' + err.message; render(); }
+  ev.target.value = '';
+}
+function took(loaded, name) {
+  open = null;
+  apply(loaded.spine, 'Loaded ' + name);
+  setBaseline(hist.present);
+  lastSaved = 'Loaded ' + name + '. Undo goes back to what you had.' + (loaded.problem ? ' ' + loaded.problem : '');
+  render();
+}
+
+// What the file held that could not be used (S-228): each field named, with what was wrong and what the file held.
+// A field set to missing leaves the list once it is entered; the rest is said once, folded.
+function problemsCard(spine) {
+  const p = fileProblems(spine);
+  if (!p.open.length && !p.other.length) return null;
+  const held = (x) => (x.held === null || x.held === undefined ? '' : ' The file held ' + (typeof x.held === 'string' ? '"' + x.held + '"' : JSON.stringify(x.held)).slice(0, 80) + '.');
+  const item = (x) => h('li', {}, x.link ? h('a', { href: '#' + encodeURIComponent(x.link) }, x.label) : h('strong', {}, x.label), ': ' + x.message + '.' + held(x));
+  return h('section', { class: 'card', 'aria-labelledby': 'problems-h', role: p.open.length ? 'alert' : null },
+    h('h2', { id: 'problems-h' }, p.open.length ? 'From your file: ' + p.open.length + ' field' + (p.open.length === 1 ? '' : 's') + ' to look at' : 'From your file'),
+    p.open.length ? [h('p', { class: 'muted' }, 'These could not be used as the file had them, so each reads missing until you enter it. Nothing else in the file was changed.'), h('ul', { class: 'flow-list' }, p.open.map(item))] : null,
+    p.other.length ? h('details', { class: 'flow-list' }, h('summary', {}, 'Read another way or kept aside (' + p.other.length + ')'), h('ul', {}, p.other.map(item))) : null);
 }
 
 function resetAsk(e) {

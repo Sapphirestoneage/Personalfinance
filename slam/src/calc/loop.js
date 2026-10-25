@@ -4,7 +4,7 @@
 
 import { planView, actualsFor, prevMonthKey, reviewSummary } from './plan.js';
 import { counted, isPending, monthLog } from './log.js';
-import { cashCalendar, forecastCheck } from './calendar.js';
+import { forecastCheck } from './dates.js';
 import { balancesFor, kindOf, lastUpdated } from './balances.js';
 import { bridgeFor } from './bridge.js';
 import { detect, topMerchants } from './tx-analysis.js';
@@ -44,14 +44,13 @@ export function gapLines(summary) {
 export function loopStrip(doc, summary, today) {
   const month = doc.currentMonth;
   const log = monthLog(doc, month);
-  const cal = cashCalendar(doc, summary.income, { today: today < month + '-01' ? month + '-01' : today, horizon: 0 });
-  const items = cal.scheduled.filter((i) => monthOf(i.planned) === month && !i.skipped);
   const bal = balancesFor(doc, month);
   const br = bridgeFor(doc, summary.income, month);
   return {
     month,
     plan: { state: planState(doc, summary, month) },
-    track: { entries: log.count, last: log.last, confirmed: items.filter((i) => i.confirmed).length, scheduled: items.length },
+    // The scheduled-item counts went with the cash calendar (S-209): the calendar lives in SLAM now.
+    track: { entries: log.count, last: log.last },
     review: { empty: gapLines(summary).length, balancesMissing: bal.missing.length, balancesTotal: bal.required.length * 2, ties: br.ties, unexplained: br.unexplained },
     nextPlan: planState(doc, summary, nextKey(month))
   };
@@ -137,8 +136,6 @@ export function owedToClient(doc, month) {
 export function monthEndChecklist(doc, summary, today) {
   const month = doc.currentMonth;
   const gaps = gapLines(summary);
-  const cal = cashCalendar(doc, summary.income, { today: today > lastDay(month) ? lastDay(month) : today < month + '-01' ? month + '-01' : today, horizon: 0 });
-  const waiting = cal.waiting.filter((i) => monthOf(i.planned) === month);
   const bal = balancesFor(doc, month);
   const br = bridgeFor(doc, summary.income, month);
   const inMonth = doc.transactions.filter((t) => monthOf(t.date) === month);
@@ -150,16 +147,15 @@ export function monthEndChecklist(doc, summary, today) {
   const next = planState(doc, summary, nextKey(month));
   const items = [
     { key: 'gaps', label: 'Lines in the plan with no actual and no entries', count: gaps.length, open: gaps.length > 0, short: gaps.length + ' line' + (gaps.length === 1 ? '' : 's') + ' empty', fix: 'actual', names: gaps.map((g) => g.name) },
-    { key: 'waiting', label: 'Scheduled items still waiting on It happened or Didn\'t happen', count: waiting.length, open: waiting.length > 0, short: waiting.length + ' scheduled item' + (waiting.length === 1 ? '' : 's') + ' waiting', fix: 'cashflow', names: waiting.map((w) => w.name) },
     { key: 'balances', label: 'Start and end balances missing', count: bal.missing.length, open: bal.missing.length > 0 || !bal.rows.length, short: bal.rows.length ? bal.missing.length + ' balance' + (bal.missing.length === 1 ? '' : 's') + ' missing' : 'no accounts', fix: 'balances', names: bal.missing.map((m) => m.name + ' ' + m.which),
       // Investments and things you own are optional at month-end (S-110): listed with their last update, never open items.
       stale: bal.stale },
     { key: 'bridge', label: 'Bridge from budget to cash', count: br.ties ? 0 : 1, open: br.ties !== true, state: br.ties === null ? 'needs balances' : br.ties ? 'ties' : 'off by ' + whole(br.unexplained), short: br.ties === null ? 'bridge needs balances' : 'off by ' + whole(br.unexplained || 0), fix: 'bridge' },
     // Income entries with no source (S-118): the money counts, but it should say whose it is.
     { key: 'income-source', label: 'Income entries with no source', count: incomeLoose.count, open: incomeLoose.count > 0, short: incomeLoose.count + ' income entr' + (incomeLoose.count === 1 ? 'y' : 'ies') + ' with no source', fix: 'actual' },
-    { key: 'unmapped', label: 'Imported entries with no line, and possible matches to confirm', count: unmapped.length + possible.length, open: unmapped.length + possible.length > 0, short: unmapped.length + ' unmapped, ' + possible.length + ' possible match' + (possible.length === 1 ? '' : 'es'), fix: 'cashflow' },
-    { key: 'duplicates', label: 'Likely duplicates not resolved', count: dups.length, open: dups.length > 0, short: dups.length + ' likely duplicate' + (dups.length === 1 ? '' : 's'), fix: 'cashflow' },
-    { key: 'owed', label: 'Reimbursements still owed to the client', count: owed.count, open: owed.count > 0, short: owed.count + ' reimbursement' + (owed.count === 1 ? '' : 's') + ' owed', amount: owed.amount, fix: 'cashflow', names: owed.list.map((o) => o.name) },
+    { key: 'unmapped', label: 'Imported entries with no line, and possible matches to confirm', count: unmapped.length + possible.length, open: unmapped.length + possible.length > 0, short: unmapped.length + ' unmapped, ' + possible.length + ' possible match' + (possible.length === 1 ? '' : 'es'), fix: 'track' },
+    { key: 'duplicates', label: 'Likely duplicates not resolved', count: dups.length, open: dups.length > 0, short: dups.length + ' likely duplicate' + (dups.length === 1 ? '' : 's'), fix: 'track' },
+    { key: 'owed', label: 'Reimbursements still owed to the client', count: owed.count, open: owed.count > 0, short: owed.count + ' reimbursement' + (owed.count === 1 ? '' : 's') + ' owed', amount: owed.amount, fix: 'track', names: owed.list.map((o) => o.name) },
     { key: 'next-plan', label: 'Next month\'s plan', count: next === 'not started' ? 1 : 0, open: next === 'not started', state: next, short: 'next month\'s plan not started', fix: 'plan' }
   ];
   const open = items.filter((i) => i.open);

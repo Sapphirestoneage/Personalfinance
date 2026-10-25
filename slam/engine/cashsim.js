@@ -16,15 +16,17 @@
 
 import { valueOf as v, tracker, round2, monthKey, monthEnd, addMonths, addDays, daysBetween, dayIn, daysInMonth } from './spine.js';
 import { cashflow, streamWeight, payrollShares } from './cashflow.js';
-import { balanceSheet } from './networth.js';
+import { balanceSheet, setAsideFor } from './networth.js';
 import { emergency } from './emergency.js';
 import { mainChecking } from './defaults.js';
 import { shareOf, coverOf } from './sharing.js';
 import { isSubscription, nextCharge } from './subscriptions.js';
-import { DEFAULT_MIN_SOURCE, payPolicyOf, minimumPayment } from './debt.js';
+import { DEFAULT_MIN_SOURCE, payPolicyOf, paymentOn, lineFor, lineMonthly, paysDebtOf } from './debt.js';
 import * as C from './vendor/cashcal.js';
 import { MATCH_DAYS, matchOccurrence } from './feed.js';
 import { TAG_WORDS } from './spending.js';
+import { payDay2Of } from './contrib.js';
+import { fromPaycheck, isEarmarked } from './schema.js';
 
 const cents = (x) => (x === null || x === undefined ? null : Math.round(x * 100));
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
@@ -104,13 +106,16 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     if (a.family !== 'cash') continue;
     const bal = t.useFact('accounts.' + a.id + '.balance', a.balance);
     if (bal === null) { needs.push({ path: 'accounts.' + a.id + '.balance', what: (v(a.name) || a.id) + ': balance' }); continue; }
-    const cushion = v(a.role) === 'emergency' || (a.type === 'hysa' || a.type === 'savings') && a.id !== main;
-    model.accounts.push({ id: a.id, name: v(a.name) || a.id, type: a.type, balance: cents(bal), primary: a.id === main, cushion, autoCover: false });
+    // Money set aside for a goal (S-228) is apart like the cushion, so safe to spend leaves it out (the vendored engine reads
+    // `cushion` for that), but it is never the cushion: it does not lower the floor and never tops checking up.
+    const earmarked = isEarmarked(a);
+    const cushion = earmarked || v(a.role) === 'emergency' || (a.type === 'hysa' || a.type === 'savings') && a.id !== main;
+    model.accounts.push({ id: a.id, name: v(a.name) || a.id, type: a.type, balance: cents(bal), primary: a.id === main, cushion, autoCover: false, ...(earmarked ? { earmarked: true, goal: setAsideFor(spine, a) } : {}) });
     model.paths['acct:' + a.id] = 'accounts.' + a.id + '.balance';
   }
   if (!model.accounts.length) needs.push({ path: null, what: 'a checking or savings account with a balance' });
   // Auto-cover (a house default, S-203): the cushion account tops checking back up to the floor; off when calendar.autoCover is false.
-  if (cal.autoCover !== false) { const spare = model.accounts.find((a) => !a.primary && a.cushion) || model.accounts.find((a) => !a.primary); if (spare) { spare.autoCover = true; t.addRough('accounts.' + spare.id + '.balance'); } }
+  if (cal.autoCover !== false) { const spare = model.accounts.find((a) => !a.primary && a.cushion && !a.earmarked) || model.accounts.find((a) => !a.primary && !a.earmarked); if (spare) { spare.autoCover = true; t.addRough('accounts.' + spare.id + '.balance'); } }
   const pid = main;
 
   // ------------------------------------------------------------ income: what lands, on its days
@@ -156,9 +161,9 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     const item = { id: s.id, label, to, source: 'spine', variable: roughFact(s.amount), estimated: estimatedDay, path };
     model.paths['pay:' + s.id] = path;
     const maybe = w < 1;
-    const push = (dates, each) => {
+    const push = (dates, each, it = item) => {
       if (maybe) { for (const d of dates) if (d >= asOf && d <= end && (!s.end || d <= s.end)) model.maybe.push({ id: s.id + '@' + d, label, cents: cents(each), date: d, likelihood: w, direction: 'in', path }); return; }
-      model.incomes.push(item); fenceDates(model, item, dates, s.start, s.end);
+      model.incomes.push(it); fenceDates(model, it, dates, s.start, s.end);
     };
     if (s.cadence === 'once') { if (s.start >= asOf && s.start <= end) { if (maybe) model.maybe.push({ id: s.id, label, cents: cents(amt * ratio), date: s.start, likelihood: w, direction: 'in', path }); else model.extras.push({ id: s.id, label, cents: cents(amt * ratio), cadence: 'once', date: s.start, direction: 'in', paidWith: 'cash', category: 'income', to, path }); } continue; }
     if (STEP[s.cadence]) {
@@ -169,6 +174,14 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       continue;
     }
     const day = s.payDay ? t.useFact(base + '.payDay', s.payDay) : null;
+    // Two days entered (S-226): each is a monthly paycheck of half the month, under the line's own id, so a pay's key
+    // is the line and its day, as the calendar has it (engine/contrib.js semimonthlyDates).
+    const day2 = s.cadence === 'semimonthly' && day ? payDay2Of(s) : null;
+    if (day2 !== null) {
+      t.useFact(base + '.payDay2', s.payDay2);
+      for (const dd of [day, day2]) push(C.occurrences({ cadence: 'month', day: dd }, asOf, end), perMonthNet / 2, { ...item, cents: cents(perMonthNet / 2), cadence: 'month', day: dd, estimated: estimatedDay || roughFact(s.payDay2) });
+      continue;
+    }
     if (s.cadence === 'semimonthly') {
       const d1 = day || 15;
       Object.assign(item, { cents: cents(perMonthNet / 2), cadence: 'semimonthly', anchor: dayIn(ym, d1) });
@@ -188,6 +201,8 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   const reimbDays = R('APP_REIMBURSE_DAYS');
   for (const e of spine.expenses || []) {
     const base = 'expenses.' + e.id, path = base + '.amount';
+    // A line that pays a debt (S-226, answer 35) is that debt's payment below, paid once on the debt's due day.
+    if (paysDebtOf(spine, e)) { t.useFact(base + '.paysDebt', e.paysDebt); continue; }
     if (coverOf(e).covered) { t.useFact(base + '.covered', e.covered); continue; }
     if (e.end && e.end < asOf) continue;
     // Marked "does not apply": not a cost, and not a missing one either.
@@ -273,12 +288,17 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       const reportDay = reportFact ?? stmtDay;
       if (reportFact === null) t.addRough(base + '.reportDay');
       const annualFee = d.annualFee && d.annualFee.kind !== 'notForMe' ? t.useFact(base + '.annualFee', d.annualFee) ?? 0 : 0;
+      // A card that pays its full statement never carries a balance and never accrues interest (S-226, answer 38): the
+      // engine's pay-in-full card. A card a budget line pays (answer 35) pays the line's amount.
+      const ln = lineFor(spine, d, ym), lineAmt = ln ? lineMonthly(ln) : null;
+      if (lineAmt !== null) { t.useFact('expenses.' + ln.id + '.amount', ln.amount); t.useFact('expenses.' + ln.id + '.paysDebt', ln.paysDebt); }
+      const inFull = policy === 'statement' && lineAmt === null;
       model.cards.push({
         id: d.id, name, balance: cents(bal), apr, promoApr, promoEnd: promoEnds ? promoEnds.slice(0, 7) : null, limit: cents(limit), minimum: cents(minEntered),
-        stmtDay, graceDays: grace, dueDay, payInFull: false, autopay: policy === 'statement' ? 'statement' : 'minimum', goalNoInterest: everyday,
+        stmtDay, graceDays: grace, dueDay, payInFull: inFull, autopay: lineAmt !== null ? cents(lineAmt) : policy === 'statement' ? 'statement' : 'minimum', goalNoInterest: everyday,
         lateFee, penaltyApr, reportDay: reportDay, reportDayRough: reportFact === null, payLast, annualFee: cents(annualFee),
         minPct: minEntered === null ? 0.01 + apr / 12 : 0, minFloor: minEntered === null ? cents(rules.get('APP_CARD_MIN_FLOOR', year)) : 0,
-        revolving: bal > 0, estimated: closeFact === null, movable: true, path: base + '.balance'
+        revolving: bal > 0 && !inFull, estimated: closeFact === null, movable: true, path: base + '.balance'
       });
       t.rule(rules, 'APP_CARD_MIN_FLOOR', year); t.rule(rules, 'APP_CARD_MIN_PCT', year);
       // A statement that closed before the run, due inside it (S-209). The engine opens every card with no
@@ -289,7 +309,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       const card = model.cards[model.cards.length - 1];
       const carry = carriedStatement(asOf, end, card.stmtDay, card.dueDay, grace);
       if (carry && bal > 0) {
-        const m = minimumPayment(d, rules, carry.due, bal, policy);
+        const m = paymentOn(spine, rules, d, carry.due, bal, policy);
         const pay = m.value === null ? null : Math.min(bal, m.value);
         if (pay) {
           model.extras.push({ id: 'carry:' + d.id, kind: 'card-payment', label: name + (policy === 'statement' ? ' statement' : ' minimum') + ' (statement closed ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+carry.close.slice(5, 7) - 1] + ' ' + +carry.close.slice(8, 10) + ')', cadence: 'once', date: carry.due, cents: cents(pay), direction: 'out', paidWith: 'cash', category: 'debt', card: d.id });
@@ -300,7 +320,10 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
       }
       continue;
     }
-    const minimum = t.useFact(base + '.minimum', d.minimum);
+    // A loan a budget line pays (S-226, answer 35): the line's amount a month, else the loan's own payment.
+    const ln = lineFor(spine, d, ym), lineAmt = ln ? lineMonthly(ln) : null;
+    if (lineAmt !== null) { t.useFact('expenses.' + ln.id + '.amount', ln.amount); t.useFact('expenses.' + ln.id + '.paysDebt', ln.paysDebt); }
+    const minimum = lineAmt !== null ? lineAmt : t.useFact(base + '.minimum', d.minimum);
     if (minimum === null) { needs.push({ path: base + '.minimum', what: name + ': monthly payment' }); continue; }
     if (bal <= 0) continue;
     const dueDay = t.useFact(base + '.dueDay', d.dueDay) ?? 1;
@@ -315,7 +338,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
 
   // ------------------------------------------------------------ saving from take-home and the tax set-aside
   for (const a of spine.accounts || []) {
-    if (!a.monthlyContribution || a.family === 'cash' || ['employerRetirement', 'hsaFsa'].includes(a.family)) continue;
+    if (!a.monthlyContribution || a.family === 'cash' || fromPaycheck(a)) continue;
     const x = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
     if (!x) continue;
     const from = a.fundedFrom ? t.useFact('accounts.' + a.id + '.fundedFrom', a.fundedFrom) : null;
@@ -331,7 +354,7 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   // The floor on checking is the stage 1 month less what the cushion accounts already hold (Eli's correction: the floor is the cushion, not a formula on top of it).
   if (em.monthlyNeed !== null) {
     const target = Math.ceil(floorMonths * em.monthlyNeed);
-    const cushionCash = model.accounts.filter((a) => a.cushion).reduce((x, a) => x + a.balance, 0) / 100;
+    const cushionCash = model.accounts.filter((a) => a.cushion && !a.earmarked).reduce((x, a) => x + a.balance, 0) / 100;
     model.floor = cents(Math.max(0, target - cushionCash)); model.floorTarget = cents(target); model.cushionCash = cents(cushionCash);
     model.floorSource = cushionCash >= target ? 'cushion-account' : cushionCash > 0 ? 'stage1-less-cushion' : 'stage1';
     t.absorb({ ...em.tiers.full.burn, value: undefined });
@@ -401,6 +424,9 @@ export function logIntoRun(spine, model, asOf, end, cardIds) {
       entries.push({ logId: e.id, date: e.date, label: words(e), kind: 'income', amount: e.amount, moved: e.amount, how: 'whole' });
       continue;
     }
+    // Logged on a line that pays a debt (S-226): the run pays that debt itself on its due day, so the entry moves no
+    // more cash (matching a logged payment to the debt's own payment waits on question 30, parked).
+    if (e.expenseId && paysDebtOf(spine, lineOf.get(e.expenseId))) { entries.push({ logId: e.id, date: e.date, label: words(e), kind: e.kind || 'spend', amount: e.amount, moved: 0, how: 'the debt payment' }); continue; }
     const tag = tagOf(e), payer = payerOf(e);
     const everyday = (!e.expenseId || spreadLines.has(e.expenseId)) && spread.some((b) => b.category === tag && b.paidWith === payer);
     if (everyday) { const k = e.date.slice(0, 7) + '|' + tag + '|' + payer; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(e); continue; }
@@ -455,12 +481,15 @@ export function cashsim(spine, rules, opts = {}) {
   // Checking is known only when a checking account has a balance (S-209 review): with none, the engine's main
   // account may be savings, and savings is never shown as checking.
   const hasChecking = model.accounts.some((a) => a.primary && a.type === 'checking');
-  const checkingIds = hasChecking ? model.accounts.filter((a) => a.primary || a.type === 'checking').map((a) => a.id) : null;
+  const checkingIds = hasChecking ? model.accounts.filter((a) => a.primary || (a.type === 'checking' && !a.earmarked)).map((a) => a.id) : null;
   const checkingOf = (d) => (checkingIds ? checkingIds.reduce((x, id) => x + (d.balances[id] || 0), 0) : d.primary);
   // A day's in and out are checking's own (S-209 review): card charges, interest and fees move the card, not checking;
   // a payment the floor held back never left. Transfers between two checking accounts show on both sides.
   const flowOf = (d, sign) => (checkingIds ? d.events.filter((e) => checkingIds.includes(e.account) && !e.card && e.kind !== 'shortfall' && e.kind !== 'statement' && typeof e.cents === 'number' && Math.sign(e.cents) === sign).reduce((x, e) => x + Math.abs(e.cents), 0) : sign > 0 ? d.in : d.out);
-  const days = run.days.map((d) => ({ date: d.date, dom: d.dom, cash: dollars(d.cash), primary: dollars(checkingOf(d)), cardDebt: dollars(d.cardDebt + owedBefore(d.date)), loanDebt: dollars(d.loanDebt), payLater: dollars(d.payLater), debt: dollars(d.debt + owedBefore(d.date)), in: dollars(flowOf(d, 1)), out: dollars(flowOf(d, -1)), balances: Object.fromEntries(Object.entries(d.balances).map(([k, c]) => [k, dollars(c)])), events: d.events.map(ev) }));
+  // A day's cash is every account but money set aside for a goal (S-228), which the day carries apart.
+  const apart = model.accounts.filter((a) => a.earmarked).map((a) => a.id);
+  const apartOf = (d) => apart.reduce((x, id) => x + (d.balances[id] || 0), 0);
+  const days = run.days.map((d) => ({ date: d.date, dom: d.dom, cash: dollars(d.cash - apartOf(d)), setAside: apart.length ? dollars(apartOf(d)) : null, primary: dollars(checkingOf(d)), cardDebt: dollars(d.cardDebt + owedBefore(d.date)), loanDebt: dollars(d.loanDebt), payLater: dollars(d.payLater), debt: dollars(d.debt + owedBefore(d.date)), in: dollars(flowOf(d, 1)), out: dollars(flowOf(d, -1)), balances: Object.fromEntries(Object.entries(d.balances).map(([k, c]) => [k, dollars(c)])), events: d.events.map(ev) }));
   const cards = Object.fromEntries(Object.entries(run.cards).map(([id, c]) => [id, { ...c, balance: dollars(c.balance), interest: dollars(c.interest), lateFees: dollars(c.lateFees), paid: dollars(c.paid), chargedBack: dollars(c.chargedBack), netPaydown: dollars(c.netPaydown), startBalance: dollars(c.startBalance), limit: dollars(c.limit), peakBeforeReport: dollars(c.peakBeforeReport), interestByMonth: Object.fromEntries(Object.entries(c.interestByMonth).map(([k, x]) => [k, dollars(x)])), statements: c.statements.map((s) => ({ ...s, balance: dollars(s.balance), interest: dollars(s.interest), charges: dollars(s.charges), adb: dollars(s.adb) })), path: model.paths['debt:' + id] || null }]));
   const loans = Object.fromEntries(Object.entries(run.loans).map(([id, l]) => [id, { ...l, balance: dollars(l.balance), interest: dollars(l.interest), paid: dollars(l.paid), path: model.paths['debt:' + id] || null }]));
   // Dates: cards free (every revolving card stopped revolving), high-interest free, loans paid, all free.

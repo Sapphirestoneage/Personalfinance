@@ -88,3 +88,12 @@ with balance, limit and utilization, APR, promo, statement and due days, minimum
 3. Installment debts: student, auto, mortgage, personal; payoff schedule; secured asset. 4. Investments and
 things you own. 5. Income: each paycheck lands in an account. 6. Expenses: bills paid from an account or
 card, then categories and the budget. Cards and loans move their month balances onto the debt (one record).
+
+## Parked from the answers to questions 29 to 64 (2026-10-25, S-226, S-227)
+
+- Paid from a second account: a bill, or a card or loan payment, out of savings or a second checking account (answer 29; today every bill and payment comes out of main checking).
+- Card and loan payments as items: move one, skip one, mark it "It happened" or match it to a log entry (answer 30; today the run pays them itself on the due day).
+- Balance checks per account, and per debt, on their own dates (answer 33; today a check-in moves the whole household to that day).
+- Couples details: whose account it is beyond partner or first person, and the spousal IRA rule's edge cases (answer 48).
+- Couples details: whose capital gains, dividends and other income on a tax year are, for partners who do not file jointly (answer 61).
+- Couples details: married filing separately and living apart all year, the single Roth range (answer 62).

@@ -343,7 +343,8 @@ test('an expense\'s payment: the account or card and the day, one row', () => {
   assert.ok(linkOptions(s0, 'link:cash|card').some((o) => o.value === card.id && o.group === 'Cards'));
   const s = editPayment(s0, e.id, { from: card.id, day: 5 }, '2026-10-23');
   const row = paymentRow(s, s.expenses[0]);
-  assert.deepEqual(row.fact.value, { from: card.id, day: 5 });
+  // paysDebt (S-226): the debt the line pays; none here.
+  assert.deepEqual(row.fact.value, { from: card.id, day: 5, paysDebt: null });
   assert.equal(row.display, card.name.value + ', on the 5th');
   assert.ok(validate(s).ok);
   const cleared = editPayment(s, e.id, { from: card.id, day: null }, '2026-10-23');
@@ -417,7 +418,8 @@ test('income: one row says how much, how often, since when and the day paid; the
   let s = demo();
   const row = ledgerRows(s).flatMap((g) => g.rows).find((r) => r.path === 'income.salary.amount');
   assert.equal(row.type, 'income');
-  assert.deepEqual(row.fact.value, { amount: 6000, cadence: 'monthly', start: '2024-01-01', end: null, payDay: 15 });
+  // payDay2 (S-226): twice a month, the second day; none here.
+  assert.deepEqual(row.fact.value, { amount: 6000, cadence: 'monthly', start: '2024-01-01', end: null, payDay: 15, payDay2: null });
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'semimonthly', start: '2024-01-01', end: '2027-06-30', payDay: 15, kind: 'known', label: 'Salary (new title)' }, '2026-10-23');
   const x = s.income.find((i) => i.id === 'salary');
   assert.deepEqual([x.amount.value, x.cadence, x.start, x.end, x.payDay.value, x.label], [6200, 'semimonthly', '2024-01-01', '2027-06-30', 15, 'Salary (new title)']);
@@ -426,6 +428,7 @@ test('income: one row says how much, how often, since when and the day paid; the
   const rows = ledgerRows(s).flatMap((g) => g.rows);
   assert.equal(rows.filter((r) => r.path.startsWith('income.salary.')).some((r) => r.path.endsWith('.payDay')), false);
   assert.equal(rowPathFor(s, 'income.salary.payDay'), 'income.salary.amount');
+  assert.equal(rowPathFor(s, 'income.salary.payDay2'), 'income.salary.amount', 'the second pay day lives on the same row');
   assert.equal(rows.length, listFacts(s).length - 2 - listFacts(s).filter((x) => /\.payDay$/.test(x.path)).length, 'the two card intro facts and every pay day fold into their rows');
   // A blank clears a date; a pay day of null drops the field; bad dates are refused.
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'monthly', end: null, payDay: null }, '2026-10-23');

@@ -36,8 +36,8 @@ test('the loop strip for October', () => {
   const s = loopStrip(d, buildSummary(d, refs), TODAY);
   assert.equal(s.plan.state, 'started');
   // 13 entries: 3 income, 2 groceries, Geico, 2 transfers, concert, couch, 2 card payments, ATM; last Oct 28.
-  // Scheduled: the yearly car insurance on Oct 14, confirmed by the Geico entry (same line, same day, 1,200).
-  assert.deepEqual(s.track, { entries: 13, last: '2026-10-28', confirmed: 1, scheduled: 1 });
+  // The scheduled-item counts went with the cash calendar (S-209).
+  assert.deepEqual(s.track, { entries: 13, last: '2026-10-28' });
   assert.deepEqual(s.review, { empty: 0, balancesMissing: 0, balancesTotal: 6, ties: false, unexplained: -60 });
   assert.equal(s.nextPlan, 'not started');
 });
@@ -47,7 +47,7 @@ test('the month-end checklist: three open items', () => {
   const c = monthEndChecklist(d, buildSummary(d, refs), TODAY);
   const by = Object.fromEntries(c.items.map((i) => [i.key, [i.count, i.open]]));
   assert.deepEqual(by, {
-    gaps: [0, false], waiting: [0, false], balances: [0, false], bridge: [1, true], unmapped: [0, false], duplicates: [0, false],
+    gaps: [0, false], balances: [0, false], bridge: [1, true], unmapped: [0, false], duplicates: [0, false],
     'income-source': [0, false], // every income entry names the job (S-118)
     owed: [1, true],          // the friend's 60 for the concert
     'next-plan': [1, true]    // no November plan yet

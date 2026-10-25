@@ -6,8 +6,6 @@
 // Line actuals come from the log on their own (S-087); there is no confirm step.
 
 import { h, options } from '../dom.js';
-import { waitingCard, checkBalancesCard } from '../components/cashflow.js';
-import { cashflowCards } from '../charts/cash-charts.js';
 import { emptyState } from '../components/jump.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
@@ -162,14 +160,14 @@ function logCard(ctx, summary, month, months) {
       ctx.ui.logAll ? 'Show the latest ' + LATEST : 'Show all ' + all.length) : null);
 }
 
-// What is missing for the calendar, as one-line prompts that link to Setup.
+// What is missing for the pay schedule, as one-line prompts that link to Setup.
 function setupPrompts(ctx) {
   const doc = ctx.doc;
   const live = (xs) => xs.filter((x) => x.state !== 'archived');
   const out = [];
-  if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the calendar knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
+  if (!live(doc.accounts).length) out.push(emptyState(ctx, 'Add a checking account so the log knows where your cash is.', 'setup:accounts', 'Add an account', 'prompt-accounts'));
   const noPayday = live(doc.income).filter((i) => i.payFrequency !== 'semimonthly' && !i.nextPayDate.date);
-  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the calendar knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
+  if (noPayday.length) out.push(emptyState(ctx, 'Add a payday so the income month knows when money comes in.', 'setup:income', 'Add a payday', 'prompt-payday'));
   return out.length ? h('div', { class: 'card prompts' }, out) : null;
 }
 
@@ -180,11 +178,16 @@ export function renderTrack(ctx, summary) {
   return h('div', {},
     h('h1', {}, 'Track'),
     setupPrompts(ctx),
-    waitingCard(ctx, summary),
     h('div', { class: 'card spread', id: 'quick-entry-card' }, h('span', {}, 'Spent something? Log it in a few taps.'), quickEntryButton(ctx)),
     logCard(ctx, summary, month, months),
-    h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'), h('div', { class: 'grid' }, cashflowCards(ctx, summary))),
     importCard(ctx),
     possibleCard(ctx),
-    checkBalancesCard(ctx));
+    calendarMoved());
+}
+
+// The cash calendar, scheduled items and balance checks moved to SLAM (S-209); the anchor stays so old links land here.
+function calendarMoved() {
+  return h('section', { id: 'calendar' }, h('h2', {}, 'Cash calendar'),
+    h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The day-by-day cash calendar, safe to spend, scheduled items and the balance check-in now live in SLAM, which reads this household and feeds the log back.'),
+      h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-calendar' }, 'Open the cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'track-slam-spending' }, 'Check in and log spending'))));
 }

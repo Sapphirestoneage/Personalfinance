@@ -25,7 +25,7 @@ const DESTS = {
   track: ['track', {}, null],
   cashflow: ['track', {}, null],
   log: ['track', {}, 'log-card'],
-  calendar: ['track', {}, 'chart-cf-chart'],
+  calendar: ['track', {}, 'calendar'],
   import: ['track', {}, 'import-card'],
   checks: ['track', {}, 'check-balances'],
   review: ['review', {}, null],
@@ -95,9 +95,11 @@ export function screenLabel(id) {
 
 // Every chart and card worth finding by name (S-108 search): [anchor id, name, where it lives].
 export const CHARTS = [
-  ['cash-strip', 'Cash, next 30 days', 'today'],
-  ['chart-cf-chart', 'Cash by day (the calendar)', 'track'], ['chart-cf-paylater', 'Bills that land before the paycheck', 'track'],
-  ['chart-cf-list', 'Cash by date (list)', 'track'], ['chart-cf-grid', 'Month grid', 'track'], ['chart-cf-sofar', 'This month so far', 'track'],
+  // The cash calendar moved to SLAM (S-209): its names still find the card that opens it.
+  ['cash-moved', 'Cash, next 30 days (in SLAM)', 'today'],
+  ['calendar', 'Cash by day (the calendar, in SLAM)', 'track'], ['calendar', 'Bills that land before the paycheck (in SLAM)', 'track'],
+  ['calendar', 'Cash by date (list, in SLAM)', 'track'], ['calendar', 'Month grid (in SLAM)', 'track'], ['calendar', 'This month so far (in SLAM)', 'track'],
+  ['calendar', 'Forecast check (drift at each check-in, in SLAM)', 'track'], ['calendar', 'What if a bill moved? (bill timing, in SLAM)', 'track'],
   ['chart-sankey', 'Where the money goes', 'insights:where'], ['chart-donut', 'Spending by category', 'insights:where'], ['chart-nws', 'Needs, wants, savings', 'insights:where'],
   ['chart-fv', 'Fixed vs variable', 'insights:where'], ['chart-types', 'Spending by type', 'insights:where'], ['chart-tags', 'By tag', 'insights:where'],
   ['chart-gauges', 'Housing and savings rate', 'insights:where'],
@@ -109,12 +111,11 @@ export const CHARTS = [
   ['chart-trend-heat', 'Categories by month', 'insights:time'], ['chart-trend-mom', 'Month over month', 'insights:time'], ['chart-trend-pacing', 'Pacing', 'insights:time'],
   ['chart-trend-dom', 'Spending by day of the month', 'insights:time'], ['trend-stats', 'Trends in one line each', 'insights:time'],
   ['chart-estimate-history', 'When the estimate changed', 'insights:time'], ['chart-pareto', '80/20', 'insights:time'],
-  ['chart-bridge', 'Budget to cash (the bridge)', 'insights:cash'], ['chart-cf-forecast', 'Forecast check', 'insights:cash'], ['chart-tx-top', 'Top 5 merchants', 'insights:cash'],
+  ['chart-bridge', 'Budget to cash (the bridge)', 'insights:cash'], ['chart-tx-top', 'Top 5 merchants', 'insights:cash'],
   ['chart-tx-week', 'Spending by weekday', 'insights:cash'], ['chart-tx-size', 'Small and frequent vs big and rare', 'insights:cash'], ['chart-tx-subs', 'Subscriptions', 'insights:cash'],
   ['chart-tx-findings', 'What the transactions show', 'insights:cash'],
   ['chart-draftt', 'DRAFTT', 'insights:you'], ['chart-joy', 'Joy vs spend', 'insights:you'], ['chart-stress', 'Satisfaction and stress', 'insights:you'],
   ['chart-mistake', 'Mistake cost', 'insights:you'], ['chart-statement', 'Personal income statement', 'insights:you'], ['extras', 'Also worth knowing', 'insights:you'],
-  ['chart-cf-whatif', 'What if a bill moved?', 'setup:bills'],
   ['nw-tiles', 'Net worth (everything)', 'insights:networth'], ['nw-tiles', 'FI net worth (what can fund your life)', 'insights:networth'],
   ['nw-tiles', 'Locked in things you use', 'insights:networth'], ['chart-nw-time', 'Both net worths, month by month', 'insights:networth'],
   ['chart-nw-assets-debts', 'What you have and what you owe, by month', 'insights:networth'], ['chart-nw-mix', 'What it is made of (liquidity tiers)', 'insights:networth'],

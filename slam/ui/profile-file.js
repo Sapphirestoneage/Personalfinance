@@ -4,7 +4,7 @@
 // date and source), which the loader reads like a profile, so it can replace
 // fixtures/eli.local.json. Never sent anywhere: the browser saves it to disk.
 
-import { loadHousehold } from '../engine/normalize.js';
+import { readHousehold } from '../engine/normalize.js';
 
 const KEY = 'slam-profile-baseline:v1';
 export const FILE_NAME = 'eli.local.json';
@@ -31,10 +31,11 @@ export function downloadProfile(spine) {
   setBaseline(spine);
 }
 
-// A chosen file read as a household (a saved spine or a profile); throws in words when it is not one.
-export async function readProfile(file) {
+// A chosen file read in this browser as a household (a saved spine, an export or a profile of any version, S-228):
+// { spine, problems }, the fields it could not use named in problems. Throws in words only when it is not a household.
+export async function readProfile(file, { today = null } = {}) {
   const text = await file.text();
   let raw;
   try { raw = JSON.parse(text); } catch { throw new Error(file.name + ' is not a JSON file.'); }
-  return loadHousehold(raw);
+  return readHousehold(raw, { today });
 }

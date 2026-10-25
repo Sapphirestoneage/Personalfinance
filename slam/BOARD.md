@@ -45,7 +45,7 @@
 - [x] Batch G, the ports (S-209): a gap audit of the Budget calendar's own code; what it did brought to SLAM (the log reaches the run once, safe to spend capped at the lowest point ahead, Cash by day, the month in words, waiting, by date, so far and expected, empty states)
 - [x] Bug: a bare `income` path crashed the self-audit with a local profile; earned income for a year is one function, `labelFor` never throws, a fourth audited household reproduces it (S-210)
 - [x] How much to max it? (S-211): a panel on every tax-advantaged account in the Ledger, one Plan card, deadline chips on the calendar, the FOO rungs and the Windfall Roth step on the same rows, the cash check on the day-by-day run
-- [ ] Batch G, the retirement: held, because a few things are still Budget only (questions 29 on); ready as `docs/phase2/batch-g-retire.patch`
+- [x] Batch G, the retirement: the patch is now applied (answer 39, S-226); what is left is listed as known differences in `docs/PHASE2_REPORT.md`
 
 ## Next: Eli's answers to questions 29 on, then the retirement patch
 

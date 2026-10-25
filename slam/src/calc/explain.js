@@ -1,10 +1,11 @@
 // How a number was worked out (S-108): the inputs behind each headline number,
-// read straight from the summary and the cash calendar, so the panel and the
-// number can never disagree. No new math: every amount here is one calc made.
+// read straight from the summary, so the panel and the number can never
+// disagree. (Safe to spend, so far and expected went with the cash calendar to
+// SLAM, S-209; the third argument is kept so callers keep their places.) No new math: every amount here is one calc made.
 // `where` is a place in the app (ui/nav.js) or a field path, so each input links to its source.
 
 // nw: a net worth at a day (networth.js), for the three net worths.
-export function explain(summary, which, cal, nw) {
+export function explain(summary, which, _retired, nw) {
   const t = summary.totals;
   const inc = summary.income;
   if (which === 'takeHome') {
@@ -21,26 +22,6 @@ export function explain(summary, which, cal, nw) {
       steps: summary.rows.filter((r) => !r.savings && !r.notForMe && r.basis !== null).map((r) => ({ label: r.name + (r.basisFrom === 'estimate' ? ' (estimate)' : ''), amount: r.basis, where: r.isDebt ? 'setup:debts' : r.basisFrom === 'estimate' ? 'estimates' : 'actual', open: r.isDebt ? null : 'rv-cat:' + r.id })),
       result: { label: 'Spending', amount: t.spending },
       note: t.basisUsesEstimate.length ? 'Actuals, with estimates standing in for ' + t.basisUsesEstimate.join(', ') + '.' : 'Actuals for every category.'
-    };
-  }
-  // So far and expected by month end (S-128): `cal` is the month's outlook (calendar.js monthOutlook).
-  if (which === 'soFar' && cal) {
-    return {
-      title: 'So far this month',
-      steps: [{ label: 'Income logged', amount: cal.incomeSoFar, where: 'log' }, { label: 'Spending logged', amount: -cal.spentSoFar, where: 'log' }],
-      result: { label: 'So far', amount: cal.soFar, signed: true },
-      note: 'Only money that has arrived or left, from the log, up to today.'
-    };
-  }
-  if (which === 'expected' && cal) {
-    return {
-      title: 'Expected by month end',
-      steps: [{ label: 'So far', amount: cal.soFar },
-        ...cal.items.map((i) => ({ label: i.name + ' (' + i.date.slice(5) + ')', amount: i.amount, where: 'calendar' })),
-        ...cal.rest.filter((u) => u.left).map((u) => ({ label: u.name + ': rest of the plan', amount: -u.left, where: 'calendar' }))],
-      result: { label: 'Expected by month end', amount: cal.expected, signed: true },
-      note: 'So far, plus paychecks and bills still to come on the calendar, less the rest of the plan for lines not yet spent.' +
-        (cal.noPayDate.length ? ' No pay date yet for ' + cal.noPayDate.join(', ') + ', so none of its pay is counted.' : '')
     };
   }
   if (which === 'surplus') {
@@ -65,18 +46,6 @@ export function explain(summary, which, cal, nw) {
       ],
       result: { label: 'Savings rate', amount: t.savingsRate, pct: true },
       note: '(savings + retirement from the paycheck) / (take-home + retirement from the paycheck).'
-    };
-  }
-  if (which === 'safeToSpend' && cal) {
-    return {
-      title: 'Safe to spend',
-      steps: [
-        { label: 'In checking today', amount: cal.todayCash, where: 'checks' },
-        { label: 'Lowest point ahead' + (cal.lowest ? ' (' + cal.lowest.date + ')' : ''), amount: cal.lowest ? cal.lowest.amount : null, where: 'calendar' },
-        { label: 'Less your cushion', amount: -cal.cushion, where: 'setup:coach' }
-      ],
-      result: { label: 'Safe to spend', amount: cal.safeToSpend },
-      note: 'The lower of today\'s checking and the lowest point ahead less the cushion, never below $0.'
     };
   }
   if (nw && (which === 'nwTotal' || which === 'nwFI')) {

@@ -2,7 +2,7 @@
 // (avalanche, snowball, stress-weighted) with payoff dates and interest.
 
 import { valueOf, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, dayIn } from './spine.js';
-import { REVOLVING } from './schema.js';
+import { REVOLVING, PER_YEAR } from './schema.js';
 
 const v = valueOf;
 const P = (d, k) => 'debts.' + d.id + '.' + k;
@@ -222,9 +222,11 @@ export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, as
     const iso = monthStart(ym);
     let pool = extra;
     for (const s of st) {
-      if (s.bal <= 0.005) { const m = minimumPayment(s.d, rules, iso, s.startBal); pool += m.value ?? 0; continue; }
-      accrueMonth(s, iso, asOf, t);
-      const m = minimumPayment(s.d, rules, iso, s.bal);
+      // A paid-off debt frees its payment for the next one; a card paid by its statement frees nothing (its payment
+      // is its new charges) and never accrues interest (answer 38).
+      if (s.bal <= 0.005) { if (accrues(spine, s.d)) { const m = paymentOn(spine, rules, s.d, iso, s.startBal); pool += m.value ?? 0; } continue; }
+      if (accrues(spine, s.d)) accrueMonth(s, iso, asOf, t);
+      const m = paymentOn(spine, rules, s.d, iso, s.bal);
       t.absorb({ ...m, value: undefined });
       const pay = Math.min(s.bal, m.value ?? 0);
       s.bal -= pay;
@@ -263,8 +265,37 @@ export function payPolicyOf(spine, d) {
   if (d.type !== 'credit_card') return 'minimum';
   return v(d.payPolicy) || (spine.household && v(spine.household.cardPayPolicy)) || 'minimum';
 }
+// A card that pays its full statement never carries a balance, so it never accrues interest (S-226, answer 38):
+// in the debt schedule, the payoff plan and the day-by-day run (engine/cashsim.js) alike.
+export const accrues = (spine, d) => payPolicyOf(spine, d) !== 'statement';
 
-// Minimums due in a month across all debts with a balance, each on its due day.
+// A debt paid by a budget line (S-226, answer 35): the expense that names it (expenses.<id>.paysDebt), not covered by
+// someone else, running in the month ym when one is given. Its payment is counted once: under debt payments, at the
+// line's amount a month when the line has one (else the debt's own minimum); never also as an expense
+// (engine/cashflow.js), and once in the run (engine/cashsim.js).
+const runsIn = (e, ym) => !ym || ((!e.start || e.start <= monthEnd(ym)) && (!e.end || e.end >= monthStart(ym)));
+export function lineFor(spine, d, ym = null) {
+  return (spine.expenses || []).find((e) => e.paysDebt && v(e.paysDebt) === d.id && !(e.covered && v(e.covered) === true) && runsIn(e, ym)) || null;
+}
+// The debt an expense pays, when it names one that is in the household.
+export const paysDebtOf = (spine, e) => { const id = e && e.paysDebt ? v(e.paysDebt) : null; return id && (spine.debts || []).some((d) => d.id === id) ? id : null; };
+// What a line puts toward its debt a month: its amount at its cadence; null when not entered (or a one-time line).
+export const lineMonthly = (e) => { const a = v(e.amount); return a === null || !PER_YEAR[e.cadence] ? null : round2(a * PER_YEAR[e.cadence] / 12); };
+// The month's payment on a debt: the line that pays it, at its amount (never more than the balance), else the minimum
+// by the pay policy.
+export function paymentOn(spine, rules, d, iso, balance = v(d.balance), policy = payPolicyOf(spine, d)) {
+  const e = lineFor(spine, d, iso.slice(0, 7));
+  const m = e ? lineMonthly(e) : null;
+  if (m === null) return minimumPayment(d, rules, iso, balance, policy);
+  const t = tracker();
+  t.useFact(P(d, 'balance'), d.balance);
+  t.useFact('expenses.' + e.id + '.amount', e.amount);
+  t.useFact('expenses.' + e.id + '.paysDebt', e.paysDebt);
+  if (balance === null) return t.out(null);
+  return t.out(balance <= 0 ? 0 : Math.min(balance, m), { estimated: false, line: e.id, lineLabel: e.label });
+}
+
+// Payments due in a month across all debts with a balance, each on its due day: the minimum, or the line that pays it.
 export function minimumsTotal(spine, rules, iso) {
   const t = tracker();
   let sum = 0;
@@ -272,10 +303,10 @@ export function minimumsTotal(spine, rules, iso) {
   for (const d of spine.debts || []) {
     const b = v(d.balance);
     if (b !== null && b <= 0) continue;
-    const m = minimumPayment(d, rules, iso, v(d.balance), payPolicyOf(spine, d));
+    const m = paymentOn(spine, rules, d, iso);
     t.absorb({ ...m, value: undefined });
     if (m.value !== null) sum += m.value;
-    items.push({ id: d.id, name: v(d.name), amount: m.value, estimated: !!m.estimated, dueDate: dueDateIn(d, iso.slice(0, 7)) });
+    items.push({ id: d.id, name: v(d.name), amount: m.value, estimated: !!m.estimated, dueDate: dueDateIn(d, iso.slice(0, 7)), line: m.line || null, lineLabel: m.lineLabel || null, path: m.line ? 'expenses.' + m.line + '.amount' : P(d, 'minimum') });
   }
   return { total: t.out(round2(sum)), items };
 }
@@ -304,13 +335,13 @@ export function debtSchedule(spine, rules, asOf, untilYm) {
     let paid = 0, interest = 0;
     for (const s of states) {
       if (s.bal <= 0.005) continue;
-      interest += accrueMonth(s, iso, asOf, t);
-      const m = minimumPayment(s.d, rules, iso, s.bal, payPolicyOf(spine, s.d));
+      if (accrues(spine, s.d)) interest += accrueMonth(s, iso, asOf, t);
+      const m = paymentOn(spine, rules, s.d, iso, s.bal);
       t.absorb({ ...m, value: undefined });
       if (m.value === null) t.addMissing(P(s.d, 'minimum'));
       const pay = Math.min(s.bal, m.value ?? 0);
       s.bal -= pay; paid += pay;
-      if (pay > 0) payments.push({ id: s.d.id, name: v(s.d.name), amount: round2(pay), estimated: !!m.estimated, dueDate: dueDateIn(s.d, ym) });
+      if (pay > 0) payments.push({ id: s.d.id, name: v(s.d.name), amount: round2(pay), estimated: !!m.estimated, dueDate: dueDateIn(s.d, ym), line: m.line || null, lineLabel: m.lineLabel || null, path: m.line ? 'expenses.' + m.line + '.amount' : P(s.d, 'minimum') });
       if (s.bal <= 0.005 && !s.paidYm) { s.bal = 0; s.paidYm = ym; paidOff.push(s.d.id); }
     }
     months.set(ym, { payments, paid: round2(paid), interest: round2(interest), debt: round2(states.reduce((a, s) => a + s.bal, 0)), paidOff });

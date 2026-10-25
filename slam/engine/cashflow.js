@@ -3,8 +3,8 @@
 // expense changes are handled month by month.
 
 import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey, accountOwner, incomeOwner } from './spine.js';
-import { PER_YEAR } from './schema.js';
-import { minimumsTotal, debtSchedule } from './debt.js';
+import { PER_YEAR, fromPaycheck } from './schema.js';
+import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
 import { taxSetAside } from './tax.js';
 import { shareOf } from './sharing.js';
 
@@ -60,16 +60,35 @@ export function streamWeight(s, mode, t) {
 
 const isActive = (item, ym) => activeDays(item.start, item.end, ym) > 0 && (item.cadence !== 'once' || (item.start || '').slice(0, 7) === ym);
 
-// Accounts whose monthly contribution comes out of a paycheck before take-home.
-const PAYROLL_FAMILIES = ['employerRetirement', 'hsaFsa'];
 
 // The people whose payroll saving comes only out of their own pay: everyone with a W-2 or tips line, whatever it
 // pays, and the first person (a line no one is named on is theirs, so every line not theirs names someone else).
 // Only a later person with no such line has it come out of the household's pay (S-213, S-214, S-216).
 const payOwners = (spine) => new Set([...(spine.income || []).filter((s) => s.type === 'w2' || s.type === 'tips').map((s) => incomeOwner(spine, s)), (((spine.household && spine.household.people) || [])[0] || {}).id].filter(Boolean));
 
-// Each paycheck's share of the month's payroll saving (S-211): an account's monthly amount comes off its owner's W-2
-// and tips pay, split by gross; when its owner has no such pay line at all, off all the household's W-2 and tips pay.
+// The pay a plan from pay fills from (S-227, answer 60). A plan takes deferrals only from the pay of the employer that
+// sponsors it: its "paid through" job when one is chosen (paidThrough, one of its owner's W-2 jobs); else, with two or
+// more jobs (W-2 lines that pay over time), the sponsoring one, the job that pays the most a year (then by id; a job with
+// no amount comes last), rough until it is chosen. A one-time W-2 line (a bonus) and tips go with it.
+const isJob = (s) => s.type === 'w2' && s.cadence !== 'once';
+export function jobsOf(spine, a) {
+  const who = (accountOwner(spine, a) || {}).id;
+  const yearly = (s) => { const x = valueOf(s.amount); return x === null ? -1 : x * (PER_YEAR[s.cadence] || 1); };
+  return (spine.income || []).filter((s) => isJob(s) && incomeOwner(spine, s) === who).sort((x, y) => yearly(y) - yearly(x) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+}
+// The job a plan is paid through: the one chosen, else the sponsoring one; null with no job.
+export const paidThroughOf = (spine, a) => { const jobs = jobsOf(spine, a); const pick = a.paidThrough ? valueOf(a.paidThrough) : null; return jobs.find((s) => s.id === pick) || jobs[0] || null; };
+// Whether the job is a guess: two or more jobs and none chosen.
+export const paidThroughGuess = (spine, a) => { const jobs = jobsOf(spine, a); const pick = a.paidThrough ? valueOf(a.paidThrough) : null; return jobs.length > 1 && !jobs.some((s) => s.id === pick); };
+export function payLinesFor(spine, a) {
+  const who = (accountOwner(spine, a) || {}).id;
+  const mine = (spine.income || []).filter((s) => (s.type === 'w2' || s.type === 'tips') && incomeOwner(spine, s) === who);
+  const job = paidThroughOf(spine, a);
+  return mine.filter((s) => !isJob(s) || s === job);
+}
+
+// Each paycheck's share of the month's payroll saving (S-211): an account's monthly amount comes off the pay it fills
+// from (payLinesFor), split by gross; when its owner has no such pay line at all, off all the household's W-2 and tips pay.
 // An owner whose pay is not coming this month has nothing taken. cf is this month's cashflow(); the shares add up to
 // cf.saving.payroll whenever the pay it comes from has an amount.
 export function payrollShares(spine, cf) {
@@ -79,11 +98,12 @@ export function payrollShares(spine, cf) {
   const share = {};
   if (!pays.length) return share;
   for (const a of spine.accounts || []) {
-    if (!PAYROLL_FAMILIES.includes(a.family) || !a.monthlyContribution) continue;
+    if (!fromPaycheck(a) || !a.monthlyContribution) continue;
     const m = valueOf(a.monthlyContribution);
     if (!m) continue;
     const who = (accountOwner(spine, a) || {}).id;
-    const mine = pays.filter((x) => owner[x.id] === who);
+    const plan = new Set(payLinesFor(spine, a).map((s) => s.id));
+    const mine = pays.filter((x) => owner[x.id] === who && plan.has(x.id));
     const from = mine.length ? mine : lines.has(who) ? [] : pays;
     if (!from.length) continue;
     const g = from.reduce((s, x) => s + x.gross, 0);
@@ -144,7 +164,8 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   for (const a of spine.accounts || []) {
     if (!a.monthlyContribution) continue;
     const path = 'accounts.' + a.id + '.monthlyContribution';
-    if (PAYROLL_FAMILIES.includes(a.family)) {
+    // Out of the paycheck before take-home (engine/schema.js fromPaycheck), else from take-home.
+    if (fromPaycheck(a)) {
       const who = (accountOwner(spine, a) || {}).id;
       if (!(lines.has(who) ? paid.has(who) : w2Active)) continue;
       const x = pay.useFact(path, a.monthlyContribution);
@@ -165,6 +186,8 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   for (const e of spine.expenses || []) {
     if (!isActive(e, ym)) continue;
     const base = 'expenses.' + e.id, path = base + '.amount';
+    // A line that pays a debt (S-226, answer 35) is counted once, under debt payments below, never also here.
+    if (paysDebtOf(spine, e)) { ex.useFact(base + '.paysDebt', e.paysDebt); continue; }
     const covered = !!e.covered && v(e.covered) === true;
     if (covered) { ex.useFact(base + '.covered', e.covered); items.push({ id: e.id, label: e.label, amount: 0, covered: true, fat: e.fat, need: v(e.need), fixed: e.fixed }); continue; }
     const amt = ex.useFact(path, e.amount);
@@ -193,7 +216,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     const mo = sc.months.get(ym);
     const st = tracker();
     st.absorb({ value: 0, from: sc.from, rough: sc.rough, missing: sc.missing, rules: sc.rules });
-    mins = { total: st.out(mo.paid), items: mo.payments.map((p) => ({ id: p.id, name: p.name, amount: p.amount, estimated: p.estimated, dueDate: p.dueDate })) };
+    mins = { total: st.out(mo.paid), items: mo.payments.map((p) => ({ id: p.id, name: p.name, amount: p.amount, estimated: p.estimated, dueDate: p.dueDate, line: p.line, lineLabel: p.lineLabel, path: p.path })) };
   } else mins = minimumsTotal(spine, rules, iso);
 
   // Tax set-aside (S-172): income with no federal withholding (unemployment,

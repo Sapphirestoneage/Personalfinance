@@ -68,9 +68,12 @@ test('1. interest accrues on a carried balance at the statement and never on a c
   assert.ok(r.cards.visa.statements.length >= 3);
   near(r.cards.visa.statements[0].interest, Math.round(r.cards.visa.statements[0].adb * 0.22 / 12 * 100) / 100, 'on the average daily balance', 0.02);
   assert.equal(r.cards.ink.interest, 0, 'a card with no balance charges nothing');
+  // Answer 38 (S-226): a card set to pay its statement never carries a balance, so it never accrues interest, not even
+  // at its first statement (before, the balance it had was taken as carried and charged a month of interest).
   const full = cashsim(put(s, 'debts.visa.payPolicy', 'statement'), R, { months: 4 });
-  assert.ok(full.cards.visa.interest < r.cards.visa.interest, 'paying the statement stops interest after the carried balance clears');
-  assert.ok(full.cards.visa.statements.slice(1).every((x) => x.interest === 0), 'no interest once a statement is paid in full');
+  assert.equal(full.cards.visa.interest, 0, 'paying the statement: no interest at all');
+  assert.ok(full.cards.visa.statements.every((x) => x.interest === 0), 'no interest on any statement');
+  assert.equal(full.cards.visa.cleared, full.start, 'it never revolves');
 });
 
 test('2. paying more clears sooner and costs less', () => {
@@ -151,16 +154,19 @@ test('8. a 0% promo card sorts last in avalanche until it reverts; student loans
   assert.ok(later.extraLog.some((x) => x.to === 'store' && x.date >= '2027-03-01'), 'after the intro ends the extra reaches the store card: ' + JSON.stringify(later.extraLog));
 });
 
-test('9. cleared means stopped revolving, not balance zero, including at 0%', () => {
+test('9. cleared means stopped revolving, not balance zero; a card that pays its statement never revolves, at 0% too', () => {
   let s = richer(demo());
-  s = put(s, 'debts.visa.payPolicy', 'statement');
+  s = put(s, 'debtPlan.extra', 1500);
   s = editPayment(s, 'groceries', { from: 'visa', day: null }, '2026-10-23');
-  const r = cashsim(s, R, { months: 4 });
-  assert.ok(r.cards.visa.cleared && r.cards.visa.cleared > r.start, 'the Visa stops revolving at its first full payment');
+  const r = cashsim(s, R, { months: 6 });
+  assert.ok(r.cards.visa.cleared && r.cards.visa.cleared > r.start, 'the Visa stops revolving once the extra clears what it carries');
   assert.ok(r.cards.visa.balance > 0, 'and still carries the groceries put on it since');
+  // Answer 38 (S-226): set to pay its statement, a card never carries a balance: clear from the start, no interest.
+  const full = cashsim(put(s, 'debts.visa.payPolicy', 'statement'), R, { months: 6 });
+  assert.deepEqual([full.cards.visa.cleared, full.cards.visa.interest], [full.start, 0]);
   const promo = cashsim(put(richer(demo()), 'debts.store.payPolicy', 'statement'), R, { months: 4 });
   assert.equal(promo.cards.store.interest, 0);
-  assert.ok(promo.cards.store.cleared && promo.cards.store.cleared > promo.start, 'a 0% card clears the day its statement is paid in full');
+  assert.equal(promo.cards.store.cleared, promo.start, 'a 0% card that pays its statement is clear from the start');
   assert.equal(r.cards.ink.cleared, r.start, 'a card that never revolved is clear from the start');
 });
 
@@ -365,4 +371,80 @@ test('a carried statement the floor holds back goes back on the card with the la
   const before = sim.daily.find((d) => d.date === '2026-11-11'), on = sim.daily.find((d) => d.date === visa.carried.due);
   const onCard = on.events.filter((e) => e.card && e.card !== 'visa').reduce((a, e) => a - e.amount, 0);
   near(on.cardDebt - before.cardDebt - onCard, R.get('CARD_LATE_FEE', 2026) + (visa.carried.unpaid - visa.carried.amount) + on.events.filter((e) => e.card === 'visa' && e.kind !== 'late-fee').reduce((a, e) => a - e.amount, 0));
+});
+
+// Answer 34 (S-226): twice a month on two named days. The 1st and the 15th: the run, the calendar and the pay counts
+// place the same two days; a line without the second day keeps the run's rule (the 1st gives the 1st and the 16th).
+test('twice a month on the 1st and the 15th: the run, the calendar and the pay counts place the same two days', async () => {
+  const { calendar } = await import('../engine/calendar.js');
+  const { payDatesOf } = await import('../engine/contrib.js');
+  const base = editIncome(demo(), 'salary', { amount: 3000, cadence: 'semimonthly', payDay: 1 }, '2026-10-23');
+  const oldRun = cashsim(base, R, { months: 3 }).run.items.filter((i) => i.kind === 'income' && i.sourceId === 'salary');
+  const old = oldRun.map((i) => i.date);
+  assert.deepEqual(old.slice(0, 4), ['2026-11-01', '2026-11-16', '2026-12-01', '2026-12-16'], 'one day entered: the run\'s rule, the 1st and 15 days later');
+  const s = editIncome(base, 'salary', { amount: 3000, cadence: 'semimonthly', payDay: 1, payDay2: 15 }, '2026-10-23');
+  assert.ok(validate(s).ok, JSON.stringify(validate(s).errors));
+  assert.equal(s.income.find((x) => x.id === 'salary').payDay2.value, 15);
+  const run = cashsim(s, R, { months: 3 }).run.items.filter((i) => i.kind === 'income' && i.sourceId === 'salary');
+  assert.deepEqual(run.map((i) => i.date).slice(0, 4), ['2026-11-01', '2026-11-15', '2026-12-01', '2026-12-15']);
+  // Each paycheck is half the month's take-home, the same as under the one-day rule: only the days move.
+  assert.ok(run.every((i) => i.cents === oldRun[0].cents), 'half a month each: ' + run[0].cents + ' and ' + oldRun[0].cents);
+  const cal = calendar(s, R, { months: 3 });
+  const pays = cal.months.flatMap((m) => m.events).filter((e) => e.kind === 'pay' && e.sourceId === 'salary').map((e) => e.date);
+  assert.deepEqual(pays.filter((d) => d >= '2026-11-01').slice(0, 4), ['2026-11-01', '2026-11-15', '2026-12-01', '2026-12-15'], 'the calendar places the same two days');
+  assert.deepEqual(payDatesOf(s.income.find((x) => x.id === 'salary'), '2027-02-01', '2027-02-28'), ['2027-02-01', '2027-02-15']);
+  // A second day past the month's end is its last day; switching away from twice a month drops the second day.
+  const late = editIncome(base, 'salary', { amount: 3000, cadence: 'semimonthly', payDay: 15, payDay2: 31 }, '2026-10-23');
+  assert.deepEqual(payDatesOf(late.income.find((x) => x.id === 'salary'), '2027-02-01', '2027-02-28'), ['2027-02-15', '2027-02-28']);
+  assert.equal(editIncome(s, 'salary', { amount: 6000, cadence: 'monthly', payDay: 15 }, '2026-10-23').income.find((x) => x.id === 'salary').payDay2, undefined);
+  assert.throws(() => editIncome(base, 'salary', { amount: 3000, cadence: 'semimonthly', payDay: 1, payDay2: 1 }, '2026-10-23'), /different day/);
+});
+
+// Answer 35 (S-226): a car loan and the budget line that pays it. Linked, the payment is counted once: under debt
+// payments at the line's amount (not the loan's own minimum), never also as an expense, and paid once in the run.
+test('a debt paid by a budget line: the surplus counts the car payment once, at the line\'s amount, and the run pays it once', async () => {
+  const { summarize } = await import('../engine/summary.js');
+  const { ledgerRows } = await import('../engine/ledger.js');
+  const { debtSchedule } = await import('../engine/debt.js');
+  let s = demo();
+  let made = addItem(s, { collection: 'debts', type: 'auto_loan', label: 'Car loan' }, '2026-10-23');
+  s = set(made.spine, 'debts.car-loan.balance', 15000);
+  s = set(s, 'debts.car-loan.minimum', 350);
+  s = set(s, 'debts.car-loan.apr', 0.06);
+  s = put(s, 'debts.car-loan.dueDay', 5);
+  made = addItem(s, { collection: 'expenses', label: 'Car payment', fat: 'transportation' }, '2026-10-23');
+  s = set(made.spine, 'expenses.car-payment.amount', 400);
+  s = editPayment(s, 'car-payment', { from: 'chk', day: 5 }, '2026-10-23');
+  const ym = '2026-10';
+  const twice = cashflow(s, R, ym);
+  // Not linked: the $400 line and the loan's $350 minimum both go out.
+  const linked = editPayment(s, 'car-payment', { from: 'chk', day: 5, paysDebt: 'car-loan' }, '2026-10-23');
+  assert.ok(validate(linked).ok, JSON.stringify(validate(linked).errors));
+  const once = cashflow(linked, R, ym);
+  // Linked: the line leaves the expenses ($400 less) and the loan's payment is the line's $400 (not its $350 minimum).
+  near(once.expenses.total.value, twice.expenses.total.value - 400, 'the line is not an expense');
+  assert.equal(once.debtMinimums.items.find((x) => x.id === 'car-loan').amount, 400, 'paid at the line\'s amount');
+  near(once.debtMinimums.total.value, twice.debtMinimums.total.value + 50, 'the payment is $400, not $350 on top');
+  near(once.surplus.value, twice.surplus.value + 350, 'the surplus counts $400 once, not $400 and $350');
+  near(summarize(linked, R).cashflow.surplus.value, once.surplus.value);
+  // Later months read the same payment from the debt schedule.
+  const sched = debtSchedule(linked, R, linked.meta.asOf, '2027-01').months.get('2026-12').payments.find((x) => x.id === 'car-loan');
+  assert.deepEqual([sched.amount, sched.line], [400, 'car-payment']);
+  // The run pays it once, on the loan's due day, at $400; the line is not also a bill.
+  const run = cashsim(linked, R, { months: 3 });
+  assert.equal(run.model.bills.some((b) => b.id === 'car-payment'), false, 'not a bill');
+  assert.equal(run.model.loans.find((l) => l.id === 'car-loan').payment, 40000);
+  const out = run.run.items.filter((i) => i.sourceId === 'car-payment' || (i.kind === 'loan' && i.sourceId === 'car-loan'));
+  assert.equal(out.length, 0, 'no bill occurrences for the line');
+  const paid = run.daily.flatMap((d) => d.events).filter((e) => /Car/.test(e.label) && e.amount < 0 && e.kind !== 'interest');
+  assert.ok(paid.length >= 2 && paid.every((e) => e.amount === -400), 'once a month at $400: ' + JSON.stringify(paid));
+  // The Ledger shows the link on both rows.
+  const rows = ledgerRows(linked).flatMap((g) => g.rows);
+  assert.match(rows.find((r) => r.path === 'expenses.car-payment.paidFrom').display, /pays Car loan/);
+  assert.equal(rows.find((r) => r.path === 'expenses.car-payment.amount').fact.value.paysDebt, 'Car loan');
+  assert.match(rows.find((r) => r.path === 'debts.car-loan.minimum').display, /Paid by the Car payment line/);
+  // Unlinking puts it back; a second line cannot pay the same debt.
+  assert.equal(editPayment(linked, 'car-payment', { from: 'chk', day: 5, paysDebt: null }, '2026-10-23').expenses.find((x) => x.id === 'car-payment').paysDebt, undefined);
+  const other = set(addItem(linked, { collection: 'expenses', label: 'Car payment copy' }, '2026-10-23').spine, 'expenses.car-payment-copy.amount', 1);
+  assert.throws(() => editPayment(other, 'car-payment-copy', { from: 'chk', paysDebt: 'car-loan' }, '2026-10-23'), /already pays/);
 });

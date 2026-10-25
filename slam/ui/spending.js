@@ -5,7 +5,7 @@
 // Every number comes from engine/spending.js, engine/cashsim.js and the
 // summary; every number has Show the math. Formatting only.
 
-import { mountPage, gapsCard } from './page.js';
+import { mountPage, gapsCard, whoseLine } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
@@ -17,7 +17,7 @@ import { logSpend, removeLog, checkIn, setSweep, parseInput, createHistory, comm
 import { applyDefaults } from '../engine/defaults.js';
 import { FAT } from '../engine/schema.js';
 import { mathButton } from './math-panel.js';
-import { loadAll, save, SOURCE_WORDS } from './household.js';
+import { loadAll, save } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { pickedWindow, windowBar } from './window.js';
@@ -66,7 +66,7 @@ function safeCard(vw, ctx, spine, sim) {
       s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend right now: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + (s.shortfall.covered ? ', and the cushion covers ' + money(s.shortfall.covered) + ' of it' : '') + '.') : null,
       h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
         ? ' The lowest point ahead decides it: cash outside the cushion falls to ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + (s.low.covered ? ' before the cushion tops it up' : '') + ', less the floor on checking (' + money(s.floor) + '). Spending more today would take that day lower.'
-        : ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + '). The lowest point ahead, through ' + shortDate(s.through) + ', stays above this.', s.excludesCushion ? ' The cushion is not spending money.' : ''),
+        : ' Cash outside the cushion (' + money(s.cash) + '), less what is committed before then (' + money(s.committed) + '), less the floor on checking (' + money(s.floor) + '). The lowest point ahead, through ' + shortDate(s.through) + ', stays above this.', s.excludesCushion ? ' The cushion is not spending money.' : '', s.setAsideNote ? ' ' + s.setAsideNote : ''),
       s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See cash by day around ' + shortDate(s.low.date) + ' on the calendar')) : null,
       mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], ctx)]);
 }
@@ -226,7 +226,7 @@ function checkinCard(c, spine, vw, ctx) {
       tryApply((s) => checkIn(s, { date: form.checkDate, balances, forecast }), 'Checked in on ' + shortDate(form.checkDate));
     } },
       h('label', { for: 'ci-date', class: 'edit-label' }, 'On'), date,
-      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.cushion ? ' (cushion)' : '') + ', forecast ' + (f.forecast[a.id] === null ? 'unknown' : money(f.forecast[a.id])) + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
+      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', forecast ' + (f.forecast[a.id] === null ? 'unknown' : money(f.forecast[a.id])) + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the check-in'))),
     h('h3', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
     h('h3', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
@@ -336,7 +336,7 @@ function render() {
   app.replaceChildren(...[
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Spending'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
+      h('div', {}, h('h1', {}, 'Spending'), whoseLine(hist.present, source, { rules, reopen: boot })),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     staleBanner(vw.stale),
@@ -360,9 +360,10 @@ function render() {
   if (focusId === 'log-merchant') { const i = document.getElementById('log-merchant'); if (i) i.focus({ preventScroll: true }); }
 }
 
-loadAll().then(async (loaded) => {
+async function boot(loaded) {
   hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
   try { const r = await fetch(new URL('../data/merchant-rules.json', import.meta.url), { cache: 'no-store' }); if (r.ok) merchantRules = await r.json(); } catch { /* the house rules are optional: without them every line is new */ }
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Spending page could not load: ' + err.message)); });
+}
+loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Spending page could not load: ' + err.message)); });

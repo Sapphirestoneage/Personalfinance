@@ -29,7 +29,6 @@ import { removeTransaction } from '../src/store/edits.js';
 import { newNextStage } from '../src/store/schema.js';
 import { buildSummary } from '../src/calc/summary.js';
 import { bridgeFor } from '../src/calc/bridge.js';
-import { cashCalendar, safeReading } from '../src/calc/calendar.js';
 import { paretoLevels, paretoCut, entryItems, lineItems, merchantItems } from '../src/calc/pareto.js';
 import { monthOverMonth, fixedFloor, volatility, categoryGrid } from '../src/calc/trends.js';
 import { budgetTotals } from '../src/calc/totals.js';
@@ -313,87 +312,7 @@ test('February to March: month over month, fixed floor, volatility', () => {
 // ---------------------------------------------------------------------------
 // OCTOBER 2026, the open month, today the 17th.
 // September ended with checking 4,001.03, savings 150, and the Visa at 2,818.03 (the car repair).
-// The calendar's cash is checking only (S-094).
-// October so far: rent 1,750 (Oct 1), 250 moved to savings (Oct 3), paycheck +1,500 (Oct 9), dog walking +130
-// (Oct 12), car payment 340 (Oct 15), all logged; on the Visa: Trader Joe's 88.20, Corner Coffee 4.75 (twice), Shell 46, Safeway 121.80,
-// Chipotle 13.75. Utilities (84 planned) is not in yet, so it is spread: 84 over Oct 18 to 31 (14 days) = 6 a day;
-// November 84 / 30 = 2.80 a day. Every other line with no due day is paid on the Visa, so its spread moves
-// the card, not cash.
-// ---------------------------------------------------------------------------
-
-test('October: every scheduled item, five days, the lowest point, safe to spend, the pay-later flag', () => {
-  const d = riley();
-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 });
-  const oct = cal.scheduled.filter((i) => i.planned.startsWith('2026-10')).map((i) => [i.date, i.kind, i.name, i.amount, !!i.confirmed]);
-  assert.deepEqual(oct, [
-    ['2026-10-01', 'bill', 'Rent', 1750, true],
-    ['2026-10-09', 'paycheck', 'Northwind Labs', 1500, true],
-    ['2026-10-15', 'bill', 'Car payment', 340, true],
-    ['2026-10-18', 'bill', 'Phone', 65, false],
-    ['2026-10-23', 'paycheck', 'Northwind Labs', 1500, false],
-    ['2026-10-25', 'debt', 'Visa', 2818.03, false]
-  ]);
-  const at = (date) => cal.days.find((x) => x.date === date).cash;
-  // Today: checking at September's end 4,001.03 - 1,750 - 250 + 1,500 + 130 - 340 = 3,291.03
-  money(at('2026-10-17'), 3291.03, 'Oct 17');
-  // Oct 22: - phone 65 - 5 days x 6 = 3,196.03
-  money(at('2026-10-22'), 3196.03, 'Oct 22');
-  // Oct 25: 3,291.03 - 65 - 8 x 6 + 1,500 (Oct 23) - 2,818.03 (Visa) = 1,860.00
-  money(at('2026-10-25'), 1860, 'Oct 25');
-  // Nov 1: 1,860 - 6 x 6 (Oct 26 to 31) - 1,750 rent - 2.80 = 71.20
-  money(at('2026-11-01'), 71.2, 'Nov 1');
-  // Nov 5: 71.20 - 4 x 2.80 = 60.00, the day before the Nov 6 paycheck
-  money(at('2026-11-05'), 60, 'Nov 5');
-  assert.deepEqual(cal.lowest, { date: '2026-11-05', amount: 60 });
-  // Safe to spend (S-095), checking only: the lowest point anywhere ahead is Nov 5, 60.00; less the 100 cushion
-  // = -40.00, below 0, so safe to spend is 0 and the shortfall is $40 on Nov 5. Until payday (Oct 23) the lowest
-  // is Oct 22, 3,196.03 - 100 = 3,096.03: higher than 0, so it is not shown.
-  assert.equal(cal.safeToSpend, 0);
-  assert.deepEqual(cal.shortfall, { amount: 40, date: '2026-11-05' });
-  assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
-  assert.ok(cal.safeToSpend <= cal.todayCash);
-  // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.
-  assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Rent', '2026-11-01', '2026-11-06', 5]]);
-  // Under the cushion: Nov 1 to Nov 5 (71.20, 68.40, 65.60, 62.80, 60.00). Never under zero.
-  assert.deepEqual([cal.belowCushion, cal.belowZero], [5, 0]);
-});
-
-test('October: the spread for groceries shrinks as entries come in', () => {
-  // Plan 420. Spread over Oct 18 to 31 (14 days):
-  //   no entries: 420 / 14 = 30 a day
-  //   after Trader Joe's 88.20: 331.80 / 14 = 23.70 a day
-  //   after Safeway 121.80 too: 210 / 14 = 15 a day
-  const perDay = (d) => cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 }).spreads['2026-10'].units.find((u) => u.name === 'Groceries');
-  const d = riley();
-  const groc = d.transactions.filter((t) => t.lineId === 'groceries' && t.date.startsWith('2026-10'));
-  const both = perDay(d);
-  assert.deepEqual([both.plan, both.logged, both.left, both.perDay], [420, 210, 210, 15]);
-  removeTransaction(d, groc.find((t) => t.amount === 121.8).id);
-  money(perDay(d).perDay, 23.7, 'one entry');
-  removeTransaction(d, groc.find((t) => t.amount === 88.2).id);
-  money(perDay(d).perDay, 30, 'none');
-});
-
-test('October: the projected balance on any day is the start plus every item up to that day', () => {
-  const d = riley();
-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 90 });
-  // From the first month with balances (October 2025: checking 2,900), real month
-  // starts and ends reset it; between resets it is the last real number plus every item since.
-  let cash = null;
-  for (const day of cal.days) {
-    const flow = day.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
-    if (cash === null) cash = 2900 + flow;
-    else cash += flow;
-    const m = day.date.slice(0, 7);
-    const end = d.balances[m] && day.date <= '2026-10-17' && day.date === m + '-' + String(new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5)), 0)).getUTCDate()).padStart(2, '0');
-    if (end && d.balances[m].chk.end.amount !== null) cash = d.balances[m].chk.end.amount;
-    assert.ok(Math.abs(day.cash - cash) <= 0.011, day.date + ': ' + day.cash + ' vs ' + cash);
-  }
-});
-
-// ---------------------------------------------------------------------------
-// The rules the loop stands on.
-// ---------------------------------------------------------------------------
+// The October calendar tests moved with the calendar to SLAM (S-209): test/spine-calendar.test.js and test/spine-cashsim.test.js.
 
 test('a line with entries cannot be typed over', () => {
   const d = riley();

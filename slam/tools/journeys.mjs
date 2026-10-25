@@ -124,10 +124,11 @@ async function firstSession(browser, view, size) {
   check(J, 'First session done', String(await page.$$eval('#first-session', (x) => x.length)), '0');
   check(J, 'Take-home', await text(page, '[data-key="how:takeHome"]'), money(2600));
   check(J, 'Spending', await text(page, '[data-key="how:spending"]'), money(2000));
-  check(J, 'So far', await text(page, '[data-key="how:soFar"]'), signedMoney(0));
-  check(J, 'Expected by month end', await text(page, '[data-key="how:expected"]'), signedMoney(-2000));
+  // So far and expected by month end moved to SLAM's Spending page with the Budget calendar (S-209).
+  check(J, 'Surplus tile', String(await page.$$eval('[data-key="how:surplus"]', (x) => x.length)), '1');
   check(J, 'Savings rate', await text(page, '[data-key="how:savingsRate"]'), pct(0));
-  check(J, 'Cash today', await text(page, '[data-key="cash-today"]'), money(2500));
+  // Cash today moved to SLAM with the calendar (S-209): Today links there.
+  check(J, 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
   report('a. First session', view, t, 60);
   await page.close();
 }
@@ -167,7 +168,7 @@ async function monthDoc() {
 
 // b. A month, by hand. 20 quick entries: groceries 52.10 + 47.35 + 61.80 + 44.20 + 39.90 + 55.15 + 48.60 + 50.40 = 399.50;
 // eating out 14.60 + 12.25 + 18.40 + 9.75 + 16.30 + 21.10 = 92.40; gas 38.25 + 41.50 + 35.80 + 33.45 + 29.90 + 22.10 = 201.00.
-// It happened: paycheck 4,000, rent 1,500, bills 60. The bank file has 5 of the entries (52.10, 47.35, 61.80, 38.25, 14.60)
+// Three more quick entries (the Budget's "It happened" retired with its calendar, S-209): paycheck 4,000, rent 1,500, bills 60. The bank file has 5 of the entries (52.10, 47.35, 61.80, 38.25, 14.60)
 // a day earlier: matched 5, new 0. Utilities and internet: none this month.
 // Spent: 399.50 + 92.40 + 201.00 + 1,500 + 60 = 2,252.90. Surplus: 4,000 - 2,252.90 = +1,747.10.
 // Checking: 3,000 + 4,000 - 1,500 - 60 - (399.50 + 92.40 + 201.00) = 4,747.10, typed as the end balance, so the bridge ties.
@@ -211,12 +212,20 @@ async function month(browser, view, size) {
   }
   t.step('20 quick entries (most taps for one: ' + most + ')');
   if (most > 6) { failures += 1; console.log('  FAIL a quick entry took ' + most + ' taps (limit 6)'); }
-  for (let i = 0; i < 3; i++) {
-    await page.waitForSelector('[data-key^="happened:"]');
-    await t.tap('[data-key^="happened:"]');
-    await page.waitForTimeout(120);
+  // The scheduled items' "It happened" went with the Budget calendar (S-209): the paycheck, rent and the
+  // phone bill are three quick entries here (in SLAM they are "It happened" on the calendar).
+  for (const [kind, line, amount] of [['income', 'job', '4000'], ['spend', 'rent', '1500'], ['spend', 'subscriptions', '60']]) {
+    await t.tap('[data-key="open-quick-entry"]');
+    await amountReady(page);
+    // The sheet redraws on the next frame: wait for it before typing, so the amount and the income chips are the redrawn ones.
+    if (kind === 'income') { await t.tap('[data-key="qe-kind:income"]'); await page.waitForSelector('[data-key="qe-kind:income"][aria-pressed="true"]'); }
+    await page.locator('[data-key="qe-amount"]').fill(amount); t.n += 1;
+    if (!(await page.locator('[data-key="qe-line:' + line + '"]').count())) { await t.tap('[data-key="qe-search"]'); await page.keyboard.type(line === 'subscriptions' ? 'bills' : line); }
+    await t.tap('[data-key="qe-line:' + line + '"]');
+    await t.tap('[data-key="qe-save"]');
+    await page.waitForFunction(() => !document.querySelector('.sheet'));
   }
-  t.step('Confirm 3 scheduled items');
+  t.step('Log the paycheck, rent and the phone bill (3 quick entries)');
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(CSV) });
   t.n += 2; // tap "Choose CSV file", pick the file
   await page.waitForSelector('[data-key="match-summary"]');
@@ -278,9 +287,9 @@ async function questions(browser, view, size) {
   t.step('Log a $12 lunch', 6);
   await home();
 
-  // 2. Safe to spend (S-095 by hand): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0.
-  check(J, 'Safe to spend', await text(page, '[data-key="safe-to-spend"]'), money(0));
-  t.step('Safe to spend', 0);
+  // 2. Safe to spend moved to SLAM with the calendar (S-209): Today links to the Spending page, one tap.
+  check(J, 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
+  t.step('Safe to spend (a link to SLAM)', 0);
 
   // 3. Why cash dropped last month: September's bridge. September ended with checking 4,001.03 and
   // savings 150 = 4,151.03 (test/riley.test.js); explained + not explained = the actual change.

@@ -23,7 +23,6 @@ import { newHousehold } from '../src/store/schema.js';
 import { migrate } from '../src/store/migrate.js';
 import { findLine } from '../src/store/edits.js';
 import { buildSummary } from '../src/calc/summary.js';
-import { cashCalendar } from '../src/calc/calendar.js';
 import { counted } from '../src/calc/log.js';
 
 const refs = loadRefs();
@@ -131,7 +130,7 @@ test('deleting leaves a marker; the live view, calc, and screens never count it'
   await s.remove(id);
 });
 
-test('Riley: a deleted log entry never reaches the calendar or the month totals', () => {
+test('Riley: a deleted log entry never reaches the month totals', () => {
   const doc = migrate(JSON.parse(readFileSync(join(here, 'test/fixtures/riley-schema9.json'), 'utf8')));
   // Mark the Oct 15 Chipotle 13.75 deleted by hand, as a file from another copy would.
   const full = JSON.parse(JSON.stringify(doc));
@@ -142,9 +141,6 @@ test('Riley: a deleted log entry never reaches the calendar or the month totals'
   const trimmed = JSON.parse(JSON.stringify(doc));
   trimmed.transactions = trimmed.transactions.filter((t) => t.id !== 'tx-mcjhuru');
   assert.deepEqual(buildSummary(full, refs).totals, buildSummary(trimmed, refs).totals);
-  const opts = { today: '2026-10-17', horizon: 30 };
-  const income = buildSummary(trimmed, refs).income;
-  assert.deepEqual(cashCalendar(full, income, opts).lowest, cashCalendar(trimmed, income, opts).lowest);
 });
 
 test('removing a client keeps its file, marked deleted; it leaves the list and an import brings it back (S-098)', async () => {

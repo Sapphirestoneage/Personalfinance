@@ -7,7 +7,7 @@ import { actualsFor, planView, prevMonthKey } from './plan.js';
 import { counted } from './log.js';
 import { detect } from './tx-analysis.js';
 import { bridgeFor } from './bridge.js';
-import { forecastCheck, daysInMonth } from './calendar.js';
+import { forecastCheck, daysInMonth } from './dates.js';
 import { sortByPlan } from './loop.js';
 import { ratio } from './money.js';
 

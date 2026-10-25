@@ -2009,7 +2009,12 @@
       ],
       "main": "month",
       "appliesTo": "Traditional IRA, Roth IRA, spousal IRA",
-      "notes": "Tax filing day without extensions. Money put in from January 1 to this day can count for either year and has to be assigned to one. Conversions and rollovers do not count against the limit (a 529 rolled into a Roth IRA does). Moves to the next business day on a weekend or holiday (not modeled).",
+      "notes": "Traditional IRA: Tax filing deadline (April 15) for prior year. Roth IRA, Spousal IRA: April 15 for prior year.",
+      "wording": {
+        "traditional_ira": "Tax filing deadline (April 15) for prior year",
+        "roth_ira": "April 15 for prior year",
+        "spousal_ira": "April 15 for prior year"
+      },
       "source": "IRS Publication 590-A, When can contributions be made (by the return due date, not including extensions)",
       "verified": "verify"
     },
@@ -2024,7 +2029,10 @@
       ],
       "main": "month",
       "appliesTo": "HSA",
-      "notes": "Tax filing day without extensions. Money put in from January 1 to this day can count for either year and has to be assigned to one. Moves to the next business day on a weekend or holiday (not modeled).",
+      "notes": "HSA: April 15 for prior year.",
+      "wording": {
+        "hsa": "April 15 for prior year"
+      },
       "source": "IRS Publication 969, contributions for a year by the return due date without extensions",
       "verified": "verify"
     },
@@ -2045,7 +2053,15 @@
       "main": "paycheck",
       "payrollOnly": true,
       "appliesTo": "401(k), Roth 401(k), 403(b), 457(b), TSP, SIMPLE IRA",
-      "notes": "Through payroll by December 31: a deferral counts for the year the paycheck is paid.",
+      "notes": "401(k) traditional: Deferrals by Dec 31 (payroll). Roth 401(k): Deferrals by Dec 31. 403(b), 457(b) governmental, TSP, SIMPLE IRA: Dec 31.",
+      "wording": {
+        "k401": "Deferrals by Dec 31 (payroll)",
+        "roth_k401": "Deferrals by Dec 31",
+        "k403b": "Dec 31",
+        "k457b": "Dec 31",
+        "tsp": "Dec 31",
+        "simple_ira": "Dec 31"
+      },
       "source": "IRC 402(g); IRS 401(k) Plan Overview (elective deferrals come out of pay)",
       "verified": "verify"
     },
@@ -2058,7 +2074,10 @@
       "types": [],
       "main": "month",
       "appliesTo": "Solo 401(k)",
-      "notes": "The employee deferral has to be elected by December 31; the money can go in later, by the funding deadline.",
+      "notes": "Solo 401(k): Plan set up by Dec 31 (or by tax deadline for first year under SECURE 2.0); employee deferral election by Dec 31; employer part by tax deadline.",
+      "wording": {
+        "solo_k401": "Plan set up by Dec 31 (or by tax deadline for first year under SECURE 2.0); employee deferral election by Dec 31; employer part by tax deadline"
+      },
       "source": "IRS One-Participant 401(k) Plans",
       "verified": "verify"
     },
@@ -2073,7 +2092,10 @@
       ],
       "main": "month",
       "appliesTo": "Solo 401(k)",
-      "notes": "The filing deadline with extensions: October 15 only with an extension (Form 4868) filed by the April deadline, otherwise April 15. The employee deferral had to be elected by December 31 of the year. Moves to the next business day on a weekend or holiday (not modeled).",
+      "notes": "Solo 401(k): Plan set up by Dec 31 (or by tax deadline for first year under SECURE 2.0); employee deferral election by Dec 31; employer part by tax deadline.",
+      "wording": {
+        "solo_k401": "Plan set up by Dec 31 (or by tax deadline for first year under SECURE 2.0); employee deferral election by Dec 31; employer part by tax deadline"
+      },
       "source": "IRS One-Participant 401(k) Plans; Form 4868 extends the return to October 15",
       "verified": "verify"
     },
@@ -2088,7 +2110,10 @@
       ],
       "main": "month",
       "appliesTo": "SEP IRA",
-      "notes": "The filing deadline with extensions: October 15 only with an extension (Form 4868) filed by the April deadline, otherwise April 15. Moves to the next business day on a weekend or holiday (not modeled).",
+      "notes": "SEP IRA: Tax filing deadline including extensions.",
+      "wording": {
+        "sep_ira": "Tax filing deadline including extensions"
+      },
       "source": "IRS SEP Plan FAQs (by the due date of the return, including extensions)",
       "verified": "verify"
     },
@@ -2103,7 +2128,10 @@
       ],
       "main": "month",
       "appliesTo": "529 plan (the NY deduction)",
-      "notes": "Contributions by December 31 count for that year's New York deduction.",
+      "notes": "529: NY deduction by Dec 31.",
+      "wording": {
+        "k529": "NY deduction by Dec 31"
+      },
       "source": "NY Tax Law 612(c)(32); NY 529 Direct Plan",
       "verified": "verify"
     },
@@ -2126,6 +2154,26 @@
       "notes": "Publication 590-A, Worksheet 2-2",
       "source": "IRS Publication 590-A, Worksheet 2-2 (reduced Roth IRA contribution limit)",
       "verified": "law"
+    },
+    {
+      "id": "ROTH_PICK_MAX_RATE",
+      "rule": "Roth or pre-tax: the Plan picks the Roth at this marginal federal rate or below",
+      "value": 0.12,
+      "unit": "rate",
+      "appliesTo": "How much to max it? and the FOO ladder: a Roth and a pre-tax account that share one limit (a Roth 401(k) and a 401(k), a Roth and a traditional IRA)",
+      "notes": "At 12% or below the tax on Roth money now is low. Between this and PRETAX_PICK_MIN_RATE (22%) both are shown, with the reason.",
+      "source": "Eli's answer 64 (2026-10-25)",
+      "verified": "app"
+    },
+    {
+      "id": "PRETAX_PICK_MIN_RATE",
+      "rule": "Roth or pre-tax: the Plan picks pre-tax at this marginal federal rate or above",
+      "value": 0.24,
+      "unit": "rate",
+      "appliesTo": "How much to max it? and the FOO ladder: a Roth and a pre-tax account that share one limit",
+      "notes": "At 24% and up pre-tax money saves tax at that rate now. Between ROTH_PICK_MAX_RATE and this both are shown, with the reason.",
+      "source": "Eli's answer 64 (2026-10-25)",
+      "verified": "app"
     }
   ]
 }

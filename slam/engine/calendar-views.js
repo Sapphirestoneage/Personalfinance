@@ -11,6 +11,7 @@ import { longDate } from './flags.js';
 import { payDatesIn, calendar } from './calendar.js';
 import * as C from './vendor/cashcal.js';
 import { maxItDeadlines } from './maxit.js';
+import { setAsideWords, setAsideNote } from './networth.js';
 
 const weekdayOf = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
 const PER_MONTH = { weekly: 52 / 12, biweekly: 26 / 12 };
@@ -160,7 +161,9 @@ export function cashLine(spine, sim, { from = null } = {}) {
   if (!sim || !sim.daily.length || !sim.checking.known) return null;
   const asOf = sim.start, primary = sim.model.accounts.find((a) => a.primary);
   if (!primary) return null;
-  const savingsIds = sim.model.accounts.filter((a) => !a.primary && (a.cushion || a.type === 'savings' || a.type === 'hysa')).map((a) => a.id);
+  // Money set aside for a goal is not savings to fall back on (S-228): it is listed apart, by its goal, never in the line.
+  const savingsIds = sim.model.accounts.filter((a) => !a.primary && !a.earmarked && (a.cushion || a.type === 'savings' || a.type === 'hysa')).map((a) => a.id);
+  const setAside = sim.model.accounts.filter((a) => a.earmarked).map((a) => ({ id: a.id, name: a.name, goal: a.goal || null, words: setAsideWords(a.goal), balance: round2(a.balance / 100) }));
   const cardIds = new Set((spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => d.id));
   const flow = new Map();
   for (const e of spine.log || []) {
@@ -190,10 +193,10 @@ export function cashLine(spine, sim, { from = null } = {}) {
   const earliest = anchors[0].date;
   const lowDay = ahead.reduce((m, d) => (d.checking < m.checking ? d : m));
   const pays = new Set(ahead.filter((d) => d.payday).map((d) => d.date));
-  const cushionNames = sim.model.accounts.filter((a) => a.cushion).map((a) => a.name);
+  const cushionNames = sim.model.accounts.filter((a) => a.cushion && !a.earmarked).map((a) => a.name);
   const topped = sim.daily.find((d) => d.events.some((e) => e.kind === 'auto-cover' && cushionNames.some((nm) => e.label.startsWith('From ' + nm))));
   const low = { date: lowDay.date, amount: lowDay.checking, beforePayday: pays.has(addDays(lowDay.date, 1)), toppedFrom: topped ? topped.date : null };
-  return { days, low, asOf, floor: sim.floor.amount, min: Math.min(0, sim.floor.amount, ...values), max: Math.max(...values), savingsIds, earliest, backTo: earliest.slice(0, 7) < asOf.slice(0, 7) ? earliest.slice(0, 7) : null, anchors: anchors.length };
+  return { days, low, asOf, floor: sim.floor.amount, min: Math.min(0, sim.floor.amount, ...values), max: Math.max(...values), savingsIds, setAside, setAsideNote: setAsideNote(setAside), earliest, backTo: earliest.slice(0, 7) < asOf.slice(0, 7) ? earliest.slice(0, 7) : null, anchors: anchors.length };
 }
 
 // Waiting (S-209, the Budget's "Scheduled, on or before today"): each paycheck, bill and subscription
@@ -223,7 +226,7 @@ export function cashReading(sim, ym) {
   if (!sim || !sim.checking.known) return null;
   const days = sim.daily.filter((d) => d.date.slice(0, 7) === ym);
   if (!days.length) return null;
-  const cushion = sim.model.accounts.filter((a) => a.cushion);
+  const cushion = sim.model.accounts.filter((a) => a.cushion && !a.earmarked);
   const low = days.reduce((m, d) => (d.primary < m.primary ? d : m));
   const pays = new Set(sim.daily.filter((d) => d.events.some((e) => e.kind === 'income')).map((d) => d.date));
   const floor = sim.floor.amount;

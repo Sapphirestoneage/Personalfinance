@@ -9,7 +9,6 @@ import { buildSummary } from '../src/calc/summary.js';
 import { bridgeFor } from '../src/calc/bridge.js';
 import { netWorthBridge } from '../src/calc/networth-bridge.js';
 import { cardInterest, promoEnded, promoWarnings } from '../src/calc/debts.js';
-import { cashCalendar } from '../src/calc/calendar.js';
 
 const refs = loadRefs();
 const lines = (b) => Object.fromEntries(b.lines.map((l) => [l.key, l.amount]));
@@ -54,15 +53,6 @@ test('Dana: Month in review for June says so', () => {
   const review = (key) => d.months.find((m) => m.key === key).snapshot.review;
   assert.equal(review('2026-06').readings[0], 'Your 0% promo ended. Interest this month: $259.90.');
   assert.ok(!review('2026-07').readings.some((r) => r.includes('promo')));
-});
-
-test('Dana: the calendar shows October\'s interest on the card, on its due day', () => {
-  const d = loadHousehold('dana');
-  // Due the 20th: 244.42 charged to the Visa (what is owed goes up), checking untouched.
-  const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 30 });
-  const day = cal.days.find((x) => x.date === '2026-10-20');
-  const it = day.items.find((i) => i.kind === 'interest');
-  assert.deepEqual([it.name, it.flow, it.cash, it.account], ['Visa interest (computed)', -244.42, false, 'visa']);
 });
 
 test('Dana: the Next card warns 60 days before the promo ends', () => {

@@ -8,15 +8,14 @@ import { h } from '../dom.js';
 import { money, pct, signedMoney, todayIso, dayLabel, dateLabel } from '../format.js';
 import { statusChip } from '../components/status.js';
 import { nextCard } from '../components/cards.js';
-import { budgetCashStrip } from '../components/cashflow.js';
 import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
 import { INSIGHT_TABS } from '../nav.js';
 import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
 import { promoWarnings } from '../../calc/debts.js';
-import { monthOutlook } from '../../calc/calendar.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
+import { quickEntryButton } from '../components/quick-entry.js';
 
 function tile(label, value, sub, cls) {
   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
@@ -29,21 +28,20 @@ export function headlineTiles(ctx, summary) {
   const inc = summary.income;
   const since = summary.sinceLast;
   const hb = (key, text) => howButton(ctx, key, text);
-  // An open month (S-128): so far and expected by month end, never money that has not arrived as actual.
-  const o = monthOutlook(ctx.doc, inc, todayIso());
-  const open = ['takeHome', 'spending', 'surplus', 'savingsRate', ...(o ? ['soFar', 'expected'] : [])].includes(ctx.ui.how) ? ctx.ui.how : null;
+  // So far and expected by month end (S-128) went with the cash calendar (S-209): SLAM's Spending page and
+  // the Dashboard carry them now, so the third tile here is always the surplus.
+  const open = ['takeHome', 'spending', 'surplus', 'savingsRate'].includes(ctx.ui.how) ? ctx.ui.how : null;
   return h('div', {},
     h('div', { class: 'strip four', id: 'headline' },
       tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
       tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
-      o ? tile('So far this month', hb('soFar', signedMoney(o.soFar)), h('span', {}, 'Expected by month end ', hb('expected', signedMoney(o.expected))), o.soFar < 0 ? 'bad' : 'good')
-        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
+      tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)),
           h('span', { 'data-key': 'surplus-rate' }, (t.surplusRate === null ? '' : pct(t.surplusRate) + ' of take-home') + (since && since.surplus !== null ? (t.surplusRate === null ? '' : ', ') + signedMoney(since.surplus) + ' since last time' : '')),
           t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
       // Only what is allocated counts (S-138); the surplus not allocated yet is shown as a boost.
       tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), h('span', { 'data-key': 'savings-boost' }, 'incl. pre-tax' +
         (summary.allocation.boost === null ? '' : '. Up to +' + pct(summary.allocation.boost) + ' if you allocate your surplus')))),
-    open ? howPanel(ctx, explain(summary, open, o)) : null);
+    open ? howPanel(ctx, explain(summary, open)) : null);
 }
 
 function firstSessionCard(ctx, summary) {
@@ -88,7 +86,7 @@ export function renderToday(ctx, summary) {
     loopStripCard(ctx, summary),
     firstSessionCard(ctx, summary),
     nextCard(ctx, summary, extras(ctx, summary)),
-    budgetCashStrip(ctx, summary),
+    spineLinks(ctx),
     headlineTiles(ctx, summary),
     chartLinks(ctx));
 }
@@ -97,4 +95,12 @@ export function renderToday(ctx, summary) {
 function chartLinks(ctx) {
   return h('div', { class: 'card', id: 'today-charts' }, h('h3', {}, 'Charts'),
     h('div', { class: 'row' }, INSIGHT_TABS.map(([id, name]) => h('button', { class: 'btn small', 'data-key': 'today-chart:' + id, onclick: () => ctx.jump('insights:' + id) }, name))));
+}
+
+// Where the cash calendar, safe to spend and the check-in live now (S-209): the SLAM pages next to this app.
+function spineLinks(ctx) {
+  return h('div', { class: 'card', id: 'cash-moved' },
+    h('div', { class: 'spread' }, h('h2', {}, 'Cash calendar, safe to spend, check-in'), quickEntryButton(ctx)),
+    h('p', { class: 'muted' }, 'These moved to SLAM, which reads the same household and feeds this log back. Open them in a new tab:'),
+    h('p', {}, h('a', { class: 'btn', href: 'calendar.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-calendar' }, 'Cash calendar'), ' ', h('a', { class: 'btn', href: 'spending.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-spending' }, 'Spending and check-in'), ' ', h('a', { class: 'btn ghost', href: 'plan.html', target: '_blank', rel: 'noopener', 'data-key': 'slam-plan' }, 'Plan')));
 }

@@ -10,7 +10,7 @@ import { addEntry } from '../src/store/log.js';
 import { setIncomeActual } from '../src/store/edits.js';
 import { setPlanIncome } from '../src/store/plans.js';
 import { incomeMonth } from '../src/calc/income-month.js';
-import { payDates } from '../src/calc/calendar.js';
+import { payDates } from '../src/calc/dates.js';
 import { buildSummary } from '../src/calc/summary.js';
 import { bridgeFor } from '../src/calc/bridge.js';
 import { netWorthBridge } from '../src/calc/networth-bridge.js';

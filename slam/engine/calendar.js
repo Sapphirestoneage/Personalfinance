@@ -26,6 +26,8 @@ import { shareOf, coverOf } from './sharing.js';
 import { balanceSheet } from './networth.js';
 import { money } from '../src/ui/format.js';
 import { maxItDeadlines, maxItTypes } from './maxit.js';
+import { semimonthlyDates } from './contrib.js';
+import { fromPaycheck } from './schema.js';
 import * as C from './vendor/cashcal.js';
 import { matchOccurrence } from './feed.js';
 
@@ -102,8 +104,10 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (day === null) { add({ ...common, date: null, amount: net, rough: amountRough, note: s.cadence === 'total' ? 'a total spread over its months' : 'day paid not entered' }); continue; }
     const dayRough = roughFact(s.payDay);
     if (s.cadence === 'semimonthly') {
-      // The run's own rule for the two days (cashcal.js paydays), so each pay's key matches the run's occurrence.
-      const [d1, d2] = C.paydays('semimonthly', dayIn(ym, day), monthStart(ym), monthEnd(ym));
+      // The two days as the run places them (engine/contrib.js semimonthlyDates: both days when a second one is
+      // entered, S-226), so each pay's key matches the run's occurrence.
+      if (s.payDay2) t.useFact(base + '.payDay2', s.payDay2);
+      const [d1, d2] = semimonthlyDates(s, monthStart(ym), monthEnd(ym));
       const half = { gross: common.gross === null ? null : round2(common.gross / 2), withheld: common.withheld === null ? null : round2(common.withheld / 2), fica: common.fica === null ? null : round2(common.fica / 2), saved: round2(common.saved / 2) };
       // A payday after the line's end does not come (as in the run).
       if (!(s.end && d1 > s.end)) add({ ...common, ...half, date: d1, amount: perPay(2), rough: amountRough || dayRough });
@@ -159,14 +163,15 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
   for (const m of cf.debtMinimums.items) {
     if (m.amount === null || m.amount <= 0) continue;
     const d = (spine.debts || []).find((x) => x.id === m.id);
-    t.useFact('debts.' + d.id + '.minimum', d.minimum);
+    if (!m.line) t.useFact('debts.' + d.id + '.minimum', d.minimum);
     const dueRough = roughFact(d.dueDay);
-    add({ id: 'debt:' + d.id, sourceId: null, repeats: true, plan: d.type === 'bnpl', kind: 'debt', label: (m.name || d.id) + (m.estimated ? ' (minimum, house default)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a house guess' : null) : 'due day not entered', path: 'debts.' + d.id + '.minimum' });
+    // A debt paid by a budget line (S-226): the line's amount, once, on the debt's due day.
+    add({ id: 'debt:' + d.id, sourceId: null, repeats: true, plan: d.type === 'bnpl', kind: 'debt', label: (m.name || d.id) + (m.line ? ' payment (the ' + m.lineLabel + ' line)' : m.estimated ? ' (minimum, house default)' : ' minimum'), date: m.dueDate, amount: m.amount, direction: 'out', rough: !!m.estimated || dueRough, note: m.dueDate ? (dueRough ? 'due day is a house guess' : null) : 'due day not entered', path: m.path || 'debts.' + d.id + '.minimum' });
   }
 
   // ------------------------------------------------------------ saving from take-home, the tax set-aside
   for (const a of spine.accounts || []) {
-    if (!a.monthlyContribution || a.family === 'cash' || ['employerRetirement', 'hsaFsa'].includes(a.family)) continue;
+    if (!a.monthlyContribution || a.family === 'cash' || fromPaycheck(a)) continue;
     const x = t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution);
     if (!x) continue;
     add({ id: 'save:' + a.id, sourceId: 'save:' + a.id, repeats: true, kind: 'saving', label: 'Into ' + (v(a.name) || a.id), date: null, amount: x, direction: 'out', rough: roughFact(a.monthlyContribution), note: 'paid in from take-home; no day entered', path: 'accounts.' + a.id + '.monthlyContribution' });

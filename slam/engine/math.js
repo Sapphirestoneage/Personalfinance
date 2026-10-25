@@ -14,7 +14,7 @@
 import { getAt, valueOf } from './spine.js';
 import { scenarioRule } from './scenarios.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
-import { INVESTED_FAMILIES } from './schema.js';
+import { INVESTED_FAMILIES, isEarmarked } from './schema.js';
 import { project } from './projection.js';
 import { money } from '../src/ui/format.js';
 import { expenseRow } from './ledger.js';
@@ -48,8 +48,8 @@ def({ id: 'debts', label: 'Total debts', unit: 'usd', op: 'sum', screens: ['dash
   explain: ({ spine, s }) => out(s.sheet.debts, (spine.debts || []).map((d) => field(spine, 'debts.' + d.id + '.balance', v(d.balance), 'usd', 'plus', v(d.name) || d.id))) });
 def({ id: 'netWorth', label: 'Net worth', unit: 'usd', op: 'sum', screens: ['dashboard#tile-networth'], formula: 'Net worth = total assets - total debts',
   explain: ({ s }) => out(s.sheet.netWorth, [metric('assets', 'Total assets', s.sheet.assets, 'usd'), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
-def({ id: 'cash', label: 'Cash', unit: 'usd', op: 'sum', screens: ['dashboard#tile-runway'], formula: 'Cash = checking, savings and other cash accounts added up (the Roth backstop is not cash)',
-  explain: ({ spine, s }) => out(s.sheet.cash, (spine.accounts || []).filter((a) => a.family === 'cash').map((a) => field(spine, 'accounts.' + a.id + '.balance', v(a.balance), 'usd', 'plus', v(a.name) || a.id))) });
+def({ id: 'cash', label: 'Cash', unit: 'usd', op: 'sum', screens: ['dashboard#tile-runway'], formula: 'Cash = checking, savings and other cash accounts added up (the Roth backstop and money set aside for a goal are not cash)',
+  explain: ({ spine, s }) => out(s.sheet.cash, (spine.accounts || []).filter((a) => a.family === 'cash' && !isEarmarked(a)).map((a) => field(spine, 'accounts.' + a.id + '.balance', v(a.balance), 'usd', 'plus', v(a.name) || a.id)), [], s.sheet.setAsideNote ? { note: s.sheet.setAsideNote } : {}) });
 def({ id: 'invested', label: 'Invested assets', unit: 'usd', op: 'sum', screens: ['dashboard#tile-fi'], formula: 'Invested = retirement, IRA, HSA and taxable investing balances added up',
   explain: ({ spine, s }) => out(s.sheet.invested, (spine.accounts || []).filter((a) => INVESTED_FAMILIES.includes(a.family)).map((a) => field(spine, 'accounts.' + a.id + '.balance', v(a.balance), 'usd', 'plus', v(a.name) || a.id))) });
 
@@ -64,7 +64,7 @@ def({ id: 'subscriptions', label: 'Subscriptions a month', unit: 'usd/month', op
 def({ id: 'leanSpending', label: 'Lean spending this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-fi'], formula: 'Lean spending = food, housing and transportation that are needs (a want such as eating out is left out)',
   explain: ({ spine, s }) => out(s.cashflow.expenses.lean, s.cashflow.expenses.items.filter((i) => i.fat && i.need !== false && !i.covered).map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'plus', i.label))) });
 def({ id: 'minimums', label: 'Minimum payments this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-surplus', 'dashboard#tile-runway'], formula: 'Minimum payments = each debt\'s minimum this month (a rough default when none is entered)',
-  explain: ({ spine, s }) => out(s.cashflow.debtMinimums.total, s.cashflow.debtMinimums.items.map((i) => field(spine, 'debts.' + i.id + '.minimum', i.amount, 'usd/month', 'plus', (i.name || i.id) + (i.estimated ? ' (house default)' : '')))) });
+  explain: ({ spine, s }) => out(s.cashflow.debtMinimums.total, s.cashflow.debtMinimums.items.map((i) => field(spine, i.path || 'debts.' + i.id + '.minimum', i.amount, 'usd/month', 'plus', (i.name || i.id) + (i.line ? ' (paid by the ' + i.lineLabel + ' line)' : i.estimated ? ' (house default)' : '')))) });
 def({ id: 'taxSetAside', label: 'Tax set-aside this month', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-surplus'], formula: 'Tax set-aside = the year\'s tax still due (tax - withholding - estimated payments - already set aside) / months until the return is due; while the tax cannot be figured, untaxed income x the marginal rate',
   explain: ({ spine, s }) => out(s.cashflow.taxSetAside.total, s.cashflow.taxSetAside.lines.map((l) => ({ label: l.kind === 'balance' ? l.label + ': (' + money(l.base) + (l.held ? ' - ' + money(l.held) + ' set aside' : '') + ') / ' + l.months + ' months' : l.label + ': ' + money(l.base) + ' x ' + (Math.round(l.rate * 1000) / 10) + '%' + (l.months ? ' / ' + l.months + ' months' : ''), value: l.amount, unit: 'usd/month', kind: l.kind === 'balance' ? s.tax.balanceDue.kind : kindOf(spine, l.kind === 'income' ? 'income.' + l.id + '.amount' : 'accounts.' + l.id + '.conversions'), role: 'plus', path: l.kind === 'balance' ? null : l.kind === 'income' ? 'income.' + l.id + '.amount' : 'accounts.' + l.id + '.conversions', metric: l.kind === 'balance' && l.taxYear === +s.asOf.slice(0, 4) ? 'taxBalanceDue' : undefined, group: 'T' }))) });
 def({ id: 'surplus', label: 'Monthly surplus', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-surplus'], formula: 'Surplus = take-home - spending - minimum payments - saving from take-home - tax set-aside',
@@ -132,6 +132,7 @@ const MAXIT_FORMULAS = {
   lump: 'Lump sum today = the room left - what the monthly amounts already set up still put in for the year (on paydays to December 31, or each month to December); the new money',
   month: 'A month = the lump sum (the new money) / the months from today to the deadline (one contribution a month; for a payroll-only account, the months that hold a paycheck), rounded up to the cent; the last one is what is left',
   paycheck: 'A paycheck = the lump sum (the new money) / the owner\'s paychecks from today to the deadline (real pay dates from the day-by-day run), rounded up to the cent; for a payroll-only account, plus what already comes out of each paycheck for it (the deferral to set)',
+  raise: 'Contribution to raise to = what a paycheck holds (what lands from it + what already comes out of it for the plan) / the paycheck\'s gross pay, a whole percent rounded down so it never asks more than lands (answer 53: the paycheck cap stays)',
   low: 'Lowest day of cash with it = the lowest day of cash across every account in the day-by-day run with the new money taken out on its dates',
   payoff: 'Payoff moved = the latest card or loan payoff date with the new money - the same date without it, in days (inside the run)'
 };
@@ -145,7 +146,7 @@ function maxitMetric(id) {
   const acct = all ? null : parts.slice(1, -2).join(':');
   // A page without the whole max-it result (the Windfall room) still opens one account's numbers.
   const rowOf = (ctx) => { if (ctx.maxit) return ctx.maxit.rows.find((r) => r.accountId === acct && r.year === year) || null; const a = (ctx.spine.accounts || []).find((x) => x.id === acct); return a && canMaxIt(ctx.rules, a, year) ? maxItRow(ctx.spine, ctx.rules, a, year, { asOf: ctx.s ? ctx.s.asOf : ctx.spine.meta.asOf, claims: ctx.sim ? ctx.sim.claims : null }) : null; };
-  const base = { id, unit: what === 'month' ? 'usd/month' : what === 'payoff' ? 'count' : 'usd', screens: MAXIT_SCREENS, formula: MAXIT_FORMULAS[what] };
+  const base = { id, unit: what === 'month' ? 'usd/month' : what === 'payoff' ? 'count' : what === 'raise' ? 'ratio' : 'usd', screens: MAXIT_SCREENS, formula: MAXIT_FORMULAS[what] };
   const res = (r, value) => ({ value, kind: r.kind, from: r.from, rough: r.rough, missing: r.missing, rules: r.rules });
   const roomRes = (r) => res(r, r.room);
   const r2 = (x) => Math.round(x * 100) / 100;
@@ -232,6 +233,14 @@ function maxitMetric(id) {
   if (what === 'month' && !all) return { ...base, label: 'A month to the deadline (new money)', op: 'custom',
     explain: (ctx) => { const r = rowOf(ctx); return r && r.applies && r.perMonth !== null ? out(res(r, r.perMonth), [{ ...metric('maxit:' + acct + ':' + year + ':lump', 'Lump sum (the new money) for ' + year, res(r, r.lump), 'usd', 'arg'), key: 'lump' }, term((r.deadline.payrollOnly ? 'Months with a paycheck from today to ' : 'Months from today to ') + r.deadline.date + ' (' + r.months.dates.join(', ') + ')', r.months.count, 'count', 'computed', 'arg', { rule: r.deadline.rule, key: 'count' })], [], lastNote(r, r.months.last, r.perMonth)) : out(null, []); },
     recompute: (t) => (one(t, 'lump') === null || !one(t, 'count') ? null : c2(one(t, 'lump') / one(t, 'count'))) };
+  // More than a paycheck holds (answer 53): the contribution to raise to, as a share of a paycheck's gross pay.
+  if (what === 'raise') return { ...base, label: 'Contribution to raise to (share of pay)', op: 'custom',
+    explain: (ctx) => {
+      const r = rowOf(ctx); const p = r && r.paychecks;
+      if (!p || p.raiseTo === null || p.raiseTo === undefined) return out(null, []);
+      return out(res(r, p.raiseTo), [term('What a paycheck holds: what lands from it (' + cents(p.landed) + ') and what already comes out of it for the plan (' + cents(p.current || 0) + ')', p.holds, 'usd', 'computed', 'arg', { key: 'holds' }), term('Gross pay of a paycheck (' + (p.streams[0] || 'pay') + ')', p.gross, 'usd', 'computed', 'arg', { key: 'gross' })], [], { note: 'About ' + cents(p.gap) + ' of the room still cannot go in through payroll by ' + r.deadline.date + '.' });
+    },
+    recompute: (t) => (one(t, 'holds') === null || !one(t, 'gross') ? null : Math.floor(Math.round(one(t, 'holds') / one(t, 'gross') * 10000) / 100) / 100) };
   if (what === 'paycheck') return { ...base, label: 'A paycheck to the deadline', op: 'custom',
     explain: (ctx) => {
       const r = rowOf(ctx); const p = r && r.paychecks;
@@ -464,7 +473,7 @@ function spendMetric(id) {
     explain: ({ spend: sp }) => { const r = tagOf(sp); return r && r.pace !== null ? out({ value: r.pace, kind: 'known', from: [], rough: [], missing: [], rules: [] }, [metric('spend:tagSpent:' + key, 'Spent so far', { value: r.spent, kind: 'known' }, 'usd', 'arg'), term('Day of the month', sp.tags.day ?? sp.tags.daysInMonth, 'count', 'known', 'arg'), term('Days in the month', sp.tags.daysInMonth, 'count', 'known', 'arg')]) : out(null, []); },
     recompute: (t) => (t[0].value === null || !t[1].value ? null : Math.round(t[0].value / (t[1].value / t[2].value) * 100) / 100) };
   if (what === 'tier') return { id, label: 'Burn tier', unit: 'usd/month', op: 'sum', screens: SPEND_SCREENS, formula: { core: 'Core burn = food, housing and transportation lines a month, added up', rest: 'Everything else = every other spending line a month, not debt', minimums: 'Minimums = every debt at its minimum a month', extra: 'Extra = after-tax saving + the tax set-aside + the extra at the debt' }[key] || 'A burn tier',
-    explain: ({ spine, s, tiers }) => { const tier = tiers && tiers.tiers.find((x) => x.id === key); if (!tier) return out(null, []); const items = s.cashflow.expenses.items.filter((i) => !i.covered && (key === 'core' ? i.fat : key === 'rest' ? !i.fat : false)); const terms = key === 'core' || key === 'rest' ? items.map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'plus', i.label + ' (a month)')) : key === 'minimums' ? s.cashflow.debtMinimums.items.map((i) => field(spine, 'debts.' + i.id + '.minimum', i.amount, 'usd/month', 'plus', (i.label || i.name || i.id) + ' minimum')) : [metric('savingAfterTax', 'After-tax saving', s.cashflow.saving.afterTax, 'usd/month'), metric('taxSetAside', 'Tax set-aside', s.cashflow.taxSetAside.total, 'usd/month'), term('The extra at the debt', tiers.extra ?? 0, 'usd/month', 'known', 'plus', { path: spine.debtPlan && spine.debtPlan.extra ? 'debtPlan.extra' : null })]; return out({ value: tier.amount, kind: tiers.kind === 'incomplete' ? 'incomplete' : tiers.kind, from: tiers.takeHome.from, rough: tiers.takeHome.rough, missing: tiers.missing, rules: [] }, terms); } };
+    explain: ({ spine, s, tiers }) => { const tier = tiers && tiers.tiers.find((x) => x.id === key); if (!tier) return out(null, []); const items = s.cashflow.expenses.items.filter((i) => !i.covered && (key === 'core' ? i.fat : key === 'rest' ? !i.fat : false)); const terms = key === 'core' || key === 'rest' ? items.map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'plus', i.label + ' (a month)')) : key === 'minimums' ? s.cashflow.debtMinimums.items.map((i) => field(spine, i.path || 'debts.' + i.id + '.minimum', i.amount, 'usd/month', 'plus', (i.label || i.name || i.id) + (i.line ? ' payment (the ' + i.lineLabel + ' line)' : ' minimum'))) : [metric('savingAfterTax', 'After-tax saving', s.cashflow.saving.afterTax, 'usd/month'), metric('taxSetAside', 'Tax set-aside', s.cashflow.taxSetAside.total, 'usd/month'), term('The extra at the debt', tiers.extra ?? 0, 'usd/month', 'known', 'plus', { path: spine.debtPlan && spine.debtPlan.extra ? 'debtPlan.extra' : null })]; return out({ value: tier.amount, kind: tiers.kind === 'incomplete' ? 'incomplete' : tiers.kind, from: tiers.takeHome.from, rough: tiers.takeHome.rough, missing: tiers.missing, rules: [] }, terms); } };
   if (what === 'cut') return { id, label: 'Saved a month by the cuts', unit: 'usd/month', op: 'sum', screens: SPEND_SCREENS, formula: 'Saved = the dropped lines a month, added up',
     explain: ({ spine, cut }) => (cut ? out(resOf(cut, cut.saved), cut.dropped.map((i) => field(spine, i.path, i.amount, 'usd/month', 'plus', i.label + ' (a month)'))) : out(null, [])) };
   if (what === 'cutDebt') return { id, label: 'Interest saved by aiming the cuts at the debt', unit: 'usd', op: 'sum', screens: SPEND_SCREENS, formula: 'Interest saved = interest on the monthly plan as it is - interest with the saving added to the extra',
@@ -581,6 +590,9 @@ export const showNumber = (x, unit, kind = null) => (kind === 'notForMe' ? 'does
 
 export function recompute(m, terms, ctx) {
   const val = (t) => t.value;
+  // No inputs to work from (a bill with no amount, one someone else covers, a reading that does not apply): missing,
+  // never $0 and never a crash. Every custom recompute reads its terms by position, so this guard is theirs too (S-228).
+  if (!Array.isArray(terms) || !terms.length) return null;
   if (m.op === 'sum') {
     // Nothing known, or a number that is not given while any input is missing: missing, never $0.
     if (!terms.length || terms.every((t) => t.value === null)) return null;
@@ -604,10 +616,12 @@ export function recompute(m, terms, ctx) {
 function plugged(m, terms, value) {
   const f = (t) => showNumber(t.value, t.unit, t.kind);
   let left;
-  if (m.op === 'sum') left = terms.map((t, i) => (i === 0 ? (t.role === 'minus' ? '- ' : '') : t.role === 'minus' ? ' - ' : ' + ') + f(t)).join('') || '0';
+  const none = value === null || value === undefined ? 'nothing to work from yet' : '0';
+  if (!terms.length) left = none;
+  else if (m.op === 'sum') left = terms.map((t, i) => (i === 0 ? (t.role === 'minus' ? '- ' : '') : t.role === 'minus' ? ' - ' : ' + ') + f(t)).join('');
   else if (m.op === 'ratio') {
     const num = terms.filter((t) => t.role === 'num').map(f), den = terms.filter((t) => t.role === 'den').map(f);
-    left = (num.length > 1 ? '(' + num.join(' + ') + ')' : num[0]) + (m.factor ? ' x ' + m.factor : '') + ' / ' + (den.length > 1 ? '(' + den.join(' + ') + ')' : den[0]);
+    left = !num.length || !den.length ? none : (num.length > 1 ? '(' + num.join(' + ') + ')' : num[0]) + (m.factor ? ' x ' + m.factor : '') + ' / ' + (den.length > 1 ? '(' + den.join(' + ') + ')' : den[0]);
   } else left = terms.map((t) => t.label + ' ' + f(t)).join(', ');
   return left + ' = ' + showNumber(value, m.unit);
 }

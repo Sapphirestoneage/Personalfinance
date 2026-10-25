@@ -12,7 +12,7 @@
 
 import { toMonthly } from './normalize.js';
 import { counted } from './log.js';
-import { payDates } from './calendar.js';
+import { payDates } from './dates.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };

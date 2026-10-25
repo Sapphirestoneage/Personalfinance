@@ -200,9 +200,10 @@ function checkDate(d, what) {
 
 // One income stream, as its panel saves it (S-199): the amount and how often,
 // when it starts and ends (blank is open-ended), and the day of the month it
-// is paid (payDay, for monthly and less often; weekly and biweekly pay dates
+// is paid (payDay, for monthly and less often; twice a month, payDay2 is the
+// second day, S-226; weekly and biweekly pay dates
 // follow the start date). A new name keeps the id.
-export function editIncome(spine, id, { amount, cadence, start = undefined, end = undefined, payDay = undefined, personId = undefined, kind = 'known', label = null }, today) {
+export function editIncome(spine, id, { amount, cadence, start = undefined, end = undefined, payDay = undefined, payDay2 = undefined, personId = undefined, kind = 'known', label = null }, today) {
   const base = 'income.' + id;
   const x = getAt(spine, base);
   if (!x) throw new Error('No income ' + id);
@@ -228,6 +229,14 @@ export function editIncome(spine, id, { amount, cadence, start = undefined, end 
       next.payDay = { value: payDay, kind, ...stamp };
     }
   }
+  // Twice a month, the second day (S-226): kept only for twice-a-month pay with a first day, and never the same day.
+  if (next.cadence !== 'semimonthly' || !next.payDay) delete next.payDay2;
+  else if (payDay2 === null) delete next.payDay2;
+  else if (payDay2 !== undefined) {
+    if (!Number.isInteger(payDay2) || payDay2 < 1 || payDay2 > 31) throw new Error('Second day paid: 1 to 31');
+    next.payDay2 = { value: payDay2, kind, ...stamp };
+  }
+  if (next.payDay2 && next.payDay2.value === next.payDay.value) throw new Error('The second day paid is a different day from the first');
   return setAt(s, base, next);
 }
 
@@ -318,8 +327,9 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
   return { spine: { ...spine, [collection]: [...list, item] }, id, firstPath: first };
 }
 
-// An expense's payment (S-189): the account or card, and the day (blank clears it).
-export function editPayment(spine, id, { from, day = null, kind = 'known' }, today) {
+// An expense's payment (S-189): the account or card, and the day (blank clears it). paysDebt (S-226): the debt the
+// line pays (its payment is then counted once, under debt payments), null to unlink, undefined to keep.
+export function editPayment(spine, id, { from, day = null, paysDebt = undefined, kind = 'known' }, today) {
   const base = 'expenses.' + id;
   if (!getAt(spine, base)) throw new Error('No expense ' + id);
   const stamp = { asOf: today, source: 'ledger' };
@@ -327,6 +337,13 @@ export function editPayment(spine, id, { from, day = null, kind = 'known' }, tod
   const e = getAt(s, base);
   if (day === null) { if (e.payDay) { const next = { ...e }; delete next.payDay; s = setAt(s, base, next); } }
   else s = setAt(s, base + '.payDay', { value: day, kind, ...stamp });
+  if (paysDebt === null) { const x = getAt(s, base); if (x.paysDebt) { const next = { ...x }; delete next.paysDebt; s = setAt(s, base, next); } }
+  else if (paysDebt !== undefined) {
+    if (!(spine.debts || []).some((d) => d.id === paysDebt)) throw new Error('No debt ' + paysDebt);
+    const other = (spine.expenses || []).find((x) => x.id !== id && x.paysDebt && x.paysDebt.value === paysDebt);
+    if (other) throw new Error('The ' + other.label + ' line already pays that debt');
+    s = setAt(s, base + '.paysDebt', { value: paysDebt, kind: 'known', ...stamp });
+  }
   return s;
 }
 
@@ -346,13 +363,20 @@ export function duplicateItem(spine, collection, id, today, name = '') {
   if (amount && amount in copy) copy[amount] = { value: null, kind: 'missing', ...stamp, note: 'duplicated: fill this in' };
   if (typeof copy.label === 'string') copy.label = name;
   if (copy.name && isFact(copy.name)) copy.name = name ? { value: name, kind: 'known', ...stamp } : { value: null, kind: 'missing', ...stamp };
+  // One line pays a debt (S-226): the copy does not.
+  delete copy.paysDebt;
   return { spine: { ...spine, [collection]: [...list, copy] }, id: copy.id, firstPath: collection + '.' + copy.id + '.' + amount };
 }
 
 // Remove one item (undo brings it back).
 export function removeItem(spine, collection, id) {
   if (!(spine[collection] || []).some((x) => x.id === id)) throw new Error('No ' + collection + ' item ' + id);
-  return { ...spine, [collection]: spine[collection].filter((x) => x.id !== id) };
+  const out = { ...spine, [collection]: spine[collection].filter((x) => x.id !== id) };
+  // A removed debt: the line that paid it is an expense again (S-226).
+  if (collection === 'debts') out.expenses = (spine.expenses || []).map((e) => { if (!(e.paysDebt && e.paysDebt.value === id)) return e; const next = { ...e }; delete next.paysDebt; return next; });
+  // A removed job: a plan paid through it goes back to the sponsoring job (S-227).
+  if (collection === 'income') out.accounts = (spine.accounts || []).map((a) => { if (!(a.paidThrough && a.paidThrough.value === id)) return a; const next = { ...a }; delete next.paidThrough; return next; });
+  return out;
 }
 
 // Many fields at once: confirm (those with a value become known), rough (those

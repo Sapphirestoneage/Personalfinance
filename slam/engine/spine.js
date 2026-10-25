@@ -81,6 +81,8 @@ export function listFacts(spine) {
 // ---------------------------------------------------------------- dates
 // Dates are ISO strings (YYYY-MM-DD). All date math is in UTC days.
 export const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+// A real day on the calendar written YYYY-MM-DD (2026-02-30 and 2026-13-45 are not), S-228.
+export const isDay = (x) => { if (typeof x !== 'string' || !ISO_DATE.test(x)) return false; const t = Date.parse(x + 'T00:00:00Z'); return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === x; };
 export const toDay = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;
 export const fromDay = (d) => new Date(d * 86400000).toISOString().slice(0, 10);
 export const addDays = (iso, n) => fromDay(toDay(iso) + n);

@@ -8,8 +8,6 @@ import { h } from '../dom.js';
 import { money, signedMoney, pct, monthLabel, dayLabel, todayIso } from '../format.js';
 import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../calc/loop.js';
 import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
-import { forecastFor } from '../../calc/calendar.js';
-import { saveForecast } from '../../store/cashflow.js';
 import { netWorthBridge } from '../../calc/networth-bridge.js';
 import { milestones, netWorthByMonth } from '../../calc/networth.js';
 import { incomeRowsList } from './income-month.js';
@@ -29,7 +27,7 @@ export function loopStripCard(ctx, summary) {
       ctx.doc.months.some((m) => m.key < s.month) && !(ctx.doc.plans || {})[s.month] ? h('button', { class: 'btn small primary', 'data-key': 'start-plan', onclick: () => ctx.jump('plan') }, 'Start next month\'s plan') : null),
     h('div', { class: 'loop-steps' },
       step('1', 'Plan', 'Plan: ' + s.plan.state, 'plan', 'Next month\'s plan'),
-      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : '') + ', scheduled ' + t.confirmed + ' of ' + t.scheduled + ' confirmed', 'track', 'Track'),
+      step('2', 'Track', t.entries + ' entr' + (t.entries === 1 ? 'y' : 'ies') + (t.last ? ', last ' + dayLabel(t.last) : ''), 'track', 'Track'),
       step('3', 'Review', reviewState, 'actual', 'Fill gaps')));
 }
 
@@ -42,9 +40,7 @@ export function checklistCard(ctx, summary) {
     const snap = { ...closeMonthSnapshot(summary), review };
     const key = ctx.store.closeMonth(snap);
     ctx.update('Save snapshot', (d) => { d.snapshots.push(snapshotOf(summary, new Date().toISOString())); });
-    // The new month's predicted end cash, as of its 1st (S-086).
-    const next = ctx.doc.currentMonth;
-    ctx.update('Save forecast', (d) => saveForecast(d, next, forecastFor(d, summary.income, next), new Date().toISOString()));
+    // The predicted end cash went with the cash calendar (S-209); SLAM's check-in records the miss now.
     ctx.ui.closing = false;
     ctx.ui.justClosed = key;
     ctx.toast(monthLabel(key) + ' closed. ' + c.summary + '.');

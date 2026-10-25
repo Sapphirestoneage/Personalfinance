@@ -1,6 +1,6 @@
 # Calendar parity matrix (Phase 2, Batch 0)
 
-**Batch G (S-209, 2026-10-23): the retirement is held.** The matrix below was built from the spec and shows nothing "old Budget only". Before deleting, a second audit read the Budget calendar's own code and found more than the spec named. Most of it is now in SLAM; what is not is listed in "The gap audit" at the end, with the question for Eli each one waits on. The retirement itself is ready as `docs/phase2/batch-g-retire.patch`. Rows that read "in cashcal.js" are in SLAM through the vendored v44 engine (`slam/engine/vendor/cashcal.js`, Batch A).
+**The retirement is now applied (2026-10-25, answer 39, S-226); the rows still Budget only below are known differences, settled in `docs/PHASE2_REPORT.md`.** **Batch G (S-209, 2026-10-23): the retirement was held.** The matrix below was built from the spec and shows nothing "old Budget only". Before deleting, a second audit read the Budget calendar's own code and found more than the spec named. Most of it is now in SLAM; what is not is listed in "The gap audit" at the end, with the question for Eli each one waits on. The retirement itself is ready as `docs/phase2/batch-g-retire.patch`. Rows that read "in cashcal.js" are in SLAM through the vendored v44 engine (`slam/engine/vendor/cashcal.js`, Batch A).
 
 Every feature in `money-rooms-v3/reference/cashflow-calendar-spec.md` sections 3, 4
 and 7, one row each, with where it lives today and which batch of the Phase 2 plan

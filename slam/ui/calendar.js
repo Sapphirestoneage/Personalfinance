@@ -9,7 +9,7 @@
 // this browser (the same saved household the Ledger edits) and can be undone.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
-import { mountPage, gapsCard } from './page.js';
+import { mountPage, gapsCard, whoseLine } from './page.js';
 import { calendar, weekdayOf, rangeCashTerms } from '../engine/calendar.js';
 import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashReading, cashLine, waiting } from '../engine/calendar-views.js';
 import { cashChartCard } from './cash-chart.js';
@@ -18,7 +18,7 @@ import { summarize } from '../engine/summary.js';
 import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe, parseInput, createHistory, commit, undo, canUndo, undoLabel, redo, canRedo, redoLabel } from '../engine/edits.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { mathButton } from './math-panel.js';
-import { loadAll, save, SOURCE_WORDS } from './household.js';
+import { loadAll, save } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal } from './view.js';
@@ -461,7 +461,7 @@ function render() {
   app.replaceChildren(...[
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Cash flow calendar'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(c.asOf), ' · ', SOURCE_WORDS[source])),
+      h('div', {}, h('h1', {}, 'Cash flow calendar'), whoseLine(hist.present, source, { asOf: c.asOf, rules, reopen: boot })),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
         h('button', { type: 'button', class: 'btn', disabled: !canRedo(hist), title: canRedo(hist) ? 'Redo ' + redoLabel(hist) : 'Nothing undone to redo', onclick: () => { const before = hist; hist = redo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Redone: ' + redoLabel(before) + '.'; render(); } } }, 'Redo'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
@@ -501,7 +501,7 @@ document.addEventListener('keydown', (e) => {
   const i = document.getElementById('cal-search'); if (i) { e.preventDefault(); i.focus(); }
 });
 
-loadAll().then((loaded) => {
+function boot(loaded) {
   hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
   const asOfYm = loaded.spine.meta.asOf.slice(0, 7);
   const want = location.hash.slice(1);
@@ -510,4 +510,5 @@ loadAll().then((loaded) => {
   dragSetup(app);
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The calendar could not load: ' + err.message)); });
+}
+loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The calendar could not load: ' + err.message)); });

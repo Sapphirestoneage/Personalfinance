@@ -10,6 +10,7 @@ import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
 import { isSubscription } from './subscriptions.js';
+import { lineFor, paysDebtOf } from './debt.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool,
 // choice:a|b (pick one), suggest:a|b (pick one or type another), list.
@@ -24,8 +25,8 @@ export function typeFor(spine, path) {
     if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
-  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' ? 'int' : 'money';
-  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
+  if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' || s[2] === 'payDay2' ? 'int' : 'money';
+  if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'paysDebt' ? 'link:debt' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
@@ -34,6 +35,8 @@ export function typeFor(spine, path) {
     // Links (S-189): a debt is paid from cash; money is paid into an account from cash or the paycheck.
     if (s[2] === 'paidFrom') return 'link:cash';
     if (s[2] === 'fundedFrom') return 'link:cash|paycheck';
+    // The job a plan from pay is paid through (S-227).
+    if (s[2] === 'paidThrough') return 'link:job';
     return (item && fieldsFor(item.family)[s[2]]) || 'text';
   }
   if (s[0] === 'goals') return 'money';
@@ -82,22 +85,22 @@ export function expenseRow(spine, e) {
   const cover = coverOf(e);
   return {
     path, label: labelFor(spine, path), group: 'E', type: 'expense',
-    fact: { value: amount === null && e.amount.kind !== 'notForMe' && !cover.covered ? null : { amount, cadence: e.cadence, covered: cover.covered, coveredBy: cover.by, shared: !cover.covered && sh.shared, people: sh.people, share: sh.share, whoPays: sh.whoPays, fromDefault: sh.fromDefault, yourMonthly: cover.covered ? 0 : sh.shared ? yourCost(monthly, sh.share) : monthly, subscription: isSubscription(e) }, kind: e.amount.kind === 'notForMe' ? 'notForMe' : kind },
+    fact: { value: amount === null && e.amount.kind !== 'notForMe' && !cover.covered ? null : { amount, cadence: e.cadence, covered: cover.covered, coveredBy: cover.by, shared: !cover.covered && sh.shared, people: sh.people, share: sh.share, whoPays: sh.whoPays, fromDefault: sh.fromDefault, yourMonthly: cover.covered ? 0 : sh.shared ? yourCost(monthly, sh.share) : monthly, subscription: isSubscription(e), paysDebt: paysDebtOf(spine, e) ? linkName(spine, valueOf(e.paysDebt)) : null }, kind: e.amount.kind === 'notForMe' ? 'notForMe' : kind },
     members: [path, ...SHARE_FIELDS.map((k) => 'expenses.' + e.id + '.' + k)]
   };
 }
 
 // An income stream's amount, how often, when it starts and ends, and the day
 // it is paid are one row (S-199): "$6,000 a month, since Jan 1, 2024, on the 15th".
-// Its value: { amount, cadence, start, end, payDay }.
+// Its value: { amount, cadence, start, end, payDay, payDay2 } (payDay2: twice a month, the second day, S-226).
 export function incomeRow(spine, x) {
   const path = 'income.' + x.id + '.amount';
-  const kind = combinedKind([x.amount, ...(x.payDay ? [x.payDay] : [])]);
+  const kind = combinedKind([x.amount, ...(x.payDay ? [x.payDay] : []), ...(x.payDay2 ? [x.payDay2] : [])]);
   const amount = valueOf(x.amount);
   return {
     path, label: labelFor(spine, path), group: 'I', type: 'income',
-    fact: { value: amount === null && x.amount.kind !== 'notForMe' ? null : { amount, cadence: x.cadence, start: x.start || null, end: x.end || null, payDay: x.payDay ? valueOf(x.payDay) : null }, kind: x.amount.kind === 'notForMe' ? 'notForMe' : kind },
-    members: [path, 'income.' + x.id + '.payDay']
+    fact: { value: amount === null && x.amount.kind !== 'notForMe' ? null : { amount, cadence: x.cadence, start: x.start || null, end: x.end || null, payDay: x.payDay ? valueOf(x.payDay) : null, payDay2: x.payDay2 ? valueOf(x.payDay2) : null }, kind: x.amount.kind === 'notForMe' ? 'notForMe' : kind },
+    members: [path, 'income.' + x.id + '.payDay', 'income.' + x.id + '.payDay2']
   };
 }
 
@@ -112,8 +115,8 @@ export function previewCost(amount, cadence, shared, people, share) {
 // an expense's sharing fields on its amount row).
 export function rowPathFor(spine, path) {
   const s = path.split('.');
-  if (s[0] === 'expenses' && s[2] === 'payDay') return 'expenses.' + s[1] + '.paidFrom';
-  if (s[0] === 'income' && (s[2] === 'payDay' || s[2] === 'personId')) return 'income.' + s[1] + '.amount';
+  if (s[0] === 'expenses' && (s[2] === 'payDay' || s[2] === 'paysDebt')) return 'expenses.' + s[1] + '.paidFrom';
+  if (s[0] === 'income' && (s[2] === 'payDay' || s[2] === 'payDay2' || s[2] === 'personId')) return 'income.' + s[1] + '.amount';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
   if (s[0] === 'expenses' && (SHARE_FIELDS.includes(s[2]) || s[2] === 'subscription')) return 'expenses.' + s[1] + '.amount';
   return path;
@@ -132,19 +135,19 @@ export function ledgerRows(spine) {
       continue;
     }
     // An income stream's amount, how often, dates and pay day are one row (S-199).
-    if (s[0] === 'income' && (s[2] === 'amount' || s[2] === 'payDay')) {
+    if (s[0] === 'income' && (s[2] === 'amount' || s[2] === 'payDay' || s[2] === 'payDay2')) {
       if (s[2] === 'amount') rows.push(incomeRow(spine, getAt(spine, 'income.' + s[1])));
       continue;
     }
     // An expense's account and day are one row: "Main checking, on the 5th" (S-189).
-    if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay')) {
+    if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay' || s[2] === 'paysDebt')) {
       if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
       continue;
     }
     // A section's sharing default is set on the section, not as a row.
     if (s[0] === 'household' && s[1] === 'expenseDefaults') continue;
     const type = typeFor(spine, path);
-    rows.push({ path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) });
+    rows.push(linkedDebtRow(spine, { path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) }));
   }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));
 }
@@ -157,26 +160,37 @@ export function linkOptions(spine, type) {
   if (want.includes('cash')) for (const a of spine.accounts || []) if (a.family === 'cash') out.push({ value: a.id, label: valueOf(a.name) || a.id, group: 'Accounts' });
   if (want.includes('card')) for (const d of spine.debts || []) if (d.type === 'credit_card') out.push({ value: d.id, label: valueOf(d.name) || d.id, group: 'Cards' });
   if (want.includes('paycheck')) out.push({ value: 'paycheck', label: 'Taken from my paycheck', group: 'Paycheck' });
+  if (want.includes('job')) for (const s of spine.income || []) if (s.type === 'w2' && s.cadence !== 'once') out.push({ value: s.id, label: s.label, group: 'Jobs' });
   return out;
 }
 // The name of what a link points at; an id that is gone says so.
 export function linkName(spine, id) {
   if (id === 'paycheck') return 'Taken from the paycheck';
   const x = (spine.accounts || []).find((a) => a.id === id) || (spine.debts || []).find((d) => d.id === id);
+  if (!x) { const s = (spine.income || []).find((i) => i.id === id); if (s) return s.label; }
   return x ? valueOf(x.name) || id : 'an account no longer here (' + id + ')';
 }
 const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
-// An expense's payment row: the account or card, and the day when it is known.
+// An expense's payment row: the account or card, the day when it is known, and the debt it pays (S-226).
 export function paymentRow(spine, e) {
   const path = 'expenses.' + e.id + '.paidFrom';
   const from = e.paidFrom ? e.paidFrom.value : null, day = e.payDay ? e.payDay.value : null;
+  const pays = paysDebtOf(spine, e);
   const kind = !e.paidFrom ? 'missing' : e.paidFrom.kind;
   return {
     path, label: labelFor(spine, path), group: 'E', type: 'payment',
-    fact: { value: from === null ? null : { from, day }, kind },
-    display: from === null ? null : linkName(spine, from) + (day ? ', on the ' + ordinal(day) : ''),
-    members: [path, 'expenses.' + e.id + '.payDay']
+    fact: { value: from === null ? null : { from, day, paysDebt: pays }, kind },
+    display: from === null ? null : linkName(spine, from) + (day ? ', on the ' + ordinal(day) : '') + (pays ? '; pays ' + linkName(spine, pays) : ''),
+    members: [path, 'expenses.' + e.id + '.payDay', 'expenses.' + e.id + '.paysDebt']
   };
+}
+// A debt a budget line pays (S-226): its payment row says so, whatever the minimum holds (the line's amount is paid).
+function linkedDebtRow(spine, row) {
+  const s = row.path.split('.');
+  if (s[0] !== 'debts' || s[2] !== 'minimum') return row;
+  const d = getAt(spine, 'debts.' + s[1]);
+  const e = d ? lineFor(spine, d) : null;
+  return e ? { ...row, display: 'Paid by the ' + e.label + ' line, counted once', linked: true } : row;
 }
 
 // The headline numbers a guess is measured against, each with a scale so a

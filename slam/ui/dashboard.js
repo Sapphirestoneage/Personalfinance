@@ -1,12 +1,12 @@
 // The Dashboard: the one-pager out. Every number comes from engine/summary.js
 // and links to the Ledger fields it was built from. Formatting only.
 
-import { mountPage } from './page.js';
+import { mountPage, whoseLine } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { DASHBOARD_MATH, flagMath } from '../engine/math.js';
 import { mathButton } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
-import { loadAll, SOURCE_WORDS } from './household.js';
+import { loadAll } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
@@ -109,6 +109,7 @@ function render(base, rules, source) {
       id: 'runway', label: 'Cash runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months',
       lines: [
         money(sh.cash.value) + ' in cash at ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments).',
+        sh.setAsideNote,
         'Food, housing and transportation only: ' + months(em.tiers.fatOnly.runway.value) + ' months.',
         'Rule of 5 target: ' + em.targetMonths.value + ' months (' + money(em.targetDollars.value) + ').'
       ],
@@ -145,6 +146,7 @@ function render(base, rules, source) {
         safe.shortfall ? 'Nothing safe to spend: checking runs ' + money(safe.shortfall.amount) + ' short by ' + shortDate(safe.shortfall.date) + (safe.shortfall.covered ? ', and the cushion covers ' + money(safe.shortfall.covered) + ' of it' : '') + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + ', keeping the floor of ' + money(safe.floor) + '.' : null,
         reading && reading.today ? 'Checking on ' + shortDate(reading.today.date) + ': ' + money(reading.today.amount) + '.' : null,
         safe.low ? (safe.low.covered ? 'Lowest point ahead, before the cushion tops checking up: ' : 'Lowest point ahead: ') + money(safe.low.amount) + ' on ' + shortDate(safe.low.date) + '.' : null,
+        safe.setAsideNote || null,
         [h('a', { href: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : '') }, 'See cash by day ›'), ' ', h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Log a spend ›')]
       ]
     }),
@@ -174,7 +176,7 @@ function render(base, rules, source) {
     // Going somewhere is a link (CLAUDE.md affordances 1 and 4), the same row on every page.
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Dashboard'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
+      h('div', {}, h('h1', {}, 'Dashboard'), whoseLine(base, source, { asOf: s.asOf, rules, reopen: boot }))),
     h('div', { class: 'tiles' }, tiles),
     // The Phase 2 pages (S-200, S-201): going somewhere is a link, with a line on what is there.
     h('section', { class: 'card more', 'aria-labelledby': 'more-h' },
@@ -223,6 +225,7 @@ function flagsSection(spine, flags) {
     done.length ? h('details', { class: 'done' }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
 }
 
-loadAll().then(({ spine, rules, source, problem }) => { render(spine, rules, source); if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem)); }).catch((err) => {
+function boot({ spine, rules, source, problem }) { render(spine, rules, source); if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem)); }
+loadAll().then(boot).catch((err) => {
   app.replaceChildren(h('p', { class: 'card' }, 'The Dashboard could not load: ' + err.message));
 });

@@ -100,9 +100,22 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
       // Each limit counted from the rung's start: its dates left from then; none left means its deadline passes first.
       // A payroll pool counts the months that still hold a paycheck (any payday in the month, not only the first).
       const monthsLeft = (p) => (p.row.deadline.payrollOnly && p.row.paychecks ? new Set(p.row.paychecks.dates.filter((d) => d >= from).map((d) => d.slice(0, 7))).size : p.row.months.dates.filter((d) => d >= from).length);
-      // Each rung counts what the Plan counts, so following the rungs in turn never uses the same pay twice (the Plan fills a
-      // 401(k), Solo 401(k) or SEP before a new IRA amount, question 63; the line says so).
-      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => { const n = monthsLeft(p); return { ...p, left: n, perMonth: n ? c2(p.fill / n) : null }; });
+      // Each rung counts what the Plan counts, so following the rungs in turn never uses the same pay twice. The Plan and the
+      // ladder follow one order (answer 63): the 401(k) up to the match, then the IRA, then the rest; the line says why an
+      // account counts less. A plan filled from pay is capped at what its paychecks from the rung's start hold (answer
+      // 59), one person's paychecks shared by their plans from pay; the line says so.
+      const heldFrom = new Map();
+      const sized = m.pools.filter((p) => want.test(p.key)).map((p) => {
+        const n = monthsLeft(p), pc = p.row.paychecks;
+        let fill = p.fill, capFrom = false;
+        if (p.row.deadline.payrollOnly && pc && pc.each && start && start > asOf) {
+          const used = heldFrom.get(p.row.person) || 0;
+          const holds = round2(Math.max(0, pc.each.filter((e) => e.date >= from).reduce((x, e) => x + e.landed, 0) - used));
+          if (fill > holds + 0.005) { fill = holds; capFrom = true; }
+          heldFrom.set(p.row.person, round2(used + fill));
+        }
+        return { ...p, fill, capFrom, left: n, perMonth: n ? c2(fill / n) : null };
+      });
       const open = sized.filter((p) => p.left > 0);
       const closed = [...sized.filter((p) => p.left === 0), ...shut.filter((r) => paysOn(r)).map((r) => ({ key: r.pools[0], year: r.year, room: r.room, row: r, deadline: r.deadline.date }))];
       // A limit whose deadline passes first: its steady month, once per pool (a later year still open sizes it instead).
@@ -112,7 +125,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
       if (!sized.length && !later.length && !miss.length && !over.length) push(id, t, { need: 0, why: off.length ? off.map((r) => r.name + ': ' + r.why).join(' ') : shut.length ? shut.map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ') : id === 'rothHsa' ? 'No IRA or HSA in the Ledger.' : 'No workplace or self-employed retirement account in the Ledger.', done: true });
       else {
         // The Plan's count, with why it is less than the account alone could take (another limit or rung uses the pay first).
-        const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '') + (p.row.counted && !p.spill ? ' (less than the account alone could take: ' + p.row.counted.words + ')' : '');
+        const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '') + (p.capFrom ? ' (only what its paychecks from ' + longDay(from) + ' hold)' : '') + (p.row.counted && !p.spill && !(p.capFrom && p.row.counted.why === 'paycheck') ? ' (less than the account alone could take: ' + p.row.counted.words + ')' : '');
         const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
         const when = start ? 'before the surplus reaches this rung (about ' + longDay(start) + ')' : 'before the surplus reaches this rung';
         // A payroll pool whose deadline is after the start closes on its last payday, not on the deadline.

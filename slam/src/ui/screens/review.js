@@ -15,7 +15,6 @@ import { coverageNote } from '../components/coverage.js';
 import { incomeFillCard } from '../components/income-month.js';
 import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
-import { outlookLine } from '../components/outlook.js';
 import { closedMonthTable } from '../components/budget-table.js';
 import { monthRows } from '../../calc/history.js';
 import { bridgeFor } from '../../calc/bridge.js';
@@ -135,7 +134,6 @@ function monthEnd(ctx, summary) {
       h('span', { class: 'small' }, 'Budget to cash, ' + monthLabel(doc.currentMonth) + ': ', h('b', { 'data-key': 'bridge-line' }, state), ' ',
         h('a', { href: '#insights', 'data-key': 'go-bridge', onclick: (e) => { e.preventDefault(); ctx.jump('bridge', { ui: { bridgeMonth: doc.currentMonth } }); } }, 'See the bridge')),
       h('button', { class: 'btn small primary', 'data-key': 'open-checklist', onclick: () => { ctx.ui.closing = true; ctx.rerender(); } }, 'Close ' + monthLabel(doc.currentMonth))),
-    outlookLine(ctx, summary, 'review-outlook', { short: true }),
     ctx.ui.closing ? checklistCard(ctx, summary) : null);
 }
 

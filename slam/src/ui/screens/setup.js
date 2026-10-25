@@ -6,8 +6,7 @@
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';
 import { renderProfile, incomeSection, coachNotesCard, futureToolsCard } from './setup-basics.js';
-import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
-import { whatIfCard } from '../charts/cash-charts.js';
+import { paydaysCard, billsCard } from '../components/cashflow.js';
 import { materialityInput } from '../charts/bridge-charts.js';
 import { setOwnReturn } from '../../store/accounts.js';
 import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
@@ -84,9 +83,8 @@ function tagsSection(ctx) {
 }
 
 function coachSection(ctx) {
-  if (ctx.role === 'client') return h('div', { class: 'card' }, h('p', { class: 'small muted' }, 'These are the coach\'s settings. The calendar still uses the cushion.'));
+  if (ctx.role === 'client') return h('div', { class: 'card' }, h('p', { class: 'small muted' }, 'These are the coach\'s settings.'));
   return h('div', { class: 'card', id: 'coach-settings' },
-    cushionRow(ctx),
     h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, 'Bridge: counts as tied when within'), h('div', { class: 'hint' }, 'The budget-to-cash bridge ties when the part not explained is this small. Default $25.')),
       materialityInput(ctx)),
     h('div', { class: 'qa', 'data-key': 'own-return-row' }, h('div', { class: 'q' }, h('div', {}, 'Assumption: what a home\'s equity could earn elsewhere'), h('div', { class: 'hint' }, 'A year, after inflation. Used in "Owning vs the alternative". Default 5%.')),
@@ -102,7 +100,7 @@ const SECTIONS = {
   basics: (ctx, s) => renderProfile(ctx, s),
   coverage: (ctx, s) => coverageSection(ctx, s),
   income: (ctx, s) => h('div', {}, incomeSection(ctx, s), paydaysCard(ctx)),
-  bills: (ctx, s) => h('div', {}, billsCard(ctx), whatIfCard(ctx, s, calendarFor(ctx, s, ctx.ui.cfHorizon || 30))),
+  bills: (ctx, s) => h('div', {}, billsCard(ctx)),
   categories: categoriesSection,
   tags: tagsSection,
   coach: coachSection,

@@ -5,7 +5,7 @@
 // undo history, export and import. Every number comes from engine/plan.js and
 // the engines under it; every number has Show the math. Formatting only.
 
-import { mountPage } from './page.js';
+import { mountPage, whoseLine } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
@@ -14,7 +14,7 @@ import { putFact, parseInput, createHistory, commit, undo, canUndo, undoLabel } 
 import { applyDefaults } from '../engine/defaults.js';
 import { mathButton } from './math-panel.js';
 import { maxItCard, maxItFor } from './maxit-panel.js';
-import { loadAll, save, SOURCE_WORDS } from './household.js';
+import { loadAll, save } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
@@ -243,7 +243,7 @@ function render() {
   app.replaceChildren(...[
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Plan'), h('p', { class: 'muted', 'aria-live': 'polite' }, spine.meta.name, ' · numbers as of ', shortDate(spine.meta.asOf), ' · ', SOURCE_WORDS[source])),
+      h('div', {}, h('h1', {}, 'Plan'), whoseLine(hist.present, source, { rules, reopen: boot })),
       h('nav', { class: 'top-actions' }, h('button', { type: 'button', class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => { const before = hist; hist = undo(hist); if (hist !== before) { save(hist.present); lastSaved = 'Undone: ' + undoLabel(before) + '.'; render(); } } }, canUndo(hist) ? 'Undo' : 'Nothing to undo'))),
     h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
     ladderCard(spine, s, ctx),
@@ -264,9 +264,10 @@ function render() {
   ].filter(Boolean));
 }
 
-loadAll().then(async (loaded) => {
+async function boot(loaded) {
   hist = createHistory(loaded.spine); rules = loaded.rules; source = loaded.source;
   try { const r = await fetch(new URL('../data/life-events.json', import.meta.url), { cache: 'no-store' }); if (r.ok) templates = (await r.json()).templates || []; } catch { templates = []; }
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Plan page could not load: ' + err.message)); });
+}
+loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Plan page could not load: ' + err.message)); });

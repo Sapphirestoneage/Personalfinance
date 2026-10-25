@@ -162,7 +162,8 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       // for the year across every IRA, the income phase-out, and the cap at the owner's earned income (answer 25),
       // so the Windfall room, the FOO ladder and the account's panel read one number. From January 1 to the IRA
       // deadline last year's room is open too, and it closes first, so it comes first.
-      const rows = openYears(rules, roth.type, asOf).map((ty) => maxItRow(spine, rules, roth, ty, { asOf }));
+      // A year before the rules file is closed (answer 55): it takes nothing.
+      const rows = openYears(rules, roth.type, asOf).map((ty) => maxItRow(spine, rules, roth, ty, { asOf })).filter((r) => !r.closed);
       for (const r of rows) t.absorb({ ...r, value: undefined });
       const gap = rows.find((r) => r.room === null);
       const r = rows[rows.length - 1];

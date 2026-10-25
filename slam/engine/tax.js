@@ -10,7 +10,7 @@
 import { bracketTax, marginalRate } from '../src/calc/tax.js';
 import { statusRuleId } from './rules.js';
 import { valueOf, tracker, round2, monthKey, addMonths, accountOwner, incomeOwner } from './spine.js';
-import { PRESETS } from './schema.js';
+import { PRESETS, throughPayroll } from './schema.js';
 import { paidBetween, streamWeight } from './cashflow.js';
 import { yearAmount, hasTotal, hsaLimit, familyHsa, hsaEligible, counts, payAmount, hasPay, fromPayOf } from './contrib.js';
 
@@ -238,7 +238,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
     // A plan the Plan counts (from pay): its count. Its guesses are the Plan's (rough there); here the monthly amount
     // read above is the fact. Anything else from pay (an FSA): paycheck by paycheck, else month by month, never past the
     // year's election (12 months of it; 27 paydays do not add one).
-    if (!fromPayOf(spine, a, owner)) return { value: Math.min(round2(12 * c), (hasPay(spine, owner) ? payAmount(spine, owner, year, c, () => true) : null) ?? byMonths(owner, c)), months: om };
+    if (!fromPayOf(spine, a, owner)) return { value: Math.min(round2(12 * c), (hasPay(spine, owner, a) ? payAmount(spine, owner, year, c, () => true, a) : null) ?? byMonths(owner, c)), months: om };
     const y = yearAmount(spine, a, year, asOf, tracker(), 'own'), n = (y.in.months || 0) + ((y.still && y.still.months) || 0);
     return { value: y.value, months: n ? Math.max(0.1, Math.round(n * 10) / 10) : om };
   };
@@ -257,18 +257,26 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   for (const a of [...(spine.accounts || [])].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0))) {
     const pretax = PRESETS[a.type] && PRESETS[a.type].taxTreatment === 'pretax';
     const cafeteria = a.family === 'hsaFsa' && (a.type === 'hsa' || pretax);
-    const pre = cafeteria || (pretax && a.family === 'employerRetirement');
+    // A SIMPLE IRA from pay comes off wages for income tax, not for FICA (answer 50, S-227): pre-tax, not cafeteria.
+    const pre = cafeteria || (pretax && (a.family === 'employerRetirement' || a.type === 'simple_ira'));
     const owner = ownerOf(a);
     const om = payMonths[owner] || 0;
-    const fromPay = !!(om && a.monthlyContribution);
+    // An HSA's monthly amount is from pay only when it is set to go through payroll (answer 47); else it is put in
+    // from take-home and deducted on the return.
+    const fromPay = !!(om && a.monthlyContribution && (a.type !== 'hsa' || throughPayroll(a)));
     if (a.type === 'hsa') {
       // An HSA on a plan that is not HSA-eligible has a $0 limit: its money is all excess, so it stays in wages and
       // is never deducted (Form 8889).
       if (!hsaEligible(a)) { t.useFact('accounts.' + a.id + '.planEligible', a.planEligible); continue; }
       // HSA money for the year: the recorded total and what the monthly amount still adds, else the monthly forecast.
       // Employer money (a recorded employer total, else the yearly employer amount) comes off the limit, not off pay.
-      const y = hasTotal(a, year) || !fromPay ? yearAmount(spine, a, year, asOf, t, 'own') : null;
-      if (y && y.in.kind === 'missing') t.addRough('accounts.' + a.id + '.monthlyContribution');
+      const yt = tracker();
+      let y = hasTotal(a, year) || !fromPay ? yearAmount(spine, a, year, asOf, yt, 'own') : null;
+      // Nothing recorded for the year and no monthly amount (answer 43): its "How much to max it?" panel reads missing;
+      // the tax figures deduct none for it, rough, as before (a missing HSA record does not hold up the year's tax).
+      if (y && y.in.nothing) { t.addRough('accounts.' + a.id + '.contributions'); y = { ...y, value: 0 }; }
+      else if (y) t.absorb({ ...yt.out(0), value: undefined });
+      if (y && y.in.kind === 'missing' && !y.in.nothing) t.addRough('accounts.' + a.id + '.monthlyContribution');
       const c = fromPay && !y ? t.useFact('accounts.' + a.id + '.monthlyContribution', a.monthlyContribution) : null;
       const list = a.contributions ? v(a.contributions) || [] : [];
       const emp = list.filter((x) => counts(x, year) && x.kind === 'employer');

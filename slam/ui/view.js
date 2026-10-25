@@ -34,7 +34,7 @@ export function showValue(value, type) {
   if (type === 'expense') {
     const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';
     const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
-    const sub = value.subscription ? ' · subscription' : '';
+    const sub = (value.subscription ? ' · subscription' : '') + (value.paysDebt ? ' · pays ' + value.paysDebt + ', counted once under debt payments' : '');
     if (value.covered) return base + ', covered by ' + (value.coveredBy || 'someone else') + ' ($0 to you)' + sub;
     if (value.shared) return base + ', shared by ' + (value.people || '?') + (value.yourMonthly !== null ? ': you pay ' + money(value.yourMonthly) + ' a month' : '') + sub;
     return base + sub;
@@ -45,7 +45,7 @@ export function showValue(value, type) {
     const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
     const when = value.cadence === 'once' ? (value.start ? ' on ' + shortDate(value.start) : '')
       : (value.start ? (value.cadence === 'total' ? ' from ' : ', since ') + shortDate(value.start) : '') + (value.end ? (value.cadence === 'total' ? ' to ' : ', until ') + shortDate(value.end) : '');
-    const day = value.payDay && !['weekly', 'biweekly', 'once', 'total'].includes(value.cadence) ? ', paid on the ' + ordinal(value.payDay) : '';
+    const day = value.payDay && !['weekly', 'biweekly', 'once', 'total'].includes(value.cadence) ? ', paid on the ' + ordinal(value.payDay) + (value.payDay2 && value.cadence === 'semimonthly' ? ' and the ' + ordinal(value.payDay2) : '') : '';
     return base + when + day;
   }
   // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".

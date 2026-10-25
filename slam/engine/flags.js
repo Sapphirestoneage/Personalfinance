@@ -14,6 +14,7 @@ import { valueOf, daysBetween, addDays, inForce, monthKey, addMonths } from './s
 import { labelFor, listWords } from './labels.js';
 import { paymentsBefore } from './debt.js';
 import { money } from '../src/ui/format.js';
+import { isEarmarked } from './schema.js';
 
 const v = valueOf;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -228,7 +229,7 @@ export function buildFlags(spine, rules, s) {
   if (rw.value !== null && em.monthlyNeed) {
     const redMonths = R('STAGE_RUNWAY_RED_MONTHS'), target = em.targetMonths.value;
     const stage = rw.value < redMonths ? 'red' : target !== null && rw.value < target ? 'yellow' : 'green';
-    const cashAcc = (spine.accounts || []).filter((a) => a.family === 'cash');
+    const cashAcc = (spine.accounts || []).filter((a) => a.family === 'cash' && !isEarmarked(a));
     const home = cashAcc.find((a) => v(a.role) === 'emergency') || cashAcc.find((a) => ['savings', 'hysa'].includes(a.type)) || cashAcc[0];
     const path = home ? 'accounts.' + home.id + '.balance' : rw.from[0];
     const cash = s.sheet.cash.value;
@@ -237,7 +238,7 @@ export function buildFlags(spine, rules, s) {
     const back = em.backstop.contributions.value;
     add({
       id: 'runway', stage, title: 'Cash covers ' + months1(rw.value) + ' months of spending',
-      detail: money(cash) + ' in cash against ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments)' + (fat !== null ? '; ' + months1(fat) + ' months on food, housing and transportation alone' : '') + '.' + (back ? ' Roth contributions of ' + money(back) + ' can come out with no tax or penalty; they are not counted as cash.' : ''),
+      detail: money(cash) + ' in cash against ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments)' + (fat !== null ? '; ' + months1(fat) + ' months on food, housing and transportation alone' : '') + '.' + (back ? ' Roth contributions of ' + money(back) + ' can come out with no tax or penalty; they are not counted as cash.' : '') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''),
       next: stage === 'red' ? toMonths(redMonths, 'Next: ', '') : stage === 'yellow' ? toMonths(target, 'Next: ', ', the Rule of 5 target') : null,
       green: stage === 'green' || target === null ? null : toMonths(target, 'Stage 3: ', ', the Rule of 5 target'),
       from: rw.from, rules: ['STAGE_RUNWAY_RED_MONTHS', 'APP_RULE_OF_5']

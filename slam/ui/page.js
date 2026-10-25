@@ -2,8 +2,9 @@
 // that shows a banner instead of a silent failure, the build stamp in the
 // footer, and a polite live region for the page's headline. Formatting only.
 
-import { h, ledgerHref } from './view.js';
+import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
+import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 
 // The build stamp: moved by hand with each batch (no build step).
 export const BUILD = { label: 'Phase 2, Batch G and How much to max it', date: '2026-10-23' };
@@ -41,4 +42,30 @@ export function gapsCard(spine, sim) {
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: g.fix ? ledgerHref(g.fix) : 'ledger.html' }, g.noChecking ? 'Add a checking account' : 'Add the balance')));
   if (!g.missing.length) return null;
   return h('p', { class: 'muted missing-row' }, 'No balance for ', ...g.missing.flatMap((m, i) => [i ? ', ' : '', h('a', { href: ledgerHref(m.path) }, m.name)]), ', so ' + (g.missing.length === 1 ? 'it is' : 'they are') + ' left out of the cash line.');
+}
+
+// Whose numbers (S-228): every page's header says whose numbers these are. The made-up household reads "Example
+// household" with a filled "Load my file" button: the file picked is read here, in the browser, and saved in this
+// browser only, and the page reopens on it (reopen gets what loadAll returns). Anyone else's reads their name.
+export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen } = {}) {
+  const w = whose(spine);
+  const when = ' · numbers as of ' + shortDate(asOf);
+  if (!w.example) return h('p', { class: 'muted whose' }, h('strong', { class: 'whose-name' }, w.name), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    msg.textContent = 'Reading ' + file.name + '...';
+    try { const loaded = await loadMyFile(file, rules); msg.textContent = ''; reopen({ rules, ...loaded }); }
+    catch (err) { msg.textContent = 'Could not load that file: ' + err.message; }
+    input.value = '';
+  });
+  return h('div', { class: 'whose whose-example' },
+    h('p', { class: 'muted' }, h('strong', { class: 'whose-name' }, 'Example household'), ' (made up)', when),
+    h('div', { class: 'whose-load' },
+      h('button', { type: 'button', class: 'btn primary', onclick: () => input.click() }, 'Load my file'),
+      h('span', { class: 'whose-note' }, 'Stays in this browser. Nothing is uploaded.'),
+      input),
+    msg);
 }

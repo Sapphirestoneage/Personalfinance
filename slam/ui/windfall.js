@@ -4,12 +4,12 @@
 // answer are kept in this browser only; nothing is written to the household.
 // Formatting only: the engine is engine/windfall.js.
 
-import { mountPage } from './page.js';
+import { mountPage, whoseLine } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { windfall } from '../engine/windfall.js';
 import { mathButton } from './math-panel.js';
 import { parseInput } from '../engine/edits.js';
-import { loadAll, SOURCE_WORDS } from './household.js';
+import { loadAll } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, ledgerHref } from './view.js';
@@ -92,13 +92,14 @@ function render() {
   app.replaceChildren(
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'math.html' }, 'All formulas')),
     h('header', { class: 'top' },
-      h('div', {}, h('h1', {}, 'Windfall'), h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]))),
+      h('div', {}, h('h1', {}, 'Windfall'), whoseLine(base, source, { asOf: s.asOf, rules, reopen: boot }))),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),
     result(spine, s));
 }
 
-loadAll().then((loaded) => {
+function boot(loaded) {
   base = loaded.spine; rules = loaded.rules; source = loaded.source;
   render();
   if (loaded.problem) app.prepend(h('p', { class: 'card', role: 'alert' }, loaded.problem));
-}).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Windfall room could not load: ' + err.message)); });
+}
+loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Windfall room could not load: ' + err.message)); });

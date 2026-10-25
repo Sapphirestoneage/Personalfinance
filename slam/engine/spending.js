@@ -7,7 +7,8 @@
 
 import { valueOf as v, tracker, round2, monthKey, addMonths, daysBetween, daysInMonth } from './spine.js';
 import { payoffPlan } from './debt.js';
-import { FAT } from './schema.js';
+import { FAT, isEarmarked } from './schema.js';
+import { setAsideFor, setAsideWords, setAsideNote } from './networth.js';
 import * as C from './vendor/cashcal.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
@@ -94,7 +95,9 @@ export function safeToSpend(sim) {
   const shortfall = today !== null && today < 0 ? { amount: round2(-today), date: binding === 'low' ? lowDay.date : s.nextIncome || lowDay.date, covered: low.covered, held: low.held } : null;
   const through = sim.daily.length ? sim.daily[sim.daily.length - 1].date : null;
   const primary = sim.model.accounts.find((a) => a.primary);
-  return { today, byPaycheck: s.today, byLow, binding, low, through, shortfall, cashPath: primary ? 'accounts.' + primary.id + '.balance' : null, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: s.excludesCushion, byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
+  // Money set aside for a goal is left out with the cushion (S-228); the page names it.
+  const setAside = sim.model.accounts.filter((a) => a.earmarked).map((a) => ({ id: a.id, name: a.name, goal: a.goal || null, words: setAsideWords(a.goal), balance: round2(a.balance / 100) }));
+  return { today, byPaycheck: s.today, byLow, binding, low, through, shortfall, cashPath: primary ? 'accounts.' + primary.id + '.balance' : null, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: cushion.some((a) => !a.earmarked), setAside, setAsideNote: setAsideNote(setAside), byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
 }
 
 // Can I spend this: the same run with the purchase added. Yes, tight or no;
@@ -154,7 +157,7 @@ export function donut(spine, rules, s) {
   const slices = TAGS.map((tag) => { const items = cf.expenses.items.filter((i) => (i.fat || 'other') === tag && !i.covered && i.amount); return { id: tag, label: TAG_WORDS[tag], amount: round2(items.reduce((a, i) => a + i.amount, 0)), items: items.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })) }; }).filter((x) => x.amount > 0);
   const minimums = cf.debtMinimums.total.value ?? 0;
   const saving = round2((cf.saving.afterTax.value ?? 0) + (cf.taxSetAside.total.value ?? 0));
-  if (minimums > 0) slices.push({ id: 'minimums', label: 'Debt minimums', amount: round2(minimums), items: cf.debtMinimums.items.map((i) => ({ id: i.id, label: i.label || i.name || i.id, amount: i.amount, path: 'debts.' + i.id + '.minimum' })) });
+  if (minimums > 0) slices.push({ id: 'minimums', label: 'Debt minimums', amount: round2(minimums), items: cf.debtMinimums.items.map((i) => ({ id: i.id, label: i.label || i.name || i.id, amount: i.amount, path: i.path || 'debts.' + i.id + '.minimum' })) });
   if (saving > 0) slices.push({ id: 'saving', label: 'Saving and the tax set-aside', amount: saving, items: [] });
   const spent = round2(slices.reduce((a, x) => a + x.amount, 0));
   const left = total === null ? null : round2(total - spent);
@@ -175,7 +178,7 @@ export function billAutopsy(spine, rules, s, asOf = spine.meta.asOf) {
     const reviewed = e.reviewed ? v(e.reviewed) : null;
     rows.push({ id: i.id, label: i.label, monthly: i.amount, yearly: round2(i.amount * 12), path: 'expenses.' + i.id + '.amount', subscription: !!(e.subscription && v(e.subscription) === true), need: i.need, reviewed, stale: !reviewed || daysBetween(reviewed, asOf) > 365, kind: 'computed' });
   }
-  for (const m of s.cashflow.debtMinimums.items) if (m.amount) rows.push({ id: 'min:' + m.id, label: (m.label || m.name || m.id) + ' minimum', monthly: m.amount, yearly: round2(m.amount * 12), path: 'debts.' + m.id + '.minimum', subscription: false, need: true, reviewed: null, stale: false, kind: 'computed' });
+  for (const m of s.cashflow.debtMinimums.items) if (m.amount) rows.push({ id: 'min:' + m.id, label: (m.label || m.name || m.id) + (m.line ? ' payment (the ' + m.lineLabel + ' line)' : ' minimum'), monthly: m.amount, yearly: round2(m.amount * 12), path: m.path || 'debts.' + m.id + '.minimum', subscription: false, need: true, reviewed: null, stale: false, kind: 'computed' });
   rows.sort((a, b) => b.yearly - a.yearly);
   const t = tracker();
   t.absorb({ ...s.cashflow.expenses.total, value: undefined }); t.absorb({ ...s.cashflow.debtMinimums.total, value: undefined });
@@ -220,7 +223,8 @@ export function checkInForecast(spine, sim, date = sim.start) {
   const day = sim.daily.find((d) => d.date === date) || sim.daily[sim.daily.length - 1] || null;
   // Every cash account, the ones the run left out for a missing balance too (S-209): a check-in is where it gets one.
   const inRun = new Map(sim.model.accounts.map((a) => [a.id, a]));
-  const accounts = (spine.accounts || []).filter((a) => a.family === 'cash').map((a) => ({ id: a.id, name: inRun.has(a.id) ? inRun.get(a.id).name : v(a.name) || a.id, path: 'accounts.' + a.id + '.balance', cushion: inRun.has(a.id) ? !!inRun.get(a.id).cushion : false, now: v(a.balance), inRun: inRun.has(a.id) }));
+  // An account set aside for a goal says so (S-228); it is never called the cushion.
+  const accounts = (spine.accounts || []).filter((a) => a.family === 'cash').map((a) => ({ id: a.id, name: inRun.has(a.id) ? inRun.get(a.id).name : v(a.name) || a.id, path: 'accounts.' + a.id + '.balance', cushion: inRun.has(a.id) ? !!inRun.get(a.id).cushion && !isEarmarked(a) : false, setAside: isEarmarked(a) ? setAsideWords(setAsideFor(spine, a)) : null, now: v(a.balance), inRun: inRun.has(a.id) }));
   return { date: day ? day.date : date, forecast: Object.fromEntries(accounts.map((a) => [a.id, day && a.inRun ? (day.balances[a.id] ?? null) : null])), accounts };
 }
 

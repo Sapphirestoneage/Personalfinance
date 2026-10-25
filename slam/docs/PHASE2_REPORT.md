@@ -206,3 +206,39 @@ applied, and 22 (retire the Budget calendar) waits on questions 29 to 39.
 
 This is where the session stops. Look at it on a phone (the steps at the top),
 answer 29 to 39 in any order, and say go for the retirement when you are ready.
+
+## Known differences (2026-10-25, after the retirement)
+
+The Budget calendar is retired: the patch is applied (answer 39, S-226). These are the 28 rows of the gap audit
+(`docs/CALENDAR_PARITY.md`) that were still Budget only, each with how your answers settle it.
+
+| # | What the Budget calendar did | How it is settled |
+| --- | --- | --- |
+| 9 | Each scheduled item lands in its own chosen account | Known difference: paychecks land in their own account; bills and payments stay on main checking (29, parked). |
+| 20 | Pay date rules per pay frequency | Closed: twice a month can name both days, the 1st and the 15th (34). |
+| 26 | Debt payments scheduled on the debt's due day | Known difference: paid on the due day, from main checking only (29, parked). |
+| 28 | A debt paid by a budget line is scheduled as that line, not twice | Closed: a line can name the debt it pays, counted and paid once (35). |
+| 29 | Future scheduled items hit their account on their day | Known difference: paychecks do; bills come out of main checking (29, parked). |
+| 30 | List of scheduled items with their states | Known difference: card and loan payments stay automatic, not items (30, parked). |
+| 32 | Spread for a category planned as one number | Decided: a category can be one number, split into lines later; the screen is a later batch (37). |
+| 37 | A stable key for each scheduled item | Known difference: paychecks and bills have keys; card and loan payments are not items (30). |
+| 38 | Move a scheduled item to another day | Known difference: paychecks and bills move; card and loan payments do not (30). |
+| 39 | Skip a scheduled item this month | Known difference: paychecks and bills skip; card and loan payments do not (30). |
+| 40 | Confirm a scheduled item by an explicit link ('It happened') | Known difference: for paychecks and bills only (30). |
+| 41 | Auto-confirm a scheduled item from a matching log entry | Known difference: for paychecks and bills only (30). |
+| 48 | Month-end cash forecast made on the 1st | Known difference: drift at each check-in instead; no month-start forecast (32). |
+| 49 | Forecast check: predicted against actual month end | Known difference: drift at check-ins is enough (32). |
+| 56 | Cushion: the amount to keep in checking | Known difference: the floor stays derived; no typed override (31). |
+| 77 | Forecast check: each month's predicted end cash against the real end balance | Known difference: drift at check-ins is enough (32). |
+| 100 | Editable, prefilled amount on each waiting item | Known difference: for paychecks and bills; card and loan payments are automatic (30). |
+| 101 | "It happened": confirm a scheduled item into the log | Known difference: for paychecks and bills only (30). |
+| 102 | "Didn't happen / moved": move one occurrence to a new date | Known difference: for paychecks and bills only (30). |
+| 103 | "Skip this month": drop one scheduled occurrence | Known difference: for paychecks and bills only (30). |
+| 105 | Waiting items clear themselves when a matching log entry already exists | Known difference: for paychecks and bills only (30). |
+| 108 | Track "Check balances" card: a real balance for any account or debt on any day | Known difference: the household check-in covers every cash account; per-account and debt checks are parked (33). |
+| 128 | Predicted end cash saved at month close | Known difference: no month-start forecast is stored (32). |
+| 129 | Insights, Cash tab: Forecast check card | Known difference: drift at check-ins instead (32). |
+| 132 | "Didn't happen / moved": move a scheduled item to a new date | Known difference: card and loan payments do not move (30). |
+| 133 | Track: Check balances for any account on any day | Known difference: the household check-in; per-account checks are parked (33). |
+| 142 | Automatic tick-off of scheduled items by matching log or bank entries | Known difference: for paychecks and bills only (30). |
+| 145 | Setup cash-flow inputs had a visible effect | Known difference: due days and the card pay setting work (a card paying its statement never carries a balance, 38); paid-from accounts stay on main checking (29); the cushion stays derived (31). |

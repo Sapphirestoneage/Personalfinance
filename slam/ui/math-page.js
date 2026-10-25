@@ -3,11 +3,11 @@
 // the rules registry, with today's numbers for the loaded household. Nothing
 // here is written by hand, so it cannot drift from the engines.
 
-import { mountPage } from './page.js';
+import { mountPage, whoseLine } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { METRICS, metricById, explainMetric, showNumber } from '../engine/math.js';
 import { canMaxIt } from '../engine/maxit.js';
-import { loadAll, SOURCE_WORDS } from './household.js';
+import { loadAll } from './household.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
 import { h, chip, ledgerHref, shortDate } from './view.js';
@@ -60,7 +60,7 @@ function rulesTable(rules) {
     })));
 }
 
-loadAll().then(({ spine: base, rules, source }) => {
+function boot({ spine: base, rules, source, problem }) {
   // The Triple D set picked on the Dashboard (S-183).
   const set = pickedScenario();
   const spine = withScenario(base, rules, set);
@@ -70,7 +70,7 @@ loadAll().then(({ spine: base, rules, source }) => {
     h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'ledger.html' }, 'Ledger'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'windfall.html' }, 'Windfall')),
     h('header', { class: 'top' },
       h('div', {}, h('h1', {}, 'How every number is figured'),
-        h('p', { class: 'muted' }, spine.meta.name, ' · numbers as of ', shortDate(s.asOf), ' · ', SOURCE_WORDS[source]),
+        whoseLine(base, source, { asOf: s.asOf, rules, reopen: boot }),
         h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'dashboard.html' }, 'change it on the Dashboard'), '.')),
     ),
     h('p', { class: 'muted' }, 'Built from the engines when this page loads: ' + METRICS.length + ' numbers, plus one utilization number per card, one cost per expense, and one per Windfall step (shown on the Windfall page). Each formula is followed by the same formula with today\'s numbers.'),
@@ -79,5 +79,7 @@ loadAll().then(({ spine: base, rules, source }) => {
     // Numbers that come one per year or per account (S-210): this year's, under the family's name.
     ...[['earned', 'earned:' + s.asOf.slice(0, 4)], ...maxItSample(spine, rules, s)].map(([anchor, id]) => metricCard(metricById(id), ctx, anchor)),
     rulesTable(rules));
+  if (problem) app.prepend(h('p', { class: 'card', role: 'alert' }, problem));
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
-}).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The math page could not load: ' + err.message)); });
+}
+loadAll().then(boot).catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The math page could not load: ' + err.message)); });

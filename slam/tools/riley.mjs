@@ -26,7 +26,6 @@ import { startPlan, copyPlanForward, setPlanAmount } from '../src/store/plans.js
 import { planStartValues } from '../src/calc/plan.js';
 import { importCSV } from '../src/calc/tx-import.js';
 import { matchImport, matchSummary } from '../src/calc/log.js';
-import { scheduledItems, forecastFor } from '../src/calc/calendar.js';
 import { incomeSummary } from '../src/calc/income.js';
 import { buildSummary, closeMonthSnapshot, snapshotOf } from '../src/calc/summary.js';
 import { monthReview, lastDay } from '../src/calc/loop.js';
@@ -165,9 +164,14 @@ function applyEvents(month, events, csvAccounts) {
     if (ev.acct in bank) bank[ev.acct] = cents(bank[ev.acct] + (ev.acct === 'visa' ? ev.amt : -ev.amt));
     if (ev.acct === 'chk' && bank.chk < lowChecking.amount) lowChecking = { amount: bank.chk, date: ev.date };
     if (ev.how === 'scheduled') {
+      // The scheduled item used to come from the cash calendar (retired, S-209); the journey builds it from the event.
       const key = ev.key + ':' + ev.date;
-      const item = scheduledItems(store.doc, month, incomeSummary(store.doc, refs.tax)).items.find((i) => i.key === key);
-      if (!item) throw new Error('No scheduled item ' + key);
+      const [kind, id] = ev.key.split(':');
+      const d0 = store.doc;
+      const line = kind === 'bill' ? d0.categories.flatMap((c) => c.lines).find((l) => l.id === id) : null;
+      const inc = kind === 'pay' ? d0.income.find((x) => x.id === id) : null;
+      const debt = kind === 'debt' ? (d0.debts || []).find((x) => x.id === id) : null;
+      const item = { key, kind: kind === 'pay' ? 'paycheck' : kind, dir: kind === 'pay' ? 'in' : 'out', name: inc ? inc.label : line ? line.name : debt ? debt.label : id, lineId: line ? line.id : (debt && debt.lineId) || null, incomeId: inc ? inc.id : null, account: ev.acct || 'chk', date: ev.date };
       upd('It happened', (d) => confirmScheduled(d, item, Math.abs(ev.amt), ev.date));
     }
     if (ev.how === 'manual' || ev.how === 'both') {
@@ -219,7 +223,6 @@ function close(month) {
   store.closeMonth({ ...closeMonthSnapshot(s), review });
   upd('Save snapshot', (d) => { d.snapshots.push(snapshotOf(s, now.toISOString())); });
   const next = store.doc.currentMonth;
-  upd('Save forecast', (d) => saveForecast(d, next, forecastFor(d, s.income, next), now.toISOString()));
   console.log(month + ': ' + review.openItems.summary + '; bridge ' + (review.bridge.ties ? 'ties' : 'off by ' + review.bridge.unexplained));
 }
 

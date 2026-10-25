@@ -45,6 +45,12 @@ const households = () => {
   p = { ...p, income: [...p.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-06-30' } : x.id === 'tutoring' ? { ...x, amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : x)),
     { id: 'ui', type: 'unemployment', label: 'Unemployment benefits', personId: 'casey', amount: { value: 450, kind: 'known', asOf: null, source: 'test' }, cadence: 'weekly', start: '2026-07-06', end: '2026-12-28', withholding: { federal: { value: 0, kind: 'known', asOf: null, source: 'test' }, state: { value: 0, kind: 'known', asOf: null, source: 'test' } } }] };
   list.push(['demo, the local profile shape', p]);
+  // A bill someone else covers with no amount, and a recurring bill with no amount (S-228): Show the math crashed on
+  // them (a recompute read its first input when there was none).
+  let c = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  c = editExpense(c, 'phone', { amount: null, cadence: 'monthly', coveredBy: 'Parents' }, '2026-10-23');
+  c = { ...c, expenses: c.expenses.map((e) => (e.id === 'streaming' ? { ...e, amount: { value: null, kind: 'missing', asOf: null, source: 'test' } } : e)) };
+  list.push(['demo, a covered bill with no amount', applyDefaults(c, R)]);
   if (exists('fixtures/eli.local.json')) list.push(['local profile', applyDefaults(loadHousehold(readJson('fixtures/eli.local.json')), R)]);
   // Each household also gets a windfall of $5,000 with tax taken out, so the Windfall steps are audited too (S-201).
   return list.map(([name, spine]) => {
@@ -242,3 +248,34 @@ test('i. the local profile shape: earned income and the Roth room read missing a
   assert.ok(sl && sl.missing.concat(sl.rough).includes('income.tutoring.amount'), 'the student loan names the blank line');
   assert.ok(!sl.missing.concat(sl.rough).includes('income'));
 });
+
+test('j. Show the math opens on every metric of a household with a covered bill that has no amount, without throwing (S-228)', () => {
+  const h = ALL.find((x) => x.name === 'demo, a covered bill with no amount');
+  const phone = h.s.cashflow.expenses.items.find((i) => i.id === 'phone');
+  assert.ok(phone && phone.covered, 'the phone bill is covered by someone else');
+  assert.ok(!h.ctx.spend.autopsy.rows.some((r) => r.id === 'phone'), 'a covered bill is not in the autopsy');
+  // Every id the pages can ask for, and the per-item ids for every expense, debt and account, including ones a reading
+  // leaves out (the covered phone bill, a bill with no amount, a card with no trap).
+  const keys = (h.spine.expenses || []).map((e) => e.id).concat((h.spine.debts || []).map((d) => d.id), (h.spine.accounts || []).map((a) => a.id), ['nothing-here']);
+  const perItem = keys.flatMap((k) => ['expenseCost:' + k, 'cardUtil:' + k, 'spend:autopsy:' + k, 'spend:priceChange:' + k, 'spend:tagBudget:' + k, 'spend:tagSpent:' + k, 'spend:pace:' + k, 'spend:tier:' + k,
+    'debt:interestMonth:' + k, 'debt:minOnly:' + k, 'debt:utilReport:' + k, 'debt:feeRoi:' + k, 'debt:bonus:' + k, 'debt:idr:' + k, 'debt:whichCard:' + k, 'compare:line:' + k, 'compare:tag:' + k,
+    'plan:goal:' + k, 'plan:draftt:' + k, 'plan:foo:' + k, 'plan:solve:' + k, 'maxit:' + k + ':2026:room', 'maxit:' + k + ':2026:lump', 'maxit:' + k + ':2026:month', 'maxit:' + k + ':2026:paycheck', 'maxit:' + k + ':2026:raise', 'maxit:' + k + ':2026:low', 'maxit:' + k + ':2026:payoff']);
+  const loose = ['spend:safePerDay', 'spend:cutDebt', 'spend:drift', 'spend:momentum', 'spend:sweep', 'debt:bt', 'debt:solve', 'plan:wage', 'calendar:paycheckLeft', 'earned:2027',
+    ...['taxOnIt', 'taxBill', 'cashFloor', 'promos', 'employerMatch', 'cards', 'cushion', 'roth', 'left'].map((x) => 'windfall:' + x)];
+  const ids = [...new Set([...idsFor(h), ...perItem, ...loose])].filter((id) => metricById(id));
+  assert.ok(ids.length > 300, 'opened ' + ids.length + ' metrics');
+  // With the page's whole context, and with only the summary (a page that has not built the readings yet).
+  for (const ctx of [h.ctx, { spine: h.spine, rules: R, s: h.s }]) for (const id of ids) {
+    let e;
+    assert.doesNotThrow(() => { e = explainMetric(id, ctx); }, id);
+    assert.ok(!/undefined|NaN/.test(e.plugged), id + ' plugs in ' + e.plugged);
+    if (e.value === null) { assert.equal(e.recomputed, null, id + ' is missing both ways'); assert.match(e.plugged, /missing$/, id + ' reads missing'); }
+    if (!e.terms.length && e.value === null) assert.ok(!/\$0/.test(e.plugged), id + ' with nothing to work from never reads $0');
+  }
+  // The covered bill with no amount reads missing on the autopsy and its own cost a month is $0 to you, not a crash.
+  const a = explainMetric('spend:autopsy:phone', h.ctx);
+  assert.equal(a.value, null); assert.equal(a.recomputed, null); assert.equal(a.plugged, 'nothing to work from yet = missing');
+  assert.equal(explainMetric('expenseCost:phone', h.ctx).value, 0, 'covered: $0 to you');
+  assert.equal(explainMetric('expenseCost:streaming', h.ctx).value, null, 'no amount: missing, never $0');
+});
+

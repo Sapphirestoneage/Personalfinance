@@ -6,7 +6,9 @@
 // on every number. Recording what went in is a small form that adds one entry to
 // the account's contributions by year.
 
-import { maxIt, maxItSim, maxItCash, longDay } from '../engine/maxit.js';
+import { maxIt, maxItSim, maxItCash, longDay, jobsOf, paidThroughOf, paidThroughGuess } from '../engine/maxit.js';
+import { FROM_PAY } from '../engine/contrib.js';
+import { throughPayroll } from '../engine/schema.js';
 import { labelFor } from '../engine/labels.js';
 import { parseInput } from '../engine/edits.js';
 import { mathButton } from './math-panel.js';
@@ -35,6 +37,10 @@ const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last
 // A blank the row waits on that the Ledger can fill (not a rule).
 const canFill = (path) => path && !path.startsWith('rule:');
 
+// More than a paycheck holds (answer 53): the contribution to raise to, and what still cannot go in through payroll.
+const raiseWords = (r) => { const p = r.paychecks; return p.raiseTo !== null && p.raiseTo !== undefined ? 'More than a paycheck holds: raise your contribution to ' + Math.round(p.raiseTo * 100) + '% of pay (about ' + cash(p.holds) + ' of each ' + cash(p.gross) + ' paycheck, all it can hold). About ' + cash(p.gap) + ' of the room still cannot go in through payroll by ' + longDay(r.deadline.date) + '.' : 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.'; };
+// A Roth and a pre-tax account that share a limit (answer 64): which one the Plan counts, and why.
+const pickWords = (r) => (r.pick.countedId === r.accountId ? 'The Plan counts this one. ' : 'The Plan counts ' + r.pick.counted + ' instead (one limit). ') + r.pick.words;
 // The main number first: for a payroll-only account the deferral to set a paycheck, for the rest the new money a month.
 function mainOf(r) {
   const p = r.paychecks;
@@ -134,14 +140,35 @@ function yearBlock(m, r, { onRecord = null } = {}) {
   return h('div', { class: 'max-year card-tile' }, head,
     main.big ? h('p', { class: 'max-big' }, main.big) : h('p', { class: 'missing-row' }, main.sub, main.blank ? [' ', h('a', { href: ledgerHref(main.blank.path) }, 'Fill it in')] : null),
     main.big ? h('p', { class: 'tile-sub' }, main.sub) : null,
-    p && p.tooBig ? h('p', { class: 'tool-result bad' }, p.multi ? 'More than some paychecks hold: the ' + p.shortLines.join(' and ') + ' paychecks hold as little as about ' + cash(p.landed) + (p.holdsTotal !== null ? '; together the paychecks to ' + longDay(r.deadline.date) + ' hold about ' + cash(p.holdsTotal) : '') + ', so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll.' : 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.') : null,
+    p && p.tooBig ? h('p', { class: 'tool-result bad' }, p.multi ? 'More than some paychecks hold: the ' + p.shortLines.join(' and ') + ' paychecks hold as little as about ' + cash(p.landed) + (p.holdsTotal !== null ? '; together the paychecks to ' + longDay(r.deadline.date) + ' hold about ' + cash(p.holdsTotal) : '') + ', so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll.' : raiseWords(r)) : null,
+    r.safe ? h('p', { class: 'tile-sub' }, r.safe) : null,
+    r.employerOnly ? h('p', { class: 'tile-sub' }, r.employerOnly) : null,
+    r.pick ? h('p', { class: 'tile-sub' }, pickWords(r)) : null,
     r.overWords ? h('p', { class: 'tool-result bad' }, r.overWords) : null,
     r.overSoonWords ? h('p', { class: 'tool-result bad' }, r.overSoonWords) : null,
     r.aboveCap ? h('p', { class: 'tile-sub' }, cash(r.aboveCap) + ' is above the New York deduction cap: that part is not deductible (it can stay in the 529).') : null,
     h('dl', { class: 'kv' }, ...kv.flatMap(([k, val]) => [h('dt', {}, k), h('dd', { class: /^[$-]/.test(val) ? '' : 'words' }, val)])),
     h('div', { class: 'edit-actions' }, record),
     c ? h('p', { class: 'tool-result' + (c.breaks ? ' bad' : '') }, h('strong', {}, 'Against cash: '), c.words) : null,
-    mathButton([key + 'room', ...(r.lump !== null ? [key + 'lump'] : []), ...(r.perMonth !== null ? [key + 'month'] : []), ...(p && (p.perPaycheck !== null || p.perLine) && r.fillable ? [key + 'paycheck'] : []), ...(c ? [key + 'low', ...(c.measurable ? [key + 'payoff'] : [])] : [])], ctxFor(m)));
+    mathButton([key + 'room', ...(r.lump !== null ? [key + 'lump'] : []), ...(r.perMonth !== null ? [key + 'month'] : []), ...(p && (p.perPaycheck !== null || p.perLine) && r.fillable ? [key + 'paycheck'] : []), ...(p && p.raiseTo !== null && p.raiseTo !== undefined ? [key + 'raise'] : []), ...(c ? [key + 'low', ...(c.measurable ? [key + 'payoff'] : [])] : [])], ctxFor(m)));
+}
+
+// How the account is filled (S-227): an HSA's small "through payroll" switch, off by default (answer 47: from take-home),
+// and a 401(k)-style plan's "paid through" job, the sponsoring one by default (answer 60). Each saves at once.
+function howFilled(spine, a, { onPayroll = null, onPaidThrough = null } = {}) {
+  if (a.type === 'hsa' && onPayroll) {
+    const on = throughPayroll(a);
+    const sw = h('button', { type: 'button', class: 'switch', role: 'switch', id: 'payroll-' + a.id, 'aria-checked': String(on), 'aria-labelledby': 'payroll-l-' + a.id, onclick: () => onPayroll(a.id, !on) },
+      h('span', { class: 'switch-track', 'aria-hidden': 'true' }, h('span', { class: 'switch-knob' })), h('span', { class: 'switch-state' }, on ? 'Yes' : 'No'));
+    return h('div', {}, h('div', { class: 'switch-row' }, h('span', { id: 'payroll-l-' + a.id, class: 'edit-label' }, 'Through payroll'), sw),
+      h('p', { class: 'edit-hint' }, on ? 'It comes out of the paycheck before tax, so it lowers the pay that is taxed and its Social Security and Medicare.' : 'Off: money goes in from take-home (the default) and is deducted on the return. Turn it on if it comes out of your paycheck.'));
+  }
+  const jobs = FROM_PAY.includes(a.type) && a.family === 'employerRetirement' && onPaidThrough ? jobsOf(spine, a) : [];
+  if (jobs.length < 2) return null;
+  const cur = paidThroughOf(spine, a), guess = paidThroughGuess(spine, a);
+  const sel = h('select', { id: 'paid-through-' + a.id, onchange: (e) => onPaidThrough(a.id, e.target.value) }, jobs.map((s) => h('option', { value: s.id, selected: !!cur && cur.id === s.id }, s.label)));
+  return h('div', { class: 'tool-form' }, h('label', { for: 'paid-through-' + a.id, class: 'edit-label' }, 'Paid through'), sel,
+    h('p', { class: 'edit-hint' }, guess ? 'A guess: the job that pays the most. Choose the job whose employer offers this plan; only its paychecks fill it.' : 'Only this job\'s paychecks fill it.'));
 }
 
 // The panel under one account in the Ledger.
@@ -149,8 +176,10 @@ export function maxItPanel(spine, rules, accountId, opts = {}) {
   const m = maxItFor(spine, rules);
   const acc = m.mx.accounts.find((x) => x.id === accountId);
   if (!acc) return null;
+  const a = (spine.accounts || []).find((x) => x.id === accountId);
   return h('section', { class: 'max-panel', id: 'max-' + accountId, 'aria-labelledby': 'max-h-' + accountId },
     h('h3', { id: 'max-h-' + accountId, class: 'max-title' }, 'How much to max ' + acc.name),
+    a ? howFilled(spine, a, opts) : null,
     acc.rows.length > 1 && m.mx.window.words ? h('p', { class: 'max-window' }, m.mx.window.words) : null,
     h('div', { class: 'max-years' + (acc.rows.length > 1 ? ' two' : '') }, acc.rows.map((r) => yearBlock(m, r, opts))));
 }
@@ -176,7 +205,8 @@ export function maxItCard(spine, rules) {
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
       r.couple || r.counted ? h('span', { class: 'tile-sub' }, [r.couple ? r.couple.words : null, r.counted ? 'Counted in the Plan: ' + cash(r.counted.fill) + ' (' + r.counted.words + ').' : null].filter(Boolean).join(' ')) : null,
       r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
-      r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
+      r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : r.paychecks.raiseTo !== null && r.paychecks.raiseTo !== undefined ? 'More than a paycheck holds: raise your contribution to ' + Math.round(r.paychecks.raiseTo * 100) + '% of pay' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
+      r.safe || r.employerOnly || r.pick ? h('span', { class: 'tile-sub' }, [r.safe ? 'Safe amount, could be higher.' : null, r.employerOnly, r.pick ? pickWords(r) : null].filter(Boolean).join(' ')) : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);
   };
   const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);

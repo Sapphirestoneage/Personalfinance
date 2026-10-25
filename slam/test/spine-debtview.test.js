@@ -228,3 +228,26 @@ test('card tiles carry the billing cycle, why it is stuck and the trap; the ever
   assert.equal(gantt(sim).rows.length, 3);
   assert.ok(orderList(s, R, sim).rows.length === 3 && interestTimeline(sim).months.length >= 6);
 });
+
+// Answer 38 (S-226): a card set to pay its statement never carries a balance and never accrues interest, in the run,
+// the Debt tab and the cash flow's debt schedule alike.
+test('a card that pays its statement: no interest in the run, the Debt tab or the cash flow schedule', async () => {
+  const { debtSchedule, payoffPlan } = await import('../engine/debt.js');
+  const s = putFact(demo(), 'debts.visa.payPolicy', 'statement', 'known', T);
+  const sim = cashsim(s, R, { months: 12 });
+  assert.equal(sim.cards.visa.interest, 0, 'the run');
+  assert.equal(sim.cards.visa.revolving, false);
+  const d = debtView(s, R, sim, summarize(s, R, { flags: false }));
+  const row = d.order.rows.find((r) => r.id === 'visa');
+  assert.deepEqual([row.interestInWindow, row.planInterest], [0, 0], 'the Debt tab: the run and the payoff plan');
+  assert.equal(d.interest.debts.find((x) => x.id === 'visa') ? d.interest.debts.find((x) => x.id === 'visa').total : 0, 0, 'no interest stack');
+  // The cash flow's months ahead: the statement is the balance, paid in full, with no month of interest on it.
+  const sched = debtSchedule(s, R, T, '2027-01');
+  const nov = sched.months.get('2026-11').payments.find((x) => x.id === 'visa');
+  assert.equal(nov.amount, 3000, 'the whole $3,000 balance, no interest added');
+  assert.equal(sched.months.get('2026-12').payments.some((x) => x.id === 'visa'), false, 'nothing carried after');
+  assert.equal(payoffPlan(s, R, { asOf: T }).debts.find((x) => x.id === 'visa').interest, 0);
+  // Paid by the minimum, the same card carries its balance and pays interest.
+  const carried = payoffPlan(demo(), R, { asOf: T }).debts.find((x) => x.id === 'visa');
+  assert.ok(carried.interest > 0);
+});

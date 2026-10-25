@@ -274,14 +274,15 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // the 4th and the 5th). No income or plan yet, so nothing moves ahead: today 2,500, also the lowest point and
   // safe to spend.
   await go(page, 'today');
-  await page.waitForSelector('#cash-strip');
-  check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2500));
-  check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2500));
-  check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2500));
+  // The cash strip retired with the Budget calendar (S-209): Today links to SLAM's calendar and keeps Quick entry.
+  await page.waitForSelector('#cash-moved');
+  check('loop', 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
+  check('loop', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
+  check('loop', 'Quick entry on Today', String(await page.$$eval('#cash-moved [data-key="open-quick-entry"]', (x) => x.length)), '1');
   await go(page, 'track');
-  await page.waitForSelector('#chart-cf-chart svg');
-  check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
-  check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
+  await page.waitForSelector('[data-key="track-slam-calendar"]');
+  check('loop', 'Track calendar link', await page.$eval('[data-key="track-slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
+  // The calendar chart and month grid moved to SLAM's calendar page with the Budget calendar (S-209).
   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
   await go(page, 'review');
   // Filled categories are one row each until tapped (S-106).
@@ -317,7 +318,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'today');
   await page.waitForSelector('#loop-strip');
   check('loop strip', 'Review step', await settled(page, '[data-key="loop-review"] .small', '0 lines still empty, 6 of 6 balances in, bridge off by $60'), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
-  check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28, scheduled 1 of 1 confirmed'), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
+  check('loop strip', 'Track step', await settled(page, '[data-key="loop-track"] .small', '10 entries, last Oct 28'), '10 entries, last Oct 28');
   page.on('dialog', (dl) => dl.accept());
   await go(page, 'review');
   await page.click('[data-key="open-checklist"]');
@@ -362,14 +363,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // car payment) and 6 on the Visa = 12;
   // scheduled in October: rent, two paychecks, car payment, phone, Visa = 6, of which 3 are done so far.
   await page.getByText('Riley, 31').click();
-  await page.waitForSelector('#cash-strip');
-  check('riley', 'Cash today', await settled(page, '[data-key="cash-today"]', money(3291.03)), money(3291.03));
-  check('riley', 'Lowest point', await settled(page, '[data-key="cash-lowest"]', money(60)), money(60));
-  // Safe to spend (S-095): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0 and a message.
-  check('riley', 'Safe to spend', await settled(page, '[data-key="safe-to-spend"]', money(0)), money(0));
-  check('riley', 'Shortfall message', await settled(page, '[data-key="safe-short"]', "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5."), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
-  check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
-  check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15, scheduled 3 of 6 confirmed'), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
+  // Cash today, the lowest point and safe to spend moved to SLAM with the calendar (S-209); Today links there.
+  await page.waitForSelector('#cash-moved');
+  check('riley', 'Calendar link', await page.$eval('[data-key="slam-calendar"]', (a) => a.getAttribute('href')), 'calendar.html');
+  check('riley', 'Track step', await settled(page, '[data-key="loop-track"] .small', '12 entries, last Oct 15'), '12 entries, last Oct 15');
   // Past months are on Review; the bridge history and the 80/20 are in Insights (S-106).
   await go(page, 'review');
   await page.waitForSelector('#months-review');
@@ -430,10 +427,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // November's plan: paydays Nov 6 and Nov 20, 2 x 1,500 = 3,000, and dog walking 250: 3,250.
   await plan(page, 'plan');
   check('riley', 'November planned income', await settled(page, '[data-key="plan-income-total"]', '$3,250'), '$3,250');
+  // The pay-later flag and the cash chart moved to SLAM's calendar page with the Budget calendar (S-209).
   await go(page, 'track');
-  await page.waitForSelector('#chart-cf-paylater');
-  check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
-  check('riley', 'cf-chart drawn', String(await page.$$eval('#chart-cf-chart svg', (x) => x.length >= 1)), 'true');
+  await page.waitForSelector('[data-key="track-slam-calendar"]');
   await insights(page, 'cash');
   check('riley', 'bridge drawn', String(await page.$$eval('#chart-bridge svg', (x) => x.length >= 1)), 'true');
   await insights(page, 'time');
@@ -557,18 +553,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
   check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
-  // October is open (S-128): so far and expected by month end, by hand in test/outlook.test.js:
-  // so far 1,630 - 2,369.25 = -739.25; expected -739.25 + 1,500 - 65 - 694.75 = 1.00.
+  // So far and expected by month end (S-128) and safe to spend were built on the Budget calendar and moved
+  // to SLAM's Spending page with it (S-209): Today shows the surplus tile and links there.
   await go(page, 'today');
-  await page.waitForSelector('[data-key="how:soFar"]');
-  check('sources', 'So far tile', await page.$eval('[data-key="how:soFar"]', (b) => b.textContent), signedMoney(-739.25));
-  check('sources', 'Expected by month end', await page.$eval('[data-key="how:expected"]', (b) => b.textContent), signedMoney(1));
-  await page.click('[data-key="how:expected"]');
+  await page.waitForSelector('[data-key="how:surplus"]');
+  await page.click('[data-key="how:surplus"]');
   await page.waitForSelector('#how-panel');
-  check('sources', 'Expected panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), signedMoney(1));
-  // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
-  await page.click('[data-key="how:safeToSpend"]');
-  check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));
+  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), (await page.$eval('[data-key="how:surplus"]', (b) => b.textContent)).replace(/\.\d\d$/, ''));
+  check('sources', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
   // A number in the Insights table opens its source: Food's actual opens its row on Review.
   await insights(page, 'compared');
   await page.locator('tr.cat', { hasText: 'Food' }).locator('td:not(.wide) a.src-link').first().click();
@@ -587,14 +579,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.goto(URL + '#clients');
   console.log('view as client and merge (phone width)');
   await page.getByText('Riley, 31').click();
-  await page.waitForSelector('#cash-strip');
+  await page.waitForSelector('#cash-moved');
   // The coach writes a note, tags Shopping as a mistake (not shared), and sees the coach-only settings.
   await setup(page, 'notes');
   await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
   await page.press('[data-key="coach-notes"]', 'Tab');
   await page.waitForTimeout(150);
   await setup(page, 'coach');
-  check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
+  check('client view', 'The cushion input went with the calendar (S-209)', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
   check('client view', 'Coach sees materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '1');
   await go(page, 'review');
   await page.waitForSelector('#mistakes');
@@ -619,9 +611,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
   check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
   await go(page, 'today');
-  await page.waitForSelector('#cash-strip');
-  // The calendar still uses the cushion: the same $0 and message as the coach sees.
-  check('client view', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
+  await page.waitForSelector('#cash-moved');
+  // Safe to spend moved to SLAM with the calendar (S-209): the client sees the same link the coach sees.
+  check('client view', 'Spending link', await page.$eval('[data-key="slam-spending"]', (a) => a.getAttribute('href')), 'spending.html');
   await page.click('[data-key="view-as-client"]');
   await page.waitForTimeout(150);
   check('client view', 'Back to coach', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'View as client');
@@ -646,7 +638,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('merge', 'The file', String(/^The file: Shopping, .*estimate \$80.* \(client, /.test(file)), 'true');
   await page.check('[data-key="pick:incoming:line:shopping"]');
   await page.click('[data-key="finish-merge"]');
-  await page.waitForSelector('#cash-strip');
+  await page.waitForSelector('#cash-moved');
   await go(page, 'review');
   await page.waitForSelector('#mistakes');
   check('merge', 'Picked the file', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');
