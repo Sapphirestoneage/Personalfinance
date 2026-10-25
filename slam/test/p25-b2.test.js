@@ -26,7 +26,7 @@ test('sizes: 15px body, 40px buttons and 32px row actions, each with a 44px tap 
 
 test('the page ends at the tab bar\'s own height, measured by the shell', () => {
   const css = read('ui/spine.css');
-  assert.match(css, /body\.has-tabs \{ padding-bottom: calc\(var\(--tabbar-h, 56px\) \+ env\(safe-area-inset-bottom, 0px\)\); \}/);
+  assert.match(css, /body\.has-tabs \{ padding-bottom: var\(--tabbar-h, 56px\); \}/, 'the measured height already holds the safe area');
   const shell = code('ui/shell.js');
   assert.match(shell, /measureTabs\(tabs\);/);
   assert.match(shell, /setProperty\('--tabbar-h', Math\.ceil\(bar\.getBoundingClientRect\(\)\.height\) \+ 'px'\)/);
@@ -49,7 +49,9 @@ test('one map for the section names; "Everything else" reads Miscellaneous', () 
 
 // The client screens: the six tabs, the One-pager and Got extra money?, and what they draw from.
 const CLIENT = ['ui/dashboard.js', 'ui/session.js', 'ui/ledger.js', 'ui/calendar.js', 'ui/cash-chart.js', 'ui/spending.js', 'ui/plan.js', 'ui/onepager.js', 'ui/windfall.js', 'ui/page.js', 'ui/shell.js', 'ui/flow-chart.js', 'ui/debt-tab.js', 'ui/maxit-panel.js'];
-const BANNED = /\b(engines?|registry|spine|simulations?|templates?|schema|computed|derived)\b|\bthe Ledger\b|\bS-\d{2,3}\b|\u2014/i;
+const BANNED = /\b(engines?|registry|rules?|spine|kinds?|paths?|fields?|stored|simulations?|templates?|schema|computed|derived)\b|\bthe Ledger\b|\bS-\d{2,3}\b|\u2014/i;
+// The engine files whose words reach a client screen (flag titles, notes, tier and calendar labels).
+const SAYS = ['engine/calendar.js', 'engine/cashsim.js', 'engine/flags.js', 'engine/spending.js', 'engine/plan.js', 'engine/labels.js', 'engine/ledger-tree.js'];
 // Every quoted string in the code, read quote to quote (a regex literal with a quote in it is rare here).
 function strings(src) {
   const out = [];
@@ -57,19 +59,25 @@ function strings(src) {
     const q = src[i];
     if (q !== "'" && q !== '"' && q !== '`') continue;
     let j = i + 1, s = '';
-    while (j < src.length && src[j] !== q) { if (src[j] === '\\') { s += src[j + 1]; j += 2; } else s += src[j++]; }
+    while (j < src.length && src[j] !== q && (q === '`' || src[j] !== '\n')) { if (src[j] === '\\') { s += src[j + 1]; j += 2; } else s += src[j++]; }
+    // A quote that runs to the end of its line was not a string (a regex, an apostrophe): read on from the next line.
+    if (src[j] === '\n') { i = j; continue; }
     out.push(s); i = j;
   }
   return out;
 }
 test('no code words in a sentence on a client screen', () => {
-  for (const f of CLIENT) {
+  const found = [];
+  for (const f of [...CLIENT, ...SAYS]) {
     for (const s of strings(code(f))) {
-      // A sentence: words with a space, not a class list, a selector or an id.
+      // A sentence: words with a space, not a class list, a selector or an id. The Rule of 5 is a name.
       if (!/\s/.test(s) || /^[a-z0-9 _:.#[\]="-]+$/.test(s)) continue;
-      assert.ok(!BANNED.test(s), f + ': ' + s);
+      // labels.js names a reference value 'Rule <ID>' only on the Builder's pages.
+      if (s === 'Rule ') continue;
+      if (BANNED.test(s.replace(/Rule of 55?/g, ''))) found.push(f + ': ' + s);
     }
   }
+  assert.deepEqual(found, []);
 });
 
 test('the copy pass: Add a purchase, never Log a spend, on every client screen', () => {

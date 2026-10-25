@@ -6,15 +6,15 @@ Every client screen, every sentence rewritten or deleted, then cut again. Words 
 
 | Page | Before (Batch 1) | After (Batch 2) |
 | --- | --- | --- |
-| Today | 1,225 | 615 |
+| Today | 1,225 | 780 |
 | Session | 76 | 68 |
 | My numbers | 119 | 102 |
-| Calendar | 876 | 541 |
-| Spending | 1,015 | 683 |
+| Calendar | 876 | 549 |
+| Spending | 1,015 | 707 |
 | Plan | 343 | 263 |
 | One-pager | 210 | 173 |
 | Got extra money? | 184 | 131 |
-| All | 4,048 | 2,576 (36% fewer) |
+| All | 4,048 | 2,773 (31% fewer) |
 
 
 ## Today
@@ -119,7 +119,6 @@ Every client screen, every sentence rewritten or deleted, then cut again. Words 
 | (not marked yet, so counted as still to come) / X already happened, so it is in so far | (not marked yet) / X already happened |
 | TAG / LOGGED (column heads) | Category / Spent |
 | Core burn: food, housing, transportation / Plus everything else that is not debt / Plus the extra at the debt, saving and the tax set-aside | Core: food, housing, getting around / Plus miscellaneous / Plus extra on debt, saving and tax |
-| No check-in with a forecast yet. | No check-ins yet. |
 | Last checked in N days ago: the numbers are stale. A check-in puts real balances back in. | Last checked in N days ago. Time to check in. |
 | Tap a row to see its lines. Try cutting something. Nothing is saved until you choose. | Try cutting something. Nothing is saved until you choose. |
 
@@ -227,3 +226,27 @@ Every client screen, every sentence rewritten or deleted, then cut again. Words 
 | A bonus with tax withheld, a gift, an inheritance, a tax refund, a sale of your own things | A gift, a refund, a bonus with tax taken out |
 | Contract or 1099 pay, a prize, a bonus paid with nothing withheld | 1099 pay, a prize |
 | Self-employment tax is owed on top of income tax | Self-employment tax is owed too |
+
+## Today (review)
+
+| Before | After |
+| --- | --- |
+| Checking runs $X short by DATE. | Checking runs $X short of the floor by DATE (when there is a floor). |
+| Safe to spend | Safe to spend, as of DATE (put back) |
+| Limits used | Personal cards: limits used |
+| (each flag) its detail paragraph deleted | put back: the detail is what to do and why |
+
+## Spending (review)
+
+| Before | After |
+| --- | --- |
+| Cash, less bills due before then, less the floor. | Cash outside the cushion, less bills due before DATE, less the floor. |
+| N bills could not be paid | N payments would dip under the floor |
+| (budget note deleted) | A line with no amount makes its budget missing, not smaller. |
+
+## Calendar (review)
+
+| Before | After |
+| --- | --- |
+| In $X, out $Y. | In $X, out $Y. Lines with no amount are not in these. |
+| checking at the end of the month, from the day-by-day simulation | checking at the end of the month, figured day by day |

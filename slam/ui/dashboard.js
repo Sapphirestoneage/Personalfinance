@@ -95,29 +95,29 @@ function render({ spine: base, rules }) {
       extra: em.backstop.contributions.value || em.backstop.conversions.length ? backstop : null
     }),
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: numbersHref('needs'), result: cf.surplus, shown: money(cf.surplus.value), lines: [
-        'Left of ' + money(cf.income.takeHome.value) + ' take-home after spending, debt payments, saving and taxes.'
+        cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home after spending, debt payments, saving and the tax set-aside.'
       ] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: numbersHref('income'), result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
     tile(spine, {
       id: 'cards', label: 'Credit cards', target: numbersHref('debt', 'credit-cards'), result: sh.cards, shown: money(sh.cards.value),
       lines: [
         pr.items.length ? money(pr.total.value) + ' on promo, due ' + shortDate(promoBy) + ': ' + money(pr.monthly.value) + ' a month clears it.' : null,
-        utilLine(ut.personal, 'Limits used')
+        utilLine(ut.personal, 'Personal cards: limits used')
       ]
     }),
     tile(spine, {
       id: 'fi', label: 'Financial independence', target: numbersHref('goals'), result: fi.fiPercent, shown: pct(fi.fiPercent.value, 1),
       lines: [
         money(sh.invested.value) + ' invested of ' + money(fi.fiNumber.value) + ' needed.',
-        fi.yearsToFi.value !== null ? 'About ' + fi.yearsToFi.value.toFixed(0) + ' years at this pace.' : null,
+        fi.yearsToFi.value !== null ? 'About ' + fi.yearsToFi.value.toFixed(1) + ' years at this pace.' : fi.yearsToFi.note ? 'Years to FI: ' + fi.yearsToFi.note + '.' : null,
         [SCENARIO_WORDS[scenario] + ' assumptions. ', h('a', { href: '#scenario' }, 'Change')]
       ]
     }),
     tile(spine, {
-      id: 'cash', label: 'Safe to spend', target: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : ''), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
+      id: 'cash', label: 'Safe to spend, as of ' + shortDate(spine.meta.asOf), target: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : ''), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
       shown: money(safe.today), missingText: 'Missing: a checking balance',
       lines: [
-        safe.shortfall ? 'Checking runs ' + money(safe.shortfall.amount) + ' short by ' + shortDate(safe.shortfall.date) + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + '.' : null,
+        safe.shortfall ? 'Checking runs ' + money(safe.shortfall.amount) + ' short' + (safe.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(safe.shortfall.date) + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + '.' : null,
         safe.setAsideNote || null,
         [h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Add a purchase ›')]
       ]
@@ -128,7 +128,7 @@ function render({ spine: base, rules }) {
       shown: (compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing added this month yet',
       lines: [
         compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + (compare.spend.entries === 1 ? ' entry' : ' entries') + ').' : null,
-        compare.income.actual !== null ? 'Income ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' planned' : '') + '.' : null,
+        compare.income.actual !== null ? 'Income ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' planned' : '') + '.' : compare.monthsLogged.length ? 'No income added yet, so no real savings rate.' : null,
         compare.savingsRate.real !== null ? 'Savings rate ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' (plan ' + pct(compare.savingsRate.plan, 1) + ')' : '') + '.' : null,
         outlook.stale ? 'Check in balances to see the month so far.' : ['So far: ', h('span', { class: outlook.soFar < 0 ? 'neg' : 'pos' }, (outlook.soFar < 0 ? '-' : '+') + money(Math.abs(outlook.soFar))), '. By month end: ' + (outlook.expected === null ? 'missing' : (outlook.expected < 0 ? '-' : '+') + money(Math.abs(outlook.expected))) + '.'],
         [h('a', { href: 'spending.html' }, 'Add a purchase or import a statement ›')]
@@ -173,6 +173,7 @@ const goalLine = (g, cls) => g && h('p', { class: 'goal ' + cls }, g.path ? h('a
 function flagItem(spine, f) {
   return h('li', { class: 'flag flag-' + f.stage, id: 'flag-' + f.id },
     h('p', { class: 'flag-title' }, h('span', { class: 'stage-chip stage-' + f.stage }, f.stageLabel), ' ', f.title),
+    h('p', { class: 'flag-detail' }, f.detail),
     goalLine(f.next, 'goal-next'),
     flagMath(f).length ? keptMath('flag-' + f.id, flagMath(f), mathCtx) : null);
 }

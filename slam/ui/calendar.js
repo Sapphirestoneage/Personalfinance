@@ -337,7 +337,7 @@ function summary(m, c, mathCtx) {
   const todaySub = cash.todayNote ? cash.todayNote : 'All cash accounts';
   return h('section', { class: 'card month-sum', 'aria-label': 'This month in one line' },
     h('p', { class: 'flow-total' }, (m.net >= 0 ? money(m.net) + ' more in than out' : money(-m.net) + ' more out than in') + ' in ' + longMonth(m.ym) + '.'),
-    h('p', { class: 'tile-sub' }, 'In ' + money(m.in) + ', out ' + money(m.out) + '.'),
+    h('p', { class: 'tile-sub' }, 'In ' + money(m.in) + ', out ' + money(m.out) + '. Lines with no amount are not in these.'),
     // Cash today opens the cash accounts in My numbers: the whole row is the target.
     todayLine ? (cash.path ? h('a', { class: 'go-row plain', href: ledgerHref(cash.path) }, h('span', { class: 'go-name' }, todayLine), h('span', { class: 'go-sub' }, todaySub)) : h('p', { class: 'tile-sub' }, todayLine + '. ' + todaySub)) : null,
     h('p', { class: 'tile-sub' }, cash.when === 'past' ? null : [chip(cash.kind === 'computed' ? 'known' : cash.kind), ' '], cashWords, c.sim && c.sim.floor.amount ? ' Floor on checking: ' + money(c.sim.floor.amount) + '.' : ''),

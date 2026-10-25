@@ -120,10 +120,10 @@ function safeCard(m) {
     s.today === null ? [h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'), gapsCard(m.spine, m.sim)] : [
       gapsCard(m.spine, m.sim),
       h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today), hoursTag(s.today)), h('span', { class: 'muted' }, s.shortfall ? 'short by ' + shortDate(s.shortfall.date) : s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
-      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend: checking runs ' + money(s.shortfall.amount) + ' short by ' + shortDate(s.shortfall.date) + '.') : null,
+      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + '.') : null,
       h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
-        ? ' Set by the lowest day ahead, ' + shortDate(s.low.date) + '. Spending more today takes that day lower.'
-        : ' Cash, less bills due before then, less the floor.', s.setAsideNote ? ' ' + s.setAsideNote : ''),
+        ? ' Set by the lowest day ahead: ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + '. Spending more today takes that day lower.'
+        : ' Cash outside the cushion, less bills due before ' + shortDate(s.through) + ', less the floor.', s.setAsideNote ? ' ' + s.setAsideNote : ''),
       s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See ' + shortDate(s.low.date) + ' on the calendar')) : null,
       mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], m.ctx)]);
 }
@@ -207,7 +207,7 @@ function tagsCard(m) {
         h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left), r.left === null ? null : hoursTag(r.left)),
         h('td', { class: 'num' }, r.pace === null ? '' : money(r.pace)),
         h('td', { class: 'num' }, money(r.lastMonthSameDay))))))),
-    h('p', { class: 'tile-note' }, kindChip(t.kind)),
+    h('p', { class: 'tile-note' }, kindChip(t.kind), ' A line with no amount makes its budget missing, not smaller.'),
     mathButton(t.rows.flatMap(tagMath), m.ctx));
 }
 
@@ -290,7 +290,7 @@ function askCard(m, state) {
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Tell me'))),
     ask && ask.verdict ? [
       h('p', {}, h('span', { class: 'verdict ' + ask.verdict }, ask.verdict === 'yes' ? 'Yes' : ask.verdict === 'tight' ? 'Tight' : 'No')),
-      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' bill' + (ask.shortfalls === 1 ? '' : 's') + ' could not be paid' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
+      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' would dip under the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
       h('p', { class: 'tile-note' }, kindChip(ask.kind)),
       mathButton(['spend:ask'], () => ({ ...m.ctx(), ask }))] : null);
 }
@@ -316,7 +316,7 @@ function checkinCard(m) {
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-labelledby': 'ci-h' },
     h('h2', { id: 'ci-h' }, 'Check in balances'),
-    h('p', { class: 'muted' }, 'Type what each account holds today. The grey number is what we expected.'),
+    h('p', { class: 'muted' }, 'Type what each account holds today. The grey number, when there is one, is what we expected.'),
     h('form', { class: 'checkin-grid', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const balances = {}, forecast = {};
@@ -326,7 +326,7 @@ function checkinCard(m) {
       change((s) => checkIn(s, { date: form.checkDate, balances, forecast }), said.added('Check-in for ' + shortDate(form.checkDate)));
     } },
       h('label', { for: 'ci-date', class: 'edit-label' }, 'On'), date,
-      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ')' : a.cushion ? ' (cushion)' : '')), input]),
+      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save balances'))),
     h('h3', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
     h('h3', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
