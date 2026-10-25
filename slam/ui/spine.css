@@ -641,6 +641,19 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .cut-row { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid var(--border); font-size: var(--text-sm); }
 .cut-row .cut-amt { font-family: var(--font-num); margin-left: auto; }
 .cut-row.dropped .cut-name { text-decoration: line-through; color: var(--text-muted); }
+/* Spending screen by screen (S-230): a slice with lines opens its category, a line opens itself; the swatch is the
+   row's mark. A slice with no lines (saving, left over) is plain text: no border, no chevron. */
+.go-row > .sw, .go-still > .sw { grid-area: mark; width: 14px; height: 14px; }
+.go-still { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "mark name" "mark sub"; align-items: center; gap: 2px var(--space-3); min-height: 56px; padding: var(--space-2) var(--space-3); }
+.slice-list { margin: 0; }
+.line-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }
+.line-list li.dropped .go-name { text-decoration: line-through; color: var(--text-muted); }
+.cell-link { display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--tap); font-weight: 600; }
+.cat-bar { display: grid; gap: var(--space-1); margin: var(--space-2) 0; max-width: 480px; }
+/* A switch button (try without a line, hours of life) shows when it is on. */
+.btn.toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), var(--btn-shadow-press); background: var(--accent-soft); }
+/* A link to a part of the page lands below the tabs on a computer. */
+@media (min-width: 640px) { #log, #import, #checkin { scroll-margin-top: 72px; } }
 /* Check-in: one bordered box per account, the forecast as the placeholder. */
 .checkin-grid { display: grid; gap: var(--space-2); grid-template-columns: 1fr; max-width: 520px; }
 .checkin-grid input { min-height: var(--tap); padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; font-family: var(--font-num); background: var(--surface); color: var(--text); }
