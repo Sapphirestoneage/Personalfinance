@@ -180,7 +180,7 @@ levels or archetypes (links instead).
 | 140 | DRAFTT scorecard with the 35% housing line (L002) | in SLAM | `slam/engine/plan.js` draftt (APP_HOUSING_REF) | F |
 | 141 | Fixed floor: total fixed commitments, what if income stopped (L018) | in SLAM | `slam/engine/plan.js` fixedFloor | F |
 | 142 | Goals with deadline, priority, linked account, sinking-fund flag, FI date cost (F009) | in SLAM | `slam/engine/plan.js` goalsView; `slam/engine/schema.js` goals | F |
-| 143 | Estimated vs actual per line and tag from the Budget log, on the Dashboard (R004) | in SLAM | `slam/engine/compare.js`; `slam/ui/dashboard.js` tile compare; `slam/ui/spending.js` compareCard | E |
+| 143 | Estimated vs actual per line and tag from the Budget log, on Today (R004) | in SLAM | `slam/engine/compare.js`; `slam/ui/dashboard.js` tile compare; `slam/ui/spending.js` compareCard | E |
 
 ## Totals (recounted at FINISH)
 
@@ -306,9 +306,9 @@ Still Budget only or ported with a difference, by question: question 29 (5), que
 | 84 | Source tag on each list row: Logged / Bank / Scheduled / Waiting | ported, with a difference | partial | scheduled, happened, logged and not marked yet; typed and imported are both logged |
 | 85 | 'So far' number for the open month | in SLAM before Batch G | in SLAM |  |
 | 86 | 'Expected by month end' number for the open month | in SLAM before Batch G | partial |  |
-| 87 | Outlook line placements: full line under the budget table, short line on Review | ported in Batch G | in SLAM | Spending and the Dashboard |
-| 88 | 'No pay date yet for <income>' note on the outlook line | ported, with a difference | partial | named on the Spending card; the Dashboard line says missing |
-| 89 | Today screen "Cash, next 30 days" strip card (numbers only, with a + Quick entry button in its header) | ported in Batch G | partial | a Dashboard tile |
+| 87 | Outlook line placements: full line under the budget table, short line on Review | ported in Batch G | in SLAM | Spending and Today |
+| 88 | 'No pay date yet for <income>' note on the outlook line | ported, with a difference | partial | named on the Spending card; the line on Today says missing |
+| 89 | Today screen "Cash, next 30 days" strip card (numbers only, with a + Quick entry button in its header) | ported in Batch G | partial | a Today tile |
 | 90 | Today tile: cash in checking today, which links to the balance check | ported in Batch G | partial | with a check-in link |
 | 91 | Today tile: lowest point in the next 30 days, with its date, linked to the calendar | ported in Batch G | partial | on the tile and the chart |
 | 92 | Today tile: Safe to spend, through a stated date | ported in Batch G | partial | through its date |
@@ -331,19 +331,19 @@ Still Budget only or ported with a difference, by question: question 29 (5), que
 | 109 | A balance check resets the cash projection from that day | same outcome, SLAM design | partial | question 33 |
 | 110 | A balance check becomes part of the account's or debt's dated balance history | same outcome, SLAM design | partial | question 33 |
 | 111 | One cached cash calendar per document version, horizon and day | not a capability | partial | a speed cache, not something a person sees |
-| 112 | Calendar horizon: a fixed 30 days on Today and the waiting card, and 30/60/90 days chosen on Track and shared with Setup's bill what-if | same outcome, SLAM design | partial | the window selector; the Dashboard runs a month and a paycheck |
-| 113 | Today: "Cash, next 30 days" card showing today's checking balance (Today tile) | ported in Batch G | partial | Dashboard tile |
+| 112 | Calendar horizon: a fixed 30 days on Today and the waiting card, and 30/60/90 days chosen on Track and shared with Setup's bill what-if | same outcome, SLAM design | partial | the window selector; Today runs a month and a paycheck |
+| 113 | Today: "Cash, next 30 days" card showing today's checking balance (Today tile) | ported in Batch G | partial | a Today tile |
 | 114 | Today: Lowest point tile (lowest projected checking balance in the next 30 days, with its date) | ported in Batch G | partial | tile and chart |
 | 115 | Today: Safe to spend tile ("through <date>") | ported in Batch G | partial | null with no balance |
 | 116 | Safe to spend "how it was worked out" panel | ported in Batch G | partial | inputs linked |
 | 117 | Today: shortfall warning when nothing is safe to spend | in SLAM before Batch G | in SLAM |  |
 | 118 | Today: plain-language cash reading plus links to the calendar | ported in Batch G | partial | tile and chart |
 | 119 | Today: empty-state prompt to add a checking balance | ported in Batch G | partial | stops at the prompt |
-| 120 | Today: "So far this month" headline tile (replaced Surplus while the month is open) | ported in Batch G | partial | on the Dashboard tile |
+| 120 | Today: "So far this month" headline tile (replaced Surplus while the month is open) | ported in Batch G | partial | on the Today tile |
 | 121 | Today: "Expected by month end" number under the So far tile | ported in Batch G | partial | expected waits on a missing pay date, named |
 | 122 | "So far this month" explain panel | in SLAM before Batch G | in SLAM |  |
 | 123 | "Expected by month end" explain panel | ported in Batch G | partial | one term per item |
-| 124 | Review: short So far / Expected line under the month-end bar | same outcome, SLAM design | partial | Spending and the Dashboard are its homes |
+| 124 | Review: short So far / Expected line under the month-end bar | same outcome, SLAM design | partial | Spending and Today are its homes |
 | 125 | Budget table: long So far / Expected outlook line (Insights, Compared) | in SLAM before Batch G | partial |  |
 | 126 | Loop strip, Track step: "scheduled X of Y confirmed" count | ported in Batch G | partial | happened count |
 | 127 | Month-end checklist item: scheduled items still waiting | ported in Batch G | partial | the waiting card |
@@ -364,6 +364,6 @@ Still Budget only or ported with a difference, by question: question 29 (5), que
 | 142 | Automatic tick-off of scheduled items by matching log or bank entries | still Budget only | partial | ported for paychecks and bills; card and loan payments: question 30 |
 | 143 | Projected schedule of paychecks, bills and debt payments | in SLAM before Batch G | in SLAM |  |
 | 144 | Computed credit-card interest shown on the card's due day | in SLAM before Batch G | in SLAM |  |
-| 145 | Setup cash-flow inputs had a visible effect (due days, paid-from accounts, card pays minimum/statement, cushion) | still Budget only | partial | due days now in the SLAM Ledger (patch); paid-from: question 29; cushion: question 31 |
+| 145 | Setup cash-flow inputs had a visible effect (due days, paid-from accounts, card pays minimum/statement, cushion) | still Budget only | partial | due days now in SLAM's My numbers (patch); paid-from: question 29; cushion: question 31 |
 | 146 | Find-by-name search results for the cash calendar cards | in the retirement patch | missing | the find-by-name entries point at the cards that open SLAM |
 | 147 | Riley example household ("Riley, 31, a year of the monthly loop") carries saved monthly forecasts | in the retirement patch | missing | Riley keeps its saved forecasts while the Budget calendar stays |

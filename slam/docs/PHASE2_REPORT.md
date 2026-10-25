@@ -14,9 +14,9 @@ git fetch origin claude/slam-phase-2 && git checkout claude/slam-phase-2
 cd slam && python3 -m http.server 8000
 ```
 
-then open http://localhost:8000/dashboard.html (it links to the Ledger,
-Calendar, Spending, Plan and Windfall pages). On a phone on the same network,
-use the computer's address instead of localhost.
+then open http://localhost:8000/dashboard.html (Today; its tabs open Session,
+My numbers, Calendar, Spending and Plan). On a phone on the same network, use
+the computer's address instead of localhost.
 
 ## Where it stands
 
@@ -29,7 +29,7 @@ Known differences, each with its answer.
 
 ## What was built
 
-Before the batches (S-199 to S-201): income dates and the pay day in the Ledger,
+Before the batches (S-199 to S-201): income dates and the pay day in My numbers,
 the first cash flow calendar, the Windfall room, links between the pages.
 
 | Batch | Decision | What it added |
@@ -39,7 +39,7 @@ the first cash flow calendar, the Windfall room, links between the pages.
 | B | S-204 | The calendar's views: month, weeks, next 14 days, paychecks with the gross fold-out, the year; drag or Move, skip, re-price, lock; the maybe tray; search; milestones; the time selector |
 | C | S-205 | The Debt tab: clear dates, the payoff timeline, interest by month, why a card is stuck, the target solver, the minimum-payment trap, utilization, balance transfer, which card, signup bonus |
 | D | S-206 | The Spending page: the five-second logger, budgets by tag with pace, safe to spend, burn tiers, the cut simulator, bill autopsy, can I spend this, check-ins with drift, the sweep |
-| E | S-207 | The feed: a statement or the Budget's log becomes proposals applied once; estimated vs actual per line and tag; a Dashboard tile |
+| E | S-207 | The feed: a statement or the Budget's log becomes proposals applied once; estimated vs actual per line and tag; a Today tile |
 | F | S-208 | The Plan page: the windfall order with the match, SE tax and the Roth cap; the ladder; the allocator; the solvers; the hourly wage; DRAFTT; goals; scenarios; the one-pager |
 | G | S-209 | What the Budget calendar did, in SLAM (below); the retirement held |
 
@@ -62,7 +62,7 @@ Batch G in more detail, all on the SLAM pages:
   one tap each way; Back to its day; Redo; "3 of 6 marked happened".
 - **By date**: every movement with what checking holds after it, and where it
   came from (scheduled, happened, logged).
-- **So far and expected by month end** on Spending and the Dashboard.
+- **So far and expected by month end** on Spending and Today.
 - Smaller: pay-later readings, bill timing with Save the new due day, card
   interest on its day, yearly bills once a year, a paycheck or debt with no
   amount named, every checking account in the line, paychecks into their own
@@ -141,9 +141,9 @@ Your profile (`fixtures/eli.local.json`), golden values and sign-off notes were
 not in this environment and were never created here. With the file in place:
 
 1. **Golden tests**: `node --test` in `slam/` should still report every local
-   golden value passing (nothing in Phase 2 changes a Dashboard number; the demo
+   golden value passing (nothing in Phase 2 changes a number on Today; the demo
    fixture only gained pay days).
-2. **Ledger, Income**: each stream's row should read right. The 2026-only W-2
+2. **My numbers, Income**: each stream's row should read right. The 2026-only W-2
    line (cadence total) reads "from ... to ..."; weekly unemployment reads
    "a week, since <start>". If the stream's `start` is the claim date rather
    than the first payment date, the calendar's pay dates will be off by that
@@ -152,7 +152,7 @@ not in this environment and were never created here. With the file in place:
    (a house-default 1st reads rough), the two 0% promos' switch dates, the
    subscription charge days, the 1099 contract at its likelihood, and the 2026
    return in April 2027 with the balance due you expect. The month-end cash
-   should match the Dashboard's projection for the same month.
+   should match Today's projection for the same month.
 4. **Windfall**: run it with an amount you have in mind, both tax answers. Check
    the marginal rate on the tax step (it is rough while the W-2 numbers are
    rough), the 2026 balance due less your set-aside, which promo balances it
@@ -161,7 +161,7 @@ not in this environment and were never created here. With the file in place:
    in the contributions list counts as "put in for 2026" (if that entry is the
    plan rather than what is in, the room is overstated), and the phase-out
    against 2026 AGI.
-5. **SIGNOFF.local.md**: Phase 2 changes no Phase 1 number. The Ledger's
+5. **SIGNOFF.local.md**: Phase 2 changes no Phase 1 number. My numbers'
    "paid from" rows on the demo now read "Checking, on the 1st" where a day was
    added; your own file has no pay days until you enter them.
 

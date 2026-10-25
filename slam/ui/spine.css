@@ -661,6 +661,8 @@ details.later-list, details.flow-list { min-width: 0; max-width: 100%; overflow-
 .onepager .op-cell { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
 .onepager .op-cell .op-v { font-family: var(--font-num); font-weight: 700; font-size: var(--text-lg); display: block; }
 .onepager .op-cell .op-k { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.onepager .op-cell .op-k, .onepager .op-cell .tile-note { display: block; }
+@media print { .onepager .chev { display: none; } }
 @media print { .page-links, .top-actions, .btn, .skip, .build-stamp, .saved-line, .math, .window-bar, .whose-load { display: none !important; } body { background: #fff; color: #000; } .card, .op-cell { break-inside: avoid; border-color: #999; } }
 
 /* Cash by day (S-209): thin lines, a wash for days under the floor, labels in the gutters. */

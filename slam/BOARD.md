@@ -5,7 +5,7 @@
 - [x] Rules registry: `data/rules-2026.json` (115 rules), `engine/rules.js` `get(id, year)`, a test that every rule id in code exists
 - [x] Account shells and the spine schema: ten families, Account Rules presets, the validator; both fixtures validate
 - [x] Engines with unit tests: cashflow, tax (federal, FICA, SE, unemployment, gains stacking, conversions, NY), projection (24 months, then yearly to life expectancy), FI (number, percent, years, Lean, Coast, implied), debt (avalanche, snowball, stress; payoff dates and interest; promo deadlines), emergency (Rule of 5, runway tiers, Roth backstop), flags
-- [x] Ledger: DAITE groups, kind chips, edit / confirm / not for me, undo and redo, the still-guessing list
+- [x] Ledger (now My numbers): groups (now the six DATING sections), kind chips, edit / confirm / not for me, undo and redo, the still-guessing list
 - [x] Dashboard: net worth, runway and backstop, surplus, savings rate, cards and promo deadline, FI, tax balance due, flags; every number links to its Ledger fields
 - [x] Golden tests: Eli (local only) and the demo household
 - [x] Docs: README section, CONTRACTS.md, DECISIONS.md S-140 to S-155, QUESTIONS.md

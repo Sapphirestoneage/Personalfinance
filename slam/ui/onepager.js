@@ -1,8 +1,10 @@
 // The printable one-pager (S-208): the household on one page, from the same
 // summary and run every other page reads. Print it from the browser. It opens
-// from the One-pager button on Today, and its Back returns there (S-230).
+// from the One-pager button on Today, and its Back returns there (S-230). A card
+// with more behind it (Debt, the next rung, Spending) is the target as a whole,
+// with a chevron, and opens where that detail lives; the rest is plain text.
 
-import { startPage } from './shell.js';
+import { startPage, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { clearDates } from '../engine/debtview.js';
@@ -16,6 +18,9 @@ import { h, money, pct, shortDate } from './view.js';
 
 const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 const m = (x) => (x === null || x === undefined ? 'missing' : money(x));
+// A card that opens where its detail lives: the whole card is the target, with a chevron (CLAUDE.md affordance 5).
+const goCard = (title, href, ...body) => h('section', { class: 'card has-target' },
+  h('h2', {}, h('a', { class: 'card-link', href }, h('span', {}, title), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A'))), ...body);
 
 function render({ spine: base, rules }) {
   const spine = withScenario(base, rules, pickedScenario());
@@ -34,9 +39,9 @@ function render({ spine: base, rules }) {
         cell('Safe to spend today', m(safe.today), safe.daysUntil ? m(safe.perDay) + ' a day until ' + shortDate(safe.nextIncome) : ''),
         cell('Cards', m(sh.cards.value), s.debt.utilization.personal.value === null ? '' : 'personal utilization ' + pct(s.debt.utilization.personal.value, 1))),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),
-      h('section', { class: 'card' }, h('h2', {}, 'Debt'), h('ul', {}, cd.rows.map((r) => h('li', {}, r.label + ': ' + (r.date ? shortDate(r.date) : 'not inside the next three months'))), h('li', {}, 'Payoff order: ' + s.debt.avalancheCardsDetail.map((x) => x.name).join(', ')))),
-      h('section', { class: 'card' }, h('h2', {}, 'The next rung'), foo.current ? h('p', {}, foo.rungs.find((r) => r.id === foo.current).label + ': ' + foo.rungs.find((r) => r.id === foo.current).why) : h('p', {}, foo.rungs.every((r) => r.done) ? 'Every rung is done.' : 'The ladder needs a few answers on the Plan page.'), h('p', { class: 'tile-note' }, 'Rungs done: ' + foo.rungs.filter((r) => r.done).map((r) => r.label).join(', '))),
-      h('section', { class: 'card' }, h('h2', {}, 'Spending a month'), h('ul', {}, cf.expenses.items.filter((i) => !i.covered && i.amount).sort((a, b) => b.amount - a.amount).slice(0, 8).map((i) => h('li', {}, i.label + ': ' + money(i.amount)))), h('p', { class: 'tile-note' }, 'The eight biggest lines. Everything else is in the Ledger.')),
+      goCard('Debt', numbersHref('debt'), h('ul', {}, cd.rows.map((r) => h('li', {}, r.label + ': ' + (r.date ? shortDate(r.date) : 'not inside the next three months'))), h('li', {}, 'Payoff order: ' + s.debt.avalancheCardsDetail.map((x) => x.name).join(', ')))),
+      goCard('The next rung', 'plan.html', foo.current ? h('p', {}, foo.rungs.find((r) => r.id === foo.current).label + ': ' + foo.rungs.find((r) => r.id === foo.current).why) : h('p', {}, foo.rungs.every((r) => r.done) ? 'Every rung is done.' : 'The ladder needs a few answers on the Plan page.'), h('p', { class: 'tile-note' }, 'Rungs done: ' + foo.rungs.filter((r) => r.done).map((r) => r.label).join(', '))),
+      goCard('Spending a month', numbersHref('needs'), h('ul', {}, cf.expenses.items.filter((i) => !i.covered && i.amount).sort((a, b) => b.amount - a.amount).slice(0, 8).map((i) => h('li', {}, i.label + ': ' + money(i.amount)))), h('p', { class: 'tile-note' }, 'The eight biggest. All of them are in My numbers, under Needs.')),
       h('p', { class: 'tile-note' }, 'Every number here is on Today, the Calendar, the Spending page or the Plan page with Show the math.'));
 }
 
