@@ -1,12 +1,16 @@
-// The Ledger as a tree (S-169): DAITE group > section > (institution) > item >
+// My numbers as a tree (S-169): DATING section > group > (institution) > item >
 // fields, so a card's facts sit together under its issuer under "Credit
 // cards", and a Roth IRA's under "IRA > Roth IRA". Built from ledgerRows, so a
 // field shows exactly once. Each node says what can be added there.
+// DATING (S-231): D Debt, A Assets, T Taxes, I Income, N Needs, G Goals. Needs holds every expense (the stored key
+// stays expenses), each tagged need or want; Goals holds the goals and the assumptions.
+// numbersScreens, screenAt and levelsFor give My numbers its screens: a section (debt), a group in it
+// (credit-cards), an item (visa), each its own address (ledger.html#/debt/credit-cards/visa).
 
 import { valueOf } from './spine.js';
 import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked } from './schema.js';
 import { setAsideFor, setAsideWords } from './networth.js';
-import { ledgerRows } from './ledger.js';
+import { ledgerRows, rowPathFor } from './ledger.js';
 import { UNNAMED } from './labels.js';
 
 const v = valueOf;
@@ -26,9 +30,12 @@ export function institutionOf(item, inst) {
 const short = (label) => (label.includes(': ') ? label.slice(label.indexOf(': ') + 2) : label);
 const capital = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// How many of each kind; filled: entered (known, rough or worked out); asked: all but the not-for-me ones.
 function counts(rows) {
   const c = { missing: 0, rough: 0, known: 0, notForMe: 0, computed: 0 };
   for (const r of rows) c[r.fact.kind] = (c[r.fact.kind] || 0) + 1;
+  c.filled = c.known + c.rough + c.computed;
+  c.asked = rows.length - c.notForMe;
   return c;
 }
 
@@ -96,27 +103,99 @@ export function ledgerTree(spine, inst) {
   // Expenses: FAT tag > each expense (one row each); health coverage
   const expSections = [...FAT, 'other'].map((tag) => {
     const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag);
-    return list.length ? node('E:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, single: false, summary: 'expenses.' + e.id + '.amount' }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
+    return list.length ? node('N:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
   }).filter(Boolean);
   const health = take(byPrefix('household.healthCoverage'));
-  if (health.length) expSections.push(node('E:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
+  if (health.length) expSections.push(node('N:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
 
   // Goals and assumptions
   const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label || UNNAMED, r, { collection: 'goals', id: g.id }); });
-  const gSections = [node('G:goals', 'Goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } }), node('G:assumptions', 'Assumptions', [item('assumptions', 'Assumptions', take(byPrefix('assumptions')))])];
+  const gSections = [node('G:goals', 'Your goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } }), node('G:assumptions', 'Assumptions', [item('assumptions', 'Assumptions', take(byPrefix('assumptions')))])];
   const plan = take(byPrefix('debtPlan'));
   if (plan.length) gSections.push(node('G:debtPlan', 'Debt plan', [item('debtPlan', 'The extra at the debt', plan)]));
 
   // Anything not placed above still shows (nothing is ever hidden by the tree).
   const rest = rows.filter((r) => !used.has(r.path));
+  // DATING order: Debt, Assets, Taxes, Income, Needs, Goals (S-231). slug: the section's address in My numbers; letter:
+  // its DATING letter.
   const tree = [
-    node('D', 'Debt', debtSections, { add: { collection: 'debts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family === 'debt') } }),
-    node('A', 'Assets', assetSections, { add: { collection: 'accounts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family !== 'debt') } }),
-    node('I', 'Income', incomeSections, { add: { collection: 'income', types: INCOME_TYPES } }),
-    node('T', 'Taxes', taxSections),
-    node('E', 'Expenses', expSections, { add: { collection: 'expenses', fat: null } }),
-    node('G', 'Goals and assumptions', gSections)
+    node('D', 'Debt', debtSections, { slug: 'debt', letter: 'D', add: { collection: 'debts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family === 'debt') } }),
+    node('A', 'Assets', assetSections, { slug: 'assets', letter: 'A', add: { collection: 'accounts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family !== 'debt') } }),
+    node('T', 'Taxes', taxSections, { slug: 'taxes', letter: 'T' }),
+    node('I', 'Income', incomeSections, { slug: 'income', letter: 'I', add: { collection: 'income', types: INCOME_TYPES } }),
+    node('N', 'Needs', expSections, { slug: 'needs', letter: 'N', add: { collection: 'expenses', fat: null } }),
+    node('G', 'Goals', gSections, { slug: 'goals', letter: 'G' })
   ];
-  if (rest.length) tree.push(node('X', 'Other fields', [item('other', 'Other fields', rest)]));
+  if (rest.length) tree.push(node('X', 'Other', [item('other', 'Other', rest)], { slug: 'other' }));
   return tree;
+}
+
+// ------------------------------------------------------------------ screen by screen (S-231)
+export const slugOf = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+// Addresses that stay apart within one list: a second "Other" is other-2.
+function uniqueSlugs(list, slugFor) {
+  const seen = new Set();
+  return list.map((x) => { const s = slugFor(x); let k = s, n = 2; while (seen.has(k)) k = s + '-' + n++; seen.add(k); return k; });
+}
+const itemsUnder = (n) => (n.item ? [n] : n.children.flatMap(itemsUnder));
+// An item's address: its id (stable when it is renamed), else its own words.
+const itemSlug = (it) => it.id || (/^(withholding|taxYears)\./.test(it.key) ? slugOf(it.key.split('.')[1]) : slugOf(it.label));
+
+// The screens of My numbers, from ledgerTree: each section's groups, each group's items in order with the sub-group
+// they sit in (an issuer, an account type) as a heading. A group of one item with nothing to add opens that item
+// straight away (Filing, Assumptions). rowLevels and itemLevels: where each field and each item opens.
+export function numbersScreens(tree) {
+  const rowLevels = new Map(), itemLevels = new Map();
+  for (const sec of tree) {
+    const slugs = uniqueSlugs(sec.children, (c) => slugOf(c.label));
+    sec.groups = sec.children.map((c, i) => {
+      const parts = [];
+      if (!c.item) {
+        for (const ch of c.children) {
+          const last = parts[parts.length - 1];
+          if (!ch.item) parts.push({ heading: ch.label, node: ch, items: itemsUnder(ch) });
+          else if (last && !last.node) last.items.push(ch);
+          else parts.push({ heading: null, node: null, items: [ch] });
+        }
+      }
+      const items = c.item ? [c] : parts.flatMap((p) => p.items);
+      const only = c.item ? c : !c.add && c.children.length === 1 && c.children[0].item ? c.children[0] : null;
+      return { slug: slugs[i], label: c.label, node: c, counts: c.counts, item: only, parts, items, slugs: uniqueSlugs(items, itemSlug) };
+    });
+    for (const g of sec.groups) g.items.forEach((it, k) => {
+      const levels = g.item ? [sec.slug, g.slug] : [sec.slug, g.slug, g.slugs[k]];
+      itemLevels.set(it.key, levels);
+      for (const r of it.rows) rowLevels.set(r.path, levels);
+    });
+  }
+  return { sections: tree, rowLevels, itemLevels };
+}
+
+// The screen at these levels: {} for the top, { section }, { section, group, item } (item null on a group's own
+// screen); null when a level is not there (deleted, renamed away, or a bad link).
+export function screenAt(screens, levels) {
+  if (!levels.length) return {};
+  if (levels.length > 3) return null;
+  const section = screens.sections.find((x) => x.slug === levels[0]);
+  if (!section) return null;
+  if (levels.length === 1) return { section };
+  const group = section.groups.find((x) => x.slug === levels[1]);
+  if (!group) return null;
+  if (levels.length === 2) return { section, group, item: group.item };
+  if (group.item) return null;
+  const k = group.slugs.indexOf(levels[2]);
+  return k < 0 ? null : { section, group, item: group.items[k] };
+}
+
+// Where a link opens (an old ledger.html#<field> link, a field named by another page, an item, or a whole list):
+// { levels, row }, row the field to open there, or null.
+const LIST_SECTION = { debts: 'debt', accounts: 'assets', taxYears: 'taxes', income: 'income', expenses: 'needs', goals: 'goals', assumptions: 'goals', debtPlan: 'goals' };
+export function levelsFor(screens, spine, path) {
+  const p = String(path || '');
+  const row = p ? rowPathFor(spine, p) : p;
+  if (screens.rowLevels.has(row)) return { levels: screens.rowLevels.get(row), row };
+  const own = screens.itemLevels.get(p) || screens.itemLevels.get(p.split('.').slice(0, 2).join('.'));
+  if (own) return { levels: own, row: null };
+  const sec = LIST_SECTION[p.split('.')[0]];
+  return { levels: sec && screens.sections.some((x) => x.slug === sec) ? [sec] : [], row: null };
 }

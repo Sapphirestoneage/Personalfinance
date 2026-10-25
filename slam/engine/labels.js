@@ -1,4 +1,4 @@
-// Plain words for a spine path, and the DAITE group it belongs to.
+// Plain words for a spine path, and the DATING group it belongs to.
 // Used by flags (to name a missing field) and by the Ledger.
 
 import { getAt, valueOf } from './spine.js';
@@ -18,7 +18,7 @@ const FIELD = {
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
   paidFrom: 'paid from', paysDebt: 'the debt it pays', payDay: 'day paid', payDay2: 'second day paid', personId: 'whose pay', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',
-  need: 'a need (not a want)', covered: 'paid by someone else', everydayCard: 'everyday card (paid in full, held flat)', payLast: 'paid last',
+  need: 'need or want', covered: 'paid by someone else', everydayCard: 'everyday card (paid in full, held flat)', payLast: 'paid last',
   trialEnds: 'free trial ends', workHoursPerWeek: 'hours worked a week', workRelated: 'a cost of working', deductible: 'biggest insurance deductible', commuteHoursPerWeek: 'commute hours a week',
   matchRate: 'employer match (share of what you put in)', matchCap: 'match up to (share of gross)',
   priority: 'priority (1 first)', linkedAccount: 'the account it lives in', sinkingFund: 'a sinking fund', monthly: 'set aside a month', spendOn: 'spent on', repeatYearly: 'repeats every year',
@@ -88,10 +88,11 @@ export function labelFor(spine, path) {
   }
 }
 
-// DAITE: Debt, Assets, Income, Taxes, Expenses, then goals and assumptions.
+// DATING (S-231): Debt, Assets, Taxes, Income, Needs (every expense; the id stays E, as the stored key stays
+// expenses), then Goals with the assumptions.
 export const GROUPS = [
-  { id: 'D', label: 'Debt' }, { id: 'A', label: 'Assets' }, { id: 'I', label: 'Income' }, { id: 'T', label: 'Taxes' },
-  { id: 'E', label: 'Expenses' }, { id: 'G', label: 'Goals and assumptions' }
+  { id: 'D', label: 'Debt' }, { id: 'A', label: 'Assets' }, { id: 'T', label: 'Taxes' }, { id: 'I', label: 'Income' },
+  { id: 'E', label: 'Needs' }, { id: 'G', label: 'Goals' }
 ];
 
 export function groupFor(path) {

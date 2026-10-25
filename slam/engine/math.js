@@ -635,12 +635,12 @@ export function explainMetric(id, ctx) {
   if (!m) return null;
   const e = m.explain(ctx);
   const terms = e.terms;
-  // Inputs grouped by DAITE with signed subtotals (computed numbers in their own group).
+  // Inputs grouped by DATING with signed subtotals (numbers worked out from others in their own group).
   const groups = [...GROUPS.map((g) => g.id), null].map((g) => {
     const list = terms.filter((t) => t.group === g);
     if (!list.length) return null;
     const subtotal = m.op === 'sum' && list.every((t) => t.value !== null) ? Math.round(list.reduce((a, t) => a + (t.role === 'minus' ? -1 : 1) * t.value, 0) * 100) / 100 : null;
-    return { group: g, label: g ? GROUPS.find((x) => x.id === g).label : 'Computed numbers', terms: list, subtotal };
+    return { group: g, label: g ? GROUPS.find((x) => x.id === g).label : 'Worked out from your other numbers', terms: list, subtotal };
   }).filter(Boolean);
   const roughBecause = [...new Set([...terms.filter((t) => t.kind === 'rough').map((t) => t.label), ...(e.rough || []).map((p) => labelFor(ctx.spine, p))])];
   const missingBecause = [...new Set([...terms.filter((t) => t.kind === 'missing' || t.kind === 'incomplete').map((t) => t.label), ...(e.missing || []).map((p) => labelFor(ctx.spine, p))])];

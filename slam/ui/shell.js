@@ -123,6 +123,9 @@ export function refresh() { if (opts && (hist || !opts.household)) draw(); }
 export function say(text, undoFn = null) { bar(end(text), undoFn ? 'Undo' : null, undoFn ? () => { undoFn(); bar('Undone: ' + end(text), null); } : null); }
 // The household, the rules and where the household came from, for a handler outside render.
 export const current = () => ({ spine: hist ? hist.present : undefined, rules, source, institutions });
+// Open a different household the page read itself (what loadAll or loadMyFile returns): a fresh history, as Load my
+// file gives; the bar says text when there is one.
+export function reopen(loaded, text) { take({ rules, institutions, ...loaded }); draw(); if (text) say(text); }
 
 // ---------------------------------------------------------------- the tab bar, the trail, the header, the bar
 export function tabBar(lit) {
@@ -204,6 +207,8 @@ function take(loaded) {
 }
 
 function draw() {
+  // Still loading the household (a back or a level link tapped meanwhile): arrive() draws the screen the address names.
+  if (opts.household && !hist) return;
   const levels = levelsNow();
   const ctx = context(levels);
   const names = levels.map((_, i) => nameOf(levels.slice(0, i + 1), ctx));

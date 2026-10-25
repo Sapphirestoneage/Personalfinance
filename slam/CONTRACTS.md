@@ -187,7 +187,7 @@ All pure: spine and rules in, plain objects out. `asOf` defaults to `spine.meta.
 | summary | `summarize(spine, rules, { asOf, flags })`, `incomeCliff(spine, rules, asOf)`, `sessionSteps(spine, summary)` and `SESSION_ORDER` (S-230: Needs, Debt, Income, Assets, Goals, each `{ id, letter, label, result }`; goals is the sum of goal amounts, the FI goal left out, with `count`) | `{ asOf, ym, cashflow, sheet, cliff, debt: { utilization, creditScore, promo, avalanche, avalancheCards, avalancheCardsDetail }, emergency, fi, tax, subs, flags }`; `payoffOrders(spine, rules, summary)` |
 | labels | `labelFor(spine, path)`, `groupFor(path)`, `GROUPS`, `namedPath(path)`, `unnamedLabel(path)` | words for a field; its DAITE group. `labelFor` never throws: a path that does not name one field (a bare `income`, a missing id) reads `unnamedLabel(path)`, and the self-audit fails on any engine that emits one (S-210) |
 | ledger | `ledgerRows(spine)`, `stillGuessing(spine, rules)`, `stillGuessingSteps(spine, rules)` (a generator, for slices), `paymentRow(spine, expense)`, `linkOptions(spine, type)`, `linkName(spine, id)`, `typeFor(spine, path)`, `cardRateRow(spine, card)`, `expenseRow(spine, expense)`, `incomeRow(spine, stream)`, `previewCost(amount, cadence, shared, people, share)`, `rowPathFor(spine, path)`, `hasIntro(card)` | rows by group; a card's APR, intro rate and intro end are one `cardRate` row; an expense's amount, how often, sharing and cover are one `expense` row; an income stream's amount, how often, dates and pay day are one `income` row (S-199); `{ swing, items: [{ path, label, kind, group, blocks, score, moves }] }` |
-| ledger-tree | `ledgerTree(spine, institutions)`, `institutionOf(item, institutions)` | DAITE group > section > (institution) > item > rows; each node `{ key, label, children or rows, counts, add }`; every field once |
+| ledger-tree | `ledgerTree(spine, institutions)`, `institutionOf(item, institutions)`, `numbersScreens(tree)`, `screenAt(screens, levels)`, `levelsFor(screens, spine, path)` | DATING section (D Debt, A Assets, T Taxes, I Income, N Needs, G Goals; each with its `slug` and `letter`) > group > (institution or account type) > item > rows; each node `{ key, label, children or rows, counts, add }`; every field once; Needs holds the expenses (an item's `need` is its Need or Want tag). `numbersScreens` gives My numbers its screens (a section's `groups`, a group's `items` with `parts` under headings, `rowLevels` and `itemLevels`); `screenAt` is null for a level that is not there; `levelsFor` is where a field, an item or a list opens, and the row to open there (S-231) |
 | edits | `parseInput(type, text)`, `inputText(type, value)`, `editFact(spine, path, 'set'\|'confirm'\|'notForMe'\|'clear', { value, kind, today })`, `putFact(spine, path, value, kind, today)`, `addContribution(spine, accountId, { year, amount, kind }, today)` (one entry on the account's contributions by year, S-211), `recordContribution(spine, accountId, { year, amount, kind }, today)` (a contribution or employer total replaces the year's entries of that part and is `through` the as-of date, S-214; a rollover, conversion or from529 is added; `TOTAL_KINDS`), `parseCardRate(...)`, `editCardRate(spine, cardId, 'set'\|'confirm'\|'notForMe', { value, kind, today })`, `editExpense(spine, id, { amount, cadence, sharing, coveredBy, kind, label, subscription, start, end }, today)`, `editIncome(spine, id, { amount, cadence, start, end, payDay, payDay2, personId, kind, label }, today)` (`personId`, whose pay it is, S-211; `payDay2`, twice a month the second day, S-226), `editPayment(spine, id, { from, day, paysDebt, kind }, today)` (`paysDebt`, the debt the line pays, S-226), `duplicateItem(spine, collection, id, today, name)`, `setSectionSharing(spine, tag, { shared, sharedWith, yourShare, whoPays }, today)`, `addItem(spine, { collection, type, label, cadence, fat }, today)`, `removeItem(spine, collection, id)`, `moveOccurrence(spine, key, date)` (refuses a locked key; the original date clears the move), `skipOccurrence(spine, key, skip)`, `repriceOccurrence(spine, key, amount\|null)`, `lockOccurrence(spine, key, on)`, `addMaybe(spine, { label, amount, likelihood, direction, date })` → `{ spine, id }`, `setMaybeDate(spine, id, date\|null)`, `removeMaybe(spine, id)` (S-204; `key` is `sourceId\|YYYY-MM-DD`), `bulkEdit(spine, rows, 'confirm'\|'rough'\|'notForMe', today)`, `createHistory`, `commit`, `undo`, `redo` | a new spine (`addItem` returns `{ spine, id, firstPath }`); a new history |
 
 ## Views
@@ -249,7 +249,10 @@ change((s) => removeItem(s, 'expenses', 'gym'), said.deleted('Gym'));
   `ctx.state` (or `kept()`) gives it back on the next render.
 - `refresh()` redraws (a resize); `say(words, undoFn)` puts a message in the
   bar, with Undo when `undoFn` is given (for something outside the household,
-  like a rule); `current()` is `{ spine, rules, source, institutions }`.
+  like a rule); `current()` is `{ spine, rules, source, institutions }`;
+  `reopen(loaded, words)` opens a different household the page read itself
+  (what `loadAll` or `loadMyFile` returns) with a fresh history, as Load my
+  file does (My numbers' Load profile file and Go back to the file).
 - My numbers sections: `needs`, `debt`, `assets`, `taxes`, `income`, `goals`
   (`SECTIONS`; `numbersHref('debt', 'credit-cards')` is
   `ledger.html#/debt/credit-cards`). Session links to the first five.
@@ -262,4 +265,15 @@ instead of `app.replaceChildren`, and keep anything open across Back with
 `keep`. Keep old `#<field path>` links working (Today's cards and Show the
 math link fields that way). A page with a time picker or filter keeps it in
 `keep` as well as wherever it keeps it now. Today (`ui/dashboard.js`), Session,
-the Builder, Rules, All formulas and the One-pager are on the shell.
+the Builder, Rules, All formulas, the One-pager and My numbers are on the shell.
+
+My numbers (`ui/ledger.js`, S-231): the top screen lists the six DATING
+sections with one total each (`sessionSteps`, else how much is filled in),
+Still guessing (`#/still-guessing`), and the search and filters, whose finds
+show under them, one row each. A section lists its groups, a group its items
+(with their headline value, the Need or Want tag in Needs and the rough and
+missing counts), an item its rows; a row opens its editor in place, one at a
+time, kept with `keep({ open })`. Subscriptions sit under Needs
+(`#/needs/subscriptions`), Pick what you have is `#/pick`. An old
+`ledger.html#<field path>` or `#max:<account>` link opens the item's screen
+with that row (or the max panel) open. Delete never asks; the bar offers Undo.

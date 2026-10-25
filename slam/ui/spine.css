@@ -163,6 +163,14 @@ button.dot { border: 1px solid currentColor; font: inherit; font-size: var(--tex
 @media (min-width: 640px) { .row-pick { grid-template-columns: auto 1fr minmax(120px, auto) 92px; grid-template-areas: "box label value chip"; } }
 .bulk-bar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-3); background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius-md); box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15); }
 .bulk-count { font-weight: 700; margin-right: var(--space-2); }
+/* My numbers, screen by screen (S-231): a heading over the items it holds (an issuer, an account type), a found row
+   that opens its own screen, and the bars kept above the tabs on a phone. */
+.part-h { margin: var(--space-4) 0 var(--space-2); font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); }
+a.row-main { text-decoration: none; }
+.row-main.row-pick { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "box label chip" "box value value"; }
+.row-main.row-pick::after { content: none; }
+@media (min-width: 640px) { .row-main.row-pick { grid-template-columns: auto minmax(0, 1fr) minmax(120px, auto) 92px; grid-template-areas: "box label value chip"; } }
+@media (max-width: 639px) { body.has-tabs .bulk-bar, body.has-tabs .pick-actions { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); } }
 
 /* The expense panel (S-175, S-176). */
 .edit-title { margin: 0; font-weight: 700; }

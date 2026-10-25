@@ -1,95 +1,94 @@
-// The Ledger: every field, grouped by DAITE and then by kind, institution and
-// account (S-169); tap one to edit it, confirm it, or mark it not for me; add
-// and remove accounts, debts, income, expenses and goals; select several to
-// confirm or mark them at once. Every edit can be undone. The list at the top is
-// every rough and missing field, ordered by how much it changes the results.
+// My numbers (S-169, S-231): every answer the household has given, screen by screen in DATING order (D Debt, A Assets,
+// T Taxes, I Income, N Needs, G Goals). The top lists the six sections, each with one total; a section opens its
+// groups (Credit cards), a group its items (Amex Blue), an item its rows, and a row its editor in place. Each level is
+// its own screen and history entry (the shell, ui/shell.js): Back, the trail and the browser's back go up one level,
+// and coming back restores the scroll, the open row, the search and the filter. Every change goes through the
+// shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
+// come from engine/ledger-tree.js, the totals from engine/summary.js.
 
-import { mountPage, whoseLine } from './page.js';
-import { ledgerRows, stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
+import { startPage, change, said, go, keep, kept, refresh, say, current, reopen } from './shell.js';
+import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { maxItPanel } from './maxit-panel.js';
 import { canMaxIt } from '../engine/maxit.js';
-import { summarize } from '../engine/summary.js';
+import { summarize, sessionSteps } from '../engine/summary.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
 import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
-import { ledgerTree } from '../engine/ledger-tree.js';
-import { PRESETS, INCOME_TYPES, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
+import { ledgerTree, numbersScreens, screenAt, levelsFor } from '../engine/ledger-tree.js';
+import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
-import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit, createHistory, commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
-import { applyDefaults, isPhone } from '../engine/defaults.js';
+import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
+import { isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
-import { loadAll, save, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate, PAY_POLICY_WORDS } from './view.js';
+import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
+import { h, chip, showValue, money, words, shortDate } from './view.js';
 
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
+// What each section's one total means, in a client's words (the totals come from engine/summary.js sessionSteps).
+const TOTAL_WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' in what you own', goals: ' in goals' };
 
-let rules, hist, source, inst, open = null, showAll = false, guess = null;
-// The tree (S-169): which items are open, which add form is open, and select mode.
-let openItems = new Set(), adding = null, selecting = false, selected = new Set();
-// Accounts whose "How much to max it?" panel is open (S-211). It holds no inputs, so it survives every redraw.
-let maxOpen = new Set();
-// dirty: something was typed in the open editor and not saved yet (S-164).
-// lastSaved: the line under the header that says what was just saved.
-let dirty = false, lastSaved = null;
+// What the page holds between draws. rules, inst and source follow the shell (current()); the rest is this page's.
+let rules = null, inst = null, source = null, screenKey = null, based = false;
+// The open editor is built once while it is open (LIVE-FORM: built once), so a redraw never drops what is typed in it.
+// dirty: something was typed there and not saved yet (S-164).
+let dirty = false, edCache = null;
+// What is open on this screen and is not worth a history entry: an add form, the section's sharing form.
+let adding = null, sharingOpen = null;
+// Select several: the picked rows, kept while moving between screens so one action can cover them all.
+let selecting = false, selected = new Set();
+// Pick what you have: the ticked starters.
+let picking = null;
+// A link waiting to land: { key, patch, scroll, block } (the screen, what to keep there, what to scroll to).
+let pending = null;
+const cur = () => current().spine;
 // Today in the person's own time zone, not UTC (an evening edit is today's).
 const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-const app = document.getElementById('app');
-mountPage({ app });
 
-function apply(next, label, shown = null) {
-  // House defaults (a card's default APR) refill any blank after every edit.
-  hist = commit(hist, applyDefaults(next, rules), label);
-  const ok = save(hist.present);
-  if (ok) source = 'saved';
-  dirty = false;
-  lastSaved = ok ? 'Saved in this browser: ' + label + (shown ? ' is ' + shown : '') + '.' : 'Could not save in this browser (storage is blocked), so this edit lasts only until the page closes.';
-  render();
-  refreshGuess();
+// The screens, built once per version of the household.
+let scMemo = { spine: null, inst: null, sc: null };
+function screensOf(spine) {
+  if (scMemo.spine !== spine || scMemo.inst !== inst) scMemo = { spine, inst, sc: numbersScreens(ledgerTree(spine, inst || { names: [], aliases: {} })) };
+  return scMemo.sc;
+}
+// The household's numbers, figured once per version (the section totals and the subscriptions read them).
+let sumMemo = { spine: null, s: null };
+function summaryOf(spine) {
+  if (sumMemo.spine !== spine) sumMemo = { spine, s: summarize(spine, rules, { flags: false }) };
+  return sumMemo.s;
 }
 
-function step(fn, verb) {
-  const before = hist;
-  hist = fn(hist);
-  if (hist !== before) { if (save(hist.present)) source = 'saved'; dirty = false; lastSaved = verb; render(); refreshGuess(); }
+const hashFor = (levels) => '#/' + levels.map(encodeURIComponent).join('/');
+// Open a field (or an item, or a whole list) on its own screen, with the field's editor open.
+function openField(path) {
+  if (!canLeave()) return;
+  const { levels, row } = levelsFor(screensOf(cur()), cur(), path);
+  selecting = false;
+  land(levels, { open: row }, row ? { id: 'f-' + row, block: 'center', focus: true } : null);
 }
-
-// The still-guessing ranking takes about a second, so it runs in slices of a
-// few milliseconds after the page has redrawn (S-184); taps are never held up.
-// Until it finishes, the last list shows with "Updating". Only the list's own
-// section is replaced; it holds no inputs.
-let guessJob = 0, guessFor = null;
-function refreshGuess() {
-  const job = ++guessJob, spine = hist.present;
-  const it = stillGuessingSteps(spine, rules);
-  const run = () => {
-    if (job !== guessJob) return;
-    const end = performance.now() + 8;
-    let r;
-    while (!(r = it.next()).done) if (performance.now() > end) { setTimeout(run, 0); return; }
-    guess = r.value; guessFor = spine;
-    document.querySelector('section.guessing')?.replaceWith(guessList());
-  };
-  setTimeout(run, 0);
+// A link to ledger.html#max:<account> opens that account with its "How much to max it?" panel.
+function openMax(id) {
+  const levels = screensOf(cur()).itemLevels.get('accounts.' + id);
+  if (!levels || !canLeave()) return;
+  selecting = false;
+  land(levels, { max: true }, { id: 'max-' + id, block: 'start' });
 }
-
-// Not now (S-194): a field you will come back to. It stays missing or rough
-// (the numbers stay honest), but Still guessing stops asking until Ask me
-// again. Kept per viewer in this browser, with the day it was set aside.
-const LATER_KEY = 'slam-ledger-later:v1';
-let later = (() => { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || {}; } catch { return {}; } })();
-const keepLater = () => { try { localStorage.setItem(LATER_KEY, JSON.stringify(later)); } catch { /* storage blocked: lasts until the page closes */ } };
-function laterBtn(row) {
-  if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { delete later[row.path]; keepLater(); lastSaved = 'Asking again: ' + row.label + '.'; render(); } }, 'Ask me again');
-  if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
-  return h('button', { type: 'button', class: 'btn', onclick: () => { later[row.path] = today(); keepLater(); open = null; dirty = false; lastSaved = 'Not now: ' + row.label + '. It stays ' + (row.fact.kind === 'missing' ? 'missing' : 'a guess') + ', and Still guessing will not ask until you choose Ask me again.'; render(); } }, 'Not now');
+function land(levels, patch, scroll) {
+  const key = levels.join('/');
+  pending = { key, patch, scroll };
+  if (key === screenKey) refresh(); else go(levels);
 }
-const isLater = (path) => !!later[rowPathFor(hist.present, path)];
+// A link that opens a field: a real address for the screen, and the field's editor open when it lands.
+const fieldLink = (path, kids, attrs = {}) => {
+  const { levels } = levelsFor(screensOf(cur()), cur(), path);
+  return h('a', { ...attrs, href: hashFor(levels), onclick: (e) => { e.preventDefault(); openField(path); } }, kids);
+};
 
-// Leaving an editor with unsaved typing is refused with a message, never silent.
+// ---------------------------------------------------------------- the open editor
+// Leaving an editor with unsaved typing on this screen is refused with a message, never silent.
 function canLeave() {
   // A copy or a contribution typed into its small form and not saved yet holds the page too.
   const form = [...document.querySelectorAll('.dup-form, .rec-form')].find((f) => { const i = f.querySelector('input'); return i.value.trim() !== (i.dataset.start || ''); });
@@ -99,19 +98,49 @@ function canLeave() {
     form.querySelector('input').focus();
     return false;
   }
-  if (!open || !dirty) return true;
-  const msg = document.querySelector('.row.open .edit-msg');
+  if (!dirty || !edCache || !document.contains(edCache.el)) return true;
+  const msg = edCache.el.querySelector('.edit-msg');
   if (msg) msg.textContent = 'Not saved yet. Choose Save, Save as a guess, or Cancel.';
   const i = document.getElementById('edit-input');
   if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); }
   return false;
 }
+function setOpen(path) { keep({ open: path }); dirty = false; edCache = null; refresh(); }
+function closeEditor() { keep({ open: null }); dirty = false; edCache = null; }
+const cancel = () => { closeEditor(); refresh(); };
+// Save from an editor: it closes, and the change goes through the shell in words.
+function done(next, text) { closeEditor(); change(next, text); }
+const confirmed = (label) => label + ' confirmed';
+const notMine = (label) => label + ' marked not for me';
 
 // An editor is a form: Enter saves (as known), typing marks it unsaved.
 function editorForm(onSubmit, ...kids) {
   return h('form', { class: 'editor', novalidate: true, onsubmit: (e) => { e.preventDefault(); onSubmit(); }, oninput: () => { dirty = true; }, onchange: () => { dirty = true; } }, ...kids);
 }
-const cancel = () => { open = null; dirty = false; render(); };
+
+// Need or want (S-231): two plain tags on every line in Needs. The stored answer stays a yes or no (expenses.<id>.need).
+const isNeedRow = (path) => /^expenses\.[^.]+\.need$/.test(path);
+const needWords = (v) => (v === true ? 'Need' : v === false ? 'Want' : null);
+const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : showValue(value, row.type));
+
+// Not now (S-194): a field you will come back to. It stays missing or rough
+// (the numbers stay honest), but Still guessing stops asking until Ask me
+// again. Kept per viewer in this browser, with the day it was set aside.
+const LATER_KEY = 'slam-ledger-later:v1';
+let later = (() => { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || {}; } catch { return {}; } })();
+const keepLater = () => { try { localStorage.setItem(LATER_KEY, JSON.stringify(later)); } catch { /* storage blocked: lasts until the page closes */ } };
+function setLater(path, on) {
+  const before = later[path];
+  if (on) later[path] = today(); else delete later[path];
+  keepLater();
+  return () => { if (before) later[path] = before; else delete later[path]; keepLater(); refresh(); };
+}
+function laterBtn(row) {
+  if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, false); refresh(); say('Asking again: ' + row.label, back); } }, 'Ask me again');
+  if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
+  return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, true); closeEditor(); refresh(); say('Not now: ' + row.label + '. It stays ' + (row.fact.kind === 'missing' ? 'missing' : 'a guess') + ', and Still guessing will not ask until you choose Ask me again', back); } }, 'Not now');
+}
+const isLater = (path) => !!later[rowPathFor(cur(), path)];
 
 // One panel for a card's interest rate (S-161): the APR, a switch for an intro
 // rate, and when it is on, the intro rate and its end date; the APR then reads
@@ -119,19 +148,19 @@ const cancel = () => { open = null; dirty = false; render(); };
 // typed is lost.
 function cardRateEditor(row) {
   const cardId = row.path.split('.')[1];
-  const cur = row.fact.value || { apr: null, intro: null };
-  const startOn = !!cur.intro;
+  const cur0 = row.fact.value || { apr: null, intro: null };
+  const startOn = !!cur0.intro;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const fallback = showValue(rules.get('DEFAULT_CARD_APR', +hist.present.meta.asOf.slice(0, 4)), 'rate');
+  const fallback = showValue(rules.get('DEFAULT_CARD_APR', +cur().meta.asOf.slice(0, 4)), 'rate');
   const apr = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  apr.value = inputText('rate', cur.apr);
+  apr.value = inputText('rate', cur0.apr);
   const aprLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startOn ? 'Rate after intro' : 'Interest rate (APR)');
   const afterNote = h('span', {}, startOn ? 'Starts the day after the intro ends. ' : '');
   const aprHint = h('p', { class: 'edit-hint' }, afterNote, 'As a percent: 25 means 25%. Left blank, the house assumption of ' + fallback + ' is used and marked rough.');
   const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  introRate.value = cur.intro ? inputText('rate', cur.intro.rate) : '0';
+  introRate.value = cur0.intro ? inputText('rate', cur0.intro.rate) : '0';
   const introEnds = h('input', { id: 'intro-ends', type: 'date' });
-  introEnds.value = (cur.intro && cur.intro.ends) || '';
+  introEnds.value = (cur0.intro && cur0.intro.ends) || '';
   const introBox = h('div', { class: 'intro-fields', hidden: !startOn },
     h('label', { for: 'intro-rate', class: 'edit-label' }, 'Intro rate'), introRate,
     h('label', { for: 'intro-ends', class: 'edit-label' }, 'Intro ends'), introEnds);
@@ -152,10 +181,9 @@ function cardRateEditor(row) {
   const doSet = (kind) => {
     const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value });
     if (!p.ok) { msg.textContent = p.message; return; }
-    open = null;
-    apply(editCardRate(hist.present, cardId, 'set', { value: p.value, kind, today: today() }), row.label, showValue({ apr: p.value.apr ?? rules.get('DEFAULT_CARD_APR', +hist.present.meta.asOf.slice(0, 4)), intro: p.value.intro }, 'cardRate') + (kind === 'rough' ? ' (a guess)' : ''));
+    done(editCardRate(cur(), cardId, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, showValue({ apr: p.value.apr ?? rules.get('DEFAULT_CARD_APR', +cur().meta.asOf.slice(0, 4)), intro: p.value.intro }, 'cardRate') + (kind === 'rough' ? ' (a guess)' : '')));
   };
-  const act = (action) => { open = null; apply(editCardRate(hist.present, cardId, action, { today: today() }), row.label, action === 'notForMe' ? 'not for me' : 'confirmed'); };
+  const act = (action) => done(editCardRate(cur(), cardId, action, { today: today() }), action === 'notForMe' ? notMine(row.label) : confirmed(row.label));
   return editorForm(() => doSet('known'),
     aprLabel, apr, aprHint,
     h('div', { class: 'switch-row' }, h('span', { id: 'intro-switch-label', class: 'edit-label' }, 'Has an intro rate?'), sw),
@@ -178,14 +206,14 @@ function cardRateEditor(row) {
 const HOW_OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every two weeks'], ['semimonthly', 'twice a month'], ['quarterly', 'a quarter'], ['yearly', 'a year']];
 function expenseEditor(row) {
   const id = row.path.split('.')[1];
-  const e = getAt(hist.present, 'expenses.' + id);
-  const cur = row.fact.value || {};
-  const sh = shareOf(hist.present, e);
+  const e = getAt(cur(), 'expenses.' + id);
+  const now = row.fact.value || {};
+  const sh = shareOf(cur(), e);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
   amount.value = inputText('money', valueOf(e.amount));
   const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
-  const startMode = cur.covered ? 'covered' : sh.shared ? 'shared' : 'me';
+  const startMode = now.covered ? 'covered' : sh.shared ? 'shared' : 'me';
   // Who pays comes first, as three choices in plain sight (S-186); `mode.value` reads the picked one.
   const choice = (v, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'exp-mode', value: v, checked: startMode === v }), h('span', { class: 'choice-text' }, h('strong', {}, text), sub ? h('span', { class: 'choice-sub' }, sub) : null));
   const modeBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Who pays?'),
@@ -198,7 +226,7 @@ function expenseEditor(row) {
   // A subscription (S-191): marked here; its next charge and last review are its own rows.
   const subBox = h('input', { type: 'checkbox', id: 'exp-sub', checked: isSubscription(e) });
   // A phone: one tap fills a standard plan for one line, saved as a guess.
-  const std = isPhone(e) ? rules.get('DEFAULT_PHONE_PLAN_1', +hist.present.meta.asOf.slice(0, 4)) : null;
+  const std = isPhone(e) ? rules.get('DEFAULT_PHONE_PLAN_1', +cur().meta.asOf.slice(0, 4)) : null;
   let usedStd = false;
   // Shared details
   const people = h('input', { id: 'exp-people', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
@@ -226,8 +254,8 @@ function expenseEditor(row) {
     h('label', { class: 'radio' }, whole, ' I pay all of it and get paid back'),
     sh.fromDefault ? h('p', { class: 'edit-hint' }, 'Bills in this section are shared by default.') : null);
   // Covered by
-  const payers = payersOf(hist.present);
-  const by = h('select', { id: 'exp-by' }, payers.map((p) => h('option', { value: p, selected: cur.coveredBy === p }, p)), h('option', { value: '__other' }, 'Other / add a name...'));
+  const payers = payersOf(cur());
+  const by = h('select', { id: 'exp-by' }, payers.map((p) => h('option', { value: p, selected: now.coveredBy === p }, p)), h('option', { value: '__other' }, 'Other / add a name...'));
   const other = h('input', { id: 'exp-other', type: 'text', autocomplete: 'off', placeholder: 'Who covers it?', hidden: true, 'aria-label': 'Who covers it' });
   by.addEventListener('change', () => { other.hidden = by.value !== '__other'; if (!other.hidden) other.focus(); });
   const coveredBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'covered' },
@@ -290,11 +318,10 @@ function expenseEditor(row) {
     }
     const d = dates.read();
     if (d.problem) { msg.textContent = d.problem; return; }
-    open = null;
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
-    apply(editExpense(hist.present, id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
+    done(editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), said.changed(label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
@@ -305,8 +332,8 @@ function expenseEditor(row) {
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label, 'confirmed'); } }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), e.label, 'not for me'); } }, 'Not for me'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label)) }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(e.label)) }, 'Not for me'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
@@ -342,13 +369,13 @@ const INCOME_OFTEN = [['monthly', 'a month'], ['semimonthly', 'twice a month'], 
 const BY_START = ['weekly', 'biweekly'];
 function incomeEditor(row) {
   const id = row.path.split('.')[1];
-  const x = getAt(hist.present, 'income.' + id);
+  const x = getAt(cur(), 'income.' + id);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const name = h('input', { id: 'inc-name', type: 'text', autocomplete: 'off' });
   name.value = x.label;
   // Whose pay it is, when two people share the household (S-211): it decides whose 401(k), IRA and HSA it counts for.
-  const ps = hist.present.household.people || [];
-  const whose = ps.length > 1 ? h('select', { id: 'inc-whose' }, ps.map((p) => h('option', { value: p.id, selected: (x.personId || ps[0].id) === p.id }, p.name || p.id))) : null;
+  const ps = cur().household.people || [];
+  const whoseSel = ps.length > 1 ? h('select', { id: 'inc-whose' }, ps.map((p) => h('option', { value: p.id, selected: (x.personId || ps[0].id) === p.id }, p.name || p.id))) : null;
   const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
   amount.value = inputText('money', valueOf(x.amount));
   const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
@@ -359,14 +386,14 @@ function incomeEditor(row) {
   const day2 = h('input', { id: 'inc-day2', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day2.value = x.payDay2 && valueOf(x.payDay2) ? String(valueOf(x.payDay2)) : '';
   const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day of the month it lands (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th. Leave blank and the second pay comes 15 days after the first.'));
-  const words = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
+  const startWords = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
   const dates = dateFields(x.start, x.end, 'inc', { label: 'When does it run?' });
   const startLabel = dates.box.querySelector('label[for="inc-start"]'), endLabel = dates.box.querySelector('label[for="inc-end"]');
   const sync = () => {
     const c = often.value;
     dayBox.hidden = BY_START.includes(c) || c === 'once' || c === 'total';
     day2Box.hidden = c !== 'semimonthly';
-    startLabel.textContent = BY_START.includes(c) ? 'First pay date (pay dates count from it)' : words[c] || 'Starts (optional)';
+    startLabel.textContent = BY_START.includes(c) ? 'First pay date (pay dates count from it)' : startWords[c] || 'Starts (optional)';
     endLabel.textContent = c === 'total' ? 'To' : c === 'once' ? 'Ends (leave blank)' : 'Ends (optional)';
     if (c === 'once' || c === 'total' || BY_START.includes(c)) dates.box.open = true;
   };
@@ -391,36 +418,33 @@ function incomeEditor(row) {
       payDay2 = p.value;
     }
     const label = name.value.trim() || x.label;
-    try {
-      const next = editIncome(hist.present, id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2, personId: whose ? whose.value : undefined, kind, label }, today());
-      open = null;
-      apply(next, label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2 }, 'income') + (kind === 'rough' ? ' (a guess)' : ''));
-    } catch (err) { msg.textContent = err.message; }
+    let next;
+    try { next = editIncome(cur(), id, { amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2, personId: whoseSel ? whoseSel.value : undefined, kind, label }, today()); } catch (err) { msg.textContent = err.message; return; }
+    done(next, said.changed(label, showValue({ amount: a.value, cadence: often.value, start: d.start, end: d.end, payDay, payDay2 }, 'income') + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'inc-name', class: 'edit-label' }, 'Name'), name,
-    whose ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whose, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
+    whoseSel ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whoseSel, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
     h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
     h('p', { class: 'edit-hint' }, 'Gross pay, before anything is taken out. Tax withheld has its own rows under Taxes.'),
     dayBox, day2Box, dates.box, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), x.label, 'confirmed'); } }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), x.label, 'not for me'); } }, 'Not for me'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(x.label)) }, 'Confirm'),
+      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(x.label)) }, 'Not for me'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
 // A section's sharing default (S-175): "Bills here are just mine" or "shared",
 // with the details new and untouched expenses here follow.
-let sharingOpen = null;
 function sectionSharing(n) {
-  const tag = n.key.startsWith('E:') ? n.key.slice(2) : null;
+  const tag = n.key.startsWith('N:') ? n.key.slice(2) : null;
   if (!tag || tag === 'health' || selecting) return null;
-  const d = (hist.present.household.expenseDefaults || {})[tag];
+  const d = (cur().household.expenseDefaults || {})[tag];
   const on = !!d && d.shared && d.shared.value === true;
-  const words = on ? 'Shared by default with ' + ((d.sharedWith && d.sharedWith.value) || '?') + ' people' : 'Not shared by default';
-  if (sharingOpen !== tag) return h('p', { class: 'section-default' }, words, ' ', h('button', { type: 'button', class: 'btn ghost small', onclick: () => { if (!canLeave()) return; sharingOpen = tag; render(); } }, 'Change'));
+  const text = on ? 'Shared by default with ' + ((d.sharedWith && d.sharedWith.value) || '?') + ' people' : 'Not shared by default';
+  if (sharingOpen !== tag) return h('p', { class: 'section-default' }, text, ' ', h('button', { type: 'button', class: 'btn ghost small', onclick: () => { if (!canLeave()) return; sharingOpen = tag; refresh(); } }, 'Change'));
   const people = h('input', { type: 'text', inputmode: 'numeric', 'aria-label': 'People sharing, you included' });
   people.value = on && d.sharedWith && d.sharedWith.value ? String(d.sharedWith.value) : '2';
   const sw = h('select', { 'aria-label': 'Default for this section' }, h('option', { value: 'no', selected: !on }, 'Just mine'), h('option', { value: 'yes', selected: on }, 'Shared'));
@@ -432,9 +456,9 @@ function sectionSharing(n) {
     const p = parseInput('int', people.value);
     if (sw.value === 'yes' && (!p.ok || p.value < 2)) return;
     sharingOpen = null;
-    apply(setSectionSharing(hist.present, tag, { shared: sw.value === 'yes', sharedWith: sw.value === 'yes' ? p.value : null, whoPays: whole.value }, today()), n.label + ' bills', sw.value === 'yes' ? 'shared by default' : 'not shared by default');
+    change(setSectionSharing(cur(), tag, { shared: sw.value === 'yes', sharedWith: sw.value === 'yes' ? p.value : null, whoPays: whole.value }, today()), said.changed(n.label + ' bills', sw.value === 'yes' ? 'shared by default' : 'not shared by default'));
   } }, h('label', { class: 'edit-label' }, n.label + ' bills are'), sw, details,
-  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { sharingOpen = null; render(); } }, 'Cancel')));
+  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { sharingOpen = null; refresh(); } }, 'Cancel')));
 }
 
 // Pick from a list, or type another (S-181): a loan's repayment plan. "Not
@@ -442,11 +466,11 @@ function sectionSharing(n) {
 // amount: the plan is saved as not sure and the amount as the loan's payment,
 // in one step that one Undo takes back.
 function suggestEditor(row) {
-  const f = getAt(hist.present, row.path);
+  const f = getAt(cur(), row.path);
   const opts = row.type.slice(8).split('|');
   const typedOwn = f.value !== null && !opts.includes(f.value);
   const payPath = row.path.replace(/\.plan$/, '.minimum');
-  const pay = getAt(hist.present, payPath);
+  const pay = getAt(cur(), payPath);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pickEl = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose a plan'),
     ...opts.map((v) => h('option', { value: v, selected: f.value === v }, showValue(v, row.type))),
@@ -470,17 +494,15 @@ function suggestEditor(row) {
     if (v === '__amount') {
       const a = parseInput('money', amount.value);
       if (!a.ok) { msg.textContent = a.message; amount.focus(); return; }
-      open = null;
-      const s1 = editFact(hist.present, row.path, 'set', { value: 'not_sure', kind: 'rough', today: today() });
-      apply(editFact(s1, payPath, 'set', { value: a.value, kind, today: today() }), row.label, 'not sure; payment ' + showValue(a.value, 'money') + ' a month' + (kind === 'rough' ? ' (a guess)' : ''));
+      const s1 = editFact(cur(), row.path, 'set', { value: 'not_sure', kind: 'rough', today: today() });
+      done(editFact(s1, payPath, 'set', { value: a.value, kind, today: today() }), said.changed(row.label, 'not sure; payment ' + showValue(a.value, 'money') + ' a month' + (kind === 'rough' ? ' (a guess)' : '')));
       return;
     }
     const value = v === '__other' ? own.value.trim() : v;
     if (!value) { msg.textContent = 'Type the plan name'; own.focus(); return; }
-    open = null;
     // Not sure is never known.
     const k = value === 'not_sure' ? 'rough' : kind;
-    apply(editFact(hist.present, row.path, 'set', { value, kind: k, today: today() }), row.label, showValue(value, row.type) + (k === 'rough' && value !== 'not_sure' ? ' (a guess)' : ''));
+    done(editFact(cur(), row.path, 'set', { value, kind: k, today: today() }), said.changed(row.label, showValue(value, row.type) + (k === 'rough' && value !== 'not_sure' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.label),
@@ -488,42 +510,40 @@ function suggestEditor(row) {
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
+      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
 // A pick list of the household's accounts (and cards, or the paycheck) for a link (S-189).
-function linkSelect(type, current, id) {
-  const opts = linkOptions(hist.present, type);
+function linkSelect(type, value, id) {
+  const opts = linkOptions(cur(), type);
   const groups = [...new Set(opts.map((o) => o.group))];
   return h('select', { id }, h('option', { value: '' }, 'Choose'),
-    ...groups.map((g) => h('optgroup', { label: g }, opts.filter((o) => o.group === g).map((o) => h('option', { value: o.value, selected: current === o.value }, o.label)))));
+    ...groups.map((g) => h('optgroup', { label: g }, opts.filter((o) => o.group === g).map((o) => h('option', { value: o.value, selected: value === o.value }, o.label)))));
 }
 
 // An expense's payment (S-189): the account or card it comes out of, and the
 // day of the month when there is one. One Save writes both.
 function paymentEditor(row) {
   const id = row.path.split('.')[1];
-  const e = getAt(hist.present, 'expenses.' + id);
-  const cur = row.fact.value || {};
+  const e = getAt(cur(), 'expenses.' + id);
+  const now = row.fact.value || {};
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const from = linkSelect('link:cash|card', cur.from ?? null, 'edit-input');
+  const from = linkSelect('link:cash|card', now.from ?? null, 'edit-input');
   const day = h('input', { id: 'pay-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
-  day.value = cur.day ? String(cur.day) : '';
+  day.value = now.day ? String(now.day) : '';
   // The debt this line pays (S-226): a car payment that pays the car loan is counted once, under debt payments.
   // Only a line that repeats can pay a debt (answer 35); a one-time or total line is offered no debt.
-  const debts = PER_YEAR[e.cadence] ? hist.present.debts || [] : [];
-  const pays = debts.length ? h('select', { id: 'pay-debt' }, h('option', { value: '' }, 'None: an ordinary bill'), ...debts.map((x) => h('option', { value: x.id, selected: cur.paysDebt === x.id }, valueOf(x.name) || x.id))) : null;
+  const debts = PER_YEAR[e.cadence] ? cur().debts || [] : [];
+  const pays = debts.length ? h('select', { id: 'pay-debt' }, h('option', { value: '' }, 'None: an ordinary bill'), ...debts.map((x) => h('option', { value: x.id, selected: now.paysDebt === x.id }, valueOf(x.name) || x.id))) : null;
   const doSet = (kind) => {
     if (!from.value) { msg.textContent = 'Pick where it is paid from'; from.focus(); return; }
     const d = day.value.trim() === '' ? { ok: true, value: null } : parseInput('int', day.value);
     if (!d.ok || (d.value !== null && (d.value < 1 || d.value > 31))) { msg.textContent = 'Day: a number from 1 to 31, or leave it blank'; day.focus(); return; }
     const label = from.selectedOptions[0].textContent;
-    try {
-      const next = editPayment(hist.present, id, { from: from.value, day: d.value, paysDebt: pays ? pays.value || null : undefined, kind }, today());
-      open = null;
-      apply(next, e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (pays && pays.value ? '; pays ' + pays.selectedOptions[0].textContent : '') + (kind === 'rough' ? ' (a guess)' : ''));
-    } catch (err) { msg.textContent = err.message; }
+    let next;
+    try { next = editPayment(cur(), id, { from: from.value, day: d.value, paysDebt: pays ? pays.value || null : undefined, kind }, today()); } catch (err) { msg.textContent = err.message; return; }
+    done(next, said.changed(e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (pays && pays.value ? '; pays ' + pays.selectedOptions[0].textContent : '') + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, 'Paid from'), from,
@@ -535,7 +555,7 @@ function paymentEditor(row) {
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), e.label + ': paid from', 'confirmed'); } }, 'Confirm'),
+      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label + ': paid from')) }, 'Confirm'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
 }
 
@@ -544,14 +564,14 @@ function editor(row) {
   if (row.type === 'expense') return expenseEditor(row);
   if (row.type === 'income') return incomeEditor(row);
   if (row.type === 'payment') return paymentEditor(row);
-  const f = getAt(hist.present, row.path);
+  const f = getAt(cur(), row.path);
   if (row.type.startsWith('suggest:')) return suggestEditor(row);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   let input;
   if (row.type.startsWith('link:')) {
     input = linkSelect(row.type, f.value, 'edit-input');
   } else if (row.type.startsWith('choice:') || row.type === 'bool') {
-    const opts = row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
+    const opts = isNeedRow(row.path) ? [['true', 'Need'], ['false', 'Want']] : row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
     input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
   } else if (row.type === 'list') {
     input = h('textarea', { id: 'edit-input', rows: 3 });
@@ -560,74 +580,239 @@ function editor(row) {
     input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
     input.value = inputText(row.type, f.value);
   }
-  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? (row.path.endsWith('.contributions') ? 'A list, for example [{"year": 2026, "amount": 4000}]. Add "kind": "rollover", "conversion", "from529" or "employer" when it was one; How much to max it? records one entry at a time in plain words.' : 'A list, for example [{"year": 2026, "amount": 4000}]') : null;
+  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? (row.path.endsWith('.contributions') ? 'A list by year, for example [{"year": 2026, "amount": 4000}]. A rollover, a conversion or the employer part is easier to record with How much to max it? on this account, one at a time in plain words.' : 'A list, for example [{"year": 2026, "amount": 4000}]') : null;
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
     const p = parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
-    open = null;
-    apply(editFact(hist.present, row.path, 'set', { value: p.value, kind, today: today() }), row.label, showValue(p.value, row.type) + (kind === 'rough' ? ' (a guess)' : ''));
+    done(editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
-    h('label', { for: 'edit-input', class: 'edit-label' }, row.label),
+    h('label', { for: 'edit-input', class: 'edit-label' }, row.field || row.label),
     input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'confirm', { today: today() }), row.label, 'confirmed'); } }, 'Confirm'),
-      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => { open = null; apply(editFact(hist.present, row.path, 'notForMe', { today: today() }), row.label, 'not for me'); } }, 'Not for me'),
+      f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)) }, 'Confirm'),
+      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
       laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
     ));
 }
-
-function rowEl(row) {
-  const f = row.fact;
-  const shown = f.kind === 'notForMe' ? 'Does not apply' : row.linked ? row.display : f.value === null ? 'Not given yet' : row.display || showValue(f.value, row.type);
-  const isOpen = open === row.path && !selecting;
-  const label = row.field || row.label;
-  if (selecting) {
-    const on = selected.has(row.path);
-    return h('li', { class: 'row kind-' + f.kind + (on ? ' picked' : ''), id: 'f-' + row.path },
-      h('label', { class: 'row-main row-pick' },
-        h('input', { type: 'checkbox', checked: on, onchange: () => { if (on) selected.delete(row.path); else selected.add(row.path); render(); } }),
-        h('span', { class: 'row-label' }, label),
-        h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
-        chip(f.kind)));
-  }
-  // A computed value in the Ledger (an expense's cost to you) shows its math (S-177).
-  const computed = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
-  return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
-    // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's payment.
-    row.linked ? h('button', { class: 'row-main', onclick: () => openField(row.linePath) },
-      h('span', { class: 'row-label' }, label),
-      h('span', { class: 'row-value' }, shown, ' ', h('span', { class: 'tile-view' }, 'View ›')),
-      chip(f.kind)) :
-    h('button', { class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; open = isOpen ? null : row.path; dirty = false; render(); } },
-      h('span', { class: 'row-label' }, label, later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null),
-      h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, shown),
-      chip(f.kind)),
-    computed && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: hist.present, rules, s: summarize(hist.present, rules, { flags: false }) })) : null,
-    isOpen && !row.linked && editor(row));
+// The open row's editor: the one already built while it is open and typed in, else a fresh one.
+function openEditor(row) {
+  if (edCache && edCache.path === row.path && (dirty || edCache.spine === cur())) return edCache.el;
+  const el = editor(row);
+  edCache = { path: row.path, el, spine: cur(), label: row.label };
+  return el;
 }
 
-// Pick what you have (S-193): tick the accounts, cards, loans, income and
-// bills you have; Add puts them all in with their details blank and then
-// shows only what is missing, so the details come next. One Undo takes it back.
-let picking = null;
+// ---------------------------------------------------------------- rows
+// What a row reads: its value in words, "Not given yet" or "Does not apply".
+function rowValue(row) {
+  const f = row.fact;
+  if (f.kind === 'notForMe') return 'Does not apply';
+  if (row.linked) return row.display;
+  if (f.value === null) return 'Not given yet';
+  return row.display || shownAs(row, f.value);
+}
+// The answers your file could not give (S-228): they stay flagged on their row until entered.
+let flagMemo = { spine: null, set: null };
+function flaggedRows(spine) {
+  if (flagMemo.spine !== spine) flagMemo = { spine, set: new Set(fileProblems(spine).open.filter((x) => x.link).map((x) => rowPathFor(spine, x.link))) };
+  return flagMemo.set;
+}
+const tags = (row) => [
+  later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null,
+  flaggedRows(cur()).has(row.path) ? h('span', { class: 'later-tag' }, 'From your file: enter it again') : null
+];
+
+// A row ticked in Select several (full: its item's name too, where rows from many items are listed).
+function pickRow(row, full = false) {
+  const on = selected.has(row.path), f = row.fact;
+  return h('li', { class: 'row kind-' + f.kind + (on ? ' picked' : ''), id: 'f-' + row.path },
+    h('label', { class: 'row-main row-pick' },
+      h('input', { type: 'checkbox', checked: on, onchange: () => { if (on) selected.delete(row.path); else selected.add(row.path); refresh(); } }),
+      h('span', { class: 'row-label' }, full ? row.label : row.field || row.label),
+      h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, rowValue(row)),
+      chip(f.kind)));
+}
+
+// One row on an item's screen: tap it to open its editor in place (one at a time).
+function rowEl(row, openPath) {
+  if (selecting) return pickRow(row);
+  const f = row.fact;
+  const isOpen = openPath === row.path;
+  const label = row.field || row.label;
+  // A value worked out from others (an expense's cost to you) shows its math (S-177).
+  const worked = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
+  return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
+    // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's payment.
+    row.linked ? h('button', { type: 'button', class: 'row-main', onclick: () => openField(row.linePath) },
+      h('span', { class: 'row-label' }, label),
+      h('span', { class: 'row-value' }, rowValue(row)),
+      chip(f.kind)) :
+    h('button', { type: 'button', class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; setOpen(isOpen ? null : row.path); } },
+      h('span', { class: 'row-label' }, label, tags(row)),
+      h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, rowValue(row)),
+      chip(f.kind)),
+    worked && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null,
+    isOpen && !row.linked ? openEditor(row) : null);
+}
+
+// "3 missing", "2 rough": small labels on a row that opens (the filters at the top show only those).
+const dots = (c) => (c.missing || c.rough ? h('span', { class: 'group-counts' },
+  c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
+  c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + ' rough') : null) : null);
+const filledWords = (c) => c.filled + ' of ' + c.asked + ' filled in';
+// A row that opens a deeper screen: the whole row is the target, with a chevron.
+const goRow = (href, { mark = null, name, sub, id = null }) => h('li', {}, h('a', { class: mark ? 'go-row' : 'go-row plain', href, id },
+  mark ? h('span', { class: 'go-mark', 'aria-hidden': 'true' }, mark) : null,
+  h('span', { class: 'go-name' }, name),
+  h('span', { class: 'go-sub' }, ...[].concat(sub).filter(Boolean))));
+
+// An item's headline: its balance, amount or target in words.
+const OFTEN = { weekly: ' a week', biweekly: ' every two weeks', semimonthly: ' twice a month', monthly: ' a month', quarterly: ' a quarter', yearly: ' a year', total: ' in total', once: ' once' };
+function headline(it) {
+  const main = it.summary ? it.rows.find((r) => r.path === it.summary) : it.rows.length === 1 ? it.rows[0] : null;
+  if (!main) return h('span', {}, filledWords(it.counts));
+  if (!it.summary) return h('span', { class: main.fact.value === null ? 'empty' : null }, rowValue(main));
+  const stream = it.collection === 'income' ? (cur().income || []).find((x) => x.id === it.id) : null;
+  if (main.fact.value === null) return h('span', { class: 'empty' }, main.fact.kind === 'notForMe' ? 'Does not apply' : 'Not given yet');
+  return h('span', { class: 'go-total' }, showValue(main.fact.value, main.type) + (main.type === 'income' || !stream ? '' : OFTEN[stream.cadence] || ''));
+}
+
+// ---------------------------------------------------------------- the top: six sections, search and filters
+// Which kinds show (S-168), a per-browser convenience kept in localStorage when it can be; the page works without it.
+const VIEW_KEY = 'slam-ledger-view:v1';
+const KIND_ORDER = ['missing', 'rough', 'known', 'computed', 'notForMe'];
+const KIND_LABEL = { missing: 'Missing', rough: 'Rough', known: 'Known', computed: 'Worked out', notForMe: 'Not for me' };
+let kinds = (() => { try { const v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null'); if (v && Array.isArray(v.kinds)) return v.kinds; } catch { /* storage blocked */ } return [...KIND_ORDER]; })();
+// The filter is one for the whole page (only the top screen changes it), so coming back finds it as it was left; the
+// search is kept with the top screen's own history entry.
+function setKinds(k, q = null) {
+  kinds = k;
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify({ kinds })); } catch { /* storage blocked */ }
+  if (q !== null) keep({ q });
+  refresh();
+}
+const shows = (row, q) => kinds.includes(row.fact.kind) && (!q || (row.label + ' ' + row.path).toLowerCase().includes(q.toLowerCase()));
+const filtering = (q) => !!q || kinds.length !== KIND_ORDER.length;
+
+function filterBar(sc, q) {
+  const all = sc.sections.flatMap((g) => g.allRows);
+  const n = (k) => all.filter((r) => r.fact.kind === k).length;
+  // A chip shows only its kind; tapped again, it shows everything (S-182).
+  const solo = (k) => kinds.length === 1 && kinds[0] === k;
+  const pick = (k) => setKinds(solo(k) ? [...KIND_ORDER] : [k]);
+  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Search your numbers (press /)', autocomplete: 'off', 'aria-label': 'Search your numbers' });
+  search.value = q;
+  search.addEventListener('input', () => { keep({ q: search.value }); refresh(); });
+  return h('section', { class: 'card filters', 'aria-label': 'Search and show' },
+    search,
+    h('div', { class: 'filter-row' },
+      h('span', { class: 'filter-label' }, 'Show:'),
+      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
+    h('p', { class: 'filter-hint muted' }, kinds.length === 1 ? 'Tap it again to show everything.' : 'Tap one to see only those.'),
+    h('div', { class: 'filter-row' },
+      h('button', { type: 'button', class: 'btn', onclick: () => setKinds(KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed')) }, 'Hide known'),
+      h('button', { type: 'button', class: 'btn', onclick: () => setKinds(['missing']) }, 'Only missing'),
+      h('button', { type: 'button', class: 'btn', disabled: !filtering(q), title: filtering(q) ? null : 'Everything is showing', onclick: () => setKinds([...KIND_ORDER], '') }, filtering(q) ? 'Show everything' : 'Showing everything'),
+      selectToggle()));
+}
+
+// What the search and the filters find, one row each, every one opening its own screen with its editor open.
+function results(sc, q) {
+  const all = sc.sections.flatMap((g) => g.allRows);
+  const found = all.filter((r) => shows(r, q));
+  const resultRow = (row) => (selecting ? pickRow(row, true) : h('li', { class: 'row kind-' + row.fact.kind },
+    fieldLink(row.path, [h('span', { class: 'row-label' }, row.label, tags(row)), h('span', { class: 'row-value' + (row.fact.value === null ? ' empty' : '') }, rowValue(row)), chip(row.fact.kind)], { class: 'row-main row-link' })));
+  return [
+    h('p', { class: 'muted', role: 'status' }, 'Showing ' + found.length + ' of ' + all.length + '.'),
+    ...sc.sections.map((sec) => {
+      const rows = sec.allRows.filter((r) => shows(r, q));
+      return rows.length ? h('section', { class: 'card', 'aria-label': sec.label }, h('h2', {}, sec.letter ? [h('span', { class: 'daite' }, sec.letter), ' '] : null, sec.label), h('ul', { class: 'rows' }, rows.map(resultRow))) : null;
+    }),
+    found.length ? null : h('p', { class: 'muted' }, 'Nothing matches. ', h('button', { type: 'button', class: 'btn small', onclick: () => setKinds([...KIND_ORDER], '') }, 'Show everything'))
+  ];
+}
+
+// The six sections in DATING order, each with one total where your numbers give one, else how much is filled in.
+function sectionList(sc) {
+  const steps = Object.fromEntries(sessionSteps(cur(), summaryOf(cur())).map((x) => [x.id, x.result]));
+  return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
+    const r = steps[sec.slug];
+    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total' }, money(r.value)), TOTAL_WORDS[sec.slug]) : h('span', {}, filledWords(sec.counts));
+    // A total built on a missing line says so; how many lines are rough or missing shows beside it.
+    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec.counts)] });
+  }));
+}
+
+// ---------------------------------------------------------------- still guessing (its own screen)
+// The still-guessing ranking takes about a second, so it runs in slices of a
+// few milliseconds after the page has redrawn (S-184); taps are never held up.
+// Until it finishes, the last list shows with "Updating". Only its own row and list are replaced; they hold no inputs.
+let guess = null, guessJob = 0, guessFor = null, guessOf = null;
+function refreshGuess(spine) {
+  if (guessOf === spine) return;
+  guessOf = spine;
+  const job = ++guessJob;
+  const it = stillGuessingSteps(spine, rules);
+  const run = () => {
+    if (job !== guessJob) return;
+    const end = performance.now() + 8;
+    let r;
+    while (!(r = it.next()).done) if (performance.now() > end) { setTimeout(run, 0); return; }
+    guess = r.value; guessFor = spine;
+    document.getElementById('guess-row')?.closest('li')?.replaceWith(guessRow());
+    document.querySelector('section.guessing')?.replaceWith(guessList());
+  };
+  setTimeout(run, 0);
+}
+function guessRow() {
+  const n = guess ? guess.items.filter((it) => !isLater(it.path)).length : null;
+  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter most...' : n ? n + ' to look at, the ones that matter most first' : 'Nothing left to look at' });
+}
+function guessList() {
+  if (!guess) return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' }, h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
+  const showAll = !!kept().all;
+  const stale = guessFor !== cur();
+  const items = guess.items.filter((it) => !isLater(it.path));
+  const setAside = guess.items.filter((it) => isLater(it.path));
+  const list = showAll ? items : items.slice(0, 8);
+  const why = (it) => {
+    if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
+    const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+    return top ? 'Off by ' + Math.round(guess.swing * 100) + '%, moves ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
+  };
+  return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' },
+    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last change...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
+    h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
+      fieldLink(it.path, [chip(it.kind), ' ', h('span', { class: 'g-label' }, it.label)]),
+      h('span', { class: 'why' }, why(it))))),
+    items.length > 8 && h('button', { type: 'button', class: 'btn ghost', onclick: () => { keep({ all: !showAll }); refresh(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
+    setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
+      h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
+        h('button', { type: 'button', class: 'btn small', onclick: () => { const back = setLater(rowPathFor(cur(), it.path), false); refresh(); say('Asking again: ' + it.label, back); } }, 'Ask me again'))))) : null);
+}
+
+// ---------------------------------------------------------------- pick what you have (its own screen)
+// Tick the accounts, cards, loans, income and bills you have; Add puts them all in with their details blank, then the
+// top of My numbers shows only what is missing, and the first one opens. One Undo takes it back (S-193).
 function pickerCard() {
-  const have = haveCounts(hist.present);
+  picking = picking || new Map();
+  const have = haveCounts(cur());
   const addBtn = h('button', { type: 'button', class: 'btn primary', onclick: () => {
     const picks = [...picking].map(([key, n]) => ({ key, count: n }));
     if (!picks.length) return;
-    const r = addPicked(hist.present, picks, today());
+    const r = addPicked(cur(), picks, today());
     picking = null;
-    for (const p of r.added) { const [c, id] = p.split('.'); openItems.add(c + '.' + id); }
-    apply(r.spine, 'Added ' + r.count + ' item' + (r.count === 1 ? '' : 's'));
-    lastSaved = 'Added ' + r.count + '. Showing only what is missing: fill in the red fields, or use Not now.';
-    view = { ...view, kinds: ['missing'], q: '' }; keepView(); render();
+    if (!change(r.spine, said.added(r.count + ' item' + (r.count === 1 ? '' : 's')))) return;
+    // Coming back to the top shows only what is missing, so the new ones are easy to fill in.
+    kinds = ['missing'];
+    try { localStorage.setItem(VIEW_KEY, JSON.stringify({ kinds })); } catch { /* storage blocked */ }
     openField(r.added[0]);
   } });
   const sync = () => { const n = [...picking.values()].reduce((x, k) => x + k, 0); addBtn.disabled = !n; addBtn.textContent = n ? 'Add ' + n + ' and fill in details' : 'Tick what you have first'; };
@@ -639,135 +824,36 @@ function pickerCard() {
     const n = have.get(x.key) || 0;
     return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
   };
-  const card = h('section', { class: 'card picker', id: 'picker', 'aria-labelledby': 'picker-h' },
-    h('h2', { id: 'picker-h' }, 'Pick what you have'),
-    h('p', { class: 'muted' }, 'Tick everything that applies; for several of one kind, say how many. Each is added with its details blank, then the Ledger shows only what is missing so you can fill it in.'),
+  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Pick what you have' },
+    h('p', { class: 'muted' }, 'Tick everything that applies; for several of one type, say how many. Each is added with its details blank, then My numbers shows only what is missing so you can fill it in.'),
     ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
-    h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; render(); } }, 'Cancel')));
+    h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; go([]); } }, 'Cancel')));
   sync();
   return card;
 }
 
-// Subscriptions to look at (S-191): soonest charge first, each with Reviewed
-// today. Figured once per version of the household, not on every tap.
-let subsFor = null, subsNow = null;
-function subsCard() {
-  if (subsFor !== hist.present) { subsNow = summarize(hist.present, rules, { flags: false }).subs; subsFor = hist.present; }
-  const sub = subsNow;
-  if (!sub.items.length) return (hist.present.expenses || []).length ? h('section', { class: 'card subs', 'aria-labelledby': 'subs-h' }, h('h2', { id: 'subs-h' }, 'Subscriptions'), h('p', { class: 'muted' }, 'None marked yet. Open an expense and tick "This is a subscription" to keep an eye on it.')) : null;
+// ---------------------------------------------------------------- subscriptions (under Needs)
+// Subscriptions to look at (S-191): soonest charge first, each with Reviewed today.
+function subsRow() {
+  if (!(cur().expenses || []).length) return null;
+  const sub = summaryOf(cur()).subs;
+  return goRow(hashFor(['needs', 'subscriptions']), { name: 'Subscriptions', sub: sub.items.length ? [h('span', {}, h('span', { class: 'go-total' }, money(sub.monthly.value)), ' a month, ' + sub.items.length + ' marked'), sub.toLook.length ? h('span', { class: 'dot dot-rough' }, sub.toLook.length + ' to look at') : null] : 'None marked yet' });
+}
+function subsScreen() {
+  const sub = summaryOf(cur()).subs;
+  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None marked yet. Open an expense and tick "This is a subscription" to keep an eye on it.'));
   const when = (i) => i.renews ? 'Next charge ' + shortDate(i.renews) + (i.daysToCharge === 0 ? ' (today)' : ' (in ' + i.daysToCharge + ' day' + (i.daysToCharge === 1 ? '' : 's') + ')') : 'Next charge not given';
-  return h('section', { class: 'card subs', 'aria-labelledby': 'subs-h' },
-    h('h2', { id: 'subs-h' }, 'Subscriptions ', h('span', { class: 'count' }, String(sub.items.length))),
+  return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
     h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year. ' + (sub.toLook.length ? sub.toLook.length + ' to look at: charging within ' + sub.soonDays + ' days or not reviewed in ' + sub.reviewDays + '.' : 'All reviewed recently.')),
     h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub' + (i.soon || i.due ? ' sub-look' : '') },
       h('div', { class: 'sub-main' },
-        h('a', { href: '#expenses.' + i.id + '.amount', onclick: (ev) => { ev.preventDefault(); openField('expenses.' + i.id + '.amount'); } }, i.label),
+        fieldLink('expenses.' + i.id + '.amount', i.label),
         h('span', { class: 'sub-cost' }, i.monthly === null ? 'amount not given' : money(i.monthly, true) + ' a month')),
       h('p', { class: 'sub-when' }, when(i), ' · ', i.reviewed ? 'Reviewed ' + shortDate(i.reviewed) : 'Never reviewed', i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
-      h('button', { type: 'button', class: 'btn small', onclick: () => apply(putFact(hist.present, 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ': last reviewed', 'today') }, 'Reviewed today')))));
+      h('button', { type: 'button', class: 'btn small', onclick: () => change(putFact(cur(), 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ' marked reviewed today') }, 'Reviewed today')))));
 }
 
-function guessList() {
-  if (!guess) return h('section', { class: 'card guessing', 'aria-labelledby': 'g-title' }, h('h2', { id: 'g-title' }, 'Still guessing'), h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
-  const stale = guessFor !== hist.present;
-  const items = guess.items.filter((it) => !isLater(it.path));
-  const setAside = guess.items.filter((it) => isLater(it.path));
-  const list = showAll ? items : items.slice(0, 8);
-  const why = (it) => {
-    if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
-    const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
-    return top ? 'Off by ' + Math.round(guess.swing * 100) + '%, moves ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
-  };
-  return h('section', { class: 'card guessing', 'aria-labelledby': 'g-title' },
-    h('h2', { id: 'g-title' }, 'Still guessing ', h('span', { class: 'count' }, String(items.length))),
-    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last edit...' : 'Missing first, then rough numbers, biggest effect on the results first.'),
-    h('ol', { class: 'guess-list' }, list.map((it) => h('li', {},
-      h('a', { href: '#' + it.path, onclick: (e) => { e.preventDefault(); openField(it.path); } }, chip(it.kind), ' ', h('span', { class: 'g-label' }, it.label)),
-      h('span', { class: 'why' }, why(it))))),
-    items.length > 8 && h('button', { class: 'btn ghost', onclick: () => { showAll = !showAll; render(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
-    setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
-      h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
-        h('button', { type: 'button', class: 'btn small', onclick: () => { delete later[rowPathFor(hist.present, it.path)]; keepLater(); render(); } }, 'Ask me again'))))) : null);
-}
-
-function openField(path) {
-  path = rowPathFor(hist.present, path);
-  if (open !== path && !canLeave()) return;
-  if (open !== path) dirty = false;
-  open = path;
-  selecting = false;
-  const trail = itemKeysFor(path);
-  for (const key of trail) openItems.add(key);
-  // A link always lands: a folded group or section on the way opens.
-  if (trail.some((k) => view.folded.includes(k))) { view = { ...view, folded: view.folded.filter((k) => !trail.includes(k)) }; keepView(); }
-  render();
-  // A link always lands: when the filter hides the field, show everything.
-  if (!document.getElementById('f-' + path)) { view = { ...view, kinds: [...KIND_ORDER], q: '' }; keepView(); render(); }
-  const el = document.getElementById('f-' + path);
-  if (el) { el.scrollIntoView({ block: 'center' }); const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
-}
-
-// ---------------------------------------------------------------- view filters (S-168)
-// Which kinds show, a search, and folded groups. A per-browser convenience:
-// kept in localStorage when it can be, and the page works without it.
-const VIEW_KEY = 'slam-ledger-view:v1';
-const KIND_ORDER = ['missing', 'rough', 'known', 'computed', 'notForMe'];
-const KIND_LABEL = { missing: 'Missing', rough: 'Rough', known: 'Known', computed: 'Computed', notForMe: 'Not for me' };
-let view = (() => {
-  try { const v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null'); if (v && Array.isArray(v.kinds)) return { kinds: v.kinds, q: '', folded: v.folded || [] }; } catch { /* storage blocked */ }
-  return { kinds: [...KIND_ORDER], q: '', folded: [] };
-})();
-const keepView = () => { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ kinds: view.kinds, folded: view.folded })); } catch { /* storage blocked */ } };
-const setView = (patch) => { if (!canLeave()) return; view = { ...view, ...patch }; keepView(); render(); };
-const onlyKind = (k) => setView({ kinds: [k], folded: [] });
-const shows = (row) => view.kinds.includes(row.fact.kind) && (!view.q || (row.label + ' ' + row.path).toLowerCase().includes(view.q.toLowerCase()));
-
-const filtering = () => view.q !== '' || view.kinds.length !== KIND_ORDER.length;
-
-// The tree keys of the item (and its parents) that hold a field.
-// The keys of the item holding a field, and of every group above it (or of the item with this key).
-function itemKeysFor(path, key = null) {
-  const keys = [];
-  const walk = (n, trail) => {
-    if (n.item) { if (key ? n.key === key : n.rows.some((r) => r.path === path)) keys.push(...trail, n.key); return; }
-    for (const c of n.children) walk(c, [...trail, n.key]);
-  };
-  for (const g of ledgerTree(hist.present, inst)) walk(g, []);
-  return keys;
-}
-
-function filterBar(tree) {
-  const all = tree.flatMap((g) => g.allRows);
-  const n = (k) => all.filter((r) => r.fact.kind === k).length;
-  const showing = all.filter(shows).length;
-  // A chip shows only its kind; tapped again, it shows everything (S-182).
-  const solo = (k) => view.kinds.length === 1 && view.kinds[0] === k;
-  const pick = (k) => (solo(k) ? setView({ kinds: [...KIND_ORDER] }) : onlyKind(k));
-  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Find a field (press /)', autocomplete: 'off', 'aria-label': 'Find a field' });
-  search.value = view.q;
-  search.addEventListener('input', () => { view = { ...view, q: search.value }; render(); });
-  const itemKeys = tree.flatMap(function keys(nd) { return nd.item ? [nd.key] : nd.children.flatMap(keys); });
-  return h('section', { class: 'card filters', 'aria-label': 'Show fields' },
-    h('div', { class: 'filter-row' },
-      h('span', { class: 'filter-label' }, 'Show:'),
-      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (view.kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
-    h('p', { class: 'filter-hint muted' }, view.kinds.length === 1 ? 'Tap it again to show everything.' : 'Tap one to see only those fields.'),
-    h('div', { class: 'filter-row' },
-      h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed') }) }, 'Hide known'),
-      h('button', { type: 'button', class: 'btn', onclick: () => onlyKind('missing') }, 'Only missing'),
-      h('button', { type: 'button', class: 'btn', onclick: () => setView({ kinds: [...KIND_ORDER], q: '' }) }, 'Show everything'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: () => { if (!canLeave()) return; if (openItems.size) openItems = new Set(); else openItems = new Set(itemKeys); render(); } }, openItems.size ? 'Close all items' : 'Open all items'),
-      h('button', { type: 'button', class: 'btn' + (selecting ? ' primary' : ''), 'aria-pressed': String(selecting), onclick: () => { if (!canLeave()) return; selecting = !selecting; selected = new Set(); open = null; render(); } }, selecting ? 'Done selecting' : 'Select several')),
-    search,
-    h('p', { class: 'muted', role: 'status' }, 'Showing ' + showing + ' of ' + all.length + ' fields.'),
-    h('nav', { class: 'jump', 'aria-label': 'Jump to a group' }, tree.map((g) => h('a', { href: '#group-' + g.key, onclick: (e) => { e.preventDefault(); if (view.folded.includes(g.key)) setView({ folded: view.folded.filter((x) => x !== g.key) }); document.getElementById('group-' + g.key)?.scrollIntoView({ block: 'start' }); } }, g.label))));
-}
-
-// The counts are buttons: tapping "8 missing" shows only missing fields (S-168).
-const countBtns = (c) => h('span', { class: 'group-counts' },
-  c.missing ? h('button', { type: 'button', class: 'dot dot-missing', onclick: (e) => { e.stopPropagation(); onlyKind('missing'); }, title: 'Show only missing fields' }, c.missing + ' missing') : null,
-  c.rough ? h('button', { type: 'button', class: 'dot dot-rough', onclick: (e) => { e.stopPropagation(); onlyKind('rough'); }, title: 'Show only rough fields' }, c.rough + ' rough') : null);
-
+// ---------------------------------------------------------------- adding, copying, deleting
 const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
 const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
 
@@ -775,26 +861,25 @@ const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi:
 // a name, how often for money that repeats.
 function addForm(n) {
   const { collection, types = [], fat } = n.add;
-  const typeSel = types.length > 1 ? h('select', { id: 'add-type-' + n.key, 'aria-label': 'Kind' }, types.map((t) => h('option', { value: t }, collection === 'income' ? words(t) : collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t].label))) : null;
+  const typeSel = types.length > 1 ? h('select', { id: 'add-type-' + n.key, 'aria-label': 'Type' }, types.map((t) => h('option', { value: t }, collection === 'income' ? words(t) : collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t].label))) : null;
   const name = h('input', { type: 'text', id: 'add-name', placeholder: collection === 'expenses' ? 'What it is for' : 'Name, for example Chase Freedom', autocomplete: 'off', 'aria-label': 'Name' });
   const cad = collection === 'income' || collection === 'expenses' ? h('select', { 'aria-label': 'How often' }, CADENCES.filter((c) => c !== 'total').map((c) => h('option', { value: c, selected: c === 'monthly' }, words(c)))) : null;
-  const fatSel = collection === 'expenses' && fat === null && n.key === 'E' ? h('select', { 'aria-label': 'Kind of spending' }, h('option', { value: '' }, 'Not food, housing or transportation'), FAT.map((t) => h('option', { value: t }, words(t)))) : null;
+  const fatSel = collection === 'expenses' && fat === null && n.key === 'N' ? h('select', { 'aria-label': 'Type of spending' }, h('option', { value: '' }, 'Not food, housing or transportation'), FAT.map((t) => h('option', { value: t }, words(t)))) : null;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   return h('form', { class: 'editor add-form', onsubmit: (e) => {
     e.preventDefault();
     const label = name.value.trim();
     if (!label) { msg.textContent = 'Give it a name'; name.focus(); return; }
     const type = typeSel ? typeSel.value : types[0];
-    const made = addItem(hist.present, { collection, type, label, cadence: cad ? cad.value : 'monthly', fat: fatSel ? fatSel.value || null : fat ?? null }, today());
+    const made = addItem(cur(), { collection, type, label, cadence: cad ? cad.value : 'monthly', fat: fatSel ? fatSel.value || null : fat ?? null }, today());
     adding = null;
-    apply(made.spine, 'Added ' + label);
-    openField(made.firstPath);
+    if (change(made.spine, said.added(label))) openField(made.firstPath);
   } }, typeSel, name, cad, fatSel, msg,
-  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { adding = null; render(); } }, 'Cancel')));
+  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { adding = null; refresh(); } }, 'Cancel')));
 }
 
 function addButton(n) {
-  if (!n.add || selecting) return null;
+  if (!n || !n.add || selecting) return null;
   if (adding === n.key) return addForm(n);
   // "an auto loan", "a Roth IRA": the article by sound, names keep their capitals.
   const name = n.add.types && n.add.types.length === 1 && PRESETS[n.add.types[0]] ? PRESETS[n.add.types[0]].label : null;
@@ -804,217 +889,213 @@ function addButton(n) {
   const acronym = noun && /^[A-Z]{2}/.test(noun);
   const an = noun && (acronym ? 'AEFHILMNORSX'.includes(noun[0]) : /^[aeiou]/i.test(noun) && !/^(Roth|Uni)/.test(noun));
   const what = noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
-  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; render(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
+  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; refresh(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
 }
 
-// An expense someone else pays counts $0 toward spending (S-171).
-function coveredBtn(it) {
-  if (it.collection !== 'expenses') return null;
-  const path = 'expenses.' + it.id + '.covered';
-  const f = getAt(hist.present, path);
-  const on = !!f && f.value === true;
-  return h('button', { type: 'button', class: 'btn small', onclick: () => apply(putFact(hist.present, path, !on, 'known', today()), it.label, on ? 'paid by you' : 'paid by someone else (counts $0)') }, on ? 'I pay this' : 'Paid by someone else');
-}
-
-// One item: a header with its headline value that opens and closes it, its
-// fields, and Remove (undo brings it back).
-function itemEl(it) {
-  const rows = it.rows.filter(shows);
-  if (filtering() && !rows.length) return null;
-  const isOpen = openItems.has(it.key) || (filtering() && rows.length > 0) || it.single;
-  const main = it.summary && it.rows.find((r) => r.path === it.summary);
-  const stream = it.collection === 'income' ? (hist.present.income || []).find((x) => x.id === it.id) : null;
-  const often = stream ? { weekly: ' a week', biweekly: ' every two weeks', semimonthly: ' twice a month', monthly: ' a month', quarterly: ' a quarter', yearly: ' a year', total: ' in total', once: ' once' }[stream.cadence] || '' : '';
-  const mainText = main ? (main.fact.value === null ? (main.fact.kind === 'notForMe' ? 'does not apply' : 'not given') : showValue(main.fact.value, main.type) + (main.type === 'income' ? '' : often)) : '';
-  if (it.single) return rows.map(rowEl).map((li) => { li.querySelector('.row-label').textContent = it.label; return li; });
-  const toggle = () => { if (!canLeave()) return; if (openItems.has(it.key)) openItems.delete(it.key); else openItems.add(it.key); render(); };
-  const remove = it.collection ? h('button', { type: 'button', class: 'btn ghost small', onclick: (e) => {
-    const box = h('span', { class: 'confirm' }, 'Remove ' + it.label + '? ',
-      h('button', { type: 'button', class: 'btn danger', onclick: () => { open = null; openItems.delete(it.key); apply(removeItem(hist.present, it.collection, it.id), 'Removed ' + it.label); } }, 'Remove'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: () => render() }, 'Keep'));
-    e.currentTarget.replaceWith(box);
-  } }, 'Remove') : null;
-  // Duplicate (S-190): the copy keeps everything but its name and amount.
-  const dup = it.collection ? h('button', { type: 'button', class: 'btn small', onclick: (e) => {
+// Duplicate (S-190): the copy keeps everything but its name and amount, and opens on its own screen.
+function dupButton(it) {
+  return h('button', { type: 'button', class: 'btn small', onclick: (e) => {
     if (!canLeave()) return;
     const name = h('input', { id: 'dup-name', type: 'text', autocomplete: 'off' });
+    const msg = h('p', { class: 'edit-msg', role: 'alert' });
     const form = h('form', { class: 'confirm dup-form', onsubmit: (ev) => {
       ev.preventDefault();
       const nm = name.value.trim();
-      if (!nm) { name.focus(); return; }
-      const r = duplicateItem(hist.present, it.collection, it.id, today(), nm);
-      openItems.add(it.collection + '.' + r.id);
-      apply(r.spine, 'Copied ' + it.label + ' as ' + nm, null);
-      openField(r.firstPath);
+      if (!nm) { msg.textContent = 'Give the copy a name'; name.focus(); return; }
+      const r = duplicateItem(cur(), it.collection, it.id, today(), nm);
+      name.value = '';
+      if (change(r.spine, said.added(nm + ' (a copy of ' + it.label + ')'))) openField(r.firstPath);
     } },
       h('label', { for: 'dup-name', class: 'edit-label' }, 'Name for the copy'), name,
       h('button', { type: 'submit', class: 'btn primary' }, 'Make the copy'),
-      h('button', { type: 'button', class: 'btn ghost', onclick: () => render() }, 'Cancel'),
+      h('button', { type: 'button', class: 'btn ghost', onclick: () => refresh() }, 'Cancel'),
+      msg,
       h('p', { class: 'edit-hint' }, 'It keeps how often, who pays, sharing and where it is paid from. The amount starts blank.'));
     e.currentTarget.replaceWith(form);
     name.focus();
-  } }, 'Duplicate') : null;
-  const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select these') : null;
-  // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
-  const acct = it.collection === 'accounts' ? (hist.present.accounts || []).find((x) => x.id === it.id) : null;
-  const maxable = acct && canMaxIt(rules, acct, +hist.present.meta.asOf.slice(0, 4));
-  const maxShown = maxable && maxOpen.has(it.id);
-  const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(!!maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; if (maxOpen.has(it.id)) maxOpen.delete(it.id); else maxOpen.add(it.id); render(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
-  return h('li', { class: 'item' + (isOpen ? ' open' : ''), id: 'item-' + it.key },
-    h('div', { class: 'item-head' },
-      h('button', { type: 'button', class: 'fold item-fold', 'aria-expanded': String(isOpen), onclick: toggle },
-        h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), h('span', { class: 'item-name' }, it.label), mainText ? h('span', { class: 'item-main' }, mainText) : null),
-      countBtns(it.counts), pickAll),
-    it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
-    isOpen ? h('ul', { class: 'rows' }, rows.length ? rows.map(rowEl) : h('li', { class: 'muted' }, 'Nothing to fill in here.')) : null,
-    isOpen && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dup, remove) : null,
-    isOpen && !selecting && maxShown ? maxItPanel(hist.present, rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null);
+  } }, 'Duplicate');
 }
+
+// Delete never asks: it goes at once and the bar offers Undo. Its screen is gone, so the page goes up a level.
+const deleteButton = (it) => h('button', { type: 'button', class: 'btn danger small', onclick: () => { if (!canLeave()) return; closeEditor(); change((s) => removeItem(s, it.collection, it.id), said.deleted(it.label)); } }, 'Delete');
 
 // "Record what went in for <year>" (S-211): one entry added to the account's contributions by year, one undoable edit.
 function saveContribution(accountId, year, amount, kind) {
-  const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
+  const acc = (cur().accounts || []).find((a) => a.id === accountId);
   const what = TOTAL_KINDS.includes(kind) ? (kind === 'employer' ? 'the employer part for ' : 'the total for ') + year + ', ' : 'a ' + ({ rollover: 'rollover', conversion: 'conversion', from529: '529 rollover' }[kind] || 'deposit') + ' for ' + year + ' of ';
-  apply(recordContribution(hist.present, accountId, { year, amount, kind }, today()), 'Recorded ' + what + money(amount, !Number.isInteger(amount)) + ', in ' + (valueOf(acc.name) || accountId));
+  change(recordContribution(cur(), accountId, { year, amount, kind }, today()), 'Recorded ' + what + money(amount, !Number.isInteger(amount)) + ', in ' + (valueOf(acc.name) || accountId));
 }
-
 // An HSA through payroll or from take-home (S-227, answer 47), and the job a plan from pay is paid through (answer 60):
 // one undoable edit each.
 function savePayroll(accountId, on) {
-  const acc = (hist.present.accounts || []).find((a) => a.id === accountId);
-  apply(setThroughPayroll(hist.present, accountId, on, today()), (valueOf(acc.name) || accountId) + ': ' + (on ? 'through payroll' : 'from take-home'));
+  const acc = (cur().accounts || []).find((a) => a.id === accountId);
+  change(setThroughPayroll(cur(), accountId, on, today()), said.changed(valueOf(acc.name) || accountId, on ? 'through payroll' : 'from take-home'));
 }
 function savePaidThrough(accountId, incomeId) {
-  const acc = (hist.present.accounts || []).find((a) => a.id === accountId), job = (hist.present.income || []).find((s) => s.id === incomeId);
+  const acc = (cur().accounts || []).find((a) => a.id === accountId), job = (cur().income || []).find((s) => s.id === incomeId);
   if (!job) return;
-  apply(putFact(hist.present, 'accounts.' + accountId + '.paidThrough', incomeId, 'known', today()), (valueOf(acc.name) || accountId) + ': paid through ' + job.label);
+  change(putFact(cur(), 'accounts.' + accountId + '.paidThrough', incomeId, 'known', today()), said.changed(valueOf(acc.name) || accountId, 'paid through ' + job.label));
 }
 
-// A link to ledger.html#max:<account> opens that account and its panel, unfolding its group and showing every kind.
-function openMax(id) {
-  if (!(hist.present.accounts || []).some((a) => a.id === id) || !canLeave()) return;
-  const trail = itemKeysFor(null, 'accounts.' + id);
-  selecting = false;
-  for (const k of trail) openItems.add(k);
-  maxOpen.add(id);
-  if (trail.some((k) => view.folded.includes(k))) { view = { ...view, folded: view.folded.filter((k) => !trail.includes(k)) }; keepView(); }
-  render();
-  if (!document.getElementById('max-' + id)) { view = { ...view, kinds: [...KIND_ORDER], q: '' }; keepView(); render(); }
-  const el = document.getElementById('max-' + id);
-  if (el) el.scrollIntoView({ block: 'start' });
+// ---------------------------------------------------------------- select several
+function selectToggle() {
+  return h('button', { type: 'button', class: 'btn' + (selecting ? ' primary' : ''), 'aria-pressed': String(selecting), onclick: () => { if (!canLeave()) return; selecting = !selecting; selected = new Set(); closeEditor(); refresh(); } }, selecting ? 'Done selecting' : 'Select several');
 }
-const fromHash = () => { const p = decodeURIComponent(location.hash.slice(1)); return p.startsWith('max:') ? { max: p.slice(4) } : { path: p }; };
-
-// A section or sub-section: its label and counts, its add button, its children.
-function nodeEl(n, depth) {
-  if (n.item) return itemEl(n);
-  const kids = n.children.flatMap((c) => [nodeEl(c, depth + 1)]).flat().filter(Boolean);
-  if (filtering() && !kids.length) return null;
-  const folded = view.folded.includes(n.key);
-  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== n.key) : [...view.folded, n.key] });
-  const Tag = depth === 1 ? 'h3' : 'h4';
-  const pickAll = selecting ? h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const rows = n.allRows.filter(shows); const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); render(); } }, 'Select all here') : null;
-  return h('li', { class: 'node depth-' + depth, id: 'node-' + n.key },
-    h('div', { class: 'node-head' },
-      h(Tag, {}, h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold }, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›'), n.label)),
-      countBtns(n.counts), pickAll),
-    folded ? null : sectionSharing(n),
-    folded ? null : h('ul', { class: 'tree' }, kids),
-    folded ? null : addButton(n));
+// Pick every row on this screen (or tap again to drop them).
+function selectAll(rows, words0) {
+  if (!selecting || !rows.length) return null;
+  return h('button', { type: 'button', class: 'btn ghost small', onclick: () => { const all = rows.every((r) => selected.has(r.path)); for (const r of rows) all ? selected.delete(r.path) : selected.add(r.path); refresh(); } }, words0);
 }
-
-function groupEl(g) {
-  const kids = g.children.flatMap((c) => [nodeEl(c, 1)]).flat().filter(Boolean);
-  if (filtering() && !kids.length) return null;
-  const folded = view.folded.includes(g.key);
-  const fold = () => setView({ folded: folded ? view.folded.filter((x) => x !== g.key) : [...view.folded, g.key] });
-  return h('section', { class: 'card group', id: 'group-' + g.key, 'aria-labelledby': 'h-' + g.key },
-    h('h2', { id: 'h-' + g.key },
-      h('button', { type: 'button', class: 'fold', 'aria-expanded': String(!folded), onclick: fold, title: folded ? 'Open this group' : 'Fold this group' }, h('span', { class: 'daite' }, g.key), ' ', g.label, h('span', { class: 'fold-mark', 'aria-hidden': 'true' }, '›')),
-      countBtns(g.counts)),
-    folded ? null : h('ul', { class: 'tree' }, kids.length ? kids : h('li', { class: 'muted' }, 'Nothing here yet.')),
-    folded ? null : addButton(g));
-}
-
-// Select mode's action bar: what to do with every picked field at once.
-function bulkBar(tree) {
+// Select mode's bar: what to do with every picked row at once, on any screen.
+function bulkBar(sc) {
   if (!selecting) return null;
-  const rows = tree.flatMap((g) => g.allRows).filter((r) => selected.has(r.path));
-  const run = (action, word) => { if (!rows.length) return; const n = rows.length; apply(bulkEdit(hist.present, rows, action, today()), word + ' ' + n + ' field' + (n === 1 ? '' : 's')); selected = new Set(); };
-  return h('div', { class: 'bulk-bar', role: 'region', 'aria-label': 'Selected fields' },
-    h('span', { class: 'bulk-count' }, rows.length + ' selected'),
-    rows.length ? null : h('span', { class: 'disabled-why' }, 'Tick fields above to act on them.'),
-    h('button', { type: 'button', class: 'btn primary', disabled: !rows.length, onclick: () => run('confirm', 'Confirmed') }, 'Confirm'),
-    h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('rough', 'Marked rough:') }, 'Mark rough'),
-    h('button', { type: 'button', class: 'btn', disabled: !rows.length, onclick: () => run('notForMe', 'Not for me:') }, 'Not for me'),
-    h('button', { type: 'button', class: 'btn ghost', onclick: () => { selected = new Set(tree.flatMap((g) => g.allRows).filter(shows).map((r) => r.path)); render(); } }, 'Select all shown'),
-    h('button', { type: 'button', class: 'btn ghost', onclick: () => { selected = new Set(); render(); } }, 'Clear'));
+  const rows = sc.sections.flatMap((g) => g.allRows).filter((r) => selected.has(r.path));
+  const n = rows.length, lines = n + (n === 1 ? ' line' : ' lines');
+  // A line with no number yet cannot be confirmed or marked rough: the bar says so rather than doing nothing.
+  const run = (action, text) => {
+    if (!n) return;
+    if (change(bulkEdit(cur(), rows, action, today()), text)) selected = new Set();
+    else say('Nothing changed: a line with no number yet cannot be ' + (action === 'confirm' ? 'confirmed' : 'marked rough') + '. Fill it in first');
+  };
+  return h('div', { class: 'bulk-bar', role: 'region', 'aria-label': 'Selected' },
+    h('span', { class: 'bulk-count' }, n + ' selected'),
+    n ? null : h('span', { class: 'disabled-why' }, 'Tick the lines to change first.'),
+    h('button', { type: 'button', class: 'btn primary', disabled: !n, onclick: () => run('confirm', lines + ' confirmed') }, 'Confirm'),
+    h('button', { type: 'button', class: 'btn', disabled: !n, onclick: () => run('rough', lines + ' marked rough') }, 'Mark rough'),
+    h('button', { type: 'button', class: 'btn', disabled: !n, onclick: () => run('notForMe', lines + ' marked not for me') }, 'Not for me'),
+    h('button', { type: 'button', class: 'btn ghost', disabled: !n, onclick: () => { selected = new Set(); refresh(); } }, 'Clear'),
+    h('button', { type: 'button', class: 'btn ghost', onclick: () => { selecting = false; selected = new Set(); refresh(); } }, 'Done selecting'));
 }
 
-function render() {
-  const spine = hist.present;
-  const tree = ledgerTree(spine, inst);
-  const focusId = document.activeElement && document.activeElement.id;
-  const caret = focusId === 'ledger-search' ? document.activeElement.selectionStart : null;
-  // Empty slots (no picker, no banner) are left out, never drawn as text.
-  app.replaceChildren(...[
-    // Going somewhere is a link; doing something is a button (CLAUDE.md affordances 1 and 4).
-    h('nav', { class: 'page-links', 'aria-label': 'Pages' }, h('a', { href: 'dashboard.html' }, 'Dashboard'), h('a', { href: 'calendar.html' }, 'Calendar'), h('a', { href: 'spending.html' }, 'Spending'), h('a', { href: 'plan.html' }, 'Plan'), h('a', { href: 'windfall.html' }, 'Windfall'), h('a', { href: 'math.html' }, 'All formulas')),
-    h('header', { class: 'top' },
-      h('div', {},
-        h('h1', {}, 'Ledger'),
-        whoseLine(spine, source, { rules, reopen: (loaded) => took(loaded, 'your file') })),
-      h('nav', { class: 'top-actions' },
-        h('button', { class: 'btn', disabled: !canUndo(hist), title: canUndo(hist) ? 'Undo ' + undoLabel(hist) : null, onclick: () => step(undo, 'Undone: ' + undoLabel(hist) + '.') }, canUndo(hist) ? 'Undo' : 'Nothing to undo'),
-        // Redo shows only when there is something to redo.
-        canRedo(hist) ? h('button', { class: 'btn', title: 'Redo ' + redoLabel(hist), onclick: () => step(redo, 'Redone: ' + redoLabel(hist) + '.') }, 'Redo') : null,
-        // One filled button a screen: on the example, Load my file is it.
-        h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
-        // The example household loads a file from its header (Load my file); anyone else's loads a different one here.
-        whose(spine).example ? null : h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file'),
-        whose(spine).example ? null : h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, onchange: loadFile }),
-        h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); render(); document.getElementById('picker')?.scrollIntoView({ block: 'start' }); } }, 'Pick what you have'),
-        )),
-    h('p', { class: 'saved-line', role: 'status', 'aria-live': 'polite' }, lastSaved || ''),
-    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
+// ---------------------------------------------------------------- the screens
+function topScreen(sc, st) {
+  const spine = cur();
+  const q = st.q || '';
+  return [
     problemsCard(spine),
-    picking ? pickerCard() : null,
-    guessList(),
-    subsCard(),
-    filterBar(tree),
-    ...tree.map(groupEl).filter(Boolean),
-    bulkBar(tree),
-    h('footer', { class: 'foot' },
-      h('a', { class: 'btn ghost', href: '#' }, 'Back to top'),
-      source === 'saved' && h('button', { class: 'btn ghost', onclick: resetAsk }, 'Go back to the file (drop edits saved in this browser)'))
-  ].filter(Boolean));
-  if (focusId === 'edit-input') { const i = document.getElementById('edit-input'); if (i) i.focus({ preventScroll: true }); }
-  if (focusId === 'ledger-search') { const i = document.getElementById('ledger-search'); if (i) { i.focus({ preventScroll: true }); i.setSelectionRange(caret, caret); } }
+    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
+    sectionList(sc),
+    h('ul', { class: 'go-list' }, guessRow()),
+    // Search and the filters: what they find shows right under them, one row each.
+    filterBar(sc, q),
+    filtering(q) ? results(sc, q) : null,
+    source === 'saved' ? h('footer', { class: 'foot' }, h('button', { type: 'button', class: 'btn danger', onclick: backToFile }, 'Go back to the file (drop edits saved in this browser)')) : null
+  ];
 }
 
-// The profile file (S-195): save downloads it; load reads one back (undoable).
-function saveFile() {
-  if (!canLeave()) return;
-  downloadProfile(hist.present);
-  lastSaved = 'Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ to make it the file the app starts from.';
-  render();
+function sectionScreen(sec) {
+  return [
+    selectAll(sec.allRows, 'Select all here'),
+    sec.groups.length ? h('ul', { class: 'go-list' }, sec.groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
+      name: g.label,
+      sub: [g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items')), dots(g.counts)]
+    }))) : h('p', { class: 'muted' }, 'Nothing here yet.'),
+    sec.slug === 'needs' ? h('ul', { class: 'go-list' }, subsRow()) : null,
+    addButton(sec)
+  ];
 }
-// Both buttons read the file through the one loader (household.js loadMyFile, S-228): a field it cannot use is listed
-// at the top of the Ledger, never a reason to refuse the file.
+
+function groupScreen(sec, g) {
+  const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
+    name: it.label,
+    sub: [headline(it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
+  });
+  return [
+    sectionSharing(g.node),
+    selectAll(g.node.allRows, 'Select all here'),
+    ...g.parts.map((p) => [
+      p.heading ? h('h2', { class: 'part-h' }, p.heading) : null,
+      h('ul', { class: 'go-list' }, p.items.map(itemRow)),
+      addButton(p.node)
+    ]),
+    addButton(g.node)
+  ];
+}
+
+function itemScreen(sec, g, it, st) {
+  // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
+  const acct = it.collection === 'accounts' ? (cur().accounts || []).find((x) => x.id === it.id) : null;
+  const maxable = acct && canMaxIt(rules, acct, +cur().meta.asOf.slice(0, 4));
+  const maxShown = maxable && !!st.max;
+  const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; keep({ max: !maxShown }); refresh(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
+  return [
+    g.item && it.label !== g.label ? h('p', { class: 'muted' }, it.label) : null,
+    it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
+    selectAll(it.rows, 'Select these'),
+    h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, it.rows.length ? it.rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
+    it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
+    maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
+  ];
+}
+
+// A level's words for the trail and the title; null when that level is not there any more.
+function nameOf(levels, ctx) {
+  inst = ctx.institutions || inst; rules = ctx.rules || rules;
+  if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
+  if (levels[0] === 'pick') return levels.length === 1 ? 'Pick what you have' : null;
+  if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
+  const at = screenAt(screensOf(ctx.spine), levels);
+  if (!at) return null;
+  return levels.length === 1 ? at.section.label : levels.length === 2 ? at.group.label : at.item.label;
+}
+
+function render(ctx) {
+  rules = ctx.rules; inst = ctx.institutions || inst; source = ctx.source;
+  const spine = ctx.spine, levels = ctx.levels, key = levels.join('/');
+  // Shown straight from the file (no browser edits): the file and the page match.
+  if (!based) { based = true; if (source !== 'saved') setBaseline(spine); }
+  // A new screen: what was open on the last one closes; typing left there unsaved is said, never dropped silently.
+  if (key !== screenKey) {
+    if (screenKey !== null && dirty && edCache) say('Not saved: ' + edCache.label);
+    dirty = false; edCache = null; adding = null; sharingOpen = null;
+    screenKey = key;
+  }
+  let st = ctx.state || {};
+  // A link that has landed: what it opens is kept with the screen, and it scrolls to it.
+  if (pending && pending.key === key) {
+    const p = pending; pending = null;
+    keep(p.patch); st = { ...st, ...p.patch };
+    if (p.patch.open !== (edCache && edCache.path)) { dirty = false; edCache = null; }
+    if (p.scroll) requestAnimationFrame(() => { const el = document.getElementById(p.scroll.id); if (!el) return; el.scrollIntoView({ block: p.scroll.block }); if (p.scroll.focus) document.getElementById('edit-input')?.focus({ preventScroll: true }); });
+  } else if (pending) pending = null; // it landed somewhere else (its screen was gone): it never opens later by surprise
+  refreshGuess(spine);
+  const sc = screensOf(spine);
+  let body;
+  if (levels[0] === 'still-guessing') body = guessList();
+  else if (levels[0] === 'pick') body = pickerCard();
+  else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
+  else {
+    const at = screenAt(sc, levels) || {};
+    body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group);
+  }
+  return [body, bulkBar(sc)];
+}
+
+// ---------------------------------------------------------------- the profile file
+// The profile file (S-195): save downloads it; load reads one back. Loading a different household starts its own
+// history, as Load my file does.
+function saveFile() {
+  downloadProfile(cur());
+  refresh();
+  say('Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ to make it the file the app starts from');
+}
+// Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
+// at the top of My numbers, never a reason to refuse the file.
 async function loadFile(ev) {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
-  try { took(await loadMyFile(file, rules), file.name); } catch (err) { console.warn(err); lastSaved = loadFailWords(err, file.name); render(); }
+  try { reopen(await loadMyFile(file, rules), 'Loaded ' + file.name); } catch (err) { console.warn(err); say(loadFailWords(err, file.name)); }
   ev.target.value = '';
 }
-function took(loaded, name) {
-  open = null;
-  apply(loaded.spine, 'Loaded ' + name);
-  setBaseline(hist.present);
-  // Where it lives now: saved in this browser, or open on this page only when the browser would not keep it.
-  source = loaded.source;
-  lastSaved = 'Loaded ' + name + '. Undo goes back to what you had.' + (loaded.problem ? ' ' + loaded.problem : '');
-  render();
+// Back to the file: the edits saved in this browser go, and the bar offers them back.
+async function backToFile() {
+  const before = cur();
+  forgetSaved();
+  let loaded;
+  try { loaded = await loadAll(); } catch (err) { change(before, 'Your edits are back'); say('The file could not be read: ' + err.message); return; }
+  if (loaded.source !== 'saved') setBaseline(loaded.spine);
+  reopen(loaded);
+  say('Back to the file. The edits saved in this browser were dropped', () => change(before, 'The edits saved in this browser are back'));
 }
 
 // What the file held that could not be used (S-228): each one named in plain words, with what the file had.
@@ -1024,48 +1105,45 @@ function problemsCard(spine) {
   if (!p.open.length && !p.other.length) return null;
   // What the file had, only when it is a plain word or number (never a whole record).
   const held = (x) => (typeof x.held === 'string' && x.held.trim() ? ' Your file had "' + (x.held.length > 40 ? x.held.slice(0, 37) + '...' : x.held) + '".' : typeof x.held === 'number' && Number.isFinite(x.held) ? ' Your file had ' + x.held + '.' : '');
-  const item = (x) => h('li', {}, x.link ? h('a', { href: '#' + encodeURIComponent(x.link) }, x.label) : h('strong', {}, x.label), ': ' + x.words + '.' + held(x));
+  const item = (x) => h('li', {}, x.link ? fieldLink(x.link, x.label) : h('strong', {}, x.label), ': ' + x.words + '.' + held(x));
   return h('section', { class: 'card', 'aria-labelledby': 'problems-h', role: p.open.length ? 'alert' : null },
     h('h2', { id: 'problems-h' }, p.open.length ? 'From your file: ' + p.open.length + ' to enter again' : 'From your file'),
     p.open.length ? [h('p', { class: 'muted' }, 'Each shows as missing until you enter it. Nothing else in your file was changed.'), h('ul', { class: 'flow-list' }, p.open.map(item))] : null,
     p.other.length ? h('details', { class: 'flow-list' }, h('summary', {}, 'Read another way or set aside (' + p.other.length + ')'), h('ul', {}, p.other.map(item))) : null);
 }
 
-function resetAsk(e) {
-  const box = h('span', { class: 'confirm' }, 'Drop every edit saved in this browser? ',
-    h('button', { class: 'btn danger', onclick: async () => { forgetSaved(); await start(); } }, 'Drop them'),
-    h('button', { class: 'btn ghost', onclick: () => render() }, 'Keep them'));
-  e.currentTarget.replaceWith(box);
+// The page's own buttons, on the top screen: save the file, load another (the example loads from its header), pick.
+function actions(ctx) {
+  if (ctx.levels.length) return [];
+  const spine = ctx.spine, mine = !whose(spine).example;
+  return [
+    // One filled button a screen: on the example, Load my file is it.
+    h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
+    mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
+    mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
+    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Pick what you have')
+  ];
 }
 
-// "/" jumps to the field search (S-168).
+// An old link to a field or an account (ledger.html#expenses.rent.amount, #max:roth, from Today, the Calendar, Show
+// the math) opens its screen with that field open. The address is tidied first, so a reload does not open it again.
+function oldLink() {
+  const raw = location.hash.slice(1);
+  if (!raw || raw.startsWith('/') || !cur()) return;
+  let p = raw;
+  try { p = decodeURIComponent(raw); } catch { /* not encoded */ }
+  history.replaceState(history.state, '', location.pathname + location.search);
+  if (p.startsWith('max:')) openMax(p.slice(4)); else openField(p);
+}
+
+// "/" jumps to the search on the top screen (S-168).
 document.addEventListener('keydown', (e) => {
   if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
   const i = document.getElementById('ledger-search');
   if (i) { e.preventDefault(); i.focus(); }
 });
-document.addEventListener('keydown', (e) => {
-  if (!hist || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
-  if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-  e.preventDefault();
-  if (e.shiftKey) step(redo, 'Redone: ' + redoLabel(hist) + '.');
-  else step(undo, 'Undone: ' + undoLabel(hist) + '.');
-});
 // Closing or leaving the page with unsaved typing asks first.
-window.addEventListener('beforeunload', (e) => { if (open && dirty) { e.preventDefault(); e.returnValue = ''; } });
-window.addEventListener('hashchange', () => { const x = fromHash(); if (!hist) return; if (x.max) openMax(x.max); else if (x.path) openField(x.path); });
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('hashchange', oldLink);
 
-async function start() {
-  const loaded = await loadAll();
-  rules = loaded.rules; source = loaded.source; inst = loaded.institutions; hist = createHistory(loaded.spine); guess = null; open = null;
-  // Shown straight from the file (no browser edits): the file and the page match.
-  if (loaded.source !== 'saved') setBaseline(hist.present);
-  if (loaded.problem) lastSaved = loaded.problem;
-  render();
-  refreshGuess();
-  const x = fromHash();
-  if (x.max) openMax(x.max);
-  else if (x.path && getAt(hist.present, rowPathFor(hist.present, x.path))) openField(x.path);
-}
-
-start().catch((err) => { app.replaceChildren(h('p', { class: 'card' }, 'The Ledger could not load: ' + err.message)); });
+startPage({ tab: 'numbers', title: 'My numbers', name: nameOf, actions, render }).then(oldLink);

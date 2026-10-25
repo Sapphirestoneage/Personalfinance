@@ -15,10 +15,11 @@ import { readJson, loadRules, SLAM } from './spine-helpers.js';
 const R = loadRules();
 const demo = () => loadHousehold(readJson('fixtures/demo.json'));
 
-test('ledger: every Fact is a row, in a DAITE group, with a label and type', () => {
+test('ledger: every Fact is a row, in a DATING group, with a label and type', () => {
   const s = demo();
   const groups = ledgerRows(s);
-  assert.deepEqual(groups.map((g) => g.id), ['D', 'A', 'I', 'T', 'E', 'G']);
+  // DATING order (S-231); the expenses group keeps its id E and reads Needs.
+  assert.deepEqual(groups.map((g) => g.id + ' ' + g.label), ['D Debt', 'A Assets', 'T Taxes', 'I Income', 'E Needs', 'G Goals']);
   const rows = groups.flatMap((g) => g.rows);
   // A card's APR, intro rate and intro end share one row.
   const cardIntro = listFacts(s).filter((x) => /^debts\.[^.]+\.(promoApr|promoEnds)$/.test(x.path) && getAt(s, x.path.split('.').slice(0, 2).join('.')).type === 'credit_card');

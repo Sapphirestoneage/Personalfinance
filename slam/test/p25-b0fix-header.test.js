@@ -53,7 +53,7 @@ test('a file with things that cannot be read: the page line and My numbers use c
     income: [{ type: 'w2', label: 'Job', amount: 5000, cadence: 'fortnightly' }], expenses: [{ id: 'rent', label: 'Rent', amount: '1,200', cadence: 'monthly' }],
     accounts: [{ id: 'chk', type: 'checking', family: 'cash', balance: 900, cashback: 2 }, { id: 'robo', type: 'robo_advisor', family: 'taxable', name: 'Robo', balance: 10 }], debts: [null], goals: 'see notes' };
   const loaded = await loadMyFile(fileOf('sam.json', JSON.stringify(v5)), R);
-  assert.match(loaded.problem, /\d+ things in your file could not be read, so they show as missing\. Fill them in at the top of the Ledger page\./);
+  assert.match(loaded.problem, /\d+ things in your file could not be read, so they show as missing\. Fill them in at the top of My numbers\./);
   assert.doesNotMatch(loaded.problem.replace('sam.json', ''), JARGON);
   const p = fileProblems(loaded.spine);
   for (const x of [...p.open, ...p.other]) {

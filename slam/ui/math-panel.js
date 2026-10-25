@@ -11,7 +11,7 @@ const KIND_TEXT = { known: 'known', rough: 'rough', missing: 'missing', computed
 
 function termEl(t, ctx, depth) {
   const value = h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind));
-  const label = t.path ? h('a', { href: ledgerHref(t.path), title: 'Open this field in the Ledger' }, t.label)
+  const label = t.path ? h('a', { href: ledgerHref(t.path), title: 'Open it in My numbers' }, t.label)
     : t.rule ? h('a', { href: 'math.html#rule-' + t.rule, title: 'See this rule' }, t.label) : h('span', {}, t.label);
   const li = h('li', { class: 'math-term' }, chip(t.kind), ' ', label, ' ', value);
   if (t.metric && depth < 6) li.append(mathButton([t.metric], ctx, depth + 1, 'Show the math for ' + t.label));
