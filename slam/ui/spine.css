@@ -989,3 +989,11 @@ body.has-tabs { padding-bottom: var(--tabbar-h, 56px); }
 .wr-pick { max-width: none; border: 0; padding: 0; min-height: var(--btn-h); }
 .srow .cat-one, .srow.cat-one { background: transparent; }
 @media (min-width: 640px) { .srow { flex-wrap: nowrap; } .srow .row-more[open] { flex-basis: auto; } }
+
+/* ---------------------------------------------------------------- My numbers, the statement (Batch 4) */
+.nw-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.nw-one { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.nw-one .tile-value { font-size: var(--text-xl); margin: 0; }
+.nw-one .math-btn { font-size: var(--text-xs); }
+.find-fold > summary { font-weight: 600; }
+.nw-one:has(.math-panel) { grid-column: 1 / -1; }

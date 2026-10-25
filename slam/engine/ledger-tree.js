@@ -199,3 +199,42 @@ export function levelsFor(screens, spine, path) {
   const sec = LIST_SECTION[p.split('.')[0]];
   return { levels: sec && screens.sections.some((x) => x.slug === sec) ? [sec] : [], row: null };
 }
+
+// ---------------------------------------------------------------- the statement (Batch 4)
+// My numbers reads like a financial statement: each item's amount (a debt's or an account's balance, a bill's
+// monthly cost to you, an income line's monthly gross this month, a goal's target), each group's total, and the
+// groups and items of Debt, Assets, Income, Needs and Goals biggest first. An item with a blank amount makes its
+// group's total incomplete (never smaller), and sorts last. Taxes keep their order. s: summary.js summarize().
+const MONEY_SECTIONS = ['debt', 'assets', 'income', 'needs', 'goals'];
+export function statementOrder(screens, spine, s) {
+  const exp = new Map(s.cashflow.expenses.items.map((x) => [x.id, x.amount]));
+  const inc = new Map(s.cashflow.income.streams.filter((x) => x.included).map((x) => [x.id, x.gross]));
+  const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+  const amountOf = (it) => {
+    if (!it.collection || !it.id) return undefined;
+    const x = (spine[it.collection] || []).find((y) => y.id === it.id);
+    if (!x) return undefined;
+    if (it.collection === 'expenses') return exp.has(it.id) ? num(exp.get(it.id)) : undefined;
+    if (it.collection === 'income') return inc.has(it.id) ? num(inc.get(it.id)) : undefined;
+    if (it.collection === 'goals') return x.type === 'fi' ? undefined : num(valueOf(x.target));
+    return num(valueOf(x.balance));
+  };
+  const byAmount = (a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
+  for (const sec of screens.sections) {
+    if (!MONEY_SECTIONS.includes(sec.slug)) continue;
+    for (const g of sec.groups) {
+      for (const it of g.items) it.amount = amountOf(it);
+      const counted = g.items.filter((it) => it.amount !== undefined);
+      g.total = counted.length ? Math.round(counted.reduce((a, it) => a + (it.amount ?? 0), 0) * 100) / 100 : null;
+      g.totalIncomplete = counted.some((it) => it.amount === null);
+      // Items biggest first, inside each part, keeping each item's address with it.
+      const slugOf = new Map(g.items.map((it, k) => [it, g.slugs[k]]));
+      for (const p of g.parts) p.items.sort(byAmount);
+      if (g.parts.length) g.items = g.parts.flatMap((p) => p.items);
+      g.slugs = g.items.map((it) => slugOf.get(it));
+      if (g.parts.length > 1) g.parts.sort((a, b) => (b.items[0] ? b.items[0].amount ?? -Infinity : -Infinity) - (a.items[0] ? a.items[0].amount ?? -Infinity : -Infinity));
+    }
+    sec.groups.sort((a, b) => (b.total ?? -Infinity) - (a.total ?? -Infinity));
+  }
+  return screens;
+}

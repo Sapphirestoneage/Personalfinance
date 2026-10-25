@@ -48,6 +48,11 @@ def({ id: 'debts', label: 'Total debts', unit: 'usd', op: 'sum', screens: ['dash
   explain: ({ spine, s }) => out(s.sheet.debts, (spine.debts || []).map((d) => field(spine, 'debts.' + d.id + '.balance', v(d.balance), 'usd', 'plus', v(d.name) || d.id))) });
 def({ id: 'netWorth', label: 'Net worth', unit: 'usd', op: 'sum', screens: ['dashboard#tile-networth'], formula: 'Net worth = total assets - total debts',
   explain: ({ s }) => out(s.sheet.netWorth, [metric('assets', 'Total assets', s.sheet.assets, 'usd'), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
+// Liquid net worth (Batch 4): the accounts counted as liquid (a Roth's contributions only), less every debt.
+def({ id: 'liquidAssets', label: 'Liquid assets', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid assets = cash, taxable investing and other accounts counted as liquid (a Roth IRA counts its contributions only)',
+  explain: ({ spine, s }) => out(s.sheet.liquid, s.sheet.liquid.items.map((x) => x.part === 'contributions' ? field(spine, 'accounts.' + x.id + '.basis', x.amount, 'usd', 'plus', x.name + ' (contributions)') : field(spine, x.path, x.amount, 'usd', 'plus', x.name))) });
+def({ id: 'liquidNetWorth', label: 'Liquid net worth', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid net worth = liquid assets - total debts',
+  explain: ({ s }) => out(s.sheet.liquidNetWorth, [metric('liquidAssets', 'Liquid assets', s.sheet.liquid, 'usd'), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
 def({ id: 'cash', label: 'Cash', unit: 'usd', op: 'sum', screens: ['dashboard#tile-runway'], formula: 'Cash = checking, savings and other cash accounts added up (the Roth backstop and money set aside for a goal are not cash)',
   explain: ({ spine, s }) => out(s.sheet.cash, (spine.accounts || []).filter((a) => a.family === 'cash' && !isEarmarked(a)).map((a) => field(spine, 'accounts.' + a.id + '.balance', v(a.balance), 'usd', 'plus', v(a.name) || a.id)), [], s.sheet.setAsideNote ? { note: s.sheet.setAsideNote } : {}) });
 def({ id: 'invested', label: 'Invested assets', unit: 'usd', op: 'sum', screens: ['dashboard#tile-fi'], formula: 'Invested = retirement, IRA, HSA and taxable investing balances added up',

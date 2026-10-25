@@ -17,7 +17,7 @@ import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
 import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
-import { ledgerTree, numbersScreens, screenAt, levelsFor } from '../engine/ledger-tree.js';
+import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
 import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
@@ -51,7 +51,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + '-' + Strin
 // The screens, built once per version of the household.
 let scMemo = { spine: null, inst: null, sc: null };
 function screensOf(spine) {
-  if (scMemo.spine !== spine || scMemo.inst !== inst) scMemo = { spine, inst, sc: numbersScreens(ledgerTree(spine, inst || { names: [], aliases: {} })) };
+  if (scMemo.spine !== spine || scMemo.inst !== inst) scMemo = { spine, inst, sc: statementOrder(numbersScreens(ledgerTree(spine, inst || { names: [], aliases: {} })), spine, summaryOf(spine)) };
   return scMemo.sc;
 }
 // Every row by its path, once per version of the screens (Still guessing and Subscriptions open a row in place).
@@ -1007,13 +1007,32 @@ function topScreen(sc, st) {
   return [
     problemsCard(spine),
     matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
+    worthPair(spine),
     sectionList(sc),
     h('ul', { class: 'go-list' }, guessRow()),
-    // Search and the filters: what they find shows right under them, one row each.
-    filterBar(sc, q),
-    filtering(q) ? results(sc, q) : null,
+    // Search and the filters, folded: what they find shows right under them, one row each.
+    h('details', { class: 'flow-list card find-fold', open: filtering(q) || null }, h('summary', {}, 'Search and filter'), filterBar(sc, q), filtering(q) ? results(sc, q) : null),
     source === 'saved' ? h('footer', { class: 'foot' }, h('button', { type: 'button', class: 'btn danger', onclick: backToFile }, 'Go back to the file (drop edits saved in this browser)')) : null
   ];
+}
+
+// The top of the statement (Batch 4): liquid and total net worth side by side, each with Show the math that lists the
+// accounts and debts it counts.
+function worthPair(spine) {
+  const s = summaryOf(spine), ctx = () => ({ spine: cur(), rules, s: summaryOf(cur()) });
+  const one = (id, label, r, sub, ids) => h('div', { class: 'nw-one' },
+    h('p', { class: 'tile-label' }, label),
+    r.value === null ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(r.value)),
+    h('p', { class: 'tile-sub muted' }, sub, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null),
+    mathButton(ids, ctx));
+  return h('section', { class: 'card nw-pair', 'aria-label': 'Net worth' },
+    one('liquid', 'Liquid net worth', s.sheet.liquidNetWorth, 'What you can reach, less all you owe', ['liquidNetWorth', 'liquidAssets', 'debts']),
+    one('total', 'Total net worth', s.sheet.netWorth, 'All you own, less all you owe', ['netWorth', 'assets', 'debts']));
+}
+// A group's total on its row: incomplete when a line in it has no amount yet.
+function groupTotal(sec, g) {
+  if (g.total === undefined || (g.total === null && !g.totalIncomplete)) return g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items'));
+  return h('span', {}, h('span', { class: 'go-total' }, money(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
 }
 
 function sectionScreen(sec) {
@@ -1021,7 +1040,7 @@ function sectionScreen(sec) {
     selectAll(sec.allRows, 'Select all here'),
     sec.groups.length ? h('ul', { class: 'go-list' }, sec.groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
       name: g.label,
-      sub: [g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items')), dots(g.counts)]
+      sub: [groupTotal(sec, g), dots(g.counts)]
     }))) : h('p', { class: 'muted' }, 'Nothing here yet.'),
     sec.slug === 'needs' ? h('ul', { class: 'go-list' }, subsRow()) : null,
     addButton(sec)

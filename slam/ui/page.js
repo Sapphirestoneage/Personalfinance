@@ -8,7 +8,7 @@ import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 import { loadFailWords } from './profile-file.js';
 
 // The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2.5, Batch 3', date: '2026-10-25' };
+export const BUILD = { label: 'Phase 2.5, Batch 4', date: '2026-10-25' };
 
 let banner = null;
 function showError(text) {
