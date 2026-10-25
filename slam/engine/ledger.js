@@ -121,12 +121,13 @@ export function previewCost(amount, cadence, shared, people, share) {
   return shared ? yourCost(m, share ?? (people ? 1 / people : null)) : m;
 }
 
+const PAY_PARTS = ['payBasis', 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal'];
 // The Ledger row a field lives on (a card's intro fields live on its rate row;
 // an expense's sharing fields on its amount row).
 export function rowPathFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'expenses' && (s[2] === 'payDay' || s[2] === 'paysDebt')) return 'expenses.' + s[1] + '.paidFrom';
-  if (s[0] === 'income' && (s[2] === 'payDay' || s[2] === 'payDay2' || s[2] === 'personId')) return 'income.' + s[1] + '.amount';
+  if (s[0] === 'income' && (s[2] === 'payDay' || s[2] === 'payDay2' || s[2] === 'personId' || PAY_PARTS.includes(s[2]))) return 'income.' + s[1] + '.amount';
   if (s[0] === 'debts' && isCard(spine, s[1]) && CARD_RATE.includes(s[2])) return 'debts.' + s[1] + '.apr';
   if (s[0] === 'expenses' && (SHARE_FIELDS.includes(s[2]) || s[2] === 'subscription')) return 'expenses.' + s[1] + '.amount';
   return path;
@@ -145,6 +146,8 @@ export function ledgerRows(spine) {
       continue;
     }
     // An income stream's amount, how often, dates and pay day are one row (S-199).
+    // How the pay is figured (a salary, hours) is set in the Session, where the amount follows from it: no row of its own.
+    if (s[0] === 'income' && PAY_PARTS.includes(s[2])) continue;
     if (s[0] === 'income' && (s[2] === 'amount' || s[2] === 'payDay' || s[2] === 'payDay2')) {
       if (s[2] === 'amount') rows.push(incomeRow(spine, getAt(spine, 'income.' + s[1])));
       continue;

@@ -150,7 +150,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   }
   const current = rungs.find((r) => r.done === false) || null;
   const out = all.out(surplus);
-  return { rungs, current: current ? current.id : null, surplus, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => a.matchRate), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { rungs, current: current ? current.id : null, surplus, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => (v(a.matchRate) ?? 0) > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 const money = (x) => (x === null || x === undefined ? 'missing' : '$' + Math.round(x).toLocaleString('en-US'));
 

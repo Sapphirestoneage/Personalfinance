@@ -6,7 +6,7 @@
 // Every change goes through the shell's change() with words, so Undo takes it back. Formatting only: the totals come
 // from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
-import { startPage, change, said, say, refresh, go } from './shell.js';
+import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
 import { setAt, getAt, valueOf as v, addDays } from '../engine/spine.js';
@@ -178,17 +178,20 @@ const allItems = () => DATA.needs.flatMap((c) => c.items.flatMap((x) => [x, ...(
 function setHome(k) {
   const today = todayIso(), covers = new Set(DATA.familyCovers || []);
   const words = (DATA.questions.home.options.find(([x]) => x === k) || [k, k])[1];
+  // How many bills move, counted first, so the words say it with the Undo.
+  const now = current().spine;
+  const moved = allItems().filter((x) => covers.has(x.key)).map((x) => findExpense(now, x.label)).filter((e) => e && ((by) => (k === 'family' ? !by : by === 'Parents' || by === 'Family'))(e.coveredBy && v(e.coveredBy))).length;
   change((spine) => {
     let s = putFact(spine, 'household.home', k, 'known', today);
     for (const item of allItems().filter((x) => covers.has(x.key))) {
       const e = findExpense(s, item.label);
       if (!e) continue;
       const by = e.coveredBy && v(e.coveredBy);
-      if (k === 'family' && !by) s = editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: 'Parents' }, today);
+      if (k === 'family' && !by) s = editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: 'Family' }, today);
       else if (k !== 'family' && (by === 'Parents' || by === 'Family')) s = editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: null }, today);
     }
     return s;
-  }, said.changed('Where you live', words.toLowerCase()) + (k === 'family' ? '; rent, utilities and internet are on your family now' : ''));
+  }, said.changed('Where you live', words.toLowerCase()) + (!moved ? '' : '; ' + moved + (moved === 1 ? ' bill is' : ' bills are') + (k === 'family' ? ' on your family now' : ' yours again')));
 }
 // Typical amounts for the lines that fit the answers, on empty lines only, marked guess.
 function fillTypical(t) {
@@ -198,7 +201,7 @@ function fillTypical(t) {
     for (const cat of DATA.needs) {
       if (findExpense(s, cat.label)) continue;
       for (const item of cat.items) {
-        if (!applies(s, item)) continue;
+        if (!applies(s, item) || (item.when && Object.keys(item.when).some((q) => v(s.household[q]) === null || v(s.household[q]) === undefined))) continue;
         const amt = t.amounts[item.key];
         if (amt === undefined) continue;
         let e = findExpense(s, item.label);
@@ -206,7 +209,7 @@ function fillTypical(t) {
         if (!e && noList().includes(item.key)) continue;
         if (!e) { const r = addLine(s, item, cat.fat, today); s = r.spine; e = getAt(s, 'expenses.' + r.id); }
         const fam = v(s.household.home) === 'family' && (DATA.familyCovers || []).includes(item.key);
-        s = editExpense(s, e.id, { amount: amt, kind: 'rough', ...(fam ? { coveredBy: 'Parents' } : {}) }, today);
+        s = editExpense(s, e.id, { amount: amt, kind: 'rough', ...(fam ? { coveredBy: 'Family' } : {}) }, today);
       }
     }
     return s;
@@ -224,7 +227,7 @@ function needs(ctx) {
       Q.getAround ? question('around', Q.getAround.label, Q.getAround.options, v(hh.getAround), (k) => putF('household.getAround', k, said.changed('How you get around', Q.getAround.options.find(([x]) => x === k)[1].toLowerCase()))) : null,
       h('p', { class: 'edit-label' }, 'Fill typical amounts'),
       h('div', { class: 'edit-actions' }, Object.values(DATA.typical || {}).map((t) => h('button', { type: 'button', class: 'btn small', onclick: () => fillTypical(t) }, t.label))),
-      h('p', { class: 'edit-hint' }, 'Only empty lines that fit your answers, marked guess. Type over any of them.')),
+      h('p', { class: 'edit-hint' }, 'Only empty lines that fit your answers, marked guess. Answer both questions first for housing and getting around.')),
     ...DATA.needs.map((cat) => {
       const catLine = findExpense(spine, cat.label);
       // One number for the whole category, or its lines: never both, so nothing counts twice.
@@ -248,6 +251,7 @@ const putF = (path, value, words, kind = 'known') => change((s) => (value === nu
 function addDebt(type, label) {
   change((spine) => {
     const r = addItem(spine, { collection: 'debts', type, label }, todayIso());
+    later(() => document.getElementById('d-bal-' + r.id)?.focus());
     let s = r.spine;
     // A car loan takes over a "Car payment" line in Needs, so the payment counts once.
     const pay = type === 'auto_loan' ? findExpense(s, 'Car payment') : null;
@@ -263,7 +267,8 @@ function debt(ctx) {
     const have = list.filter((d) => d.type === type).length;
     return h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, q),
       have ? h('span', { class: 'q-have' }, 'Yes, ' + have, ' ', h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, 'Add another'))
-        : h('button', { type: 'button', class: 'btn small', id: 'dq-' + type, onclick: () => addDebt(type, label) }, 'Yes'));
+        : noList().includes('debt-' + type) ? h('span', { class: 'q-have' }, 'No', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('debt-' + type, false) }, 'Change'))
+        : h('span', { class: 'tick' }, h('button', { type: 'button', class: 'btn small', id: 'dq-' + type, onclick: () => addDebt(type, label) }, 'Yes'), h('button', { type: 'button', class: 'btn small', id: 'dqn-' + type, onclick: () => setNo('debt-' + type, true) }, 'No')));
   });
   return frame(ctx, 'debt', () => [
     h('section', { class: 'card qs' }, ...asks),
@@ -276,7 +281,7 @@ function debt(ctx) {
           moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'a month'),
           intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x)))),
           // A card: paid in full every month, or carried? It decides whether the balance costs interest.
-          d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full each month?'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null);
+          d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full? Not set (counted as carried)'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null);
       })) : h('p', { class: 'muted' }, 'No debts yet.'),
       list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
@@ -333,17 +338,14 @@ function payWith(x, patch, words) {
 function w2Bits(spine, x) {
   const basis = v(x.payBasis), name = x.label;
   const extra = (spine.income || []).find((y) => y.label === extraLabel(x));
-  const pick = extra ? 'both' : basis === 'hourly' ? 'hourly' : basis === 'salary' ? 'salary' : null;
-  const choose = (k) => change((s) => {
-    let n = setPay(s, x.id, { basis: k === 'hourly' ? 'hourly' : 'salary', cadence: PER_YEAR_OK(x.cadence) ? x.cadence : 'biweekly' }, todayIso());
-    const ex = (n.income || []).find((y) => y.label === extraLabel(x));
-    if (k === 'both' && !ex) n = addItem(n, { collection: 'income', type: 'tips', label: extraLabel(x) }, todayIso()).spine;
-    if (k !== 'both' && ex && v(ex.amount) === null) n = removeItem(n, 'income', ex.id);
-    return n;
-  }, said.changed(name, k === 'both' ? 'a salary plus tips, overtime or commission' : k === 'hourly' ? 'paid by the hour' : 'a salary'));
+  const pick = basis === 'hourly' || basis === 'salary' ? basis : null;
+  const choose = (k) => change((s) => setPay(s, x.id, { basis: k, cadence: PER_YEAR_OK(x.cadence) ? x.cadence : 'biweekly' }, todayIso()), said.changed(name, k === 'hourly' ? 'paid by the hour' : 'a salary'));
+  // Tips, overtime or commission on top: a line of its own, so the steady part stays steady.
+  const toggleExtra = () => change((s) => (extra ? removeItem(s, 'income', extra.id) : addItem(s, { collection: 'income', type: 'tips', label: extraLabel(x) }, todayIso()).spine), extra ? extraLabel(x) + ' removed' : said.added(extraLabel(x)));
   const often = pickBox('i-often-' + x.id, name + ': paid how often', PAY_OFTEN, x.cadence, (c) => payWith(x, { cadence: c }, said.changed(name + ' paid', PAY_OFTEN.find(([k]) => k === c)[1].toLowerCase())));
   return [
-    question('pay-' + x.id, 'How is ' + name + ' paid?', [['salary', 'Salary'], ['hourly', 'By the hour'], ['both', 'Both']], pick, choose),
+    question('pay-' + x.id, 'How is ' + name + ' paid?', [['salary', 'Salary'], ['hourly', 'By the hour']], pick, choose),
+    h('button', { type: 'button', id: 'i-extra-' + x.id, class: 'btn small toggle', 'aria-pressed': String(!!extra), onclick: toggleExtra }, extra ? 'Plus tips or overtime: on' : 'Plus tips or overtime'),
     basis === 'salary' ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-sal-' + x.id }, 'Yearly salary, before tax'), moneyBox('i-sal-' + x.id, v(x.salary), name + ': yearly salary', (a) => payWith(x, { salary: a }, said.changed(name + ' salary', a === null ? 'blank' : money(a) + ' a year'))), often) : null,
     basis === 'hourly' ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-rate-' + x.id }, 'Per hour, and hours a week'), moneyBox('i-rate-' + x.id, v(x.hourlyRate), name + ': per hour', (a) => payWith(x, { hourlyRate: a }, said.changed(name + ' hourly rate', a === null ? 'blank' : money(a, true) + ' an hour')), '$ an hour'), intBox('i-hrs-' + x.id, v(x.hoursPerWeek), name + ': hours a week', (n) => payWith(x, { hoursPerWeek: n }, said.changed(name + ' hours', n === null ? 'blank' : n + ' a week')), { placeholder: 'hours', min: 1, max: 100 }), often) : null,
     basis ? h('p', { class: 'edit-hint' }, v(x.amount) === null ? 'Each paycheck: fill in the boxes above.' : 'Each paycheck before tax: ' + money(v(x.amount)) + '.') : null
@@ -352,8 +354,8 @@ function w2Bits(spine, x) {
 function selfBits(x) {
   const lumpy = v(x.payBasis) === 'lumpy', name = x.label;
   return [
-    question('sp-' + x.id, 'Does ' + name + ' come in steady or in lumps?', [['steady', 'About the same each month'], ['lumpy', 'In lumps']], v(x.amount) === null && !x.payBasis ? null : lumpy ? 'lumpy' : 'steady',
-      (k) => change((s) => (k === 'lumpy' ? setPay(s, x.id, { basis: 'lumpy' }, todayIso()) : setPay(s, x.id, { basis: null }, todayIso())), (k === 'lumpy' ? name + ' comes in lumps now' : name + ' is about the same each month now'))),
+    question('sp-' + x.id, 'Does ' + name + ' come in steady or in lumps?', [['steady', 'About the same each month'], ['lumpy', 'In lumps']], !x.payBasis && v(x.amount) === null ? null : lumpy ? 'lumpy' : 'steady',
+      (k) => change((s) => (k === 'lumpy' ? setPay(s, x.id, { basis: 'lumpy' }, todayIso()) : setPay(s, x.id, { basis: 'steady' }, todayIso())), (k === 'lumpy' ? name + ' comes in lumps now' : name + ' is about the same each month now'))),
     lumpy ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-yr-' + x.id }, 'All of it over the last 12 months'), moneyBox('i-yr-' + x.id, v(x.yearTotal), name + ': last 12 months', (a) => payWith(x, { yearTotal: a }, said.changed(name + ' last 12 months', a === null ? 'blank' : money(a)))), h('p', { class: 'edit-hint' }, v(x.amount) === null ? 'Counted as a monthly average, a guess.' : 'Counted as ' + money(v(x.amount)) + ' a month on average, a guess.')) : null,
     h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-be-' + x.id }, 'Business costs a month (optional)'), moneyBox('i-be-' + x.id, v(x.businessExpenses), name + ': business costs a month', (a) => putF('income.' + x.id + '.businessExpenses', a, said.changed(name + ' business costs', a === null ? 'blank' : money(a))))),
     h('p', { class: 'muted mini-note' }, 'Nothing is withheld, so tax is set aside from each payment.')
@@ -363,7 +365,7 @@ function unemploymentBits(x) {
   const name = x.label, asOf = todayIso();
   const weeksLeft = x.end ? Math.max(0, Math.round((Date.parse(x.end) - Date.parse(asOf)) / 6048e5)) : null;
   return [h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-wk-' + x.id }, 'Weeks of benefits left'),
-    intBox('i-wk-' + x.id, weeksLeft, name + ': weeks left', (n) => setIncome(x, { cadence: 'weekly', end: n === null ? null : addDays(asOf, n * 7) }, said.changed(name + ' weeks left', n === null ? 'blank' : String(n))), { placeholder: 'weeks', min: 0, max: 99 }))];
+    intBox('i-wk-' + x.id, weeksLeft, name + ': weeks left', (n) => setIncome(x, { end: n === null ? null : addDays(asOf, n * 7) }, said.changed(name + ' weeks left', n === null ? 'blank' : String(n))), { placeholder: 'weeks', min: 0, max: 99 }))];
 }
 const PER_YEAR_OK = (c) => ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(c);
 function incomeRows(spine) {
@@ -437,6 +439,7 @@ function holdings(a) {
     }), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Remove holding ' + (i + 1), onclick: () => save(list.filter((_, j) => j !== i), name + ': holding ' + (i + 1) + ' removed') }, 'Remove')))),
     h('button', { type: 'button', class: 'btn small', onclick: () => save([...list, { ticker: null, share: null, expenseRatio: null, managedBy: null, advisoryFee: null }], name + ': a holding added') }, 'Add a holding'));
 }
+const lastMatch = {};
 function assets(ctx) {
   const spine = ctx.spine, today = todayIso();
   let iraPick = 'roth_ira';
@@ -458,7 +461,7 @@ function assets(ctx) {
           // A plan at work: does the employer match, and up to what share of pay?
           a.family === 'employerRetirement' ? h('div', { class: 'srow-q' },
             question('m-' + a.id, 'Does your employer match?', [['yes', 'Yes'], ['no', 'No']], a.matchRate ? (v(a.matchRate) === 0 ? 'no' : 'yes') : null,
-              (k) => putF(p + '.matchRate', k === 'no' ? 0 : null, said.changed(name + ' match', k === 'no' ? 'none' : 'yes, the rate to come'))),
+              (k) => { if (k === 'no' && v(a.matchRate)) lastMatch[a.id] = v(a.matchRate); const back = k === 'yes' ? lastMatch[a.id] ?? null : 0; putF(p + '.matchRate', back, said.changed(name + ' match', k === 'no' ? 'none' : back ? pct(back) : 'yes, the rate to come')); }),
             a.matchRate && v(a.matchRate) !== 0 ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'a-mr-' + a.id }, 'They match this share of what you put in, up to this share of pay'),
               rateBox('a-mr-' + a.id, v(a.matchRate), name + ': match rate', (x) => putF(p + '.matchRate', x, said.changed(name + ' match', x === null ? 'blank' : pct(x)))),
               rateBox('a-mc-' + a.id, v(a.matchCap), name + ': match up to', (x) => putF(p + '.matchCap', x, said.changed(name + ' match cap', x === null ? 'blank' : pct(x) + ' of pay')))) : null) : null);

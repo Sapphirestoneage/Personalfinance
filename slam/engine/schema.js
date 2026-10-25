@@ -32,7 +32,7 @@ export const PERSON_PURPOSE_WORDS = { gift: 'A gift or support', allowance: 'An 
 export const ALLOWANCE_MODES = ['gift', 'time'];
 // How a paycheck is figured (Batch 3, the questions): a yearly salary, an hourly rate times hours a week, or for 1099
 // pay that comes in lumps, the last 12 months' total. The amount a payday is figured from these (edits.js setPay).
-export const PAY_BASES = ['salary', 'hourly', 'lumpy'];
+export const PAY_BASES = ['salary', 'hourly', 'lumpy', 'steady'];
 // The Session's first questions on Needs: where you live, how you get around.
 export const HOMES = ['rent', 'own', 'family', 'other'];
 export const GET_AROUND = ['car', 'transit', 'both', 'none'];
@@ -327,7 +327,7 @@ export function validate(spine) {
       if (s.personId && !(h.people || []).some((x) => x.id === s.personId)) err(p + '.personId', 'no such person');
       checkFact(p + '.payBasis', s.payBasis, PAY_BASES, false);
       for (const k of ['salary', 'hourlyRate', 'yearTotal']) checkFact(p + '.' + k, s[k], 'money', false);
-      checkFact(p + '.hoursPerWeek', s.hoursPerWeek, 'money', false);
+      checkFact(p + '.hoursPerWeek', s.hoursPerWeek, 'int', false);
       if (s.type === 'person') {
         checkFact(p + '.from', s.from, 'text', false);
         checkFact(p + '.purpose', s.purpose, PERSON_PURPOSES);

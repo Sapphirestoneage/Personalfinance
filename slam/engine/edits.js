@@ -308,10 +308,12 @@ export function setPay(spine, id, { basis, salary, hourlyRate, hoursPerWeek, yea
   if (hourlyRate === undefined) hourlyRate = was('hourlyRate');
   if (hoursPerWeek === undefined) hoursPerWeek = was('hoursPerWeek');
   const next = { ...x };
-  for (const k of ['payBasis', 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal']) delete next[k];
-  if (!basis) return setAt(spine, base, next);
+  // Cleared, every part goes; switched, the parts of the other ways are kept, so switching back finds them.
+  if (!basis) { for (const k of ['payBasis', 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal']) delete next[k]; return setAt(spine, base, next); }
   if (!PAY_BASES.includes(basis)) throw new Error('Not a way of being paid: ' + basis);
   next.payBasis = F(basis);
+  // Steady (1099 or side money about the same each month): the amount is typed as it is.
+  if (basis === 'steady') return setAt(spine, base, next);
   const often = basis === 'lumpy' ? 'monthly' : cadence || x.cadence;
   if (!PER_YEAR[often]) throw new Error('Paid how often: weekly, every two weeks, twice a month or monthly');
   next.cadence = often;
