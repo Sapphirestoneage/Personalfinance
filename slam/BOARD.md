@@ -62,6 +62,10 @@ The open questions are in QUESTIONS.md. The ones that change numbers most now:
 confirming the rough W-2 numbers (the tax bill), card minimums (surplus,
 runway), and the 1099 contract's amount and likelihood (next year's outlook).
 
+## Phase 3
+
+- Life Pyramid: Maslow as a bar graph, Classic vs Real vs You. Spec: docs/specs/life-pyramid.md
+
 ## Future rounds
 
 Backlog only; not built.
