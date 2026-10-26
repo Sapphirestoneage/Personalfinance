@@ -10,6 +10,7 @@ import { startPage, change, said, go, keep, kept, refresh, say, current, reopen,
 import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
+import { addForm as newAddForm } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
@@ -22,7 +23,7 @@ import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
-import { getAt, valueOf } from '../engine/spine.js';
+import { getAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint } from './view.js';
 
@@ -895,27 +896,13 @@ function subsScreen() {
 
 // ---------------------------------------------------------------- adding, copying, deleting
 const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
-const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
 
-// An add form, built once when opened (S-169): a type when there is a choice,
-// a name, how often for money that repeats.
+// The add form (S-237): the same one the Session uses (ui/add-form.js), asking first, then the name and the amount.
 function addForm(n) {
   const { collection, types = [], fat } = n.add;
-  const typeSel = types.length > 1 ? h('select', { id: 'add-type-' + n.key, 'aria-label': 'Type' }, types.map((t) => h('option', { value: t }, collection === 'income' ? words(t) : collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t].label))) : null;
-  const name = h('input', { type: 'text', id: 'add-name', placeholder: collection === 'expenses' ? 'What it is for' : 'Name, for example Chase Freedom', autocomplete: 'off', 'aria-label': 'Name' });
-  const cad = collection === 'income' || collection === 'expenses' ? h('select', { 'aria-label': 'How often' }, CADENCES.filter((c) => c !== 'total').map((c) => h('option', { value: c, selected: c === 'monthly' }, words(c)))) : null;
-  const fatSel = collection === 'expenses' && fat === null && n.key === 'N' ? h('select', { 'aria-label': 'Type of spending' }, h('option', { value: '' }, 'Not food, housing or transportation'), FAT.map((t) => h('option', { value: t }, words(t)))) : null;
-  const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  return h('form', { class: 'editor add-form', onsubmit: (e) => {
-    e.preventDefault();
-    const label = name.value.trim();
-    if (!label) { msg.textContent = 'Give it a name'; name.focus(); return; }
-    const type = typeSel ? typeSel.value : types[0];
-    const made = addItem(cur(), { collection, type, label, cadence: cad ? cad.value : 'monthly', fat: fatSel ? fatSel.value || null : fat ?? null }, today());
-    adding = null;
-    if (change(made.spine, said.added(label))) openField(made.firstPath);
-  } }, typeSel, name, cad, fatSel, msg,
-  h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { adding = null; refresh(); } }, 'Cancel')));
+  return newAddForm({ spine: cur, collection, types, fat: fat ?? null, today: today(),
+    onDone: (made, label) => { adding = null; if (change(made.spine, said.added(label))) openField(made.firstPath); },
+    onCancel: () => { adding = null; refresh(); } });
 }
 
 function addButton(n) {

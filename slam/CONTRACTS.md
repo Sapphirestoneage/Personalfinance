@@ -300,7 +300,7 @@ Design kit is the page's own HTML; a sample tapped says it is a sample. The
 One-pager's Debt, next rung and Spending cards are whole-card targets with a
 chevron (My numbers at Debt, the Plan, My numbers at Needs).
 
-## Phase 2.5 additions (S-238 to S-240)
+## Phase 2.5 additions (S-239 to S-241)
 
 ```
 Fact.by?: client | coach | lookedUp | default          // who supplies it (optional; whoSupplies(f) reads the source when absent)
