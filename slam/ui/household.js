@@ -1,6 +1,6 @@
 // Loading and saving the household for every page.
 // Order: the household saved in this browser, then fixtures/eli.local.json (on
-// this machine only, gitignored), then the made-up demo household. Every file
+// this machine only, gitignored, and only on localhost with ?local=1), then the made-up demo household. Every file
 // goes through one loader (engine/normalize.js readHousehold, S-228): a field
 // it cannot use is named for the Ledger, never a crash, and a household saved
 // in this browser always opens, never the demo in its place.
@@ -45,6 +45,17 @@ export function keepRuleOverrides(o) {
 export const loadRules = () => fetchRules(new URL('data/', base), [2026], ruleOverrides());
 export const rulesFile = (year = 2026) => fetchJson('data/rules-' + year + '.json');
 
+// The file on this computer is looked for only on localhost with ?local=1: never on the published site or the
+// artifact, so no page asks for a file that is not there.
+const LOCAL_KEY = 'slam-local:v1';
+export function lookForLocalFile(loc = typeof location !== 'undefined' ? location : null) {
+  if (!loc) return false;
+  if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(loc.hostname)) return false;
+  // Asked once, remembered for this browser tab, so moving between the tabs keeps the file.
+  const asked = new URLSearchParams(loc.search).get('local') === '1';
+  try { if (asked) sessionStorage.setItem(LOCAL_KEY, '1'); return asked || sessionStorage.getItem(LOCAL_KEY) === '1'; } catch { return asked; }
+}
+
 export async function loadAll() {
   const [rules, institutions] = await Promise.all([loadRules(), fetchJson('data/institutions.json').then((x) => x || { names: [], aliases: {} })]);
   const saved = readSaved();
@@ -64,7 +75,7 @@ export async function loadAll() {
       problem = 'What this browser saved could not be read. A copy is kept in this browser, so nothing is lost.';
     }
   }
-  const local = await fetchJson('fixtures/eli.local.json');
+  const local = lookForLocalFile() ? await fetchJson('fixtures/eli.local.json') : null;
   if (local) { try { const { spine } = readHousehold(local, { today: todayIso() }); return { rules, institutions, spine: applyDefaults(spine, rules), source: 'local', problem: problem || needWords(spine) }; } catch (err) { console.warn('Local file: ' + err.message); problem = (problem ? problem + ' ' : '') + 'Your file on this computer could not be read.'; } }
   return { rules, institutions, spine: applyDefaults(readHousehold(await fetchJson('fixtures/demo.json'), { today: todayIso() }).spine, rules), source: 'demo', problem };
 }

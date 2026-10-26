@@ -24,7 +24,7 @@ const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
-const URL = process.env.SLAM_URL || 'http://localhost:8765/';
+const URL = process.env.SLAM_URL || 'http://localhost:8765/clients.html';
 const VIEWS = [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 900 }]];
 let failures = 0;
 const results = [];

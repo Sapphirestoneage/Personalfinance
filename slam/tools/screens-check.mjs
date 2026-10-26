@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
-const URL = process.env.SLAM_URL || 'http://localhost:8765/';
+const URL = process.env.SLAM_URL || 'http://localhost:8765/clients.html';
 const DEMOS = { maya: 'Maya, 26', luis: 'Luis, 33', tasha: 'Tasha, 29', sam: 'Sam, 24' };
 let failures = 0;
 

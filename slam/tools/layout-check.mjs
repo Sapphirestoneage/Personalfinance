@@ -132,7 +132,7 @@ if (process.argv[1] && process.argv[1].endsWith('layout-check.mjs')) {
   let playwright;
   try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
   const browser = await playwright.chromium.launch();
-  const { failures } = await layoutCheck(browser, process.env.SLAM_URL || 'http://localhost:8765/');
+  const { failures } = await layoutCheck(browser, process.env.SLAM_URL || 'http://localhost:8765/clients.html');
   await browser.close();
   process.exit(failures ? 1 : 0);
 }

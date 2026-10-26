@@ -265,6 +265,8 @@ module.exports = function (t) {
     check('Jan 31 + 1 month clamps to Feb 28', BetweenJobs.addMonths(new Date(2027, 0, 31).getTime(), 1), '2027-02-28');
     check('a year on', BetweenJobs.addMonths(NOW, 12), '2027-09-05');
     check('seven days on', BetweenJobs.addDays(NOW, 7), '2026-09-12');
+    check('84 days on across the November clock change', BetweenJobs.addDays(new Date(2026, 9, 26, 23, 30).getTime(), 84), '2027-01-18');
+    check('a day back across the year', BetweenJobs.addDays(new Date(2027, 0, 1).getTime(), -1), '2026-12-31');
   }
 
   /* -- The page, the registry and the ownership rows ------------------------ */

@@ -19,7 +19,7 @@ const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); } catch (e) { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 
-const URL = process.env.SLAM_URL || 'http://localhost:8765/';
+const URL = process.env.SLAM_URL || 'http://localhost:8765/clients.html';
 const OUT = new globalThis.URL('./gallery/', import.meta.url).pathname;
 const APPROVED = new globalThis.URL('./gallery-approved/', import.meta.url).pathname;
 const approve = process.argv.includes('--approve');

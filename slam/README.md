@@ -3,7 +3,11 @@
 Coach-operated financial planning software. A coach runs it live on a call with a
 client, one household at a time, on a laptop or a phone.
 
-The first tool is the **Budget**. It holds a client to their own words: they guess
+The app opens on **Today** (index.html goes to dashboard.html). The tabs are Today,
+Calendar, Spending, Plan and My numbers; the Session and the Builder hang off them.
+
+The older first tool is the **Budget** (now clients.html, linked from the Builder as
+"Client list (old)" until Phase 3 replaces it). It holds a client to their own words: they guess
 first (the estimate), then we find the truth (the actual, and the plan for the month)
 and measure how far off they were, and where. What they would like to spend (the
 dream life, short and long term) lives in **Eras**, next to today.
@@ -20,11 +24,10 @@ From this folder:
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000/ in a browser. (Any static server works. There is
-no build step.)
-
-Click **Try with example numbers** on the Clients screen to load a demo household.
-All demo households are made up.
+Then open http://localhost:8000/ in a browser: it opens Today with the made-up
+demo household. (Any static server works. There is no build step.) The old Budget
+is at http://localhost:8000/clients.html; click **Try with example numbers** on its
+Clients screen. All demo households are made up.
 
 ## Run the tests
 
@@ -114,7 +117,9 @@ On your own machine you can instead:
 1. Copy your profile file to `slam/fixtures/eli.local.json` (any name ending
    in `.local.json` in that folder is ignored by git; the pages look for
    this exact name).
-2. Serve the folder and open My numbers. The header shows your name.
+2. Serve the folder and open My numbers with `?local=1` on localhost
+   (http://localhost:8000/ledger.html?local=1). The header shows your name.
+   Without `?local=1`, or anywhere but localhost, the file is never asked for.
    Without the file the pages load the made-up demo household
    (`fixtures/demo.json`).
 3. Edits are saved in this browser only. "Go back to the file" at the bottom

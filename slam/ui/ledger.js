@@ -1151,7 +1151,7 @@ function render(ctx) {
 function saveFile() {
   downloadProfile(cur());
   refresh();
-  say('Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ to make it the file the app starts from');
+  say('Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ and open a page with ?local=1 on this computer to start from it');
 }
 // Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
 // at the top of My numbers, never a reason to refuse the file.

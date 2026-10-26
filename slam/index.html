@@ -1,18 +1,17 @@
 <!doctype html>
-<!-- SLAM (Stress Less About Money): the Budget. Static page, no build step. -->
+<!-- SLAM: the front door opens Today. The old client list lives at clients.html, linked from the Builder only; an old
+     Budget link (index.html#setup, #clients) still goes there. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>SLAM Budget</title>
+  <title>SLAM Today</title>
+  <meta http-equiv="refresh" content="0; url=dashboard.html">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f52ba'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="src/ui/tokens.css">
-  <link rel="stylesheet" href="src/ui/app.css">
+  <script>location.replace((location.hash && !location.hash.startsWith('#/') ? 'clients.html' : 'dashboard.html') + location.search + location.hash);</script>
 </head>
 <body>
-  <div id="app"><p style="padding:16px">Loading SLAM...</p></div>
-  <noscript>SLAM needs JavaScript.</noscript>
-  <script type="module" src="src/ui/app.js"></script>
+  <p><a href="dashboard.html">Open Today</a></p>
 </body>
 </html>

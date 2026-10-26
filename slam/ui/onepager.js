@@ -34,7 +34,7 @@ function render({ spine: base, rules }) {
         cell('Cash', m(sh.cash.value), em.tiers.full.runway.value === null ? 'runway unknown' : em.tiers.full.runway.value.toFixed(1) + ' months at ' + m(em.tiers.full.burn.value) + ' a month'),
         cell('Take-home a month', m(cf.income.takeHome.value), 'gross ' + m(cf.income.gross.value)),
         cell('Monthly surplus', m(cf.surplus.value), 'after spending, minimums, saving and the set-aside'),
-        cell('Savings rate', cf.savingsRate.gross.value === null ? 'missing' : pct(cf.savingsRate.gross.value, 1), 'of gross'),
+        cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home'),
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.fiNumber.value)),
         cell('Safe to spend today', m(safe.today), safe.daysUntil ? m(safe.perDay) + ' a day until ' + shortDate(safe.nextIncome) : ''),
         cell('Cards', m(sh.cards.value), s.debt.utilization.personal.value === null ? '' : 'personal utilization ' + pct(s.debt.utilization.personal.value, 1))),

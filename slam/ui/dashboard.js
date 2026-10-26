@@ -97,7 +97,7 @@ function render({ spine: base, rules }) {
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: numbersHref('needs'), result: cf.surplus, shown: money(cf.surplus.value), lines: [
         cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home after spending, debt payments, saving and the tax set-aside.'
       ] }),
-    tile(spine, { id: 'savings', label: 'Savings rate', target: numbersHref('income'), result: cf.savingsRate.gross, shown: pct(cf.savingsRate.gross.value, 1) + ' of gross', lines: [pct(cf.savingsRate.net.value, 1) + ' of take-home.'] }),
+    tile(spine, { id: 'savings', label: 'Savings rate', target: numbersHref('income'), result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
     tile(spine, {
       id: 'cards', label: 'Credit cards', target: numbersHref('debt', 'credit-cards'), result: sh.cards, shown: money(sh.cards.value),
       lines: [

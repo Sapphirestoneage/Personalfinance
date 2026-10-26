@@ -117,3 +117,8 @@ The Budget calendar is not retired yet: a second audit of its own code found the
 96. **The Session's questions**: living with family puts rent, utilities, internet and renter's insurance on "Parents" (the real cost kept, $0 to you). Should it ask whose family (parents, a partner's family) instead of always Parents? **Default used:** Parents; change it in each line's More.
 97. **Salary, hourly or both**: "Both" adds a second line for tips, overtime and commission as its own monthly amount. **Default used:** a separate line, so the steady part stays steady.
 98. **Typical amounts**: two sets, high-cost city and elsewhere, in data/session-presets.json. **Default used:** those two; the numbers are rough 2026 guesses, please check them.
+
+## Phase 2.5, Parts A to C (2026-10-26)
+
+99. **Plan still says "of gross" in two places**: the FOO hyper-saving step ("Saving 18% of gross, past the 25% mark") and the FI solver's "savings rate needed". The 25% hyper-saving mark is the Money Guy's, and it is defined on gross. **Default used:** kept on gross there, since that is the rule's own definition; Today and the One-pager lead with take-home.
+100. **Old Budget links**: a saved link like index.html#setup used to open the old Budget's screen. **Default used:** any old-style hash (not #/...) on index.html goes to clients.html, so those links still work; a plain index.html opens Today.

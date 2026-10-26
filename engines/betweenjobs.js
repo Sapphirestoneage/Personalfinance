@@ -50,7 +50,6 @@
 
   var MONTHS = 12;
   var DAYS_PER_MONTH = 365.25 / 12;
-  var MS_PER_DAY = 86400000;
   /* The floor, when none has been typed: a bare-minimum month at 70% of
      spending. A convention, not a benchmark. The drawer says so. */
   var FLOOR_SHARE = 0.70;
@@ -70,7 +69,13 @@
     target.setDate(Math.min(d.getDate(), last));
     return iso(target);
   }
-  function addDays(nowMs, days) { return iso(new Date(nowMs + days * MS_PER_DAY)); }
+  /** Whole calendar days on from today's local date, counted on UTC dates so a
+      daylight-saving change in between never moves the day. */
+  function addDays(nowMs, days) {
+    var d = new Date(nowMs);
+    var u = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + days));
+    return iso(new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate()));
+  }
 
   /* ---- The stand-ins, named so the room proposes exactly what the engine uses -- */
 

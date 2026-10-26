@@ -566,7 +566,7 @@ function planMetric(id) {
 // The metric(s) behind each Dashboard tile and flag.
 export const DASHBOARD_MATH = {
   'tile-networth': ['netWorth'], 'tile-runway': ['runway', 'runwayFat', 'ruleOf5Dollars', 'rothBasis'], 'tile-surplus': ['surplus'],
-  'tile-savings': ['savingsRateGross', 'savingsRateNet'], 'tile-cards': ['cards', 'promoTotal', 'promoMonthly', 'personalUtil', 'overallUtil'],
+  'tile-savings': ['savingsRateNet', 'savingsRateGross'], 'tile-cards': ['cards', 'promoTotal', 'promoMonthly', 'personalUtil', 'overallUtil'],
   'tile-fi': ['fiPercent', 'fiNumber', 'impliedFi', 'leanFi', 'coastFi'], 'tile-tax': ['taxBalanceDue'], 'tile-compare': ['compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected'], 'tile-cash': ['spend:safeToday']
 };
 export function flagMath(flag) {
