@@ -355,11 +355,13 @@ export function repairSpine(input, { today = null } = {}) {
   // The Session's first questions moved into the Profile (Phase 2.5 B3): an older file's household.home and
   // household.getAround are read as profile.home and profile.getAround (both, none: a mix, rideshare).
   if (s.profile !== undefined && (!s.profile || typeof s.profile !== 'object' || Array.isArray(s.profile))) { aside('profile', s.profile, 'not a record of answers'); delete s.profile; }
-  for (const [k, map] of [['home', {}], ['getAround', { both: 'mix', none: 'rideshare' }]]) {
+  // An old answer maps to one that hides nothing it used to show: car and both read as a mix; none and other are not
+  // moved (left for the Profile to ask again).
+  for (const [k, map] of [['home', { other: null }], ['getAround', { car: 'mix', both: 'mix', none: null }]]) {
     if (H[k] === undefined) continue;
     const was = H[k];
     delete H[k];
-    if (!isFact(was) || was.value === null || (s.profile && s.profile[k])) continue;
+    if (!isFact(was) || was.value === null || map[was.value] === null || (s.profile && s.profile[k])) continue;
     s.profile = { ...(s.profile || {}), [k]: { ...was, value: map[was.value] || was.value } };
   }
   if (!s.assumptions || typeof s.assumptions !== 'object' || Array.isArray(s.assumptions)) { if (s.assumptions !== undefined) aside('assumptions', s.assumptions, 'not a set of assumptions'); s.assumptions = {}; }

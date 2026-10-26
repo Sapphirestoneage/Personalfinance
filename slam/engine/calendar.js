@@ -30,6 +30,7 @@ import { semimonthlyDates } from './contrib.js';
 import { fromPaycheck } from './schema.js';
 import * as C from './vendor/cashcal.js';
 import { matchOccurrence } from './feed.js';
+import { hiddenLine } from './profile.js';
 
 const STEP = { weekly: 7, biweekly: 14 };
 const roughFact = (f) => !f || f.kind !== 'known';
@@ -195,6 +196,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (inMonth(s.end)) add({ id: 'ends:' + s.id, kind: 'incomeEnds', label: s.label + ' ends', date: s.end, path: 'income.' + s.id + '.amount' });
   }
   for (const e of spine.expenses || []) {
+    if (hiddenLine(spine, e)) continue;
     if (inMonth(e.start) && e.start > asOf) add({ id: 'estarts:' + e.id, kind: 'expenseStarts', label: e.label + ' starts', date: e.start, path: 'expenses.' + e.id + '.amount' });
     if (inMonth(e.end)) add({ id: 'eends:' + e.id, kind: 'expenseEnds', label: e.label + ' ends', date: e.end, path: 'expenses.' + e.id + '.amount' });
   }

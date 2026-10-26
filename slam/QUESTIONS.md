@@ -134,3 +134,6 @@ The Budget calendar is not retired yet: a second audit of its own code found the
 110. **The birth year alone** sets the birth date as July 1 of that year, a guess from the profile, until the real date is typed. **Default used:** July 1.
 111. **A partner or other adults at home**: a new housing or food line starts shared, half each. **Default used:** half each; change it in the line's More.
 112. **Tone**: "Gently" shows one step under a softer heading ("One step to start with") and moves the rest of Do first to Next up; "Straight to it" keeps Do first as it is. **Default used:** that.
+113. **Two sessions on this branch again**: another session pushed S-237 (one add form for every item type) while Part B was running. **Default used:** merged, theirs kept as S-237; Part B's decisions are S-238 to S-241.
+114. **Old Session answers**: "My own car" from the old Session reads as "A mix" in the Profile (it showed the car lines and the car payment), and "Walk, bike or rides" and "Something else" are not carried over, so the Profile asks again. **Default used:** that, so nothing that showed before is hidden.
+115. **Saving into a trip fund or other money set aside for a goal** counts as saving in the savings rate (it is set aside, not spent). **Default used:** counts.

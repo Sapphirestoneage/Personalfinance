@@ -196,8 +196,18 @@ export const lineKey = (e) => (e && typeof e.key === 'string' && e.key) || (e &&
 export function hiddenLine(spine, e) {
   const k = lineKey(e);
   if (!k || !LINE_KEYS.has(k) || !spine.profile) return false;
-  return !shows(answersOf(spine), k);
+  const a = answersOf(spine);
+  // Nothing is hidden before the client says so: the line's own question must be answered (not "Not sure").
+  if (!(GOVERNS[k] || []).some((q) => a[q] !== undefined && a[q] !== NOT_SURE)) return false;
+  return !shows(a, k);
 }
+// The Level 1 questions that decide whether each expense line shows.
+const HOME_Q = ['home', 'familyPay', 'ownLoan'];
+const GOVERNS = {
+  rent: HOME_Q, 'pay-family': HOME_Q, 'renters-insurance': HOME_Q, mortgage: HOME_Q, 'property-tax': HOME_Q, 'home-insurance': HOME_Q,
+  'car-payment': ['getAround'], lease: ['getAround'], 'car-insurance': ['getAround'], 'car-gas': ['getAround'], 'car-upkeep': ['getAround'], transit: ['getAround'], rides: ['getAround'],
+  childcare: ['livesWith'], 'family-support': ['give'], tzedakah: ['give'], 'child-support-paid': ['give'], 'health-premium': ['health']
+};
 
 // ---------------------------------------------------------------- answering
 const NAME_SOURCE = 'profile';
@@ -234,7 +244,7 @@ export function applyAnswer(spine, id, value, { today, by = 'client', source = N
   if (clean === null) delete profile[id]; else profile[id] = fact(clean, { kind: 'known', asOf: today, source, by });
   const log = [...(spine.lifeChanges || [])];
   log.push({ id: 'lc-' + (log.length + 1), date: today, question: id, from: before, to: clean });
-  return syncProfile({ ...spine, profile, lifeChanges: log }, { today });
+  return syncProfile({ ...spine, profile, lifeChanges: log }, { today, changed: id });
 }
 export function applyAnswers(spine, answers, opts) {
   let s = spine;
@@ -251,14 +261,14 @@ const optWords = (q, k) => (q && q.options ? (q.options.find(([x]) => x === k) |
 
 // What the answers move, idempotent: run after every answer. It touches only what the profile set (a cover marked
 // "Family", a guess sourced "profile"), so nothing the client typed is overwritten.
-export function syncProfile(spine, { today }) {
+export function syncProfile(spine, { today, changed = null }) {
   const a = answersOf(spine);
   const f = fieldsFor(a);
   let s = spine;
   for (const e of spine.expenses || []) {
     const k = lineKey(e), by = e.coveredBy && v(e.coveredBy), want = f.covered[k] || null;
     if (want && !by) s = setAt(s, 'expenses.' + e.id, { ...getAt(s, 'expenses.' + e.id), covered: fact(true, { asOf: today, source: NAME_SOURCE }), coveredBy: fact(want, { asOf: today, source: NAME_SOURCE }) });
-    else if (!want && (by === 'Family' || by === 'Parents') && e.covered && e.covered.source === NAME_SOURCE) {
+    else if (!want && ((by === 'Family' && e.coveredBy.source !== 'typed') || (by === 'Parents' && e.covered && e.covered.source === NAME_SOURCE))) {
       const x = { ...getAt(s, 'expenses.' + e.id) }; delete x.covered; delete x.coveredBy; s = setAt(s, 'expenses.' + e.id, x);
     }
   }
@@ -271,10 +281,13 @@ export function syncProfile(spine, { today }) {
   if (has(a, 'debts', 'cards') && a.cardsFull && a.cardsFull !== NOT_SURE) guess('household.cardPayPolicy', a.cardsFull === 'always' ? 'statement' : 'minimum');
   // How the paycheck is figured follows the answer (salary is a yearly amount, by the hour is rate x hours): the first
   // W-2 line takes that basis and the pay frequency. setPay keeps the other way's numbers, so switching back finds them.
-  const job = (s.income || []).find((x) => x.type === 'w2' && x.cadence !== 'once');
-  const basis = { salary: 'salary', hourly: 'hourly' }[a.payType];
-  const often = ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(a.payOften) ? a.payOften : undefined;
-  if (job && basis && (v(job.payBasis) !== basis || (often && job.cadence !== often))) s = setPay(s, job.id, { basis, cadence: often }, today);
+  // Only when that answer is the one changing (changed), so a later answer never undoes what the coach typed.
+  if (changed === 'payType' || changed === 'payOften') {
+    const job = (s.income || []).find((x) => x.type === 'w2' && x.cadence !== 'once');
+    const basis = { salary: 'salary', hourly: 'hourly' }[a.payType] || (job && v(job.payBasis) !== 'steady' && v(job.payBasis) !== 'lumpy' ? v(job.payBasis) : null);
+    const often = ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(a.payOften) ? a.payOften : undefined;
+    if (job && basis && (v(job.payBasis) !== basis || (often && job.cadence !== often))) s = setPay(s, job.id, { basis, cadence: often }, today);
+  }
   // A parent's plan ends at 26: a dated change in health coverage, kept only while the answer is a parent's plan.
   const hc = (s.household.healthCoverage || []).filter((x) => x.id !== 'turning-26');
   const birth = person ? v(getAt(s, 'household.people.' + person.id + '.birthDate')) : null;
@@ -390,6 +403,8 @@ export const stillGuessing = (spine) => ((spine.coaching && spine.coaching.homew
 // CUSHION_SHAKY_EXTRA).
 export function cushionExtraMonths(spine, rules, year) {
   const s = spine.profile && spine.profile.incomeSecurity ? v(spine.profile.incomeSecurity) : null;
+  // A stale answer (work changed to retired) no longer moves the cushion: its question is not open.
+  if (s !== null && !L2.get('incomeSecurity').opens(answersOf(spine))) return 0;
   if (s === 'okay') return rules.get('CUSHION_OKAY_EXTRA', year);
   if (s === 'shaky') return rules.get('CUSHION_SHAKY_EXTRA', year);
   return 0;

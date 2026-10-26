@@ -15,7 +15,13 @@ function load() { try { const x = JSON.parse(localStorage.getItem(KEY) || 'null'
 let state = load() || { answers: {}, gut: null };
 let note = '';
 function keep() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* lasts until the page closes */ } }
-const set = (id, value) => { const a = { ...state.answers }; if (value === null) delete a[id]; else a[id] = value; state = { ...state, answers: a }; keep(); draw(); };
+// LIVE-FORM: a tap redraws the page; a typed or picked answer (a name, a year, a date) is kept without a redraw, so the
+// next tap is never lost to a page rebuilt under the finger (D-034).
+const TYPED = new Set(['text', 'year', 'state', 'date']);
+const set = (id, value) => { const a = { ...state.answers }; if (value === null) delete a[id]; else a[id] = value; state = { ...state, answers: a }; keep(); if (!TYPED.has((LEVEL1.find((q) => q.id === id) || {}).kind)) draw(); else count(); };
+// The answer count at the bottom, updated in place.
+const count = () => { const el = document.getElementById('b-count'); if (el) el.textContent = countWords(); };
+const countWords = () => { const n = Object.keys(state.answers).length; return n + (n === 1 ? ' answer' : ' answers') + (state.gut === null ? '.' : ' and your spending guess.'); };
 
 function areaCard([area, label]) {
   const qs = LEVEL1.filter((q) => q.area === area && asked(state.answers, q));
@@ -32,12 +38,14 @@ function gutCard() {
   box.value = inputText('money', state.gut);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (!t) { state = { ...state, gut: null }; keep(); draw(); return; }
+    // Kept in place, never redrawn: what was typed stays, even when it cannot be read.
+    const say = (x) => { const el = document.getElementById('gut-msg'); if (el) el.textContent = x; };
+    if (!t) { state = { ...state, gut: null }; keep(); say(''); count(); return; }
     const p = parseInput('money', t);
-    if (!p.ok) { note = 'Type an amount, like 2,500.'; draw(); return; }
-    state = { ...state, gut: p.value }; note = ''; keep(); draw();
+    if (!p.ok) { say('Type an amount, like 2,500.'); return; }
+    state = { ...state, gut: p.value }; keep(); say(''); count();
   });
-  return h('section', { class: 'card' }, h('h2', { id: 'gut-l' }, 'About how much do you spend a month?'), h('p', { class: 'muted' }, 'Your best guess. Don\'t look anything up.'), box);
+  return h('section', { class: 'card' }, h('h2', { id: 'gut-l' }, 'About how much do you spend a month?'), h('p', { class: 'muted' }, 'Your best guess. Don\'t look anything up.'), box, h('p', { class: 'edit-msg', id: 'gut-msg', role: 'alert' }));
 }
 
 function send() {
@@ -53,7 +61,6 @@ function send() {
 }
 
 function draw() {
-  const n = Object.keys(state.answers).length;
   app.replaceChildren(
     h('header', { class: 'top' }, h('h1', {}, 'Before our first call')),
     h('p', { class: 'lede' }, 'About 5 minutes. Tap what fits, in any order. "Not sure" is always fine.'),
@@ -61,7 +68,7 @@ function draw() {
     gutCard(),
     ...AREAS.map(areaCard),
     h('section', { class: 'card' },
-      h('p', {}, n + (n === 1 ? ' answer' : ' answers') + (state.gut === null ? '.' : ' and your spending guess.')),
+      h('p', { id: 'b-count' }, countWords()),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers')),
       h('p', { class: 'edit-msg', role: 'status' }, note || 'This saves a file. Email or text it to Eli.')));
 }

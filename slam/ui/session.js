@@ -14,7 +14,7 @@ import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
-import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared } from '../engine/profile.js';
+import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
 import { h, chip, money, pct } from './view.js';
 import { addForm } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
@@ -221,7 +221,7 @@ function needs(ctx) {
       // One number for the whole category, or its lines: never both, so nothing counts twice.
       const catOn = !!catLine && v(catLine.amount) !== null;
       const anyLine = cat.items.some((item) => [item, ...(item.subs || [])].some((x) => { const e = findExpense(spine, x.label); return e && v(e.amount) !== null; }));
-      const lines = catOn ? [] : cat.items.filter((item) => applies(spine, item) || findExpense(spine, item.label)).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
+      const lines = catOn ? [] : cat.items.filter((item) => applies(spine, item) || ((e) => e && !hiddenLine(spine, e))(findExpense(spine, item.label))).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
       const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
       const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in My numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
       return h('section', { class: 'card', 'aria-labelledby': 'cat-' + cat.id },
@@ -495,7 +495,8 @@ function goals(ctx) {
         h('dl', { class: 'kv' },
           h('dt', {}, 'Yearly spending'), h('dd', {}, yearly.kind === 'notForMe' ? 'set by your FI number' : yearly.value === null ? 'missing' : [money(yearly.value) + (fi.goalSource === 'spending' ? ' (your goal)' : ''), yearly.kind === 'rough' || yearly.kind === 'incomplete' ? [' ', chip(yearly.kind)] : null]),
           h('dt', {}, 'FI number'), h('dd', {}, fi.fiNumber.value === null ? 'missing' : money(fi.fiNumber.value)),
-          h('dt', {}, 'There so far'), h('dd', {}, fi.fiPercent.value === null ? 'missing' : pct(fi.fiPercent.value, 1)))),
+          // FI % reads today's FI number (B2), so it says which number it is measured against.
+          h('dt', {}, 'There so far'), h('dd', {}, fi.fiPercent.value === null ? 'missing' : pct(fi.fiPercent.value, 1) + ' of ' + money(fi.today.value) + ' at today\'s spending'))),
       h('section', { class: 'card', 'aria-labelledby': 'g-h' },
         h('h2', { id: 'g-h' }, 'Goals'),
         h('ul', { class: 'srows' },

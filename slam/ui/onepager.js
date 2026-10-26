@@ -36,7 +36,7 @@ function render({ spine: base, rules }) {
         cell('Take-home a month', m(cf.income.takeHome.value), 'gross ' + m(cf.income.gross.value)),
         cell('Monthly surplus', m(cf.monthlySurplus.value), 'after spending, debt minimums and the tax set-aside'),
         cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home'),
-        cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.fiNumber.value)),
+        cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.today.value) + ' at today\'s spending'),
         cell('Safe to spend today', m(safe.today), safe.daysUntil ? m(safe.perDay) + ' a day until ' + shortDate(safe.nextIncome) : ''),
         cell('Cards', m(sh.cards.value), s.debt.utilization.personal.value === null ? '' : 'personal utilization ' + pct(s.debt.utilization.personal.value, 1))),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),

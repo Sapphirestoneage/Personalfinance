@@ -12,7 +12,7 @@ import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
 import { cashflow } from '../engine/cashflow.js';
 import { summarize } from '../engine/summary.js';
-import { editFact, setPay, addItem } from '../engine/edits.js';
+import { editFact, setPay, addItem, editExpense } from '../engine/edits.js';
 import { valueOf, getAt } from '../engine/spine.js';
 import { ledgerTree } from '../engine/ledger-tree.js';
 import * as P from '../engine/profile.js';
@@ -168,6 +168,10 @@ test('an older file\'s Session answers move into the Profile; income security ad
   const s = readHousehold(raw, { today: TODAY }).spine;
   assert.equal(s.household.home, undefined);
   assert.deepEqual([valueOf(s.profile.home), valueOf(s.profile.getAround)], ['family', 'mix']);
+  // An old answer never hides what it used to show: a car reads as a mix; none and other are asked again.
+  const old = (home, around) => { const r = readJson('fixtures/demo.json'); r.household.home = { value: home, kind: 'known', asOf: '2026-10-25', source: 'session' }; r.household.getAround = { value: around, kind: 'known', asOf: '2026-10-25', source: 'session' }; return readHousehold(r, { today: TODAY }).spine; };
+  assert.equal(valueOf(old('rent', 'car').profile.getAround), 'mix');
+  assert.equal(old('other', 'none').profile, undefined);
   assert.ok(validate(s).ok);
   const base = summarize(demo(), R).emergency.targetMonths.value;
   const shaky = summarize(answer(demo(), { work: 'w2', incomeSecurity: 'shaky' }), R).emergency.targetMonths.value;
@@ -188,4 +192,38 @@ test('a parent\'s plan puts the turning-26 switch on the dates; the birth year i
 test('the profile spec doc is written from the code and up to date', async () => {
   const { profileDoc } = await import('../tools/profile-doc.mjs');
   assert.equal(readFileSync(new URL('../docs/specs/profile-questions.md', import.meta.url), 'utf8'), profileDoc(), 'run node tools/profile-doc.mjs');
+});
+
+test('review fixes: nothing hidden before its question; hidden lines never paid; needs missing stays missing', async () => {
+  const { cashsim } = await import('../engine/cashsim.js');
+  // A Childcare line, with only the name answered: still counted.
+  let s = addItem(answer(demo(), { firstName: 'Casey' }), { collection: 'expenses', label: 'Childcare' }, TODAY).spine;
+  s = editFact(s, 'expenses.childcare.amount', 'set', { value: 500, kind: 'known', today: TODAY });
+  assert.equal(P.hiddenLine(s, getAt(s, 'expenses.childcare')), false);
+  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3230 + 500);
+  // Living with family, paying nothing: the cash run pays no rent either.
+  const fam = answer(demo(), { home: 'family', familyPay: 'nothing' });
+  const paid = (sp) => cashsim(sp, R, { months: 1 }).daily.flatMap((d) => d.events || []).filter((e) => /rent/i.test(e.label || '')).length;
+  assert.ok(paid(demo()) > 0, 'rent is paid without a profile');
+  assert.equal(paid(fam), 0, 'and not once the profile hides it');
+  // No line marked need: the first cushion step is missing, never the minimums alone.
+  let none = demo();
+  for (const e of none.expenses) none = editFact(none, 'expenses.' + e.id + '.need', 'clear', { today: TODAY });
+  const step = summarize(none, R).emergency.cushion[0];
+  assert.equal(step.target.value, null);
+  assert.equal(step.reached, null);
+});
+
+test('review fixes: a later answer never undoes typed pay; a stale answer stops counting; an old Family cover comes off', () => {
+  let s = answer(demo(), { work: 'w2', payType: 'hourly' });
+  s = setPay(s, 'salary', { basis: 'salary', salary: 90000 }, TODAY);
+  s = answer(s, { tone: 'gentle' });
+  assert.equal(valueOf(getAt(s, 'income.salary.amount')), 7500, 'the coach typed a salary after the answer');
+  const shaky = answer(demo(), { work: 'w2', incomeSecurity: 'shaky' });
+  const base = summarize(demo(), R).emergency.targetMonths.value;
+  assert.equal(summarize(answer(shaky, { work: 'retired' }), R).emergency.targetMonths.value, base);
+  // A cover the old Session put on utilities ("Family", source ledger) comes off when the Profile says rent.
+  const old = editExpense(demo(), 'utilities', { amount: 150, kind: 'known', coveredBy: 'Family' }, TODAY);
+  assert.equal(valueOf(getAt(old, 'expenses.utilities.covered')), true);
+  assert.equal(getAt(answer(old, { home: 'rent' }), 'expenses.utilities.covered'), undefined);
 });

@@ -362,7 +362,7 @@ export function buildFlags(spine, rules, s) {
   const inputs = [
     ['tax', year + ' tax', tax.balanceDue],
     ['takehome', 'Monthly take-home', s.cashflow.income.takeHome],
-    ['surplus', 'Monthly surplus', s.cashflow.surplus],
+    ['surplus', 'Left after saving', s.cashflow.surplus],
     ['utilization', 'Personal card utilization', s.debt.utilization.personal],
     ['networth', 'Net worth', s.sheet.netWorth],
     ['fi', 'FI percent', fi.fiPercent],

@@ -27,7 +27,7 @@ import { getAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint } from './view.js';
 
-const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
+const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
 // What each section's one total means, in a client's words (the totals come from engine/summary.js sessionSteps).
 const TOTAL_WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' in what you own', goals: ' in goals' };

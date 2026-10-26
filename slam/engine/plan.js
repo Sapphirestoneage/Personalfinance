@@ -279,8 +279,8 @@ export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   const total = round2(rows.reduce((a, r) => a + r.amount, 0));
   const spentElse = round2((cf.expenses.total.value ?? 0) + linkedSum - byTag('accommodation') - byTag('food') - byTag('transportation') - rows.filter((r) => r.key === 'therapy').reduce((a, r) => a + r.amount, 0));
   const leftOver = base === null ? null : round2(base - total - spentElse - (cf.taxSetAside.total.value ?? 0));
-  const out = t.out(base ? round2(total / base * 10000) / 10000 : null);
-  return { rows, total, totalShare: out.value, everythingElse: spentElse, leftOver, base: { amount: base, takeHome, pretax, gross, label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home' }, housingReference: ref, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  const out = t.out(takeHome ? Math.round(total / takeHome * 10000) / 10000 : null);
+  return { rows, total, totalShare: out.value, everythingElse: spentElse, leftOver, base: { amount: base, takeHome, pretax, gross, label: 'take-home' }, housingReference: ref, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 
 // ---------------------------------------------------------------- the fixed floor (L018)

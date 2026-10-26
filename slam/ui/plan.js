@@ -260,9 +260,9 @@ function drafttScreen(m) {
   if (d.base.amount === null) return h('section', { class: 'card', 'aria-label': SCREENS.draftt }, h('p', { class: 'muted missing-row' }, 'Missing: take-home pay.'));
   const max = Math.max(0.01, ...d.rows.map((r) => r.share));
   return h('section', { class: 'card', 'aria-label': SCREENS.draftt },
-    h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', as shares of ' + d.base.label + '. The mark on housing is ' + pct(d.housingReference) + ', for reference.'),
-    h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, (r.referenceAmount / d.base.amount) / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
-    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' DRAFTT is ' + pct(d.totalShare, 1) + ' of ' + money(d.base.amount) + '; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
+    h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', each as a share of take-home (Retirement of gross). The mark on housing is ' + pct(d.housingReference) + ' of take-home, for reference, not a target.'),
+    h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, r.reference / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
+    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' DRAFTT is ' + pct(d.totalShare, 1) + ' of ' + money(d.base.takeHome) + ' take-home; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
     math('draftt', d.rows.map((r) => 'plan:draftt:' + r.key), mathCtx(m)));
 }
 

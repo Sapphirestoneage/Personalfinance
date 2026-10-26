@@ -77,7 +77,7 @@ function askScreen({ spine }, area) {
     const trio = h('div', { class: 'segmented q-seg' }, ...['known', 'lookup', 'notSure'].map((k) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!!st && st.status === k), onclick: () => mark(q, k) }, h('span', { class: 'seg-label' }, STATUS_WORDS[k]))));
     return h('section', { class: 'card qs' },
       q.kind === 'one' ? questionEl(q, a[q.id] ?? null, answer(q)) : h('p', { class: 'q-label' }, q.label),
-      q.kind === 'field' ? trio : null,
+      trio,
       q.kind === 'field' && st && st.status === 'known' ? h('p', { class: 'edit-hint' }, h('a', { href: 'session.html' }, 'Type it in the Session'), ' or ', h('a', { href: 'ledger.html' }, 'in My numbers'), '.') : null,
       q.where ? h('p', { class: 'edit-hint' }, 'Where to find it: ' + whereWords(q) + '.') : null,
       q.does ? h('p', { class: 'edit-hint' }, q.does) : null);

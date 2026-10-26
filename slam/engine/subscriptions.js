@@ -5,6 +5,7 @@
 // SUB_REVIEW_DAYS.
 
 import { tracker, valueOf as v, round2, daysBetween, addMonths, dayIn } from './spine.js';
+import { hiddenLine } from './profile.js';
 
 const STEP_MONTHS = { monthly: 1, quarterly: 3, yearly: 12 };
 
@@ -25,7 +26,7 @@ export function subscriptions(spine, rules, cf, asOf) {
   const t = tracker();
   const items = [];
   for (const e of spine.expenses || []) {
-    if (!isSubscription(e)) continue;
+    if (!isSubscription(e) || hiddenLine(spine, e)) continue;
     const base = 'expenses.' + e.id;
     t.useFact(base + '.amount', e.amount);
     const line = cf.expenses.items.find((i) => i.id === e.id);

@@ -3,7 +3,7 @@
 // expense changes are handled month by month.
 
 import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey, accountOwner, incomeOwner } from './spine.js';
-import { PER_YEAR, fromPaycheck } from './schema.js';
+import { PER_YEAR, fromPaycheck, isEarmarked } from './schema.js';
 import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
 import { taxSetAside } from './tax.js';
 import { shareOf } from './sharing.js';
@@ -164,7 +164,9 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   // that is not the main checking (a savings account, an emergency fund): both count in the savings rate.
   const pay = tracker(), after = tracker(), cashSave = tracker(), mt = tracker(), lines = payOwners(spine);
   let payroll = 0, afterTax = 0, cashSaving = 0, match = 0;
-  const mainCash = (spine.accounts || []).filter((a) => a.family === 'cash').find((a) => a.type === 'checking') || null;
+  // The main checking account, by the same rule as defaults.js mainChecking (never an account set aside for a goal).
+  const cashAccts = (spine.accounts || []).filter((a) => a.family === 'cash' && !isEarmarked(a));
+  const mainCash = cashAccts.find((a) => a.type === 'checking') || cashAccts[0] || null;
   for (const a of spine.accounts || []) {
     if (!a.monthlyContribution) continue;
     const path = 'accounts.' + a.id + '.monthlyContribution';

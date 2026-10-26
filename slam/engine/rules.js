@@ -138,5 +138,10 @@ export async function fetchRules(baseUrl, years = [2026], overrides = {}) {
     Promise.all(years.map((y) => fetch(new URL('rules-' + y + '.json', baseUrl)).then((r) => r.json()))),
     fetch(new URL('house-defaults.json', baseUrl)).then((r) => (r.ok ? r.json() : null)).catch(() => null)
   ]);
-  return makeRules(...regs.map((r) => withHouse(withOverrides(r, overrides && overrides[r.year]), house, overrides && overrides[HOUSE])));
+  if (!house) throw new Error('Eli\'s house defaults (data/house-defaults.json) could not be read, so the numbers cannot be figured. Reload the page.');
+  // A change made on the Rules page before a rule moved to the house defaults is kept as a house change.
+  const ids = new Set(house.rules.map((r) => r.id)), moved = {};
+  for (const y of years) for (const [id, o] of Object.entries((overrides && overrides[y]) || {})) if (ids.has(id) && !moved[id]) moved[id] = o;
+  const houseOwn = { ...moved, ...((overrides && overrides[HOUSE]) || {}) };
+  return makeRules(...regs.map((r) => withHouse(withOverrides(r, overrides && overrides[r.year]), house, houseOwn)));
 }

@@ -10,6 +10,7 @@ import { payoffPlan } from './debt.js';
 import { FAT, isEarmarked, SECTION_WORDS } from './schema.js';
 import { setAsideFor, setAsideWords, setAsideNote } from './networth.js';
 import * as C from './vendor/cashcal.js';
+import { hiddenLine } from './profile.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
@@ -195,6 +196,7 @@ export function priceChanges(spine, rules, asOf = spine.meta.asOf) {
   const drift = rules.get('APP_PRICE_DRIFT', year);
   const out = [];
   for (const e of spine.expenses || []) {
+    if (hiddenLine(spine, e)) continue;
     const planned = v(e.amount);
     if (planned === null || !(planned > 0)) continue;
     const logged = (spine.log || []).filter((x) => x.expenseId === e.id && x.kind === 'spend').sort((a, b) => (a.date < b.date ? 1 : -1));

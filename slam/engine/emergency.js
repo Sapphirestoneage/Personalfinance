@@ -24,7 +24,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const targetMonths = months.out(years === null ? null : years / divisor + extra);
 
   // Monthly spending for both runway and target: expenses plus minimum payments.
-  const burn = (expenses) => { const t = tracker(); t.absorb(expenses); t.absorb(cf.debtMinimums.total); return t.out(round2(expenses.value + cf.debtMinimums.total.value)); };
+  const burn = (expenses) => { const t = tracker(); t.absorb(expenses); t.absorb(cf.debtMinimums.total); return t.out(expenses.value === null ? null : round2(expenses.value + cf.debtMinimums.total.value)); };
   const full = burn(cf.expenses.total), fat = burn(cf.expenses.fat), needs = burn(cf.expenses.need);
   const runway = (b) => { const t = tracker(); t.absorb(sheet.cash); t.absorb(b); return t.out(b.value > 0 ? sheet.cash.value / b.value : null); };
   // Targets in dollars use the month's spending rounded up to a whole dollar,
