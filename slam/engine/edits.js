@@ -1,7 +1,7 @@
 // Editing the spine: one Fact at a time, and an undo/redo history of whole
 // documents (households are small; S-003 does the same for the Budget).
 
-import { getAt, setAt, isFact, valueOf } from './spine.js';
+import { getAt, setAt, isFact, valueOf, fact } from './spine.js';
 import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
@@ -546,6 +546,20 @@ export function logSpend(spine, { amount, date, kind = 'spend', tag = null, expe
   const id = nextId(list, 'l');
   const entry = { id, date, amount: Math.round(amount * 100) / 100, kind, tag, expenseId, merchant: merchant ? String(merchant).trim() || null : null, note: note ? String(note).trim() || null : null, paidWith, source, ...(importKey ? { importKey } : {}) };
   return { spine: { ...spine, log: [...list, entry] }, id };
+}
+// A payment on a debt (Plan, Batch 8): the debt's balance goes down by the amount, and so does the main checking
+// account when its balance is known (both are Numbers, as of the day). Never below zero.
+export function recordDebtPayment(spine, debtId, amount, date) {
+  const d = (spine.debts || []).find((x) => x.id === debtId);
+  if (!d) throw new Error('No debt ' + debtId);
+  if (!(amount > 0)) throw new Error('A payment is more than $0');
+  const bal = d.balance ? d.balance.value : null;
+  if (bal === null) throw new Error('Type the balance first');
+  let s = setAt(spine, 'debts.' + debtId + '.balance', fact(Math.max(0, Math.round((bal - amount) * 100) / 100), { kind: 'known', asOf: date, source: 'payment' }));
+  const cash = (spine.accounts || []).filter((a) => a.family === 'cash' && !(a.role && a.role.value === 'sinking'));
+  const chk = cash.find((a) => a.type === 'checking') || cash[0];
+  if (chk && chk.balance && chk.balance.value !== null) s = setAt(s, 'accounts.' + chk.id + '.balance', fact(Math.round((chk.balance.value - amount) * 100) / 100, { kind: chk.balance.kind === 'rough' ? 'rough' : 'known', asOf: date, source: 'payment' }));
+  return s;
 }
 export function removeLog(spine, id) { return { ...spine, log: (spine.log || []).filter((x) => x.id !== id) }; }
 export function checkIn(spine, { date, balances, forecast = {} }) {

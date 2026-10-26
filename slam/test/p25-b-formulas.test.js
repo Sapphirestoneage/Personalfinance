@@ -157,3 +157,19 @@ test('every metric has a written definition and says which layers it reads; FORM
   assert.equal(readFileSync(new URL('../docs/FORMULAS.md', import.meta.url), 'utf8'), formulasDoc(), 'run node tools/formulas-doc.mjs');
   for (const id of ['surplus', 'savingsRateNet', 'savingsRateGross', 'fiToday', 'fiNumber', 'impliedFi', 'leanFi', 'fatFi', 'baristaFi', 'coastFi', 'fiPercent', 'cushionNeeds', 'cushionMonth', 'ruleOf5Dollars', 'runway', 'runwayNeeds', 'liquidNetWorth', 'netWorth', 'housingShare', 'personalUtil', 'overallUtil']) assert.ok(METRICS.some((m) => m.id === id), id);
 });
+
+test('Batch 8: a typed 0 deductible is done with no deductible; a blank one is missing; neither reads as covered', async () => {
+  const { fooLadder } = await import('../engine/plan.js');
+  const { putFact, recordDebtPayment } = await import('../engine/edits.js');
+  const step = (s) => fooLadder(s, R, summarize(s, R)).rungs.find((r) => r.id === 'deductibles');
+  const blank = step(pat());
+  assert.deepEqual([blank.need, blank.done], [null, null]);
+  const zero = step(putFact(pat(), 'household.deductible', 0, 'known', '2026-10-22'));
+  assert.deepEqual([zero.need, zero.done], [0, true]);
+  assert.match(zero.why, /No insurance deductible/);
+  assert.doesNotMatch(zero.why + blank.why, /covers|100%/);
+  // A payment lowers the debt and checking: Visa 1,000 - 200 = 800; checking 6,000 - 200 = 5,800.
+  const paid = recordDebtPayment(pat(), 'visa', 200, '2026-10-22');
+  assert.equal(paid.debts.find((d) => d.id === 'visa').balance.value, 800);
+  assert.equal(paid.accounts.find((a) => a.id === 'chk').balance.value, 5800);
+});

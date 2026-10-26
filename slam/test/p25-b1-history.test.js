@@ -60,6 +60,7 @@ const CHANGES = {
   logSpend: [null, withLog],
   removeLog: [withLog, (s) => E.removeLog(s, 'l1')],
   checkIn: [null, (s) => E.checkIn(s, { date: T, balances: { chk: 2500, hysa: 9000 }, forecast: { chk: 2400 } })],
+  recordDebtPayment: [null, (s) => E.recordDebtPayment(s, 'visa', 200, T)],
   setSweep: [null, (s) => E.setSweep(s, { on: true, to: 'hysa', keep: 500 })],
   confirmOccurrence: [null, withHappened],
   unconfirmOccurrence: [withHappened, (s) => E.unconfirmOccurrence(s, 'rent|2026-11-01')]

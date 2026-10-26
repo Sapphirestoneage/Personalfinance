@@ -12,7 +12,8 @@ import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
-import { putFact, parseInput } from '../engine/edits.js';
+import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
+import { valueOf } from '../engine/spine.js';
 import { keptMath } from './math-panel.js';
 import { maxItCard, maxItFor } from './maxit-panel.js';
 import { withScenario } from '../engine/scenarios.js';
@@ -100,6 +101,12 @@ function stepRow(r, current) {
     h('span', { class: 'go-sub' }, ...status.filter(Boolean))));
 }
 
+// The outlook in one sentence (Batch 8); the runs are behind Show the math and on its own screen.
+function outlookLine(m) {
+  if (!m.sim || !m.sim.checking.known) return null;
+  const o = m.outlook || (m.outlook = outlook(m.spine, m.rules, m.sim));
+  return h('p', { class: 'tile-sub outlook-line' }, 'Next three months: checking\'s lowest day is about ' + money(o.low.typical) + ' in a typical run, ' + money(o.low.bad) + ' in a bad one. ', math('outlook-top', ['plan:outlook'], () => mathCtx(m)({ outlook: o })));
+}
 function top(m) {
   const f = m.foo, surplus = m.s.cashflow.surplus.value;
   const w = surplusWaterfall(m.spine, m.rules, m.s);
@@ -110,6 +117,7 @@ function top(m) {
     h('p', { class: 'lede' }, surplus === null ? 'Your monthly surplus is not known yet, so the steps have no dates.'
       : surplus <= 0 ? 'No monthly surplus to put toward the steps yet.'
         : 'Your ' + money(surplus) + ' a month goes to these steps, one at a time.'),
+    outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
       h('ol', { class: 'go-list' }, f.rungs.map((r) => stepRow(r, f.current))),
@@ -172,10 +180,49 @@ function stepScreen(m, r) {
     h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null ? 'Type the biggest deductible below.' : r.why),
     r.flow ? h('p', { class: 'tile-note' }, 'A monthly amount: once the surplus gets here, this much goes to it every month.') : null,
     r.id === 'deductibles' ? deductibleForm(m) : null,
+    r.id === 'highInterest' ? hiDebts(m, r) : null,
+    r.need === null && r.path && r.id !== 'deductibles' ? inlineFix(m, r) : null,
     r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in My numbers (Assets, then the 401(k)).') : null,
     r.id === 'reserves' ? h('p', { class: 'tile-sub' }, f.setup.reserveMonths === null ? 'The Rule of 5 target needs a birth date.' : 'Your target: the Rule of 5, ' + f.setup.reserveMonths.toFixed(1) + ' months of spending.') : null,
     links.length ? h('ul', { class: 'go-list' }, links) : null,
     r.need !== null ? math('step', ['plan:foo:' + r.id], mathCtx(m)) : null);
+}
+
+// The missing number a step needs, typed right here (Batch 8): a money, a whole number or a rate; anything else links
+// to its place in My numbers.
+const FIX_TYPES = ['money', 'int', 'rate', 'date'];
+function inlineFix(m, r) {
+  let type = 'text';
+  try { type = typeFor(m.base, r.path); } catch { /* not a field this form can type */ }
+  if (!FIX_TYPES.includes(type)) return null;
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const box = h('input', { id: 'fix-' + r.id, type: type === 'date' ? 'date' : 'text', inputmode: type === 'date' ? null : 'decimal', autocomplete: 'off' });
+  return h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
+    e.preventDefault();
+    const p = parseInput(type, box.value);
+    if (!box.value.trim() || !p.ok) { msg.textContent = p.ok ? 'Type it first' : p.message; box.focus(); return; }
+    change((x) => putFact(x, r.path, p.value, 'known', todayIso()), said.changed(labelFor(m.base, r.path), showValue(p.value, type)));
+  } }, h('label', { for: 'fix-' + r.id, class: 'edit-label' }, labelFor(m.base, r.path)), box, msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save it')));
+}
+// High-interest debt (Batch 8): each debt at or above the line, with Record a payment right here, and Add a debt.
+function hiDebts(m, r) {
+  // The same debts the step counts (its rate today, so a 0% promo is not on it).
+  const list = (r.ids || []).map((id) => (m.base.debts || []).find((d) => d.id === id)).filter(Boolean);
+  const row = (d) => {
+    const name = valueOf(d.name) || d.id;
+    const msg = h('p', { class: 'edit-msg', role: 'alert' });
+    const box = h('input', { id: 'pay-' + d.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '$', 'aria-label': 'Payment on ' + name });
+    return h('li', { class: 'hi-debt' }, h('p', {}, h('strong', {}, name), ' ' + money(valueOf(d.balance)) + ' at ' + pct(valueOf(d.apr), 1)),
+      h('form', { class: 'inline-form', novalidate: true, onsubmit: (e) => {
+        e.preventDefault();
+        const p = parseInput('money', box.value);
+        if (!box.value.trim() || !p.ok || !(p.value > 0)) { msg.textContent = 'Type the payment, like 200'; box.focus(); return; }
+        change((x) => recordDebtPayment(x, d.id, p.value, todayIso()), said.added('Payment of ' + money(p.value) + ' on ' + name));
+      } }, box, h('button', { type: 'submit', class: 'btn small' }, 'Record a payment'), msg));
+  };
+  return h('div', {}, list.length ? h('ul', { class: 'hi-list' }, list.map(row)) : null,
+    h('p', { class: 'edit-hint' }, 'A payment lowers the debt and checking.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: numbersHref('debt') }, 'Add a debt')));
 }
 
 // ---------------------------------------------------------------- the rest of the plan, a screen each
@@ -255,6 +302,12 @@ function wageScreen(m) {
     w.wage !== null ? math('wage', ['plan:wage'], mathCtx(m)) : null);
 }
 
+// Housing beside the 35% line, in dollars (Batch 8): a reference, never a verdict.
+function housingOver(d) {
+  const a = d.rows.find((r) => r.key === 'accommodation');
+  if (!a || a.overReference === undefined) return null;
+  return h('p', { class: 'tile-sub' }, a.overReference > 0 ? 'Housing is ' + money(a.overReference) + ' a month above the ' + pct(d.housingReference) + ' line.' : 'Housing is at or below the ' + pct(d.housingReference) + ' line.');
+}
 function drafttScreen(m) {
   const d = draftt(m.spine, m.rules, m.s);
   if (d.base.amount === null) return h('section', { class: 'card', 'aria-label': SCREENS.draftt }, h('p', { class: 'muted missing-row' }, 'Missing: take-home pay.'));
@@ -262,6 +315,7 @@ function drafttScreen(m) {
   return h('section', { class: 'card', 'aria-label': SCREENS.draftt },
     h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', each as a share of take-home (Retirement of gross). The mark on housing is ' + pct(d.housingReference) + ' of take-home, for reference, not a target.'),
     h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, r.reference / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
+    housingOver(d),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' DRAFTT is ' + pct(d.totalShare, 1) + ' of ' + money(d.base.takeHome) + ' take-home; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
     math('draftt', d.rows.map((r) => 'plan:draftt:' + r.key), mathCtx(m)));
 }
