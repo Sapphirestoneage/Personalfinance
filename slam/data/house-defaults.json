@@ -161,6 +161,26 @@
       "notes": "",
       "source": "Eli's default",
       "verified": "house"
+    },
+    {
+      "id": "CUSHION_OKAY_EXTRA",
+      "rule": "Months added to the Rule of 5 cushion when income is only okay",
+      "value": 1,
+      "unit": "months",
+      "appliesTo": "Emergency fund (Profile: income security)",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "CUSHION_SHAKY_EXTRA",
+      "rule": "Months added to the Rule of 5 cushion when income is shaky",
+      "value": 3,
+      "unit": "months",
+      "appliesTo": "Emergency fund (Profile: income security)",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
     }
   ]
 }

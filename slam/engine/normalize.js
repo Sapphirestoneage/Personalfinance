@@ -298,7 +298,7 @@ export function fileProblems(spine) {
   return { open: open.map(named), other: other.map(named) };
 }
 
-const COLLECTIONS = ['income', 'expenses', 'accounts', 'debts', 'goals', 'taxYears', 'log', 'checkins'];
+const COLLECTIONS = ['income', 'expenses', 'accounts', 'debts', 'goals', 'taxYears', 'log', 'checkins', 'lifeChanges'];
 const words = (x) => { try { const t = JSON.stringify(x); return t === undefined ? String(x) : t.length > 80 ? t.slice(0, 77) + '...' : t; } catch { return String(x); } };
 
 // repairSpine(spine, { today }) -> { spine, problems }: a copy where every field the validator rejects is either set to
@@ -351,6 +351,16 @@ export function repairSpine(input, { today = null } = {}) {
     H[k] = ids('household.' + k, H[k], k === 'situation' ? 'situation' : 'coverage');
     if (!H[k].length) H[k] = [{ id: 'now', from: null, value: fact(null, { kind: 'missing', asOf: s.meta.asOf, source: 'upgrade' }) }];
     if (!H[k].some((e) => e.from === null)) H[k][0].from = null;
+  }
+  // The Session's first questions moved into the Profile (Phase 2.5 B3): an older file's household.home and
+  // household.getAround are read as profile.home and profile.getAround (both, none: a mix, rideshare).
+  if (s.profile !== undefined && (!s.profile || typeof s.profile !== 'object' || Array.isArray(s.profile))) { aside('profile', s.profile, 'not a record of answers'); delete s.profile; }
+  for (const [k, map] of [['home', {}], ['getAround', { both: 'mix', none: 'rideshare' }]]) {
+    if (H[k] === undefined) continue;
+    const was = H[k];
+    delete H[k];
+    if (!isFact(was) || was.value === null || (s.profile && s.profile[k])) continue;
+    s.profile = { ...(s.profile || {}), [k]: { ...was, value: map[was.value] || was.value } };
   }
   if (!s.assumptions || typeof s.assumptions !== 'object' || Array.isArray(s.assumptions)) { if (s.assumptions !== undefined) aside('assumptions', s.assumptions, 'not a set of assumptions'); s.assumptions = {}; }
   // Entries the checks walk into: a list inside a Fact (contributions, conversions) holds records; the calendar's

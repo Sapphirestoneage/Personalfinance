@@ -4,6 +4,7 @@
 // own line and never counted as cash. Conversions carry their own clocks.
 
 import { valueOf, tracker, round2, ageOn } from './spine.js';
+import { cushionExtraMonths } from './profile.js';
 
 const v = valueOf;
 
@@ -17,7 +18,10 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const months = tracker();
   months.absorb(age.out(years));
   const divisor = months.rule(rules, 'APP_RULE_OF_5', year);
-  const targetMonths = months.out(years === null ? null : years / divisor);
+  // Income security (Profile Level 2): okay or shaky income adds months (house defaults CUSHION_*_EXTRA).
+  const extra = cushionExtraMonths(spine, rules, year);
+  if (extra) months.read(spine, 'profile.incomeSecurity');
+  const targetMonths = months.out(years === null ? null : years / divisor + extra);
 
   // Monthly spending for both runway and target: expenses plus minimum payments.
   const burn = (expenses) => { const t = tracker(); t.absorb(expenses); t.absorb(cf.debtMinimums.total); return t.out(round2(expenses.value + cf.debtMinimums.total.value)); };

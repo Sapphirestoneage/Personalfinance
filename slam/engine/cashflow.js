@@ -7,6 +7,7 @@ import { PER_YEAR, fromPaycheck } from './schema.js';
 import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
 import { taxSetAside } from './tax.js';
 import { shareOf } from './sharing.js';
+import { hiddenLine } from './profile.js';
 
 const v = valueOf;
 
@@ -202,7 +203,8 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   let total = 0, fatSum = 0, needSum = 0, leanSum = 0, anyNeed = false;
   const items = [];
   for (const e of spine.expenses || []) {
-    if (!isActive(e, ym)) continue;
+    // A line the profile hides (Phase 2.5 B3: renting, then living with family) is kept, not counted.
+    if (!isActive(e, ym) || hiddenLine(spine, e)) continue;
     const base = 'expenses.' + e.id, path = base + '.amount';
     // A line that pays a debt (S-226, answer 35) is counted once, under debt payments below, never also here.
     if (paysDebtOf(spine, e)) { ex.useFact(base + '.paysDebt', e.paysDebt); continue; }

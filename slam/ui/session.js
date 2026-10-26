@@ -14,6 +14,7 @@ import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
+import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared } from '../engine/profile.js';
 import { h, chip, money, pct } from './view.js';
 
 // The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
@@ -118,8 +119,11 @@ const findExpense = (spine, label) => (spine.expenses || []).find((e) => lower(e
 // A starter line added: its tag, need or want, and a subscription mark from the list.
 function addLine(spine, item, fat, today) {
   const r = addItem(spine, { collection: 'expenses', label: item.label, fat }, today);
-  let s = putFact(r.spine, 'expenses.' + r.id + '.need', item.need !== false, 'known', today);
+  // The starter line's key (rent, utilities) goes with it, so the Profile knows which line it is whatever its name.
+  let s = putFact(setAt(r.spine, 'expenses.' + r.id + '.key', item.key), 'expenses.' + r.id + '.need', item.need !== false, 'known', today);
   if (item.subscription) s = editExpense(s, r.id, { amount: null, subscription: true }, today);
+  // With a partner or other adults at home (Profile), a housing or food line starts shared, half each.
+  if (startsShared(answersOf(s), fat)) s = editExpense(s, r.id, { amount: null, sharing: { shared: true, sharedWith: 2, whoPays: 'part' } }, today);
   return { spine: s, id: r.id };
 }
 function setLineAmount(item, fat, value, kind = 'known') {
@@ -170,29 +174,9 @@ function question(id, label, options, value, onPick) {
     h('p', { class: 'q-label', id: 'q-' + id }, label),
     h('div', { class: 'segmented q-seg' }, options.map(([k, w]) => h('button', { type: 'button', id: 'q-' + id + '-' + k, class: 'seg-btn', 'aria-pressed': String(value === k), onclick: () => { if (value !== k) onPick(k); } }, h('span', { class: 'seg-label' }, w)))));
 }
-// A line belongs to the answers given so far (data: when); with no answer yet, every line shows.
-const applies = (spine, item) => !item.when || Object.entries(item.when).every(([k, list]) => { const a = v(spine.household[k]); return a === null || a === undefined || list.includes(a); });
+// A line shows unless the Profile hides it (engine/profile.js): with no answer yet, every line shows.
+const applies = (spine, item) => showsKey(answersOf(spine), item.key);
 const allItems = () => DATA.needs.flatMap((c) => c.items.flatMap((x) => [x, ...(x.subs || [])]));
-// Where you live: living with family puts rent, utilities and internet on them (covered, $0 to you, the real cost
-// kept); moving out takes the cover off again. One change, one Undo.
-function setHome(k) {
-  const today = todayIso(), covers = new Set(DATA.familyCovers || []);
-  const words = (DATA.questions.home.options.find(([x]) => x === k) || [k, k])[1];
-  // How many bills move, counted first, so the words say it with the Undo.
-  const now = current().spine;
-  const moved = allItems().filter((x) => covers.has(x.key)).map((x) => findExpense(now, x.label)).filter((e) => e && ((by) => (k === 'family' ? !by : by === 'Parents' || by === 'Family'))(e.coveredBy && v(e.coveredBy))).length;
-  change((spine) => {
-    let s = putFact(spine, 'household.home', k, 'known', today);
-    for (const item of allItems().filter((x) => covers.has(x.key))) {
-      const e = findExpense(s, item.label);
-      if (!e) continue;
-      const by = e.coveredBy && v(e.coveredBy);
-      if (k === 'family' && !by) s = editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: 'Family' }, today);
-      else if (k !== 'family' && (by === 'Parents' || by === 'Family')) s = editExpense(s, e.id, { amount: v(e.amount), kind: e.amount.kind === 'missing' ? 'known' : e.amount.kind, coveredBy: null }, today);
-    }
-    return s;
-  }, said.changed('Where you live', words.toLowerCase()) + (!moved ? '' : '; ' + moved + (moved === 1 ? ' bill is' : ' bills are') + (k === 'family' ? ' on your family now' : ' yours again')));
-}
 // Typical amounts for the lines that fit the answers, on empty lines only, marked guess.
 function fillTypical(t) {
   const today = todayIso();
@@ -201,18 +185,19 @@ function fillTypical(t) {
     for (const cat of DATA.needs) {
       if (findExpense(s, cat.label)) continue;
       for (const item of cat.items) {
-        if (!applies(s, item) || (item.when && Object.keys(item.when).some((q) => v(s.household[q]) === null || v(s.household[q]) === undefined))) continue;
+        // Housing and getting-around lines wait for their Profile answer, so a guess never lands on the wrong home.
+        if (!applies(s, item) || (waitsOn(item.key) && !answersOf(s)[waitsOn(item.key)])) continue;
         const amt = t.amounts[item.key];
         if (amt === undefined) continue;
         let e = findExpense(s, item.label);
         if (e && v(e.amount) !== null) continue;
         if (!e && noList().includes(item.key)) continue;
         if (!e) { const r = addLine(s, item, cat.fat, today); s = r.spine; e = getAt(s, 'expenses.' + r.id); }
-        const fam = v(s.household.home) === 'family' && (DATA.familyCovers || []).includes(item.key);
-        s = editExpense(s, e.id, { amount: amt, kind: 'rough', ...(fam ? { coveredBy: 'Family' } : {}) }, today);
+        s = editExpense(s, e.id, { amount: amt, kind: 'rough' }, today);
       }
     }
-    return s;
+    // The Profile's covers (living with family) land on the new lines too.
+    return syncProfile(s, { today });
   }, 'Typical amounts for ' + t.label.toLowerCase() + ' added as guesses');
 }
 function needs(ctx) {
@@ -220,14 +205,15 @@ function needs(ctx) {
   const known = new Set(allItems().map((x) => lower(x.label)));
   const extra = (fat) => (spine.expenses || []).filter((e) => !known.has(lower(e.label)) && !DATA.needs.some((c) => lower(c.label) === lower(e.label)) && (fat === 'other' ? !['food', 'accommodation', 'transportation'].includes(e.fat) : e.fat === fat));
   const hidden = noList().filter((k) => allItems().some((x) => x.key === k));
-  const Q = DATA.questions || {};
+  const a = answersOf(spine);
+  const said1 = (id) => { const q = questionById(id), x = a[id]; return x === undefined ? 'not answered yet' : x === 'notSure' ? 'not sure' : (q.options.find(([k]) => k === x) || [x, x])[1]; };
   return frame(ctx, 'needs', () => [
     h('section', { class: 'card qs' },
-      Q.home ? question('home', Q.home.label, Q.home.options, v(hh.home), setHome) : null,
-      Q.getAround ? question('around', Q.getAround.label, Q.getAround.options, v(hh.getAround), (k) => putF('household.getAround', k, said.changed('How you get around', Q.getAround.options.find(([x]) => x === k)[1].toLowerCase()))) : null,
+      // Where you live and how you get around are Profile answers (Phase 2.5 B3): shown here, changed there.
+      h('p', { class: 'q-said' }, 'Where you live: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
       h('p', { class: 'edit-label' }, 'Fill typical amounts'),
       h('div', { class: 'edit-actions' }, Object.values(DATA.typical || {}).map((t) => h('button', { type: 'button', class: 'btn small', onclick: () => fillTypical(t) }, t.label))),
-      h('p', { class: 'edit-hint' }, 'Only empty lines that fit your answers, marked guess. Answer both questions first for housing and getting around.')),
+      h('p', { class: 'edit-hint' }, 'Only empty lines that fit the Profile, marked guess. Housing and getting around wait for those two answers.')),
     ...DATA.needs.map((cat) => {
       const catLine = findExpense(spine, cat.label);
       // One number for the whole category, or its lines: never both, so nothing counts twice.
@@ -523,10 +509,20 @@ function goals(ctx) {
 }
 
 // ---------------------------------------------------------------- the top screen
+// Level 2 of the Profile (Phase 2.5 B3): only what the answers before the call opened, each a link to its questions.
+function level2Card(spine) {
+  const a = answersOf(spine);
+  if (!Object.keys(a).length) return h('section', { class: 'card' }, h('p', {}, 'No answers from before the call yet. ', h('a', { href: 'profile.html' }, 'Open the Profile'), ' to load them or ask the questions now.'));
+  const areas = level2(a);
+  return h('section', { class: 'card', 'aria-labelledby': 'l2-h' }, h('h2', { id: 'l2-h' }, 'To ask today'),
+    areas.length ? h('ul', { class: 'go-list' }, areas.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions')))))) : h('p', { class: 'muted' }, 'Nothing more to ask from the answers so far.'));
+}
+
 function overview(ctx) {
   const steps = sessionSteps(ctx.spine, summarize(ctx.spine, ctx.rules, { flags: false }));
   return [
     h('p', { class: 'lede' }, 'Five steps for a first session. Skip anything.'),
+    level2Card(ctx.spine),
     h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),

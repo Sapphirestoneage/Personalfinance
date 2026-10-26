@@ -26,7 +26,7 @@ export function fact(value, opts = {}) {
 // else is the client's.
 export const SUPPLIERS = ['client', 'coach', 'lookedUp', 'default'];
 export const SUPPLIER_WORDS = { client: 'you', coach: 'Eli', lookedUp: 'looked up', default: "Eli's default" };
-const HOUSE_SOURCES = /^(DEFAULT_[A-Z0-9_]+|APP_CARD_MIN_FLOOR|APP_CARD_MIN_PCT|house:[a-z0-9-]+)$/;
+const HOUSE_SOURCES = /^(DEFAULT_[A-Z0-9_]+|APP_CARD_MIN_FLOOR|APP_CARD_MIN_PCT|cardPayPolicy|mainChecking|house:[a-z0-9-]+)$/;
 export function whoSupplies(f) {
   if (!f || typeof f !== 'object') return null;
   if (f.by && SUPPLIERS.includes(f.by)) return f.by;

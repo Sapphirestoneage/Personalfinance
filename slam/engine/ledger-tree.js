@@ -8,6 +8,7 @@
 // (credit-cards), an item (visa), each its own address (ledger.html#/debt/credit-cards/visa).
 
 import { valueOf } from './spine.js';
+import { hiddenLine } from './profile.js';
 import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked, SECTION_WORDS } from './schema.js';
 import { setAsideFor, setAsideWords } from './networth.js';
 import { ledgerRows, rowPathFor } from './ledger.js';
@@ -102,9 +103,15 @@ export function ledgerTree(spine, inst) {
 
   // Expenses: FAT tag > each expense (one row each); health coverage
   const expSections = [...FAT, 'other'].map((tag) => {
-    const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag);
+    const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag && !hiddenLine(spine, e));
     return list.length ? node('N:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
   }).filter(Boolean);
+  // Lines the Profile hides (renting, then living with family): kept with what was typed, not counted, shown apart.
+  const kept = (spine.expenses || []).filter((e) => hiddenLine(spine, e));
+  if (kept.length) expSections.push(node('N:hidden', 'Kept, not counted (hidden by the Profile)', kept.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', note: 'Hidden by the Profile. It comes back, with what was typed, if the answer changes back.' }); })));
+  // The gut number from before the call (Profile Level 1): a guess to hold the real spending against.
+  const gut = take(byPrefix('household.gutSpending'));
+  if (gut.length) expSections.push(node('N:gut', 'Your guess before we started', [item('household.gutSpending', 'Spending a month, your guess', gut)]));
   const health = take(byPrefix('household.healthCoverage'));
   if (health.length) expSections.push(node('N:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
 

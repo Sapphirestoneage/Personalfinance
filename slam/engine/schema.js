@@ -3,6 +3,7 @@
 // CONTRACTS.md describes the same shape in words.
 
 import { KINDS, isFact, isDay } from './spine.js';
+import { questionById, cleanAnswer, STATUS } from './profile.js';
 
 export const SCHEMA_ID = 'slam-spine/1';
 
@@ -33,9 +34,6 @@ export const ALLOWANCE_MODES = ['gift', 'time'];
 // How a paycheck is figured (Batch 3, the questions): a yearly salary, an hourly rate times hours a week, or for 1099
 // pay that comes in lumps, the last 12 months' total. The amount a payday is figured from these (edits.js setPay).
 export const PAY_BASES = ['salary', 'hourly', 'lumpy', 'steady'];
-// The Session's first questions on Needs: where you live, how you get around.
-export const HOMES = ['rent', 'own', 'family', 'other'];
-export const GET_AROUND = ['car', 'transit', 'both', 'none'];
 // Pay for your own work with no paycheck: 1099 pay, side money that comes with no 1099, and an allowance that is pay for
 // your time. Each owes self-employment tax and has nothing withheld.
 export const isSelfEmployment = (s) => !!s && (s.type === '1099' || s.type === 'side' || (s.type === 'person' && s.purpose && s.purpose.value === 'allowance' && s.allowanceMode && s.allowanceMode.value === 'time'));
@@ -264,8 +262,8 @@ export function validate(spine) {
   // Batch 3: last year's tax result (a refund is positive, an amount owed negative), and how goals are funded.
   checkFact('household.lastRefund', h.lastRefund, 'money', false);
   checkFact('household.goalOrder', h.goalOrder, ['oneAtATime', 'byDeadline'], false);
-  checkFact('household.home', h.home, HOMES, false);
-  checkFact('household.getAround', h.getAround, GET_AROUND, false);
+  // The gut number (Profile Level 1): "About how much do you spend a month?", a guess in Numbers.
+  checkFact('household.gutSpending', h.gutSpending, 'money', false);
   // How every card is paid unless a card says otherwise (S-189).
   checkFact('household.cardPayPolicy', h.cardPayPolicy, PAY_POLICIES, false);
   // Names that cover bills, beyond the built-in ones (S-176).
@@ -493,6 +491,27 @@ export function validate(spine) {
       else for (const [id, amt] of Object.entries(c.balances)) if (typeof amt !== 'number') err(p + '.balances.' + id, 'a number');
       if (c.forecast !== undefined && (typeof c.forecast !== 'object' || c.forecast === null)) err(p + '.forecast', 'an object of account id to amount or null');
     }
+  }
+
+  // The Profile (Phase 2.5 B3): one Fact per question, its value one the question allows; the life-change log; homework.
+  const pf = spine.profile;
+  if (pf !== undefined) {
+    if (!pf || typeof pf !== 'object' || Array.isArray(pf)) err('profile', 'a record of answers');
+    else for (const [k, f] of Object.entries(pf)) {
+      const path = 'profile.' + k;
+      if (!questionById(k)) { err(path, 'not a profile question'); continue; }
+      if (!isFact(f)) { err(path, 'not a Fact'); continue; }
+      if (f.value !== null && cleanAnswer(k, f.value) === undefined) err(path, 'not an answer this question allows');
+    }
+  }
+  if (spine.lifeChanges !== undefined) {
+    if (!Array.isArray(spine.lifeChanges)) err('lifeChanges', 'a list');
+    else { uniqueIds('lifeChanges', spine.lifeChanges); for (const c of spine.lifeChanges) { if (!isDate(c.date)) err('lifeChanges.' + c.id + '.date', 'not a date (YYYY-MM-DD)'); if (typeof c.question !== 'string') err('lifeChanges.' + c.id + '.question', 'names a question'); } }
+  }
+  const hw = spine.coaching && spine.coaching.homework;
+  if (hw !== undefined) {
+    if (!Array.isArray(hw)) err('coaching.homework', 'a list');
+    else { uniqueIds('coaching.homework', hw); for (const x of hw) if (!STATUS.includes(x.status)) err('coaching.homework.' + x.id + '.status', 'not one of ' + STATUS.join('|')); }
   }
 
   // assumptions

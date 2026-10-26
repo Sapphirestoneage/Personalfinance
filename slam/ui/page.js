@@ -57,7 +57,8 @@ const say = (text) => { said = text; for (const m of document.querySelectorAll('
 export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen } = {}) {
   const w = whose(spine);
   const when = ' · numbers as of ' + shortDate(asOf);
-  if (!w.example) return h('p', { class: 'muted whose' }, h('strong', { class: 'whose-name' }, w.name), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
+  // The name opens the Profile (Phase 2.5 B3): how this household's life works right now.
+  if (!w.example) return h('p', { class: 'muted whose' }, h('a', { class: 'whose-name', href: 'profile.html' }, h('strong', {}, w.name)), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
   const msg = h('p', { class: 'edit-msg', role: 'alert' }, said);
   const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
   input.addEventListener('change', async () => {
@@ -70,7 +71,7 @@ export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen
   });
   return h('div', { class: 'whose whose-example' },
     h('div', { class: 'whose-load' },
-      h('span', { class: 'whose-name' }, 'Example household'),
+      h('a', { class: 'whose-name', href: 'profile.html' }, 'Example household'),
       h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Load my file'),
       input),
     msg);

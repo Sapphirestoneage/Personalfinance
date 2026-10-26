@@ -311,6 +311,9 @@ export function setPay(spine, id, { basis, salary, hourlyRate, hoursPerWeek, yea
   // Cleared, every part goes; switched, the parts of the other ways are kept, so switching back finds them.
   if (!basis) { for (const k of ['payBasis', 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal']) delete next[k]; return setAt(spine, base, next); }
   if (!PAY_BASES.includes(basis)) throw new Error('Not a way of being paid: ' + basis);
+  // A line typed as an amount (or as a salary) keeps that salary when it switches to another way, so switching back
+  // finds it.
+  if (basis !== 'salary' && salary !== null && !x.salary && (!x.payBasis || was('payBasis') === 'salary')) next.salary = F(salary);
   next.payBasis = F(basis);
   // Steady (1099 or side money about the same each month): the amount is typed as it is.
   if (basis === 'steady') return setAt(spine, base, next);

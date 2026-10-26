@@ -299,3 +299,18 @@ open on the Rules page (`rules.html#/K401_DEF`), and old links
 Design kit is the page's own HTML; a sample tapped says it is a sample. The
 One-pager's Debt, next rung and Spending cards are whole-card targets with a
 chevron (My numbers at Debt, the Plan, My numbers at Needs).
+
+## Phase 2.5 additions (S-238 to S-240)
+
+```
+Fact.by?: client | coach | lookedUp | default          // who supplies it (optional; whoSupplies(f) reads the source when absent)
+profile?: { <question id>: Fact }                      // engine/profile.js LEVEL1 and LEVEL2; a value the question allows, or "notSure"
+lifeChanges?: [{ id, date, question, from, to }]       // every Profile change, appended
+coaching?: { homework?: [{ id, label, where, status: known|lookup|notSure|done, date }] }
+household.gutSpending?: Fact<money>                    // the gut number from before the call, a guess
+expenses.*.key?: text                                  // a Session starter line's key (rent, utilities), whatever its name
+goals.<fi>.dreamSpending?, partTimeIncome?: Fact<money> // a year: Fat FI and Barista FI
+```
+
+`household.home` and `household.getAround` are gone; the loader reads them into `profile.home` and `profile.getAround`.
+House defaults: `data/house-defaults.json`, read through the same `rules.get(id, year)` as a law.

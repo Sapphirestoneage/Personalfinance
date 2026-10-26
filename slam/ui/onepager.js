@@ -15,6 +15,7 @@ import { whose } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, money, pct, shortDate } from './view.js';
+import { homeworkList } from '../engine/profile.js';
 
 const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 const m = (x) => (x === null || x === undefined ? 'missing' : money(x));
@@ -33,7 +34,7 @@ function render({ spine: base, rules }) {
         cell('Net worth', m(sh.netWorth.value), 'assets ' + m(sh.assets.value) + ', debts ' + m(sh.debts.value)),
         cell('Cash', m(sh.cash.value), em.tiers.full.runway.value === null ? 'runway unknown' : em.tiers.full.runway.value.toFixed(1) + ' months at ' + m(em.tiers.full.burn.value) + ' a month'),
         cell('Take-home a month', m(cf.income.takeHome.value), 'gross ' + m(cf.income.gross.value)),
-        cell('Monthly surplus', m(cf.surplus.value), 'after spending, minimums, saving and the set-aside'),
+        cell('Monthly surplus', m(cf.monthlySurplus.value), 'after spending, debt minimums and the tax set-aside'),
         cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home'),
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.fiNumber.value)),
         cell('Safe to spend today', m(safe.today), safe.daysUntil ? m(safe.perDay) + ' a day until ' + shortDate(safe.nextIncome) : ''),
@@ -42,7 +43,14 @@ function render({ spine: base, rules }) {
       goCard('Debt', numbersHref('debt'), h('ul', {}, cd.rows.map((r) => h('li', {}, r.label + ': ' + (r.date ? shortDate(r.date) : 'not in the next 3 months'))), h('li', {}, 'Payoff order: ' + s.debt.avalancheCardsDetail.map((x) => x.name).join(', ')))),
       goCard('The next rung', 'plan.html', foo.current ? h('p', {}, foo.rungs.find((r) => r.id === foo.current).label + ': ' + foo.rungs.find((r) => r.id === foo.current).why) : h('p', {}, foo.rungs.every((r) => r.done) ? 'Every rung is done.' : 'The ladder needs a few answers on the Plan page.'), h('p', { class: 'tile-note' }, 'Rungs done: ' + foo.rungs.filter((r) => r.done).map((r) => r.label).join(', '))),
       goCard('Spending a month', numbersHref('needs'), h('ul', {}, cf.expenses.items.filter((i) => !i.covered && i.amount).sort((a, b) => b.amount - a.amount).slice(0, 8).map((i) => h('li', {}, i.label + ': ' + money(i.amount)))), h('p', { class: 'tile-note' }, 'The eight biggest.')),
-      null);
+      todoCard(base));
+}
+
+// The client's to-dos from the Profile (Level 3), grouped by where to find each item.
+function todoCard(spine) {
+  const groups = homeworkList(spine);
+  if (!groups.length) return null;
+  return goCard('Your to-dos', 'profile.html#/todo', ...groups.map((g) => [h('h3', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x)))]));
 }
 
 startPage({

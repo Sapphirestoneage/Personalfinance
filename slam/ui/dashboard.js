@@ -19,6 +19,7 @@ import { flowSection } from './flow-chart.js';
 import { pickedScenario, scenarioBar } from './scenario.js';
 import { SCENARIO_WORDS } from '../engine/scenarios.js';
 import { h, chip, money, pct, shortDate, ledgerHref } from './view.js';
+import { toneOf } from '../engine/profile.js';
 
 const monthLabel = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const months = (x) => (x === null ? '' : x.toFixed(1));
@@ -193,10 +194,12 @@ function flagItem(spine, f) {
 function flagsSection(spine, flags) {
   const guessy = flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-'));
   const first = flags.filter((f) => f.stage === 'red'), next = flags.filter((f) => f.stage === 'yellow' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
+  // The Profile's tone (Level 1): gently, one step to start with and the rest under Next up; straight to it, all of it.
+  const gentle = toneOf(spine) === 'gentle';
   const group = (id, title, list) => (list.length ? h('section', { class: 'card', 'aria-labelledby': id }, h('h2', { id }, title), h('ul', { class: 'flags' }, list.map((f) => flagItem(spine, f)))) : null);
   return [
-    group('do-first-h', 'Do first', first),
-    group('next-up-h', 'Next up', next),
+    group('do-first-h', gentle ? 'One step to start with' : 'Do first', gentle ? first.slice(0, 1) : first),
+    group('next-up-h', 'Next up', gentle ? [...first.slice(1), ...next] : next),
     !first.length && !next.length ? h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.')) : null,
     guessy.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guessy.length + (guessy.length === 1 ? ' number is a guess' : ' numbers are guesses'))))) : null,
     done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },

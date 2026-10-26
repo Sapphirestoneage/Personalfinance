@@ -88,9 +88,10 @@ test('the Session: five steps with letters, tick lists and presets from data, Ba
   assert.match(src, /'Next: ' \+ next\[2\]/);
   const data = JSON.parse(readFileSync(new URL('../data/session-presets.json', import.meta.url), 'utf8'));
   assert.deepEqual(data.needs.map((c) => c.label), ['Accommodation', 'Food', 'Transportation', 'Health and fitness', 'Subscriptions', 'Miscellaneous']);
-  assert.deepEqual(Object.keys(data.questions), ['home', 'getAround']);
+  // Phase 2.5 B3: where you live and how you get around moved into the Profile; the file holds no questions or when.
+  assert.equal(data.questions, undefined);
   assert.deepEqual(Object.values(data.typical).map((t) => t.label), ['High-cost city', 'Elsewhere']);
-  assert.ok(data.needs.flatMap((c) => c.items).some((i) => i.key === 'pay-family' && i.when.home[0] === 'family'));
+  assert.ok(data.needs.flatMap((c) => c.items).some((i) => i.key === 'pay-family' && i.when === undefined));
   assert.equal(data.withdrawal.find((w) => w.default).rate, 0.04);
   assert.ok(data.withdrawal.every((w) => w.source));
   const starter = readFileSync(new URL('../engine/starter.js', import.meta.url), 'utf8');

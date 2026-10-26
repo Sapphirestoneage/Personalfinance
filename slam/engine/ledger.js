@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, HOMES, GET_AROUND } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -24,8 +24,7 @@ export function typeFor(spine, path) {
     if (s[1] === 'situation') return 'choice:' + SITUATIONS.join('|');
     if (s[1] === 'lastRefund') return 'money';
     if (s[1] === 'goalOrder') return 'choice:oneAtATime|byDeadline';
-    if (s[1] === 'home') return 'choice:' + HOMES.join('|');
-    if (s[1] === 'getAround') return 'choice:' + GET_AROUND.join('|');
+    if (s[1] === 'gutSpending') return 'money';
     if (s[1] === 'healthCoverage') return s[3] === 'planType' ? 'choice:' + PLAN_TYPES.join('|') : s[3] === 'enrolled' ? 'bool' : s[3] === 'setAside' ? 'money' : 'choice:' + COVERAGES.join('|');
     return 'text';
   }
@@ -157,8 +156,8 @@ export function ledgerRows(spine) {
       if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
       continue;
     }
-    // A section's sharing default is set on the section, not as a row.
-    if (s[0] === 'household' && s[1] === 'expenseDefaults') continue;
+    // A section's sharing default is set on the section, not as a row. Profile answers live on the Profile page.
+    if ((s[0] === 'household' && s[1] === 'expenseDefaults') || s[0] === 'profile') continue;
     const type = typeFor(spine, path);
     rows.push(linkedDebtRow(spine, { path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) }));
   }

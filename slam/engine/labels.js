@@ -2,6 +2,7 @@
 // Used by flags (to name a missing field) and by the Ledger.
 
 import { getAt, valueOf } from './spine.js';
+import { questionById } from './profile.js';
 import { SECTION_WORDS } from './schema.js';
 
 const FIELD = {
@@ -30,7 +31,7 @@ const FIELD = {
   coverageLevel: 'coverage (self or family)', throughPayroll: 'through payroll', paidThrough: 'paid through (the job)', monthsEligible: 'months eligible this year', employerSeed: 'employer money in a year', planEligible: 'HSA-eligible plan'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
-const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded', home: 'Where you live', getAround: 'How you get around' };
+const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded', gutSpending: 'Your guess: spending a month' };
 const words = (k) => FIELD[k] || String(k ?? '').replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
@@ -40,7 +41,7 @@ const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
 
 // How many segments a path needs to name one field, by its first segment
 // ("income.salary.amount": the collection, the item id, the field).
-const NEEDS = { household: 2, income: 3, expenses: 3, accounts: 3, debts: 3, goals: 3, assumptions: 2, debtPlan: 2, taxYears: 3 };
+const NEEDS = { profile: 2, household: 2, income: 3, expenses: 3, accounts: 3, debts: 3, goals: 3, assumptions: 2, debtPlan: 2, taxYears: 3 };
 // A path labelFor can name: a known root with every segment it needs, or a
 // rule reference ("rule:PSLF_PAYMENTS"). Anything else is a bug in the engine
 // that emitted it; the self-audit fails on it (S-210).
@@ -84,6 +85,7 @@ export function labelFor(spine, path) {
     }
     case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label || UNNAMED : s[1]) + ': ' + words(s[2]); }
     case 'assumptions': return ASSUME[s[1]] || words(s[1]);
+    case 'profile': { const q = questionById(s[1]); return 'Profile: ' + (q ? q.label : words(s[1])); }
     case 'debtPlan': return 'Debt plan: ' + words(s[1]);
     case 'taxYears': return s[1] + ' ' + words(s[2]);
     default: return path;
@@ -105,8 +107,11 @@ export function groupFor(path) {
   if (s[0] === 'income') return s[2] === 'withholding' ? 'T' : 'I';
   if (s[0] === 'taxYears') return 'T';
   if (s[0] === 'expenses') return 'E';
-  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' || s[1] === 'home' || s[1] === 'getAround' ? 'E' : s[1] === 'cardPayPolicy' ? 'D' : 'T';
+  if (s[0] === 'profile') return PROFILE_GROUP[(questionById(s[1]) || {}).area] || 'G';
+  if (s[0] === 'household') return s[1] === 'situation' ? 'I' : s[1] === 'healthCoverage' || s[1] === 'gutSpending' ? 'E' : s[1] === 'cardPayPolicy' ? 'D' : 'T';
   return 'G';
 }
 
+// A profile answer's DATING letter, by its area.
+const PROFILE_GROUP = { home: 'E', around: 'E', work: 'I', people: 'I', debt: 'D', accounts: 'A', health: 'E', style: 'E', you: 'T', goals: 'G', k401: 'A', ira: 'A', hsa: 'A', brokerage: 'A', cards: 'D', student: 'D', car: 'D', mortgage: 'D', debtAll: 'D', goalsAll: 'G', statements: 'A' };
 export const listWords = (xs) => (xs.length <= 1 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);

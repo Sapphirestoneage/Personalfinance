@@ -1,6 +1,6 @@
 {
   "year": 2026,
-  "note": "First-session questions, starter lists and typical amounts (Phase 2.5, Batch 3). Each line says which answers it belongs to (when). Typical amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
+  "note": "Starter lists and typical amounts for the Session (Phase 2.5, Batch 3). Which lines show follows the Profile's answers (engine/profile.js fieldsFor), not this file. Typical amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
   "needs": [
     {
       "id": "accommodation",
@@ -9,69 +9,31 @@
       "items": [
         {
           "key": "rent",
-          "label": "Rent",
-          "when": {
-            "home": [
-              "rent",
-              "other"
-            ]
-          }
+          "label": "Rent"
         },
         {
           "key": "pay-family",
-          "label": "Paid to family for rent",
-          "when": {
-            "home": [
-              "family"
-            ]
-          }
+          "label": "Paid to family for rent"
         },
         {
           "key": "mortgage",
-          "label": "Mortgage payment",
-          "when": {
-            "home": [
-              "own"
-            ]
-          }
+          "label": "Mortgage payment"
         },
         {
           "key": "property-tax",
-          "label": "Property tax",
-          "when": {
-            "home": [
-              "own"
-            ]
-          }
+          "label": "Property tax"
         },
         {
           "key": "home-insurance",
-          "label": "Home insurance",
-          "when": {
-            "home": [
-              "own"
-            ]
-          }
+          "label": "Home insurance"
         },
         {
           "key": "renters-insurance",
-          "label": "Renter's insurance",
-          "when": {
-            "home": [
-              "rent"
-            ]
-          }
+          "label": "Renter's insurance"
         },
         {
           "key": "utilities",
           "label": "Utilities",
-          "when": {
-            "home": [
-              "rent",
-              "own",
-              "other"
-            ]
-          },
           "subs": [
             {
               "key": "electric",
@@ -93,14 +55,7 @@
         },
         {
           "key": "internet",
-          "label": "Internet",
-          "when": {
-            "home": [
-              "rent",
-              "own",
-              "other"
-            ]
-          }
+          "label": "Internet"
         },
         {
           "key": "phone",
@@ -131,63 +86,27 @@
       "items": [
         {
           "key": "car-payment",
-          "label": "Car payment",
-          "when": {
-            "getAround": [
-              "car",
-              "both"
-            ]
-          }
+          "label": "Car payment"
         },
         {
           "key": "car-insurance",
-          "label": "Car insurance",
-          "when": {
-            "getAround": [
-              "car",
-              "both"
-            ]
-          }
+          "label": "Car insurance"
         },
         {
           "key": "car-gas",
-          "label": "Gas for the car",
-          "when": {
-            "getAround": [
-              "car",
-              "both"
-            ]
-          }
+          "label": "Gas for the car"
         },
         {
           "key": "car-upkeep",
-          "label": "Car upkeep",
-          "when": {
-            "getAround": [
-              "car",
-              "both"
-            ]
-          }
+          "label": "Car upkeep"
         },
         {
           "key": "transit",
-          "label": "Transit",
-          "when": {
-            "getAround": [
-              "transit",
-              "both"
-            ]
-          }
+          "label": "Transit"
         },
         {
           "key": "rides",
-          "label": "Rides and rideshare",
-          "when": {
-            "getAround": [
-              "none",
-              "transit"
-            ]
-          }
+          "label": "Rides and rideshare"
         }
       ]
     },
@@ -255,60 +174,6 @@
       "label": "3.3%",
       "source": "Morningstar, The State of Retirement Income (2021)"
     }
-  ],
-  "questions": {
-    "home": {
-      "label": "Where do you live?",
-      "options": [
-        [
-          "rent",
-          "I rent"
-        ],
-        [
-          "own",
-          "I own"
-        ],
-        [
-          "family",
-          "With parents or family"
-        ],
-        [
-          "other",
-          "Something else"
-        ]
-      ]
-    },
-    "getAround": {
-      "label": "How do you get around?",
-      "options": [
-        [
-          "car",
-          "My own car"
-        ],
-        [
-          "transit",
-          "Transit"
-        ],
-        [
-          "both",
-          "Both"
-        ],
-        [
-          "none",
-          "Walk, bike or rides"
-        ]
-      ]
-    }
-  },
-  "familyCovers": [
-    "rent",
-    "renters-insurance",
-    "utilities",
-    "electric",
-    "gas-utility",
-    "water",
-    "trash",
-    "internet"
   ],
   "typical": {
     "city": {
