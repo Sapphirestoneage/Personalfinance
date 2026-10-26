@@ -1075,3 +1075,7 @@ h3.flag-title { margin: 0; font-size: var(--text-md); font-weight: 700; }
 .unemp-fields .add-field { display: grid; gap: 4px; }
 .unemp-fields input { width: 100%; }
 .unemp-note { background: var(--watch-soft); padding: var(--space-2) var(--space-3); border-radius: 6px; }
+.unemp-field { display: grid; gap: 4px; align-content: start; }
+.unemp-box { min-height: var(--btn-h); width: 100%; padding: 6px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); box-sizing: border-box; }
+.unemp-box:focus { outline: 2px solid var(--accent, #2b6cb0); outline-offset: 1px; }
+.unemp-status { font-weight: 600; margin: 0 0 var(--space-3); }

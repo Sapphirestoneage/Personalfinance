@@ -26,7 +26,9 @@ export function weeksLeft(s, asOf) {
 
 export function unemploymentView(spine, s, { asOf = spine.meta.asOf, rules = null } = {}) {
   const cf = s.cashflow;
-  const streams = (spine.income || []).filter((x) => x.type === 'unemployment' && (!x.end || x.end >= asOf)).map((x) => {
+  // A benefit that ended in the last year is still shown, as ended (its last payment can be last week).
+  const yearAgo = round2(toDay(asOf) - 365);
+  const streams = (spine.income || []).filter((x) => x.type === 'unemployment' && (!x.end || toDay(x.end) >= yearAgo)).map((x) => {
     const weekly = x.cadence === 'weekly' ? v(x.amount) : null;
     const fed = x.withholding ? v(x.withholding.federal) : null;
     const left = weeksLeft(x, asOf);
@@ -40,7 +42,7 @@ export function unemploymentView(spine, s, { asOf = spine.meta.asOf, rules = nul
       // What is left of a month's benefit once tax is out: what is withheld, or what to set aside when nothing is.
       setAsideMonthly: round2(setAside),
       afterTaxMonthly: row.gross === null || row.gross === undefined ? null : round2(row.gross - (fed === null ? 0 : (row.withheld || 0)) - setAside),
-      lastDay: x.end || null,
+      lastDay: x.end || null, ended: !!x.end && x.end < asOf,
       paths: { amount: 'income.' + x.id + '.amount', end: 'income.' + x.id + '.end', federal: 'income.' + x.id + '.withholding.federal' }
     };
   });
@@ -49,12 +51,14 @@ export function unemploymentView(spine, s, { asOf = spine.meta.asOf, rules = nul
   const ends = streams.map((x) => x.end).filter(Boolean).sort();
   const lastEnd = ends.length && ends.length === streams.length ? ends[ends.length - 1] : null;
   const cash = s.sheet.cash.value;
+  // Every benefit already ended: the month as it is now is the month after. Else the first full month after the last ends.
+  const allEnded = streams.length > 0 && streams.every((x) => x.ended);
   let after = null;
   if (lastEnd && rules) {
-    const ym = nextMonth(lastEnd.slice(0, 7));
-    const m = cashflow(spine, rules, ym);
+    const ym = allEnded ? asOf.slice(0, 7) : nextMonth(lastEnd.slice(0, 7));
+    const m = allEnded ? cf : cashflow(spine, rules, ym);
     const left = m.monthlySurplus.value;
-    after = { ym, from: ym + '-01', left, months: left === null || cash === null || left >= 0 ? null : round2(cash / -left), kind: m.monthlySurplus.kind };
+    after = { ym, now: allEnded, from: ym + '-01', left, months: left === null || cash === null || left >= 0 ? null : round2(cash / -left), kind: m.monthlySurplus.kind };
   }
   return {
     between: betweenJobs(spine, asOf), streams,

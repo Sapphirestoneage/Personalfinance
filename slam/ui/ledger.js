@@ -1097,37 +1097,46 @@ function unemploymentCard() {
   if (!u.between && !u.streams.length) return null;
   const later = (fn) => setTimeout(fn, 0);
   const add = () => change((x) => { const r = addItem(x, { collection: 'income', type: 'unemployment', label: 'Unemployment benefit' }, day); return setAt(r.spine, 'income.' + r.id + '.cadence', 'weekly'); }, said.added('Unemployment benefit'));
-  const box = (id, label, value, type, onSet) => {
-    const b = h('input', { id, type: type === 'date' ? 'date' : 'text', inputmode: type === 'money' ? 'decimal' : null, autocomplete: 'off', placeholder: type === 'money' ? '$' : null, 'aria-label': label });
+  // A bordered box, its label above and a hint under it (affordance 3).
+  const box = (id, label, hint, value, type, onSet) => {
+    const b = h('input', { id, class: 'unemp-box', type: type === 'date' ? 'date' : 'text', inputmode: type === 'money' ? 'decimal' : null, autocomplete: 'off', placeholder: type === 'money' ? '$' : null, 'aria-describedby': id + '-hint' });
     b.value = type === 'date' ? value || '' : inputText('money', value);
     b.addEventListener('change', () => { const t = b.value.trim(); if (!t) return later(() => onSet(null)); if (type === 'date') return later(() => onSet(t)); const p = parseInput('money', t); if (!p.ok) { say(label + ': ' + p.message); return; } later(() => onSet(p.value)); });
-    return h('div', { class: 'add-field' }, h('label', { for: id, class: 'edit-label' }, label), b);
+    return h('div', { class: 'unemp-field' }, h('label', { for: id, class: 'edit-label' }, label), b, h('p', { class: 'edit-hint', id: id + '-hint' }, hint));
   };
   const fig = (label, value, sub) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, value), sub ? h('p', { class: 'tile-sub muted' }, sub) : null);
+  // The benefit in one sentence: how much, until when, how many payments are left, or that it has ended.
+  const status = (x) => x.weekly === null ? 'Type the benefit a week to see how much is left.'
+    : !x.end ? money(x.weekly) + ' a week. Type the last payment\'s date to see how many are left.'
+      : x.ended ? 'Ended: the last payment was ' + shortDate(x.end) + '. Nothing more is coming from it.'
+        : money(x.weekly) + ' a week until ' + shortDate(x.end) + ': ' + x.weeksLeft + (x.weeksLeft === 1 ? ' more payment, ' : ' more payments, ') + money(x.stillToCome) + ' still to come.';
   const stream = (x) => {
     const tax = h('div', { class: 'segmented', role: 'group', 'aria-label': x.label + ': federal tax taken out' },
       [['none', 'None taken out'], ['ten', '10% taken out']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(x.withholds === (k === 'ten')), disabled: k === 'ten' && x.weekly === null ? true : null,
         onclick: () => change((sp) => putFact(sp, x.paths.federal, k === 'ten' ? tenPercentOf(x.weekly) : 0, 'known', day), said.changed(x.label + ': federal tax', k === 'ten' ? '10% taken out' : 'none taken out')) }, h('span', { class: 'seg-label' }, w))));
     return h('section', { class: 'card', 'aria-label': x.label },
-      h('h3', {}, x.label),
+      h('h3', {}, x.label, x.ended ? [' ', h('span', { class: 'pill' }, 'ended')] : null),
+      h('p', { class: 'unemp-status' }, status(x)),
       h('div', { class: 'unemp-fields' },
-        box('ui-amt-' + x.id, 'A week', x.weekly, 'money', (a) => change((sp) => { let n = putFact(sp, x.paths.amount, a, a === null ? 'missing' : 'known', day); if (x.withholds && a !== null) n = putFact(n, x.paths.federal, tenPercentOf(a), 'known', day); return n; }, said.changed(x.label + ' a week', a === null ? 'blank' : money(a)))),
-        box('ui-end-' + x.id, 'Last week paid', x.end, 'date', (d) => change((sp) => setAt(sp, 'income.' + x.id + '.end', d), said.changed(x.label + ': last week paid', d ? shortDate(d) : 'not known')))),
-      h('p', { class: 'edit-label' }, 'Federal tax'), tax,
-      h('div', { class: 'nw-pair fi-three' },
+        box('ui-amt-' + x.id, 'Benefit a week', 'Before any tax, as the state pays it.', x.weekly, 'money', (a) => change((sp) => { let n = putFact(sp, x.paths.amount, a, a === null ? 'missing' : 'known', day); if (x.withholds && a !== null) n = putFact(n, x.paths.federal, tenPercentOf(a), 'known', day); return n; }, said.changed(x.label + ' a week', a === null ? 'blank' : money(a)))),
+        box('ui-end-' + x.id, 'Last payment', 'When it ends, or ended. A past date is fine.', x.end, 'date', (d) => change((sp) => setAt(sp, 'income.' + x.id + '.end', d), said.changed(x.label + ': last payment', d ? shortDate(d) : 'not known')))),
+      h('p', { class: 'edit-label' }, 'Federal tax on it'), tax,
+      h('p', { class: 'edit-hint' }, 'Unemployment is taxed. Have 10% taken out each week, or set it aside yourself.'),
+      x.ended ? null : h('div', { class: 'nw-pair fi-three' },
         fig('A month', x.monthly === null ? null : money(x.monthly), 'about 4.3 weeks'),
-        fig('Weeks left', x.weeksLeft === null ? null : String(x.weeksLeft), x.end ? 'through ' + shortDate(x.end) : 'Type the last week paid'),
+        fig('Payments left', x.weeksLeft === null ? null : String(x.weeksLeft), x.end ? 'through ' + shortDate(x.end) : 'needs the last payment'),
         fig('Still to come', x.stillToCome === null ? null : money(x.stillToCome), null),
-        fig('A month after tax', x.afterTaxMonthly === null ? null : money(x.afterTaxMonthly), x.withholds === false && x.setAsideMonthly ? money(x.setAsideMonthly) + ' a month set aside for tax, since none is taken out' : x.withholds ? '10% taken out each week' : null)));
+        fig('A month after tax', x.afterTaxMonthly === null ? null : money(x.afterTaxMonthly), x.withholds === false && x.setAsideMonthly ? money(x.setAsideMonthly) + ' a month to set aside for tax' : x.withholds ? '10% taken out each week' : null)));
   };
   return h('section', { class: 'card unemp', 'aria-labelledby': 'unemp-h' },
     h('h2', { id: 'unemp-h' }, 'Unemployment'),
     u.jobsStillPaying.length ? h('p', { class: 'tile-note unemp-note' }, 'Still counted as paying: ', ...u.jobsStillPaying.flatMap((j, i) => [i ? ', ' : '', h('a', { href: ledgerHref(j.path) }, j.label)]), '. If the job ended, give it an end date so the numbers stop counting it.') : null,
     u.streams.length ? u.streams.map(stream) : [h('p', {}, 'No unemployment benefit in your numbers yet.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: add }, 'Add the weekly benefit'))],
     h('div', { class: 'nw-pair' },
-      fig('Cash runway now', u.runway === null ? null : u.runway.toFixed(1) + ' months', 'with the benefit still coming'),
+      fig('Cash runway now', u.runway === null ? null : u.runway.toFixed(1) + ' months', u.streams.length && u.streams.every((x) => x.ended) ? 'with no benefit coming' : u.streams.length ? 'with the benefit still coming' : null),
       fig('On needs only', u.runwayNeeds === null ? null : u.runwayNeeds.toFixed(1) + ' months', null)),
-    u.after ? h('p', { class: 'tile-sub' }, 'After it ends, in ' + monthWordsOf(u.after.ym) + ': ' + (u.after.left === null ? 'the month cannot be figured yet (a number is missing).' : u.after.left >= 0 ? money(u.after.left) + ' is left that month from the pay that continues.' : 'a month runs ' + money(-u.after.left) + ' short' + (u.after.months === null ? '.' : '; your cash of ' + money(u.cash) + ' covers about ' + u.after.months.toFixed(1) + ' months of that.'))) : u.streams.length ? h('p', { class: 'tile-sub muted' }, 'Type the last week paid to see what happens after it ends.') : null,
+    u.after ? h('section', { class: 'card', 'aria-labelledby': 'unemp-after-h' }, h('h3', { id: 'unemp-after-h' }, u.after.now ? 'Now that it has ended' : 'When it ends'),
+      h('p', {}, (u.after.now ? 'This month (' + monthWordsOf(u.after.ym) + '), with no benefit: ' : 'In ' + monthWordsOf(u.after.ym) + ', the first full month without it: ') + (u.after.left === null ? 'it cannot be figured yet, a number is missing.' : u.after.left >= 0 ? money(u.after.left) + ' is left over from the pay that continues.' : 'it runs ' + money(-u.after.left) + ' short a month' + (u.after.months === null ? '.' : '. Your cash of ' + money(u.cash) + ' covers about ' + u.after.months.toFixed(1) + ' months of that.')))) : u.streams.length ? h('p', { class: 'tile-sub muted' }, 'Type the last payment\'s date to see what happens when it ends.') : null,
     mathButton(['runway', 'runwayNeeds', 'taxSetAside'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })));
 }
 

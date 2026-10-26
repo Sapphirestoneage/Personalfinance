@@ -77,3 +77,15 @@ test('My numbers shows the Unemployment card on Income and on Your situation', (
   assert.match(src, /'Add the weekly benefit'/);
   void addItem;
 });
+
+test('a benefit whose last payment was last week shows as ended, and the month now is the month after', () => {
+  const s = setAt(laidOff(), 'income', laidOff().income.map((x) => (x.id === 'ui' ? { ...x, end: '2026-10-19' } : x)));
+  const u = unemploymentView(s, summarize(s, R), { rules: R });
+  const x = u.streams[0];
+  assert.deepEqual([x.ended, x.weeksLeft, x.stillToCome], [true, 0, 0], 'ended Oct 19, before the Oct 22 numbers');
+  assert.equal(u.after.now, true);
+  assert.equal(u.after.ym, '2026-10');
+  // Ended over a year ago: not shown.
+  const old = setAt(laidOff(), 'income', laidOff().income.map((x) => (x.id === 'ui' ? { ...x, end: '2025-09-01' } : x)));
+  assert.equal(unemploymentView(old, summarize(old, R), { rules: R }).streams.length, 0);
+});
