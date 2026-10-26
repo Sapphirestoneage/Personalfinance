@@ -31,7 +31,7 @@ function render({ spine: base, rules }) {
   const sim = cashsim(spine, rules, { months: 3 });
   const cd = clearDates(sim), foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  const step = foo.rungs.find((r) => r.id === foo.current) || null;
+  const step = foo.rungs.find((r) => r.done !== true) || null;
   const flow = flowSection(moneyFlow(spine, rules, cf, { open: [] }), { open: [], onToggle: () => {}, month: MONTHS[+s.ym.slice(5, 7) - 1] });
   flow.classList.add('op-flow');
   return h('div', { class: 'onepager' },

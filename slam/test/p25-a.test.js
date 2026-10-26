@@ -48,11 +48,13 @@ test('Batch 7: Spending has Do and See; See says its range and has reference lin
   assert.match(src, /'Showing ' \+ windowWords\(m\.compare\)/);
   assert.doesNotMatch(src, /running hot|'on track'/);
   const { referenceBands } = await import('../engine/spending.js');
-  const s = { cashflow: { income: { takeHome: { value: 4000 } }, expenses: { need: { value: 1800 }, total: { value: 2600 } }, debtMinimums: { total: { value: 200 } }, saving: { total: 400 } } };
-  const r = referenceBands(s, JSON.parse(read('data/benchmarks.json')));
-  // Needs (1,800 + 200) / 4,000 = 50%; wants 800 / 4,000 = 20%; saving 400 / 4,000 = 10%.
-  assert.deepEqual(r.rows.map((x) => [x.id, x.share, x.reference]), [['needs', 0.5, 0.5], ['wants', 0.2, 0.3], ['saving', 0.1, 0.2]]);
+  // Take-home 3,600 + 400 from pay = 4,000 of pay. Needs: rent 1,500 + groceries 300 + the car line that pays its loan
+  // (200, a need) + the card's minimum (100, not on a line) = 2,100 = 52.5%; wants 600 = 15%; saving 800 = 20%.
+  const cf = (items, linked) => ({ cashflow: { income: { takeHome: { value: 3600 } }, expenses: { items, linked, need: { value: null }, total: { value: null } }, debtMinimums: { total: { value: 300 } }, saving: { payroll: { value: 400 }, match: { value: 0 }, total: 800 } } });
+  const items = [{ amount: 1500, need: true }, { amount: 300, need: true }, { amount: 600, need: false }, { amount: 90, need: true, covered: true }];
+  const r = referenceBands(cf(items, [{ amount: 200, need: true }]), JSON.parse(read('data/benchmarks.json')));
+  assert.deepEqual(r.rows.map((x) => [x.id, x.share, x.reference]), [['needs', 0.525, 0.5], ['wants', 0.15, 0.3], ['saving', 0.2, 0.2]]);
   assert.ok(r.rows.every((x) => !('verdict' in x) && !('grade' in x)));
-  const none = referenceBands({ cashflow: { ...s.cashflow, expenses: { need: { value: null }, total: { value: 2600 } } } }, JSON.parse(read('data/benchmarks.json')));
+  const none = referenceBands(cf([...items, { amount: 50, need: null }], []), JSON.parse(read('data/benchmarks.json')));
   assert.equal(none.rows[0].share, null, 'no needs marked is missing, never 0%');
 });

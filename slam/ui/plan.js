@@ -221,7 +221,7 @@ function hiDebts(m, r) {
       } }, box, h('button', { type: 'submit', class: 'btn small' }, 'Record a payment'), msg));
   };
   return h('div', {}, list.length ? h('ul', { class: 'hi-list' }, list.map(row)) : null,
-    h('p', { class: 'edit-hint' }, 'A payment lowers the debt and checking.'),
+    h('p', { class: 'edit-hint' }, 'A payment lowers the debt, and checking when its balance is in. A payment above the balance pays the balance.'),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: numbersHref('debt') }, 'Add a debt')));
 }
 

@@ -290,13 +290,19 @@ export function syncProfile(spine, { today, changed = null }) {
   }
   // Goals picked (Level 1) are added once, ready for an amount and a date; moving in the next year adds moving costs;
   // FI yes or curious adds the FI goal. A goal is never removed when an answer changes (the client may have typed in it).
-  const want = [...(Array.isArray(a.goals) ? a.goals : []), ...(['yes', 'maybe'].includes(a.moving) ? ['moving'] : [])];
-  for (const k of want) {
-    if ((s.goals || []).some((g) => g.key === k)) continue;
-    const label = k === 'moving' ? 'Moving costs' : goalWords(k);
-    s = { ...s, goals: [...(s.goals || []), { id: 'goal-' + k, key: k, type: k === 'debtFree' ? 'payoff' : 'savings', label, target: fact(null, { asOf: today, source: NAME_SOURCE }) }] };
+  // Only when that answer is the one changing, and only what it newly picks: a goal the client deleted is not put back.
+  const picks = (x, q) => (q === 'goals' ? (Array.isArray(x) ? x : []) : q === 'moving' ? (['yes', 'maybe'].includes(x) ? ['moving'] : []) : ['yes', 'curious'].includes(x) ? ['fi'] : []);
+  if (['goals', 'moving', 'fi'].includes(changed)) {
+    const last = [...(s.lifeChanges || [])].reverse().find((c) => c.question === changed);
+    const before = new Set(picks(last ? last.from : null, changed));
+    for (const k of picks(a[changed], changed)) {
+      if (before.has(k) || (s.goals || []).some((g) => g.key === k || (k === 'fi' && g.type === 'fi'))) continue;
+      let id = k === 'fi' ? 'fi' : 'goal-' + k, n = 2;
+      while ((s.goals || []).some((g) => g.id === id)) id = (k === 'fi' ? 'fi' : 'goal-' + k) + '-' + n++;
+      const goal = k === 'fi' ? { id, key: k, type: 'fi', label: 'Financial independence' } : { id, key: k, type: k === 'debtFree' ? 'payoff' : 'savings', label: k === 'moving' ? 'Moving costs' : goalWords(k), target: fact(null, { asOf: today, source: NAME_SOURCE }) };
+      s = { ...s, goals: [...(s.goals || []), goal] };
+    }
   }
-  if (['yes', 'curious'].includes(a.fi) && !(s.goals || []).some((g) => g.type === 'fi')) s = { ...s, goals: [...(s.goals || []), { id: 'fi', type: 'fi', label: 'Financial independence' }] };
   // A parent's plan ends at 26: a dated change in health coverage, kept only while the answer is a parent's plan.
   const hc = (s.household.healthCoverage || []).filter((x) => x.id !== 'turning-26');
   const birth = person ? v(getAt(s, 'household.people.' + person.id + '.birthDate')) : null;

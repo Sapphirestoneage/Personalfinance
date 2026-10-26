@@ -71,13 +71,14 @@ function model(base, rules) {
 function tiles({ spine, rules, s }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   const foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
-  const step = foo.rungs.find((r) => r.id === foo.current) || null;
+  // The first step not done yet, a blank one too (a blank deductible is not skipped).
+  const step = foo.rungs.find((r) => r.done !== true) || null;
   const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : money(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : money(sh.netWorth.value)));
   return h('div', { class: 'tiles' },
     tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: both }),
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: money(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home.'] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
-    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [money(sh.cash.value) + ' in cash.'] }),
+    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [sh.cash.value === null ? null : money(sh.cash.value) + ' in cash.'] }),
     tile(spine, { id: 'next', label: 'Next step', target: step ? 'plan.html#/' + slugOf(step.id) : 'plan.html', result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: step ? step.kind : foo.kind, from: [], rough: [], missing: [] },
       shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.need !== null && !step.done ? money(step.need) + (step.flow ? ' a month' : '') + '.' : null] }));
 }
@@ -118,7 +119,7 @@ function runwayScreen({ s }) {
       h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'On needs only'), h('p', { class: 'tile-value' }, em.tiers.needsOnly.runway.value === null ? 'missing' : months(em.tiers.needsOnly.runway.value) + ' months'), keptMath('screen-runway-needs', ['runwayNeeds'], mathCtx))),
     h('section', { class: 'card', 'aria-labelledby': 'cushion-h' }, h('h2', { id: 'cushion-h' }, 'Your cushion, in three steps'),
       h('ol', { class: 'cushion-steps' }, em.cushion.map((c) => h('li', { class: c.reached ? 'is-done' : '' }, h('span', {}, c.label), h('span', { class: 'num' }, c.target.value === null ? 'missing' : money(c.target.value)), h('span', { class: 'muted' }, c.reached === null ? '' : c.reached ? 'there' : money(c.toGo) + ' to go')))),
-      h('p', { class: 'tile-sub' }, money(sh.cash.value) + ' in cash.'), sh.setAsideNote ? h('p', { class: 'tile-sub' }, sh.setAsideNote) : null,
+      sh.cash.value === null ? null : h('p', { class: 'tile-sub' }, money(sh.cash.value) + ' in cash.'), sh.setAsideNote ? h('p', { class: 'tile-sub' }, sh.setAsideNote) : null,
       em.backstop.contributions.value ? h('p', { class: 'tile-sub' }, 'Also there in a pinch: ' + money(em.backstop.contributions.value) + ' of Roth contributions, no tax or penalty.') : null,
       keptMath('screen-cushion', ['cushionNeeds', 'cushionMonth', 'ruleOf5Dollars'], mathCtx))
   ];

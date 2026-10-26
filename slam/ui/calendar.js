@@ -43,12 +43,15 @@ const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked
 // The view toggles (Batch 6): filters on the one list of events. A rough or missing item is a guess or has no amount.
 const FILTERS = [['all', 'All'], ['in', 'Money in'], ['bills', 'Bills'], ['debt', 'Debt'], ['rough', 'Rough or missing']];
 const DEBT_KINDS = ['debt', 'interest', 'promoEnds'];
+const BILL_KINDS = ['bill', 'subscription', 'estimatedTax'];
+// Dates that carry no amount by design (a start, an end, a deadline): never read as missing.
+const MARKER_KINDS = ['incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'promoEnds', 'bonusBy', 'maxDeadline', 'coverage', 'situation', 'foo'];
 const FILTER_OF = {
   all: () => true,
   in: (e) => e.direction === 'in',
-  bills: (e) => e.direction === 'out' && !DEBT_KINDS.includes(e.kind),
+  bills: (e) => BILL_KINDS.includes(e.kind),
   debt: (e) => DEBT_KINDS.includes(e.kind),
-  rough: (e) => !!e.rough || e.amount === null
+  rough: (e) => !!e.rough || e.kind === 'missing' || (e.amount === null && !MARKER_KINDS.includes(e.kind))
 };
 const filtered = (m, f) => (f === 'all' ? m : { ...m, events: m.events.filter(FILTER_OF[f]), undated: m.undated.filter(FILTER_OF[f]), days: m.days.map((d) => ({ ...d, events: d.events.filter(FILTER_OF[f]) })) });
 const VIEWS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
@@ -364,8 +367,9 @@ function summary(m, c, mathCtx) {
 // The top three (Batch 6): cash today, what checking has left at the end of this month, and the lowest point, each
 // with Show the math. A month with no run (before the as-of date) has none.
 function topThree(c, mathCtx) {
+  // Only for this month: another month's view has its own reading below.
   const m = c.months[0];
-  if (!c.sim || !m) return null;
+  if (!c.sim || !m || m.ym !== c.sim.start.slice(0, 7)) return null;
   const r = cashReading(c.sim, m.ym);
   const one = (label, value, sub, ids, extra) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(value)), sub ? h('p', { class: 'tile-sub muted' }, sub) : null, mathButton(ids, () => ({ ...mathCtx(), ...extra })));
   return h('section', { class: 'card nw-pair cal-three', 'aria-label': 'Cash in three numbers' },
@@ -382,7 +386,7 @@ function waitingCard(spine, rules, today) {
   // Several at once (Batch 6): tick them, then one tap marks them all, and one Undo takes them all back.
   for (const k of [...picked]) if (!list.some((e) => e.key === k)) picked.delete(k);
   const chosen = list.filter((e) => picked.has(e.key));
-  const markAll = (happened) => { const n = chosen.length; const keys = chosen.map((e) => ({ key: e.key, amount: e.amount })); picked.clear(); change((s) => keys.reduce((x, k) => (happened ? (k.amount === null ? x : confirmOccurrence(x, k.key, { amount: k.amount })) : skipOccurrence(x, k.key, true)), s), n + (n === 1 ? ' item' : ' items') + (happened ? ' marked happened' : ' marked did not happen')); };
+  const markAll = (happened) => { const keys = chosen.filter((e) => !happened || e.amount !== null).map((e) => ({ key: e.key, amount: e.amount })); const n = keys.length; if (!n) { say('An item with no amount needs its own screen: open it to type what came in or went out'); return; } picked.clear(); change((s) => keys.reduce((x, k) => (happened ? (k.amount === null ? x : confirmOccurrence(x, k.key, { amount: k.amount })) : skipOccurrence(x, k.key, true)), s), n + (n === 1 ? ' item' : ' items') + (happened ? ' marked happened' : ' marked did not happen')); };
   return h('section', { class: 'card', 'aria-labelledby': 'waiting-h' },
     h('h2', { id: 'waiting-h' }, 'Did these happen? ', h('span', { class: 'count' }, String(list.length))),
     list.length > 1 ? h('div', { class: 'edit-actions' },
@@ -390,15 +394,21 @@ function waitingCard(spine, rules, today) {
       h('button', { type: 'button', class: 'btn small primary', id: 'wait-happened', disabled: !chosen.length, onclick: () => markAll(true) }, chosen.length ? 'Mark ' + chosen.length + ' happened' : 'Mark selected happened'),
       h('button', { type: 'button', class: 'btn small', id: 'wait-not', disabled: !chosen.length, onclick: () => markAll(false) }, 'Did not happen')) : null,
     h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened' },
-      list.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', class: 'wait-pick', checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); refresh(); } }), ' Select') : null,
+      list.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', class: 'wait-pick', checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); pickedWords(); } }), ' Select') : null,
       h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
       h('div', { class: 'edit-actions' },
         e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'It happened'),
         h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
         h('a', { class: 'btn ghost', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Different: open it'))))));
 }
-// The items ticked in Did these happen?, kept while the page is open.
+// The items ticked in Did these happen?, kept while the page is open. A tick updates the two buttons in place, never
+// the list it is in (D-034).
 const picked = new Set();
+function pickedWords() {
+  const n = picked.size, a = document.getElementById('wait-happened'), b = document.getElementById('wait-not');
+  if (a) { a.disabled = !n; a.textContent = n ? 'Mark ' + n + ' happened' : 'Mark selected happened'; }
+  if (b) b.disabled = !n;
+}
 
 // The month's cash reading in words (S-209): checking today, the lowest day, and the days in trouble.
 function readingLines(c, m) {

@@ -237,3 +237,20 @@ test('Batch 10 fix: the goals picked before the call are set up, once, ready for
   assert.ok(s.goals.some((g) => g.id === 'goal-travel'), 'unpicking keeps the goal and what was typed in it');
   assert.ok(validate(s).ok);
 });
+
+test('Part C review: a deleted goal is not put back; a goal id already taken gets its own; a payment never goes past the balance', async () => {
+  const { removeItem, addItem: add, recordDebtPayment } = await import('../engine/edits.js');
+  let s = add(demo(), { collection: 'goals', type: 'savings', label: 'Goal car' }, TODAY).spine;
+  s = answer(s, { goals: ['car', 'travel'] });
+  assert.ok(s.goals.some((g) => g.key === 'car' && g.id !== 'goal-car'), 'its own id');
+  assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('\\n'));
+  const travel = s.goals.find((g) => g.key === 'travel').id;
+  s = removeItem(s, 'goals', travel);
+  s = answer(s, { tone: 'gentle' });
+  s = answer(s, { goals: ['car', 'travel', 'home'] });
+  assert.ok(!s.goals.some((g) => g.key === 'travel'), 'deleted, and not newly picked: stays deleted');
+  assert.ok(s.goals.some((g) => g.key === 'home'));
+  const paid = recordDebtPayment(demo(), 'visa', 5000, TODAY);
+  assert.equal(valueOf(getAt(paid, 'debts.visa.balance')), 0);
+  assert.equal(valueOf(getAt(paid, 'accounts.chk.balance')), 3000 - 3000, 'checking pays only what was owed');
+});

@@ -196,7 +196,7 @@ function tagsCard(m) {
     h('p', { class: 'muted' }, t.day ? 'Day ' + t.day + ' of ' + t.daysInMonth + '. The line in each bar is where you would be today on pace.' : 'Spent against the budget.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', {}, 'Spent'), h('th', { class: 'num' }, 'Left'), h('th', { class: 'num' }, 'At this pace'), h('th', { class: 'num' }, 'Last month, same day'))),
-      h('tbody', {}, t.rows.map((r) => h('tr', { class: r.hot ? 'tight' : '' },
+      h('tbody', {}, t.rows.map((r) => h('tr', {},
         h('td', {}, tagName(m, r.tag, r.label)),
         h('td', {}, budgetCell(r)),
         h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left), r.left === null ? null : hoursTag(r.left)),
@@ -388,7 +388,7 @@ function compareCard(m) {
     c.monthsSilent.length ? h('p', { class: 'muted' }, 'Nothing added in ' + c.monthsSilent.map(monthWords).join(', ') + '.') : null,
     h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spent ' + money(c.spend.actual) + ' of ' + (c.spend.planned === null ? 'a plan with a missing line' : money(c.spend.planned) + ' planned') + ' (' + diffWords(c.spend.diff) + ').'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Spent'), h('th', { class: 'num' }, 'Difference'))),
-      h('tbody', {}, c.tags.map((r) => h('tr', { class: r.diff !== null && r.diff > 0 ? 'tight' : '' }, h('td', {}, tagName(m, r.tag, r.label), r.unassigned ? h('span', { class: 'choice-sub' }, ' (' + money(r.unassigned) + ' not on a line)') : null), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff))))))),
+      h('tbody', {}, c.tags.map((r) => h('tr', {}, h('td', {}, tagName(m, r.tag, r.label), r.unassigned ? h('span', { class: 'choice-sub' }, ' (' + money(r.unassigned) + ' not on a line)') : null), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff))))))),
     fold('lines', 'flow-list', 'Every line (' + c.lines.length + ')',
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Line'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
         h('tbody', {}, c.lines.map((r) => h('tr', {}, h('td', {}, lineLink(m, r.id, r.label, r.path), ' ', h('span', { class: 'choice-sub' }, r.entries + (r.entries === 1 ? ' entry' : ' entries'))), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff)))))))),
@@ -467,7 +467,7 @@ function categoryScreen(m, cat) {
       h('ul', { class: 'go-list line-list' }, cat.lines.map((l) => lineRow(m, cat, l)))),
     cutCard(m),
     r ? h('section', { class: 'card', 'aria-labelledby': 'cat-h' },
-      h('h2', { id: 'cat-h' }, 'Budget, ' + monthWords(m.vw.tags.ym), ' ', hotChip(r)),
+      h('h2', { id: 'cat-h' }, 'Budget, ' + monthWords(m.vw.tags.ym)),
       h('div', { class: 'cat-bar' }, budgetCell(r)),
       h('ul', { class: 'flow-list' },
         h('li', {}, 'Left: ' + (r.left === null ? 'missing' : money(r.left)), r.left === null ? null : hoursTag(r.left)),
@@ -536,7 +536,8 @@ function referenceCard(m) {
   const pc1 = (x) => (x === null ? 'missing' : Math.round(x * 1000) / 10 + '%');
   return h('section', { class: 'card', 'aria-labelledby': 'ref-h' },
     h('h2', { id: 'ref-h' }, 'Beside a common reference'),
-    h('p', { class: 'muted' }, 'Shares of take-home a month, beside the 50/30/20 lines. A reference point, not a grade.'),
+    h('p', { class: 'muted' }, 'Shares of pay a month (take-home plus what your paycheck saves and the match), beside the 50/30/20 lines. A reference point, not a grade.'),
+    r.unmarked ? h('p', { class: 'muted missing-row' }, money(r.unmarked) + ' a month is not marked need or want yet, so needs and wants read missing.') : null,
     h('ul', { class: 'sum-lines' }, r.rows.map((x) => h('li', { class: 'sum-line' }, h('span', {}, x.label), h('span', { class: 'num' }, pc1(x.share) + ' (line at ' + pc1(x.reference) + ')')))),
     h('p', { class: 'tile-note' }, 'Source: ' + r.source + '.'));
 }

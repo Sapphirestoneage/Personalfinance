@@ -2,6 +2,7 @@
 // documents (households are small; S-003 does the same for the Budget).
 
 import { getAt, setAt, isFact, valueOf, fact } from './spine.js';
+import { mainChecking } from './defaults.js';
 import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
@@ -555,9 +556,10 @@ export function recordDebtPayment(spine, debtId, amount, date) {
   if (!(amount > 0)) throw new Error('A payment is more than $0');
   const bal = d.balance ? d.balance.value : null;
   if (bal === null) throw new Error('Type the balance first');
-  let s = setAt(spine, 'debts.' + debtId + '.balance', fact(Math.max(0, Math.round((bal - amount) * 100) / 100), { kind: 'known', asOf: date, source: 'payment' }));
-  const cash = (spine.accounts || []).filter((a) => a.family === 'cash' && !(a.role && a.role.value === 'sinking'));
-  const chk = cash.find((a) => a.type === 'checking') || cash[0];
+  // Never more than is owed: a payment above the balance pays the balance.
+  amount = Math.min(amount, bal);
+  let s = setAt(spine, 'debts.' + debtId + '.balance', fact(Math.round((bal - amount) * 100) / 100, { kind: 'known', asOf: date, source: 'payment' }));
+  const main = mainChecking(spine), chk = main ? (spine.accounts || []).find((a) => a.id === main) : null;
   if (chk && chk.balance && chk.balance.value !== null) s = setAt(s, 'accounts.' + chk.id + '.balance', fact(Math.round((chk.balance.value - amount) * 100) / 100, { kind: chk.balance.kind === 'rough' ? 'rough' : 'known', asOf: date, source: 'payment' }));
   return s;
 }

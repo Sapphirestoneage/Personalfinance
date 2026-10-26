@@ -286,13 +286,20 @@ export function spendingView(spine, rules, sim, s, { today = spine.meta.asOf, ym
 // beside its 50/30/20 reference line. A reference, never a grade: no row says good or bad. Needs are the lines marked
 // need plus debt minimums; wants are the rest of spending; saving is everything set to be saved (docs/FORMULAS.md).
 export function referenceBands(s, bench) {
-  const cf = s.cashflow, th = cf.income.takeHome.value, ref = (bench && bench.fiftyThirtyTwenty) || null;
+  const cf = s.cashflow, ref = (bench && bench.fiftyThirtyTwenty) || null;
   if (!ref) return null;
-  const needs = cf.expenses.need.value === null ? null : round2(cf.expenses.need.value + (cf.debtMinimums.total.value ?? 0));
-  const wants = cf.expenses.need.value === null || cf.expenses.total.value === null ? null : round2(cf.expenses.total.value - cf.expenses.need.value);
-  const share = (x) => (x === null || !th ? null : Math.round(x / th * 1000) / 1000);
+  // Over pay as the savings rate reads it (take-home + pre-tax + match), so the three never add past 100%.
+  const th = cf.income.takeHome.value, pay = th === null ? null : round2(th + (cf.saving.payroll.value ?? 0) + (cf.saving.match.value ?? 0));
+  // Each line once: a line that pays a debt is in linked (with its need or want), the other minimums are needs.
+  const lines = [...cf.expenses.items.filter((i) => !i.covered), ...(cf.expenses.linked || [])];
+  const sum = (f) => round2(lines.filter(f).reduce((a, i) => a + (i.amount ?? 0), 0));
+  const linkedSum = round2((cf.expenses.linked || []).reduce((a, i) => a + i.amount, 0));
+  const unmarked = sum((i) => i.need === null || i.need === undefined);
+  const needs = unmarked ? null : round2(sum((i) => i.need === true) + (cf.debtMinimums.total.value ?? 0) - linkedSum);
+  const wants = unmarked ? null : sum((i) => i.need === false);
+  const share = (x) => (x === null || !pay ? null : Math.round(x / pay * 1000) / 1000);
   return {
-    takeHome: th, source: ref.source,
+    pay, unmarked: unmarked || 0, source: ref.source,
     rows: [['needs', 'Needs (and debt minimums)', needs, ref.needs], ['wants', 'Wants', wants, ref.wants], ['saving', 'Saving', cf.saving.total, ref.savings]].map(([id, label, amount, reference]) => ({ id, label, amount, share: share(amount), reference }))
   };
 }
