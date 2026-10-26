@@ -102,7 +102,7 @@ export function moneyFlow(spine, rules, cf, { open = [] } = {}) {
   for (const n of [...nodes.values()].filter((x) => x.kind === 'account')) {
     const inn = links.filter((l) => l.to === n.id).reduce((x, l) => x + l.amount, 0);
     const out = links.filter((l) => l.from === n.id).reduce((x, l) => x + l.amount, 0);
-    if (inn - out > 0.004) { left += inn - out; link(n.id, node('left', { label: 'Left over', col: 3, kind: 'left' }), inn - out); }
+    if (inn - out > 0.004) { left += inn - out; link(n.id, node('left', { label: 'Left after saving', col: 3, kind: 'left' }), inn - out); }
     if (out - inn > 0.004) { short += out - inn; link(node('short:' + n.id, { label: 'From ' + n.label, col: 0, kind: 'short', path: n.path }), n.id, out - inn); }
   }
 

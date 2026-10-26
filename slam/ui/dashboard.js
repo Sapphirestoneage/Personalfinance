@@ -11,17 +11,13 @@ import { keptMath } from './math-panel.js';
 import { labelFor } from '../engine/labels.js';
 import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
-import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
-import { cashsim } from '../engine/cashsim.js';
-import { safeToSpend } from '../engine/spending.js';
-import { waiting } from '../engine/calendar-views.js';
 import { flowSection } from './flow-chart.js';
-import { pickedScenario, scenarioBar } from './scenario.js';
-import { SCENARIO_WORDS } from '../engine/scenarios.js';
-import { h, chip, money, pct, shortDate, ledgerHref } from './view.js';
+import { pickedScenario } from './scenario.js';
+import { fooLadder } from '../engine/plan.js';
+import { maxItFor } from './maxit-panel.js';
+import { h, chip, money, pct, ledgerHref } from './view.js';
 import { toneOf } from '../engine/profile.js';
 
-const monthLabel = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
 // What a number was built from: a link per field, and a note when an input is rough or missing.
@@ -33,7 +29,7 @@ function provenance(spine, r) {
   const note = missing.length
     ? h('p', { class: 'tile-note' }, chip(r.value === null ? 'missing' : 'incomplete'), ' Needs: ', ...missing.flatMap((p, i) => [i ? ', ' : '', link(p)]))
     : rough.length ? h('p', { class: 'tile-note' }, chip('rough'), ' ' + rough.length + (rough.length === 1 ? ' guess' : ' guesses')) : null;
-  return [note, mathCtx && MATH_FOR._m.get(r) ? keptMath(MATH_FOR._m.get(r).key, MATH_FOR._m.get(r).ids, mathCtx) : null];
+  return [note, mathCtx && MATH_FOR._m.get(r) && (MATH_FOR._m.get(r).ids || []).length ? keptMath(MATH_FOR._m.get(r).key, MATH_FOR._m.get(r).ids, mathCtx) : null];
 }
 
 // One tile: a label, the big number, lines under it. The whole tile opens what the card is about (target), and a
@@ -56,102 +52,87 @@ function tile(spine, { id, label, result, shown, missingText, target = null, lin
     ...provenance(spine, result));
 }
 
-// Utilization in words: "Personal cards 35.0% ($4,200 of $12,000)."
-function utilLine(r, label) {
-  return r.value === null ? label + ': not enough to figure yet.' : label + ' ' + pct(r.value, 1) + ' (' + money(r.balance) + ' of ' + money(r.limit) + ').';
-}
-
-// The picked Triple D set (S-183) replaces the real return and withdrawal rate
-// before anything is figured, so every FI number and the projection follow it.
+// The five tiles (Phase 2.5 Batch 5), each one tap to its own screen: Net worth (liquid and total, the drill-down in My
+// numbers), Monthly surplus, Savings rate of take-home and Cash runway (screens of this page), Next step (the Plan's
+// current step). The credit cards, FI, tax, safe to spend and month-vs-plan moved to Debt, Goals, Taxes, the Calendar
+// and Spending.
 let scenario = pickedScenario();
 // Sections of the money flow split into their expenses (S-192): kept with this screen, so coming back opens them again.
 const flowOpen = () => kept().flowOpen || [];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-function render({ spine: base, rules }) {
+const slugOf = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+function model(base, rules) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
-  const compare = estimatedVsActual(spine, rules, { months: 1 });
-  // Cash at a glance (S-209, the Budget's Today strip): checking on the as-of day, the lowest point ahead, safe to spend.
-  const sim = cashsim(spine, rules, { months: 1 });
-  const safe = safeToSpend(sim);
-  const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-  const outlook = monthOutlook(spine, rules, sim, { today: todayIso(), waiting: waiting(spine, rules, { today: todayIso() }) });
-  mathCtx = { spine, rules, s, compare, spend: { safe }, monthOut: outlook };
-  const cf = s.cashflow, sh = s.sheet, em = s.emergency, fi = s.fi, tx = s.tax, pr = s.debt.promo, ut = s.debt.utilization;
-  const promoBy = pr.items.length ? pr.items[pr.items.length - 1].promoEnds : null;
+  mathCtx = { spine, rules, s };
+  return { spine, rules, s };
+}
 
-  const backstop = h('div', { class: 'backstop' },
-    em.backstop.contributions.value ? h('p', { class: 'tile-sub' }, 'Also there in a pinch: ' + money(em.backstop.contributions.value) + ' of Roth contributions, no tax or penalty.') : null,
-    ...em.backstop.conversions.map((c) => h('p', { class: 'tile-sub' }, money(c.amount) + ' converted in ' + c.year + (c.penaltyFree ? ': free to take out.' : ': a ' + pct(c.penaltyRate) + ' penalty before ' + shortDate(c.clockOpens) + '.'))));
+function tiles({ spine, rules, s }) {
+  const cf = s.cashflow, sh = s.sheet, em = s.emergency;
+  const foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
+  const step = foo.rungs.find((r) => r.id === foo.current) || null;
+  const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : money(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : money(sh.netWorth.value)));
+  return h('div', { class: 'tiles' },
+    tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: both }),
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: money(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home.'] }),
+    tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
+    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [money(sh.cash.value) + ' in cash.'] }),
+    tile(spine, { id: 'next', label: 'Next step', target: step ? 'plan.html#/' + slugOf(step.id) : 'plan.html', result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: step ? step.kind : foo.kind, from: [], rough: [], missing: [] },
+      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.need !== null && !step.done ? money(step.need) + (step.flow ? ' a month' : '') + '.' : null] }));
+}
 
-  const tiles = [
-    tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: money(sh.netWorth.value), lines: [money(sh.assets.value) + ' owned, ' + money(sh.debts.value) + ' owed.'] }),
-    tile(spine, {
-      id: 'runway', label: 'Cash runway', target: numbersHref('assets', 'cash'), result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months',
-      lines: [
-        money(sh.cash.value) + ' in cash; ' + money(em.tiers.full.burn.value) + ' a month goes out.',
-        sh.setAsideNote,
-        'Rule of 5 goal: ' + em.targetMonths.value + ' months (' + money(em.targetDollars.value) + ').'
-      ],
-      extra: em.backstop.contributions.value || em.backstop.conversions.length ? backstop : null
-    }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: numbersHref('needs'), result: cf.monthlySurplus, shown: money(cf.monthlySurplus.value), lines: [
-        cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home after spending, debt minimums and the tax set-aside.'
-      ] }),
-    tile(spine, { id: 'savings', label: 'Savings rate', target: numbersHref('income'), result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
-    tile(spine, {
-      id: 'cards', label: 'Credit cards', target: numbersHref('debt', 'credit-cards'), result: sh.cards, shown: money(sh.cards.value),
-      lines: [
-        pr.items.length ? money(pr.total.value) + ' on promo, due ' + shortDate(promoBy) + ': ' + money(pr.monthly.value) + ' a month clears it.' : null,
-        utilLine(ut.personal, 'Personal cards: limits used')
-      ]
-    }),
-    tile(spine, {
-      id: 'fi', label: 'Financial independence', target: numbersHref('goals'), result: fi.fiPercent, shown: pct(fi.fiPercent.value, 1),
-      lines: [
-        money(sh.invested.value) + ' invested of ' + money(fi.today.value) + ' at today\'s spending.',
-        fi.yearsToFi.value !== null ? 'About ' + fi.yearsToFi.value.toFixed(1) + ' years at this pace.' : fi.yearsToFi.note ? 'Years to FI: ' + fi.yearsToFi.note + '.' : null,
-        [SCENARIO_WORDS[scenario] + ' assumptions. ', h('a', { href: '#scenario' }, 'Change')]
-      ]
-    }),
-    tile(spine, {
-      id: 'cash', label: 'Safe to spend, as of ' + shortDate(spine.meta.asOf), target: 'calendar.html' + (safe.low ? '#' + safe.low.date.slice(0, 7) : ''), result: { value: safe.today, kind: safe.kind, from: safe.cashPath ? [safe.cashPath] : [], rough: safe.rough, missing: safe.missing },
-      shown: money(safe.today), missingText: 'Missing: a checking balance',
-      lines: [
-        safe.shortfall ? 'Checking runs ' + money(safe.shortfall.amount) + ' short' + (safe.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(safe.shortfall.date) + '.' : safe.today !== null ? 'Through ' + shortDate(safe.through) + '.' : null,
-        safe.setAsideNote || null,
-        [h('a', { href: 'spending.html#checkin' }, 'Check in balances ›'), ' ', h('a', { href: 'spending.html#log' }, 'Add a purchase ›')]
-      ]
-    }),
-    tile(spine, {
-      // Nothing logged this month: no number (empty is not zero), and the card says so.
-      id: 'compare', label: monthLabel(compare.to) + ' vs plan', result: { value: compare.monthsLogged.length ? compare.spend.diff : null, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.monthsLogged.length ? compare.rough : [], missing: compare.monthsLogged.length ? compare.missing : [] },
-      shown: (compare.spend.onPlan ? 'On the plan' : compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing added this month yet',
-      lines: [
-        compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + (compare.spend.entries === 1 ? ' entry' : ' entries') + ').' : null,
-        compare.income.actual !== null ? 'Income ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' planned' : '') + '.' : compare.monthsLogged.length ? 'No income added yet, so no real savings rate.' : null,
-        compare.savingsRate.real !== null ? 'Savings rate ' + pct(compare.savingsRate.real, 1) + (compare.savingsRate.plan !== null ? ' (plan ' + pct(compare.savingsRate.plan, 1) + ')' : '') + '.' : null,
-        outlook.stale ? 'Check in balances to see the month so far.' : ['So far: ', h('span', { class: outlook.soFar < 0 ? 'neg' : 'pos' }, (outlook.soFar < 0 ? '-' : '+') + money(Math.abs(outlook.soFar))), '. By month end: ' + (outlook.expected === null ? 'missing' : (outlook.expected < 0 ? '-' : '+') + money(Math.abs(outlook.expected))) + '.'],
-        [h('a', { href: 'spending.html' }, 'Add a purchase or import a statement ›')]
-      ]
-    }),
-    tile(spine, {
-      id: 'tax', label: tx.year + ' tax still owed (estimate)', target: numbersHref('taxes'), result: tx.balanceDue,
-      shown: money(tx.balanceDue.value), missingText: tx.missingText ? tx.missingText.charAt(0).toUpperCase() + tx.missingText.slice(1) : null,
-      lines: [
-        tx.balanceDue.value === null && tx.partial ? 'At least ' + money(tx.partial.federalIncomeTax.value) + ' federal on the ' + tx.year + ' income known so far.' : null,
-        'Next payment due ' + shortDate(tx.nextEstimated.date) + '.',
-        tx.notModeled.length ? 'Not included: ' + tx.notModeled.join(', ') + '.' : null
-      ]
-    })
-  ];
-
-  // The tabs, the header and Undo come from the shell; the Calendar is a tab, and the Windfall opens from Plan.
+// ---------------------------------------------------------------- the tile screens
+const line = (label, value, cls = '') => h('li', { class: 'sum-line ' + cls }, h('span', {}, label), h('span', { class: 'num' }, value === null || value === undefined ? 'missing' : money(value)));
+function surplusScreen({ s }) {
+  const cf = s.cashflow;
   return [
-    h('div', { class: 'tiles' }, tiles),
-    scenarioBar(base, rules, scenario, (id) => { scenario = id; refresh(); document.getElementById('scenario')?.scrollIntoView({ block: 'nearest' }); }),
-    flowPart(spine, rules, s),
-    flagsSection(spine, s.flags)
+    h('section', { class: 'card', 'aria-label': 'Monthly surplus in three lines' },
+      h('ul', { class: 'sum-lines' },
+        line('Take-home', cf.income.takeHome.value),
+        line('What goes out', cf.goesOut.value),
+        h('li', { class: 'sum-sub' }, h('ul', {}, line('Spending', cf.expenses.total.value), line('Debt payments', cf.debtMinimums.total.value), line('Tax set-aside', cf.taxSetAside.total.value))),
+        line('What is left', cf.monthlySurplus.value, 'sum-total')),
+      cf.monthlySurplus.value !== null && cf.saving.afterTax.value ? h('p', { class: 'tile-sub' }, money(cf.saving.afterTax.value) + ' of it already goes to saving; ' + money(cf.surplus.value) + ' is left after that.') : null,
+      keptMath('screen-surplus', ['surplus', 'leftAfterSaving'], mathCtx))
+  ];
+}
+function savingsScreen({ s }) {
+  const cf = s.cashflow, sv = cf.saving;
+  return h('section', { class: 'card', 'aria-label': 'Savings rate' },
+    h('p', { class: 'tile-value' }, pct(cf.savingsRate.net.value, 1) + ' of take-home'),
+    h('ul', { class: 'sum-lines' },
+      line('Saved from take-home', sv.fromTakeHome),
+      line('Retirement from your paycheck', sv.payroll.value),
+      line('Employer match', sv.match.value),
+      line('Extra on debt', sv.extraDebt.value),
+      line('All of it, a month', sv.total, 'sum-total')),
+    h('p', { class: 'tile-sub' }, 'Of gross pay it is ' + pct(cf.savingsRate.gross.value, 1) + '. Money left over but not set to go anywhere is not counted.'),
+    keptMath('screen-savings', ['savingsRateNet', 'savingsRateGross'], mathCtx));
+}
+function runwayScreen({ s }) {
+  const em = s.emergency, sh = s.sheet;
+  return [
+    h('section', { class: 'card nw-pair', 'aria-label': 'Cash runway' },
+      h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'At today\'s spending'), h('p', { class: 'tile-value' }, months(em.tiers.full.runway.value) + ' months'), keptMath('screen-runway', ['runway'], mathCtx)),
+      h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'On needs only'), h('p', { class: 'tile-value' }, em.tiers.needsOnly.runway.value === null ? 'missing' : months(em.tiers.needsOnly.runway.value) + ' months'), keptMath('screen-runway-needs', ['runwayNeeds'], mathCtx))),
+    h('section', { class: 'card', 'aria-labelledby': 'cushion-h' }, h('h2', { id: 'cushion-h' }, 'Your cushion, in three steps'),
+      h('ol', { class: 'cushion-steps' }, em.cushion.map((c) => h('li', { class: c.reached ? 'is-done' : '' }, h('span', {}, c.label), h('span', { class: 'num' }, c.target.value === null ? 'missing' : money(c.target.value)), h('span', { class: 'muted' }, c.reached === null ? '' : c.reached ? 'there' : money(c.toGo) + ' to go')))),
+      h('p', { class: 'tile-sub' }, money(sh.cash.value) + ' in cash.'), sh.setAsideNote ? h('p', { class: 'tile-sub' }, sh.setAsideNote) : null,
+      em.backstop.contributions.value ? h('p', { class: 'tile-sub' }, 'Also there in a pinch: ' + money(em.backstop.contributions.value) + ' of Roth contributions, no tax or penalty.') : null,
+      keptMath('screen-cushion', ['cushionNeeds', 'cushionMonth', 'ruleOf5Dollars'], mathCtx))
+  ];
+}
+const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen };
+
+function render({ spine: base, rules, levels }) {
+  const m = model(base, rules);
+  if (levels.length && SCREENS[levels[0]]) return SCREENS[levels[0]](m);
+  return [
+    tiles(m),
+    flowPart(m.spine, rules, m.s),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager')),
+    flagsSection(m.spine, m.s.flags)
   ];
 }
 
@@ -208,4 +189,4 @@ function flagsSection(spine, flags) {
 }
 
 // The One-pager is a button here; its Back comes back to Today.
-startPage({ tab: 'today', title: 'Today', render, actions: () => h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager') });
+startPage({ tab: 'today', title: 'Today', render, name: (levels) => ({ surplus: 'Monthly surplus', savings: 'Savings rate', runway: 'Cash runway' }[levels[0]] || null) });

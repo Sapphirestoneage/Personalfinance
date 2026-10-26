@@ -271,6 +271,9 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   // save, before any saving. `surplus` above is what is left after the saving that is set up.
   const ms = tracker();
   ms.absorb(takeHome); ms.absorb(ex.out(0)); ms.absorb(mins.total); ms.absorb(setAside.total);
+  // What goes out (Today's surplus screen): spending + debt minimums + the tax set-aside.
+  const go = tracker(); go.absorb(ex.out(0)); go.absorb(mins.total); go.absorb(setAside.total);
+  const goesOut = go.out(round2(total + mins.total.value + (setAside.total.value ?? 0)));
   const monthly = ms.out(round2(gross - withheld - fica - payroll - total - mins.total.value - (setAside.total.value ?? 0)));
   const rate = (num, den, ...parts) => { const t = tracker(); for (const p of parts) t.absorb(p); return t.out(den > 0 ? round2(num / den * 1e6) / 1e6 : null); };
   const grossR = g.out(round2(gross));
@@ -282,11 +285,11 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   return {
     ym, mode,
     income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams },
-    saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)), cash: cashSave.out(round2(cashSaving)), match: mt.out(round2(match)), extraDebt: xt.out(round2(extraDebt)), total: saved },
+    saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)), cash: cashSave.out(round2(cashSaving)), fromTakeHome, match: mt.out(round2(match)), extraDebt: xt.out(round2(extraDebt)), total: saved },
     expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items, linked },
     debtMinimums: mins,
     taxSetAside: setAside,
-    surplus: surplusR, monthlySurplus: monthly,
+    surplus: surplusR, monthlySurplus: monthly, goesOut,
     savingsRate: {
       // The headline (B2): (saving + pre-tax retirement + employer match + extra debt payoff) / (take-home + pre-tax
       // retirement + employer match).

@@ -644,7 +644,7 @@ function planMetric(id) {
 
 // The metric(s) behind each Dashboard tile and flag.
 export const DASHBOARD_MATH = {
-  'tile-networth': ['netWorth'], 'tile-runway': ['runway', 'runwayNeeds', 'cushionNeeds', 'cushionMonth', 'ruleOf5Dollars', 'rothBasis'], 'tile-surplus': ['surplus', 'leftAfterSaving'],
+  'tile-networth': ['liquidNetWorth', 'netWorth'], 'tile-next': [], 'tile-runway': ['runway', 'runwayNeeds', 'cushionNeeds', 'cushionMonth', 'ruleOf5Dollars', 'rothBasis'], 'tile-surplus': ['surplus', 'leftAfterSaving'],
   'tile-savings': ['savingsRateNet', 'savingsRateGross'], 'tile-cards': ['cards', 'promoTotal', 'promoMonthly', 'personalUtil', 'overallUtil'],
   'tile-fi': ['fiPercent', 'fiToday', 'fiNumber', 'impliedFi', 'leanFi', 'fatFi', 'baristaFi', 'coastFi'], 'tile-tax': ['taxBalanceDue'], 'tile-compare': ['compare:spend', 'compare:income', 'compare:savingsReal', 'compare:soFar', 'compare:expected'], 'tile-cash': ['spend:safeToday']
 };

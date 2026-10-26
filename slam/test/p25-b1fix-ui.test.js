@@ -54,12 +54,11 @@ test('Show the math opens no Builder page and names no rule by its id', () => {
   assert.match(code('ui/plan.js'), /const math = keptMath;/);
 });
 
-test('Today: nothing logged is no number; each card opens what it is named for; what is open is kept', () => {
+test('Today (Batch 5): five tiles, each one tap to its own screen; the flags below; what is open is kept', () => {
   const src = code('ui/dashboard.js');
-  assert.match(src, /result: \{ value: compare\.monthsLogged\.length \? compare\.spend\.diff : null, kind: compare\.monthsLogged\.length \? compare\.kind : 'missing', from: \[\], rough: compare\.monthsLogged\.length \? compare\.rough : \[\], missing: compare\.monthsLogged\.length \? compare\.missing : \[\] \}/);
-  assert.doesNotMatch(src, /\['log'\]/, 'no missing input named "log"');
-  for (const [id, href] of [['networth', 'numbersHref\\(\\)'], ['runway', "numbersHref\\('assets', 'cash'\\)"], ['surplus', "numbersHref\\('needs'\\)"], ['savings', "numbersHref\\('income'\\)"], ['cards', "numbersHref\\('debt', 'credit-cards'\\)"], ['fi', "numbersHref\\('goals'\\)"], ['tax', "numbersHref\\('taxes'\\)"]]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
-  assert.match(src, /target: 'calendar\.html' \+ \(safe\.low/, 'safe to spend opens cash by day');
+  const ids = [...src.matchAll(/tile\(spine, \{ id: '([a-z]+)'/g)].map((m) => m[1]);
+  assert.deepEqual(ids, ['networth', 'surplus', 'savings', 'runway', 'next']);
+  for (const [id, href] of [['networth', 'numbersHref\\(\\)'], ['surplus', "'#/surplus'"], ['savings', "'#/savings'"], ['runway', "'#/runway'"], ['next', "step \\? 'plan\\.html#/'"]]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
   assert.match(src, /keptMath\('flag-' \+ f\.id/);
   assert.match(src, /open: kept\(\)\.done \|\| null, ontoggle:/);
   assert.match(src, /listOpen: !!kept\(\)\.flowList/);

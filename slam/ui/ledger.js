@@ -1044,8 +1044,51 @@ function groupTotal(sec, g) {
   return h('span', {}, h('span', { class: 'go-total' }, money(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
 }
 
+// What moved here from Today (Phase 2.5 Batch 5): the FI numbers on Goals, the year's tax on Taxes, the cards on Debt.
+// Each number side by side with its Show the math; a blank input reads missing, never $0.
+function figure(label, r, sub, ids) {
+  const ctx = () => ({ spine: cur(), rules, s: summaryOf(cur()) });
+  return h('div', { class: 'nw-one' },
+    h('p', { class: 'tile-label' }, label),
+    r.value === null || r.value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, typeof sub === 'function' ? sub(r.value) : money(r.value)),
+    r.kind === 'rough' || r.kind === 'incomplete' ? h('p', { class: 'tile-sub' }, chip(r.kind)) : null,
+    ids ? mathButton(ids, ctx) : null);
+}
+const pctOf = (x) => Math.round(x * 1000) / 10 + '%';
+function sectionTop(sec) {
+  const s = summaryOf(cur());
+  if (sec.slug === 'goals') {
+    const fi = s.fi;
+    return [
+      h('section', { class: 'card nw-pair fi-three', 'aria-label': 'Financial independence, three ways' },
+        figure('FI number: today\'s spending', fi.today, null, ['fiToday']),
+        figure('FI number: your goal', fi.goal, null, ['fiNumber']),
+        figure('FI number: without debt payments', fi.implied, null, ['impliedFi'])),
+      h('section', { class: 'card nw-pair', 'aria-label': 'How far along, and other FI numbers' },
+        figure('There so far', fi.fiPercent, (x) => pctOf(x) + ' of today\'s', ['fiPercent']),
+        figure('Lean FI', fi.leanFi, null, ['leanFi']), figure('Fat FI', fi.fatFi, null, ['fatFi']),
+        figure('Barista FI', fi.baristaFi, null, ['baristaFi']), figure('Coast FI', fi.coastFi, null, ['coastFi']))
+    ];
+  }
+  if (sec.slug === 'taxes') {
+    const tx = s.tax;
+    return h('section', { class: 'card nw-pair', 'aria-label': 'This year\'s tax' },
+      figure(tx.year + ' tax still owed (estimate)', tx.balanceDue, null, ['taxBalanceDue']),
+      h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'Next payment due'), h('p', { class: 'tile-value' }, shortDate(tx.nextEstimated.date))));
+  }
+  if (sec.slug === 'debt' && (cur().debts || []).some((d) => d.type === 'credit_card')) {
+    const ut = s.debt.utilization;
+    return h('section', { class: 'card nw-pair', 'aria-label': 'Cards' },
+      figure('On every card', s.sheet.cards, null, ['cards']),
+      figure('Card use, personal cards', ut.personal, pctOf, ['personalUtil']),
+      figure('Card use, all cards', ut.overall, pctOf, ['overallUtil']));
+  }
+  return null;
+}
+
 function sectionScreen(sec) {
   return [
+    sectionTop(sec),
     selectAll(sec.allRows, 'Select all here'),
     sec.groups.length ? h('ul', { class: 'go-list' }, sec.groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
       name: g.label,

@@ -38,7 +38,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
 
   // The cushion in three steps (B2, the Rule of 5): a month of needs, then a month of full spending, then age / 5
   // months of full spending. Each step's target, and whether the cash already reaches it.
-  const stepOf = (id, label, r) => ({ id, label, target: r, reached: r.value === null || sheet.cash.value === null ? null : sheet.cash.value >= r.value });
+  const stepOf = (id, label, r) => { const known = r.value !== null && sheet.cash.value !== null; return { id, label, target: r, reached: known ? sheet.cash.value >= r.value : null, toGo: known ? round2(Math.max(0, r.value - sheet.cash.value)) : null }; };
   const cushion = [
     stepOf('needs', 'A month of needs', needs),
     stepOf('month', 'A month of full spending', full),

@@ -96,7 +96,7 @@ const idsFor = (h) => [...METRICS.map((m) => m.id), ...h.s.debt.utilization.item
 test('a. every Dashboard number and every flag has a formula, inputs and rules', () => {
   const src = readFileSync(SLAM + 'ui/dashboard.js', 'utf8');
   const tiles = [...src.matchAll(/tile\(spine, \{\s*id: '([a-z]+)'/g)].map((m) => m[1]);
-  assert.ok(tiles.length >= 7, 'found the tiles');
+  assert.ok(tiles.length >= 5, 'found the tiles');
   for (const t of tiles) assert.ok(DASHBOARD_MATH['tile-' + t], 'tile ' + t + ' has math');
   for (const m of METRICS) {
     assert.ok(m.formula && m.formula.includes('='), m.id + ' has a formula in words');

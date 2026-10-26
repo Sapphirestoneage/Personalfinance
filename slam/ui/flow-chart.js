@@ -139,7 +139,7 @@ export function flowSection(flow, { open, onToggle, month, listOpen = false, onL
   const used = new Set(flow.nodes.map((n) => CAT[n.kind]).filter(Boolean));
   const name = (id) => flow.nodes.find((n) => n.id === id);
   wrap.append(
-    h('p', { class: 'flow-total' }, flow.short > 0 ? money(flow.short, true) + ' a month more goes out than comes in.' : money(flow.left, true) + ' a month is left over.'),
+    h('p', { class: 'flow-total' }, flow.short > 0 ? money(flow.short, true) + ' a month more goes out than comes in.' : money(flow.left, true) + ' a month is left after saving.'),
     h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' },
       LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t)),
       flow.links.some((l) => l.rough) ? h('li', {}, h('span', { class: 'sw sw-rough', 'aria-hidden': 'true' }), 'Lighter: a guessed route (main checking until you link it)') : null),
