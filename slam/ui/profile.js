@@ -1,6 +1,6 @@
 // The Profile (Phase 2.5 B3), opened by tapping the client's name in the header; the six tabs do not change. Level 1
 // by area (each ends with one line saying what it set up), Level 2 for what Level 1 opened (each question known now,
-// looked up later or not sure), the life changes, and the client's to-dos. "Load client answers" reads the file the
+// looked up later or not sure), the life changes, and the client's to-dos. "Import answers" reads the file the
 // client sent from "Before our first call". Every change goes through the shell's change(), so Undo takes it back.
 // Formatting only: engine/profile.js.
 
@@ -36,7 +36,7 @@ function top({ spine }) {
   ];
 }
 
-// Load client answers: the file from "Before our first call", read in this browser; nothing is uploaded.
+// Import answers: the file from "Before our first call", read in this browser; nothing is uploaded.
 let loadMsg = '';
 function loadCard() {
   const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'The client\'s answers file' });
@@ -51,7 +51,7 @@ function loadCard() {
     loadMsg = n + (n === 1 ? ' answer' : ' answers') + ' loaded from ' + file.name + (read.gut !== null ? ', and the spending guess' : '') + '.' + (read.problems.length ? ' Not used: ' + read.problems.join('; ') + '.' : '');
     change((s) => loadAnswers(s, read, { today: todayIso() }), 'Answers from ' + file.name + ' loaded');
   });
-  return h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Load client answers'), input, h('a', { class: 'btn ghost', href: 'before.html' }, 'The client\'s page'), msg);
+  return h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Import answers'), input, h('a', { class: 'btn ghost', href: 'before.html' }, 'The client\'s page'), msg);
 }
 
 // ---------------------------------------------------------------- one area of Level 1

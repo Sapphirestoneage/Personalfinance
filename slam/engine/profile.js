@@ -337,7 +337,7 @@ export function readAnswersFile(x) {
   const gut = typeof x.gutSpending === 'number' && x.gutSpending >= 0 ? x.gutSpending : null;
   return { answers, gut, savedAt: typeof x.savedAt === 'string' ? x.savedAt : null, problems };
 }
-// Load client answers (the coach): fills the Profile and the gut number, each answer a life change from the file.
+// Import answers (the coach): fills the Profile and the gut number, each answer a life change from the file.
 export function loadAnswers(spine, file, { today }) {
   let s = applyAnswers(spine, file.answers, { today, by: 'client', source: 'answers file' });
   if (file.gut !== null && file.gut !== undefined) s = setGutNumber(s, file.gut, { today, source: 'answers file' });

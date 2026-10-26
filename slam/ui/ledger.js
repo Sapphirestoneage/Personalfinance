@@ -42,7 +42,7 @@ let dirty = false, edCache = null;
 let adding = null, sharingOpen = null;
 // Select several: the picked rows, kept while moving between screens so one action can cover them all.
 let selecting = false, selected = new Set();
-// Pick what you have: the ticked starters.
+// Quick add: the ticked starters.
 let picking = null;
 // A link waiting to land: { key, patch, scroll, block } (the screen, what to keep there, what to scroll to).
 let pending = null;
@@ -865,7 +865,7 @@ function pickerCard() {
     const n = have.get(x.key) || 0;
     return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
   };
-  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Pick what you have' },
+  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Quick add' },
     h('p', { class: 'muted' }, 'Tick what you have. Fill in the details after.'),
     ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
     h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; go([]); } }, 'Cancel')));
@@ -1006,13 +1006,13 @@ function topScreen(sc, st) {
   const q = st.q || '';
   return [
     problemsCard(spine),
-    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
+    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have unsaved changes.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save')),
     worthPair(spine),
     sectionList(sc),
     h('ul', { class: 'go-list' }, guessRow()),
     // Search and the filters, folded: what they find shows right under them, one row each.
     h('details', { class: 'flow-list card find-fold', open: filtering(q) || null }, h('summary', {}, 'Search and filter'), filterBar(sc, q), filtering(q) ? results(sc, q) : null),
-    source === 'saved' ? h('footer', { class: 'foot' }, h('button', { type: 'button', class: 'btn danger', onclick: backToFile }, 'Go back to the file (drop edits saved in this browser)')) : null
+    source === 'saved' ? h('footer', { class: 'foot' }, h('button', { type: 'button', class: 'btn danger', onclick: backToFile }, 'Discard changes')) : null
   ];
 }
 
@@ -1193,7 +1193,7 @@ function itemScreen(sec, g, it, st) {
 function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
-  if (levels[0] === 'pick') return levels.length === 1 ? 'Pick what you have' : null;
+  if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
   const at = screenAt(screensOf(ctx.spine), levels);
   if (!at) return null;
@@ -1234,11 +1234,11 @@ function render(ctx) {
 
 // ---------------------------------------------------------------- the profile file
 // The profile file (S-195): save downloads it; load reads one back. Loading a different household starts its own
-// history, as Load my file does.
+// history, as Open file does.
 function saveFile() {
   downloadProfile(cur());
   refresh();
-  say('Saved ' + FILE_NAME + ' to your downloads. Put it in slam/fixtures/ and open a page with ?local=1 on this computer to start from it');
+  say('Saved ' + FILE_NAME + ' to your downloads.');
 }
 // Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
 // at the top of My numbers, never a reason to refuse the file.
@@ -1278,11 +1278,11 @@ function actions(ctx) {
   if (ctx.levels.length) return [];
   const spine = ctx.spine, mine = !whose(spine).example;
   return [
-    // One filled button a screen: on the example, Load my file is it.
-    h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
+    // One filled button a screen: on the example, Open file is it.
+    h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save'),
     mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
-    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Pick what you have')
+    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add')
   ];
 }
 

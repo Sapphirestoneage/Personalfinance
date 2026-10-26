@@ -39,7 +39,7 @@ export async function readProfile(file, { today = null } = {}) {
   try {
     return readHousehold(JSON.parse(await file.text()), { today });
   } catch (err) {
-    console.warn('Load my file: ' + (file && file.name) + ': ' + (err && err.message));
+    console.warn('Open file: ' + (file && file.name) + ': ' + (err && err.message));
     throw notOurs(file && file.name);
   }
 }

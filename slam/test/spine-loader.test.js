@@ -237,7 +237,7 @@ test('whose numbers: the made-up household is the example, anyone else is named,
     assert.ok(!/SOURCE_WORDS\[source\]/.test(src), f + ' has no header of its own');
   }
   assert.match(readFileSync(SLAM + 'ui/shell.js', 'utf8'), /whoseLine\(hist\.present, source, \{ rules, reopen:/, 'the shell\'s header says whose numbers');
-  // Load my file goes through the one loader: no page reads a file another way.
+  // Open file goes through the one loader: no page reads a file another way.
   const page = readFileSync(SLAM + 'ui/page.js', 'utf8'), hh = readFileSync(SLAM + 'ui/household.js', 'utf8'), pf = readFileSync(SLAM + 'ui/profile-file.js', 'utf8');
   assert.match(page, /'Example household'/);
   assert.match(page, /loadMyFile\(/); assert.match(hh, /readProfile\(/); assert.match(pf, /readHousehold\(/);

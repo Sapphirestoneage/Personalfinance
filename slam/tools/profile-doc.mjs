@@ -17,7 +17,7 @@ export function profileDoc() {
     'any order. The one number is the gut number ("About how much do you spend a month? Your best guess, don\'t look',
     'anything up"), saved to Numbers as a guess. "Send my answers" saves answers-<first name>-<date>.json: "Email or text',
     'this file to Eli." It never asks for account numbers or logins, and the answers stay on the phone until sent. On the',
-    'Profile page, "Load client answers" fills the Profile and the gut number and shows what it set up.', ''
+    'Profile page, "Import answers" fills the Profile and the gut number and shows what it set up.', ''
   ];
   for (const [area, label] of AREAS) {
     L.push('### ' + label, '');

@@ -48,9 +48,9 @@ export function gapsCard(spine, sim) {
 }
 
 // Whose numbers (S-228): every page's header says whose numbers these are. The made-up household reads "Example
-// household" with a filled "Load my file" button: the file picked is read here, in the browser, and saved in this
+// household" with a filled "Open file" button: the file picked is read here, in the browser, and saved in this
 // browser only, and the page reopens on it (reopen gets what loadAll returns). Anyone else's reads their name.
-// The last thing said about Load my file. The header is rebuilt on every render (a resize redraws the Calendar), so the
+// The last thing said about Open file. The header is rebuilt on every render (a resize redraws the Calendar), so the
 // words live here and are written to whichever header is on the page when the file is read.
 let said = '';
 const say = (text) => { said = text; for (const m of document.querySelectorAll('.whose .edit-msg')) m.textContent = text; };
@@ -72,7 +72,7 @@ export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen
   return h('div', { class: 'whose whose-example' },
     h('div', { class: 'whose-load' },
       h('a', { class: 'whose-name', href: 'profile.html' }, 'Example household'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Load my file'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'),
       input),
     msg);
 }

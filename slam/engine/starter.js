@@ -1,4 +1,4 @@
-// Pick what you have (S-193): a first step that lists the usual accounts,
+// Quick add (S-193): a first step that lists the usual accounts,
 // cards, loans, income and bills. Each one ticked is added with its fields
 // missing, so the Ledger then asks for the details. One step, one Undo.
 

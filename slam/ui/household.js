@@ -94,7 +94,7 @@ export function forgetSaved() {
 // The household history every page shares (S-230): the last 25 changes, kept in this browser beside the household,
 // so Undo and Redo work on any page, in any tab and after a reload. It belongs to the household saved with it (a
 // fingerprint of that text): when the saved household is not the one it was kept for, a page starts a fresh one.
-// Loading a different household (Load my file, going back to the file or the example) clears it.
+// Loading a different household (Open file, going back to the file or the example) clears it.
 const HISTORY_KEY = 'slam-history:v1';
 export const HISTORY_STEPS = 25;
 export function openHistory(spine) {
@@ -121,7 +121,7 @@ export function clearHistory() { try { localStorage.removeItem(HISTORY_KEY); } c
 // The keys whose change in another tab means this page's household is out of date.
 export const HOUSEHOLD_KEYS = [KEY, HISTORY_KEY, RULES_KEY];
 
-// Load my file (S-228): the file the person picks is read here, in the browser, by the one loader; nothing is
+// Open file (S-228): the file the person picks is read here, in the browser, by the one loader; nothing is
 // uploaded anywhere. It is saved in this browser only, so every page opens to it. Returns what loadAll returns, so a
 // page reopens on it; when the browser will not keep it, it is open on this page only, and the page says so.
 export async function loadMyFile(file, rules) {

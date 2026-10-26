@@ -116,11 +116,11 @@ test('the history keeps the last 25 changes, and they survive a reload', () => i
   assert.equal(E.redoLabel(later), 'Rent changed to $1,006');
 }));
 
-test('the history is cleared when a different household loads: Load my file, or going back to the file or the example', () => inBrowser(async () => {
+test('the history is cleared when a different household loads: Open file, or going back to the file or the example', () => inBrowser(async () => {
   let hist = E.createHistory((await loadAll()).spine);
   hist = step(hist, E.editFact(hist.present, 'expenses.rent.amount', 'set', { value: 1000, today: T }), 'Rent changed to $1,000');
   assert.equal((await reopen()).past.length, 1);
-  // Load my file: someone else's household.
+  // Open file: someone else's household.
   const other = readJson('fixtures/demo.json');
   other.meta = { ...other.meta, name: 'The Avery household', demo: false };
   const loaded = await loadMyFile({ name: 'avery.json', text: async () => JSON.stringify(other) }, R);

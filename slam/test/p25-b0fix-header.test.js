@@ -1,4 +1,4 @@
-// Phase 2.5, Batch 0 fixes: the header and Load my file, and what a file that cannot be read says. Adapted from the
+// Phase 2.5, Batch 0 fixes: the header and Open file, and what a file that cannot be read says. Adapted from the
 // second build's p25-header-whose and p25-safety-loader tests. Every household here is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,7 +31,7 @@ test('the header never shows a file path', () => {
   assert.equal(SOURCE_WORDS.local, 'Your file on this computer');
 });
 
-test('Load my file: a file that is not a household says so in plain words, and that nothing changed', async () => {
+test('Open file: a file that is not a household says so in plain words, and that nothing changed', async () => {
   const files = [fileOf('notes.txt', 'just some notes'), fileOf('budget.json', JSON.stringify({ schemaVersion: 16, profile: { name: 'Someone' } })), fileOf('empty.json', ''), fileOf('list.json', '[]'), fileOf('blank.json', '{}')];
   const warn = console.warn; console.warn = () => {};
   try {
@@ -104,14 +104,14 @@ test('a saved household that cannot be read is copied once, however often the pa
   } finally { globalThis.fetch = keep.fetch; globalThis.localStorage = keep.localStorage; console.warn = warn; }
 });
 
-test('the Calendar adds its drag listeners once, so Load my file never makes one drag two undo steps', () => {
+test('the Calendar adds its drag listeners once, so Open file never makes one drag two undo steps', () => {
   const src = readFileSync(SLAM + 'ui/calendar.js', 'utf8');
   const boot = src.slice(src.indexOf('function boot('), src.indexOf('loadAll().then(boot)'));
   assert.doesNotMatch(boot, /dragSetup\(/);
   assert.equal((src.match(/^dragSetup\(app\);$/gm) || []).length, 1);
 });
 
-test('the header keeps a Load my file message across redraws, and the example screen has one filled button', () => {
+test('the header keeps a Open file message across redraws, and the example screen has one filled button', () => {
   const page = readFileSync(SLAM + 'ui/page.js', 'utf8');
   assert.match(page, /let said = ''/);
   assert.match(page, /h\('p', \{ class: 'edit-msg', role: 'alert' \}, said\)/);

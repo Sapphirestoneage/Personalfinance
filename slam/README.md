@@ -108,7 +108,7 @@ browser). How a page uses the shell: CONTRACTS.md, "The shell".
 ### Loading your own profile
 
 Every page's header says whose numbers they are (S-228). The made-up demo
-says "Example household" with a Load my file button: pick your file and it
+says "Example household" with a Open file button: pick your file and it
 is read in the browser and saved in this browser only (nothing is uploaded),
 and every page opens to it from then on. This works in a published page too.
 
