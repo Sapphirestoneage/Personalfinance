@@ -232,13 +232,12 @@ function expenseEditor(row) {
   amount.value = inputText('money', valueOf(e.amount));
   const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
   const startMode = now.covered ? 'covered' : sh.shared ? 'shared' : 'me';
-  // Who pays comes first, as three choices in plain sight (S-186); `mode.value` reads the picked one.
-  const choice = (v, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'exp-mode', value: v, checked: startMode === v }), h('span', { class: 'choice-text' }, h('strong', {}, text), sub ? h('span', { class: 'choice-sub' }, sub) : null));
-  const modeBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Who pays?'),
-    choice('me', 'I pay all of it'),
-    choice('shared', 'I share it with others', 'Roommates, a partner'),
-    choice('covered', 'Someone else covers it', 'Parents, a partner, an employer: costs you $0'));
-  const mode = { get value() { return (modeBox.querySelector('input:checked') || { value: 'me' }).value; } };
+  // Who pays (S-186), as two ticks on the folded row: shared, or someone else covers it (never both); neither is me.
+  const sharedTick = h('input', { type: 'checkbox', id: 'exp-shared', checked: startMode === 'shared' });
+  const coveredTick = h('input', { type: 'checkbox', id: 'exp-covered', checked: startMode === 'covered' });
+  sharedTick.addEventListener('change', () => { if (sharedTick.checked) coveredTick.checked = false; });
+  coveredTick.addEventListener('change', () => { if (coveredTick.checked) sharedTick.checked = false; });
+  const mode = { get value() { return coveredTick.checked ? 'covered' : sharedTick.checked ? 'shared' : 'me'; } };
   const name = h('input', { id: 'exp-name', type: 'text', autocomplete: 'off' });
   name.value = e.label;
   // A subscription (S-191): marked here; its next charge and last review are its own rows.
@@ -281,8 +280,11 @@ function expenseEditor(row) {
     h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, other,
     h('p', { class: 'edit-hint' }, 'A covered expense counts $0 toward your spending.'));
   // When it starts and ends (S-199): blank is open-ended; a past start is fine.
-  const dates = dateFields(e.start, e.end, 'exp');
-  const AMOUNT_Q = { me: 'How much is it?', shared: 'How much is the whole bill?', covered: 'What would it cost if you paid it yourself?' };
+  const dates = dateFields(e.start, e.end, 'exp', { plain: true });
+  const datesTick = h('input', { type: 'checkbox', id: 'exp-dated', checked: !!(e.start || e.end) });
+  dates.box.hidden = !datesTick.checked;
+  datesTick.addEventListener('change', () => { dates.box.hidden = !datesTick.checked; if (datesTick.checked) dates.from.focus(); });
+  const AMOUNT_Q = { me: 'Amount', shared: 'Whole bill', covered: 'Full cost' };
   const amountLabel = h('label', { for: 'edit-input', class: 'edit-label' }, AMOUNT_Q[startMode]);
   const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'Counts as $0 now. The real cost shows what you would pay if that stops.');
   const stdBtn = std === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => { amount.value = String(std); often.value = 'monthly'; usedStd = true; preview(); amount.focus(); } }, 'Use a standard plan for 1 line (' + money(std) + ' a month)');
@@ -310,11 +312,18 @@ function expenseEditor(row) {
       partNote.textContent = r.problem ? '' : partVal() === 'even' ? (even === null ? '' : 'Even split with ' + r.people + ' people: ' + showValue(even, 'rate') + ' each.') : s === null ? '' : 'That is ' + showValue(s, 'rate') + ' of the bill.';
     }
   };
-  modeBox.addEventListener('change', () => {
+  const tick = (box, words) => h('label', { class: 'tick-chip', for: box.id }, box, h('span', {}, words));
+  const tickRow = h('div', { class: 'tick-row' }, tick(sharedTick, 'Shared'), tick(coveredTick, 'Someone else pays'), tick(subBox, 'Subscription'), tick(datesTick, 'Start or end date'));
+  // The folded row (owner's ask, 2026-10-26): closed by default; its line names what is ticked, so nothing hides silently.
+  const onNow = h('span', { class: 'when-now' });
+  const showOn = () => { const on = [[sharedTick, 'Shared'], [coveredTick, 'Someone else pays'], [subBox, 'Subscription'], [datesTick, 'Has dates']].filter(([b]) => b.checked).map(([, w]) => w); onNow.textContent = on.join(', '); };
+  const more = h('details', { class: 'when more-opts' }, h('summary', {}, 'More options ', onNow), tickRow, sharedBox, coveredBox, dates.box);
+  tickRow.addEventListener('change', () => {
     sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered'; amountHint.hidden = mode.value !== 'covered';
     amountLabel.textContent = AMOUNT_Q[mode.value];
-    preview();
+    showOn(); preview();
   });
+  showOn();
   amount.addEventListener('input', () => { usedStd = false; });
   for (const el of [amount, often, people, share, mine]) el.addEventListener('input', preview);
   often.addEventListener('change', preview);
@@ -327,17 +336,17 @@ function expenseEditor(row) {
     let sharing = null, coveredBy = null;
     if (mode.value === 'shared') {
       const r = readShare();
-      if (!r.people || r.people < 2) { msg.textContent = 'How many people: 2 or more, you included'; people.focus(); return; }
-      if (r.problem) { msg.textContent = r.problem; (partVal() === 'amt' ? mine : share).focus(); return; }
+      if (!r.people || r.people < 2) { msg.textContent = 'How many people: 2 or more, you included'; more.open = true; people.focus(); return; }
+      if (r.problem) { msg.textContent = r.problem; more.open = true; (partVal() === 'amt' ? mine : share).focus(); return; }
       sharing = { shared: true, sharedWith: r.people, yourShare: r.share, whoPays: whole.checked ? 'whole' : 'part' };
     } else if (mode.value === 'me') sharing = { shared: false };
     if (mode.value === 'covered') {
       coveredBy = by.value === '__other' ? other.value.trim() : by.value;
-      if (!coveredBy) { msg.textContent = 'Who covers it?'; other.focus(); return; }
+      if (!coveredBy) { msg.textContent = 'Who covers it?'; more.open = true; other.focus(); return; }
       sharing = null;
     }
-    const d = dates.read();
-    if (d.problem) { msg.textContent = d.problem; return; }
+    const d = datesTick.checked ? dates.read() : { start: null, end: null, problem: null };
+    if (d.problem) { msg.textContent = d.problem; more.open = true; return; }
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
@@ -354,12 +363,13 @@ function expenseEditor(row) {
       return costMoved || !other.length ? [cost, ...other].join('. ') : other.join('. ');
     }
   };
+  // One slim row: name, amount, how often. Everything else is on the folded row under it.
+  const slim = h('div', { class: 'slim-row' },
+    h('div', { class: 'slim-name' }, h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name),
+    h('div', { class: 'slim-amt' }, amountLabel, amount),
+    h('div', { class: 'slim-often' }, h('label', { for: 'exp-often', class: 'edit-label' }, 'How often'), often));
   return editorForm(() => doSet('known'),
-    h('label', { for: 'exp-name', class: 'edit-label' }, 'Name'), name,
-    modeBox,
-    amountLabel, h('div', { class: 'amount-row' }, amount, often), amountHint, stdBtn,
-    h('label', { class: 'check-row', for: 'exp-sub' }, subBox, h('span', {}, h('strong', {}, 'This is a subscription'), h('span', { class: 'choice-sub' }, 'Renews on its own'))),
-    sharedBox, coveredBox, dates.box, yours, msg,
+    slim, amountHint, stdBtn, more, yours, msg,
     h('div', { class: 'edit-actions' },
       h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
       h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
@@ -371,17 +381,19 @@ function expenseEditor(row) {
 // Start and end dates for an income stream or an expense (S-199), folded
 // under "When does it run?" so an open-ended item asks nothing. Blank means
 // open-ended. read() gives { start, end, problem }.
-function dateFields(start, end, prefix, { label = 'When does it run?', startWords = 'Starts (optional)', endWords = 'Ends (optional)' } = {}) {
+function dateFields(start, end, prefix, { label = 'When does it run?', startWords = 'Starts (optional)', endWords = 'Ends (optional)', plain = false } = {}) {
   const from = h('input', { id: prefix + '-start', type: 'date' });
   from.value = start || '';
   const to = h('input', { id: prefix + '-end', type: 'date' });
   to.value = end || '';
-  const box = h('details', { class: 'when', open: !!(start || end) || null },
+  const fields = h('div', { class: 'sub-fields' },
+    h('label', { for: prefix + '-start', class: 'edit-label' }, startWords), from,
+    h('label', { for: prefix + '-end', class: 'edit-label' }, endWords), to,
+    h('p', { class: 'edit-hint' }, 'Leave blank if it has no end.'));
+  // plain: the fields alone, for a panel that shows them behind its own tick.
+  const box = plain ? fields : h('details', { class: 'when', open: !!(start || end) || null },
     h('summary', {}, label, ' ', h('span', { class: 'when-now' }, start || end ? (start ? 'from ' + shortDate(start) : 'from the start') + (end ? ' to ' + shortDate(end) : '') : 'no dates: it is ongoing')),
-    h('div', { class: 'sub-fields' },
-      h('label', { for: prefix + '-start', class: 'edit-label' }, startWords), from,
-      h('label', { for: prefix + '-end', class: 'edit-label' }, endWords), to,
-      h('p', { class: 'edit-hint' }, 'Leave blank if it has no end.')));
+    fields);
   return {
     box, from, to,
     read: () => {
