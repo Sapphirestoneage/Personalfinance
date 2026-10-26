@@ -33,3 +33,5 @@ money-rooms-v3/screenshots/level-stage/
 # Real-data sign-off notes and screenshots stay on this machine (SIGNOFF.local.md, signoff.local/).
 **/signoff.local/
 **/*.local.md
+# The numbers spreadsheet (S-237): a person's own sheet and any download of it (my-numbers-*.local.xlsx).
+*.local.*

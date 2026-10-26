@@ -1030,3 +1030,16 @@ h3.flag-title { margin: 0; font-size: var(--text-md); font-weight: 700; }
 .done-group > summary::after { content: "\203A"; margin-left: auto; font-size: 1.4rem; line-height: 1; color: var(--text-muted); transition: transform 0.15s ease; }
 .done-group[open] > summary::after { transform: rotate(90deg); }
 @media (prefers-reduced-motion: reduce) { .done-group > summary::after { transition: none; } }
+
+/* The numbers spreadsheet preview (S-237): one row per answer read, its reading in words, a quick fix when it needs a look. */
+.import-list { list-style: none; padding-left: 0; display: grid; gap: var(--space-3); }
+.import-row { display: grid; gap: var(--space-1); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.import-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.import-row p { margin: 0; }
+.import-changes { margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); }
+.import-note { font-size: var(--text-sm); }
+.import-fix label { display: grid; gap: var(--space-1); font-weight: 600; }
+.import-fix .hint { font-weight: 400; font-size: var(--text-xs); }
+.import-actions { margin: var(--space-4) 0; }
+/* Several quick fixes sit on one screen, so their buttons stay in place instead of pinning to the bottom. */
+@media (max-width: 639px) { .editor.import-fix .edit-actions { position: static; border-top: 0; } }

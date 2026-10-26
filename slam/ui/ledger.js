@@ -25,6 +25,7 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, valueOf } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint } from './view.js';
+import { sheetButtons, undoImportCard, importScreen } from './sheet-panel.js';
 
 const MOVE_WORDS = { surplus: 'monthly surplus', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -1012,12 +1013,16 @@ function bulkBar(sc) {
     h('button', { type: 'button', class: 'btn ghost', onclick: () => { selecting = false; selected = new Set(); refresh(); } }, 'Done selecting'));
 }
 
+// The numbers spreadsheet (S-237): what its panel needs from this page.
+const sheetCtx = { spine: () => cur(), change: (next, text) => change(next, text), go: (l) => go(l), say: (t) => say(t), refresh: () => refresh(), today: () => today(), canLeave: () => canLeave() };
+
 // ---------------------------------------------------------------- the screens
 function topScreen(sc, st) {
   const spine = cur();
   const q = st.q || '';
   return [
     problemsCard(spine),
+    undoImportCard(sheetCtx),
     matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have edits not in your profile file.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save to profile file')),
     worthPair(spine),
     sectionList(sc),
@@ -1107,6 +1112,7 @@ function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
   if (levels[0] === 'pick') return levels.length === 1 ? 'Pick what you have' : null;
+  if (levels[0] === 'import') return levels.length === 1 ? 'Import numbers spreadsheet' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
   const at = screenAt(screensOf(ctx.spine), levels);
   if (!at) return null;
@@ -1137,6 +1143,7 @@ function render(ctx) {
   let body;
   if (levels[0] === 'still-guessing') body = guessList();
   else if (levels[0] === 'pick') body = pickerCard();
+  else if (levels[0] === 'import') body = importScreen(sheetCtx);
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else {
     const at = screenAt(sc, levels) || {};
@@ -1191,8 +1198,10 @@ function actions(ctx) {
   if (ctx.levels.length) return [];
   const spine = ctx.spine, mine = !whose(spine).example;
   return [
-    // One filled button a screen: on the example, Load my file is it.
-    h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save to profile file'),
+    // One filled button a screen: Import numbers spreadsheet (S-237); on the example, Load my file is it. Save to
+    // profile file is also on the banner.
+    ...sheetButtons(sheetCtx, { primary: !whose(spine).example }),
+    h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Save to profile file'),
     mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
     h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Pick what you have')

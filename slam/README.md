@@ -29,6 +29,19 @@ demo household. (Any static server works. There is no build step.) The old Budge
 is at http://localhost:8000/clients.html; click **Try with example numbers** on its
 Clients screen. All demo households are made up.
 
+## The numbers spreadsheet
+
+My numbers has **Import numbers spreadsheet**, **Download my numbers** and **Download blank sheet for a
+client** (S-237). The sheet has a My Numbers tab (Question, Your answer, How sure?, Notes, a hidden id) and a Key
+tab for people. Import takes .xlsx or .csv, shows a preview in words, and changes nothing until Apply; Undo import
+puts it back. The questions and synonyms live only in `data/import-map.json`; answers are read by
+`js/parse-answer.js`. Your own sheet goes in `fixtures/` as `*.local.xlsx` (gitignored); check it with
+
+```
+node tools/import-check.mjs fixtures/eli-numbers.local.xlsx fixtures/eli.local.json
+node tools/privacy-scan.mjs
+```
+
 ## Run the tests
 
 ```

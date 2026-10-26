@@ -116,5 +116,7 @@ test('the header keeps a Load my file message across redraws, and the example sc
   assert.match(page, /let said = ''/);
   assert.match(page, /h\('p', \{ class: 'edit-msg', role: 'alert' \}, said\)/);
   assert.match(readFileSync(SLAM + 'ui/onepager.js', 'utf8'), /class: whose\(base\)\.example \? 'btn' : 'btn primary', onclick: \(\) => window\.print\(\)/);
-  assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /class: matchesFile\(spine\) \|\| whose\(spine\)\.example \? 'btn' : 'btn primary', onclick: saveFile/);
+  // S-237: Import numbers spreadsheet is My numbers' filled button, except on the example (Load my file is it there).
+  assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /sheetButtons\(sheetCtx, \{ primary: !whose\(spine\)\.example \}\)/);
+  assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /h\('button', \{ type: 'button', class: 'btn', onclick: saveFile \}, 'Save to profile file'\)/);
 });

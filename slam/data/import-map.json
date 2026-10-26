@@ -1,0 +1,1652 @@
+{
+  "_about": "The numbers spreadsheet (S-237): the only place the sheet's question wordings and synonyms live. js/sheet-import.js matches rows with it, js/sheet-export.js writes the sheet from it, test/import-map.test.js fails when a household field has no entry here or an entry points at a field that no longer exists. $me is the first person's id; $year is the as-of year.",
+  "version": 1,
+  "sheets": {
+    "numbers": [
+      "my numbers",
+      "numbers",
+      "my answers",
+      "answers",
+      "sheet1",
+      "sheet 1"
+    ],
+    "key": [
+      "key",
+      "legend",
+      "how to fill this in",
+      "how to",
+      "instructions",
+      "read me",
+      "readme"
+    ]
+  },
+  "headers": {
+    "id": [
+      "id",
+      "key",
+      "field id",
+      "row id",
+      "hidden id",
+      "code"
+    ],
+    "question": [
+      "question",
+      "questions",
+      "item",
+      "what",
+      "line",
+      "field",
+      "thing",
+      "name",
+      "label"
+    ],
+    "answer": [
+      "your answer",
+      "answer",
+      "answers",
+      "amount",
+      "value",
+      "number",
+      "response",
+      "yours"
+    ],
+    "sure": [
+      "how sure?",
+      "how sure",
+      "sure",
+      "confidence",
+      "certainty",
+      "known?",
+      "how confident"
+    ],
+    "notes": [
+      "notes",
+      "note",
+      "comments",
+      "comment",
+      "details",
+      "detail",
+      "more"
+    ]
+  },
+  "synonyms": [
+    [
+      "housing",
+      "rent",
+      "mortgage",
+      "home payment",
+      "lease"
+    ],
+    [
+      "roth ira",
+      "roth"
+    ],
+    [
+      "credit card",
+      "cc",
+      "card",
+      "credit"
+    ],
+    [
+      "birthday",
+      "birth date",
+      "date of birth",
+      "dob",
+      "born"
+    ],
+    [
+      "take home",
+      "takehome",
+      "net pay"
+    ],
+    [
+      "paycheck",
+      "salary",
+      "wages",
+      "pay",
+      "job",
+      "w2",
+      "w-2"
+    ],
+    [
+      "groceries",
+      "grocery",
+      "food at home",
+      "supermarket"
+    ],
+    [
+      "eating out",
+      "dining",
+      "restaurants",
+      "takeout",
+      "take out",
+      "delivery"
+    ],
+    [
+      "phone",
+      "cell",
+      "mobile",
+      "cell phone"
+    ],
+    [
+      "utilities",
+      "utility",
+      "electric",
+      "electricity",
+      "gas and electric",
+      "power"
+    ],
+    [
+      "internet",
+      "wifi",
+      "wi-fi",
+      "broadband"
+    ],
+    [
+      "transit",
+      "metro",
+      "subway",
+      "bus",
+      "metrocard",
+      "train"
+    ],
+    [
+      "car insurance",
+      "auto insurance"
+    ],
+    [
+      "health insurance",
+      "health coverage",
+      "medical insurance"
+    ],
+    [
+      "subscriptions",
+      "streaming",
+      "netflix",
+      "spotify"
+    ],
+    [
+      "hysa",
+      "high yield savings",
+      "high-yield savings",
+      "hys"
+    ],
+    [
+      "401k",
+      "401(k)",
+      "401 k"
+    ],
+    [
+      "403b",
+      "403(b)"
+    ],
+    [
+      "457b",
+      "457(b)",
+      "457"
+    ],
+    [
+      "529",
+      "529 plan",
+      "college savings"
+    ],
+    [
+      "ira",
+      "individual retirement account"
+    ],
+    [
+      "hsa",
+      "health savings account"
+    ],
+    [
+      "fsa",
+      "flexible spending account"
+    ],
+    [
+      "brokerage",
+      "taxable",
+      "investments",
+      "investing",
+      "stocks",
+      "index funds"
+    ],
+    [
+      "student loan",
+      "student loans",
+      "school loan"
+    ],
+    [
+      "auto loan",
+      "car loan",
+      "car payment"
+    ],
+    [
+      "family",
+      "parents",
+      "mom",
+      "dad"
+    ],
+    [
+      "emergency fund",
+      "cushion",
+      "rainy day"
+    ],
+    [
+      "financial independence",
+      "fi",
+      "fire",
+      "retire early"
+    ],
+    [
+      "inflation",
+      "cpi"
+    ],
+    [
+      "withdrawal rate",
+      "swr",
+      "safe withdrawal"
+    ],
+    [
+      "new york city",
+      "nyc"
+    ],
+    [
+      "self employed",
+      "self-employed",
+      "freelance",
+      "1099",
+      "contractor",
+      "gig"
+    ],
+    [
+      "household",
+      "people at home",
+      "family size"
+    ]
+  ],
+  "sections": [
+    {
+      "id": "about",
+      "title": "About you",
+      "words": [
+        "about you",
+        "about me",
+        "you",
+        "personal",
+        "basics",
+        "the basics"
+      ]
+    },
+    {
+      "id": "income",
+      "title": "Money coming in",
+      "collection": "income",
+      "words": [
+        "money coming in",
+        "income",
+        "money in",
+        "pay",
+        "earnings"
+      ]
+    },
+    {
+      "id": "needs",
+      "title": "Monthly spending: needs",
+      "collection": "expenses",
+      "need": true,
+      "words": [
+        "monthly spending needs",
+        "spending needs",
+        "needs",
+        "must haves",
+        "bills",
+        "fixed costs",
+        "essentials"
+      ]
+    },
+    {
+      "id": "wants",
+      "title": "Monthly spending: wants",
+      "collection": "expenses",
+      "need": false,
+      "words": [
+        "monthly spending wants",
+        "spending wants",
+        "wants",
+        "nice to haves",
+        "fun",
+        "extras"
+      ]
+    },
+    {
+      "id": "have",
+      "title": "What you have",
+      "collection": "accounts",
+      "words": [
+        "what you have",
+        "what i have",
+        "assets",
+        "accounts",
+        "savings and investments",
+        "you have"
+      ]
+    },
+    {
+      "id": "owe",
+      "title": "What you owe",
+      "collection": "debts",
+      "words": [
+        "what you owe",
+        "what i owe",
+        "debts",
+        "debt",
+        "loans",
+        "you owe",
+        "liabilities"
+      ]
+    },
+    {
+      "id": "goals",
+      "title": "Goals",
+      "collection": "goals",
+      "words": [
+        "goals",
+        "goal",
+        "saving for",
+        "dreams"
+      ]
+    },
+    {
+      "id": "assumptions",
+      "title": "Assumptions",
+      "words": [
+        "assumptions",
+        "assumption",
+        "settings",
+        "planning numbers"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "path": "household.people.$me.name",
+      "section": "about",
+      "type": "name",
+      "question": "Your name",
+      "words": [
+        "name",
+        "full name",
+        "first name"
+      ]
+    },
+    {
+      "path": "household.people.$me.birthDate",
+      "section": "about",
+      "type": "date",
+      "question": "Your birthday",
+      "words": [
+        "birthday",
+        "date of birth",
+        "when were you born",
+        "dob"
+      ]
+    },
+    {
+      "path": "household.filingStatus",
+      "section": "about",
+      "type": "choice",
+      "question": "How you file taxes",
+      "words": [
+        "filing status",
+        "tax filing status",
+        "file taxes as",
+        "tax status"
+      ],
+      "choices": {
+        "single": [
+          "Single"
+        ],
+        "mfj": [
+          "Married filing jointly",
+          "married jointly",
+          "joint",
+          "jointly",
+          "mfj",
+          "married"
+        ],
+        "mfs": [
+          "Married filing separately",
+          "married separately",
+          "separately",
+          "mfs"
+        ],
+        "hoh": [
+          "Head of household",
+          "hoh"
+        ]
+      }
+    },
+    {
+      "path": "household.state",
+      "section": "about",
+      "type": "text",
+      "question": "State you live in",
+      "words": [
+        "state",
+        "home state",
+        "which state",
+        "state of residence"
+      ]
+    },
+    {
+      "path": "household.county",
+      "section": "about",
+      "type": "text",
+      "question": "County you live in",
+      "words": [
+        "county",
+        "which county"
+      ]
+    },
+    {
+      "path": "household.nycResident",
+      "section": "about",
+      "type": "bool",
+      "question": "Do you live in New York City?",
+      "words": [
+        "nyc resident",
+        "live in nyc",
+        "new york city resident",
+        "nyc"
+      ]
+    },
+    {
+      "path": "household.householdSize",
+      "section": "about",
+      "type": "int",
+      "question": "People in your household (you included)",
+      "words": [
+        "household size",
+        "how many people",
+        "people in household",
+        "family size"
+      ]
+    },
+    {
+      "path": "household.home",
+      "section": "about",
+      "type": "choice",
+      "question": "Do you rent or own your home?",
+      "words": [
+        "rent or own",
+        "own or rent",
+        "home",
+        "where you live",
+        "living situation"
+      ],
+      "choices": {
+        "rent": [
+          "Rent",
+          "renting",
+          "renter",
+          "lease"
+        ],
+        "own": [
+          "Own",
+          "owner",
+          "homeowner",
+          "mortgage"
+        ],
+        "family": [
+          "With family",
+          "parents",
+          "family",
+          "live with parents"
+        ],
+        "other": [
+          "Other"
+        ]
+      }
+    },
+    {
+      "path": "household.getAround",
+      "section": "about",
+      "type": "choice",
+      "question": "How do you get around?",
+      "words": [
+        "get around",
+        "transportation",
+        "commute how",
+        "car or transit"
+      ],
+      "choices": {
+        "car": [
+          "Car",
+          "drive",
+          "driving"
+        ],
+        "transit": [
+          "Transit",
+          "subway",
+          "bus",
+          "train",
+          "public transit"
+        ],
+        "both": [
+          "Both",
+          "car and transit"
+        ],
+        "none": [
+          "Neither",
+          "walk",
+          "bike",
+          "none"
+        ]
+      }
+    },
+    {
+      "path": "household.situation.now.value",
+      "section": "about",
+      "type": "choice",
+      "question": "What you do for work now",
+      "words": [
+        "work situation",
+        "job situation",
+        "employment",
+        "working now",
+        "situation"
+      ],
+      "choices": {
+        "employed": [
+          "Employed",
+          "full time",
+          "part time",
+          "job",
+          "w2",
+          "employee"
+        ],
+        "self_employed": [
+          "Self-employed",
+          "self employed",
+          "freelance",
+          "1099",
+          "contractor",
+          "own business"
+        ],
+        "between_jobs": [
+          "Between jobs",
+          "unemployed",
+          "looking",
+          "laid off"
+        ],
+        "student": [
+          "Student",
+          "in school"
+        ],
+        "retired": [
+          "Retired"
+        ],
+        "mixed": [
+          "A mix",
+          "mixed",
+          "both"
+        ]
+      }
+    },
+    {
+      "path": "household.healthCoverage.now.value",
+      "section": "about",
+      "type": "choice",
+      "question": "Your health insurance now",
+      "words": [
+        "health insurance",
+        "health coverage",
+        "insurance",
+        "medical coverage"
+      ],
+      "choices": {
+        "employer": [
+          "Through work",
+          "employer",
+          "work",
+          "job"
+        ],
+        "parent_plan": [
+          "A parent's plan",
+          "parents plan",
+          "parent's plan",
+          "parents"
+        ],
+        "own_plan": [
+          "My own plan",
+          "own plan",
+          "private"
+        ],
+        "marketplace": [
+          "Marketplace",
+          "aca",
+          "obamacare",
+          "exchange"
+        ],
+        "medicaid": [
+          "Medicaid"
+        ],
+        "medicare": [
+          "Medicare"
+        ],
+        "none": [
+          "None",
+          "uninsured",
+          "no insurance"
+        ],
+        "other": [
+          "Other"
+        ]
+      }
+    },
+    {
+      "path": "household.workHoursPerWeek",
+      "section": "about",
+      "type": "int",
+      "question": "Hours you work a week",
+      "words": [
+        "work hours",
+        "hours a week",
+        "hours per week",
+        "hours worked"
+      ]
+    },
+    {
+      "path": "household.commuteHoursPerWeek",
+      "section": "about",
+      "type": "int",
+      "question": "Hours you commute a week",
+      "words": [
+        "commute",
+        "commute hours",
+        "commuting time"
+      ]
+    },
+    {
+      "path": "household.deductible",
+      "section": "about",
+      "type": "money",
+      "question": "Your biggest insurance deductible",
+      "words": [
+        "deductible",
+        "insurance deductible",
+        "health deductible"
+      ]
+    },
+    {
+      "path": "household.lastRefund",
+      "section": "about",
+      "type": "money",
+      "question": "Last year's tax refund (a minus sign if you owed)",
+      "words": [
+        "tax refund",
+        "refund",
+        "last refund",
+        "owed in taxes"
+      ]
+    },
+    {
+      "path": "household.cardPayPolicy",
+      "section": "owe",
+      "type": "choice",
+      "question": "How you pay your credit cards each month",
+      "words": [
+        "pay cards",
+        "card payment habit",
+        "how you pay credit cards",
+        "pay in full"
+      ],
+      "choices": {
+        "statement": [
+          "The full statement",
+          "in full",
+          "full balance",
+          "statement balance",
+          "pay in full"
+        ],
+        "minimum": [
+          "New charges plus the minimum",
+          "minimum",
+          "minimums",
+          "min"
+        ]
+      }
+    },
+    {
+      "path": "debtPlan.extra",
+      "section": "owe",
+      "type": "money",
+      "question": "Extra you can put toward debt each month",
+      "words": [
+        "extra toward debt",
+        "extra debt payment",
+        "extra a month for debt",
+        "debt extra"
+      ]
+    },
+    {
+      "path": "debtPlan.day",
+      "section": "owe",
+      "type": "int",
+      "question": "Day of the month the extra goes out",
+      "words": [
+        "extra payment day",
+        "debt payment day"
+      ]
+    },
+    {
+      "path": "debtPlan.strategy",
+      "section": "owe",
+      "type": "choice",
+      "question": "Pay off highest rate first, or smallest balance first?",
+      "words": [
+        "debt strategy",
+        "avalanche or snowball",
+        "payoff order",
+        "payoff method"
+      ],
+      "choices": {
+        "avalanche": [
+          "Highest rate first",
+          "avalanche",
+          "highest interest"
+        ],
+        "snowball": [
+          "Smallest balance first",
+          "snowball",
+          "smallest first"
+        ]
+      }
+    },
+    {
+      "path": "debtPlan.stopAtHi",
+      "section": "owe",
+      "type": "bool",
+      "question": "Stop the extra once only low-rate debt is left?",
+      "words": [
+        "stop at low rate",
+        "stop extra payments"
+      ]
+    },
+    {
+      "path": "debtPlan.hiRate",
+      "section": "owe",
+      "type": "rate",
+      "question": "What rate counts as high?",
+      "words": [
+        "high rate",
+        "high interest cutoff"
+      ]
+    },
+    {
+      "path": "debtPlan.rollFreed",
+      "section": "owe",
+      "type": "bool",
+      "question": "When a debt is paid off, roll its payment into the next?",
+      "words": [
+        "roll payments",
+        "snowball payments",
+        "roll freed payment"
+      ]
+    },
+    {
+      "path": "household.goalOrder",
+      "section": "goals",
+      "type": "choice",
+      "question": "Fund goals one at a time, or by deadline?",
+      "words": [
+        "goal order",
+        "fund goals",
+        "goals order"
+      ],
+      "choices": {
+        "oneAtATime": [
+          "One at a time",
+          "one by one",
+          "in order"
+        ],
+        "byDeadline": [
+          "By deadline",
+          "all at once",
+          "by date",
+          "deadline"
+        ]
+      }
+    },
+    {
+      "path": "taxYears.$year.estimatedPaidFederal",
+      "section": "income",
+      "type": "money",
+      "question": "Federal estimated tax paid this year",
+      "words": [
+        "estimated federal tax paid",
+        "federal estimates paid",
+        "quarterly federal taxes paid"
+      ]
+    },
+    {
+      "path": "taxYears.$year.estimatedPaidState",
+      "section": "income",
+      "type": "money",
+      "question": "State estimated tax paid this year",
+      "words": [
+        "estimated state tax paid",
+        "state estimates paid",
+        "quarterly state taxes paid"
+      ]
+    },
+    {
+      "path": "taxYears.$year.setAside",
+      "section": "income",
+      "type": "money",
+      "question": "Set aside for this year's tax bill",
+      "words": [
+        "tax set aside",
+        "saved for taxes",
+        "tax savings"
+      ]
+    },
+    {
+      "path": "taxYears.$year.capitalGainsLong",
+      "section": "income",
+      "type": "money",
+      "question": "Long-term capital gains this year",
+      "words": [
+        "capital gains",
+        "long term gains"
+      ]
+    },
+    {
+      "path": "taxYears.$year.qualifiedDividends",
+      "section": "income",
+      "type": "money",
+      "question": "Qualified dividends this year",
+      "words": [
+        "dividends",
+        "qualified dividends"
+      ]
+    },
+    {
+      "path": "taxYears.$year.otherIncome",
+      "section": "income",
+      "type": "money",
+      "question": "Other taxable income this year",
+      "words": [
+        "other taxable income",
+        "other income"
+      ]
+    },
+    {
+      "path": "assumptions.inflation",
+      "section": "assumptions",
+      "type": "rate",
+      "question": "Inflation a year",
+      "words": [
+        "inflation",
+        "inflation rate",
+        "prices rise"
+      ]
+    },
+    {
+      "path": "assumptions.realReturn",
+      "section": "assumptions",
+      "type": "rate",
+      "question": "Investment return a year, after inflation",
+      "words": [
+        "return",
+        "real return",
+        "investment return",
+        "growth rate",
+        "market return"
+      ]
+    },
+    {
+      "path": "assumptions.realReturn",
+      "section": "assumptions",
+      "type": "scenarios",
+      "question": "Investment return: best / likely / worst",
+      "words": [
+        "best likely worst",
+        "return scenarios",
+        "best case likely worst case"
+      ],
+      "exportAs": "never"
+    },
+    {
+      "path": "assumptions.withdrawalRate",
+      "section": "assumptions",
+      "type": "rate",
+      "question": "Safe withdrawal rate",
+      "words": [
+        "withdrawal rate",
+        "safe withdrawal",
+        "swr",
+        "4% rule"
+      ]
+    },
+    {
+      "path": "assumptions.lifeExpectancy",
+      "section": "assumptions",
+      "type": "int",
+      "question": "Plan to live to age",
+      "words": [
+        "life expectancy",
+        "live to",
+        "age you plan to live to"
+      ]
+    },
+    {
+      "path": "assumptions.coastAge",
+      "section": "assumptions",
+      "type": "int",
+      "question": "Age you would stop saving (coast)",
+      "words": [
+        "coast age",
+        "coast fi age",
+        "stop saving age"
+      ]
+    }
+  ],
+  "kinds": {
+    "income": [
+      {
+        "type": "w2",
+        "words": [
+          "paycheck",
+          "salary",
+          "job",
+          "w2",
+          "wages",
+          "employer",
+          "pay"
+        ]
+      },
+      {
+        "type": "1099",
+        "words": [
+          "1099",
+          "freelance",
+          "contract",
+          "contractor",
+          "consulting",
+          "self employed"
+        ]
+      },
+      {
+        "type": "side",
+        "words": [
+          "side",
+          "side gig",
+          "gig",
+          "hustle",
+          "odd jobs",
+          "cash work"
+        ]
+      },
+      {
+        "type": "tips",
+        "words": [
+          "tips",
+          "gratuity"
+        ]
+      },
+      {
+        "type": "unemployment",
+        "words": [
+          "unemployment",
+          "ui benefits",
+          "jobless benefits"
+        ]
+      },
+      {
+        "type": "rental",
+        "words": [
+          "rental income",
+          "rent from tenant",
+          "tenant",
+          "airbnb"
+        ]
+      },
+      {
+        "type": "pension",
+        "words": [
+          "pension"
+        ]
+      },
+      {
+        "type": "ss",
+        "words": [
+          "social security",
+          "ssi",
+          "ssdi"
+        ]
+      },
+      {
+        "type": "maybeMoney",
+        "words": [
+          "bonus",
+          "maybe",
+          "possible",
+          "might get",
+          "windfall"
+        ]
+      },
+      {
+        "type": "person",
+        "words": [
+          "family",
+          "parents",
+          "allowance",
+          "gift",
+          "support",
+          "child support",
+          "alimony"
+        ]
+      },
+      {
+        "type": "other",
+        "words": [
+          "other",
+          "interest",
+          "refund"
+        ]
+      }
+    ],
+    "expenses": [
+      {
+        "id": "housing",
+        "words": [
+          "housing",
+          "rent",
+          "mortgage"
+        ],
+        "fat": "accommodation"
+      },
+      {
+        "id": "utilities",
+        "words": [
+          "utilities",
+          "electric",
+          "gas bill",
+          "water",
+          "internet",
+          "wifi"
+        ],
+        "fat": "accommodation"
+      },
+      {
+        "id": "renters",
+        "words": [
+          "renters insurance",
+          "home insurance"
+        ],
+        "fat": "accommodation"
+      },
+      {
+        "id": "groceries",
+        "words": [
+          "groceries",
+          "food at home"
+        ],
+        "fat": "food"
+      },
+      {
+        "id": "dining",
+        "words": [
+          "eating out",
+          "dining",
+          "restaurants",
+          "coffee",
+          "takeout",
+          "delivery",
+          "lunch"
+        ],
+        "fat": "food"
+      },
+      {
+        "id": "transit",
+        "words": [
+          "transit",
+          "metro",
+          "subway",
+          "bus",
+          "train"
+        ],
+        "fat": "transportation"
+      },
+      {
+        "id": "car",
+        "words": [
+          "car insurance",
+          "gas",
+          "fuel",
+          "parking",
+          "tolls",
+          "uber",
+          "lyft",
+          "rideshare",
+          "car"
+        ],
+        "fat": "transportation"
+      },
+      {
+        "id": "other",
+        "words": [],
+        "fat": null
+      }
+    ],
+    "accounts": [
+      {
+        "type": "checking",
+        "words": [
+          "checking",
+          "checking account",
+          "debit"
+        ]
+      },
+      {
+        "type": "savings",
+        "words": [
+          "savings",
+          "savings account"
+        ]
+      },
+      {
+        "type": "hysa",
+        "words": [
+          "hysa",
+          "high yield savings"
+        ]
+      },
+      {
+        "type": "money_market",
+        "words": [
+          "money market",
+          "cash management",
+          "mmf"
+        ]
+      },
+      {
+        "type": "cd",
+        "words": [
+          "cd",
+          "certificate of deposit"
+        ]
+      },
+      {
+        "type": "treasury",
+        "words": [
+          "treasury",
+          "t bills",
+          "tbills",
+          "treasuries"
+        ]
+      },
+      {
+        "type": "i_bond",
+        "words": [
+          "i bond",
+          "i bonds",
+          "ibonds"
+        ]
+      },
+      {
+        "type": "k401",
+        "words": [
+          "401k",
+          "traditional 401k"
+        ]
+      },
+      {
+        "type": "roth_k401",
+        "words": [
+          "roth 401k"
+        ]
+      },
+      {
+        "type": "k403b",
+        "words": [
+          "403b"
+        ]
+      },
+      {
+        "type": "k457b",
+        "words": [
+          "457b"
+        ]
+      },
+      {
+        "type": "tsp",
+        "words": [
+          "tsp",
+          "thrift savings plan"
+        ]
+      },
+      {
+        "type": "solo_k401",
+        "words": [
+          "solo 401k",
+          "individual 401k"
+        ]
+      },
+      {
+        "type": "after_tax_k401",
+        "words": [
+          "after tax 401k",
+          "mega backdoor"
+        ]
+      },
+      {
+        "type": "traditional_ira",
+        "words": [
+          "traditional ira",
+          "ira",
+          "trad ira"
+        ]
+      },
+      {
+        "type": "roth_ira",
+        "words": [
+          "roth ira"
+        ]
+      },
+      {
+        "type": "rollover_ira",
+        "words": [
+          "rollover ira",
+          "rollover"
+        ]
+      },
+      {
+        "type": "inherited_ira",
+        "words": [
+          "inherited ira"
+        ]
+      },
+      {
+        "type": "spousal_ira",
+        "words": [
+          "spousal ira"
+        ]
+      },
+      {
+        "type": "sep_ira",
+        "words": [
+          "sep ira",
+          "sep"
+        ]
+      },
+      {
+        "type": "simple_ira",
+        "words": [
+          "simple ira"
+        ]
+      },
+      {
+        "type": "hsa",
+        "words": [
+          "hsa"
+        ]
+      },
+      {
+        "type": "health_fsa",
+        "words": [
+          "fsa",
+          "health fsa"
+        ]
+      },
+      {
+        "type": "lp_fsa",
+        "words": [
+          "limited purpose fsa",
+          "lp fsa",
+          "dental vision fsa"
+        ]
+      },
+      {
+        "type": "dc_fsa",
+        "words": [
+          "dependent care fsa",
+          "dcfsa",
+          "daycare fsa"
+        ]
+      },
+      {
+        "type": "k529",
+        "words": [
+          "529"
+        ]
+      },
+      {
+        "type": "coverdell",
+        "words": [
+          "coverdell",
+          "esa"
+        ]
+      },
+      {
+        "type": "utma",
+        "words": [
+          "utma",
+          "ugma",
+          "custodial account"
+        ]
+      },
+      {
+        "type": "custodial_roth",
+        "words": [
+          "custodial roth",
+          "kids roth"
+        ]
+      },
+      {
+        "type": "able",
+        "words": [
+          "able account",
+          "able"
+        ]
+      },
+      {
+        "type": "trump",
+        "words": [
+          "trump account"
+        ]
+      },
+      {
+        "type": "brokerage",
+        "words": [
+          "brokerage",
+          "individual brokerage"
+        ]
+      },
+      {
+        "type": "joint_brokerage",
+        "words": [
+          "joint brokerage",
+          "joint investing"
+        ]
+      },
+      {
+        "type": "crypto",
+        "words": [
+          "crypto",
+          "bitcoin",
+          "ethereum",
+          "coinbase"
+        ]
+      },
+      {
+        "type": "espp",
+        "words": [
+          "espp",
+          "employee stock purchase"
+        ]
+      },
+      {
+        "type": "rsu",
+        "words": [
+          "rsu",
+          "rsus",
+          "stock options",
+          "equity grant"
+        ]
+      },
+      {
+        "type": "home",
+        "words": [
+          "home value",
+          "house",
+          "condo",
+          "apartment i own",
+          "home"
+        ]
+      },
+      {
+        "type": "rental",
+        "words": [
+          "rental property",
+          "investment property"
+        ]
+      },
+      {
+        "type": "car",
+        "words": [
+          "car value",
+          "car",
+          "vehicle",
+          "truck"
+        ]
+      },
+      {
+        "type": "business",
+        "words": [
+          "business",
+          "my business",
+          "company equity"
+        ]
+      },
+      {
+        "type": "pension",
+        "words": [
+          "pension"
+        ]
+      },
+      {
+        "type": "cash_value_life",
+        "words": [
+          "whole life",
+          "cash value life",
+          "life insurance cash value"
+        ]
+      },
+      {
+        "type": "annuity",
+        "words": [
+          "annuity"
+        ]
+      }
+    ],
+    "debts": [
+      {
+        "type": "credit_card",
+        "words": [
+          "credit card",
+          "visa",
+          "mastercard",
+          "amex",
+          "american express",
+          "discover",
+          "chase",
+          "capital one",
+          "citi",
+          "quicksilver",
+          "sapphire",
+          "freedom",
+          "venture",
+          "store card"
+        ]
+      },
+      {
+        "type": "student_loan",
+        "words": [
+          "student loan",
+          "federal student loan",
+          "fafsa",
+          "direct loan",
+          "nelnet",
+          "mohela",
+          "aidvantage",
+          "navient"
+        ]
+      },
+      {
+        "type": "private_student_loan",
+        "words": [
+          "private student loan",
+          "sallie mae",
+          "sofi student"
+        ]
+      },
+      {
+        "type": "mortgage",
+        "words": [
+          "mortgage",
+          "home loan"
+        ]
+      },
+      {
+        "type": "heloc",
+        "words": [
+          "heloc",
+          "home equity line"
+        ]
+      },
+      {
+        "type": "auto_loan",
+        "words": [
+          "auto loan",
+          "car loan"
+        ]
+      },
+      {
+        "type": "personal_loan",
+        "words": [
+          "personal loan",
+          "loan"
+        ]
+      },
+      {
+        "type": "bnpl",
+        "words": [
+          "bnpl",
+          "buy now pay later",
+          "affirm",
+          "klarna",
+          "afterpay"
+        ]
+      },
+      {
+        "type": "payday",
+        "words": [
+          "payday",
+          "cash advance"
+        ]
+      },
+      {
+        "type": "medical",
+        "words": [
+          "medical",
+          "hospital",
+          "doctor bill",
+          "medical bill"
+        ]
+      },
+      {
+        "type": "irs_plan",
+        "words": [
+          "irs",
+          "tax payment plan",
+          "back taxes"
+        ]
+      },
+      {
+        "type": "k401_loan",
+        "words": [
+          "401k loan"
+        ]
+      },
+      {
+        "type": "family_iou",
+        "words": [
+          "family",
+          "parents",
+          "mom",
+          "dad",
+          "friend",
+          "iou"
+        ]
+      }
+    ],
+    "goals": [
+      {
+        "type": "fi",
+        "words": [
+          "financial independence",
+          "fi",
+          "fire"
+        ]
+      },
+      {
+        "type": "savings",
+        "words": [
+          "emergency fund",
+          "save",
+          "down payment",
+          "trip",
+          "wedding",
+          "car"
+        ]
+      },
+      {
+        "type": "payoff",
+        "words": [
+          "paid off",
+          "pay off",
+          "debt free"
+        ]
+      },
+      {
+        "type": "other",
+        "words": []
+      }
+    ]
+  },
+  "answers": {
+    "sure": [
+      "I know it",
+      "Rough guess",
+      "Don't know",
+      "Worked out"
+    ]
+  },
+  "starters": {
+    "income": [
+      "Paycheck from your job",
+      "Side money"
+    ],
+    "needs": [
+      "Rent or mortgage",
+      "Utilities",
+      "Groceries",
+      "Phone",
+      "Transit or car costs",
+      "Health insurance"
+    ],
+    "wants": [
+      "Eating out",
+      "Subscriptions",
+      "Shopping",
+      "Fun"
+    ],
+    "have": [
+      "Checking",
+      "Savings",
+      "401(k)",
+      "Roth IRA"
+    ],
+    "owe": [
+      "Credit card",
+      "Student loan",
+      "Car loan"
+    ],
+    "goals": [
+      "Emergency fund",
+      "Financial independence"
+    ]
+  }
+}
