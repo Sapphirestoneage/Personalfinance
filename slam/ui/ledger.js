@@ -14,6 +14,7 @@ import { addForm as newAddForm } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
+import { unemploymentView, tenPercentOf } from '../engine/unemployment.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
 import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
 import { fileProblems } from '../engine/normalize.js';
@@ -23,9 +24,9 @@ import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
-import { getAt, valueOf, whoSupplies } from '../engine/spine.js';
+import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate, keyHint } from './view.js';
+import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -1083,7 +1084,51 @@ function sectionTop(sec) {
       figure('Card use, personal cards', ut.personal, pctOf, ['personalUtil']),
       figure('Card use, all cards', ut.overall, pctOf, ['overallUtil']));
   }
+  if (sec.slug === 'income') return unemploymentCard();
   return null;
+}
+
+// Unemployment (owner's ask): when between jobs, what the benefit pays and for how long, the tax on it, and what the
+// cash does once it stops. The weekly amount, the last week paid and the federal withholding are typed right here.
+// A box saves when it is left (after the focus moves on), so the redraw keeps the next box.
+const monthWordsOf = (ym) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
+function unemploymentCard() {
+  const spine = cur(), s = summaryOf(spine), u = unemploymentView(spine, s, { rules }), day = today();
+  if (!u.between && !u.streams.length) return null;
+  const later = (fn) => setTimeout(fn, 0);
+  const add = () => change((x) => { const r = addItem(x, { collection: 'income', type: 'unemployment', label: 'Unemployment benefit' }, day); return setAt(r.spine, 'income.' + r.id + '.cadence', 'weekly'); }, said.added('Unemployment benefit'));
+  const box = (id, label, value, type, onSet) => {
+    const b = h('input', { id, type: type === 'date' ? 'date' : 'text', inputmode: type === 'money' ? 'decimal' : null, autocomplete: 'off', placeholder: type === 'money' ? '$' : null, 'aria-label': label });
+    b.value = type === 'date' ? value || '' : inputText('money', value);
+    b.addEventListener('change', () => { const t = b.value.trim(); if (!t) return later(() => onSet(null)); if (type === 'date') return later(() => onSet(t)); const p = parseInput('money', t); if (!p.ok) { say(label + ': ' + p.message); return; } later(() => onSet(p.value)); });
+    return h('div', { class: 'add-field' }, h('label', { for: id, class: 'edit-label' }, label), b);
+  };
+  const fig = (label, value, sub) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, value), sub ? h('p', { class: 'tile-sub muted' }, sub) : null);
+  const stream = (x) => {
+    const tax = h('div', { class: 'segmented', role: 'group', 'aria-label': x.label + ': federal tax taken out' },
+      [['none', 'None taken out'], ['ten', '10% taken out']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(x.withholds === (k === 'ten')), disabled: k === 'ten' && x.weekly === null ? true : null,
+        onclick: () => change((sp) => putFact(sp, x.paths.federal, k === 'ten' ? tenPercentOf(x.weekly) : 0, 'known', day), said.changed(x.label + ': federal tax', k === 'ten' ? '10% taken out' : 'none taken out')) }, h('span', { class: 'seg-label' }, w))));
+    return h('section', { class: 'card', 'aria-label': x.label },
+      h('h3', {}, x.label),
+      h('div', { class: 'unemp-fields' },
+        box('ui-amt-' + x.id, 'A week', x.weekly, 'money', (a) => change((sp) => { let n = putFact(sp, x.paths.amount, a, a === null ? 'missing' : 'known', day); if (x.withholds && a !== null) n = putFact(n, x.paths.federal, tenPercentOf(a), 'known', day); return n; }, said.changed(x.label + ' a week', a === null ? 'blank' : money(a)))),
+        box('ui-end-' + x.id, 'Last week paid', x.end, 'date', (d) => change((sp) => setAt(sp, 'income.' + x.id + '.end', d), said.changed(x.label + ': last week paid', d ? shortDate(d) : 'not known')))),
+      h('p', { class: 'edit-label' }, 'Federal tax'), tax,
+      h('div', { class: 'nw-pair fi-three' },
+        fig('A month', x.monthly === null ? null : money(x.monthly), 'about 4.3 weeks'),
+        fig('Weeks left', x.weeksLeft === null ? null : String(x.weeksLeft), x.end ? 'through ' + shortDate(x.end) : 'Type the last week paid'),
+        fig('Still to come', x.stillToCome === null ? null : money(x.stillToCome), null),
+        fig('A month after tax', x.afterTaxMonthly === null ? null : money(x.afterTaxMonthly), x.withholds === false && x.setAsideMonthly ? money(x.setAsideMonthly) + ' a month set aside for tax, since none is taken out' : x.withholds ? '10% taken out each week' : null)));
+  };
+  return h('section', { class: 'card unemp', 'aria-labelledby': 'unemp-h' },
+    h('h2', { id: 'unemp-h' }, 'Unemployment'),
+    u.jobsStillPaying.length ? h('p', { class: 'tile-note unemp-note' }, 'Still counted as paying: ', ...u.jobsStillPaying.flatMap((j, i) => [i ? ', ' : '', h('a', { href: ledgerHref(j.path) }, j.label)]), '. If the job ended, give it an end date so the numbers stop counting it.') : null,
+    u.streams.length ? u.streams.map(stream) : [h('p', {}, 'No unemployment benefit in your numbers yet.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: add }, 'Add the weekly benefit'))],
+    h('div', { class: 'nw-pair' },
+      fig('Cash runway now', u.runway === null ? null : u.runway.toFixed(1) + ' months', 'with the benefit still coming'),
+      fig('On needs only', u.runwayNeeds === null ? null : u.runwayNeeds.toFixed(1) + ' months', null)),
+    u.after ? h('p', { class: 'tile-sub' }, 'After it ends, in ' + monthWordsOf(u.after.ym) + ': ' + (u.after.left === null ? 'the month cannot be figured yet (a number is missing).' : u.after.left >= 0 ? money(u.after.left) + ' is left that month from the pay that continues.' : 'a month runs ' + money(-u.after.left) + ' short' + (u.after.months === null ? '.' : '; your cash of ' + money(u.cash) + ' covers about ' + u.after.months.toFixed(1) + ' months of that.'))) : u.streams.length ? h('p', { class: 'tile-sub muted' }, 'Type the last week paid to see what happens after it ends.') : null,
+    mathButton(['runway', 'runwayNeeds', 'taxSetAside'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })));
 }
 
 function sectionScreen(sec) {
@@ -1123,6 +1168,7 @@ function itemScreen(sec, g, it, st) {
   const maxShown = maxable && !!st.max;
   const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; keep({ max: !maxShown }); refresh(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
   return [
+    it.key === 'household.situation' ? unemploymentCard() : null,
     g.item && it.label !== g.label ? h('p', { class: 'muted' }, it.label) : null,
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),

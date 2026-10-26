@@ -1070,3 +1070,8 @@ h3.flag-title { margin: 0; font-size: var(--text-md); font-weight: 700; }
 }
 .onepager .op-flow .fb-more { display: none; }
 .onepager .op-flow .fb-tap { pointer-events: none; border: 0; padding: 0; background: none; }
+/* Unemployment card (owner's ask, 2026-10-26): labels above their boxes, two boxes side by side when there is room. */
+.unemp-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); }
+.unemp-fields .add-field { display: grid; gap: 4px; }
+.unemp-fields input { width: 100%; }
+.unemp-note { background: var(--watch-soft); padding: var(--space-2) var(--space-3); border-radius: 6px; }

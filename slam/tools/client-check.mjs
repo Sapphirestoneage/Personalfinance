@@ -2,7 +2,7 @@
 // renter, anxious) and Dre (31, self-employed, lumpy pay, a card balance) each start from a client answers file
 // (test/clients/*-answers.json, made up) and the Profile. Then a navigation test: four levels down, the phone's back to
 // the top, three undos in a row. Run from the repo root with slam served on 8765:
-//   (cd slam && python3 -m http.server 8765 &) ; node slam/tools/client-test.mjs
+//   (cd slam && python3 -m http.server 8765 &) ; node slam/tools/client-check.mjs
 // Prints, per client: the seconds the script took, the taps, typed answers and results read aloud, an estimated
 // session length at a coach's pace (EST), and every place a step needed explaining (notes). Exits 1 when a check fails.
 
