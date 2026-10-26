@@ -41,3 +41,18 @@ test('Batch 6: the Calendar has three numbers on top, the filters, several marke
   for (const w of ["'Cash today'", "'Left this month'", "'Lowest point'", "['rough', 'Rough or missing']", "'Drag an item to another day to move it. '", "'What the colors mean')", "keys.reduce("]) assert.ok(src.includes(w), w);
   assert.match(read('ui/cash-chart.js'), /tag\(aheadPts, 'Cash'\); tag\(debtPts, 'Debt'\)/);
 });
+
+test('Batch 7: Spending has Do and See; See says its range and has reference lines, never a verdict', async () => {
+  const src = read('ui/spending.js');
+  assert.match(src, /\[\['do', 'Do'\], \['see', 'See'\]\]/);
+  assert.match(src, /'Showing ' \+ windowWords\(m\.compare\)/);
+  assert.doesNotMatch(src, /running hot|'on track'/);
+  const { referenceBands } = await import('../engine/spending.js');
+  const s = { cashflow: { income: { takeHome: { value: 4000 } }, expenses: { need: { value: 1800 }, total: { value: 2600 } }, debtMinimums: { total: { value: 200 } }, saving: { total: 400 } } };
+  const r = referenceBands(s, JSON.parse(read('data/benchmarks.json')));
+  // Needs (1,800 + 200) / 4,000 = 50%; wants 800 / 4,000 = 20%; saving 400 / 4,000 = 10%.
+  assert.deepEqual(r.rows.map((x) => [x.id, x.share, x.reference]), [['needs', 0.5, 0.5], ['wants', 0.2, 0.3], ['saving', 0.1, 0.2]]);
+  assert.ok(r.rows.every((x) => !('verdict' in x) && !('grade' in x)));
+  const none = referenceBands({ cashflow: { ...s.cashflow, expenses: { need: { value: null }, total: { value: 2600 } } } }, JSON.parse(read('data/benchmarks.json')));
+  assert.equal(none.rows[0].share, null, 'no needs marked is missing, never 0%');
+});

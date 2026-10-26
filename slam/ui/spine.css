@@ -1049,3 +1049,7 @@ h3.flag-title { margin: 0; font-size: var(--text-md); font-weight: 700; }
 .cl-end { font-weight: 600; }
 .waiting-list .check-row { display: flex; align-items: center; gap: var(--space-2); width: auto; min-height: var(--tap); }
 .waiting-list .check-row input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; flex: none; margin: 0; padding: 0; }
+/* Phase 2.5 Batch 7: Spending's Do and See. */
+.spend-tabs { margin-bottom: var(--space-3); }
+.range-words { font-weight: 600; margin: var(--space-2) 0; }
+.checkin-chip > summary { cursor: pointer; }

@@ -281,3 +281,18 @@ export function spendingView(spine, rules, sim, s, { today = spine.meta.asOf, ym
     log: monthLog(spine, ym || monthKey(asOf))
   };
 }
+
+// Reference bands (Phase 2.5 Batch 7, data/benchmarks.json): needs, wants and saving as shares of take-home, each
+// beside its 50/30/20 reference line. A reference, never a grade: no row says good or bad. Needs are the lines marked
+// need plus debt minimums; wants are the rest of spending; saving is everything set to be saved (docs/FORMULAS.md).
+export function referenceBands(s, bench) {
+  const cf = s.cashflow, th = cf.income.takeHome.value, ref = (bench && bench.fiftyThirtyTwenty) || null;
+  if (!ref) return null;
+  const needs = cf.expenses.need.value === null ? null : round2(cf.expenses.need.value + (cf.debtMinimums.total.value ?? 0));
+  const wants = cf.expenses.need.value === null || cf.expenses.total.value === null ? null : round2(cf.expenses.total.value - cf.expenses.need.value);
+  const share = (x) => (x === null || !th ? null : Math.round(x / th * 1000) / 1000);
+  return {
+    takeHome: th, source: ref.source,
+    rows: [['needs', 'Needs (and debt minimums)', needs, ref.needs], ['wants', 'Wants', wants, ref.wants], ['saving', 'Saving', cf.saving.total, ref.savings]].map(([id, label, amount, reference]) => ({ id, label, amount, share: share(amount), reference }))
+  };
+}

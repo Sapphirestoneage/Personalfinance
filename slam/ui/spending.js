@@ -11,7 +11,8 @@ import { startPage, change, said, keep, kept, refresh } from './shell.js';
 import { gapsCard } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
-import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS } from '../engine/spending.js';
+import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS, referenceBands } from '../engine/spending.js';
+import { spendingStart } from '../engine/profile.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
 import { waiting } from '../engine/calendar-views.js';
 import { realHourlyWage, hoursOf } from '../engine/plan.js';
@@ -107,11 +108,6 @@ function fold(id, cls, summary, ...body) {
 }
 
 // ---------------------------------------------------------------- pieces of the top screen
-function staleBanner(st) {
-  return h('div', { class: 'stale-banner' + (st.stale ? '' : ' fresh'), role: st.stale ? 'alert' : 'status' },
-    h('span', {}, h('strong', {}, st.stale ? 'Out of date: ' : 'Up to date: '), st.words),
-    h('a', { class: 'btn' + (st.stale ? ' primary' : ''), href: '#checkin' }, 'Check in'));
-}
 
 function safeCard(m) {
   const s = m.vw.safe;
@@ -189,7 +185,6 @@ function budgetCell(r) {
   if (markShare !== null) bar.append(h('span', { class: 'mark', style: 'left:' + pc(markShare) }));
   return [bar, h('span', { class: 'muted' }, money(r.spent) + ' of ' + money(r.budget))];
 }
-const hotChip = (r) => (r.hot ? h('span', { class: 'hot-chip' }, 'running hot') : r.over ? h('span', { class: 'hot-chip' }, 'over') : r.budget !== null && r.budget > 0 ? h('span', { class: 'hot-chip fine' }, 'on track') : null);
 // A tag's name: it opens its category when it has lines.
 const tagName = (m, tag, label) => (catOf(m, tag) ? h('a', { class: 'cell-link', href: at(tag) }, label, chev()) : label);
 const tagMath = (r) => ['spend:tagBudget:' + r.tag, 'spend:tagSpent:' + r.tag, ...(r.pace !== null ? ['spend:pace:' + r.tag] : [])];
@@ -202,7 +197,7 @@ function tagsCard(m) {
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', {}, 'Spent'), h('th', { class: 'num' }, 'Left'), h('th', { class: 'num' }, 'At this pace'), h('th', { class: 'num' }, 'Last month, same day'))),
       h('tbody', {}, t.rows.map((r) => h('tr', { class: r.hot ? 'tight' : '' },
-        h('td', {}, tagName(m, r.tag, r.label), ' ', hotChip(r)),
+        h('td', {}, tagName(m, r.tag, r.label)),
         h('td', {}, budgetCell(r)),
         h('td', { class: 'num' }, r.left === null ? 'missing' : money(r.left), r.left === null ? null : hoursTag(r.left)),
         h('td', { class: 'num' }, r.pace === null ? '' : money(r.pace)),
@@ -519,24 +514,58 @@ function lineScreen(m, cat, l) {
 }
 
 // ---------------------------------------------------------------- the screens
+// Two tabs (Phase 2.5 Batch 7): Do (import a statement, the review queue, add a purchase, the check-in as one chip
+// that opens in place) and See (the time picker that says its range in words, the categories, reference lines from
+// data/benchmarks.json, never a verdict). The tab is kept with the screen; a link to #checkin or #log opens Do.
+let BENCH = null;
+try { const r = await fetch(new URL('../data/benchmarks.json', import.meta.url), { cache: 'no-store' }); if (r.ok) BENCH = await r.json(); } catch { /* no reference lines */ }
+const tabOf = (state) => (state.tab === 'see' || state.tab === 'do' ? state.tab : 'do');
+function tabsBar(tab) {
+  return h('div', { class: 'segmented spend-tabs', role: 'group', 'aria-label': 'Spending' },
+    [['do', 'Do'], ['see', 'See']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
+}
+function checkinChip(m) {
+  const open = /^#checkin$/.test(location.hash) || kept().checkinOpen === true;
+  const d = h('details', { class: 'card checkin-chip', open: open || null }, h('summary', {}, h('span', {}, 'Check in balances'), ' ', h('span', { class: 'pill' + (m.vw.stale.stale ? ' pill-maybe' : '') }, m.vw.stale.stale ? 'out of date' : 'up to date')), checkinCard(m));
+  d.addEventListener('toggle', () => { if (!!kept().checkinOpen !== d.open) keep({ checkinOpen: d.open }); });
+  return d;
+}
+function referenceCard(m) {
+  const r = referenceBands(m.s, BENCH);
+  if (!r) return null;
+  const pc1 = (x) => (x === null ? 'missing' : Math.round(x * 1000) / 10 + '%');
+  return h('section', { class: 'card', 'aria-labelledby': 'ref-h' },
+    h('h2', { id: 'ref-h' }, 'Beside a common reference'),
+    h('p', { class: 'muted' }, 'Shares of take-home a month, beside the 50/30/20 lines. A reference point, not a grade.'),
+    h('ul', { class: 'sum-lines' }, r.rows.map((x) => h('li', { class: 'sum-line' }, h('span', {}, x.label), h('span', { class: 'num' }, pc1(x.share) + ' (line at ' + pc1(x.reference) + ')')))),
+    h('p', { class: 'tile-note' }, 'Source: ' + r.source + '.'));
+}
+const rangeWords = (m) => h('p', { class: 'range-words', 'aria-live': 'polite' }, 'Showing ' + windowWords(m.compare) + '.');
 function topScreen(m, months, state) {
+  const tab = /^#(checkin|log)$/.test(location.hash) ? 'do' : tabOf(state);
+  const addFirst = spendingStart(m.base || m.spine) === 'add';
   return [
-    staleBanner(m.vw.stale),
-    controls(m, months),
-    safeCard(m),
-    outlookCard(m),
-    loggerCard(m),
-    tagsCard(m),
-    compareCard(m),
-    importCard(m),
-    tiersCard(m),
-    donutCard(m),
-    cutCard(m),
-    askCard(m, state),
-    autopsyCard(m),
-    pricesCard(m),
-    checkinCard(m),
-    sweepCard(m)
+    tabsBar(tab),
+    ...(tab === 'do' ? [
+      safeCard(m),
+      addFirst ? loggerCard(m) : importCard(m),
+      addFirst ? importCard(m) : loggerCard(m),
+      checkinChip(m),
+      askCard(m, state),
+      sweepCard(m)
+    ] : [
+      controls(m, months),
+      rangeWords(m),
+      tagsCard(m),
+      compareCard(m),
+      referenceCard(m),
+      donutCard(m),
+      tiersCard(m),
+      outlookCard(m),
+      cutCard(m),
+      autopsyCard(m),
+      pricesCard(m)
+    ])
   ];
 }
 
