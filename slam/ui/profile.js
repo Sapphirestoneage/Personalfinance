@@ -102,10 +102,11 @@ function changesScreen({ spine }) {
 
 startPage({
   tab: null, title: 'Profile', parent: ['Today', 'dashboard.html'],
-  name: (levels) => (levels[0] === 'ask' ? L2_AREAS[levels[1]] || null : levels[0] === 'todo' ? 'To-dos' : levels[0] === 'changes' ? 'Life changes' : AREA_NAMES[levels[0]] || null),
+  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : levels[0] === 'todo' ? 'To-dos' : levels[0] === 'changes' ? 'Life changes' : AREA_NAMES[levels[0]] || null),
   render: (ctx) => {
     const [l0, l1] = ctx.levels;
     if (!l0) return top(ctx);
+    if (l0 === 'ask' && !l1) { const l2 = level2(answersOf(ctx.spine)); return l2.length ? h('ul', { class: 'go-list' }, l2.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: '#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label))))) : h('p', { class: 'card' }, 'Nothing to ask yet.'); }
     if (l0 === 'ask') return askScreen(ctx, l1);
     if (l0 === 'todo') return todoScreen(ctx);
     if (l0 === 'changes') return changesScreen(ctx);

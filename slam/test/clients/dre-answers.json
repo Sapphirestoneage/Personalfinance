@@ -1,0 +1,40 @@
+{
+  "kind": "slam-answers/1",
+  "savedAt": "2026-10-26",
+  "answers": {
+    "firstName": "Dre",
+    "birthYear": 1995,
+    "state": "NY",
+    "livesWith": [
+      "partner"
+    ],
+    "tone": "straight",
+    "home": "rent",
+    "moving": "no",
+    "getAround": "car",
+    "work": "self",
+    "quarterly": "notSure",
+    "publicService": "no",
+    "getMoney": "no",
+    "give": [
+      "none"
+    ],
+    "debts": [
+      "cards"
+    ],
+    "cardsFull": "no",
+    "behind": "no",
+    "accounts": [
+      "checking"
+    ],
+    "emergencySeparate": "no",
+    "health": "marketplace",
+    "tracking": "statements",
+    "goals": [
+      "debtFree",
+      "emergency"
+    ],
+    "fi": "notNow"
+  },
+  "gutSpending": 3500
+}

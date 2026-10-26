@@ -227,3 +227,13 @@ test('review fixes: a later answer never undoes typed pay; a stale answer stops 
   assert.equal(valueOf(getAt(old, 'expenses.utilities.covered')), true);
   assert.equal(getAt(answer(old, { home: 'rent' }), 'expenses.utilities.covered'), undefined);
 });
+
+test('Batch 10 fix: the goals picked before the call are set up, once, ready for an amount; nothing removes them', () => {
+  let s = answer(demo(), { goals: ['emergency', 'travel'], moving: 'yes', fi: 'curious' });
+  const keys = s.goals.filter((g) => g.key).map((g) => [g.id, g.label, g.target.kind]).sort();
+  assert.deepEqual(keys, [['goal-emergency', 'An emergency fund', 'missing'], ['goal-moving', 'Moving costs', 'missing'], ['goal-travel', 'Travel', 'missing']]);
+  assert.equal(s.goals.filter((g) => g.type === 'fi').length, 1, 'the demo already has its FI goal');
+  s = answer(s, { goals: ['emergency'] });
+  assert.ok(s.goals.some((g) => g.id === 'goal-travel'), 'unpicking keeps the goal and what was typed in it');
+  assert.ok(validate(s).ok);
+});

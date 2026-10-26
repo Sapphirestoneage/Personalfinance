@@ -1,0 +1,48 @@
+{
+  "kind": "slam-answers/1",
+  "savedAt": "2026-10-26",
+  "answers": {
+    "firstName": "Maya",
+    "birthYear": 1999,
+    "state": "NY",
+    "livesWith": [
+      "alone"
+    ],
+    "tone": "gentle",
+    "home": "rent",
+    "moving": "no",
+    "getAround": "transit",
+    "work": "w2",
+    "payType": "salary",
+    "payOften": "biweekly",
+    "extras": [
+      "none"
+    ],
+    "offers": [
+      "k401",
+      "health"
+    ],
+    "publicService": "no",
+    "getMoney": "no",
+    "give": [
+      "none"
+    ],
+    "debts": [
+      "none"
+    ],
+    "behind": "no",
+    "accounts": [
+      "checking",
+      "savings"
+    ],
+    "emergencySeparate": "no",
+    "health": "work",
+    "tracking": "none",
+    "goals": [
+      "emergency",
+      "travel"
+    ],
+    "fi": "curious"
+  },
+  "gutSpending": 2800
+}

@@ -288,6 +288,15 @@ export function syncProfile(spine, { today, changed = null }) {
     const often = ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(a.payOften) ? a.payOften : undefined;
     if (job && basis && (v(job.payBasis) !== basis || (often && job.cadence !== often))) s = setPay(s, job.id, { basis, cadence: often }, today);
   }
+  // Goals picked (Level 1) are added once, ready for an amount and a date; moving in the next year adds moving costs;
+  // FI yes or curious adds the FI goal. A goal is never removed when an answer changes (the client may have typed in it).
+  const want = [...(Array.isArray(a.goals) ? a.goals : []), ...(['yes', 'maybe'].includes(a.moving) ? ['moving'] : [])];
+  for (const k of want) {
+    if ((s.goals || []).some((g) => g.key === k)) continue;
+    const label = k === 'moving' ? 'Moving costs' : goalWords(k);
+    s = { ...s, goals: [...(s.goals || []), { id: 'goal-' + k, key: k, type: k === 'debtFree' ? 'payoff' : 'savings', label, target: fact(null, { asOf: today, source: NAME_SOURCE }) }] };
+  }
+  if (['yes', 'curious'].includes(a.fi) && !(s.goals || []).some((g) => g.type === 'fi')) s = { ...s, goals: [...(s.goals || []), { id: 'fi', type: 'fi', label: 'Financial independence' }] };
   // A parent's plan ends at 26: a dated change in health coverage, kept only while the answer is a parent's plan.
   const hc = (s.household.healthCoverage || []).filter((x) => x.id !== 'turning-26');
   const birth = person ? v(getAt(s, 'household.people.' + person.id + '.birthDate')) : null;

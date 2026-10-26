@@ -1,0 +1,108 @@
+{
+  "schema": "slam-spine/1",
+  "meta": {
+    "name": "Dre (made up)",
+    "asOf": "2026-10-26",
+    "demo": false,
+    "from": "made up for the Phase 2.5 client test; not a real person"
+  },
+  "household": {
+    "people": [
+      {
+        "id": "you",
+        "name": "You",
+        "birthDate": {
+          "value": null,
+          "asOf": "2026-10-26",
+          "source": "new client",
+          "kind": "missing"
+        }
+      }
+    ],
+    "filingStatus": {
+      "value": "single",
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "known"
+    },
+    "state": {
+      "value": null,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "missing"
+    },
+    "county": {
+      "value": null,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "missing"
+    },
+    "nycResident": {
+      "value": null,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "missing"
+    },
+    "situation": [
+      {
+        "id": "now",
+        "from": null,
+        "value": {
+          "value": null,
+          "asOf": "2026-10-26",
+          "source": "new client",
+          "kind": "missing"
+        }
+      }
+    ],
+    "healthCoverage": [
+      {
+        "id": "now",
+        "from": null,
+        "value": {
+          "value": null,
+          "asOf": "2026-10-26",
+          "source": "new client",
+          "kind": "missing"
+        }
+      }
+    ]
+  },
+  "income": [],
+  "expenses": [],
+  "accounts": [],
+  "debts": [],
+  "goals": [],
+  "assumptions": {
+    "inflation": {
+      "value": 0.03,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "rough"
+    },
+    "realReturn": {
+      "value": 0.06,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "rough"
+    },
+    "withdrawalRate": {
+      "value": 0.04,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "rough"
+    },
+    "lifeExpectancy": {
+      "value": 90,
+      "asOf": "2026-10-26",
+      "source": "new client",
+      "kind": "rough"
+    }
+  },
+  "taxYears": [
+    {
+      "id": "2026",
+      "year": 2026
+    }
+  ]
+}
