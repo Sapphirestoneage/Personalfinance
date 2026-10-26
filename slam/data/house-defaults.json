@@ -1,0 +1,166 @@
+{
+  "kind": "house-defaults",
+  "source": "Eli's method, applied to every client until a client's own number replaces it. Edit on the Builder's House defaults page.",
+  "rules": [
+    {
+      "id": "DEFAULT_CARD_APR",
+      "rule": "Card interest rate used when a card has no APR, or an intro rate has no rate after it",
+      "value": 0.25,
+      "unit": "rate",
+      "appliesTo": "Credit cards",
+      "notes": "Filled in at load and after each Ledger edit, stored as rough so it shows yellow",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "DEFAULT_DUE_DAY",
+      "rule": "Day of the month a debt payment is due when none is entered",
+      "value": 1,
+      "unit": "day of month",
+      "appliesTo": "Every debt type: credit cards, auto, student, personal and other loans, mortgages, HELOCs, BNPL, IOUs with a payment",
+      "notes": "Filled in at load and after each Ledger edit, stored as rough. A card statement close day is never filled in.",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "DEFAULT_APY",
+      "rule": "APY used when a cash account (not high-yield savings) has none",
+      "value": 0.0001,
+      "unit": "rate",
+      "appliesTo": "Cash accounts",
+      "notes": "0.01%, about what a regular checking or savings account pays; filled in at load and after each Ledger edit, stored as rough. High-yield savings is left blank so the real rate is asked for",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "DEFAULT_PHONE_PLAN_1",
+      "rule": "Monthly cost of a standard phone plan for one line, used when a phone expense has no amount",
+      "value": 70,
+      "unit": "usd/month",
+      "appliesTo": "Expenses (phone)",
+      "notes": "A single-line unlimited plan at a major carrier with taxes and fees, roughly $65 to $80 in 2026; prepaid plans cost less. For a phone someone else covers, it is what it would cost you. Stored as rough",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "DEFAULT_VEHICLE_DEPRECIATION",
+      "rule": "Yearly change in a vehicle's value when none is entered",
+      "value": -0.15,
+      "unit": "rate",
+      "appliesTo": "Other assets (car)",
+      "notes": "A car loses about 15% of its value a year; stored on the car as rough so it shows yellow, and the net worth projection uses it",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_CARD_MIN_PCT",
+      "rule": "Default card minimum: this share of the balance plus a month of interest",
+      "value": 0.01,
+      "unit": "rate",
+      "appliesTo": "Debt engine",
+      "notes": "Used with APP_CARD_MIN_FLOOR",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_CARD_MIN_FLOOR",
+      "rule": "Default card minimum: never less than this",
+      "value": 40,
+      "unit": "$",
+      "appliesTo": "Debt engine",
+      "notes": "Stored as a rough default when a card has no minimum; recomputed as the balance changes; never more than the balance",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_RULE_OF_5",
+      "rule": "Rule of 5: months of expenses = age divided by this",
+      "value": 5,
+      "unit": "divisor",
+      "appliesTo": "Emergency fund",
+      "notes": "",
+      "source": "Eli's default (SLAM design (Phase 1 brief))",
+      "verified": "house"
+    },
+    {
+      "id": "APP_HOUSING_REF",
+      "rule": "Housing reference line as a share of take-home, shown beside the DRAFTT housing letter (no verdict)",
+      "value": 0.35,
+      "unit": "rate",
+      "appliesTo": "Plan page: DRAFTT scorecard",
+      "notes": "Answer L002: a reference, not a target or a colour",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "FOO_RUNGS",
+      "rule": "The Financial Order of Operations, rung by rung",
+      "value": [
+        "deductibles",
+        "employerMatch",
+        "highInterest",
+        "reserves",
+        "rothHsa",
+        "maxRetirement",
+        "hyper",
+        "prepaid",
+        "lowInterest"
+      ],
+      "unit": "order",
+      "appliesTo": "Plan page: the FOO ladder",
+      "notes": "Deductibles covered, the employer match, high-interest debt, emergency reserves (the Rule of 5 target), Roth and HSA room, retirement maxed, hyper-accumulation (a savings rate), prepaid future expenses (goals), low-interest debt. Change the order here, not in code.",
+      "source": "Eli's default (The Money Guy Financial Order of Operations, as the spec (E007) adopts it)",
+      "verified": "house"
+    },
+    {
+      "id": "FOO_HYPER_RATE",
+      "rule": "Hyper-accumulation: the gross savings rate the FOO aims for",
+      "value": 0.25,
+      "unit": "rate",
+      "appliesTo": "Plan page: FOO rung 7",
+      "notes": "",
+      "source": "Eli's default (The Money Guy Financial Order of Operations (25%))",
+      "verified": "house"
+    },
+    {
+      "id": "APP_HI_RATE",
+      "rule": "Debt at or above this rate counts as high-interest for the extra at the debt (stopAtHi) and the high-interest-free date",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Cash simulation: the extra at the debt",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "WINDFALL_ORDER",
+      "rule": "The order a lump sum is assigned in the Windfall room",
+      "value": [
+        "taxOnIt",
+        "taxBill",
+        "cashFloor",
+        "promos",
+        "employerMatch",
+        "cards",
+        "cushion",
+        "roth",
+        "left"
+      ],
+      "unit": "order",
+      "appliesTo": "Windfall",
+      "notes": "Tax on the money itself (when it is still owed), the year's tax bill, cash up to the stage 1 floor, promo balances the surplus cannot clear in time, the employer match left on the table this year (answer 23: before the cards, skipped and said so when no stream has a match), cards charging interest now (highest rate first), cash up to the Rule of 5 target, the year's Roth IRA room, then what is left. Change the order here, not in code.",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_MATERIALITY",
+      "rule": "A difference smaller than this is too small to matter: the month reads on plan",
+      "value": 100,
+      "unit": "usd",
+      "appliesTo": "Spending, Today",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
+    }
+  ]
+}

@@ -5,16 +5,19 @@
 // (old and new) and leaves out; nothing is applied until Apply, which keeps them as overrides too.
 
 import { startPage, refresh, say, said } from './shell.js';
-import { rulesFile, ruleOverrides, keepRuleOverrides } from './household.js';
-import { withOverrides, diffRules, importOverrides, notRulesWords, RULE_SORT_WORDS } from '../engine/rules.js';
+import { rulesFile, houseFile, ruleOverrides, keepRuleOverrides } from './household.js';
+import { withOverrides, diffRules, importOverrides, notRulesWords, RULE_SORT_WORDS, HOUSE } from '../engine/rules.js';
 import { h, ruleValueWords } from './view.js';
 
-const YEAR = 2026;
-const file = await rulesFile(YEAR);
+// The same page edits Eli's house defaults (house.html, data/house-defaults.json, Phase 2.5 B1): kept under overrides.house
+// instead of a year, with no import.
+const ON_HOUSE = /\/house\.html$/.test(location.pathname);
+const YEAR = 2026, KEY = ON_HOUSE ? HOUSE : YEAR;
+const file = ON_HOUSE ? await houseFile() : await rulesFile(YEAR);
 const fileById = new Map(((file && file.rules) || []).map((r) => [r.id, r]));
 let incoming = null; // a rules file read and waiting: { name, diff }
 
-const mine = () => ruleOverrides()[YEAR] || {};
+const mine = () => ruleOverrides()[KEY] || {};
 const inUse = () => withOverrides(file, mine());
 const byId = () => new Map(inUse().rules.map((r) => [r.id, r]));
 const unitWords = (r) => (r.unit ? ' (' + r.unit + ')' : '');
@@ -22,14 +25,14 @@ const shown = (r) => ruleValueWords(r) + unitWords(r);
 
 // Overrides for this year, kept; Undo (the bar, the header or Ctrl/Cmd+Z) puts the ones before back, and Redo these.
 function keepMine(next, words) {
-  const all = ruleOverrides(), before = all[YEAR] || {};
+  const all = ruleOverrides(), before = all[KEY] || {};
   const after = next && Object.keys(next).length ? next : {};
   if (!putYear(after)) { say('This browser will not keep rule changes, so nothing changed'); return; }
   refresh();
   say(words, () => { putYear(before); refresh(); }, () => { putYear(after); refresh(); });
 }
 // This year's overrides, the other years' left as they are.
-function putYear(o) { const again = { ...ruleOverrides() }; if (Object.keys(o).length) again[YEAR] = o; else delete again[YEAR]; return keepRuleOverrides(again); }
+function putYear(o) { const again = { ...ruleOverrides() }; if (Object.keys(o).length) again[KEY] = o; else delete again[KEY]; return keepRuleOverrides(again); }
 
 // ---------------------------------------------------------------- the list
 function row(r, changed) {
@@ -119,12 +122,12 @@ function ruleScreen(r) {
 // ---------------------------------------------------------------- the page
 const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'A rules file', onchange: (e) => readFile(e.target) });
 startPage({
-  tab: null, title: 'Rules', parent: ['Builder', 'builder.html'], household: false,
+  tab: null, title: ON_HOUSE ? 'House defaults' : 'Rules', parent: ['Builder', 'builder.html'], household: false,
   name: (levels) => { const r = levels.length === 1 ? byId().get(levels[0]) : null; return r ? r.rule || r.id : null; },
   actions: ({ levels }) => (levels.length || !file ? null : [
-    h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Import a rules file'), input,
+    ON_HOUSE ? null : [h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Import a rules file'), input],
     Object.keys(mine()).length
-      ? h('button', { type: 'button', class: 'btn danger', onclick: () => keepMine({}, 'Every rule is back to the file\'s value') }, 'Use the file\'s rules')
+      ? h('button', { type: 'button', class: 'btn danger', onclick: () => keepMine({}, ON_HOUSE ? 'Every house default is back to the file\'s value' : 'Every rule is back to the file\'s value') }, 'Use the file\'s rules')
       : h('button', { type: 'button', class: 'btn', disabled: true }, 'Every rule is the file\'s')
   ]),
   render: ({ levels }) => {
@@ -132,7 +135,7 @@ startPage({
     if (levels.length) return ruleScreen(byId().get(levels[0]));
     const own = mine(), rules = inUse().rules;
     return [
-      h('p', { class: 'lede' }, 'Every rule the app uses (data/rules-' + YEAR + '.json), with its value, source and note. A change here is kept in this browser and used on every page.'),
+      h('p', { class: 'lede' }, ON_HOUSE ? 'Eli\'s method, used for every client until their own number is in (data/house-defaults.json). Change one here and every guess that used it changes on every page; nothing a client typed changes. Client screens say "using Eli\'s default".' : 'Every rule the law sets (data/rules-' + YEAR + '.json), with its value, source and note. Eli\'s own defaults are on House defaults. A change here is kept in this browser and used on every page.'),
       importCard(),
       h('ul', { class: 'go-list', 'aria-label': rules.length + ' rules' }, rules.map((r) => row(r, !!own[r.id])))
     ];

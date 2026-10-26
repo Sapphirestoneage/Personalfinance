@@ -12,7 +12,11 @@ const files = [
   // engine/vendor/ holds byte copies of another app's files (S-203), checked for drift, not style.
   ...['engine', 'ui'].flatMap((d) => readdirSync(SLAM + d).filter((f) => f.endsWith('.js') || f.endsWith('.css')).map((f) => d + '/' + f)),
   ...readdirSync(SLAM + 'test').filter((f) => /^(spine-|rules\.|schema\.|eli\.golden|demo\.golden|p25-)/.test(f)).map((f) => 'test/' + f),
-  'ledger.html', 'dashboard.html', 'plan.html', 'onepager.html', 'spending.html', 'calendar.html', 'windfall.html', 'session.html', 'builder.html', 'rules.html', 'math.html', 'affordances.html', 'data/rules-2026.json', 'fixtures/demo.json',
+  // Every page, every data file and every Phase 2.5 doc (Phase 2.5: the list grows by itself).
+  ...readdirSync(SLAM).filter((f) => f.endsWith('.html')),
+  ...readdirSync(SLAM + 'data').filter((f) => f.endsWith('.json')).map((f) => 'data/' + f),
+  ...readdirSync(SLAM + 'docs').filter((f) => /^(DATA_LAYERS|FORMULAS|PROGRESS_25|PHASE25_PLAN)\.md$/.test(f)).map((f) => 'docs/' + f),
+  'fixtures/demo.json',
   'CONTRACTS.md', 'BOARD.md', 'QUESTIONS.md', 'DECISIONS.md', 'README.md'
 ];
 

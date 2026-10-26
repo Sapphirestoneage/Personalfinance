@@ -692,7 +692,7 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
       h('span', { class: 'row-label' }, label, row.linked ? null : tags(row)),
       h('span', { class: 'row-value' + (!row.linked && f.value === null ? ' empty' : '') }, rowValue(row)),
       chip(f.kind)),
-    note && !isOpen ? h('p', { class: 'row-why' }, note) : null,
+    !isOpen && (note || whoSupplies(f) === 'default') ? h('p', { class: 'row-why' }, note || 'Using Eli\'s default until the real number is in.') : null,
     worked && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null,
     isOpen ? (line ? [h('p', { class: 'row-why' }, 'Set by ' + lineName(row) + ' in Needs. You can change it here.'), openEditor(line)] : openEditor(row)) : null);
 }

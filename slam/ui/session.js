@@ -9,7 +9,7 @@
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
-import { setAt, getAt, valueOf as v, addDays } from '../engine/spine.js';
+import { setAt, getAt, valueOf as v, addDays, whoSupplies } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
@@ -72,7 +72,7 @@ const pickBox = (id, label, options, value, onPick) => {
   return s;
 };
 // A guess says so on its row.
-const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, 'guess') : f && f.kind === 'missing' ? chip('missing') : null);
+const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, whoSupplies(f) === 'default' ? 'Eli\'s default' : 'guess') : f && f.kind === 'missing' ? chip('missing') : null);
 // A small closed fold on the right of a row: who pays, sharing, a cover, dates.
 // What is open stays open when a change redraws the screen.
 const openMore = new Set();

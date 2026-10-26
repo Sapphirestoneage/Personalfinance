@@ -1,9 +1,11 @@
 // Shared loaders for the Phase 1 spine tests (Node only).
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { makeRules } from '../engine/rules.js';
+import { makeRules, withHouse } from '../engine/rules.js';
 
 export const SLAM = fileURLToPath(new URL('..', import.meta.url));
 export const readJson = (rel) => JSON.parse(readFileSync(SLAM + rel, 'utf8'));
 export const exists = (rel) => existsSync(SLAM + rel);
-export const loadRules = () => makeRules(readJson('data/rules-2026.json'));
+// The law's yearly file with Eli's house defaults laid in (data/house-defaults.json), as every page loads them.
+export const lawAndHouse = (reg = readJson('data/rules-2026.json'), houseOverrides) => withHouse(reg, readJson('data/house-defaults.json'), houseOverrides);
+export const loadRules = (houseOverrides) => makeRules(lawAndHouse(undefined, houseOverrides));

@@ -16,7 +16,24 @@ export function fact(value, opts = {}) {
     kind: (kind === 'known' || kind === 'rough' || kind === 'computed') && (value === null || value === undefined) ? 'missing' : kind
   };
   if (opts.note) f.note = opts.note;
+  if (opts.by && SUPPLIERS.includes(opts.by)) f.by = opts.by;
   return f;
+}
+
+// The four tags every number keeps (docs/DATA_LAYERS.md): where it came from (source), as of when (asOf), how sure
+// (kind: known, rough, guess is rough, missing, notForMe) and who supplies it (by). A Fact saved before Phase 2.5 has
+// no `by`; it is read from the source: a house default's id is Eli's default, typical amounts are looked up, anything
+// else is the client's.
+export const SUPPLIERS = ['client', 'coach', 'lookedUp', 'default'];
+export const SUPPLIER_WORDS = { client: 'you', coach: 'Eli', lookedUp: 'looked up', default: "Eli's default" };
+const HOUSE_SOURCES = /^(DEFAULT_[A-Z0-9_]+|APP_CARD_MIN_FLOOR|APP_CARD_MIN_PCT|house:[a-z0-9-]+)$/;
+export function whoSupplies(f) {
+  if (!f || typeof f !== 'object') return null;
+  if (f.by && SUPPLIERS.includes(f.by)) return f.by;
+  const src = String(f.source || '');
+  if (HOUSE_SOURCES.test(src)) return 'default';
+  if (/^(typical|reference)\b/i.test(src)) return 'lookedUp';
+  return 'client';
 }
 
 export const isFact = (x) => !!x && typeof x === 'object' && 'value' in x && 'kind' in x && KINDS.includes(x.kind);

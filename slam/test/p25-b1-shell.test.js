@@ -56,7 +56,7 @@ test('the Builder: one small link at the bottom of every page; the Design kit, A
   const b = read('ui/builder.js');
   for (const [name, href] of [['Design kit', 'affordances.html'], ['All formulas', 'math.html'], ['Rules', 'rules.html']]) assert.ok(b.includes("['" + name + "', '" + href + "'"), name);
   assert.match(b, /tab: null, title: 'Builder'/);
-  for (const f of ['ui/math-page.js', 'ui/rules-page.js']) { assert.match(read(f), /tab: null, title: '[^']+', parent: \['Builder', 'builder\.html'\]/, f); assert.doesNotMatch(read(f), /page-links/, f); }
+  for (const f of ['ui/math-page.js', 'ui/rules-page.js']) { assert.match(read(f), /tab: null, title: (?:'[^']+'|ON_HOUSE \? 'House defaults' : 'Rules'), parent: \['Builder', 'builder\.html'\]/, f); assert.doesNotMatch(read(f), /page-links/, f); }
   const kit = read('affordances.html');
   assert.match(kit, /<title>SLAM Design kit<\/title>/);
   assert.match(kit, /<h1>Design kit<\/h1>/);

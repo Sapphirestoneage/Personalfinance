@@ -118,8 +118,25 @@ export function importOverrides(overrides, diff) {
 // A rules file in plain words when it is not one: null when it is.
 export const notRulesWords = (x) => (!x || typeof x !== 'object' || Array.isArray(x) ? 'It is not a rules file.' : !Number.isInteger(x.year) ? 'It does not say which year its rules are for.' : !Array.isArray(x.rules) ? 'It has no list of rules.' : null);
 
-// Browser and Node loaders. The engines never call these; pages and tests do. overrides: { <year>: { <id>: {...} } }.
+// House defaults (Phase 2.5 B1, docs/DATA_LAYERS.md layer 3): Eli's method applied to everyone (a card's rate when it
+// is not known, the due day, the Rule of 5, the housing reference, the FOO order, what is too small to matter). They
+// live in data/house-defaults.json, not the law's yearly file, and the Builder's House defaults page edits them (kept
+// in this browser under overrides.house). Engines read them through the same get() as a law, every year.
+export const HOUSE = 'house';
+export function withHouse(registry, house, houseOverrides) {
+  if (!house || !Array.isArray(house.rules)) return registry;
+  const own = withOverrides({ year: registry.year, rules: house.rules.map((r) => ({ ...r, layer: HOUSE })) }, houseOverrides).rules.map((r) => ({ ...r, layer: HOUSE }));
+  const ids = new Set(own.map((r) => r.id));
+  return { ...registry, rules: [...registry.rules.filter((r) => !ids.has(r.id)), ...own] };
+}
+export const isHouseRule = (r) => !!r && r.layer === HOUSE;
+
+// Browser and Node loaders. The engines never call these; pages and tests do. overrides: { <year>: { <id>: {...} },
+// house: { <id>: {...} } }.
 export async function fetchRules(baseUrl, years = [2026], overrides = {}) {
-  const regs = await Promise.all(years.map((y) => fetch(new URL('rules-' + y + '.json', baseUrl)).then((r) => r.json())));
-  return makeRules(...regs.map((r) => withOverrides(r, overrides && overrides[r.year])));
+  const [regs, house] = await Promise.all([
+    Promise.all(years.map((y) => fetch(new URL('rules-' + y + '.json', baseUrl)).then((r) => r.json()))),
+    fetch(new URL('house-defaults.json', baseUrl)).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  ]);
+  return makeRules(...regs.map((r) => withHouse(withOverrides(r, overrides && overrides[r.year]), house, overrides && overrides[HOUSE])));
 }

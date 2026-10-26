@@ -55,7 +55,8 @@ export function estimatedVsActual(spine, rules, { months = 1, asOf = spine.meta.
   return {
     from: yms[0], to: last, months: yms, monthsLogged: yms.filter((ym) => logged.has(ym)), monthsSilent: yms.filter((ym) => !logged.has(ym)),
     lines: lineRows, tags: tagRows,
-    spend: { planned: spendMissing ? null : spendPlanned, actual: spendActual, diff: out.value, entries: log.filter((e) => e.kind !== 'income').length },
+    // Too small to matter (Eli's default APP_MATERIALITY, $100): the month reads on plan.
+    spend: { planned: spendMissing ? null : spendPlanned, actual: spendActual, diff: out.value, onPlan: out.value !== null && Math.abs(out.value) < rules.get('APP_MATERIALITY', +last.slice(0, 4)), entries: log.filter((e) => e.kind !== 'income').length },
     income: { planned: incomeMissing ? null : incomePlanned, actual: incomeEntries ? incomeActual : null, entries: incomeEntries, diff: incomeMissing || !incomeEntries ? null : round2(incomeActual - incomePlanned) },
     savingsRate: { real: realRate, plan: planRate, note: !incomeEntries ? 'No income logged in the window, so no real savings rate yet; log a paycheck when it lands.' : null },
     kind: out.kind, from_: out.from, rough: out.rough, missing: out.missing, rules: out.rules

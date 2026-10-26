@@ -44,6 +44,7 @@ export function keepRuleOverrides(o) {
 }
 export const loadRules = () => fetchRules(new URL('data/', base), [2026], ruleOverrides());
 export const rulesFile = (year = 2026) => fetchJson('data/rules-' + year + '.json');
+export const houseFile = () => fetchJson('data/house-defaults.json');
 
 // The file on this computer is looked for only on localhost with ?local=1: never on the published site or the
 // artifact, so no page asks for a file that is not there.

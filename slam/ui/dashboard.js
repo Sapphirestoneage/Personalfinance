@@ -125,7 +125,7 @@ function render({ spine: base, rules }) {
     tile(spine, {
       // Nothing logged this month: no number (empty is not zero), and the card says so.
       id: 'compare', label: monthLabel(compare.to) + ' vs plan', result: { value: compare.monthsLogged.length ? compare.spend.diff : null, kind: compare.monthsLogged.length ? compare.kind : 'missing', from: [], rough: compare.monthsLogged.length ? compare.rough : [], missing: compare.monthsLogged.length ? compare.missing : [] },
-      shown: (compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing added this month yet',
+      shown: (compare.spend.onPlan ? 'On the plan' : compare.spend.diff > 0 ? money(compare.spend.diff) + ' over the plan' : compare.spend.diff < 0 ? money(-compare.spend.diff) + ' under the plan' : 'On the plan'), missingText: compare.monthsLogged.length ? null : 'Nothing added this month yet',
       lines: [
         compare.monthsLogged.length ? 'Spent ' + money(compare.spend.actual) + ' of ' + (compare.spend.planned === null ? 'a plan with a missing line' : money(compare.spend.planned) + ' planned') + ' (' + compare.spend.entries + (compare.spend.entries === 1 ? ' entry' : ' entries') + ').' : null,
         compare.income.actual !== null ? 'Income ' + money(compare.income.actual) + (compare.income.planned !== null ? ' of ' + money(compare.income.planned) + ' planned' : '') + '.' : compare.monthsLogged.length ? 'No income added yet, so no real savings rate.' : null,

@@ -132,7 +132,7 @@ test('the default card APR fills a blank as rough, and leaves real rates alone',
   }
   assert.equal(getAt(out, 'debts.store.apr').value, 0.2999);
   assert.equal(getAt(out, 'debts.sl.apr').value, 0.05, 'loans are not touched');
-  assert.equal(R.meta('DEFAULT_CARD_APR', 2026).verified, 'assumption');
+  assert.equal(R.meta('DEFAULT_CARD_APR', 2026).verified, 'house');
   assert.ok(validate(out).ok);
 });
 
@@ -171,7 +171,7 @@ test('the default due day fills every debt with no due day as rough, never a sta
   assert.equal(getAt(out, 'debts.store.dueDay').value, 3, 'a real due day stays');
   assert.equal(getAt(out, 'debts.iou.dueDay'), undefined, 'an IOU with no payment gets no due day');
   assert.ok(out.debts.every((d) => !d.statementCloseDay), 'no statement close day is invented');
-  assert.equal(R.meta('DEFAULT_DUE_DAY', 2026).verified, 'assumption');
+  assert.equal(R.meta('DEFAULT_DUE_DAY', 2026).verified, 'house');
 });
 
 // ------------------------------------------------------------------ the tree, adding, removing, many at once (S-169)
