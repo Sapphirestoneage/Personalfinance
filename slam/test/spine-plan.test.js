@@ -147,7 +147,11 @@ test('DRAFTT: the letters as shares of the base, the housing reference at 35%, n
   assert.equal(a.amount, 1950);
   assert.equal(a.reference, 0.35);
   assert.equal(a.referenceAmount, Math.round(d.base.takeHome * 0.35 * 100) / 100);
-  assert.ok(Math.abs(d.rows.reduce((x, r) => x + r.share, 0) - d.totalShare) < 0.001);
+  // B2: each letter over take-home (4,711), Retirement over gross (6,500), worked by hand.
+  assert.equal(a.share, 0.4139, '1,950 / 4,711');
+  assert.equal(d.rows.find((r) => r.key === 'retirement').share, 0.1231, '(500 + 300) / 6,500');
+  assert.equal(d.rows.find((r) => r.key === 'retirement').of, 'gross');
+  assert.equal(a.overReference, 301.15, '1,950 - 35% of 4,711 (1,648.85)');
   assert.ok(!('verdict' in d) && !('stage' in d));
 });
 

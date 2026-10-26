@@ -8,7 +8,8 @@
 //   expenses 1650 + 140 + 60 + 15 + 480 + 220 + 127 + 45 + 65 + 30 + 400 = 3,232
 //   after-tax saving 300 + 150 = 450; 2026 is a refund, so no tax set-aside
 //   surplus = 4,647.93 - 3,232 - 0 (the card is spending already counted) - 450 = 965.93
-//   savings rate of gross = (965.93 + 520 + 450) / 6,933.33 = 27.92%; of take-home = (965.93 + 450) / 4,647.93 = 30.46%
+//   monthly surplus (B2, before saving) = 4,647.93 - 3,232 = 1,415.93
+//   savings rate (B2) = (450 + 520) / (4,647.93 + 520) = 970 / 5,167.93 = 18.77%; of gross 970 / 6,933.33 = 13.99%
 //   age 38: Rule of 5 = 7.6 months; runway = 19,500 / 3,232 = 6.03 months; target = ceil(7.6 x 3,232) = 24,564
 //   the $900 clears with the November statement payment, with no interest.
 import test from 'node:test';
@@ -81,8 +82,9 @@ test('cash flow: a card paid in full is not a debt payment on top of the spendin
   assert.equal(cf.debtMinimums.total.value, 0);
   assert.deepEqual(cf.debtMinimums.items, [], 'the Visa is not listed as a payment');
   near(cf.surplus.value, 965.93);
-  near(cf.savingsRate.gross.value, 0.2792, 0.0001, 'savings rate of gross');
-  near(cf.savingsRate.net.value, 0.3046, 0.0001, 'savings rate of take-home');
+  near(cf.monthlySurplus.value, 1415.93);
+  near(cf.savingsRate.gross.value, 0.1399, 0.0001, 'savings rate of gross');
+  near(cf.savingsRate.net.value, 0.1877, 0.0001, 'savings rate of take-home');
 });
 
 test('cash flow in a later month leaves out the statement payment too', () => {

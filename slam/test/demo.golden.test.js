@@ -31,8 +31,13 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.deepEqual(cf.taxSetAside.lines.map((l) => [l.kind, l.months]), [['balance', 7]]);
     const surplus = 4711 - 3230 - 342 - 300 - setAside; // 631.35 (300 to the Roth from take-home)
     near(cf.surplus.value, surplus);
-    near(cf.savingsRate.gross.value, (surplus + 500 + 300) / 6500);
-    near(cf.savingsRate.net.value, (surplus + 300) / 4711);
+    // Monthly surplus (B2): take-home - spending - minimums - the set-aside, before any saving: 931.35.
+    near(cf.monthlySurplus.value, 4711 - 3230 - 342 - setAside);
+    // Savings rate (B2): what is set to be saved (300 to the Roth + 500 to the 401(k); no match, no cash saving, no
+    // extra at the debt; the 631.35 left unassigned is not counted) over take-home + pre-tax: 800 / 5,211 = 15.35%.
+    near(cf.savingsRate.net.value, 800 / (4711 + 500), 0.0001);
+    // Of gross: 800 / 6,500 = 12.31%.
+    near(cf.savingsRate.gross.value, 800 / 6500, 0.0001);
     assert.equal(cf.expenses.need.value, 1800 + 150 + 500 + 130 + 60); // tagged needs; "Everything else" is not tagged yet
     assert.equal(cf.expenses.lean.value, 1800 + 150 + 500 + 130); // food, housing, transportation that are not wants
     assert.equal(cf.surplus.kind, 'rough');

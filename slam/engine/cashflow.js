@@ -159,8 +159,11 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
 
   // Saving: payroll contributions (only while its owner's paycheck is coming in, or any paycheck for an owner with
   // no pay line) and after-tax contributions paid from take-home.
-  const pay = tracker(), after = tracker(), lines = payOwners(spine);
-  let payroll = 0, afterTax = 0;
+  // Also (Phase 2.5 B2, docs/FORMULAS.md): the employer match on what goes in from pay, and saving into a cash account
+  // that is not the main checking (a savings account, an emergency fund): both count in the savings rate.
+  const pay = tracker(), after = tracker(), cashSave = tracker(), mt = tracker(), lines = payOwners(spine);
+  let payroll = 0, afterTax = 0, cashSaving = 0, match = 0;
+  const mainCash = (spine.accounts || []).filter((a) => a.family === 'cash').find((a) => a.type === 'checking') || null;
   for (const a of spine.accounts || []) {
     if (!a.monthlyContribution) continue;
     const path = 'accounts.' + a.id + '.monthlyContribution';
@@ -170,11 +173,26 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
       if (!(lines.has(who) ? paid.has(who) : w2Active)) continue;
       const x = pay.useFact(path, a.monthlyContribution);
       if (x !== null) payroll += x;
+      // The match: the match rate times what goes in, up to the cap (a share of the W-2 pay it is paid through).
+      const rate = a.matchRate ? mt.useFact('accounts.' + a.id + '.matchRate', a.matchRate) : null;
+      if (rate) {
+        const cap = mt.useFact('accounts.' + a.id + '.matchCap', a.matchCap);
+        const job = new Set(payLinesFor(spine, a).map((l) => l.id));
+        const wage = streams.filter((x) => job.has(x.id) && x.gross !== null).reduce((sum, x) => sum + x.gross, 0);
+        mt.useFact(path, a.monthlyContribution);
+        if (cap !== null && x !== null) match += rate * Math.min(x, cap * wage);
+      }
     } else if (a.family !== 'cash') {
       const x = after.useFact(path, a.monthlyContribution);
       if (x !== null) afterTax += x;
+    } else if (a !== mainCash) {
+      const x = cashSave.useFact(path, a.monthlyContribution);
+      if (x !== null) cashSaving += x;
     }
   }
+  // The extra at the debt (debtPlan.extra): payoff above the minimums, which the savings rate counts as saving.
+  const xt = tracker();
+  const extraDebt = spine.debtPlan && spine.debtPlan.extra ? xt.useFact('debtPlan.extra', spine.debtPlan.extra) ?? 0 : 0;
   th.absorb(pay.out(0));
 
   // Expenses. One paid by someone else counts $0 (S-171). Needs: expenses
@@ -245,21 +263,32 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   // Surplus = take-home - expenses - minimum payments - after-tax saving - tax set-aside.
   const surplus = round2(gross - withheld - fica - payroll - total - mins.total.value - afterTax - (setAside.total.value ?? 0));
   const surplusR = sur.out(surplus);
-  const rate = (num, den, ...parts) => { const t = tracker(); for (const p of parts) t.absorb(p); return t.out(den > 0 ? num / den : null); };
+  // Monthly surplus (B2) = take-home - spending - debt minimums - the tax set-aside on 1099 income: what is free to
+  // save, before any saving. `surplus` above is what is left after the saving that is set up.
+  const ms = tracker();
+  ms.absorb(takeHome); ms.absorb(ex.out(0)); ms.absorb(mins.total); ms.absorb(setAside.total);
+  const monthly = ms.out(round2(gross - withheld - fica - payroll - total - mins.total.value - (setAside.total.value ?? 0)));
+  const rate = (num, den, ...parts) => { const t = tracker(); for (const p of parts) t.absorb(p); return t.out(den > 0 ? round2(num / den * 1e6) / 1e6 : null); };
   const grossR = g.out(round2(gross));
+  // Saving for the savings rate: from take-home (after-tax accounts and cash savings), pre-tax and Roth from the
+  // paycheck, the employer match, and the extra at the debt. What is left unassigned is not counted (S-138).
+  const fromTakeHome = round2(afterTax + cashSaving);
+  const saved = round2(fromTakeHome + payroll + match + extraDebt);
+  const savedParts = [after.out(0), cashSave.out(0), pay.out(0), mt.out(0), xt.out(0)];
   return {
     ym, mode,
     income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams },
-    saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)) },
+    saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)), cash: cashSave.out(round2(cashSaving)), match: mt.out(round2(match)), extraDebt: xt.out(round2(extraDebt)), total: saved },
     expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items, linked },
     debtMinimums: mins,
     taxSetAside: setAside,
-    surplus: surplusR,
+    surplus: surplusR, monthlySurplus: monthly,
     savingsRate: {
-      // Gross: everything saved (surplus, payroll and after-tax contributions) out of gross pay.
-      gross: rate(surplus + payroll + afterTax, gross, surplusR, grossR, pay.out(0), after.out(0)),
-      // Net: what is kept out of take-home (surplus and after-tax contributions).
-      net: rate(surplus + afterTax, gross - withheld - fica - payroll, surplusR, takeHome, after.out(0))
+      // The headline (B2): (saving + pre-tax retirement + employer match + extra debt payoff) / (take-home + pre-tax
+      // retirement + employer match).
+      net: takeHome.value === null ? rate(null, 0, takeHome, ...savedParts) : rate(saved, takeHome.value + payroll + match, takeHome, ...savedParts),
+      // Of gross: the same top / (gross income + employer match). Shown beside the headline in Show the math.
+      gross: rate(saved, gross + match, grossR, ...savedParts)
     }
   };
 }

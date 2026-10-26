@@ -21,7 +21,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
 
   // Monthly spending for both runway and target: expenses plus minimum payments.
   const burn = (expenses) => { const t = tracker(); t.absorb(expenses); t.absorb(cf.debtMinimums.total); return t.out(round2(expenses.value + cf.debtMinimums.total.value)); };
-  const full = burn(cf.expenses.total), fat = burn(cf.expenses.fat);
+  const full = burn(cf.expenses.total), fat = burn(cf.expenses.fat), needs = burn(cf.expenses.need);
   const runway = (b) => { const t = tracker(); t.absorb(sheet.cash); t.absorb(b); return t.out(b.value > 0 ? sheet.cash.value / b.value : null); };
   // Targets in dollars use the month's spending rounded up to a whole dollar,
   // so reaching a target in dollars always reaches it in months (S-165).
@@ -32,14 +32,23 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const gap = tracker();
   gap.absorb(targetDollars); gap.absorb(sheet.cash);
 
+  // The cushion in three steps (B2, the Rule of 5): a month of needs, then a month of full spending, then age / 5
+  // months of full spending. Each step's target, and whether the cash already reaches it.
+  const stepOf = (id, label, r) => ({ id, label, target: r, reached: r.value === null || sheet.cash.value === null ? null : sheet.cash.value >= r.value });
+  const cushion = [
+    stepOf('needs', 'A month of needs', needs),
+    stepOf('month', 'A month of full spending', full),
+    stepOf('ruleOf5', 'Age / 5 months of full spending', targetDollars)
+  ];
   return {
-    age: years,
+    age: years, cushion,
     targetMonths,
     targetDollars,
     gap: gap.out(targetDollars.value === null ? null : round2(Math.max(0, targetDollars.value - sheet.cash.value))),
     tiers: {
       full: { burn: full, runway: runway(full) },
-      fatOnly: { burn: fat, runway: runway(fat) }
+      fatOnly: { burn: fat, runway: runway(fat) },
+      needsOnly: { burn: needs, runway: runway(needs) }
     },
     monthlyNeed,
     backstop: rothBackstop(spine, rules, asOf, years)

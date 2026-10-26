@@ -33,6 +33,11 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
   const imp = tracker();
   imp.absorb(cf.expenses.total); imp.read(spine, 'assumptions.withdrawalRate');
   const implied = imp.out(wr ? round2(cf.expenses.total.value * 12 / wr) : null);
+  // Today's FI number (B2): today's yearly spending, debt payments included, / the withdrawal rate.
+  const td = tracker();
+  td.absorb(cf.expenses.total); td.absorb(cf.debtMinimums.total); td.read(spine, 'assumptions.withdrawalRate');
+  const yearlyToday = cf.expenses.total.value === null ? null : round2((cf.expenses.total.value + (cf.debtMinimums.total.value ?? 0)) * 12);
+  const today = td.out(wr && yearlyToday !== null ? round2(yearlyToday / wr) : null);
 
   // The goal: a direct FI number wins, else goal spending / rate.
   const goalRec = (spine.goals || []).find((g) => g.type === 'fi');
@@ -49,11 +54,23 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
     }
   }
   const goalR = gt.out(goal === null ? null : round2(goal));
-  const fiNumber = goal !== null ? goalR : implied;
+  // The one target years-to-FI and Coast FI aim at: the goal when there is one, else today's FI number.
+  const fiNumber = goal !== null ? goalR : today;
 
+  // FI % (B2) = invested assets / today's FI number.
   const pct = tracker();
-  pct.absorb(sheet.invested); pct.absorb(fiNumber);
-  const fiPercent = pct.out(fiNumber.value ? sheet.invested.value / fiNumber.value : null);
+  pct.absorb(sheet.invested); pct.absorb(today);
+  const fiPercent = pct.out(today.value ? round2(sheet.invested.value / today.value * 1e6) / 1e6 : null);
+
+  // Fat FI = dream yearly spending / withdrawal rate; Barista FI = (today's yearly spending - part-time income a
+  // year) / withdrawal rate. Both read the FI goal's own fields; blank is missing, never $0.
+  const ft = tracker(), bt = tracker();
+  const dream = goalRec && goalRec.dreamSpending ? ft.useFact('goals.' + goalRec.id + '.dreamSpending', goalRec.dreamSpending) : (ft.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.dreamSpending'), null);
+  ft.read(spine, 'assumptions.withdrawalRate');
+  const fatFi = ft.out(dream === null || !wr ? null : round2(dream / wr));
+  bt.absorb(today);
+  const partTime = goalRec && goalRec.partTimeIncome ? bt.useFact('goals.' + goalRec.id + '.partTimeIncome', goalRec.partTimeIncome) : (bt.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.partTimeIncome'), null);
+  const baristaFi = bt.out(partTime === null || !wr || yearlyToday === null ? null : round2(Math.max(0, yearlyToday - partTime) / wr));
 
   // Lean FI: yearly food, housing and transportation that are needs (eating
   // out is a want), at the same withdrawal rate as every other FI number (S-173).
@@ -95,7 +112,9 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
     // Yearly spending the FI number rests on (Batch 3): the goal's own when it has one, else today's spending.
     // A direct FI number rests on no spending, so there is none to show.
     yearlySpending: goalSource === 'direct' ? { value: null, kind: 'notForMe' } : goalSource === 'spending' ? { value: round2(goal * wr), kind: goalR.kind } : { value: cf.expenses.total.value === null ? null : round2(cf.expenses.total.value * 12), kind: cf.expenses.total.kind },
-    fiNumber, goal: goalR, goalSource, implied,
+    fiNumber, goal: goalR, goalSource, implied, today, yearlyToday, fatFi, baristaFi,
+    // The three FI numbers side by side (B2): today's spending, the goal's, and today's without debt payments.
+    threeWays: [{ id: 'today', label: 'Today\'s spending', result: today }, { id: 'goal', label: 'Your goal', result: goalR }, { id: 'noDebt', label: 'Without debt payments', result: implied }],
     goalBelowImplied: mis.out(goal === null || implied.value === null ? null : goal < implied.value),
     fiPercent, leanFi, coastFi: coast, coastAge, coastReached: coast.value === null ? null : sheet.invested.value >= coast.value,
     annualSaving: round2(annualSaving),

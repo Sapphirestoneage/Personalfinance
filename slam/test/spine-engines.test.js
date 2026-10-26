@@ -81,8 +81,11 @@ test('cashflow: gross, take-home with FICA and payroll saving, surplus and both 
   assert.equal(c.expenses.fat.value, 2500);
   assert.equal(c.debtMinimums.total.value, 250);
   near(c.surplus.value, 3517.5 - 2800 - 250 - 100);
-  near(c.savingsRate.gross.value, (367.5 + 400 + 100) / 5000);
-  near(c.savingsRate.net.value, (367.5 + 100) / 3517.5);
+  // Monthly surplus (B2) = 3,517.50 take-home - 2,800 - 250 = 467.50, before the 100 to the Roth.
+  near(c.monthlySurplus.value, 3517.5 - 2800 - 250);
+  // Savings rate: (100 Roth + 400 401(k)) / (3,517.50 + 400) = 12.76%; of gross 500 / 5,000 = 10%.
+  near(c.savingsRate.net.value, 500 / 3917.5, 0.0001);
+  near(c.savingsRate.gross.value, 0.1, 0.0001);
   assert.equal(c.surplus.kind, 'computed');
   assert.ok(c.income.fica.rules.includes('FICA_SS_RATE'));
 });

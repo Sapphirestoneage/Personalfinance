@@ -247,16 +247,17 @@ export function realHourlyWage(spine, rules, s, { asOf = spine.meta.asOf } = {})
 export const hoursOf = (amount, wage) => (amount === null || amount === undefined || !wage ? null : Math.round(amount / wage * 10) / 10);
 
 // ---------------------------------------------------------------- DRAFTT (L002)
-// Debt, Retirement, Accommodation, Food, Transportation, Therapy as shares of the
-// base (take-home plus pre-tax retirement); the housing letter gets a reference
-// line at APP_HOUSING_REF of take-home. Shares only, never a verdict.
+// Debt, Retirement, Accommodation, Food, Transportation, Therapy (B2): each letter as a share of take-home, and
+// Retirement as a share of gross. The housing letter gets a reference line at APP_HOUSING_REF of take-home and the
+// dollars over it. Shares only, never a verdict.
 export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   const year = +asOf.slice(0, 4);
   const t = tracker();
   const cf = s.cashflow;
   const ref = t.rule(rules, 'APP_HOUSING_REF', year);
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.saving.payroll, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined });
-  const takeHome = cf.income.takeHome.value, pretax = cf.saving.payroll.value ?? 0;
+  const takeHome = cf.income.takeHome.value, pretax = cf.saving.payroll.value ?? 0, gross = cf.income.gross.value;
+  t.absorb({ ...cf.income.gross, value: undefined });
   const base = takeHome === null ? null : round2(takeHome + pretax);
   // A line that pays a debt (answer 35) is shown in its own category (a car payment under transportation), not under D.
   const linked = cf.expenses.linked || [], linkedSum = round2(linked.reduce((a, i) => a + i.amount, 0));
@@ -269,12 +270,17 @@ export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     { key: 'food', letter: 'F', label: 'Food', amount: byTag('food') },
     { key: 'transportation', letter: 'T', label: 'Transportation', amount: byTag('transportation') },
     ...(therapy.length ? [{ key: 'therapy', letter: 'Th', label: 'Therapy', amount: round2(therapy.reduce((a, i) => a + (i.amount ?? 0), 0)) }] : [])
-  ].map((r) => ({ ...r, share: base ? round2(r.amount / base * 10000) / 10000 : null, shareOfTakeHome: takeHome ? round2(r.amount / takeHome * 10000) / 10000 : null }));
+  ].map((r) => {
+    const over = r.key === 'retirement' ? gross : takeHome;
+    return { ...r, of: r.key === 'retirement' ? 'gross' : 'take-home', share: over ? Math.round(r.amount / over * 10000) / 10000 : null, shareOfTakeHome: takeHome ? Math.round(r.amount / takeHome * 10000) / 10000 : null };
+  });
+  const housing = rows.find((r) => r.key === 'accommodation');
+  if (housing && housing.referenceAmount !== null) housing.overReference = round2(Math.max(0, housing.amount - housing.referenceAmount));
   const total = round2(rows.reduce((a, r) => a + r.amount, 0));
   const spentElse = round2((cf.expenses.total.value ?? 0) + linkedSum - byTag('accommodation') - byTag('food') - byTag('transportation') - rows.filter((r) => r.key === 'therapy').reduce((a, r) => a + r.amount, 0));
   const leftOver = base === null ? null : round2(base - total - spentElse - (cf.taxSetAside.total.value ?? 0));
   const out = t.out(base ? round2(total / base * 10000) / 10000 : null);
-  return { rows, total, totalShare: out.value, everythingElse: spentElse, leftOver, base: { amount: base, takeHome, pretax, label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home' }, housingReference: ref, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { rows, total, totalShare: out.value, everythingElse: spentElse, leftOver, base: { amount: base, takeHome, pretax, gross, label: pretax > 0 ? 'take-home plus pre-tax retirement' : 'take-home' }, housingReference: ref, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 
 // ---------------------------------------------------------------- the fixed floor (L018)
