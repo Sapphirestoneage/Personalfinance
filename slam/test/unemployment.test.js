@@ -75,6 +75,7 @@ test('My numbers shows the Unemployment card on Income and on Your situation', (
   assert.match(src, /if \(sec\.slug === 'income'\) return unemploymentCard\(\);/);
   assert.match(src, /it\.key === 'household\.situation' \? unemploymentCard\(\) : null/);
   assert.match(src, /'Add the weekly benefit'/);
+  assert.match(src, /removeItem\(sp, 'income', x\.id\)[^\n]*'Delete this benefit'/, 'each benefit can be deleted, undoably');
   void addItem;
 });
 

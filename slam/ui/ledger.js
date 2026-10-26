@@ -1122,6 +1122,8 @@ function unemploymentCard() {
         box('ui-end-' + x.id, 'Last payment', 'When it ends, or ended. A past date is fine.', x.end, 'date', (d) => change((sp) => setAt(sp, 'income.' + x.id + '.end', d), said.changed(x.label + ': last payment', d ? shortDate(d) : 'not known')))),
       h('p', { class: 'edit-label' }, 'Federal tax on it'), tax,
       h('p', { class: 'edit-hint' }, 'Unemployment is taxed. Have 10% taken out each week, or set it aside yourself.'),
+      // Delete (red outline, undoable): an old or duplicate benefit goes, and its numbers with it.
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger small', id: 'ui-del-' + x.id, onclick: () => change((sp) => removeItem(sp, 'income', x.id), said.deleted(x.label + (x.ended ? ' (ended ' + shortDate(x.end) + ')' : ''))) }, 'Delete this benefit')),
       x.ended ? null : h('div', { class: 'nw-pair fi-three' },
         fig('A month', x.monthly === null ? null : money(x.monthly), 'about 4.3 weeks'),
         fig('Payments left', x.weeksLeft === null ? null : String(x.weeksLeft), x.end ? 'through ' + shortDate(x.end) : 'needs the last payment'),
