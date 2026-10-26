@@ -165,32 +165,43 @@ function flowPart(spine, rules, s) {
   return el;
 }
 
-// A goal line: a link to the Ledger field it depends on when there is one.
-const goalLine = (g, cls) => g && h('p', { class: 'goal ' + cls }, g.path ? h('a', { href: ledgerHref(g.path) }, g.text) : g.text);
-
-// One flag: its stage in words and color (never color alone), what is true,
-// what moves it up one stage, and the goal for stage 3 (S-165).
-function flagItem(spine, f) {
-  return h('li', { class: 'flag flag-' + f.stage, id: 'flag-' + f.id },
-    h('p', { class: 'flag-title' }, h('span', { class: 'stage-chip stage-' + f.stage }, f.stageLabel), ' ', f.title),
-    h('p', { class: 'flag-detail' }, f.detail),
-    goalLine(f.next, 'goal-next'),
-    flagMath(f).length ? keptMath('flag-' + f.id, flagMath(f), mathCtx) : null);
+// Where a card's action goes: a field opens on its screen in My numbers (with a value ready to accept when the card
+// suggests one), else a page.
+const PREFILL_KEY = 'slam-prefill:v1';
+function actionEl(a, cls) {
+  if (!a || (!a.path && !a.href)) return null;
+  const href = a.path ? ledgerHref(a.path) : a.href;
+  const keepPrefill = () => { try { if (a.prefill !== undefined && a.path) sessionStorage.setItem(PREFILL_KEY, JSON.stringify({ path: a.path, value: a.prefill })); } catch { /* the field opens with what it holds */ } };
+  return h('a', { class: cls, href, onclick: keepPrefill }, a.label);
 }
 
-// Red first, then yellow; green folded into "Done" with a count. A number that only rests on guesses is one line that
-// opens Still guessing, not a flag each.
+// One card: a short headline, one line of numbers, one filled button with a verb; a smaller second way when there is
+// one; then Show the math, small, after the action. The detail is behind Show the math.
+function flagItem(spine, f) {
+  const c = f.card || { headline: f.title, line: '', action: null };
+  return h('li', { class: 'flag flag-' + f.stage, id: 'flag-' + f.id },
+    h('h3', { class: 'flag-title' }, c.headline),
+    c.line ? h('p', { class: 'flag-line' }, c.line) : null,
+    h('div', { class: 'flag-actions' },
+      actionEl(c.action, f.stage === 'green' ? 'btn small' : 'btn primary small'),
+      c.alt ? actionEl(c.alt, 'flag-alt') : null,
+      flagMath(f).length ? keptMath('flag-' + f.id, flagMath(f), mathCtx) : null));
+}
+
+// Three groups: Do first, Next up, Done (folded, with a count). A number that only rests on guesses is one row that
+// opens Still guessing, not a card each.
 function flagsSection(spine, flags) {
   const guessy = flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-'));
-  const open = flags.filter((f) => f.stage !== 'green' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
-  const count = (st) => open.filter((f) => f.stage === st).length;
-  return h('section', { class: 'card', 'aria-labelledby': 'flags-h' },
-    h('h2', { id: 'flags-h' }, 'To work on', h('span', { class: 'group-counts' },
-      count('red') ? h('span', { class: 'stage-chip stage-red' }, count('red') + ' at stage 1') : null,
-      count('yellow') ? h('span', { class: 'stage-chip stage-yellow' }, count('yellow') + ' at stage 2') : null)),
-    open.length ? h('ul', { class: 'flags' }, open.map((f) => flagItem(spine, f))) : h('p', { class: 'muted' }, 'Nothing to work on.'),
-    guessy.length ? h('p', { class: 'goal' }, guessy.length + (guessy.length === 1 ? ' number rests on guesses. ' : ' numbers rest on guesses. '), h('a', { href: numbersHref('still-guessing') }, 'See what to firm up')) : null,
-    done.length ? h('details', { class: 'done', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } }, h('summary', {}, h('span', { class: 'stage-chip stage-green' }, 'Stage 3'), ' Done (' + done.length + ')'), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null);
+  const first = flags.filter((f) => f.stage === 'red'), next = flags.filter((f) => f.stage === 'yellow' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
+  const group = (id, title, list) => (list.length ? h('section', { class: 'card', 'aria-labelledby': id }, h('h2', { id }, title), h('ul', { class: 'flags' }, list.map((f) => flagItem(spine, f)))) : null);
+  return [
+    group('do-first-h', 'Do first', first),
+    group('next-up-h', 'Next up', next),
+    !first.length && !next.length ? h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.')) : null,
+    guessy.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guessy.length + (guessy.length === 1 ? ' number is a guess' : ' numbers are guesses'))))) : null,
+    done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },
+      h('summary', {}, h('span', {}, 'Done'), h('span', { class: 'count' }, String(done.length))), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null
+  ];
 }
 
 // The One-pager is a button here; its Back comes back to Today.

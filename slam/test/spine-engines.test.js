@@ -584,8 +584,8 @@ test('stages: thresholds, labels, sorting, and goals with gaps and monthly amoun
   const order = f.map((x) => x.stageNumber);
   assert.deepEqual(order, [...order].sort((a, b) => a - b), 'red first, then yellow, then green');
   for (const x of f) {
-    assert.equal(x.stageLabel, 'Stage ' + x.stageNumber + ' of 3');
-    if (x.stage !== 'green') assert.ok(x.green && x.green.text.startsWith('Stage 3'), x.id + ' has a green goal');
+    assert.equal(x.stageLabel, { red: 'Do first', yellow: 'Next up', green: 'Done' }[x.stage]);
+    if (x.stage !== 'green') assert.ok(x.green && x.green.text.startsWith('Goal: '), x.id + ' has a green goal');
     if (x.stage !== 'green') assert.ok(x.next && x.next.text.startsWith('Next'), x.id + ' has a next goal');
   }
   const u = f.find((x) => x.id === 'utilization-p');

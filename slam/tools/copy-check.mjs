@@ -15,7 +15,7 @@ export const PAGES = ['dashboard', 'session', 'ledger', 'calendar', 'spending', 
 // My numbers' own screens are client screens too.
 const DEEP = ['session.html#/needs', 'session.html#/debt', 'session.html#/income', 'session.html#/assets', 'session.html#/goals', 'ledger.html#/debt', 'ledger.html#/assets', 'ledger.html#/taxes', 'ledger.html#/income', 'ledger.html#/needs', 'ledger.html#/goals'];
 export const BANNED = [/\bengines?\b/i, /\bregistry\b/i, /\brules?\b/i, /\bspine\b/i, /\bkinds?\b/i, /\bpaths?\b/i, /\bfields?\b/i,
-  /\bstored\b/i, /\bsimulations?\b/i, /\btemplates?\b/i, /\bschema\b/i, /\bS-\d+/, /\bthe Ledger\b/i, /\bcomputed\b/i, /\bderived\b/i, /—/];
+  /\bstored\b/i, /\bsimulations?\b/i, /\btemplates?\b/i, /\bschema\b/i, /\bS-\d+/, /\bthe Ledger\b/i, /\bcomputed\b/i, /\bderived\b/i, /\u2014/, /\bPhase\b/, /\bBatch\b/, /\bStage\b/i, /\bversion\b/i];
 // Proper names that carry a banned word and are not the app talking: the Rule of 5 (a named target).
 const ALLOWED = [/Rule of 5/gi, /Rule of 55/gi];
 

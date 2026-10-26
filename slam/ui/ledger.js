@@ -70,6 +70,15 @@ function summaryOf(spine) {
 
 const hashFor = (levels) => '#/' + levels.map(encodeURIComponent).join('/');
 // Open a field (or an item, or a whole list) on its own screen, with the field's editor open.
+// A suggested value for one field, left by a card on Today; read once.
+function takePrefill(path) {
+  try {
+    const p = JSON.parse(sessionStorage.getItem('slam-prefill:v1') || 'null');
+    if (!p || p.path !== path) return null;
+    sessionStorage.removeItem('slam-prefill:v1');
+    return p.value;
+  } catch { return null; }
+}
 function openField(path) {
   if (!canLeave()) return;
   const { levels, row } = levelsFor(screensOf(cur()), cur(), path);
@@ -600,6 +609,9 @@ function editor(row) {
     input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
     input.value = inputText(row.type, f.value);
   }
+  // A value a card on Today suggested (Update goal): in the box, ready to accept with Save.
+  const suggested = takePrefill(row.path);
+  if (suggested !== null) input.value = inputText(row.type, suggested);
   const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? (row.path.endsWith('.contributions') ? 'A list by year, for example [{"year": 2026, "amount": 4000}]. A rollover, a conversion or the employer part is easier to record with How much to max it? on this account, one at a time in plain words.' : 'A list, for example [{"year": 2026, "amount": 4000}]') : null;
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;

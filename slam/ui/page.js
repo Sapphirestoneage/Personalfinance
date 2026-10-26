@@ -1,14 +1,10 @@
 // What every page shares (S-208): a skip link to the content, an error catcher
-// that shows a banner instead of a silent failure, the build stamp in the
-// footer, and a polite live region for the page's headline. Formatting only.
+// that shows a banner instead of a silent failure, a one-line footer, and a polite live region for the page's headline. Formatting only.
 
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 import { loadFailWords } from './profile-file.js';
-
-// The build stamp: moved by hand with each batch (no build step).
-export const BUILD = { label: 'Phase 2.5, Batch 4', date: '2026-10-25' };
 
 let banner = null;
 function showError(text) {
@@ -21,12 +17,12 @@ function showError(text) {
 const builderLink = () => (/\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
 
 // Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
-// the app, the stamp and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
+// the app, the footer line and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
 // there, out of the tabs), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
   if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
-  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'SLAM ' + BUILD.label + ', ' + BUILD.date + '. Numbers are yours; nothing leaves this browser.'), ' ', builderLink()));
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink()));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };
@@ -73,10 +69,9 @@ export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen
     input.value = '';
   });
   return h('div', { class: 'whose whose-example' },
-    h('p', { class: 'muted' }, h('strong', { class: 'whose-name' }, 'Example household'), ' (made up)', when),
     h('div', { class: 'whose-load' },
-      h('button', { type: 'button', class: 'btn primary', onclick: () => input.click() }, 'Load my file'),
-      h('span', { class: 'whose-note' }, 'Nothing is uploaded.'),
+      h('span', { class: 'whose-name' }, 'Example household'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Load my file'),
       input),
     msg);
 }

@@ -49,7 +49,7 @@ test('one map for the section names; "Everything else" reads Miscellaneous', () 
 
 // The client screens: the six tabs, the One-pager and Got extra money?, and what they draw from.
 const CLIENT = ['ui/dashboard.js', 'ui/session.js', 'ui/ledger.js', 'ui/calendar.js', 'ui/cash-chart.js', 'ui/spending.js', 'ui/plan.js', 'ui/onepager.js', 'ui/windfall.js', 'ui/page.js', 'ui/shell.js', 'ui/flow-chart.js', 'ui/debt-tab.js', 'ui/maxit-panel.js'];
-const BANNED = /\b(engines?|registry|rules?|spine|kinds?|paths?|fields?|stored|simulations?|templates?|schema|computed|derived)\b|\bthe Ledger\b|\bS-\d{2,3}\b|\u2014/i;
+const BANNED = /\b(engines?|registry|rules?|spine|kinds?|paths?|fields?|stored|simulations?|templates?|schema|computed|derived|stage|phase|batch|version)\b|\bthe Ledger\b|\bS-\d{2,3}\b|\u2014/i;
 // The engine files whose words reach a client screen (flag titles, notes, tier and calendar labels).
 const SAYS = ['engine/calendar.js', 'engine/cashsim.js', 'engine/flags.js', 'engine/spending.js', 'engine/plan.js', 'engine/labels.js', 'engine/ledger-tree.js'];
 // Every quoted string in the code, read quote to quote (a regex literal with a quote in it is rare here).

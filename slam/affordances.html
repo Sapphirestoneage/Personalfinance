@@ -119,7 +119,7 @@
   </section>
 
   <section class="card" aria-labelledby="p2-h">
-    <h2 id="p2-h">Calendar and Windfall (Phase 2)</h2>
+    <h2 id="p2-h">Calendar and Windfall</h2>
     <p class="muted">A month is picked with real buttons; the heading between them is not a control.</p>
     <div class="month-nav" role="group" aria-label="Pick a month"><button type="button" class="btn">&#8249; Sep 2026</button><h2 class="month-h">October 2026 <span class="stage-chip stage-green">This month</span></h2><button type="button" class="btn">Nov 2026 &#8250;</button></div>
     <p class="muted">A calendar item: a data-color swatch, the name as a link to its field, the amount with its direction; a rough tag when the day or the amount is a guess.</p>
@@ -135,7 +135,7 @@
   </section>
 
   <section class="card" aria-labelledby="p2b-h">
-    <h2 id="p2b-h">Calendar views (Phase 2, Batch B)</h2>
+    <h2 id="p2b-h">Calendar views</h2>
     <p class="muted">Tabs are buttons; the pressed one is filled. The time selector is the same segmented control as the assumption sets and is shared with the budget.</p>
     <div class="tabs" role="group" aria-label="Views"><button type="button" class="tab-btn" aria-pressed="true">Month</button><button type="button" class="tab-btn" aria-pressed="false">Weeks</button><button type="button" class="tab-btn" aria-pressed="false">Next 14 days</button></div>
     <div class="window-bar" role="group" aria-label="How far ahead"><span class="filter-label">Show</span><div class="segmented"><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">1 month</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">3 months</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">12 months</span></button></div></div>
@@ -158,7 +158,7 @@
     <div class="year-strip" role="list"><div class="ys" role="listitem"><b>Nov</b><span class="ys-low">$1,460</span></div><div class="ys tight" role="listitem"><b>Dec</b><span class="ys-low">$310</span><span class="pill">tight</span></div><div class="ys under" role="listitem"><b>Jan</b><span class="ys-low">-$120</span><span class="pill">under</span></div></div>
   </section>
   <section class="card" aria-labelledby="p2c-h">
-    <h2 id="p2c-h">Debt tab (Phase 2, Batch C)</h2>
+    <h2 id="p2c-h">Debt tab</h2>
     <p class="muted">Clear dates are tiles; a date past the window reads as words. The payoff Gantt is a bar per debt on one timeline, striped when it runs past the window. The interest stack is one column a month, a segment per card, with a legend and a list twin.</p>
     <div class="clear-grid"><div class="clear-tile"><span class="clear-date">Mar 3, 2027</span><span class="clear-label">High-interest free</span></div><div class="clear-tile beyond"><span class="clear-date">Not inside the window</span><span class="clear-label">Debt free</span></div></div>
     <div class="gantt"><div class="gantt-row"><span class="gantt-label">Visa</span><div class="gantt-track"><div class="gantt-bar viz-1" style="width: 45%"></div><span class="gantt-tick" style="left: 25%"></span><span class="gantt-tick" style="left: 50%"></span></div></div><div class="gantt-row"><span class="gantt-label">Federal student loan</span><div class="gantt-track"><div class="gantt-bar viz-4 beyond" style="width: 100%"></div></div></div></div>
@@ -173,7 +173,7 @@
     <div class="tool-result bad">$1,200 a month more clears it by Jan 1, 2027, but checking goes under the floor twice.</div>
   </section>
   <section class="card" aria-labelledby="p2d-h">
-    <h2 id="p2d-h">Spending (Phase 2, Batch D)</h2>
+    <h2 id="p2d-h">Spending</h2>
     <p class="muted">The staleness banner carries its one action. Safe to spend is one big number. The logger is a big amount box, tag chips that press, and bordered boxes. A tag's budget is a bar with a mark where the budget expects you to be today; running hot is a chip.</p>
     <div class="stale-banner" role="alert"><span><strong>Stale: </strong>Last anchored 12 days ago: the numbers are stale.</span><a class="btn primary" href="#checkin">Check in</a></div>
     <div class="stale-banner fresh" role="status"><span><strong>Fresh: </strong>Checked in today.</span><a class="btn" href="#checkin">Check in</a></div>
@@ -193,7 +193,7 @@
     <form class="checkin-grid" onsubmit="return false"><label class="edit-label" for="d-ci-chk">Checking, forecast $2,925, now $3,100</label><input id="d-ci-chk" type="text" inputmode="decimal" placeholder="2925"><button type="button" class="btn primary">Save the check-in</button></form>
   </section>
   <section class="card" aria-labelledby="p2e-h">
-    <h2 id="p2e-h">The feed and estimated vs actual (Phase 2, Batch E)</h2>
+    <h2 id="p2e-h">The feed and estimated vs actual</h2>
     <p class="muted">A statement pastes into a bordered box; each proposed line has a checkbox, its status as a pill (matched, recurring, new, already in, skip) and why in small words; nothing lands until Apply. Estimated vs actual is a table; a tag over the plan is a tinted row.</p>
     <form class="tool-form" onsubmit="return false"><label class="edit-label" for="d-csv">A statement</label><textarea id="d-csv" rows="3">Date,Description,Amount
 2026-10-05,CRUNCH FITNESS 44,-50.00</textarea><div class="edit-actions"><button type="button" class="btn primary">Read the statement</button><button type="button" class="btn">Read the Budget app: Riley (312)</button></div></form>
@@ -206,11 +206,11 @@
     <div class="tablewrap"><table class="data-table"><thead><tr><th>Tag</th><th class="num">Planned</th><th class="num">Logged</th><th class="num">Difference</th></tr></thead><tbody><tr class="tight"><td>Food</td><td class="num">$700</td><td class="num">$765</td><td class="num">+$65 over</td></tr><tr><td>Housing</td><td class="num">$1,950</td><td class="num">$1,950</td><td class="num">on the plan</td></tr></tbody></table></div>
   </section>
   <section class="card" aria-labelledby="p2f-h">
-    <h2 id="p2f-h">Plan page and shared pieces (Phase 2, Batch F)</h2>
+    <h2 id="p2f-h">Plan page and shared pieces</h2>
     <p class="muted">Every page now starts with a skip link (visible when it has focus), ends with the build stamp, and shows an error banner instead of failing silently. On a phone the Save row of any editor stays pinned at the bottom. An amount can carry a second price tag in hours of life.</p>
     <p><a class="skip" href="#app" style="position: static; display: inline-block">Skip to the content</a> &nbsp; <span class="hours-tag">(2.3 h)</span></p>
     <div class="error-banner" role="alert"><strong>Something went wrong. </strong><span class="error-text">A number could not be read.</span> <button type="button" class="btn small">Reload the page</button> <button type="button" class="btn ghost small">Hide</button></div>
-    <footer class="build-stamp" style="margin-top: 8px"><span>SLAM Phase 2.5, Batch 1, 2026-10-25. Numbers are yours; nothing leaves this browser.</span> <a class="builder-link" href="builder.html">Builder</a></footer>
+    <footer class="build-stamp" style="margin-top: 8px"><span>Your numbers stay in this browser.</span> <a class="builder-link" href="builder.html">Builder</a></footer>
     <p class="muted">The FOO ladder: a tick for a done rung, a filled number for the current one; each rung says what it needs and the month it completes. The DRAFTT letters are bars with a reference mark on housing, no verdict.</p>
     <ol class="ladder"><li class="done"><span><strong>Deductibles covered</strong><span class="rung-why">Cash covers the biggest deductible ($2,500).</span></span><span class="rung-when">done</span></li><li class="current"><span><strong>High-interest debt gone</strong><span class="rung-why">Visa $3,000 at or above 10%.</span></span><span class="rung-when">$3,000, about Mar 2027</span></li><li><span><strong>Emergency reserves</strong><span class="rung-why">$10,861 to the Rule of 5 target.</span></span><span class="rung-when">$10,861, about Jul 2028</span></li></ol>
     <ul class="letters"><li><span class="letter">A</span><span class="lbar" role="img" aria-label="Accommodation 41%"><span class="lfill" style="width: 100%"></span><span class="lref" style="left: 85%"></span></span><span class="lamt">$1,950 (41.4%)</span></li><li><span class="letter">F</span><span class="lbar" role="img" aria-label="Food 15%"><span class="lfill" style="width: 36%"></span></span><span class="lamt">$700 (14.9%)</span></li></ul>
@@ -221,7 +221,7 @@
     <ul class="ev-list"><li class="ev ev-foo"><span class="sw viz-0" aria-hidden="true"></span><span class="ev-name">Plan: $686 to high-interest debt gone<span class="pill">plan</span></span><span class="ev-amt">-$686</span></li></ul>
   </section>
   <section class="card" aria-labelledby="p2g-h">
-    <h2 id="p2g-h">What the old Budget calendar did, now in SLAM (Phase 2, Batch G)</h2>
+    <h2 id="p2g-h">What the old Budget calendar did, now in SLAM</h2>
     <p class="muted">A past or today paycheck, bill or subscription opens with "Did it happen?". The amount it was planned at is one tap; a different amount is typed; either one goes into the log. Once logged, the item carries a green "happened" pill and a Not yet button that takes the entry back out.</p>
     <div class="happened" role="group" aria-label="Did it happen?"><p class="edit-label">Did it happen?</p><div class="edit-actions"><button type="button" class="btn primary">It happened</button><button type="button" class="btn">It did not happen</button></div><label for="g-hap" class="edit-label">Or a different amount</label><input id="g-hap" type="text" inputmode="decimal" placeholder="95"><div class="edit-actions"><button type="button" class="btn">Log this amount</button></div></div>
     <p class="muted">Before the as-of date, a paycheck or bill nobody has marked reads "not marked yet" (dashed), never "done".</p>
@@ -288,7 +288,7 @@
   </section>
 
   <section class="card" aria-labelledby="nav-h">
-    <h2 id="nav-h">Getting around (Phase 2.5, Batch 1)</h2>
+    <h2 id="nav-h">Getting around</h2>
     <p class="muted">The tabs, the same six on every page: at the bottom on a phone, at the top on a computer. The current one is filled; a Builder page lights none. Rest, current, pressed and focus.</p>
     <nav class="tabbar is-sample" aria-label="Sample tabs, Today current"><ul><li><a class="tab" href="dashboard.html" aria-current="page">Today</a></li><li><a class="tab is-pressed" href="session.html">Session</a></li><li><a class="tab is-focus" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
     <span class="demo-cap">Today current, Session pressed, My numbers with the focus.</span>

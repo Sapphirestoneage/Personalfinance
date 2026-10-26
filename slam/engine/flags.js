@@ -20,7 +20,14 @@ const v = valueOf;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const longDate = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
 const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1].slice(0, 3) + ' ' + ym.slice(0, 4);
+// The three groups on Today, in words (no stage numbers on any screen).
+const GROUP_WORDS = { red: 'Do first', yellow: 'Next up', green: 'Done' };
 const pctWords = (x) => Math.round(x * 100) + '%';
+// A big amount, short: $1.0M, $1.08M; under a million, the dollars.
+const big = (x) => { if (x === null || x === undefined) return 'missing'; if (Math.abs(x) < 1e6) return money(x); let t = (x / 1e6).toFixed(2); if (t.endsWith('0')) t = t.slice(0, -1); return '$' + t + 'M'; };
+// A flag as a card on Today: a short headline, one line of numbers, one action (a verb; a field to open, or a page),
+// and sometimes a second, smaller way. prefill: a value the field opens with, ready to accept.
+const cardOf = (headline, line, action, alt = null) => ({ headline, line, action, alt });
 const pct1 = (x) => (Math.round(x * 1000) / 10).toFixed(1) + '%';
 const rateWords = (x) => String(Math.round(x * 10000) / 100) + '%';
 const months1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
@@ -50,7 +57,7 @@ export function buildFlags(spine, rules, s) {
   const asOf = s.asOf, year = +asOf.slice(0, 4);
   const R = (id) => rules.get(id, year);
   const out = [];
-  const add = (f) => out.push({ rules: [], from: [], next: null, green: null, ...f, stageNumber: STAGE_NUMBER[f.stage], stageLabel: 'Stage ' + STAGE_NUMBER[f.stage] + ' of 3' });
+  const add = (f) => out.push({ rules: [], from: [], next: null, green: null, ...f, stageNumber: STAGE_NUMBER[f.stage], stageLabel: GROUP_WORDS[f.stage] });
 
   // ------------------------------------------------------------ the income cliff (S-174)
   const cl = s.cliff;
@@ -62,7 +69,8 @@ export function buildFlags(spine, rules, s) {
       title: 'From ' + longDate(cl.from) + ', certain income is $0 and costs are ' + money(cl.costs) + ' a month',
       detail: 'Costs then: spending ' + money(cl.spending.value) + ', minimum payments ' + money(cl.minimums.value) + (cl.setAside.value ? ', tax set-aside ' + money(cl.setAside.value) : '') + '. Likely income from then: ' + money(cl.likely.value) + ' a month' + (lk ? ' (' + lk + ')' : '') + '.',
       next: goal(asOf, 'Next: a confirmed income from ' + longDate(cl.from) + ' that covers ' + money(cl.costs) + ' a month', { target: Math.ceil(cl.costs), gap: cl.costs, path: best ? 'income.' + best.id + '.likelihood' : null }),
-      green: goal(asOf, 'Stage 3: certain income covers the costs from ' + longDate(cl.from), { target: Math.ceil(cl.costs), path: best ? 'income.' + best.id + '.likelihood' : null }),
+      green: goal(asOf, 'Goal: certain income covers the costs from ' + longDate(cl.from), { target: Math.ceil(cl.costs), path: best ? 'income.' + best.id + '.likelihood' : null }),
+      card: cardOf('Income stops ' + longDate(cl.from), money(cl.costs) + ' a month of costs, ' + money(cl.likely.value) + ' likely income', { label: 'Confirm income', path: best ? 'income.' + best.id + '.likelihood' : null, href: best ? null : 'session.html#/income' }),
       from: [...new Set([...cl.spending.from, ...cl.minimums.from, ...cl.likely.from])], rules: ['STAGE_CLIFF_MONTHS']
     });
   }
@@ -95,12 +103,16 @@ export function buildFlags(spine, rules, s) {
     taxStage = 'yellow';
     taxNext = tax.balanceDue.kind === 'rough' ? goal(asOf, 'Next: confirm ' + labelFor(spine, tax.balanceDue.rough[0]) + ', and ' + coverGoal('').text, { path: tax.balanceDue.rough[0], gap: Math.max(0, due - (setAside || 0)) }) : coverGoal('Next: ');
   }
-  const taxGreen = goal(asOf, 'Stage 3: every ' + year + ' tax input known, and the balance due set aside by ' + longDate(returnDue) + pace, { target: due === null ? null : Math.ceil(due), gap: due === null ? null : Math.max(0, due - (setAside || 0)), path: setAsidePath });
+  const taxGreen = goal(asOf, 'Goal: every ' + year + ' tax input known, and the balance due set aside by ' + longDate(returnDue) + pace, { target: due === null ? null : Math.ceil(due), gap: due === null ? null : Math.max(0, due - (setAside || 0)), path: setAsidePath });
   const taxBits = { stage: taxStage, next: taxStage === 'green' ? null : taxNext, green: taxStage === 'green' ? null : taxGreen };
   add({
     id: 'tax-' + year, ...taxBits,
     title: due === null ? 'The ' + year + ' tax bill cannot be figured yet' : 'Estimated ' + year + ' balance due: ' + money(due),
     detail: (due === null ? 'It needs ' + (tax.missingText || 'more inputs').replace(/^missing: /, '') + '. ' : '') + 'Next estimated payment date: ' + longDate(nextDate.date) + '.' + (setAside !== null && due !== null ? ' Set aside so far: ' + money(setAside) + '.' : ''),
+    card: due === null ? cardOf('Your ' + year + ' tax needs numbers', 'Missing: ' + (tax.missingText || 'more inputs').replace(/^missing: (\d{4} )?/, ''), { label: 'Fill in taxes', path: tax.balanceDue.missing[0] || null, href: tax.balanceDue.missing[0] ? null : 'ledger.html#/taxes' })
+      : taxStage === 'green' ? cardOf('Your ' + year + ' tax is covered', money(due) + ' due, set aside', { label: 'See taxes', href: 'ledger.html#/taxes' })
+        : due > 0 && !(setAsideKnown && setAside >= due) ? cardOf('Set aside for your ' + year + ' tax', money(due) + ' due by ' + longDate(returnDue) + (line && line.amount ? ', ' + money(Math.ceil(line.amount)) + ' a month' : ''), { label: 'Set money aside', path: setAsidePath, href: setAsidePath ? null : 'ledger.html#/taxes' })
+          : cardOf('Confirm your ' + year + ' tax numbers', money(due) + ' estimated, ' + tax.balanceDue.rough.length + (tax.balanceDue.rough.length === 1 ? ' guess' : ' guesses'), { label: 'Confirm numbers', path: tax.balanceDue.rough[0] || null, href: 'ledger.html#/taxes' }),
     from: [...new Set([...tax.balanceDue.from, ...(setAsidePath ? [setAsidePath] : [])])], rules: [nextDate.rule, ...tax.balanceDue.rules]
   });
 
@@ -111,6 +123,7 @@ export function buildFlags(spine, rules, s) {
       id: 'roth-conversion-' + a.id, ...taxBits,
       title: 'Roth conversion adds ' + year + ' taxable income',
       detail: 'The ' + money(c.taxable ?? c.amount) + ' converted in ' + year + ' counts as ' + year + ' taxable income. No tax was withheld from it.',
+      card: cardOf('A Roth conversion adds tax', money(c.taxable ?? c.amount) + ' in ' + year + ', nothing withheld', { label: 'See taxes', href: 'ledger.html#/taxes' }),
       from: ['accounts.' + a.id + '.conversions']
     });
   }
@@ -123,7 +136,7 @@ export function buildFlags(spine, rules, s) {
     const detail = due !== null
       ? 'Estimated ' + year + ' balance due: ' + money(due) + '. Next estimated payment date: ' + longDate(nextDate.date) + '.'
       : 'The ' + year + ' balance due cannot be figured yet (' + tax.missingText + '). Tax on the ' + year + ' income known so far is at least ' + money(floor) + ' federal, and the unemployment (' + money(tax.inputs.unemployment) + ' in ' + year + ') had none withheld. Next estimated payment date: ' + longDate(nextDate.date) + '.';
-    add({ id: 'unemployment-withholding-' + st.id, ...taxBits, title: st.label + ' has no federal tax withheld', detail, from: ['income.' + st.id + '.withholding.federal', ...tax.balanceDue.missing], rules: [nextDate.rule, ...tax.balanceDue.rules] });
+    add({ id: 'unemployment-withholding-' + st.id, ...taxBits, title: st.label + ' has no federal tax withheld', detail, card: cardOf(st.label + ': no tax withheld', due !== null ? money(due) + ' due for ' + year : 'At least ' + money(floor) + ' federal for ' + year, { label: 'Plan for the tax', href: 'ledger.html#/taxes' }), from: ['income.' + st.id + '.withholding.federal', ...tax.balanceDue.missing], rules: [nextDate.rule, ...tax.balanceDue.rules] });
   }
 
   // ------------------------------------------------------------ utilization
@@ -144,9 +157,10 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'utilization-' + c.id, stage,
       title: c.name + ' is at ' + pctWords(c.util.value) + ' of its limit',
+      card: cardOf(c.name + ' is ' + pctWords(c.util.value) + ' of its limit', money(c.balance) + ' of ' + money(c.limit) + (stage === 'green' ? '' : '; paying ' + money(c.balance - Math.floor(c.limit * (stage === 'red' ? red : green))) + ' gets it to ' + pctWords(stage === 'red' ? red : green)), { label: stage === 'green' ? 'See the card' : 'Plan a payment', path }),
       detail: money(c.balance) + ' of ' + money(c.limit) + '. Over ' + pctWords(red) + ' of a limit counts against a credit score' + (c.reports === null ? ', if this card reports to personal credit (not entered yet)' : '') + '.',
       next: stage === 'red' ? downTo(red, 'Next: ') : stage === 'yellow' ? downTo(green, 'Next: ') : null,
-      green: stage === 'green' ? null : downTo(green, 'Stage 3: '),
+      green: stage === 'green' ? null : downTo(green, 'Goal: '),
       from: c.util.from, rules: utilRules
     });
   }
@@ -161,9 +175,10 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'utilization-personal', stage,
       title: 'Personal cards are at ' + pct1(pu.value) + ' of their limits',
+      card: cardOf('Cards are ' + pctWords(pu.value) + ' of their limits', money(pu.balance) + ' of ' + money(pu.limit) + (stage === 'green' ? '' : '; paying ' + money(pu.balance - Math.floor(pu.limit * (stage === 'red' ? red : green))) + ' gets them to ' + pctWords(stage === 'red' ? red : green)), { label: stage === 'green' ? 'See the cards' : 'Plan a payment', path }),
       detail: money(pu.balance) + ' of ' + money(pu.limit) + ' on the cards that report to personal credit; over ' + pctWords(red) + ' counts against a credit score.' + (ov.value !== null ? ' All cards, business ones included: ' + pct1(ov.value) + '.' : '') + (cs.smallest && cs.personalAfter.value !== null ? ' Paying off ' + cs.smallest.name + ' (' + money(cs.smallest.balance) + '), the smallest balance over ' + pctWords(red) + ', would bring personal utilization to ' + pct1(cs.personalAfter.value) + '.' : ''),
       next: stage === 'red' ? payTo(red, 'Next: ') : stage === 'yellow' ? payTo(green, 'Next: ') : null,
-      green: stage === 'green' ? null : payTo(green, 'Stage 3: '),
+      green: stage === 'green' ? null : payTo(green, 'Goal: '),
       from: pu.from, rules: utilRules
     });
   }
@@ -184,11 +199,12 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'promo-deadlines', stage,
       title: stage === 'green' ? 'Every promo balance is paid off' : money(pr.total.value) + ' in promo balances due by ' + longDate(last),
+      card: stage === 'green' ? cardOf('Promo balances are paid off', 'Nothing left on a 0% rate', { label: 'See the cards', href: 'ledger.html#/debt' }) : cardOf('Promo rates end ' + longDate(last), money(pr.total.value) + ' left; ' + money(Math.ceil(pr.monthly.value)) + ' a month clears it' + (stage === 'red' ? ', ' + money(Math.ceil(pr.monthly.value - (surplus ?? 0))) + ' more than your surplus' : ''), { label: 'Plan payments', path }),
       detail: stage === 'green' ? 'Nothing is left on a 0% intro rate.' : 'Clearing them in time takes about ' + money(pr.monthly.value, true) + ' a month: ' + lines.join('; ') + '.',
       next: stage === 'red'
         ? goal(asOf, 'Next: free up ' + money(Math.ceil(pr.monthly.value - (surplus ?? 0))) + ' a month: clearing the promos takes ' + money(Math.ceil(pr.monthly.value)) + ' a month' + (surplus === null ? ' and the monthly surplus is not known yet' : ' and the monthly surplus is ' + money(surplus)), { target: Math.ceil(pr.monthly.value), gap: pr.monthly.value - (surplus ?? 0), path })
         : stage === 'yellow' ? allPaid('Next: ') : null,
-      green: stage === 'green' ? null : allPaid('Stage 3: '),
+      green: stage === 'green' ? null : allPaid('Goal: '),
       from: pr.total.from
     });
   }
@@ -214,9 +230,10 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'income-ends-' + st.id, stage,
       title: st.label + ' ends ' + longDate(st.end) + ', in ' + daysBetween(asOf, st.end) + ' days',
+      card: cardOf(st.label + ' ends in ' + daysBetween(asOf, st.end) + ' days', (lost !== null ? money(lost) + ' a month ends ' : 'Ends ') + longDate(st.end) + (stage === 'green' ? ', replaced' : ''), { label: stage === 'green' ? 'See income' : 'Confirm what comes next', path: bestPath }),
       detail: stage === 'green' ? 'Replaced by ' + listWords(confirmed.map((o) => o.label)) + ' (confirmed).' : named.length ? 'What follows: ' + listWords(named) + '. None of it is confirmed yet.' : 'No income is entered to follow it.',
       next: stage === 'red' ? goal(asOf, 'Next: a replacement at least ' + pctWords(R('STAGE_REPLACE_YELLOW')) + ' likely, with an amount' + (lost !== null ? ' (' + money(lost) + ' a month ends)' : ''), { gap: lost, path: bestPath }) : stage === 'yellow' ? confirmGoal('Next: ') : null,
-      green: stage === 'green' ? null : confirmGoal('Stage 3: '),
+      green: stage === 'green' ? null : confirmGoal('Goal: '),
       from: ['income.' + st.id + '.amount', ...after.flatMap((o) => ['income.' + o.id + '.amount', ...(o.likelihood ? ['income.' + o.id + '.likelihood'] : [])])],
       rules: ['APP_INCOME_END_DAYS', 'STAGE_REPLACE_YELLOW']
     });
@@ -238,9 +255,10 @@ export function buildFlags(spine, rules, s) {
     const back = em.backstop.contributions.value;
     add({
       id: 'runway', stage, title: 'Cash covers ' + months1(rw.value) + ' months of spending',
+      card: cardOf('Cash covers ' + months1(rw.value) + ' months', money(cash) + ' now' + (stage === 'green' || target === null ? '' : '; ' + money(Math.ceil((stage === 'red' ? redMonths : target) * em.monthlyNeed)) + ' covers ' + (stage === 'red' ? redMonths : target) + ' months'), { label: stage === 'green' ? 'See your cash' : 'Build the cushion', path }),
       detail: money(cash) + ' in cash against ' + money(em.tiers.full.burn.value) + ' a month (expenses plus minimum payments)' + (fat !== null ? '; ' + months1(fat) + ' months on food, housing and transportation alone' : '') + '.' + (back ? ' Roth contributions of ' + money(back) + ' can come out with no tax or penalty; they are not counted as cash.' : '') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''),
       next: stage === 'red' ? toMonths(redMonths, 'Next: ', '') : stage === 'yellow' ? toMonths(target, 'Next: ', ', the Rule of 5 target') : null,
-      green: stage === 'green' || target === null ? null : toMonths(target, 'Stage 3: ', ', the Rule of 5 target'),
+      green: stage === 'green' || target === null ? null : toMonths(target, 'Goal: ', ', the Rule of 5 target'),
       from: rw.from, rules: ['STAGE_RUNWAY_RED_MONTHS', 'APP_RULE_OF_5']
     });
   }
@@ -263,10 +281,12 @@ export function buildFlags(spine, rules, s) {
       const spendNeeded = Math.floor(fi.goal.value * wr / 12 / share);
       return goal(asOf, word + 'an FI goal of ' + money(goalNeeded) + ' or more (' + money(goalNeeded - fi.goal.value) + ' higher), or spending of ' + money(spendNeeded) + ' a month or less (' + money(Math.max(0, Math.ceil(spend - spendNeeded))) + ' less)', { target: goalNeeded, gap: goalNeeded - fi.goal.value, path });
     };
-    const ys = fix(yr, 'Next: '), gs = fix(gr, 'Stage 3: ');
+    const ys = fix(yr, 'Next: '), gs = fix(gr, 'Goal: ');
     add({
       id: 'fi-goal-gap', stage,
       title: stage === 'green' ? 'The FI goal covers today\'s spending' : 'The FI goal is below what today\'s spending implies',
+      card: stage === 'green' ? cardOf('Your FI goal covers your spending', big(fi.goal.value) + ' goal vs ' + big(fi.implied.value) + ' your spending needs', { label: 'See goals', href: 'ledger.html#/goals' })
+        : cardOf(stage === 'red' ? 'Your FI goal is too low' : 'Your FI goal is a little low', big(fi.goal.value) + ' goal vs ' + big(fi.implied.value) + ' your spending needs', { label: 'Update goal', path, prefill: goalRec.fiNumber ? Math.ceil(fi.implied.value) : Math.ceil(spend * 12) }, { label: 'Or lower spending', href: 'ledger.html#/needs' }),
       detail: 'Goal: ' + money(fi.goal.value) + '. Today\'s spending (' + money(spend) + ' a month, before debt payments) at a ' + pctWords(wr) + ' withdrawal rate implies ' + money(fi.implied.value) + ' (the goal is ' + pctWords(ratio) + ' of it).',
       next: stage === 'red' ? { ...ys, spendingNeeded: Math.floor(fi.goal.value * wr / 12 / yr), goalNeeded: Math.ceil(yr * fi.implied.value) } : stage === 'yellow' ? { ...fix(gr, 'Next: '), spendingNeeded: Math.floor(fi.goal.value * wr / 12 / gr), goalNeeded: Math.ceil(gr * fi.implied.value) } : null,
       green: stage === 'green' ? null : { ...gs, spendingNeeded: Math.floor(fi.goal.value * wr / 12 / gr), goalNeeded: Math.ceil(gr * fi.implied.value) },
@@ -304,9 +324,10 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'health-26-' + p.id, stage,
       title: p.name + '\'s coverage ' + (v(now.value) === 'parent_plan' ? 'on a parent\'s plan ends at ' + ageLimit : 'changes') + ' (' + longDate(when) + ', in ' + left + ' days)',
+      card: cardOf('Health coverage changes in ' + left + ' days', longDate(when) + (cost ? ', ' + money(cost) + ' a month after' : ''), { label: stage === 'green' ? 'See coverage' : 'Set up the new plan', path: nextGoal.path || (base ? base + '.value' : null), href: base ? null : 'ledger.html#/needs' }),
       detail: (costs.length ? listWords(costs.map((e) => money(v(e.amount)) + ' a month for ' + e.label)) + ' starts then. ' : '') + 'Putting money in an HSA depends on the new plan: an HDHP qualifies, and bronze and catastrophic plans count from 2026. ' + hsa,
       next: stage === 'green' ? null : nextGoal,
-      green: stage === 'green' ? null : setAsideGoal('Stage 3: '),
+      green: stage === 'green' ? null : setAsideGoal('Goal: '),
       from: ['household.people.' + p.id + '.birthDate', ...(base ? [base + '.value', base + '.planType', base + '.enrolled', base + '.setAside'] : []), ...costs.map((e) => 'expenses.' + e.id + '.amount')],
       rules: ['APP_HEALTH_PARENT_AGE', 'HDHP_MIN_S', 'STAGE_COVERAGE_RED_DAYS']
     });
@@ -325,11 +346,12 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'subscriptions', stage,
       title: sub.items.length + ' subscription' + (sub.items.length === 1 ? '' : 's') + ': ' + money(sub.monthly.value) + ' a month (' + money(sub.yearly) + ' a year)',
+      card: cardOf(stage === 'green' ? 'Subscriptions are checked' : due.length ? 'Subscriptions not checked in ' + sub.reviewDays + ' days' : 'A subscription charges soon', (look.length || sub.items.length) + ' subscription' + ((look.length || sub.items.length) === 1 ? '' : 's') + ', ' + money(look.length ? look.reduce((a, i) => a + (i.monthly ?? 0), 0) : sub.monthly.value) + ' a month', { label: 'Review subscriptions', href: 'ledger.html#/needs/subscriptions' }),
       detail: [soon.length ? 'Charging soon: ' + listWords(soon.map((i) => i.label + ' on ' + longDate(i.renews) + (i.monthly !== null ? ' (' + money(i.monthly) + ' a month)' : ''))) + '.' : null,
         due.length ? 'Not reviewed in ' + sub.reviewDays + ' days: ' + listWords(due.map((i) => i.label)) + '.' : null,
         stage === 'green' ? 'Every subscription was reviewed in the last ' + sub.reviewDays + ' days.' : null].filter(Boolean).join(' '),
       next: first ? goal(asOf, 'Next: look at ' + first.label + (first.soon ? ' before it charges on ' + longDate(first.renews) : '') + ' and mark it reviewed', { path: 'expenses.' + first.id + '.reviewed' }) : null,
-      green: stage === 'green' ? null : goal(asOf, 'Stage 3: every subscription reviewed in the last ' + sub.reviewDays + ' days, none charging unseen'),
+      green: stage === 'green' ? null : goal(asOf, 'Goal: every subscription reviewed in the last ' + sub.reviewDays + ' days, none charging unseen'),
       from: sub.items.flatMap((i) => ['expenses.' + i.id + '.amount', 'expenses.' + i.id + '.renews', 'expenses.' + i.id + '.reviewed']),
       rules: ['SUB_REVIEW_DAYS', 'SUB_RENEW_SOON_DAYS']
     });
@@ -354,10 +376,11 @@ export function buildFlags(spine, rules, s) {
     add({
       id: 'input-' + id, stage,
       title: stage === 'red' ? what + ' needs ' + missing.length + ' input' + (missing.length === 1 ? '' : 's') : stage === 'yellow' ? what + ' uses ' + rough.length + ' rough number' + (rough.length === 1 ? '' : 's') : what + ': every input known',
+      card: cardOf(stage === 'red' ? what + ' is missing a number' : stage === 'yellow' ? what + ' rests on guesses' : what + ' is complete', stage === 'red' ? 'Needs ' + labelFor(spine, missing[0]) + (missing.length > 1 ? ' and ' + (missing.length - 1) + ' more' : '') : stage === 'yellow' ? rough.length + (rough.length === 1 ? ' guess' : ' guesses') : 'Every number it uses is known', { label: stage === 'red' ? 'Fill it in' : stage === 'yellow' ? 'Firm it up' : 'See it', path: missing[0] || rough[0] || null, href: missing[0] || rough[0] ? null : 'ledger.html' }),
       detail: stage === 'red' ? 'Needs: ' + fields(missing) + '.' : stage === 'yellow' ? 'Rough: ' + fields(rough) + '.' : 'Every number it uses is known.',
       next: stage === 'red' ? goal(asOf, 'Next: enter ' + labelFor(spine, missing[0]) + (missing.length > 1 ? ' (and ' + (missing.length - 1) + ' more)' : ''), { path: missing[0] })
         : stage === 'yellow' ? goal(asOf, 'Next: confirm ' + labelFor(spine, rough[0]) + (rough.length > 1 ? ' (and ' + (rough.length - 1) + ' more)' : ''), { path: rough[0] }) : null,
-      green: stage === 'green' ? null : goal(asOf, 'Stage 3: every input known', { path: missing[0] || rough[0] }),
+      green: stage === 'green' ? null : goal(asOf, 'Goal: every input known', { path: missing[0] || rough[0] }),
       from: missing.length ? missing : rough.length ? rough : r.from || []
     });
   }
