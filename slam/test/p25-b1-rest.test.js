@@ -45,7 +45,7 @@ test('the One-pager: under Today, the cards with more behind them are whole-card
   const src = read('ui/onepager.js');
   assert.match(src, /const goCard = \(title, href, \.\.\.body\) => h\('section', \{ class: 'card has-target' \},/);
   assert.match(src, /h\('a', \{ class: 'card-link', href \}, h\('span', \{\}, title\), h\('span', \{ class: 'chev', 'aria-hidden': 'true' \}, '\\u203A'\)\)/);
-  for (const [title, href] of [['Debt', "numbersHref\\('debt'\\)"], ['The next rung', "'plan\\.html'"], ['Spending a month', "numbersHref\\('needs'\\)"]]) assert.match(src, new RegExp("goCard\\('" + title + "', " + href), title);
+  for (const [title, href] of [['Debt', "numbersHref\\('debt'\\)"], ['Next step', "step \\? 'plan\\.html#/'"]]) assert.match(src, new RegExp("goCard\\('" + title + "', " + href), title);
   for (const w of strings(src)) assert.doesNotMatch(w, JARGON, 'onepager: ' + w);
   assert.match(read('ui/spine.css'), /\.onepager \.op-cell \.op-k, \.onepager \.op-cell \.tile-note \{ display: block; \}/, 'a cell label never runs into its note');
 });

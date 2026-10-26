@@ -140,3 +140,4 @@ The Budget calendar is not retired yet: a second audit of its own code found the
 116. **Spending's Do and See**: a two-button toggle kept with the screen (Back and the tab return to the one you were on), not two page levels, so every link to a category keeps working. **Default used:** the toggle; Do opens first.
 117. **The outlook sentence on the demo reads "$0 typical, $0 bad"**: checking is topped up from savings whenever it would dip, so its lowest day sits at the floor in every run. **Default used:** the sentence says what the runs say; the Outlook screen has the rest.
 118. **Record a payment** lowers the debt's balance and the main checking balance by the amount, as of today. **Default used:** both; it is not logged as spending.
+119. **Printing the One-pager from a phone**: at 375px it prints on 3 pages; from a computer it is one Letter page. **Default used:** print from a computer; the phone layout is kept for reading.
