@@ -97,3 +97,22 @@ card, then categories and the budget. Cards and loans move their month balances 
 - Couples details: whose account it is beyond partner or first person, and the spousal IRA rule's edge cases (answer 48).
 - Couples details: whose capital gains, dividends and other income on a tax year are, for partners who do not file jointly (answer 61).
 - Couples details: married filing separately and living apart all year, the single Roth range (answer 62).
+
+## Parked from the persona checker (claude/slam-checker-zdig1g, docs/CHECKER_REPORT.md; read only, not merged; 2026-10-26)
+
+Still open after Phase 2.5 (the checker's card-paid-in-full, money-from-a-person, dates, hours x rate, employer match,
+goals and Lean FI items were done in Batches 0 to 4 and Part B):
+- New York City income tax (8 personas), and any state other than New York, even federal only with a note (3).
+- A second or third adult in My numbers with their own income, accounts and age; a sharing formula by income (6).
+- Children as dependents: the child tax credit, dependent care and earned income credits (4).
+- The marketplace subsidy and benefit cliffs against a changing income (5).
+- Withdrawals and a first pass at decumulation: a draw, required distributions, Medicare, survivor rules (4).
+- The net investment income tax (3); FICA's wage base once a year across streams.
+- Self-employed deductions in cash flow and tax: SEP and solo 401(k) deferrals, health insurance, business expenses (3).
+- Social Security: taxation of benefits and the survivor-to-own switch (2).
+- An FI number net of income that continues (a pension, Social Security, a job kept on purpose) beyond Barista FI (2).
+- Equity compensation (RSUs) as what it is (2); in-kind support and gift-tax reporting (2).
+- A tuition or education category and a medical category with FSA or HSA sizing (5 and 3).
+- A payday loan as a fee due in full on a date (1); a filing status that changes on a date (1); a kollel or stipend
+  situation (1).
+- The projection's edges: a cash shortfall pauses the FI clock; a payment below the interest ends the plan with words.
