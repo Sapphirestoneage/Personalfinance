@@ -181,15 +181,16 @@ export function cashLine(spine, sim, { from = null } = {}) {
     let end;
     if (a) { end = a.amount; for (let x = a.date; x <= d; x = addDays(x, 1)) end += flow.get(x) || 0; }
     else { const b = anchors.find((x) => x.date > d); end = b.amount; for (let x = addDays(d, 1); x < b.date; x = addDays(x, 1)) end -= flow.get(x) || 0; }
-    past.push({ date: d, checking: round2(end), savings: null, past: true, payday: (spine.log || []).some((e) => e.date === d && e.kind === 'income'), big: null, under: round2(end) < sim.floor.amount });
+    past.push({ date: d, checking: round2(end), savings: null, debt: null, past: true, payday: (spine.log || []).some((e) => e.date === d && e.kind === 'income'), big: null, under: round2(end) < sim.floor.amount });
   }
   const ahead = sim.daily.map((d) => {
     const outs = d.events.filter((e) => ['bill', 'card-payment', 'loan-payment', 'paylater'].includes(e.kind) && !e.card && e.amount <= -100);
     const big = outs.length ? outs.reduce((m, e) => (e.amount < m.amount ? e : m)) : null;
-    return { date: d.date, checking: d.primary, savings: savingsIds.length ? round2(savingsIds.reduce((x, id) => x + (d.balances[id] || 0), 0)) : null, past: false, payday: d.events.some((e) => e.kind === 'income'), big: big ? { label: big.label, amount: -big.amount } : null, under: d.primary < sim.floor.amount };
+    // All debt that day (cards and loans), drawn as its own labeled line (Batch 6).
+    return { date: d.date, checking: d.primary, debt: d.debt, savings: savingsIds.length ? round2(savingsIds.reduce((x, id) => x + (d.balances[id] || 0), 0)) : null, past: false, payday: d.events.some((e) => e.kind === 'income'), big: big ? { label: big.label, amount: -big.amount } : null, under: d.primary < sim.floor.amount };
   });
   const days = [...past, ...ahead];
-  const values = days.flatMap((d) => [d.checking, d.savings]).filter((x) => x !== null);
+  const values = days.flatMap((d) => [d.checking, d.savings, d.debt]).filter((x) => x !== null && x !== undefined);
   const earliest = anchors[0].date;
   const lowDay = ahead.reduce((m, d) => (d.checking < m.checking ? d : m));
   const pays = new Set(ahead.filter((d) => d.payday).map((d) => d.date));

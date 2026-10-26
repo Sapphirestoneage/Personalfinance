@@ -18,6 +18,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const dayWords = (d) => {
   const bits = [shortDate(d.date) + ': checking ' + money(d.checking)];
   if (d.savings !== null) bits.push('savings ' + money(d.savings) + ' (apart)');
+  if (d.debt) bits.push('debt ' + money(d.debt));
   if (d.payday) bits.push('payday');
   if (d.big) bits.push(d.big.label + ' ' + money(d.big.amount));
   if (d.under) bits.push('under the floor');
@@ -38,6 +39,7 @@ function chart(line, width) {
   const aheadPts = idx.filter(([, d]) => !d.past).map(([i, d]) => [i, d.checking]);
   if (pastPts.length && firstAhead) aheadPts.unshift(pastPts[pastPts.length - 1]);
   const savePts = idx.filter(([, d]) => d.savings !== null).map(([i, d]) => [i, d.savings]);
+  const debtPts = idx.filter(([, d]) => d.debt !== null && d.debt !== undefined && d.debt > 0).map(([i, d]) => [i, d.debt]);
   const svg = s('svg', { class: 'cl-svg', viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': 'Checking every day from ' + shortDate(line.days[0].date) + ' to ' + shortDate(line.days[n - 1].date) + '; every day is also in the list below the chart' });
   // Days under the floor (or under zero when there is no floor): one wash per run of days.
   let run = null;
@@ -51,6 +53,10 @@ function chart(line, width) {
   if (savePts.length > 1) svg.append(s('polyline', { class: 'cl-line cl-thin viz-5', points: pts(savePts) }));
   if (pastPts.length > 1) svg.append(s('polyline', { class: 'cl-line cl-past', points: pts(pastPts) }));
   if (aheadPts.length > 1) svg.append(s('polyline', { class: 'cl-line viz-3', points: pts(aheadPts) }));
+  if (debtPts.length > 1) svg.append(s('polyline', { class: 'cl-line cl-thin viz-2', points: pts(debtPts) }));
+  // Each line named at its right end (Batch 6): Cash, Debt, Savings.
+  const tag = (list, words) => { if (list.length < 2) return; const [i, v] = list[list.length - 1]; svg.append(s('text', { class: 'cl-label cl-end', x: (x(i) - 2).toFixed(1), y: (y(v) - 6).toFixed(1), 'text-anchor': 'end' }, words)); };
+  tag(aheadPts, 'Cash'); tag(debtPts, 'Debt'); tag(savePts, 'Savings, apart');
   // The as-of day: a thin line, its label in the top gutter, kept inside the chart.
   if (firstAhead) {
     const ax = x(firstAhead[0]);
@@ -77,9 +83,10 @@ function chart(line, width) {
 export function cashChartCard(line, { back = false, onBack = null, width = 640, preCover = null } = {}) {
   if (!line) return null;
   const legend = [
-    ['viz-3', 'Checking, expected'],
+    ['viz-3', 'Cash (checking), expected'],
     ['cl-sw-past', 'Checking, recorded'],
-    ['viz-5', 'Savings (not added in)'],
+    ['viz-5', 'Savings, shown apart (not added in)'],
+    ...(line.days.some((d) => d.debt > 0) ? [['viz-2', 'Debt, all cards and loans']] : []),
     ...(line.days.some((d) => d.under) ? [['cl-sw-under', line.floor > 0 ? 'Under the floor of ' + money(line.floor) : 'Below zero']] : [])
   ];
   return h('section', { class: 'card cash-chart', 'aria-labelledby': 'cashline-h' },

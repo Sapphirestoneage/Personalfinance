@@ -40,6 +40,17 @@ const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const LEGEND = [['viz-3', 'Money in, and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt payments and rates'], ['viz-4', 'Tax and account deadlines'], ['viz-5', 'Maybe money'], ['viz-0', 'Start and end dates']];
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
+// The view toggles (Batch 6): filters on the one list of events. A rough or missing item is a guess or has no amount.
+const FILTERS = [['all', 'All'], ['in', 'Money in'], ['bills', 'Bills'], ['debt', 'Debt'], ['rough', 'Rough or missing']];
+const DEBT_KINDS = ['debt', 'interest', 'promoEnds'];
+const FILTER_OF = {
+  all: () => true,
+  in: (e) => e.direction === 'in',
+  bills: (e) => e.direction === 'out' && !DEBT_KINDS.includes(e.kind),
+  debt: (e) => DEBT_KINDS.includes(e.kind),
+  rough: (e) => !!e.rough || e.amount === null
+};
+const filtered = (m, f) => (f === 'all' ? m : { ...m, events: m.events.filter(FILTER_OF[f]), undated: m.undated.filter(FILTER_OF[f]), days: m.days.map((d) => ({ ...d, events: d.events.filter(FILTER_OF[f]) })) });
 const VIEWS = [['month', 'Month'], ['weeks', 'Weeks'], ['agenda', 'Next 14 days'], ['paychecks', 'Paychecks'], ['year', 'Year'], ['debt', 'Debt']];
 
 // Why an item that cannot move stays on its day, in words (tapping it opens its screen, which says this).
@@ -78,7 +89,8 @@ function rootState(s, asOfYm) {
     timing: s.timing === true,
     back: typeof s.back === 'boolean' ? s.back : read(BACK_KEY, (v) => v === '1' || v === '0', '0') === '1',
     open: Array.isArray(s.open) ? s.open : [],
-    debt: s.debt && typeof s.debt === 'object' ? s.debt : null
+    debt: s.debt && typeof s.debt === 'object' ? s.debt : null,
+    filter: FILTERS.some(([id]) => id === s.filter) ? s.filter : 'all'
   };
 }
 const setRoot = (patch) => { keep(patch); refresh(); };
@@ -349,21 +361,44 @@ function summary(m, c, mathCtx) {
     null);
 }
 
+// The top three (Batch 6): cash today, what checking has left at the end of this month, and the lowest point, each
+// with Show the math. A month with no run (before the as-of date) has none.
+function topThree(c, mathCtx) {
+  const m = c.months[0];
+  if (!c.sim || !m) return null;
+  const r = cashReading(c.sim, m.ym);
+  const one = (label, value, sub, ids, extra) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(value)), sub ? h('p', { class: 'tile-sub muted' }, sub) : null, mathButton(ids, () => ({ ...mathCtx(), ...extra })));
+  return h('section', { class: 'card nw-pair cal-three', 'aria-label': 'Cash in three numbers' },
+    one('Cash today', m.cash.today, 'Every cash account', ['cash'], {}),
+    one('Left this month', m.cash.value, 'Checking at the end of ' + longMonth(m.ym), ['calendar:monthCash'], { month: m }),
+    one('Lowest point', r ? r.low.amount : null, r ? shortDate(r.low.date) + (r.low.beforePayday ? ', the day before payday' : '') : null, ['calendar:lowPoint'], { low: r ? { ...r.low, floor: c.sim.floor.amount } : null }));
+}
+
 // Waiting (S-209, the Budget's Track card): due on or before today and not marked yet. One tap each way; Open it opens
 // the item's own screen, for a different amount or a move.
 function waitingCard(spine, rules, today) {
   const list = waiting(spine, rules, { today });
   if (!list.length) return null;
+  // Several at once (Batch 6): tick them, then one tap marks them all, and one Undo takes them all back.
+  for (const k of [...picked]) if (!list.some((e) => e.key === k)) picked.delete(k);
+  const chosen = list.filter((e) => picked.has(e.key));
+  const markAll = (happened) => { const n = chosen.length; const keys = chosen.map((e) => ({ key: e.key, amount: e.amount })); picked.clear(); change((s) => keys.reduce((x, k) => (happened ? (k.amount === null ? x : confirmOccurrence(x, k.key, { amount: k.amount })) : skipOccurrence(x, k.key, true)), s), n + (n === 1 ? ' item' : ' items') + (happened ? ' marked happened' : ' marked did not happen')); };
   return h('section', { class: 'card', 'aria-labelledby': 'waiting-h' },
     h('h2', { id: 'waiting-h' }, 'Did these happen? ', h('span', { class: 'count' }, String(list.length))),
-    null,
+    list.length > 1 ? h('div', { class: 'edit-actions' },
+      h('button', { type: 'button', class: 'btn small', id: 'wait-all', onclick: () => { for (const e of list) picked.add(e.key); refresh(); } }, 'Select all'),
+      h('button', { type: 'button', class: 'btn small primary', id: 'wait-happened', disabled: !chosen.length, onclick: () => markAll(true) }, chosen.length ? 'Mark ' + chosen.length + ' happened' : 'Mark selected happened'),
+      h('button', { type: 'button', class: 'btn small', id: 'wait-not', disabled: !chosen.length, onclick: () => markAll(false) }, 'Did not happen')) : null,
     h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened' },
+      list.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', class: 'wait-pick', checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); refresh(); } }), ' Select') : null,
       h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
       h('div', { class: 'edit-actions' },
         e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'It happened'),
         h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
-        h('a', { class: 'btn ghost', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Open it'))))));
+        h('a', { class: 'btn ghost', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Different: open it'))))));
 }
+// The items ticked in Did these happen?, kept while the page is open.
+const picked = new Set();
 
 // The month's cash reading in words (S-209): checking today, the lowest day, and the days in trouble.
 function readingLines(c, m) {
@@ -435,14 +470,15 @@ function monthTab(v, c, today, ms, mathCtx, st) {
   const pre = c.sim && c.sim.checking.known ? safeToSpend(c.sim).low : null;
   parts.push(cashChartCard(line, { preCover: pre && pre.covered ? pre : null, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); }, width: chartWidth || Math.min(960, (app.clientWidth || 360) - 66) }));
   const floor = c.sim ? c.sim.floor.amount : null;
-  for (const m of c.months) {
+  for (const whole of c.months) {
+    const m = filtered(whole, st.filter);
     const used = new Set(m.events.map((e) => CAT[e.kind] || 'viz-0'));
     parts.push(
       c.months.length > 1 ? h('h2', { class: 'month-h' }, longMonth(m.ym)) : null,
-      summary(m, c, mathCtx),
+      summary(whole, c, mathCtx),
       h('section', { class: 'card cal', 'aria-labelledby': 'cal-h-' + m.ym },
         h('h2', { id: 'cal-h-' + m.ym }, 'On the days'),
-        h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([cc]) => used.has(cc)).map(([cc, t]) => h('li', {}, h('span', { class: 'sw ' + cc, 'aria-hidden': 'true' }), t)), m.events.some((e) => e.rough) ? h('li', {}, h('span', { class: 'ev-tag' }, 'rough'), ' a guess') : null, h('li', {}, h('span', { class: 'grip', 'aria-hidden': 'true' }, '⋮⋮'), ' drag to move')),
+        h('ul', { class: 'flow-legend', id: 'legend-' + m.ym, 'aria-label': 'What the colors mean' }, LEGEND.filter(([cc]) => used.has(cc)).map(([cc, t]) => h('li', {}, h('span', { class: 'sw ' + cc, 'aria-hidden': 'true' }), t)), m.events.some((e) => e.rough) ? h('li', {}, h('span', { class: 'ev-tag' }, 'rough'), ' a guess') : null, h('li', {}, h('span', { class: 'grip', 'aria-hidden': 'true' }, '⋮⋮'), ' drag to move')),
         h('div', { class: 'cal-grid-only' }, grid(m, today, ms, floor)),
         h('div', { class: 'cal-list-only' }, dayList(m, today, ms)),
         skippedList(m, v.base)),
@@ -634,6 +670,7 @@ function monthScreen(v, ctx) {
   return [
     windowBar(st.months, (n) => setRoot({ months: n })),
     gapsCard(spine, c.sim),
+    topThree(c, mathCtx),
     waitingCard(spine, rules, today),
     h('div', { class: 'month-nav', role: 'group', 'aria-label': 'Pick a month' },
       h('button', { type: 'button', class: 'btn', id: 'cal-prev', onclick: () => toMonth(addMonths(st.ym, -1)) }, '‹ ' + monthWords(addMonths(st.ym, -1))),
@@ -641,6 +678,8 @@ function monthScreen(v, ctx) {
       h('button', { type: 'button', class: 'btn', id: 'cal-next', onclick: () => toMonth(addMonths(st.ym, 1)) }, monthWords(addMonths(st.ym, 1)) + ' ›'),
       st.ym !== asOfYm ? h('button', { type: 'button', class: 'btn ghost', id: 'cal-now', onclick: () => toMonth(asOfYm) }, 'Back to this month') : null),
     h('div', { class: 'tabs', role: 'group', 'aria-label': 'Views' }, VIEWS.map(([id, label]) => h('button', { type: 'button', class: 'tab-btn', id: 'view-' + id, 'aria-pressed': String(st.view === id), onclick: () => setRoot({ view: id }) }, label))),
+    st.view === 'month' ? h('div', { class: 'segmented cal-filter', role: 'group', 'aria-label': 'Show' }, FILTERS.map(([id, label]) => h('button', { type: 'button', class: 'seg-btn', id: 'filter-' + id, 'aria-pressed': String(st.filter === id), onclick: () => setRoot({ filter: id }) }, h('span', { class: 'seg-label' }, label)))) : null,
+    st.view === 'month' ? h('p', { class: 'muted cal-hint' }, 'Drag an item to another day to move it. ', h('a', { href: '#legend-' + st.ym }, 'What the colors mean')) : null,
     searchCard(c, st),
     ...body,
     trayCard(c, st),

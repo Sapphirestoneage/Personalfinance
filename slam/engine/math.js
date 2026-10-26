@@ -469,6 +469,10 @@ function windfallMetric(id) {
 function calendarMetric(id) {
   if (id === 'calendar:paycheckLeft') return { id, label: 'Left after this paycheck', unit: 'usd', op: 'sum', screens: ['calendar'], formula: 'Left = the paycheck - every bill, payment and everyday spending it covers until the next paycheck',
     explain: ({ paycheck: p }) => (p ? out({ value: p.left, kind: 'computed', from: [], rough: [], missing: [], rules: [] }, [{ label: 'The paycheck (what lands)', value: p.amount, unit: 'usd', kind: 'computed', role: 'plus', path: p.path || null, group: 'I' }, ...p.bills.map((b) => ({ label: b.label + (b.date ? ' (' + b.date + ')' : ''), value: b.amount, unit: 'usd', kind: 'computed', role: 'minus', group: null }))]) : out(null, [])) };
+  if (id === 'calendar:lowPoint') return { id, label: 'The lowest point', unit: 'usd', op: 'custom', screens: ['calendar'], formula: 'Lowest point = the lowest checking balance on any day of the month, after every paycheck, bill, payment and everyday spending that day',
+    plain: 'The day checking is lowest this month, from the day-by-day run.',
+    explain: ({ low }) => (low ? out({ value: low.amount, kind: 'computed', from: [], rough: [], missing: [], rules: [] }, [{ label: 'Checking on ' + low.date, value: low.amount, unit: 'usd', kind: 'computed', role: 'arg', group: 'A' }, { label: 'The floor on checking', value: low.floor, unit: 'usd', kind: 'computed', role: 'arg', group: null }]) : out(null, [])),
+    recompute: (t) => t[0].value };
   if (id !== 'calendar:monthCash' && id !== 'calendar:rangeCash') return null;
   const range = id === 'calendar:rangeCash';
   return { id, label: range ? 'Checking at the end of the period' : 'Checking at the end of the month', unit: 'usd', op: 'sum', screens: ['calendar'], formula: (range ? 'Checking at the end = checking at the start' : 'Checking at month end = checking at the start of the month') + ' + pay in - bills - card and loan payments - everyday spending - saving and the set-aside + top-ups from the cushion',

@@ -1042,3 +1042,10 @@ h3.flag-title { margin: 0; font-size: var(--text-md); font-weight: 700; }
 .cushion-steps li { flex-wrap: wrap; }
 .cushion-steps li.is-done span:first-child::before { content: '\2713  '; }
 .cushion-steps .num { margin-left: auto; }
+/* Phase 2.5 Batch 6: the Calendar's three numbers, the filters and the hint. */
+.cal-three { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+.cal-filter { margin: var(--space-2) 0; }
+.cal-hint { font-size: var(--text-sm); margin: 0 0 var(--space-2); }
+.cl-end { font-weight: 600; }
+.waiting-list .check-row { display: flex; align-items: center; gap: var(--space-2); width: auto; }
+.waiting-list .check-row input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; min-height: 20px; flex: none; margin: 0; padding: 0; }

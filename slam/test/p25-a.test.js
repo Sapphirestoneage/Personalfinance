@@ -35,3 +35,9 @@ test('Today and the One-pager lead the savings rate with take-home; gross is in 
   const { DASHBOARD_MATH } = await import('../engine/math.js');
   assert.deepEqual(DASHBOARD_MATH['tile-savings'], ['savingsRateNet', 'savingsRateGross']);
 });
+
+test('Batch 6: the Calendar has three numbers on top, the filters, several marked at once, the hint and the legend link', () => {
+  const src = read('ui/calendar.js');
+  for (const w of ["'Cash today'", "'Left this month'", "'Lowest point'", "['rough', 'Rough or missing']", "'Drag an item to another day to move it. '", "'What the colors mean')", "keys.reduce("]) assert.ok(src.includes(w), w);
+  assert.match(read('ui/cash-chart.js'), /tag\(aheadPts, 'Cash'\); tag\(debtPts, 'Debt'\)/);
+});
