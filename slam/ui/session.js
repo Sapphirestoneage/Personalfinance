@@ -15,6 +15,8 @@ import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { h, chip, money, pct } from './view.js';
+import { addForm } from './add-form.js';
+import { INCOME_FIRST } from '../engine/add.js';
 
 // The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
 let DATA = { needs: [], presets: [], withdrawal: [] };
@@ -289,7 +291,15 @@ function debt(ctx) {
 }
 
 // ---------------------------------------------------------------- Income (and the two tax questions)
-const INCOME_ADD = [['w2', 'Paycheck (W-2)'], ['1099', '1099 work'], ['unemployment', 'Unemployment'], ['side', 'Side money (not 1099)'], ['person', 'Money from a person']];
+// Adding income (S-237): the same form My numbers uses (ui/add-form.js), questions first, built once while open.
+let addingIncome = false, incomeFormEl = null;
+function incomeAdd(spine, today) {
+  if (!addingIncome) { incomeFormEl = null; return h('button', { type: 'button', id: 'i-add', class: 'btn add', onclick: () => { addingIncome = true; refresh(); document.getElementById('add-type')?.focus(); } }, '+ Add income'); }
+  if (!incomeFormEl) incomeFormEl = addForm({ spine: () => current().spine, collection: 'income', types: INCOME_FIRST.map(([k]) => k), today,
+    onDone: (made, label) => { addingIncome = false; incomeFormEl = null; change(made.spine, said.added(label)); },
+    onCancel: () => { addingIncome = false; incomeFormEl = null; refresh(); } });
+  return incomeFormEl;
+}
 const OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every 2 weeks'], ['semimonthly', 'twice a month'], ['yearly', 'a year']];
 function setIncome(x, patch, words) {
   change((s) => editIncome(s, x.id, { amount: v(x.amount), cadence: x.cadence, kind: x.amount && x.amount.kind !== 'missing' ? x.amount.kind : 'known', ...patch }, todayIso()), words);
@@ -397,8 +407,7 @@ function income(ctx) {
   return frame(ctx, 'income', () => [
     h('section', { class: 'card' },
       (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine)) : h('p', { class: 'muted' }, 'No income yet.'),
-      h('p', { class: 'edit-label' }, 'Add one'),
-      h('div', { class: 'edit-actions' }, INCOME_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addItem(s, { collection: 'income', type, label }, today).spine, said.added(label)) }, label)))),
+      incomeAdd(spine, today)),
     h('section', { class: 'card', 'aria-labelledby': 'tax-h' },
       h('h2', { id: 'tax-h' }, h('span', { class: 'go-mark', 'aria-hidden': 'true' }, 'T'), 'Taxes'),
       h('ul', { class: 'srows' },

@@ -1,0 +1,90 @@
+// One way to add anything (S-237): Session and My numbers both call addWithAnswers, so the same answers always give
+// the same saved item. The form (ui/add-form.js) asks; this file turns the answers into the item. Pure, no DOM.
+//
+// addWithAnswers(spine, { collection, type, label, amount, cadence, fat, answers }, today) -> { spine, id, firstPath, collection }
+//   amount: what the amount box holds, read by type (a paycheck on salary: the yearly salary; by the hour: the rate;
+//   1099 in lumps: the last 12 months; unemployment: a week; a card or account: the balance; a goal: the target).
+//   null leaves it missing (never $0).
+
+import { addItem, putFact, setPay, editIncome } from './edits.js';
+import { inForce, addDays } from './spine.js';
+import { PRESETS } from './schema.js';
+
+// The income kinds the form offers first, in plain words, then the rest.
+export const INCOME_FIRST = [['w2', 'Paycheck (W-2)'], ['1099', '1099 work'], ['unemployment', 'Unemployment'], ['side', 'Side money (not 1099)'], ['person', 'Money from a person']];
+export const INCOME_MORE = [['tips', 'Tips'], ['rental', 'Rental income'], ['pension', 'Pension'], ['ss', 'Social Security'], ['other', 'Other income']];
+export const INCOME_WORDS = Object.fromEntries([...INCOME_FIRST, ...INCOME_MORE]);
+// How often, in plain words. Paychecks only come on a pay schedule.
+export const OFTEN_WORDS = [['monthly', 'A month'], ['semimonthly', 'Twice a month'], ['biweekly', 'Every 2 weeks'], ['weekly', 'A week'], ['quarterly', 'A quarter'], ['yearly', 'A year']];
+export const PAY_SCHEDULE = [['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['weekly', 'Weekly'], ['monthly', 'Monthly']];
+export const W2_BASIS = [['salary', 'Salary'], ['hourly', 'By the hour'], ['both', 'Salary plus tips, overtime or commission']];
+export const SELF_BASIS = [['steady', 'About the same each month'], ['lumpy', 'In lumps']];
+
+// What goes in the name box, by what is being added.
+export function namePlaceholder(collection, type) {
+  if (collection === 'income') return 'Where it comes from, e.g. Hudson Valley Health';
+  if (collection === 'expenses') return 'What it\'s for, e.g. Rent';
+  if (collection === 'goals') return 'Goal, e.g. Trip to Lisbon';
+  if (collection === 'debts') return type === 'credit_card' || !type ? 'Card name, e.g. Chase Freedom' : 'Loan, e.g. ' + (PRESETS[type] ? PRESETS[type].label : 'Car loan');
+  return 'Account, e.g. Chase savings';
+}
+
+// The amount box's label, by type and answers.
+export function amountWords(collection, type, answers = {}) {
+  if (collection === 'income') {
+    if (type === 'w2') return answers.payBasis === 'hourly' ? 'Per hour, before tax' : 'Yearly salary, before tax';
+    if ((type === '1099' || type === 'side') && answers.payBasis === 'lumpy') return 'All of it over the last 12 months';
+    if (type === 'unemployment') return 'How much a week';
+    return 'How much, before tax';
+  }
+  if (collection === 'debts') return 'How much you owe';
+  if (collection === 'accounts') return 'How much is in it';
+  if (collection === 'goals') return 'How much you need';
+  return 'How much';
+}
+
+// The first choice, from the situation in force today: between jobs starts on Unemployment, self-employed on 1099.
+export function firstIncomeType(spine, today) {
+  const now = inForce(spine.household && spine.household.situation, today);
+  const s = now && now.value ? now.value.value : null;
+  return s === 'between_jobs' ? 'unemployment' : s === 'self_employed' ? '1099' : 'w2';
+}
+
+export function addWithAnswers(spine, { collection, type, label, amount = null, cadence = 'monthly', fat = null, answers = {} }, today) {
+  const name = String(label || '').trim() || (collection === 'income' ? INCOME_WORDS[type] || 'Income' : collection === 'expenses' ? 'New expense' : collection === 'goals' ? 'New goal' : (PRESETS[type] || {}).label);
+  if (collection !== 'income') {
+    const made = addItem(spine, { collection, type, label: name, cadence, fat }, today);
+    if (amount === null) return { ...made, collection };
+    return { ...made, collection, spine: putFact(made.spine, made.firstPath, amount, 'known', today) };
+  }
+  const a = answers || {};
+  // Money from a person that is a loan is a debt you owe, not income.
+  if (type === 'person' && a.purpose === 'loan') {
+    const r = addItem(spine, { collection: 'debts', type: 'family_iou', label: 'Owed to ' + (String(a.from || '').trim() || 'a person') }, today);
+    return { ...r, collection: 'debts', spine: amount === null ? r.spine : putFact(r.spine, r.firstPath, amount, 'known', today) };
+  }
+  const often = type === 'w2' ? (PAY_SCHEDULE.some(([k]) => k === cadence) ? cadence : 'biweekly') : type === 'unemployment' ? 'weekly' : cadence;
+  const made = addItem(spine, { collection: 'income', type, label: name, cadence: often }, today);
+  const id = made.id, base = 'income.' + id;
+  let s = made.spine;
+  if (type === 'w2') {
+    const basis = a.payBasis === 'hourly' ? 'hourly' : 'salary';
+    s = setPay(s, id, basis === 'hourly' ? { basis, hourlyRate: amount, hoursPerWeek: a.hoursPerWeek ?? null, cadence: often } : { basis, salary: amount, cadence: often }, today);
+    if (a.payBasis === 'both') s = addItem(s, { collection: 'income', type: 'tips', label: name + ': tips, overtime, commission' }, today).spine;
+  } else if ((type === '1099' || type === 'side') && a.payBasis === 'lumpy') {
+    s = setPay(s, id, { basis: 'lumpy', yearTotal: amount }, today);
+  } else {
+    s = editIncome(s, id, { amount, cadence: often }, today);
+    if (type === '1099' || type === 'side') s = setPay(s, id, { basis: 'steady' }, today);
+  }
+  if (type === 'unemployment') {
+    const end = a.endDate || (Number.isInteger(a.weeksLeft) ? addDays(today, a.weeksLeft * 7) : null);
+    if (end) s = editIncome(s, id, { amount, cadence: 'weekly', end }, today);
+  }
+  if (type === 'person') {
+    if (a.from) s = putFact(s, base + '.from', String(a.from).trim(), 'known', today);
+    if (a.purpose) s = putFact(s, base + '.purpose', a.purpose, 'known', today);
+    if (a.purpose === 'allowance') s = putFact(s, base + '.allowanceMode', 'gift', 'known', today);
+  }
+  return { spine: s, id, firstPath: made.firstPath, collection: 'income' };
+}
