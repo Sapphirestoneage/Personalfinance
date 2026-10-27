@@ -134,11 +134,15 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     const card = payer ? (spine.debts || []).find((x) => x.id === payer && x.type === 'credit_card') : null;
     const onCard = card ? { card: card.id, cardNote: 'on ' + (v(card.name) || card.id) + ': checking pays it through the card payment' } : {};
     if (isSubscription(e)) {
-      // A subscription charges its whole amount on its day (a yearly one once a year).
-      const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;
+      // A subscription charges its whole amount on its day (a yearly one once a year). A monthly one with a typed pay
+      // day and only the house's guessed renewal date charges on its pay day (morning answer 6: the demo's Streaming
+      // and Gym), as the run has it.
+      const guessed = e.renews && e.renews.source === 'DEFAULT_DUE_DAY';
+      const payDay = guessed && e.cadence === 'monthly' && e.payDay && v(e.payDay) !== null ? t.useFact(base + '.payDay', e.payDay) : null;
+      const renews = payDay ? dayIn(ym, payDay) : e.renews ? t.useFact(base + '.renews', e.renews) : null;
       const charge = v(e.amount) === null ? null : (sh.shared && sh.share !== null && !(sh.listed && sh.whoPays === 'whole') ? v(e.amount) * sh.share : v(e.amount));
       const next = renews ? nextCharge(renews, e.cadence, first) : null;
-      if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path, note: onCard.cardNote || null, ...onCard });
+      if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || (!payDay && roughFact(e.renews)), path, note: onCard.cardNote || null, ...onCard });
       else if (!renews) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, kind: 'subscription', label: e.label, date: null, amount: yours, direction: 'out', rough: true, note: 'next charge date not entered', path });
       // A charge in another month: nothing this month; the monthly share is in the month-end cash from the projection.
       continue;

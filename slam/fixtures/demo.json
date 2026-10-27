@@ -405,6 +405,12 @@
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"
+      },
+      "subscription": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
       }
     },
     {
@@ -429,6 +435,12 @@
       "fat": null,
       "payDay": {
         "value": 1,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "subscription": {
+        "value": true,
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"

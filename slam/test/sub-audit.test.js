@@ -32,3 +32,13 @@ test('ranked by cost a year; uses give cost per use; candidates add up', () => {
   assert.equal(a.freedYearly, Math.round(a.freedMonthly * 12 * 100) / 100);
   assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('; '));
 });
+
+test('the demo marks Streaming and Gym as subscriptions; each stays on its pay day on the Calendar (morning answer 6)', async () => {
+  const { calendar } = await import('../engine/calendar.js');
+  const s = demo();
+  const a = subscriptionAudit(s, summarize(s, R).subs);
+  assert.deepEqual(a.rows.map((r) => r.id).sort(), ['gym', 'streaming']);
+  const oct = calendar(s, R, { from: '2026-10', months: 1 }).months[0];
+  assert.equal(oct.events.find((e) => e.sourceId === 'gym').date, '2026-10-01', 'a guessed renewal date never hides the typed pay day');
+  assert.equal(oct.events.find((e) => e.sourceId === 'streaming').date, '2026-10-05');
+});

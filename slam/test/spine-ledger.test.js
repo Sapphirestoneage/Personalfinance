@@ -29,7 +29,10 @@ test('ledger: every Fact is a row, in a DATING group, with a label and type', ()
   const answers = listFacts(s).filter((x) => x.path.startsWith('profile.'));
   // How a bill is shared (who pays, the people on it) folds into its amount row.
   const shareFolds = listFacts(s).filter((x) => /^expenses\.[^.]+\.(shared|sharedWith|yourShare|whoPays|sharers)$/.test(x.path));
-  assert.equal(rows.length, listFacts(s).length - cardIntro.length - payDays.length - answers.length - shareFolds.length);
+  // Whether a bill is a subscription (the demo's Streaming and Gym, morning answer 6) folds into its row too.
+  const subFolds = listFacts(s).filter((x) => /^expenses\.[^.]+\.subscription$/.test(x.path));
+  assert.equal(subFolds.length, 2);
+  assert.equal(rows.length, listFacts(s).length - cardIntro.length - payDays.length - answers.length - shareFolds.length - subFolds.length);
   const find = (p) => rows.find((r) => r.path === p);
   assert.equal(find('debts.visa.apr').group, 'D');
   assert.equal(find('debts.visa.apr').type, 'cardRate');
@@ -440,7 +443,7 @@ test('income: one row says how much, how often, since when and the day paid; the
   assert.equal(rows.filter((r) => r.path.startsWith('income.salary.')).some((r) => r.path.endsWith('.payDay')), false);
   assert.equal(rowPathFor(s, 'income.salary.payDay'), 'income.salary.amount');
   assert.equal(rowPathFor(s, 'income.salary.payDay2'), 'income.salary.amount', 'the second pay day lives on the same row');
-  assert.equal(rows.length, listFacts(s).length - 3 - listFacts(s).filter((x) => /\.payDay$/.test(x.path) || x.path.startsWith('profile.') || /^expenses\.[^.]+\.(shared|whoPays|sharers)$/.test(x.path)).length, 'the three card intro facts, every pay day and how a bill is shared fold into their rows; Profile answers live on Profile');
+  assert.equal(rows.length, listFacts(s).length - 3 - listFacts(s).filter((x) => /\.payDay$/.test(x.path) || x.path.startsWith('profile.') || /^expenses\.[^.]+\.(shared|whoPays|sharers|subscription)$/.test(x.path)).length, 'the three card intro facts, every pay day and how a bill is shared fold into their rows; Profile answers live on Profile');
   // A blank clears a date; a pay day of null drops the field; bad dates are refused.
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'monthly', end: null, payDay: null }, '2026-10-23');
   assert.equal(s.income.find((i) => i.id === 'salary').end, null);

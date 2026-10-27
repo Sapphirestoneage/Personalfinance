@@ -94,3 +94,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answer 3 (2026-10-27): the payoff-order quick win reads APP_MATERIALITY from the Assumptions page, no $100 in code, with a test (S-245).
 - Morning answer 4 (2026-10-27): a cushion or emergency-fund goal is the Plan's reserve step (its target), the demo's Six-month cushion goal removed, four tests that used it as "a goal" now add their own (S-246).
 - Morning answer 5 (2026-10-27): Bills worth a call lists every negotiable bill with its script and I called, no "above typical" until the price table is sourced (placeholder flag kept), with a test (S-247).
+- Morning answer 6 (2026-10-27): the demo's Streaming and Gym are subscriptions (the audit has rows); a guessed renewal date no longer moves a subscription off its typed pay day; six tests updated, one added (S-248).

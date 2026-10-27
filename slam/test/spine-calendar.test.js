@@ -129,7 +129,7 @@ test('a missing amount is a missing line, never $0; a covered bill is not on the
   s = editFact(s, 'expenses.gym.amount', 'clear', { today: '2026-10-23' });
   s = editExpense(s, 'phone', { amount: 60, cadence: 'monthly', coveredBy: 'Parents' }, '2026-10-23');
   const m = calendar(s, R, { months: 1 }).months[0];
-  const gym = find(m, 'bill:gym');
+  const gym = find(m, 'sub:gym');
   assert.ok(gym, 'the gym still shows');
   assert.equal(gym.amount, null);
   assert.equal(m.events.some((e) => e.id === 'bill:phone'), false, 'covered: someone else pays it');

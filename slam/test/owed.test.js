@@ -128,6 +128,6 @@ test('the Calendar dates the ask: "Ask Theo: $39 for Sep to Nov", a dated item, 
   assert.equal(ask.label, 'Ask Theo: $39 for Sep to Nov (Streaming (family plan))');
   assert.equal(ask.amount, null);
   assert.equal(ask.note, 'Hey! Your share of Streaming (family plan) for Sep to Nov is $39.');
-  // The bill itself leaves whole on its day.
-  assert.equal(dec.events.find((e) => e.id === 'bill:streaming').amount, 40);
+  // The bill itself (a subscription in the demo, morning answer 6) leaves whole on its day.
+  assert.equal(dec.events.find((e) => e.id === 'sub:streaming').amount, 40);
 });

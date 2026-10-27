@@ -229,7 +229,10 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     // paid and lands in an account (Owed to you). A bill shared the old way keeps its paid-back-a-few-days-later run.
     const reimb = (dates, amountBack, cadence, day) => { if (!whole || sh.listed) return; const inc = { id: e.id + ':reimb', label: e.label + ', paid back', cents: cents(amountBack), cadence: 'month', day, offsetDays: reimbDays, to: pid, source: 'reimb', variable: false, estimated: true, path }; model.incomes.push(inc); t.addRough(path); };
     const dayFact = e.payDay ? t.useFact(base + '.payDay', e.payDay) : null;
-    if (isSubscription(e)) {
+    // A monthly subscription with a typed pay day and only the house's guessed renewal date is paid on its pay day like
+    // any bill (morning answer 6), the same day the Calendar shows.
+    const guessedRenews = e.renews && e.renews.source === 'DEFAULT_DUE_DAY' && e.cadence === 'monthly' && dayFact !== null;
+    if (isSubscription(e) && !guessedRenews) {
       const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;
       const next = renews ? nextCharge(renews, e.cadence, asOf) : null;
       if (next && (e.cadence === 'monthly' || e.cadence === 'yearly' || e.cadence === 'quarterly')) {

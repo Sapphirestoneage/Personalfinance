@@ -288,7 +288,7 @@ test('a paycheck or a debt with no amount is on the calendar, named, and moves n
 
 test('a yearly bill with a date is on the calendar once a year at the whole amount, the same day as the run (S-209)', () => {
   let s = demo();
-  s = { ...s, expenses: s.expenses.map((x) => (x.id === 'gym' ? { ...x, cadence: 'yearly', start: '2026-12-05' } : x)) };
+  s = { ...s, expenses: s.expenses.map((x) => (x.id === 'gym' ? { ...x, cadence: 'yearly', start: '2026-12-05', subscription: undefined } : x)) };
   s = putFact(s, 'expenses.gym.amount', 480, 'known', '2026-10-23');
   const c = calendar(s, R, { from: '2026-11', months: 2 });
   const [nov, dec] = c.months;
