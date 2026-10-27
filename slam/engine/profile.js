@@ -27,7 +27,7 @@ const W2 = (a) => ['w2', 'both'].includes(ans(a, 'work'));
 const SELF = (a) => ['self', 'both'].includes(ans(a, 'work'));
 export const LEVEL1 = [
   { id: 'firstName', area: 'you', label: 'Your first name', kind: 'text', does: 'Names the household on every page.' },
-  { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the Rule of 5 cushion, Coast FI and the turning-26 switch.' },
+  { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
   { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['adults', 'Other adults']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.' },
   { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },

@@ -19,7 +19,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 ### You
 
 - **Your first name** (text, or Not sure). Names the household on every page.
-- **The year you were born** (year, or Not sure). Sets your age for the Rule of 5 cushion, Coast FI and the turning-26 switch.
+- **The year you were born** (year, or Not sure). Sets your age for the cushion target, Coast FI and the turning-26 switch.
 - **The state you live in** (state, or Not sure). Picks the state tax.
 - **Who lives with you?** (Just me / A partner / Kids / Other adults, or Not sure). Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.
 - **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.

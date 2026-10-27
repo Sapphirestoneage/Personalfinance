@@ -392,7 +392,7 @@ function outlookCard(m) {
   const sign = (x) => (x === null ? 'missing' : (x < 0 ? '-' : '+') + money(Math.abs(x)));
   if (o.stale) return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' }, h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
     h('p', { class: 'muted' }, 'Balances are from ' + shortDate(o.asOf) + '. Check in to see this month.'),
-    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#checkin' }, 'Check in')));
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/checkin' }, 'Check in')));
   return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },
     h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
     h('div', { class: 'clear-grid' },
@@ -556,12 +556,6 @@ function tabsBar(tab) {
   return h('div', { class: 'segmented spend-tabs', role: 'group', 'aria-label': 'Spending' },
     [['do', 'Do'], ['see', 'See']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
 }
-function checkinChip(m) {
-  const open = /^#checkin$/.test(location.hash) || kept().checkinOpen === true;
-  const d = h('details', { class: 'card checkin-chip', open: open || null }, h('summary', {}, h('span', {}, 'Check in balances'), ' ', h('span', { class: 'pill' + (m.vw.stale.stale ? ' pill-maybe' : '') }, m.vw.stale.stale ? 'out of date' : 'up to date')), checkinCard(m));
-  d.addEventListener('toggle', () => { if (!!kept().checkinOpen !== d.open) keep({ checkinOpen: d.open }); });
-  return d;
-}
 function referenceCard(m) {
   const r = referenceBands(m.s, BENCH);
   if (!r) return null;
@@ -574,6 +568,14 @@ function referenceCard(m) {
     h('p', { class: 'tile-note' }, 'Source: ' + r.source + '.'));
 }
 const rangeWords = (m) => h('p', { class: 'range-words', 'aria-live': 'polite' }, 'Showing ' + windowWords(m.compare) + '.');
+// Do's tools, each its own screen (spending.html#/import): [title, its row's line, the screen].
+const TOOLS = {
+  import: ['Import a statement', () => 'Paste a bank or card download; you check each line first', (m) => importCard(m)],
+  checkin: ['Check in balances', (m) => (m.vw.stale.stale ? 'Out of date: type what the accounts hold now' : 'Up to date'), (m) => checkinCard(m)],
+  ask: ['Can I spend this?', () => 'See what a purchase does to your lowest day', (m, state) => askCard(m, state)],
+  sweep: ['Month-end sweep', () => 'Move what is left at the end of the month', (m) => sweepCard(m)]
+};
+const TOOL_IDS = ['import', 'checkin', 'ask', 'sweep'];
 function topScreen(m, months, state) {
   const tab = /^#(checkin|log)$/.test(location.hash) ? 'do' : tabOf(state);
   const addFirst = spendingStart(m.base || m.spine) === 'add';
@@ -581,11 +583,9 @@ function topScreen(m, months, state) {
     tabsBar(tab),
     ...(tab === 'do' ? [
       safeCard(m),
-      addFirst ? loggerCard(m) : importCard(m),
-      addFirst ? importCard(m) : loggerCard(m),
-      checkinChip(m),
-      askCard(m, state),
-      sweepCard(m)
+      loggerCard(m),
+      // The rest of Do are rows that open their own screen (audit 4); Import leads when the Profile says they import.
+      h('ul', { class: 'go-list', 'aria-label': 'More to do' }, (addFirst ? TOOL_IDS : ['import', ...TOOL_IDS.filter((x) => x !== 'import')]).map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
     ] : [
       controls(m, months),
       rangeWords(m),
@@ -609,6 +609,7 @@ function render(ctx) {
   const m = model(ctx.spine, ctx.rules, months);
   wage = m.wage;
   const [catId, lineId] = ctx.levels;
+  if (TOOLS[catId] && lineId === undefined) return TOOLS[catId][2](m, ctx.state);
   const cat = catId === undefined ? null : catOf(m, catId);
   if (!cat) return topScreen(m, months, ctx.state);
   const line = lineId === undefined ? null : cat.lines.find((l) => l.id === lineId);
@@ -617,6 +618,7 @@ function render(ctx) {
 
 // A level's words: a category (Housing), then one of its lines (Rent); null when it is not there any more.
 function name(levels, ctx) {
+  if (TOOLS[levels[0]]) return levels.length === 1 ? TOOLS[levels[0]][0] : null;
   const m = model(ctx.spine, ctx.rules, monthsOf(ctx.state));
   const cat = catOf(m, levels[0]);
   if (!cat || levels.length > 2) return null;
@@ -625,4 +627,6 @@ function name(levels, ctx) {
   return line ? line.label || line.id : null;
 }
 
+// An old link (spending.html#checkin) lands on the Check in screen.
+if (location.hash === '#checkin') history.replaceState(history.state, '', '#/checkin');
 startPage({ tab: 'spending', title: 'Spending', render, name });

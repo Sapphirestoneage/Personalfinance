@@ -22,9 +22,9 @@ export const GROUPS = [
   { id: 'method', label: 'Your method', note: 'How you fill a gap until the client\'s own number is in.', rows: [
     row('DEFAULT_CARD_APR', 'Card interest rate when unknown', 'A card with no rate typed uses this, marked as a guess.', [['My numbers, Debt', N + '#/debt'], ['Plan', P], ['Calendar', C]]),
     row('DEFAULT_DUE_DAY', 'Due day when unknown', 'A debt with no due day is due on this day of the month, as a guess.', [['Calendar', C], ['My numbers, Debt', N + '#/debt']]),
-    row('APP_RULE_OF_5', 'Rule of 5 (age divided by)', 'Months of expenses in the cushion = age divided by this (age 32 / 5 = 6.4 months), before income security adds more.', [['Today', T], ['Plan', P]]),
-    row('CUSHION_OKAY_EXTRA', 'Extra cushion months, income okay', 'Added to the Rule of 5 when income is okay but not rock solid.', [['Today', T], ['Plan', P]]),
-    row('CUSHION_SHAKY_EXTRA', 'Extra cushion months, income shaky', 'Added to the Rule of 5 when income is shaky.', [['Today', T], ['Plan', P]]),
+    row('APP_RULE_OF_5', 'Cushion: age divided by', 'Months of expenses in the cushion = age divided by this (age 32 / 5 = 6.4 months), before income security adds more.', [['Today', T], ['Plan', P]]),
+    row('CUSHION_OKAY_EXTRA', 'Extra cushion months, income okay', 'Added to the cushion when income is okay but not rock solid.', [['Today', T], ['Plan', P]]),
+    row('CUSHION_SHAKY_EXTRA', 'Extra cushion months, income shaky', 'Added to the cushion when income is shaky.', [['Today', T], ['Plan', P]]),
     row('APP_HOUSING_REF', 'Housing line', 'The share of take-home housing is compared with. A reference, not a grade.', [['Plan', P], ['Spending', S]]),
     row('APP_MATERIALITY', 'Too small to matter', 'A difference under this reads as on plan.', [['Spending', S], ['Today', T]]),
     row('APP_TREND_PCT', 'Trend line for variable spending', 'A variable expense is going up or down once its latest month is this far from its average.', [['Spending', S + '#see']]),
@@ -46,9 +46,9 @@ export const GROUPS = [
     row('STAGE_CLIFF_MONTHS', 'Income ending soon', 'Income that stops within this many months shows a warning.', [['Today', T], ['Calendar', C]])
   ] },
   { id: 'order', label: 'Order and allocations', note: 'Where the next dollar goes.', rows: [
-    row('FOO_RUNGS', 'Financial order of operations', 'The steps money climbs, in order.', [['Plan', P], ['Today', T]]),
+    row('FOO_RUNGS', 'The order money goes in', 'The steps money climbs, one at a time.', [['Plan', P], ['Today', T]]),
     row('WINDFALL_ORDER', 'Windfall order', 'Where extra money goes first.', [['Got extra money?', W]]),
-    row('FOO_HYPER_RATE', 'Hyper-saving mark, of gross (how this rule is defined)', 'Saving this share of gross pay is the last step of the order.', [['Plan', P]]),
+    row('FOO_HYPER_RATE', 'Invest-more mark, of gross (how this rule is defined)', 'Saving this share of gross pay reaches the invest-more step.', [['Plan', P]]),
     { id: 'REF_503020', name: '50/30/20 reference', means: 'Needs, wants and saving as a share of pay, shown as a reference line, never a grade.', screens: used(['Spending', S + '#see']), reference: 'benchmarks' }
   ] },
   { id: 'future', label: 'Future guesses', note: 'The sets every FI number reads. The client\'s own guesses are their numbers, on My numbers.', rows: [

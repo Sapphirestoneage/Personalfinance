@@ -1178,3 +1178,10 @@ a.fb-link .fb-more { justify-self: end; }
 .pref-tile { display: flex; align-items: center; gap: var(--space-2); }
 .pref-tile .check-row { flex: 1 1 auto; }
 .pref-link { margin: 0; }
+/* Header (audit 4): Undo and Redo as small icons; the household name opens a small menu. */
+.icon-btn { min-width: var(--tap); padding: 0; font-size: 1.15rem; }
+.whose-menu { position: relative; display: inline-block; }
+.whose-menu > summary { list-style: none; cursor: pointer; }
+.whose-menu > summary::-webkit-details-marker { display: none; }
+.whose-menu > summary::after { content: "\25BE"; font-size: 0.8em; }
+.whose-items { position: absolute; z-index: 20; top: 100%; left: 0; display: grid; gap: var(--space-1, 4px); padding: var(--space-2); background: var(--surface); border: 1.5px solid var(--btn-line); border-radius: var(--radius-sm); box-shadow: var(--btn-shadow); min-width: 160px; }

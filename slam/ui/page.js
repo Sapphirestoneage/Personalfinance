@@ -71,10 +71,13 @@ export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen
     catch (err) { console.warn(err); say(loadFailWords(err, file.name)); }
     input.value = '';
   });
+  // The household menu (audit 4): Open file lives here and on the Builder, not as a button on every header.
   return h('div', { class: 'whose whose-example' },
-    h('div', { class: 'whose-load' },
-      h('a', { class: 'whose-name', href: 'profile.html' }, 'Example household'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'),
-      input),
+    h('details', { class: 'whose-menu' },
+      h('summary', { class: 'btn small whose-name' }, 'Example household'),
+      h('div', { class: 'whose-items' },
+        h('a', { class: 'btn small', href: 'profile.html' }, 'Profile'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'),
+        input)),
     msg);
 }

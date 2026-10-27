@@ -222,8 +222,9 @@ function header(ctx, title) {
   const own = opts.actions ? [].concat(opts.actions(ctx)).filter(Boolean) : [];
   const u = undoWords(), r = redoWords();
   const undoing = opts.household || side ? [
-    h('button', { type: 'button', class: 'btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : null, onclick: doUndo }, 'Undo'),
-    h('button', { type: 'button', class: 'btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : null, onclick: doRedo }, 'Redo')
+    // Small icons in the header (audit 4); the words are the button's name and its tooltip.
+    h('button', { type: 'button', class: 'btn small icon-btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : 'Undo', title: u ? 'Undo: ' + u : 'Nothing to undo', onclick: doUndo }, h('span', { 'aria-hidden': 'true' }, '\u21B6')),
+    h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'))
   ] : [];
   return [
     h('div', { class: 'top-title' }, h('h1', {}, title), opts.household ? whoseLine(hist.present, source, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null),

@@ -59,8 +59,6 @@ function tile(spine, { id, label, result, shown, missingText, target = null, lin
 // current step). The credit cards, FI, tax, safe to spend and month-vs-plan moved to Debt, Goals, Taxes, the Calendar
 // and Spending.
 let scenario = pickedScenario();
-// Sections of the money flow split into their expenses (S-192): kept with this screen, so coming back opens them again.
-const flowOpen = () => kept().flowOpen || [];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const slugOf = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 function model(base, rules) {
@@ -177,15 +175,12 @@ function cashCard(spine, rules) {
     h('div', { class: 'flag-actions' }, fixButton(story)));
 }
 
-// The money flow (S-192); a split or join redraws only this section.
+// The money flow (S-192). No Split here (audit 4): each section opens its screen in My numbers, where its lines are.
 function flowPart(spine, rules, s) {
-  const open = flowOpen();
-  const el = flowSection(moneyFlow(spine, rules, s.cashflow, { open }), {
-    open, month: MONTH_NAMES[+s.ym.slice(5, 7) - 1],
-    listOpen: !!kept().flowList, onList: (on) => { if (!!kept().flowList !== on) keep({ flowList: on }); },
-    onToggle: (sec) => { keep({ flowOpen: open.includes(sec) ? open.filter((x) => x !== sec) : [...open, sec] }); el.replaceWith(flowPart(spine, rules, s)); }
+  return flowSection(moneyFlow(spine, rules, s.cashflow, { open: [] }), {
+    open: [], month: MONTH_NAMES[+s.ym.slice(5, 7) - 1], onToggle: null,
+    listOpen: !!kept().flowList, onList: (on) => { if (!!kept().flowList !== on) keep({ flowList: on }); }
   });
-  return el;
 }
 
 // Where a card's action goes: a field opens on its screen in My numbers (with a value ready to accept when the card

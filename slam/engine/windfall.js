@@ -28,7 +28,7 @@ const monthsSoFar = (asOf) => +asOf.slice(5, 7);
 
 export const STEP_LABELS = {
   taxOnIt: 'Tax on this money', taxBill: 'The year\'s tax bill', cashFloor: 'Cash up to the stage 1 floor', promos: 'Promo balances before their deadline',
-  employerMatch: 'The employer match left on the table', cards: 'Cards charging interest now', cushion: 'Cash up to the Rule of 5 target', roth: 'Roth IRA room this year', left: 'Not assigned yet'
+  employerMatch: 'The employer match left on the table', cards: 'Cards charging interest now', cushion: 'Cash up to your cushion target', roth: 'Roth IRA room this year', left: 'Not assigned yet'
 };
 
 // source: where the money came from ('w2', '1099', 'other'); a 1099 lump sum owes self-employment tax too (answer 24).
@@ -150,10 +150,10 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
     else if (id === 'cushion') run(id, (t) => {
       const target = s.emergency.targetDollars.value;
       t.absorb({ ...s.emergency.targetDollars, value: undefined }); t.absorb({ ...s.sheet.cash, value: undefined });
-      if (target === null || cash === null) return { need: null, why: 'The Rule of 5 target needs a birth date and monthly spending.', path: s.emergency.targetDollars.missing[0] || null };
+      if (target === null || cash === null) return { need: null, why: 'The cushion target needs a birth date and monthly spending.', path: s.emergency.targetDollars.missing[0] || null };
       const have = cash + floorAdded;
       const need = Math.max(0, target - have);
-      return { need, why: 'The Rule of 5 target is ' + money(target) + ' (' + s.emergency.targetMonths.value.toFixed(1) + ' months); cash is ' + money(cash) + (floorAdded ? ' plus ' + money(floorAdded) + ' from the floor step' : '') + (need ? ', so ' + money(need) + ' to go.' : ', which already reaches it.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
+      return { need, why: 'The cushion target is ' + money(target) + ' (' + s.emergency.targetMonths.value.toFixed(1) + ' months); cash is ' + money(cash) + (floorAdded ? ' plus ' + money(floorAdded) + ' from the floor step' : '') + (need ? ', so ' + money(need) + ' to go.' : ', which already reaches it.') + (s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: s.sheet.cash.from[0] || null, target };
     });
     else if (id === 'roth') run(id, (t) => {
       const roth = (spine.accounts || []).find((a) => a.type === 'roth_ira');

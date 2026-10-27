@@ -108,12 +108,12 @@ def({ id: 'cushionNeeds', label: 'Cushion step 1: a month of needs', unit: 'usd/
 def({ id: 'cushionMonth', label: 'Cushion step 2: a month of full spending', unit: 'usd/month', op: 'sum', screens: ['dashboard#tile-runway'], formula: 'Step 2 = a full month of spending = spending + debt minimums',
   plain: 'The second step: enough cash for one whole month as you live now.',
   explain: ({ s }) => out(s.emergency.tiers.full.burn, [metric('expenses', 'Spending', s.cashflow.expenses.total, 'usd/month'), metric('minimums', 'Debt minimums', s.cashflow.debtMinimums.total, 'usd/month')]) });
-def({ id: 'ruleOf5Months', label: 'Rule of 5 target (months)', unit: 'months', op: 'custom', screens: ['dashboard#tile-runway'], formula: 'Months to keep = age / 5',
-  plain: 'The Rule of 5: keep one month of full spending for every five years of age.',
+def({ id: 'ruleOf5Months', label: 'Cushion target (months)', unit: 'months', op: 'custom', screens: ['dashboard#tile-runway'], formula: 'Months to keep = age / 5',
+  plain: 'The cushion target: one month of full spending for every five years of age.',
   explain: ({ spine, rules, s }) => { const p = spine.household.people[0]; return out(s.emergency.targetMonths, [{ ...field(spine, 'household.people.' + p.id + '.birthDate', s.emergency.age, 'age', 'arg', 'Age today (from ' + labelFor(spine, 'household.people.' + p.id + '.birthDate') + ')') }, ruleTerm(rules, 'APP_RULE_OF_5', +s.asOf.slice(0, 4), 'arg', 'Divide by', 'count')], ['APP_RULE_OF_5']); },
   recompute: (t) => (t[0].value === null ? null : t[0].value / t[1].value) });
-def({ id: 'ruleOf5Dollars', label: 'Cushion step 3: the Rule of 5', unit: 'usd', op: 'custom', screens: ['dashboard#tile-runway', 'flag:runway'], formula: 'Step 3 = (age / 5) months x a month of full spending, rounded up to whole dollars',
-  plain: 'The third and last step of the cushion: the Rule of 5 in dollars.',
+def({ id: 'ruleOf5Dollars', label: 'Cushion step 3: the full cushion', unit: 'usd', op: 'custom', screens: ['dashboard#tile-runway', 'flag:runway'], formula: 'Step 3 = (age / 5) months x a month of full spending, rounded up to whole dollars',
+  plain: 'The third and last step of the cushion: the full target in dollars.',
   explain: ({ s }) => out(s.emergency.targetDollars, [metric('ruleOf5Months', 'Months to keep', s.emergency.targetMonths, 'months', 'arg'), { label: 'Spending and minimums a month, rounded up', value: s.emergency.monthlyNeed, unit: 'usd/month', kind: s.emergency.tiers.full.burn.kind, role: 'arg', group: null }]),
   recompute: (t) => (t[0].value === null || t[1].value === null ? null : Math.ceil(t[0].value * t[1].value)) });
 
@@ -432,7 +432,7 @@ const WINDFALL_FORMULAS = {
   promos: 'Promo step = what, paid now, brings the monthly amount that clears the promos down to the monthly surplus, capped at what is left',
   employerMatch: 'Employer match step = for each workplace account with a match, (the match cap x W-2 gross a month - what goes in a month) for the months left this year, capped at what is left; skipped when no account has a match',
   cards: 'Cards step = every card balance charging interest today, highest rate first, capped at what is left',
-  cushion: 'Cushion step = the Rule of 5 target - (cash + the floor step), capped at what is left',
+  cushion: 'Cushion step = the cushion target - (cash + the floor step), capped at what is left',
   roth: 'Roth step = this year\'s room on the Roth IRA (the max-it room: the IRA limit and catch-up, the phase-out, the earned income cap, less what is in for the year), or in the monthly order that room a month to its deadline, capped at what is left',
   left: 'Left over = the windfall - every step before it'
 };
@@ -456,7 +456,7 @@ function windfallMetric(id) {
       if (stepId === 'cashFloor') terms.push(metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'Spending and minimums a month, rounded up', value: s.emergency.monthlyNeed, unit: 'usd/month', kind: s.emergency.tiers.full.burn.kind, role: 'arg', group: null }, ruleTerm(rules, 'STAGE_RUNWAY_RED_MONTHS', year, 'arg', 'Stage 1 floor', 'months'));
       if (stepId === 'promos') terms.push(metric('promoMonthly', 'Monthly amount that clears the promos', s.debt.promo.monthly, 'usd/month', 'arg'), metric('leftAfterSaving', 'Left after saving', s.cashflow.surplus, 'usd/month', 'arg'), ...st.items.map((x) => field(spine, x.path, x.balance, 'usd', 'arg', x.name + ' balance (' + x.paymentsLeft + ' payments left)')));
       if (stepId === 'cards') terms.push(...st.items.map((x) => field(spine, x.path, x.pay, 'usd', 'arg', x.name + ' at ' + (Math.round(x.rate * 10000) / 100) + '%')));
-      if (stepId === 'cushion') terms.push(metric('ruleOf5Dollars', 'Rule of 5 target', s.emergency.targetDollars, 'usd', 'arg'), metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'The floor step', value: w.steps.find((x) => x.id === 'cashFloor').amount ?? 0, unit: 'usd', kind: 'computed', role: 'arg', metric: 'windfall:cashFloor', group: null });
+      if (stepId === 'cushion') terms.push(metric('ruleOf5Dollars', 'Cushion target', s.emergency.targetDollars, 'usd', 'arg'), metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'The floor step', value: w.steps.find((x) => x.id === 'cashFloor').amount ?? 0, unit: 'usd', kind: 'computed', role: 'arg', metric: 'windfall:cashFloor', group: null });
       if (stepId === 'roth' && st.rows) for (const r of st.rows) terms.push(metric('maxit:' + r.accountId + ':' + r.year + ':' + (w.monthly ? 'month' : 'lump'), (w.monthly ? 'New money a month for ' + r.year + ', to ' : 'New money for ' + r.year + ' (the room less what is already set to go in), to ') + r.deadline.date, { value: w.monthly ? r.perMonth : r.lump, kind: r.kind }, 'usd', 'arg'));
       return out(r, terms);
     },
@@ -633,7 +633,7 @@ function planMetric(id) {
   if (what === 'wage') return { id, label: 'Real hourly wage', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Real hourly wage = (take-home a month - the costs of working a month) / ((hours worked + commute hours a week) x weeks in a month)',
     explain: ({ spine, rules, plan }) => (plan && plan.wage.wage !== null ? out(resOf(plan.wage, plan.wage.wage), [term('Take-home a month', plan.wage.takeHome, 'usd/month', 'computed', 'arg', { metric: 'takeHome' }), term('Costs of working a month', plan.wage.costMonthly, 'usd/month', 'computed', 'arg'), field(spine, 'household.workHoursPerWeek', plan.wage.hoursWeek, 'count', 'arg'), term('Commute hours a week', plan.wage.commuteWeek, 'count', plan.wage.rough.includes('household.commuteHoursPerWeek') ? 'rough' : 'known', 'arg', { path: 'household.commuteHoursPerWeek' }), ruleTerm(rules, 'APP_WEEKS_PER_MONTH', +spine.meta.asOf.slice(0, 4), 'arg', 'Weeks in a month', 'count')]) : out(null, [])),
     recompute: (t) => (t.some((x) => x.value === null) ? null : Math.round((t[0].value - t[1].value) / ((t[2].value + t[3].value) * t[4].value) * 100) / 100) };
-  if (what === 'draftt') return { id, label: 'DRAFTT letter as a share of the base', unit: 'ratio', op: 'ratio', screens: PLAN_SCREENS, formula: 'DRAFTT share = the letter\'s amount a month / take-home (Retirement / gross)',
+  if (what === 'draftt') return { id, label: 'Each of the six as a share of take-home', unit: 'ratio', op: 'ratio', screens: PLAN_SCREENS, formula: 'Share = the letter\'s amount a month / take-home (Retirement / gross)',
     explain: ({ plan }) => { const r = plan && plan.draftt.rows.find((x) => x.key === key); return r ? out({ value: r.share, kind: plan.draftt.kind, from: plan.draftt.from, rough: plan.draftt.rough, missing: plan.draftt.missing, rules: plan.draftt.rules }, [term(r.label + ' a month', r.amount, 'usd/month', 'computed', 'num'), r.key === 'retirement' ? term('Gross income', plan.draftt.base.gross, 'usd/month', 'computed', 'den') : term('Take-home', plan.draftt.base.takeHome, 'usd/month', 'computed', 'den')]) : out(null, []); } };
   if (what === 'floor') return { id, label: 'The fixed floor a month', unit: 'usd/month', op: 'sum', blockOnMissing: true, screens: PLAN_SCREENS, formula: 'Fixed floor = every line marked fixed, a month, added up + every debt at its minimum',
     explain: ({ spine, plan }) => (plan ? out(resOf(plan.floor, plan.floor.floor), [...plan.floor.items.map((i) => field(spine, i.path, i.amount, 'usd/month', 'plus', i.label + ' (a month)')), term('Debt minimums', plan.floor.minimums, 'usd/month', plan.floor.minimums === null ? 'missing' : 'computed', 'plus', { metric: 'debtMinimums' })]) : out(null, [])) };

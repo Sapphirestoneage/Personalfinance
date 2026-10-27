@@ -69,8 +69,8 @@ const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', h
 // A step's screen is its id in words (#/high-interest); every other screen has its own word.
 const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
-  surplus: 'Your surplus, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
-  solve: 'What it takes to get there', wage: 'Real hourly wage', draftt: 'DRAFTT', floor: 'If income stopped',
+  surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
+  solve: 'What it takes to get there', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
   outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import'
 };
 const payId = (p) => p.date + '-' + p.streamId;
@@ -136,19 +136,26 @@ function top(m) {
     h('section', { class: 'card has-target', 'aria-labelledby': 'extra-h' },
       h('h2', { id: 'extra-h' }, h('a', { class: 'card-link', href: 'windfall.html' }, h('span', {}, 'Got extra money?'), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'))),
       h('p', { class: 'tile-sub' }, 'A bonus, a gift or a tax refund: see where it would go, step by step.')),
+    // More about your plan, in three headings (audit 4): the month, the future, files.
     h('section', { 'aria-labelledby': 'more-h' },
       h('h2', { id: 'more-h' }, 'More about your plan'),
+      h('h3', { class: 'part-h' }, 'Your money each month'),
       h('ul', { class: 'go-list' },
         goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month']),
         a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,
+
+        goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
+        goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
+        goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs'])),
+      h('h3', { class: 'part-h' }, 'Your future'),
+      h('ul', { class: 'go-list' },
         goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
         goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
         goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
-        goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
-        goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
-        goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']),
         goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
-        goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'),
+        goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby')),
+      h('h3', { class: 'part-h' }, 'Saved and files'),
+      h('ul', { class: 'go-list' },
         goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
         goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file')))
   ];
@@ -192,7 +199,7 @@ function stepScreen(m, r) {
     r.id === 'highInterest' ? hiDebts(m, r) : null,
     r.need === null && r.path && r.id !== 'deductibles' ? inlineFix(m, r) : null,
     r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in My numbers (Assets, then the 401(k)).') : null,
-    r.id === 'reserves' ? h('p', { class: 'tile-sub' }, f.setup.reserveMonths === null ? 'The Rule of 5 target needs a birth date.' : 'Your target: the Rule of 5, ' + f.setup.reserveMonths.toFixed(1) + ' months of spending.') : null,
+    r.id === 'reserves' ? h('p', { class: 'tile-sub' }, f.setup.reserveMonths === null ? 'The cushion target needs a birth date.' : 'Your target: ' + f.setup.reserveMonths.toFixed(1) + ' months of spending (a month for every five years of age).') : null,
     links.length ? h('ul', { class: 'go-list' }, links) : null,
     r.need !== null ? math('step', ['plan:foo:' + r.id], mathCtx(m)) : null);
 }
@@ -322,10 +329,10 @@ function drafttScreen(m) {
   if (d.base.amount === null) return h('section', { class: 'card', 'aria-label': SCREENS.draftt }, h('p', { class: 'muted missing-row' }, 'Missing: take-home pay.'));
   const max = Math.max(0.01, ...d.rows.map((r) => r.share));
   return h('section', { class: 'card', 'aria-label': SCREENS.draftt },
-    h('p', { class: 'muted' }, 'Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', each as a share of take-home (Retirement of gross). The mark on housing is ' + pct(d.housingReference) + ' of take-home, for reference, not a target.'),
+    h('p', { class: 'muted' }, h('span', { class: 'pill' }, 'DRAFTT'), ' Debt, Retirement, Accommodation, Food, Transportation' + (d.rows.some((r) => r.key === 'therapy') ? ', Therapy' : '') + ', each as a share of take-home (Retirement of gross). The mark on housing is ' + pct(d.housingReference) + ' of take-home, for reference, not a target.'),
     h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, r.reference / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
     housingOver(d),
-    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' DRAFTT is ' + pct(d.totalShare, 1) + ' of ' + money(d.base.takeHome) + ' take-home; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
+    h('p', { class: 'tile-sub' }, kindChip(d.kind), ' These six together are ' + pct(d.totalShare, 1) + ' of ' + money(d.base.takeHome) + ' take-home; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
     math('draftt', d.rows.map((r) => 'plan:draftt:' + r.key), mathCtx(m)));
 }
 

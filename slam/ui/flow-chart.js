@@ -34,10 +34,10 @@ const widthOf = (text, font) => {
   pen.font = font;
   return pen.measureText(String(text)).width;
 };
-const tapMark = (n) => (n.section && !n.path ? (n.open ? '  \u2212' : '  +') : '');
+const tapMark = (n, split) => (split && n.section && !n.path ? (n.open ? '  \u2212' : '  +') : '');
 // Each gutter as wide as its longest label (with room for the amount), between 120px and a third of the chart.
 function gutters(flow, width, font) {
-  const longest = (col, more) => Math.max(0, ...flow.nodes.filter((n) => n.col === col).map((n) => Math.max(widthOf(n.label + tapMark(n), font), widthOf(money(n.amount) + more, font))));
+  const longest = (col, more) => Math.max(0, ...flow.nodes.filter((n) => n.col === col).map((n) => Math.max(widthOf(n.label + tapMark(n, true), font), widthOf(money(n.amount) + more, font))));
   const fit = (w) => Math.round(Math.min(Math.max(120, w + 18), width / 3));
   return { gutL: fit(longest(0, '')), gutR: fit(longest(3, ' a month')) };
 }
@@ -77,6 +77,7 @@ function layout(flow, width, font) {
 // Room above the first row, so a label on a thin top band is not cut off.
 const PAD_TOP = 16;
 function sankey(flow, width, onToggle, font) {
+  const tapOf = (n) => !!onToggle && n.section && !n.path;
   const { nodes, bands, height, nw, gutL, gutR } = layout(flow, width, font);
   const svg = s('svg', { class: 'flow-svg', viewBox: '0 ' + -PAD_TOP + ' ' + width + ' ' + (height + 6 + PAD_TOP), width: '100%', role: 'img', 'aria-label': 'Where the money goes this month; the same flows are listed below the chart' });
   // The destination's color carries each band; a lighter band with a dashed edge is a guessed route.
@@ -95,9 +96,9 @@ function sankey(flow, width, onToggle, font) {
     const full = (t, shown) => (shown === t ? shown : [s('title', {}, t), shown]);
     if (n.col === 0) { const shown = cut(name, gutL - 12, font); g.append(s('text', { x: n.x - 8, y: mid - 2, 'text-anchor': 'end', class: 'fl-name' }, full(name, shown)), s('text', { x: n.x - 8, y: mid + 12, 'text-anchor': 'end', class: 'fl-amt' }, amt)); }
     else if (n.col === 3) {
-      const tap = n.section && !n.path;
-      const shown = cut(name, gutR - 12 - widthOf(tapMark(n), font), font);
-      g.append(s('text', { x: n.x + nw + 8, y: mid - 2, class: 'fl-name' }, full(name, shown + tapMark(n))), s('text', { x: n.x + nw + 8, y: mid + 12, class: 'fl-amt' }, amt + ' a month'));
+      const tap = !!onToggle && n.section && !n.path;
+      const shown = cut(name, gutR - 12 - widthOf(tapMark(n, !!onToggle), font), font);
+      g.append(s('text', { x: n.x + nw + 8, y: mid - 2, class: 'fl-name' }, full(name, shown + tapMark(n, !!onToggle))), s('text', { x: n.x + nw + 8, y: mid + 12, class: 'fl-amt' }, amt + ' a month'));
       if (tap) {
         g.classList.add('fl-tap');
         g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', (n.open ? 'Join ' : 'Split ') + name);
@@ -108,7 +109,7 @@ function sankey(flow, width, onToggle, font) {
     } else if (n.col === 2) g.append(s('text', { x: n.x + nw, y: n.y - 6, 'text-anchor': 'end', class: 'fl-name fl-small' }, name + '  ' + amt));
     else g.append(s('text', { x: n.x, y: n.y - 6, class: 'fl-name fl-small' }, name + '  ' + amt));
     // An income or a destination that is its own line opens its screen in My numbers.
-    const to = (n.col === 0 || n.col === 3) && !(n.section && !n.path) ? editHref(n) : null;
+    const to = (n.col === 0 || n.col === 3) && !tapOf(n) ? editHref(n) : null;
     svg.append(to ? s('a', { href: to, class: 'fl-link', 'aria-label': 'Edit ' + name }, s('title', {}, 'Edit ' + name), g) : g);
   }
   return svg;
@@ -119,7 +120,7 @@ function barList(flow, onToggle, open) {
   const ins = flow.nodes.filter((n) => n.col === 0), outs = flow.nodes.filter((n) => n.col === 3);
   const max = Math.max(...flow.nodes.filter((n) => n.col === 0 || n.col === 3).map((n) => n.amount));
   const row = (n) => {
-    const tap = n.section && !n.path;
+    const tap = !!onToggle && n.section && !n.path;
     const head = h('div', { class: 'fb-head' }, h('span', { class: 'fb-name' }, n.label), h('span', { class: 'fb-amt' }, money(n.amount) + ' a month'));
     const bar = h('div', { class: 'fb-track' }, h('div', { class: 'fb-bar ' + (CAT[n.kind] || 'fl-pass'), style: 'width:' + Math.max(2, Math.round(n.amount / max * 100)) + '%' }));
     const to = editHref(n);
@@ -151,7 +152,8 @@ export function flowSection(flow, { open, onToggle, month, listOpen = false, onL
     h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' },
       LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t)),
       flow.links.some((l) => l.rough) ? h('li', {}, h('span', { class: 'sw sw-rough', 'aria-hidden': 'true' }), 'Lighter: a guessed route (main checking until you link it)') : null),
-    h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec]))),
+    // Split lives on My numbers (audit 4): a page with no onToggle draws no Split buttons; a section opens its screen.
+    !onToggle ? null : h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec]))),
     h('div', { class: 'flow-box' }),
     h('details', { class: 'flow-list', open: listOpen || null, ontoggle: (e) => onList && onList(e.target.open) }, h('summary', {}, 'Every flow, with links to your numbers'),
       h('ul', {}, flow.links.map((l) => { const a = name(l.from), b = name(l.to), p = b.path || a.path; return h('li', {}, p ? h('a', { href: 'ledger.html#' + encodeURIComponent(p) }, a.label + ' to ' + b.label) : a.label + ' to ' + b.label, ': ' + money(l.amount) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
