@@ -70,12 +70,13 @@ export function payoffOrders(spine, rules, s) {
 // share), Debt (owed), Income (a month, before tax), Assets (everything you own), Goals (the amounts set as goals;
 // the FI goal is a number the app figures, so it is not added in). Session shows these; each opens My numbers at its
 // section. A goal with no amount yet makes the total incomplete, never $0.
-export const SESSION_ORDER = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals']];
+// DATING order, as My numbers (owner's ask, 2026-10-27, S-258): Debt, Assets, Taxes, Income, Needs, Goals.
+export const SESSION_ORDER = [['debt', 'D', 'Debt'], ['assets', 'A', 'Assets'], ['taxes', 'T', 'Taxes'], ['income', 'I', 'Income'], ['needs', 'N', 'Needs'], ['goals', 'G', 'Goals']];
 export function sessionSteps(spine, s) {
   const t = tracker();
   const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && !isCushionGoal(spine, g));
   let sum = null;
   for (const g of goals) { const v = t.useFact('goals.' + g.id + '.target', g.target); if (v !== null) sum = round2((sum ?? 0) + v); }
-  const result = { needs: s.cashflow.expenses.total, debt: s.sheet.debts, income: s.cashflow.income.gross, assets: s.sheet.assets, goals: t.out(sum, { count: goals.length }) };
+  const result = { needs: s.cashflow.expenses.total, debt: s.sheet.debts, taxes: s.tax.balanceDue, income: s.cashflow.income.gross, assets: s.sheet.assets, goals: t.out(sum, { count: goals.length }) };
   return SESSION_ORDER.map(([id, letter, label]) => ({ id, letter, label, result: result[id] }));
 }

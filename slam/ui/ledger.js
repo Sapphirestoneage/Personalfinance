@@ -916,7 +916,8 @@ function results(sc, q) {
 function sectionList(sc) {
   const steps = Object.fromEntries(sessionSteps(cur(), summaryOf(cur())).map((x) => [x.id, x.result]));
   return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
-    const r = steps[sec.slug];
+    // Taxes has its total on its own screen (balance due), not on this list.
+    const r = sec.slug === 'taxes' ? null : steps[sec.slug];
     const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug], sec.slug === 'assets' && summaryOf(cur()).sheet.owed ? ', plus ' + money(summaryOf(cur()).sheet.owed) + ' owed to you' : null) : h('span', {}, filledWords(sec.counts));
     // A total built on a missing line says so; how many lines are rough or missing shows beside it.
     return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec, true)] });

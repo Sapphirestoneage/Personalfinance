@@ -9,7 +9,7 @@
 import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
-import { summarize, sessionSteps } from '../engine/summary.js';
+import { summarize, sessionSteps, SESSION_ORDER } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
 import { setAt, getAt, valueOf as v, addDays, whoSupplies } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
@@ -28,7 +28,7 @@ import { INCOME_FIRST } from '../engine/add.js';
 let DATA = { needs: [], presets: [], withdrawal: [] };
 try { const r = await fetch(new URL('../data/session-presets.json', import.meta.url), { cache: 'no-store' }); if (r.ok) DATA = await r.json(); } catch { /* the steps still list what is in your numbers */ }
 
-const STEPS = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals']];
+const STEPS = SESSION_ORDER;
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const lower = (x) => String(x || '').trim().toLowerCase();
 const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
@@ -99,7 +99,7 @@ const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...k
 
 // ---------------------------------------------------------------- the step frame
 // Each step's total, as its formula (Track L): the same registry ids My numbers' sections use.
-const STEP_METRIC = { needs: 'expenses', debt: 'debts', income: 'gross', assets: 'assets' };
+const STEP_METRIC = { needs: 'expenses', debt: 'debts', taxes: 'taxBalanceDue', income: 'gross', assets: 'assets' };
 function frame(ctx, id, body) {
   const s = summarize(ctx.spine, ctx.rules, { flags: false });
   const steps = sessionSteps(ctx.spine, s);
@@ -119,11 +119,13 @@ function frame(ctx, id, body) {
     h('p', { class: 'muted step-skip' }, 'Nothing here is required. Next skips ahead.')
   ];
 }
-const WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
+const WORDS = { needs: ' a month', debt: ' owed', taxes: ' due at tax time', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
 // owed: what others owe the household (round 3: Assets less Debt visibly makes net worth, as in My numbers).
 function totalWords(step, owed = 0) {
   const r = step.result;
   if (r.value === null) return h('span', { class: 'empty' }, 'Nothing yet');
+  // Taxes below zero is money back (a refund), said so.
+  if (step.id === 'taxes' && r.value < 0) return h('span', {}, h('strong', {}, money(-r.value)), ' back at tax time', r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
   return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], step.id === 'assets' && owed ? ', plus ' + money(owed) + ' owed to you' : null, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
 }
 
@@ -416,6 +418,15 @@ function incomeRows(spine) {
   });
 }
 function income(ctx) {
+  const spine = ctx.spine, today = todayIso();
+  return frame(ctx, 'income', () => [
+    h('section', { class: 'card' },
+      (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine)) : h('p', { class: 'muted' }, 'No income yet.'),
+      incomeAdd(spine, today))
+  ]);
+}
+// ---------------------------------------------------------------- Taxes (its own step, DATING order, S-258)
+function taxes(ctx) {
   const spine = ctx.spine, hh = spine.household, today = todayIso();
   const last = v(hh.lastRefund) ?? null;
   // A refund or an amount owed with no amount yet stays missing (never $0); the choice waits here for the amount.
@@ -426,12 +437,8 @@ function income(ctx) {
     change((s) => (how === 'none' ? putFact(s, 'household.lastRefund', null, 'notForMe', today) : how === '' || amt === null ? putFact(s, 'household.lastRefund', null, 'missing', today) : putFact(s, 'household.lastRefund', how === 'owed' ? -Math.abs(amt) : Math.abs(amt), 'known', today)),
       said.changed('Last year\'s tax', how === 'refund' ? 'a refund of ' + money(Math.abs(amt)) : how === 'owed' ? money(Math.abs(amt)) + ' owed' : how === 'none' ? 'did not file' : 'not sure'));
   };
-  return frame(ctx, 'income', () => [
-    h('section', { class: 'card' },
-      (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine)) : h('p', { class: 'muted' }, 'No income yet.'),
-      incomeAdd(spine, today)),
-    h('section', { class: 'card', 'aria-labelledby': 'tax-h' },
-      h('h2', { id: 'tax-h' }, h('span', { class: 'go-mark', 'aria-hidden': 'true' }, 'T'), 'Taxes'),
+  return frame(ctx, 'taxes', () => [
+    h('section', { class: 'card', 'aria-label': 'Taxes' },
       h('ul', { class: 'srows' },
         lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
           pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
@@ -542,7 +549,7 @@ function goals(ctx) {
       h('section', { class: 'card', 'aria-labelledby': 'wr-h' },
         h('h2', { id: 'wr-h' }, 'Withdrawal rate'),
         // Only Your own takes a withdrawal rate of its own; the other sets each have theirs.
-        own ? h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: wr === w.rate, onchange: () => change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)) }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source))))))
+        own ? h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: wr === w.rate, onchange: () => change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)) }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source), w.note ? h('span', { class: 'choice-sub' }, w.note) : null)))))
           : [h('p', {}, 'The ' + SCENARIO_WORDS[pickedScenario()].toLowerCase() + ' set uses ' + pct(scenarioAssumptions(spine, rules, pickedScenario()).withdrawalRate.value, 1) + '.'), h('button', { type: 'button', class: 'btn small', onclick: () => { pick('best'); refresh(); } }, 'Choose my own')])
     ];
   });
@@ -551,7 +558,7 @@ function goals(ctx) {
 // ---------------------------------------------------------------- the top screen
 // Krug pass: one list, the five steps, each with how many of the Profile's open questions belong to it; the questions
 // themselves sit at the top of each step. "Start with Needs" leads.
-const STEP_AREAS = { needs: ['health', 'statements'], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
+const STEP_AREAS = { needs: ['health', 'statements'], taxes: [], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
 const openAreas = (spine, step) => { const a = answersOf(spine); return Object.keys(a).length ? level2(a).filter((x) => STEP_AREAS[step].includes(x.area)) : []; };
 function stepQuestions(spine, step) {
   const areas = openAreas(spine, step);
@@ -565,7 +572,7 @@ function overview(ctx) {
   const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   const open = openCounts(openQuestions(ctx.spine, g));
   return [
-    h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›')),
+    h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go([STEPS[0][0]]) }, 'Start with ' + STEPS[0][2] + ' ›')),
     h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = open ? open[st.id] : null; return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),
@@ -594,7 +601,7 @@ function sessionNotesRow(ctx) {
     h('p', { class: 'muted' }, h('a', { href: 'onepager.html' }, 'See the One-pager'))]);
 }
 
-const SCREENS = { needs, debt, income, assets, goals };
+const SCREENS = { debt, assets, taxes, income, needs, goals };
 let goalAdding = false;
 function render(ctx) {
   // The shared ranking (ui/urgency.js): the last answer stands until the new one lands, then one redraw.

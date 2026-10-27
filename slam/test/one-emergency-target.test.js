@@ -33,7 +33,7 @@ test('an old file\'s "Six-month cushion" goal sets the reserve step\'s target an
   assert.match(f.rungs.find((r) => r.id === 'reserves').why, /your goal "Six-month cushion"/);
   assert.equal(f.rungs.find((r) => r.id === 'prepaid').need, 0, 'not a big cost ahead too');
   assert.ok(!goalsView(s, R, x).rows.some((r) => r.id === 'cushion'));
-  assert.equal(sessionSteps(s, x)[4].result.value, null, 'not in the goals total');
+  assert.equal(sessionSteps(s, x).find((st) => st.id === 'goals').result.value, null, 'not in the goals total');
 });
 
 test('which goals merge: an emergency kind, or emergency fund, cushion or rainy day in the name', () => {
@@ -51,7 +51,7 @@ test('only the goal that sets the target leaves the goal lists; an emergency kin
   const x = summarize(s, R, { flags: false });
   assert.equal(x.emergency.targetDollars.value, 12000);
   assert.deepEqual(goalsView(s, R, x).rows.map((r) => r.id).sort(), ['car', 'trip']);
-  assert.equal(sessionSteps(s, x)[4].result.value, 5000);
+  assert.equal(sessionSteps(s, x).find((st) => st.id === 'goals').result.value, 5000);
   s.goals.push({ id: 'net', type: 'emergency', label: 'Safety net', target: K(9000) });
   assert.equal(summarize(s, R, { flags: false }).emergency.targetDollars.value, 9000);
 });

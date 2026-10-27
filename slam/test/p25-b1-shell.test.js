@@ -66,25 +66,27 @@ test('the Builder: one small link at the bottom of every page; the Design kit, A
   for (const f of ['session.html', 'builder.html', 'rules.html']) assert.match(read(f), /<script type="module" src="ui\/[\w-]+\.js"><\/script>/, f);
 });
 
-test('Session: the five steps in call order, each with its letter and one total from the engine, missing never $0', () => {
-  assert.deepEqual(SESSION_ORDER.map(([id, letter]) => letter + ' ' + id), ['N needs', 'D debt', 'I income', 'A assets', 'G goals']);
+test('Session: the six steps in DATING order, as My numbers, each with its letter and one total from the engine, missing never $0', () => {
+  assert.deepEqual(SESSION_ORDER.map(([id, letter]) => letter + ' ' + id), ['D debt', 'A assets', 'T taxes', 'I income', 'N needs', 'G goals']);
   const s0 = demo();
   const sum = summarize(s0, R, { flags: false });
   const steps = sessionSteps(s0, sum);
-  assert.deepEqual(steps.map((x) => x.label), ['Needs', 'Debt', 'Income', 'Assets', 'Goals']);
-  assert.equal(steps[0].result, sum.cashflow.expenses.total);
-  assert.equal(steps[1].result, sum.sheet.debts);
-  assert.equal(steps[2].result, sum.cashflow.income.gross);
-  assert.equal(steps[3].result, sum.sheet.assets);
-  assert.equal(steps[4].result.value, null, 'no savings goal in the demo (its cushion goal is the Plan\'s reserve step now); the FI goal is figured, not added');
+  assert.deepEqual(steps.map((x) => x.label), ['Debt', 'Assets', 'Taxes', 'Income', 'Needs', 'Goals']);
+  const at = (list, id) => list.find((x) => x.id === id);
+  assert.equal(at(steps, 'needs').result, sum.cashflow.expenses.total);
+  assert.equal(at(steps, 'debt').result, sum.sheet.debts);
+  assert.equal(at(steps, 'taxes').result, sum.tax.balanceDue);
+  assert.equal(at(steps, 'income').result, sum.cashflow.income.gross);
+  assert.equal(at(steps, 'assets').result, sum.sheet.assets);
+  assert.equal(at(steps, 'goals').result.value, null, 'no savings goal in the demo (its cushion goal is the Plan\'s reserve step now); the FI goal is figured, not added');
   // A goal with no amount yet: incomplete, never $0; no goals at all: missing.
   const withTrip = { ...s0, goals: [...s0.goals, { id: 'trip', type: 'savings', label: 'Trip', target: { value: 3000, kind: 'known', asOf: '2026-10-01', source: 'test' } }] };
-  assert.equal(sessionSteps(withTrip, summarize(withTrip, R, { flags: false }))[4].result.value, 3000);
+  assert.equal(sessionSteps(withTrip, summarize(withTrip, R, { flags: false })).find((x) => x.id === 'goals').result.value, 3000);
   const blank = editFact(withTrip, 'goals.trip.target', 'clear', { today: '2026-10-25' });
-  const g = sessionSteps(blank, summarize(blank, R, { flags: false }))[4].result;
+  const g = sessionSteps(blank, summarize(blank, R, { flags: false })).find((x) => x.id === 'goals').result;
   assert.deepEqual([g.value, g.kind, g.count], [null, 'missing', 1]);
   const none = { ...s0, goals: s0.goals.filter((x) => x.type === 'fi') };
-  assert.deepEqual([sessionSteps(none, summarize(none, R, { flags: false }))[4].result.value, sessionSteps(none, summarize(none, R, { flags: false }))[4].result.count], [null, 0]);
+  assert.deepEqual([sessionSteps(none, summarize(none, R, { flags: false })).find((x) => x.id === 'goals').result.value, sessionSteps(none, summarize(none, R, { flags: false })).find((x) => x.id === 'goals').result.count], [null, 0]);
   const src = read('ui/session.js');
   // Batch 3: each row opens its own guided step (session.html#/needs), not My numbers.
   assert.match(src, /h\('a', \{ class: 'go-row', href: '#\/' \+ st\.id \}/, 'each row opens its step');
