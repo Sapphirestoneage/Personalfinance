@@ -78,7 +78,7 @@ function inspect({ builder }) {
     const dw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let n = dw.nextNode(); n; n = dw.nextNode()) {
       const m = n.nodeValue.match(/\b20\d\d-\d\d-\d\d\b/);
-      if (!m || !n.parentElement || !visible(n.parentElement) || n.parentElement.closest('.math-panel, .math-page, .log-list, .log, .ch-table, input, textarea, [data-cents]')) continue;
+      if (!m || !n.parentElement || !visible(n.parentElement) || n.parentElement.closest('.math-panel, .math-page, .log-list, .log, .ch-table, input, textarea, [data-cents], [data-sample]')) continue;
       add('raw date', m[0] + ' in ' + where(n.parentElement));
     }
   }

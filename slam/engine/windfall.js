@@ -170,7 +170,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (gap) return { need: null, why: cap1(gap.missingLabel) + '. ' + gap.why, path: (gap.ei && gap.ei.missing[0]) || null, earned: gap.ei || null, row: gap, rows };
       // The new money: the room less what the monthly amount already set up still puts in for the year.
       const need = round2(rows.reduce((x, y) => x + ((monthly ? y.perMonth : y.lump) || 0), 0));
-      const each = rows.map((y) => (rows.length > 1 ? y.year + ': ' : '') + y.why + (monthly ? ' That is ' + money(y.perMonth, true) + ' a month for ' + y.months.count + ' month' + (y.months.count === 1 ? '' : 's') + ', to ' + longDate(y.deadline.date) + '.' : ' A contribution for ' + y.year + ' can be made until ' + longDate(y.deadline.date) + '.'));
+      const each = rows.map((y) => (rows.length > 1 ? y.year + ': ' : '') + y.why + (monthly ? ' That is ' + (Number.isInteger(y.perMonth) ? '' : 'about ') + money(Math.ceil(y.perMonth)) + ' a month for ' + y.months.count + ' month' + (y.months.count === 1 ? '' : 's') + ', to ' + longDate(y.deadline.date) + '.' : ' A contribution for ' + y.year + ' can be made until ' + longDate(y.deadline.date) + '.'));
       return { need, why: each.join(' '), path: 'accounts.' + roth.id + '.contributions', limit: r.limit.value, soFar: r.contributed.value, earned: r.ei, row: r, rows };
     });
     else if (id === 'left') run(id, () => ({ need: Math.max(0, remaining), why: remaining > 0.005 ? money(remaining) + ' has no job yet. It stays as cash until it is given one: invest it, start a sinking fund, or add it to a goal.' : 'Every dollar is assigned.', path: null }));

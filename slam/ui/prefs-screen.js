@@ -21,7 +21,7 @@ export function prefsSummary() {
 
 function choice(p, value, onPick, note = () => null) {
   return h('div', { class: 'segmented pref-seg', role: 'group', 'aria-labelledby': 'pref-' + p.id },
-    p.options.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(String(value) === String(k)), onclick: () => { if (String(value) !== String(k)) onPick(k); } }, h('span', { class: 'seg-label' }, w), note(k))));
+    p.options.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(String(value) === String(k)), onclick: () => { if (String(value) !== String(k)) onPick(k); } }, h('span', { class: 'seg-label', 'data-sample': p.id === 'dateStyle' ? '' : null }, w), note(k))));
 }
 function tilesControl(p, value) {
   const order = Array.isArray(value) ? value : p.default;

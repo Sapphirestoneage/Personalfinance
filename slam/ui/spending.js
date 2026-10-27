@@ -341,7 +341,7 @@ function checkinCard(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const date = h('input', { id: 'ci-date', type: 'date', onchange: () => { form.checkDate = date.value; } }); date.value = form.checkDate;
   const f = checkInForecast(m.spine, m.sim, form.checkDate >= m.sim.start ? form.checkDate : m.sim.start);
-  const boxes = f.accounts.map((a) => ({ a, input: h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? '' : String(f.forecast[a.id]) }) }));
+  const boxes = f.accounts.map((a) => ({ a, input: h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? '' : 'expected ' + money(f.forecast[a.id]) }) }));
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-labelledby': 'ci-h' },
