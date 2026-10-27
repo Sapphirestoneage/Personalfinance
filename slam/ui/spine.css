@@ -1468,3 +1468,35 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .where-field.wide { grid-column: 1 / -1; }
 .where-save { grid-column: 1 / -1; }
 @media (min-width: 720px) { .where-fields { grid-template-columns: 3fr 2fr 1fr auto; } .where-field.wide, .where-save { grid-column: auto; } }
+
+/* Before our first call: one section at a time, a thin progress bar, Back and Next at the bottom. */
+.before-progress { margin: 0 0 12px; }
+.before-progress p { margin: 0 0 6px; font-size: var(--text-sm); }
+.progress-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.progress-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .2s ease; }
+@media (prefers-reduced-motion: reduce) { .progress-bar > span { transition: none; } }
+.step-nav { display: flex; justify-content: space-between; gap: 12px; margin: 16px 0 32px; }
+.step-nav .btn { min-width: 120px; }
+.q-field input.year-box { max-width: 12ch; margin-bottom: 8px; }
+.q-seg.q-scale { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); }
+.q-seg.q-scale .q-notsure { grid-column: 1 / -1; }
+.q-seg.q-scale .seg-btn { justify-content: center; text-align: center; }
+.q-field textarea, .q-field input[type="text"]:not(.year-box) { width: 100%; }
+
+/* Assumptions as one-line rows (Krug pass): the fold's line holds the name and value, Change sits beside it. */
+.as-row.as-line { grid-template-columns: 1fr auto; align-items: start; column-gap: var(--space-2); }
+.as-row.as-plain { grid-template-columns: 1fr; }
+.as-more > summary { display: flex; align-items: center; gap: var(--space-2); min-height: var(--tap); cursor: pointer; list-style: none; }
+.as-more > summary::-webkit-details-marker { display: none; }
+.as-more > summary .as-name { font-weight: 500; flex: 1 1 auto; }
+.as-more > summary .as-value { text-align: right; white-space: nowrap; }
+.as-more > summary::after { content: "\203A"; font-size: 1.2rem; color: var(--text-muted); transition: transform .15s ease; }
+.as-more[open] > summary::after { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .as-more > summary::after { transition: none; } }
+.as-body { display: grid; gap: 6px; padding: 0 0 var(--space-2); }
+.as-line > .btn { align-self: center; }
+.as-plain { display: flex; justify-content: space-between; align-items: center; min-height: var(--tap); }
+.as-link { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: var(--tap); text-decoration: none; color: inherit; }
+.as-group > summary .chip { margin-left: 8px; }
+.op-flow-table tr.op-first-out th, .op-flow-table tr.op-first-out td { border-top: 2px solid var(--border-strong, var(--border)); }
+.op-flow-table th[scope="row"] { font-size: var(--text-sm); text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 500; }

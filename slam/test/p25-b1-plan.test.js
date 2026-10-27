@@ -34,8 +34,7 @@ test('Plan is on the shell: no page-links row, no header or undo of its own, eve
   assert.doesNotMatch(src, /confirm\(/);
   assert.match(src, /const putBack = \(was, now, words\) => say\(words, \(\) => \{ keepScenarios\(was\); refresh\(\); \}, \(\) => \{ keepScenarios\(now\); refresh\(\); \}\)/);
   // The Windfall is reached from Plan as a card whose whole area is the target, with a chevron.
-  assert.match(src, /h\('section', \{ class: 'card has-target', 'aria-labelledby': 'extra-h' \}/);
-  assert.match(src, /h\('a', \{ class: 'card-link', href: 'windfall\.html' \}, h\('span', \{\}, 'Got extra money\?'\), h\('span', \{ class: 'chev', 'aria-hidden': 'true' \}, '(?:\\u203A|›)'\)\)/);
+  assert.match(src, /goRow\('windfall\.html', 'Got extra money\?'/);
   assert.match(read('plan.html'), /<script type="module" src="ui\/plan\.js"><\/script>/);
 });
 

@@ -115,3 +115,23 @@ export function moneyFlow(spine, rules, cf, { open = [] } = {}) {
   const list = [...nodes.values()].sort((a, b) => a.col - b.col || (a.col === 3 ? ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) : 0));
   return { nodes: list, links: [...merged.values()], left: round2(left), short: round2(short), sections: SECTION };
 }
+
+// The money flow as a short table (Krug pass, the One-pager): what comes in, then where it ends up, biggest first.
+// A row is an end of the flow (a section, debt payments, saving, taxes, what is left), with every route into it added
+// up; accounts and cards in between are not rows. [{ label, amount, rough, side: 'in' | 'out' }].
+export function flowTable(flow) {
+  const by = new Map(flow.nodes.map((n) => [n.id, n]));
+  const through = new Set(flow.links.map((l) => l.from));
+  const ins = flow.nodes.filter((n) => n.id.startsWith('in:')).map((n) => {
+    const out = flow.links.filter((l) => l.from === n.id);
+    return { label: n.label, amount: round2(out.reduce((t, l) => t + l.amount, 0)), rough: out.some((l) => l.rough), side: 'in' };
+  });
+  const ends = new Map();
+  for (const l of flow.links) {
+    if (through.has(l.to) || l.to.startsWith('in:')) continue;
+    const e = ends.get(l.to) || { label: by.get(l.to).label, amount: 0, rough: false, side: 'out' };
+    e.amount = round2(e.amount + l.amount); e.rough = e.rough || l.rough;
+    ends.set(l.to, e);
+  }
+  return [...ins.sort((a, b) => b.amount - a.amount), ...[...ends.values()].sort((a, b) => b.amount - a.amount)];
+}

@@ -88,23 +88,25 @@ function ruleRow(ctx, r, level) {
   const reset = level === 'client'
     ? () => change((s) => resetClientAssumption(s, r.id), r.name + ' is back to your default (' + valueWords(house, m.unit) + ')')
     : () => keepHouse((o) => { const n = { ...o }; delete n[r.id]; return n; }, r.name + ' is back to the file\'s value');
-  return h('li', { class: 'as-row' },
-    h('div', { class: 'as-head' },
-      h('span', { class: 'as-name' }, r.name),
-      changedHere ? h('span', { class: 'chip chip-rough' }, level === 'client' ? 'changed for this client' : 'changed in this browser') : null,
-      h('span', { class: 'as-value' }, valueWords(shown, m.unit))),
-    h('p', { class: 'as-means' }, r.means, level === 'client' && own ? ' Your default: ' + valueWords(house, m.unit) + '.' : ''),
-    usedBy(ctx, r),
-    h('div', { class: 'as-btns' },
-      list ? h('a', { class: 'btn small', href: 'house.html#/' + encodeURIComponent(r.id) }, 'Change the order on House defaults')
-        : h('a', { class: 'btn small', href: '#/' + encodeURIComponent(r.id), 'aria-label': 'Change ' + r.name }, 'Change'),
-      changedHere ? h('button', { type: 'button', class: 'btn small danger', onclick: reset }, level === 'client' ? 'Reset to your default' : 'Use the file\'s value') : null));
+  // One line (Krug pass): the name, the value and Change; what it means, where it is used and Reset open inside.
+  return oneLine(r.name, valueWords(shown, m.unit), changedHere ? h('span', { class: 'chip chip-rough' }, level === 'client' ? 'changed for this client' : 'changed in this browser') : null,
+    list ? h('a', { class: 'btn small', href: 'house.html#/' + encodeURIComponent(r.id), 'aria-label': 'Change the order of ' + r.name }, 'Change')
+      : h('a', { class: 'btn small', href: '#/' + encodeURIComponent(r.id), 'aria-label': 'Change ' + r.name }, 'Change'),
+    [h('p', { class: 'as-means' }, r.means, level === 'client' && own ? ' Your default: ' + valueWords(house, m.unit) + '.' : ''),
+      usedBy(ctx, r),
+      changedHere ? h('div', { class: 'as-btns' }, h('button', { type: 'button', class: 'btn small danger', onclick: reset }, level === 'client' ? 'Reset to your default' : 'Use the file\'s value')) : null]);
+}
+// A row that is one line: a fold with the name and value (tap to read more), and its action beside it.
+function oneLine(name, value, chipEl, action, body) {
+  return h('li', { class: 'as-row as-line' },
+    h('details', { class: 'as-more' }, h('summary', {}, h('span', { class: 'as-name' }, name, chipEl ? [' ', chipEl] : null), h('span', { class: 'as-value' }, value)), h('div', { class: 'as-body' }, body)),
+    action || null);
 }
 const refRow = (r) => {
   const t = bench && bench.fiftyThirtyTwenty;
-  return h('li', { class: 'as-row' }, h('div', { class: 'as-head' }, h('span', { class: 'as-name' }, r.name), h('span', { class: 'as-value' }, t ? Math.round(t.needs * 100) + ' / ' + Math.round(t.wants * 100) + ' / ' + Math.round(t.savings * 100) : 'not set')),
-    h('p', { class: 'as-means' }, r.means + (t ? ' Source: ' + t.source + '.' : '')), h('p', { class: 'as-used' }, 'Used by: ', r.screens.map((x) => h('a', { href: x.href }, x.label))),
-    h('p', { class: 'edit-hint' }, 'Reference data: changed in data/benchmarks.json, not per client.'));
+  return oneLine(r.name, t ? Math.round(t.needs * 100) + ' / ' + Math.round(t.wants * 100) + ' / ' + Math.round(t.savings * 100) : 'not set', null, null,
+    [h('p', { class: 'as-means' }, r.means + (t ? ' Source: ' + t.source + '.' : '')), h('p', { class: 'as-used' }, 'Used by: ', r.screens.map((x) => h('a', { href: x.href }, x.label))),
+      h('p', { class: 'edit-hint' }, 'Reference data: changed in data/benchmarks.json, not per client.')]);
 };
 
 // ---------------------------------------------------------------- the groups
@@ -115,24 +117,21 @@ function typicalCard(g) {
   const src = t.sources || {};
   return h('ul', { class: 'as-list' }, keys.map((k) => {
     const s = src[k] || {};
-    return h('li', { class: 'as-row' },
-      h('div', { class: 'as-head' }, h('span', { class: 'as-name' }, camel(k)), s.status === 'verify' ? h('span', { class: 'chip chip-rough' }, 'verify') : null,
-        h('span', { class: 'as-value' }, sets.map(([, x]) => x.label + ' ' + money(x.amounts[k]) + ' a month').join(' · '))),
-      h('p', { class: 'as-means' }, (s.source || 'No source given') + (s.year ? ', ' + s.year : '') + '. ', s.url ? h('a', { href: s.url, rel: 'noopener', target: '_blank' }, 'The table') : null),
-      h('p', { class: 'as-used' }, 'Used by: ', g.screens.map((x) => h('a', { href: x.href }, x.label))));
+    return oneLine(camel(k), sets.map(([, x]) => x.label + ' ' + money(x.amounts[k])).join(' \u00b7 '), s.status === 'verify' ? h('span', { class: 'chip chip-rough' }, 'verify') : null, null,
+      [h('p', { class: 'as-means' }, 'A month. ' + (s.source || 'No source given') + (s.year ? ', ' + s.year : '') + '. ', s.url ? h('a', { href: s.url, rel: 'noopener', target: '_blank' }, 'The table') : null),
+        h('p', { class: 'as-used' }, 'Used by: ', g.screens.map((x) => h('a', { href: x.href }, x.label)))]);
   }));
 }
 function lawCard() {
   const list = (law && law.rules) || [];
-  return h('details', { class: 'flow-list' }, h('summary', {}, list.length + ' rules from the law, read only'),
-    h('ul', { class: 'as-list' }, list.map((r) => h('li', { class: 'as-row' }, h('div', { class: 'as-head' }, h('span', { class: 'as-name' }, r.rule || r.id), h('span', { class: 'as-value' }, valueWords(r.value, r.unit)))))),
-    prefs().view === 'client' ? null : h('p', {}, h('a', { href: 'rules.html' }, 'Change a rule on the Builder\'s Rules page')));
+  return [h('ul', { class: 'as-list' }, list.map((r) => h('li', { class: 'as-row as-line as-plain' }, h('span', { class: 'as-name' }, r.rule || r.id), h('span', { class: 'as-value' }, valueWords(r.value, r.unit))))),
+    prefs().view === 'client' ? null : h('p', {}, h('a', { href: 'rules.html' }, 'Change a rule on the Builder\'s Rules page'))];
 }
 function ownCard(ctx, g) {
   const A = (ctx.spine && ctx.spine.assumptions) || {};
   return [h('h3', { class: 'fv-h' }, 'The client\'s own guesses'),
     h('p', { class: 'muted' }, 'Typed with the client, so they are their numbers: changed on My numbers, never here.'),
-    h('ul', { class: 'as-list' }, g.own.map(([k, w]) => h('li', { class: 'as-row' }, h('div', { class: 'as-head' }, h('a', { class: 'as-name', href: ledgerHref('assumptions.' + k) }, w), h('span', { class: 'as-value' }, A[k] && v(A[k]) !== null ? valueWords(v(A[k]), k === 'lifeExpectancy' || k === 'coastAge' ? 'age' : 'rate') : 'not given yet')))))];
+    h('ul', { class: 'as-list' }, g.own.map(([k, w]) => h('li', { class: 'as-row as-line as-plain' }, h('a', { class: 'as-link', href: ledgerHref('assumptions.' + k) }, h('span', { class: 'as-name' }, w), h('span', { class: 'as-value' }, A[k] && v(A[k]) !== null ? valueWords(v(A[k]), k === 'lifeExpectancy' || k === 'coastAge' ? 'age' : 'rate') : 'not given yet')))))];
 }
 
 function listScreen(ctx) {
@@ -143,13 +142,22 @@ function listScreen(ctx) {
   return [
     sw,
     level === 'client' && nOwn ? h('p', { class: 'muted' }, nOwn + ' changed for this client') : null,
-    GROUPS.map((g) => h('section', { class: 'card', 'aria-labelledby': 'as-' + g.id },
-      h('h2', { id: 'as-' + g.id }, g.label),
-      h('p', { class: 'muted' }, g.note),
-      g.typical ? typicalCard(g) : g.law ? lawCard() : h('ul', { class: 'as-list' }, g.rows.map((r) => (r.reference ? refRow(r) : ruleRow(ctx, r, level)))),
-      g.own ? ownCard(ctx, g) : null))
+    // Groups start closed (Krug pass); open or closed is kept in this browser. The closed line says how many rows and
+    // how many are changed.
+    GROUPS.map((g) => {
+      const n = g.typical ? null : g.law ? ((law && law.rules) || []).length : g.rows.length;
+      const changed = g.rows ? g.rows.filter((r) => (level === 'client' ? clientOverrides(ctx.spine)[r.id] : r.id in houseOwn())).length : 0;
+      return h('details', { class: 'card as-group done-group', open: openGroups().has(g.id) || null, ontoggle: (e) => keepGroup(g.id, e.target.open) },
+        h('summary', {}, h('span', {}, g.label), h('span', { class: 'count' }, n === null ? '' : String(n)), changed ? h('span', { class: 'chip chip-rough' }, changed + ' changed') : null),
+        h('p', { class: 'muted' }, g.note),
+        g.typical ? typicalCard(g) : g.law ? lawCard() : h('ul', { class: 'as-list' }, g.rows.map((r) => (r.reference ? refRow(r) : ruleRow(ctx, r, level)))),
+        g.own ? ownCard(ctx, g) : null);
+    })
   ];
 }
+const GROUPS_KEY = 'slam-assume-open:v1';
+const openGroups = () => { try { return new Set(JSON.parse(localStorage.getItem(GROUPS_KEY) || '[]')); } catch { return new Set(); } };
+const keepGroup = (id, open) => { const s = openGroups(); if (open) s.add(id); else s.delete(id); try { localStorage.setItem(GROUPS_KEY, JSON.stringify([...s])); } catch { /* storage blocked */ } };
 
 // ---------------------------------------------------------------- one row's screen: change, preview, save
 // For everyone: kept as a house override in this browser, then every page reads the new rules.

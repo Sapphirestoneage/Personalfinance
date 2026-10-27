@@ -40,7 +40,7 @@ import { whereTable } from './where-data.js';
 import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
 import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
 
-const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
+const MOVE_WORDS = { surplus: 'money left each month', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
 // What each section's one total means, in a client's words (the totals come from engine/summary.js sessionSteps).
 const TOTAL_WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' in what you own', goals: ' in goals' };
@@ -982,7 +982,7 @@ function guessList() {
   // Each guess opens its editor right here, so the list stays the screen Back comes back to. Closed, it says where to
   // find it and what a miss could move ("Paystub, 5 min. Could move your FI number by $30,000").
   const open = kept().open || null;
-  const subOf = (it) => [it.short ? it.short + ' \u00b7 ' + it.minutes + ' min' : null, whyOf(it)].filter(Boolean).join('. ');
+  const subOf = (it) => [it.short ? it.short + ' \u00b7 ' + it.minutes + ' min' : null, whyOf(it).replace(/^Could move your /, 'moves your ')].filter(Boolean).join(' \u00b7 ');
   const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: whyOf(it), sub: subOf(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label, h('span', { class: 'row-sub' }, subOf(it))), kindMark(it.path, it.kind))); };
   // Grouped by where: one visit finds the group, so each group can go to the homework at once.
   const toHomework = (g) => change((sp) => addLookups(sp, g.items.map((it) => ({ path: it.path, label: it.label, where: it.where })), { today: today() }), g.items.length + (g.items.length === 1 ? ' number' : ' numbers') + ' added to homework: ' + g.where);
@@ -1441,8 +1441,14 @@ function itemScreen(sec, g, it, st) {
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
     fillBar(toFill(it.counts)),
-    (() => { const rows = fillOn() ? it.rows.filter((r) => kinds.includes(r.fact.kind)) : it.rows;
-      return h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, rows.length ? rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))); })(),
+    (() => { const all = fillOn() ? it.rows.filter((r) => kinds.includes(r.fact.kind)) : it.rows;
+      // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
+      // numbers come first; it opens by itself when one of its rows is open.
+      const feel = (r) => /\.(stress|reasonsToKeep)$/.test(r.path), rows = all.filter((r) => !feel(r)), feels = all.filter(feel);
+      return [h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, rows.length ? rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
+        feels.length ? h('details', { class: 'card done-group feel-fold', open: feels.some((r) => r.path === st.open) || kept().feel || null, ontoggle: (e) => { if (!!kept().feel !== e.target.open) keep({ feel: e.target.open }); } },
+          h('summary', {}, h('span', {}, 'How you feel about it'), h('span', { class: 'count' }, feels.filter((r) => /stress$/.test(r.path) && r.fact.value !== null).map((r) => 'stress ' + r.fact.value + ' of 10').join(''))),
+          h('ul', { class: 'rows' }, feels.map((r) => rowEl(r, st.open || null)))) : null]; })(),
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     // Contributions by year (owner's ask, 2026-10-27): an account that can hold them and has none offers to add them.

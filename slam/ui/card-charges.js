@@ -12,7 +12,9 @@ const today = () => new Date().toISOString().slice(0, 10);
 const nameOf = (spine, id) => { const x = [...(spine.accounts || []), ...(spine.debts || [])].find((a) => a.id === id); return x ? v(x.name) || id : id; };
 const perMonth = (m) => (m === null ? 'no amount yet' : money(m) + ' a month');
 
-// The card screen's section: each attached expense on one line, then a picker to attach another.
+// The card screen's section: each attached expense on one line, then a picker to attach another. What is open stays
+// open when a change redraws the screen.
+const openNow = new Set();
 export function chargesCard(spine, cardId) {
   const card = nameOf(spine, cardId);
   const { items: on, total } = cardCharges(spine, cardId);
@@ -21,8 +23,9 @@ export function chargesCard(spine, cardId) {
     h('option', { value: '' }, 'Pick an expense'),
     off.map((e) => h('option', { value: e.id }, e.label + (e.paidFrom && v(e.paidFrom) ? ' (now ' + nameOf(spine, v(e.paidFrom)) + ')' : ''))));
   const attach = () => { const id = pick.value; if (!id) return; const e = off.find((x) => x.id === id); change((s) => chargeTo(s, id, cardId, today()), e.label + ' now charged to ' + card); };
-  return h('section', { class: 'card charges', 'aria-labelledby': 'charges-h' },
-    h('h2', { id: 'charges-h' }, 'Charged to this card ', h('span', { class: 'count' }, String(on.length))),
+  // One line that opens (Krug pass): how many and how much a month; the list and the picker inside.
+  return h('details', { class: 'card charges done-group', open: openNow.has(cardId) || null, ontoggle: (e) => { if (e.target.open) openNow.add(cardId); else openNow.delete(cardId); } },
+    h('summary', { id: 'charges-h' }, h('span', {}, 'Charged to this card'), h('span', { class: 'count' }, on.length ? on.length + (total === null ? '' : ', ' + money(total) + ' a month') : 'none')),
     on.length ? h('p', { class: 'muted' }, total === null ? 'No amounts entered yet.' : money(total) + ' a month of planned spending goes on it.') : h('p', { class: 'muted' }, 'Nothing attached yet. Attach the bills and spending you put on this card.'),
     on.length ? h('ul', { class: 'charge-list' }, on.map((e) => h('li', { class: 'charge-line' },
       h('a', { class: 'charge-name', href: ledgerHref(e.path) }, e.label),

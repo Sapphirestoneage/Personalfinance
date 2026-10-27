@@ -14,8 +14,8 @@ import { parseInput, inputText } from '../engine/edits.js';
 const KEY = 'slam-before:v1';
 const app = document.getElementById('app');
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-function load() { try { const x = JSON.parse(localStorage.getItem(KEY) || 'null'); return x && typeof x === 'object' && x.answers && typeof x.answers === 'object' ? { answers: x.answers, gut: typeof x.gut === 'number' ? x.gut : null } : null; } catch { return null; } }
-let state = load() || { answers: {}, gut: null };
+function load() { try { const x = JSON.parse(localStorage.getItem(KEY) || 'null'); return x && typeof x === 'object' && x.answers && typeof x.answers === 'object' ? { answers: x.answers, gut: typeof x.gut === 'number' ? x.gut : null, step: Number.isInteger(x.step) ? x.step : 0 } : null; } catch { return null; } }
+let state = load() || { answers: {}, gut: null, step: 0 };
 let note = '';
 function keep() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* lasts until the page closes */ } }
 // LIVE-FORM: a tap redraws the page; a typed or picked answer (a name, a year, a date) is kept without a redraw, so the
@@ -26,12 +26,16 @@ const set = (id, value) => { const a = { ...state.answers }; if (value === null)
 const count = () => { const el = document.getElementById('b-count'); if (el) el.textContent = countWords(); };
 const countWords = () => { const n = Object.keys(state.answers).length; return n + (n === 1 ? ' answer' : ' answers') + (state.gut === null ? '.' : ' and your spending guess.'); };
 
+// One section at a time (Krug pass): the areas that have questions, the spending guess after Why now, then Send.
+const STEPS = () => {
+  const areas = AREAS.filter(([area]) => LEVEL1.some((q) => q.area === area && asked(state.answers, q)));
+  return [areas[0], ['gut', 'Spending'], ...areas.slice(1), ['send', 'Send to Eli']].filter(Boolean);
+};
 function areaCard([area, label]) {
   const qs = LEVEL1.filter((q) => q.area === area && asked(state.answers, q));
-  const done = qs.filter((q) => state.answers[q.id] !== undefined).length;
   const line = fieldsFor(state.answers).setup[area];
   return h('section', { class: 'card before-area', 'aria-labelledby': 'a-' + area },
-    h('h2', { id: 'a-' + area }, label, h('span', { class: 'count' }, done + ' of ' + qs.length)),
+    h('h2', { id: 'a-' + area }, label),
     ...qs.map((q) => questionEl(choicesFor(q, state.answers), state.answers[q.id] ?? null, (x) => set(q.id, x), { idPrefix: 'b' })),
     line ? h('p', { class: 'muted setup-line' }, line + '.') : null);
 }
@@ -74,16 +78,25 @@ async function copyAnswers() {
   draw();
 }
 
+function sendCard() {
+  return h('section', { class: 'card', 'aria-labelledby': 'send-h' },
+    h('h2', { id: 'send-h' }, 'Send your answers to Eli'),
+    h('p', { id: 'b-count' }, countWords()),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
+    h('p', { class: 'edit-msg', role: 'status' }, note || 'On a phone this opens the share sheet; else it saves a file to email or text to Eli.'));
+}
 function draw() {
-  app.replaceChildren(
+  const steps = STEPS(), at = Math.min(Math.max(state.step || 0, 0), steps.length - 1), [id, label] = steps[at];
+  const goTo = (n) => { state = { ...state, step: n }; keep(); note = ''; draw(); window.scrollTo(0, 0); };
+  app.replaceChildren(...[
     h('header', { class: 'top' }, h('h1', {}, 'Before our first call')),
-    h('p', { class: 'lede' }, 'About 5 minutes. Tap what fits, in any order. "Not sure" is always fine.'),
-    h('p', { class: 'muted' }, 'Your answers stay on your phone until you send them. This never asks for account numbers or logins.'),
-    gutCard(),
-    ...AREAS.map(areaCard),
-    h('section', { class: 'card' },
-      h('p', { id: 'b-count' }, countWords()),
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
-      h('p', { class: 'edit-msg', role: 'status' }, note || 'On a phone this opens the share sheet; else it saves a file to email or text to Eli.')));
+    h('div', { class: 'before-progress' },
+      h('p', { class: 'muted' }, 'Step ' + (at + 1) + ' of ' + steps.length + ' \u00b7 ' + label),
+      h('div', { class: 'progress-bar', role: 'progressbar', 'aria-valuemin': '1', 'aria-valuemax': String(steps.length), 'aria-valuenow': String(at + 1), 'aria-label': 'Step ' + (at + 1) + ' of ' + steps.length }, h('span', { style: 'width:' + Math.round(((at + 1) / steps.length) * 100) + '%' }))),
+    at === 0 ? h('p', { class: 'lede' }, 'About 5 minutes. "Not sure" is always fine. Your answers stay on your phone until you send them; this never asks for account numbers or logins.') : null,
+    id === 'gut' ? gutCard() : id === 'send' ? sendCard() : areaCard(steps[at]),
+    h('nav', { class: 'step-nav', 'aria-label': 'Steps' },
+      at > 0 ? h('button', { type: 'button', class: 'btn', onclick: () => goTo(at - 1) }, 'Back') : h('span'),
+      at < steps.length - 1 ? h('button', { type: 'button', class: 'btn primary', onclick: () => goTo(at + 1) }, at === steps.length - 2 ? 'Done, send it' : 'Next') : null)].filter(Boolean));
 }
 draw();

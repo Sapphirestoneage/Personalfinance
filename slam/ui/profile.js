@@ -30,10 +30,10 @@ function top({ spine, rules }) {
   const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
   const todo = hw.reduce((n, g) => n + g.items.length, 0);
   const groups = [
-    { n: l1.length, row: goRow('#/life', 'L', 'Your life', done + ' of ' + l1.length, 'answered: where you live, work, money in and out, who it is shared with') },
-    { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up, and the life changes') },
-    { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client; the rest are your defaults' : 'every number the app assumes, as your defaults') },
-    { n: 1, row: goRow('#/goals', 'G', 'FI assumptions', SCENARIO_WORDS[pickedScenario()], 'assumption set for every FI number') },
+    { n: l1.length, row: goRow('#/life', 'L', 'Your life', done + ' of ' + l1.length, 'answered') },
+    { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up') },
+    { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client' : 'all your defaults') },
+    { n: 1, row: goRow('#/goals', 'G', 'FI assumptions', SCENARIO_WORDS[pickedScenario()], 'assumption set') },
     { n: 0, row: goRow('#/prefs', 'P', 'Preferences', null, prefsSummary()) },
     // The quarterly review (owner's ask, 2026-10-27): each subscription, still wanted or not, every few months.
     (() => { const subs = summarize(spine, rules, { flags: false }).subs, due = subs.items.filter((i) => i.due).length; return { n: due, row: goRow('#/review', 'R', 'Quarterly review', subs.items.length ? String(due) : null, subs.items.length ? (due === 1 ? 'subscription to look at' : 'subscriptions to look at') : 'no subscriptions yet') }; })()

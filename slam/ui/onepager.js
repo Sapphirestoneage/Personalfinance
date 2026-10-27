@@ -19,8 +19,7 @@ import { pickedScenario } from './scenario.js';
 import { money as dollars } from '../src/ui/format.js';
 import { h, pct, monthWords, shortDate, stepHref, todayIso } from './view.js';
 import { homeworkList } from '../engine/profile.js';
-import { moneyFlow } from '../engine/flow.js';
-import { flowSection } from './flow-chart.js';
+import { moneyFlow, flowTable } from '../engine/flow.js';
 
 const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 // Plain dollars on the handout: no hours or days tags, whatever the screen shows.
@@ -38,8 +37,13 @@ function render({ spine: base, rules }) {
   const debt = debtView(spine, rules, sim, s, { extra: planDebtExtra(spine, rules, s, { sim, ladder: rank.ladder }).amount });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   const step = rank.first, who = whose(base);
-  const flow = flowSection(moneyFlow(spine, rules, cf, { open: [] }), { open: [], onToggle: () => {}, month: MONTHS[+s.ym.slice(5, 7) - 1] });
-  flow.classList.add('op-flow');
+  // The money flow as a small table (Krug pass): in, then where it ends up; a guessed amount is marked "about".
+  const rows = flowTable(moneyFlow(spine, rules, cf, { open: [] }));
+  const flow = rows.length ? h('section', { class: 'card op-flow' }, h('h2', {}, 'Where the money goes in ' + MONTHS[+s.ym.slice(5, 7) - 1]),
+    h('table', { class: 'data-table op-flow-table' },
+      h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, ''), h('th', { scope: 'col', class: 'num' }, 'A month'))),
+      h('tbody', {}, rows.map((r, i) => h('tr', { class: r.side === 'out' && (i === 0 || rows[i - 1].side === 'in') ? 'op-first-out' : null },
+        h('th', { scope: 'row' }, (r.side === 'in' ? 'In: ' : '') + r.label), h('td', { class: 'num' }, (r.rough && r.side === 'out' ? 'about ' : '') + m(r.amount))))))) : null;
   return h('div', { class: 'onepager' },
       h('header', { class: 'op-head' }, h('p', { class: 'op-who' }, clientName(base) + (who.example ? ' (example, made up)' : '')), h('p', { class: 'op-meta' }, shortDate(new Date().toISOString().slice(0, 10)) + '. Prepared by Eli Saperstein, financial coach.')),
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },

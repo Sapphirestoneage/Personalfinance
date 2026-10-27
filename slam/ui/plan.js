@@ -110,7 +110,7 @@ function stepRow(r, current, together = null) {
     h('span', { class: 'go-name' }, r.label),
     h('span', { class: 'go-sub' }, ...status.filter(Boolean)),
     now && r.why ? h('span', { class: 'go-why' }, r.why) : null,
-    together ? h('span', { class: 'go-why' }, 'These ' + (NUM[together.n] || together.n) + ' run together from ' + monthWords(together.from) + ': each takes part of the surplus every month.') : null));
+    together ? h('span', { class: 'go-why' }, 'These ' + (NUM[together.n] || together.n) + ' run together from ' + monthWords(together.from) + ', sharing the surplus.') : null));
 }
 // Steps that finish in the same month: the first of them carries the one line that says why.
 function togetherOf(rungs) {
@@ -147,7 +147,7 @@ function top(m) {
     // The steps are paid from what is left after saving (cashflow.surplus), never called the monthly surplus.
     h('p', { class: 'lede' }, surplus === null ? 'What is left after saving is not known yet, so the steps have no dates.'
       : surplus <= 0 ? 'Nothing is left after saving to put toward the steps yet.'
-        : 'Your ' + money(surplus) + ' a month left after saving goes to these steps, one at a time.'),
+        : money(surplus) + ' a month left after saving goes to these steps, in order.'),
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
@@ -155,38 +155,38 @@ function top(m) {
       protectLine(m.rank),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
     // The Windfall page sits under Plan: the whole card is the way in.
-    h('section', { class: 'card has-target', 'aria-labelledby': 'extra-h' },
-      h('h2', { id: 'extra-h' }, h('a', { class: 'card-link', href: 'windfall.html' }, h('span', {}, 'Got extra money?'), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'))),
-      h('p', { class: 'tile-sub' }, 'A bonus, a gift or a tax refund: see where it would go, step by step.')),
-    // More about your plan, in three headings (audit 4): the month, the future, files.
-    h('section', { 'aria-labelledby': 'more-h' },
-      h('h2', { id: 'more-h' }, 'More about your plan'),
-      h('h3', { class: 'part-h' }, 'Your money each month'),
-      h('ul', { class: 'go-list' },
-        goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month']),
-        a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,
-
-        goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
-        goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
-        goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs'])),
-      h('h3', { class: 'part-h' }, 'Your future'),
-      h('ul', { class: 'go-list' },
-        goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
-        goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
-        goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
-        goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
-        goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby')),
-      h('h3', { class: 'part-h' }, 'Saved and files'),
-      h('ul', { class: 'go-list' },
-        goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
-        goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file')))
+    h('ul', { class: 'go-list' }, goRow('windfall.html', 'Got extra money?', 'Bonus, gift or refund')),
+    // More about your plan (Krug pass): three rows that open, each saying its most useful fact on the closed line;
+    // open or closed is kept with the screen.
+    h('section', { 'aria-label': 'More about your plan' },
+      fold('month', 'Your money each month', [h('span', { class: 'go-total' }, money(w.surplus)), ' a month left'],
+        h('ul', { class: 'go-list' },
+          goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month']),
+          a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,
+          goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
+          goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
+          goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']))),
+      fold('future', 'Your future', g.rows.length ? plural(g.rows.length, 'goal') + (events.length ? ', ' + plural(events.length, 'event') : '') : events.length ? plural(events.length, 'event') : 'Goals, retirement room, what-ifs',
+        h('ul', { class: 'go-list' },
+          goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
+          goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
+          goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
+          goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
+          goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
+      fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'Download or read in a file',
+        h('ul', { class: 'go-list' },
+          goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
+          goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file'))))
   ];
 }
+// A row that opens in place: its title and one fact on the closed line.
+const fold = (key, title, fact, body) => h('details', { class: 'card done-group plan-fold', open: (kept().folds || {})[key] || null, ontoggle: (e) => { const f = { ...(kept().folds || {}) }; if (!!f[key] === e.target.open) return; f[key] = e.target.open; keep({ folds: f }); } },
+  h('summary', {}, h('span', {}, title), h('span', { class: 'count' }, fact)), body);
 
 // ---------------------------------------------------------------- one step
 function deductibleForm(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const ded = h('input', { id: 'foo-ded', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '2,500', 'aria-describedby': 'foo-ded-hint' });
+  const ded = h('input', { id: 'foo-ded', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,500', 'aria-describedby': 'foo-ded-hint' });
   ded.value = m.foo.setup.deductible === null ? '' : String(m.foo.setup.deductible);
   return h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
     e.preventDefault();

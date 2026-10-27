@@ -88,18 +88,14 @@ function questionCard(q) {
     h('div', { class: 'flag-actions' }, h('a', { class: 'btn small', href: q.path ? ledgerHref(q.path) : 'plan.html' }, 'Answer it')));
 }
 
-function tiles({ spine, rules, s }) {
+function tiles({ spine, s }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  // The one ranking (engine/next-step.js): the step that loses the most a month first; a step waiting on a number is a
-  // question on Do first, never the next step.
-  const rank = rankOf(spine, rules, s);
-  const step = rank.first, foo = rank.ladder;
-  void step; void foo;
   // Net worth leads with the total; the liquid figure is named "Cash after card debt" (Krug pass), so it never reads
   // as a second cash number beside the runway's.
   const all = [
     tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : 'Cash after card debt ' + summaryMoney(sh.liquidNetWorth.value)] }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value) }),
+    // The Plan works from what is left after saving; the tile says it too, so the two never read as a disagreement.
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.monthlySurplus.value !== null && cf.saving.afterTax.value && cf.surplus.value !== null ? summaryMoney(cf.surplus.value) + ' after saving' : null] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 0) }),
     tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months' })];
   // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped. The next step is its own

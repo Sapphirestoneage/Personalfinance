@@ -1,0 +1,226 @@
+{
+ "Today": {
+  "390": {
+   "words": 99,
+   "height": 1020,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 2
+  },
+  "1024": {
+   "words": 101,
+   "height": 976,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 2
+  }
+ },
+ "Session": {
+  "390": {
+   "words": 43,
+   "height": 844,
+   "buttons": 4,
+   "chips": 3,
+   "primary": 1
+  },
+  "1024": {
+   "words": 45,
+   "height": 800,
+   "buttons": 4,
+   "chips": 3,
+   "primary": 1
+  }
+ },
+ "My numbers": {
+  "390": {
+   "words": 86,
+   "height": 1053,
+   "buttons": 16,
+   "chips": 1,
+   "primary": 0
+  },
+  "1024": {
+   "words": 88,
+   "height": 974,
+   "buttons": 16,
+   "chips": 1,
+   "primary": 0
+  }
+ },
+ "Still guessing": {
+  "390": {
+   "words": 90,
+   "height": 844,
+   "buttons": 41,
+   "chips": 5,
+   "primary": 0
+  },
+  "1024": {
+   "words": 93,
+   "height": 800,
+   "buttons": 40,
+   "chips": 5,
+   "primary": 0
+  }
+ },
+ "A card (Visa)": {
+  "390": {
+   "words": 60,
+   "height": 990,
+   "buttons": 21,
+   "chips": 0,
+   "primary": 1
+  },
+  "1024": {
+   "words": 66,
+   "height": 998,
+   "buttons": 20,
+   "chips": 0,
+   "primary": 1
+  }
+ },
+ "Needs": {
+  "390": {
+   "words": 39,
+   "height": 844,
+   "buttons": 7,
+   "chips": 0,
+   "primary": 0
+  },
+  "1024": {
+   "words": 42,
+   "height": 800,
+   "buttons": 6,
+   "chips": 0,
+   "primary": 0
+  }
+ },
+ "Calendar": {
+  "390": {
+   "words": 180,
+   "height": 1912,
+   "buttons": 22,
+   "chips": 0,
+   "primary": 1
+  },
+  "1024": {
+   "words": 182,
+   "height": 1847,
+   "buttons": 22,
+   "chips": 0,
+   "primary": 1
+  }
+ },
+ "Spending": {
+  "390": {
+   "words": 103,
+   "height": 1382,
+   "buttons": 13,
+   "chips": 0,
+   "primary": 2
+  },
+  "1024": {
+   "words": 105,
+   "height": 1276,
+   "buttons": 13,
+   "chips": 0,
+   "primary": 2
+  }
+ },
+ "Plan": {
+  "390": {
+   "words": 172,
+   "height": 1315,
+   "buttons": 5,
+   "chips": 5,
+   "primary": 1
+  },
+  "1024": {
+   "words": 174,
+   "height": 1144,
+   "buttons": 5,
+   "chips": 5,
+   "primary": 1
+  }
+ },
+ "Profile": {
+  "390": {
+   "words": 46,
+   "height": 844,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 0
+  },
+  "1024": {
+   "words": 48,
+   "height": 800,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 0
+  }
+ },
+ "Assumptions": {
+  "390": {
+   "words": 31,
+   "height": 844,
+   "buttons": 40,
+   "chips": 20,
+   "primary": 0
+  },
+  "1024": {
+   "words": 33,
+   "height": 800,
+   "buttons": 39,
+   "chips": 20,
+   "primary": 0
+  }
+ },
+ "One-pager": {
+  "390": {
+   "words": 190,
+   "height": 1723,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 0
+  },
+  "1024": {
+   "words": 192,
+   "height": 1551,
+   "buttons": 4,
+   "chips": 0,
+   "primary": 0
+  }
+ },
+ "Before our first call": {
+  "390": {
+   "words": 122,
+   "height": 1076,
+   "buttons": 24,
+   "chips": 0,
+   "primary": 1
+  },
+  "1024": {
+   "words": 122,
+   "height": 814,
+   "buttons": 24,
+   "chips": 0,
+   "primary": 1
+  }
+ },
+ "Got extra money?": {
+  "390": {
+   "words": 99,
+   "height": 879,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 1
+  },
+  "1024": {
+   "words": 101,
+   "height": 843,
+   "buttons": 4,
+   "chips": 0,
+   "primary": 1
+  }
+ }
+}
