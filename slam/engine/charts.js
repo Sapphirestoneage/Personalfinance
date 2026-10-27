@@ -210,17 +210,19 @@ export function netWorthAhead(spine, rules, { years = 5 } = {}) {
 
 // The app's pick between the two orders the plan can run (overnight Track E): highest rate first, unless smallest
 // balance first costs no more than the "too small to matter" amount in interest and clears its first debt at least a
-// month sooner (a quick win for about the same money). { id, words }.
-export function recommendOrder(methods, { materiality = 100 } = {}) {
+// month sooner (a quick win for about the same money). The amount is the house default APP_MATERIALITY, on the
+// Assumptions page (morning answer 3), never a number in code. { id, words, rule }.
+export function recommendOrder(methods, rules, year) {
+  const materiality = rules.get('APP_MATERIALITY', year);
   const a = methods.find((x) => x.id === 'avalanche'), sb = methods.find((x) => x.id === 'snowball');
   if (!a || !sb) return null;
-  if (a.neverPaysOff && sb.neverPaysOff) return { id: 'avalanche', words: 'Neither order pays it all off at this pace; highest rate first costs the least while you work on it.' };
-  if (sb.neverPaysOff) return { id: 'avalanche', words: 'Smallest balance first never pays it all off at this pace.' };
+  if (a.neverPaysOff && sb.neverPaysOff) return { rule: 'APP_MATERIALITY', id: 'avalanche', words: 'Neither order pays it all off at this pace; highest rate first costs the least while you work on it.' };
+  if (sb.neverPaysOff) return { rule: 'APP_MATERIALITY', id: 'avalanche', words: 'Smallest balance first never pays it all off at this pace.' };
   const more = round2((sb.interest ?? 0) - (a.interest ?? 0));
   const sooner = a.first && sb.first ? monthsBetween(sb.first.ym, a.first.ym) : 0;
-  if (more <= materiality && sooner >= 1) return { id: 'snowball', words: 'Smallest balance first clears ' + sb.first.name + ' ' + sooner + (sooner === 1 ? ' month' : ' months') + ' sooner for ' + (more <= 0 ? 'no more interest' : 'only $' + Math.round(more).toLocaleString('en-US') + ' more interest') + ': a quick win for about the same money.' };
-  if (more >= 1) return { id: 'avalanche', words: 'Highest rate first saves $' + Math.round(more).toLocaleString('en-US') + ' in interest.' };
-  return { id: 'avalanche', words: 'Both orders cost the same and finish the same month; highest rate first is the default.' };
+  if (more <= materiality && sooner >= 1) return { rule: 'APP_MATERIALITY', id: 'snowball', words: 'Smallest balance first clears ' + sb.first.name + ' ' + sooner + (sooner === 1 ? ' month' : ' months') + ' sooner for ' + (more <= 0 ? 'no more interest' : 'only $' + Math.round(more).toLocaleString('en-US') + ' more interest') + ': a quick win for about the same money.' };
+  if (more >= 1) return { rule: 'APP_MATERIALITY', id: 'avalanche', words: 'Highest rate first saves $' + Math.round(more).toLocaleString('en-US') + ' in interest.' };
+  return { rule: 'APP_MATERIALITY', id: 'avalanche', words: 'Both orders cost the same and finish the same month; highest rate first is the default.' };
 }
 // Months from one year-month to a later one (negative when it is earlier).
 const monthsBetween = (from, to) => (+to.slice(0, 4) - +from.slice(0, 4)) * 12 + (+to.slice(5, 7) - +from.slice(5, 7));

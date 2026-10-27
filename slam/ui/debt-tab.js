@@ -51,7 +51,7 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
 function methodsCard(spine, rules, d, extra) {
   const m = methodPaths(spine, rules, { extra });
   if (!m.length) return null;
-  const pick = recommendOrder(m, { materiality: rules.get('APP_MATERIALITY', +spine.meta.asOf.slice(0, 4)) ?? 100 });
+  const pick = recommendOrder(m, rules, +spine.meta.asOf.slice(0, 4));
   // Round 1: when every order ends the same month at the same interest and clears the same debt first, there is
   // nothing to choose; one sentence says so instead of identical cards.
   const tie = new Set(m.map((x) => [x.debtFreeYm, Math.round(x.interest ?? -1), x.first ? x.first.name + x.first.ym : ''].join('|'))).size === 1;

@@ -26,7 +26,7 @@ export const GROUPS = [
     row('CUSHION_OKAY_EXTRA', 'Extra cushion months, income okay', 'Added to the cushion when income is okay but not rock solid.', [['Today', T], ['Plan', P]]),
     row('CUSHION_SHAKY_EXTRA', 'Extra cushion months, income shaky', 'Added to the cushion when income is shaky.', [['Today', T], ['Plan', P]]),
     row('APP_HOUSING_REF', 'Housing line', 'The share of take-home housing is compared with. A reference, not a grade.', [['Plan', P], ['Spending', S]]),
-    row('APP_MATERIALITY', 'Too small to matter', 'A difference under this reads as on plan.', [['Spending', S], ['Today', T]]),
+    row('APP_MATERIALITY', 'Too small to matter', 'A difference under this reads as on plan; and smallest balance first is recommended over highest rate first when it costs no more interest than this.', [['Spending', S], ['Today', T], ['My numbers, Debt', N + '#/debt']]),
     row('APP_BUDGET_SHARE', 'Budget: a difference worth marking', 'A Budget row is marked over or under only when the difference is at least this share of its plan, or the too-small-to-matter amount, whichever is larger.', [['Spending, Budget', S + '#see']]),
     row('APP_TREND_PCT', 'Trend line for variable spending', 'A variable expense is going up or down once its latest month is this far from its average.', [['Spending', S + '#see']]),
     row('DEFAULT_PHONE_PLAN_1', 'Phone plan for one line', 'The standard plan a phone line can fill in with one tap, as a guess.', [['My numbers, Needs', N + '#/needs']]),

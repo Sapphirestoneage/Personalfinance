@@ -1,4 +1,5 @@
 // The numbers behind every chart (overnight Track C): each chart ends where its screen's number is.
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readJson, loadRules } from './spine-helpers.js';
@@ -110,13 +111,23 @@ test('scenario lines and goal bars', () => {
 
 test('the recommended order: highest rate first unless a quick win costs about nothing', () => {
   const m = (id, interest, firstYm, never = false) => ({ id, interest, first: { name: id === 'snowball' ? 'Store card' : 'Visa', ym: firstYm }, neverPaysOff: never });
-  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')]).id, 'snowball');
-  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')]).words, /4 months sooner for only \$50 more/);
-  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')]).id, 'avalanche');
-  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')]).words, /saves \$400/);
-  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1000, '2027-06')]).id, 'avalanche');
-  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 900, '2027-02', true)]).id, 'avalanche');
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')], R, 2026).id, 'snowball');
+  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')], R, 2026).words, /4 months sooner for only \$50 more/);
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')], R, 2026).id, 'avalanche');
+  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')], R, 2026).words, /saves \$400/);
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1000, '2027-06')], R, 2026).id, 'avalanche');
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 900, '2027-02', true)], R, 2026).id, 'avalanche');
   const s = demo();
   for (const d of s.debts) delete d.stress;
   assert.deepEqual(C.methodPaths(s, R, { extra: 200 }).map((x) => x.id), ['avalanche', 'snowball'], 'no stress scores: two orders');
+});
+
+test('the recommended order\'s quick-win amount is the house default on the Assumptions page (morning answer 3)', () => {
+  const m = (id, interest, firstYm) => ({ id, interest, first: { name: id === 'snowball' ? 'Store card' : 'Visa', ym: firstYm }, neverPaysOff: false });
+  const pair = [m('avalanche', 1000, '2027-06'), m('snowball', 1150, '2027-02')];
+  assert.equal(C.recommendOrder(pair, R, 2026).id, 'avalanche', '$150 more is over the $100 default');
+  const looser = { get: (id, y) => (id === 'APP_MATERIALITY' ? 200 : R.get(id, y)) };
+  assert.equal(C.recommendOrder(pair, looser, 2026).id, 'snowball', 'a $200 default makes it a quick win');
+  assert.equal(C.recommendOrder(pair, R, 2026).rule, 'APP_MATERIALITY');
+  assert.doesNotMatch(readFileSync(new URL('../engine/charts.js', import.meta.url), 'utf8'), /materiality = 100/);
 });
