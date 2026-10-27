@@ -3,65 +3,22 @@
 Written by `node tools/qa-crawl.mjs` on the demo household (made up).
 
 ```
-SLAM tester: 152 screens x 3 looks, 0 taps, 287s.
-FAIL: 89 blocking findings.
+SLAM tester: 123 screens x 3 looks, 0 taps, 231s.
+PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
   cents: 3
-  open form: 3 (blocking)
-  overflow: 86 (blocking)
-  placeholder looks typed: 144
+  placeholder looks typed: 6
   small tap: 168
 ```
 
-## placeholder looks typed (48)
+## placeholder looks typed (2)
 
-- affordances.html: input#d-ci-chk "2925" [375 light, 375 dark, 1280 light]
-- affordances.html: input#g-hap "95" [375 light, 375 dark, 1280 light]
-- affordances.html: input#aff-rec-amount "500" [375 light, 375 dark, 1280 light]
-- affordances.html#app: input#d-ci-chk "2925" [375 light, 375 dark, 1280 light]
-- affordances.html#app: input#g-hap "95" [375 light, 375 dark, 1280 light]
-- affordances.html#app: input#aff-rec-amount "500" [375 light, 375 dark, 1280 light]
-- affordances.html#l-h: input#d-ci-chk "2925" [375 light, 375 dark, 1280 light]
-- affordances.html#l-h: input#g-hap "95" [375 light, 375 dark, 1280 light]
-- affordances.html#l-h: input#aff-rec-amount "500" [375 light, 375 dark, 1280 light]
-- affordances.html#checkin: input#d-ci-chk "2925" [375 light, 375 dark, 1280 light]
-- affordances.html#checkin: input#g-hap "95" [375 light, 375 dark, 1280 light]
-- affordances.html#checkin: input#aff-rec-amount "500" [375 light, 375 dark, 1280 light]
-- affordances.html#nav-h: input#d-ci-chk "2925" [375 light, 375 dark, 1280 light]
-- affordances.html#nav-h: input#g-hap "95" [375 light, 375 dark, 1280 light]
-- affordances.html#nav-h: input#aff-rec-amount "500" [375 light, 375 dark, 1280 light]
-- calendar.html#/2026-10-01/rent%7C2026-10-01: input#hap-amount "1800" [375 light, 375 dark, 1280 light]
-- calendar.html#/2026-10-01/gym%7C2026-10-01: input#hap-amount "50" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-rent.amt "Rent, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-renters-insurance.amt "Renter's insurance, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-utilities.amt "Utilities, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-internet.amt "Internet, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-phone.amt "Phone, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-groceries.amt "Groceries, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-eating-out.amt "Eating out, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-car-payment.amt "Car payment, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-car-insurance.amt "Car insurance, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-car-gas.amt "Gas for the car, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-car-upkeep.amt "Car upkeep, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-transit.amt "Transit, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-rides.amt "Rides and rideshare, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-x-transit.amt "Bus pass and rideshare, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#c-transportation.amt "Transportation, one number a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-gym.amt "Gym, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-trainer.amt "Trainer, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-subscriptions.amt "Subscriptions, a month" [375 light, 375 dark, 1280 light]
-- session.html#/needs: input#n-x-streaming.amt "Streaming (family plan), a month" [375 light, 375 dark, 1280 light]
-- session.html#/income: input#i-amt-salary.amt "Salary at Hudson Valley Health: how much, before t" [375 light, 375 dark, 1280 light]
-- session.html#/income: input#i-amt-tutoring.amt "Weekend tutoring: how much, before tax" [375 light, 375 dark, 1280 light]
-- session.html#/income: input#i-be-tutoring.amt "Weekend tutoring: business costs a month" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-chk.amt "Checking: balance" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-hysa.amt "High-yield savings: balance" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-k401.amt "Work 401(k): balance" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-roth.amt "Roth IRA: balance" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-brk.amt "Brokerage: balance" [375 light, 375 dark, 1280 light]
-- session.html#/assets: input#a-bal-car.amt "2019 Corolla: balance" [375 light, 375 dark, 1280 light]
-- session.html#/goals: input#g-t-cushion.amt "Six-month cushion: amount" [375 light, 375 dark, 1280 light]
 - spending.html#/checkin: input#ci-chk "2781.3" [375 light, 375 dark, 1280 light]
 - spending.html#/checkin: input#ci-hysa "9000" [375 light, 375 dark, 1280 light]
+
+
+## cents (1)
+
+- plan.html#/surplus: $650.00 in span.rung-why "The 2026 limit is $7,500. In for 2026 so far: abou" [375 light, 375 dark, 1280 light]
 
 
 ## small tap (56)
@@ -122,62 +79,5 @@ FAIL: 89 blocking findings.
 - affordances.html#nav-h: a.tab.is-pressed "Session" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
-
-
-## overflow (43)
-
-- assumptions.html: details.as-more "The order money goes in9 steps: Deductibles, Emplo" ends at 950px of 375 [375 light, 375 dark]
-- assumptions.html: a.btn.small "Change the order of The order money goes in" ends at 1002px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Windfall order9 steps: Tax on it, Tax bill, Cash f" ends at 757px of 375 [375 light, 375 dark]
-- assumptions.html: a.btn.small "Change the order of Windfall order" ends at 809px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Rent verifyHigh-cost city $2,400 · Elsewhere $1,40" ends at 407px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Pay-family verifyHigh-cost city $400 · Elsewhere $" ends at 380px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Mortgage verifyHigh-cost city $3,200 · Elsewhere $" ends at 425px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Property-tax verifyHigh-cost city $700 · Elsewhere" ends at 400px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Home-insurance verifyHigh-cost city $150 · Elsewhe" ends at 399px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Renters-insurance verifyHigh-cost city $15 · Elsew" ends at 379px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Utilities verifyHigh-cost city $170 · Elsewhere $2" ends at 381px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Groceries verifyHigh-cost city $450 · Elsewhere $4" ends at 398px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Eating-out verifyHigh-cost city $300 · Elsewhere $" ends at 382px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Car-payment verifyHigh-cost city $500 · Elsewhere " ends at 391px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Car-insurance verifyHigh-cost city $220 · Elsewher" ends at 399px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Car-gas verifyHigh-cost city $150 · Elsewhere $180" ends at 380px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Subscriptions verifyHigh-cost city $40 · Elsewhere" ends at 407px of 375 [375 light, 375 dark]
-- assumptions.html: details.as-more "Miscellaneous verifyHigh-cost city $300 · Elsewher" ends at 431px of 375 [375 light, 375 dark]
-- calendar.html: p.cal-low "Lowest -$227 on Nov 14, 2026" ends at 388px of 375 [375 light, 375 dark]
-- calendar.html: p.cal-low-words "Under your floor of $0, the day before payday." ends at 388px of 375 [375 light, 375 dark]
-- calendar.html: div.edit-actions "Move $228 from High-yield savings by Nov 11, 2026" ends at 388px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "The order money goes in9 steps: Deductibles, Emplo" ends at 950px of 375 [375 light, 375 dark]
-- assumptions.html#app: a.btn.small "Change the order of The order money goes in" ends at 1002px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Windfall order9 steps: Tax on it, Tax bill, Cash f" ends at 757px of 375 [375 light, 375 dark]
-- assumptions.html#app: a.btn.small "Change the order of Windfall order" ends at 809px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Rent verifyHigh-cost city $2,400 · Elsewhere $1,40" ends at 407px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Pay-family verifyHigh-cost city $400 · Elsewhere $" ends at 380px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Mortgage verifyHigh-cost city $3,200 · Elsewhere $" ends at 425px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Property-tax verifyHigh-cost city $700 · Elsewhere" ends at 400px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Home-insurance verifyHigh-cost city $150 · Elsewhe" ends at 399px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Renters-insurance verifyHigh-cost city $15 · Elsew" ends at 379px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Utilities verifyHigh-cost city $170 · Elsewhere $2" ends at 381px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Groceries verifyHigh-cost city $450 · Elsewhere $4" ends at 398px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Eating-out verifyHigh-cost city $300 · Elsewhere $" ends at 382px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Car-payment verifyHigh-cost city $500 · Elsewhere " ends at 391px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Car-insurance verifyHigh-cost city $220 · Elsewher" ends at 399px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Car-gas verifyHigh-cost city $150 · Elsewhere $180" ends at 380px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Subscriptions verifyHigh-cost city $40 · Elsewhere" ends at 407px of 375 [375 light, 375 dark]
-- assumptions.html#app: details.as-more "Miscellaneous verifyHigh-cost city $300 · Elsewher" ends at 431px of 375 [375 light, 375 dark]
-- calendar.html#app: p.cal-low "Lowest -$227 on Nov 14, 2026" ends at 388px of 375 [375 light, 375 dark]
-- calendar.html#app: p.cal-low-words "Under your floor of $0, the day before payday." ends at 388px of 375 [375 light, 375 dark]
-- calendar.html#app: div.edit-actions "Move $228 from High-yield savings by Nov 11, 2026" ends at 388px of 375 [375 light, 375 dark]
-- plan.html#/file: the page scrolls sideways (379px) [375 light, 375 dark]
-
-
-## open form (1)
-
-- windfall.html: form.editor.windfall-form "How much is coming in?$Is tax already taken out of" [375 light, 375 dark, 1280 light]
-
-
-## cents (1)
-
-- plan.html#/surplus: $650.00 in span.rung-why "The 2026 limit is $7,500. In for 2026 so far: abou" [375 light, 375 dark, 1280 light]
 
 

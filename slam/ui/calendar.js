@@ -23,6 +23,8 @@ import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf, keyHint } from './view.js';
 import { personSlug } from './owed.js';
 import { addForm } from './add-form.js';
+import { icsEvents, icsText } from '../engine/ics.js';
+import { addDays } from '../engine/spine.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton } from './forecast.js';
@@ -56,7 +58,7 @@ const FILTER_OF = {
   rough: (e) => !!e.rough || e.kind === 'missing' || (e.amount === null && !MARKER_KINDS.includes(e.kind))
 };
 const filtered = (m, f) => (f === 'all' ? m : { ...m, events: m.events.filter(FILTER_OF[f]), undated: m.undated.filter(FILTER_OF[f]), days: m.days.map((d) => ({ ...d, events: d.events.filter(FILTER_OF[f]) })) });
-const VIEWS = [['list', 'List'], ['month', 'Month'], ['year', 'Year']];
+const VIEWS = [['month', 'Month'], ['week', 'Week'], ['list', 'List'], ['year', 'Year']];
 
 // Why an item that cannot move stays on its day, in words (tapping it opens its screen, which says this).
 const FIXED = {
@@ -88,7 +90,7 @@ function rootState(s, asOfYm) {
   return {
     // Always opens on the current month (or a month a link names); the month picked lasts with this screen only.
     ym: YM.test(s.ym || '') ? s.ym : linked || asOfYm,
-    view: VIEWS.some(([id]) => id === s.view) ? s.view : 'list',
+    view: VIEWS.some(([id]) => id === s.view) ? s.view : 'month',
     q: typeof s.q === 'string' ? s.q : '',
     byPay: s.byPay === true,
     day: typeof s.day === 'string' ? s.day : null,
@@ -337,7 +339,7 @@ function dragSetup(root) {
   let drag = null;
   const cellAt = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest('[data-date]') : null; };
   root.addEventListener('pointerdown', (e) => {
-    const grip = e.target.closest('.grip'); if (!grip) return;
+    const grip = e.target.closest('.grip, .chip-grip'); if (!grip) return;
     const item = grip.closest('[data-drag]'); if (!item) return;
     const from = item.closest('[data-date]');
     drag = { item, kind: item.dataset.drag, key: item.dataset.key, label: item.dataset.label || 'It', maybeId: item.dataset.maybe, from: from ? from.dataset.date : null, x: e.clientX, y: e.clientY, moving: false, ghost: null, over: null, id: e.pointerId };
@@ -359,7 +361,8 @@ function dragSetup(root) {
     const d = drag; drag = null;
     d.item.classList.remove('dragging'); if (d.ghost) d.ghost.remove(); if (d.over) d.over.classList.remove('drop-target');
     if (!drop) return;
-    if (!d.moving) { say('To move ' + d.label + ', drag the grip onto another day, or tap its name and pick a day'); return; }
+    // A chip tapped without dragging opens its item (the chip is its own grip on the month grid).
+    if (!d.moving) { if (d.item.dataset.href) { location.hash = d.item.dataset.href; return; } say('To move ' + d.label + ', drag the grip onto another day, or tap its name and pick a day'); return; }
     const cell = cellAt(e.clientX, e.clientY);
     if (!cell || cell.dataset.date === d.from) return;
     const date = cell.dataset.date;
@@ -448,34 +451,116 @@ function listView(v, c, m, st, today) {
   ];
 }
 
-// ---------------------------------------------------------------- the month grid: net, balance, dots
-function monthView(v, c, m, st, today) {
+// ---------------------------------------------------------------- the month grid (overnight Track A: a calendar)
+// Like a wall calendar: each day its items as short colored chips (a dot each on a phone), "+N more" when it is full,
+// and checking at the end of the day in small figures. Today is ringed; pay periods sit on alternating faint bands;
+// days under the floor are shaded. Tap a day: its items in a panel beside the grid (under it on a phone). Tap a chip:
+// its own screen. Drag a chip onto another day to move it (Undo takes it back).
+const CHIPS = 3;
+const shortMoney = (x) => { const a = Math.abs(x); return '$' + (a >= 10000 ? Math.round(a / 1000) + 'k' : a >= 1000 ? (Math.round(a / 100) / 10) + 'k' : Math.round(a)); };
+function dayChip(e) {
+  const href = itemHref(e);
+  const canDrag = e.movable && !e.locked && !!e.key;
+  return h('span', { class: 'cal-chip ' + (CAT[e.kind] || 'viz-0') + (e.direction === 'in' ? ' in' : '') + (e.rough ? ' rough' : '') + (canDrag ? ' chip-grip' : ''), role: 'link', tabindex: '0', title: e.label + (e.amount !== null ? ' ' + money(e.amount) : ''),
+    'data-key': e.key || null, 'data-label': e.label, 'data-drag': canDrag ? (e.kind === 'maybe' ? 'maybe' : 'event') : null, 'data-maybe': e.kind === 'maybe' ? e.maybeId : null, 'data-href': href,
+    onclick: canDrag || !href ? null : () => { location.hash = href; }, onkeydown: (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && href) { ev.preventDefault(); location.hash = href; } } },
+    h('span', { class: 'chip-name' }, e.label), e.amount !== null && e.amount !== undefined ? h('span', { class: 'chip-amt' }, (e.direction === 'in' ? '+' : '') + shortMoney(e.amount)) : null);
+}
+// Which pay period each day is in, for the faint bands: the count of paydays on or before it.
+function payBands(days) {
+  const pays = days.filter((d) => d.events.some((e) => e.kind === 'pay')).map((d) => d.date).sort();
+  return (date) => pays.filter((p) => p <= date).length % 2;
+}
+function dayCell(date, m, st, today, ctx) {
+  const d = m.days.find((x) => x.date === date), bal = m.line.find((x) => x.date === date);
+  const its = d ? d.events.filter((e) => !isDateToKnow(e)) : [];
+  const tint = bal && ctx.floor !== null && bal.primary < ctx.floor ? ' under' : bal && ctx.near !== null && bal.primary < ctx.near ? ' near' : '';
+  const open = () => setRoot({ day: st.day === date ? null : date });
+  return h('div', { class: 'cell band-' + ctx.band(date) + (date === today ? ' today' : '') + (date === ctx.low ? ' low' : '') + tint + (st.day === date ? ' is-picked' : ''), 'data-date': date, role: 'gridcell' },
+    h('button', { type: 'button', class: 'cell-open', 'aria-pressed': String(st.day === date),
+      'aria-label': dayWords(date) + (its.length ? ', ' + its.length + (its.length === 1 ? ' item' : ' items') : ', nothing on it') + (bal ? ', checking after ' + money(bal.primary) : ''), onclick: open },
+      h('span', { class: 'cell-day' }, String(+date.slice(8, 10)))),
+    its.length ? h('div', { class: 'cell-chips' }, its.slice(0, CHIPS).map(dayChip), its.length > CHIPS ? h('button', { type: 'button', class: 'cell-more', onclick: open }, '+' + (its.length - CHIPS) + ' more') : null) : null,
+    its.length ? h('span', { class: 'cell-dots', 'aria-hidden': 'true' }, its.slice(0, 5).map((e) => h('span', { class: 'mk mk-' + markOf(e) + ' ' + (CAT[e.kind] || 'viz-0') }))) : null,
+    bal ? h('span', { class: 'cell-cash' + tint }, money(bal.primary)) : null);
+}
+function gridCtx(c, m) {
   const floor = c.sim ? c.sim.floor.amount : null, near = floor === null ? null : floor + (c.sim.everydayPerDay || 0) * 7;
+  const low = m.line.length ? m.line.reduce((a, x) => (x.primary < a.primary ? x : a), m.line[0]).date : null;
+  return { floor, near, low, band: payBands(m.days) };
+}
+// The picked day, beside the grid: its items (each opens; the grip drags), checking after, and its own screen.
+function dayPanel(m, st) {
+  if (!st.day || st.day.slice(0, 7) !== m.ym) return h('aside', { class: 'card day-panel muted-panel', 'aria-label': 'A day' }, h('p', { class: 'muted' }, 'Tap a day to see what lands on it.'));
+  const d = m.days.find((x) => x.date === st.day), bal = m.line.find((x) => x.date === st.day);
+  return h('aside', { class: 'card day-panel', 'aria-labelledby': 'picked-h' },
+    h('h2', { id: 'picked-h' }, dayWords(st.day)),
+    d && d.events.length ? h('ul', { class: 'cal-items' }, d.events.map(itemRow)) : h('p', { class: 'muted' }, 'Nothing lands on this day.'),
+    bal ? h('p', { class: 'cal-after' }, 'Checking after: ' + money(bal.primary)) : null,
+    h('a', { class: 'go-row plain', href: dayHref(st.day) }, h('span', { class: 'go-name' }, 'Open the day'), h('span', { class: 'go-sub' }, 'Move, skip or mark what happened')));
+}
+// On a phone, a sideways swipe on the grid moves a month (the arrows above do the same).
+function swipeMonths(el, ym) {
+  let x0 = null, y0 = null;
+  el.addEventListener('touchstart', (e) => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) setRoot({ ym: addMonths(ym, dx < 0 ? 1 : -1), day: null });
+  }, { passive: true });
+  return el;
+}
+const dowList = () => (pref('weekStart') === 'monday' ? [...DOW.slice(1), DOW[0]] : DOW);
+function monthView(v, c, m, st, today) {
+  const ctx = gridCtx(c, m);
   const first = m.ym + '-01', lead = (weekdayOf(first) - (pref('weekStart') === 'monday' ? 1 : 0) + 7) % 7;
   const n = new Date(Date.UTC(+m.ym.slice(0, 4), +m.ym.slice(5, 7), 0)).getUTCDate();
-  const low = m.line.length ? m.line.reduce((a, x) => (x.primary < a.primary ? x : a), m.line[0]).date : null;
-  const dow = pref('weekStart') === 'monday' ? [...DOW.slice(1), DOW[0]] : DOW;
   const cells = [];
   for (let i = 0; i < lead; i++) cells.push(h('div', { class: 'cell empty', 'aria-hidden': 'true' }));
-  for (let day = 1; day <= n; day++) {
-    const date = m.ym + '-' + String(day).padStart(2, '0');
+  for (let day = 1; day <= n; day++) cells.push(dayCell(m.ym + '-' + String(day).padStart(2, '0'), m, st, today, ctx));
+  return [
+    monthDates(v, c, m),
+    h('div', { class: 'month-layout' },
+      swipeMonths(h('div', { class: 'grid-wrap' }, h('div', { class: 'grid-dow', 'aria-hidden': 'true' }, dowList().map((x) => h('span', {}, x))), h('div', { class: 'grid', role: 'grid', 'aria-label': longMonth(m.ym) }, cells)), m.ym),
+      dayPanel(m, st)),
+    gridKey()
+  ];
+}
+// The key of colors, once under the grid (a direct label beats a legend, but a chip is too small to say its kind).
+const gridKey = () => h('ul', { class: 'grid-key', 'aria-label': 'Colors' }, [['viz-3', 'Pay and saving'], ['viz-1', 'Bills'], ['viz-2', 'Debt'], ['viz-4', 'Tax and deadlines'], ['viz-5', 'Maybe money']].map(([c, w]) => h('li', {}, h('span', { class: 'mk ' + c, 'aria-hidden': 'true' }), w)));
+
+// ---------------------------------------------------------------- the week: seven columns with the same chips
+function weekStart(date) { const back = (weekdayOf(date) - (pref('weekStart') === 'monday' ? 1 : 0) + 7) % 7; return addDays(date, -back); }
+function weekView(v, c, m, st, today) {
+  const start = weekStart(st.day && st.day.slice(0, 7) === m.ym ? st.day : today.slice(0, 7) === m.ym ? today : m.ym + '-01');
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const ctx = gridCtx(c, m);
+  const col = (date) => {
+    if (date.slice(0, 7) !== m.ym) return h('div', { class: 'week-col other-month' }, h('p', { class: 'week-h' }, dayWords(date)), h('p', { class: 'muted' }, 'In ' + longMonth(date.slice(0, 7))));
     const d = m.days.find((x) => x.date === date), bal = m.line.find((x) => x.date === date);
     const its = d ? d.events.filter((e) => !isDateToKnow(e)) : [];
-    const tint = bal && floor !== null && bal.primary < floor ? ' under' : bal && near !== null && bal.primary < near ? ' near' : '';
-    cells.push(h('button', { type: 'button', class: 'cell' + (date === today ? ' today' : '') + (date === low ? ' low' : '') + tint + (st.day === date ? ' is-picked' : ''), 'data-date': date, 'aria-pressed': String(st.day === date),
-      'aria-label': dayWords(date) + (d && d.net ? ', net ' + money(d.net) : '') + (bal ? ', checking ' + money(bal.primary) : '') + (its.length ? ', ' + its.length + (its.length === 1 ? ' item' : ' items') : ''),
-      onclick: () => setRoot({ day: st.day === date ? null : date }) },
-      h('span', { class: 'cell-day' }, String(day)),
-      d && d.net ? h('span', { class: 'cell-net' + (d.net > 0 ? ' in' : ' out') }, (d.net > 0 ? '+' : '-') + money(Math.abs(d.net))) : null,
-      bal ? h('span', { class: 'cell-cash' }, money(bal.primary)) : null,
-      its.length ? h('span', { class: 'cell-dots', 'aria-hidden': 'true' }, its.slice(0, 5).map((e) => h('span', { class: 'mk mk-' + markOf(e) + ' ' + (CAT[e.kind] || 'viz-0') }))) : null));
-  }
-  const picked = st.day && st.day.slice(0, 7) === m.ym ? m.days.find((x) => x.date === st.day) : null;
+    return h('div', { class: 'week-col band-' + ctx.band(date) + (date === today ? ' today' : '') + (bal && ctx.floor !== null && bal.primary < ctx.floor ? ' under' : ''), 'data-date': date },
+      h('button', { type: 'button', class: 'week-h cell-open', onclick: () => setRoot({ day: date }) }, dayWords(date)),
+      its.length ? h('div', { class: 'cell-chips' }, its.map(dayChip)) : h('p', { class: 'muted week-none' }, 'Nothing'),
+      bal ? h('p', { class: 'cell-cash' }, money(bal.primary)) : null);
+  };
   return [
-    h('div', { class: 'grid-wrap' }, h('div', { class: 'grid-dow', 'aria-hidden': 'true' }, dow.map((x) => h('span', {}, x))), h('div', { class: 'grid' }, cells)),
-    st.day && st.day.slice(0, 7) === m.ym ? h('section', { class: 'card', 'aria-labelledby': 'picked-h' }, h('h2', { id: 'picked-h' }, dayWords(st.day)),
-      picked && picked.events.length ? h('ul', { class: 'cal-items' }, picked.events.map(itemRow)) : h('p', { class: 'muted' }, 'Nothing lands on this day.')) : null
+    h('div', { class: 'week-nav' },
+      h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Week before', onclick: () => setRoot({ day: addDays(start, -7), ym: addDays(start, -7).slice(0, 7) }) }, '‹'),
+      h('span', { class: 'week-words' }, 'Week of ' + shortDate(start).replace(/, \d{4}$/, '')),
+      h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Week after', onclick: () => setRoot({ day: addDays(start, 7), ym: addDays(start, 7).slice(0, 7) }) }, '›')),
+    h('div', { class: 'week-grid' }, days.map(col)),
+    gridKey()
   ];
+}
+
+// "Add to my calendar": the bills, paydays and deadlines for the next 12 months as an .ics file (engine/ics.js).
+function downloadIcs(spine, rules) {
+  const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const text = icsText(icsEvents(spine, rules, { months: 12 }), { stamp: now, name: 'SLAM' + (((spine.household.people || [])[0] || {}).name ? ': ' + spine.household.people[0].name : '') });
+  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/calendar' })), download: 'slam-calendar.ics' });
+  document.body.append(a); a.click(); a.remove();
+  say('Saved slam-calendar.ics: open it to add the bills, paydays and deadlines to your calendar');
 }
 
 // ---------------------------------------------------------------- the year: the table, a first month that starts partway
@@ -519,7 +604,8 @@ function belowRows(v, c, m, st) {
       return timingBody(timingMemo.t);
     }) : null,
     foldRow('cal-maybe', 'Maybe money', c.tray.length ? c.tray.length + ' without a day' : 'none', () => trayCard(c, st), { add: { label: 'Add', onOpen: () => { trayAdding = true; } } }),
-    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt' }, h('span', { class: 'go-name' }, 'Debt payoff dates'), h('span', { class: 'go-sub' }, 'On My numbers, Debt'))))
+    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt' }, h('span', { class: 'go-name' }, 'Debt payoff dates'), h('span', { class: 'go-sub' }, 'On My numbers, Debt'))),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => downloadIcs(v.base, v.rules) }, 'Add to my calendar')))
   ];
 }
 function timingBody(t) {
@@ -565,7 +651,7 @@ function confirmScreen(spine, rules, today) {
 }
 
 // ---------------------------------------------------------------- the month screen
-const VIEW_WORDS = [['list', 'List'], ['month', 'Month'], ['year', 'Year']];
+const VIEW_WORDS = VIEWS;
 function monthScreen(v, ctx) {
   const rules = v.rules, spine = v.spine, asOf = spine.meta.asOf, asOfYm = asOf.slice(0, 7);
   const st = rootState(ctx.state || {}, asOfYm);
@@ -576,7 +662,7 @@ function monthScreen(v, ctx) {
   const prev = addMonths(st.ym, -1), next = addMonths(st.ym, 1);
   const known = !(c.sim && !c.sim.checking.known);
   const filterOn = st.filter !== 'all' || !!st.q;
-  const body = st.view === 'year' ? yearView(spine, rules) : !c.sim && st.ym < asOfYm ? [pastWords(asOf)] : st.view === 'month' ? monthView(v, c, m, st, today) : listView(v, c, m, st, today);
+  const body = st.view === 'year' ? yearView(spine, rules) : !c.sim && st.ym < asOfYm ? [pastWords(asOf)] : st.view === 'month' ? monthView(v, c, m, st, today) : st.view === 'week' ? weekView(v, c, m, st, today) : listView(v, c, m, st, today);
   return [
     ...topCard(v.base, rules, today),
     // One time control: previous, the month, next; Today only when away from this month.

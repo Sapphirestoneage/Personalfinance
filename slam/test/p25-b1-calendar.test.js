@@ -40,7 +40,7 @@ test('screen by screen: Calendar, a day, an item; the month screen keeps its mon
   assert.match(src, /if \(ctx\.levels\.length === 1\) return dayScreen\(v, date\);/);
   // Made simple: one month control (no month count), three views, Group by paycheck, a day picked in the grid.
   for (const k of ['ym', 'view', 'q', 'byPay', 'day', 'back', 'open', 'filter']) assert.match(src, new RegExp('\\b' + k + ': '), 'kept: ' + k);
-  assert.match(src, /const VIEWS = \[\['list', 'List'\], \['month', 'Month'\], \['year', 'Year'\]\];/);
+  assert.match(src, /const VIEWS = \[\['month', 'Month'\], \['week', 'Week'\], \['list', 'List'\], \['year', 'Year'\]\];/, 'a calendar first: Month, then Week, the list and the year');
   assert.match(src, /keep\(\{ q: box\.value \}\)/, 'what is typed in search is kept');
   // An item that cannot move says why; old month links still open their month.
   assert.match(src, /h\('strong', \{\}, 'Cannot move here\. '\), fixedWords\(e\)/);
