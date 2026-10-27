@@ -1725,3 +1725,9 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .note-form { display: grid; gap: var(--space-1); }
 .note-acts { display: flex; gap: var(--space-2); } #session-note { width: 100%; min-height: 88px; font: inherit; padding: var(--space-2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
 @media (max-width: 480px) { .note-list li { grid-template-columns: 1fr; } }
+/* Keyboard shortcuts (Track J) */
+.keys-dialog { border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); padding: var(--space-5); max-width: min(440px, 92vw); }
+.keys-dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+.keys-dialog h2 { margin-top: 0; }
+kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); font-family: inherit; font-size: var(--text-sm); text-align: center; }
+.keys-btn { margin-left: var(--space-2); } @media (hover: none) { .keys-btn { display: none; } }

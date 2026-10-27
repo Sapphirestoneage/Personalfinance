@@ -14,6 +14,7 @@
 
 import { mountPage, whoseMenu } from './page.js';
 import { searchButton } from './search.js';
+import { installShortcuts } from './shortcuts.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS, yours } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { withClient } from '../engine/assumptions.js';
@@ -448,6 +449,7 @@ const TEXT_TYPES = /^(text|search|email|number|tel|url|password|date|month|week|
 const typing = (t) => !!t && (t.isContentEditable || t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && TEXT_TYPES.test(t.type || 'text')));
 
 function listen() {
+  installShortcuts({ undo: doUndo, redo: doRedo, typing, say });
   window.addEventListener('popstate', (ev) => {
     clearTimeout(scrollTimer);
     const e = ev.state && ev.state.shell;

@@ -1,6 +1,7 @@
 // What every page shares (S-208): a skip link to the content, an error catcher
 // that shows a banner instead of a silent failure, a one-line footer, and a polite live region for the page's headline. Formatting only.
 
+import { showList } from './shortcuts.js';
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile } from './household.js';
@@ -24,7 +25,7 @@ const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
   if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
-  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink()));
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink(), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };
