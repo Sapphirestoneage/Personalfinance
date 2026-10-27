@@ -13,13 +13,15 @@ import { maxItFor } from './maxit-panel.js';
 import { whose } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
+import { money as dollars } from '../src/ui/format.js';
 import { h, money, pct, shortDate } from './view.js';
 import { homeworkList } from '../engine/profile.js';
 import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
 
 const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
-const m = (x) => (x === null || x === undefined ? 'missing' : money(x));
+// Plain dollars on the handout: no hours or days tags, whatever the screen shows.
+const m = (x) => (x === null || x === undefined ? 'missing' : dollars(x));
 // A card that opens where its detail lives: the whole card is the target, with a chevron (CLAUDE.md affordance 5).
 const goCard = (title, href, ...body) => h('section', { class: 'card has-target' },
   h('h2', {}, h('a', { class: 'card-link', href }, h('span', {}, title), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A'))), ...body);

@@ -1169,6 +1169,7 @@ a.fb-link .fb-more { justify-self: end; }
 .as-preview { min-height: 1.5em; }
 /* Preferences: larger text, and hidden numbers that blur until tapped. */
 :root.text-larger { font-size: 112.5%; }
+@media print { :root.discreet * { filter: none !important; } }
 :root.discreet :is(.tile-value, .go-total, .as-value, .math-value, .fb-amt, .fv-amt, .charge-amt, .wait-amt, .num, .safe-big, .srow-val, .tile-sub, .flag-line, .sum-line):not(.is-shown) { filter: blur(7px); cursor: pointer; user-select: none; }
 /* Preferences: each a label, a hint and its buttons; Today's tiles ticked and moved. */
 .pref-seg { gap: var(--space-1, 4px); }

@@ -35,9 +35,13 @@ export function applyPrefs(doc = typeof document !== 'undefined' ? document : nu
     tapWired = true;
     doc.addEventListener('click', (e) => {
       if (!root.classList.contains('discreet')) return;
-      const el = e.target.closest && e.target.closest(DISCREET);
+      const hit = e.target.closest && e.target.closest(DISCREET);
+      // A tile is one link: a tap anywhere on a blurred tile shows its number first.
+      const card = !hit && e.target.closest ? e.target.closest('a, button') : null;
+      const el = hit || (card && card.querySelector(DISCREET + ':not(.is-shown)')) || null;
       for (const x of doc.querySelectorAll('.is-shown')) if (x !== el) x.classList.remove('is-shown');
-      if (el && !el.classList.contains('is-shown')) { el.classList.add('is-shown'); if (!el.closest('a, button')) e.preventDefault(); }
+      // The first tap on a blurred amount shows it, even inside a link or button; the next tap follows it.
+      if (el && !el.classList.contains('is-shown')) { el.classList.add('is-shown'); e.preventDefault(); e.stopPropagation(); }
     }, true);
   }
 }

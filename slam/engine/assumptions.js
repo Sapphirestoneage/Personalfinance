@@ -10,6 +10,8 @@
 import { setAt } from './spine.js';
 import { METRICS, explainMetric } from './math.js';
 import { summarize } from './summary.js';
+import { withScenario } from './scenarios.js';
+import { applyDefaults } from './defaults.js';
 
 const T = 'dashboard.html', P = 'plan.html', N = 'ledger.html', C = 'calendar.html', S = 'spending.html', W = 'windfall.html', SE = 'session.html', PR = 'profile.html';
 const used = (...xs) => xs.map(([label, href]) => ({ label, href }));
@@ -101,8 +103,10 @@ export function resetClientAssumption(spine, id) {
 
 // ---------------------------------------------------------------- which formulas read a rule, and what a change moves
 // Every formula that reads each rule on this household: Map(rule id -> [{ id, label }]).
-export function formulasByRule(ctx) {
+// scenario: the assumption set picked (the FI numbers read it), so the set's own rows count as read.
+export function formulasByRule(ctx, { scenario = null } = {}) {
   const out = new Map();
+  if (scenario) ctx = { ...ctx, spine: withScenario(ctx.spine, ctx.rules, scenario) };
   if (!ctx.s) ctx = { ...ctx, s: summarize(ctx.spine, ctx.rules, { flags: false }) };
   for (const m of METRICS) {
     let e = null;
@@ -113,15 +117,17 @@ export function formulasByRule(ctx) {
 }
 
 // Before and after a change, on this household: the first `limit` numbers that move, else the formulas that read it.
-export function previewChange(spine, rules, id, value, { limit = 2 } = {}) {
+// rules: the ones in use now (this client's own values included). Each side fills blanks from its own defaults and
+// applies the picked assumption set, as the pages do, so a default that only fills a blank and a set's own rates move.
+export function previewChange(spine, rules, id, value, { limit = 2, scenario = null } = {}) {
   const after = { ...rules, get: (rid, y) => (rid === id ? value : rules.get(rid, y)), meta: (rid, y) => (rid === id ? { ...rules.meta(rid, y), value } : rules.meta(rid, y)) };
-  const a = { spine, rules, s: summarize(spine, rules, { flags: false }) };
-  const b = { spine, rules: after, s: summarize(spine, after, { flags: false }) };
+  const side = (r) => { const sp = scenario ? withScenario(applyDefaults(spine, r), r, scenario) : applyDefaults(spine, r); return { spine: sp, rules: r, s: summarize(sp, r, { flags: false }) }; };
+  const a = side(rules), b = side(after);
   const moved = [];
   for (const m of METRICS) {
     let x = null, y = null;
     try { x = explainMetric(m.id, a); y = explainMetric(m.id, b); } catch { continue; }
-    if (!x || !y || !(x.rules || []).includes(id)) continue;
+    if (!x || !y) continue;
     if (JSON.stringify(x.value) !== JSON.stringify(y.value)) moved.push({ id: m.id, label: m.label, unit: m.unit, before: x.value, after: y.value });
     if (moved.length >= limit) break;
   }

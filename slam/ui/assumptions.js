@@ -12,6 +12,7 @@ import { HOUSE } from '../engine/rules.js';
 import { valueOf as v } from '../engine/spine.js';
 import { h, money, ledgerHref } from './view.js';
 import { prefs } from './prefs.js';
+import { pickedScenario } from './scenario.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const year = (spine) => +((spine && spine.meta && spine.meta.asOf) || today()).slice(0, 4);
@@ -35,13 +36,22 @@ export function valueWords(value, unit) {
   return value + (unit && unit !== 'count' && unit !== 'age' ? ' ' + unit : '');
 }
 const hintFor = (unit) => (PCT_UNITS.includes(unit) ? 'A percent: 25 for 25%.' : MONEY_UNITS.includes(unit) ? 'Dollars.' : 'A number.');
+// A value in its own range: a day of the month 1 to 31, a share between -100% and 100%, a divisor above 0, the rest
+// zero or more (a car's yearly loss is the one negative rate, so rates may go below zero).
 function parseFor(text, unit) {
   const t = String(text).trim();
   if (t === '') return { ok: false, message: 'Type a value' };
-  if (PCT_UNITS.includes(unit)) return parseInput('rate', t);
-  if (MONEY_UNITS.includes(unit)) return parseInput('money', t);
-  const n = Number(t.replace(/[,\s]/g, ''));
-  return Number.isFinite(n) ? { ok: true, value: n } : { ok: false, message: 'Type a number' };
+  let p;
+  if (PCT_UNITS.includes(unit)) p = parseInput('rate', t.replace(/^-/, '')), p = p.ok && t.startsWith('-') ? { ok: true, value: -p.value } : p;
+  else if (MONEY_UNITS.includes(unit)) p = parseInput('money', t);
+  else { const n = Number(t.replace(/[,\s]/g, '')); p = Number.isFinite(n) ? { ok: true, value: n } : { ok: false, message: 'Type a number' }; }
+  if (!p.ok) return p;
+  const x = p.value;
+  if (unit === 'day of month' && !(Number.isInteger(x) && x >= 1 && x <= 31)) return { ok: false, message: 'A day of the month: 1 to 31' };
+  if (unit === 'divisor' && !(x > 0)) return { ok: false, message: 'A number above 0' };
+  if (PCT_UNITS.includes(unit) && !(x >= -1 && x <= 1)) return { ok: false, message: 'A percent from -100 to 100' };
+  if (!PCT_UNITS.includes(unit) && unit !== 'divisor' && x < 0) return { ok: false, message: 'Zero or more' };
+  return p;
 }
 
 // ---------------------------------------------------------------- the level and what each row reads
@@ -56,7 +66,7 @@ let formulasMemo = null;
 function formulas(ctx) {
   if (formulasMemo && formulasMemo.spine === ctx.spine && formulasMemo.rules === ctx.rules) return formulasMemo.map;
   let map = new Map();
-  try { map = formulasByRule({ spine: ctx.spine, rules: ctx.rules }); } catch { map = new Map(); }
+  try { map = formulasByRule({ spine: ctx.spine, rules: ctx.rules }, { scenario: pickedScenario() }); } catch { map = new Map(); }
   formulasMemo = { spine: ctx.spine, rules: ctx.rules, map };
   return map;
 }
@@ -164,10 +174,10 @@ function rowScreen(ctx, r) {
     const p = parseFor(box.value, m.unit);
     if (!p.ok) { preview.replaceChildren(); return; }
     let moved = [];
-    try { moved = previewChange(ctx.spine, level === 'client' ? houseRules(ctx) : ctx.rules, r.id, p.value); } catch { moved = []; }
+    try { moved = previewChange(ctx.spine, ctx.rules, r.id, p.value, { scenario: pickedScenario() }); } catch { moved = []; }
     preview.replaceChildren(moved.length
       ? h('ul', { class: 'flow-list' }, moved.map((x) => h('li', {}, x.label + ': now ' + fmtMetric(x.before, x.unit) + '; with ' + valueWords(p.value, m.unit) + ', ' + fmtMetric(x.after, x.unit) + '.')))
-      : h('p', { class: 'muted' }, p.value === now ? 'This is the value in use.' : /^DEFAULT_/.test(r.id) ? 'It only fills a blank, and no blank on this household uses it now.' : 'No number on this household moves; it is read on ' + r.screens.map((x) => x.label).join(', ') + '.'));
+      : h('p', { class: 'muted' }, p.value === now ? 'This is the value in use.' : /^DEFAULT_/.test(r.id) ? 'It fills a blank only; no summary number on this household moves with it.' : 'No number on this household moves; it is read on ' + r.screens.map((x) => x.label).join(', ') + '.'));
   };
   box.addEventListener('input', show);
   const save = (e) => {

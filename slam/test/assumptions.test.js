@@ -47,3 +47,13 @@ test('before and after: a change shows the numbers it moves on this household; f
   const f = formulasByRule({ spine: s, rules: R });
   assert.ok((f.get('APP_RULE_OF_5') || []).length, 'the Rule of 5 is read by a formula');
 });
+
+test('the preview reads this client\'s own values, fills blanks on each side, and moves a set\'s FI numbers (review fixes)', () => {
+  let s = setClientAssumption(demo(), 'APP_RULE_OF_5', 3, T);
+  const C = withClient(R, s);
+  const ro5 = previewChange(s, C, 'APP_RULE_OF_5', 4);
+  assert.equal(Math.round(ro5[0].before * 10) / 10, 10.7, 'now is the client\'s 3, not the house 5');
+  const wr = previewChange(s, C, 'SCENARIO_LIKELY_WR', 0.035, { scenario: 'likely' });
+  assert.ok(wr.length && wr[0].after > wr[0].before, 'a lower withdrawal rate raises the FI number');
+  assert.ok((formulasByRule({ spine: s, rules: C }, { scenario: 'likely' }).get('SCENARIO_LIKELY_WR') || []).length);
+});

@@ -11,9 +11,10 @@ const KEY = 'slam-window:v1';
 export function pickedWindow() {
   // A window picked on the page wins; else the default from Preferences; else 1 month.
   const dflt = WINDOWS.some(([n]) => n === +pref('window')) ? +pref('window') : 1;
-  try { const v = localStorage.getItem(KEY); return WINDOWS.some(([n]) => String(n) === v) ? +v : dflt; } catch { return dflt; }
+  try { const v = sessionStorage.getItem(KEY); return WINDOWS.some(([n]) => String(n) === v) ? +v : dflt; } catch { return dflt; }
 }
-export function keepWindow(n) { try { localStorage.setItem(KEY, String(n)); } catch { /* storage blocked: lasts until the page closes */ } }
+// Kept for this browser tab: a new visit opens on the default from Preferences.
+export function keepWindow(n) { try { sessionStorage.setItem(KEY, String(n)); } catch { /* storage blocked: lasts until the page closes */ } }
 
 // A segmented control; the pressed segment is filled. onPick(n) runs after the choice is kept.
 export function windowBar(current, onPick) {

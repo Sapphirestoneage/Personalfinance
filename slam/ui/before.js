@@ -4,6 +4,9 @@
 // Formatting only: the questions and the file are engine/profile.js.
 
 import { h } from './view.js';
+import { applyPrefs } from './prefs.js';
+
+applyPrefs();
 import { questionEl } from './profile-q.js';
 import { AREAS, LEVEL1, asked, answersFile, answersFileName, fieldsFor } from '../engine/profile.js';
 import { parseInput, inputText } from '../engine/edits.js';
