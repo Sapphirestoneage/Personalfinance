@@ -264,7 +264,8 @@ export function idr(spine, rules, d, s = null, asOf = spine.meta.asOf) {
 // debt by a date, found by halving over the same simulation, and whether that
 // extra breaks cash (a shortfall held back by the floor). The v44 solver stops
 // at $600 a month; this one goes up to the balance itself, so it always answers.
-export function solvePayoff(spine, rules, sim, { target, byDate, maxExtra = null } = {}) {
+// planExtra: the Plan's extra at the debt this month (review): the search starts there, not at the typed extra alone.
+export function solvePayoff(spine, rules, sim, { target, byDate, maxExtra = null, planExtra = null } = {}) {
   const model = sim.model;
   const year = +model.start.slice(0, 4);
   const opts = { maybeMode: sim.mode, penaltyMonths: rules.get('CARD_PENALTY_MONTHS', year) };
@@ -278,7 +279,7 @@ export function solvePayoff(spine, rules, sim, { target, byDate, maxExtra = null
     return { date, run: r };
   };
   const ok = (x) => !!x.date && x.date <= byDate;
-  const now = model.extra.cents || 0;
+  const now = Math.max(model.extra.cents || 0, planExtra ? cents(planExtra) : 0);
   const base = run(now);
   const shape = (x, extra) => ({ target, name: card ? card.name : loan.name, byDate, extraNow: dollars(now), need: dollars(extra), date: x.date, breaksCash: x.run.shortfalls.length > 0, shortfalls: x.run.shortfalls.length, low: dollars(x.run.low.cents) });
   if (ok(base)) return { ...shape(base, now), already: true };

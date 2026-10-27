@@ -4,7 +4,7 @@
 import { cashflow } from './cashflow.js';
 import { balanceSheet } from './networth.js';
 import { utilization, creditScoreNote, promoDeadlines, order, orderDetail, payoffPlan } from './debt.js';
-import { emergency, isEmergencyGoal } from './emergency.js';
+import { emergency, isCushionGoal } from './emergency.js';
 import { fiReport } from './fi.js';
 import { taxForYear } from './tax.js';
 import { buildFlags } from './flags.js';
@@ -73,7 +73,7 @@ export function payoffOrders(spine, rules, s) {
 export const SESSION_ORDER = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals']];
 export function sessionSteps(spine, s) {
   const t = tracker();
-  const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && !isEmergencyGoal(g));
+  const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && !isCushionGoal(spine, g));
   let sum = null;
   for (const g of goals) { const v = t.useFact('goals.' + g.id + '.target', g.target); if (v !== null) sum = round2((sum ?? 0) + v); }
   const result = { needs: s.cashflow.expenses.total, debt: s.sheet.debts, income: s.cashflow.income.gross, assets: s.sheet.assets, goals: t.out(sum, { count: goals.length }) };

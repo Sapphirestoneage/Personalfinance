@@ -978,8 +978,10 @@ function guessList() {
   const stale = guessFor !== cur(), table = whereTable(), v = guessView();
   const all = table ? withWhere(cur(), guess.items, table) : guess.items.map((it) => ({ ...it, where: null, short: null, minutes: 1, whereId: 'other' }));
   const sorted = (list) => sortGuesses(cur(), list, v.sort);
-  const now = sorted(all.filter(isOpenItem));
-  const fine = sorted(all.filter((it) => it.urgency === 'fine' && !isOpenItem(it)));
+  // The one list (morning answer 10): a Profile answer is asked on the Profile, so it is in neither count here.
+  const isOpen = (it) => isOpenItem(it) && !it.path.startsWith('profile.');
+  const now = sorted(all.filter(isOpen));
+  const fine = sorted(all.filter((it) => it.urgency === 'fine' && !isOpen(it)));
   const later = all.filter((it) => it.urgency === 'later').sort((a, b) => (a.until < b.until ? -1 : 1));
   // Each guess opens its editor right here, so the list stays the screen Back comes back to. Closed, it says where to
   // find it and what a miss could move ("Paystub, 5 min. Could move your FI number by $30,000").

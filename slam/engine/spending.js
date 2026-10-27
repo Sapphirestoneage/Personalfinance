@@ -136,21 +136,23 @@ export function cutSimulator(spine, rules, s, { dropped = [], towardDebt = false
   const surplusBefore = s.cashflow.surplus.value;
   const surplusAfter = surplusBefore === null ? null : round2(surplusBefore + saved);
   let debt = null;
-  if (towardDebt) {
+  const owes = (spine.debts || []).some((d) => (v(d.balance) ?? 0) > 0);
+  if (towardDebt && owes) {
     const plan = spine.debtPlan || {};
     const extraNow = plan.extra ? t.useFact('debtPlan.extra', plan.extra) ?? 0 : 0;
     const strategy = plan.strategy && v(plan.strategy) === 'snowball' ? 'snowball' : 'avalanche';
-    // The Plan's payoff before and after (morning answer 1): what is saved goes to the debt every month, on top of
-    // the Plan's own extra, as a typed extra would.
-    const pp = (sp) => { const p = planPayoff(sp, rules, s, { asOf }); return { debtFreeYm: p.allYm, neverPaysOff: p.neverPaysOff, totalInterest: p.interest }; };
-    const before = pp(spine);
-    const after = pp({ ...spine, debtPlan: { ...plan, extra: { value: round2(extraNow + saved), kind: 'known', asOf, source: 'typed' } } });
+    // The Plan's payoff before and after (morning answer 1), the way "Cut them" leaves the household (review): the lines
+    // gone, so the surplus is larger by what is saved, and the saved amount typed as extra at the debt every month.
+    const pp = (sp, sm) => { const p = planPayoff(sp, rules, sm, { asOf }); return { debtFreeYm: p.allYm, neverPaysOff: p.neverPaysOff, totalInterest: p.interest }; };
+    const before = pp(spine, s);
+    const sAfter = { ...s, cashflow: { ...s.cashflow, surplus: { ...s.cashflow.surplus, value: surplusAfter } } };
+    const after = pp({ ...spine, expenses: (spine.expenses || []).filter((e) => !dropped.includes(e.id)), debtPlan: { ...plan, extra: { value: round2(extraNow + saved), kind: 'known', asOf, source: 'typed' } } }, sAfter);
     t.absorb({ ...before.totalInterest, value: undefined });
     const months = before.debtFreeYm && after.debtFreeYm ? (+before.debtFreeYm.slice(0, 4) - +after.debtFreeYm.slice(0, 4)) * 12 + (+before.debtFreeYm.slice(5) - +after.debtFreeYm.slice(5)) : null;
     debt = { extraNow, extraAfter: round2(extraNow + saved), strategy, debtFreeBefore: before.debtFreeYm, debtFreeAfter: after.debtFreeYm, neverBefore: before.neverPaysOff, neverAfter: after.neverPaysOff, interestBefore: before.totalInterest.value, interestAfter: after.totalInterest.value, interestSaved: before.totalInterest.value === null || after.totalInterest.value === null ? null : round2(before.totalInterest.value - after.totalInterest.value), monthsSooner: months };
   }
   const out = t.out(saved);
-  return { dropped: items.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })), saved, surplusBefore, surplusAfter, towardDebt, debt, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { dropped: items.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })), saved, surplusBefore, surplusAfter, towardDebt, owes, debt, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 
 // Where the take-home goes: a slice per tag (expandable to its lines), the

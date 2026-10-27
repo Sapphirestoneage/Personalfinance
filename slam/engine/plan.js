@@ -12,7 +12,7 @@ const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
 import { yearsToTarget } from './fi.js';
 import { payoffPlan, rateOn, paidInFull, debtOrder, debtLoss } from './debt.js';
 import { windfall } from './windfall.js';
-import { isEmergencyGoal } from './emergency.js';
+import { isCushionGoal } from './emergency.js';
 import { maxIt, longDay, steadyMonth } from './maxit.js';
 import { paysAfter } from './contrib.js';
 import { paychecks } from './calendar-views.js';
@@ -31,7 +31,8 @@ const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), mont
 // Months from one YYYY-MM to another.
 const ymIndex = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
 // The Plan's extra at the debt in month k (1 the first): the surplus inside a debt step's window, plus any typed extra.
-const windowExtra = (windows, surplus, typed) => (k) => typed + (windows.some((w) => k >= w.from && k <= w.to) ? surplus : 0);
+// A typed extra is part of the surplus (cashflow does not take it out), so it is never added on top (review).
+const windowExtra = (windows, surplus, typed) => (k) => (windows.some((w) => k >= w.from && k <= w.to) ? Math.max(surplus, typed) : typed);
 const monthsToFill = (need, perMonth) => (need <= 0 ? 0 : perMonth > 0 ? Math.ceil(need / perMonth) : null);
 
 // ---------------------------------------------------------------- the surplus waterfall (E008)
@@ -75,14 +76,19 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   const strategy = (spine.debtPlan && v(spine.debtPlan.strategy)) === 'snowball' ? 'snowball' : 'avalanche';
   const typed = (spine.debtPlan && spine.debtPlan.extra && v(spine.debtPlan.extra)) || 0;
   const windows = [];
+  const clearedAt = new Map();
   const debtMonths = (ids) => {
-    if (!ids.length || !afterAll) return undefined;
+    if (!ids.length) return undefined;
+    if (!afterAll) return null; // after a step that never finishes, no date (review: not the old surplus-only guess)
     const start = monthsSoFar;
     const r = payoffPlan(spine, rules, { strategy, extra: windowExtra([...windows, { from: start + 1, to: Infinity }], surplus, typed), asOf });
     const yms = ids.map((id) => (r.debts.find((d) => d.id === id) || {}).payoffYm || null);
     if (yms.some((y) => !y)) return null;
-    const m = Math.max(0, ymIndex(monthKey(asOf), yms.sort().pop()) - start);
+    const at = ymIndex(monthKey(asOf), yms.sort().pop());
+    const m = Math.max(0, at - start);
     windows.push({ from: start + 1, to: start + m });
+    // Cleared before the step starts (minimums, a typed extra): it completes the month it clears, not when it starts.
+    if (at < start) clearedAt.set(ids.join(','), at);
     return m;
   };
   const push = (id, t, { need, flow = false, why, path = null, done = null, ids = null, runMonths = undefined }) => {
@@ -92,7 +98,8 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     // A flow rung (a monthly amount) takes from the surplus for good; a stock rung is filled once.
     const months = n === null ? null : isDone ? 0 : runMonths !== undefined ? runMonths : flow ? 0 : monthsToFill(n, surplus);
     // A flow rung after one that never finishes has no date either.
-    const completes = n === null ? null : isDone ? asOf : months === null || (flow && !afterAll) ? null : sameDayLater(asOf, monthsSoFar + months);
+    const early = ids && clearedAt.has(ids.join(',')) ? clearedAt.get(ids.join(',')) : null;
+    const completes = n === null ? null : isDone ? asOf : early !== null ? sameDayLater(asOf, early) : months === null || (flow && !afterAll) ? null : sameDayLater(asOf, monthsSoFar + months);
     if (n !== null && !isDone) { if (months === null) afterAll = false; else monthsSoFar += months; }
     rungs.push({ id, rung: rungs.length + 1, label: RUNG_LABELS[id], need: n, flow, done: isDone, months, completes, why, path, ids, kind: n === null ? 'missing' : snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed', from: snap.from, rough: snap.rough, missing: snap.missing, rules: snap.rules });
     all.absorb({ value: 0, ...snap });
@@ -177,7 +184,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     else if (id === 'hyper') { const rate = t.rule(rules, 'FOO_HYPER_RATE', year); const g = s.cashflow.savingsRate.gross; t.absorb({ ...g, value: undefined }); const gross = s.cashflow.income.gross.value; push(id, t, { need: g.value === null || gross === null ? null : Math.max(0, (rate - g.value) * gross), flow: true, why: g.value === null ? 'Needs the gross savings rate.' : g.value >= rate ? 'Saving ' + Math.round(g.value * 100) + '% of gross (how this rule is defined), past the ' + Math.round(rate * 100) + '% mark.' : 'Saving ' + Math.round(g.value * 100) + '% of gross (how this rule is defined); ' + money(Math.max(0, (rate - g.value) * gross)) + ' a month more reaches ' + Math.round(rate * 100) + '%.', path: g.missing[0] || s.cashflow.income.gross.from[0] || null }); }
     // Goals to save for (a payoff goal is debt, counted by the debt steps). A goal with no target yet is left out of the
     // sum and named, and the step reads incomplete (never $0 for it), so the steps after it keep their dates.
-    else if (id === 'prepaid') { const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && g.type !== 'payoff' && g.target && !isEmergencyGoal(g)); let need = 0; const blank = []; for (const g of goals) { const tg = t.useFact('goals.' + g.id + '.target', g.target); if (tg === null) blank.push(g); else need += tg; } const known = goals.length - blank.length; push(id, t, { need: known || !blank.length ? need : null, why: goals.length ? (known ? money(need) + ' across ' + known + ' goal' + (known === 1 ? '' : 's') + '.' : '') + (blank.length ? (known ? ' ' : '') + blank.map((g) => g.label || g.id).join(', ') + (blank.length === 1 ? ' has' : ' have') + ' no target yet.' : '') : 'No goals beyond financial independence.', path: goals.length ? 'goals.' + (blank[0] || goals[0]).id + '.target' : null, done: goals.length ? null : true }); }
+    else if (id === 'prepaid') { const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && g.type !== 'payoff' && g.target && !isCushionGoal(spine, g)); let need = 0; const blank = []; for (const g of goals) { const tg = t.useFact('goals.' + g.id + '.target', g.target); if (tg === null) blank.push(g); else need += tg; } const known = goals.length - blank.length; push(id, t, { need: known || !blank.length ? need : null, why: goals.length ? (known ? money(need) + ' across ' + known + ' goal' + (known === 1 ? '' : 's') + '.' : '') + (blank.length ? (known ? ' ' : '') + blank.map((g) => g.label || g.id).join(', ') + (blank.length === 1 ? ' has' : ' have') + ' no target yet.' : '') : 'No goals beyond financial independence.', path: goals.length ? 'goals.' + (blank[0] || goals[0]).id + '.target' : null, done: goals.length ? null : true }); }
     else if (id === 'lowInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); if (r === null || r >= hi || !(b > 0) || paidInFull(spine, d)) return false; const l = debtLoss(spine, rules, d, asOf); return !(l && l.promo && l.after >= hi); }); /* a promo card whose rate after is high is the high-interest step's (round 2) */ const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' under ' + Math.round(hi * 100) + '%.' : 'Nothing under ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id), runMonths: need > 0 ? debtMonths(list.map((d) => d.id)) : undefined }); }
   }
   const current = rungs.find((r) => r.done === false) || null;
@@ -398,7 +405,7 @@ export function goalsView(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   const saving = s.cashflow.surplus.value === null ? null : round2(s.cashflow.surplus.value + (s.cashflow.saving.payroll.value ?? 0) + (s.cashflow.saving.afterTax.value ?? 0));
   const yearsNow = F !== null && P !== null && r !== null && saving !== null ? yearsToTarget(P, saving * 12, F, r) : null;
   // A cushion goal is the Plan's reserve step (morning answer 4), not a goal row.
-  const rows = (spine.goals || []).filter((g) => g.type !== 'fi' && !isEmergencyGoal(g)).map((g) => {
+  const rows = (spine.goals || []).filter((g) => g.type !== 'fi' && !isCushionGoal(spine, g)).map((g) => {
     const t = tracker();
     const p = 'goals.' + g.id;
     const target = t.useFact(p + '.target', g.target);
@@ -495,12 +502,14 @@ export function exportCsv(spine, what = 'log') {
 // wins; else, while the Plan's current step is a debt, the same amount its calendar chip shows: what is left after
 // saving, up to what the step still needs. Otherwise none.
 export function planDebtExtra(spine, rules, s, { sim = null, ladder = null } = {}) {
-  const typed = spine.debtPlan && spine.debtPlan.extra ? v(spine.debtPlan.extra) : null;
-  if (typed !== null && typed !== undefined) return { amount: typed, from: 'typed' };
+  // The same month-by-month extra the Plan's payoff run uses (windowExtra): during a debt step the larger of the
+  // surplus and a typed extra, otherwise the typed extra (review: never one number here and another in the run).
+  const typed = (spine.debtPlan && spine.debtPlan.extra ? v(spine.debtPlan.extra) : null) ?? 0;
   const f = ladder || fooLadder(spine, rules, s, { sim });
   const cur = f.rungs.find((r) => r.id === f.current) || null;
-  if (!cur || !['highInterest', 'lowInterest'].includes(cur.id) || !(f.surplus > 0) || !(cur.need > 0)) return { amount: 0, from: 'plan' };
-  return { amount: Math.round(Math.min(f.surplus, cur.need)), from: 'plan', step: cur.label };
+  const inStep = cur && ['highInterest', 'lowInterest'].includes(cur.id) && f.surplus > 0 && cur.need > 0;
+  const amount = inStep ? Math.round(Math.max(typed, Math.min(f.surplus, cur.need))) : typed;
+  return { amount, from: inStep && amount > typed ? 'plan' : typed ? 'typed' : 'plan', ...(inStep ? { step: cur.label } : {}) };
 }
 
 // The Plan's payoff (morning answer 1, S-243): the one source for every payoff date and interest total a client sees
@@ -517,13 +526,17 @@ export function planPayoff(spine, rules, s, { ladder = null, sim = null, asOf = 
   const ym = (r) => (r && r.completes ? monthKey(r.completes) : null);
   const hiR = rung('highInterest'), loR = rung('lowInterest');
   const hasHi = !!(hiR && hiR.need > 0), hasLo = !!(loR && loR.need > 0);
-  const hiYm = hasHi ? ym(hiR) : null;
-  const allYm = hasLo ? ym(loR) : hasHi ? hiYm : run.debtFreeYm;
-  const everyRun = payoffPlan(spine, rules, { strategy, extra: Math.max(0, f.surplus) + typed, asOf });
+  // The months are the run's (review): high-interest gone when the step's debts clear, all gone when every debt does
+  // (a debt in no step, such as one with no rate yet, included); never, when any debt never clears.
+  const payoff = (ids) => { const yms = ids.map((id) => (run.debts.find((d) => d.id === id) || {}).payoffYm || null); return yms.some((y) => !y) ? null : yms.sort().pop() || null; };
+  const hiYm = hasHi ? payoff(hiR.ids || []) : null;
+  const allYm = run.neverPaysOff ? null : run.debtFreeYm || null;
+  const everyExtra = Math.max(0, f.surplus, typed);
+  const everyRun = payoffPlan(spine, rules, { strategy, extra: everyExtra, asOf });
   return {
     none: false, strategy, extraFn: windowExtra(windows, f.surplus, typed), hiYm, hasHi, allYm, neverPaysOff: !allYm, interest: run.totalInterest, debts: run.debts, order: run.order,
     waits: !allYm && (hasLo ? loR : hiR) ? (hasLo ? loR : hiR) : null,
-    every: { debtFreeYm: everyRun.neverPaysOff ? null : everyRun.debtFreeYm, interest: everyRun.totalInterest, extra: Math.max(0, f.surplus) + typed },
+    every: { debtFreeYm: everyRun.neverPaysOff || !(everyExtra > 0) ? null : everyRun.debtFreeYm, interest: everyRun.totalInterest, extra: everyExtra },
     ...(trace ? { schedule: run.schedule } : {})
   };
 }

@@ -44,3 +44,14 @@ test('which goals merge: an emergency kind, or emergency fund, cushion or rainy 
   assert.ok(!isEmergencyGoal({ type: 'payoff', label: 'Cushion card payoff' }));
   assert.ok(!isEmergencyGoal({ type: 'fi', label: 'Financial independence' }));
 });
+
+test('only the goal that sets the target leaves the goal lists; an emergency kind wins over a name (review)', () => {
+  const s = withGoal({ id: 'fund', type: 'savings', label: 'Emergency fund', target: K(12000) });
+  s.goals.push({ id: 'car', type: 'savings', label: 'Car repair cushion', target: K(3000) }, { id: 'trip', type: 'savings', label: 'Trip', target: K(2000) });
+  const x = summarize(s, R, { flags: false });
+  assert.equal(x.emergency.targetDollars.value, 12000);
+  assert.deepEqual(goalsView(s, R, x).rows.map((r) => r.id).sort(), ['car', 'trip']);
+  assert.equal(sessionSteps(s, x)[4].result.value, 5000);
+  s.goals.push({ id: 'net', type: 'emergency', label: 'Safety net', target: K(9000) });
+  assert.equal(summarize(s, R, { flags: false }).emergency.targetDollars.value, 9000);
+});

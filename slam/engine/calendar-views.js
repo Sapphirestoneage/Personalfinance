@@ -109,16 +109,13 @@ export function paychecks(spine, rules, sim, s) {
   return list;
 }
 
-// Milestones inside the window: a card cleared, a loan paid off, every card
-// free, high-interest free, debt free, a promo ending, income starting or ending.
+// Milestones inside the window: cash under the floor, a promo ending, income starting or ending, and the dates to
+// know. Payoff dates are the Plan's (morning answer 1) and are not here.
 export function milestones(spine, rules, sim, months = []) {
   const out = [];
   const add = (date, label, kind, path = null, note = null, accountId = null) => { if (date && date >= sim.start) out.push({ date, label, kind, path, note, ...(accountId ? { accountId } : {}) }); };
-  for (const [id, d] of Object.entries(sim.clearDates.perCard)) { const c = sim.cards[id]; if (d && d > sim.start) add(d, (c ? c.name : id) + ' cleared', 'cleared', c ? c.path : null, 'stopped revolving: the statement was paid in full'); }
-  for (const [id, l] of Object.entries(sim.loans)) if (l.paidOff) add(l.paidOff, l.name + ' paid off', 'paidOff', l.path);
-  if (sim.clearDates.cardsFree && sim.clearDates.cardsFree > sim.start) add(sim.clearDates.cardsFree, 'Every card clear', 'cardsFree');
-  if (sim.clearDates.hiFree && sim.clearDates.hiFree > sim.start) add(sim.clearDates.hiFree, 'High-interest free (nothing above ' + Math.round(sim.clearDates.hiRate * 100) + '%)', 'hiFree');
-  if (sim.clearDates.allFree && sim.clearDates.allFree > sim.start) add(sim.clearDates.allFree, 'Debt free', 'allFree');
+  // No payoff milestones from the day-by-day run (morning answer 1, review): a card cleared, a loan paid off, every card
+  // clear, high-interest free and debt free are the Plan's months, on the Debt screen.
   if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up' + (sim.model.accounts.some((a) => a.earmarked) ? ', less money set aside for a goal,' : '') + ' falls under the floor');
   for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn', 'maxDeadline'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path, e.kind === 'maxDeadline' ? e.note : null, e.accountId || null);
   const seen = new Set();

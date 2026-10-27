@@ -42,7 +42,7 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
   // Charts (Track C): when it is gone, what is interest, and the three orders side by side; each opens as a table.
   const charts = h('section', { class: 'card debt-charts' }, debtCharts(spine, rules, { extra: plan.extraFn || 0, strategy: d.order.strategy, every: plan.every }));
-  return [clearCard(d), methodsCard(spine, rules, d, plan.extraFn || 0), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
+  return [clearCard(d), methodsCard(spine, rules, d, plan.extraFn || 0), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm, plan), loansCard(d, ctx)].filter(Boolean);
 }
 
 // The orders side by side (Track E): each one's debt-free month, its interest and the first debt it clears, the
@@ -84,7 +84,7 @@ function clearCard(d) {
     h('div', { class: 'clear-grid' }, leadLines(cd).filter((x) => x[0]).map(([label, words]) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': label },
       h('span', { class: 'clear-date' }, words), h('span', { class: 'clear-label' }, label)))),
     leadLines(cd).filter((x) => !x[0]).map(([, words]) => h('p', { class: 'tile-sub' }, words[0].toUpperCase() + words.slice(1), cd.everyInterest !== null && cd.interest !== null ? [' (' + money(cd.everyInterest) + ' of interest instead of ', h('span', { 'data-metric': 'plan:debtInterest' }, money(cd.interest)), ')'] : null, '.')),
-    h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan: the extra goes to the debt while its debt steps are being filled (Plan, step by step).'));
+    h('p', { class: 'tile-note' }, kindChip(cd.kind), ' From the Plan: the extra goes to the debt while its debt steps are being filled (Plan, step by step).'));
 }
 
 // Each debt's month on the Plan (the day-by-day run's own clear dates are not shown: morning answer 1).
@@ -101,12 +101,12 @@ function orderCard(d, ctx) {
     h('h2', { id: 'order-h' }, 'Payoff order ', h('span', { class: 'count' }, o.strategy === 'snowball' ? 'smallest balance first' : 'highest rate first')),
     h('p', { class: 'muted' }, 'The Plan\'s extra at the debt goes to the first unpaid debt in this order. A promo card whose interest would come back (deferred interest) comes first, to clear before its promo ends; a debt marked paid last waits for the others.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
-      h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Debt'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Rate today'), h('th', {}, 'Clears'), h('th', { class: 'num' }, 'Interest, next 12 months'))),
+      h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Debt'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Rate today'), h('th', {}, 'Clears'), h('th', { class: 'num' }, 'Interest, next 12 months at today\'s payments'))),
       h('tbody', {}, o.rows.map((r) => h('tr', {}, h('td', {}, String(r.position)), h('td', {}, h('a', { href: ledgerHref(r.path) }, r.name), r.payLast ? [' ', h('span', { class: 'pill' }, 'paid last')] : null), h('td', { class: 'num' }, r.balance === null ? 'missing' : money(r.balance)),
         h('td', { class: 'num' }, pctWords(r.rate) + (r.promo ? ' (intro, ends ' + (r.promoEnds ? shortDate(r.promoEnds) : 'date not entered') + ')' : '')),
         h('td', {}, r.planYm ? monthWords(r.planYm) : 'not at this pace'),
         h('td', { class: 'num' }, money(r.interestInWindow))))))),
-    h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day, with new charges on the cards; the total below is the Plan\'s to the end, without them, so the two are not meant to add up.'),
+    h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day at today\'s payments (the minimums and any extra you set, not the Plan\'s extra), with new charges on the cards; the total below is the Plan\'s to the end, so the two are not meant to add up.'),
     h('p', { class: 'tile-sub' }, o.neverPaysOff ? 'At this pace the Plan does not pay everything off.' : o.debtFreeYm ? ['All debt gone ' + monthWords(o.debtFreeYm) + ' on your plan, ', o.totalInterest.value === null ? 'interest unknown' : h('span', { 'data-metric': 'plan:debtInterest' }, money(o.totalInterest.value)), ' of interest in all.'] : ''),
     mathButton(['debt:interestWindow'], ctx));
 }
@@ -115,7 +115,7 @@ function interestCard(d, ctx) {
   const t = d.interest;
   if (!t.months.length || !t.debts.length) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'int-h' },
-    h('h2', { id: 'int-h' }, 'Card interest, month by month'),
+    h('h2', { id: 'int-h' }, 'Card interest, month by month, at today\'s payments'),
     h('p', { class: 'muted' }, 'What each card charges at its statement close, stacked by card. Loan interest is not charged by statement; it sits in the order list.'),
     h('div', { class: 'stack', role: 'img', 'aria-label': 'Card interest by month: ' + t.months.map((m) => monthWords(m.ym) + ' ' + money(m.total)).join('; ') },
       t.months.map((m) => h('div', { class: 'stack-col', title: monthWords(m.ym) + ': ' + money(m.total) }, t.debts.map((x) => (m.byDebt[x.id] ? h('div', { class: 'stack-seg ' + vizOf(debtIndex(x.id)), style: 'height:' + pc(t.max ? m.byDebt[x.id] / t.max : 0) }) : null))))),
@@ -192,7 +192,7 @@ function whichCardCard(c, spine, rules, ctx, save) {
       h('tbody', {}, w.rows.map((r, i) => h('tr', { class: i === 0 ? 'tight' : '' }, h('td', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, i === 0 ? [' ', h('span', { class: 'pill' }, 'best')] : null, r.utilizationWarn ? [' ', h('span', { class: 'pill' }, 'utilization')] : null), h('td', { class: 'num' }, money(r.rewards) + ' (' + pctWords(r.rate) + ')'), h('td', { class: 'num' }, r.revolving ? money(r.interest) + ' a month' : 'none'), h('td', { class: 'num' }, money(r.net)), h('td', {}, r.revolving ? 'revolving, no float' : r.interestFreeDays + ' days interest-free')))))),
       w.left.length ? h('p', { class: 'tile-sub' }, 'Left out: ' + w.left.join(', ') + ' (a business card; tick A business purchase to compare it).') : null,
       h('p', { class: 'tile-note' }, kindChip(w.kind), ' Rewards at each card\'s own rate, else usually 1% (rough). A revolving card charges a month of interest on the purchase. Float days run to the next due date.'),
-      mathButton(w.rows.map((r) => 'debt:whichCard:' + r.id), () => ctx({ which: w }))] : h('p', { class: 'muted' }, 'Type an amount to compare the cards.'));
+      mathButton(w.rows.map((r) => 'debt:whichCard:' + r.id), () => ctx({ which: w }))] : w && w.left.length ? h('p', { class: 'muted' }, 'Only business cards here: tick A business purchase to compare them.') : h('p', { class: 'muted' }, 'Type an amount to compare the cards.'));
 }
 
 function btCard(c, spine, rules, ctx, save) {
@@ -220,14 +220,14 @@ function btCard(c, spine, rules, ctx, save) {
       mathButton(['debt:bt'], () => ctx({ bt: b }))] : b ? h('p', { class: 'muted missing-row' }, 'Missing: the card\'s balance.') : null);
 }
 
-function solveCard(c, spine, rules, ctx, save) {
+function solveCard(c, spine, rules, ctx, save, plan = null) {
   const targets = [...c.sim.model.cards.filter((x) => x.balance > 0).map((x) => ({ id: x.id, name: x.name })), ...c.sim.model.loans.filter((x) => x.balance > 0).map((x) => ({ id: x.id, name: x.name }))];
   if (!targets.length) return null;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pick = h('select', { id: 'solve-target' }, targets.map((x) => h('option', { value: x.id }, x.name)));
   pick.value = form.solveTarget || targets[0].id;
   const by = h('input', { id: 'solve-by', type: 'date' }); by.value = form.solveBy;
-  const x = form.solveBy ? solvePayoff(spine, rules, c.sim, { target: pick.value, byDate: form.solveBy }) : null;
+  const x = form.solveBy ? solvePayoff(spine, rules, c.sim, { target: pick.value, byDate: form.solveBy, planExtra: plan && plan.extraFn ? plan.extraFn(1) : null }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'solve-h' },
     h('h2', { id: 'solve-h' }, 'Paid off by a date'),
     h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, with your cash day by day, and whether that extra pushes checking under the floor.'),
@@ -237,8 +237,8 @@ function solveCard(c, spine, rules, ctx, save) {
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Work it out'))),
     x ? [h('div', { class: 'tool-result' + (x.breaksCash ? ' bad' : '') },
       x.impossible ? 'Even ' + money(x.need) + ' a month more does not clear ' + x.name + ' by ' + shortDate(x.byDate) + (x.best ? '; the soonest is ' + shortDate(x.best) : '') + '.'
-        : x.already ? x.name + ' already clears by ' + shortDate(x.date) + ' with the extra as it is (' + money(x.extraNow) + ' a month).'
-        : [h('strong', {}, money(x.need) + ' a month'), ' at the debt (now ' + money(x.extraNow) + ') clears ' + x.name + ' by ' + shortDate(x.date) + '.'],
+        : x.already ? x.name + ' already clears by ' + shortDate(x.date) + ' with the Plan\'s extra (' + money(x.extraNow) + ' a month).'
+        : [h('strong', {}, money(x.need) + ' a month'), ' at the debt (the Plan sends ' + money(x.extraNow) + ' now) clears ' + x.name + ' by ' + shortDate(x.date) + '.'],
       x.breaksCash ? ' That breaks cash: checking goes under the floor ' + x.shortfalls + ' time' + (x.shortfalls === 1 ? '' : 's') + ' (lowest day ' + money(x.low) + ').' : ' Checking stays above the floor (lowest day ' + money(x.low) + ').'),
       mathButton(['debt:solve'], () => ctx({ solve: x }))] : null);
 }

@@ -109,7 +109,7 @@ export const monthsBack = (ym, n) => Array.from({ length: n }, (_, i) => addMont
 // Each debt's balance month by month on one method, stacked to zero: { months: [ym], debts: [{ id, name, points }],
 // interest, principal by year }.
 export function debtPath(spine, rules, { strategy = 'avalanche', extra = 0, asOf = spine.meta.asOf } = {}) {
-  const p = payoffPlan(spine, rules, { strategy, extra, asOf, trace: true, maxMonths: 360 });
+  const p = payoffPlan(spine, rules, { strategy, extra, asOf, trace: true, maxMonths: 600 });
   const ids = p.debts.map((d) => d.id);
   const start = Object.fromEntries((spine.debts || []).map((d) => [d.id, v(d.balance) ?? 0]));
   const months = [monthKey(asOf), ...p.schedule.map((r) => r.ym)];
@@ -128,7 +128,7 @@ export const METHOD_WORDS = { avalanche: 'Highest rate first', snowball: 'Smalle
 export function methodPaths(spine, rules, { extra = 0, asOf = spine.meta.asOf } = {}) {
   const scored = (spine.debts || []).some((d) => v(d.stress) !== null && v(d.stress) !== undefined);
   return Object.keys(METHOD_WORDS).filter((id) => id !== 'stress' || scored).map((id) => {
-    const p = payoffPlan(spine, rules, { strategy: id, extra, asOf, trace: true, maxMonths: 360 });
+    const p = payoffPlan(spine, rules, { strategy: id, extra, asOf, trace: true, maxMonths: 600 });
     const startTotal = round2((spine.debts || []).reduce((a, d) => a + (v(d.balance) ?? 0), 0));
     const first = p.debts.filter((d) => d.payoffYm).sort((a, b) => (a.payoffYm < b.payoffYm ? -1 : a.payoffYm > b.payoffYm ? 1 : 0))[0] || null;
     return { id, words: METHOD_WORDS[id], months: [monthKey(asOf), ...p.schedule.map((r) => r.ym)], totals: [startTotal, ...p.schedule.map((r) => round2(Object.values(r.balances).reduce((a, x) => a + x, 0)))], debtFreeYm: p.debtFreeYm, interest: p.totalInterest.value, neverPaysOff: p.neverPaysOff, first: first ? { name: first.name, ym: first.payoffYm } : null, order: p.order };

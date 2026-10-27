@@ -13,7 +13,11 @@ const v = valueOf;
 // cushion or rainy day, is the Plan's reserve step, not a goal of its own. Its target becomes the cushion target.
 const EMERGENCY_NAME = /\b(emergency|cushion|rainy[- ]day)\b/i;
 export const isEmergencyGoal = (g) => !!g && g.type !== 'fi' && g.type !== 'payoff' && (g.type === 'emergency' || EMERGENCY_NAME.test(g.label || ''));
-export const emergencyGoal = (spine) => (spine.goals || []).find((g) => isEmergencyGoal(g) && g.target && v(g.target) !== null && v(g.target) !== undefined) || null;
+// The goal that sets the cushion target: one of kind emergency first, else the first named like one; it needs a target.
+// Only this goal leaves the goal lists (review): another cushion-named goal stays a goal of its own.
+const hasTarget = (g) => g.target && v(g.target) !== null && v(g.target) !== undefined;
+export const emergencyGoal = (spine) => { const gs = (spine.goals || []).filter((g) => isEmergencyGoal(g) && hasTarget(g)); return gs.find((g) => g.type === 'emergency') || gs[0] || null; };
+export const isCushionGoal = (spine, g) => { const e = emergencyGoal(spine); return !!e && e.id === g.id; };
 
 export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const year = +asOf.slice(0, 4);

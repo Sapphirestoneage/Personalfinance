@@ -79,8 +79,8 @@ test('milestones: a card cleared, a loan paid off, every card clear, promo ends;
   s = putFact(s, 'debtPlan.extra', 1500, 'known', '2026-10-23');
   const c = calendar(s, R, { months: 6 });
   const ms = milestones(s, R, c.sim, c.months);
-  assert.ok(ms.some((m) => /Visa cleared/.test(m.label) && m.path === 'debts.visa.balance'));
-  assert.ok(ms.some((m) => m.kind === 'cardsFree'));
+  // Payoff dates are the Plan's, on the Debt screen (morning answer 1, review): none from the day-by-day run here.
+  assert.ok(!ms.some((m) => ['cleared', 'paidOff', 'cardsFree', 'hiFree', 'allFree'].includes(m.kind)));
   assert.ok(ms.some((m) => m.kind === 'promoEnds' && m.date === '2027-03-01'));
   for (let i = 1; i < ms.length; i++) assert.ok(ms[i].date >= ms[i - 1].date);
   assert.equal(new Set(ms.map((m) => m.date + m.label)).size, ms.length);

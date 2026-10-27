@@ -58,7 +58,7 @@ export function outcome(spine, rules) {
   const hasDebt = (spine.debts || []).some((d) => (v(d.balance) ?? 0) > 0);
   const p = hasDebt ? planPayoff(spine, rules, s) : null;
   const y = s.fi.yearsToFi.value;
-  return { surplus: s.cashflow.surplus.value, hiYm: p ? p.hiYm : null, debtFreeYm: p ? p.allYm : null, neverPaysOff: !!(p && p.neverPaysOff), interest: p ? p.interest.value : 0, everyYm: p ? p.every.debtFreeYm : null, yearsToFi: y, fiYear: y === null ? null : Math.floor(+s.asOf.slice(0, 4) + (+s.asOf.slice(5, 7) - 1) / 12 + y) };
+  return { surplus: s.cashflow.surplus.value, hasHi: !!(p && p.hasHi), hiYm: p ? p.hiYm : null, debtFreeYm: p ? p.allYm : null, neverPaysOff: !!(p && p.neverPaysOff), interest: p ? p.interest.value : 0, everyYm: p ? p.every.debtFreeYm : null, yearsToFi: y, fiYear: y === null ? null : Math.floor(+s.asOf.slice(0, 4) + (+s.asOf.slice(5, 7) - 1) / 12 + y) };
 }
 
 export function whatIf(spine, rules, moves, today) {
