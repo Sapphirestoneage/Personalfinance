@@ -24,6 +24,6 @@ test('living with family asks whose family, and the cover names them (question 9
 
 test('Profile is a main tab with five groups that open their own screens', () => {
   const src = readFileSync(SLAM + 'ui/profile.js', 'utf8');
-  for (const [href, name] of [['#/life', 'Your life'], ['#/homework', 'Homework'], ['assumptions.html', 'Your assumptions'], ['#/goals', 'Goals settings'], ['#/prefs', 'Preferences']]) assert.ok(src.includes("goRow('" + href + "'") && src.includes("'" + name + "'"), name);
+  for (const [href, name] of [['#/life', 'Your life'], ['#/homework', 'Homework'], ['assumptions.html', 'Your assumptions'], ['#/goals', 'FI assumptions'], ['#/prefs', 'Preferences']]) assert.ok(src.includes("goRow('" + href + "'") && src.includes("'" + name + "'"), name);
   assert.match(src, /tab: 'profile', title: 'Profile'/);
 });

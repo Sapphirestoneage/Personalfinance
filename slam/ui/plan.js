@@ -96,14 +96,30 @@ function render({ spine: base, rules, levels }) {
 }
 
 // ---------------------------------------------------------------- the top: the steps, Got extra money?, the rest
-function stepRow(r, current) {
-  const status = r.need === null ? [chip('missing')]
+// One step (Krug pass): no "a month" or "Next" pills. The current step is open, with "Now" and its reason; a step
+// waiting on a number is a question, not a red chip; steps that finish in the same month say so once.
+const NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+function stepRow(r, current, together = null) {
+  const now = r.id === current && !r.done;
+  const when = r.completes ? 'about ' + monthWords(r.completes.slice(0, 7)) : r.months === null ? 'no surplus to fund it yet' : null;
+  const status = r.need === null ? ['Answer one question to finish this step']
     : r.done ? ['Done']
-      : [h('span', { class: 'go-total' }, money(r.need) + (r.flow ? ' a month' : '')), r.completes ? 'about ' + monthWords(r.completes.slice(0, 7)) : r.months === null ? 'no surplus to fund it yet' : null, r.kind === 'rough' || r.kind === 'incomplete' ? kindChip(r.kind) : null];
-  return h('li', {}, h('a', { class: 'go-row' + (r.done ? ' is-done' : '') + (r.id === current ? ' is-current' : ''), href: '#/' + slug(r.id) },
-    h('span', { class: 'go-mark', 'aria-hidden': 'true' }, r.done ? '✓' : String(r.rung)),
-    h('span', { class: 'go-name' }, r.label, r.flow ? [' ', h('span', { class: 'pill' }, 'a month')] : null, r.id === current ? [' ', h('span', { class: 'pill pill-locked' }, 'Next')] : null),
-    h('span', { class: 'go-sub' }, ...status.filter(Boolean))));
+      : [now ? 'Now: ' : null, h('span', { class: 'go-total' }, money(r.need) + (r.flow ? ' a month' : '')), when, r.kind === 'rough' || r.kind === 'incomplete' ? kindChip(r.kind) : null];
+  return h('li', {}, h('a', { class: 'go-row' + (r.done ? ' is-done' : '') + (now ? ' is-current' : '') + (r.need === null ? ' is-question' : ''), href: '#/' + slug(r.id) },
+    h('span', { class: 'go-mark', 'aria-hidden': 'true' }, r.done ? '✓' : r.need === null ? '?' : String(r.rung)),
+    h('span', { class: 'go-name' }, r.label),
+    h('span', { class: 'go-sub' }, ...status.filter(Boolean)),
+    now && r.why ? h('span', { class: 'go-why' }, r.why) : null,
+    together ? h('span', { class: 'go-why' }, 'These ' + (NUM[together.n] || together.n) + ' run together from ' + monthWords(together.from) + ': each takes part of the surplus every month.') : null));
+}
+// Steps that finish in the same month: the first of them carries the one line that says why.
+function togetherOf(rungs) {
+  const open = rungs.filter((r) => !r.done && r.need !== null && r.completes);
+  const by = new Map();
+  for (const r of open) { const k = r.completes.slice(0, 7); by.set(k, [...(by.get(k) || []), r]); }
+  const out = new Map();
+  for (const list of by.values()) if (list.length > 1) out.set(list[0].id, { n: list.length, from: (list.map((r) => r.starts || r.completes).sort()[0] || list[0].completes).slice(0, 7) });
+  return out;
 }
 
 // The outlook in one sentence (Batch 8); the runs are behind Show the math and on its own screen.
@@ -135,9 +151,8 @@ function top(m) {
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
-      h('ol', { class: 'go-list' }, f.rungs.map((r) => stepRow(r, f.current))),
+      h('ol', { class: 'go-list' }, (() => { const t = togetherOf(f.rungs); return f.rungs.map((r) => stepRow(r, f.current, t.get(r.id) || null)); })()),
       protectLine(m.rank),
-      h('p', { class: 'tile-note' }, kindChip(f.kind), ' "A month" steps take some of the surplus every month.'),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
     // The Windfall page sits under Plan: the whole card is the way in.
     h('section', { class: 'card has-target', 'aria-labelledby': 'extra-h' },

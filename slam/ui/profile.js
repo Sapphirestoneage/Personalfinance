@@ -1,5 +1,5 @@
 // The Profile (Phase 2.5 B3), a main tab since 2026-10-27, laid out like My numbers: five groups, biggest first, each
-// opening its own screen (Your life, Homework, Your assumptions, Goals settings, Preferences). What is set once or
+// opening its own screen (Your life, Homework, Your assumptions, FI assumptions, Preferences). What is set once or
 // rarely changed lives here, off the daily screens, which keep a one-line link. Level 1
 // by area (each ends with one line saying what it set up), Level 2 for what Level 1 opened (each question known now,
 // looked up later or not sure), the life changes, and the client's to-dos. "Import answers" reads the file the
@@ -22,7 +22,8 @@ const AREA_NAMES = Object.fromEntries(AREAS);
 const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: todayIso(), by: 'coach' }), q.label + (x === null ? ' cleared' : ' answered') + '. Logged as a life change');
 
 // ---------------------------------------------------------------- the top: five groups, biggest first
-const goRow = (href, mark, name, total, sub) => h('li', {}, h('a', { class: 'go-row', href }, h('span', { class: 'go-mark', 'aria-hidden': 'true' }, mark), h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, total !== null ? h('span', { class: 'go-total' }, total) : null, total !== null ? ' ' : null, sub)));
+// No letter badges (Krug pass): those are only for the six DATING groups in My numbers.
+const goRow = (href, mark, name, total, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, total !== null ? h('span', { class: 'go-total' }, total) : null, total !== null ? ' ' : null, sub)));
 function top({ spine, rules }) {
   const a = answersOf(spine), hw = homeworkList(spine), own = Object.keys(clientOverrides(spine)).length;
   const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
@@ -31,7 +32,7 @@ function top({ spine, rules }) {
     { n: l1.length, row: goRow('#/life', 'L', 'Your life', done + ' of ' + l1.length, 'answered: where you live, work, money in and out, who it is shared with') },
     { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up, and the life changes') },
     { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client; the rest are your defaults' : 'every number the app assumes, as your defaults') },
-    { n: 1, row: goRow('#/goals', 'G', 'Goals settings', SCENARIO_WORDS[pickedScenario()], 'assumption set for every FI number') },
+    { n: 1, row: goRow('#/goals', 'G', 'FI assumptions', SCENARIO_WORDS[pickedScenario()], 'assumption set for every FI number') },
     { n: 0, row: goRow('#/prefs', 'P', 'Preferences', null, prefsSummary()) }
   ];
   return [
@@ -136,7 +137,7 @@ function changesScreen({ spine }) {
 
 startPage({
   tab: 'profile', title: 'Profile',
-  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'Goals settings', prefs: 'Preferences' })[levels[0]] || AREA_NAMES[levels[0]] || null),
+  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'FI assumptions', prefs: 'Preferences' })[levels[0]] || AREA_NAMES[levels[0]] || null),
   render: (ctx) => {
     const [l0, l1] = ctx.levels;
     if (!l0) return top(ctx);
