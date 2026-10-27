@@ -37,6 +37,23 @@ export function clearDates(sim) {
   };
 }
 
+// Clear dates from the Plan's run (payoffPlan through the order list): high-interest free, cards, loans, all, each as the
+// month it lands. A date more than 12 months out reads as one line, "Past <the date 12 months on>", with what it holds.
+export function planClearDates(spine, rules, o, asOf = spine.meta.asOf) {
+  const hi = rules.get('APP_HI_RATE', +asOf.slice(0, 4));
+  const last = (rows) => { if (!rows.length) return monthKey(asOf); if (rows.some((r) => !r.planYm)) return null; return rows.map((r) => r.planYm).sort().pop(); };
+  const owing = o.rows.filter((r) => (r.balance ?? 0) > 0);
+  const horizon = addMonths(monthKey(asOf), 12);
+  const row = (id, label, ym) => ({ id, label, ym, past: !ym || ym > horizon });
+  const rows = [
+    row('hiFree', 'High-interest free (nothing above ' + Math.round(hi * 100) + '%)', last(owing.filter((r) => (r.rate ?? 0) >= hi || r.promo))),
+    row('cardsFree', 'Every card clear', last(owing.filter((r) => r.kind === 'card'))),
+    row('loansFree', 'Loans paid off', last(owing.filter((r) => r.kind === 'loan'))),
+    row('allFree', 'Debt free', o.debtFreeYm || last(owing))
+  ];
+  return { rows: rows.filter((r) => !r.past), past: rows.filter((r) => r.past), horizon, extra: o.extra, kind: o.kind };
+}
+
 // The payoff Gantt: one bar per card and loan from the start of the window to
 // the day it clears, or to the end of the window when it does not.
 export function gantt(sim) {
@@ -64,11 +81,12 @@ export function gantt(sim) {
 // The payoff order under the debt plan's strategy: rate today, the clear date
 // inside the window from the simulation, the month from the monthly plan when
 // it falls beyond the window (rough), and the interest each one costs.
-export function orderList(spine, rules, sim, asOf = spine.meta.asOf) {
+export function orderList(spine, rules, sim, asOf = spine.meta.asOf, extraOverride = null) {
   const strategy = sim.extra.strategy === 'snowball' ? 'snowball' : 'avalanche';
   const ids = order(spine, strategy, asOf);
   const detail = orderDetail(spine, ids, asOf);
-  const plan = payoffPlan(spine, rules, { strategy, extra: sim.extra.amount || 0, asOf });
+  const extra = extraOverride ?? (sim.extra.amount || 0);
+  const plan = payoffPlan(spine, rules, { strategy, extra, asOf });
   const rows = detail.map((x, i) => {
     const d = debtOf(spine, x.id);
     const isCard = d.type === 'credit_card';
@@ -84,7 +102,7 @@ export function orderList(spine, rules, sim, asOf = spine.meta.asOf) {
     };
   });
   const kind = plan.totalInterest.kind === 'computed' && sim.kind === 'computed' ? 'computed' : plan.totalInterest.kind === 'missing' ? 'missing' : 'rough';
-  return { strategy, extra: sim.extra.amount || 0, rows, debtFreeYm: plan.debtFreeYm, neverPaysOff: plan.neverPaysOff, totalInterest: plan.totalInterest, kind };
+  return { strategy, extra, rows, debtFreeYm: plan.debtFreeYm, neverPaysOff: plan.neverPaysOff, totalInterest: plan.totalInterest, kind };
 }
 
 // Card interest month by month, one stack per card (loan interest is not
@@ -308,12 +326,14 @@ export function balanceTransfer(spine, rules, { cardId, feeShare = null, promoMo
 }
 
 // Everything the Debt tab shows, from one run.
-export function debtView(spine, rules, sim, s = null, { asOf = spine.meta.asOf } = {}) {
+// extra: the extra a month at the debt from the Plan (planDebtExtra), so the order and the clear dates read the same
+// number the Plan shows; the clear dates come from the Plan's month-by-month run (never "not inside the window").
+export function debtView(spine, rules, sim, s = null, { asOf = spine.meta.asOf, extra = null } = {}) {
   const cards = cardTiles(spine, rules, sim, asOf);
   const loans = (spine.debts || []).filter((d) => STUDENT.includes(d.type) || (d.federal && v(d.federal) === true)).map((d) => idr(spine, rules, d, s, asOf));
   return {
     asOf, window: { from: sim.start, days: sim.days },
-    clearDates: clearDates(sim), gantt: gantt(sim), order: orderList(spine, rules, sim, asOf), interest: interestTimeline(sim),
+    ...(() => { const o = orderList(spine, rules, sim, asOf, extra); return { order: o, clearDates: planClearDates(spine, rules, o, asOf), gantt: gantt(sim) }; })(), interest: interestTimeline(sim),
     cards, utilization: utilizationAtReport(spine, rules, sim), loans,
     kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules
   };

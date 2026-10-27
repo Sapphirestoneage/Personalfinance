@@ -329,6 +329,8 @@ export function calendar(spine, rules, { from = null, months = 1, mode = 'expect
     for (const d of days) { d.in = round2(d.in); d.out = round2(d.out); delete d.skip; }
     const sum = (dir) => round2(events.filter((e) => e.direction === dir && e.amount !== null && e.counted).reduce((x, e) => x + e.amount, 0));
     const inn = sum('in'), outt = sum('out');
+    // Each day's net in or out, for the month grid (the Calendar made simple).
+    for (const d of days) { d.in = round2(d.in); d.out = round2(d.out); d.net = round2(d.in - d.out); }
     let cash;
     const line = cashLineFor(sim, ym);
     const lastDay = line.length ? line[line.length - 1] : null;

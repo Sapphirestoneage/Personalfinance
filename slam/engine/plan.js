@@ -426,12 +426,26 @@ export function exportCsv(spine, what = 'log') {
   throw new Error('Export the log or the lines.');
 }
 
+// The extra a month at the debt (Calendar audit, 2026-10-27): one number everywhere. A typed extra (debtPlan.extra)
+// wins; else, while the Plan's current step is a debt, the same amount its calendar chip shows: what is left after
+// saving, up to what the step still needs. Otherwise none.
+export function planDebtExtra(spine, rules, s, { sim = null, ladder = null } = {}) {
+  const typed = spine.debtPlan && spine.debtPlan.extra ? v(spine.debtPlan.extra) : null;
+  if (typed !== null && typed !== undefined) return { amount: typed, from: 'typed' };
+  const f = ladder || fooLadder(spine, rules, s, { sim });
+  const cur = f.rungs.find((r) => r.id === f.current) || null;
+  if (!cur || !['highInterest', 'lowInterest'].includes(cur.id) || !(f.surplus > 0) || !(cur.need > 0)) return { amount: 0, from: 'plan' };
+  return { amount: Math.round(Math.min(f.surplus, cur.need)), from: 'plan', step: cur.label };
+}
+
 // FOO ghost chips (row 60): the surplus the current rung takes, as a plan event on the last day of each month in the window.
 export function fooGhosts(spine, rules, s, months, { sim = null } = {}) {
   const f = fooLadder(spine, rules, s, { sim });
   const cur = f.rungs.find((r) => r.id === f.current) || null;
   if (!cur || !(f.surplus > 0)) return [];
-  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(Math.min(f.surplus, cur.need)) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(Math.min(f.surplus, cur.need)), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
+  // A debt step shows the one extra-at-the-debt number (planDebtExtra), the same as the Debt screen.
+  const amt = ['highInterest', 'lowInterest'].includes(cur.id) ? planDebtExtra(spine, rules, s, { sim, ladder: f }).amount : Math.min(f.surplus, cur.need);
+  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(amt) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(amt), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
 }
 
 // The spine's FAT tags, for the pages that need them.

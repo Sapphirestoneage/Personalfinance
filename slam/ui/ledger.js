@@ -13,6 +13,11 @@ import { mathButton } from './math-panel.js';
 import { addForm as newAddForm } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
+import { foldRow } from './rows.js';
+import { debtTab } from './debt-tab.js';
+import { debtView } from '../engine/debtview.js';
+import { planDebtExtra } from '../engine/plan.js';
+import { forecast } from './forecast.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
 import { canMaxIt } from '../engine/maxit.js';
@@ -1112,15 +1117,32 @@ function sectionTop(sec) {
       figure(tx.year + ' tax still owed (estimate)', tx.balanceDue, null, ['taxBalanceDue']),
       h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'Next payment due'), h('p', { class: 'tile-value' }, shortDate(tx.nextEstimated.date))));
   }
-  if (sec.slug === 'debt' && (cur().debts || []).some((d) => d.type === 'credit_card')) {
+  if (sec.slug === 'debt') {
     const ut = s.debt.utilization;
-    return h('section', { class: 'card nw-pair', 'aria-label': 'Cards' },
+    return [(cur().debts || []).some((d) => d.type === 'credit_card') ? h('section', { class: 'card nw-pair', 'aria-label': 'Cards' },
       figure('On every card', s.sheet.cards, null, ['cards']),
       figure('Card use, personal cards', ut.personal, pctOf, ['personalUtil']),
-      figure('Card use, all cards', ut.overall, pctOf, ['overallUtil']));
+      figure('Card use, all cards', ut.overall, pctOf, ['overallUtil'])) : null,
+    debtPayoffRow()];
   }
   if (sec.slug === 'income') return unemploymentCard();
   return null;
+}
+
+// Debt payoff dates (moved here from the Calendar): one line with the debt-free month, opening the clear dates, the
+// order, the interest and the tools. The extra at the debt is the Plan's one number.
+let payoffMemo = { spine: null, rules: null, row: null };
+function debtPayoffRow() {
+  const spine = cur();
+  if (!(spine.debts || []).some((d) => (valueOf(d.balance) ?? 0) > 0)) return null;
+  if (payoffMemo.spine !== spine || payoffMemo.rules !== rules) {
+    const s = summaryOf(spine), sim = forecast(spine, rules, 12).sim;
+    const x = planDebtExtra(spine, rules, s, { sim }), d = debtView(spine, rules, sim, s, { extra: x.amount });
+    const free = [...d.clearDates.rows, ...d.clearDates.past].find((r) => r.id === 'allFree');
+    payoffMemo = { spine, rules, sim, s, fact: free && !free.past ? 'Debt free ' + monthWordsOf(free.ym) : 'Debt free past ' + monthWordsOf(d.clearDates.horizon) };
+  }
+  const m = payoffMemo;
+  return foldRow('debt-payoff', 'Payoff dates', m.fact, () => debtTab({ c: { sim: m.sim }, spine, rules, mathCtx: () => ({ spine, rules, s: m.s }), rerender: refresh }));
 }
 
 // Unemployment (owner's ask): when between jobs, what the benefit pays and for how long, the tax on it, and what the

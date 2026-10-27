@@ -1,9 +1,11 @@
-// The Debt tab on the calendar page (S-205): formatting of engine/debtview.js.
+// Debt payoff dates (S-205), on My numbers' Debt screen since the Calendar was made simple: formatting of
+// engine/debtview.js. The extra at the debt is the Plan's one number (planDebtExtra).
 // Every number has Show the math; a missing input reads as a missing row in
 // words, never a number. A card or a loan is a whole-card target with a
 // chevron that opens it in My numbers (S-230). Formatting only.
 
 import { debtView, solvePayoff, whichCard, balanceTransfer } from '../engine/debtview.js';
+import { planDebtExtra } from '../engine/plan.js';
 import { parseInput } from '../engine/edits.js';
 import { labelFor } from '../engine/labels.js';
 import { mathButton } from './math-panel.js';
@@ -25,22 +27,31 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
   if (saved) for (const k of Object.keys(FORM)) if (typeof saved[k] === 'string') form[k] = saved[k];
   const keepForm = () => (onSave ? onSave({ ...form }) : rerender());
   const base = mathCtx();
-  const d = debtView(spine, rules, c.sim, base.s);
+  const extra = planDebtExtra(spine, rules, base.s, { sim: c.sim });
+  const d = debtView(spine, rules, c.sim, base.s, { extra: extra.amount });
+  d.extraFrom = extra;
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
   return [clearCard(d), ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
 }
 
+// Clear dates from the Plan's run: each as its month; anything past 12 months is one line, never "not inside the
+// window" four times (Calendar audit).
 function clearCard(d) {
+  const cd = d.clearDates, x = d.extraFrom || { amount: cd.extra, from: 'plan' };
   return h('section', { class: 'card', 'aria-labelledby': 'clear-h' },
     h('h2', { id: 'clear-h' }, 'Clear dates'),
-    h('div', { class: 'clear-grid' }, d.clearDates.rows.map((r) => h('div', { class: 'clear-tile' + (r.beyond ? ' beyond' : ''), role: 'group', 'aria-label': r.label },
-      h('span', { class: 'clear-date' }, r.date ? shortDate(r.date) : 'Not inside the window'), h('span', { class: 'clear-label' }, r.label), h('span', { class: 'tile-note' }, r.why)))),
-    h('p', { class: 'tile-note' }, kindChip(d.kind), ' Over the next ' + d.window.days + ' days, from ' + shortDate(d.window.from) + '. A date past the window shows once the window is long enough (12 months is the most).'));
+    cd.rows.length ? h('div', { class: 'clear-grid' }, cd.rows.map((r) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': r.label },
+      h('span', { class: 'clear-date' }, monthWords(r.ym)), h('span', { class: 'clear-label' }, r.label)))) : null,
+    cd.past.length ? h('p', { class: 'tile-sub' }, 'Past ' + monthWords(cd.horizon) + ': ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(', ') + '.') : null,
+    h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan\'s month-by-month run, with ' + money(x.amount) + ' a month extra at the debt' + (x.from === 'typed' ? ' (the amount you set).' : x.step ? ' (the Plan\'s step: ' + x.step.toLowerCase() + ').' : '.')));
 }
 
 function ganttCard(d) {
   const g = d.gantt;
-  if (!g.rows.length) return h('section', { class: 'card' }, h('h2', {}, 'Payoff timeline'), h('p', { class: 'muted' }, 'No debt with a balance.'));
+  if (!g.rows.length) return null;
+  // The timeline only when its bars differ (something clears inside the window); else each debt and its clear month.
+  if (new Set(g.rows.map((r) => r.clearDate || 'past')).size < 2) return h('section', { class: 'card', 'aria-labelledby': 'gantt-h' }, h('h2', { id: 'gantt-h' }, 'When each debt clears'),
+    h('ul', { class: 'flow-list' }, d.order.rows.filter((r) => (r.balance ?? 0) > 0).map((r) => h('li', {}, h('a', { href: ledgerHref(r.path) }, r.name), ': ' + (r.planYm ? monthWords(r.planYm) : 'past ' + monthWords(d.clearDates.horizon))))));
   const left = (f) => 'left:' + pc(f);
   const shown = g.ticks.filter((t, i) => g.ticks.length <= 6 || i % Math.ceil(g.ticks.length / 6) === 0);
   return h('section', { class: 'card', 'aria-labelledby': 'gantt-h' },

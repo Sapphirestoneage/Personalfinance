@@ -23,7 +23,9 @@ test('the Debt tab reads one run: clear dates, a Gantt bar per debt, the order, 
   const s = demo();
   const sim = cashsim(s, R, { months: 12 });
   const d = debtView(s, R, sim, summarize(s, R, { flags: false }));
-  assert.deepEqual(d.clearDates.rows.map((r) => r.id), ['hiFree', 'cardsFree', 'loansFree', 'allFree']);
+  // Clear dates from the Plan's run: each one a month inside 12 months, or one "Past" line (Calendar audit).
+  assert.deepEqual([...d.clearDates.rows, ...d.clearDates.past].map((r) => r.id).sort(), ['allFree', 'cardsFree', 'hiFree', 'loansFree']);
+  assert.ok(d.clearDates.rows.every((r) => /^\d{4}-\d{2}$/.test(r.ym)));
   assert.deepEqual(d.gantt.rows.map((r) => r.id), ['visa', 'store', 'sl'], 'the zero-balance business card has no bar');
   for (const r of d.gantt.rows) { assert.ok(r.fraction > 0 && r.fraction <= 1); assert.ok(r.startBalance > 0); assert.equal(typeof r.beyond, 'boolean'); }
   assert.ok(d.gantt.ticks.length >= 11, 'a tick per month start inside the window');
@@ -251,4 +253,15 @@ test('a card that pays its statement: no interest in the run, the Debt tab or th
   // Paid by the minimum, the same card carries its balance and pays interest.
   const carried = payoffPlan(demo(), R, { asOf: T }).debts.find((x) => x.id === 'visa');
   assert.ok(carried.interest > 0);
+});
+
+test('one extra at the debt: the Plan\'s step amount, the same in the debt view and the calendar chip (Calendar audit)', async () => {
+  const { planDebtExtra, fooGhosts, fooLadder } = await import('../engine/plan.js');
+  const s = demo(), S = summarize(s, R, { flags: false });
+  const x = planDebtExtra(s, R, S);
+  const sim = cashsim(s, R, { months: 12 });
+  const d = debtView(s, R, sim, S, { extra: x.amount });
+  assert.equal(d.order.extra, x.amount);
+  const f = fooLadder(s, R, S);
+  if (['highInterest', 'lowInterest'].includes(f.current)) assert.equal(fooGhosts(s, R, S, [s.meta.asOf.slice(0, 7)])[0].amount, x.amount);
 });

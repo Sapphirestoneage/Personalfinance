@@ -163,7 +163,7 @@ test('the debt tab: no payoff bar, no minimum trap and no order row for a card p
   assert.equal(tile.trap, null);
   assert.equal(tile.interest, 0);
   assert.equal(tile.revolving, false);
-  assert.equal(view.clearDates.rows.find((r) => r.id === 'cardsFree').date, sim.start, 'every card is clear from the start');
+  assert.equal(view.clearDates.rows.find((r) => r.id === 'cardsFree').ym, sim.start.slice(0, 7), 'every card is clear from the start');
 });
 
 test('flags and the plan stay right: utilization still reads the balance; the Visa is not high-interest debt', () => {

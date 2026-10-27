@@ -38,8 +38,9 @@ test('screen by screen: Calendar, a day, an item; the month screen keeps its mon
   const src = read('ui/calendar.js');
   assert.match(src, /if \(ctx\.levels\.length === 2\) return itemScreen\(v, date, id\);/);
   assert.match(src, /if \(ctx\.levels\.length === 1\) return dayScreen\(v, date\);/);
-  for (const k of ['ym', 'view', 'months', 'q', 'agendaAll', 'timing', 'back', 'open', 'debt']) assert.match(src, new RegExp('\\b' + k + ': '), 'kept: ' + k);
-  assert.match(src, /setRoot\(\{ months: n \}\)/, 'the time picker is kept with the screen');
+  // Made simple: one month control (no month count), three views, Group by paycheck, a day picked in the grid.
+  for (const k of ['ym', 'view', 'q', 'byPay', 'day', 'back', 'open', 'filter']) assert.match(src, new RegExp('\\b' + k + ': '), 'kept: ' + k);
+  assert.match(src, /const VIEWS = \[\['list', 'List'\], \['month', 'Month'\], \['year', 'Year'\]\];/);
   assert.match(src, /keep\(\{ q: box\.value \}\)/, 'what is typed in search is kept');
   // An item that cannot move says why; old month links still open their month.
   assert.match(src, /h\('strong', \{\}, 'Cannot move here\. '\), fixedWords\(e\)/);
@@ -50,10 +51,8 @@ test('screen by screen: Calendar, a day, an item; the month screen keeps its mon
 test('the whole card is the target, with a chevron, where "View in the Ledger" was', () => {
   for (const f of ['ui/calendar.js', 'ui/debt-tab.js', 'ui/cash-chart.js']) assert.doesNotMatch(read(f), /View in the Ledger|Open in the Ledger|in the Ledger/, f);
   const cal = read('ui/calendar.js');
-  assert.match(cal, /class: 'card pay-card' \+ \(p\.path \? ' has-target' : ''\)/);
-  assert.match(cal, /h\('a', \{ class: 'card-link', href: ledgerHref\(p\.path\) \}, h\('strong', \{\}, head\), chev\(\)\)/);
-  assert.match(cal, /h\('a', \{ class: 'go-row plain', href: ledgerHref\(cash\.path\) \}/);
-  assert.match(cal, /\(href \? ' has-target' : ''\)/);
+  assert.match(cal, /class: 'cal-item' \+ \(href \? ' has-target' : ''\)/);
+  assert.match(cal, /h\('a', \{ class: 'cal-name ev-go', href \}, e\.label\)/);
   const debt = read('ui/debt-tab.js');
   assert.equal((debt.match(/h\('a', \{ class: 'card-link', href: ledgerHref\((t|l)\.path\) \}, h\('span', \{\}, (t|l)\.name\), chev\(\)\)/g) || []).length, 2);
   const css = read('ui/spine.css');
