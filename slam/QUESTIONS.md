@@ -215,3 +215,9 @@ My numbers counts the tax fields every household needs; the Taxes screen's "To f
 
 ## 160. What it takes to get there, with no age typed (round 2, finding 8)
 It used the app's default (Coast age plus 15, so 80) and answered "savings rate needed 0.0%". Default used now: no answers until an age is typed; the charts still show. Say if it should default to an age (65 to match Coast FI, or one set in Profile).
+
+## 161. Deferred interest in the day-by-day run (overnight round 3, finding 3)
+Today and the One-pager warn that about $360 of deferred interest lands if the Store card is not cleared by Feb 28, 2027. The day-by-day run (which leaves $916 on the card at the end) does not charge that lump, so the month-by-month interest shows only $196. Default used: unchanged tonight (engine work). Proposed: the run charges the deferred interest as one lump on the first statement after the promo ends when a balance remains.
+
+## 162. "Paid last" on the everyday card (round 3, finding 1)
+The Visa is marked as the everyday card, so the day-by-day run pays it last ("nothing extra reaches it"), while the monthly plan's order ranks it second and clears it about Apr 2027. Default used: both shown, each labelled; one rule for "paid last" in both runs is engine work (with 155).

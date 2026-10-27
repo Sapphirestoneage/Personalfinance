@@ -126,7 +126,7 @@ function surplusScreen({ s }) {
 function savingsScreen({ s }) {
   const cf = s.cashflow, sv = cf.saving;
   return h('section', { class: 'card', 'aria-label': 'Savings rate' },
-    h('p', { class: 'tile-value' }, pct(cf.savingsRate.net.value, 1) + ' of take-home'),
+    h('p', { class: 'tile-value' }, pct(cf.savingsRate.net.value, 1) + ' of pay after tax'),
     h('ul', { class: 'sum-lines' },
       line('Saved from take-home', sv.fromTakeHome),
       line('Retirement from your paycheck', sv.payroll.value),

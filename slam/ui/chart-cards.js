@@ -182,10 +182,10 @@ export function savingsCurveCard(c, { yearsToFi = null } = {}) {
   const byR = new Map(c.points);
   return chartCard({ id: 'savings-curve', question: 'How much sooner does saving more get you there?',
     // The projection's FI year leads (the one every screen shows); the curve's own point is named as the simple math.
-    summary: (yearsToFi !== null ? 'About ' + yearsToFi + ' years to FI on the full projection. ' : '') + (c.here.rate !== null ? 'The curve is the simple math (steady saving of gross pay, one return): at your ' + pct(c.here.rate) + ' (what is left after spending counts too) it says about ' + c.here.years + ' years. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
+    summary: (yearsToFi !== null ? 'About ' + yearsToFi + ' years to FI on the full projection. ' : '') + (c.here.rate !== null ? 'The curve is the simple math (steady saving of gross pay, one return). Its dot is your saving plus what is left over, ' + pct(c.here.rate) + ' of gross pay (not the savings rate on Today): about ' + c.here.years + ' years. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
     draw: (w) => lines({ width: w, series: [{ label: 'Years to FI', c: 1, points: c.points }], dots, xFmt: pct0, xTicks: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7], yFmt: (x) => Math.round(x) + ' y', yMin: 0, tips: (r) => pct(r) + ' saved: about ' + byR.get(r) + ' years', label: 'Savings rate against years to FI' }),
     legend: [{ c: 1, words: 'Years to FI at each savings rate; the dot is you' }, ...(c.target ? [{ c: 2, words: 'The rate your target age needs' }] : [])],
-    note: 'Steady saving of gross pay and the real return assumed, as on What it takes to get there; the full projection (with pay changes and debt ending) can land a little earlier or later.',
+    note: 'Steady saving of gross pay and the real return assumed; the full projection (with pay changes and debt ending) can land a little earlier or later.',
     table: { head: ['Saved of gross', 'Years to FI'], rows: c.points.map(([r, y]) => [pct(r), String(y)]) } });
 }
 

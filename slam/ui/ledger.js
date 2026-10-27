@@ -1384,7 +1384,7 @@ function debtPayoffRow() {
     const s = summaryOf(spine), sim = forecast(spine, rules, 12).sim;
     const x = planDebtExtra(spine, rules, s, { sim }), d = debtView(spine, rules, sim, s, { extra: x.amount });
     const free = [...d.clearDates.rows, ...d.clearDates.past].find((r) => r.id === 'allFree');
-    payoffMemo = { spine, rules, sim, s, fact: free && !free.past ? 'Debt free ' + monthWordsOf(free.ym) : 'Debt free past ' + monthWordsOf(d.clearDates.horizon) };
+    payoffMemo = { spine, rules, sim, s, fact: free && !free.past ? 'Debt free ' + monthWordsOf(free.ym) : d.order.debtFreeYm ? 'Debt free about ' + monthWordsOf(d.order.debtFreeYm) : 'Debt free past ' + monthWordsOf(d.clearDates.horizon) };
   }
   const m = payoffMemo;
   return foldRow('debt-payoff', 'Payoff dates', m.fact, () => debtTab({ c: { sim: m.sim }, spine, rules, mathCtx: () => ({ spine, rules, s: m.s }), rerender: refresh }));

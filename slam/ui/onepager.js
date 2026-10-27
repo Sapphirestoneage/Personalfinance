@@ -44,7 +44,8 @@ function render({ spine: base, rules }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   const step = rank.first, who = whose(base);
   // The money flow as a small table (Krug pass): in, then where it ends up; a guessed amount is marked "about".
-  const rows = flowTable(moneyFlow(spine, rules, cf, { open: [] }));
+  // What is left goes last, after everything it is left from (round 3).
+  const rows = flowTable(moneyFlow(spine, rules, cf, { open: [] })).sort((a, b) => (a.side === b.side ? (/left/i.test(a.label) ? 1 : /left/i.test(b.label) ? -1 : 0) : 0));
   const flow = rows.length ? h('section', { class: 'card op-flow' }, h('h2', {}, 'Where the money goes in ' + MONTHS[+s.ym.slice(5, 7) - 1]),
     h('table', { class: 'data-table op-flow-table' },
       h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, ''), h('th', { scope: 'col', class: 'num' }, 'A month'))),
@@ -56,7 +57,7 @@ function render({ spine: base, rules }) {
         cell('Net worth', m(sh.netWorth.value), null, 'netWorth'),
         cell('Reachable after all debts', m(sh.liquidNetWorth.value), null, 'liquidNetWorth'),
         cell('Monthly surplus', m(cf.monthlySurplus.value), 'take-home ' + m(cf.income.takeHome.value) + ', after spending, debt minimums and the tax set-aside', 'surplus'),
-        cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home', 'savingsRateNet'),
+        cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of pay after tax, with what goes from pay to saving', 'savingsRateNet'),
         cell('Cash runway', em.tiers.full.runway.value === null ? 'missing' : em.tiers.full.runway.value.toFixed(1) + ' months', m(sh.cash.value) + ' in cash', 'runway'),
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), ['of ', h('span', { 'data-metric': 'fiToday' }, m(s.fi.today.value)), ' at today\'s spending'], 'fiPercent')),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),

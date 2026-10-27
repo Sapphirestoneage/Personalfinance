@@ -292,12 +292,12 @@ function paychecksScreen(m) {
   const third = (p) => p.bonus ? h('span', { class: 'pill' }, (p.cadence === 'weekly' ? '5th' : '3rd') + ' paycheck in ' + monthWords(p.ym).split(' ')[0]) : null;
   const totals = (p) => Object.keys(JOB).map((k) => ({ k, v: p.byKind[k] })).filter((x) => x.v > 0);
   const chart = chartCard({ id: 'paycheck-jobs', question: 'What does each paycheck pay for?',
-    summary: 'Every dollar of each paycheck has a job until the next one.' + (a.paychecks.some((p) => p.carryOut) ? ' Where one would come up short, the one before it keeps the difference.' : '') + (a.fromChecking ? ' ' + money(a.fromChecking) + ' has to be in checking already' + (a.shortBy ? '; checking holds ' + money(a.checking) + ', so it comes up ' + money(a.shortBy) + ' short before the next paycheck. The Calendar runs every day and every card, so its lowest day is the one to act on.' : '.') : ''),
+    summary: 'Every dollar of each paycheck has a job until the next one.' + (a.paychecks.some((p) => p.carryOut) ? ' Where one would come up short, the one before it keeps the difference.' : '') + (a.fromChecking ? ' ' + money(a.fromChecking) + ' has to be in checking already' + (a.shortBy ? ', more than checking holds; the Calendar\'s lowest day says by how much and when.' : '.') : ''),
     draw: (w) => bars({ width: w, rows: a.paychecks.map((p) => ({ label: shortDate(p.date).replace(/, \d{4}$/, ''), segs: totals(p).map((x) => ({ v: x.v, c: JOB[x.k][0], tip: shortDate(p.date) + ', ' + JOB[x.k][1].toLowerCase() + ': ' + money(x.v) })), value: money(p.assigned) })), label: 'Each paycheck by its jobs' }),
     legend: Object.values(JOB).map(([c, words]) => ({ c, words })),
     table: { head: ['Paycheck', ...Object.values(JOB).map((x) => x[1]), 'In all'], rows: a.paychecks.map((p) => [shortDate(p.date) + ': ' + p.label, ...Object.keys(JOB).map((k) => money(p.byKind[k])), money(p.assigned)]) } });
   return [
-    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one. The last one shown counts no bills after the three months, so more of it reads as going to the Plan.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
+    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one. The Plan\'s ' + money(m.foo.surplus) + ' a month is the month as a whole; one paycheck sends more or less as the bills fall between paydays. The last one shown counts no bills after the three months, so more of it reads as going to the Plan.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
     h('ul', { class: 'go-list pay-list' }, a.paychecks.flatMap((p) => [
       goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, third(p) ? [' ', third(p)] : null],
         [h('span', { class: 'go-total' }, money(p.amount)), p.carryIn ? ' plus ' + money(p.carryIn) + ' carried in' : '', (p.left > 0.004 ? '· ' + money(p.left) + ' to the Plan' : '· all to bills and spending')]),
@@ -319,13 +319,15 @@ function paycheckScreen(m, p0) {
     math('pay', ['plan:pay:' + p.date + ':' + p.streamId], mathCtx(m)));
 }
 
+// When the Plan's step for big costs dates a goal with no set-aside of its own (round 3), the table says so.
+const planDate = (m, r) => { const st = m.foo.rungs.find((x) => x.id === 'prepaid'); return st && st.completes && r.toGo > 0 ? '; the Plan\'s step ' + st.rung + ' puts it about ' + monthWords(st.completes.slice(0, 7)) : ''; };
 function goalsScreen(m) {
   const g = goalsView(m.spine, m.rules, m.s);
   const bars = goalsCard(goalBars(g));
   return [bars ? h('section', { class: 'card' }, bars) : null, h('section', { class: 'card', 'aria-label': SCREENS.goals },
     g.setAsideTotal ? h('p', { class: 'muted' }, money(g.setAsideTotal) + ' a month goes to goals.') : null,
     g.rows.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Goal'), h('th', { class: 'num' }, 'Target'), h('th', { class: 'num' }, 'There'), h('th', { class: 'num' }, 'To go'), h('th', {}, 'Reached'), h('th', {}, 'Costs the FI date'))),
-      h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? 'none yet' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
+      h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? 'none yet' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet' + planDate(m, r)), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
     h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
     g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null)];
 }
@@ -354,7 +356,7 @@ function whatIfScreen(m) {
     const dm = a.debtFreeYm && b.debtFreeYm ? months(b.debtFreeYm, a.debtFreeYm) : 0;
     out.replaceChildren(
       row('Left after saving, a month', money(a.surplus), money(b.surplus)),
-      row('Debt free', free(a), free(b), dm > 0 ? plural(dm, 'month') + ' sooner' : dm < 0 ? plural(-dm, 'month') + ' later' : null),
+      row('Debt free (all extra at the debt)', free(a), free(b), dm > 0 ? plural(dm, 'month') + ' sooner' : dm < 0 ? plural(-dm, 'month') + ' later' : null),
       row('Interest on the way', money(a.interest), money(b.interest)),
       row('Financial independence', a.fiYear === null ? 'not at this pace' : 'about ' + a.fiYear, b.fiYear === null ? 'not at this pace' : 'about ' + b.fiYear, a.fiYear !== null && b.fiYear !== null && a.fiYear !== b.fiYear ? plural(Math.abs(a.fiYear - b.fiYear), 'year') + (b.fiYear < a.fiYear ? ' sooner' : ' later') : null));
   };
@@ -427,7 +429,7 @@ function callsScreen(m) {
       h('p', { class: 'muted' }, 'One call each, most dollars a month at stake first. Typical prices are a starting table to check, not a promise.'),
       h('ol', { class: 'audit-list' }, list.map((x) => h('li', { class: 'audit-row' },
         h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(x.path) }, x.label), h('span', { class: 'audit-cost' }, nowWords(x))),
-        h('p', { class: 'tile-sub' }, x.kind === 'card' ? (x.promo ? 'Intro ' + rateWords(x.promo.rate) + ' until ' + shortDate(x.promo.ends) + ', then ' + rateWords(x.now) + ': about ' + money(x.yearCost) + ' of interest a year at this balance after that' : 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance') : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
+        h('p', { class: 'tile-sub' }, x.kind === 'card' ? (x.promo ? 'Intro ' + rateWords(x.promo.rate) + ' until ' + shortDate(x.promo.ends) + ', then ' + rateWords(x.now) + ': about ' + money(x.stake) + ' of interest a month at this balance after that' : 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance') : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
         x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? rateWords(x.called.from) + ' to ' + rateWords(x.called.to) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
         h('details', { class: 'script-fold' }, h('summary', {}, 'Call script'), h('p', { class: 'script' }, x.script),
           h('button', { type: 'button', class: 'btn small', onclick: () => { try { navigator.clipboard.writeText(x.script); say('Script copied'); } catch { say('Copy did not work here; select the words instead'); } } }, 'Copy the script')),

@@ -98,3 +98,39 @@ $227: rounded up on purpose).
 
 **After.** Suites 1,068 pass; root 35,911.
 
+## Round 3
+
+**Before.** qa-crawl PASS (151 x 3, 333 taps; no dead clicks; 399 small taps reported). agree-check PASS. Suites
+1,068; root 35,911. Reviewer: 9 high, 17 medium, 6 low (round-3/findings.md). Most highs are the two-runs questions
+already in QUESTIONS (154, 155) seen from new angles, plus a few new ones.
+
+**Fixed.**
+- 6 (high): the savings rate said "of take-home" beside a take-home that gives a different rate; it now says "of pay
+  after tax" (the One-pager adds "with what goes from pay to saving"), which is the base the rate uses.
+- 7 (high): Session Needs says "Shared bills count your part in the total: Streaming (family plan) $14 of $40", so
+  the lines add to the header.
+- 8 (high): a goal with no set-aside says when the Plan's step puts it ("the Plan's step 8 puts it about Jan 2031").
+- 4 (high): the Payoff dates line says "Debt free about Nov 2028" (the monthly plan) instead of "past Oct 2027" (the
+  end of the 12-month run), and the clear dates say the run ends Oct 2027 and the rest comes later.
+- 2 (high): the order table says its interest column is the next 12 months day by day with new charges and the total
+  is the monthly plan without them, so the two are not meant to add up.
+- 5 (high): Paychecks says the Plan's $712 is the month as a whole and a paycheck sends more or less as bills fall.
+- 9 (high): the Calendar's Plan suggestion says to check the lowest day first.
+- 3 (high, part): Bills worth a call says the Store card's cost after its intro as a month, not "$360 a year" (which
+  read as the deferred lump); the run charging the lump is QUESTIONS 161.
+- 10: Session's Assets line says "plus $176 owed to you". 11: the savings curve's dot is named "your saving plus what
+  is left over, 23.3% of gross pay (not the savings rate on Today)". 13: the self-reference on What it takes is gone.
+  18: Paychecks no longer gives its own shortfall figure; it points to the Calendar's lowest day. 24: "Call script"
+  has a chevron and the link color. 26: What if's row reads "Debt free (all extra at the debt)". 30: the One-pager
+  lists what is left last.
+
+**To QUESTIONS.** 1 (162), 3 (161).
+
+**Left, with reason.** 12 (FI numbers, as before), 14 and 16 (the Debt screen's length and its older interest chart:
+a day session should fold its tools and move that chart to the shared module), 15 (forgiveness words: engine), 17,
+22, 23 (as before), 19 (the Plan's steps that share the surplus: the step words come from the ladder; worth a day
+session), 20 and 21 (Session controls), 25 (two completeness counts: as round 1, 17), 27 and 28 (tool scope: small taps
+and more metrics; recorded for the day), 29, 31, 32 (as before).
+
+**After.** Suites 1,068; root 35,911.
+

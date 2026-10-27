@@ -108,7 +108,7 @@ function frame(ctx, id, body) {
     h('section', { class: 'card step-head', 'aria-label': 'Step ' + (i + 1) + ' of ' + STEPS.length },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
       h('span', { class: 'step-name' }, 'Step ' + (i + 1) + ' of ' + STEPS.length + ': ' + STEPS[i][2]),
-      h('span', { class: 'step-total' }, totalWords(step)),
+      h('span', { class: 'step-total' }, totalWords(step, s.sheet.owed)),
       STEP_METRIC[id] ? mathButton([STEP_METRIC[id]], () => ({ spine: ctx.spine, rules: ctx.rules, s })) : null),
     ...[].concat(body(s)),
     h('div', { class: 'step-nav' },
@@ -119,10 +119,11 @@ function frame(ctx, id, body) {
   ];
 }
 const WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
-function totalWords(step) {
+// owed: what others owe the household (round 3: Assets less Debt visibly makes net worth, as in My numbers).
+function totalWords(step, owed = 0) {
   const r = step.result;
   if (r.value === null) return h('span', { class: 'empty' }, 'Nothing yet');
-  return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
+  return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], step.id === 'assets' && owed ? ', plus ' + money(owed) + ' owed to you' : null, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
 }
 
 // ---------------------------------------------------------------- Needs
@@ -240,7 +241,9 @@ function needs(ctx) {
   const hidden = noList().filter((k) => allItems().some((x) => x.key === k));
   const a = answersOf(spine);
   const said1 = (id) => { const q = questionById(id), x = a[id]; return x === undefined ? 'not answered yet' : x === 'notSure' ? 'not sure' : (q.options.find(([k]) => k === x) || [x, x])[1]; };
-  return frame(ctx, 'needs', () => [
+  return frame(ctx, 'needs', (sum) => [
+    // A shared bill counts the household's part in the total (round 3: the lines then add up to it).
+    (() => { const sh = sum.cashflow.expenses.items.filter((i) => i.shared && i.full !== i.amount); return sh.length ? h('p', { class: 'muted' }, 'Shared bills count your part in the total: ' + sh.map((i) => i.label + ' ' + money(i.amount) + ' of ' + money(i.full)).join(', ') + '.') : null; })(),
     h('section', { class: 'card qs' },
       // Where you live and how you get around are Profile answers (Phase 2.5 B3): shown here, changed there.
       h('p', { class: 'q-said' }, 'Where you live: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
@@ -557,13 +560,13 @@ function stepQuestions(spine, step) {
 }
 
 function overview(ctx) {
-  const steps = sessionSteps(ctx.spine, summarize(ctx.spine, ctx.rules, { flags: false }));
+  const sum = summarize(ctx.spine, ctx.rules, { flags: false }), steps = sessionSteps(ctx.spine, sum);
   return [
     h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›')),
     h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = qCount(openAreas(ctx.spine, st.id)); return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),
-      h('span', { class: 'go-sub' }, totalWords(st), n ? ' · ' + n + (n === 1 ? ' question' : ' questions') : ''))); }))
+      h('span', { class: 'go-sub' }, totalWords(st, sum.sheet.owed), n ? ' · ' + n + (n === 1 ? ' question' : ' questions') : ''))); }))
   ];
 }
 

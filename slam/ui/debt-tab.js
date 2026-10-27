@@ -82,7 +82,7 @@ function clearCard(d) {
     h('h2', { id: 'clear-h' }, 'Clear dates'),
     cd.rows.length ? h('div', { class: 'clear-grid' }, cd.rows.map((r) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': r.label },
       h('span', { class: 'clear-date' }, monthWords(r.ym)), h('span', { class: 'clear-label' }, r.label)))) : null,
-    cd.past.length ? h('p', { class: 'tile-sub' }, 'After the 12-month run (past ' + monthWords(cd.horizon) + '; the monthly plan below gives the months): ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(', ') + '.') : null,
+    cd.past.length ? h('p', { class: 'tile-sub' }, 'The 12-month run ends ' + monthWords(cd.horizon) + '; ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(' and ') + ' come later' + (d.order.debtFreeYm ? ', debt free about ' + monthWords(d.order.debtFreeYm) + ' on the monthly plan.' : '.')) : null,
     h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan\'s month-by-month run, with ' + money(x.amount) + ' a month extra at the debt' + (x.from === 'typed' ? ' (the amount you set).' : x.step ? ' (the Plan\'s step: ' + x.step.toLowerCase() + ').' : '.')));
 }
 
@@ -117,6 +117,7 @@ function orderCard(d, ctx) {
         h('td', { class: 'num' }, pctWords(r.rate) + (r.promo ? ' (intro, ends ' + (r.promoEnds ? shortDate(r.promoEnds) : 'date not entered') + ')' : '')),
         h('td', {}, r.clearDate ? shortDate(r.clearDate) : r.planYm ? 'about ' + monthWords(r.planYm) + ' (monthly plan, rough)' : 'not inside the window'),
         h('td', { class: 'num' }, money(r.interestInWindow))))))),
+    h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day, with new charges on the cards; the total below is the monthly plan to the end, without them, so the two are not meant to add up.'),
     h('p', { class: 'tile-sub' }, o.neverPaysOff ? 'At this pace the monthly plan never pays everything off.' : o.debtFreeYm ? 'Debt free about ' + monthWords(o.debtFreeYm) + ' on the monthly plan, ' + (o.totalInterest.value === null ? 'interest unknown' : money(o.totalInterest.value) + ' of interest in all') + '.' : ''),
     mathButton(['debt:interestWindow'], ctx));
 }
