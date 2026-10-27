@@ -386,21 +386,34 @@ function waitingCard(spine, rules, today) {
   // Several at once (Batch 6): tick them, then one tap marks them all, and one Undo takes them all back.
   for (const k of [...picked]) if (!list.some((e) => e.key === k)) picked.delete(k);
   const chosen = list.filter((e) => picked.has(e.key));
-  const markAll = (happened) => { const keys = chosen.filter((e) => !happened || e.amount !== null).map((e) => ({ key: e.key, amount: e.amount })); const n = keys.length; if (!n) { say('An item with no amount needs its own screen: open it to type what came in or went out'); return; } picked.clear(); change((s) => keys.reduce((x, k) => (happened ? (k.amount === null ? x : confirmOccurrence(x, k.key, { amount: k.amount })) : skipOccurrence(x, k.key, true)), s), n + (n === 1 ? ' item' : ' items') + (happened ? ' marked happened' : ' marked did not happen')); };
+  // Estimated vs actual (owner's ask, 2026-10-27): a typed actual is what is logged; blank logs the estimate.
+  const actualOf = (e) => { const t = (typedActual.get(e.key) || '').trim(); if (t === '') return { ok: true, value: e.amount }; const p = parseInput('money', t); return p.ok ? p : { ok: false, message: e.label + ', actual: ' + p.message }; };
+  const markAll = (happened) => { const bad = happened ? chosen.map(actualOf).find((x) => !x.ok) : null; if (bad) { say(bad.message); return; } const keys = chosen.map((e) => ({ key: e.key, amount: happened ? actualOf(e).value : e.amount })).filter((k) => !happened || k.amount !== null); const n = keys.length; if (!n) { say('An item with no amount needs its own screen: open it to type what came in or went out'); return; } picked.clear(); change((s) => keys.reduce((x, k) => (happened ? (k.amount === null ? x : confirmOccurrence(x, k.key, { amount: k.amount })) : skipOccurrence(x, k.key, true)), s), n + (n === 1 ? ' item' : ' items') + (happened ? ' marked happened' : ' marked did not happen')); };
   return h('section', { class: 'card', 'aria-labelledby': 'waiting-h' },
     h('h2', { id: 'waiting-h' }, 'Did these happen? ', h('span', { class: 'count' }, String(list.length))),
     list.length > 1 ? h('div', { class: 'edit-actions' },
-      h('button', { type: 'button', class: 'btn small', id: 'wait-all', onclick: () => { for (const e of list) picked.add(e.key); refresh(); } }, 'Select all'),
+      h('button', { type: 'button', class: 'btn small', id: 'wait-all', disabled: chosen.length === list.length, onclick: () => { for (const e of list) picked.add(e.key); refresh(); } }, 'Select all'),
+      h('button', { type: 'button', class: 'btn small', id: 'wait-none', disabled: !chosen.length, onclick: () => { picked.clear(); refresh(); } }, 'Deselect all'),
       h('button', { type: 'button', class: 'btn small primary', id: 'wait-happened', disabled: !chosen.length, onclick: () => markAll(true) }, chosen.length ? 'Mark ' + chosen.length + ' happened' : 'Mark selected happened'),
       h('button', { type: 'button', class: 'btn small', id: 'wait-not', disabled: !chosen.length, onclick: () => markAll(false) }, 'Did not happen')) : null,
     // One line each (owner's ask, 2026-10-27): tick, what and when, then the answer buttons.
     h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened wait-line' },
       list.length > 1 ? h('label', { class: 'wait-tick', title: 'Select ' + e.label }, h('input', { type: 'checkbox', class: 'wait-pick', 'aria-label': 'Select ' + e.label + ', ' + shortDate(e.date), checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); pickedWords(); } })) : null,
-      h('p', { class: 'wait-what' }, h('strong', {}, e.label), h('span', { class: 'wait-when' }, shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '')), h('span', { class: 'wait-amt' }, e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
+      h('p', { class: 'wait-what' }, h('strong', {}, e.label), h('span', { class: 'wait-when' }, shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '')), h('span', { class: 'wait-amt' }, e.amount === null ? 'estimate not entered' : 'est. ' + (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
+      actualBox(e),
       h('div', { class: 'wait-btns' },
-        e.amount === null ? null : h('button', { type: 'button', class: 'btn small', 'aria-label': 'It happened: ' + e.label, onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'Happened'),
+        h('button', { type: 'button', class: 'btn small', 'aria-label': 'It happened: ' + e.label, onclick: () => { const a = actualOf(e); if (!a.ok) { say(a.message); return; } if (a.value === null) { say(e.label + ': type the actual amount first'); return; } typedActual.delete(e.key); change((s) => confirmOccurrence(s, e.key, { amount: a.value }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(a.value) + (e.amount !== null && a.value !== e.amount ? ' (estimated ' + exact(e.amount) + ')' : '')); } }, 'Happened'),
         h('button', { type: 'button', class: 'btn small', 'aria-label': 'It did not happen: ' + e.label, onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'Didn\'t happen'),
         h('a', { class: 'btn small ghost', 'aria-label': 'Different amount or day: open ' + e.label, href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Different \u203A'))))));
+}
+// The actual amount typed on a line, kept while the page is open so a redraw never drops it (D-034).
+const typedActual = new Map();
+function actualBox(e) {
+  const id = 'act-' + e.key.replace(/[^a-z0-9]+/gi, '-');
+  const box = h('input', { id, class: 'wait-actual', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? '$' : exact(e.amount), 'aria-label': e.label + ', actual amount (blank uses the estimate)' });
+  box.value = typedActual.get(e.key) || '';
+  box.addEventListener('input', () => typedActual.set(e.key, box.value));
+  return h('label', { class: 'wait-act', for: id }, h('span', { class: 'wait-act-l' }, 'Actual'), box);
 }
 // The items ticked in Did these happen?, kept while the page is open. A tick updates the two buttons in place, never
 // the list it is in (D-034).
@@ -409,6 +422,9 @@ function pickedWords() {
   const n = picked.size, a = document.getElementById('wait-happened'), b = document.getElementById('wait-not');
   if (a) { a.disabled = !n; a.textContent = n ? 'Mark ' + n + ' happened' : 'Mark selected happened'; }
   if (b) b.disabled = !n;
+  const all = document.getElementById('wait-all'), none = document.getElementById('wait-none');
+  if (none) none.disabled = !n;
+  if (all) all.disabled = n === document.querySelectorAll('.wait-pick').length;
 }
 
 // The month's cash reading in words (S-209): checking today, the lowest day, and the days in trouble.
