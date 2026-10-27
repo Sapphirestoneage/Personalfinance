@@ -247,7 +247,7 @@ function hiDebts(m, r) {
   const row = (d) => {
     const name = valueOf(d.name) || d.id;
     const msg = h('p', { class: 'edit-msg', role: 'alert' });
-    const box = h('input', { id: 'pay-' + d.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '$', 'aria-label': 'Payment on ' + name });
+    const box = h('input', { id: 'pay-' + d.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 200', 'aria-label': 'Payment on ' + name });
     return h('li', { class: 'hi-debt' }, h('p', {}, h('strong', {}, name), ' ' + money(valueOf(d.balance)) + ' at ' + pct(valueOf(d.apr), 1)),
       h('form', { class: 'inline-form', novalidate: true, onsubmit: (e) => {
         e.preventDefault();
@@ -303,7 +303,7 @@ function goalsScreen(m) {
 function solveScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const byAge = kept().byAge || '';
-  const age = h('input', { id: 'solve-age', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '60' });
+  const age = h('input', { id: 'solve-age', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 60' });
   age.value = byAge;
   const parsed = byAge.trim() === '' ? { ok: true, value: null } : parseInput('int', byAge);
   const x = solvers(m.spine, m.rules, m.s, { byAge: parsed.ok ? parsed.value : null });
@@ -320,7 +320,7 @@ function solveScreen(m) {
 function wageScreen(m) {
   const w = realHourlyWage(m.spine, m.rules, m.s);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const hours = h('input', { id: 'wage-hours', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '40' }); hours.value = w.hoursWeek === null ? '' : String(w.hoursWeek);
+  const hours = h('input', { id: 'wage-hours', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 40' }); hours.value = w.hoursWeek === null ? '' : String(w.hoursWeek);
   const commute = h('input', { id: 'wage-commute', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 45' }); commute.value = m.base.household.commuteHoursPerWeek && m.base.household.commuteHoursPerWeek.value !== null ? String(m.base.household.commuteHoursPerWeek.value) : '';
   return h('section', { class: 'card', 'aria-label': SCREENS.wage },
     h('p', { class: 'muted' }, 'What you keep for each hour of work and commute.'),
@@ -359,7 +359,7 @@ function drafttScreen(m) {
 function floorScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const shock = kept().shockMonths || '';
-  const months = h('input', { id: 'shock-months', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '3' }); months.value = shock;
+  const months = h('input', { id: 'shock-months', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 3' }); months.value = shock;
   const p = shock.trim() === '' ? { ok: true, value: null } : parseInput('int', shock);
   const f = fixedFloor(m.spine, m.rules, m.s, m.sim, { months: p.ok ? p.value : null });
   return h('section', { class: 'card', 'aria-label': SCREENS.floor },
@@ -375,7 +375,7 @@ function floorScreen(m) {
 function outlookScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const want = kept().outlookRuns || '';
-  const runs = h('input', { id: 'outlook-runs', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '200' }); runs.value = want;
+  const runs = h('input', { id: 'outlook-runs', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 200' }); runs.value = want;
   const p = want.trim() === '' ? { ok: true, value: null } : parseInput('int', want);
   const o = outlook(m.spine, m.rules, m.sim, { runs: p.ok && p.value ? Math.min(1000, Math.max(10, p.value)) : null });
   return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },

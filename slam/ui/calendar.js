@@ -9,19 +9,20 @@
 // with its history entry, so Back, the trail and coming back from another page land where it was.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
-import { startPage, change, said, go, keep, kept, refresh, say } from './shell.js';
+import { startPage, change, said, go, keep, kept, refresh, say, current } from './shell.js';
 import { calendar, weekdayOf } from '../engine/calendar.js';
 import { yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashLine, waiting, itemId, itemDay } from '../engine/calendar-views.js';
 import { cashChartCard } from './cash-chart.js';
 import { safeToSpend } from '../engine/spending.js';
 import { summarize } from '../engine/summary.js';
-import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe, parseInput } from '../engine/edits.js';
+import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, setMaybeDate, removeMaybe, parseInput } from '../engine/edits.js';
 import { gapsCard } from './page.js';
 import { mathButton } from './math-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf, keyHint } from './view.js';
 import { personSlug } from './owed.js';
+import { addForm } from './add-form.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton } from './forecast.js';
@@ -312,32 +313,11 @@ function actualBox(e) {
 // ---------------------------------------------------------------- maybe money: the list; the form opens from + Add only
 let trayAdding = false;
 function trayCard(c, st) {
-  // The form (owner's ask, 2026-10-27: clearer): in or out first, then what it is and how much side by side, how
-  // likely as three plain choices, and the day if known. Labels above the boxes; Enter adds, Esc cancels.
-  const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  let dir = 'in', likely = 0.5;
-  const seg = (opts, get, set, label) => { const btns = opts.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(get() === k), onclick: () => { set(k); for (const [i, b] of btns.entries()) b.setAttribute('aria-pressed', String(opts[i][0] === k)); } }, h('span', { class: 'seg-label' }, w))); return h('div', { class: 'segmented', role: 'group', 'aria-label': label }, btns); };
-  const label = h('input', { id: 'tray-label', type: 'text', autocomplete: 'off', placeholder: 'e.g. Tax refund' });
-  const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 1,200' });
-  const dateIn = h('input', { id: 'tray-date', type: 'date' });
-  const field = (id, words, box, short = true) => h('div', { class: 'add-field' + (short ? ' short' : '') }, h('label', { for: id, class: 'edit-label' }, words), box);
+  // The form is the shared add form (slim by default): what it is and how much, in or out, how likely, the day if
+  // known. Labels above the boxes; Enter adds, Esc cancels.
   const cancel = () => { trayAdding = false; refresh(); };
-  const form = h('form', { class: 'editor add-form tray-form', novalidate: true, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); cancel(); } }, onsubmit: (ev) => {
-    ev.preventDefault();
-    if (!label.value.trim()) { msg.textContent = 'What is it: a name, for example Tax refund'; label.focus(); return; }
-    const a = parseInput('money', amount.value); if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
-    trayAdding = false;
-    change((s) => addMaybe(s, { label: label.value, amount: a.value, likelihood: likely, direction: dir, date: dateIn.value || null }).spine, said.added(label.value.trim()) + (dateIn.value ? ' on ' + shortDate(dateIn.value) : ' to maybe money'));
-  } },
-    seg([['in', 'Money in'], ['out', 'Money out']], () => dir, (k) => { dir = k; }, 'In or out'),
-    h('div', { class: 'add-grid' },
-      field('tray-label', 'What is it?', label),
-      field('tray-amount', 'How much', h('div', { class: 'affix' }, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '$'), amount))),
-    h('p', { class: 'edit-label' }, 'How likely?'),
-    seg([[0.75, 'Likely'], [0.5, 'Maybe'], [0.25, 'Unlikely']], () => likely, (k) => { likely = k; }, 'How likely'),
-    h('div', { class: 'add-grid' }, field('tray-date', 'When, if you know', dateIn)),
-    msg,
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn', onclick: cancel }, 'Cancel')));
+  const form = trayAdding ? addForm({ spine: () => current().spine, collection: 'maybe', today: todayIso(), onCancel: cancel,
+    onDone: (made, label) => { trayAdding = false; change(made.spine, said.added(label) + (made.date ? ' on ' + shortDate(made.date) : ' to maybe money')); } }) : null;
   const item = (m) => {
     const d = h('input', { type: 'date', 'aria-label': 'Day for ' + m.label });
     return h('li', { class: 'tray-item', 'data-key': 'maybe:' + m.id, 'data-label': m.label, 'data-drag': 'maybe', 'data-maybe': m.id },
@@ -347,7 +327,7 @@ function trayCard(c, st) {
   };
   return h('section', { class: 'card tray', id: 'tray', 'aria-labelledby': 'tray-h' },
     c.tray.length ? h('ul', { class: 'tray-list' }, c.tray.map(item)) : null,
-    trayAdding ? form : null);
+    form);
 }
 
 // ---------------------------------------------------------------- drag to reschedule (S-204)

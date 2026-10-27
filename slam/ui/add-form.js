@@ -6,7 +6,8 @@
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
 import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
-import { parseInput } from '../engine/edits.js';
+import { parseInput, addMaybe } from '../engine/edits.js';
+import { setAt } from '../engine/spine.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { h } from './view.js';
@@ -45,22 +46,23 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const name = box('add-name');
   const amount = box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' });
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
-  const often = income || collection === 'expenses' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
+  const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
   if (often) often.setAttribute('aria-label', 'How often');
   const fatSel = collection === 'expenses' && fat === null ? select('add-fat', [['', 'Something else (not food, housing or transportation)'], ...FAT.map((t) => [t, FAT_WORDS[t] || t])], '') : null;
   const qs = h('div', { class: 'add-questions' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   // The answers, kept while the kind changes so switching back finds them.
-  const ans = { payBasis: null, schedule: 'biweekly', hours: '', weeks: '', endDate: '', from: '', purpose: '' };
+  const ans = { payBasis: null, schedule: 'biweekly', hours: '', weeks: '', endDate: '', from: '', purpose: '', dir: 'in', likely: 0.5, date: '', by: '' };
+  const maybe = collection === 'maybe';
 
   const pick = (id, label, options, key) => { const s = select(id, [['', 'Pick one'], ...options], ans[key] || ''); s.addEventListener('change', () => { ans[key] = s.value || null; draw(); }); return field(id, label, s); };
   const text = (id, label, key, attrs = {}, hint) => { const b = h('input', { id, type: 'text', autocomplete: 'off', ...attrs }); b.value = ans[key] || ''; b.addEventListener('input', () => { ans[key] = b.value; }); return field(id, label, b, hint); };
 
   function draw() {
     const t = kind();
-    name.placeholder = namePlaceholder(collection, t);
+    name.placeholder = maybe ? 'e.g. Tax refund' : namePlaceholder(collection, t);
     name.setAttribute('aria-label', 'Name');
-    amountLabel.textContent = amountWords(collection, t, ans);
+    amountLabel.textContent = maybe ? 'How much' : amountWords(collection, t, ans);
     const out = [];
     let showOften = !!often;
     if (income && t === 'w2') {
@@ -86,6 +88,14 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       out.push(pick('add-purpose', 'What it is for', Object.entries(PERSON_PURPOSE_WORDS), 'purpose'));
       if (ans.purpose === 'loan') out.push(h('p', { class: 'edit-hint' }, 'A loan is money you owe, so it goes under Debt.'));
     }
+    // Maybe money (the Calendar's tray): in or out, how likely, and the day if known.
+    if (maybe) {
+      const seg = (opts, key, label) => { const btns = opts.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(ans[key] === k), onclick: () => { ans[key] = k; for (const [i, b] of btns.entries()) b.setAttribute('aria-pressed', String(opts[i][0] === k)); } }, h('span', { class: 'seg-label' }, w))); return h('div', { class: 'add-field' }, h('p', { class: 'edit-label' }, label), h('div', { class: 'segmented', role: 'group', 'aria-label': label }, btns)); };
+      out.push(seg([['in', 'Money in'], ['out', 'Money out']], 'dir', 'In or out'), seg([[0.75, 'Likely'], [0.5, 'Maybe'], [0.25, 'Unlikely']], 'likely', 'How likely?'));
+      out.push(field('add-date', 'When, if you know', (() => { const d = h('input', { id: 'add-date', type: 'date' }); d.value = ans.date; d.addEventListener('input', () => { ans.date = d.value; }); return d; })(), null, null, true));
+    }
+    // A goal: by when, if there is a date.
+    if (collection === 'goals') out.push(field('add-by', 'By when (optional)', (() => { const d = h('input', { id: 'add-by', type: 'date' }); d.value = ans.by; d.addEventListener('input', () => { ans.by = d.value; }); return d; })(), null, null, true));
     if (often) often.hidden = !showOften;
     if (ans.payBasis && income && !((t === 'w2' && W2_BASIS.some(([k]) => k === ans.payBasis)) || ((t === '1099' || t === 'side') && SELF_BASIS.some(([k]) => k === ans.payBasis)))) ans.payBasis = null;
     qs.replaceChildren(...out);
@@ -128,6 +138,13 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       if (String(ans.weeks).trim()) { const n = parseInput('int', ans.weeks); if (!n.ok || n.value < 0 || n.value > 99) { msg.textContent = 'Weeks left: a number from 0 to 99'; return; } answers.weeksLeft = n.value; }
       if (ans.endDate) answers.endDate = ans.endDate;
     }
+    if (maybe) {
+      if (!name.value.trim()) { msg.textContent = 'What is it: a name, for example Tax refund'; name.focus(); return; }
+      if (a.value === null) { msg.textContent = 'How much: type an amount'; amount.focus(); return; }
+      const r = addMaybe(now(), { label: name.value, amount: a.value, likelihood: ans.likely, direction: ans.dir, date: ans.date || null });
+      onDone({ spine: r.spine, id: r.id, collection: 'maybe', date: ans.date || null }, name.value.trim());
+      return;
+    }
     const cadence = t === 'w2' ? ans.schedule : often && !often.hidden ? often.value : 'monthly';
     let made;
     try { made = addWithAnswers(now(), { collection, type: t, label: name.value, amount: a.value, cadence, fat: fatSel ? fatSel.value || null : fat, answers }, today); } catch (err) { msg.textContent = err.message; return; }
@@ -143,11 +160,12 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     if (more.asOf.value) extra.asOf = more.asOf.value;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
     made = addMore(made, extra, today);
+    if (made.collection === 'goals' && ans.by) made = { ...made, spine: setAt(made.spine, 'goals.' + made.id + '.by', ans.by) };
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);
   };
 
-  const amountHint = h('p', { class: 'edit-hint' }, 'Blank is fine for now.');
+  const amountHint = h('p', { class: 'edit-hint', hidden: maybe }, 'Blank is fine for now.');
   amount.addEventListener('input', () => { amountHint.hidden = amount.value.trim() !== ''; });
   return h('form', { class: 'editor add-form', onsubmit: submit, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); onCancel(); } } },
     h('div', { class: 'add-grid' },
@@ -156,7 +174,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
-    h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),
+    maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),
     msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn', onclick: onCancel }, 'Cancel')));
 }

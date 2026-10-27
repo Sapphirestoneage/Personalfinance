@@ -51,7 +51,7 @@ const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', h
 
 function form() {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const amount = h('input', { id: 'wf-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '5,000' });
+  const amount = h('input', { id: 'wf-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 5,000' });
   amount.value = ask.amount === null ? '' : String(ask.amount);
   const choice = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-taxed', value: val, checked: ask.taxed === (val === 'yes') }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
   const taxBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Is tax already taken out of it?'),

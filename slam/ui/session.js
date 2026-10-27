@@ -503,15 +503,9 @@ function goals(ctx) {
     const yearly = fi.yearlySpending;
     const list = (spine.goals || []).filter((g) => g.type !== 'fi');
     const order = v(spine.household.goalOrder) || 'oneAtATime';
-    const form = { name: h('input', { id: 'g-name', type: 'text', autocomplete: 'off', 'aria-label': 'Goal name', placeholder: 'Name' }), amt: h('input', { id: 'g-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', 'aria-label': 'Goal amount in dollars', placeholder: 'Amount ($)' }), by: h('input', { id: 'g-by', type: 'date', 'aria-label': 'By when' }) };
-    const add = (e) => {
-      e.preventDefault();
-      const name = form.name.value.trim();
-      if (!name) { say('Give the goal a name'); form.name.focus(); return; }
-      const a = form.amt.value.trim() === '' ? { ok: true, value: null } : parseInput('money', form.amt.value);
-      if (!a.ok) { say('Amount: ' + a.message); form.amt.focus(); return; }
-      change((sp) => { const r = addItem(sp, { collection: 'goals', type: 'savings', label: name }, today); let n = a.value === null ? r.spine : putFact(r.spine, 'goals.' + r.id + '.target', a.value, 'known', today); if (form.by.value) n = setAt(n, 'goals.' + r.id + '.by', form.by.value); return n; }, said.added('Goal ' + name));
-    };
+    // + Add a goal opens the shared add form (slim by default); it never sits open.
+    const goalForm = goalAdding ? addForm({ spine: () => current().spine, collection: 'goals', types: ['savings'], today, onCancel: () => { goalAdding = false; refresh(); },
+      onDone: (made, label) => { goalAdding = false; change(made.spine, said.added('Goal ' + label)); } }) : null;
     const wr = v(spine.assumptions.withdrawalRate), own = pickedScenario() === 'best';
     return [
       h('section', { class: 'card fi-card', 'aria-label': 'Financial independence' },
@@ -529,7 +523,7 @@ function goals(ctx) {
           ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target, 'goals.' + g.id + '.target')),
             moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
             (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
-        h('form', { class: 'goal-form', novalidate: true, onsubmit: add }, form.name, form.amt, form.by, h('button', { type: 'submit', class: 'btn small primary' }, 'Add a goal')),
+        goalForm || h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { goalAdding = true; refresh(); requestAnimationFrame(focusAdd); } }, '+ Add a goal')),
         h('p', { class: 'edit-label' }, 'Fund goals'),
         h('div', { class: 'segmented', role: 'group', 'aria-label': 'Fund goals' }, [['oneAtATime', 'One at a time'], ['byDeadline', 'By deadline']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(order === k), onclick: () => { if (order !== k) putF('household.goalOrder', k, said.changed('Goals', w.toLowerCase())); } }, h('span', { class: 'seg-label' }, w))))),
       scenarioBar(spine, rules, pickedScenario(), () => refresh()),
@@ -566,6 +560,7 @@ function overview(ctx) {
 }
 
 const SCREENS = { needs, debt, income, assets, goals };
+let goalAdding = false;
 function render(ctx) {
   // The shared ranking (ui/urgency.js): the last answer stands until the new one lands, then one redraw.
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });

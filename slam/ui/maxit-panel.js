@@ -67,7 +67,7 @@ function recordButton(r, onRecord) {
     // The contribution total, without a 529 rolled in (that is counted on its own), and the employer part on its own.
     const now = r.record.total, events = r.record.events;
     const emp = r.record.employer;
-    const amount = h('input', { id: id + '-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '500' });
+    const amount = h('input', { id: id + '-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 500' });
     const kind = h('select', { id: id + '-kind' }, KIND_CHOICES(r.type).map(([v, w]) => h('option', { value: v }, w)));
     const label = h('label', { for: id + '-amount', class: 'edit-label' });
     const hint = h('p', { class: 'edit-hint' });

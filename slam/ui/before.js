@@ -41,7 +41,7 @@ function areaCard([area, label]) {
 }
 
 function gutCard() {
-  const box = h('input', { id: 'gut', class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '$', 'aria-labelledby': 'gut-l' });
+  const box = h('input', { id: 'gut', class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,500', 'aria-labelledby': 'gut-l' });
   box.value = inputText('money', state.gut);
   box.addEventListener('change', () => {
     const t = box.value.trim();
