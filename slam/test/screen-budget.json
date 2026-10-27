@@ -33,14 +33,14 @@
  },
  "My numbers": {
   "390": {
-   "words": 101,
-   "height": 1123,
+   "words": 91,
+   "height": 1094,
    "buttons": 16,
    "chips": 1,
    "primary": 0
   },
   "1024": {
-   "words": 88,
+   "words": 93,
    "height": 974,
    "buttons": 16,
    "chips": 1,
@@ -81,7 +81,7 @@
  },
  "Needs": {
   "390": {
-   "words": 39,
+   "words": 49,
    "height": 844,
    "buttons": 7,
    "chips": 0,
@@ -98,17 +98,17 @@
  "Calendar": {
   "390": {
    "words": 140,
-   "height": 1318,
+   "height": 1342,
    "buttons": 48,
    "chips": 0,
-   "primary": 1
+   "primary": 0
   },
   "1024": {
    "words": 181,
    "height": 1504,
    "buttons": 48,
    "chips": 0,
-   "primary": 1
+   "primary": 0
   }
  },
  "Spending": {
@@ -133,14 +133,14 @@
    "height": 1315,
    "buttons": 5,
    "chips": 5,
-   "primary": 1
+   "primary": 0
   },
   "1024": {
    "words": 174,
    "height": 1144,
    "buttons": 5,
    "chips": 5,
-   "primary": 1
+   "primary": 0
   }
  },
  "Profile": {

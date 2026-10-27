@@ -17,6 +17,6 @@ netWorth            $62,976 (dashboard.html); $62,976 (onepager.html)
 overallUtil         19.1% (ledger.html#/debt)
 personalUtil        35% (ledger.html#/debt)
 runway              3.4 months (dashboard.html); 3.4 months (onepager.html)
-savingsRateNet      15% (dashboard.html); 15.4% (onepager.html)
+savingsRateNet      15.4% (dashboard.html); 15.4% (onepager.html)
 surplus             $1,012 (dashboard.html); $1,012 (onepager.html)
 
