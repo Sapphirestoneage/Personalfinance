@@ -133,4 +133,11 @@ Words on the phone at 390px (from screen-budget) and the reviewer's worst proble
 
 ## Checks at the end
 
-FINAL_CHECKS
+After the last fix (2026-10-27):
+
+- `node tools/qa-crawl.mjs`: **PASS**. 151 screens x 3 looks (375 light, 375 dark, 1280 light), 333 taps: no errors,
+  crashes, overflow, null/undefined/NaN text, em dashes, raw dates or the app's own address as text; tab bar on one
+  row. Reported, not blocking: 399 small tap targets.
+- `node tools/agree-check.mjs`: **PASS**. Every one of the 21 tagged metrics reads the same on every screen.
+- `cd slam && node --test`: 1,068 pass, 0 fail (1,031 at the start of the night).
+- `node test/run.js` (the root suite): 35,911 checks pass.
