@@ -24,6 +24,9 @@ import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
+import { endCallScreen } from './end-call.js';
+import { rememberStep, currentClient } from './clients.js';
+import { ledgerHref } from './view.js';
 
 // The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
 let DATA = { needs: [], presets: [], withdrawal: [] };
@@ -103,6 +106,28 @@ const delBtn = (collection, id, name) => h('button', { type: 'button', class: 'b
 // ---------------------------------------------------------------- the step frame
 // Each step's total, as its formula (Track L): the same registry ids My numbers' sections use.
 const STEP_METRIC = { needs: 'expenses', debt: 'debts', taxes: 'taxBalanceDue', income: 'gross', assets: 'assets' };
+// A step is done when something was entered in it (friction audit: an empty household read 4 of 6 done, its $0 totals
+// counted as answers).
+function entered(spine, id) {
+  if (id === 'debt') return (spine.debts || []).length > 0 || noList().some((k) => k.startsWith('debt-'));
+  if (id === 'assets') return (spine.accounts || []).length > 0;
+  if (id === 'taxes') return !!v(spine.household.filingStatus);
+  if (id === 'income') return (spine.income || []).length > 0;
+  if (id === 'needs') return (spine.expenses || []).some((e) => v(e.amount) !== null);
+  if (id === 'goals') return (spine.goals || []).some((g) => g.type !== 'fi');
+  return false;
+}
+// The Next card (practical run, S-269): the numbers worth filling now, ranked by how much each moves the headline
+// numbers (the shared ranking, ui/urgency.js). One big #1, then #2 and #3 smaller; each opens its number.
+function nextCard(ctx) {
+  const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  const top = (openQuestions(ctx.spine, g) || []).slice(0, 3);
+  if (!top.length) return null;
+  const words = (q) => q.label + (q.kind === 'missing' ? ', not given yet' : ', a guess worth checking');
+  return h('section', { class: 'card next-card', 'aria-label': 'Next to fill' },
+    h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
+    top.length > 1 ? h('ol', { class: 'next-more', start: 2 }, top.slice(1).map((q) => h('li', {}, h('a', { href: ledgerHref(q.row || q.path) }, words(q))))) : null);
+}
 function frame(ctx, id, body) {
   const s = summarize(ctx.spine, ctx.rules, { flags: false });
   const steps = sessionSteps(ctx.spine, s);
@@ -110,7 +135,7 @@ function frame(ctx, id, body) {
   const prev = STEPS[i - 1], next = STEPS[i + 1];
   return [
     // The progress tracker (S-265): every step, done when its total is in, each a tap away; Back and Next stay below.
-    stepper(STEPS.map(([sid, , label]) => { const st = steps.find((x) => x.id === sid); return { label, href: '#/' + sid, state: sid === id ? 'current' : st && st.result && st.result.value !== null ? 'done' : 'todo' }; }), i, { nav: false }),
+    stepper(STEPS.map(([sid, , label]) => { const st = steps.find((x) => x.id === sid); return { label, href: '#/' + sid, state: sid === id ? 'current' : entered(ctx.spine, sid) && st && st.result && st.result.value !== null ? 'done' : 'todo' }; }), i, { nav: false }),
     h('section', { class: 'card step-head', 'aria-label': STEPS[i][2] },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
       h('span', { class: 'step-name' }, STEPS[i][2]),
@@ -120,7 +145,7 @@ function frame(ctx, id, body) {
     h('div', { class: 'step-nav' },
       h('button', { type: 'button', class: 'btn', onclick: () => go(prev ? [prev[0]] : []) }, '‹ Back'),
       next ? h('button', { type: 'button', class: 'btn primary', onclick: () => go([next[0]]) }, 'Next: ' + next[2] + ' ›')
-        : h('a', { class: 'btn primary', href: 'dashboard.html' }, 'Done: see Today ›')),
+        : h('button', { type: 'button', class: 'btn primary', onclick: () => go(['end']) }, 'End the call ›')),
     h('p', { class: 'muted step-skip' }, 'Nothing here is required. Next skips ahead.')
   ];
 }
@@ -135,7 +160,8 @@ function totalWords(step, owed = 0) {
 }
 
 // ---------------------------------------------------------------- Needs
-const NO_KEY = 'slam-session-no:v1';
+// Per client (S-269): one client's No is not another's.
+const NO_KEY = 'slam-session-no:v1' + ((currentClient() || {}).id ? ':' + currentClient().id : '');
 const noList = () => { try { return JSON.parse(localStorage.getItem(NO_KEY) || '[]'); } catch { return []; } };
 function setNo(key, on) { try { const l = new Set(noList()); if (on) l.add(key); else l.delete(key); localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } refresh(); }
 const findExpense = (spine, label) => (spine.expenses || []).find((e) => lower(e.label) === lower(label)) || null;
@@ -276,8 +302,8 @@ function needs(ctx) {
 }
 
 // ---------------------------------------------------------------- Debt
-const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
-const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card'], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
+const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['mortgage', 'Mortgage'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
+const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card'], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['mortgage', 'A mortgage?', 'Mortgage'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
 const putF = (path, value, words, kind = 'known') => change((s) => (value === null ? putFact(s, path, null, 'missing', todayIso()) : putFact(s, path, value, kind, todayIso())), words);
 function addDebt(type, label) {
   change((spine) => {
@@ -617,8 +643,12 @@ function render(ctx) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
   const id = ctx.levels[0];
-  return id ? [stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [overview(ctx), sessionNotesRow(ctx)];
+  if (id === 'end') return [endCallScreen(ctx.spine, r, null, todayIso()), sessionNotesRow(ctx)];
+  if (id) rememberStep(id);
+  return id ? [nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
 }
-const name = (levels) => (levels.length === 1 ? (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null : null);
+const name = (levels) => (levels.length === 1 ? (levels[0] === 'end' ? 'End of the call' : (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null) : null);
+// End call (S-269): one button in the header, on every Session screen but its own.
+const actions = (ctx) => (ctx.levels[0] === 'end' ? [] : [h('button', { type: 'button', id: 'end-call', class: 'btn small', onclick: () => go(['end']) }, 'End call')]);
 
-startPage({ tab: 'session', title: 'Session', render, name });
+startPage({ tab: 'session', title: 'Session', render, name, actions });

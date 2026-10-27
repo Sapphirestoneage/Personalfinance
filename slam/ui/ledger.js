@@ -150,8 +150,12 @@ function canLeave() {
     return false;
   }
   if (!dirty || !edCache || !document.contains(edCache.el)) return true;
+  // Autosave (practical run, S-269): leaving an editor saves what was typed, as Enter would; only typing that cannot be
+  // read holds the page, with its message.
+  const ed = edCache.el.querySelector('form.editor');
+  if (ed) { ed.requestSubmit(); if (!dirty) return true; }
   const msg = edCache.el.querySelector('.edit-msg');
-  if (msg) msg.textContent = 'Not saved yet. Choose Save, Save as a guess, or Cancel.';
+  if (msg && !msg.textContent) msg.textContent = 'Not saved yet: fix it, or choose Cancel.';
   const i = document.getElementById('edit-input');
   if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); }
   return false;
@@ -1286,7 +1290,6 @@ function topScreen(sc, st) {
     h('details', { class: 'flow-list card find-fold', open: (filtering(q) && !fillOn()) || null }, h('summary', {}, 'Filter'), filterBar(sc, q)),
     filtering(q) ? results(sc, q) : null,
     problemsCard(spine),
-    matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have unsaved changes.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save')),
     filtering(q) ? null : worthPair(spine),
     filtering(q) ? null : sectionList(sc),
     h('ul', { class: 'go-list' }, guessRow()),
@@ -1657,7 +1660,8 @@ function actions(ctx) {
   const spine = ctx.spine, mine = !whose(spine).example;
   return [
     // One filled button a screen: on the example, Open file is it.
-    h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save'),
+    // Every change is kept in this browser as it is made (S-269); this is a copy to keep elsewhere.
+    h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Download a backup'),
     mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
     h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add')

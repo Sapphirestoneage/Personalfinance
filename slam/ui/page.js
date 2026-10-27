@@ -1,6 +1,7 @@
 // What every page shares (S-208): a skip link to the content, an error catcher
 // that shows a banner instead of a silent failure, a one-line footer, and a polite live region for the page's headline. Formatting only.
 
+import { clients, adopt, newClient, switchTo, renameClient, syncName, duplicateClient, deleteClient, showExample } from './clients.js';
 import { showList } from './shortcuts.js';
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
@@ -59,11 +60,13 @@ const icon = () => {
   svg.append(el('circle', { cx: '12', cy: '8', r: '4' }), el('path', { d: 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7' }));
   return h('span', { class: 'whose-icon' }, svg);
 };
-// The name menu (Krug pass): a person icon and the name; it opens Profile and Open file. The file picked is read here,
-// in the browser, and the page reopens on it (reopen gets what loadAll returns).
-export function whoseMenu(spine, { rules, reopen, asOf = spine.meta.asOf } = {}) {
-  const w = whose(spine);
-  const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
+// The client switcher (practical run, S-269; was the name menu): the client's name always in the header; it opens the
+// list of clients to switch to, New client, Rename, Duplicate, Delete (asked first, with Undo), the example, Profile
+// and Open file. A switch reloads the page on the other household. rename(name) renames through the page's change().
+export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.meta.asOf } = {}) {
+  const w = whose(spine), reg = w.example ? clients() : adopt(w.name), at = reg.list.find((c) => c.id === reg.current) || null;
+  if (at && !w.example && at.name !== w.name) syncName(w.name);
+  const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'A household backup file' });
   const msg = h('p', { class: 'edit-msg', role: 'status' });
   input.addEventListener('change', async () => {
     const file = input.files && input.files[0];
@@ -71,11 +74,29 @@ export function whoseMenu(spine, { rules, reopen, asOf = spine.meta.asOf } = {})
     if (!file) return;
     try { const loaded = await loadMyFile(file, rules); reopen({ rules, ...loaded }); } catch (err) { console.warn(err); msg.textContent = loadFailWords(err, file.name); }
   });
+  const reload = () => location.reload();
+  const nameBox = h('input', { type: 'text', id: 'client-name', autocomplete: 'off', placeholder: 'e.g. Maya Lopez', 'aria-describedby': 'client-name-hint' });
+  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm); location.assign('session.html'); };
+  const newForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: create },
+    h('label', { for: 'client-name', class: 'edit-label' }, 'New client'), nameBox, h('p', { class: 'edit-hint', id: 'client-name-hint' }, 'Starts empty, kept only in this browser.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', id: 'client-create', class: 'btn primary small' }, 'Create'), h('button', { type: 'button', class: 'btn small', onclick: () => { newForm.hidden = true; } }, 'Cancel')));
+  const renameBox = h('input', { type: 'text', id: 'client-rename', autocomplete: 'off', value: w.example ? '' : w.name, 'aria-label': 'New name' });
+  const renameForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: (e) => { e.preventDefault(); const nm = renameBox.value.trim(); if (!nm || !at) return; renameClient(at.id, nm); if (rename) rename(nm); } },
+    h('label', { for: 'client-rename', class: 'edit-label' }, 'Rename'), renameBox, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary small' }, 'Rename')));
+  const others = reg.list.filter((c) => c.id !== reg.current);
   return h('details', { class: 'whose-menu' },
-    h('summary', { class: 'btn small whose-name', 'aria-label': 'Whose numbers: ' + w.name }, icon(), h('span', { class: 'whose-text' }, w.name)),
+    h('summary', { class: 'btn small whose-name', id: 'client-switch', 'aria-label': 'Client: ' + w.name + '. Switch or add a client' }, icon(), h('span', { class: 'whose-text' }, w.name), h('span', { 'aria-hidden': 'true' }, ' \u25BE')),
     h('div', { class: 'whose-items' },
       h('p', { class: 'whose-full' }, h('strong', {}, w.name)),
-      h('p', { class: 'muted' }, (w.example ? 'Made up, to try the app. ' : '') + 'Numbers as of ' + shortDate(asOf) + '.'),
+      h('p', { class: 'muted' }, (w.example ? 'Made up, to try the app. ' : '') + 'Numbers as of ' + shortDate(asOf) + '. Kept in this browser.'),
+      others.length ? h('ul', { class: 'client-list', 'aria-label': 'Switch to' }, others.map((c) => h('li', {}, h('button', { type: 'button', class: 'btn small client-pick', onclick: () => { if (switchTo(c.id)) reload(); } }, c.name)))) : null,
+      h('button', { type: 'button', id: 'client-new', class: 'btn small', onclick: () => { newForm.hidden = false; nameBox.focus(); } }, '+ New client'), newForm,
+      at ? h('div', { class: 'client-actions' },
+        h('button', { type: 'button', class: 'btn small', onclick: () => { renameForm.hidden = false; renameBox.focus(); renameBox.select(); } }, 'Rename'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => { if (duplicateClient()) reload(); } }, 'Duplicate'),
+        h('button', { type: 'button', class: 'btn small danger', onclick: () => { if (confirm('Delete ' + at.name + ' from this browser? You can undo it right after.')) { deleteClient(at.id); reload(); } } }, 'Delete')) : null,
+      renameForm,
+      reg.current ? h('button', { type: 'button', class: 'btn small', onclick: () => { showExample(); reload(); } }, 'Show the example household') : null,
       h('a', { class: 'btn small', href: 'profile.html' }, 'Profile'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'), input, msg));
+      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open a backup file'), input, msg));
 }

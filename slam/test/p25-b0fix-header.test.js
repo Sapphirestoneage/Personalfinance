@@ -113,5 +113,7 @@ test('the Calendar adds its drag listeners once, so Open file never makes one dr
 
 test('the example screen has one filled button (Open file is on the Builder since the bug sweep)', () => {
   assert.match(readFileSync(SLAM + 'ui/onepager.js', 'utf8'), /class: whose\(base\)\.example \? 'btn' : 'btn primary', onclick: \(\) => window\.print\(\)/);
-  assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /class: matchesFile\(spine\) \|\| whose\(spine\)\.example \? 'btn' : 'btn primary', onclick: saveFile/);
+  // Autosave (S-269): the backup download is never the filled button; nothing has to be pressed to keep a change.
+  assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /h\('button', \{ type: 'button', class: 'btn', onclick: saveFile \}, 'Download a backup'\)/);
+  assert.doesNotMatch(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /You have unsaved changes/);
 });

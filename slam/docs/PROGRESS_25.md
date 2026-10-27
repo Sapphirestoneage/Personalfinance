@@ -113,3 +113,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Type depth Batch 1 (2026-10-27): data/type-features.json for every type, engine/features.js, schema fields, match words read into tiers, with tests (S-266).
 - Type depth Batch 1 additions (2026-10-27): beneficiary and titling ticks on every account, a beneficiary flag, the Social Security estimate, coach notes, employer plan memory (S-267).
 - Friction audit, before (2026-10-27): tools/friction-audit.mjs and docs/FRICTION_BEFORE.md (S-268).
+- Practical to run (2026-10-27): four tabs and More, clients and the switcher, pick up where we left off, the Next card, End call, autosave, the audit's fixes (S-269).

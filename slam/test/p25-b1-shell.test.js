@@ -18,12 +18,14 @@ const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), 
 const JARGON = /\b(engine|registry|rules|spine|kind|path|field|stored|simulation|template|schema|computed|derived)\b|S-\d{3}|the Ledger/i;
 const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).filter((x) => /\s/.test(x) && /^[A-Z ]/.test(x));
 
-test('six tabs, the same on every page, in order; Profile is in the name menu (Krug pass)', () => {
+test('four tabs and a More menu, the same on every page, in order; Profile is in the client menu (S-269)', () => {
   const src = read('ui/shell.js');
   const tabs = [...src.slice(src.indexOf('export const TABS'), src.indexOf('];', src.indexOf('export const TABS'))).matchAll(/\['(\w+)', '([^']+)', '([\w.]+)'\]/g)].map((m) => [m[2], m[3]]);
-  assert.deepEqual(tabs, [['Today', 'dashboard.html'], ['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Calendar', 'calendar.html'], ['Spending', 'spending.html'], ['Plan', 'plan.html']]);
-  assert.match(read('ui/page.js'), /h\('a', \{ class: 'btn small', href: 'profile\.html' \}, 'Profile'\),\n\s+h\('button', \{ type: 'button', class: 'btn small', onclick: \(\) => input\.click\(\) \}, 'Open file'\)/);
-  for (const [, page] of tabs) assert.ok(existsSync(SLAM + page), page + ' exists, so no tab is a dead click');
+  assert.deepEqual(tabs, [['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Plan', 'plan.html'], ['Calendar', 'calendar.html']]);
+  const more = [...src.slice(src.indexOf('export const MORE'), src.indexOf('];', src.indexOf('export const MORE'))).matchAll(/\['(\w+)', '([^']+)', '([\w.]+)'\]/g)].map((m) => m[3]);
+  for (const page of ['dashboard.html', 'spending.html', 'windfall.html', 'math.html', 'rules.html', 'house.html', 'builder.html', 'before.html', 'profile.html', 'onepager.html']) assert.ok(more.includes(page), page + ' is in More');
+  assert.match(read('ui/page.js'), /h\('a', \{ class: 'btn small', href: 'profile\.html' \}, 'Profile'\)/);
+  for (const page of [...tabs.map((t) => t[1]), ...more]) assert.ok(existsSync(SLAM + page), page + ' exists, so no tab is a dead click');
   assert.match(src, /'aria-current': id === lit \? 'page' : null/);
   const css = read('ui/spine.css');
   assert.match(css, /\.tabbar \{ position: fixed; left: 0; right: 0; bottom: 0;/, 'at the bottom on a phone');
@@ -90,7 +92,7 @@ test('Session: the six steps in DATING order, as My numbers, each with its lette
   const src = read('ui/session.js');
   // Batch 3: each row opens its own guided step (session.html#/needs), not My numbers.
   assert.match(src, /h\('a', \{ class: 'go-row', href: '#\/' \+ st\.id \}/, 'each row opens its step');
-  assert.match(src, /startPage\(\{ tab: 'session', title: 'Session', render, name \}\)/);
+  assert.match(src, /startPage\(\{ tab: 'session', title: 'Session', render, name, actions \}\)/);
 });
 
 test('client words on the new screens follow THE COPY RULE', () => {

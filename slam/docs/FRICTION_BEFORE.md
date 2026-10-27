@@ -1,11 +1,13 @@
 # Friction audit, before
 
+Minutes are taps, typed answers and results at the pace, plus the time each friction below loses.
+
 Made by `node slam/tools/friction-audit.mjs` on 2026-10-27. Two made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: 5 s a tap, 45 s a typed answer, 60 s a result talked through.
 
 | Household | Numbers typed | Taps | Taps per number | Keys | Scrolls | Page loads | Screen changes | Dead ends | Next below the fold | Results talked | Minutes |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Maya | 28 | 48 | 1.71 | 139 | 5 | 4 | 21 | 0 | 3 | 7 | 32 |
-| Dre | 35 | 64 | 1.83 | 180 | 5 | 5 | 22 | 0 | 1 | 7 | 38.6 |
+| Maya | 28 | 48 | 1.71 | 139 | 5 | 4 | 21 | 0 | 3 | 7 | 36.2 |
+| Dre | 35 | 64 | 1.83 | 180 | 5 | 5 | 22 | 0 | 1 | 7 | 48.2 |
 
 ## Per step (taps, typed answers, scrolls)
 
@@ -35,7 +37,6 @@ None.
 ## Printed
 
 Maya: yes, Dre: yes
-
 ## Also seen on the walk (not timed by the script)
 
 - Seven tabs in the header (Today, Session, My numbers, Calendar, Spending, Plan, and the name menu), plus pages reached only by address (Windfall, Math, Rules, House, Builder, Before, One-pager).

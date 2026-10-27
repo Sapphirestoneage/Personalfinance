@@ -110,7 +110,7 @@ async function run(browser, hh) {
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); }); await page.reload(); await page.waitForTimeout(1200);
   r.step = 'new client';
   const file = await blankFile(hh.name);
-  if (await r.has('#client-new')) {
+  if (await page.locator('#client-new').count()) {
     await r.tap('#client-switch', 'the client switcher');
     await r.tap('#client-new', 'New client');
     await r.type('#client-name', hh.name, 'the client\'s name');
@@ -219,7 +219,7 @@ async function run(browser, hh) {
 
   // The one-pager.
   r.step = 'one-pager';
-  if (await r.has('#end-call')) { await r.tap('#end-call', 'End call'); }
+  if (await r.has('#end-call')) { await nav('#end-call', 'End call'); await nav('#ec-print', 'Print or save the one-pager'); }
   else { await go('onepager.html'); r.lose(PACE.tap * 2, 'The one-pager is not on the Session: the coach goes to it by address or the menu'); }
   if (await r.has('button:has-text("Print")')) await r.tap('button:has-text("Print")', 'Print', { expectChange: false });
   r.talk();
@@ -232,10 +232,13 @@ async function run(browser, hh) {
 }
 
 // ---------------------------------------------------------------- the report
-const minutes = (x) => Math.round(((x.taps * PACE.tap) + (x.typed * PACE.typed) + (x.results * PACE.result)) / 6) / 10;
+// The time: taps, typed answers and results at the pace, plus the time each friction loses (a blank file to make, a
+// screen to go find).
+const minutes = (x) => Math.round(((x.taps * PACE.tap) + (x.typed * PACE.typed) + (x.results * PACE.result) + x.lost.reduce((a, l) => a + l.secs, 0)) / 6) / 10;
 function report(runs, before) {
   const L = [];
   L.push('# Friction audit, ' + (before ? 'after' : 'before'), '');
+  L.push('Minutes are taps, typed answers and results at the pace, plus the time each friction below loses.', '');
   L.push('Made by `node slam/tools/friction-audit.mjs` on ' + new Date().toISOString().slice(0, 10) + '. Two made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: ' + PACE.tap + ' s a tap, ' + PACE.typed + ' s a typed answer, ' + PACE.result + ' s a result talked through.', '');
   L.push('| Household | Numbers typed | Taps | Taps per number | Keys | Scrolls | Page loads | Screen changes | Dead ends | Next below the fold | Results talked | Minutes |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const x of runs) L.push('| ' + [x.name, x.typed, x.taps, (x.taps / x.typed).toFixed(2), x.keys, x.scrolls, x.pages, x.screens, x.dead.length, x.below.length, x.results, minutes(x)].join(' | ') + ' |');
@@ -260,10 +263,14 @@ function report(runs, before) {
   return L.join('\n');
 }
 
-const browser = await playwright.chromium.launch();
+// --from FILE: the report again from saved numbers (no browser).
 const runs = [];
-for (const hh of HOUSEHOLDS) { try { runs.push(await run(browser, structuredClone(hh))); } catch (err) { console.error(hh.name + ': ' + err.message); process.exitCode = 1; } }
-await browser.close();
+if (arg('--from')) runs.push(...JSON.parse(readFileSync(arg('--from'), 'utf8')).map((x) => ({ errors: [], ...x })));
+else {
+  const browser = await playwright.chromium.launch();
+  for (const hh of HOUSEHOLDS) { try { runs.push(await run(browser, structuredClone(hh))); } catch (err) { console.error(hh.name + ': ' + err.message); process.exitCode = 1; } }
+  await browser.close();
+}
 const beforeFile = arg('--before');
 const before = beforeFile && existsSync(beforeFile) ? JSON.parse(readFileSync(beforeFile, 'utf8')) : null;
 const md = report(runs, before);

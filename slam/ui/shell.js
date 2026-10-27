@@ -13,6 +13,9 @@
 // Formatting only: the page's render reads the engines; nothing here figures a number.
 
 import { mountPage, whoseMenu } from './page.js';
+import { takeDeleted, restoreClient } from './clients.js';
+import { renameHousehold } from '../engine/blank.js';
+import { whose } from './household.js';
 import { searchButton } from './search.js';
 import { installShortcuts } from './shortcuts.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS, yours } from './household.js';
@@ -26,14 +29,27 @@ import { savedPerDay } from '../engine/money-as.js';
 import { commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { h, said, sentence as end } from './view.js';
 
-// The six tabs, in order: [id, words, page].
+// The four tabs, in order (practical run, S-269): [id, words, page]. Everything else is one tap away in More.
 export const TABS = [
-  ['today', 'Today', 'dashboard.html'],
   ['session', 'Session', 'session.html'],
   ['numbers', 'My numbers', 'ledger.html'],
-  ['calendar', 'Calendar', 'calendar.html'],
+  ['plan', 'Plan', 'plan.html'],
+  ['calendar', 'Calendar', 'calendar.html']
+];
+// The More menu: every other page, in the order a call reaches for them. Old links to any of them keep working.
+export const MORE = [
+  ['today', 'Today', 'dashboard.html'],
+  ['onepager', 'One-pager', 'onepager.html'],
+  ['profile', 'Profile', 'profile.html'],
+  ['before', 'Before our first call', 'before.html'],
   ['spending', 'Spending', 'spending.html'],
-  ['plan', 'Plan', 'plan.html']
+  ['windfall', 'Got extra money?', 'windfall.html'],
+  ['where', 'Where to find each number', 'where.html'],
+  ['assumptions', 'Assumptions', 'assumptions.html'],
+  ['math', 'All formulas', 'math.html'],
+  ['rules', 'Rules', 'rules.html'],
+  ['house', 'House defaults', 'house.html'],
+  ['builder', 'Builder', 'builder.html']
 ];
 // Profile is not a tab (bug sweep): it opens from the household name in every header, a person icon and the name.
 // My numbers opens at a section, and deeper, by these words: numbersHref('debt', 'credit-cards').
@@ -105,6 +121,9 @@ export async function startPage(o) {
     try { take(await loadAll()); } catch (err) { app.replaceChildren(h('p', { class: 'card' }, opts.title + ' could not load: ' + err.message)); return; }
   }
   arrive();
+  // A client deleted just before this page loaded: Undo brings it back (S-269).
+  const gone = takeDeleted();
+  if (gone) say(gone.client.name + ' deleted from this browser', () => { restoreClient(gone); location.reload(); });
 }
 
 // Every change goes through here: next is the new household, or a function from the household now to the next one;
@@ -195,8 +214,12 @@ export function tabBar(lit) {
     saveScroll();
     try { sessionStorage.setItem(RETURN_KEY, new URL(href, location.href).pathname); } catch { /* storage blocked: the page opens at its top */ }
   };
+  const here = MORE.find(([, , href]) => samePage(href));
   return h('nav', { class: 'tabbar', 'aria-label': 'Pages' },
-    h('ul', {}, TABS.map(([id, words, href]) => h('li', {}, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tap(href) }, words)))));
+    h('ul', {}, TABS.map(([id, words, href]) => h('li', {}, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tap(href) }, words))),
+      h('li', {}, h('details', { class: 'more-menu' },
+        h('summary', { class: 'tab', 'aria-current': here || (lit && !TABS.some(([id]) => id === lit)) ? 'page' : null }, here ? 'More: ' + here[1] : 'More'),
+        h('ul', { class: 'more-list' }, MORE.map(([, words, href]) => h('li', {}, h('a', { class: 'more-link', href, 'aria-current': samePage(href) ? 'page' : null, onclick: tap(href) }, words))))))));
 }
 // The tab bar's own height, as --tabbar-h: the page's bottom padding on a phone (so nothing hides behind the bar) and
 // where Back and the trail stick on a computer.
@@ -246,15 +269,17 @@ function header(ctx, title) {
     h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'))
   ] : [];
   return [
+    // Saved (S-269): every change is kept in this browser as it is made; nothing to press.
+    opts.household && hist && savedMark ? h('span', { class: 'saved-mark', role: 'status', title: savedMark === 'Saved' ? 'Kept in this browser' : 'This browser would not keep the change' }, savedMark) : null,
     h('div', { class: 'top-actions' },
-      opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null,
+      opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); }, rename: (nm) => change((x) => renameHousehold(x, nm, whose(x).name), 'Client renamed to ' + nm) }) : null,
       opts.household && hist ? searchButton(() => hist.present, { rulesOf: () => rulesFor(hist.present), run: runCommand }) : null,
       ...undoing)
   ];
 }
 // One header line everywhere (Krug pass, 44px): the SLAM wordmark (to Today), Back on a phone or the trail on a
 // computer, the title; then whose numbers, search, Undo and Redo.
-const wordmark = () => h('a', { class: 'wordmark', href: 'dashboard.html', 'aria-label': 'SLAM: Today' }, 'SLAM');
+const wordmark = () => h('a', { class: 'wordmark', href: 'session.html', 'aria-label': 'SLAM: Session' }, 'SLAM');
 function headLine(levels, names, ctx, title) {
   return [wordmark(), ...screenTop(levels, names), h('h1', { class: 'top-h1' }, title), ...header(ctx, title)];
 }
@@ -276,7 +301,8 @@ function fade() {
 }
 
 // ---------------------------------------------------------------- undo and redo
-function stored() { const ok = keepHistory(hist); if (ok) source = 'saved'; return ok; }
+let savedMark = null;
+function stored() { const ok = keepHistory(hist); if (ok) source = 'saved'; savedMark = ok ? 'Saved' : 'Not saved'; return ok; }
 function doUndo() {
   if (side && side.done) {
     const s = side;
