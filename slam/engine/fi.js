@@ -65,11 +65,18 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
   // Fat FI = dream yearly spending / withdrawal rate; Barista FI = (today's yearly spending - part-time income a
   // year) / withdrawal rate. Both read the FI goal's own fields; blank is missing, never $0.
   const ft = tracker(), bt = tracker();
-  const dream = goalRec && goalRec.dreamSpending ? ft.useFact('goals.' + goalRec.id + '.dreamSpending', goalRec.dreamSpending) : (ft.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.dreamSpending'), null);
+  // Until the FI goal (or a scenario) says, both use a house default (owner's ask, 2026-10-27), marked rough: a dream
+  // spending of today's yearly spending x APP_FAT_FI_MULT, and part-time work covering APP_BARISTA_SHARE of it.
+  const typed = (f) => !!f && f.value !== null && f.value !== undefined && f.kind !== 'missing';
+  const dream = goalRec && typed(goalRec.dreamSpending) ? ft.useFact('goals.' + goalRec.id + '.dreamSpending', goalRec.dreamSpending)
+    : yearlyToday === null ? (ft.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.dreamSpending'), null)
+      : (ft.absorb(today), ft.addRough('goals.' + (goalRec ? goalRec.id : 'fi') + '.dreamSpending'), round2(yearlyToday * ft.rule(rules, 'APP_FAT_FI_MULT', year)));
   ft.read(spine, 'assumptions.withdrawalRate');
   const fatFi = ft.out(dream === null || !wr ? null : round2(dream / wr));
   bt.absorb(today);
-  const partTime = goalRec && goalRec.partTimeIncome ? bt.useFact('goals.' + goalRec.id + '.partTimeIncome', goalRec.partTimeIncome) : (bt.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.partTimeIncome'), null);
+  const partTime = goalRec && typed(goalRec.partTimeIncome) ? bt.useFact('goals.' + goalRec.id + '.partTimeIncome', goalRec.partTimeIncome)
+    : yearlyToday === null ? (bt.addMissing('goals.' + (goalRec ? goalRec.id : 'fi') + '.partTimeIncome'), null)
+      : (bt.addRough('goals.' + (goalRec ? goalRec.id : 'fi') + '.partTimeIncome'), round2(yearlyToday * bt.rule(rules, 'APP_BARISTA_SHARE', year)));
   const baristaFi = bt.out(partTime === null || !wr || yearlyToday === null ? null : round2(Math.max(0, yearlyToday - partTime) / wr));
 
   // Lean FI: yearly food, housing and transportation that are needs (eating
@@ -113,6 +120,7 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
     // A direct FI number rests on no spending, so there is none to show.
     yearlySpending: goalSource === 'direct' ? { value: null, kind: 'notForMe' } : goalSource === 'spending' ? { value: round2(goal * wr), kind: goalR.kind } : { value: cf.expenses.total.value === null ? null : round2(cf.expenses.total.value * 12), kind: cf.expenses.total.kind },
     fiNumber, goal: goalR, goalSource, implied, today, yearlyToday, fatFi, baristaFi,
+    dream, dreamDefault: !(goalRec && typed(goalRec.dreamSpending)), partTime, partTimeDefault: !(goalRec && typed(goalRec.partTimeIncome)),
     // The three FI numbers side by side (B2): today's spending, the goal's, and today's without debt payments.
     threeWays: [{ id: 'today', label: 'Today\'s spending', result: today }, { id: 'goal', label: 'Your goal', result: goalR }, { id: 'noDebt', label: 'Without debt payments', result: implied }],
     goalBelowImplied: mis.out(goal === null || implied.value === null ? null : goal < implied.value),

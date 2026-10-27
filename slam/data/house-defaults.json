@@ -203,6 +203,26 @@
       "verified": "house"
     },
     {
+      "id": "APP_FAT_FI_MULT",
+      "rule": "Fat FI: dream yearly spending as a multiple of today's, when the FI goal has none",
+      "value": 1.5,
+      "unit": "multiple",
+      "appliesTo": "FI engine",
+      "notes": "Shown as rough until a dream spending is typed on the FI goal or a scenario",
+      "source": "Eli's default (owner's ask, 2026-10-27)",
+      "verified": "house"
+    },
+    {
+      "id": "APP_BARISTA_SHARE",
+      "rule": "Barista FI: the share of today's yearly spending part-time work covers, when the FI goal has no part-time income",
+      "value": 0.5,
+      "unit": "ratio",
+      "appliesTo": "FI engine",
+      "notes": "Shown as rough until a part-time income is typed on the FI goal or a scenario",
+      "source": "Eli's default (owner's ask, 2026-10-27)",
+      "verified": "house"
+    },
+    {
       "id": "STAGE_RUNWAY_RED_MONTHS",
       "rule": "Cash runway under this many months is stage 1 (red)",
       "value": 1,

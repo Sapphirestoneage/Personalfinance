@@ -58,7 +58,9 @@ export const GROUPS = [
     row('SCENARIO_WORST_WR', 'Conservative set: withdrawal rate', 'The withdrawal rate in the Conservative set.', [['Today', T], ['Plan', P]]),
     row('SCENARIO_OPT_RETURN', 'Optimistic set: real return', 'A year\'s return after inflation in the Optimistic set.', [['Today', T], ['Plan', P]]),
     row('SCENARIO_OPT_WR', 'Optimistic set: withdrawal rate', 'The withdrawal rate in the Optimistic set.', [['Today', T], ['Plan', P]]),
-    row('APP_COAST_AGE', 'Coast age', 'The age Coast FI counts to when the client has not said.', [['Plan', P], ['My numbers, Goals', N + '#/goals']])
+    row('APP_COAST_AGE', 'Coast age', 'The age Coast FI counts to when the client has not said.', [['Plan', P], ['My numbers, Goals', N + '#/goals']]),
+    row('APP_FAT_FI_MULT', 'Fat FI: dream spending', 'Dream yearly spending as a multiple of today\'s, until the FI goal says.', [['My numbers, Goals', N + '#/goals']]),
+    row('APP_BARISTA_SHARE', 'Barista FI: part-time work covers', 'The share of today\'s spending part-time work pays, until the FI goal says.', [['My numbers, Goals', N + '#/goals']])
   ], own: [
     ['inflation', 'Inflation'], ['realReturn', 'Real return'], ['withdrawalRate', 'Withdrawal rate'], ['lifeExpectancy', 'Life expectancy'], ['coastAge', 'Coast age']
   ] },
