@@ -1513,3 +1513,13 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .share-status { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
 .share-person > .btn.danger { justify-self: start; }
 @media (min-width: 720px) { .share-top { grid-template-columns: 2fr 1fr 1fr; } .share-top .share-field:first-child { grid-column: auto; } }
+
+/* Owed to you: each line its label and amount, a muted line under it, then its buttons. */
+.owed-lines { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
+.owed-line { border-top: 1px solid var(--border); padding-top: 12px; display: grid; gap: 6px; }
+.owed-head { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; }
+.owed-amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.owed-sub { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.owed-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.owed-note { font-size: var(--text-sm); }
+.lent-form h2 { margin-top: 0; }

@@ -37,7 +37,8 @@ import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
 import { shareEditor, threeNumbers } from './share-editor.js';
-import { setSharers } from '../engine/owed.js';
+import { setSharers, owedToYou } from '../engine/owed.js';
+import { owedScreen, personScreen, owedFigure, personSlug, resetOwedForms } from './owed.js';
 import { whereTable } from './where-data.js';
 import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
 import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
@@ -1233,6 +1234,7 @@ function rowFigure(sec, it) {
 }
 // A group's total on its row: incomplete when a line in it has no amount yet.
 function groupTotal(sec, g) {
+  if (sec.slug === 'assets' && g.slug === 'owed-to-you') return owedFigure(cur());
   if (g.total === undefined || (g.total === null && !g.totalIncomplete)) return g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items'));
   if (g.total === null) return h('span', {}, chip('missing'), h('span', { class: 'empty' }, ' No amounts yet'));
   return h('span', {}, h('span', { class: 'go-total' }, summaryMoney(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
@@ -1438,6 +1440,7 @@ function nameOf(levels, ctx) {
   if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
   if (levels[0] === 'needs' && levels[1] === 'covered') return levels.length === 2 ? 'Covered by others' : null;
+  if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) { const p = owedToYou(ctx.spine).find((x) => personSlug(x.key) === levels[2]); return levels.length === 3 && p ? p.name : null; }
   const at = screenAt(screensOf(ctx.spine), levels);
   if (!at) return null;
   return levels.length === 1 ? at.section.label : levels.length === 2 ? at.group.label : at.item.label;
@@ -1451,7 +1454,7 @@ function render(ctx) {
   // A new screen: what was open on the last one closes; typing left there unsaved is said, never dropped silently.
   if (key !== screenKey) {
     if (screenKey !== null && dirty && edCache) say('Not saved: ' + edCache.label);
-    dirty = false; edCache = null; adding = null; sharingOpen = null;
+    dirty = false; edCache = null; adding = null; sharingOpen = null; resetOwedForms();
     screenKey = key;
   }
   let st = ctx.state || {};
@@ -1469,6 +1472,9 @@ function render(ctx) {
   else if (levels[0] === 'pick') body = pickerCard();
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else if (levels[0] === 'needs' && levels[1] === 'covered') body = coveredScreen();
+  // Owed to you (shared bills brief): person by person; a loan's own fields still open as an item.
+  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) });
+  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = personScreen(cur(), levels[2]);
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);

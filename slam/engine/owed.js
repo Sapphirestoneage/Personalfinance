@@ -182,6 +182,8 @@ export function owedToYou(spine, asOf = spine.meta.asOf) {
   for (const x of people.values()) x.lines.sort((a, b) => (a.since < b.since ? -1 : a.since > b.since ? 1 : 0));
   return [...people.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 }
+// What stays owed after a payment toward a line.
+export const owedLeft = (owed, paid) => Math.max(0, round2(owed - paid));
 export const owedTotal = (spine, asOf) => round2(owedToYou(spine, asOf).reduce((t, x) => t + x.total, 0));
 // Names already used on bills and loans, for the name box.
 export const sharerNames = (spine) => [...new Set([...(spine.expenses || []).flatMap((e) => arrangementOf(spine, e).people.map((p) => p.name)), ...(spine.lent || []).map((l) => l.person)].filter((n) => n && !/^Person \d+$/.test(n)))].sort();
