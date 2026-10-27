@@ -52,6 +52,7 @@ const CHANGES = {
   setChargeDay: [null, (s) => E.setChargeDay(s, 'streaming', 9, T)],
   markSubscription: [null, (s) => E.markSubscription(s, 'streaming', true, T)],
   addFee: [null, (s) => E.addFee(s, 'visa', T)],
+  setCheck: [null, (s) => E.setCheck(s, 'expenses.groceries.amount', 'later', '2027-01-01', T)],
   duplicateItem: [null, (s) => E.duplicateItem(s, 'expenses', 'gym', T, 'Gym two').spine],
   removeItem: [null, (s) => E.removeItem(E.removeItem(s, 'debts', 'visa'), 'income', 'tutoring')],
   bulkEdit: [null, (s) => E.bulkEdit(s, [{ path: 'expenses.rent.amount', type: 'money' }, { path: 'debts.visa.apr', type: 'cardRate' }], 'rough', T)],

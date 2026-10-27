@@ -12,14 +12,13 @@ import { scenarioBar, pickedScenario } from './scenario.js';
 import { SCENARIO_WORDS } from '../engine/scenarios.js';
 import { prefsScreen, prefsSummary } from './prefs-screen.js';
 import { pref } from './prefs.js';
-import { h, money, shortDate } from './view.js';
+import { h, money, shortDate, todayIso } from './view.js';
 import { questionEl } from './profile-q.js';
 import { AREAS, LEVEL1, asked, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
 import { valueOf as v } from '../engine/spine.js';
 import { summarize } from '../engine/summary.js';
 import { putFact } from '../engine/edits.js';
 
-const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const AREA_NAMES = Object.fromEntries(AREAS);
 const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: todayIso(), by: 'coach' }), q.label + (x === null ? ' cleared' : ' answered') + '. Logged as a life change');
 
@@ -27,7 +26,7 @@ const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: toda
 // No letter badges (Krug pass): those are only for the six DATING groups in My numbers.
 const goRow = (href, mark, name, total, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, total !== null ? h('span', { class: 'go-total' }, total) : null, total !== null ? ' ' : null, sub)));
 function top({ spine, rules }) {
-  const a = answersOf(spine), hw = homeworkList(spine), own = Object.keys(clientOverrides(spine)).length;
+  const a = answersOf(spine), hw = homeworkList(spine, todayIso()), own = Object.keys(clientOverrides(spine)).length;
   const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
   const todo = hw.reduce((n, g) => n + g.items.length, 0);
   const groups = [
@@ -127,7 +126,7 @@ const whereWords = (q) => ({ paystub: 'your paystub', benefits: 'your benefits s
 
 // ---------------------------------------------------------------- to-dos and life changes
 function todoScreen({ spine }) {
-  const groups = homeworkList(spine), guessing = stillGuessing(spine);
+  const groups = homeworkList(spine, todayIso()), guessing = stillGuessing(spine);
   return [
     groups.length ? groups.map((g) => h('section', { class: 'card' }, h('h2', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x))))) : h('p', { class: 'card' }, 'Nothing to look up yet. In the session, "I\'ll look it up" adds a to-do here.'),
     guessing.length ? h('section', { class: 'card' }, h('h2', {}, 'Still guessing'), h('ul', {}, guessing.map((x) => h('li', {}, x.label)))) : null,

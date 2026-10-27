@@ -152,7 +152,7 @@ test('Level 2 opens only for what Level 1 ticked; Level 3 makes the to-dos, grou
   assert.deepEqual(P.stillGuessing(s).map((x) => x.id), ['k401Contribution']);
   assert.ok(validate(s).ok);
   // The one-pager prints them.
-  assert.match(readFileSync(new URL('../ui/onepager.js', import.meta.url), 'utf8'), /homeworkList\(spine\)/);
+  assert.match(readFileSync(new URL('../ui/onepager.js', import.meta.url), 'utf8'), /homeworkList\(spine, todayIso\(\)\)/);
 });
 
 test('every question changes something, says what, and "Not sure" is always allowed', () => {

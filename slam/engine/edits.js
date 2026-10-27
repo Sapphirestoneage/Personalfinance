@@ -418,6 +418,17 @@ export function setChargeDay(spine, id, day, today) {
   if (next < today) next = m === 12 ? on(y + 1, 1) : on(y, m + 1);
   return putFact(spine, 'expenses.' + id + '.renews', next, 'known', today);
 }
+// Check later or check now (rough now and rough later): an override on one number's Fact, with its date. mode null
+// clears it, so the rule decides again. The value and how sure it is never change.
+export function setCheck(spine, path, mode, until, today) {
+  const f = getAt(spine, path);
+  if (!isFact(f)) throw new Error('No field at ' + path);
+  const next = { ...f };
+  if (mode === 'later') next.check = { mode: 'later', until, set: today };
+  else if (mode === 'now') next.check = { mode: 'now', set: today };
+  else delete next.check;
+  return setAt(spine, path, next);
+}
 // A card's annual fee row (owner's ask, 2026-10-27): added blank (missing, never $0) so it can be typed.
 export function addFee(spine, id, today) {
   const d = getAt(spine, 'debts.' + id);

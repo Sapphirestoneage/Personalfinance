@@ -30,12 +30,12 @@ import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
 import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription, addFee } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription, addFee, setCheck } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney } from './view.js';
+import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -57,7 +57,7 @@ let picking = null;
 let pending = null;
 const cur = () => current().spine;
 // Today in the person's own time zone, not UTC (an evening edit is today's).
-const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const today = () => todayIso();
 
 // The screens, built once per version of the household.
 let scMemo = { spine: null, inst: null, sc: null };
@@ -157,24 +157,25 @@ const isNeedRow = (path) => /^expenses\.[^.]+\.need$/.test(path);
 const needWords = (v) => (v === true ? 'Need' : v === false ? 'Want' : null);
 const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : showValue(value, row.type));
 
-// Not now (S-194): a field you will come back to. It stays missing or rough
-// (the numbers stay honest), but Still guessing stops asking until Ask me
-// again. Kept per viewer in this browser, with the day it was set aside.
-const LATER_KEY = 'slam-ledger-later:v1';
-let later = (() => { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || {}; } catch { return {}; } })();
-const keepLater = () => { try { localStorage.setItem(LATER_KEY, JSON.stringify(later)); } catch { /* storage blocked: lasts until the page closes */ } };
-function setLater(path, on) {
-  const before = later[path];
-  if (on) later[path] = today(); else delete later[path];
-  keepLater();
-  return () => { if (before) later[path] = before; else delete later[path]; keepLater(); refresh(); };
-}
+// Check later and check now (rough now and rough later, replacing Not now): stored on the number's Fact with its date
+// (engine/edits.js setCheck), so it lasts across browsers and reloads and Undo takes it back. A later date that passes
+// makes the number "check now" and puts it in the homework.
+const addMonthsIso = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
+const checkOf = (path) => { const f = getAt(cur(), path); return f && f.check ? f.check : null; };
 function laterBtn(row) {
-  if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, false); refresh(); say('Asking again: ' + row.label, back); } }, 'Ask me again');
   if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
-  return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, true); closeEditor(); refresh(); say('Not now: ' + row.label + '. Still guessing will skip it', back); } }, 'Not now');
+  const c = checkOf(row.path);
+  const put = (mode, until, words) => { closeEditor(); change((s) => setCheck(s, row.path, mode, until, today()), words); };
+  const when = h('input', { type: 'date', 'aria-label': 'Check again on', min: today() });
+  return [
+    c && c.mode === 'later' ? h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': check again now') }, 'Check now') : null,
+    !c || c.mode !== 'now' ? h('button', { type: 'button', class: 'btn', onclick: () => put('now', null, row.label + ': worth checking now') }, 'Mark check now') : h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': mark taken off') }, 'Clear the mark'),
+    h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 1), row.label + ': check again next month') }, 'Check next month'),
+    h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 3), row.label + ': check again in 3 months') }, 'Check in 3 months'),
+    h('div', { class: 'later-pick' }, when, h('button', { type: 'button', class: 'btn', onclick: () => { if (!when.value) { say('Pick a day first'); when.focus(); return; } put('later', when.value, row.label + ': check again ' + shortDate(when.value)); } }, 'Check on that day'))
+  ];
 }
-const isLater = (path) => !!later[rowPathFor(cur(), path)];
+const isLater = (path) => { const c = checkOf(rowPathFor(cur(), path)); return !!c && c.mode === 'later' && c.until > today(); };
 
 // One panel for a card's interest rate (S-161): the APR, a switch for an intro
 // rate, and when it is on, the intro rate and its end date; the APR then reads
@@ -778,7 +779,7 @@ function flaggedRows(spine) {
   return flagMemo.set;
 }
 const tags = (row) => [
-  later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null,
+  null,
   flaggedRows(cur()).has(row.path) ? h('span', { class: 'later-tag' }, 'From your file: enter it again') : null
 ];
 
@@ -962,7 +963,7 @@ function guessList() {
     items.length > 8 && h('button', { type: 'button', class: 'btn ghost', onclick: () => { keep({ all: !showAll }); refresh(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
     setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
       h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
-        h('button', { type: 'button', class: 'btn small', onclick: () => { const back = setLater(rowPathFor(cur(), it.path), false); refresh(); say('Asking again: ' + it.label, back); } }, 'Ask me again'))))) : null);
+        h('button', { type: 'button', class: 'btn small', onclick: () => change((sp) => setCheck(sp, rowPathFor(cur(), it.path), null, null, today()), it.label + ': check again now') }, 'Check now'))))) : null);
 }
 
 // ---------------------------------------------------------------- pick what you have (its own screen)

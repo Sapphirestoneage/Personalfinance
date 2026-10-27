@@ -10,7 +10,8 @@
 //
 // Pure functions; the pages call them through the shell's change(), so Undo takes any of it back.
 
-import { fact, setAt, getAt, valueOf as v, whoSupplies } from './spine.js';
+import { fact, setAt, getAt, valueOf as v, whoSupplies, listFacts } from './spine.js';
+import { labelFor } from './labels.js';
 import { setPay } from './edits.js';
 
 export const NOT_SURE = 'notSure';
@@ -443,12 +444,19 @@ export function setHomework(spine, id, status, { today }) {
   return { ...spine, coaching: { ...(spine.coaching || {}), homework: list } };
 }
 // The client's to-dos, grouped by where to find each item, for the one-pager and the recap.
-export function homeworkList(spine) {
+// With asOf, numbers whose "check later" date has come join the list under "Check again" (Rough now and later).
+export function homeworkList(spine, asOf) {
   const items = ((spine.coaching && spine.coaching.homework) || []).filter((x) => x.status === 'lookup');
   const groups = new Map();
-  for (const x of items) { const k = x.where || 'Ask Eli'; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x.label); }
+  const put = (k, label) => { if (!groups.has(k)) groups.set(k, []); groups.get(k).push(label); };
+  for (const x of items) put(x.where || 'Ask Eli', x.label);
+  for (const d of asOf ? dueChecks(spine, asOf) : []) put('Check again', d.label);
   return [...groups.entries()].map(([where, labels]) => ({ where, items: labels }));
 }
+// Numbers marked "check later" whose date has come: [{ path, label, until }].
+export const dueChecks = (spine, asOf) => listFacts(spine)
+  .filter(({ fact: f }) => f.check && f.check.mode === 'later' && f.check.until && f.check.until <= asOf)
+  .map(({ path, fact: f }) => ({ path, label: labelFor(spine, path), until: f.check.until }));
 export const stillGuessing = (spine) => ((spine.coaching && spine.coaching.homework) || []).filter((x) => x.status === 'notSure');
 
 // Extra cushion months for income security (Level 2): okay +1, shaky +3 (house defaults CUSHION_OKAY_EXTRA,

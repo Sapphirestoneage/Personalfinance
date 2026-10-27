@@ -17,7 +17,7 @@ import { whose } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { money as dollars } from '../src/ui/format.js';
-import { h, pct, monthWords, shortDate, stepHref } from './view.js';
+import { h, pct, monthWords, shortDate, stepHref, todayIso } from './view.js';
 import { homeworkList } from '../engine/profile.js';
 import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
@@ -77,7 +77,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 // The client's to-dos from the Profile (Level 3), grouped by where to find each item.
 function todoCard(spine) {
-  const groups = homeworkList(spine);
+  const groups = homeworkList(spine, todayIso());
   if (!groups.length) return null;
   return goCard('Your to-dos', 'profile.html#/todo', ...groups.map((g) => [h('h3', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x)))]));
 }
