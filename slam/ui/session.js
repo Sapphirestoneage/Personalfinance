@@ -436,7 +436,7 @@ function income(ctx) {
         lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
           pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
         lineRow('', h('label', { class: 'srow-name', for: 't-last' }, 'Last year'),
-          pickBox('t-last', 'Last year\'s tax', [['', 'Not sure'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
+          pickBox('t-last', 'Last year\'s tax', [['', 'Pick one'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
           lastHow === 'refund' || lastHow === 'owed' ? moneyBox('t-last-amt', last === null ? null : Math.abs(last), 'How much', (a) => setLast(lastHow, a)) : null)),
       h('p', { class: 'edit-hint' }, 'The rest of taxes can wait for a later session.'))
   ]);

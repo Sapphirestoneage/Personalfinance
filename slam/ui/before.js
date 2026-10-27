@@ -93,7 +93,7 @@ function draw() {
     h('div', { class: 'before-progress' },
       h('p', { class: 'muted' }, 'Step ' + (at + 1) + ' of ' + steps.length + ' \u00b7 ' + label),
       h('div', { class: 'progress-bar', role: 'progressbar', 'aria-valuemin': '1', 'aria-valuemax': String(steps.length), 'aria-valuenow': String(at + 1), 'aria-label': 'Step ' + (at + 1) + ' of ' + steps.length }, h('span', { style: 'width:' + Math.round(((at + 1) / steps.length) * 100) + '%' }))),
-    at === 0 ? h('p', { class: 'lede' }, 'About 5 minutes. "Not sure" is always fine. Your answers stay on your phone until you send them; this never asks for account numbers or logins.') : null,
+    at === 0 ? h('p', { class: 'lede' }, 'About 5 minutes. Skip anything you do not know; your coach asks it on the call. Your answers stay on your phone until you send them; this never asks for account numbers or logins.') : null,
     id === 'gut' ? gutCard() : id === 'send' ? sendCard() : areaCard(steps[at]),
     h('nav', { class: 'step-nav', 'aria-label': 'Steps' },
       at > 0 ? h('button', { type: 'button', class: 'btn', onclick: () => goTo(at - 1) }, 'Back') : h('span'),

@@ -108,7 +108,7 @@ function areaScreen({ spine }, area) {
   const qs = LEVEL1.filter((q) => q.area === area && asked(a, q));
   const line = fieldsFor(a).setup[area];
   return [
-    h('section', { class: 'card qs' }, ...qs.map((q) => [questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q), { notSure: false }), h('p', { class: 'edit-hint' }, q.does)])),
+    h('section', { class: 'card qs' }, ...qs.map((q) => [questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)), h('p', { class: 'edit-hint' }, q.does)])),
     h('p', { class: 'setup-line' }, h('strong', {}, 'Set up: '), line ? line + '.' : 'nothing yet.')
   ];
 }
@@ -125,7 +125,7 @@ function askScreen({ spine }, area) {
     const st = hw.get(q.id);
     const trio = h('div', { class: 'segmented q-seg' }, ...['known', 'lookup'].map((k) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!!st && st.status === k), onclick: () => mark(q, k) }, h('span', { class: 'seg-label' }, STATUS_WORDS[k]))));
     return h('section', { class: 'card qs' },
-      q.kind === 'one' ? questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q), { notSure: false }) : h('p', { class: 'q-label' }, q.label),
+      q.kind === 'one' ? questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)) : h('p', { class: 'q-label' }, q.label),
       trio,
       q.kind === 'field' && st && st.status === 'known' ? h('p', { class: 'edit-hint' }, h('a', { href: 'session.html' }, 'Type it in the Session'), ' or ', h('a', { href: 'ledger.html' }, 'in My numbers'), '.') : null,
       q.where ? h('p', { class: 'edit-hint' }, 'Where to find it: ' + whereWords(q) + '.') : null,
