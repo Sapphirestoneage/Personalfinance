@@ -124,8 +124,10 @@ export function debtPath(spine, rules, { strategy = 'avalanche', extra = 0, asOf
 export const METHOD_WORDS = { avalanche: 'Highest rate first', snowball: 'Smallest balance first', stress: 'Most stressful first' };
 // The three methods side by side: each one's total owed month by month, debt-free month, interest, and first debt
 // cleared. { methods: [{ id, words, months, totals, debtFreeYm, interest, first: { name, ym } }] }.
+// Most stressful first only when some debt has a stress score (without one it is the same as highest rate first).
 export function methodPaths(spine, rules, { extra = 0, asOf = spine.meta.asOf } = {}) {
-  return Object.keys(METHOD_WORDS).map((id) => {
+  const scored = (spine.debts || []).some((d) => v(d.stress) !== null && v(d.stress) !== undefined);
+  return Object.keys(METHOD_WORDS).filter((id) => id !== 'stress' || scored).map((id) => {
     const p = payoffPlan(spine, rules, { strategy: id, extra, asOf, trace: true, maxMonths: 360 });
     const startTotal = round2((spine.debts || []).reduce((a, d) => a + (v(d.balance) ?? 0), 0));
     const first = p.debts.filter((d) => d.payoffYm).sort((a, b) => (a.payoffYm < b.payoffYm ? -1 : a.payoffYm > b.payoffYm ? 1 : 0))[0] || null;
@@ -204,3 +206,20 @@ export function netWorthAhead(spine, rules, { years = 5 } = {}) {
   const asOf = spine.meta.asOf, endYm = (+asOf.slice(0, 4) + years) + asOf.slice(4, 7);
   return project(spine, rules, { asOf, mode: 'expected', endYm }).months.map((m) => ({ ym: m.ym, netWorth: m.netWorth }));
 }
+
+// The app's pick between the two orders the plan can run (overnight Track E): highest rate first, unless smallest
+// balance first costs no more than the "too small to matter" amount in interest and clears its first debt at least a
+// month sooner (a quick win for about the same money). { id, words }.
+export function recommendOrder(methods, { materiality = 100 } = {}) {
+  const a = methods.find((x) => x.id === 'avalanche'), sb = methods.find((x) => x.id === 'snowball');
+  if (!a || !sb) return null;
+  if (a.neverPaysOff && sb.neverPaysOff) return { id: 'avalanche', words: 'Neither order pays it all off at this pace; highest rate first costs the least while you work on it.' };
+  if (sb.neverPaysOff) return { id: 'avalanche', words: 'Smallest balance first never pays it all off at this pace.' };
+  const more = round2((sb.interest ?? 0) - (a.interest ?? 0));
+  const sooner = a.first && sb.first ? monthsBetween(sb.first.ym, a.first.ym) : 0;
+  if (more <= materiality && sooner >= 1) return { id: 'snowball', words: 'Smallest balance first clears ' + sb.first.name + ' ' + sooner + (sooner === 1 ? ' month' : ' months') + ' sooner for ' + (more <= 0 ? 'no more interest' : 'only $' + Math.round(more).toLocaleString('en-US') + ' more interest') + ': a quick win for about the same money.' };
+  if (more >= 1) return { id: 'avalanche', words: 'Highest rate first saves $' + Math.round(more).toLocaleString('en-US') + ' in interest.' };
+  return { id: 'avalanche', words: 'Both orders cost the same and finish the same month; highest rate first is the default.' };
+}
+// Months from one year-month to a later one (negative when it is earlier).
+const monthsBetween = (from, to) => (+to.slice(0, 4) - +from.slice(0, 4)) * 12 + (+to.slice(5, 7) - +from.slice(5, 7));

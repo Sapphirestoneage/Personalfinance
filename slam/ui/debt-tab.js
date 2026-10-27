@@ -11,6 +11,10 @@ import { labelFor } from '../engine/labels.js';
 import { mathButton } from './math-panel.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 import { debtCharts } from './chart-cards.js';
+import { methodPaths, recommendOrder, METHOD_WORDS } from '../engine/charts.js';
+import { putFact } from '../engine/edits.js';
+import { change } from './shell.js';
+import { said, todayIso } from './view.js';
 
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const vizOf = (i) => VIZ[i % VIZ.length];
@@ -34,7 +38,31 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
   // Charts (Track C): when it is gone, what is interest, and the three orders side by side; each opens as a table.
   const charts = h('section', { class: 'card debt-charts' }, debtCharts(spine, rules, { extra: extra.amount || 0, strategy: d.order.strategy }));
-  return [clearCard(d), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
+  return [clearCard(d), methodsCard(spine, rules, d, extra.amount || 0), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
+}
+
+// The orders side by side (Track E): each one's debt-free month, its interest and the first debt it clears, the
+// app's pick with its reason, and "Use this order" (one change, so Undo takes it back). Most stressful first is there
+// to compare when debts have stress scores; the day-by-day plan runs the other two.
+function methodsCard(spine, rules, d, extra) {
+  const m = methodPaths(spine, rules, { extra });
+  if (!m.length) return null;
+  const pick = recommendOrder(m, { materiality: rules.get('APP_MATERIALITY', +spine.meta.asOf.slice(0, 4)) ?? 100 });
+  const now = d.order.strategy;
+  const use = (id) => change((s) => putFact(s, 'debtPlan.strategy', id, 'known', todayIso()), said.changed('Payoff order', METHOD_WORDS[id].toLowerCase()));
+  return h('section', { class: 'card', 'aria-labelledby': 'methods-h' },
+    h('h2', { id: 'methods-h' }, 'Which order?'),
+    pick ? h('p', { class: 'tile-sub' }, h('strong', {}, 'Recommended: ' + METHOD_WORDS[pick.id].toLowerCase() + '. '), pick.words) : null,
+    h('div', { class: 'method-grid' }, m.map((x) => h('div', { class: 'method-col' + (pick && pick.id === x.id ? ' is-pick' : ''), role: 'group', 'aria-label': x.words },
+      h('p', { class: 'method-name' }, x.words, pick && pick.id === x.id ? [' ', h('span', { class: 'pill' }, 'Recommended')] : null),
+      h('dl', { class: 'method-facts' },
+        h('dt', {}, 'Debt free'), h('dd', {}, x.neverPaysOff ? 'not at this pace' : monthWords(x.debtFreeYm)),
+        h('dt', {}, 'Interest in all'), h('dd', {}, x.interest === null ? 'missing' : money(x.interest)),
+        h('dt', {}, 'First cleared'), h('dd', {}, x.first ? x.first.name + ', ' + monthWords(x.first.ym) : 'none')),
+      x.id === 'stress' ? h('p', { class: 'muted' }, 'To compare: the plan runs the other two.')
+        : x.id === now ? h('button', { type: 'button', class: 'btn small', disabled: true, title: 'This is the order the plan uses now' }, 'In use now')
+          : h('button', { type: 'button', class: 'btn small' + (pick && pick.id === x.id ? ' primary' : ''), onclick: () => use(x.id) }, 'Use this order')))),
+    h('p', { class: 'tile-note' }, 'Each with ' + money(extra) + ' a month extra at the debt, on the monthly plan.'));
 }
 
 // Clear dates from the Plan's run: each as its month; anything past 12 months is one line, never "not inside the

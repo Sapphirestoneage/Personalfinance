@@ -1684,3 +1684,11 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .b-view { margin: 0 0 var(--space-3); max-width: 320px; } .b-view .seg-btn { flex: 1 1 4rem; align-items: center; text-align: center; }
 .cl-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-3); }
 .pay-arrow { list-style: none; padding: 2px var(--space-4); color: var(--text-muted); font-size: var(--text-sm); }
+.method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); margin: var(--space-3) 0; }
+.method-col { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.method-col.is-pick { border-color: var(--accent); background: var(--accent-soft); }
+.method-name { margin: 0; font-weight: 700; }
+.method-facts { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--space-3); margin: 0; font-size: var(--text-sm); }
+.method-facts dt { color: var(--text-muted); }
+.method-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.method-col .btn { align-self: start; margin-top: auto; }

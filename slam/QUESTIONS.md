@@ -191,3 +191,6 @@ Build Queue note, not built: progress toward the target over time.
 
 ## 152. Where the target lives (2026-10-27)
 Default used: the target is a saved scenario, and saved scenarios live in this browser, so the target does too (one per browser, which in practice is one per household on this machine). Say if it should travel inside the household file instead.
+
+## 153. The app's recommended payoff order (overnight Track E, 2026-10-27)
+Default used: the recommendation picks between the two orders the day-by-day plan can run. Highest rate first, unless smallest balance first costs no more than the "too small to matter" amount ($100) in interest and clears its first debt at least a month sooner (a quick win for about the same money). Most stressful first shows beside them to compare but cannot be picked, because the cash simulation only runs the other two. Say if you want a different rule (a hybrid, or a bigger allowance for the quick win), or most stressful first made usable.

@@ -107,3 +107,16 @@ test('scenario lines and goal bars', () => {
   const x = summarize(s, R), g = C.goalBars(goalsView(s, R, x));
   assert.ok(g.length >= 1 && g.every((y) => y.share >= 0 && y.share <= 1));
 });
+
+test('the recommended order: highest rate first unless a quick win costs about nothing', () => {
+  const m = (id, interest, firstYm, never = false) => ({ id, interest, first: { name: id === 'snowball' ? 'Store card' : 'Visa', ym: firstYm }, neverPaysOff: never });
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')]).id, 'snowball');
+  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1050, '2027-02')]).words, /4 months sooner for only \$50 more/);
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')]).id, 'avalanche');
+  assert.match(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1400, '2027-02')]).words, /saves \$400/);
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 1000, '2027-06')]).id, 'avalanche');
+  assert.equal(C.recommendOrder([m('avalanche', 1000, '2027-06'), m('snowball', 900, '2027-02', true)]).id, 'avalanche');
+  const s = demo();
+  for (const d of s.debts) delete d.stress;
+  assert.deepEqual(C.methodPaths(s, R, { extra: 200 }).map((x) => x.id), ['avalanche', 'snowball'], 'no stress scores: two orders');
+});
