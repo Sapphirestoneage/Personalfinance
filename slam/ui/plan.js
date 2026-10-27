@@ -9,6 +9,7 @@
 
 import { foldRow } from './rows.js';
 import { whatIf } from '../engine/whatif.js';
+import { negotiationList, recordCall } from '../engine/negotiate.js';
 import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
 import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
@@ -73,7 +74,7 @@ const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', h
 const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
   surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
-  solve: 'What it takes to get there', whatif: 'What if', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
+  solve: 'What it takes to get there', whatif: 'What if', calls: 'Bills worth a call', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
   outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import'
 };
 const payId = (p) => p.date + '-' + p.streamId;
@@ -94,7 +95,7 @@ function render({ spine: base, rules, levels }) {
   const [a, b] = levels;
   if (!a) return top(m);
   if (a === 'paychecks') return b ? paycheckScreen(m, paycheckOf(m, b)) : paychecksScreen(m);
-  const screen = { surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
+  const screen = { surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, calls: callsScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
   return screen ? screen(m) : stepScreen(m, stepOf(m, a));
 }
 
@@ -168,6 +169,7 @@ function top(m) {
           a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,
           goRow('#/wage', SCREENS.wage, wage.wage === null ? [chip('missing'), 'Needs your hours worked a week'] : [h('span', { class: 'go-total' }, money(wage.wage, true)), 'an hour, after work costs']),
           goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
+          goRow('#/calls', SCREENS.calls, callsFact(m)),
           goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']))),
       fold('future', 'Your future', g.rows.length ? plural(g.rows.length, 'goal') + (events.length ? ', ' + plural(events.length, 'event') : '') : events.length ? plural(events.length, 'event') : 'Goals, retirement room, what-ifs',
         h('ul', { class: 'go-list' },
@@ -380,6 +382,54 @@ function whatIfScreen(m) {
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as a scenario'),
         h('button', { type: 'button', class: 'btn', onclick: () => { keep({ moves: null }); refresh(); } }, 'Set all back to zero'))),
     h('ul', { class: 'go-list' }, goRow('#/scenarios', SCREENS.scenarios, 'Compare or load a saved one')));
+}
+
+// Bills worth a call (Track H): phone, internet, TV, insurance, the gym and cards charging more than the table's rate
+// (data/negotiable-<year>.json), each with what it costs against typical, a call script, and "I called" with the new
+// price (it goes into My numbers; the call is kept with its date; Undo takes it back).
+let negotiable = null;
+try { const r = await fetch(new URL('../data/negotiable-2026.json', import.meta.url), { cache: 'no-store' }); if (r.ok) negotiable = await r.json(); } catch { /* offline: no list */ }
+const callsOf = (m) => m.calls || (m.calls = negotiationList(m.base, summarize(m.base, m.rules, { flags: false }).cashflow, negotiable));
+function callsFact(m) {
+  const list = callsOf(m), over = list.filter((x) => x.above > 0);
+  return !negotiable ? 'The list of typical prices did not load' : !list.length ? 'Nothing on the list' : over.length ? plural(over.length, 'bill') + ' above typical' : plural(list.length, 'bill') + ' worth a look';
+}
+const nowWords = (x) => (x.kind === 'card' ? pct(x.now, 1) + ' a year' : money(x.now) + ' a month');
+function callsScreen(m) {
+  const list = callsOf(m);
+  if (!negotiable) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'The list of typical prices did not load. Try again when online.'));
+  if (!list.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'No phone, internet, TV, insurance or gym bills, and no card above ' + pct(negotiable.cardRateAbove, 0) + '.'));
+  const call = (x) => {
+    const box = h('input', { id: 'call-' + x.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: x.kind === 'card' ? 'e.g. 18%' : 'e.g. 45', 'aria-describedby': 'call-' + x.id + '-hint' });
+    const msg = h('p', { class: 'edit-msg', role: 'alert' });
+    const save = (e) => {
+      e.preventDefault();
+      const p = parseInput(x.kind === 'card' ? 'rate' : 'money', box.value);
+      if (!p.ok || p.value === null) { msg.textContent = p.message || 'Type the new price'; return; }
+      change((sp) => recordCall(sp, x, p.value, todayIso()), said.changed(x.label + (x.kind === 'card' ? ' rate' : ''), x.kind === 'card' ? pct(p.value, 1) + ' after a call' : money(p.value) + ' a month after a call'));
+    };
+    return h('details', { class: 'call-fold' }, h('summary', { class: 'btn small' }, 'I called'), h('form', { class: 'tool-form call-form', novalidate: true, onsubmit: save },
+      h('label', { for: 'call-' + x.id, class: 'edit-label' }, x.kind === 'card' ? 'New rate after the call' : 'New price a month after the call'), box,
+      h('p', { class: 'edit-hint', id: 'call-' + x.id + '-hint' }, x.kind === 'card' ? 'Now ' + pct(x.now, 1) + '; type the same if it did not change' : 'Now ' + money(x.now) + '; type the same if it did not change'), msg,
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small primary' }, 'Save the new price'))));
+  };
+  const bills = list.filter((x) => x.kind === 'bill');
+  return [
+    h('section', { class: 'card', 'aria-label': SCREENS.calls },
+      h('p', { class: 'muted' }, 'One call each, most above typical first. Typical prices are a starting table to check, not a promise.'),
+      h('ol', { class: 'audit-list' }, list.map((x) => h('li', { class: 'audit-row' },
+        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(x.path) }, x.label), h('span', { class: 'audit-cost' }, nowWords(x))),
+        h('p', { class: 'tile-sub' }, x.kind === 'card' ? 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance' : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
+        x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? pct(x.called.from, 1) + ' to ' + pct(x.called.to, 1) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
+        h('details', { class: 'script-fold' }, h('summary', {}, 'Call script'), h('p', { class: 'script' }, x.script),
+          h('button', { type: 'button', class: 'btn small', onclick: () => { try { navigator.clipboard.writeText(x.script); say('Script copied'); } catch { say('Copy did not work here; select the words instead'); } } }, 'Copy the script')),
+        call(x))))),
+    bills.length ? h('section', { class: 'card' }, chartCard({ id: 'calls-chart', question: 'Which bills are above typical?',
+      summary: bills.filter((x) => x.above > 0).length ? bills.filter((x) => x.above > 0).map((x) => x.label + ' by ' + money(x.above)).join('; ') + '.' : 'Every bill on the list is at or under typical.',
+      draw: (w) => bars({ width: w, rows: bills.map((x) => ({ label: x.label, range: { v0: 0, v1: x.typical }, segs: [{ v: x.now, c: x.above > 0 ? 2 : 1, tip: x.label + ': ' + money(x.now) + ' a month, typical ' + money(x.typical) }], target: x.typical, targetTip: 'Typical: ' + money(x.typical), value: money(x.now) })), label: 'Bills against typical' }),
+      legend: [{ c: 1, words: 'At or under typical' }, { c: 2, words: 'Above typical' }, { c: 0, words: 'Typical (the tick)', cls: 'sw-band' }],
+      table: { head: ['Bill', 'A month', 'Typical', 'Above'], rows: bills.map((x) => [x.label, money(x.now), money(x.typical), x.above > 0 ? money(x.above) : '']) } })) : null
+  ];
 }
 
 function solveScreen(m) {

@@ -1713,3 +1713,6 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .uses-field { display: grid; gap: 2px; }
 .uses-box { width: 7rem; min-height: var(--tap); }
 .uses-field .edit-hint { margin: 0; }
+.script-fold { margin: var(--space-2) 0; } .script-fold .script { background: var(--surface-2); padding: var(--space-3); border-radius: var(--radius-sm); }
+.call-form { margin-top: var(--space-2); }
+.call-fold > summary { list-style: none; display: inline-flex; align-items: center; cursor: pointer; } .call-fold > summary::-webkit-details-marker { display: none; } .call-fold[open] > summary { box-shadow: var(--btn-shadow-press); }

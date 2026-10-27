@@ -1,0 +1,52 @@
+{
+  "year": 2026,
+  "source": "PLACEHOLDER: typical monthly prices typed from general knowledge of US plans, NOT verified. Eli to confirm or replace with a sourced table.",
+  "placeholder": true,
+  "unit": "dollars per month for one household, national, used as is",
+  "cardRateAbove": 0.15,
+  "kinds": [
+    {
+      "id": "phone",
+      "words": "Phone",
+      "match": "\\b(phone|cell|mobile|wireless)\\b",
+      "typical": 60,
+      "script": "Hi, I have been a customer for a while and I am reviewing my bills. I can get a similar plan elsewhere for less. What can you do on my monthly price, or is there a cheaper plan that keeps what I use?"
+    },
+    {
+      "id": "internet",
+      "words": "Internet",
+      "match": "\\b(internet|wifi|wi-fi|broadband|fiber)\\b",
+      "typical": 65,
+      "script": "Hi, I am looking at my internet bill. New customers are offered a lower price than I pay, and other providers here are cheaper. Can you match a new-customer rate or move me to a plan that costs less? If not, please connect me with the retention team."
+    },
+    {
+      "id": "tv",
+      "words": "Cable or TV",
+      "match": "\\b(cable|satellite|tv)\\b",
+      "typical": 80,
+      "script": "Hi, I am thinking of cancelling TV service because of the price. Before I do, what promotions or smaller packages can you offer me?"
+    },
+    {
+      "id": "carInsurance",
+      "words": "Car insurance",
+      "match": "\\b(car insurance|auto insurance|vehicle insurance)\\b",
+      "typical": 170,
+      "script": "Hi, I am shopping my car insurance. Can you check every discount I qualify for (safe driver, bundling, paying in full, low mileage, autopay) and quote a higher deductible? I have a quote from another company for less."
+    },
+    {
+      "id": "homeInsurance",
+      "words": "Home or renters insurance",
+      "match": "\\b(renters|homeowners|home insurance)\\b",
+      "typical": 110,
+      "script": "Hi, I am reviewing my policy. Can you check for discounts (bundling, security system, claims-free, paying in full) and tell me what a higher deductible would save?"
+    },
+    {
+      "id": "gym",
+      "words": "Gym",
+      "match": "\\b(gym|fitness)\\b",
+      "typical": 40,
+      "script": "Hi, I am thinking of cancelling my membership because of the cost. Is there a lower rate, an off-peak plan or a freeze option you can offer?"
+    }
+  ],
+  "cardScript": "Hi, I have paid this card for a while and I am working on paying it down. My rate is {rate}. Can you lower my APR? Other cards are offering me less, and I would like to keep this account open."
+}

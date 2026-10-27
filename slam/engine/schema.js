@@ -542,9 +542,11 @@ export function validate(spine) {
       if (f.value !== null && cleanAnswer(k, f.value) === undefined) err(path, 'not an answer this question allows');
     }
   }
+  // Life changes: a Profile answer (question), a step toward the Budget target (kind 'target') or a bill called about
+  // (kind 'called', overnight Track H: { id, date, kind, path, label, from, to }). Older files hold only the first.
   if (spine.lifeChanges !== undefined) {
     if (!Array.isArray(spine.lifeChanges)) err('lifeChanges', 'a list');
-    else { uniqueIds('lifeChanges', spine.lifeChanges); for (const c of spine.lifeChanges) { if (!isDate(c.date)) err('lifeChanges.' + c.id + '.date', 'not a date (YYYY-MM-DD)'); if (typeof c.question !== 'string') err('lifeChanges.' + c.id + '.question', 'names a question'); } }
+    else { uniqueIds('lifeChanges', spine.lifeChanges); for (const c of spine.lifeChanges) { if (!isDate(c.date)) err('lifeChanges.' + c.id + '.date', 'not a date (YYYY-MM-DD)'); if (c.kind === 'target' || c.kind === 'called') { if (typeof c.path !== 'string') err('lifeChanges.' + c.id + '.path', 'names a field'); } else if (typeof c.question !== 'string') err('lifeChanges.' + c.id + '.question', 'names a question'); } }
   }
   const hw = spine.coaching && spine.coaching.homework;
   if (hw !== undefined) {
