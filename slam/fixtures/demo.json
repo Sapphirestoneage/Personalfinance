@@ -1184,6 +1184,48 @@
       "source": "demo (made up)",
       "kind": "known",
       "by": "client"
+    },
+    "disability": {
+      "value": "work",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
+    },
+    "homeInsurance": {
+      "value": "yes",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
+    },
+    "dependents": {
+      "value": "no",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
+    },
+    "lifeInsurance": {
+      "value": "none",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
+    },
+    "beneficiaries": {
+      "value": "yes",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
+    },
+    "will": {
+      "value": "no",
+      "kind": "known",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "by": "client"
     }
   }
 }

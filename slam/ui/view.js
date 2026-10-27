@@ -42,7 +42,7 @@ export const shortDate = (iso) => {
   return MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
 };
 // Where a ranked next step opens: its Plan screen, else the number it needs.
-export const stepHref = (step) => (step && step.rung ? 'plan.html#/' + step.rung.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) : step && step.path ? ledgerHref(step.path) : 'plan.html');
+export const stepHref = (step) => (step && step.href ? step.href : step && step.rung ? 'plan.html#/' + step.rung.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) : step && step.path ? ledgerHref(step.path) : 'plan.html');
 export const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 export const words = (s) => String(s).replace(/_/g, ' ');
 export const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');

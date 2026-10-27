@@ -20,7 +20,7 @@ const YES_NO = [['yes', 'Yes'], ['no', 'No']];
 // { id, area, label, kind: one | many | text | year | state | date | count, options, when(answers), does }
 export const AREAS = [
   ['start', 'Why now'], ['you', 'You'], ['home', 'Home'], ['around', 'Getting around'], ['work', 'Work'], ['people', 'Money with other people'],
-  ['debt', 'Debt'], ['accounts', 'Accounts'], ['health', 'Health'], ['style', 'Spending style'], ['goals', 'Goals']
+  ['debt', 'Debt'], ['accounts', 'Accounts'], ['health', 'Health'], ['protect', 'Protection'], ['style', 'Spending style'], ['goals', 'Goals']
 ];
 export const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const W2 = (a) => ['w2', 'both'].includes(ans(a, 'work'));
@@ -63,6 +63,13 @@ export const LEVEL1 = [
   { id: 'behind', area: 'debt', label: 'Behind on any payment right now?', kind: 'one', options: YES_NO, does: 'Yes opens "When it won\'t all get paid" first.' },
   { id: 'accounts', area: 'accounts', label: 'Which accounts do you have?', kind: 'many', options: [['checking', 'Checking'], ['savings', 'Savings'], ['k401', '401(k) or similar'], ['ira', 'IRA'], ['hsa', 'HSA'], ['brokerage', 'Brokerage'], ['crypto', 'Crypto'], ['none', 'None']], exclusive: ['none'], does: 'Opens each account in the session.' },
   { id: 'emergencySeparate', area: 'accounts', label: 'Emergency money kept apart from checking?', kind: 'one', options: YES_NO, does: 'Yes shows an emergency fund account.' },
+  // Protection (audit 7): what would carry them through a bad year. A gap becomes a ranked step (protectionGaps).
+  { id: 'disability', area: 'protect', label: 'Do you have disability insurance?', kind: 'one', options: [['work', 'Through work'], ['own', 'My own policy'], ['none', 'None']], does: 'Pays part of your income if you cannot work. Missing, it becomes a step after the starter emergency fund.' },
+  { id: 'homeInsurance', area: 'protect', label: 'Do you have renters or home insurance?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'Covers your things and liability. Missing, it becomes a step.' },
+  { id: 'dependents', area: 'protect', label: 'Does anyone depend on your income?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'If someone does, life insurance and a will matter.' },
+  { id: 'lifeInsurance', area: 'protect', label: 'Do you have life insurance?', kind: 'one', options: [['work', 'Through work'], ['own', 'My own policy'], ['none', 'None']], does: 'Needed when someone depends on your income.' },
+  { id: 'beneficiaries', area: 'protect', label: 'Are the beneficiaries on your accounts up to date?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'Retirement accounts go to whoever is named, whatever a will says.' },
+  { id: 'will', area: 'protect', label: 'Do you have a will?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'Says who looks after your kids and your things.' },
   { id: 'health', area: 'health', label: 'Where is your health insurance from?', kind: 'one', options: [['work', 'Work'], ['parent', 'A parent\'s plan'], ['marketplace', 'Marketplace'], ['medicaid', 'Medicaid'], ['none', 'None']], does: 'A parent\'s plan sets the turning-26 switch on the Calendar.' },
   { id: 'tracking', area: 'style', label: 'How do you keep track now?', kind: 'one', options: [['none', 'I don\'t'], ['app', 'An app'], ['spreadsheet', 'A spreadsheet'], ['statements', 'Statements']], does: 'Spending opens on what fits: adding purchases, or importing a statement.' },
   { id: 'goals', area: 'goals', label: 'Pick your top 3', kind: 'many', max: 3, options: [['emergency', 'An emergency fund'], ['debtFree', 'Out of debt'], ['home', 'Buy a home'], ['car', 'A car'], ['travel', 'Travel'], ['wedding', 'A wedding'], ['kids', 'Kids'], ['invest', 'Start investing'], ['business', 'Start a business'], ['school', 'School']], does: 'Adds those goals, ready for an amount and a date.' },
@@ -194,6 +201,7 @@ function setupLines(a, shown, covered) {
   if (answered('debt')) out.debt = 'Opens ' + list(by('D'));
   if (answered('accounts')) out.accounts = 'Opens ' + list(by('A'));
   if (answered('health')) out.health = ans(a, 'health') === 'parent' ? 'Turning 26 on the Calendar' : 'Shows ' + list(by('N', ['health-premium']));
+  if (answered('protect')) { const g = protectionGaps(a); out.protect = g.length ? 'Steps: ' + g.map((x) => x.short).join(', ') : 'No gaps from the answers'; }
   if (answered('style')) out.style = ans(a, 'tracking') === 'none' ? 'Spending opens on adding a purchase' : 'Spending opens on importing a statement';
   if (answered('goals')) out.goals = 'Goals: ' + list([...(Array.isArray(ans(a, 'goals')) ? ans(a, 'goals') : []).map(goalWords), ...(ans(a, 'fi') === 'notNow' ? [] : ['Financial independence'])]);
   return out;
@@ -443,3 +451,19 @@ export const toneOf = (spine) => (spine.profile && spine.profile.tone ? v(spine.
 // Where Spending opens: adding a purchase when they do not keep track, else importing a statement.
 export const spendingStart = (spine) => { const t = spine.profile && spine.profile.tracking ? v(spine.profile.tracking) : null; return t === null || t === NOT_SURE ? null : t === 'none' ? 'add' : 'import'; };
 export const questionById = (id) => L1.get(id) || L2.get(id) || null;
+
+// Protection gaps from the answers (audit 7), in the order they rank: each one a step after the starter emergency
+// fund. "Not sure" and blank are not gaps; they stay questions. Life insurance and a will count only when someone
+// depends on the income; disability only when they work.
+export function protectionGaps(a) {
+  const is = (id, ...vals) => vals.includes(ans(a, id));
+  const works = ['w2', 'self', 'both'].includes(ans(a, 'work'));
+  const depends = is('dependents', 'yes') || has(a, 'livesWith', 'kids');
+  const gaps = [];
+  if (works && is('disability', 'none')) gaps.push({ id: 'disability', short: 'disability insurance', label: 'Get disability insurance', why: 'Your pay is what everything else rests on; disability insurance replaces part of it if you cannot work.' });
+  if (is('homeInsurance', 'no')) gaps.push({ id: 'homeInsurance', short: ans(a, 'home') === 'own' ? 'home insurance' : 'renters insurance', label: ans(a, 'home') === 'own' ? 'Get home insurance' : 'Get renters insurance', why: 'It covers your things and anyone hurt in your home, often for a few dollars a week.' });
+  if (depends && is('lifeInsurance', 'none')) gaps.push({ id: 'lifeInsurance', short: 'life insurance', label: 'Get term life insurance', why: 'Someone depends on your income; term life replaces it if you die.' });
+  if (is('beneficiaries', 'no')) gaps.push({ id: 'beneficiaries', short: 'beneficiaries', label: 'Update the beneficiaries on your accounts', why: 'Retirement accounts go to whoever is named on them, whatever a will says.' });
+  if (depends && is('will', 'no')) gaps.push({ id: 'will', short: 'a will', label: 'Write a will', why: 'Someone depends on you; a will says who looks after them and your things.' });
+  return gaps;
+}

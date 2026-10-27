@@ -115,6 +115,12 @@ function outlookLine(m) {
   return [h('p', { class: 'tile-sub outlook-line', id: 'cash-low' }, lowWords(story) + ' ', h('a', { href: '#/outlook' }, 'Good and bad months')),
     story.under ? h('div', { class: 'edit-actions' }, fixButton(story)) : null];
 }
+// Protection gaps rank with the steps (engine/next-step.js) but are not steps of the order: one line, each a link.
+function protectLine(rank) {
+  const p = rank.steps.filter((x) => x.id.startsWith('protect:'));
+  if (!p.length) return null;
+  return h('p', { class: 'tile-sub' }, (rank.first && rank.first.id.startsWith('protect:') ? 'Next, before these: ' : 'Also on your list: '), p.map((x, i) => [i ? ', ' : '', h('a', { href: x.href }, x.label.toLowerCase())]), '.');
+}
 function top(m) {
   const f = m.foo, surplus = m.s.cashflow.surplus.value;
   const w = surplusWaterfall(m.spine, m.rules, m.s);
@@ -130,6 +136,7 @@ function top(m) {
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
       h('ol', { class: 'go-list' }, f.rungs.map((r) => stepRow(r, f.current))),
+      protectLine(m.rank),
       h('p', { class: 'tile-note' }, kindChip(f.kind), ' "A month" steps take some of the surplus every month.'),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
     // The Windfall page sits under Plan: the whole card is the way in.

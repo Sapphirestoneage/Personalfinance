@@ -1489,7 +1489,7 @@
       "value": 0.1,
       "unit": "rate",
       "appliesTo": "Federal student loans on an income-driven plan",
-      "notes": "15% for older IBR borrowers; the Repayment Assistance Plan that opens July 1, 2026 uses 1% to 10% of AGI by income band and is not modeled yet",
+      "notes": "15% for older IBR borrowers. Loans made on or after July 1, 2026 can use only the standard plan or the Repayment Assistance Plan (RAP_* rules)",
       "source": "20 U.S.C. 1098e (IBR); verify the plan before quoting",
       "verified": "verify"
     },
@@ -1541,6 +1541,66 @@
       "appliesTo": "Income-driven repayment: discretionary income",
       "notes": "2025 HHS guideline; replace with the 2026 figure when published and verified",
       "source": "HHS poverty guidelines, 2025",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_BAND",
+      "rule": "Repayment Assistance Plan: each full step of AGI of this size adds the share below",
+      "value": 10000,
+      "unit": "$",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan (opens July 1, 2026)",
+      "notes": "AGI $10,000 to $20,000 pays 1%, $20,000 to $30,000 pays 2%, and so on up to 10% at $100,000 and over",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_SHARE_PER_BAND",
+      "rule": "Repayment Assistance Plan: share of AGI added for each full band",
+      "value": 0.01,
+      "unit": "rate",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan",
+      "notes": "",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_SHARE_MAX",
+      "rule": "Repayment Assistance Plan: the highest share of AGI",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan",
+      "notes": "Reached at AGI of $100,000",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_MIN_PAYMENT",
+      "rule": "Repayment Assistance Plan: the smallest monthly payment",
+      "value": 10,
+      "unit": "$",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan",
+      "notes": "Also the payment when AGI is under $10,000",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_DEPENDENT_CREDIT",
+      "rule": "Repayment Assistance Plan: taken off the monthly payment for each dependent",
+      "value": 50,
+      "unit": "$",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan",
+      "notes": "SLAM counts everyone in the household but the borrower as a dependent; a rough count",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "RAP_FORGIVENESS_PAYMENTS",
+      "rule": "Repayment Assistance Plan: qualifying monthly payments before the rest is forgiven",
+      "value": 360,
+      "unit": "payments",
+      "appliesTo": "Federal Direct loans on the Repayment Assistance Plan",
+      "notes": "Thirty years; unpaid interest is waived and some principal is matched each month, neither modeled",
+      "source": "One Big Beautiful Bill Act (Pub. L. 119-21, sec. 82001), adding 20 U.S.C. 1098e-1; verify against studentaid.gov before quoting",
       "verified": "verify"
     },
     {

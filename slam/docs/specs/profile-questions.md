@@ -79,6 +79,15 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 - **Where is your health insurance from?** (Work / A parent's plan / Marketplace / Medicaid / None, or Not sure). A parent's plan sets the turning-26 switch on the Calendar.
 
+### Protection
+
+- **Do you have disability insurance?** (Through work / My own policy / None, or Not sure). Pays part of your income if you cannot work. Missing, it becomes a step after the starter emergency fund.
+- **Do you have renters or home insurance?** (Yes / No, or Not sure). Covers your things and liability. Missing, it becomes a step.
+- **Does anyone depend on your income?** (Yes / No, or Not sure). If someone does, life insurance and a will matter.
+- **Do you have life insurance?** (Through work / My own policy / None, or Not sure). Needed when someone depends on your income.
+- **Are the beneficiaries on your accounts up to date?** (Yes / No, or Not sure). Retirement accounts go to whoever is named, whatever a will says.
+- **Do you have a will?** (Yes / No, or Not sure). Says who looks after your kids and your things.
+
 ### Spending style
 
 - **How do you keep track now?** (I don't / An app / A spreadsheet / Statements, or Not sure). Spending opens on what fits: adding purchases, or importing a statement.

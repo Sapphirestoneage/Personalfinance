@@ -19,6 +19,7 @@ const debtOf = (spine, id) => (spine.debts || []).find((d) => d.id === id) || nu
 const openingCents = (c) => c.balance + (c.carried ? Math.round(c.carried.amount * 100) : 0);
 const STUDENT = ['student_loan', 'private_student_loan'];
 const IDR_RULES = ['IDR_PAYMENT_SHARE', 'IDR_POVERTY_MULTIPLE', 'POVERTY_LINE_1', 'POVERTY_LINE_EACH'];
+const RAP_RULES = ['RAP_BAND', 'RAP_SHARE_PER_BAND', 'RAP_SHARE_MAX', 'RAP_MIN_PAYMENT', 'RAP_DEPENDENT_CREDIT', 'RAP_FORGIVENESS_PAYMENTS'];
 const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), months); const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return ym + '-' + String(Math.min(+iso.slice(8, 10), last)).padStart(2, '0'); };
 
 // The four clear dates, kept separate (spec 4.4): high-interest free, every card clear, loans paid off, debt free.
@@ -240,6 +241,16 @@ export function idr(spine, rules, d, s = null, asOf = spine.meta.asOf) {
     discretionary = Math.max(0, round2(agi - t.rule(rules, 'IDR_POVERTY_MULTIPLE', year) * poverty));
     payment = round2(t.rule(rules, 'IDR_PAYMENT_SHARE', year) * discretionary / 12);
   }
+  // The Repayment Assistance Plan (opens July 1, 2026): a share of AGI by $10,000 band, less a credit for each
+  // dependent, never under the minimum; forgiven after its payments. Shown beside income-driven repayment, not in place.
+  let rap = null;
+  if (RAP_RULES.every((id) => rules.has(id, year)) && size !== null && agi !== null) {
+    const band = t.rule(rules, 'RAP_BAND', year);
+    const share = Math.min(t.rule(rules, 'RAP_SHARE_MAX', year), Math.floor(agi / band) * t.rule(rules, 'RAP_SHARE_PER_BAND', year));
+    const pay = Math.max(t.rule(rules, 'RAP_MIN_PAYMENT', year), round2(agi * share / 12 - t.rule(rules, 'RAP_DEPENDENT_CREDIT', year) * Math.max(0, size - 1)));
+    const n = t.rule(rules, 'RAP_FORGIVENESS_PAYMENTS', year);
+    rap = { share, payment: pay, payments: n, date: sameDayLater(asOf, n) };
+  }
   const hasYears = rules.has('IDR_FORGIVENESS_YEARS', year);
   const years = hasYears ? t.rule(rules, 'IDR_FORGIVENESS_YEARS', year) : null;
   if (!hasYears) missingRules.push('IDR_FORGIVENESS_YEARS');
@@ -249,7 +260,7 @@ export function idr(spine, rules, d, s = null, asOf = spine.meta.asOf) {
   if (pslfOn && !hasPslf) missingRules.push('PSLF_PAYMENTS');
   const out = t.out(payment);
   return {
-    ...base, federal: true, agi, agiSource, householdSize: size, povertyLine: poverty, discretionary, payment,
+    ...base, federal: true, agi, agiSource, householdSize: size, povertyLine: poverty, discretionary, payment, rap,
     lower: payment !== null && base.standardPayment !== null ? payment < base.standardPayment : null,
     forgivenessYears: years, forgivenessDate: years === null ? null : sameDayLater(asOf, years * 12),
     pslf: pslfOn ? { payments: pslfPayments, date: pslfPayments === null ? null : sameDayLater(asOf, pslfPayments) } : null,

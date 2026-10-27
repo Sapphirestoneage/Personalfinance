@@ -7,11 +7,13 @@
 // Card use ranks first only when the Profile says they plan to apply for credit in the next 12 months. Then the rest
 // of the order, in its own order. A step blocked only by a missing number is not a step: it becomes a question on its
 // card ("What's your highest insurance deductible?") and the ranking moves on.
+// Protection (audit 7): each gap from the Profile (protectionGaps) ranks right after the starter emergency fund (the
+// deductibles rung): ahead of the dollars-lost steps once that fund is there, else just after it.
 
 import { valueOf as v, round2, monthKey } from './spine.js';
 import { rateOn, paidInFull } from './debt.js';
 import { fooLadder, RUNG_LABELS } from './plan.js';
-import { answersOf } from './profile.js';
+import { answersOf, protectionGaps } from './profile.js';
 
 const QUESTIONS = {
   deductibles: 'What is your highest insurance deductible?',
@@ -67,7 +69,10 @@ export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null,
     if (ranked.has(r.id)) continue;
     rest.push({ id: 'rung:' + r.id, rung: r.id, label: r.label, loss: null, need: r.need, flow: r.flow, path: r.path, why: r.why });
   }
-  const steps = [...first, ...losing, ...rest];
+  const protect = protectionGaps(answersOf(spine)).map((g) => ({ id: 'protect:' + g.id, rung: null, label: g.label, loss: null, path: 'profile.' + g.id, href: 'profile.html#/protect', why: g.why }));
+  const starter = ladder.rungs.find((r) => r.id === 'deductibles');
+  const at = rest.findIndex((x) => x.rung === 'deductibles') + 1;
+  const steps = starter && starter.done === true ? [...first, ...protect, ...losing, ...rest] : [...first, ...losing, ...rest.slice(0, at), ...protect, ...rest.slice(at)];
   return { steps, first: steps[0] || null, questions, ladder };
 }
 const money0 = (x) => '$' + Math.round(x).toLocaleString('en-US');
