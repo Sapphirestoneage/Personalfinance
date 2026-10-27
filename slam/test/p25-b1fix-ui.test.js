@@ -121,7 +121,7 @@ test('My numbers: Select several reads 0 selected after an action; the bar names
 test('the Calendar: the month is kept; a plan suggestion opens the plan; the debt words match the link; Year months are buttons', () => {
   const src = code('ui/calendar.js');
   assert.match(src, /if \(!YM\.test\(\(ctx\.state \|\| \{\}\)\.ym \|\| ''\)\) keep\(\{ ym: st\.ym \}\);/);
-  assert.match(src, /const where = e\.kind === 'foo' \? \['plan\.html', 'See it in your plan'/);
+  assert.match(src, /: e\.kind === 'foo' \? \['plan\.html', 'See it in your plan'/);
   assert.match(src, /note \? h\('p', \{ class: 'tile-sub' \}, sentence\(cap\(note\)\)\) : null/);
   assert.doesNotMatch(src, /cap\(e\.note\) \+ '\.'/);
   assert.match(src, /debt: 'Set by the lender\\'s due date\. Change it in My numbers\.'/);

@@ -118,3 +118,16 @@ test('the demo shows it off: a family plan with one person paid ahead and one pa
   assert.equal(O.personStatus(s, e, arr, arr.people[1], s.meta.asOf).askOn, '2026-12-01');
   assert.ok(validate(s).ok, validate(s).errors.map((x) => x.path + ' ' + x.message).join('\n'));
 });
+
+test('the Calendar dates the ask: "Ask Theo: $39 for Sep to Nov", a dated item, not money moving', async () => {
+  const { calendar } = await import('../engine/calendar.js');
+  const s = applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+  const dec = calendar(s, R, { from: '2026-12', months: 1 }).months[0];
+  const ask = dec.events.find((e) => e.kind === 'ask');
+  assert.equal(ask.date, '2026-12-01');
+  assert.equal(ask.label, 'Ask Theo: $39 for Sep to Nov (Streaming (family plan))');
+  assert.equal(ask.amount, null);
+  assert.equal(ask.note, 'Hey! Your share of Streaming (family plan) for Sep to Nov is $39.');
+  // The bill itself leaves whole on its day.
+  assert.equal(dec.events.find((e) => e.id === 'bill:streaming').amount, 40);
+});

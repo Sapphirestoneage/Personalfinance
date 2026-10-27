@@ -21,6 +21,7 @@ import { mathButton } from './math-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf, keyHint } from './view.js';
+import { personSlug } from './owed.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton } from './forecast.js';
@@ -38,14 +39,14 @@ const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 
 
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
-const CAT = { foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
+const CAT = { ask: 'viz-4', foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
 // The view toggles (Batch 6): filters on the one list of events. A rough or missing item is a guess or has no amount.
 const FILTERS = [['all', 'All'], ['in', 'Money in'], ['bills', 'Bills'], ['debt', 'Debt'], ['rough', 'Rough or missing']];
 const DEBT_KINDS = ['debt', 'interest', 'promoEnds'];
 const BILL_KINDS = ['bill', 'subscription', 'estimatedTax'];
 // Dates that carry no amount by design (a start, an end, a deadline): never read as missing.
-const MARKER_KINDS = ['incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'promoEnds', 'bonusBy', 'maxDeadline', 'coverage', 'situation', 'foo'];
+const MARKER_KINDS = ['incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'promoEnds', 'bonusBy', 'maxDeadline', 'coverage', 'situation', 'foo', 'ask'];
 const FILTER_OF = {
   all: () => true,
   in: (e) => e.direction === 'in',
@@ -198,7 +199,9 @@ function itemScreen(v, date, id) {
   if (e.date === date) following = null;
   else if (following !== id + '@' + e.date) { following = id + '@' + e.date; queueMicrotask(() => go([e.date, id])); }
   // A plan suggestion has no usual amount or day of its own: it opens the plan it comes from.
-  const where = e.kind === 'foo' ? ['plan.html', 'See it in your plan', 'The steps your surplus goes to, one at a time.']
+  // When to ask someone to pay you back (shared bills brief): copy a friendly message, or mark it paid on their screen.
+  const where = e.kind === 'ask' ? ['ledger.html#/assets/owed-to-you/' + personSlug(e.person), 'Mark paid', 'What ' + e.person + ' owes you, line by line.']
+    : e.kind === 'foo' ? ['plan.html', 'See it in your plan', 'The steps your surplus goes to, one at a time.']
     : e.kind === 'maxDeadline' && e.accountId ? [maxHref(e.accountId), 'How much to max it?', 'The room left and how to fill it by this deadline.'] : e.path ? [ledgerHref(e.path), 'See it in My numbers', 'Change the usual amount or day.'] : null;
   const note = noteOf(e, { moved: false });
   return [
@@ -210,7 +213,8 @@ function itemScreen(v, date, id) {
       e.moved ? h('p', { class: 'tile-sub' }, 'Moved from ' + shortDate(e.origDate) + '. Other months stay put.') : null,
       e.movable ? null : h('p', { class: 'tile-sub why-fixed' }, h('strong', {}, 'Cannot move here. '), fixedWords(e)),
       e.confirmable ? happenedRow(e) : null,
-      e.kind === 'pay' ? payFold(e) : null),
+      e.kind === 'pay' ? payFold(e) : null,
+      e.kind === 'ask' ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: async (ev) => { try { await navigator.clipboard.writeText(e.note); ev.target.textContent = 'Copied'; } catch { ev.target.textContent = 'Could not copy'; } } }, 'Copy message')) : null),
     e.movable ? changeCard(e) : null,
     where ? h('a', { class: 'go-row plain', href: where[0] }, h('span', { class: 'go-name' }, where[1]), h('span', { class: 'go-sub' }, where[2])) : null
   ];
