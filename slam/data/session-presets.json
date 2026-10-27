@@ -225,6 +225,129 @@
         "subscriptions": 40,
         "miscellaneous": 250
       }
+    },
+    "note": "Typical monthly amounts for one adult, shown as typical and stored as a guess wherever they land. Each amount names the published table it should come from (sources below). The BLS, HUD and Census sites could not be reached when this was built (2026-10-27), so every number is still the earlier estimate, marked verify (QUESTIONS.md 124). Not anyone's real numbers.",
+    "sources": {
+      "rent": {
+        "source": "HUD Fair Market Rent, one bedroom (city: large metros; elsewhere: national median), cross-checked with Census ACS median gross rent (B25064)",
+        "year": 2026,
+        "url": "https://www.huduser.gov/portal/datasets/fmr.html",
+        "status": "verify"
+      },
+      "pay-family": {
+        "source": "No published average: Eli's guess for rent paid to family",
+        "year": 2026,
+        "url": null,
+        "status": "verify"
+      },
+      "mortgage": {
+        "source": "Census ACS median monthly owner costs with a mortgage (B25088)",
+        "year": 2024,
+        "url": "https://data.census.gov/table?q=B25088",
+        "status": "verify"
+      },
+      "property-tax": {
+        "source": "Census ACS median real estate taxes paid (B25103), a year divided by 12",
+        "year": 2024,
+        "url": "https://data.census.gov/table?q=B25103",
+        "status": "verify"
+      },
+      "home-insurance": {
+        "source": "BLS Consumer Expenditure Survey, homeowner's insurance, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "renters-insurance": {
+        "source": "BLS Consumer Expenditure Survey, tenant's insurance, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "utilities": {
+        "source": "BLS Consumer Expenditure Survey, utilities, fuels and public services, less telephone, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "internet": {
+        "source": "BLS Consumer Expenditure Survey, internet services (telephone and other communication), by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "phone": {
+        "source": "BLS Consumer Expenditure Survey, cellular phone service, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "groceries": {
+        "source": "BLS Consumer Expenditure Survey, food at home, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "eating-out": {
+        "source": "BLS Consumer Expenditure Survey, food away from home, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "car-payment": {
+        "source": "BLS Consumer Expenditure Survey, vehicle finance charges and purchases, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "car-insurance": {
+        "source": "BLS Consumer Expenditure Survey, vehicle insurance, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "car-gas": {
+        "source": "BLS Consumer Expenditure Survey, gasoline, other fuels and motor oil, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "car-upkeep": {
+        "source": "BLS Consumer Expenditure Survey, vehicle maintenance and repairs, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "transit": {
+        "source": "BLS Consumer Expenditure Survey, public and other transportation, local, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "rides": {
+        "source": "BLS Consumer Expenditure Survey, public and other transportation, local (rides), by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "gym": {
+        "source": "BLS Consumer Expenditure Survey, fees and admissions, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "subscriptions": {
+        "source": "BLS Consumer Expenditure Survey, audio and visual equipment and services, streaming, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      },
+      "miscellaneous": {
+        "source": "BLS Consumer Expenditure Survey, miscellaneous, by region (elsewhere) and selected large metro areas (city)",
+        "year": 2024,
+        "url": "https://www.bls.gov/cex/tables/calendar-year/mean-item-share-average-standard-error.htm",
+        "status": "verify"
+      }
     }
   }
 }
