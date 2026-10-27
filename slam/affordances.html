@@ -341,6 +341,30 @@
     <p class="muted">At the bottom of every page, one small link to the Builder (the Design kit, All formulas and Rules): see the footer sample under Plan page and shared pieces.</p>
   </section>
 
+  <section class="card" aria-labelledby="ov-h">
+    <h2 id="ov-h">Added overnight: command bar, orders, what if, audit, calls, notes, keys</h2>
+    <p class="muted">The command bar says what Enter will do before it does it.</p>
+    <div class="search-panel" style="position: static;"><input type="search" aria-label="Find or do something sample" value="visa 2700"><ul class="search-results"><li><button type="button" class="search-hit search-cmd"><span>Set Visa balance to $2,700 (now $3,000)</span><span class="search-kind">Enter</span></button></li><li><a class="search-hit" href="#ov-h"><span>Visa</span><span class="search-kind">Debt</span></a></li></ul></div>
+    <div class="method-grid">
+      <div class="method-col is-pick" role="group" aria-label="Highest rate first sample"><p class="method-name">Highest rate first <span class="pill">Recommended</span></p><dl class="method-facts"><dt>Debt free</dt><dd>November 2028</dd><dt>Interest in all</dt><dd>$1,464</dd><dt>First cleared</dt><dd>Store card, Dec 2026</dd></dl><button type="button" class="btn small" disabled title="This is the order the plan uses now">In use now</button></div>
+      <div class="method-col" role="group" aria-label="Smallest balance first sample"><p class="method-name">Smallest balance first</p><dl class="method-facts"><dt>Debt free</dt><dd>November 2028</dd><dt>Interest in all</dt><dd>$1,502</dd><dt>First cleared</dt><dd>Store card, Dec 2026</dd></dl><button type="button" class="btn small">Use this order</button></div>
+    </div>
+    <div class="wi-field"><div class="wi-head"><label for="wi-sample" class="edit-label">Extra to debt a month</label><output class="wi-value" for="wi-sample">$500</output></div><input type="range" id="wi-sample" min="0" max="1000" step="25" value="500"><p class="edit-hint">On top of the extra already set, in the plan's order</p></div>
+    <div class="wi-out"><div class="wi-row is-moved"><span class="wi-label">Debt free</span><span class="wi-now">Nov 2028</span><span class="wi-arrow" aria-hidden="true">&#8594;</span><span class="wi-then">Nov 2027</span><span class="wi-words">12 months sooner</span></div><div class="wi-row"><span class="wi-label">Financial independence</span><span class="wi-now">about 2048</span><span class="wi-arrow" aria-hidden="true">&#8594;</span><span class="wi-then">about 2048</span></div></div>
+    <ol class="audit-list"><li class="audit-row is-candidate"><div class="audit-head"><a href="#ov-h">Streaming</a><span class="audit-cost">$192 a year</span></div><p class="tile-sub">$16 a month &middot; $4.00 a use</p><div class="audit-actions"><div class="uses-field"><label for="uses-sample" class="edit-label">Uses a month</label><input id="uses-sample" class="uses-box" type="text" inputmode="numeric" value="4"><p class="edit-hint">Optional</p></div><button type="button" class="btn small is-pressed" aria-pressed="true">Marked to cancel</button></div></li>
+      <li class="audit-row"><div class="audit-head"><a href="#ov-h">Phone</a><span class="audit-cost">$60 a month</span></div><p class="tile-sub">About typical ($60)</p><details class="script-fold"><summary>Call script</summary><p class="script">Hi, I have been a customer for a while and I am reviewing my bills.</p></details><details class="call-fold"><summary class="btn small">I called</summary></details></li></ol>
+    <details class="row-notes" open><summary>Notes (1)</summary><ul class="note-list"><li><span class="note-date">Oct 27, 2026</span><span class="note-text">Lease renews in March</span><button type="button" class="btn small danger">Delete</button></li></ul></details>
+    <p class="pay-arrow" style="margin: var(--space-2) 0;"><span aria-hidden="true">&#8595;</span> $3,053 carried to the Dec 1, 2026 paycheck</p>
+    <p>Keys: <kbd>g</kbd> then <kbd>p</kbd> opens the Plan; <kbd>?</kbd> lists them all.</p>
+  </section>
+
+  <section class="card" aria-labelledby="charts-h" id="charts-gallery">
+    <h2 id="charts-h">Charts</h2>
+    <p class="muted">One chart module (ui/chart.js), made-up numbers. Each asks its question as its title, says its point, opens as a table, and shows a rough part hatched or dashed. Switch the look to check both.</p>
+    <div class="segmented" role="group" aria-label="Look" id="look"><button type="button" class="seg-btn" data-look="light" aria-pressed="false"><span class="seg-label">Light</span></button><button type="button" class="seg-btn" data-look="dark" aria-pressed="false"><span class="seg-label">Dark</span></button><button type="button" class="seg-btn" data-look="" aria-pressed="true"><span class="seg-label">Device</span></button></div>
+    <div id="charts-here"></div>
+  </section>
+
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>
@@ -350,11 +374,29 @@
 <script type="module">
   import { startPage, say } from './ui/shell.js';
   startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'], household: false });
+  // The chart gallery: every form the app draws, in a normal and a rough state, and the empty state.
+  const C = await import('./ui/chart.js');
+  const yrs = (a, b, f) => Array.from({ length: b - a + 1 }, (_, i) => [a + i, f(i)]);
+  const T = (rows) => ({ head: ['Item', 'Value'], rows: rows.map(([a, b]) => [String(a), C.exactMoney(b)]) });
+  const cards = [
+    C.chartCard({ id: 'k-wf', question: 'What makes up your net worth?', summary: 'Assets less debts come to $62,976.', draw: (w) => C.waterfall({ width: w, steps: [{ label: 'Cash', v: 12000 }, { label: 'Retirement', v: 45000 }, { label: 'Car', v: 10000, rough: true }, { label: 'Cards', v: -4200 }, { label: 'Net worth', v: 62800, total: true, rough: true }] }), legend: [{ c: 1, words: 'Adds' }, { c: 2, words: 'Takes away' }, { c: 0, words: 'Total' }], table: T([['Cash', 12000], ['Net worth', 62800]]) }),
+    C.chartCard({ id: 'k-line', question: 'When do your investments reach the FI number?', summary: 'Around 2046, a projection.', draw: (w) => C.lines({ width: w, series: [{ label: 'Invested', c: 2, points: yrs(2026, 2050, (i) => 65000 * 1.09 ** i), dashed: true, endLabel: 'Invested' }], hlines: [{ y: 1000000, label: 'FI number $1M', c: 1 }], tips: (y) => String(y) }), legend: [{ c: 2, words: 'Invested, projected', dash: true }, { c: 1, words: 'FI number', cls: 'sw-line' }], table: T(yrs(2026, 2030, (i) => 65000 * 1.09 ** i)) }),
+    C.chartCard({ id: 'k-area', question: 'When is your debt gone?', summary: 'Debt free November 2028.', draw: (w) => C.lines({ width: w, series: [{ label: 'Visa', c: 1, stack: true, points: yrs(2026, 2029, (i) => Math.max(0, 3000 - i * 1500)) }, { label: 'Loan', c: 3, stack: true, rough: true, points: yrs(2026, 2029, (i) => Math.max(0, 3000 - i * 1500) + Math.max(0, 20000 - i * 7000)) }] }), legend: [{ c: 1, words: 'Visa' }, { c: 3, words: 'Loan (rough)', rough: true }], table: T([[2026, 23000], [2029, 0]]) }),
+    C.chartCard({ id: 'k-bullet', question: 'Is each part on plan this month?', summary: 'Food is $186 over.', draw: (w) => C.bars({ width: w, rows: [{ label: 'Housing', range: { v0: 0, v1: 1950 }, segs: [{ v: 1951, c: 1 }], target: 1950 }, { label: 'Food', range: { v0: 0, v1: 700 }, segs: [{ v: 886, c: 2 }], target: 700 }, { label: 'Fun', range: { v0: 0, v1: 300 }, segs: [{ v: 120, c: 1, rough: true }], target: 300 }] }), legend: [{ c: 1, words: 'At or under plan' }, { c: 2, words: 'Over plan' }], table: T([['Food', 886]]) }),
+    C.chartCard({ id: 'k-div', question: 'Where are you over and under?', summary: 'Right is over, left is under.', draw: (w) => C.bars({ width: w, diverging: true, rows: [{ label: 'Food', segs: [{ v: 186, c: 2 }] }, { label: 'Fun', segs: [{ v: -180, c: 1 }] }] }), legend: [{ c: 1, words: 'Under' }, { c: 2, words: 'Over' }], table: T([['Food', 186], ['Fun', -180]]) }),
+    C.chartCard({ id: 'k-col', question: 'How much of each year\'s payments is interest?', summary: 'In 2027, $900 of $12,600.', draw: (w) => C.columns({ width: w, cols: [2026, 2027, 2028].map((y, i) => ({ label: String(y), segs: [{ v: 2000 + i * 5000, c: 1 }, { v: 300 + i * 200, c: 2, rough: i === 2 }] })) }), legend: [{ c: 1, words: 'Paid down' }, { c: 2, words: 'Interest' }], table: T([[2026, 2300]]) }),
+    C.chartCard({ id: 'k-tree', question: 'What takes the biggest share of the plan?', summary: 'Rent, at $1,800.', draw: (w) => C.treemap({ width: w, height: 220, items: [{ label: 'Rent', v: 1800, c: 1 }, { label: 'Groceries', v: 500, c: 2 }, { label: 'Car', v: 300, c: 4, rough: true }, { label: 'Phone', v: 60, c: 3 }] }), legend: [{ c: 1, words: 'Housing' }, { c: 2, words: 'Food' }, { c: 4, words: 'Getting around' }, { c: 3, words: 'Other' }], table: T([['Rent', 1800]]) }),
+    C.chartCard({ id: 'k-heat', question: 'Which days did the money go out?', summary: 'Darker days spent more.', draw: (w) => C.heatmap({ width: w, ym: '2026-09', days: [{ date: '2026-09-01', v: 1850 }, { date: '2026-09-05', v: 80 }, { date: '2026-09-12', v: 140 }, { date: '2026-09-19', v: 60 }, { date: '2026-09-23', v: 42 }] }), table: T([['Sep 1', 1850]]) }),
+    C.chartCard({ id: 'k-empty', question: 'How is your net worth changing?', summary: 'One point so far.', empty: 'A line starts once your net worth has been seen on two different days.' })
+  ];
+  document.getElementById('charts-here').append(...cards, Object.assign(document.createElement('p'), { className: 'muted', textContent: 'A sparkline (Today): ' }), C.sparkline({ width: 120, height: 32, points: [62976, 63400, 63900, 64700, 65100, 66000], rough: true, label: 'Sample sparkline' }));
+  // The look switch: light, dark or the device's, for this page only.
+  for (const b of document.querySelectorAll('#look .seg-btn')) b.addEventListener('click', (e) => { e.stopPropagation(); const k = b.dataset.look; if (k) document.documentElement.dataset.theme = k; else delete document.documentElement.dataset.theme; for (const x of document.querySelectorAll('#look .seg-btn')) x.setAttribute('aria-pressed', String(x === b)); });
   // No dead clicks: a sample button, or a sample link to nowhere, says what it is when tapped. The page's own Back
   // and trail, the skip link and links to real pages work as they do everywhere.
   document.getElementById('app').addEventListener('click', (e) => {
     const t = e.target.closest('button, a[href^="#"]');
-    if (!t || t.closest('.screen-top:not(.is-sample)') || /^#(app$|\/)/.test(t.getAttribute('href') || '')) return;
+    if (!t || t.closest('.chart-card') || t.closest('#look') || t.closest('.screen-top:not(.is-sample)') || /^#(app$|\/)/.test(t.getAttribute('href') || '')) return;
     if (t.tagName === 'A') e.preventDefault();
     say('A sample, so it does nothing here. In the app it ' + (t.tagName === 'A' ? 'opens what it names' : 'does what it says'));
   });
