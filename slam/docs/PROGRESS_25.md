@@ -106,3 +106,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Owner (2026-10-27): the Session in My numbers' order with Taxes as its own step (S-258); withdrawal rates add 4.7% and 5.2% with guardrails (S-259).
 - Owner (2026-10-27): every saved Session row has Delete, undoable (S-260).
 - Owner (2026-10-27): Plan step 1 is the starter cushion, one of four per client ($1,000 default, deductible, a month of housing, a month of needs), with tests (S-261).
+- Owner (2026-10-27): the account picker grouped (401(k)s together, IRAs together) with a Roth tick box (S-262).

@@ -28,6 +28,27 @@ const percent = (input) => h('div', { class: 'affix affix-end' }, input, h('span
 // Opening a form never scrolls the page.
 export const focusAdd = () => document.getElementById('add-name')?.focus({ preventScroll: true });
 const select = (id, options, value) => h('select', { id }, options.map(([k, w]) => h('option', { value: k, selected: k === value || null }, w)));
+// The account picker (S-262): groups in a set order, the 401(k)s together and the IRAs together; the Roth twins are
+// left out (the Roth box picks them); a few shorter names where Roth is the box.
+const ACCOUNT_GROUPS = [
+  ['Cash', ['checking', 'savings', 'hysa', 'money_market']],
+  ['Bonds and CDs', ['cd', 'treasury', 'i_bond']],
+  ['401(k) and workplace plans', ['k401', 'solo_k401', 'after_tax_k401', 'k403b', 'k457b', 'tsp']],
+  ['IRAs', ['traditional_ira', 'rollover_ira', 'spousal_ira', 'inherited_ira', 'sep_ira', 'simple_ira']],
+  ['HSA and FSA', ['hsa', 'health_fsa', 'lp_fsa', 'dc_fsa']],
+  ['Investing', ['brokerage', 'joint_brokerage', 'espp', 'rsu', 'crypto']],
+  ['Education and kids', ['k529', 'coverdell', 'utma', 'custodial_roth', 'able', 'trump']]
+];
+const ACCOUNT_NAMES = { k401: '401(k)', traditional_ira: 'IRA' };
+const ROTH_TWINS = ['roth_k401', 'roth_ira'];
+function accountSelect(types, value) {
+  const have = new Set(types.filter((t) => !ROTH_TWINS.includes(t)));
+  const named = (t) => ACCOUNT_NAMES[t] || (PRESETS[t] ? PRESETS[t].label : t);
+  const placed = new Set(ACCOUNT_GROUPS.flatMap(([, ts]) => ts));
+  const groups = [...ACCOUNT_GROUPS.map(([g, ts]) => [g, ts.filter((t) => have.has(t))]), ['Other', [...have].filter((t) => !placed.has(t))]].filter(([, ts]) => ts.length);
+  const v = ROTH_TWINS.includes(value) ? { roth_k401: 'k401', roth_ira: 'traditional_ira' }[value] : value;
+  return h('select', { id: 'add-type' }, groups.map(([g, ts]) => h('optgroup', { label: g }, ts.map((t) => h('option', { value: t, selected: t === v || null }, named(t))))));
+}
 
 // addForm({ spine (the household, or a function returning it), collection, types, fat, today, onDone, onCancel }) -> a <form>
 //   onDone(made, label): made is { spine, id, firstPath, collection } from addWithAnswers.
@@ -40,8 +61,15 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     ? [...INCOME_FIRST, ...INCOME_MORE].filter(([k]) => !types.length || types.includes(k))
     : types.map((t) => [t, collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t] ? PRESETS[t].label : t]);
   const first = income && typeList.some(([k]) => k === firstIncomeType(spine, today)) ? firstIncomeType(spine, today) : (typeList[0] || [null])[0];
-  const typeSel = typeList.length > 1 ? select('add-type', typeList, first) : null;
-  const kind = () => (typeSel ? typeSel.value : first);
+  // Accounts (owner's ask, 2026-10-27, S-262): grouped by kind (all the 401(k)s together, all the IRAs together), and
+  // Roth is a tick box, not its own line: a 401(k) or an IRA with Roth ticked is the Roth version.
+  const accounts = collection === 'accounts';
+  const ROTH_OF = { k401: 'roth_k401', traditional_ira: 'roth_ira' };
+  const typeSel = typeList.length > 1 ? (accounts ? accountSelect(typeList.map(([k]) => k), first) : select('add-type', typeList, first)) : null;
+  const roth = accounts ? h('input', { type: 'checkbox', id: 'add-roth' }) : null;
+  const rothRow = roth ? h('label', { class: 'check-row', for: 'add-roth' }, roth, ' Roth (money goes in after tax)') : null;
+  const syncRoth = () => { if (rothRow) rothRow.hidden = !ROTH_OF[typeSel ? typeSel.value : first]; };
+  const kind = () => { const k = typeSel ? typeSel.value : first; return roth && roth.checked && ROTH_OF[k] ? ROTH_OF[k] : k; };
 
   const name = box('add-name');
   const amount = box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' });
@@ -120,6 +148,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   };
   const showMore = () => { const on = moreFields(collection, kind()); for (const [k, el] of Object.entries(moreBox)) el.hidden = !on.includes(k); };
   if (typeSel) typeSel.addEventListener('change', showMore);
+  if (typeSel && rothRow) { typeSel.addEventListener('change', syncRoth); syncRoth(); }
   showMore();
 
   const submit = (e) => {
@@ -172,6 +201,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       field('add-name', 'Name', name, null, null, true),
       h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint)),
     typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
+    rothRow,
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
     maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),

@@ -70,3 +70,11 @@ test('the Session and My numbers both use the one form', () => {
     assert.doesNotMatch(src, /Name, for example Chase Freedom/, f);
   }
 });
+
+test('the account picker: grouped, the 401(k)s together and the IRAs together, Roth a tick box (S-262)', () => {
+  const src = readFileSync(new URL('../ui/add-form.js', import.meta.url), 'utf8');
+  assert.match(src, /\['401\(k\) and workplace plans', \['k401', 'solo_k401', 'after_tax_k401', 'k403b', 'k457b', 'tsp'\]\]/);
+  assert.match(src, /\['IRAs', \['traditional_ira', 'rollover_ira', 'spousal_ira', 'inherited_ira', 'sep_ira', 'simple_ira'\]\]/);
+  assert.match(src, /const ROTH_OF = \{ k401: 'roth_k401', traditional_ira: 'roth_ira' \};/);
+  assert.match(src, /h\('optgroup', \{ label: g \}/);
+});
