@@ -97,3 +97,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answer 6 (2026-10-27): the demo's Streaming and Gym are subscriptions (the audit has rows); a guessed renewal date no longer moves a subscription off its typed pay day; six tests updated, one added (S-248).
 - Morning answer 7 (2026-10-27): What it takes solves for the FI assumptions' age, else 65 as a guess with Change, with a test (S-249).
 - Morning answer 8 (2026-10-27): Which card leaves business cards out unless the purchase is marked business, with a test (S-250).
+- Morning answer 9 (2026-10-27): Got extra money? asks only where the money came from (seven answers) and sets the tax from it; the step and Show the math name the rule, with a test (S-251).

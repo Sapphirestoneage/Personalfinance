@@ -483,6 +483,8 @@ function windfallMetric(id) {
       if (stepId === 'promos') terms.push(metric('promoMonthly', 'Monthly amount that clears the promos', s.debt.promo.monthly, 'usd/month', 'arg'), metric('leftAfterSaving', 'Left after saving', s.cashflow.surplus, 'usd/month', 'arg'), ...st.items.map((x) => field(spine, x.path, x.balance, 'usd', 'arg', x.name + ' balance (' + x.paymentsLeft + ' payments left)')));
       if (stepId === 'cards') terms.push(...st.items.map((x) => field(spine, x.path, x.pay, 'usd', 'arg', x.name + ' at ' + (Math.round(x.rate * 10000) / 100) + '%')));
       if (stepId === 'cushion') terms.push(metric('ruleOf5Dollars', 'Cushion target', s.emergency.targetDollars, 'usd', 'arg'), metric('cash', 'Cash today', s.sheet.cash, 'usd', 'arg'), { label: 'The floor step', value: w.steps.find((x) => x.id === 'cashFloor').amount ?? 0, unit: 'usd', kind: 'computed', role: 'arg', metric: 'windfall:cashFloor', group: null });
+      // Which rule set the tax (morning answer 9): where the money came from.
+      if (stepId === 'taxOnIt' && w.taxRule) return out(r, terms, [], { note: 'From ' + w.fromWords.toLowerCase() + ': ' + w.taxRule });
       if (stepId === 'roth' && st.rows) for (const r of st.rows) terms.push(metric('maxit:' + r.accountId + ':' + r.year + ':' + (w.monthly ? 'month' : 'lump'), (w.monthly ? 'New money a month for ' + r.year + ', to ' : 'New money for ' + r.year + ' (the room less what is already set to go in), to ') + r.deadline.date, { value: w.monthly ? r.perMonth : r.lump, kind: r.kind }, 'usd', 'arg'));
       return out(r, terms);
     },

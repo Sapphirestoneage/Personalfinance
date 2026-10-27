@@ -33,7 +33,22 @@ export const STEP_LABELS = {
 
 // source: where the money came from ('w2', '1099', 'other'); a 1099 lump sum owes self-employment tax too (answer 24).
 // monthly: the same order run on the monthly surplus (E008): flow steps (the match, the Roth room) read as amounts a month.
-export function windfall(spine, rules, s, { amount, taxed = true, source = 'other', monthly = false } = {}) {
+// Where the money came from (morning answer 9, S-251): the one question Got extra money? asks. Each answer sets the tax
+// treatment (taxed: tax already out or none owed; source: w2 payroll, 1099 self-employment, other) and says which rule
+// applied, for the step and its Show the math.
+export const WINDFALL_FROM = {
+  bonus: { words: 'A bonus from my job', taxed: true, source: 'w2', rule: 'A bonus from your job: income and payroll tax come out of the paycheck it lands in, so nothing more is held back.' },
+  refund: { words: 'A tax refund', taxed: true, source: 'other', rule: 'A tax refund is your own money coming back: it is not income, so no tax is held back.' },
+  gift: { words: 'A gift', taxed: true, source: 'other', rule: 'A gift is not income to the one who gets it; any gift tax is the giver\'s.' },
+  inheritance: { words: 'An inheritance', taxed: true, source: 'other', rule: 'An inheritance is not federal income (money from an inherited retirement account is taxed when it comes out).' },
+  side: { words: 'Side income', taxed: false, source: '1099', rule: 'Side income has no tax taken out: income tax and self-employment tax are held back.' },
+  sale: { words: 'Selling something', taxed: true, source: 'other', rule: 'Selling something you own for less than you paid is not income; if it sold for more than it cost, the gain is taxed.' },
+  other: { words: 'Something else', taxed: false, source: 'other', rule: 'Somewhere else: income tax is held back to be safe.' }
+};
+export function windfall(spine, rules, s, { amount, from = null, taxed: taxedIn = true, source: sourceIn = 'other', monthly = false } = {}) {
+  const fromRow = from && WINDFALL_FROM[from] ? WINDFALL_FROM[from] : null;
+  const taxed = fromRow ? fromRow.taxed : taxedIn, source = fromRow ? fromRow.source : sourceIn;
+  const taxRule = fromRow ? fromRow.rule : null;
   const asOf = s.asOf, year = +asOf.slice(0, 4);
   const R = (id) => rules.get(id, year);
   const order = R('WINDFALL_ORDER');
@@ -61,7 +76,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
 
   for (const id of order) {
     if (id === 'taxOnIt') run(id, (t) => {
-      if (taxed) return { need: 0, why: 'Tax is already taken out of it, or none is owed, so nothing is held back here.' };
+      if (taxed) return { need: 0, why: taxRule || 'Tax is already taken out of it, or none is owed, so nothing is held back here.' };
       const L = s.tax.lines, P = s.tax.partial;
       const fed = L.marginalFederal && L.marginalFederal.value !== null ? L.marginalFederal : P ? P.marginalFederal : null;
       const st = L.marginalState && L.marginalState.value !== null ? L.marginalState : P ? P.marginalState : null;
@@ -73,7 +88,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       if (source === '1099') { const seLine = L.marginalSe && L.marginalSe.value !== null ? L.marginalSe : null; if (seLine) { se = seLine.value; t.absorb({ ...seLine, value: undefined }); } else { se = t.rule(rules, 'SE_FACTOR', year) * (t.rule(rules, 'SE_SS_RATE', year) + t.rule(rules, 'SE_MED_RATE', year)); for (const p of s.tax.balanceDue.missing.length ? s.tax.balanceDue.missing : ['household.filingStatus']) t.addRough(p); } seWords = ' + ' + pct(se) + ' self-employment tax'; }
       const rate = (fed.value || 0) + ((st && st.value) || 0) + se;
       const floor = L.marginalFederal && L.marginalFederal.value !== null ? '' : ' (a floor: the year\'s tax cannot be figured yet)';
-      return { need: amount * rate, why: 'Nothing withholds tax from it, so ' + pct(rate) + ' (' + pct(fed.value || 0) + ' federal' + (st && st.value ? ' + ' + pct(st.value) + ' state' : '') + seWords + ', your marginal rate' + floor + ') is held back for the ' + year + ' return.', path: 'household.filingStatus', rate };
+      return { need: amount * rate, why: (taxRule ? taxRule + ' ' : '') + 'Nothing withholds tax from it, so ' + pct(rate) + ' (' + pct(fed.value || 0) + ' federal' + (st && st.value ? ' + ' + pct(st.value) + ' state' : '') + seWords + ', your marginal rate' + floor + ') is held back for the ' + year + ' return.', path: 'household.filingStatus', rate };
     });
     else if (id === 'taxBill') run(id, (t) => {
       const due = s.tax.balanceDue.value;
@@ -180,7 +195,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
   const assigned = round2(steps.filter((x) => x.id !== 'left').reduce((a, x) => a + (x.amount || 0), 0));
   const snap = all.snapshot();
   const leftStep = steps.find((x) => x.id === 'left');
-  return { amount, taxed, source, monthly, asOf, steps, assigned, left: round2(leftStep ? leftStep.amount : Math.max(0, remaining)), order, ...snap, kind: snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed' };
+  return { amount, from: fromRow ? from : null, fromWords: fromRow ? fromRow.words : null, taxRule, taxed, source, monthly, asOf, steps, assigned, left: round2(leftStep ? leftStep.amount : Math.max(0, remaining)), order, ...snap, kind: snap.missing.length ? 'incomplete' : snap.rough.length ? 'rough' : 'computed' };
 }
 
 export { monthKey };

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { loadHousehold } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { summarize } from '../engine/summary.js';
-import { windfall } from '../engine/windfall.js';
+import { windfall, WINDFALL_FROM } from '../engine/windfall.js';
 import { editFact, putFact } from '../engine/edits.js';
 import { explainMetric } from '../engine/math.js';
 import { readJson, loadRules } from './spine-helpers.js';
@@ -126,4 +126,20 @@ test('show the math: every step explains itself and recomputes to the cent', () 
       assert.ok(e.formula.includes('='));
     }
   }
+});
+
+test('Got extra money? asks only where it came from; the answer sets the tax and Show the math names the rule (morning answer 9)', () => {
+  const s = demo(), x = summarize(s, R);
+  assert.deepEqual(Object.keys(WINDFALL_FROM), ['bonus', 'refund', 'gift', 'inheritance', 'side', 'sale', 'other']);
+  for (const id of ['bonus', 'refund', 'gift', 'inheritance', 'sale']) {
+    const w = windfall(s, R, x, { amount: 5000, from: id });
+    assert.equal(step(w, 'taxOnIt').amount, 0, id + ': nothing held back');
+    assert.equal(step(w, 'taxOnIt').why, WINDFALL_FROM[id].rule);
+  }
+  const side = windfall(s, R, x, { amount: 5000, from: 'side' }), other = windfall(s, R, x, { amount: 5000, from: 'other' });
+  assert.ok(step(side, 'taxOnIt').amount > step(other, 'taxOnIt').amount && step(other, 'taxOnIt').amount > 0, 'side income adds self-employment tax; something else holds back income tax');
+  assert.equal(side.source, '1099');
+  const e = explainMetric('windfall:taxOnIt', { spine: s, rules: R, s: x, windfall: side });
+  assert.match(e.note, /^From side income: Side income has no tax taken out/);
+  assert.equal(windfall(s, R, x, { amount: 5000, from: 'bonus' }).source, 'w2');
 });

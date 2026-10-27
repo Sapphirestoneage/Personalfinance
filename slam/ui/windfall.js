@@ -7,7 +7,7 @@
 
 import { startPage, refresh, keep, kept } from './shell.js';
 import { summarize } from '../engine/summary.js';
-import { windfall } from '../engine/windfall.js';
+import { windfall, WINDFALL_FROM } from '../engine/windfall.js';
 import { mathButton } from './math-panel.js';
 import { parseInput } from '../engine/edits.js';
 import { withScenario } from '../engine/scenarios.js';
@@ -21,7 +21,9 @@ const COLOR = { taxOnIt: 'viz-4', taxBill: 'viz-4', cashFloor: 'viz-3', promos: 
 const LEGEND = [['viz-4', 'Tax'], ['viz-3', 'Cash'], ['viz-2', 'Debt'], ['viz-5', 'Roth IRA'], ['viz-0', 'Not assigned yet']];
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 
-let ask = (() => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v.amount === 'number') return { amount: v.amount, taxed: v.taxed !== false, source: ['w2', '1099', 'other'].includes(v.source) ? v.source : 'other' }; } catch { /* storage blocked */ } return { amount: null, taxed: true, source: 'other' }; })();
+// What is asked (morning answer 9): how much, and where it came from; the tax follows from where (WINDFALL_FROM). An
+// answer saved by the old two-question form reads as "Something else" until asked again.
+let ask = (() => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && typeof v.amount === 'number') return { amount: v.amount, from: WINDFALL_FROM[v.from] ? v.from : 'other' }; } catch { /* storage blocked */ } return { amount: null, from: 'bonus' }; })();
 const remember = () => { try { localStorage.setItem(KEY, JSON.stringify(ask)); } catch { /* storage blocked: lasts until the page closes */ } };
 
 // One run per household and answer (a redraw, a level change and the trail's names reuse it).
@@ -53,29 +55,22 @@ function form() {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const amount = h('input', { id: 'wf-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 5,000' });
   amount.value = ask.amount === null ? '' : String(ask.amount);
-  const choice = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-taxed', value: val, checked: ask.taxed === (val === 'yes') }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
-  const taxBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Is tax already taken out of it?'),
-    choice('yes', 'Yes, or none is owed', 'A gift, a refund, a bonus with tax taken out'),
-    choice('no', 'No, tax is still owed on it', '1099 pay, a prize'));
-  // Where it came from (answer 24): 1099 money owes self-employment tax on top.
-  const src = (val, text, sub) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-source', value: val, checked: ask.source === val }), h('span', { class: 'choice-text' }, h('strong', {}, text), h('span', { class: 'choice-sub' }, sub)));
-  const srcBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Where did it come from?'),
-    src('other', 'A gift, a refund, a sale, an inheritance', 'No payroll tax on it'),
-    src('w2', 'My job (a bonus or back pay)', 'Payroll tax came off it already'),
-    src('1099', 'Contract or 1099 work', 'Self-employment tax is owed too'));
+  // One question (morning answer 9): where it came from sets the tax; the step says which rule applied.
+  const src = (val) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-from', value: val, checked: ask.from === val }), h('span', { class: 'choice-text' }, h('strong', {}, WINDFALL_FROM[val].words)));
+  const srcBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Where did it come from?'), ...Object.keys(WINDFALL_FROM).map(src));
   // The screen's one job is this question, so the form is its main action (the tester allows a main form open).
   return h('form', { class: 'editor windfall-form', 'data-main-form': '', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
     const p = parseInput('money', amount.value);
     if (!p.ok || p.value <= 0) { msg.textContent = 'How much: ' + (p.ok ? 'more than $0' : p.message); amount.focus(); return; }
-    ask = { amount: p.value, taxed: taxBox.querySelector('input:checked').value === 'yes', source: srcBox.querySelector('input:checked').value };
+    ask = { amount: p.value, from: srcBox.querySelector('input:checked').value };
     remember();
     refresh();
     document.getElementById('wf-result')?.scrollIntoView({ block: 'start' });
   } },
     h('label', { for: 'wf-amount', class: 'edit-label' }, 'How much is coming in?'),
     h('div', { class: 'amount-row' }, h('span', { class: 'unit', 'aria-hidden': 'true' }, '$'), amount),
-    taxBox, srcBox, msg,
+    srcBox, msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Show where it goes')));
 }
 
@@ -97,7 +92,7 @@ function result(m) {
   const used = new Set(segs.map((x) => COLOR[x.id]));
   return h('section', { class: 'card', id: 'wf-result', 'aria-labelledby': 'wf-h' },
     h('h2', { id: 'wf-h' }, 'Where ' + money(w.amount) + ' goes'),
-    h('p', { class: 'tile-sub' }, (w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' has a job' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give one.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: open it to see what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
+    h('p', { class: 'tile-sub' }, (w.fromWords ? w.fromWords + ': ' + (w.taxed ? 'no tax held back. ' : 'tax held back first. ') : w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' has a job' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give one.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: open it to see what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
     h('div', { class: 'wf-bar', role: 'img', 'aria-label': 'The money split by step; the same amounts are listed below' }, segs.map((x) => h('span', { class: 'wf-seg ' + COLOR[x.id], style: 'width:' + (x.amount / w.amount * 100) + '%', title: x.label + ': ' + money(x.amount) }))),
     h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t))),
     h('ol', { class: 'go-list' }, w.steps.map(stepRow)),
