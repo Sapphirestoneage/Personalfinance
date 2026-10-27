@@ -510,7 +510,7 @@ details.when .sub-fields { margin-top: var(--space-2); }
 .cell-cash { margin: var(--space-1) 0 0; font-family: var(--font-num); font-size: var(--text-xs); color: var(--text); }
 .cell-debt { margin: 0; font-family: var(--font-num); font-size: 10px; color: var(--text-muted); }
 .cell.under { background: var(--bad-soft); }
-.cell.low .cell-cash::after, .day.low .day-cash::after { content: " lowest"; font-family: var(--font-ui); font-weight: 700; color: var(--st-dont-know); }
+.cell.low .cell-cash::after, .day.low .day-cash::after { content: " lowest this month"; font-family: var(--font-ui); font-weight: 700; color: var(--st-dont-know); }
 .day-cash { font-family: var(--font-num); font-size: var(--text-sm); color: var(--text-muted); }
 /* The selected item's editor. */
 .ev-editor { border-left: 4px solid var(--accent); }
@@ -1726,10 +1726,16 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .note-acts { display: flex; gap: var(--space-2); } #session-note { width: 100%; min-height: 88px; font: inherit; padding: var(--space-2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
 @media (max-width: 480px) { .note-list li { grid-template-columns: 1fr; } }
 /* Keyboard shortcuts (Track J) */
-.keys-dialog { border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); padding: var(--space-5); max-width: min(440px, 92vw); }
+.keys-dialog { border: 1.5px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); padding: var(--space-5); max-width: min(440px, 92vw); }
 .keys-dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .keys-dialog h2 { margin-top: 0; }
 kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); font-family: inherit; font-size: var(--text-sm); text-align: center; }
 .keys-btn { margin-left: var(--space-2); } @media (hover: none) { .keys-btn { display: none; } }
 @media (max-width: 700px) { .keys-btn { display: none; } }
 .script-fold > summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; }
+.sub-maybe { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; }
+/* Round 1: the page name wraps to two lines on a phone rather than being cut off (the trunk test). */
+@media (max-width: 480px) { .top-h1 { white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; font-size: var(--text-sm); } }
+/* Round 1: a grid item never grows past its column (a wide table or chart scrolls or shrinks inside it instead). */
+.fold-body { grid-template-columns: minmax(0, 1fr); } .fold-body > * { min-width: 0; } .chart-card, .ch-wrap { min-width: 0; max-width: 100%; }
+.srow .day-box, .srow-fields .day-box { width: 5.5rem; }

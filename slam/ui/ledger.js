@@ -910,7 +910,7 @@ function sectionList(sc) {
   const steps = Object.fromEntries(sessionSteps(cur(), summaryOf(cur())).map((x) => [x.id, x.result]));
   return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
     const r = steps[sec.slug];
-    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug]) : h('span', {}, filledWords(sec.counts));
+    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug], sec.slug === 'assets' && summaryOf(cur()).sheet.owed ? ', plus ' + money(summaryOf(cur()).sheet.owed) + ' owed to you' : null) : h('span', {}, filledWords(sec.counts));
     // A total built on a missing line says so; how many lines are rough or missing shows beside it.
     return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec)] });
   }));
@@ -1051,6 +1051,16 @@ function subsRow() {
   const sub = summaryOf(cur()).subs;
   return goRow(hashFor(['needs', 'subscriptions']), { name: 'Subscriptions', sub: sub.items.length ? [h('span', {}, h('span', { class: 'go-total' }, money(sub.monthly.value)), ' a month, ' + sub.items.length + ' marked'), sub.toLook.length ? h('span', { class: 'dot dot-rough' }, sub.toLook.length + ' to look at') : null] : 'None marked yet' });
 }
+// No subscriptions yet (round 1: never a dead end): one sentence, and the bills that look like one, each with a button.
+const LOOKS_LIKE_SUB = /stream|netflix|spotify|hulu|disney|prime|music|gym|fitness|cloud|storage|app\b|membership|subscription|news|magazine|software|game/i;
+function subsEmpty() {
+  const maybe = (cur().expenses || []).filter((e) => LOOKS_LIKE_SUB.test(e.label || ''));
+  return h('section', { class: 'card subs ch-empty-card' },
+    h('p', {}, 'No subscriptions yet. Mark a bill that renews on its own and it shows here, ranked by what it costs a year.'),
+    maybe.length ? h('ul', { class: 'go-list' }, maybe.map((e) => h('li', { class: 'sub-maybe' }, h('span', { class: 'go-name' }, e.label), h('button', { type: 'button', class: 'btn small', onclick: () => change((x) => markSubscription(x, e.id, true, today()), said.changed(e.label, 'a subscription')) }, 'Make it a subscription')))) : null,
+    h('ul', { class: 'go-list' }, goRow(hashFor(['needs']), { name: 'Pick from all your bills', sub: 'Open one and choose Move to Subscriptions' })));
+}
+
 // Subscriptions (bug sweep): one row each with its amount, its day and what it is paid with; the row opens its editor
 // in place. Tick several to set the card or the day for all of them at once.
 let subsPicked = new Set();
@@ -1058,7 +1068,7 @@ const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st',
 const roughFact = (f) => !!f && f.kind === 'rough';
 function subsScreen() {
   const sub = summaryOf(cur()).subs;
-  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None yet. Open a bill and pick Move to Subscriptions.'));
+  if (!sub.items.length) return subsEmpty();
   const open = kept().open || null;
   subsPicked = new Set([...subsPicked].filter((id) => sub.items.some((i) => i.id === id)));
   const exp = (id) => getAt(cur(), 'expenses.' + id);
@@ -1109,7 +1119,7 @@ function subsScreen() {
 // candidate" marks one, and the marked ones add up to what cancelling them frees. Each answer is one change (Undo).
 function auditScreen() {
   const sub = summaryOf(cur()).subs, au = subscriptionAudit(cur(), sub);
-  if (!au.rows.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'No subscriptions yet. Open a bill and pick Move to Subscriptions.'));
+  if (!au.rows.length) return subsEmpty();
   const later = (fn) => setTimeout(fn, 0);
   const usesBox = (r) => {
     const b = h('input', { id: 'uses-' + r.id, class: 'uses-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 4', 'aria-describedby': 'uses-' + r.id + '-hint' });
@@ -1282,7 +1292,7 @@ function worthPair(spine) {
   // Said once (Krug pass): the names alone; what each counts is in Show the math. Total first, as on Today.
   return h('section', { class: 'card nw-pair', 'aria-label': 'Net worth' },
     one('total', 'Net worth', s.sheet.netWorth, null, ['netWorth']),
-    one('liquid', 'Cash after card debt', s.sheet.liquidNetWorth, null, ['liquidNetWorth']));
+    one('liquid', 'Reachable after all debts', s.sheet.liquidNetWorth, null, ['liquidNetWorth']));
 }
 // An item's figure on a group screen: a bill or a pay line shows what it counts a month (the figure it sorts and adds
 // by) when that differs from its own ("$200 a month, of $2,400 a year"); the FI goal says it is figured, not added.
@@ -1361,7 +1371,7 @@ function payChartsRow() {
 function fiChartsRow() {
   const c = fiCtx(cur());
   if (!c.s.fi.fiNumber.value) return null;
-  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard(savingsCurve(solvers(c.spine, rules, c.s)))]);
+  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard(savingsCurve(solvers(c.spine, rules, c.s)), { yearsToFi: c.s.fi.yearsToFi.value })]);
 }
 
 // Debt payoff dates (moved here from the Calendar): one line with the debt-free month, opening the clear dates, the

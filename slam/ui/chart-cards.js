@@ -56,7 +56,7 @@ export function paycheckCard(flow, stream) {
   if (steps.length < 3) return null;
   const last = steps[steps.length - 1];
   return chartCard({ id: 'paycheck-' + stream.id, question: 'Where does ' + stream.label + ' go before it reaches you?',
-    summary: 'Of ' + exactMoney(steps[0].v) + ' a month, ' + exactMoney(last.v) + ' lands as take-home' + (last.share === null ? '.' : ' (' + pct0(last.share) + ').'),
+    summary: 'Of ' + exactMoney(steps[0].v) + ' a month, ' + exactMoney(last.v) + ' lands in your account' + (last.share === null ? '.' : ' (' + pct0(last.share) + ')') + ', after taxes and what comes out of pay for saving.',
     draw: (w) => waterfall({ width: w, steps, label: 'A paycheck, step by step' }),
     legend: [{ c: 2, words: 'Taken out' }, { c: 0, words: 'Pay and take-home' }], note: steps.some((x) => x.rough) ? ROUGH_NOTE : null, table: stepsTable(steps) });
 }
@@ -152,7 +152,10 @@ export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', as
       tips: (t) => tWords(t) + ': ' + m.map((x) => { const j = x.months.findIndex((ym) => Math.abs(ymT(ym) - t) < 0.01); return x.words + ' ' + (j < 0 ? '$0' : exactMoney(x.totals[j])); }).join(', '), xTicks: null, label: 'Total owed under each order' }),
     legend: m.map((x, i) => ({ c: [1, 2, 4][i], words: x.words, cls: ['sw-line', 'sw-pat-1', 'sw-pat-2'][i] })),
     table: { head: ['Order', 'Debt free', 'Interest', 'First cleared'], rows: m.map((x) => [x.words, ymWords(x.debtFreeYm), exactMoney(x.interest), x.first ? x.first.name + ', ' + monthWords(x.first.ym) : 'none']) } });
-  return [area, split, methods];
+  // Every order the same (round 1): the lines would lie on top of each other, so the chart is left out; Which order?
+  // says so in one sentence.
+  const tie = new Set(m.map((x) => [x.debtFreeYm, Math.round(x.interest ?? -1), x.first ? x.first.name + x.first.ym : ''].join('|'))).size === 1;
+  return tie ? [area, split] : [area, split, methods];
 }
 
 // ---------------------------------------------------------------- Plan and FI
@@ -169,14 +172,15 @@ export function fiPathCard(f) {
     note: 'The invested line is a projection, so it is dashed.',
     table: { head: ['Year', 'Invested', 'Coast FI'], rows: f.invested.map(([y, x]) => [String(y), exactMoney(x), (f.coast.find((c) => c[0] === y) || [null, null])[1] === null ? '' : exactMoney(f.coast.find((c) => c[0] === y)[1])]) } });
 }
-export function savingsCurveCard(c) {
+export function savingsCurveCard(c, { yearsToFi = null } = {}) {
   if (!c || c.points.length < 2) return null;
   const dots = [];
   if (c.here.rate !== null && c.here.years !== null) dots.push({ x: c.here.rate, y: c.here.years, c: 1, label: 'You are here: ' + pct(c.here.rate) + ' saved, about ' + c.here.years + ' years' });
   if (c.target) dots.push({ x: c.target.rate, y: c.target.years, c: 2, label: 'Target: ' + pct(c.target.rate) + ' saved reaches FI by age ' + c.target.age });
   const byR = new Map(c.points);
   return chartCard({ id: 'savings-curve', question: 'How much sooner does saving more get you there?',
-    summary: (c.here.rate !== null ? 'Saving ' + pct(c.here.rate) + ' of gross pay: about ' + c.here.years + ' years to FI by this simple math. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
+    // The projection's FI year leads (the one every screen shows); the curve's own point is named as the simple math.
+    summary: (yearsToFi !== null ? 'About ' + yearsToFi + ' years to FI on the full projection. ' : '') + (c.here.rate !== null ? 'The curve is the simple math (steady saving of gross pay, one return): at your ' + pct(c.here.rate) + ' (what is left after spending counts too) it says about ' + c.here.years + ' years. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
     draw: (w) => lines({ width: w, series: [{ label: 'Years to FI', c: 1, points: c.points }], dots, xFmt: pct0, xTicks: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7], yFmt: (x) => Math.round(x) + ' y', yMin: 0, tips: (r) => pct(r) + ' saved: about ' + byR.get(r) + ' years', label: 'Savings rate against years to FI' }),
     legend: [{ c: 1, words: 'Years to FI at each savings rate; the dot is you' }, ...(c.target ? [{ c: 2, words: 'The rate your target age needs' }] : [])],
     note: 'Steady saving of gross pay and the real return assumed, as on What it takes to get there; the full projection (with pay changes and debt ending) can land a little earlier or later.',
@@ -202,9 +206,9 @@ export function scenarioCard(list) {
   const end = years[years.length - 1];
   const at = (l, y) => (l.points.find((p) => p[0] === y) || [null, null])[1];
   return chartCard({ id: 'scenario-lines', question: 'How far apart do the futures land?',
-    summary: 'By ' + end + ': ' + list.map((l) => l.words.toLowerCase() + ' ' + axisMoney(at(l, end))).join(', ') + ' of net worth (projections).',
-    draw: (w) => lines({ width: w, series: list.map((l, i) => ({ label: l.words, c: 1 + (i % 5), points: l.points, dashed: i > 0, thin: i > 2 })), tips: (y) => y + ': ' + list.map((l) => l.words + ' ' + exactMoney(at(l, y))).join(', '), label: 'Net worth under each scenario' }),
-    legend: list.map((l, i) => ({ c: 1 + (i % 5), words: l.words, dash: i > 0 })),
+    summary: 'By ' + end + ': ' + list.map((l) => l.words.toLowerCase() + ' ' + axisMoney(at(l, end))).join(', ') + ' of net worth. All are projections, so all are dashed.',
+    draw: (w) => lines({ width: w, series: list.map((l, i) => ({ label: l.words, c: 1 + (i % 5), points: l.points, dashed: true, thin: i > 2 })), tips: (y) => y + ': ' + list.map((l) => l.words + ' ' + exactMoney(at(l, y))).join(', '), label: 'Net worth under each scenario' }),
+    legend: list.map((l, i) => ({ c: 1 + (i % 5), words: l.words, dash: true })),
     table: { head: ['Year', ...list.map((l) => l.words)], rows: years.filter((y, i) => i % 5 === 0 || y === end).map((y) => [String(y), ...list.map((l) => exactMoney(at(l, y)))]) } });
 }
 

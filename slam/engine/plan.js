@@ -192,7 +192,8 @@ export function allocator(spine, rules, sim, s) {
 // it) would be short, so a short paycheck shows an arrow from the one before it. A shortfall the first paycheck
 // cannot cover comes from checking already there. Each paycheck's jobs add up to its amount plus what was carried in.
 // step: { id, label } for the leftover (the Plan's current step), or null ("Left to assign").
-export function paycheckPlan(alloc, { step = null } = {}) {
+// checking (round 1): what checking holds today; when the first paycheck needs more than that, shortBy says how much.
+export function paycheckPlan(alloc, { step = null, checking = null } = {}) {
   const list = alloc.paychecks;
   const n = list.length;
   const needIn = new Array(n).fill(0);
@@ -209,7 +210,8 @@ export function paycheckPlan(alloc, { step = null } = {}) {
     ];
     return { ...p, carryIn, carryInFrom: carryIn ? (i ? list[i - 1].date : 'checking') : null, carryOut, carryTo: carryOut ? list[i + 1].date : null, left, jobs, byKind: Object.fromEntries(['bill', 'everyday', 'tax', 'carry', 'plan'].map((k) => [k, round2(jobs.filter((j) => j.kind === k).reduce((a, j) => a + j.amount, 0))])), assigned: round2(jobs.reduce((a, j) => a + j.amount, 0)) };
   });
-  return { paychecks: rows, bonusMonths: alloc.bonusMonths, fromChecking: n ? needIn[0] : 0, kind: alloc.kind };
+  const fromChecking = n ? needIn[0] : 0;
+  return { paychecks: rows, bonusMonths: alloc.bonusMonths, fromChecking, checking, shortBy: checking === null || checking === undefined ? null : round2(Math.max(0, fromChecking - checking)), kind: alloc.kind };
 }
 
 // ---------------------------------------------------------------- the solvers (E014)
@@ -224,6 +226,7 @@ function bisect(f, lo, hi, target, steps = 40) {
   for (let i = 0; i < steps; i++) { const m = (a + b) / 2; const y = f(m); if (y === null) { if (rising) b = m; else a = m; continue; } if ((y < target) === rising) a = m; else b = m; }
   return (a + b) / 2;
 }
+const usd = (x) => '$' + Math.round(x).toLocaleString('en-US');
 export function solvers(spine, rules, s, { byAge = null, asOf = spine.meta.asOf } = {}) {
   const t = tracker();
   const fi = s.fi;
@@ -245,13 +248,13 @@ export function solvers(spine, rules, s, { byAge = null, asOf = spine.meta.asOf 
   const rows = [];
   // 1. The savings rate of gross that gets there by the age.
   const needC = bisect((c) => yearsToTarget(P, c, F, r), 0, gross * 12, years);
-  rows.push({ id: 'savingsRate', label: 'Savings rate needed', value: needC === null ? null : round2(needC / (gross * 12) * 10000) / 10000, unit: 'ratio', now: round2((saving ?? 0) / gross * 10000) / 10000, words: needC === null ? 'cannot be reached by then at this return' : 'save ' + Math.round(needC / 12) + ' dollars a month (' + Math.round(needC / (gross * 12) * 100) + '% of gross, how this rule is defined) against ' + Math.round(saving ?? 0) + ' now' });
+  rows.push({ id: 'savingsRate', label: 'Savings rate needed', value: needC === null ? null : round2(needC / (gross * 12) * 10000) / 10000, unit: 'ratio', now: round2((saving ?? 0) / gross * 10000) / 10000, words: needC === null ? 'cannot be reached by then at this return' : needC / 12 < 1 ? 'what is already invested grows to it by then with nothing more saved; you save ' + usd(saving ?? 0) + ' a month now' : 'save ' + usd(needC / 12) + ' a month (' + Math.round(needC / (gross * 12) * 100) + '% of gross) against ' + usd(saving ?? 0) + ' now' });
   // 2. The spending level: what take-home less spending less minimums must be, holding income.
   const needSpend = needC === null ? null : round2(takeHome - minimums - needC / 12);
-  rows.push({ id: 'spending', label: 'Spending level needed', value: needSpend, unit: 'usd/month', now: spending, words: needSpend === null ? 'cannot be reached by then' : needSpend < 0 ? 'spending would have to go below zero: income has to rise too' : 'spend ' + Math.round(needSpend) + ' a month against ' + Math.round(spending) + ' now' });
+  rows.push({ id: 'spending', label: 'Spending level needed', value: needSpend, unit: 'usd/month', now: spending, words: needSpend === null ? 'cannot be reached by then' : needSpend < 0 ? 'spending would have to go below zero: income has to rise too' : 'spend ' + usd(needSpend) + ' a month against ' + usd(spending) + ' now' });
   // 3. The income: take-home needed holding spending (saving = take-home - spending - minimums).
   const needTakeHome = needC === null ? null : round2(spending + minimums + needC / 12);
-  rows.push({ id: 'income', label: 'Take-home needed', value: needTakeHome, unit: 'usd/month', now: takeHome, words: needTakeHome === null ? 'cannot be reached by then' : 'take home ' + Math.round(needTakeHome) + ' a month against ' + Math.round(takeHome) + ' now' });
+  rows.push({ id: 'income', label: 'Take-home needed', value: needTakeHome, unit: 'usd/month', now: takeHome, words: needTakeHome === null ? 'cannot be reached by then' : 'take home ' + usd(needTakeHome) + ' a month against ' + usd(takeHome) + ' now' });
   // 4. The real return that gets there with the saving as it is.
   const needR = saving !== null && saving > 0 ? bisect((x) => yearsToTarget(P, saving * 12, F, x), 0, 0.3, years) : null;
   rows.push({ id: 'return', label: 'Real return needed', value: needR === null ? null : round2(needR * 10000) / 10000, unit: 'ratio', now: r, words: needR === null ? 'no saving to grow' : needR >= 0.299 ? 'more than 30% a year: not a plan' : Math.round(needR * 1000) / 10 + '% real a year against ' + Math.round(r * 1000) / 10 + '% assumed' });

@@ -118,8 +118,11 @@ function inspect({ builder }) {
 const findings = [];
 const note = (screen, look, kind, what) => findings.push({ screen, look, kind, what });
 
+const OPEN_FOLDS = ['debt-payoff', 'pay-charts', 'tax-brackets', 'fi-charts', 'cal-chart', 'scenario-chart', 'session-notes'];
 async function open(browser, look, url) {
   const ctx = await browser.newContext({ viewport: { width: look.width, height: look.height }, colorScheme: look.scheme });
+  // The folds that hold charts start open (overnight round 1: a wide chart inside a closed fold went unseen).
+  await ctx.addInitScript((ids) => { try { if (!localStorage.getItem('slam-open:v1')) localStorage.setItem('slam-open:v1', JSON.stringify(ids)); } catch {} }, OPEN_FOLDS);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(['page error', e.message]));

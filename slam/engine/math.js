@@ -53,7 +53,7 @@ def({ id: 'netWorth', label: 'Net worth', unit: 'usd', op: 'sum', screens: ['das
 // Liquid net worth (Batch 4): the accounts counted as liquid (a Roth's contributions only), less every debt.
 def({ id: 'liquidAssets', label: 'Liquid assets', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid assets = cash, taxable investing and other accounts counted as liquid (a Roth IRA counts its contributions only)',
   explain: ({ spine, s }) => out(s.sheet.liquid, s.sheet.liquid.items.map((x) => x.part === 'contributions' ? field(spine, 'accounts.' + x.id + '.basis', x.amount, 'usd', 'plus', x.name + ' (contributions)') : field(spine, x.path, x.amount, 'usd', 'plus', x.name))) });
-def({ id: 'liquidNetWorth', label: 'Liquid net worth', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid net worth = liquid assets (cash, taxable, Roth contributions) - all debt',
+def({ id: 'liquidNetWorth', label: 'Reachable after all debts (liquid net worth)', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid net worth = liquid assets (cash, taxable, Roth contributions) - all debt',
   plain: 'What you could reach without a penalty or selling something you live with, less everything you owe.',
   explain: ({ s }) => out(s.sheet.liquidNetWorth, [metric('liquidAssets', 'Liquid assets', s.sheet.liquid, 'usd'), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
 def({ id: 'cash', label: 'Cash', unit: 'usd', op: 'sum', screens: ['dashboard#tile-runway'], formula: 'Cash = checking, savings and other cash accounts added up (the Roth backstop and money set aside for a goal are not cash)',

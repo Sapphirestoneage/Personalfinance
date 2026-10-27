@@ -54,7 +54,7 @@ export function cashChartCard(line, opts = {}) {
     save.length > 1 || debt.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', checked: others ? 'checked' : null, onchange: (e) => toggleOthers(e.target.checked) }), ' Show savings and debt') : null);
   card = h('section', { class: 'cash-chart', 'aria-label': 'Cash by day' },
     chartCard({ id: 'cash-line', level: 'h2', question: 'Will checking stay above your floor?',
-      summary: 'Lowest point: ' + money(low.amount) + ' on ' + shortDate(low.date) + (line.low.beforePayday ? ', the day before payday' : '') + '.' + (line.low.toppedFrom ? ' The cushion covers it from ' + shortDate(line.low.toppedFrom) + '.' : '') + (rng ? ' The pale band runs from none of the maybe money to all of it.' : ''),
+      summary: 'Lowest point: ' + money(low.amount) + ' on ' + shortDate(low.date) + (line.low.beforePayday ? ', the day before payday' : '') + '.' + (line.low.toppedFrom ? ' The cushion covers it from ' + shortDate(line.low.toppedFrom) + ', so the line below already has that money moved in and stays at the floor.' : '') + (rng ? ' The pale band runs from none of the maybe money to all of it.' : ''),
       controls,
       draw: (w) => lines({ width: w, height: 240, series, bands, range: rng, dots, xTicks: ticks, xFmt: (i) => { const d = line.days[Math.round(i)]; return d ? MONTHS[+d.date.slice(5, 7) - 1] : ''; },
         vmarks: firstAhead ? [{ x: firstAhead[0], label: 'As of ' + shortDate(line.asOf).replace(/, \d{4}$/, '') }] : [],

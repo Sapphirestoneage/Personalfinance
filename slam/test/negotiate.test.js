@@ -25,6 +25,8 @@ test('phone and gym bills and high-rate cards are listed, with scripts', () => {
   const card = list.find((x) => x.kind === 'card');
   assert.ok(card && card.now >= ref.cardRateAbove && /\d+(\.\d)?%/.test(card.script));
   assert.ok(!list.some((x) => x.label === 'Rent'));
+  assert.ok(list.every((x, i) => !i || x.stake <= list[i - 1].stake), 'most dollars a month at stake first');
+  assert.equal(list[0].kind, 'card', 'the Visa (about $55 a month of interest) before the gym ($10 above typical)');
   assert.ok(!list.some((x) => x.label === 'Miscellaneous'), 'whole words only: Miscellaneous is not a cell phone');
 });
 

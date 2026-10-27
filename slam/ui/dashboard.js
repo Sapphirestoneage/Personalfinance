@@ -93,13 +93,13 @@ function questionCard(q) {
 
 function tiles({ spine, rules, s }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  // Net worth leads with the total; the liquid figure is named "Cash after card debt" (Krug pass), so it never reads
+  // Net worth leads with the total; the liquid figure is named "Reachable after all debts" (Krug pass), so it never reads
   // as a second cash number beside the runway's.
   const all = [
-    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : ['Cash after card debt ', metric('liquidNetWorth', summaryMoney(sh.liquidNetWorth.value))]], extra: netWorthSpark(aheadOf(spine, rules)) }),
+    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : ['Reachable after all debts ', metric('liquidNetWorth', summaryMoney(sh.liquidNetWorth.value))]], extra: netWorthSpark(aheadOf(spine, rules)) }),
     // The Plan works from what is left after saving; the tile says it too, so the two never read as a disagreement.
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.monthlySurplus.value !== null && cf.saving.afterTax.value && cf.surplus.value !== null ? [metric('leftAfterSaving', summaryMoney(cf.surplus.value)), ' after saving'] : null] }),
-    tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 0) }),
+    tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) }),
     tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months' })];
   // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped. The next step is its own
   // card below the tiles (Krug pass), so an old "next" in the preference is skipped too.
@@ -153,7 +153,7 @@ function runwayScreen({ s }) {
 function networthScreen({ spine, rules, s }) {
   const sh = s.sheet, range = (kept() || {}).nwRange || '1y';
   return [h('section', { class: 'card', 'aria-label': 'Net worth' },
-    h('ul', { class: 'sum-lines' }, line('Net worth', sh.netWorth.value, 'sum-total'), line('Cash after card debt', sh.liquidNetWorth.value)),
+    h('ul', { class: 'sum-lines' }, line('Net worth', sh.netWorth.value, 'sum-total'), line('Reachable after all debts', sh.liquidNetWorth.value)),
     h('a', { class: 'btn', href: numbersHref() }, 'Open My numbers'),
     keptMath('screen-networth', DASHBOARD_MATH['tile-networth'], mathCtx)),
   h('section', { class: 'card' }, netWorthWaterfallCard(sh, spine)),

@@ -49,7 +49,7 @@ function moneyBox(id, value, label, onSet, placeholder = 'Amount') {
   return box;
 }
 // A small whole-number box (a day of the month, a year).
-function intBox(id, value, label, onSet, { placeholder = 'day', min = 1, max = 31 } = {}) {
+function intBox(id, value, label, onSet, { placeholder = 'Due day', min = 1, max = 31 } = {}) {
   const box = h('input', { id, class: 'day-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = value === null || value === undefined ? '' : String(value);
   box.addEventListener('change', () => {

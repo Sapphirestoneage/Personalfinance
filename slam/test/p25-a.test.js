@@ -30,7 +30,7 @@ test('the local file is looked for only on localhost with ?local=1', async () =>
 
 test('Today and the One-pager lead the savings rate with take-home; gross is in Show the math', async () => {
   // Krug pass: the tile shows the rate alone; its screen says "of take-home".
-  assert.match(read('ui/dashboard.js'), /result: cf\.savingsRate\.net, shown: pct\(cf\.savingsRate\.net\.value, 0\)/);
+  assert.match(read('ui/dashboard.js'), /result: cf\.savingsRate\.net, shown: pct\(cf\.savingsRate\.net\.value, 1\)/);
   assert.match(read('ui/dashboard.js'), /h\('p', \{ class: 'tile-value' \}, pct\(cf\.savingsRate\.net\.value, 1\) \+ ' of take-home'\)/);
   assert.doesNotMatch(read('ui/dashboard.js'), /' of gross'/);
   assert.match(read('ui/onepager.js'), /'of take-home'/);

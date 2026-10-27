@@ -190,7 +190,7 @@ export function waterfall({ width = 600, steps = [], label: aria } = {}) {
   const rows = steps.map((st) => {
     if (st.total) { run = st.v; return { label: st.label, from: 0, segs: [{ v: st.v, c: 0, rough: st.rough, tip: st.tip || st.label + ': ' + exactMoney(st.v) }], value: exactMoney(st.v) }; }
     const from = run; run += st.v;
-    return { label: st.label, from, segs: [{ v: st.v, c: st.v >= 0 ? 1 : 2, rough: st.rough, tip: st.tip || st.label + ': ' + (st.v >= 0 ? '+' : '') + exactMoney(st.v) }], value: (st.v >= 0 ? '+' : '') + axisMoney(st.v) };
+    return { label: st.label, from, segs: [{ v: st.v, c: st.v >= 0 ? 1 : 2, rough: st.rough, tip: st.tip || st.label + ': ' + (st.v >= 0 ? '+' : '') + exactMoney(st.v) }], value: (st.v >= 0 ? '+' : '') + exactMoney(st.v) };
   });
   return bars({ width, rows, label: aria });
 }

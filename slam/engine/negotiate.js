@@ -9,9 +9,9 @@
 import { valueOf as v, round2, getAt } from './spine.js';
 import { editExpense, editFact } from './edits.js';
 
-const rateWords = (r) => Math.round(r * 1000) / 10 + '%';
+const rateWords = (r) => Math.round(r * 10000) / 100 + '%';
 
-// [{ id, kind: 'bill'|'card', label, path, now, typical, above, script, words, called }] most above typical first.
+// [{ id, kind: 'bill'|'card', label, path, now, typical, above, stake, script, words, called }] most at stake first.
 export function negotiationList(spine, cf, ref) {
   if (!ref) return [];
   const calls = (spine.lifeChanges || []).filter((c) => c.kind === 'called');
@@ -30,8 +30,10 @@ export function negotiationList(spine, cf, ref) {
     const path = 'debts.' + d.id + '.apr';
     out.push({ id: d.id, kind: 'card', type: 'card', label: v(d.name) || d.id, path, now: apr, typical: ref.cardRateAbove, above: null, yearCost: round2(bal * apr), words: 'Card rate', script: ref.cardScript.replace('{rate}', rateWords(apr)), called: lastCall(path) });
   }
-  // Bills furthest above typical first, then cards by what their rate costs a year, then the rest.
-  return out.sort((a, b) => (b.above ?? -1e9) - (a.above ?? -1e9) || (b.yearCost ?? 0) - (a.yearCost ?? 0) || a.label.localeCompare(b.label));
+  // Ranked by dollars a month at stake (round 1, money logic: dollars lost a month): a card's interest a month, a
+  // bill's amount above typical; a bill at or under typical last.
+  for (const x of out) x.stake = x.kind === 'card' ? round2(x.yearCost / 12) : Math.max(0, x.above);
+  return out.sort((a, b) => b.stake - a.stake || a.label.localeCompare(b.label));
 }
 
 // "I called": the new price (a bill's monthly amount, or a card's rate) goes into My numbers as known, and the call is

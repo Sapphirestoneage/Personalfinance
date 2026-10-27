@@ -8,7 +8,7 @@
 // Every number comes from engine/plan.js and the engines under it, with Show the math. Formatting only.
 
 import { foldRow } from './rows.js';
-import { whatIf } from '../engine/whatif.js';
+import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
 import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
 import { chartCard, bars } from './chart.js';
@@ -22,6 +22,7 @@ import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHour
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
 import { valueOf } from '../engine/spine.js';
+import { mainChecking } from '../engine/defaults.js';
 import { keptMath } from './math-panel.js';
 import { maxItCard, maxItFor } from './maxit-panel.js';
 import { withScenario } from '../engine/scenarios.js';
@@ -133,7 +134,7 @@ function outlookLine(m) {
   const { story } = forecast(m.base, m.rules);
   if (!story) return null;
   return [h('p', { class: 'tile-sub outlook-line', id: 'cash-low' }, lowWords(story) + ' ', h('a', { href: '#/outlook' }, 'Good and bad months')),
-    story.under ? h('div', { class: 'edit-actions' }, fixButton(story)) : null];
+    story.under ? h('div', { class: 'edit-actions' }, fixButton(story, 'btn small')) : null];
 }
 // Protection gaps rank with the steps (engine/next-step.js) but are not steps of the order: one line, each a link.
 function protectLine(rank) {
@@ -283,14 +284,15 @@ function surplusScreen(m) {
 // marked. Tap a paycheck for its jobs line by line.
 const JOB = { bill: [1, 'Bills'], everyday: [3, 'Everyday spending'], tax: [4, 'Tax set aside'], carry: [5, 'Kept for a later paycheck'], plan: [2, 'To the Plan'] };
 const jobLabel = (j) => (j.kind === 'carry' ? 'Kept for the ' + shortDate(j.to) + ' paycheck' : j.label);
-const planOf = (m) => m.pplan || (m.pplan = paycheckPlan(allocOf(m), { step: (() => { const r = m.foo.rungs.find((x) => x.id === m.foo.current); return r ? { id: r.id, label: 'Plan step: ' + r.label } : null; })() }));
+const checkingNow = (m) => { const id = mainChecking(m.spine); const a = id && (m.spine.accounts || []).find((x) => x.id === id); return a ? valueOf(a.balance) ?? null : null; };
+const planOf = (m) => m.pplan || (m.pplan = paycheckPlan(allocOf(m), { checking: checkingNow(m), step: (() => { const r = m.foo.rungs.find((x) => x.id === m.foo.current); return r ? { id: r.id, label: 'Plan step: ' + r.label } : null; })() }));
 function paychecksScreen(m) {
   const a = planOf(m);
   if (!a.paychecks.length) return h('p', { class: 'card muted' }, 'No paychecks in the next three months.');
   const third = (p) => p.bonus ? h('span', { class: 'pill' }, (p.cadence === 'weekly' ? '5th' : '3rd') + ' paycheck in ' + monthWords(p.ym).split(' ')[0]) : null;
   const totals = (p) => Object.keys(JOB).map((k) => ({ k, v: p.byKind[k] })).filter((x) => x.v > 0);
   const chart = chartCard({ id: 'paycheck-jobs', question: 'What does each paycheck pay for?',
-    summary: 'Every dollar of each paycheck has a job until the next one.' + (a.paychecks.some((p) => p.carryOut) ? ' Where one would come up short, the one before it keeps the difference.' : '') + (a.fromChecking ? ' ' + money(a.fromChecking) + ' comes from checking already there.' : ''),
+    summary: 'Every dollar of each paycheck has a job until the next one.' + (a.paychecks.some((p) => p.carryOut) ? ' Where one would come up short, the one before it keeps the difference.' : '') + (a.fromChecking ? ' ' + money(a.fromChecking) + ' has to be in checking already' + (a.shortBy ? '; checking holds ' + money(a.checking) + ', so it comes up ' + money(a.shortBy) + ' short before the next paycheck. The Calendar runs every day and every card, so its lowest day is the one to act on.' : '.') : ''),
     draw: (w) => bars({ width: w, rows: a.paychecks.map((p) => ({ label: shortDate(p.date).replace(/, \d{4}$/, ''), segs: totals(p).map((x) => ({ v: x.v, c: JOB[x.k][0], tip: shortDate(p.date) + ', ' + JOB[x.k][1].toLowerCase() + ': ' + money(x.v) })), value: money(p.assigned) })), label: 'Each paycheck by its jobs' }),
     legend: Object.values(JOB).map(([c, words]) => ({ c, words })),
     table: { head: ['Paycheck', ...Object.values(JOB).map((x) => x[1]), 'In all'], rows: a.paychecks.map((p) => [shortDate(p.date) + ': ' + p.label, ...Object.keys(JOB).map((k) => money(p.byKind[k])), money(p.assigned)]) } });
@@ -345,7 +347,8 @@ function whatIfScreen(m) {
   const months = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
   const row = (label, now, then, words) => h('div', { class: 'wi-row' + (now !== then ? ' is-moved' : '') }, h('span', { class: 'wi-label' }, label), h('span', { class: 'wi-now' }, now), h('span', { class: 'wi-arrow', 'aria-hidden': 'true' }, '\u2192'), h('span', { class: 'wi-then' }, then), words ? h('span', { class: 'wi-words' }, words) : null);
   const draw = () => {
-    last = whatIf(m.base, m.rules, moves, todayIso());
+    // Read under the picked assumption set, as the rest of the Plan is (round 1: one FI year everywhere).
+    last = whatIf(m.spine, m.rules, moves, todayIso());
     const a = last.now, b = last.then;
     const free = (x) => (x.neverPaysOff ? 'not at this pace' : x.debtFreeYm ? monthWords(x.debtFreeYm) : 'no debt');
     const dm = a.debtFreeYm && b.debtFreeYm ? months(b.debtFreeYm, a.debtFreeYm) : 0;
@@ -367,7 +370,7 @@ function whatIfScreen(m) {
     e.preventDefault();
     if (!Object.values(moves).some((x) => x > 0)) { msg.textContent = 'Move a slider first'; return; }
     const before = readScenarios();
-    const entry = saveScenario(name.value.trim() || 'What if: ' + MOVES.filter(([k]) => moves[k] > 0).map(([k, label]) => label.toLowerCase().replace(/ a month.*|, once/, '') + ' ' + money(moves[k])).join(', '), (last || whatIf(m.base, m.rules, moves, todayIso())).spine);
+    const entry = saveScenario(name.value.trim() || 'What if: ' + MOVES.filter(([k]) => moves[k] > 0).map(([k, label]) => label.toLowerCase().replace(/ a month.*|, once/, '') + ' ' + money(moves[k])).join(', '), movedSpine(m.base, m.rules, moves, todayIso()));
     if (!entry) { msg.textContent = 'This browser will not keep it (storage is blocked)'; return; }
     msg.textContent = '';
     say(said.added('Scenario ' + entry.name), () => { keepScenarios(before); refresh(); }, () => { keepScenarios([...before, entry]); refresh(); });
@@ -394,7 +397,8 @@ function callsFact(m) {
   const list = callsOf(m), over = list.filter((x) => x.above > 0);
   return !negotiable ? 'The list of typical prices did not load' : !list.length ? 'Nothing on the list' : over.length ? plural(over.length, 'bill') + ' above typical' : plural(list.length, 'bill') + ' worth a look';
 }
-const nowWords = (x) => (x.kind === 'card' ? pct(x.now, 1) + ' a year' : money(x.now) + ' a month');
+const rateWords = (r) => Math.round(r * 10000) / 100 + '%';
+const nowWords = (x) => (x.kind === 'card' ? rateWords(x.now) + ' a year' : money(x.now) + ' a month');
 function callsScreen(m) {
   const list = callsOf(m);
   if (!negotiable) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'The list of typical prices did not load. Try again when online.'));
@@ -410,17 +414,17 @@ function callsScreen(m) {
     };
     return h('details', { class: 'call-fold' }, h('summary', { class: 'btn small' }, 'I called'), h('form', { class: 'tool-form call-form', novalidate: true, onsubmit: save },
       h('label', { for: 'call-' + x.id, class: 'edit-label' }, x.kind === 'card' ? 'New rate after the call' : 'New price a month after the call'), box,
-      h('p', { class: 'edit-hint', id: 'call-' + x.id + '-hint' }, x.kind === 'card' ? 'Now ' + pct(x.now, 1) + '; type the same if it did not change' : 'Now ' + money(x.now) + '; type the same if it did not change'), msg,
+      h('p', { class: 'edit-hint', id: 'call-' + x.id + '-hint' }, x.kind === 'card' ? 'Now ' + rateWords(x.now) + '; type the same if it did not change' : 'Now ' + money(x.now) + '; type the same if it did not change'), msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small primary' }, 'Save the new price'))));
   };
   const bills = list.filter((x) => x.kind === 'bill');
   return [
     h('section', { class: 'card', 'aria-label': SCREENS.calls },
-      h('p', { class: 'muted' }, 'One call each, most above typical first. Typical prices are a starting table to check, not a promise.'),
+      h('p', { class: 'muted' }, 'One call each, most dollars a month at stake first. Typical prices are a starting table to check, not a promise.'),
       h('ol', { class: 'audit-list' }, list.map((x) => h('li', { class: 'audit-row' },
         h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(x.path) }, x.label), h('span', { class: 'audit-cost' }, nowWords(x))),
         h('p', { class: 'tile-sub' }, x.kind === 'card' ? 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance' : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
-        x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? pct(x.called.from, 1) + ' to ' + pct(x.called.to, 1) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
+        x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? rateWords(x.called.from) + ' to ' + rateWords(x.called.to) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
         h('details', { class: 'script-fold' }, h('summary', {}, 'Call script'), h('p', { class: 'script' }, x.script),
           h('button', { type: 'button', class: 'btn small', onclick: () => { try { navigator.clipboard.writeText(x.script); say('Script copied'); } catch { say('Copy did not work here; select the words instead'); } } }, 'Copy the script')),
         call(x))))),
@@ -443,12 +447,12 @@ function solveScreen(m) {
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = age.value.trim() === '' ? { ok: true } : parseInput('int', age.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ byAge: age.value.trim() }); refresh(); } },
       h('label', { for: 'solve-age', class: 'edit-label' }, 'Financially independent by age'), age, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Solve'))),
-    x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
+    x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + (byAge.trim() ? '' : ' (no age typed, so the app\'s default)') + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
       h('ul', {}, x.rows.map((r) => h('li', {}, h('strong', {}, r.label + ': '), r.value === null ? r.words : (r.unit === 'ratio' ? pct(r.value, 1) : money(r.value) + ' a month') + ' (' + r.words + ')'))),
       h('p', { class: 'tile-note' }, kindChip(x.kind), ' Each answer changes one thing and holds everything else the same.'),
       math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note)),
   // The same answer as two charts (Track C): years to FI at each savings rate, and the path to the FI number.
-  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(savingsCurve(x)), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
+  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(savingsCurve(x), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
 }
 
 function wageScreen(m) {
@@ -581,7 +585,7 @@ function scenariosScreen(m) {
     list.length ? [h('label', { for: 'scen-pick', class: 'edit-label' }, 'Compare'), pick,
       h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), x.id === targetId() ? h('span', { class: 'chip chip-default' }, 'Budget target') : null, h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
         h('button', { type: 'button', class: 'btn small', onclick: () => change(() => x.spine, said.changed('Your numbers', 'the scenario ' + x.name)) }, 'Load it'),
-        h('button', { type: 'button', class: 'btn danger small', onclick: () => { const now = list.filter((y) => y.id !== x.id); keepScenarios(now); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, now, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : null,
+        h('button', { type: 'button', class: 'btn danger small', onclick: () => { const now = list.filter((y) => y.id !== x.id); keepScenarios(now); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, now, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : h('p', { class: 'muted' }, 'None saved yet. Save today above, or slide What if and save that.'),
     diff ? [h('h3', { class: 'month-h' }, other.name + ' against today: ' + plural(diff.length, 'change')), diff.length ? diffList(m.base, other.spine, diff, 60) : h('p', { class: 'muted' }, 'Nothing differs.')] : null),
   // The futures side by side (Track C): each assumption set and up to two saved scenarios, as lines.
   foldRow('scenario-chart', 'The futures side by side', 'Net worth under each, as a chart', () => scenarioCard(scenarioLines(m.base, m.rules, { saved: list })))];

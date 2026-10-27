@@ -48,6 +48,11 @@ function methodsCard(spine, rules, d, extra) {
   const m = methodPaths(spine, rules, { extra });
   if (!m.length) return null;
   const pick = recommendOrder(m, { materiality: rules.get('APP_MATERIALITY', +spine.meta.asOf.slice(0, 4)) ?? 100 });
+  // Round 1: when every order ends the same month at the same interest and clears the same debt first, there is
+  // nothing to choose; one sentence says so instead of identical cards.
+  const tie = new Set(m.map((x) => [x.debtFreeYm, Math.round(x.interest ?? -1), x.first ? x.first.name + x.first.ym : ''].join('|'))).size === 1;
+  if (tie) return h('section', { class: 'card', 'aria-labelledby': 'methods-h' }, h('h2', { id: 'methods-h' }, 'Which order?'),
+    h('p', {}, 'Every order ends ' + (m[0].neverPaysOff ? 'never, at this pace' : monthWords(m[0].debtFreeYm)) + ' with ' + money(m[0].interest) + ' of interest and clears ' + (m[0].first ? m[0].first.name + ' first' : 'nothing first') + ', so there is nothing to choose at ' + money(extra) + ' a month extra. The plan uses ' + METHOD_WORDS[d.order.strategy].toLowerCase() + '.'));
   const now = d.order.strategy;
   const use = (id) => change((s) => putFact(s, 'debtPlan.strategy', id, 'known', todayIso()), said.changed('Payoff order', METHOD_WORDS[id].toLowerCase()));
   return h('section', { class: 'card', 'aria-labelledby': 'methods-h' },
@@ -129,8 +134,10 @@ function interestCard(d, ctx) {
 function cardTile(t, d, ctx) {
   const kv = [];
   const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
-  row('Balance', t.balance === null ? 'missing' : money(t.balance) + (t.clearDate ? ', clears ' + shortDate(t.clearDate) : t.revolving ? ', revolving' : ''), t.balance === null ? 'words missing-row' : '');
-  row('Rate', pctWords(t.apr) + (t.promoApr !== null && t.promoEnd ? ', intro ' + pctWords(t.promoApr) + ' until ' + t.promoEnd : ''), 'words');
+  // Round 1: today's balance (the one every screen shows) first; where the run leaves it is its own row, named.
+  row('Balance today', t.startBalance === null ? 'missing' : money(t.startBalance), t.startBalance === null ? 'words missing-row' : '');
+  row(t.clearDate ? 'Clears' : 'At the end of the run', t.clearDate ? shortDate(t.clearDate) : t.balance === null ? 'missing' : money(t.balance) + (t.revolving ? ', revolving' : ''), t.balance === null && !t.clearDate ? 'words missing-row' : 'words');
+  row('Rate', pctWords(t.apr) + (t.promoApr !== null && t.promoEnd ? ', intro ' + pctWords(t.promoApr) + ' until ' + (String(t.promoEnd).length === 7 ? monthWords(t.promoEnd) : shortDate(t.promoEnd)) : ''), 'words');
   row('Closes', 'day ' + t.cycle.stmtDay + (t.cycle.closeRough ? ' (a guess from the due day)' : ''), 'words');
   row('Due', 'day ' + t.cycle.dueDay + ', ' + t.cycle.graceDays + ' days of grace', 'words');
   if (t.cycle.nextClose) row('Next statement', (t.cycle.nextStatement !== null ? money(t.cycle.nextStatement) + ', ' : '') + 'closes ' + shortDate(t.cycle.nextClose) + ', due ' + shortDate(t.cycle.nextDue), 'words');
@@ -160,7 +167,7 @@ function cardsCard(d, ctx) {
 function utilCard(d, ctx) {
   const u = d.utilization;
   if (!u.items.length) return null;
-  const words = (r, what) => (r.value === null ? h('span', { class: 'missing-row' }, what + ': missing ' + (r.missing.length ? r.missing.map((p) => p.split('.').slice(1).join(' ')).join(', ') : 'a limit')) : what + ': ' + pctWords(r.value) + ' (' + money(r.peak) + ' of ' + money(r.limit) + ')' + (r.value > u.warn ? ', over the ' + pctWords(u.warn) + ' line' : ''));
+  const words = (r, what) => (r.value === null ? h('span', { class: 'missing-row' }, what + ': missing ' + (r.missing.length ? r.missing.map((p) => p.split('.').slice(1).join(' ')).join(', ') : 'a limit')) : what + ': ' + pc(r.value) + ' (' + money(r.peak) + ' of ' + money(r.limit) + ')' + (r.value > u.warn ? ', over the ' + pctWords(u.warn) + ' line' : ''));
   return h('section', { class: 'card', 'aria-labelledby': 'util-h' },
     h('h2', { id: 'util-h' }, 'Utilization as the bureaus will see it'),
     h('p', { class: 'muted' }, 'The peak balance before each card reports, not the balance today. Personal counts the cards that report to personal credit; overall counts every card.'),

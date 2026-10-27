@@ -51,6 +51,6 @@ test('liquid and total net worth, each with Show the math listing what it counts
   const e = explainMetric('liquidAssets', { spine: s, rules: R, s: sum });
   assert.deepEqual(e.terms.map((t) => t.label), ['Checking', 'High-yield savings', 'Roth IRA (contributions)', 'Brokerage']);
   const src = readFileSync(new URL('../ui/ledger.js', import.meta.url), 'utf8');
-  assert.match(src, /one\('liquid', 'Cash after card debt', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth'\]\)/);
+  assert.match(src, /one\('liquid', 'Reachable after all debts', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth'\]\)/);
   assert.match(src, /one\('total', 'Net worth', s\.sheet\.netWorth, .*\['netWorth'\]\)/);
 });

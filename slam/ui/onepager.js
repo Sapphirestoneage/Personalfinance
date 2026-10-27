@@ -54,7 +54,7 @@ function render({ spine: base, rules }) {
       h('header', { class: 'op-head' }, h('p', { class: 'op-who' }, clientName(base) + (who.example ? ' (example, made up)' : '')), h('p', { class: 'op-meta' }, shortDate(new Date().toISOString().slice(0, 10)) + '. Prepared by Eli Saperstein, financial coach.')),
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },
         cell('Net worth', m(sh.netWorth.value), null, 'netWorth'),
-        cell('Cash after card debt', m(sh.liquidNetWorth.value), null, 'liquidNetWorth'),
+        cell('Reachable after all debts', m(sh.liquidNetWorth.value), null, 'liquidNetWorth'),
         cell('Monthly surplus', m(cf.monthlySurplus.value), 'take-home ' + m(cf.income.takeHome.value) + ', after spending, debt minimums and the tax set-aside', 'surplus'),
         cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home', 'savingsRateNet'),
         cell('Cash runway', em.tiers.full.runway.value === null ? 'missing' : em.tiers.full.runway.value.toFixed(1) + ' months', m(sh.cash.value) + ' in cash', 'runway'),

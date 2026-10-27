@@ -420,7 +420,7 @@ function topCard(spine, rules, today) {
     h('section', { class: 'card cal-top', id: 'cash-low', 'aria-label': 'Will you be OK until payday?' },
       h('p', { class: 'cal-low' }, h('span', { class: 'tile-label' }, 'Lowest'), ' ', h('span', { class: 'cal-low-num' + (story.under ? ' under' : '') }, money(story.low.amount)), ' on ' + shortDate(story.low.date)),
       h('p', { class: 'cal-low-words' }, story.under ? 'Under your floor of ' + money(story.floor) + (story.low.beforePayday ? ', the day before payday.' : '.') : 'You stay above your floor through ' + shortDate(story.through) + '.'),
-      story.under ? h('div', { class: 'edit-actions' }, fixButton(story)) : null),
+      story.under ? h('div', { class: 'edit-actions' }, fixButton(story, 'btn small')) : null),
     n ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/confirm', id: 'to-confirm' }, h('span', { class: 'go-name' }, n + ' to confirm'), h('span', { class: 'go-sub' }, 'Did these happen?')))) : null
   ];
 }

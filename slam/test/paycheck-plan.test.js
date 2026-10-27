@@ -27,4 +27,6 @@ test('two short paychecks in a row pull from the one before both; a short first 
   assert.equal(q.fromChecking, 300);
   assert.equal(q.paychecks[0].carryInFrom, 'checking');
   assert.equal(q.paychecks[0].assigned, 800);
+  assert.equal(paycheckPlan({ paychecks: [pc('a', 500, [800]), pc('b', 2000, [100])], bonusMonths: [] }, { checking: 120 }).shortBy, 180, 'checking holds $120 of the $300 needed');
+  assert.equal(paycheckPlan({ paychecks: [pc('a', 500, [800])], bonusMonths: [] }, { checking: 1000 }).shortBy, 0);
 });

@@ -194,3 +194,18 @@ Default used: the target is a saved scenario, and saved scenarios live in this b
 
 ## 153. The app's recommended payoff order (overnight Track E, 2026-10-27)
 Default used: the recommendation picks between the two orders the day-by-day plan can run. Highest rate first, unless smallest balance first costs no more than the "too small to matter" amount ($100) in interest and clears its first debt at least a month sooner (a quick win for about the same money). Most stressful first shows beside them to compare but cannot be picked, because the cash simulation only runs the other two. Say if you want a different rule (a hybrid, or a bigger allowance for the quick win), or most stressful first made usable.
+
+## 154. Two debt-free dates (overnight round 1, finding 5, 2026-10-27)
+The Debt screen says debt free Nov 2028: its payoff plan sends the whole extra ($712 a month) at the debt. The Plan's step list says low-interest debt is done about Jul 2033: there the $712 fills the earlier steps (reserves, Roth and HSA room, retirement, investing, big costs) before the student loan. Both are right for what they assume. Default used: left as is; the Debt screen's line says "with $712 a month extra at the debt". Say if the Debt screen should follow the Plan's order (the later date) instead.
+
+## 155. Card interest month by month against the clear dates (round 1, finding 4)
+The "Card interest, month by month" bars come from the day-by-day run (statements, grace, new charges), and the clear dates from the same run's clear rule (a statement paid in full), while the order table's months come from the monthly plan. A card that still revolves new charges keeps showing interest after its old balance is paid down. Default used: no change tonight beyond naming each card's "Balance today" and "At the end of the run"; reconciling the two runs is engine work for a day session.
+
+## 156. Two emergency targets (round 1, finding 12)
+The Plan's step 4 (Emergency reserves, $10,695 to go) is the cushion target from the reserve months; the demo also has a goal "Six-month cushion $20,000" that the Plan counts as a big cost ahead (step 8). Default used: left as is (the goal is the household's own entry). Say if a goal named like a cushion should be read as the reserve step instead of a separate goal.
+
+## 157. Which card for an everyday purchase (round 1, finding 22)
+"Which card should I use?" can pick a business card for an ordinary $100 purchase. Default used: unchanged tonight. Proposed: leave business cards out unless the purchase is marked business.
+
+## 158. Got extra money? asks about tax twice (round 1, finding 27)
+"Is tax already taken out?" and "Where did it come from?" can contradict. Default used: unchanged. Proposed: ask only where it came from and set the tax from that, showing the tax question only for a gift, a refund or a sale.
