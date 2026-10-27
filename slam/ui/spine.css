@@ -1114,3 +1114,12 @@ a.fb-link .fb-more { justify-self: end; }
 .part-sub + .go-list { margin-left: var(--space-4); }
 .biz-filter { max-width: 360px; margin-bottom: var(--space-2); }
 .biz-filter .seg-btn { align-items: center; flex: 1 1 0; }
+/* Did these happen?, one line each (owner's ask, 2026-10-27): tick, what and when, then the answers. */
+.waiting-list .wait-line { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: 4px 0; border-top: 1px solid var(--border); }
+.waiting-list .wait-line:first-child { border-top: 0; }
+.wait-tick { display: inline-flex; align-items: center; justify-content: center; width: var(--tap); height: var(--tap); flex: none; cursor: pointer; border-radius: var(--radius-sm); }
+.wait-tick:hover { background: var(--surface-2); }
+.wait-tick input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.wait-what { flex: 1 1 14rem; min-width: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); }
+.wait-when, .wait-amt { color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.wait-btns { display: flex; gap: var(--space-1, 4px); flex: none; }

@@ -393,13 +393,14 @@ function waitingCard(spine, rules, today) {
       h('button', { type: 'button', class: 'btn small', id: 'wait-all', onclick: () => { for (const e of list) picked.add(e.key); refresh(); } }, 'Select all'),
       h('button', { type: 'button', class: 'btn small primary', id: 'wait-happened', disabled: !chosen.length, onclick: () => markAll(true) }, chosen.length ? 'Mark ' + chosen.length + ' happened' : 'Mark selected happened'),
       h('button', { type: 'button', class: 'btn small', id: 'wait-not', disabled: !chosen.length, onclick: () => markAll(false) }, 'Did not happen')) : null,
-    h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened' },
-      list.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', class: 'wait-pick', checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); pickedWords(); } }), ' Select') : null,
-      h('p', { class: 'tile-sub' }, h('strong', {}, e.label), ', ' + shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '') + ', ' + (e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
-      h('div', { class: 'edit-actions' },
-        e.amount === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'It happened'),
-        h('button', { type: 'button', class: 'btn', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'It did not happen'),
-        h('a', { class: 'btn ghost', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Different: open it'))))));
+    // One line each (owner's ask, 2026-10-27): tick, what and when, then the answer buttons.
+    h('ul', { class: 'waiting-list' }, list.map((e) => h('li', { class: 'happened wait-line' },
+      list.length > 1 ? h('label', { class: 'wait-tick', title: 'Select ' + e.label }, h('input', { type: 'checkbox', class: 'wait-pick', 'aria-label': 'Select ' + e.label + ', ' + shortDate(e.date), checked: picked.has(e.key) ? 'checked' : null, onchange: (ev) => { if (ev.target.checked) picked.add(e.key); else picked.delete(e.key); pickedWords(); } })) : null,
+      h('p', { class: 'wait-what' }, h('strong', {}, e.label), h('span', { class: 'wait-when' }, shortDate(e.date) + (e.moved ? ' (moved from ' + shortDate(e.origDate) + ')' : '')), h('span', { class: 'wait-amt' }, e.amount === null ? 'amount not entered' : (e.direction === 'in' ? 'in ' : 'out ') + exact(e.amount))),
+      h('div', { class: 'wait-btns' },
+        e.amount === null ? null : h('button', { type: 'button', class: 'btn small', 'aria-label': 'It happened: ' + e.label, onclick: () => change((s) => confirmOccurrence(s, e.key, { amount: e.amount }), said.happened(e.label + ' on ' + shortDate(e.date)) + ': ' + exact(e.amount)) }, 'Happened'),
+        h('button', { type: 'button', class: 'btn small', 'aria-label': 'It did not happen: ' + e.label, onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'Didn\'t happen'),
+        h('a', { class: 'btn small ghost', 'aria-label': 'Different amount or day: open ' + e.label, href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Different \u203A'))))));
 }
 // The items ticked in Did these happen?, kept while the page is open. A tick updates the two buttons in place, never
 // the list it is in (D-034).
