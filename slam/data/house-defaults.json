@@ -173,6 +173,16 @@
       "verified": "house"
     },
     {
+      "id": "APP_STARTER_FUND",
+      "rule": "The Plan's first step, a starter cushion, when it is set to a fixed amount",
+      "value": 1000,
+      "unit": "usd",
+      "appliesTo": "Plan step 1",
+      "notes": "Owner, 2026-10-27: new clients start here; Dave Ramsey's Baby Step 1 amount",
+      "source": "Eli's default (based on: Dave Ramsey, The Total Money Makeover, Baby Step 1)",
+      "verified": "house"
+    },
+    {
       "id": "APP_BUDGET_SHARE",
       "rule": "On the Budget view, a difference is marked only when it is at least this share of the line's plan (or the too-small-to-matter amount, whichever is larger)",
       "value": 0.1,

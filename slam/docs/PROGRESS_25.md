@@ -105,3 +105,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning run finish (2026-10-27): slam tests 1,088 pass; root suite 35,911 checks pass; qa-crawl PASS (152 screens x 3 looks, 338 taps; 399 small tap targets reported, not blocking); agree-check PASS (32 metrics: 6 open questions, Apr 2027, Oct 2029, $2,255, $712 everywhere); the phone artifact republished as version 30 (demo only).
 - Owner (2026-10-27): the Session in My numbers' order with Taxes as its own step (S-258); withdrawal rates add 4.7% and 5.2% with guardrails (S-259).
 - Owner (2026-10-27): every saved Session row has Delete, undoable (S-260).
+- Owner (2026-10-27): Plan step 1 is the starter cushion, one of four per client ($1,000 default, deductible, a month of housing, a month of needs), with tests (S-261).

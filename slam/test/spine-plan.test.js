@@ -78,7 +78,9 @@ test('the FOO ladder: nine rungs in the rule order, a completion month per rung,
   const f0 = fooLadder(s, R, S(s));
   assert.equal(f0.rungs.length, 9);
   assert.deepEqual(f0.rungs.map((r) => r.id), R.get('FOO_RUNGS', 2026));
-  assert.equal(f0.rungs[0].kind, 'missing', 'no deductible entered yet');
+  // Step 1 starts as the $1,000 starter fund (S-261), which the demo's cash covers.
+  assert.deepEqual([f0.rungs[0].label, f0.rungs[0].done], ['Starter cushion', true]);
+  assert.match(f0.rungs[0].why, /covers the starter fund \(\$1,000\)/);
   assert.equal(f0.setup.deductible, null);
   s = putFact(s, 'household.deductible', 2500, 'known', T);
   const f1 = fooLadder(s, R, S(s));
@@ -252,4 +254,18 @@ test('What it takes with no age typed: the FI assumptions\' age, else 65 as a gu
   assert.deepEqual([b.targetAge, b.ageFrom], [R.get('APP_COAST_AGE', 2026), 'guess']);
   assert.ok(b.rough.includes('assumptions.coastAge'), 'shown as a guess');
   assert.equal(solvers(s, R, summarize(s, R, { flags: false }), { byAge: 55 }).ageFrom, 'typed');
+});
+
+test('Step 1, the starter cushion: a fixed $1,000, the biggest deductible, a month of housing or a month of needs (S-261)', () => {
+  const s = demo(), x = S(s);
+  const at = (basis) => { const sp = putFact(s, 'household.starterBasis', basis, 'known', T); return fooLadder(sp, R, S(sp)).rungs[0]; };
+  const cash = x.sheet.cash.value;
+  assert.equal(at('fixed').need, Math.max(0, 1000 - cash));
+  assert.equal(at('deductible').need, null, 'no deductible typed: a question');
+  const housing = Math.ceil(x.cashflow.expenses.items.filter((i) => i.fat === 'accommodation' && !i.covered).reduce((a, i) => a + i.amount, 0));
+  assert.match(at('housing').why, new RegExp('a month of housing \\(\\$' + housing.toLocaleString('en-US') + '\\)'));
+  assert.match(at('needs').why, /a month of needs and debt minimums/);
+  // An older file with a typed deductible and no choice keeps the deductible.
+  const old = putFact(s, 'household.deductible', 2500, 'known', T);
+  assert.match(fooLadder(old, R, S(old)).rungs[0].why, /the biggest deductible \(\$2,500\)/);
 });

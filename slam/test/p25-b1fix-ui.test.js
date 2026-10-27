@@ -133,7 +133,7 @@ test('the Plan: the surplus intro, the deductible, life event words, money in a 
   const src = code('ui/plan.js');
   // Batch 2's copy pass: the surplus screen says only what is not already on it (its note, when there is one).
   assert.match(src, /w\.note \? h\('p', \{ class: 'muted' \}, w\.note\) : null,/);
-  assert.match(src, /r\.id === 'deductibles' && r\.need === null \? 'Type the biggest deductible below\.' : r\.why/);
+  assert.match(src, /r\.id === 'deductibles' && r\.need === null && starterBasisOf\(m\.base\) === 'deductible' \? 'Type the biggest deductible below\.' : r\.why/);
   assert.match(src, /money\(i\.cents \/ 100\) \+ \(EVENT_OFTEN\[i\.cadence\] \|\| ''\)/);
   assert.match(src, /showValue\(x, type\)/, 'a value in a file\'s differences is worded by its type ($1,950)');
   assert.match(src, /disabled: !preview\.diff\.length, onclick: \(\) => \{ const r = preview\.r/);

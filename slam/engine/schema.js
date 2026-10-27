@@ -57,6 +57,7 @@ export function personTax(s) {
 export const CADENCES = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'quarterly', 'yearly', 'total', 'once'];
 export const PER_YEAR = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12, quarterly: 4, yearly: 1 };
 export const FAT = ['food', 'accommodation', 'transportation'];
+export const STARTER_BASES = ['fixed', 'deductible', 'housing', 'needs'];
 // The four spending sections in words, one map for every screen (Batch 2: "Everything else" reads Miscellaneous).
 export const SECTION_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation', other: 'Miscellaneous' };
 export const DEBT_PLAN_FIELDS = ['extra', 'day', 'strategy', 'stopAtHi', 'hiRate', 'rollFreed'];
@@ -268,6 +269,8 @@ export function validate(spine) {
   // Batch 3: last year's tax result (a refund is positive, an amount owed negative), and how goals are funded.
   checkFact('household.lastRefund', h.lastRefund, 'money', false);
   checkFact('household.goalOrder', h.goalOrder, ['oneAtATime', 'byDeadline'], false);
+  // The Plan's starter cushion (S-261): a fixed amount, the biggest deductible, a month of housing or a month of needs.
+  checkFact('household.starterBasis', h.starterBasis, STARTER_BASES, false);
   // The gut number (Profile Level 1): "About how much do you spend a month?", a guess in Numbers.
   checkFact('household.gutSpending', h.gutSpending, 'money', false);
   // How every card is paid unless a card says otherwise (S-189).

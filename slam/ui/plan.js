@@ -18,7 +18,7 @@ import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
-import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
+import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv, starterBasisOf, STARTER_WORDS } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
 import { valueOf } from '../engine/spine.js';
@@ -193,6 +193,14 @@ const fold = (key, title, fact, body) => h('details', { class: 'card done-group 
   h('summary', {}, h('span', {}, title), h('span', { class: 'count' }, fact)), body);
 
 // ---------------------------------------------------------------- one step
+// Step 1's choice (owner, 2026-10-27, S-261): which starter cushion this client builds first. One change, Undo.
+function starterChoice(m) {
+  const now = starterBasisOf(m.base);
+  return h('div', { class: 'q' }, h('p', { class: 'q-label', id: 'starter-l' }, 'The first cushion is'),
+    h('div', { class: 'segmented q-seg', role: 'group', 'aria-labelledby': 'starter-l' }, Object.entries(STARTER_WORDS).map(([k, w]) =>
+      h('button', { type: 'button', class: 'seg-btn', id: 'starter-' + k, 'aria-pressed': String(now === k), onclick: () => { if (now !== k) change((x) => putFact(x, 'household.starterBasis', k, 'known', todayIso()), said.changed('The first cushion', w.toLowerCase())); } },
+        h('span', { class: 'seg-label' }, k === 'fixed' ? w + ' (' + money(m.rules.get('APP_STARTER_FUND', +m.base.meta.asOf.slice(0, 4))) + ')' : w)))));
+}
 function deductibleForm(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const ded = h('input', { id: 'foo-ded', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,500', 'aria-describedby': 'foo-ded-hint' });
@@ -224,9 +232,11 @@ function stepScreen(m, r) {
     big,
     when ? h('p', { class: 'tile-sub' }, when) : null,
     // The deductible's own box is right below, so its step says to type it there.
-    h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null ? 'Type the biggest deductible below.' : r.why),
+    h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null && starterBasisOf(m.base) === 'deductible' ? 'Type the biggest deductible below.' : r.why),
     r.flow ? h('p', { class: 'tile-note' }, 'A monthly amount: once the surplus gets here, this much goes to it every month.') : null,
-    r.id === 'deductibles' ? deductibleForm(m) : null,
+    r.id === 'deductibles' ? starterChoice(m) : null,
+    r.id === 'deductibles' && starterBasisOf(m.base) === 'deductible' ? deductibleForm(m) : null,
+    r.id === 'deductibles' && ['housing', 'needs'].includes(starterBasisOf(m.base)) ? h('ul', { class: 'go-list' }, goRow(numbersHref('needs'), 'Needs', 'Where the month is figured from, in My numbers')) : null,
     r.id === 'highInterest' ? hiDebts(m, r) : null,
     r.need === null && r.path && r.id !== 'deductibles' ? inlineFix(m, r) : null,
     r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in My numbers (Assets, then the 401(k)).') : null,

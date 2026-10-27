@@ -51,7 +51,7 @@ export function surplusWaterfall(spine, rules, s) {
 // three questions: the biggest deductible, the employer match (on the account), the
 // reserve months (the Rule of 5 target already answers that).
 export const RUNG_LABELS = {
-  deductibles: 'Deductibles covered', employerMatch: 'The employer match', highInterest: 'High-interest debt', reserves: 'Emergency reserves',
+  deductibles: 'Starter cushion', employerMatch: 'The employer match', highInterest: 'High-interest debt', reserves: 'Emergency reserves',
   rothHsa: 'Roth and HSA room', maxRetirement: 'Retirement maxed', hyper: 'Invest more for the future', prepaid: 'Saving for big costs ahead', lowInterest: 'Low-interest debt'
 };
 // sim (optional): the day-by-day run "How much to max it?" reads (maxItSim), so the rungs read the same rows as its card.
@@ -108,8 +108,11 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     const t = tracker();
     // A typed 0 means no deductible: the step is done and says so. A blank one is missing: not done. Neither reads as
     // covered by cash (Batch 8).
-    if (id === 'deductibles' && spine.household.deductible && v(spine.household.deductible) === 0) { t.useFact('household.deductible', spine.household.deductible); push(id, t, { need: 0, done: true, why: 'No insurance deductible, so there is nothing to cover.', path: 'household.deductible' }); }
-    else if (id === 'deductibles') { const d = t.useFact('household.deductible', spine.household.deductible); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, d === null ? { need: null, why: 'Needs the biggest insurance deductible (health, car, home), under Filing in My numbers.', path: 'household.deductible' } : { need: cash === null ? null : d - cash, why: (cash === null ? 'Needs cash on hand.' : cash >= d ? 'Cash (' + money(cash) + ') covers the biggest deductible (' + money(d) + ').' : money(d - cash) + ' more cash covers the biggest deductible (' + money(d) + ').') + (cash !== null && s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: 'household.deductible' }); }
+    // Step 1, the starter cushion (owner, 2026-10-27, S-261): one target chosen per client (household.starterBasis): a
+    // fixed amount (APP_STARTER_FUND, $1,000), the biggest insurance deductible, a month of housing, or a month of
+    // needs (needs plus debt minimums). Unset: a typed deductible keeps an older file on the deductible, else the fixed
+    // amount.
+    if (id === 'deductibles') { const st = starterTarget(spine, rules, s, t, year); t.absorb({ ...s.sheet.cash, value: undefined }); push(id, t, st.target === null ? { need: null, why: st.missing, path: st.path } : st.target === 0 ? { need: 0, done: true, why: st.zero, path: st.path } : { need: cash === null ? null : st.target - cash, why: (cash === null ? 'Needs cash on hand.' : cash >= st.target ? 'Cash (' + money(cash) + ') covers ' + st.words + ' (' + money(st.target) + ').' : money(st.target - cash) + ' more cash covers ' + st.words + ' (' + money(st.target) + ').') + (cash !== null && s.sheet.setAsideNote ? ' ' + s.sheet.setAsideNote : ''), path: st.path }); }
     else if (id === 'employerMatch') { const st = step('employerMatch'); t.absorb({ ...st, value: undefined }); push(id, t, { need: st.need, flow: true, why: st.why, path: st.path, done: st.need === null ? null : st.need <= 0 }); }
     // High-interest debt (Krug pass): the debts the one ranking says lose money (engine/debt.js debtLoss), in its order,
     // so a deferred-interest promo that becomes high-interest at its cliff is in this step, first.
@@ -192,6 +195,35 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   return { rungs, current: current ? current.id : null, surplus, debtRun: { strategy, typed, windows }, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => (v(a.matchRate) ?? 0) > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 const money = (x) => (x === null || x === undefined ? 'missing' : '$' + Math.round(x).toLocaleString('en-US'));
+
+// The starter cushion's target (S-261): { basis, target, words, path, missing, zero }. target null: not figured yet.
+export const STARTER_WORDS = { fixed: 'A starter fund', deductible: 'The biggest insurance deductible', housing: 'One month of housing', needs: 'One month of needs' };
+export function starterBasisOf(spine) {
+  const b = spine.household.starterBasis && v(spine.household.starterBasis);
+  if (b) return b;
+  const d = spine.household.deductible;
+  return d && d.kind !== 'missing' && v(d) !== null ? 'deductible' : 'fixed';
+}
+function starterTarget(spine, rules, s, t, year) {
+  const basis = starterBasisOf(spine);
+  if (spine.household.starterBasis && v(spine.household.starterBasis)) t.useFact('household.starterBasis', spine.household.starterBasis);
+  if (basis === 'deductible') {
+    const d = t.useFact('household.deductible', spine.household.deductible);
+    return { basis, target: d, words: 'the biggest deductible', path: 'household.deductible', missing: 'Needs the biggest insurance deductible (health, car, home).', zero: 'No insurance deductible, so there is nothing to cover.' };
+  }
+  if (basis === 'housing') {
+    const items = s.cashflow.expenses.items.filter((i) => i.fat === 'accommodation' && !i.covered);
+    t.absorb({ ...s.cashflow.expenses.total, value: undefined });
+    const known = items.filter((i) => typeof i.amount === 'number');
+    return { basis, target: known.length ? Math.ceil(known.reduce((a, i) => a + i.amount, 0)) : null, words: 'a month of housing', path: items.length ? 'expenses.' + items[0].id + '.amount' : null, missing: 'Needs what housing costs a month (rent or mortgage, in Needs).', zero: 'No housing cost, so there is nothing to cover.' };
+  }
+  if (basis === 'needs') {
+    const b = s.emergency.tiers.needsOnly.burn;
+    t.absorb({ ...b, value: undefined });
+    return { basis, target: b.value === null ? null : Math.ceil(b.value), words: 'a month of needs and debt minimums', path: (b.missing || [])[0] || null, missing: 'Needs the month\'s Need lines and debt minimums.', zero: 'Nothing to cover.' };
+  }
+  return { basis: 'fixed', target: t.rule(rules, 'APP_STARTER_FUND', year), words: 'the starter fund', path: 'household.starterBasis', missing: '', zero: 'Nothing to cover.' };
+}
 
 // ---------------------------------------------------------------- the paycheck allocator (R006)
 // Each paycheck: what it covers by due date until the next one (envelopes), the

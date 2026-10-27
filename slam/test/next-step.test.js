@@ -21,7 +21,8 @@ test('one ranking by dollars lost a month: the deferred-interest Store card lead
   assert.equal(r.steps[1].id, 'interest:visa');
   assert.equal(r.steps[1].loss, 55);
   assert.ok(r.steps.every((x) => !x.id.startsWith('ask:')));
-  assert.deepEqual(r.questions.map((q) => q.question), ['What is your highest insurance deductible?']);
+  // Step 1 starts as a fixed starter fund (S-261), so no deductible is asked until the client is set to it.
+  assert.deepEqual(r.questions.map((q) => q.question), []);
   assert.ok(!r.steps.some((x) => x.id === 'interest:sl'), 'debt under the high-rate line keeps its place in the order');
 });
 

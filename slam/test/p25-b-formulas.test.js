@@ -162,7 +162,8 @@ test('Batch 8: a typed 0 deductible is done with no deductible; a blank one is m
   const { fooLadder } = await import('../engine/plan.js');
   const { putFact, recordDebtPayment } = await import('../engine/edits.js');
   const step = (s) => fooLadder(s, R, summarize(s, R)).rungs.find((r) => r.id === 'deductibles');
-  const blank = step(pat());
+  // The deductible as Step 1's target (S-261: chosen per client; a typed one keeps an older file on it).
+  const blank = step(putFact(pat(), 'household.starterBasis', 'deductible', 'known', '2026-10-22'));
   assert.deepEqual([blank.need, blank.done], [null, null]);
   const zero = step(putFact(pat(), 'household.deductible', 0, 'known', '2026-10-22'));
   assert.deepEqual([zero.need, zero.done], [0, true]);
