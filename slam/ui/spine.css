@@ -1760,3 +1760,8 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .stepper-seg a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .stepper-nav { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-2); }
 .stepper-nav .btn { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The coach's note (S-267): on screen for the coach, never on paper. A missing beneficiary on a retirement account. */
+.coach-note { border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: var(--space-3); margin: var(--space-3) 0; }
+.flag-line { border-left: 4px solid var(--warn, #b45309); padding: var(--space-2) var(--space-3); background: var(--surface); }
+@media print { .coach-only { display: none !important; } }

@@ -138,8 +138,17 @@ const DEPTH = {
   debt: { federalLoanType: 'choice:direct|ffel|perkins|parentPlus', servicer: 'text', pslfPayments: 'int', forgivenessDate: 'date', rateType: 'choice:fixed|arm', termYears: 'int', startDate: 'date', pmiMonthly: 'money', pmiEnds: 'date', escrowMonthly: 'money', extraPrincipal: 'money', securedBy: 'link', drawEnds: 'date', monthsLeft: 'int', fromAccount: 'link' }
 };
 for (const [f, x] of Object.entries(DEPTH)) Object.assign(FAMILIES[f].fields, x);
+// Every account (S-267): a beneficiary named, and how it is titled. Every item: a coach-only note, never printed.
+// employerName keys the employer plan memory (ui/employer-plans.js). Compatibility: all optional; older files have none.
+export const TITLINGS = ['individual', 'joint', 'tod', 'trust'];
+for (const f of ['employerRetirement', 'ira', 'hsaFsa', 'cash', 'fixedTerm', 'taxable', 'education', 'otherAssets']) Object.assign(FAMILIES[f].fields, { beneficiaryNamed: 'bool', titling: 'choice:' + TITLINGS.join('|') });
+FAMILIES.base.fields.coachNote = 'text';
+FAMILIES.employerRetirement.fields.employerName = 'text';
+// A Social Security estimate per person (S-267), from their SSA statement: a month at 62, at full retirement age and at
+// 70, and the statement's date. Recorded only; the FI math does not count it yet.
+export const SS_FIELDS = { ssAt62: 'money', ssAtFra: 'money', ssAt70: 'money', ssAsOf: 'date' };
 // An income line's optional depth fields (S-266).
-export const INCOME_DEPTH = { pretaxDeductions: 'money', bonusAmount: 'money', bonusMonth: 'int', raiseDate: 'date', raisePct: 'rate', quarterlyEstimates: 'bool', estimatesPaid: 'money', cashShare: 'rate', cola: 'bool', claimAge: 'int' };
+export const INCOME_DEPTH = { pretaxDeductions: 'money', bonusAmount: 'money', bonusMonth: 'int', raiseDate: 'date', raisePct: 'rate', quarterlyEstimates: 'bool', estimatesPaid: 'money', cashShare: 'rate', cola: 'bool', claimAge: 'int', openEnrollmentMonth: 'int', coachNote: 'text' };
 // A feature's tick (S-266): ticks: { featureId: 'yes' | 'no' | 'notSure' } on an account, debt or income line.
 export const TICKS = ['yes', 'no', 'notSure'];
 
@@ -276,7 +285,7 @@ export function validate(spine) {
   if (!Array.isArray(h.people) || !h.people.length) err('household.people', 'at least one person');
   else {
     uniqueIds('household.people', h.people);
-    for (const p of h.people) { if (typeof p.name !== 'string') err('household.people.' + p.id + '.name', 'needs a name'); checkFact('household.people.' + p.id + '.birthDate', p.birthDate, 'date'); }
+    for (const p of h.people) { if (typeof p.name !== 'string') err('household.people.' + p.id + '.name', 'needs a name'); checkFact('household.people.' + p.id + '.birthDate', p.birthDate, 'date'); for (const [k, t] of Object.entries(SS_FIELDS)) checkFact('household.people.' + p.id + '.' + k, p[k], t, false); }
   }
   checkFact('household.filingStatus', h.filingStatus, FILING_STATUSES);
   checkFact('household.state', h.state, 'text');
@@ -393,6 +402,7 @@ export function validate(spine) {
       else if (ex.some((x) => x !== e && ex.indexOf(x) < ex.indexOf(e) && x.paysDebt && x.paysDebt.value === e.paysDebt.value)) err(p + '.paysDebt', 'another line already pays this debt');
     }
     checkFact(p + '.payDay', e.payDay, 'int', false);
+    checkFact(p + '.coachNote', e.coachNote, 'text', false);
     // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
     checkFact(p + '.subscription', e.subscription, 'bool', false);
     checkFact(p + '.renews', e.renews, 'date', false);
@@ -473,6 +483,7 @@ export function validate(spine) {
     checkFact(p + '.monthly', g.monthly, 'money', false);
     checkFact(p + '.spendOn', g.spendOn, 'date', false);
     checkFact(p + '.repeatYearly', g.repeatYearly, 'bool', false);
+    checkFact(p + '.coachNote', g.coachNote, 'text', false);
   }
 
   // tax years: the year's own entries (estimated payments made, gains, dividends)

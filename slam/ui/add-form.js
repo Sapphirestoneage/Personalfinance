@@ -5,6 +5,8 @@
 // cancels. The answers go to engine/add.js addWithAnswers and addMore, so every screen saves the same thing.
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
+import { planFor } from './employer-plans.js';
+import { applyTemplate } from '../engine/employer-plans.js';
 import { addWithAnswers, addMore, addDetails, accountDetails, ACCOUNT_DETAILS, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
 import { parseInput, addMaybe } from '../engine/edits.js';
 import { setAt } from '../engine/spine.js';
@@ -213,6 +215,9 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       typed[k] = r.value;
     }
     made = addDetails(addMore(made, extra, today), typed, today);
+    // A plan seen before at this employer (S-267) fills the rest of its rules, as guesses.
+    const tpl = typed.employerName ? planFor(typed.employerName) : null;
+    if (tpl && made.collection === 'accounts') made = { ...made, spine: applyTemplate(made.spine, made.firstPath.split('.').slice(0, 2).join('.'), tpl, today) };
     if (made.collection === 'goals' && ans.by) made = { ...made, spine: setAt(made.spine, 'goals.' + made.id + '.by', ans.by) };
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);

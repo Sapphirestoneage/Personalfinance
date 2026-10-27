@@ -57,7 +57,7 @@ test('yes opens the fields (a default as a guess), no sets them not for me and k
   const todo = tickTodos(cat, s).find((x) => x.path.startsWith(base));
   assert.equal(todo.who, 'client');
   assert.match(todo.words, /Acme 401\(k\): Does your employer match\?/);
-  assert.deepEqual(tickCount(cat, s.accounts.find((x) => x.id === id), 'accounts'), { checked: 2, total: 12 });
+  assert.deepEqual(tickCount(cat, s.accounts.find((x) => x.id === id), 'accounts'), { checked: 2, total: 14 });
   assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('; '));
 });
 
@@ -78,4 +78,40 @@ test('match tiers: worked out tier by tier; old words become tiers and stay as w
   assert.deepEqual(up.matchTiers.value, [{ rate: 1, upTo: 0.03 }, { rate: 0.5, upTo: 0.02 }]);
   assert.equal(up.matchFormula.value, '100% of the first 3%, 50% of the next 2%', 'the words stay');
   assert.ok(validate(upgradeSpine(old)).ok);
+});
+
+// S-267: every account has beneficiary and titling ticks; a retirement account with no beneficiary is a flag; the
+// employer plan memory keeps only plan rules; a Social Security estimate is recorded per person.
+test('beneficiary, titling, employer memory, Social Security estimate', async () => {
+  const { beneficiaryFlag, tickTodos } = await import('../engine/features.js');
+  const { planTemplateOf, rememberFrom, applyTemplate, employerKey, FROM_MEMORY } = await import('../engine/employer-plans.js');
+  const { ssEstimates } = await import('../engine/ss.js');
+  const { validate } = await import('../engine/schema.js');
+  for (const [name, t] of Object.entries(cat.types)) {
+    if (t.family === 'debt') continue;
+    const ids = featuresOf(cat, { type: name }, 'accounts').map((f) => f.id);
+    assert.ok(ids.includes('titling'), name + ' has titling');
+    assert.ok(ids.includes('beneficiary') || ids.includes('successor'), name + ' has a beneficiary tick');
+  }
+  const k = { id: 'k', family: 'employerRetirement', type: 'k401', name: { value: 'Work 401(k)', kind: 'known' }, balance: { value: 9000, kind: 'known' },
+    employerName: { value: 'Acme Health, Inc.', kind: 'known' }, matchTiers: { value: [{ rate: 1, upTo: 0.03 }], kind: 'known' }, vestingYears: { value: 3, kind: 'known' },
+    monthlyContribution: { value: 500, kind: 'known' }, ticks: { beneficiary: 'no' } };
+  assert.equal(beneficiaryFlag(k), true);
+  assert.ok(tickTodos(cat, { accounts: [k], debts: [], income: [] }).some((x) => /beneficiary/.test(x.words)));
+  const tpl = planTemplateOf(k);
+  assert.deepEqual(Object.keys(tpl.fields).sort(), ['matchTiers', 'vestingYears'], 'plan rules only: no balance, no contribution');
+  assert.equal(employerKey('ACME Health inc'), employerKey('Acme Health, Inc.'));
+  const store = rememberFrom({ accounts: [k] });
+  const fresh = { accounts: [{ id: 'n', family: 'employerRetirement', type: 'k401', name: { value: 'New', kind: 'known' }, balance: { value: 0, kind: 'known' } }] };
+  const filled = applyTemplate(fresh, 'accounts.n', store[employerKey('acme health')], '2026-10-27');
+  assert.equal(filled.accounts[0].matchTiers.kind, 'rough');
+  assert.equal(filled.accounts[0].matchTiers.source, FROM_MEMORY);
+  assert.equal(planTemplateOf({ ...filled.accounts[0], employerName: { value: 'Acme', kind: 'known' } }), null, 'a remembered guess is never remembered again');
+  const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url)));
+  const p0 = demo.household.people[0];
+  const F = (value) => ({ value, kind: 'known', asOf: '2026-10-27', source: 'ledger' });
+  demo.household.people[0] = { ...p0, ssAtFra: F(2100), ssAsOf: F('2026-06-01') };
+  demo.accounts[0] = { ...demo.accounts[0], coachNote: F('Ask about the old plan'), titling: F('joint'), beneficiaryNamed: F(true) };
+  assert.deepEqual(validate(demo).errors, []);
+  assert.equal(ssEstimates(demo)[0].atFra, 2100);
 });

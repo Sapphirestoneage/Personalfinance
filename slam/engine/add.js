@@ -97,12 +97,13 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
 // so it lands where My numbers already reads it. [key, label, type, hint or options]; a choice lists [value, words].
 export const ACCOUNT_DETAILS = {
   employerRetirement: [
+    ['employerName', 'Employer', 'text', 'e.g. Acme Health'],
     ['monthlyContribution', 'You put in a month', 'money', 'e.g. 500'],
     ['matchRate', 'Employer match: this share of what you put in', 'rate', 'e.g. 50'],
     ['matchCap', 'Up to this share of your pay', 'rate', 'e.g. 6'],
     ['vestingType', 'The employer\'s money is yours', 'choice', [['immediate', 'Right away'], ['cliff', 'All at once after some years (cliff)'], ['graded', 'A share each year (graded)']]],
     ['vestingYears', 'Years until it is all yours', 'int', 'e.g. 3'],
-    ['employerType', 'Employer', 'choice', [['private', 'A company'], ['nonprofit', 'A nonprofit'], ['government', 'State or local government'], ['federal', 'Federal government'], ['self', 'Self-employed']]],
+    ['employerType', 'Kind of employer', 'choice', [['private', 'A company'], ['nonprofit', 'A nonprofit'], ['government', 'State or local government'], ['federal', 'Federal government'], ['self', 'Self-employed']]],
     ['loanBalance', 'A loan from this plan, owed', 'money', 'e.g. 3,000']
   ],
   ira: [

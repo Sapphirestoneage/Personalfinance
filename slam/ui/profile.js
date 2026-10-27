@@ -20,6 +20,8 @@ import { summarize } from '../engine/summary.js';
 import { putFact } from '../engine/edits.js';
 import { guessesFor } from './urgency.js';
 import { openQuestions } from '../engine/questions.js';
+import { ssEstimates, SS_NOT_COUNTED } from '../engine/ss.js';
+import { SS_FIELDS } from '../engine/schema.js';
 
 const AREA_NAMES = Object.fromEntries(AREAS);
 const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: todayIso(), by: 'coach' }), q.label + (x === null ? ' cleared' : ' answered') + '. Logged as a life change');
@@ -61,8 +63,21 @@ function goalsScreen({ spine, rules }) {
     // The household's own FI assumptions (return, inflation, withdrawal rate, life expectancy) are one row away.
     h('ul', { class: 'go-list' },
       h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/profile/fi-assumptions' }, h('span', { class: 'go-name' }, 'Return, inflation and withdrawal rate'), h('span', { class: 'go-sub' }, 'This household\'s own'))),
-      h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/goals' }, h('span', { class: 'go-name' }, 'Goals'), h('span', { class: 'go-sub' }, 'In My numbers'))))
+      h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/goals' }, h('span', { class: 'go-name' }, 'Goals'), h('span', { class: 'go-sub' }, 'In My numbers')))),
+    ssCard(spine)
   ];
+}
+// A Social Security estimate (S-267), from the SSA statement (ssa.gov/myaccount). Recorded only; not counted yet.
+function ssCard(spine) {
+  const est = ssEstimates(spine), people = (spine.household && spine.household.people) || [];
+  const add = () => change((s) => { let x = s; for (const p of people) for (const k of Object.keys(SS_FIELDS)) if (!p[k]) x = putFact(x, 'household.people.' + p.id + '.' + k, null, 'missing', todayIso()); return x; }, 'Social Security estimate added. Type it from the statement');
+  return h('section', { class: 'card', 'aria-labelledby': 'gs-ss' }, h('h2', { id: 'gs-ss' }, 'Social Security estimate'),
+    est.length ? h('ul', {}, est.map((e) => h('li', {}, e.person + ': ' + [[e.at62, 'at 62'], [e.atFra, 'at full retirement age'], [e.at70, 'at 70']].filter(([n]) => typeof n === 'number').map(([n, w]) => money(n) + ' a month ' + w).join(', ') + (e.asOf ? ' (statement of ' + shortDate(e.asOf) + ')' : ''))))
+      : h('p', { class: 'muted' }, 'From your statement at ssa.gov: what you would get a month at 62, at full retirement age and at 70.'),
+    h('p', { class: 'edit-hint' }, SS_NOT_COUNTED),
+    h('div', { class: 'edit-actions' }, people.some((p) => p.ssAt62 || p.ssAtFra || p.ssAt70)
+      ? h('a', { class: 'btn', href: 'ledger.html#/profile/social-security-estimate' }, 'Change the estimate')
+      : h('button', { type: 'button', class: 'btn', onclick: () => { add(); location.href = 'ledger.html#/profile/social-security-estimate'; } }, 'Add the estimate')));
 }
 function homeworkScreen(ctx) {
   const changes = ctx.spine.lifeChanges || [];

@@ -94,9 +94,17 @@ export function tickTodos(cat, spine) {
       const name = coll === 'income' ? item.label : (v(item.name) || item.id);
       out.push({ who, words: name + ': ' + f.question, path: coll + '.' + item.id + '.' + open[0].field });
     }
+    if (coll === 'accounts' && beneficiaryFlag(item)) out.push({ who: 'client', words: (v(item.name) || item.id) + ': name a beneficiary with the plan', path: 'accounts.' + item.id + '.beneficiaryNamed' });
   }
   return out;
 }
+
+// A retirement account with no beneficiary named (S-267): the one screen-two answer that shows as a flag.
+export function beneficiaryFlag(a) {
+  if (!a || !['employerRetirement', 'ira'].includes(a.family)) return false;
+  return (a.ticks && a.ticks.beneficiary === 'no') || (!!a.beneficiaryNamed && a.beneficiaryNamed.value === false);
+}
+export const BENEFICIARY_WORDS = 'No beneficiary named. Name one with the plan, so this money goes where you want without probate.';
 
 // Match tiers (S-266): what a plan matches, as [{ rate, upTo }] (upTo: the width of pay this tier covers). From
 // matchTiers when there, else the one tier of matchRate and matchCap, else none.

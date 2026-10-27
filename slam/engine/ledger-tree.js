@@ -20,6 +20,7 @@ const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', un
 const FAT_LABEL = SECTION_WORDS;
 
 // The institution a name starts with, from data/institutions.json (display only).
+const SS = /^household\.people\.[^.]+\.ss/;
 export function institutionOf(item, inst) {
   const typed = v(item.institution);
   const name = typed || v(item.name) || item.label || '';
@@ -105,7 +106,7 @@ export function ledgerTree(spine, inst) {
   assetSections.push(node('A:owed', 'Owed to you', lentItems));
 
   // Taxes: filing and you; withholding per stream; each tax year
-  const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident', 'household.householdSize', 'household.workHoursPerWeek'].includes(r.path) || r.path.startsWith('household.people.')));
+  const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident', 'household.householdSize', 'household.workHoursPerWeek'].includes(r.path) || (r.path.startsWith('household.people.') && !SS.test(r.path))));
   const taxSections = [node('T:filing', 'Filing', [item('household.filing', 'You and where you file', filing)])];
   const wh = (spine.income || []).map((s) => item('withholding.' + s.id, s.label || UNNAMED, take(byPrefix('income.' + s.id + '.withholding')))).filter((x) => x.rows.length);
   if (wh.length) taxSections.push(node('T:withholding', 'Tax withheld', wh));
@@ -134,6 +135,9 @@ export function ledgerTree(spine, inst) {
   const plan = take(byPrefix('debtPlan'));
   if (plan.length) pSections.push(node('P:debtPlan', 'Debt plan', [item('debtPlan', 'The extra at the debt', plan)]));
   if (health.length) pSections.push(node('P:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
+  // A Social Security estimate (S-267): recorded on the Profile, not counted in the FI math yet.
+  const ss = take(rows.filter((r) => SS.test(r.path)));
+  if (ss.length) pSections.push(node('P:ss', 'Social Security estimate', [item('household.ss', 'Social Security estimate', ss)]));
   if (gut.length) pSections.push(node('P:gut', 'Your guess before we started', [item('household.gutSpending', 'Spending a month, your guess', gut)]));
 
   // Anything not placed above still shows (nothing is ever hidden by the tree).

@@ -10,6 +10,7 @@
 import { foldRow } from './rows.js';
 import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
+import { ssEstimates, SS_NOT_COUNTED } from '../engine/ss.js';
 import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
 import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
@@ -493,6 +494,7 @@ function solveScreen(m) {
       h('p', { class: 'tile-note' }, kindChip(x.kind), ' Each answer changes one thing and holds everything else the same.'),
       math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note)),
   // The same answer as two charts (Track C): years to FI at each savings rate, and the path to the FI number.
+  ssEstimates(m.spine).length ? h('p', { class: 'tile-note' }, SS_NOT_COUNTED + ' Your estimate is in the Profile.') : null,
   x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(noTarget(savingsCurve(x), !byAge.trim() && x.ageFrom === 'guess'), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
 }
 

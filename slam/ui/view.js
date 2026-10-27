@@ -95,6 +95,7 @@ export function showValue(value, type) {
   if (type === 'choice:' + PAY_POLICIES.join('|')) return PAY_POLICY_WORDS[value] || words(value);
   // A cash account's role, in a client's words (S-228): a sinking fund is money set aside for a goal.
   if (type === 'choice:spending|emergency|sinking|holding') return ROLE_WORDS[value] || words(value);
+  if (type === 'choice:individual|joint|tod|trust') return { individual: 'In your name only', joint: 'Joint', tod: 'Transfer or payable on death (TOD / POD)', trust: 'In a trust' }[value] || words(value);
   if (type === 'choice:' + PERSON_PURPOSES.join('|')) return PERSON_PURPOSE_WORDS[value] || words(value);
   if (type === 'choice:' + ALLOWANCE_MODES.join('|')) return value === 'time' ? 'Pay for my time' : 'A gift';
   if (type === 'choice:' + FILING_STATUSES.join('|')) return FILING_WORDS[value] || words(value);

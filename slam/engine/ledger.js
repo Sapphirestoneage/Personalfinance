@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf, round2, tracker } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, SS_FIELDS } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -18,7 +18,7 @@ import { lineFor, paysDebtOf, linkNote, lineMonthly } from './debt.js';
 export function typeFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'household') {
-    if (s[1] === 'people') return 'date';
+    if (s[1] === 'people') return SS_FIELDS[s[3]] || 'date';
     if (s[1] === 'filingStatus') return 'choice:' + FILING_STATUSES.join('|');
     if (s[1] === 'nycResident') return 'bool';
     if (s[1] === 'cardPayPolicy') return 'choice:' + PAY_POLICIES.join('|');
@@ -169,6 +169,8 @@ export function ledgerRows(spine) {
     }
     // A section's sharing default is set on the section, not as a row. Profile answers live on the Profile page.
     if ((s[0] === 'household' && s[1] === 'expenseDefaults') || s[0] === 'profile') continue;
+    // A coach note (S-267) is never a row to fill in: the item screen shows it apart, and nothing prints it.
+    if (s[2] === 'coachNote') continue;
     const type = typeFor(spine, path);
     rows.push(linkedDebtRow(spine, { path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) }));  }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));

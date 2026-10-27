@@ -11,6 +11,9 @@ import { startPage, change, said, go, keep, kept, refresh, say, current, reopen,
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
+import { beneficiaryFlag, BENEFICIARY_WORDS } from '../engine/features.js';
+import { rememberPlans, planFor } from './employer-plans.js';
+import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
@@ -1501,6 +1504,26 @@ function groupScreen(sec, g, st = {}) {
   ];
 }
 
+// The coach's note on an item (S-267): one line, for the coach only. It is not a row to fill in, and it never prints
+// (the one-pager and every client print leave it out; .coach-only hides on paper).
+const COACH_NOTED = ['accounts', 'debts', 'income', 'expenses', 'goals'];
+function coachNoteEl(it) {
+  const path = it.collection + '.' + it.id + '.coachNote', f = getAt(cur(), path), now = f && f.value ? String(f.value) : '';
+  const box = h('input', { type: 'text', id: 'coach-note', autocomplete: 'off', placeholder: 'e.g. Wants to keep this card for the miles', 'aria-describedby': 'coach-note-hint' });
+  box.value = now;
+  const save = (e) => { e.preventDefault(); const t = box.value.trim(); if (t === now) return; change((x) => (t ? putFact(x, path, t, 'known', today()) : { ...x, [it.collection]: x[it.collection].map((i) => (i.id === it.id ? (({ coachNote, ...rest }) => rest)(i) : i)) }), t ? said.changed('Coach note', t) : said.deleted('The coach note')); };
+  return h('form', { class: 'coach-only coach-note', novalidate: true, onsubmit: save },
+    h('label', { for: 'coach-note', class: 'edit-label' }, 'Coach note'), box,
+    h('p', { class: 'edit-hint', id: 'coach-note-hint' }, 'For the coach only. Never on the one-pager or any print.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Save the note')));
+}
+// Employer plan memory (S-267): a plan seen at the same employer fills what this one is missing, as guesses.
+function memoryButton(a) {
+  const tpl = a.employerName ? planFor(valueOf(a.employerName)) : null, miss = tpl ? wouldFill(a, tpl) : [];
+  if (!miss.length) return null;
+  return h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (canLeave()) change((x) => applyTemplate(x, 'accounts.' + a.id, tpl, today()), 'Plan details filled ' + FROM_MEMORY + ' (guesses)'); } },
+    'Fill ' + miss.length + ' plan details ' + FROM_MEMORY));
+}
 function itemScreen(sec, g, it, st) {
   // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
   const acct = it.collection === 'accounts' ? (cur().accounts || []).find((x) => x.id === it.id) : null;
@@ -1528,6 +1551,9 @@ function itemScreen(sec, g, it, st) {
       ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(putFact(cur(), 'accounts.' + it.id + '.contributions', [], 'missing', today()), 'Contributions by year added to ' + it.label)) openField('accounts.' + it.id + '.contributions'); } }, '+ Add contributions by year')) : null,
     // A card's annual fee (owner's ask, 2026-10-27): one tap adds the row and opens it to type the fee.
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card' && !d.annualFee) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(addFee(cur(), it.id, today()), 'Annual fee added to ' + it.label)) openField('debts.' + it.id + '.annualFee'); } }, '+ Add an annual fee')) : null,
+    acct && beneficiaryFlag(acct) ? h('p', { class: 'flag-line' }, BENEFICIARY_WORDS) : null,
+    acct && !selecting ? memoryButton(acct) : null,
+    it.collection && !selecting && COACH_NOTED.includes(it.collection) ? coachNoteEl(it) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
   ];
@@ -1566,6 +1592,7 @@ function render(ctx) {
     if (p.scroll) requestAnimationFrame(() => { const el = document.getElementById(p.scroll.id); if (!el) return; el.scrollIntoView({ block: p.scroll.block }); if (p.scroll.focus) document.getElementById('edit-input')?.focus({ preventScroll: true }); });
   } else if (pending) pending = null; // it landed somewhere else (its screen was gone): it never opens later by surprise
   refreshGuess(spine);
+  rememberPlans(spine);
   const sc = screensOf(spine);
   let body;
   if (levels[0] === 'still-guessing') body = guessList();
