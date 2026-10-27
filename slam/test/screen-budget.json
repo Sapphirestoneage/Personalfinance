@@ -1,30 +1,30 @@
 {
  "Today": {
   "390": {
-   "words": 99,
+   "words": 102,
+   "height": 1075,
+   "buttons": 5,
+   "chips": 0,
+   "primary": 1
+  },
+  "1024": {
+   "words": 104,
    "height": 1020,
    "buttons": 5,
    "chips": 0,
-   "primary": 2
-  },
-  "1024": {
-   "words": 101,
-   "height": 976,
-   "buttons": 5,
-   "chips": 0,
-   "primary": 2
+   "primary": 1
   }
  },
  "Session": {
   "390": {
-   "words": 43,
+   "words": 49,
    "height": 844,
    "buttons": 4,
    "chips": 3,
    "primary": 1
   },
   "1024": {
-   "words": 45,
+   "words": 51,
    "height": 800,
    "buttons": 4,
    "chips": 3,
@@ -33,8 +33,8 @@
  },
  "My numbers": {
   "390": {
-   "words": 86,
-   "height": 1053,
+   "words": 101,
+   "height": 1123,
    "buttons": 16,
    "chips": 1,
    "primary": 0
@@ -97,16 +97,16 @@
  },
  "Calendar": {
   "390": {
-   "words": 180,
-   "height": 1912,
-   "buttons": 22,
+   "words": 140,
+   "height": 1318,
+   "buttons": 48,
    "chips": 0,
    "primary": 1
   },
   "1024": {
-   "words": 182,
-   "height": 1847,
-   "buttons": 22,
+   "words": 181,
+   "height": 1504,
+   "buttons": 48,
    "chips": 0,
    "primary": 1
   }
@@ -117,14 +117,14 @@
    "height": 1382,
    "buttons": 13,
    "chips": 0,
-   "primary": 2
+   "primary": 1
   },
   "1024": {
    "words": 105,
-   "height": 1276,
+   "height": 1277,
    "buttons": 13,
    "chips": 0,
-   "primary": 2
+   "primary": 1
   }
  },
  "Plan": {
@@ -163,28 +163,28 @@
   "390": {
    "words": 31,
    "height": 844,
-   "buttons": 40,
+   "buttons": 41,
    "chips": 20,
    "primary": 0
   },
   "1024": {
    "words": 33,
    "height": 800,
-   "buttons": 39,
+   "buttons": 40,
    "chips": 20,
    "primary": 0
   }
  },
  "One-pager": {
   "390": {
-   "words": 190,
+   "words": 192,
    "height": 1723,
    "buttons": 5,
    "chips": 0,
    "primary": 0
   },
   "1024": {
-   "words": 192,
+   "words": 194,
    "height": 1551,
    "buttons": 4,
    "chips": 0,
