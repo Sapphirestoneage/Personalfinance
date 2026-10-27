@@ -273,13 +273,13 @@ export function* stillGuessingSteps(spine, rules) {
     // A line someone else pays is never a guess to firm up (bug sweep): its payment fields are not asked.
     const p = path.split('.');
     if (p[0] === 'expenses' && ((NOT_ASKED.includes(p[2]) && othersPay(getAt(spine, 'expenses.' + p[1]))) || p[2] === 'reviewed')) continue;
-    const item = { path, label: labelFor(spine, path), kind: fact.kind, group: groupFor(path), blocks: blocks.get(path) || [], score: 0, moves: {} };
+    const item = { path, label: labelFor(spine, path), kind: fact.kind, group: groupFor(path), blocks: blocks.get(path) || [], score: 0, moves: {}, was: {} };
     if (fact.kind === 'rough' && typeof fact.value === 'number' && fact.value !== 0) {
       const moved = setAt(spine, path, { ...fact, value: fact.value * (1 + swing) });
       const alt = measure(moved, rules);
       for (const [name, get, scale] of METRICS) {
         const a = get(sum).value, b = get(alt).value;
-        if (typeof a === 'number' && typeof b === 'number') { const d = b - a; item.moves[name] = d; item.score += Math.abs(d) / scale; }
+        if (typeof a === 'number' && typeof b === 'number') { const d = b - a; item.moves[name] = d; item.was[name] = a; item.score += Math.abs(d) / scale; }
       }
       items.push(item);
       yield;
@@ -291,7 +291,10 @@ export function* stillGuessingSteps(spine, rules) {
   // the results, then guesses that move little, and last what no result needs yet.
   const tier = (x) => (x.kind === 'missing' ? (x.blocks.length ? 0 : 3) : x.score > 0 ? 1 : 2);
   items.sort((a, b) => tier(a) - tier(b) || b.blocks.length - a.blocks.length || b.score - a.score || a.path.localeCompare(b.path));
-  return { swing, items };
+  // Rough now and rough later: whether each guess matters now (checkNow), beside how sure it is (its kind).
+  const ctx = urgencyContext(spine, rules, sum);
+  for (const it of items) Object.assign(it, checkNow(it, getAt(spine, it.path), ctx));
+  return { swing, items, materiality: ctx.materiality };
 }
 
 export function stillGuessing(spine, rules) {
@@ -324,3 +327,38 @@ export function basisFromYears(spine, path) {
   const a = m && (spine.accounts || []).find((x) => x.id === m[1]);
   return a && basisFromList(a) ? basisOf(tracker(), a) : null;
 }
+
+// ---------------------------------------------------------------- rough now and rough later
+// Whether a rough or missing number is worth checking now (one rule, Show the math "checkNow"). How sure a number is
+// (known, rough, missing, not for me) stays its kind; this is separate.
+//   check now: getting it APP_GUESS_SWING (20%) wrong moves monthly surplus by APP_MATERIALITY ($100) or more, or
+//     cash runway by that much of cushion (months x monthly spending), or net worth, the FI number or cash 24 months
+//     out by twelve times that, or changes the FI year; a missing number counts when a result waits on it.
+//   fine for now: everything else (a missing number nothing reads yet included).
+//   An override on the Fact wins: check { mode: 'later', until } until that date passes (then it is check now, and
+//   homework), or check { mode: 'now' }.
+export const URGENCY_METRICS = [['surplus', 'month'], ['runway', 'cushion'], ['netWorth', 'year'], ['fiNumber', 'year'], ['fiImplied', 'year'], ['outlook', 'year']];
+export function urgencyContext(spine, rules, sum) {
+  const year = +sum.asOf.slice(0, 4);
+  const materiality = rules.get('APP_MATERIALITY', year);
+  const monthlySpend = (sum.cashflow.expenses.total.value ?? 0) + (sum.cashflow.debtMinimums.total.value ?? 0);
+  return { materiality, monthlySpend, asOf: sum.asOf, year };
+}
+export function checkNow(item, fact, ctx) {
+  const o = fact && fact.check;
+  if (o && o.mode === 'later' && o.until && o.until > ctx.asOf) return { urgency: 'later', until: o.until, why: 'Check again ' + o.until };
+  if (o && o.mode === 'later') return { urgency: 'now', due: true, why: 'Its check-again date has come' };
+  if (o && o.mode === 'now') return { urgency: 'now', why: 'Marked to check now' };
+  if (item.kind === 'missing') return item.blocks.length ? { urgency: 'now', why: 'A result waits on it' } : { urgency: 'fine', why: 'Not needed by a result yet' };
+  const m = ctx.materiality, d = item.moves || {};
+  const over = [];
+  if (Math.abs(d.surplus || 0) >= m) over.push(['surplus', d.surplus]);
+  if (Math.abs((d.runway || 0) * ctx.monthlySpend) >= m) over.push(['runway', d.runway * ctx.monthlySpend]);
+  for (const k of ['netWorth', 'fiNumber', 'fiImplied', 'outlook']) if (Math.abs(d[k] || 0) >= 12 * m) over.push([k, d[k]]);
+  const was = item.was || {};
+  if (typeof d.yearsToFi === 'number' && typeof was.yearsToFi === 'number' && Math.floor(ctx.year + was.yearsToFi) !== Math.floor(ctx.year + was.yearsToFi + d.yearsToFi)) over.push(['yearsToFi', d.yearsToFi]);
+  if (!over.length) return { urgency: 'fine', why: 'A 20% miss moves no result by ' + money0(m) + ' a month' };
+  over.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  return { urgency: 'now', top: over[0], why: null };
+}
+const money0 = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');

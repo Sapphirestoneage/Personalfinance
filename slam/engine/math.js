@@ -204,7 +204,7 @@ const PLAIN = {
 for (const m of M) if (!m.plain && PLAIN[m.id]) m.plain = PLAIN[m.id];
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || planMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || checkNowMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || planMetric(id);
 
 // "How much to max it?" (S-211): one family, "maxit:<account>:<year>:<what>" for one
 // account and tax year (room, lump, month, paycheck, low, payoff), and
@@ -399,6 +399,31 @@ function earnedMetric(id) {
       else if (!terms.length) terms.push(term('No W-2, tips or 1099 line in ' + year, 0, 'usd', 'computed', 'plus', { group: 'I' }));
       return out(e, terms, e.rules);
     } };
+}
+
+// Whether a guess is worth checking now ("checkNow:<path>", rough now and rough later): the biggest move a 20% miss
+// makes in a result, against the materiality line (a month's results at $100, a year's at twelve times that). ctx.guess
+// is Still guessing's run (engine/ledger.js stillGuessing); the rule itself is engine/ledger.js checkNow.
+const MOVE_LABELS = { surplus: 'Left after saving, a month', runway: 'Cash runway, in dollars of cushion', netWorth: 'Net worth', fiNumber: 'FI number', fiImplied: 'FI number from spending', outlook: 'Cash in 24 months', yearsToFi: 'Years to FI' };
+function checkNowMetric(id) {
+  if (!id || !id.startsWith('checkNow:')) return null;
+  const path = id.slice(9);
+  return { id, label: 'Worth checking now?', unit: 'usd', op: 'custom', screens: ['ledger#/still-guessing'],
+    formula: 'Check now when a ' + '20% miss moves a monthly result by the materiality line or more, or a yearly result by twelve times it',
+    plain: 'A guess is worth checking now when getting it a fifth wrong would change a result by at least $100 a month.',
+    explain: ({ spine, rules, guess }) => {
+      const it = guess && guess.items ? guess.items.find((x) => x.path === path) : null;
+      const year = +spine.meta.asOf.slice(0, 4);
+      const top = it && it.top ? it.top : null;
+      const terms = [
+        { label: it ? 'The guess: ' + it.label : 'The guess', value: getAt(spine, path) ? getAt(spine, path).value : null, unit: 'usd', kind: getAt(spine, path) ? getAt(spine, path).kind : 'missing', role: 'arg', path, group: null },
+        { label: 'How far off it might be', value: rules.get('APP_GUESS_SWING', year), unit: 'ratio', kind: 'known', role: 'arg', rule: 'APP_GUESS_SWING', group: null },
+        { label: 'Worth checking at (a month)', value: rules.get('APP_MATERIALITY', year), unit: 'usd', kind: 'known', role: 'arg', rule: 'APP_MATERIALITY', group: null },
+        top ? { label: 'Moves ' + (MOVE_LABELS[top[0]] || top[0]) + ' by', value: Math.round(Math.abs(top[1]) * 100) / 100, unit: top[0] === 'yearsToFi' ? 'years' : 'usd', kind: 'computed', role: 'arg', group: null } : null
+      ].filter(Boolean);
+      return out({ value: top ? Math.round(Math.abs(top[1]) * 100) / 100 : null, kind: it ? (it.urgency === 'now' ? 'known' : 'rough') : 'missing', rules: ['APP_GUESS_SWING', 'APP_MATERIALITY'], rough: [], missing: [] }, terms, [], { note: it ? (it.urgency === 'now' ? 'Check now' : it.urgency === 'later' ? 'Check later' : 'Fine for now') + (it.why ? ': ' + it.why : '') : 'Still guessing has not run yet' });
+    },
+    recompute: () => null };
 }
 
 // One expense's monthly cost to you ("expenseCost:<id>"): the bill a month x your share (S-177).
