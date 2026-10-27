@@ -33,7 +33,7 @@ test('DATING: six sections in order, each with its letter and the address the sh
   const needs = sc.sections.find((x) => x.slug === 'needs');
   assert.deepEqual(needs.allRows.filter((r) => r.path.startsWith('expenses.')).length, ledgerRows(demo()).flatMap((g) => g.rows).filter((r) => r.path.startsWith('expenses.')).length);
   const goals = sc.sections.find((x) => x.slug === 'goals');
-  assert.ok(goals.groups.some((g) => g.items.some((it) => it.key === 'goals.cushion')));
+  assert.ok(goals.groups.some((g) => g.items.some((it) => it.key === 'goals.fi')));
   assert.ok(!goals.groups.some((g) => /assumption/i.test(g.label)));
   assert.ok(needs.allRows.every((r) => r.path.startsWith('expenses.')), 'Needs is expenses only');
   assert.ok(sc.sections.find((x) => x.slug === 'profile').groups.some((g) => g.label === 'FI assumptions'));

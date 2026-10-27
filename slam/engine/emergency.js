@@ -9,6 +9,12 @@ import { basisOf } from './networth.js';
 
 const v = valueOf;
 
+// One emergency target (morning answer 4, S-246): a goal whose kind is emergency, or whose name says emergency fund,
+// cushion or rainy day, is the Plan's reserve step, not a goal of its own. Its target becomes the cushion target.
+const EMERGENCY_NAME = /\b(emergency|cushion|rainy[- ]day)\b/i;
+export const isEmergencyGoal = (g) => !!g && g.type !== 'fi' && g.type !== 'payoff' && (g.type === 'emergency' || EMERGENCY_NAME.test(g.label || ''));
+export const emergencyGoal = (spine) => (spine.goals || []).find((g) => isEmergencyGoal(g) && g.target && v(g.target) !== null && v(g.target) !== undefined) || null;
+
 export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const year = +asOf.slice(0, 4);
   const person = spine.household.people[0];
@@ -32,8 +38,16 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   // so reaching a target in dollars always reaches it in months (S-165).
   const monthlyNeed = full.value === null ? null : Math.ceil(full.value);
   const target = tracker();
-  target.absorb(targetMonths); target.absorb(full);
-  const targetDollars = target.out(targetMonths.value === null || monthlyNeed === null ? null : Math.ceil(targetMonths.value * monthlyNeed));
+  const goal = emergencyGoal(spine);
+  let targetDollars;
+  if (goal) {
+    // The client's own cushion goal sets the target; its months follow from the month's spending.
+    const amt = target.useFact('goals.' + goal.id + '.target', goal.target);
+    targetDollars = target.out(Math.ceil(amt));
+  } else {
+    target.absorb(targetMonths); target.absorb(full);
+    targetDollars = target.out(targetMonths.value === null || monthlyNeed === null ? null : Math.ceil(targetMonths.value * monthlyNeed));
+  }
   const gap = tracker();
   gap.absorb(targetDollars); gap.absorb(sheet.cash);
 
@@ -43,11 +57,12 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const cushion = [
     stepOf('needs', 'A month of needs', needs),
     stepOf('month', 'A month of full spending', full),
-    stepOf('ruleOf5', 'Age / 5 months of full spending', targetDollars)
+    stepOf('ruleOf5', goal ? 'Your cushion goal (' + (goal.label || 'emergency fund') + ')' : 'Age / 5 months of full spending', targetDollars)
   ];
   return {
     age: years, cushion,
-    targetMonths,
+    fromGoal: goal ? { id: goal.id, label: goal.label || 'Emergency fund', path: 'goals.' + goal.id + '.target' } : null,
+    targetMonths: goal && monthlyNeed ? { ...targetMonths, value: Math.round(targetDollars.value / monthlyNeed * 10) / 10 } : targetMonths,
     targetDollars,
     gap: gap.out(targetDollars.value === null ? null : round2(Math.max(0, targetDollars.value - sheet.cash.value))),
     tiers: {

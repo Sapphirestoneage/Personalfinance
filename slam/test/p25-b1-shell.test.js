@@ -76,9 +76,11 @@ test('Session: the five steps in call order, each with its letter and one total 
   assert.equal(steps[1].result, sum.sheet.debts);
   assert.equal(steps[2].result, sum.cashflow.income.gross);
   assert.equal(steps[3].result, sum.sheet.assets);
-  assert.equal(steps[4].result.value, 20000, 'the cushion goal; the FI goal is figured, not added');
+  assert.equal(steps[4].result.value, null, 'no savings goal in the demo (its cushion goal is the Plan\'s reserve step now); the FI goal is figured, not added');
   // A goal with no amount yet: incomplete, never $0; no goals at all: missing.
-  const blank = editFact(s0, 'goals.cushion.target', 'clear', { today: '2026-10-25' });
+  const withTrip = { ...s0, goals: [...s0.goals, { id: 'trip', type: 'savings', label: 'Trip', target: { value: 3000, kind: 'known', asOf: '2026-10-01', source: 'test' } }] };
+  assert.equal(sessionSteps(withTrip, summarize(withTrip, R, { flags: false }))[4].result.value, 3000);
+  const blank = editFact(withTrip, 'goals.trip.target', 'clear', { today: '2026-10-25' });
   const g = sessionSteps(blank, summarize(blank, R, { flags: false }))[4].result;
   assert.deepEqual([g.value, g.kind, g.count], [null, 'missing', 1]);
   const none = { ...s0, goals: s0.goals.filter((x) => x.type === 'fi') };

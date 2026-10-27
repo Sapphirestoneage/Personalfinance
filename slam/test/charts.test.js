@@ -105,6 +105,8 @@ test('scenario lines and goal bars', () => {
   assert.equal(lines.length, 3);
   const last = (l) => l.points[l.points.length - 1][1];
   assert.ok(last(lines[0]) < last(lines[1]) && last(lines[1]) < last(lines[2]), 'conservative under standard under optimistic');
+  // The demo's only savings goal was the cushion, now the Plan's reserve step (morning answer 4): a goal of its own here.
+  s.goals = [...s.goals, { id: 'trip', type: 'savings', label: 'Trip', target: { value: 3000, kind: 'known', asOf: '2026-10-01', source: 'test' } }];
   const x = summarize(s, R), g = C.goalBars(goalsView(s, R, x));
   assert.ok(g.length >= 1 && g.every((y) => y.share >= 0 && y.share <= 1));
 });

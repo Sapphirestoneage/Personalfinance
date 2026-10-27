@@ -15,7 +15,7 @@ test('search finds a debt, a bill, an account, income, a goal and a screen, name
   assert.equal(first('high-yield').kind, 'Account');
   assert.equal(first('tutoring').kind, 'Income');
   assert.equal(first('subscriptions').href, 'ledger.html#/needs/subscriptions');
-  assert.ok(searchFind(idx, 'cushion').some((x) => x.kind === 'Goal'));
+  assert.ok(searchFind(idx, 'financial independence').some((x) => x.kind === 'Goal'));
   assert.deepEqual(searchFind(idx, '  '), []);
 });
 

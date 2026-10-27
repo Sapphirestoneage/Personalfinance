@@ -92,3 +92,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answers 1 and 2 (2026-10-27): one debt model, the Plan's (planPayoff); Debt and the One-pager lead with high-interest gone Apr 2027, all debt gone Jul 2031 on your plan, Nov 2028 if every extra dollar went to debt; the day-by-day run charges deferred interest ($360 on the Store card) with tests (S-243).
 - Owner's ask from the phone (2026-10-27): no "Not sure" on the Profile (S-244; the before-call page keeps it, QUESTIONS 163).
 - Morning answer 3 (2026-10-27): the payoff-order quick win reads APP_MATERIALITY from the Assumptions page, no $100 in code, with a test (S-245).
+- Morning answer 4 (2026-10-27): a cushion or emergency-fund goal is the Plan's reserve step (its target), the demo's Six-month cushion goal removed, four tests that used it as "a goal" now add their own (S-246).

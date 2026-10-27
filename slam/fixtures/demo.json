@@ -940,17 +940,6 @@
         "source": "demo (made up)",
         "kind": "known"
       }
-    },
-    {
-      "id": "cushion",
-      "type": "savings",
-      "label": "Six-month cushion",
-      "target": {
-        "value": 20000,
-        "asOf": "2026-10-01",
-        "source": "demo (made up)",
-        "kind": "known"
-      }
     }
   ],
   "assumptions": {

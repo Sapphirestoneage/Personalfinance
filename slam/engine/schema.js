@@ -434,7 +434,7 @@ export function validate(spine) {
   uniqueIds('goals', goals);
   for (const g of goals) {
     const p = 'goals.' + g.id;
-    if (!['fi', 'savings', 'payoff', 'other'].includes(g.type)) err(p + '.type', 'fi, savings, payoff or other');
+    if (!['fi', 'savings', 'emergency', 'payoff', 'other'].includes(g.type)) err(p + '.type', 'fi, savings, emergency, payoff or other');
     for (const k of ['target', 'annualSpending', 'fiNumber', 'dreamSpending', 'partTimeIncome']) if (k in g) checkFact(p + '.' + k, g[k], 'money');
     optDate(p + '.by', g.by);
     // F009 (S-208): priority, the account it lives in, a sinking fund with a monthly set-aside, spent on a date, repeating yearly.
