@@ -22,7 +22,7 @@ import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
 import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
@@ -316,11 +316,17 @@ function expenseEditor(row) {
       partNote.textContent = r.problem ? '' : partVal() === 'even' ? (even === null ? '' : 'Even split with ' + r.people + ' people: ' + showValue(even, 'rate') + ' each.') : s === null ? '' : 'That is ' + showValue(s, 'rate') + ' of the bill.';
     }
   };
+  // Fixed or varies (owner's ask, 2026-10-27): never both; neither is not sorted yet.
+  const fixedTick = h('input', { type: 'checkbox', id: 'exp-fixed', checked: e.fixed === true });
+  const variesTick = h('input', { type: 'checkbox', id: 'exp-varies', checked: e.fixed === false });
+  fixedTick.addEventListener('change', () => { if (fixedTick.checked) variesTick.checked = false; });
+  variesTick.addEventListener('change', () => { if (variesTick.checked) fixedTick.checked = false; });
+  const fixedNow = () => (fixedTick.checked ? true : variesTick.checked ? false : null);
   const tick = (box, words) => h('label', { class: 'tick-chip', for: box.id }, box, h('span', {}, words));
-  const tickRow = h('div', { class: 'tick-row' }, tick(sharedTick, 'Shared'), tick(coveredTick, 'Someone else pays'), tick(subBox, 'Subscription'), tick(datesTick, 'Start or end date'));
+  const tickRow = h('div', { class: 'tick-row' }, tick(sharedTick, 'Shared'), tick(coveredTick, 'Someone else pays'), tick(subBox, 'Subscription'), tick(datesTick, 'Start or end date'), tick(fixedTick, 'Fixed'), tick(variesTick, 'Varies'));
   // The folded row (owner's ask, 2026-10-26): closed by default; its line names what is ticked, so nothing hides silently.
   const onNow = h('span', { class: 'when-now' });
-  const showOn = () => { const on = [[sharedTick, 'Shared'], [coveredTick, 'Someone else pays'], [subBox, 'Subscription'], [datesTick, 'Has dates']].filter(([b]) => b.checked).map(([, w]) => w); onNow.textContent = on.join(', '); };
+  const showOn = () => { const on = [[sharedTick, 'Shared'], [coveredTick, 'Someone else pays'], [subBox, 'Subscription'], [datesTick, 'Has dates'], [fixedTick, 'Fixed'], [variesTick, 'Varies']].filter(([b]) => b.checked).map(([, w]) => w); onNow.textContent = on.join(', '); };
   const more = h('details', { class: 'when more-opts' }, h('summary', {}, 'More options ', onNow), tickRow, sharedBox, coveredBox, dates.box);
   tickRow.addEventListener('change', () => {
     sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered'; amountHint.hidden = mode.value !== 'covered';
@@ -354,7 +360,9 @@ function expenseEditor(row) {
     // The standard phone plan is a guess even when Save is tapped.
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
-    done(editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today()), expenseWords());
+    const fx = fixedNow();
+    const saved = editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today());
+    done(fx === (e.fixed ?? null) ? saved : setFixed(saved, id, fx), expenseWords());
     // The bar's words: the cost when the amount, how often or who pays changed (or nothing else did); else the change.
     function expenseWords() {
       const cost = said.changed(label, yours.textContent.replace(/^Costs you /, '').replace(/\.$/, '') + (k === 'rough' ? ' (a guess)' : ''));
@@ -362,6 +370,7 @@ function expenseEditor(row) {
       const other = [
         label !== e.label ? e.label + ' renamed to ' + label : null,
         subBox.checked !== was.sub ? label + (subBox.checked ? ' is now a subscription' : ' is no longer a subscription') : null,
+        fx !== (e.fixed ?? null) ? label + (fx === true ? ' is now fixed' : fx === false ? ' now varies' : ' is not sorted as fixed or variable') : null,
         d.start !== was.dates.start || d.end !== was.dates.end ? label + '\'s dates changed' : null
       ].filter(Boolean);
       return costMoved || !other.length ? [cost, ...other].join('. ') : other.join('. ');

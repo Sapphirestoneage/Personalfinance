@@ -11,13 +11,13 @@ import { startPage, change, said, keep, kept, refresh } from './shell.js';
 import { gapsCard } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim, burnTiers } from '../engine/cashsim.js';
-import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS, referenceBands } from '../engine/spending.js';
+import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS, referenceBands, fixedVariable } from '../engine/spending.js';
 import { spendingStart } from '../engine/profile.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
 import { waiting } from '../engine/calendar-views.js';
 import { realHourlyWage, hoursOf } from '../engine/plan.js';
 import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS } from '../engine/feed.js';
-import { logSpend, removeLog, checkIn, setSweep, parseInput, removeItem, putFact } from '../engine/edits.js';
+import { logSpend, removeLog, checkIn, setSweep, parseInput, removeItem, putFact, setFixed } from '../engine/edits.js';
 import { FAT } from '../engine/schema.js';
 import { mathButton } from './math-panel.js';
 import { paidWithBox } from './card-charges.js';
@@ -78,7 +78,7 @@ function model(base, rules_, months) {
   const vw = spendingView(spine, rules_, sim, s, { today: day });
   const compare = estimatedVsActual(spine, rules_, { months });
   const tiers = burnTiers(spine, rules_, s.cashflow, { extra: spine.debtPlan && spine.debtPlan.extra && spine.debtPlan.extra.value !== null ? spine.debtPlan.extra.value : 0 });
-  memo = { base, rules: rules_, months, scen, day, spine, s, sim, vw, compare, tiers, cats: categories(vw), canCut: new Set(s.cashflow.expenses.items.filter((i) => i.amount).map((i) => i.id)), wage: realHourlyWage(spine, rules_, s).wage };
+  memo = { base, rules: rules_, months, scen, day, spine, s, sim, vw, compare, tiers, fv: fixedVariable(spine, rules_, s), cats: categories(vw), canCut: new Set(s.cashflow.expenses.items.filter((i) => i.amount).map((i) => i.id)), wage: realHourlyWage(spine, rules_, s).wage };
   memo.ctx = () => ({ spine, rules: rules_, s, sim, spend: vw, tiers, compare });
   return memo;
 }
@@ -205,6 +205,34 @@ function tagsCard(m) {
         h('td', { class: 'num' }, money(r.lastMonthSameDay))))))),
     h('p', { class: 'tile-note' }, kindChip(t.kind), ' A line with no amount makes its budget missing, not smaller.'),
     mathButton(t.rows.flatMap(tagMath), m.ctx));
+}
+
+// Fixed and variable (owner's ask, 2026-10-27): one line each, sorted with a two-button switch; a variable line shows
+// what was logged to it on average and which way it is going.
+const TREND_WORDS = { up: 'going up', down: 'going down', steady: 'steady' };
+function fixedSwitch(l, now) {
+  const set = (x) => { if (x !== now) change((sp) => setFixed(sp, l.id, x), said.changed(l.label, x ? 'a fixed expense' : 'a variable expense')); };
+  return h('span', { class: 'segmented fv-seg', role: 'group', 'aria-label': l.label + ': fixed or varies' },
+    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(now === true), onclick: () => set(true) }, h('span', { class: 'seg-label' }, 'Fixed')),
+    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(now === false), onclick: () => set(false) }, h('span', { class: 'seg-label' }, 'Varies')));
+}
+function fixedVarCard(m) {
+  const fv = m.fv;
+  const amt = (a) => (a === null ? h('span', { class: 'empty' }, 'no amount') : cents(a));
+  const trend = (l) => {
+    if (!l.logged) return h('span', { class: 'fv-note' }, 'nothing logged yet');
+    const avg = 'avg ' + cents(l.average) + ' over ' + l.logged + (l.logged === 1 ? ' month' : ' months');
+    if (!l.trend || !l.trend.direction) return h('span', { class: 'fv-note' }, avg);
+    return h('span', { class: 'fv-note' }, avg + ', ', h('span', { class: 'fv-trend fv-' + l.trend.direction }, TREND_WORDS[l.trend.direction] + (l.trend.direction === 'steady' ? '' : ' ' + Math.abs(Math.round(l.trend.change * 100)) + '%')));
+  };
+  const row = (l, now, extra) => h('li', { class: 'fv-line' }, h('a', { class: 'fv-name', href: ledgerHref(l.path) }, l.label), h('span', { class: 'fv-amt' }, amt(l.amount)), extra, fixedSwitch(l, now));
+  const head = (words, g) => h('h3', { class: 'fv-h' }, words, ' ', h('span', { class: 'fv-total' }, g.total === null ? 'some amounts missing' : money(g.total) + ' a month'));
+  return h('section', { class: 'card', 'aria-labelledby': 'fv-h' },
+    h('h2', { id: 'fv-h' }, 'Fixed and variable'),
+    h('p', { class: 'muted' }, 'Fixed is the same each time, like rent. Variable moves, like utilities and food; its trend comes from what you log.'),
+    fv.fixed.items.length ? [head('Fixed', fv.fixed), h('ul', { class: 'fv-list' }, fv.fixed.items.map((l) => row(l, true)))] : null,
+    fv.variable.items.length ? [head('Variable', fv.variable), h('ul', { class: 'fv-list' }, fv.variable.items.map((l) => row(l, false, trend(l))))] : null,
+    fv.unsorted.length ? [h('h3', { class: 'fv-h' }, 'Not sorted yet ', h('span', { class: 'count' }, String(fv.unsorted.length))), h('ul', { class: 'fv-list' }, fv.unsorted.map((l) => row(l, null)))] : null);
 }
 
 function tiersCard(m) {
@@ -561,6 +589,7 @@ function topScreen(m, months, state) {
       controls(m, months),
       rangeWords(m),
       tagsCard(m),
+      fixedVarCard(m),
       compareCard(m),
       referenceCard(m),
       donutCard(m),

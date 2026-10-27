@@ -216,7 +216,7 @@
       "cadence": "monthly",
       "start": null,
       "end": null,
-      "fixed": true,
+      "fixed": false,
       "need": {
         "value": true,
         "asOf": "2026-10-01",
@@ -243,7 +243,7 @@
       "cadence": "monthly",
       "start": null,
       "end": null,
-      "fixed": null,
+      "fixed": false,
       "need": {
         "value": true,
         "asOf": "2026-10-01",
@@ -264,7 +264,7 @@
       "cadence": "monthly",
       "start": null,
       "end": null,
-      "fixed": null,
+      "fixed": false,
       "need": {
         "value": false,
         "asOf": "2026-10-01",
@@ -285,7 +285,7 @@
       "cadence": "monthly",
       "start": null,
       "end": null,
-      "fixed": null,
+      "fixed": false,
       "need": {
         "value": true,
         "asOf": "2026-10-01",
@@ -381,7 +381,7 @@
       "cadence": "monthly",
       "start": null,
       "end": null,
-      "fixed": null,
+      "fixed": false,
       "need": {
         "value": null,
         "asOf": "2026-10-01",

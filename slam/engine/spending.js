@@ -303,3 +303,31 @@ export function referenceBands(s, bench) {
     rows: [['needs', 'Needs (and debt minimums)', needs, ref.needs], ['wants', 'Wants', wants, ref.wants], ['saving', 'Saving', cf.saving.total, ref.savings]].map(([id, label, amount, reference]) => ({ id, label, amount, share: share(amount), reference }))
   };
 }
+
+// Fixed and variable (owner's ask, 2026-10-27): a fixed line is the same each time (rent), a variable one moves
+// (utilities, food). Each group's monthly plan (missing when a line has no amount), lines not sorted yet, and for a
+// variable line what was logged to it in each of the last `months` months before this one: its average and whether
+// the latest is up, down or steady against the earlier ones (Eli's APP_TREND_PCT). A trend needs two logged months.
+export function fixedVariable(spine, rules, s, { months = 3, asOf = spine.meta.asOf } = {}) {
+  const pct = rules.get('APP_TREND_PCT', +asOf.slice(0, 4));
+  const now = monthKey(asOf);
+  const yms = Array.from({ length: months }, (_, i) => addMonths(now, i - months));
+  const items = s.cashflow.expenses.items.filter((i) => !i.covered);
+  const line = (i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' });
+  const group = (list) => ({ items: list.map(line), total: list.some((i) => i.amount === null) ? null : round2(list.reduce((a, i) => a + i.amount, 0)) });
+  const loggedTo = (id, ym) => { const es = (spine.log || []).filter((e) => e.expenseId === id && e.kind !== 'income' && e.date.slice(0, 7) === ym); return es.length ? round2(es.reduce((a, e) => a + (e.kind === 'refund' ? -e.amount : e.amount), 0)) : null; };
+  const variable = group(items.filter((i) => i.fixed === false));
+  variable.items = variable.items.map((x) => {
+    const byMonth = yms.map((ym) => ({ ym, amount: loggedTo(x.id, ym) }));
+    const seen = byMonth.filter((m) => m.amount !== null);
+    const average = seen.length ? round2(seen.reduce((a, m) => a + m.amount, 0) / seen.length) : null;
+    let trend = null;
+    if (seen.length >= 2) {
+      const last = seen[seen.length - 1].amount, before = seen.slice(0, -1), base = before.reduce((a, m) => a + m.amount, 0) / before.length;
+      const change = base > 0 ? round2((last - base) / base) : null;
+      trend = { change, direction: change === null ? null : change >= pct ? 'up' : change <= -pct ? 'down' : 'steady' };
+    }
+    return { ...x, byMonth, average, logged: seen.length, trend };
+  });
+  return { fixed: group(items.filter((i) => i.fixed === true)), variable, unsorted: items.filter((i) => i.fixed !== true && i.fixed !== false).map(line), months: yms };
+}

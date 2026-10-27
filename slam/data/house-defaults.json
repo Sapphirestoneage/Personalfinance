@@ -163,6 +163,16 @@
       "verified": "house"
     },
     {
+      "id": "APP_TREND_PCT",
+      "rule": "A variable expense's latest month is up or down when it is this far from its own average; closer reads steady",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Spending, fixed and variable",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
       "id": "CUSHION_OKAY_EXTRA",
       "rule": "Months added to the Rule of 5 cushion when income is only okay",
       "value": 1,

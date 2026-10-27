@@ -387,6 +387,13 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
   return { spine: { ...spine, [collection]: [...list, item] }, id, firstPath: first };
 }
 
+// Fixed or variable (owner's ask, 2026-10-27): true is the same each time, false varies, null is not sorted yet.
+export function setFixed(spine, id, fixed) {
+  if (!getAt(spine, 'expenses.' + id)) throw new Error('No expense ' + id);
+  if (fixed !== true && fixed !== false && fixed !== null) throw new Error('Fixed is true, false or null');
+  return setAt(spine, 'expenses.' + id + '.fixed', fixed);
+}
+
 // Attach an expense to a card or an account (owner's ask, 2026-10-27): its Paid from, keeping its day and any debt it
 // pays. from null detaches it: Paid from goes back to not given (the flow then guesses main checking).
 export function chargeTo(spine, id, from, today) {

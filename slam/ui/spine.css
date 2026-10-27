@@ -1140,3 +1140,18 @@ a.fb-link .fb-more { justify-self: end; }
 .wait-actual { width: 6.5rem; min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
 .waiting-list .wait-actual { width: 6.5rem; max-width: 6.5rem; flex: none; }
 .waiting-list .wait-what { flex: 1 1 10rem; }
+/* Fixed and variable (owner's ask, 2026-10-27): one line each. */
+.fv-h { margin: var(--space-3) 0 var(--space-1, 4px); font-size: var(--text-sm); }
+.fv-total { color: var(--text-muted); font-weight: 600; }
+.fv-list { list-style: none; margin: 0; padding: 0; }
+.fv-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--space-2); padding: 4px 0; border-top: 1px solid var(--border); }
+.fv-line:first-child { border-top: 0; }
+.fv-name { flex: 1 1 8rem; min-width: 0; }
+.fv-amt { font-variant-numeric: tabular-nums; }
+.fv-note { color: var(--text-muted); font-size: var(--text-sm); }
+.fv-trend.fv-up { color: var(--bad); font-weight: 600; }
+.fv-trend.fv-down { color: var(--st-known); font-weight: 600; }
+.fv-seg { gap: 0; flex-wrap: nowrap; flex: none; }
+.fv-seg .seg-btn { flex: none; justify-content: center; align-items: center; min-height: var(--btn-h, var(--tap)); padding: 4px var(--space-3); font-size: var(--text-sm); font-weight: 600; border-radius: 0; }
+.fv-seg .seg-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.fv-seg .seg-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -2px; }
