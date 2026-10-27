@@ -65,13 +65,14 @@ export function urgencyMap(spine, rules, onReady) {
   const r = guessesFor(spine, rules, onReady);
   return r ? mapOf(r, spine) : null;
 }
-// Worth checking now: a guess or a missing number the rule (or an override) says matters now. Unknown (still working
-// it out) counts as now, so nothing hides before the answer is in.
-export function worthNow(map, path, kind) {
+// Worth checking now: a guess or a missing number the rule (or an override) says matters now. Not worked out yet counts
+// as now, so nothing hides before the answer is in; with a current answer, a number it does not list is fine for now
+// (fresh: the answer is for these very numbers).
+export function worthNow(map, path, kind, fresh = true) {
   if (kind !== 'rough' && kind !== 'missing') return false;
   if (!map) return true;
   const u = map.get(path);
-  return !u || u.urgency === 'now';
+  return u ? u.urgency === 'now' : !fresh;
 }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // "check in Jan" (this year or next, the year added when it is not within 12 months).

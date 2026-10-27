@@ -823,8 +823,8 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
 // "3 missing", "2 rough": small labels on a row that opens (the filters at the top show only those).
 // Only what is worth checking now counts (Rough now and later): a guess that is fine for now is never in a count.
 const dots = (x) => {
-  const rows = x.allRows || x.rows, m = umap();
-  const c = rows ? { missing: rows.filter((r) => r.fact.kind === 'missing' && worthNow(m, r.path, 'missing')).length, rough: rows.filter((r) => r.fact.kind === 'rough' && worthNow(m, r.path, 'rough')).length } : x.counts || x;
+  const rows = x.allRows || x.rows || (x.node && (x.node.allRows || x.node.rows)), m = umap();
+  const c = rows ? { missing: rows.filter((r) => r.fact.kind === 'missing' && worthNow(m, r.path, 'missing', guessFor === cur())).length, rough: rows.filter((r) => r.fact.kind === 'rough' && worthNow(m, r.path, 'rough', guessFor === cur())).length } : x.counts || x;
   return c.missing || c.rough ? h('span', { class: 'group-counts' },
     c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
     c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + (c.rough === 1 ? ' guess' : ' guesses') + ' to check') : null) : null;
@@ -937,7 +937,7 @@ const umap = () => (guess ? mapOf(guess, cur()) : null);
 // A row's mark: the red Missing or amber Rough chip when it is worth checking now; a small gray dot when it is fine
 // for now or set for later; nothing for a known number.
 function kindMark(path, kind) {
-  if ((kind === 'rough' || kind === 'missing') && !worthNow(umap(), path, kind)) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': kind === 'missing' ? 'Missing, fine for now' : 'A guess, fine for now', title: 'Fine for now' });
+  if ((kind === 'rough' || kind === 'missing') && !worthNow(umap(), path, kind, guessFor === cur())) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': kind === 'missing' ? 'Missing, fine for now' : 'A guess, fine for now', title: 'Fine for now' });
   return chip(kind);
 }
 const nowCount = () => (guess ? guess.items.filter((it) => it.urgency === 'now').length : null);
