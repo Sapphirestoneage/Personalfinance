@@ -83,7 +83,7 @@ function clearCard(d) {
     h('h2', { id: 'clear-h' }, 'When your debt is gone'),
     h('div', { class: 'clear-grid' }, leadLines(cd).filter((x) => x[0]).map(([label, words]) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': label },
       h('span', { class: 'clear-date' }, words), h('span', { class: 'clear-label' }, label)))),
-    leadLines(cd).filter((x) => !x[0]).map(([, words]) => h('p', { class: 'tile-sub' }, words[0].toUpperCase() + words.slice(1) + (cd.everyInterest !== null && cd.interest !== null ? ' (' + money(cd.everyInterest) + ' of interest instead of ' + money(cd.interest) + ')' : '') + '.')),
+    leadLines(cd).filter((x) => !x[0]).map(([, words]) => h('p', { class: 'tile-sub' }, words[0].toUpperCase() + words.slice(1), cd.everyInterest !== null && cd.interest !== null ? [' (' + money(cd.everyInterest) + ' of interest instead of ', h('span', { 'data-metric': 'plan:debtInterest' }, money(cd.interest)), ')'] : null, '.')),
     h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan: the extra goes to the debt while its debt steps are being filled (Plan, step by step).'));
 }
 

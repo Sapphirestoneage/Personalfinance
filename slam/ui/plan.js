@@ -106,7 +106,9 @@ function render({ spine: base, rules, levels }) {
 const NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
 function stepRow(r, current, together = null) {
   const now = r.id === current && !r.done;
-  const when = r.completes ? 'about ' + monthWords(r.completes.slice(0, 7)) : r.months === null ? 'no surplus to fund it yet' : null;
+  // The debt steps' months are the payoff dates everywhere (morning answer 1), tagged for the agreement check.
+  const DEBT_TAG = { highInterest: 'plan:hiFreeYm', lowInterest: 'plan:allFreeYm' };
+  const when = r.completes ? ['about ', h('span', { 'data-metric': !r.done && r.need > 0 ? DEBT_TAG[r.id] || null : null }, monthWords(r.completes.slice(0, 7)))] : r.months === null ? 'no surplus to fund it yet' : null;
   const status = r.need === null ? ['Answer one question to finish this step']
     : r.done ? ['Done']
       : [now ? 'Now: ' : null, h('span', { class: 'go-total' }, money(r.need) + (r.flow ? ' a month' : '')), when, r.kind === 'rough' || r.kind === 'incomplete' ? kindChip(r.kind) : null];
@@ -300,7 +302,7 @@ function paychecksScreen(m) {
     legend: Object.values(JOB).map(([c, words]) => ({ c, words })),
     table: { head: ['Paycheck', ...Object.values(JOB).map((x) => x[1]), 'In all'], rows: a.paychecks.map((p) => [shortDate(p.date) + ': ' + p.label, ...Object.keys(JOB).map((k) => money(p.byKind[k])), money(p.assigned)]) } });
   return [
-    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one. The Plan\'s ' + money(m.foo.surplus) + ' a month is the month as a whole; one paycheck sends more or less as the bills fall between paydays. The last one shown counts no bills after the three months, so more of it reads as going to the Plan.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
+    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one. The Plan\'s ', h('span', { 'data-metric': 'leftAfterSaving' }, money(m.foo.surplus)), ' a month is the month as a whole; one paycheck sends more or less as the bills fall between paydays. The last one shown counts no bills after the three months, so more of it reads as going to the Plan.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
     h('ul', { class: 'go-list pay-list' }, a.paychecks.flatMap((p) => [
       goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, third(p) ? [' ', third(p)] : null],
         [h('span', { class: 'go-total' }, money(p.amount)), p.carryIn ? ' plus ' + money(p.carryIn) + ' carried in' : '', (p.left > 0.004 ? '· ' + money(p.left) + ' to the Plan' : '· all to bills and spending')]),
