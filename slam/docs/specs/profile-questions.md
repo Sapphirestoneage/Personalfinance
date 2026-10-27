@@ -18,11 +18,12 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 ### Why now
 
-- **What made you reach out now?** (text, or Not sure). Your words, for the first call.
-- **What would make this worth it for you?** (text, or Not sure). What a good result looks like, in your words.
+- **What made you reach out now?** (Debt feels out of control / Money is tight every month / A big change is coming / Other, or Not sure). Where the first call starts.
+- **What would make this worth it for you?** (A clear plan I can follow / A date I am debt free / Saving for something big / Other, or Not sure). What a good result looks like, so we can measure it.
 - **How stressed do you feel about money? (1 is calm, 10 is very)** (1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10, or Not sure). Saved with its date, so later sessions can show the change.
 - **How often are you paid?** (Every week / Every 2 weeks / Twice a month / Once a month / It varies, or Not sure). Puts paydays on the Calendar.
 - **About how much lands in your account a month?** (Under $2,000 / $2,000 to $4,000 / $4,000 to $6,000 / $6,000 to $8,000 / Over $8,000, or Not sure). A ballpark, so the first call starts in the right place.
+- **Anything else you would like me to know?** (text, or Not sure). Your own words, for the first call.
 
 ### You
 

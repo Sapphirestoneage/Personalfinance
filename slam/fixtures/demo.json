@@ -1006,14 +1006,14 @@
   ],
   "profile": {
     "reachOut": {
-      "value": "My card balances keep creeping up and I want a plan before they get worse.",
+      "value": "debt",
       "asOf": "2026-10-01",
       "source": "demo (made up)",
       "kind": "known",
       "by": "client"
     },
     "worthIt": {
-      "value": "Knowing which debt to pay first, and having a real cushion.",
+      "value": "plan",
       "asOf": "2026-10-01",
       "source": "demo (made up)",
       "kind": "known",
@@ -1263,6 +1263,13 @@
       "kind": "known",
       "asOf": "2026-10-01",
       "source": "demo (made up)",
+      "by": "client"
+    },
+    "anythingElse": {
+      "value": "My card balances keep creeping up and I want a plan before they get worse. Knowing which debt to pay first, and having a real cushion.",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
       "by": "client"
     }
   },

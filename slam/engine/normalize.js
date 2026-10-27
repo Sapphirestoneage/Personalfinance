@@ -18,6 +18,17 @@ export function upgradeSpine(spine) {
   const s = structuredClone(spine);
   const asOf = s.meta && s.meta.asOf;
   const stamp = { asOf, source: 'upgrade' };
+  // Why now and Worth it became choices (S-254): a typed answer becomes Other, its words go to Anything else (added to
+  // what is there), with the same date and source.
+  const CHOICES = { reachOut: ['debt', 'tight', 'change', 'other'], worthIt: ['plan', 'debtFree', 'saving', 'other'] };
+  for (const [id, keys] of Object.entries(CHOICES)) {
+    const f = s.profile && s.profile[id];
+    const x = f && f.value;
+    if (typeof x !== 'string' || x === 'notSure' || keys.includes(x)) continue;
+    const before = s.profile.anythingElse && s.profile.anythingElse.value;
+    s.profile.anythingElse = { ...f, value: before ? (before.includes(x) ? before : before + ' ' + x) : x };
+    s.profile[id] = { ...f, value: 'other' };
+  }
   // Need or want became a Fact (S-171).
   for (const e of list(s.expenses)) {
     if (e.need === undefined || e.need === null || typeof e.need === 'boolean') e.need = typeof e.need === 'boolean' ? fact(e.need, { ...stamp, kind: 'known' }) : fact(null, stamp);

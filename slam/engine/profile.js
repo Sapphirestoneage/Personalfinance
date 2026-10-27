@@ -30,11 +30,14 @@ const SELF = (a) => ['self', 'both'].includes(ans(a, 'work'));
 export const LEVEL1 = [
   // Why now (coaching, 2026-10-27): first on the client's page. Stress is a Fact with its date, and every change is a
   // life change with its date, so a later session can show how it moved.
-  { id: 'reachOut', area: 'start', label: 'What made you reach out now?', kind: 'text', long: true, does: 'Your words, for the first call.' },
-  { id: 'worthIt', area: 'start', label: 'What would make this worth it for you?', kind: 'text', long: true, does: 'What a good result looks like, in your words.' },
+  // Why now and what makes it worth it are four choices each, the last Other (owner's ask, 2026-10-27), so answers can
+  // be counted across clients; "Anything else" at the end of the area keeps the client's own words.
+  { id: 'reachOut', area: 'start', label: 'What made you reach out now?', kind: 'one', options: [['debt', 'Debt feels out of control'], ['tight', 'Money is tight every month'], ['change', 'A big change is coming'], ['other', 'Other']], does: 'Where the first call starts.' },
+  { id: 'worthIt', area: 'start', label: 'What would make this worth it for you?', kind: 'one', options: [['plan', 'A clear plan I can follow'], ['debtFree', 'A date I am debt free'], ['saving', 'Saving for something big'], ['other', 'Other']], does: 'What a good result looks like, so we can measure it.' },
   { id: 'stress', area: 'start', label: 'How stressed do you feel about money? (1 is calm, 10 is very)', kind: 'one', options: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((x) => [x, x]), does: 'Saved with its date, so later sessions can show the change.' },
   { id: 'payOften', area: 'start', label: 'How often are you paid?', kind: 'one', options: [['weekly', 'Every week'], ['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Once a month'], ['varies', 'It varies']], does: 'Puts paydays on the Calendar.' },
   { id: 'takeHome', area: 'start', label: 'About how much lands in your account a month?', kind: 'one', options: [['under2', 'Under $2,000'], ['2to4', '$2,000 to $4,000'], ['4to6', '$4,000 to $6,000'], ['6to8', '$6,000 to $8,000'], ['over8', 'Over $8,000']], does: 'A ballpark, so the first call starts in the right place.' },
+  { id: 'anythingElse', area: 'start', label: 'Anything else you would like me to know?', kind: 'text', long: true, does: 'Your own words, for the first call.' },
   { id: 'firstName', area: 'you', label: 'Your first name', kind: 'text', does: 'Names the household on every page.' },
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },

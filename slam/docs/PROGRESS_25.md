@@ -100,3 +100,5 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answer 9 (2026-10-27): Got extra money? asks only where the money came from (seven answers) and sets the tax from it; the step and Show the math name the rule, with a test (S-251).
 - Morning answer 10 (2026-10-27): one list of open questions (missing or worth checking now) read by My numbers, Taxes, Session, Still guessing, Today and the Profile; 6 on the demo everywhere; agree-check reads list:open on every one, with a test (S-252).
 - Owner's ask from the phone (2026-10-27): tapping a Calendar day opens the day (its summary and a link to each item); the panel under the grid and its Open the day button are gone (S-253).
+- Review of the morning answers (2026-10-27): one review agent, 15 findings (7 high), all fixed: the Plan's run sets the payoff months, a typed extra counted once, cut tool and Paid off by a date match the Plan, no day-by-day payoff milestones (S-255).
+- Owner from the phone (2026-10-27): no "Not sure" on any question, the before-call page included (S-256); Why now and Worth it are four choices with Other, and Anything else at the end (S-257).

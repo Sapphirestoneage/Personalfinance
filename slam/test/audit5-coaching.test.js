@@ -2,6 +2,7 @@
 // show the change; long answers keep their words; Send my answers shares the file when the phone can, and Copy my
 // answers is there too. Every household here is made up.
 import test from 'node:test';
+import { upgradeSpine } from '../engine/normalize.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SLAM, readJson } from './spine-helpers.js';
@@ -19,7 +20,12 @@ test('stress keeps its date and its history; a long answer keeps more than 40 le
   assert.equal(s.profile.stress.asOf, '2026-12-01');
   assert.deepEqual(s.lifeChanges.filter((c) => c.question === 'stress').map((c) => [c.date, c.from, c.to]), [['2026-10-01', null, '8'], ['2026-12-01', '8', '5']]);
   const long = 'My card balances keep creeping up and I want a plan before they get worse.';
-  assert.equal(answersOf(applyAnswer(raw, 'reachOut', long, { today: '2026-10-01' })).reachOut, long);
+  // Anything else keeps the client's own words (S-254); Why now is a choice to count across clients.
+  assert.equal(answersOf(applyAnswer(raw, 'anythingElse', long, { today: '2026-10-01' })).anythingElse, long);
+  assert.equal(answersOf(applyAnswer(raw, 'reachOut', 'debt', { today: '2026-10-01' })).reachOut, 'debt');
+  // An old typed answer reads as Other, its words as Anything else.
+  const old = upgradeSpine({ ...raw, profile: { ...(raw.profile || {}), reachOut: { value: long, kind: 'known', asOf: '2026-09-01', source: 'profile' }, anythingElse: undefined } });
+  assert.deepEqual([answersOf(old).reachOut, answersOf(old).anythingElse], ['other', long]);
 });
 
 test('Send my answers uses the share sheet when it can; Copy my answers is beside it', () => {
