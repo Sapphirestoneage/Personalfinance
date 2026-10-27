@@ -84,7 +84,8 @@ test('assumption sets: Conservative, Standard (default), Optimistic, Your own; a
 
 test('the Session: five steps with letters, tick lists and presets from data, Back and Next, and no Other income to pick', () => {
   const src = readFileSync(new URL('../ui/session.js', import.meta.url), 'utf8');
-  assert.match(src, /const STEPS = \[\['needs', 'N', 'Needs'\], \['debt', 'D', 'Debt'\], \['income', 'I', 'Income'\], \['assets', 'A', 'Assets'\], \['goals', 'G', 'Goals'\]\];/);
+  // The steps are the engine's SESSION_ORDER, DATING as My numbers (S-258).
+  assert.match(src, /const STEPS = SESSION_ORDER;/);
   assert.match(src, /'Next: ' \+ next\[2\]/);
   const data = JSON.parse(readFileSync(new URL('../data/session-presets.json', import.meta.url), 'utf8'));
   assert.deepEqual(data.needs.map((c) => c.label), ['Accommodation', 'Food', 'Transportation', 'Health and fitness', 'Subscriptions', 'Miscellaneous']);
@@ -94,6 +95,9 @@ test('the Session: five steps with letters, tick lists and presets from data, Ba
   assert.ok(data.needs.flatMap((c) => c.items).some((i) => i.key === 'pay-family' && i.when === undefined));
   assert.equal(data.withdrawal.find((w) => w.default).rate, 0.04);
   assert.ok(data.withdrawal.every((w) => w.source));
+  // 4.7% (Bengen, 2025) and guardrails (Guyton and Klinger, 2006) are choices too (owner, 2026-10-27); guardrails says its rules.
+  assert.ok(data.withdrawal.some((w) => w.rate === 0.047));
+  assert.match(data.withdrawal.find((w) => /guardrails/.test(w.label)).note, /cut spending by 10%.*raise it by 10%/);
   const starter = readFileSync(new URL('../engine/starter.js', import.meta.url), 'utf8');
   assert.ok(!starter.includes("I('other'"), 'Money from a person replaces Other income');
   // A new person line asks who and what for; nothing is withheld from it.

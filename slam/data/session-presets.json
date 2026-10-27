@@ -154,6 +154,17 @@
   ],
   "withdrawal": [
     {
+      "rate": 0.052,
+      "label": "5.2% with guardrails",
+      "source": "Jonathan Guyton and William Klinger, Decision Rules and Maximum Initial Withdrawal Rates (Journal of Financial Planning, 2006)",
+      "note": "Only with the guardrails in retirement: cut spending by 10% when the withdrawal rate climbs 20% above where it started, and raise it by 10% when it falls 20% below."
+    },
+    {
+      "rate": 0.047,
+      "label": "4.7%",
+      "source": "William Bengen, A Richer Retirement (2025): his updated safe rate, the same as the optimistic set"
+    },
+    {
       "rate": 0.04,
       "label": "4%",
       "source": "William Bengen, Determining Withdrawal Rates Using Historical Data (1994); the Trinity study (Cooley, Hubbard and Walz, 1998)",
