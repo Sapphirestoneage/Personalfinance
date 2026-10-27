@@ -15,6 +15,8 @@ import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
 import { foldRow } from './rows.js';
+import { subscriptionAudit } from '../engine/subscriptions.js';
+import { chartCard, bars } from './chart.js';
 import { paycheckCard, monthWaterfallCard, bracketCard, fiPathCard, savingsCurveCard } from './chart-cards.js';
 import { bracketBar, fiPath, savingsCurve } from '../engine/charts.js';
 import { moneyFlow, flowTable } from '../engine/flow.js';
@@ -1062,8 +1064,10 @@ function subsScreen() {
   };
   // One clean line per subscription (owner's ask, 2026-10-27): a small tick box, the name and its details, the chip,
   // and a chevron to the bill. Ticked ones get a set-for-all panel above the list.
+  const au = subscriptionAudit(cur(), sub);
   return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
     h('p', { class: 'subs-total' }, h('strong', {}, money(sub.monthly.value)), ' a month · ', money(sub.yearly), ' a year'),
+    h('ul', { class: 'go-list' }, goRow(hashFor(['needs', 'subscriptions', 'audit']), { name: 'Audit them', sub: au.candidates ? money(au.freedYearly) + ' a year freed by the ' + au.candidates + ' marked to cancel' : 'Ranked by cost a year, with the cost of each use' })),
     many.length ? h('div', { class: 'subs-bulk', role: 'group', 'aria-label': 'Set for the ticked ones' },
       h('p', { class: 'subs-bulk-h' }, many.length + ' ticked'),
       h('div', { class: 'add-form' }, h('div', { class: 'add-grid' },
@@ -1080,6 +1084,40 @@ function subsScreen() {
         h('span', { class: 'chev', 'aria-hidden': 'true' }, openOf(i) ? '\u2304' : '\u203A')),
       openOf(i) ? h('div', { class: 'sub-open' }, line(i)) : null))),
     h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/review' }, h('span', { class: 'go-name' }, 'Quarterly review'), h('span', { class: 'go-sub' }, sub.toLook.length ? sub.toLook.length + ' to look at' : 'All looked at')))));
+}
+
+// The subscription audit (Track G): ranked by cost a year; uses a month (optional) give the cost of one use; "Cancel
+// candidate" marks one, and the marked ones add up to what cancelling them frees. Each answer is one change (Undo).
+function auditScreen() {
+  const sub = summaryOf(cur()).subs, au = subscriptionAudit(cur(), sub);
+  if (!au.rows.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'No subscriptions yet. Open a bill and pick Move to Subscriptions.'));
+  const later = (fn) => setTimeout(fn, 0);
+  const usesBox = (r) => {
+    const b = h('input', { id: 'uses-' + r.id, class: 'uses-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 4', 'aria-describedby': 'uses-' + r.id + '-hint' });
+    b.value = r.uses === null ? '' : String(r.uses);
+    b.addEventListener('change', () => {
+      const t = b.value.trim();
+      if (!t) return later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', null, 'missing', today()), said.changed(r.label + ': uses a month', 'not given')));
+      const p = parseInput('int', t);
+      if (!p.ok || p.value < 0) { say('Uses a month: a whole number, like 4'); return; }
+      later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', p.value, 'known', today()), said.changed(r.label + ': uses a month', String(p.value))));
+    });
+    return h('div', { class: 'uses-field' }, h('label', { for: 'uses-' + r.id, class: 'edit-label' }, 'Uses a month'), b, h('p', { class: 'edit-hint', id: 'uses-' + r.id + '-hint' }, 'Optional'));
+  };
+  const mark = (r) => h('button', { type: 'button', class: 'btn small' + (r.candidate ? ' is-pressed' : ''), 'aria-pressed': String(r.candidate), onclick: () => change((x) => putFact(x, 'expenses.' + r.id + '.cancelCandidate', !r.candidate, 'known', today()), said.changed(r.label, r.candidate ? 'not a cancel candidate' : 'a cancel candidate')) }, r.candidate ? 'Marked to cancel' : 'Cancel candidate');
+  return [
+    h('section', { class: 'card', 'aria-label': 'Subscription audit' },
+      h('p', { class: 'subs-total' }, au.candidates ? [h('strong', {}, money(au.freedYearly) + ' a year'), ' freed by cancelling the ' + au.candidates + ' marked (' + money(au.freedMonthly) + ' a month).'] : 'Mark the ones you would cancel to see what it frees.'),
+      h('ol', { class: 'audit-list' }, au.rows.map((r) => h('li', { class: 'audit-row' + (r.candidate ? ' is-candidate' : '') },
+        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(r.path) }, r.label), h('span', { class: 'audit-cost' }, r.yearly === null ? 'amount not given' : money(r.yearly) + ' a year')),
+        h('p', { class: 'tile-sub' }, (r.monthly === null ? '' : money(r.monthly) + ' a month') + (r.perUse !== null ? ' · ' + money(r.perUse, true) + ' a use' : r.uses === 0 ? ' · not used' : '')),
+        h('div', { class: 'audit-actions' }, usesBox(r), mark(r)))))),
+    h('section', { class: 'card' }, chartCard({ id: 'sub-audit', question: 'Which subscriptions cost the most a year?',
+      summary: au.rows[0].label + ' costs the most: ' + money(au.rows[0].yearly) + ' a year.' + (au.candidates ? ' Marked to cancel are shown in the second color.' : ''),
+      draw: (w) => bars({ width: w, rows: au.rows.filter((r) => r.yearly !== null).map((r) => ({ label: r.label, segs: [{ v: r.yearly, c: r.candidate ? 2 : 1, tip: r.label + ': ' + money(r.yearly) + ' a year' + (r.perUse !== null ? ', ' + money(r.perUse, true) + ' a use' : '') }], value: money(r.yearly) })), label: 'Subscriptions by cost a year' }),
+      legend: au.candidates ? [{ c: 1, words: 'Keeping' }, { c: 2, words: 'Marked to cancel' }] : [],
+      table: { head: ['Subscription', 'A year', 'A month', 'Uses a month', 'A use', 'Cancel?'], rows: au.rows.map((r) => [r.label, r.yearly === null ? 'missing' : money(r.yearly), r.monthly === null ? 'missing' : money(r.monthly), r.uses === null ? '' : String(r.uses), r.perUse === null ? '' : money(r.perUse, true), r.candidate ? 'yes' : '']) } }))
+  ];
 }
 
 // ---------------------------------------------------------------- adding, copying, deleting
@@ -1460,7 +1498,7 @@ function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
   if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
-  if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
+  if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : levels.length === 3 && levels[2] === 'audit' ? 'Subscription audit' : null;
   if (levels[0] === 'needs' && levels[1] === 'covered') return levels.length === 2 ? 'Covered by others' : null;
   if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) { const p = owedToYou(ctx.spine).find((x) => personSlug(x.key) === levels[2]); return levels.length === 3 && p ? p.name : null; }
   const at = screenAt(screensOf(ctx.spine), levels);
@@ -1492,6 +1530,7 @@ function render(ctx) {
   let body;
   if (levels[0] === 'still-guessing') body = guessList();
   else if (levels[0] === 'pick') body = pickerCard();
+  else if (levels[0] === 'needs' && levels[1] === 'subscriptions' && levels[2] === 'audit') body = auditScreen();
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else if (levels[0] === 'needs' && levels[1] === 'covered') body = coveredScreen();
   // Owed to you (shared bills brief): person by person; a loan's own fields still open as an item.

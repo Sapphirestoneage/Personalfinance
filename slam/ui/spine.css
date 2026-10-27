@@ -1703,3 +1703,13 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .wi-row.is-moved .wi-then { font-weight: 700; }
 .wi-words { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text-muted); justify-self: end; }
 @media (max-width: 480px) { .wi-row { grid-template-columns: 1fr auto auto auto; font-size: var(--text-sm); } }
+/* Subscription audit (Track G) */
+.audit-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.audit-row { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); }
+.audit-row.is-candidate { border-color: var(--viz-2); }
+.audit-head { display: flex; justify-content: space-between; gap: var(--space-2); font-weight: 600; }
+.audit-cost { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.audit-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; margin-top: var(--space-2); }
+.uses-field { display: grid; gap: 2px; }
+.uses-box { width: 7rem; min-height: var(--tap); }
+.uses-field .edit-hint { margin: 0; }

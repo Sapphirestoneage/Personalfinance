@@ -369,6 +369,9 @@ export function validate(spine) {
     checkFact(p + '.subscription', e.subscription, 'bool', false);
     checkFact(p + '.renews', e.renews, 'date', false);
     checkFact(p + '.reviewed', e.reviewed, 'date', false);
+    // The subscription audit (overnight Track G): how often it is used a month, and marked to cancel. Both optional;
+    // a file without them reads as not answered.
+    checkFact(p + '.usesPerMonth', e.usesPerMonth, 'int', false); checkFact(p + '.cancelCandidate', e.cancelCandidate, 'bool', false);
     // A free trial that converts on a day (S-206).
     checkFact(p + '.trialEnds', e.trialEnds, 'date', false);
     // A cost of working (S-208): comes off the real hourly wage.

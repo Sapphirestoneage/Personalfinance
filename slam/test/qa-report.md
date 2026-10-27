@@ -3,25 +3,14 @@
 Written by `node tools/qa-crawl.mjs` on the demo household (made up).
 
 ```
-SLAM tester: 123 screens x 3 looks, 0 taps, 231s.
+SLAM tester: 148 screens x 3 looks, 312 taps, 647s.
 PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
   cents: 3
   placeholder looks typed: 6
-  small tap: 168
+  small tap: 354
 ```
 
-## placeholder looks typed (2)
-
-- spending.html#/checkin: input#ci-chk "2781.3" [375 light, 375 dark, 1280 light]
-- spending.html#/checkin: input#ci-hysa "9000" [375 light, 375 dark, 1280 light]
-
-
-## cents (1)
-
-- plan.html#/surplus: $650.00 in span.rung-why "The 2026 limit is $7,500. In for 2026 so far: abou" [375 light, 375 dark, 1280 light]
-
-
-## small tap (56)
+## small tap (118)
 
 - affordances.html: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
@@ -32,6 +21,37 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html: a.tab.is-pressed "Session" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Thu Oct 1, 3 items" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Fri Oct 2, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sat Oct 3, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sun Oct 4, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Mon Oct 5, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Tue Oct 6, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Wed Oct 7, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Thu Oct 8, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Fri Oct 9, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sat Oct 10, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sun Oct 11, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Mon Oct 12, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Tue Oct 13, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Wed Oct 14, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Thu Oct 15, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Fri Oct 16, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sat Oct 17, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sun Oct 18, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Mon Oct 19, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Tue Oct 20, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Wed Oct 21, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Thu Oct 22, nothing on it, checking after $2,964" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Fri Oct 23, nothing on it, checking after $2,927" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sat Oct 24, nothing on it, checking after $2,891" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sun Oct 25, nothing on it, checking after $2,854" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Mon Oct 26, nothing on it, checking after $2,818" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Tue Oct 27, nothing on it, checking after $2,781" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Wed Oct 28, nothing on it, checking after $2,745" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Thu Oct 29, nothing on it, checking after $2,708" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Fri Oct 30, nothing on it, checking after $2,672" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html: button.cell-open "Sat Oct 31, nothing on it, checking after $2,636" is 21px tall [375 light, 375 dark, 1280 light]
 - clients.html: button.btn.small "Undo" is 32px tall [375 light, 375 dark, 1280 light]
 - clients.html: button.btn.small "Redo" is 32px tall [375 light, 375 dark, 1280 light]
 - clients.html: button.btn.small "Switch light or dark" is 32px tall [375 light, 375 dark, 1280 light]
@@ -79,5 +99,47 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#nav-h: a.tab.is-pressed "Session" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Thu Oct 1, 3 items" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Fri Oct 2, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sat Oct 3, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sun Oct 4, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Mon Oct 5, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Tue Oct 6, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Wed Oct 7, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Thu Oct 8, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Fri Oct 9, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sat Oct 10, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sun Oct 11, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Mon Oct 12, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Tue Oct 13, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Wed Oct 14, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Thu Oct 15, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Fri Oct 16, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sat Oct 17, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sun Oct 18, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Mon Oct 19, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Tue Oct 20, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Wed Oct 21, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Thu Oct 22, nothing on it, checking after $2,964" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Fri Oct 23, nothing on it, checking after $2,927" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sat Oct 24, nothing on it, checking after $2,891" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sun Oct 25, nothing on it, checking after $2,854" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Mon Oct 26, nothing on it, checking after $2,818" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Tue Oct 27, nothing on it, checking after $2,781" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Wed Oct 28, nothing on it, checking after $2,745" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Thu Oct 29, nothing on it, checking after $2,708" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Fri Oct 30, nothing on it, checking after $2,672" is 21px tall [375 light, 375 dark, 1280 light]
+- calendar.html#app: button.cell-open "Sat Oct 31, nothing on it, checking after $2,636" is 21px tall [375 light, 375 dark, 1280 light]
+
+
+## cents (1)
+
+- plan.html#/surplus: $650.00 in span.rung-why "The 2026 limit is $7,500. In for 2026 so far: abou" [375 light, 375 dark, 1280 light]
+
+
+## placeholder looks typed (2)
+
+- spending.html#/checkin: input#ci-chk "2781.3" [375 light, 375 dark, 1280 light]
+- spending.html#/checkin: input#ci-hysa "9000" [375 light, 375 dark, 1280 light]
 
 

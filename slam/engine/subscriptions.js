@@ -56,3 +56,17 @@ export function subscriptions(spine, rules, cf, asOf) {
     toLook: items.filter((i) => i.soon || i.due)
   };
 }
+
+// The audit (overnight Track G): every subscription ranked by what it costs a year, with what one use costs when the
+// uses a month are typed, and the ones marked to cancel added up as what cancelling them frees.
+// { rows: [{ id, label, yearly, monthly, uses, perUse, candidate, path }], freedMonthly, freedYearly, candidates }.
+export function subscriptionAudit(spine, subs) {
+  const rows = subs.items.map((i) => {
+    const e = (spine.expenses || []).find((x) => x.id === i.id) || {};
+    const uses = e.usesPerMonth ? v(e.usesPerMonth) : null;
+    return { id: i.id, label: i.label, path: 'expenses.' + i.id + '.amount', monthly: i.monthly, yearly: i.yearly, uses, perUse: uses && i.monthly !== null ? round2(i.monthly / uses) : null, candidate: !!(e.cancelCandidate && v(e.cancelCandidate) === true) };
+  }).sort((a, b) => (b.yearly ?? -1) - (a.yearly ?? -1) || a.label.localeCompare(b.label));
+  const picked = rows.filter((r) => r.candidate && r.monthly !== null);
+  const freedMonthly = round2(picked.reduce((a, r) => a + r.monthly, 0));
+  return { rows, candidates: picked.length, freedMonthly, freedYearly: round2(freedMonthly * 12) };
+}
