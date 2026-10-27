@@ -542,6 +542,11 @@ export function validate(spine) {
       if (f.value !== null && cleanAnswer(k, f.value) === undefined) err(path, 'not an answer this question allows');
     }
   }
+  // Notes (overnight Track I): optional; each { id, date, path (a field, an item or null), text, shared }.
+  if (spine.notes !== undefined) {
+    if (!Array.isArray(spine.notes)) err('notes', 'a list');
+    else { uniqueIds('notes', spine.notes); for (const n of spine.notes) { if (!isDate(n.date)) err('notes.' + n.id + '.date', 'not a date (YYYY-MM-DD)'); if (typeof n.text !== 'string' || !n.text.trim()) err('notes.' + n.id + '.text', 'says something'); if (n.path !== null && typeof n.path !== 'string') err('notes.' + n.id + '.path', 'a field, an item or null'); if (typeof n.shared !== 'boolean') err('notes.' + n.id + '.shared', 'true or false'); } }
+  }
   // Life changes: a Profile answer (question), a step toward the Budget target (kind 'target') or a bill called about
   // (kind 'called', overnight Track H: { id, date, kind, path, label, from, to }). Older files hold only the first.
   if (spine.lifeChanges !== undefined) {

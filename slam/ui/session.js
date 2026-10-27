@@ -6,6 +6,7 @@
 // Every change goes through the shell's change() with words, so Undo takes it back. Formatting only: the totals come
 // from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
+import { foldRow } from './rows.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
@@ -15,7 +16,8 @@ import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
-import { h, chip, money, pct } from './view.js';
+import { h, chip, money, pct, shortDate } from './view.js';
+import { addNote, removeNote, setShared, sessionNotes } from '../engine/notes.js';
 import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
@@ -559,6 +561,27 @@ function overview(ctx) {
   ];
 }
 
+// Session notes (Track I): what was said on the call, dated. "Share with the client" puts a note on the One-pager.
+// LIVE-FORM: built once. The box and its tick live across redraws (the guesses land after the page draws), so what is
+// typed is never lost; only the list under them redraws.
+const noteBox = h('textarea', { id: 'session-note', rows: 3, placeholder: 'e.g. Next call: bring the pay stub', 'aria-describedby': 'session-note-hint' });
+const noteShare = h('input', { type: 'checkbox', id: 'session-note-share' });
+function sessionNotesRow(ctx) {
+  const list = sessionNotes(ctx.spine), shared = list.filter((n) => n.shared).length;
+  const add = (e) => { e.preventDefault(); const t = noteBox.value.trim(); if (!t) { noteBox.focus(); return; } const sh = noteShare.checked; noteBox.value = ''; noteShare.checked = false; change((x) => addNote(x, { text: t, shared: sh }, todayIso()), said.added(sh ? 'A shared note' : 'A note')); };
+  return foldRow('session-notes', 'Session notes', list.length ? list.length + (list.length === 1 ? ' note' : ' notes') + (shared ? ', ' + shared + ' on the One-pager' : '') : 'What was said, dated', () => [
+    h('form', { class: 'note-form', novalidate: true, onsubmit: add },
+      h('label', { for: 'session-note', class: 'edit-label' }, 'A note from this session'), noteBox,
+      h('p', { class: 'edit-hint', id: 'session-note-hint' }, 'Dated today.'),
+      h('label', { class: 'check-row' }, noteShare, ' Share with the client (prints on the One-pager)'),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Add the note'))),
+    list.length ? h('ul', { class: 'note-list' }, list.map((n) => h('li', {}, h('span', { class: 'note-date' }, shortDate(n.date)), h('span', { class: 'note-text' }, n.text, n.shared ? [' ', h('span', { class: 'pill' }, 'on the One-pager')] : null),
+      h('span', { class: 'note-acts' },
+        h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(n.shared), onclick: () => change((x) => setShared(x, n.id, !n.shared), said.changed('The note', n.shared ? 'not shared' : 'shared on the One-pager')) }, n.shared ? 'Stop sharing' : 'Share'),
+        h('button', { type: 'button', class: 'btn small danger', onclick: () => change((x) => removeNote(x, n.id), said.deleted('The note')) }, 'Delete'))))) : null,
+    h('p', { class: 'muted' }, h('a', { href: 'onepager.html' }, 'See the One-pager'))]);
+}
+
 const SCREENS = { needs, debt, income, assets, goals };
 let goalAdding = false;
 function render(ctx) {
@@ -566,7 +589,7 @@ function render(ctx) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
   const id = ctx.levels[0];
-  return id ? [stepQuestions(ctx.spine, id), SCREENS[id](ctx)] : overview(ctx);
+  return id ? [stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [overview(ctx), sessionNotesRow(ctx)];
 }
 const name = (levels) => (levels.length === 1 ? (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null : null);
 

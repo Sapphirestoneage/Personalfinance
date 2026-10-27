@@ -6,6 +6,7 @@
 // A handout (audit 6): who it is for, the date, who prepared it, and the footer; the next step is the shared ranking
 // written to the client; debt shows the Plan's own clear months, or "not yet planned".
 
+import { sharedNotes } from '../engine/notes.js';
 import { startPage, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
@@ -25,6 +26,11 @@ const cell = (k, v, sub = null, id = null) => h('div', { class: 'op-cell' }, h('
 // Plain dollars on the handout: no hours or days tags, whatever the screen shows.
 const m = (x) => (x === null || x === undefined ? 'missing' : dollars(x));
 // A card that opens where its detail lives: the whole card is the target, with a chevron (CLAUDE.md affordance 5).
+// The notes marked "Share with the client" in Session notes (Track I), oldest first, each with its date.
+function notesCard(spine) {
+  const list = sharedNotes(spine).slice().reverse();
+  return list.length ? h('section', { class: 'card op-notes' }, h('h2', {}, 'Notes from our sessions'), h('ul', {}, list.map((n) => h('li', {}, h('strong', {}, shortDate(n.date) + ': '), n.text)))) : null;
+}
 const goCard = (title, href, ...body) => h('section', { class: 'card has-target' },
   h('h2', {}, h('a', { class: 'card-link', href }, h('span', {}, title), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A'))), ...body);
 
@@ -58,6 +64,7 @@ function render({ spine: base, rules }) {
       goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions))),
       debtCard(debt),
       todoCard(base),
+      notesCard(base),
       h('footer', { class: 'op-foot' }, 'For education and planning. Not investment, tax or legal advice.'));
 }
 

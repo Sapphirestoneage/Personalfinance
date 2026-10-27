@@ -15,6 +15,7 @@ import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
 import { foldRow } from './rows.js';
+import { addNote, removeNote, notesFor } from '../engine/notes.js';
 import { subscriptionAudit } from '../engine/subscriptions.js';
 import { chartCard, bars } from './chart.js';
 import { paycheckCard, monthWaterfallCard, bracketCard, fiPathCard, savingsCurveCard } from './chart-cards.js';
@@ -628,7 +629,7 @@ function paymentEditor(row) {
 const editActions = (cancel, more) => h('div', { class: 'edit-actions' },
   h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
   h('button', { type: 'button', class: 'btn', onclick: cancel }, 'Cancel'),
-  h('details', { class: 'more-menu' }, h('summary', { class: 'btn', 'aria-label': 'More choices' }, '\u22EF'), h('div', { class: 'more-items' }, more.filter(Boolean))));
+  h('details', { class: 'more-menu' }, h('summary', { class: 'btn', 'aria-label': 'More choices' }, '\u22EF'), h('div', { class: 'more-items' }, more.filter(Boolean), h('button', { type: 'button', class: 'btn', onclick: (e) => { e.target.closest('details').open = false; openNotes(); } }, 'Add a note'))));
 // Birth date, state and county are the Profile's answers (one stored answer, bug sweep): shown here, edited there.
 const fromProfile = (path) => Object.values(HOUSEHOLD_ANSWERS).some((at) => at(cur()) === path);
 function editor(row) {
@@ -733,10 +734,26 @@ function listBoxes(row, value) {
 // The open row's editor: the one already built while it is open and typed in, else a fresh one.
 function openEditor(row) {
   if (edCache && edCache.path === row.path && (dirty || edCache.spine === cur())) return edCache.el;
-  const el = editor(row);
+  const el = h('div', { class: 'editor-wrap' }, editor(row), notesBlock(row));
   edCache = { path: row.path, el, spine: cur(), label: row.label };
   return el;
 }
+
+// Notes on a number or its item (Track I): dated, newest first, each one deletable (Undo brings it back). The "⋯"
+// menu's "Add a note" opens this and puts the cursor in the box.
+function notesBlock(row) {
+  const list = notesFor(cur(), row.path);
+  const box = h('input', { id: 'note-box', type: 'text', autocomplete: 'off', placeholder: 'e.g. Lease renews in March', 'aria-describedby': 'note-hint' });
+  const add = (e) => { e.preventDefault(); const t = box.value.trim(); if (!t) { box.focus(); return; } change((x) => addNote(x, { path: row.path, text: t }, today()), said.added('A note on ' + row.label)); };
+  return h('details', { class: 'row-notes', id: 'row-notes', open: list.length ? true : null },
+    h('summary', {}, list.length ? 'Notes (' + list.length + ')' : 'Notes'),
+    list.length ? h('ul', { class: 'note-list' }, list.map((n) => h('li', {}, h('span', { class: 'note-date' }, shortDate(n.date)), h('span', { class: 'note-text' }, n.text),
+      h('button', { type: 'button', class: 'btn small danger', onclick: () => change((x) => removeNote(x, n.id), said.deleted('The note')) }, 'Delete')))) : null,
+    h('form', { class: 'note-form', novalidate: true, onsubmit: add },
+      h('label', { for: 'note-box', class: 'edit-label' }, 'Add a note'), box, h('p', { class: 'edit-hint', id: 'note-hint' }, 'Dated today.'),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Add the note'))));
+}
+const openNotes = () => { const d = document.getElementById('row-notes'); if (d) { d.open = true; document.getElementById('note-box')?.focus(); } };
 
 // ---------------------------------------------------------------- rows
 // What a row reads: its value in words, "Not given yet" or "Does not apply".

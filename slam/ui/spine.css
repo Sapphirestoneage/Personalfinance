@@ -1716,3 +1716,12 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .script-fold { margin: var(--space-2) 0; } .script-fold .script { background: var(--surface-2); padding: var(--space-3); border-radius: var(--radius-sm); }
 .call-form { margin-top: var(--space-2); }
 .call-fold > summary { list-style: none; display: inline-flex; align-items: center; cursor: pointer; } .call-fold > summary::-webkit-details-marker { display: none; } .call-fold[open] > summary { box-shadow: var(--btn-shadow-press); }
+/* Notes (Track I) */
+.row-notes { margin: var(--space-3) 0 0; border-top: 1px solid var(--border); padding-top: var(--space-2); }
+.row-notes > summary { cursor: pointer; font-weight: 600; min-height: var(--tap); display: flex; align-items: center; }
+.note-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: grid; gap: var(--space-2); }
+.note-list li { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2); align-items: center; }
+.note-date { color: var(--text-muted); font-size: var(--text-sm); white-space: nowrap; }
+.note-form { display: grid; gap: var(--space-1); }
+.note-acts { display: flex; gap: var(--space-2); } #session-note { width: 100%; min-height: 88px; font: inherit; padding: var(--space-2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+@media (max-width: 480px) { .note-list li { grid-template-columns: 1fr; } }
