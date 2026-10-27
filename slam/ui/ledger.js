@@ -1032,8 +1032,10 @@ function subsScreen() {
   const exp = (id) => getAt(cur(), 'expenses.' + id);
   const dayOf = (i) => (i.renews ? 'on the ' + ordinal(+i.renews.slice(8, 10)) + (roughFact(exp(i.id).renews) ? ' (a guess)' : '') : 'no day yet');
   const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with not given'; };
-  const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : h('span', {}, i.label); };
-  const tick = (i) => h('input', { type: 'checkbox', id: 'sub-pick-' + i.id, checked: subsPicked.has(i.id) || null, onchange: (ev) => { if (ev.target.checked) subsPicked.add(i.id); else subsPicked.delete(i.id); refresh(); } });
+  // Tapped, a line opens its editor in place under it (the list stays the screen Back comes back to).
+  const openOf = (i) => open === rowPathFor(cur(), 'expenses.' + i.id + '.amount');
+  const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : null; };
+  const tick = (i) => h('input', { type: 'checkbox', class: 'sub-check', id: 'sub-pick-' + i.id, 'aria-label': 'Tick ' + i.label, checked: subsPicked.has(i.id) || null, onchange: (ev) => { if (ev.target.checked) subsPicked.add(i.id); else subsPicked.delete(i.id); refresh(); } });
   const many = [...subsPicked];
   const card = linkSelect('link:cash|card', null, 'subs-card');
   const day = h('input', { id: 'subs-day', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '1 to 31' });
@@ -1046,20 +1048,25 @@ function subsScreen() {
     subsPicked = new Set();
     change(s, many.length + ' subscriptions set' + (card.value ? ' to ' + linkName(cur(), card.value) : '') + (d ? ', on the ' + ordinal(d.value) : ''));
   };
+  // One clean line per subscription (owner's ask, 2026-10-27): a small tick box, the name and its details, the chip,
+  // and a chevron to the bill. Ticked ones get a set-for-all panel above the list.
   return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
-    h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year.'),
+    h('p', { class: 'subs-total' }, h('strong', {}, money(sub.monthly.value)), ' a month · ', money(sub.yearly), ' a year'),
     many.length ? h('div', { class: 'subs-bulk', role: 'group', 'aria-label': 'Set for the ticked ones' },
-      h('p', { class: 'edit-label' }, many.length + ' ticked'),
-      h('div', { class: 'add-field' }, h('label', { for: 'subs-card', class: 'edit-label' }, 'Paid with'), card),
-      h('div', { class: 'add-field' }, h('label', { for: 'subs-day', class: 'edit-label' }, 'Day of the month'), day),
+      h('p', { class: 'subs-bulk-h' }, many.length + ' ticked'),
+      h('div', { class: 'add-form' }, h('div', { class: 'add-grid' },
+        h('div', { class: 'add-field short' }, h('label', { for: 'subs-card', class: 'edit-label' }, 'Paid with'), card),
+        h('div', { class: 'add-field short' }, h('label', { for: 'subs-day', class: 'edit-label' }, 'Day of the month'), day))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Set for ' + many.length),
         h('button', { type: 'button', class: 'btn', onclick: () => { subsPicked = new Set(); refresh(); } }, 'Clear'))) : null,
-    h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub' + (i.soon || i.due ? ' sub-look' : '') },
-      h('div', { class: 'sub-row' }, h('label', { class: 'check-row sub-tick', for: 'sub-pick-' + i.id, 'aria-label': 'Tick ' + i.label }, tick(i)), line(i)),
-      h('p', { class: 'sub-when' }, (i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month') + ' · ' + dayOf(i) + ' · ' + withWhat(i),
-        i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
-      null))),
-    // Reviewing them is the quarterly review in Profile (owner's ask, 2026-10-27).
+    h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub-line' + (subsPicked.has(i.id) ? ' is-ticked' : '') },
+      h('label', { class: 'sub-tick', for: 'sub-pick-' + i.id }, tick(i)),
+      h('button', { type: 'button', class: 'sub-go', 'aria-expanded': String(openOf(i)), onclick: () => { if (!canLeave()) return; setOpen(openOf(i) ? null : rowPathFor(cur(), 'expenses.' + i.id + '.amount')); } },
+        h('span', { class: 'sub-name' }, i.label),
+        h('span', { class: 'sub-meta' }, [i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month', dayOf(i), withWhat(i)].join(' · ')),
+        i.soon ? h('span', { class: 'chip chip-soon' }, 'Charging soon') : null,
+        h('span', { class: 'chev', 'aria-hidden': 'true' }, openOf(i) ? '\u2304' : '\u203A')),
+      openOf(i) ? h('div', { class: 'sub-open' }, line(i)) : null))),
     h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/review' }, h('span', { class: 'go-name' }, 'Quarterly review'), h('span', { class: 'go-sub' }, sub.toLook.length ? sub.toLook.length + ' to look at' : 'All looked at')))));
 }
 
