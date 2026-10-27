@@ -1548,3 +1548,11 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .line-target { margin-top: 16px; display: grid; gap: 8px; }
 .step-target p { margin: 0; }
 .target-pick { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Phone width (the tester): long values wrap inside a one-line row; a long fix button wraps instead of pushing out. */
+.as-row.as-line > .as-more { min-width: 0; }
+.as-more > summary { flex-wrap: wrap; }
+.as-more > summary .as-name { min-width: 0; overflow-wrap: anywhere; }
+.as-more > summary .as-value { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.cal-top .btn, .edit-actions .btn { white-space: normal; text-align: center; max-width: 100%; }
+.cal-top { min-width: 0; }

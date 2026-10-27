@@ -227,7 +227,7 @@ function happenedRow(e) {
   const day = shortDate(e.date);
   if (e.logged) return h('div', { class: 'happened' }, h('p', { class: 'tile-sub' }, h('span', { class: 'pill pill-logged' }, 'happened'), ' Logged ' + exact(e.logged.amount) + ' on ' + shortDate(e.logged.date) + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => change((s) => unconfirmOccurrence(s, e.key), e.label + ' on ' + day + ': not happened yet') }, 'Not yet')));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const other = h('input', { id: 'hap-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? '' : String(e.amount) });
+  const other = h('input', { id: 'hap-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? 'e.g. 50' : 'e.g. ' + Math.round(e.amount) });
   return h('div', { class: 'happened', role: 'group', 'aria-label': 'Did it happen?' },
     h('p', { class: 'edit-label' }, 'Did it happen?'),
     h('div', { class: 'edit-actions' },

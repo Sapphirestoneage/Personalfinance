@@ -21,7 +21,7 @@ import { maxItCard, maxItFor } from './maxit-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
-import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue } from './view.js';
+import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue, metric } from './view.js';
 import { typeFor } from '../engine/ledger.js';
 import { readScenarios, keepScenarios, targetId, keepTarget } from './scenarios-store.js';
 
@@ -145,7 +145,7 @@ function top(m) {
     // The steps are paid from what is left after saving (cashflow.surplus), never called the monthly surplus.
     h('p', { class: 'lede' }, surplus === null ? 'What is left after saving is not known yet, so the steps have no dates.'
       : surplus <= 0 ? 'Nothing is left after saving to put toward the steps yet.'
-        : money(surplus) + ' a month left after saving goes to these steps, in order.'),
+        : [metric('leftAfterSaving', money(surplus)), ' a month left after saving goes to these steps, in order.']),
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
@@ -157,7 +157,7 @@ function top(m) {
     // More about your plan (Krug pass): three rows that open, each saying its most useful fact on the closed line;
     // open or closed is kept with the screen.
     h('section', { 'aria-label': 'More about your plan' },
-      fold('month', 'Your money each month', [h('span', { class: 'go-total' }, money(w.surplus)), ' a month left'],
+      fold('month', 'Your money each month', [h('span', { class: 'go-total', 'data-metric': 'leftAfterSaving' }, money(w.surplus)), ' a month left'],
         h('ul', { class: 'go-list' },
           goRow('#/surplus', SCREENS.surplus, w.note || [h('span', { class: 'go-total' }, money(w.surplus)), 'a month']),
           a.paychecks.length ? goRow('#/paychecks', SCREENS.paychecks, plural(a.paychecks.length, 'paycheck') + ' in the next three months: what each one covers') : null,

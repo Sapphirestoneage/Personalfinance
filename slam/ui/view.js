@@ -115,6 +115,10 @@ export const ledgerHref = (path) => 'ledger.html#' + encodeURIComponent(path);
 // The words for a change, for the shell's change() and its bar (S-230): said.changed('Rent', '$1,000') is
 // "Rent changed to $1,000"; a date in moved() reads as a day ("Rent moved to Nov 3, 2026").
 const dayWords = (to) => (/^\d{4}-\d{2}-\d{2}$/.test(String(to)) ? shortDate(to) : to);
+// A key number, tagged with its formula's id (engine/math.js) so tools/agree-check.mjs can find every place it shows
+// and fail when two places disagree.
+export const metric = (id, text) => h('span', { 'data-metric': id }, text);
+
 export const said = {
   changed: (what, to) => what + ' changed to ' + to,
   added: (what) => what + ' added',

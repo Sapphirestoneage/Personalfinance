@@ -13,7 +13,7 @@ import { PER_YEAR, PRESETS, throughPayroll, isSelfEmployment } from './schema.js
 import { money as fmt } from '../src/ui/format.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
-const money = (x) => (x === null || x === undefined ? 'missing' : fmt(x, Math.round(x) !== Math.round(x * 100) / 100));
+const money = (x) => (x === null || x === undefined ? 'missing' : fmt(Math.round(x))); // words are whole dollars; the exact cents are in Show the math
 const round4 = (x) => Math.round(x * 10000) / 10000;
 const pad = (n) => String(n).padStart(2, '0');
 // "9 months", "9.5 months of pay".

@@ -33,7 +33,7 @@ const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
 // A box saves after the browser has moved the focus on (Tab), so the redraw keeps it on the next box.
 const later = (fn) => setTimeout(fn, 0);
 // A money box: blank is missing (never $0); a typed value is saved when the box is left.
-function moneyBox(id, value, label, onSet, placeholder = '$') {
+function moneyBox(id, value, label, onSet, placeholder = 'Amount') {
   const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = inputText('money', value);
   box.addEventListener('change', () => {

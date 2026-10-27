@@ -29,7 +29,7 @@ const LOOKS = [
   { id: '375 dark', width: 375, height: 800, scheme: 'dark' },
   { id: '1280 light', width: 1280, height: 900, scheme: 'light' }
 ];
-const FATAL = new Set(['page error', 'console error', 'click error', 'crash', 'overflow', 'bad text', 'tab bar wraps']);
+const FATAL = new Set(['page error', 'console error', 'click error', 'crash', 'overflow', 'bad text', 'tab bar wraps', 'open form', 'placeholder 0']);
 
 // ---------------------------------------------------------------- a small static server
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.md': 'text/plain' };
@@ -47,6 +47,7 @@ function serve() {
 
 // ---------------------------------------------------------------- what one screen is checked for (runs in the page)
 function inspect({ builder }) {
+  const top = !location.hash || location.hash === '#' || location.hash === '#/';
   const out = [];
   const add = (kind, what) => out.push({ kind, what });
   const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
@@ -77,6 +78,8 @@ function inspect({ builder }) {
   const fields = [...document.querySelectorAll('input, select, textarea')].filter((el) => visible(el) && !['hidden', 'submit', 'button'].includes(el.type));
   for (const el of fields) {
     if (el.getAttribute('placeholder') !== null && /^\$?\s*0([.,]0+)?$/.test(el.getAttribute('placeholder').trim())) add('placeholder 0', where(el));
+    // A placeholder that reads like a typed number ("500", "$") is mistaken for a value; use "e.g. 500".
+    else if (!builder && el.getAttribute('placeholder') !== null && /^[$\d][\d,.$]*$/.test(el.getAttribute('placeholder').trim())) add('placeholder looks typed', where(el));
     const named = (el.labels && el.labels.length) || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title');
     if (!named) add('no label', where(el));
   }
@@ -96,6 +99,8 @@ function inspect({ builder }) {
     }
     for (const w of [...mono].slice(0, 5)) add('monospace', w);
   }
+  // Forms never sit open (slim by default): on a page's top screen, an add form or an editor nobody opened is a finding.
+  if (top && !builder) for (const f of [...document.querySelectorAll('form.add-form, form.editor, .editor form')].filter((f) => visible(f) && !f.closest('[data-main-form]'))) add('open form', where(f));
   const bar = document.querySelector('.tabbar');
   if (bar) { const tops = new Set([...bar.querySelectorAll('a, button')].filter(visible).map((x) => Math.round(x.getBoundingClientRect().top))); if (tops.size > 1) add('tab bar wraps', tops.size + ' rows'); }
   const links = [...document.querySelectorAll('a[href]')].filter(visible).map((a) => a.href);

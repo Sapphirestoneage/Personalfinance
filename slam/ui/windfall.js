@@ -63,7 +63,8 @@ function form() {
     src('other', 'A gift, a refund, a sale, an inheritance', 'No payroll tax on it'),
     src('w2', 'My job (a bonus or back pay)', 'Payroll tax came off it already'),
     src('1099', 'Contract or 1099 work', 'Self-employment tax is owed too'));
-  return h('form', { class: 'editor windfall-form', novalidate: true, onsubmit: (e) => {
+  // The screen's one job is this question, so the form is its main action (the tester allows a main form open).
+  return h('form', { class: 'editor windfall-form', 'data-main-form': '', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
     const p = parseInput('money', amount.value);
     if (!p.ok || p.value <= 0) { msg.textContent = 'How much: ' + (p.ok ? 'more than $0' : p.message); amount.focus(); return; }

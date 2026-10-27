@@ -14,7 +14,7 @@ import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario } from './scenario.js';
 import { maxItFor } from './maxit-panel.js';
-import { h, chip, money, pct, ledgerHref, summaryMoney, stepHref } from './view.js';
+import { h, chip, money, pct, ledgerHref, summaryMoney, stepHref, metric } from './view.js';
 import { toneOf, answersOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
@@ -41,12 +41,13 @@ function provenance(spine, r) {
 // Which metrics each tile's "Show the math" opens (engine/math.js DASHBOARD_MATH).
 let mathCtx = null;
 const MATH_FOR = { _m: new Map() };
+const TILE_METRIC = { networth: 'netWorth', surplus: 'surplus', savings: 'savingsRateNet', runway: 'runway' };
 function tile(spine, { id, label, result, shown, missingText, target = null, lines = [], extra = null }) {
   MATH_FOR._m.set(result, { key: 'tile-' + id, ids: DASHBOARD_MATH['tile-' + id] });
   const first = target;
   const value = result.value === null
     ? h('p', { class: 'tile-value missing-text' }, missingText || 'Not enough to figure yet')
-    : h('p', { class: 'tile-value' }, shown);
+    : h('p', { class: 'tile-value', 'data-metric': TILE_METRIC[id] || null }, shown);
   return h('section', { class: 'tile' + (first ? ' has-target' : ''), id: 'tile-' + id, 'aria-labelledby': 'tl-' + id },
     h('h2', { class: 'tile-label', id: 'tl-' + id }, first ? h('a', { class: 'card-link', href: first }, h('span', {}, label), h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A')) : label),
     value,
@@ -93,9 +94,9 @@ function tiles({ spine, s }) {
   // Net worth leads with the total; the liquid figure is named "Cash after card debt" (Krug pass), so it never reads
   // as a second cash number beside the runway's.
   const all = [
-    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : 'Cash after card debt ' + summaryMoney(sh.liquidNetWorth.value)] }),
+    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : ['Cash after card debt ', metric('liquidNetWorth', summaryMoney(sh.liquidNetWorth.value))]] }),
     // The Plan works from what is left after saving; the tile says it too, so the two never read as a disagreement.
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.monthlySurplus.value !== null && cf.saving.afterTax.value && cf.surplus.value !== null ? summaryMoney(cf.surplus.value) + ' after saving' : null] }),
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.monthlySurplus.value !== null && cf.saving.afterTax.value && cf.surplus.value !== null ? [metric('leftAfterSaving', summaryMoney(cf.surplus.value)), ' after saving'] : null] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 0) }),
     tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months' })];
   // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped. The next step is its own

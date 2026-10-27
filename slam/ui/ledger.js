@@ -887,7 +887,7 @@ function sectionList(sc) {
   const steps = Object.fromEntries(sessionSteps(cur(), summaryOf(cur())).map((x) => [x.id, x.result]));
   return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
     const r = steps[sec.slug];
-    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total' }, money(r.value)), TOTAL_WORDS[sec.slug]) : h('span', {}, filledWords(sec.counts));
+    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug]) : h('span', {}, filledWords(sec.counts));
     // A total built on a missing line says so; how many lines are rough or missing shows beside it.
     return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec)] });
   }));
@@ -1242,11 +1242,13 @@ function groupTotal(sec, g) {
 
 // What moved here from Today (Phase 2.5 Batch 5): the FI numbers on Goals, the year's tax on Taxes, the cards on Debt.
 // Each number side by side with its Show the math; a blank input reads missing, never $0.
+// The registry id each section's total is (tools/agree-check.mjs compares it with every other place it shows).
+const SECTION_METRIC = { debt: 'debts', assets: 'assets', income: 'gross', needs: 'expenses' };
 function figure(label, r, sub, ids, fi = false) {
   const ctx = () => (fi ? fiCtx(cur()) : { spine: cur(), rules, s: summaryOf(cur()) });
   return h('div', { class: 'nw-one' },
     h('p', { class: 'tile-label' }, label),
-    r.value === null || r.value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, typeof sub === 'function' ? sub(r.value) : money(r.value)),
+    r.value === null || r.value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value', 'data-metric': ids && ids.length === 1 ? ids[0] : null }, typeof sub === 'function' ? sub(r.value) : money(r.value)),
     r.kind === 'rough' || r.kind === 'incomplete' ? h('p', { class: 'tile-sub' }, chip(r.kind)) : null,
     ids ? mathButton(ids, ctx) : null);
 }

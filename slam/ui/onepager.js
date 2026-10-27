@@ -21,7 +21,7 @@ import { h, pct, monthWords, shortDate, stepHref, todayIso } from './view.js';
 import { homeworkList } from '../engine/profile.js';
 import { moneyFlow, flowTable } from '../engine/flow.js';
 
-const cell = (k, v, sub = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v' }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
+const cell = (k, v, sub = null, id = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v', 'data-metric': id }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 // Plain dollars on the handout: no hours or days tags, whatever the screen shows.
 const m = (x) => (x === null || x === undefined ? 'missing' : dollars(x));
 // A card that opens where its detail lives: the whole card is the target, with a chevron (CLAUDE.md affordance 5).
@@ -47,12 +47,12 @@ function render({ spine: base, rules }) {
   return h('div', { class: 'onepager' },
       h('header', { class: 'op-head' }, h('p', { class: 'op-who' }, clientName(base) + (who.example ? ' (example, made up)' : '')), h('p', { class: 'op-meta' }, shortDate(new Date().toISOString().slice(0, 10)) + '. Prepared by Eli Saperstein, financial coach.')),
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },
-        cell('Net worth', m(sh.netWorth.value)),
-        cell('Cash after card debt', m(sh.liquidNetWorth.value)),
-        cell('Monthly surplus', m(cf.monthlySurplus.value), 'take-home ' + m(cf.income.takeHome.value) + ', after spending, debt minimums and the tax set-aside'),
-        cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home'),
-        cell('Cash runway', em.tiers.full.runway.value === null ? 'missing' : em.tiers.full.runway.value.toFixed(1) + ' months', m(sh.cash.value) + ' in cash'),
-        cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.today.value) + ' at today\'s spending')),
+        cell('Net worth', m(sh.netWorth.value), null, 'netWorth'),
+        cell('Cash after card debt', m(sh.liquidNetWorth.value), null, 'liquidNetWorth'),
+        cell('Monthly surplus', m(cf.monthlySurplus.value), 'take-home ' + m(cf.income.takeHome.value) + ', after spending, debt minimums and the tax set-aside', 'surplus'),
+        cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of take-home', 'savingsRateNet'),
+        cell('Cash runway', em.tiers.full.runway.value === null ? 'missing' : em.tiers.full.runway.value.toFixed(1) + ' months', m(sh.cash.value) + ' in cash', 'runway'),
+        cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), ['of ', h('span', { 'data-metric': 'fiToday' }, m(s.fi.today.value)), ' at today\'s spending'], 'fiPercent')),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),
       flow,
       goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions))),
