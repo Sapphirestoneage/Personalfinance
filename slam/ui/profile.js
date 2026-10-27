@@ -40,7 +40,6 @@ function top({ spine, rules }) {
     (() => { const subs = summarize(spine, rules, { flags: false }).subs, due = subs.items.filter((i) => i.due).length; return { n: due, row: goRow('#/review', 'R', 'Quarterly review', subs.items.length ? String(due) : null, subs.items.length ? (due === 1 ? 'subscription to look at' : 'subscriptions to look at') : 'no subscriptions yet') }; })()
   ];
   return [
-    h('p', { class: 'lede' }, 'How life works right now, and how the app is set up for it. An answer changes which fields show and what the numbers mean; nothing typed is deleted.'),
     // Import answers is the coach's tool: client view hides it (Preferences).
     pref('view') === 'client' ? null : loadCard(),
     h('ul', { class: 'go-list', 'aria-label': 'Profile' }, [...groups].sort((x, y) => y.n - x.n).map((g) => g.row))

@@ -8,7 +8,7 @@
 
 import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
-import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName, coveredByOthers } from '../engine/ledger.js';
+import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
@@ -654,6 +654,9 @@ const fromProfile = (path) => Object.values(HOUSEHOLD_ANSWERS).some((at) => at(c
 function editor(row) {
   if (fromProfile(row.path)) return h('div', { class: 'editor' }, h('p', { class: 'edit-hint' }, 'This comes from your Profile, so it is changed there.'),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: 'profile.html#/you' }, 'Change in Profile'), h('button', { type: 'button', class: 'btn', onclick: () => { closeEditor(); refresh(); } }, 'Cancel')));
+  // A basis that comes from the contributions by year is changed there.
+  if (basisAccount(row.path)) return h('div', { class: 'editor' }, h('p', { class: 'edit-hint' }, 'The total of the contributions by year.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => setOpen(row.path.replace(/\.(basis|costBasis)$/, '.contributions')) }, 'Change the years'), h('button', { type: 'button', class: 'btn', onclick: () => { closeEditor(); refresh(); } }, 'Cancel')));
   if (row.type === 'cardRate') return cardRateEditor(row);
   if (row.type === 'expense') return expenseEditor(row);
   if (row.type === 'income') return incomeEditor(row);
@@ -668,8 +671,8 @@ function editor(row) {
     const opts = isNeedRow(row.path) ? [['true', 'Need'], ['false', 'Want']] : row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
     input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
   } else if (row.type === 'list') {
-    input = h('textarea', { id: 'edit-input', rows: 3 });
-    input.value = inputText(row.type, f.value);
+    // A list is a small table (owner's ask, 2026-10-27): a row per entry, boxes with their own labels, never raw code.
+    input = listBoxes(row, f.value);
   } else {
     input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
     input.value = inputText(row.type, f.value);
@@ -677,17 +680,17 @@ function editor(row) {
   // A value a card on Today suggested (Update goal): in the box, ready to accept with Save.
   const suggested = takePrefill(row.path);
   if (suggested !== null) input.value = inputText(row.type, suggested);
-  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' ? (row.path.endsWith('.contributions') ? 'A list by year, for example [{"year": 2026, "amount": 4000}]. A rollover, a conversion or the employer part is easier to record with How much to max it? on this account, one at a time in plain words.' : 'A list, for example [{"year": 2026, "amount": 4000}]') : null;
+  const hint = row.type === 'rate' ? 'As a percent: 25 means 25%' : row.type === 'list' && row.path.endsWith('.contributions') ? 'A rollover, a conversion or the employer part: record it with How much to max it? on this account.' : null;
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
-    const p = parseInput(row.type, typed);
+    const p = row.type === 'list' ? input.read() : parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
     done(editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.field || row.label),
-    input,
+    row.type === 'list' ? input.el : input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     editActions(cancel, [
@@ -695,6 +698,57 @@ function editor(row) {
         f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)) }, 'Confirm'),
         f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
         laterBtn(row)]));
+}
+// The columns of a list, by what it holds; anything else is a list of words, one per line.
+const LIST_COLS = {
+  contributions: [['year', 'Year', 'int', 'e.g. 2026'], ['amount', 'Amount', 'money', 'e.g. 4,000']],
+  conversions: [['year', 'Year', 'int', 'e.g. 2026'], ['amount', 'Amount', 'money', 'e.g. 4,000']],
+  holdings: [['ticker', 'Fund or ticker', 'text', 'e.g. VTI'], ['share', 'Share of the account (%)', 'rate', 'e.g. 60']]
+};
+// listBoxes(row, value) -> { el, read() -> { ok, value | message }, focus() }: a row of boxes per entry, + Add and Remove.
+// Fields a list keeps that are not shown here (an entry's kind, a fund's fees) ride along unchanged.
+function listBoxes(row, value) {
+  const key = row.path.split('.').pop(), cols = LIST_COLS[key] || null;
+  const list = Array.isArray(value) ? value.map((x) => (x && typeof x === 'object' ? { ...x } : x)) : [];
+  const body = h('div', { class: 'list-rows' });
+  const boxOf = (type, v, label, hint, id) => {
+    const b = h('input', { type: 'text', id, autocomplete: 'off', inputmode: type === 'text' ? null : 'decimal', placeholder: hint, 'aria-label': label });
+    b.value = v === null || v === undefined ? '' : type === 'rate' ? String(Math.round(v * 1e6) / 1e4) : String(v);
+    return b;
+  };
+  const rowEls = [];
+  const addRow = (item) => {
+    const boxes = cols ? cols.map(([k, label, type, hint], i) => boxOf(type, item ? item[k] : null, label, hint, rowEls.length === 0 && i === 0 ? 'edit-input' : null))
+      : [boxOf('text', item, 'Entry', 'Type one', rowEls.length === 0 ? 'edit-input' : null)];
+    const line = h('div', { class: 'list-row' }, ...boxes.map((b) => (b.getAttribute('inputmode') === 'decimal' && cols && cols[boxes.indexOf(b)][2] === 'money' ? h('div', { class: 'affix' }, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '$'), b) : b)),
+      h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Remove this line', title: 'Remove this line', onclick: () => { line.remove(); rowEls.splice(rowEls.findIndex((r) => r.line === line), 1); dirty = true; } }, '\u00D7'));
+    rowEls.push({ line, boxes, item: item && typeof item === 'object' ? item : null });
+    body.append(line);
+  };
+  for (const x of list) addRow(x);
+  if (!list.length) addRow(null);
+  body.style.setProperty('--list-cols', cols ? cols.length : 1);
+  const head = cols ? h('div', { class: 'list-row list-head', 'aria-hidden': 'true', style: '--list-cols:' + cols.length }, ...cols.map(([, label]) => h('span', {}, label)), h('span', {})) : null;
+  const el = h('div', { class: 'list-edit' }, head, body, h('button', { type: 'button', class: 'btn add', onclick: () => { addRow(null); dirty = true; } }, cols && cols[0][0] === 'year' ? '+ Add a year' : '+ Add a line'));
+  const read = () => {
+    const out = [];
+    for (const r of rowEls) {
+      if (r.boxes.every((b) => !b.value.trim())) continue;
+      if (!cols) { out.push(r.boxes[0].value.trim()); continue; }
+      const it = { ...(r.item || {}) };
+      for (const [i, [k, label, type]] of cols.entries()) {
+        const raw = r.boxes[i].value.trim();
+        if (!raw) { it[k] = null; continue; }
+        const p = type === 'text' ? { ok: true, value: raw } : parseInput(type, raw);
+        if (!p.ok) return { ok: false, message: label + ': ' + p.message };
+        if (k === 'year' && (p.value < 1900 || p.value > 2100)) return { ok: false, message: 'Year: a year like 2026' };
+        it[k] = p.value;
+      }
+      out.push(it);
+    }
+    return { ok: true, value: out };
+  };
+  return { el, read, focus: () => document.getElementById('edit-input')?.focus(), get value() { return ''; } };
 }
 // The open row's editor: the one already built while it is open and typed in, else a fresh one.
 function openEditor(row) {
@@ -706,8 +760,12 @@ function openEditor(row) {
 
 // ---------------------------------------------------------------- rows
 // What a row reads: its value in words, "Not given yet" or "Does not apply".
+// A basis with contributions by year (owner's ask): the total of the years, one formula (engine/networth.js basisOf).
+const basisAccount = (path) => basisFromYears(cur(), path) !== null;
 function rowValue(row) {
   const f = row.fact;
+  const ba = basisAccount(row.path);
+  if (ba) return money(basisFromYears(cur(), row.path)) + ' (by year)';
   if (f.kind === 'notForMe') return 'Does not apply';
   if (row.linked) return row.display;
   if (f.value === null) return 'Not given yet';
@@ -755,7 +813,8 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
       h('span', { class: 'row-label' }, label, row.linked ? null : tags(row)),
       h('span', { class: 'row-value' + (!row.linked && f.value === null ? ' empty' : '') }, rowValue(row)),
       chip(f.kind)),
-    !isOpen && (note || whoSupplies(f) === 'default') ? h('p', { class: 'row-why' }, note || 'Using Eli\'s default until you say otherwise.') : null,
+    // Krug pass: no sentence under a closed row; open, a default says so with a small chip, and its note.
+    isOpen && (note || whoSupplies(f) === 'default') ? h('p', { class: 'row-why' }, whoSupplies(f) === 'default' ? [h('span', { class: 'chip chip-default' }, 'default'), ' '] : null, note && !/^using Eli.s default$/i.test(note) ? note : null) : null,
     worked && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null,
     isOpen ? (line ? [h('p', { class: 'row-why' }, 'Set by ' + lineName(row) + ' in Needs. You can change it here.'), openEditor(line)] : openEditor(row)) : null);
 }
@@ -1342,6 +1401,9 @@ function itemScreen(sec, g, it, st) {
       return h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, rows.length ? rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))); })(),
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
+    // Contributions by year (owner's ask, 2026-10-27): an account that can hold them and has none offers to add them.
+    it.collection === 'accounts' && !selecting && (() => { const a = (cur().accounts || []).find((x) => x.id === it.id); return a && !a.contributions && ['ira', 'taxable', 'employerRetirement', 'hsaFsa', 'education'].includes(a.family); })()
+      ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(putFact(cur(), 'accounts.' + it.id + '.contributions', [], 'missing', today()), 'Contributions by year added to ' + it.label)) openField('accounts.' + it.id + '.contributions'); } }, '+ Add contributions by year')) : null,
     // A card's annual fee (owner's ask, 2026-10-27): one tap adds the row and opens it to type the fee.
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card' && !d.annualFee) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(addFee(cur(), it.id, today()), 'Annual fee added to ' + it.label)) openField('debts.' + it.id + '.annualFee'); } }, '+ Add an annual fee')) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,

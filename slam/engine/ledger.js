@@ -2,13 +2,14 @@
 // the "still guessing" list (rough and missing fields, ordered by how much
 // they change the results). No DOM here.
 
-import { listFacts, getAt, setAt, addMonths, result, valueOf, round2 } from './spine.js';
+import { listFacts, getAt, setAt, addMonths, result, valueOf, round2, tracker } from './spine.js';
 import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
+import { basisOf, basisFromList } from './networth.js';
 import { isSubscription } from './subscriptions.js';
 import { lineFor, paysDebtOf, linkNote, lineMonthly } from './debt.js';
 
@@ -311,4 +312,12 @@ export function coveredByOthers(spine) {
   const items = (spine.expenses || []).filter((e) => coverOf(e).covered).map((e) => ({ id: e.id, label: e.label, by: coverOf(e).by, monthly: lineMonthly(e), path: 'expenses.' + e.id + '.amount' }));
   const known = items.filter((i) => i.monthly !== null);
   return { items, monthly: items.length ? round2(known.reduce((x, i) => x + i.monthly, 0)) : null };
+}
+
+// A basis row whose account has contributions by year (owner's ask): the total of the years, else null (the row shows
+// its own typed value).
+export function basisFromYears(spine, path) {
+  const m = /^accounts\.([^.]+)\.(basis|costBasis)$/.exec(path);
+  const a = m && (spine.accounts || []).find((x) => x.id === m[1]);
+  return a && basisFromList(a) ? basisOf(tracker(), a) : null;
 }

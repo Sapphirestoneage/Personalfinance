@@ -1391,3 +1391,13 @@ body { font-variant-numeric: tabular-nums; }
 .review-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
 .review-what { margin: 0; display: grid; }
 @media (max-width: 600px) { .review-row { grid-template-columns: 1fr; } .review-row .confirm-acts .btn { flex: 1 1 0; } }
+.chip-default { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+/* A list field as a small table (owner's ask): a line per entry, labeled boxes, Remove, + Add. */
+.list-edit { display: grid; gap: var(--space-2); }
+.list-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)) auto; gap: var(--space-2); align-items: center; }
+.list-head { font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; }
+.list-row input { min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; width: 100%; }
+.list-row { grid-template-columns: 6rem minmax(0, 1fr) var(--tap); }
+.list-rows .list-row:has(> :nth-child(2):last-child), .list-row.list-head:has(> :nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) var(--tap); }
+.list-row .affix input { padding-left: 1.6em; }
+.list-row .icon-btn { font-size: 1.2rem; }

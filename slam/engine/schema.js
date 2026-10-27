@@ -97,7 +97,7 @@ export const FAMILIES = {
   },
   education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list' } },
   // holdings (Batch 3): optional rows [{ ticker, share, expenseRatio, managedBy, advisoryFee }]; share and the two fees are rates.
-  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate', holdings: 'list' } },
+  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', contributions: 'list', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate', holdings: 'list' } },
   debt: {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',

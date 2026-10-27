@@ -5,6 +5,7 @@
 
 import { valueOf, tracker, round2, ageOn } from './spine.js';
 import { cushionExtraMonths } from './profile.js';
+import { basisOf } from './networth.js';
 
 const v = valueOf;
 
@@ -72,8 +73,7 @@ export function rothBackstop(spine, rules, asOf, age) {
   for (const a of spine.accounts || []) {
     if (a.type !== 'roth_ira' && a.type !== 'custodial_roth') continue;
     const p = 'accounts.' + a.id;
-    if (a.basis) { const b = basis.useFact(p + '.basis', a.basis); if (b !== null) contributions += b; }
-    else if (a.contributions) { const list = basis.useFact(p + '.contributions', a.contributions); for (const c of list || []) contributions += c.amount; }
+    { const b = basisOf(basis, a, p); if (b !== null) contributions += b; }
     for (const c of (a.conversions && conv.useFact(p + '.conversions', a.conversions)) || []) {
       const opens = c.year + conv.rule(rules, 'ROTH_5YR', year) + '-01-01';
       const early = age !== null && age < conv.rule(rules, 'EARLY_AGE', year);

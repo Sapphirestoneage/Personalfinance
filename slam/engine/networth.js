@@ -64,7 +64,7 @@ export function liquidAssets(spine) {
     if (how === 'none') continue;
     const bal = t.useFact(base + '.balance', a.balance);
     let amount = bal;
-    if (how === 'basis') { const basis = t.useFact(base + '.basis', a.basis); amount = bal === null || basis === null ? null : Math.min(bal, Math.max(0, basis)); }
+    if (how === 'basis') { const basis = basisOf(t, a, base); amount = bal === null || basis === null ? null : Math.min(bal, Math.max(0, basis)); }
     if (amount !== null) sum += amount;
     items.push({ id: a.id, name: valueOf(a.name) || a.id, amount, part: how === 'basis' ? 'contributions' : 'all', path: base + '.balance' });
   }
@@ -93,3 +93,16 @@ export function balanceSheet(spine) {
   };
 }
 
+
+// The money put in (owner's ask, 2026-10-27): the contributions by year when that list has any, else the one basis
+// typed (a Roth's basis, a brokerage's cost basis). Rollovers and conversions are not counted here; they have their
+// own rules. One formula for every screen that reads a basis.
+const BASIS_FIELD = (a) => (a.family === 'taxable' ? 'costBasis' : 'basis');
+export function basisOf(t, a, base = 'accounts.' + a.id) {
+  const list = a.contributions ? t.useFact(base + '.contributions', a.contributions) : null;
+  const counted = Array.isArray(list) ? list.filter((c) => c && typeof c.amount === 'number' && !['rollover', 'conversion'].includes(c.kind)) : [];
+  if (counted.length) return round2(counted.reduce((x, c) => x + c.amount, 0));
+  const f = a[BASIS_FIELD(a)];
+  return f ? t.useFact(base + '.' + BASIS_FIELD(a), f) : null;
+}
+export const basisFromList = (a) => Array.isArray(valueOf(a.contributions)) && valueOf(a.contributions).some((c) => c && typeof c.amount === 'number');

@@ -48,7 +48,6 @@ export function prefsScreen({ spine, rules }) {
       (k) => (p.id === 'moneyAs' && k === 'hours' && !wage ? h('span', { class: 'choice-sub' }, 'needs your hours a week') : null));
   };
   return [
-    h('p', { class: 'lede' }, 'How this browser shows the app. Saved here, on this device, except the tone, which is saved with the client.'),
     h('section', { class: 'card' }, h('ul', { class: 'as-list' }, PREFS.map((p) => h('li', { class: 'as-row pref-row' },
       h('p', { class: 'edit-label', id: 'pref-' + p.id }, p.label, p.saved === 'client' ? h('span', { class: 'chip chip-known' }, 'saved with the client') : null),
       h('p', { class: 'as-means' }, p.hint),

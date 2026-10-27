@@ -133,7 +133,6 @@ function render({ spine, rules, levels }) {
   const m = model(spine, rules);
   if (levels.length) return stepScreen(m, m.w.steps[indexOf(m, levels[0])]);
   return [
-    h('p', { class: 'lede' }, 'Try an amount and see where it would go. Nothing is saved.'),
     h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),
     result(m)
   ];

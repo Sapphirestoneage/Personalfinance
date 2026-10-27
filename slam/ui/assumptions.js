@@ -142,9 +142,7 @@ function listScreen(ctx) {
   const nOwn = Object.keys(clientOverrides(ctx.spine)).length;
   return [
     sw,
-    h('p', { class: 'lede' }, level === 'client'
-      ? 'What this client\'s numbers assume. A change here is saved on this client only' + (nOwn ? ' (' + nOwn + ' changed now)' : '') + '; their own typed numbers never change.'
-      : 'Your defaults for every client, kept in this browser. A client with their own value keeps it.'),
+    level === 'client' && nOwn ? h('p', { class: 'muted' }, nOwn + ' changed for this client') : null,
     GROUPS.map((g) => h('section', { class: 'card', 'aria-labelledby': 'as-' + g.id },
       h('h2', { id: 'as-' + g.id }, g.label),
       h('p', { class: 'muted' }, g.note),
