@@ -1348,3 +1348,8 @@ body { font-variant-numeric: tabular-nums; }
 .whose-menu:not([open]) .whose-items { display: none; }
 .screen-top .whose-menu .whose-items { right: var(--space-2); left: auto; max-width: calc(100vw - 2 * var(--space-2)); }
 .safe-short { font-size: var(--text-lg); font-weight: 700; margin: 0 0 var(--space-2); }
+.go-row .go-why { grid-column: 2 / -1; display: block; color: var(--text-muted); font-size: var(--text-sm); }
+/* To fill in, at the top of every My numbers screen (owner's ask). */
+.fill-bar { margin: 0 0 var(--space-2); }
+.fill-bar .seg-btn { flex: 1 1 0; }
+.page-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; width: 100%; }

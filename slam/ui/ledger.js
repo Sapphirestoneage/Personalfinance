@@ -764,6 +764,16 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
 const dots = (c) => (c.missing || c.rough ? h('span', { class: 'group-counts' },
   c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
   c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + ' rough') : null) : null);
+// To fill in (owner's ask, 2026-10-27): one switch at the top of every screen here shows only what is missing or a
+// guess, so filling in goes fast. It is the page's kind filter (Missing and Rough on, the rest off), kept in this browser.
+const fillOn = () => kinds.length && kinds.every((k) => k === 'missing' || k === 'rough');
+const toFill = (c) => (c.missing || 0) + (c.rough || 0);
+function fillBar(n) {
+  const on = fillOn();
+  return h('div', { class: 'segmented fill-bar', role: 'group', 'aria-label': 'Show' },
+    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!on), onclick: () => { if (on) setKinds([...KIND_ORDER]); } }, h('span', { class: 'seg-label' }, 'Everything')),
+    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(on), onclick: () => { if (!on) setKinds(['missing', 'rough']); } }, h('span', { class: 'seg-label' }, 'To fill in (' + n + ')')));
+}
 const filledWords = (c) => c.filled + ' of ' + c.asked + ' filled in';
 // A row that opens a deeper screen: the whole row is the target, with a chevron.
 const goRow = (href, { mark = null, name, sub, id = null }) => h('li', {}, h('a', { class: mark ? 'go-row' : 'go-row plain', href, id },
@@ -1110,13 +1120,15 @@ function topScreen(sc, st) {
   const spine = cur();
   const q = st.q || '';
   return [
+    // The filter first (owner's ask, 2026-10-27): To fill in, then the kinds folded under Filter, what they find right under.
+    fillBar(sc.sections.reduce((n, x) => n + toFill(x.counts), 0)),
+    h('details', { class: 'flow-list card find-fold', open: (filtering(q) && !fillOn()) || null }, h('summary', {}, 'Filter'), filterBar(sc, q)),
+    filtering(q) ? results(sc, q) : null,
     problemsCard(spine),
     matchesFile(spine) ? null : h('div', { class: 'file-banner', role: 'status' }, h('span', {}, 'You have unsaved changes.'), h('button', { type: 'button', class: 'btn small', onclick: saveFile }, 'Save')),
-    worthPair(spine),
-    sectionList(sc),
+    filtering(q) ? null : worthPair(spine),
+    filtering(q) ? null : sectionList(sc),
     h('ul', { class: 'go-list' }, guessRow()),
-    // Search and the filters, folded: what they find shows right under them, one row each.
-    h('details', { class: 'flow-list card find-fold', open: filtering(q) || null }, h('summary', {}, 'Search and filter'), filterBar(sc, q), filtering(q) ? results(sc, q) : null),
     source === 'saved' ? h('footer', { class: 'foot' }, h('button', { type: 'button', class: 'btn danger', onclick: backToFile }, 'Discard changes')) : null
   ];
 }
@@ -1128,11 +1140,12 @@ function worthPair(spine) {
   const one = (id, label, r, sub, ids) => h('div', { class: 'nw-one' },
     h('p', { class: 'tile-label' }, label),
     r.value === null ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(r.value)),
-    h('p', { class: 'tile-sub muted' }, sub, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null),
+    r.kind === 'rough' || r.kind === 'incomplete' ? h('p', { class: 'tile-sub' }, chip(r.kind)) : null,
     mathButton(ids, ctx));
+  // Said once (Krug pass): the names alone; what each counts is in Show the math. Total first, as on Today.
   return h('section', { class: 'card nw-pair', 'aria-label': 'Net worth' },
-    one('liquid', 'Liquid net worth', s.sheet.liquidNetWorth, 'What you can reach, less all you owe', ['liquidNetWorth']),
-    one('total', 'Total net worth', s.sheet.netWorth, 'All you own, less all you owe', ['netWorth']));
+    one('total', 'Net worth', s.sheet.netWorth, null, ['netWorth']),
+    one('liquid', 'Cash after card debt', s.sheet.liquidNetWorth, null, ['liquidNetWorth']));
 }
 // An item's figure on a group screen: a bill or a pay line shows what it counts a month (the figure it sorts and adds
 // by) when that differs from its own ("$200 a month, of $2,400 a year"); the FI goal says it is figured, not added.
@@ -1266,14 +1279,17 @@ function unemploymentCard() {
 }
 
 function sectionScreen(sec) {
+  const groups = fillOn() ? sec.groups.filter((g) => toFill(g.counts)) : sec.groups;
   return [
+    fillBar(toFill(sec.counts)),
     sectionTop(sec),
     selectAll(sec.allRows, 'Select all here'),
-    sec.groups.length ? h('ul', { class: 'go-list' }, sec.groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
+    fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
+    groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
       name: g.label,
       sub: [groupTotal(sec, g), dots(g.counts)]
-    }))) : h('p', { class: 'muted' }, 'Nothing here yet.'),
-    sec.slug === 'needs' ? h('ul', { class: 'go-list' }, subsRow(), coveredRow()) : null,
+    }))) : fillOn() ? null : h('p', { class: 'muted' }, 'Nothing here yet.'),
+    sec.slug === 'needs' && !fillOn() ? h('ul', { class: 'go-list' }, subsRow(), coveredRow()) : null,
     addButton(sec)
   ];
 }
@@ -1285,16 +1301,19 @@ function groupScreen(sec, g, st = {}) {
   const filter = hasBiz ? h('div', { class: 'segmented biz-filter', role: 'group', 'aria-label': 'Which cards' },
     [[false, 'All cards'], [true, 'Business only']].map(([on, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(bizOnly === on), onclick: () => { if (bizOnly !== on) { keep({ bizOnly: on }); refresh(); } } }, h('span', { class: 'seg-label' }, w)))) : null;
   // A bank's heading stays when only its business cards show; its business part reads "Business" under it.
-  const parts = bizOnly ? g.parts.filter((p) => p.node && p.node.business) : g.parts;
+  const parts0 = bizOnly ? g.parts.filter((p) => p.node && p.node.business) : g.parts;
+  const parts = fillOn() ? parts0.map((p) => ({ ...p, items: p.items.filter((it) => toFill(it.counts)) })).filter((p) => p.items.length) : parts0;
   const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
     sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
   });
   return [
+    fillBar(toFill(g.node.counts)),
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
     filter,
+    fillOn() && !parts.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     ...parts.map((p, i) => [
       head(p, i),
       p.items.length ? h('ul', { class: 'go-list' }, p.items.map(itemRow)) : null,
@@ -1316,7 +1335,9 @@ function itemScreen(sec, g, it, st) {
     g.item && it.label !== g.label ? h('p', { class: 'muted' }, it.label) : null,
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
-    h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, it.rows.length ? it.rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
+    fillBar(toFill(it.counts)),
+    (() => { const rows = fillOn() ? it.rows.filter((r) => kinds.includes(r.fact.kind)) : it.rows;
+      return h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, rows.length ? rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))); })(),
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     // A card's annual fee (owner's ask, 2026-10-27): one tap adds the row and opens it to type the fee.

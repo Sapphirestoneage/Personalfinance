@@ -230,7 +230,6 @@ function screenTop(levels, names) {
 const undoWords = () => (side && side.done ? side.words : hist && canUndo(hist) ? undoLabel(hist) : null);
 const redoWords = () => (side ? (side.done ? null : side.words) : hist && canRedo(hist) ? redoLabel(hist) : null);
 function header(ctx, title) {
-  const own = opts.actions ? [].concat(opts.actions(ctx)).filter(Boolean) : [];
   const u = undoWords(), r = redoWords();
   const undoing = opts.household || side ? [
     // Small icons in the header (audit 4); the words are the button's name and its tooltip.
@@ -238,7 +237,7 @@ function header(ctx, title) {
     h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'))
   ] : [];
   return [
-    h('div', { class: 'top-actions' }, ...own,
+    h('div', { class: 'top-actions' },
       opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null,
       opts.household && hist ? searchButton(() => hist.present) : null,
       ...undoing)
@@ -339,7 +338,9 @@ function draw() {
   topEl.replaceChildren(...headLine(levels, names, ctx, title).filter(Boolean));
   if (opts.render) {
     const focus = focused();
-    headEl.replaceChildren();
+    // The page's own buttons (Save, Quick add, Print) sit on a row under the header line, so the title keeps its room.
+    const own = opts.actions ? [].concat(opts.actions(ctx)).filter(Boolean) : [];
+    headEl.replaceChildren(...(own.length ? [h('div', { class: 'page-actions' }, ...own)] : []));
     screenEl.replaceChildren(...[notice ? h('p', { class: 'card', role: 'alert' }, notice) : null, ...[].concat(opts.render(ctx))].flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false));
     refocus(focus);
   }
