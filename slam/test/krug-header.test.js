@@ -22,7 +22,7 @@ test('search finds a debt, a bill, an account, income, a goal and a screen, name
 test('the header line: wordmark to Today, Back or the trail, the title, then whose, search, Undo and Redo', () => {
   const shell = readFileSync(SLAM + 'ui/shell.js', 'utf8');
   assert.match(shell, /return \[wordmark\(\), \.\.\.screenTop\(levels, names\), h\('h1', \{ class: 'top-h1' \}, title\), \.\.\.header\(ctx, title\)\];/);
-  assert.match(shell, /whoseMenu\(hist\.present,[^]*searchButton\(\(\) => hist\.present\)[^]*\.\.\.undoing\)/);
+  assert.match(shell, /whoseMenu\(hist\.present,[^]*searchButton\(\(\) => hist\.present[,)][^]*\.\.\.undoing\)/);
   const css = readFileSync(SLAM + 'ui/spine.css', 'utf8');
   assert.match(css, /@media \(max-width: 639px\) \{ \.screen-top \.trail \{ display: none; \} \}/);
   assert.match(css, /@media \(min-width: 640px\) \{ \.screen-top \.back-btn \{ display: none; \} \}/);

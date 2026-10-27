@@ -130,6 +130,14 @@ export function change(next, text) {
   return true;
 }
 
+// A line from the command bar (ui/search.js, engine/command.js): a change in its words (so Undo takes it back), a
+// screen, or undo.
+function runCommand(c) {
+  if (c.kind === 'undo') return doUndo();
+  if (c.kind === 'go') { location.href = c.href; return; }
+  if (c.run) change(c.run, c.words);
+}
+
 // Open a level as its own screen: go(['debt', 'credit-cards']) or go('debt/credit-cards'); go([]) is the top.
 // A link with href="#/debt/credit-cards" on the page does the same.
 export function go(target) {
@@ -239,7 +247,7 @@ function header(ctx, title) {
   return [
     h('div', { class: 'top-actions' },
       opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null,
-      opts.household && hist ? searchButton(() => hist.present) : null,
+      opts.household && hist ? searchButton(() => hist.present, { rulesOf: () => rulesFor(hist.present), run: runCommand }) : null,
       ...undoing)
   ];
 }
