@@ -17,7 +17,8 @@ import { labelFor, groupFor, GROUPS } from './labels.js';
 import { INVESTED_FAMILIES, isEarmarked } from './schema.js';
 import { project } from './projection.js';
 import { money } from '../src/ui/format.js';
-import { expenseRow } from './ledger.js';
+import { expenseRow, coveredByOthers } from './ledger.js';
+import { owedToYou } from './owed.js';
 import { monthlyAmount } from './cashflow.js';
 import { minimumTrap, solvePayoff } from './debtview.js';
 import { canISpend } from './spending.js';
@@ -204,7 +205,7 @@ const PLAIN = {
 for (const m of M) if (!m.plain && PLAIN[m.id]) m.plain = PLAIN[m.id];
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || checkNowMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || budgetMetric(id) || planMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || checkNowMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || budgetMetric(id) || planMetric(id) || listMetric(id);
 
 // "How much to max it?" (S-211): one family, "maxit:<account>:<year>:<what>" for one
 // account and tax year (room, lump, month, paycheck, low, payoff), and
@@ -683,6 +684,25 @@ function planMetric(id) {
   if (what === 'outlook') return { id, label: 'Outlook: the typical lowest day', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Typical lowest day = the median of the lowest day over every run, each run the same window with every amount wobbled and days shifted (a fixed seed, so it repeats)',
     explain: ({ outlook: o }) => (o ? out({ value: o.low.typical, kind: o.kind, from: [], rough: [], missing: [], rules: o.rules }, [term('Runs', o.runs, 'count', 'known', 'arg', { rule: 'APP_OUTLOOK_RUNS' }), term('Wobble on every amount', o.wobble, 'ratio', 'known', 'arg', { rule: 'APP_OUTLOOK_WOBBLE' }), term('Lowest day in a bad run (tenth percentile)', o.low.bad, 'usd', 'computed', 'arg'), term('Lowest day in a good run (ninetieth)', o.low.good, 'usd', 'computed', 'arg')]) : out(null, [])),
     recompute: (t, ctx) => (ctx.outlook && ctx.sim ? outlookAgain(ctx.spine, ctx.rules, ctx.sim, { runs: ctx.outlook.runs, wobble: ctx.outlook.wobble }).low.typical : null) };
+  return null;
+}
+
+// Lists added up (overnight Track L): "list:subs" (subscriptions a month), "list:covered" (lines someone else pays),
+// "list:owed" (owed to you, everyone) and "list:owed:<person key>" (one person), read from ctx.spine and ctx.s.
+function listMetric(id) {
+  if (!id || !id.startsWith('list:')) return null;
+  const [, what, ...rest] = id.split(':');
+  const key = rest.join(':');
+  const sum = (terms) => Math.round(terms.reduce((a, t) => a + (t.value ?? 0), 0) * 100) / 100;
+  if (what === 'subs') return { id, label: 'Subscriptions a month', unit: 'usd/month', op: 'sum', screens: ['ledger'], formula: 'Subscriptions a month = each line marked a subscription, at what it costs a month (a yearly one divided by 12), added up; a year = a month x 12',
+    explain: ({ spine, s }) => { const items = s.subs.items; const terms = items.map((i) => i.monthly === null ? term(i.label + ' (no amount)', null, 'usd/month', 'missing', 'plus', { path: 'expenses.' + i.id + '.amount' }) : field(spine, 'expenses.' + i.id + '.amount', i.monthly, 'usd/month', 'plus', i.label + ' (a month)')); return out(s.subs.monthly, terms); },
+    recompute: (t) => sum(t) };
+  if (what === 'covered') return { id, label: 'Covered by others a month', unit: 'usd/month', op: 'sum', screens: ['ledger'], formula: 'Covered by others = each line someone else pays, at what it costs a month, added up; it costs you $0, so it is in no total of yours',
+    explain: ({ spine }) => { const c = coveredByOthers(spine); return out({ value: c.monthly, kind: 'computed', from: c.items.map((i) => i.path), rough: [], missing: c.items.filter((i) => i.monthly === null).map((i) => i.path), rules: [] }, c.items.map((i) => field(spine, i.path, i.monthly, 'usd/month', 'plus', i.label + ', covered by ' + (i.by || 'someone else')))); },
+    recompute: (t) => sum(t) };
+  if (what === 'owed') return { id, label: key ? 'Owed to you by one person' : 'Owed to you', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Owed to you = each shared bill you paid all of, their part for every charge since they last paid, + each loan less what came back; part of net worth, never cash until it lands in an account',
+    explain: ({ spine }) => { const people = owedToYou(spine).filter((p) => !key || p.key === key); const terms = people.flatMap((p) => p.lines.map((l) => term(p.name + ': ' + l.label + (l.kind === 'bill' ? ' (their part since ' + l.since + ')' : ''), l.amount, 'usd', 'computed', 'plus', l.expenseId ? { path: 'expenses.' + l.expenseId + '.amount' } : {}))); return out({ value: sum(terms), kind: 'computed', from: [], rough: [], missing: [], rules: [] }, terms); },
+    recompute: (t) => sum(t) };
   return null;
 }
 

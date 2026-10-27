@@ -154,7 +154,7 @@ function reviewScreen({ spine, rules }) {
     h('ul', { class: 'review-list' }, subs.items.map((i) => h('li', { class: 'review-row' + (i.due ? ' is-due' : '') },
       h('p', { class: 'review-what' }, h('strong', {}, i.label), h('span', { class: 'muted' }, (i.yearly === null ? 'cost not given' : money(i.yearly) + ' a year') + ' · ' + (i.reviewed ? 'looked at ' + shortDate(i.reviewed) : 'never looked at'))),
       h('div', { class: 'confirm-acts' },
-        h('button', { type: 'button', class: 'btn small primary', onclick: () => keep([i.id], i.label + ': kept, reviewed today') }, 'Keep it'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => keep([i.id], i.label + ': kept, reviewed today') }, 'Keep it'),
         h('a', { class: 'btn small', href: 'ledger.html#expenses.' + i.id + '.amount' }, 'Stop it'))))),
     (() => { const due = subs.items.filter((i) => i.due); return due.length > 1 ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => keep(due.map((i) => i.id), due.length + ' subscriptions kept, reviewed today') }, 'Keep all ' + due.length)) : null; })()
   ];

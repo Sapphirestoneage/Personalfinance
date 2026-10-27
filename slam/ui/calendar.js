@@ -594,7 +594,8 @@ function belowRows(v, c, m, st) {
       const line = first && first.backTo && st.back ? cashLine(v.spine, sim, { from: first.backTo + '-01' }) : first;
       const pre = sim.checking.known ? safeToSpend(sim).low : null;
       const range = cashRange(v.spine, v.rules, line, { months: pickedWindow(), from: line.days[0] && line.days[0].date < sim.start ? line.days[0].date : null });
-      return cashChartCard(line, { preCover: pre && pre.covered ? pre : null, range, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); } });
+      return [cashChartCard(line, { preCover: pre && pre.covered ? pre : null, range, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); } }),
+        mathButton(['calendar:lowPoint'], () => ({ spine: v.spine, rules: v.rules, s: sumOf(v), low: { amount: line.low.amount, date: line.low.date, floor: line.floor } }))];
     }) : null,
     foldRow('cal-month-' + m.ym, longMonth(m.ym), (m.net >= 0 ? money(m.net) + ' more in than out' : money(-m.net) + ' more out than in'), () => [
       h('p', { class: 'tile-sub' }, 'In ' + money(m.in) + ', out ' + money(m.out) + '. Lines with no amount are not in these.'),

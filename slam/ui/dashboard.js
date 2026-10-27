@@ -163,7 +163,7 @@ function networthScreen({ spine, rules, s }) {
 let ahead = { spine: null, months: null };
 const aheadOf = (spine, rules) => { if (ahead.spine !== spine) ahead = { spine, months: netWorthAhead(spine, rules, { years: 30 }) }; return ahead.months; };
 // The money flow, on its own screen (Krug pass): Today has one row that opens it.
-function flowScreen({ spine, rules, s }) { return flowPart(spine, rules, s); }
+function flowScreen({ spine, rules, s }) { return [flowPart(spine, rules, s), keptMath('screen-flow', ['leftAfterSaving', 'surplus'], mathCtx)]; }
 // Also worth doing (Krug pass): every other ranked step, the cards, the questions, and what is done, one screen.
 function moreScreen(m) { return flagsSection(m.spine, m.s.flags, rankOf(m.spine, m.rules, m.s)); }
 const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen, networth: networthScreen, flow: flowScreen, more: moreScreen };

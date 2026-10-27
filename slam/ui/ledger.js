@@ -1043,6 +1043,7 @@ function coveredScreen() {
   if (!c.items.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing is covered by someone else.'));
   return h('section', { class: 'card', 'aria-label': 'Covered by others' },
     h('p', { class: 'muted' }, money(c.monthly) + ' a month that someone else pays, $0 to you.'),
+    mathButton(['list:covered'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })),
     h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? 'cost not given' : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
 }
 function subsRow() {
@@ -1084,6 +1085,7 @@ function subsScreen() {
   const au = subscriptionAudit(cur(), sub);
   return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
     h('p', { class: 'subs-total' }, h('strong', {}, money(sub.monthly.value)), ' a month · ', money(sub.yearly), ' a year'),
+    mathButton(['list:subs'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })),
     h('ul', { class: 'go-list' }, goRow(hashFor(['needs', 'subscriptions', 'audit']), { name: 'Audit them', sub: au.candidates ? money(au.freedYearly) + ' a year freed by the ' + au.candidates + ' marked to cancel' : 'Ranked by cost a year, with the cost of each use' })),
     many.length ? h('div', { class: 'subs-bulk', role: 'group', 'aria-label': 'Set for the ticked ones' },
       h('p', { class: 'subs-bulk-h' }, many.length + ' ticked'),
@@ -1551,8 +1553,8 @@ function render(ctx) {
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else if (levels[0] === 'needs' && levels[1] === 'covered') body = coveredScreen();
   // Owed to you (shared bills brief): person by person; a loan's own fields still open as an item.
-  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) });
-  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = personScreen(cur(), levels[2]);
+  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = [owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) }), mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) }))];
+  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = [personScreen(cur(), levels[2]), (() => { const p = owedToYou(cur()).find((x) => personSlug(x.key) === levels[2]); return p ? mathButton(['list:owed:' + p.key], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null; })()];
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);

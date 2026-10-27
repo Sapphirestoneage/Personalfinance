@@ -7,6 +7,7 @@
 // from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
 import { foldRow } from './rows.js';
+import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
@@ -96,6 +97,8 @@ function more(label, ...body) {
 const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...kids);
 
 // ---------------------------------------------------------------- the step frame
+// Each step's total, as its formula (Track L): the same registry ids My numbers' sections use.
+const STEP_METRIC = { needs: 'expenses', debt: 'debts', income: 'gross', assets: 'assets' };
 function frame(ctx, id, body) {
   const s = summarize(ctx.spine, ctx.rules, { flags: false });
   const steps = sessionSteps(ctx.spine, s);
@@ -105,7 +108,8 @@ function frame(ctx, id, body) {
     h('section', { class: 'card step-head', 'aria-label': 'Step ' + (i + 1) + ' of ' + STEPS.length },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
       h('span', { class: 'step-name' }, 'Step ' + (i + 1) + ' of ' + STEPS.length + ': ' + STEPS[i][2]),
-      h('span', { class: 'step-total' }, totalWords(step))),
+      h('span', { class: 'step-total' }, totalWords(step)),
+      STEP_METRIC[id] ? mathButton([STEP_METRIC[id]], () => ({ spine: ctx.spine, rules: ctx.rules, s })) : null),
     ...[].concat(body(s)),
     h('div', { class: 'step-nav' },
       h('button', { type: 'button', class: 'btn', onclick: () => go(prev ? [prev[0]] : []) }, '‹ Back'),
