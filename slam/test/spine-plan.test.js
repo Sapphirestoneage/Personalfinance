@@ -241,3 +241,15 @@ test('export and import: a versioned file round-trips, upgrades, validates, and 
   assert.match(exportCsv(s, 'lines'), /expenses,rent,Rent/);
   assert.throws(() => exportCsv(s, 'nope'));
 });
+
+test('What it takes with no age typed: the FI assumptions\' age, else 65 as a guess (morning answer 7)', () => {
+  const s = demo();
+  const a = solvers(s, R, summarize(s, R, { flags: false }));
+  assert.deepEqual([a.targetAge, a.ageFrom], [65, 'assumptions']);
+  assert.ok(a.rows.length && a.rows.every((r) => r.value === null || typeof r.value === 'number'));
+  const none = { ...s, assumptions: { ...s.assumptions, coastAge: undefined } };
+  const b = solvers(none, R, summarize(none, R, { flags: false }));
+  assert.deepEqual([b.targetAge, b.ageFrom], [R.get('APP_COAST_AGE', 2026), 'guess']);
+  assert.ok(b.rough.includes('assumptions.coastAge'), 'shown as a guess');
+  assert.equal(solvers(s, R, summarize(s, R, { flags: false }), { byAge: 55 }).ageFrom, 'typed');
+});

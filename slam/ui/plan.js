@@ -462,12 +462,15 @@ function solveScreen(m) {
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = age.value.trim() === '' ? { ok: true } : parseInput('int', age.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ byAge: age.value.trim() }); refresh(); } },
       h('label', { for: 'solve-age', class: 'edit-label' }, 'Financially independent by age'), age, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Solve'))),
-    !byAge.trim() ? h('p', { class: 'muted' }, 'Type the age you want to be financially independent by, and this says what it takes: the savings rate, the spending, the take-home or the return.') : x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
+    // No age typed (morning answer 7): it solves for the FI assumptions' age, else 65 as a guess, and says which.
+    !byAge.trim() ? h('p', { class: 'tile-sub', id: 'solve-from' }, x.ageFrom === 'assumptions' ? 'By ' + x.targetAge + ', the age in your FI assumptions. ' : 'By ' + x.targetAge + ', a guess (no age in your FI assumptions yet). ', x.ageFrom === 'guess' ? kindChip('rough') : null, ' ',
+      h('button', { type: 'button', class: 'btn small', onclick: () => { age.focus(); age.select(); } }, 'Change')) : null,
+    x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
       h('ul', {}, x.rows.map((r) => h('li', {}, h('strong', {}, r.label + ': '), r.value === null ? r.words : (r.unit === 'ratio' ? pct(r.value, 1) : money(r.value) + ' a month') + ' (' + r.words + ')'))),
       h('p', { class: 'tile-note' }, kindChip(x.kind), ' Each answer changes one thing and holds everything else the same.'),
       math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note)),
   // The same answer as two charts (Track C): years to FI at each savings rate, and the path to the FI number.
-  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(noTarget(savingsCurve(x), !byAge.trim()), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
+  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(noTarget(savingsCurve(x), !byAge.trim() && x.ageFrom === 'guess'), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
 }
 
 function wageScreen(m) {

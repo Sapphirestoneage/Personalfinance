@@ -265,9 +265,14 @@ export function solvers(spine, rules, s, { byAge = null, asOf = spine.meta.asOf 
   const gross = s.cashflow.income.gross.value, takeHome = s.cashflow.income.takeHome.value, spending = s.cashflow.expenses.total.value, minimums = s.cashflow.debtMinimums.total.value ?? 0;
   const saving = s.cashflow.surplus.value === null ? null : round2(s.cashflow.surplus.value + (s.cashflow.saving.payroll.value ?? 0) + (s.cashflow.saving.afterTax.value ?? 0));
   t.absorb({ ...s.cashflow.income.gross, value: undefined }); t.absorb({ ...s.cashflow.expenses.total, value: undefined });
-  const targetAge = byAge ?? (rules.get('APP_COAST_AGE', +asOf.slice(0, 4)) + 15);
+  // The age to be FI by (morning answer 7, S-249): the one typed here; else the FI assumptions' age (the Profile's
+  // "Coast FI age", assumptions.coastAge); else the house default APP_COAST_AGE (65), a guess the screen says it is.
+  const own = spine.assumptions && spine.assumptions.coastAge && v(spine.assumptions.coastAge) !== null ? t.read(spine, 'assumptions.coastAge') : null;
+  const ageFrom = byAge !== null ? 'typed' : own !== null ? 'assumptions' : 'guess';
+  const targetAge = byAge ?? own ?? t.rule(rules, 'APP_COAST_AGE', +asOf.slice(0, 4));
+  if (ageFrom === 'guess') t.addRough('assumptions.coastAge');
   const years = age === null ? null : Math.max(0.5, targetAge - age);
-  const base = { targetAge, age, years, fiNumber: F, invested: P, realReturn: r, savingNow: saving, grossNow: gross, spendingNow: spending };
+  const base = { targetAge, ageFrom, age, years, fiNumber: F, invested: P, realReturn: r, savingNow: saving, grossNow: gross, spendingNow: spending };
   if (F === null || P === null || r === null || years === null || gross === null || takeHome === null || spending === null) return { ...base, rows: [], ...t.out(null), note: 'Needs the FI number, what is invested, the real return, a birth date, income and spending.' };
   // No income this month: there is no share of gross to solve for (a rate of $0 is not a number).
   if (gross <= 0) return { ...base, rows: [], ...t.out(null), note: 'No income comes in this month, so there is nothing to solve a savings rate or spending level from.' };
