@@ -22,6 +22,9 @@ test('pay dates: weekly and biweekly count from the first pay date, inside the m
   assert.deepEqual(payDatesIn(null, 'biweekly', null, '2026-10'), [], 'no first pay date, no dates');
 });
 
+// What leaves for other people on bills you pay all of (their parts, owed back).
+const paidForOthers = (cf) => cf.expenses.items.filter((x) => x.whoPays === 'whole').reduce((t, x) => t + (x.full - x.amount), 0);
+
 test('the demo month: each item on its day, the rest sometime this month, totals that add up', () => {
   const c = calendar(demo(), R, { months: 1 });
   const m = c.months[0];
@@ -43,8 +46,11 @@ test('the demo month: each item on its day, the rest sometime this month, totals
   // Totals: in is every pay, out is every bill, minimum, saving and the set-aside (from the same cash flow).
   const cf = cashflow(demo(), R, '2026-10', { mode: 'expected' });
   near(m.in, cf.income.takeHome.value, 'every paycheck adds up to the month\'s take-home');
-  near(m.out, cf.expenses.total.value + cf.debtMinimums.total.value + cf.saving.afterTax.value + cf.taxSetAside.total.value);
-  near(m.net, cf.surplus.value, 'what is left on the calendar is the month\'s surplus');
+  // A bill you pay all of for others leaves whole on its day; their part is owed back, not spent (shared bills brief).
+  const forOthers = paidForOthers(cf);
+  assert.equal(forOthers, 26, 'Maya and Theo, $13 each of the $40 streaming');
+  near(m.out, cf.expenses.total.value + cf.debtMinimums.total.value + cf.saving.afterTax.value + cf.taxSetAside.total.value + forOthers);
+  near(m.net, cf.surplus.value - forOthers, 'what is left on the calendar is the month\'s surplus, less what others owe back');
   // Days add up to the month.
   near(m.days.reduce((x, d) => x + d.in, 0) + m.undated.filter((e) => e.direction === 'in').reduce((x, e) => x + e.amount, 0), m.in);
   // This month's cash is cash today; a later month's is the projection's month-end cash.
@@ -81,7 +87,7 @@ test('dates: a promo ending, the estimated tax dates, the return with its balanc
   assert.equal(ret.direction, 'out');
   assert.equal(ret.counted, false, 'the set-aside already counted it month by month');
   const cf = cashflow(s, R, '2027-04', { mode: 'expected' });
-  near(apr.out, cf.expenses.total.value + cf.debtMinimums.total.value + cf.saving.afterTax.value + cf.taxSetAside.total.value, 'the return payment is not added to the month\'s total');
+  near(apr.out, cf.expenses.total.value + cf.debtMinimums.total.value + cf.saving.afterTax.value + cf.taxSetAside.total.value + paidForOthers(cf), 'the return payment is not added to the month\'s total');
   const jan = calendar(s, R, { from: '2027-01', months: 1 }).months[0];
   assert.equal(find(jan, 'est:4').date, '2027-01-15');
   assert.equal(find(jan, 'est:4').amount, null, 'a date, not a payment');

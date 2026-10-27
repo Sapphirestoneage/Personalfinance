@@ -46,9 +46,9 @@ def({ id: 'assets', label: 'Total assets', unit: 'usd', op: 'sum', screens: ['da
   explain: ({ spine, s }) => out(s.sheet.assets, (spine.accounts || []).map((a) => field(spine, 'accounts.' + a.id + '.balance', v(a.balance), 'usd', 'plus', v(a.name) || a.id))) });
 def({ id: 'debts', label: 'Total debts', unit: 'usd', op: 'sum', screens: ['dashboard#tile-networth'], formula: 'Total debts = every debt balance added up',
   explain: ({ spine, s }) => out(s.sheet.debts, (spine.debts || []).map((d) => field(spine, 'debts.' + d.id + '.balance', v(d.balance), 'usd', 'plus', v(d.name) || d.id))) });
-def({ id: 'netWorth', label: 'Net worth', unit: 'usd', op: 'sum', screens: ['dashboard#tile-networth'], formula: 'Total net worth = all assets - all debt',
-  plain: 'Everything you own, the house and car included, less everything you owe.',
-  explain: ({ s }) => out(s.sheet.netWorth, [metric('assets', 'Total assets', s.sheet.assets, 'usd'), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
+def({ id: 'netWorth', label: 'Net worth', unit: 'usd', op: 'sum', screens: ['dashboard#tile-networth'], formula: 'Total net worth = all assets + owed to you - all debt',
+  plain: 'Everything you own, the house and car included, and what people owe you, less everything you owe.',
+  explain: ({ s }) => out(s.sheet.netWorth, [metric('assets', 'Total assets', s.sheet.assets, 'usd'), ...(s.sheet.owed ? [term('Owed to you (shared bills and money lent; not cash)', s.sheet.owed, 'usd', 'known', 'plus')] : []), metric('debts', 'Total debts', s.sheet.debts, 'usd', 'minus')]) });
 // Liquid net worth (Batch 4): the accounts counted as liquid (a Roth's contributions only), less every debt.
 def({ id: 'liquidAssets', label: 'Liquid assets', unit: 'usd', op: 'sum', screens: ['ledger'], formula: 'Liquid assets = cash, taxable investing and other accounts counted as liquid (a Roth IRA counts its contributions only)',
   explain: ({ spine, s }) => out(s.sheet.liquid, s.sheet.liquid.items.map((x) => x.part === 'contributions' ? field(spine, 'accounts.' + x.id + '.basis', x.amount, 'usd', 'plus', x.name + ' (contributions)') : field(spine, x.path, x.amount, 'usd', 'plus', x.name))) });

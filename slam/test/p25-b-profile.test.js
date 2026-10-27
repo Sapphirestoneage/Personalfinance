@@ -78,18 +78,18 @@ test('switching "with family" back to "rent" brings back the rent typed earlier'
   let s = answer(demo(), { home: 'rent' });
   const rent = valueOf(getAt(s, 'expenses.rent.amount'));
   assert.equal(rent, 1800);
-  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3230);
+  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3204);
   // With family, paying nothing: rent is hidden (kept, not counted) and utilities are on the family.
   s = answer(s, { home: 'family', familyPay: 'nothing' });
   assert.equal(P.hiddenLine(s, getAt(s, 'expenses.rent')), true);
   assert.equal(valueOf(getAt(s, 'expenses.rent.amount')), 1800, 'kept, not deleted');
-  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3230 - 1800 - 150, 'no rent, utilities covered');
+  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3204 - 1800 - 150, 'no rent, utilities covered');
   const hidden = ledgerTree(s, { names: [], aliases: {} }).find((n) => n.key === 'N').children.find((c) => c.key === 'N:hidden');
   assert.ok(hidden && hidden.children.some((x) => x.id === 'rent'), 'My numbers shows it apart, kept');
   // Back to renting: the 1,800 is there again and the utilities are yours.
   s = answer(s, { home: 'rent' });
   assert.equal(P.hiddenLine(s, getAt(s, 'expenses.rent')), false);
-  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3230);
+  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3204);
   assert.equal(getAt(s, 'expenses.utilities.covered'), undefined);
   assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('\n'));
 });
@@ -207,7 +207,7 @@ test('review fixes: nothing hidden before its question; hidden lines never paid;
   let s = addItem(answer(demo(), { firstName: 'Casey' }), { collection: 'expenses', label: 'Childcare' }, TODAY).spine;
   s = editFact(s, 'expenses.childcare.amount', 'set', { value: 500, kind: 'known', today: TODAY });
   assert.equal(P.hiddenLine(s, getAt(s, 'expenses.childcare')), false);
-  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3230 + 500);
+  assert.equal(cashflow(s, R, '2026-10').expenses.total.value, 3204 + 500);
   // Living with family, paying nothing: the cash run pays no rent either.
   const fam = answer(demo(), { home: 'family', familyPay: 'nothing' });
   const paid = (sp) => cashsim(sp, R, { months: 1 }).daily.flatMap((d) => d.events || []).filter((e) => /rent/i.test(e.label || '')).length;

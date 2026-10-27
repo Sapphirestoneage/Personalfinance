@@ -116,11 +116,11 @@ test('the cut simulator: dropped lines add to the surplus; aimed at the debt the
   assert.equal(c0.saved, 0);
   assert.equal(c0.surplusAfter, c0.surplusBefore);
   const c1 = cutSimulator(s, R, sum, { dropped: ['streaming', 'gym'] });
-  assert.equal(c1.saved, 90);
-  assert.equal(c1.surplusAfter, Math.round((c1.surplusBefore + 90) * 100) / 100);
+  assert.equal(c1.saved, 64); // your $14 of the shared streaming and the $50 gym
+  assert.equal(c1.surplusAfter, Math.round((c1.surplusBefore + 64) * 100) / 100);
   assert.equal(c1.debt, null);
   const c2 = cutSimulator(s, R, sum, { dropped: ['streaming', 'gym'], towardDebt: true });
-  assert.equal(c2.debt.extraAfter, 90);
+  assert.equal(c2.debt.extraAfter, 64);
   assert.ok(c2.debt.debtFreeAfter < c2.debt.debtFreeBefore, 'sooner: ' + c2.debt.debtFreeAfter + ' vs ' + c2.debt.debtFreeBefore);
   assert.ok(c2.debt.interestSaved > 0);
   assert.ok(c2.debt.monthsSooner > 0);

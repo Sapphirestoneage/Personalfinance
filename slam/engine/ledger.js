@@ -38,6 +38,7 @@ export function typeFor(spine, path) {
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' || s[2] === 'payDay2' ? 'int' : 'money';
   if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'paysDebt' ? 'link:debt' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
+  if (s[0] === 'lent') return s[2] === 'due' ? 'date' : 'money';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
     // A federal loan's plan: pick from the plans, or type another (S-181).

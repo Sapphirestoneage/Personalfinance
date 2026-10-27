@@ -41,7 +41,7 @@ const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
 
 // How many segments a path needs to name one field, by its first segment
 // ("income.salary.amount": the collection, the item id, the field).
-const NEEDS = { profile: 2, household: 2, income: 3, expenses: 3, accounts: 3, debts: 3, goals: 3, assumptions: 2, debtPlan: 2, taxYears: 3 };
+const NEEDS = { profile: 2, household: 2, income: 3, expenses: 3, accounts: 3, debts: 3, goals: 3, assumptions: 2, debtPlan: 2, taxYears: 3, lent: 3 };
 // A path labelFor can name: a known root with every segment it needs, or a
 // rule reference ("rule:PSLF_PAYMENTS"). Anything else is a bug in the engine
 // that emitted it; the self-audit fails on it (S-210).
@@ -88,6 +88,8 @@ export function labelFor(spine, path) {
     case 'profile': { const q = questionById(s[1]); return 'Profile: ' + (q ? q.label : words(s[1])); }
     case 'debtPlan': return 'Debt plan: ' + words(s[1]);
     case 'taxYears': return s[1] + ' ' + words(s[2]);
+    // Money lent (shared bills brief): "Jordan: amount lent", "Jordan: when they said they'd pay".
+    case 'lent': { const x = item('lent', s[1]); const name = x ? x.person : s[1]; return name + ': ' + ({ amount: 'amount lent', due: 'when they said they\'d pay' }[s[2]] || words(s[2])); }
     default: return path;
   }
 }
@@ -103,7 +105,7 @@ export function groupFor(path) {
   if (typeof path !== 'string') return 'G';
   const s = path.split('.');
   if (s[0] === 'debts') return 'D';
-  if (s[0] === 'accounts') return 'A';
+  if (s[0] === 'accounts' || s[0] === 'lent') return 'A';
   if (s[0] === 'income') return s[2] === 'withholding' ? 'T' : 'I';
   if (s[0] === 'taxYears') return 'T';
   if (s[0] === 'expenses') return 'E';

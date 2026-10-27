@@ -214,7 +214,7 @@ export function editExpense(spine, id, { amount, cadence, sharing = null, covere
   }
   return s;
 }
-const SHARE_KEYS = ['shared', 'sharedWith', 'yourShare', 'whoPays'];
+const SHARE_KEYS = ['shared', 'sharedWith', 'yourShare', 'whoPays', 'sharers'];
 const PAYERS = ['Parents', 'Partner', 'Partner\'s family', 'Roommate', 'Employer', 'Family'];
 
 // A date typed in a panel: YYYY-MM-DD, or null (blank) for open-ended.

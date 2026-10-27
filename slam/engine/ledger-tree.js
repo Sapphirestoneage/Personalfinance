@@ -100,6 +100,10 @@ export function ledgerTree(spine, inst) {
   const situation = take(byPrefix('household.situation'));
   if (situation.length) incomeSections.push(node('I:situation', 'Your situation', [item('household.situation', 'Situation over time', situation)]));
 
+  // Owed to you (shared bills brief): money lent, one item per loan; My numbers shows it person by person (ui/owed.js).
+  const lentItems = (spine.lent || []).map((l) => item('lent.' + l.id, l.person + ', lent ' + l.date, take(byPrefix('lent.' + l.id)), { collection: 'lent', id: l.id }));
+  assetSections.push(node('A:owed', 'Owed to you', lentItems));
+
   // Taxes: filing and you; withholding per stream; each tax year
   const filing = take(rows.filter((r) => ['household.filingStatus', 'household.state', 'household.county', 'household.nycResident', 'household.householdSize', 'household.workHoursPerWeek'].includes(r.path) || r.path.startsWith('household.people.')));
   const taxSections = [node('T:filing', 'Filing', [item('household.filing', 'You and where you file', filing)])];

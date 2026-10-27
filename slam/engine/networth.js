@@ -3,6 +3,7 @@
 import { valueOf, tracker, round2 } from './spine.js';
 import { INVESTED_FAMILIES, isEarmarked } from './schema.js';
 import { debtTotals } from './debt.js';
+import { owedTotal } from './owed.js';
 import { money } from '../src/ui/format.js';
 import { listWords } from './labels.js';
 
@@ -80,6 +81,9 @@ export function balanceSheet(spine) {
   const invested = sumBalances(acc, (a) => INVESTED_FAMILIES.includes(a.family));
   const assets = sumBalances(acc, () => true);
   const { total: debts, cards } = debtTotals(spine);
+  // Owed to you (shared bills, money lent): part of net worth, never cash, so not in the liquid figure, the runway or
+  // safe to spend until it is marked paid and lands in an account.
+  const owed = owedTotal(spine, spine.meta.asOf);
   const t = tracker();
   t.absorb(assets); t.absorb(debts);
   const liquid = liquidAssets(spine);
@@ -88,7 +92,7 @@ export function balanceSheet(spine) {
   return {
     liquid, liquidNetWorth: lt.out(round2(liquid.value - debts.value)),
     cash, setAside, earmarks: list, setAsideNote: setAsideNote(list), invested, assets, debts, cards,
-    netWorth: t.out(round2(assets.value - debts.value)),
+    owed, netWorth: t.out(round2(assets.value - debts.value + owed)),
     byFamily: Object.fromEntries([...new Set(acc.map((a) => a.family))].map((f) => [f, sumBalances(acc, (a) => a.family === f)]))
   };
 }

@@ -11,7 +11,7 @@ pattern and are listed in the registry under `cardUtil:`, `maxit:`, `plan:` and 
 | --- | --- | --- | --- | --- |
 | Total assets (`assets`) | Total assets = every account and asset balance added up | Every account and everything you own, added up. | Numbers | dollars |
 | Total debts (`debts`) | Total debts = every debt balance added up | Everything you owe, added up. | Numbers | dollars |
-| Net worth (`netWorth`) | Total net worth = all assets - all debt | Everything you own, the house and car included, less everything you owe. | Numbers | dollars |
+| Net worth (`netWorth`) | Total net worth = all assets + owed to you - all debt | Everything you own, the house and car included, and what people owe you, less everything you owe. | Numbers | dollars |
 | Liquid assets (`liquidAssets`) | Liquid assets = cash, taxable investing and other accounts counted as liquid (a Roth IRA counts its contributions only) | Money you could reach without a penalty or a sale: cash, a brokerage, and what you put into a Roth IRA. | Numbers, Profile | dollars |
 | Liquid net worth (`liquidNetWorth`) | Liquid net worth = liquid assets (cash, taxable, Roth contributions) - all debt | What you could reach without a penalty or selling something you live with, less everything you owe. | Numbers, Profile | dollars |
 | Cash (`cash`) | Cash = checking, savings and other cash accounts added up (the Roth backstop and money set aside for a goal are not cash) | Checking, savings and other cash, less money set aside for a goal. | Numbers, Intentions | dollars |

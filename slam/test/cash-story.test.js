@@ -14,9 +14,9 @@ test('one cash story: the true lowest point in the window, before any move from 
   const st = cashStory(sim);
   // The run moves money in from savings, so its own low sits at the floor; the story shows the dip it hides.
   assert.ok(st.low.amount < sim.low.amount, 'the story is the real dip, not the topped-up line');
-  assert.deepEqual(st.low, { date: '2026-11-14', amount: -218.63, beforePayday: true });
+  assert.deepEqual(st.low, { date: '2026-11-14', amount: -227.11, beforePayday: true });
   assert.equal(st.under, true);
-  assert.deepEqual(st.fix, { amount: 219, from: { id: 'hysa', name: 'High-yield savings', balance: 9000 }, by: '2026-11-11', enough: true });
+  assert.deepEqual(st.fix, { amount: 228, from: { id: 'hysa', name: 'High-yield savings', balance: 9000 }, by: '2026-11-11', enough: true });
   // Spending's safe to spend reads the same low.
   assert.deepEqual([safeToSpend(sim).low.date, safeToSpend(sim).low.amount], [st.low.date, st.low.amount]);
   // A longer window never hides a later, lower day: the lowest is over the whole window.

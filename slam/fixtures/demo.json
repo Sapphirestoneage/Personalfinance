@@ -323,7 +323,7 @@
     },
     {
       "id": "streaming",
-      "label": "Streaming",
+      "label": "Streaming (family plan)",
       "amount": {
         "value": 40,
         "asOf": "2026-10-01",
@@ -340,7 +340,72 @@
         "source": "demo (made up)",
         "kind": "known"
       },
-      "fat": null
+      "fat": null,
+      "payDay": {
+        "value": 5,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "shared": {
+        "value": true,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "whoPays": {
+        "value": "whole",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "sharers": {
+        "value": [
+          {
+            "id": "p1",
+            "name": "Maya",
+            "share": {
+              "mode": "amount",
+              "value": 13
+            },
+            "payBack": "ahead",
+            "every": 3,
+            "start": null,
+            "month": null,
+            "askOn": null,
+            "since": "2026-06-01",
+            "paidThrough": "2027-07-31",
+            "credit": 0,
+            "payments": [
+              {
+                "date": "2026-06-02",
+                "amount": 182,
+                "into": "chk"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "name": "Theo",
+            "share": {
+              "mode": "amount",
+              "value": 13
+            },
+            "payBack": "every",
+            "every": 3,
+            "start": "2026-09-01",
+            "month": null,
+            "askOn": null,
+            "since": "2026-09-01",
+            "paidThrough": "2026-08-31",
+            "credit": 0,
+            "payments": []
+          }
+        ],
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      }
     },
     {
       "id": "gym",
@@ -1199,5 +1264,26 @@
       "source": "demo (made up)",
       "by": "client"
     }
-  }
+  },
+  "lent": [
+    {
+      "id": "lent1",
+      "person": "Jordan",
+      "amount": {
+        "value": 150,
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "date": "2026-09-20",
+      "due": {
+        "value": "2026-11-15",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "kind": "loan",
+      "repaid": 0
+    }
+  ]
 }

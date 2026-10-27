@@ -379,6 +379,16 @@ export function validate(spine) {
     checkFact(p + '.sharedWith', e.sharedWith, 'int', false);
     checkFact(p + '.yourShare', e.yourShare, 'rate', false);
     checkFact(p + '.whoPays', e.whoPays, 'choice:part|whole', false);
+    // The people on a shared bill (engine/owed.js): each a name, a part, and how they pay you back.
+    checkFact(p + '.sharers', e.sharers, 'list', false);
+    if (e.sharers && Array.isArray(e.sharers.value)) e.sharers.value.forEach((x, i) => {
+      const q = p + '.sharers.' + i;
+      if (!x || typeof x.name !== 'string' || !x.name.trim()) err(q + '.name', 'a name');
+      if (!x || !x.share || !['even', 'percent', 'amount'].includes(x.share.mode)) err(q + '.share', 'even, percent or amount');
+      else if (x.share.mode !== 'even' && x.share.value !== null && !(typeof x.share.value === 'number' && x.share.value >= 0)) err(q + '.share', 'a number, 0 or more');
+      if (!x || !['each', 'ahead', 'every', 'yearly', 'cover'].includes(x.payBack)) err(q + '.payBack', 'each, ahead, every, yearly or cover');
+      for (const k of ['since', 'paidThrough', 'askOn', 'start']) if (x && x[k] !== null && x[k] !== undefined && !isDate(x[k])) err(q + '.' + k, 'a date or null');
+    });
   }
 
   // accounts and debts: shells of a family, with preset types
@@ -484,6 +494,19 @@ export function validate(spine) {
     }
   }
   // The feed's memory (S-207): a merchant learned to a line.
+  // Money lent to someone (engine/owed.js): owed to you until repaid; a gift never is.
+  if (spine.lent !== undefined) {
+    if (!Array.isArray(spine.lent)) err('lent', 'must be a list');
+    else { uniqueIds('lent', spine.lent); for (const l of spine.lent) {
+      const p = 'lent.' + l.id;
+      if (typeof l.person !== 'string' || !l.person.trim()) err(p + '.person', 'a name');
+      checkFact(p + '.amount', l.amount, 'money');
+      if (!isDate(l.date)) err(p + '.date', 'a date');
+      if (l.due !== null && l.due !== undefined) checkFact(p + '.due', l.due, 'date', false);
+      if (!['loan', 'gift'].includes(l.kind)) err(p + '.kind', 'loan or gift');
+      if (typeof l.repaid !== 'number' || l.repaid < 0) err(p + '.repaid', 'dollars repaid, 0 or more');
+    } }
+  }
   if (spine.feed !== undefined) { if (typeof spine.feed !== 'object' || spine.feed === null) err('feed', 'an object'); else for (const [m, id] of Object.entries(spine.feed.memory || {})) if (!(spine.expenses || []).some((e) => e.id === id)) err('feed.memory.' + m, 'an expense id'); }
   // Check-ins (S-206): real balances against the forecast, by day.
   const checkins = spine.checkins || [];

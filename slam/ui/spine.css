@@ -1500,3 +1500,16 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .as-group > summary .chip { margin-left: 8px; }
 .op-flow-table tr.op-first-out th, .op-flow-table tr.op-first-out td { border-top: 2px solid var(--border-strong, var(--border)); }
 .op-flow-table th[scope="row"] { font-size: var(--text-sm); text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 500; }
+
+/* Shared bills: one block per person, name and part on one line, how they pay you back under it. */
+.share-editor { display: grid; gap: 8px; }
+.share-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.share-person { border: 1px solid var(--border); border-radius: var(--radius, 8px); padding: 12px; display: grid; gap: 8px; }
+.share-top { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; align-items: end; }
+.share-top .share-field:first-child { grid-column: 1 / -1; }
+.share-field input, .share-field select { width: 100%; min-width: 0; }
+.share-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.share-back { display: grid; gap: 8px; }
+.share-status { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.share-person > .btn.danger { justify-self: start; }
+@media (min-width: 720px) { .share-top { grid-template-columns: 2fr 1fr 1fr; } .share-top .share-field:first-child { grid-column: auto; } }

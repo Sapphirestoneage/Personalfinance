@@ -9,7 +9,7 @@
 import { HOUSEHOLD_ANSWERS, addLookups } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
-import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
+import { payersOf, shareOf } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
@@ -36,6 +36,8 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
+import { shareEditor, threeNumbers } from './share-editor.js';
+import { setSharers } from '../engine/owed.js';
 import { whereTable } from './where-data.js';
 import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
 import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
@@ -272,30 +274,11 @@ function expenseEditor(row) {
   // A phone: one tap fills a standard plan for one line, saved as a guess.
   const std = isPhone(e) ? rules.get('DEFAULT_PHONE_PLAN_1', +cur().meta.asOf.slice(0, 4)) : null;
   let usedStd = false;
-  // Shared details
-  const people = h('input', { id: 'exp-people', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
-  people.value = sh.shared && sh.people ? String(sh.people) : '2';
-  const share = h('input', { id: 'exp-share', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  share.value = sh.shared && valueOf(e.yourShare) !== null && e.yourShare ? inputText('rate', valueOf(e.yourShare)) : '';
-  // Your part (S-187): an even split, a percent, or the dollars you pay; each shows the other.
-  const mine = h('input', { id: 'exp-mine', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  const startPart = sh.shared && valueOf(e.yourShare) ? 'pct' : 'even';
-  const partChoice = (v, text) => h('label', { class: 'radio' }, h('input', { type: 'radio', name: 'exp-part', value: v, checked: startPart === v }), ' ', text);
-  const partGroup = h('div', { class: 'part-group', role: 'radiogroup', 'aria-labelledby': 'exp-part-h' }, partChoice('even', 'An even split'), partChoice('pct', 'A percent'), partChoice('amt', 'The amount I pay'));
-  const partVal = () => (partGroup.querySelector('input:checked') || { value: 'even' }).value;
-  const pctBox = h('div', { hidden: startPart !== 'pct' }, h('label', { for: 'exp-share', class: 'edit-label' }, 'Your share, as a percent'), share, h('p', { class: 'edit-hint' }, 'For example 25 for 25%.'));
-  const mineBox = h('div', { hidden: true }, h('label', { for: 'exp-mine', class: 'edit-label' }, 'What you pay, in dollars'), mine, h('p', { class: 'edit-hint' }, 'For the same period as the bill.'));
+  // Shared (shared bills brief): the people on the bill, their parts and how each pays you back (ui/share-editor.js).
+  const shareEd = shareEditor(cur(), e, { onChange: () => preview() });
   const partNote = h('p', { class: 'edit-hint part-note', 'aria-live': 'polite' });
-  partGroup.addEventListener('change', () => { pctBox.hidden = partVal() !== 'pct'; mineBox.hidden = partVal() !== 'amt'; preview(); (partVal() === 'pct' ? share : partVal() === 'amt' ? mine : people).focus(); });
-  const whole = h('input', { type: 'radio', name: 'exp-who', value: 'whole', checked: sh.whoPays === 'whole' });
-  const part = h('input', { type: 'radio', name: 'exp-who', value: 'part', checked: sh.whoPays !== 'whole' });
   const sharedBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'shared' },
-    h('legend', {}, 'Sharing it'),
-    h('label', { for: 'exp-people', class: 'edit-label' }, 'How many people share it, you included?'), people,
-    h('span', { id: 'exp-part-h', class: 'edit-label' }, 'Your part'), partGroup, pctBox, mineBox, partNote,
-    h('span', { class: 'edit-label' }, 'Who pays the bill?'),
-    h('label', { class: 'radio' }, part, ' Each of us pays our own part'),
-    h('label', { class: 'radio' }, whole, ' I pay all of it and get paid back'),
+    h('legend', {}, 'Sharing it'), shareEd.el, partNote,
     sh.fromDefault ? h('p', { class: 'edit-hint' }, 'Bills in this section are shared by default.') : null);
   // Covered by
   const payers = payersOf(cur());
@@ -316,28 +299,15 @@ function expenseEditor(row) {
   const amountHint = h('p', { class: 'edit-hint', hidden: startMode !== 'covered' }, 'Counts as $0 now. The real cost shows what you would pay if that stops.');
   const stdBtn = std === null ? null : h('button', { type: 'button', class: 'btn', onclick: () => { amount.value = String(std); often.value = 'monthly'; usedStd = true; preview(); amount.focus(); } }, 'Use a standard plan for 1 line (' + money(std) + ' a month)');
   const yours = h('p', { class: 'edit-preview', 'aria-live': 'polite' });
-  // { people, share, problem }: share null means an even split.
-  const readShare = () => {
-    const p = parseInput('int', people.value), n = p.ok ? p.value : null;
-    if (partVal() === 'pct') { const y = parseInput('rate', share.value); return { people: n, share: y.ok ? y.value : null, problem: y.ok ? (y.value > 1 ? 'Your share: 100 or less' : null) : 'Your share: type a percent' }; }
-    if (partVal() === 'amt') {
-      const a = parseInput('money', amount.value), m = parseInput('money', mine.value);
-      const y = a.ok && m.ok ? shareFromAmount(a.value, m.value) : null;
-      return { people: n, share: y, problem: y === null ? 'What you pay: type the dollars, and the whole bill above' : y > 1 ? 'What you pay is more than the whole bill' : null };
-    }
-    return { people: n, share: null, problem: null };
-  };
   const preview = () => {
     const a = parseInput('money', amount.value);
     if (!a.ok) { yours.textContent = ''; return; }
     if (mode.value === 'covered') { const m = previewCost(a.value, often.value, false, null, null); yours.textContent = 'Costs you $0 a month' + (m ? ' (' + money(m) + ' a month if you paid it).' : '.'); return; }
-    const r = readShare();
-    const m = previewCost(a.value, often.value, mode.value === 'shared', r.people, r.share);
+    // Shared: the three numbers for one charge (what leaves, your share, what comes back), then your cost a month.
+    const x = mode.value === 'shared' ? shareEd.numbers(a.value) : null;
+    const m = mode.value === 'shared' ? (x ? previewCost(a.value, often.value, true, null, x.share) : null) : previewCost(a.value, often.value, false, null, null);
     yours.textContent = m === null ? '' : 'Costs you ' + showValue(m, 'money') + ' a month.';
-    if (mode.value === 'shared') {
-      const even = evenShare(r.people), s = r.share ?? even;
-      partNote.textContent = r.problem ? '' : partVal() === 'even' ? (even === null ? '' : 'Even split with ' + r.people + ' people: ' + showValue(even, 'rate') + ' each.') : s === null ? '' : 'That is ' + showValue(s, 'rate') + ' of the bill.';
-    }
+    partNote.textContent = mode.value === 'shared' ? threeNumbers(x, (HOW_OFTEN.find(([k]) => k === often.value) || [null, ''])[1]) : '';
   };
   // Fixed or varies (owner's ask, 2026-10-27): never both; neither is not sorted yet.
   const fixedTick = h('input', { type: 'checkbox', id: 'exp-fixed', checked: e.fixed === true });
@@ -358,7 +328,7 @@ function expenseEditor(row) {
   });
   showOn();
   amount.addEventListener('input', () => { usedStd = false; });
-  for (const el of [amount, often, people, share, mine]) el.addEventListener('input', preview);
+  for (const el of [amount, often]) el.addEventListener('input', preview);
   often.addEventListener('change', preview);
   preview();
   // What it read when it opened, so the bar names what changed: the cost, or only the box, the name or the dates.
@@ -367,11 +337,10 @@ function expenseEditor(row) {
     const a = amount.value.trim() === '' && mode.value === 'covered' ? { ok: true, value: valueOf(e.amount) } : parseInput('money', amount.value);
     if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
     let sharing = null, coveredBy = null;
+    let listed = null;
     if (mode.value === 'shared') {
-      const r = readShare();
-      if (!r.people || r.people < 2) { msg.textContent = 'How many people: 2 or more, you included'; more.open = true; people.focus(); return; }
-      if (r.problem) { msg.textContent = r.problem; more.open = true; (partVal() === 'amt' ? mine : share).focus(); return; }
-      sharing = { shared: true, sharedWith: r.people, yourShare: r.share, whoPays: whole.checked ? 'whole' : 'part' };
+      listed = shareEd.read();
+      if (listed.problem) { msg.textContent = listed.problem; more.open = true; return; }
     } else if (mode.value === 'me') sharing = { shared: false };
     if (mode.value === 'covered') {
       coveredBy = by.value === '__other' ? other.value.trim() : by.value;
@@ -384,7 +353,8 @@ function expenseEditor(row) {
     const k = usedStd ? 'rough' : kind;
     const label = name.value.trim() || e.label;
     const fx = fixedNow();
-    const saved = editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today());
+    const edited = editExpense(cur(), id, { amount: a.value, cadence: often.value, sharing, coveredBy: mode.value === 'covered' ? coveredBy : null, kind: k, label, subscription: subBox.checked, start: d.start, end: d.end }, today());
+    const saved = listed ? setSharers(edited, id, listed.people, listed.whoPays, today()) : edited;
     done(fx === (e.fixed ?? null) ? saved : setFixed(saved, id, fx), expenseWords());
     // The bar's words: the cost when the amount, how often or who pays changed (or nothing else did); else the change.
     function expenseWords() {

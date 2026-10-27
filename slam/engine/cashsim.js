@@ -225,7 +225,9 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     const paidWith = paidFrom && cardIds.has(paidFrom) ? paidFrom : 'cash';
     const common = { id: e.id, label: e.label, paidWith, category: e.fat || 'other', variable: roughFact(e.amount), shared: !!sh.shared, budgeted: paidWith !== 'cash', movable: false, path };
     model.paths['bill:' + e.id] = path;
-    const reimb = (dates, amountBack, cadence, day) => { if (!whole) return; const inc = { id: e.id + ':reimb', label: e.label + ', paid back', cents: cents(amountBack), cadence: 'month', day, offsetDays: reimbDays, to: pid, source: 'reimb', variable: false, estimated: true, path }; model.incomes.push(inc); t.addRough(path); };
+    // A bill with its people listed (engine/owed.js) never assumes the money comes back: it counts once it is marked
+    // paid and lands in an account (Owed to you). A bill shared the old way keeps its paid-back-a-few-days-later run.
+    const reimb = (dates, amountBack, cadence, day) => { if (!whole || sh.listed) return; const inc = { id: e.id + ':reimb', label: e.label + ', paid back', cents: cents(amountBack), cadence: 'month', day, offsetDays: reimbDays, to: pid, source: 'reimb', variable: false, estimated: true, path }; model.incomes.push(inc); t.addRough(path); };
     const dayFact = e.payDay ? t.useFact(base + '.payDay', e.payDay) : null;
     if (isSubscription(e)) {
       const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;

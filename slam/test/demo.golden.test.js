@@ -21,7 +21,7 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(cf.income.gross.value, 6000 + 500); // salary + tutoring; the bonus is maybe money in 2027
     near(cf.income.fica.value, 6000 * 0.0765); // 459
     near(cf.income.takeHome.value, 6500 - 550 - 280 - 459 - 500); // 4,711 (500 to the 401(k) from pay)
-    assert.equal(cf.expenses.total.value, 1800 + 150 + 500 + 200 + 130 + 60 + 40 + 50 + 300); // 3,230
+    assert.equal(cf.expenses.total.value, 1800 + 150 + 500 + 200 + 130 + 60 + 14 + 50 + 300); // 3,204: streaming is $40 less $13 each from Maya and Theo
     assert.equal(cf.expenses.fat.value, 1800 + 150 + 500 + 200 + 130); // 2,780
     assert.equal(cf.debtMinimums.total.value, 90 + 40 + 212); // 342
     // Tax set-aside on the 1099 tutoring (no withholding): 500 x (22% federal + 5.4% NY
@@ -29,12 +29,12 @@ test('demo golden values as of 2026-10-22', async (t) => {
     const setAside = Math.round(s.tax.balanceDue.value / 7 * 100) / 100;
     near(cf.taxSetAside.total.value, setAside);
     assert.deepEqual(cf.taxSetAside.lines.map((l) => [l.kind, l.months]), [['balance', 7]]);
-    const surplus = 4711 - 3230 - 342 - 300 - setAside; // 631.35 (300 to the Roth from take-home)
+    const surplus = 4711 - 3204 - 342 - 300 - setAside; // 657.35 (300 to the Roth from take-home)
     near(cf.surplus.value, surplus);
-    // Monthly surplus (B2): take-home - spending - minimums - the set-aside, before any saving: 931.35.
-    near(cf.monthlySurplus.value, 4711 - 3230 - 342 - setAside);
+    // Monthly surplus (B2): take-home - spending - minimums - the set-aside, before any saving: 957.35.
+    near(cf.monthlySurplus.value, 4711 - 3204 - 342 - setAside);
     // Savings rate (B2): what is set to be saved (300 to the Roth + 500 to the 401(k); no match, no cash saving, no
-    // extra at the debt; the 631.35 left unassigned is not counted) over take-home + pre-tax: 800 / 5,211 = 15.35%.
+    // extra at the debt; the 657.35 left unassigned is not counted) over take-home + pre-tax: 800 / 5,211 = 15.35%.
     near(cf.savingsRate.net.value, 800 / (4711 + 500), 0.0001);
     // Of gross: 800 / 6,500 = 12.31%.
     near(cf.savingsRate.gross.value, 800 / 6500, 0.0001);
@@ -48,16 +48,17 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(s.sheet.invested.value, 45000 + 15000 + 5000);
     assert.equal(s.sheet.assets.value, 12000 + 65000 + 10000);
     assert.equal(s.sheet.debts.value, 3000 + 1200 + 20000);
-    assert.equal(s.sheet.netWorth.value, 87000 - 24200);
+    assert.equal(s.sheet.owed, 26 + 150); // Theo's Sep and Oct streaming, and the $150 lent to Jordan
+    assert.equal(s.sheet.netWorth.value, 87000 - 24200 + 176);
     assert.equal(s.sheet.cards.value, 4200);
   });
 
   await t.test('emergency fund', () => {
     assert.equal(s.emergency.age, 32);
     near(s.emergency.targetMonths.value, 32 / 5); // 6.4
-    near(s.emergency.tiers.full.runway.value, 12000 / (3230 + 342)); // 3.36
+    near(s.emergency.tiers.full.runway.value, 12000 / (3204 + 342)); // 3.38
     near(s.emergency.tiers.fatOnly.runway.value, 12000 / (2780 + 342)); // 3.84
-    assert.equal(s.emergency.targetDollars.value, Math.ceil(6.4 * 3572)); // 22,861: whole dollars, rounded up
+    assert.equal(s.emergency.targetDollars.value, Math.ceil(6.4 * 3546)); // 22,695: whole dollars, rounded up
     assert.equal(s.emergency.backstop.contributions.value, 12000);
   });
 
@@ -65,7 +66,7 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(s.fi.fiNumber.value, 40000 / 0.04); // goal spending at 4%
     assert.equal(s.fi.goalSource, 'spending');
     near(s.fi.fiPercent.value, 65000 / 1000000);
-    assert.equal(s.fi.implied.value, 3230 * 12 / 0.04); // 969,000
+    assert.equal(s.fi.implied.value, 3204 * 12 / 0.04); // 961,200
     assert.equal(s.fi.goalBelowImplied.value, false);
     assert.equal(s.fi.leanFi.value, (2780 - 200) * 12 / 0.04); // 774,000: eating out is a want; same 4% rate
     near(s.fi.coastFi.value, 1000000 / Math.pow(1.05, 65 - 32), 0.01); // 199,872.54
@@ -121,9 +122,9 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(st['utilization-visa'], 'yellow'); // exactly 30%
     assert.equal(st['promo-deadlines'], 'yellow'); // 300 a month fits in an 839 surplus
     assert.equal(st.runway, 'yellow'); // 3.4 months, under the 6.4-month target
-    assert.equal(st['fi-goal-gap'], 'green'); // 1,000,000 is over 969,000
+    assert.equal(st['fi-goal-gap'], 'green'); // 1,000,000 is over 961,200
     assert.equal(st['tax-2026'], 'yellow'); // a number, built on the rough tutoring amount
     const runway = s.flags.find((f) => f.id === 'runway');
-    assert.deepEqual([runway.next.target, runway.next.gap], [22861, 22861 - 12000]);
+    assert.deepEqual([runway.next.target, runway.next.gap], [22695, 22695 - 12000]);
   });
 });

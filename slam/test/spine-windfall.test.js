@@ -42,7 +42,7 @@ test('demo, $5,000 already taxed: the tax bill, then the promo card the surplus 
   near(cards.amount, 3000);
   // What is left after tax and the Visa goes toward the Rule of 5 target (22,861 less 12,000).
   const cushion = step(w, 'cushion');
-  near(cushion.need, 22861 - 12000);
+  near(cushion.need, 22695 - 12000);
   near(cushion.amount, 5000 - sum.tax.balanceDue.value - 3000);
   assert.ok(cushion.short > 0, 'the windfall does not reach the target');
   assert.equal(step(w, 'roth').amount, 0, 'nothing is left for the Roth');
@@ -67,9 +67,9 @@ test('demo, $40,000 not yet taxed: tax on it first at the marginal rate, the Rot
   assert.equal(roth.kind, 'rough', 'the contributions so far are a guess from the monthly amount');
   assert.ok(roth.rough.includes('accounts.roth.contributions'));
   assert.ok(roth.rules.includes('IRA_LIMIT') && roth.rules.includes('ROTH_PO_S_LO'));
-  near(step(w, 'cushion').amount, 22861 - 12000, 'the cushion is filled in full');
+  near(step(w, 'cushion').amount, 22695 - 12000, 'the cushion is filled in full');
   const left = step(w, 'left');
-  near(left.amount, 40000 - tax.amount - sum.tax.balanceDue.value - 3000 - (22861 - 12000) - 3900);
+  near(left.amount, 40000 - tax.amount - sum.tax.balanceDue.value - 3000 - (22695 - 12000) - 3900);
   near(w.assigned + w.left, 40000, 'nothing is lost');
   assert.match(left.why, /no job yet/);
 });

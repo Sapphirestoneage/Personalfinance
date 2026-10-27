@@ -14,7 +14,8 @@
 //   direction: in | out | null, rough (the day or the amount is a guess), note, path, source }.
 // Event kinds: pay, bill, subscription, debt, saving, setAside, promoEnds, estimatedTax,
 //   taxReturn, incomeStarts, incomeEnds, expenseStarts, expenseEnds, coverage, situation,
-//   bonusBy, maybe, maxDeadline (S-211, an account's last day for a tax year), and foo (added by the page).
+//   bonusBy, maybe, maxDeadline (S-211, an account's last day for a tax year), ask (when to ask someone to pay you
+//   back, shared bills brief), and foo (added by the page).
 
 import { valueOf as v, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, toDay, fromDay, dayIn, daysInMonth, isFact } from './spine.js';
 import { cashflow, streamWeight, payrollShares } from './cashflow.js';
@@ -23,6 +24,8 @@ import { promoDeadlines } from './debt.js';
 import { yearTax } from './tax.js';
 import { nextCharge, isSubscription } from './subscriptions.js';
 import { shareOf, coverOf } from './sharing.js';
+import { arrangementOf, personStatus, askMessage } from './owed.js';
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 import { balanceSheet } from './networth.js';
 import { money } from '../src/ui/format.js';
 import { maxItDeadlines, maxItTypes } from './maxit.js';
@@ -124,7 +127,8 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     t.useFact(path, e.amount);
     const sh = shareOf(spine, e);
     const amountRough = roughFact(e.amount) || (sh.rough || []).length > 0;
-    const yours = it.amount;
+    // You pay all of a bill with its people listed: the whole bill leaves on its day (what comes back is Owed to you).
+    const yours = sh.listed && sh.whoPays === 'whole' && v(e.amount) !== null ? round2(it.full) : it.amount;
     // Paid on a card (S-209): it counts in the month's plan, but checking does not move on its day.
     const payer = e.paidFrom ? v(e.paidFrom) : null;
     const card = payer ? (spine.debts || []).find((x) => x.id === payer && x.type === 'credit_card') : null;
@@ -132,7 +136,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (isSubscription(e)) {
       // A subscription charges its whole amount on its day (a yearly one once a year).
       const renews = e.renews ? t.useFact(base + '.renews', e.renews) : null;
-      const charge = v(e.amount) === null ? null : (sh.shared && sh.share !== null ? v(e.amount) * sh.share : v(e.amount));
+      const charge = v(e.amount) === null ? null : (sh.shared && sh.share !== null && !(sh.listed && sh.whoPays === 'whole') ? v(e.amount) * sh.share : v(e.amount));
       const next = renews ? nextCharge(renews, e.cadence, first) : null;
       if (next && inMonth(next)) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, movable: true, kind: 'subscription', label: e.label, date: next, amount: charge, direction: 'out', rough: amountRough || roughFact(e.renews), path, note: onCard.cardNote || null, ...onCard });
       else if (!renews) add({ id: 'sub:' + e.id, sourceId: e.id, repeats: true, kind: 'subscription', label: e.label, date: null, amount: yours, direction: 'out', rough: true, note: 'next charge date not entered', path });
@@ -150,6 +154,21 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     const day = e.payDay ? t.useFact(base + '.payDay', e.payDay) : null;
     if (day === null) { add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', kind: 'bill', label: e.label, date: null, amount: yours, direction: 'out', rough: amountRough, note: 'day paid not entered', path: base + '.paidFrom' }); continue; }
     add({ id: 'bill:' + e.id, sourceId: e.id, repeats: e.cadence !== 'once', movable: true, kind: 'bill', label: e.label, date: dayIn(ym, day), amount: yours, direction: 'out', rough: amountRough || roughFact(e.payDay), path: base + '.paidFrom', note: [e.cadence === 'monthly' ? null : 'counted as its monthly share', onCard.cardNote || null].filter(Boolean).join('; ') || null, ...onCard });
+  }
+
+  // ------------------------------------------------------------ when to ask someone to pay you back
+  // A dated item, not money moving (shared bills brief): "Ask Sam: $13 for Sep to Nov".
+  for (const e of spine.expenses || []) {
+    const arr = arrangementOf(spine, e);
+    if (arr.whoPays !== 'whole') continue;
+    for (const p of arr.people) {
+      if (p.payBack === 'cover') continue;
+      const now = personStatus(spine, e, arr, p, asOf);
+      if (!now.askOn || !inMonth(now.askOn)) continue;
+      const then = personStatus(spine, e, arr, p, now.askOn > asOf ? now.askOn : asOf);
+      const span = then.charges.length ? MONTH_SHORT[+then.charges[0].date.slice(5, 7) - 1] + (then.charges.length > 1 ? ' to ' + MONTH_SHORT[+then.charges[then.charges.length - 1].date.slice(5, 7) - 1] : '') : null;
+      add({ id: 'ask:' + e.id + ':' + p.id, sourceId: e.id, personId: p.id, kind: 'ask', label: 'Ask ' + p.name + ': ' + money(then.owed || then.each || 0) + (span ? ' for ' + span : '') + ' (' + e.label + ')', date: now.askOn, amount: null, direction: null, counted: false, path: 'expenses.' + e.id + '.amount', note: askMessage(e, p, then) });
+    }
   }
 
   // ------------------------------------------------------------ debt minimums on their due days

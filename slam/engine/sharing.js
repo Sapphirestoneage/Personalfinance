@@ -6,10 +6,10 @@
 //   whoPays: part (each pays their part) | whole (you pay it all and get paid back).
 // Your cost is the bill times your share either way; whoPays says how the cash moves.
 
-import { valueOf } from './spine.js';
+import { valueOf, round2 } from './spine.js';
 
 const v = valueOf;
-export const SHARE_FIELDS = ['shared', 'sharedWith', 'yourShare', 'whoPays', 'covered', 'coveredBy'];
+export const SHARE_FIELDS = ['shared', 'sharedWith', 'yourShare', 'whoPays', 'covered', 'coveredBy', 'sharers'];
 // Who can cover a bill: built in, then the household's own names (S-176).
 export const BUILT_IN_PAYERS = ['Parents', 'Partner', 'Partner\'s family', 'Roommate', 'Employer', 'Family'];
 export const payersOf = (spine) => [...new Set([...BUILT_IN_PAYERS, ...(spine.household.payers || [])])];
@@ -19,6 +19,14 @@ export const sectionOf = (e) => e.fat || 'other';
 
 // How an expense is shared, and where each answer came from.
 export function shareOf(spine, e) {
+  // A bill with its people listed (shared bills brief, engine/owed.js): your part is what is left after theirs.
+  const list = e.sharers ? valueOf(e.sharers) : null;
+  if (Array.isArray(list) && list.length) {
+    const whoPays = e.whoPays && valueOf(e.whoPays) === 'whole' ? 'whole' : 'part';
+    const share = yourPart({ people: list, whoPays }, valueOf(e.amount));
+    const base = 'expenses.' + e.id + '.';
+    return { shared: true, people: list.length + 1, share, whoPays, from: [base + 'sharers', base + 'whoPays'], rough: e.sharers.kind === 'rough' ? [base + 'sharers'] : [], missing: share === null && valueOf(e.amount) !== null ? [base + 'sharers'] : [], fromDefault: false, listed: true };
+  }
   const def = (spine.household.expenseDefaults || {})[sectionOf(e)] || {};
   const pick = (k) => (e[k] && e[k].kind !== 'missing' ? { f: e[k], path: 'expenses.' + e.id + '.' + k } : def[k] && def[k].kind !== 'missing' ? { f: def[k], path: 'household.expenseDefaults.' + sectionOf(e) + '.' + k } : { f: e[k] || def[k] || null, path: e[k] ? 'expenses.' + e.id + '.' + k : null });
   const s = pick('shared');
@@ -47,4 +55,28 @@ export const evenShare = (people) => (Number.isInteger(people) && people >= 2 ? 
 export function shareFromAmount(bill, yours) {
   if (typeof bill !== 'number' || !(bill > 0) || typeof yours !== 'number' || yours < 0) return null;
   return yours / bill;
+}
+
+// One person's part of one charge of a listed bill, in dollars: an even split (with you), a part, or dollars.
+// exact: unrounded, for your part (so an even three-way split costs you exactly a third).
+export function theirAmount(arr, p, bill, { exact = false } = {}) {
+  if (bill === null || bill === undefined) return null;
+  const r = exact ? (x) => x : round2;
+  if (p.share.mode === 'amount') return p.share.value;
+  if (p.share.mode === 'percent') return p.share.value === null ? null : r(bill * p.share.value);
+  return r(bill / (arr.people.length + 1));
+}
+// Your part of a listed bill as a share (0..1): what is left after the others' parts, anyone you cover counted as
+// yours. Null when a part is missing or there is no bill amount.
+export function yourPart(arr, bill) {
+  if (!arr.people.length || bill === null || bill === undefined) return null;
+  if (bill === 0) return 1;
+  let others = 0;
+  for (const p of arr.people) {
+    if (p.payBack === 'cover' && arr.whoPays === 'whole') continue;
+    const x = theirAmount(arr, p, bill, { exact: true });
+    if (x === null) return null;
+    others += x;
+  }
+  return Math.max(0, Math.min(1, (bill - others) / bill));
 }
