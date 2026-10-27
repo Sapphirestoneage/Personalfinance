@@ -59,3 +59,19 @@ test('an override survives a save and reload; old files without one load with th
   const old = demo();
   assert.deepEqual(stillGuessing(old, R).items.map((x) => x.path), stillGuessing(applyDefaults(loadHousehold(JSON.parse(JSON.stringify(old))), R), R).items.map((x) => x.path));
 });
+
+test('a first session full of typical amounts ends with a short check-now list, not dozens', async () => {
+  const { editExpense } = await import('../engine/edits.js');
+  const { valueOf } = await import('../engine/spine.js');
+  let s = demo();
+  // Every bill becomes a guess, as typical amounts filling a first session would leave it.
+  for (const e of s.expenses) if (valueOf(e.amount) !== null) s = editExpense(s, e.id, { amount: valueOf(e.amount), kind: 'rough' }, '2026-10-27');
+  const items = stillGuessing(s, R).items;
+  const rough = items.filter((x) => x.path.startsWith('expenses.') && x.kind === 'rough'), now = rough.filter((x) => x.urgency === 'now');
+  assert.ok(rough.length >= 10, 'many guesses: ' + rough.length);
+  assert.ok(now.length <= rough.length / 2, now.length + ' of ' + rough.length + ' worth checking now');
+  assert.ok(now.some((x) => x.path === 'expenses.rent.amount'), 'rent is one of them');
+  // The Session marks a guess with the same rule (ui/session.js guessChip reads ui/urgency.js).
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync(new URL('../ui/session.js', import.meta.url), 'utf8'), /worthNow\(marks, path, f\.kind, marksFresh\)/);
+});

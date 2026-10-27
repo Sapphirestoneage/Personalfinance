@@ -16,6 +16,7 @@ import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/sce
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
 import { h, chip, money, pct } from './view.js';
+import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
 
@@ -75,7 +76,13 @@ const pickBox = (id, label, options, value, onPick) => {
   return s;
 };
 // A guess says so on its row.
-const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, whoSupplies(f) === 'default' ? 'Eli\'s default' : 'guess') : f && f.kind === 'missing' ? chip('missing') : null);
+// Only a guess worth checking now gets a chip (Rough now and later); one that is fine for now shows a small gray dot,
+// so a first session ends with a short list, not dozens of chips.
+let marks = null, marksFresh = false;
+const guessChip = (f, path) => {
+  if (f && (f.kind === 'rough' || f.kind === 'missing') && !worthNow(marks, path, f.kind, marksFresh)) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': 'A guess, fine for now', title: 'Fine for now' });
+  return f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, whoSupplies(f) === 'default' ? 'Eli\'s default' : 'guess') : f && f.kind === 'missing' ? chip('missing') : null;
+};
 // A small closed fold on the right of a row: who pays, sharing, a cover, dates.
 // What is open stays open when a change redraws the screen.
 const openMore = new Set();
@@ -160,7 +167,7 @@ function needRow(spine, item, fat, key, sub = false) {
   const no = !e && noList().includes(key);
   if (no) return null;
   const by = e && e.covered && v(e.covered) ? v(e.coveredBy) : null;
-  const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount) : null, by ? h('span', { class: 'chip chip-notForMe' }, 'covered by ' + by) : null);
+  const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount, 'expenses.' + e.id + '.amount') : null, by ? h('span', { class: 'chip chip-notForMe' }, 'covered by ' + by) : null);
   const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x));
   // Not in your numbers yet: Need or Want adds it as that, No hides it.
   if (!e) return lineRow(sub ? 'sub' : '', name, amt,
@@ -280,7 +287,7 @@ function debt(ctx) {
     h('section', { class: 'card' },
       list.length ? h('ul', { class: 'srows' }, list.map((d) => {
         const name = v(d.name) || d.id, p = 'debts.' + d.id;
-        return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance)),
+        return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance, 'debts.' + d.id + '.balance')),
           moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'owed'),
           rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2)))),
           moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'a month'),
@@ -387,7 +394,7 @@ function incomeRows(spine) {
     const amountBox = asked ? null : [
       moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a)))),
       pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1])))];
-    return lineRow('income' + (x.type === 'w2' || isSelfEmployment(x) || x.type === 'unemployment' ? ' asks' : ''), h('span', { class: 'srow-name' }, x.label, guessChip(x.amount)),
+    return lineRow('income' + (x.type === 'w2' || isSelfEmployment(x) || x.type === 'unemployment' ? ' asks' : ''), h('span', { class: 'srow-name' }, x.label, guessChip(x.amount, 'income.' + x.id + '.amount')),
       amountBox,
       x.cadence === 'monthly' || x.cadence === 'semimonthly' ? intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d)))) : null,
       x.type === 'w2' ? h('div', { class: 'srow-q' }, ...w2Bits(spine, x)) : null,
@@ -466,7 +473,7 @@ function assets(ctx) {
     h('section', { class: 'card' },
       (spine.accounts || []).length ? h('ul', { class: 'srows' }, spine.accounts.map((a) => {
         const name = v(a.name) || a.id, p = 'accounts.' + a.id, part = liquidPart(s, a), on = part !== null;
-        return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance)),
+        return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance, 'accounts.' + a.id + '.balance')),
           moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x)))),
           h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => change((sp) => (!on === (s.sheet.liquid.defaults[a.id] !== 'none') ? setAt(sp, p, drop(getAt(sp, p), 'liquid')) : putFact(sp, p + '.liquid', !on, 'known', today)), said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
           a.family === 'taxable' ? holdings(a) : null,
@@ -519,7 +526,7 @@ function goals(ctx) {
         h('ul', { class: 'srows' },
           lineRow('', h('span', { class: 'srow-name' }, 'The cushion'), h('span', { class: 'srow-val' }, em.targetDollars.value === null ? 'missing a birth date' : money(s.sheet.cash.value) + ' of ' + money(em.targetDollars.value))),
           lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, (cards.missing || []).length ? 'missing a balance' : cards.value ? money(cards.value) + ' to go' : 'Done')),
-          ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target)),
+          ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target, 'goals.' + g.id + '.target')),
             moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
             (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
         h('form', { class: 'goal-form', novalidate: true, onsubmit: add }, form.name, form.amt, form.by, h('button', { type: 'submit', class: 'btn small primary' }, 'Add a goal')),
@@ -560,6 +567,9 @@ function overview(ctx) {
 
 const SCREENS = { needs, debt, income, assets, goals };
 function render(ctx) {
+  // The shared ranking (ui/urgency.js): the last answer stands until the new one lands, then one redraw.
+  const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
   const id = ctx.levels[0];
   return id ? [stepQuestions(ctx.spine, id), SCREENS[id](ctx)] : overview(ctx);
 }

@@ -173,3 +173,6 @@ The Budget calendar is not retired yet: a second audit of its own code found the
 
 ## 146. Which answers count as disagreeing (2026-10-27)
 Default used: COBRA or a retiree plan makes employer health insurance while not working fine, so it is relabeled rather than flagged. Work-based disability or life cover while not working, a mortgage or car loan not ticked under debts, kids at home with no dependents, a job still paying, and a plan type with no insurance are flagged. Say if any should be stricter or looser.
+
+## 147. The spreadsheet importer (2026-10-27)
+Default used: this branch has no spreadsheet importer, so step 4 of Rough now and later covers the Session only. Any importer that saves rough Facts is sorted by the same rule automatically, since the rule reads every rough or missing Fact.
