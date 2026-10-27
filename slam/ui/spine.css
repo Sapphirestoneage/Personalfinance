@@ -1380,3 +1380,14 @@ body { font-variant-numeric: tabular-nums; }
   .row-main .row-value { max-width: 55vw; text-align: right; }
   .row-main.row-pick { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "box label value chip"; }
 }
+/* The ⋯ menu is a small pop-over above the row; opening it never stretches Save and Cancel (owner's ask). */
+.edit-actions { align-items: center; }
+.edit-actions > .btn, .edit-actions > .more-menu { flex: 0 0 auto; align-self: center; }
+.more-menu { position: relative; }
+.more-menu .more-items { position: absolute; z-index: 45; bottom: calc(100% + 6px); left: 0; min-width: 12rem; display: grid; gap: var(--space-1); padding: var(--space-2); margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--btn-shadow); }
+.more-menu .more-items .btn { width: 100%; justify-content: flex-start; }
+@media (max-width: 479px) { .edit-actions > .btn { flex: 1 1 0; } .more-menu .more-items { left: auto; right: 0; } }
+.review-list { list-style: none; margin: 0; padding: 0; }
+.review-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.review-what { margin: 0; display: grid; }
+@media (max-width: 600px) { .review-row { grid-template-columns: 1fr; } .review-row .confirm-acts .btn { flex: 1 1 0; } }

@@ -117,16 +117,20 @@ export function ledgerTree(spine, inst) {
   const kept = (spine.expenses || []).filter((e) => hiddenLine(spine, e));
   if (kept.length) expSections.push(node('N:hidden', 'Kept, not counted (hidden by the Profile)', kept.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', note: 'Hidden by the Profile. It comes back, with what was typed, if the answer changes back.' }); })));
   // The gut number from before the call (Profile Level 1): a guess to hold the real spending against.
+  // Needs is expenses only (owner's ask, 2026-10-27): the spending guess and health coverage live under Profile.
+  const pSections = [];
   const gut = take(byPrefix('household.gutSpending'));
-  if (gut.length) expSections.push(node('N:gut', 'Your guess before we started', [item('household.gutSpending', 'Spending a month, your guess', gut)]));
   const health = take(byPrefix('household.healthCoverage'));
-  if (health.length) expSections.push(node('N:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
 
   // Goals and assumptions
   const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label || UNNAMED, r, { collection: 'goals', id: g.id }); });
-  const gSections = [node('G:goals', 'Your goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } }), node('G:assumptions', 'Assumptions', [item('assumptions', 'Assumptions', take(byPrefix('assumptions')))])];
+  // Goals is goals only (owner's ask): the assumptions and the debt plan live under Profile, at the end.
+  const gSections = [node('G:goals', 'Your goals', goalItems, { add: { collection: 'goals', types: ['savings', 'payoff', 'fi', 'other'] } })];
+  pSections.push(node('P:assumptions', 'FI assumptions', [item('assumptions', 'FI assumptions', take(byPrefix('assumptions')))]));
   const plan = take(byPrefix('debtPlan'));
-  if (plan.length) gSections.push(node('G:debtPlan', 'Debt plan', [item('debtPlan', 'The extra at the debt', plan)]));
+  if (plan.length) pSections.push(node('P:debtPlan', 'Debt plan', [item('debtPlan', 'The extra at the debt', plan)]));
+  if (health.length) pSections.push(node('P:health', 'Health coverage', [item('household.healthCoverage', 'Health coverage over time', health)]));
+  if (gut.length) pSections.push(node('P:gut', 'Your guess before we started', [item('household.gutSpending', 'Spending a month, your guess', gut)]));
 
   // Anything not placed above still shows (nothing is ever hidden by the tree).
   const rest = rows.filter((r) => !used.has(r.path));
@@ -138,7 +142,9 @@ export function ledgerTree(spine, inst) {
     node('T', 'Taxes', taxSections, { slug: 'taxes', letter: 'T' }),
     node('I', 'Income', incomeSections, { slug: 'income', letter: 'I', add: { collection: 'income', types: INCOME_TYPES } }),
     node('N', 'Needs', expSections, { slug: 'needs', letter: 'N', add: { collection: 'expenses', fat: null } }),
-    node('G', 'Goals', gSections, { slug: 'goals', letter: 'G' })
+    node('G', 'Goals', gSections, { slug: 'goals', letter: 'G' }),
+    // Profile (owner's ask): the settings that shape every number, after the six DATING sections, with no letter.
+    node('P', 'Profile', pSections, { slug: 'profile' })
   ];
   if (rest.length) tree.push(node('X', 'Other', [item('other', 'Other', rest)], { slug: 'other' }));
   return tree;

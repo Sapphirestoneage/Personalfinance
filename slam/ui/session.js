@@ -537,34 +537,32 @@ function goals(ctx) {
 }
 
 // ---------------------------------------------------------------- the top screen
-// Level 2 of the Profile (Phase 2.5 B3): only what the answers before the call opened, each a link to its questions.
-function level2Card(spine) {
-  const a = answersOf(spine);
-  if (!Object.keys(a).length) return h('section', { class: 'card' }, h('p', {}, 'No answers from before the call yet. ', h('a', { href: 'profile.html' }, 'Open the Profile'), ' to load them or ask the questions now.'));
-  const areas = level2(a);
-  return h('section', { class: 'card', 'aria-labelledby': 'l2-h' }, h('h2', { id: 'l2-h' }, 'To ask today'),
-    areas.length ? h('ul', { class: 'go-list' }, areas.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions')))))) : h('p', { class: 'muted' }, 'Nothing more to ask from the answers so far.'));
+// Krug pass: one list, the five steps, each with how many of the Profile's open questions belong to it; the questions
+// themselves sit at the top of each step. "Start with Needs" leads.
+const STEP_AREAS = { needs: ['health', 'statements'], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
+const openAreas = (spine, step) => { const a = answersOf(spine); return Object.keys(a).length ? level2(a).filter((x) => STEP_AREAS[step].includes(x.area)) : []; };
+const qCount = (areas) => areas.reduce((n, x) => n + x.questions.length, 0);
+function stepQuestions(spine, step) {
+  const areas = openAreas(spine, step);
+  if (!areas.length) return null;
+  return h('ul', { class: 'go-list', 'aria-label': 'Questions for this step' }, areas.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions'))))));
 }
 
 function overview(ctx) {
   const steps = sessionSteps(ctx.spine, summarize(ctx.spine, ctx.rules, { flags: false }));
   return [
-    h('p', { class: 'lede' }, 'Five steps for a first session. Skip anything.'),
-    // The one place the order differs from Debt, Assets, Taxes, Income, Needs, Goals, on purpose (audit 3).
-    h('p', { class: 'muted' }, 'It starts with Needs, because what you spend shapes every other number; My numbers keeps the usual order.'),
-    level2Card(ctx.spine),
-    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
+    h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›')),
+    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = qCount(openAreas(ctx.spine, st.id)); return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),
-      h('span', { class: 'go-sub' }, totalWords(st)))))),
-    h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›'))
+      h('span', { class: 'go-sub' }, totalWords(st), n ? ' · ' + n + (n === 1 ? ' question' : ' questions') : ''))); }))
   ];
 }
 
 const SCREENS = { needs, debt, income, assets, goals };
 function render(ctx) {
   const id = ctx.levels[0];
-  return id ? SCREENS[id](ctx) : overview(ctx);
+  return id ? [stepQuestions(ctx.spine, id), SCREENS[id](ctx)] : overview(ctx);
 }
 const name = (levels) => (levels.length === 1 ? (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null : null);
 

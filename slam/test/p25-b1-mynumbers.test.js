@@ -23,16 +23,20 @@ const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'
 
 test('DATING: six sections in order, each with its letter and the address the shell links to', () => {
   const sc = screens(demo());
-  assert.deepEqual(sc.sections.map((x) => x.letter + ' ' + x.label), ['D Debt', 'A Assets', 'T Taxes', 'I Income', 'N Needs', 'G Goals']);
+  assert.deepEqual(sc.sections.map((x) => (x.letter || '-') + ' ' + x.label), ['D Debt', 'A Assets', 'T Taxes', 'I Income', 'N Needs', 'G Goals', '- Profile']);
   // The shell's section words (numbersHref) open these screens; Session links to five of them.
   const shell = read('ui/shell.js');
   const ids = [...shell.slice(shell.indexOf('export const SECTIONS')).matchAll(/(\w+): '/g)].slice(0, 6).map((m) => m[1]);
   for (const id of ids) assert.ok(screenAt(sc, [id]), id + ' opens a section');
-  // Needs holds every expense (the stored key stays expenses); Goals holds the goals and the assumptions.
+  // Needs holds every expense and nothing else (the stored key stays expenses); Goals holds the goals; the assumptions
+  // are under Profile, after the six (owner's ask, 2026-10-27).
   const needs = sc.sections.find((x) => x.slug === 'needs');
   assert.deepEqual(needs.allRows.filter((r) => r.path.startsWith('expenses.')).length, ledgerRows(demo()).flatMap((g) => g.rows).filter((r) => r.path.startsWith('expenses.')).length);
   const goals = sc.sections.find((x) => x.slug === 'goals');
-  assert.ok(goals.groups.some((g) => g.label === 'Assumptions') && goals.groups.some((g) => g.items.some((it) => it.key === 'goals.cushion')));
+  assert.ok(goals.groups.some((g) => g.items.some((it) => it.key === 'goals.cushion')));
+  assert.ok(!goals.groups.some((g) => /assumption/i.test(g.label)));
+  assert.ok(needs.allRows.every((r) => r.path.startsWith('expenses.')), 'Needs is expenses only');
+  assert.ok(sc.sections.find((x) => x.slug === 'profile').groups.some((g) => g.label === 'FI assumptions'));
 });
 
 test('screen by screen: every row opens on one screen, a section, a group, an item; never deeper', () => {

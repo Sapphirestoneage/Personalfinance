@@ -16,6 +16,8 @@ import { h, money, shortDate } from './view.js';
 import { questionEl } from './profile-q.js';
 import { AREAS, LEVEL1, asked, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
 import { valueOf as v } from '../engine/spine.js';
+import { summarize } from '../engine/summary.js';
+import { putFact } from '../engine/edits.js';
 
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const AREA_NAMES = Object.fromEntries(AREAS);
@@ -33,7 +35,9 @@ function top({ spine, rules }) {
     { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up, and the life changes') },
     { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client; the rest are your defaults' : 'every number the app assumes, as your defaults') },
     { n: 1, row: goRow('#/goals', 'G', 'FI assumptions', SCENARIO_WORDS[pickedScenario()], 'assumption set for every FI number') },
-    { n: 0, row: goRow('#/prefs', 'P', 'Preferences', null, prefsSummary()) }
+    { n: 0, row: goRow('#/prefs', 'P', 'Preferences', null, prefsSummary()) },
+    // The quarterly review (owner's ask, 2026-10-27): each subscription, still wanted or not, every few months.
+    (() => { const subs = summarize(spine, rules, { flags: false }).subs, due = subs.items.filter((i) => i.due).length; return { n: due, row: goRow('#/review', 'R', 'Quarterly review', subs.items.length ? String(due) : null, subs.items.length ? (due === 1 ? 'subscription to look at' : 'subscriptions to look at') : 'no subscriptions yet') }; })()
   ];
   return [
     h('p', { class: 'lede' }, 'How life works right now, and how the app is set up for it. An answer changes which fields show and what the numbers mean; nothing typed is deleted.'),
@@ -47,8 +51,10 @@ function goalsScreen({ spine, rules }) {
     h('section', { class: 'card', 'aria-labelledby': 'gs-set' }, h('h2', { id: 'gs-set' }, 'Assumption set'),
       h('p', { class: 'muted' }, 'Every FI number on Today, My numbers, Plan and the One-pager reads this set.'),
       scenarioBar(spine, rules, pickedScenario(), () => refresh())),
-    h('section', { class: 'card', 'aria-labelledby': 'gs-more' }, h('h2', { id: 'gs-more' }, 'Goals themselves'),
-      h('p', {}, h('a', { href: 'ledger.html#/goals' }, 'Goals, the FI number and the client\'s own guesses are on My numbers'), '.'))
+    // The household's own FI assumptions (return, inflation, withdrawal rate, life expectancy) are one row away.
+    h('ul', { class: 'go-list' },
+      h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/profile/fi-assumptions' }, h('span', { class: 'go-name' }, 'Return, inflation and withdrawal rate'), h('span', { class: 'go-sub' }, 'This household\'s own'))),
+      h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/goals' }, h('span', { class: 'go-name' }, 'Goals'), h('span', { class: 'go-sub' }, 'In My numbers'))))
   ];
 }
 function homeworkScreen(ctx) {
@@ -135,9 +141,26 @@ function changesScreen({ spine }) {
   return h('ul', { class: 'go-list' }, list.map((c) => h('li', { class: 'go-row plain' }, h('span', { class: 'go-name' }, changeWords(c)), h('span', { class: 'go-sub' }, shortDate(c.date)))));
 }
 
+// The quarterly review: each subscription with what it costs a year and when it was last looked at; Keep it marks it
+// reviewed today, Stop it opens the bill to end it. Nothing here is a field to fill in.
+function reviewScreen({ spine, rules }) {
+  const subs = summarize(spine, rules, { flags: false }).subs;
+  if (!subs.items.length) return h('p', { class: 'card' }, 'No subscriptions yet. A bill with a next charge, or moved to Subscriptions, shows here.');
+  const today = todayIso();
+  const keep = (ids, words) => change((s) => ids.reduce((x, id) => putFact(x, 'expenses.' + id + '.reviewed', today, 'known', today), s), words);
+  return [
+    h('ul', { class: 'review-list' }, subs.items.map((i) => h('li', { class: 'review-row' + (i.due ? ' is-due' : '') },
+      h('p', { class: 'review-what' }, h('strong', {}, i.label), h('span', { class: 'muted' }, (i.yearly === null ? 'cost not given' : money(i.yearly) + ' a year') + ' · ' + (i.reviewed ? 'looked at ' + shortDate(i.reviewed) : 'never looked at'))),
+      h('div', { class: 'confirm-acts' },
+        h('button', { type: 'button', class: 'btn small primary', onclick: () => keep([i.id], i.label + ': kept, reviewed today') }, 'Keep it'),
+        h('a', { class: 'btn small', href: 'ledger.html#expenses.' + i.id + '.amount' }, 'Stop it'))))),
+    (() => { const due = subs.items.filter((i) => i.due); return due.length > 1 ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => keep(due.map((i) => i.id), due.length + ' subscriptions kept, reviewed today') }, 'Keep all ' + due.length)) : null; })()
+  ];
+}
+
 startPage({
   tab: 'profile', title: 'Profile',
-  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'FI assumptions', prefs: 'Preferences' })[levels[0]] || AREA_NAMES[levels[0]] || null),
+  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'FI assumptions', prefs: 'Preferences', review: 'Quarterly review' })[levels[0]] || AREA_NAMES[levels[0]] || null),
   render: (ctx) => {
     const [l0, l1] = ctx.levels;
     if (!l0) return top(ctx);
@@ -145,6 +168,7 @@ startPage({
     if (l0 === 'homework') return homeworkScreen(ctx);
     if (l0 === 'goals') return goalsScreen(ctx);
     if (l0 === 'prefs') return prefsScreen(ctx);
+    if (l0 === 'review') return reviewScreen(ctx);
     if (l0 === 'ask' && !l1) { const l2 = level2(answersOf(ctx.spine)); return l2.length ? h('ul', { class: 'go-list' }, l2.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: '#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label))))) : h('p', { class: 'card' }, 'Nothing to ask yet.'); }
     if (l0 === 'ask') return askScreen(ctx, l1);
     if (l0 === 'todo') return todoScreen(ctx);

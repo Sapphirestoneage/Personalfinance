@@ -999,7 +999,9 @@ function subsScreen() {
       h('div', { class: 'sub-row' }, h('label', { class: 'check-row sub-tick', for: 'sub-pick-' + i.id, 'aria-label': 'Tick ' + i.label }, tick(i)), line(i)),
       h('p', { class: 'sub-when' }, (i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month') + ' · ' + dayOf(i) + ' · ' + withWhat(i),
         i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
-      h('button', { type: 'button', class: 'btn small', onclick: () => change(putFact(cur(), 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ' marked reviewed today') }, 'Reviewed today')))));
+      null))),
+    // Reviewing them is the quarterly review in Profile (owner's ask, 2026-10-27).
+    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/review' }, h('span', { class: 'go-name' }, 'Quarterly review'), h('span', { class: 'go-sub' }, sub.toLook.length ? sub.toLook.length + ' to look at' : 'All looked at')))));
 }
 
 // ---------------------------------------------------------------- adding, copying, deleting

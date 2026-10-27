@@ -158,6 +158,8 @@ export function ledgerRows(spine) {
     // A line someone else pays in full, or marked Not for me (bug sweep): its name, real cost, who covers it and need or
     // want stay; how and when it is paid are not asked, so they are never missing or rough.
     if (s[0] === 'expenses' && NOT_ASKED.includes(s[2]) && othersPay(getAt(spine, 'expenses.' + s[1]))) continue;
+    // When a subscription was last reviewed is the quarterly review's (Profile), never a field to fill in (owner's ask).
+    if (s[0] === 'expenses' && s[2] === 'reviewed') continue;
     // An expense's account and day are one row: "Main checking, on the 5th" (S-189).
     if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay' || s[2] === 'paysDebt')) {
       if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
@@ -269,7 +271,7 @@ export function* stillGuessingSteps(spine, rules) {
     if (fact.kind !== 'rough' && fact.kind !== 'missing') continue;
     // A line someone else pays is never a guess to firm up (bug sweep): its payment fields are not asked.
     const p = path.split('.');
-    if (p[0] === 'expenses' && NOT_ASKED.includes(p[2]) && othersPay(getAt(spine, 'expenses.' + p[1]))) continue;
+    if (p[0] === 'expenses' && ((NOT_ASKED.includes(p[2]) && othersPay(getAt(spine, 'expenses.' + p[1]))) || p[2] === 'reviewed')) continue;
     const item = { path, label: labelFor(spine, path), kind: fact.kind, group: groupFor(path), blocks: blocks.get(path) || [], score: 0, moves: {} };
     if (fact.kind === 'rough' && typeof fact.value === 'number' && fact.value !== 0) {
       const moved = setAt(spine, path, { ...fact, value: fact.value * (1 + swing) });
