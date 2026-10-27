@@ -604,9 +604,22 @@ function paymentEditor(row) {
   // Only a line that repeats can pay a debt (answer 35); a one-time or total line is offered no debt.
   const debts = PER_YEAR[e.cadence] ? cur().debts || [] : [];
   const pays = debts.length ? h('select', { id: 'pay-debt' }, h('option', { value: '' }, 'None: an ordinary bill'), ...debts.map((x) => h('option', { value: x.id, selected: now.paysDebt === x.id }, valueOf(x.name) || x.id))) : null;
+  // Paid with a card (owner's ask, 2026-10-27): no day is asked. The money leaves checking when the card is paid, on the
+  // card's own due day, which the card already holds; the line's own day is cleared.
+  const cardOf = () => (cur().debts || []).find((x) => x.id === from.value && x.type === 'credit_card') || null;
+  const dayBox = h('div', { class: 'pay-day-box' }, h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'));
+  const cardNote = h('p', { class: 'edit-hint' });
+  const showDay = () => {
+    const c = cardOf();
+    dayBox.hidden = !!c;
+    const due = c && c.dueDay ? valueOf(c.dueDay) : null;
+    cardNote.textContent = c ? 'On the card. Checking pays it with the card' + (due ? ', on its due day, the ' + ordinal(due) : '') + '.' : 'A card here means it goes on the card; the card is then paid from its own account.';
+  };
+  from.addEventListener('change', showDay);
+  showDay();
   const doSet = (kind) => {
     if (!from.value) { msg.textContent = 'Pick where it is paid from'; from.focus(); return; }
-    const d = day.value.trim() === '' ? { ok: true, value: null } : parseInput('int', day.value);
+    const d = cardOf() || day.value.trim() === '' ? { ok: true, value: null } : parseInput('int', day.value);
     if (!d.ok || (d.value !== null && (d.value < 1 || d.value > 31))) { msg.textContent = 'Day: a number from 1 to 31, or leave it blank'; day.focus(); return; }
     const label = from.selectedOptions[0].textContent;
     let next;
@@ -614,10 +627,7 @@ function paymentEditor(row) {
     done(next, said.changed(e.label + ': paid from', label + (d.value ? ', day ' + d.value : '') + (pays && pays.value ? '; pays ' + pays.selectedOptions[0].textContent : '') + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
-    h('label', { for: 'edit-input', class: 'edit-label' }, 'Paid from'), from,
-    h('p', { class: 'edit-hint' }, 'A card here means it goes on the card; the card is then paid from its own account.'),
-    h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day,
-    h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'),
+    h('label', { for: 'edit-input', class: 'edit-label' }, 'Paid from'), from, cardNote, dayBox,
     pays ? [h('label', { for: 'pay-debt', class: 'edit-label' }, 'The debt it pays (optional)'), pays, h('p', { class: 'edit-hint' }, 'For example a car payment that pays the car loan, so it counts once.')] : null,
     msg,
     editActions(cancel, [
