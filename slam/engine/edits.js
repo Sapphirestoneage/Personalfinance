@@ -99,7 +99,7 @@ export function recordContribution(spine, accountId, { year, amount, kind = 'con
 // The Ledger's one "Interest rate" panel for a card (S-161). Typed text in:
 // { apr, hasIntro, introRate, introEnds }. A blank APR is allowed: the house
 // default fills it in as rough (engine/defaults.js). A blank intro rate is 0.
-export function parseCardRate({ apr, hasIntro, introRate, introEnds }) {
+export function parseCardRate({ apr, hasIntro, introRate, introEnds, deferred = null }) {
   const out = { apr: null, intro: null };
   if (String(apr ?? '').trim() !== '') {
     const p = parseInput('rate', apr);
@@ -111,7 +111,7 @@ export function parseCardRate({ apr, hasIntro, introRate, introEnds }) {
     if (!r.ok) return { ok: false, message: 'Intro rate: ' + r.message };
     const e = parseInput('date', introEnds);
     if (!e.ok) return { ok: false, message: 'Intro ends: pick a date' };
-    out.intro = { rate: r.value, ends: e.value };
+    out.intro = { rate: r.value, ends: e.value, deferred };
   }
   return { ok: true, value: out };
 }
@@ -131,11 +131,13 @@ export function editCardRate(spine, cardId, action, { value, kind = 'known', tod
     if (value.intro) {
       s = put(s, 'promoApr', { value: value.intro.rate, kind });
       s = put(s, 'promoEnds', { value: value.intro.ends, kind });
-    } else for (const k of ['promoApr', 'promoEnds']) if (card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
+      // Deferred interest: yes or no when the panel says; left as it was when it does not.
+      if (value.intro.deferred === true || value.intro.deferred === false) s = put(s, 'deferredInterest', { value: value.intro.deferred, kind });
+    } else for (const k of ['promoApr', 'promoEnds', 'deferredInterest']) if (card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
   } else if (action === 'confirm') {
-    for (const k of ['apr', 'promoApr', 'promoEnds']) if (card[k] && card[k].value !== null) s = put(s, k, { value: card[k].value, kind: 'known' });
+    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest']) if (card[k] && card[k].value !== null) s = put(s, k, { value: card[k].value, kind: 'known' });
   } else if (action === 'notForMe') {
-    for (const k of ['apr', 'promoApr', 'promoEnds']) if (k === 'apr' || card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
+    for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest']) if (k === 'apr' || card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
   } else throw new Error('Unknown edit ' + action);
   return s;
 }
@@ -446,7 +448,7 @@ export function bulkEdit(spine, rows, action, today) {
     if (r.type === 'cardRate') {
       const cardId = r.path.split('.')[1];
       if (action === 'rough') {
-        for (const k of ['apr', 'promoApr', 'promoEnds']) { const f = getAt(s, 'debts.' + cardId + '.' + k); if (f && f.value !== null) s = setAt(s, 'debts.' + cardId + '.' + k, { ...f, kind: 'rough', asOf: today, source: 'ledger' }); }
+        for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest']) { const f = getAt(s, 'debts.' + cardId + '.' + k); if (f && f.value !== null) s = setAt(s, 'debts.' + cardId + '.' + k, { ...f, kind: 'rough', asOf: today, source: 'ledger' }); }
       } else s = editCardRate(s, cardId, action, { today });
       continue;
     }

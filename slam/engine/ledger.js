@@ -56,7 +56,8 @@ export function typeFor(spine, path) {
 
 // A card's APR, intro rate and intro end are one Ledger row, "Interest rate"
 // (S-161). The row sits at the APR's path; its value is { apr, intro }.
-const CARD_RATE = ['apr', 'promoApr', 'promoEnds'];
+// Deferred interest only matters on an intro rate, so it sits in the same row (owner's ask, 2026-10-27).
+const CARD_RATE = ['apr', 'promoApr', 'promoEnds', 'deferredInterest'];
 const isCard = (spine, id) => { const d = getAt(spine, 'debts.' + id); return !!d && d.type === 'credit_card'; };
 
 export function hasIntro(card) {
@@ -78,7 +79,7 @@ export function cardRateRow(spine, card) {
   const intro = hasIntro(card);
   const parts = intro ? [card.apr, card.promoApr, card.promoEnds] : [card.apr];
   const kind = combinedKind(parts);
-  const value = card.apr.kind === 'notForMe' ? null : { apr: valueOf(card.apr), intro: intro ? { rate: valueOf(card.promoApr), ends: valueOf(card.promoEnds) } : null };
+  const value = card.apr.kind === 'notForMe' ? null : { apr: valueOf(card.apr), intro: intro ? { rate: valueOf(card.promoApr), ends: valueOf(card.promoEnds), deferred: card.deferredInterest ? valueOf(card.deferredInterest) : null } : null };
   return { path, label: labelFor(spine, path), group: 'D', type: 'cardRate', fact: { value: value && (value.apr !== null || value.intro) ? value : null, kind }, members: CARD_RATE.map((k) => 'debts.' + card.id + '.' + k) };
 }
 
