@@ -18,6 +18,9 @@ import { said, todayIso } from './view.js';
 
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const vizOf = (i) => VIZ[i % VIZ.length];
+// A debt's place in the household's list, so it wears one color on every chart (round 2).
+let debtIds = [];
+const debtIndex = (id) => Math.max(0, debtIds.indexOf(id));
 const pctWords = (r) => (r === null || r === undefined ? 'rate not entered' : Math.round(r * 10000) / 100 + '%');
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
@@ -28,6 +31,7 @@ const form = { ...FORM };
 const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A');
 
 export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSave = null }) {
+  debtIds = (spine.debts || []).map((d) => d.id);
   if (!c.sim) return [h('p', { class: 'muted' }, 'This view starts on the date your numbers are from. Pick that month or a later one.')];
   if (saved) for (const k of Object.keys(FORM)) if (typeof saved[k] === 'string') form[k] = saved[k];
   const keepForm = () => (onSave ? onSave({ ...form }) : rerender());
@@ -78,7 +82,7 @@ function clearCard(d) {
     h('h2', { id: 'clear-h' }, 'Clear dates'),
     cd.rows.length ? h('div', { class: 'clear-grid' }, cd.rows.map((r) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': r.label },
       h('span', { class: 'clear-date' }, monthWords(r.ym)), h('span', { class: 'clear-label' }, r.label)))) : null,
-    cd.past.length ? h('p', { class: 'tile-sub' }, 'Past ' + monthWords(cd.horizon) + ': ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(', ') + '.') : null,
+    cd.past.length ? h('p', { class: 'tile-sub' }, 'After the 12-month run (past ' + monthWords(cd.horizon) + '; the monthly plan below gives the months): ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(', ') + '.') : null,
     h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan\'s month-by-month run, with ' + money(x.amount) + ' a month extra at the debt' + (x.from === 'typed' ? ' (the amount you set).' : x.step ? ' (the Plan\'s step: ' + x.step.toLowerCase() + ').' : '.')));
 }
 
@@ -95,9 +99,9 @@ function ganttCard(d) {
     h('p', { class: 'muted' }, 'Each bar runs from today to the day the debt clears. A striped bar runs past the window.'),
     h('div', { class: 'gantt', role: 'img', 'aria-label': 'Payoff timeline: ' + g.rows.map((r) => r.name + (r.clearDate ? ' clears ' + shortDate(r.clearDate) : ' runs past the window')).join('; ') },
       g.rows.map((r, i) => h('div', { class: 'gantt-row' }, h('span', { class: 'gantt-label' }, r.name),
-        h('div', { class: 'gantt-track' }, h('div', { class: 'gantt-bar ' + vizOf(i) + (r.beyond ? ' beyond' : ''), style: 'width:' + pc(r.fraction) }), ...g.ticks.map((t) => h('span', { class: 'gantt-tick', style: left(t.fraction) })))))),
+        h('div', { class: 'gantt-track' }, h('div', { class: 'gantt-bar ' + vizOf(debtIndex(r.id)) + (r.beyond ? ' beyond' : ''), style: 'width:' + pc(r.fraction) }), ...g.ticks.map((t) => h('span', { class: 'gantt-tick', style: left(t.fraction) })))))),
     h('div', { class: 'gantt-axis', 'aria-hidden': 'true' }, h('span', {}), h('div', { class: 'axis' }, shown.map((t) => h('span', { style: left(t.fraction) }, monthWords(t.ym).slice(0, 3))))),
-    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, g.rows.map((r, i) => h('li', {}, h('span', { class: 'sw ' + vizOf(i), 'aria-hidden': 'true' }), r.name))),
+    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, g.rows.map((r) => h('li', {}, h('span', { class: 'sw ' + vizOf(debtIndex(r.id)), 'aria-hidden': 'true' }), r.name))),
     h('details', { class: 'flow-list' }, h('summary', {}, 'The same timeline as a list'),
       h('ul', {}, g.rows.map((r) => h('li', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, ': ' + money(r.startBalance) + ' today, ' + (r.clearDate ? 'clears ' + shortDate(r.clearDate) : money(r.endBalance) + ' left at the end of the window') + ', interest in the window ' + money(r.interest))))));
 }
@@ -106,9 +110,9 @@ function orderCard(d, ctx) {
   const o = d.order;
   return h('section', { class: 'card', 'aria-labelledby': 'order-h' },
     h('h2', { id: 'order-h' }, 'Payoff order ', h('span', { class: 'count' }, o.strategy === 'snowball' ? 'smallest balance first' : 'highest rate first')),
-    h('p', { class: 'muted' }, 'The extra at the debt (' + money(o.extra) + ' a month) goes to the first unpaid debt in this order; a promo card waits until its promo ends; a debt marked paid last waits for the others.'),
+    h('p', { class: 'muted' }, 'The extra at the debt (' + money(o.extra) + ' a month) goes to the first unpaid debt in this order. A promo card whose interest would come back (deferred interest) comes first, to clear before its promo ends; a debt marked paid last waits for the others.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
-      h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Debt'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Rate today'), h('th', {}, 'Clears'), h('th', { class: 'num' }, 'Interest in the window'))),
+      h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Debt'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Rate today'), h('th', {}, 'Clears'), h('th', { class: 'num' }, 'Interest, next 12 months'))),
       h('tbody', {}, o.rows.map((r) => h('tr', {}, h('td', {}, String(r.position)), h('td', {}, h('a', { href: ledgerHref(r.path) }, r.name), r.payLast ? [' ', h('span', { class: 'pill' }, 'paid last')] : null), h('td', { class: 'num' }, r.balance === null ? 'missing' : money(r.balance)),
         h('td', { class: 'num' }, pctWords(r.rate) + (r.promo ? ' (intro, ends ' + (r.promoEnds ? shortDate(r.promoEnds) : 'date not entered') + ')' : '')),
         h('td', {}, r.clearDate ? shortDate(r.clearDate) : r.planYm ? 'about ' + monthWords(r.planYm) + ' (monthly plan, rough)' : 'not inside the window'),
@@ -124,9 +128,9 @@ function interestCard(d, ctx) {
     h('h2', { id: 'int-h' }, 'Card interest, month by month'),
     h('p', { class: 'muted' }, 'What each card charges at its statement close, stacked by card. Loan interest is not charged by statement; it sits in the order list.'),
     h('div', { class: 'stack', role: 'img', 'aria-label': 'Card interest by month: ' + t.months.map((m) => monthWords(m.ym) + ' ' + money(m.total)).join('; ') },
-      t.months.map((m) => h('div', { class: 'stack-col', title: monthWords(m.ym) + ': ' + money(m.total) }, t.debts.map((x, i) => (m.byDebt[x.id] ? h('div', { class: 'stack-seg ' + vizOf(i), style: 'height:' + pc(t.max ? m.byDebt[x.id] / t.max : 0) }) : null))))),
+      t.months.map((m) => h('div', { class: 'stack-col', title: monthWords(m.ym) + ': ' + money(m.total) }, t.debts.map((x) => (m.byDebt[x.id] ? h('div', { class: 'stack-seg ' + vizOf(debtIndex(x.id)), style: 'height:' + pc(t.max ? m.byDebt[x.id] / t.max : 0) }) : null))))),
     h('div', { class: 'stack-axis', 'aria-hidden': 'true' }, t.months.map((m) => h('span', {}, monthWords(m.ym).slice(0, 3)))),
-    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, t.debts.map((x, i) => h('li', {}, h('span', { class: 'sw ' + vizOf(i), 'aria-hidden': 'true' }), x.name + ' ' + money(x.total)))),
+    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, t.debts.map((x) => h('li', {}, h('span', { class: 'sw ' + vizOf(debtIndex(x.id)), 'aria-hidden': 'true' }), x.name + ' ' + money(x.total)))),
     h('details', { class: 'flow-list' }, h('summary', {}, 'The same months as a list'), h('ul', {}, t.months.map((m) => h('li', {}, monthWords(m.ym) + ': ' + money(m.total) + ' (' + t.debts.filter((x) => m.byDebt[x.id]).map((x) => x.name + ' ' + money(m.byDebt[x.id])).join(', ') + ')')))),
     mathButton(['debt:interestWindow'], ctx));
 }

@@ -189,7 +189,8 @@ export function bracketBar(tax, rules) {
 // Net worth a year ahead for each assumption set and each saved scenario: [{ id, words, points: [[year, value]] }].
 export function scenarioLines(spine, rules, { years = 30, saved = [] } = {}) {
   const asOf = spine.meta.asOf, y0 = +asOf.slice(0, 4), endYm = (y0 + years) + '-12';
-  const run = (sp) => project(sp, rules, { asOf, mode: 'expected', endYm }).years.filter((x) => x.year <= y0 + years).map((x) => [x.year, x.netWorth]);
+  // The surplus invested, as the FI chart reads it (round 2: two charts of one future agree).
+  const run = (sp) => project(sp, rules, { asOf, mode: 'expected', endYm, investSurplus: true }).years.filter((x) => x.year <= y0 + years).map((x) => [x.year, x.netWorth]);
   const out = ['worst', 'likely', 'optimistic'].map((id) => ({ id, words: SCENARIO_WORDS[id] + ' returns', points: run(withScenario(spine, rules, id)) }));
   for (const x of saved.slice(0, 2)) out.push({ id: 'saved:' + x.id, words: 'Saved: ' + x.name, points: run({ ...x.spine, meta: { ...x.spine.meta, asOf } }) });
   return out;

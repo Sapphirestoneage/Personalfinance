@@ -1371,7 +1371,7 @@ function payChartsRow() {
 function fiChartsRow() {
   const c = fiCtx(cur());
   if (!c.s.fi.fiNumber.value) return null;
-  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard(savingsCurve(solvers(c.spine, rules, c.s)), { yearsToFi: c.s.fi.yearsToFi.value })]);
+  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard((() => { const x = savingsCurve(solvers(c.spine, rules, c.s)); return x ? { ...x, target: null } : null; })(), { yearsToFi: c.s.fi.yearsToFi.value })]);
 }
 
 // Debt payoff dates (moved here from the Calendar): one line with the debt-free month, opening the clear dates, the

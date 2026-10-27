@@ -8,6 +8,7 @@
 
 import { valueOf as v, round2, getAt } from './spine.js';
 import { editExpense, editFact } from './edits.js';
+import { rateOn } from './debt.js';
 
 const rateWords = (r) => Math.round(r * 10000) / 100 + '%';
 
@@ -28,7 +29,9 @@ export function negotiationList(spine, cf, ref) {
     const apr = v(d.apr), bal = v(d.balance);
     if (d.type !== 'credit_card' || typeof apr !== 'number' || apr < ref.cardRateAbove || !(bal > 0)) continue;
     const path = 'debts.' + d.id + '.apr';
-    out.push({ id: d.id, kind: 'card', type: 'card', label: v(d.name) || d.id, path, now: apr, typical: ref.cardRateAbove, above: null, yearCost: round2(bal * apr), words: 'Card rate', script: ref.cardScript.replace('{rate}', rateWords(apr)), called: lastCall(path) });
+    const r = rateOn(d, spine.meta.asOf);
+    // A card on an intro rate (round 2): the rate to call about is the one after; the words say when it starts.
+    out.push({ id: d.id, kind: 'card', type: 'card', label: v(d.name) || d.id, path, now: apr, promo: r.promo ? { rate: r.rate, ends: v(d.promoEnds) } : null, typical: ref.cardRateAbove, above: null, yearCost: round2(bal * apr), words: 'Card rate', script: ref.cardScript.replace('{rate}', rateWords(apr)), called: lastCall(path) });
   }
   // Ranked by dollars a month at stake (round 1, money logic: dollars lost a month): a card's interest a month, a
   // bill's amount above typical; a bill at or under typical last.

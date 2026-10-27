@@ -297,10 +297,10 @@ function paychecksScreen(m) {
     legend: Object.values(JOB).map(([c, words]) => ({ c, words })),
     table: { head: ['Paycheck', ...Object.values(JOB).map((x) => x[1]), 'In all'], rows: a.paychecks.map((p) => [shortDate(p.date) + ': ' + p.label, ...Object.keys(JOB).map((k) => money(p.byKind[k])), money(p.assigned)]) } });
   return [
-    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
+    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one. The last one shown counts no bills after the three months, so more of it reads as going to the Plan.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
     h('ul', { class: 'go-list pay-list' }, a.paychecks.flatMap((p) => [
       goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, third(p) ? [' ', third(p)] : null],
-        [h('span', { class: 'go-total' }, money(p.amount)), p.carryIn ? ' plus ' + money(p.carryIn) + ' carried in' : '', '; ' + (p.left > 0.004 ? money(p.left) + ' to the Plan' : 'all to bills and spending')]),
+        [h('span', { class: 'go-total' }, money(p.amount)), p.carryIn ? ' plus ' + money(p.carryIn) + ' carried in' : '', (p.left > 0.004 ? '· ' + money(p.left) + ' to the Plan' : '· all to bills and spending')]),
       p.carryOut ? h('li', { class: 'pay-arrow', 'aria-label': money(p.carryOut) + ' carried to the ' + shortDate(p.carryTo) + ' paycheck' }, h('span', { 'aria-hidden': 'true' }, '\u2193'), ' ' + money(p.carryOut) + ' carried to the ' + shortDate(p.carryTo) + ' paycheck') : null])),
     h('section', { class: 'card' }, chart)
   ];
@@ -325,7 +325,7 @@ function goalsScreen(m) {
   return [bars ? h('section', { class: 'card' }, bars) : null, h('section', { class: 'card', 'aria-label': SCREENS.goals },
     g.setAsideTotal ? h('p', { class: 'muted' }, money(g.setAsideTotal) + ' a month goes to goals.') : null,
     g.rows.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Goal'), h('th', { class: 'num' }, 'Target'), h('th', { class: 'num' }, 'There'), h('th', { class: 'num' }, 'To go'), h('th', {}, 'Reached'), h('th', {}, 'Costs the FI date'))),
-      h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? '' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
+      h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? 'none yet' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
     h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
     g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null)];
 }
@@ -358,7 +358,10 @@ function whatIfScreen(m) {
       row('Interest on the way', money(a.interest), money(b.interest)),
       row('Financial independence', a.fiYear === null ? 'not at this pace' : 'about ' + a.fiYear, b.fiYear === null ? 'not at this pace' : 'about ' + b.fiYear, a.fiYear !== null && b.fiYear !== null && a.fiYear !== b.fiYear ? plural(Math.abs(a.fiYear - b.fiYear), 'year') + (b.fiYear < a.fiYear ? ' sooner' : ' later') : null));
   };
-  const soon = () => { clearTimeout(timer); timer = setTimeout(() => { keep({ moves: { ...moves } }); draw(); }, 120); };
+  const saveBtn = h('button', { type: 'submit', class: 'btn primary' }, 'Save as a scenario');
+  const why = h('p', { class: 'edit-hint' });
+  const canSave = () => { const any = Object.values(moves).some((x) => x > 0); saveBtn.disabled = !any; why.textContent = any ? '' : 'Slide something first: at zero it is today.'; };
+  const soon = () => { canSave(); clearTimeout(timer); timer = setTimeout(() => { keep({ moves: { ...moves } }); draw(); }, 120); };
   const sliders = MOVES.map(([key, label, min, max, step, hint]) => {
     const read = h('output', { class: 'wi-value', for: 'wi-' + key }, money(moves[key]));
     const r = h('input', { type: 'range', id: 'wi-' + key, min, max, step, value: moves[key], 'aria-describedby': 'wi-' + key + '-hint' });
@@ -375,14 +378,15 @@ function whatIfScreen(m) {
     msg.textContent = '';
     say(said.added('Scenario ' + entry.name), () => { keepScenarios(before); refresh(); }, () => { keepScenarios([...before, entry]); refresh(); });
   };
-  draw();
+  draw(); canSave();
   return h('section', { class: 'card', 'aria-label': SCREENS.whatif },
     h('p', { class: 'muted' }, 'Slide to see what moves. Your numbers stay as they are.'),
     h('div', { class: 'wi-sliders' }, sliders),
     out,
     h('form', { class: 'tool-form', novalidate: true, onsubmit: save },
       h('label', { for: 'wi-name', class: 'edit-label' }, 'Name it (optional)'), name, msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as a scenario'),
+      why,
+      h('div', { class: 'edit-actions' }, saveBtn,
         h('button', { type: 'button', class: 'btn', onclick: () => { keep({ moves: null }); refresh(); } }, 'Set all back to zero'))),
     h('ul', { class: 'go-list' }, goRow('#/scenarios', SCREENS.scenarios, 'Compare or load a saved one')));
 }
@@ -423,7 +427,7 @@ function callsScreen(m) {
       h('p', { class: 'muted' }, 'One call each, most dollars a month at stake first. Typical prices are a starting table to check, not a promise.'),
       h('ol', { class: 'audit-list' }, list.map((x) => h('li', { class: 'audit-row' },
         h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(x.path) }, x.label), h('span', { class: 'audit-cost' }, nowWords(x))),
-        h('p', { class: 'tile-sub' }, x.kind === 'card' ? 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance' : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
+        h('p', { class: 'tile-sub' }, x.kind === 'card' ? (x.promo ? 'Intro ' + rateWords(x.promo.rate) + ' until ' + shortDate(x.promo.ends) + ', then ' + rateWords(x.now) + ': about ' + money(x.yearCost) + ' of interest a year at this balance after that' : 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance') : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
         x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? rateWords(x.called.from) + ' to ' + rateWords(x.called.to) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
         h('details', { class: 'script-fold' }, h('summary', {}, 'Call script'), h('p', { class: 'script' }, x.script),
           h('button', { type: 'button', class: 'btn small', onclick: () => { try { navigator.clipboard.writeText(x.script); say('Script copied'); } catch { say('Copy did not work here; select the words instead'); } } }, 'Copy the script')),
@@ -436,6 +440,8 @@ function callsScreen(m) {
   ];
 }
 
+// The curve's target dot only for an age that was typed (round 2: no answer for an age nobody asked about).
+const noTarget = (c, drop) => (c && drop ? { ...c, target: null } : c);
 function solveScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const byAge = kept().byAge || '';
@@ -447,12 +453,12 @@ function solveScreen(m) {
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = age.value.trim() === '' ? { ok: true } : parseInput('int', age.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ byAge: age.value.trim() }); refresh(); } },
       h('label', { for: 'solve-age', class: 'edit-label' }, 'Financially independent by age'), age, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Solve'))),
-    x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + (byAge.trim() ? '' : ' (no age typed, so the app\'s default)') + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
+    !byAge.trim() ? h('p', { class: 'muted' }, 'Type the age you want to be financially independent by, and this says what it takes: the savings rate, the spending, the take-home or the return.') : x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
       h('ul', {}, x.rows.map((r) => h('li', {}, h('strong', {}, r.label + ': '), r.value === null ? r.words : (r.unit === 'ratio' ? pct(r.value, 1) : money(r.value) + ' a month') + ' (' + r.words + ')'))),
       h('p', { class: 'tile-note' }, kindChip(x.kind), ' Each answer changes one thing and holds everything else the same.'),
       math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note)),
   // The same answer as two charts (Track C): years to FI at each savings rate, and the path to the FI number.
-  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(savingsCurve(x), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
+  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(noTarget(savingsCurve(x), !byAge.trim()), { yearsToFi: m.s.fi.yearsToFi.value }), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
 }
 
 function wageScreen(m) {

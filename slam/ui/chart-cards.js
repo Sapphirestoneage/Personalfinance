@@ -130,13 +130,15 @@ export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', as
   const p = C.debtPath(spine, rules, { strategy, extra, asOf });
   if (!p.debts.length) return [];
   const T = p.months.map(ymT);
-  const series = p.debts.map((d, i) => ({ label: d.name, c: 1 + (i % 5), stack: true, points: T.map((t, j) => [t, d.stacked[j]]) }));
+  // Each debt keeps one color on every chart: its place in the household's list (round 2).
+  const colorOf = (id) => 1 + (Math.max(0, (spine.debts || []).findIndex((d) => d.id === id)) % 5);
+  const series = p.debts.map((d) => ({ label: d.name, c: colorOf(d.id), stack: true, points: T.map((t, j) => [t, d.stacked[j]]) }));
   const tips = (t) => { const j = T.indexOf(t); return j < 0 ? null : monthWords(p.months[j]) + ': ' + p.debts.map((d) => d.name + ' ' + exactMoney(d.points[j])).join(', '); };
   const every = Math.max(1, Math.ceil(p.months.length / 24));
   const area = chartCard({ id: 'debt-area', question: 'When is your debt gone?',
     summary: p.neverPaysOff ? 'At this pace the debt is never paid off.' : 'Debt free ' + ymWords(p.debtFreeYm) + ', with ' + exactMoney(p.totalInterest) + ' of interest on the way, paying ' + exactMoney(extra) + ' a month extra.',
     draw: (w) => lines({ width: w, series, xFmt: (t) => String(yearOf(t)), tips, label: 'Debt, stacked, to zero' }),
-    legend: p.debts.map((d, i) => ({ c: 1 + (i % 5), words: d.name })), note: p.rough ? ROUGH_NOTE : null,
+    legend: p.debts.map((d) => ({ c: colorOf(d.id), words: d.name })), note: p.rough ? ROUGH_NOTE : null,
     table: { head: ['Month', ...p.debts.map((d) => d.name)], rows: p.months.filter((_, j) => j % every === 0 || j === p.months.length - 1).map((ym) => { const j = p.months.indexOf(ym); return [monthWords(ym), ...p.debts.map((d) => exactMoney(d.points[j]))]; }) } });
   const yrs = p.byYear;
   const split = chartCard({ id: 'debt-split', question: 'How much of each year\'s payments is interest?',

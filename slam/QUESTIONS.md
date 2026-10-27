@@ -209,3 +209,9 @@ The Plan's step 4 (Emergency reserves, $10,695 to go) is the cushion target from
 
 ## 158. Got extra money? asks about tax twice (round 1, finding 27)
 "Is tax already taken out?" and "Where did it come from?" can contradict. Default used: unchanged. Proposed: ask only where it came from and set the tax from that, showing the tax question only for a gift, a refund or a sale.
+
+## 159. Tax fields: "13 of 13 filled in" and "To fill in (2)" (overnight round 2, finding 6)
+My numbers counts the tax fields every household needs; the Taxes screen's "To fill in" also counts two optional ones. Default used: unchanged. Proposed: one list of open questions read by both (see also round 1 finding 17).
+
+## 160. What it takes to get there, with no age typed (round 2, finding 8)
+It used the app's default (Coast age plus 15, so 80) and answered "savings rate needed 0.0%". Default used now: no answers until an age is typed; the charts still show. Say if it should default to an age (65 to match Coast FI, or one set in Profile).

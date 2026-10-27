@@ -81,7 +81,8 @@ function debtCard(d) {
   const owing = d.order.rows.filter((r) => (r.balance ?? 0) > 0);
   if (!owing.length) return h('section', { class: 'card' }, h('h2', {}, 'Debt'), h('p', {}, 'No debt to pay off.'));
   return goCard('Debt', numbersHref('debt'), h('ul', {}, owing.map((r) => h('li', {}, r.name + ' (' + m(r.balance) + '): ' + (r.planYm ? 'clear by ' + monthWords(r.planYm) : 'not yet planned')))),
-    d.clearDates.rows.length ? h('p', { class: 'tile-note' }, d.clearDates.rows.map((r) => r.label.replace(/ \(.*\)$/, '') + ' by ' + monthWords(r.ym)).join('. ') + '.') : null);
+    d.clearDates.rows.length ? h('p', { class: 'tile-note' }, d.clearDates.rows.map((r) => r.label.replace(/ \(.*\)$/, '') + ' by ' + monthWords(r.ym)).join('. ') + '.') : null,
+    h('p', { class: 'tile-note' }, 'With ' + m(d.order.extra) + ' a month extra at the debt, in this order.'));
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

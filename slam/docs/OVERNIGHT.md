@@ -56,3 +56,45 @@ form). 25 (seven FI numbers on Goals): every one is asked for in the spec; a cal
 
 **After.** Suites 1,066 pass (the paycheck plan test grew); root 35,911.
 
+## Round 2
+
+**Before.** qa-crawl PASS (151 screens x 3 looks, 333 taps; reported: 1 dead click, 399 small taps; cents, raw
+dates and typed-looking placeholders now 0). agree-check PASS. Suites 1,066; root 35,911. Reviewer: 8 high, 18 medium,
+4 low (round-2/findings.md), down from 14 high.
+
+**Fixed.**
+- 2 (high, a clear bug, with a test): the Plan's low-interest step counted the Store card's $1,200 at its 0% intro
+  rate, which the high-interest step already counts by its rate after: $21,200 is now $20,000, and steps 3 and 9 add to
+  the debt total.
+- 7 (high, with a test): Saved scenarios projected without investing the surplus, the FI chart with it, so net worth
+  read below invested money; both now read one projection.
+- 1 (high): Session Needs did not show the household's "Miscellaneous" line (named like the section, with lines of
+  its own beside it), so $274 was in the total and on no row; it now has its own row.
+- 4 (high): the Calendar's "Plan: $712 to high-interest debt" says "(a suggestion, not in the cash line)".
+- 5 (high): the order table's column reads "Interest, next 12 months", so it no longer reads as part of the monthly
+  plan's total under it.
+- 8 (high): What it takes asks for an age before answering (no "0.0% needed" for an age nobody typed); the curve's
+  target dot shows only for a typed age (QUESTIONS 160).
+- 3: Paychecks says the last paycheck shown counts no bills after the three months; the stray space before the
+  separator is gone.
+- 9, 13: the payoff order says why a promo card with deferred interest comes first; the clear dates say "after the
+  12-month run" with the monthly plan below for the months.
+- 10: a debt wears one color on every chart (its place in the household's list).
+- 18: a card on an intro rate says "Intro 0% until Feb 28, 2027, then 29.99%" on Bills worth a call.
+- 20: a goal with nothing set aside says "none yet", not a blank.
+- 25: the One-pager's Debt card says "With $712 a month extra at the debt, in this order".
+- 28: Save as a scenario is disabled at all zero, with the reason under it.
+- From qa-crawl: "Add the note" on an empty box says to type one (it was a dead click).
+
+**To QUESTIONS.** 6 (159), 8 (160).
+
+**Left, with reason.** 11 (the order table scrolls sideways inside its box at 390, by design), 12 (forgiveness words
+on a standard plan: engine), 14 (which run each Debt block uses: QUESTIONS 155), 15 and 16 (the move-money line on four
+screens and the Spending form: each is that screen's job), 17 (Session transport lines), 19 (the Plan's steps that run
+together), 21 (FI numbers), 22 (a payday and a big bill on the same day show the payday dot), 23 ($686 in the month
+against $712 a month: the calendar month counts what others owe back), 24 (the Rough chip on Today), 26 (the small-tap
+count), 27 (an icon on the empty state), 29 (the FI charts on two screens: two ways in, on purpose), 30 ($228 to cover
+$227: rounded up on purpose).
+
+**After.** Suites 1,068 pass; root 35,911.
+
