@@ -51,7 +51,7 @@ what reads as the same thing.
 
 **Left, with reason.** 17 and 18 (open-question counts and Rough marks read from different lists on different
 screens): engine work, logged for the day. 24 (the Spending form open): it is that tab's one job (marked as the main
-form). 25 (seven FI numbers on Goals): every one is asked for in the spec; the "When you reach FI" charts row now leads.
+form). 25 (seven FI numbers on Goals): every one is asked for in the spec; a calmer layout is a day-session change (the "When you reach FI" charts row sits under them).
 28 ($228 to cover -$227): the fix rounds up to whole dollars on purpose.
 
 **After.** Suites 1,066 pass (the paycheck plan test grew); root 35,911.
