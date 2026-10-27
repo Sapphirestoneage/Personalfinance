@@ -67,6 +67,6 @@ test('the docs say DATING and My numbers, and the tab list is the new one', () =
     assert.doesNotMatch(doc, /\bthe Ledger\b(?!\) holds)|Ledger link|\bthe Dashboard\b/, f + ' names the old pages');
   }
   assert.match(read('README.md'), /D Debt, A Assets, T Taxes, I Income, N Needs \(all\n {2}spending\) and G Goals/);
-  assert.match(read('README.md'), /six tabs on every page \(Today, Session, My numbers,\nCalendar, Spending, Plan;/);
+  assert.match(read('README.md'), /seven tabs on every page \(Today, Session, My numbers,\nCalendar, Spending, Plan, Profile;/);
   assert.match(read('CONTRACTS.md'), /its DATING section \(D Debt, A Assets, T Taxes, I Income, N Needs, G Goals/);
 });

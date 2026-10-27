@@ -33,6 +33,7 @@ export const LEVEL1 = [
   { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it']], does: 'Sets how Today words the next step.' },
   { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['roommates', 'With roommates'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
   { id: 'roommates', area: 'home', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => ans(a, 'home') === 'roommates', does: 'Rent and the bills read as your share.' },
+  { id: 'whoseFamily', area: 'home', label: 'Whose family?', kind: 'one', options: [['parents', 'My parents'], ['partner', 'A partner\'s family'], ['other', 'Other family']], when: (a) => ans(a, 'home') === 'family', does: 'Names who covers the bills they pay for you.' },
   { id: 'familyPay', area: 'home', label: 'What do you pay your family?', kind: 'one', options: [['rent', 'Rent'], ['bills', 'Some bills'], ['nothing', 'Nothing']], when: (a) => ans(a, 'home') === 'family', does: 'Rent becomes "paid to family"; utilities are covered unless you pay bills.' },
   { id: 'ownLoan', area: 'home', label: 'Is there a mortgage?', kind: 'one', options: [['mortgage', 'A mortgage'], ['paidOff', 'Paid off']], when: (a) => ans(a, 'home') === 'own', does: 'Shows the mortgage, or only the property tax and insurance.' },
   { id: 'moving', area: 'home', label: 'Moving in the next year?', kind: 'one', options: [['yes', 'Yes'], ['maybe', 'Maybe'], ['no', 'No']], does: 'Adds moving costs as a goal to plan for.' },
@@ -147,7 +148,9 @@ export function fieldsFor(a = {}) {
   const covered = {};
   // Living with family: rent becomes "Rent paid to family" (hidden when you pay them nothing or only bills), and
   // utilities and internet default to covered, unless you pay some bills.
-  if (ans(a, 'home') === 'family' && ans(a, 'familyPay') !== 'bills') { covered.utilities = 'Family'; covered.internet = 'Family'; }
+  // Whose family covers them (question 96): parents, a partner's family, or other family; unsaid reads Family.
+  const family = { parents: 'Parents', partner: 'Partner\'s family', other: 'Family' }[ans(a, 'whoseFamily')] || 'Family';
+  if (ans(a, 'home') === 'family' && ans(a, 'familyPay') !== 'bills') { covered.utilities = family; covered.internet = family; }
   const meaning = {};
   if (W2(a) && ans(a, 'payType') === 'hourly') meaning.pay = 'hourly rate x usual hours a week x 52 / 12, a month';
   else if (W2(a) && ans(a, 'payType') === 'salary') meaning.pay = 'yearly salary / 12, a month';
@@ -267,8 +270,9 @@ export function syncProfile(spine, { today, changed = null }) {
   let s = spine;
   for (const e of spine.expenses || []) {
     const k = lineKey(e), by = e.coveredBy && v(e.coveredBy), want = f.covered[k] || null;
-    if (want && !by) s = setAt(s, 'expenses.' + e.id, { ...getAt(s, 'expenses.' + e.id), covered: fact(true, { asOf: today, source: NAME_SOURCE }), coveredBy: fact(want, { asOf: today, source: NAME_SOURCE }) });
-    else if (!want && ((by === 'Family' && e.coveredBy.source !== 'typed') || (by === 'Parents' && e.covered && e.covered.source === NAME_SOURCE))) {
+    const mine = !!e.coveredBy && e.coveredBy.source === NAME_SOURCE;
+    if (want && (!by || (mine && by !== want))) s = setAt(s, 'expenses.' + e.id, { ...getAt(s, 'expenses.' + e.id), covered: fact(true, { asOf: today, source: NAME_SOURCE }), coveredBy: fact(want, { asOf: today, source: NAME_SOURCE }) });
+    else if (!want && ((by === 'Family' && e.coveredBy.source !== 'typed') || mine || (by === 'Parents' && e.covered && e.covered.source === NAME_SOURCE))) {
       const x = { ...getAt(s, 'expenses.' + e.id) }; delete x.covered; delete x.coveredBy; s = setAt(s, 'expenses.' + e.id, x);
     }
   }

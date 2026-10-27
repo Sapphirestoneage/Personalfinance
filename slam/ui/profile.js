@@ -1,10 +1,16 @@
-// The Profile (Phase 2.5 B3), opened by tapping the client's name in the header; the six tabs do not change. Level 1
+// The Profile (Phase 2.5 B3), a main tab since 2026-10-27, laid out like My numbers: five groups, biggest first, each
+// opening its own screen (Your life, Homework, Your assumptions, Goals settings, Preferences). What is set once or
+// rarely changed lives here, off the daily screens, which keep a one-line link. Level 1
 // by area (each ends with one line saying what it set up), Level 2 for what Level 1 opened (each question known now,
 // looked up later or not sure), the life changes, and the client's to-dos. "Import answers" reads the file the
 // client sent from "Before our first call". Every change goes through the shell's change(), so Undo takes it back.
 // Formatting only: engine/profile.js.
 
-import { startPage, change } from './shell.js';
+import { startPage, change, refresh } from './shell.js';
+import { clientOverrides } from '../engine/assumptions.js';
+import { scenarioBar, pickedScenario } from './scenario.js';
+import { SCENARIO_WORDS } from '../engine/scenarios.js';
+import { prefsScreen, prefsSummary } from './prefs-screen.js';
 import { h, money, shortDate } from './view.js';
 import { questionEl } from './profile-q.js';
 import { AREAS, LEVEL1, asked, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
@@ -14,13 +20,42 @@ const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + St
 const AREA_NAMES = Object.fromEntries(AREAS);
 const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: todayIso(), by: 'coach' }), q.label + (x === null ? ' cleared' : ' answered') + '. Logged as a life change');
 
-// ---------------------------------------------------------------- the top
-function top({ spine }) {
-  const a = answersOf(spine), f = fieldsFor(a), l2 = level2(a), hw = homeworkList(spine), changes = spine.lifeChanges || [];
+// ---------------------------------------------------------------- the top: five groups, biggest first
+const goRow = (href, mark, name, total, sub) => h('li', {}, h('a', { class: 'go-row', href }, h('span', { class: 'go-mark', 'aria-hidden': 'true' }, mark), h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, total !== null ? h('span', { class: 'go-total' }, total) : null, total !== null ? ' ' : null, sub)));
+function top({ spine, rules }) {
+  const a = answersOf(spine), hw = homeworkList(spine), own = Object.keys(clientOverrides(spine)).length;
+  const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
+  const todo = hw.reduce((n, g) => n + g.items.length, 0);
+  const groups = [
+    { n: l1.length, row: goRow('#/life', 'L', 'Your life', done + ' of ' + l1.length, 'answered: where you live, work, money in and out, who it is shared with') },
+    { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up, and the life changes') },
+    { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client; the rest are your defaults' : 'every number the app assumes, as your defaults') },
+    { n: 1, row: goRow('#/goals', 'G', 'Goals settings', SCENARIO_WORDS[pickedScenario()], 'assumption set for every FI number') },
+    { n: 0, row: goRow('#/prefs', 'P', 'Preferences', null, prefsSummary()) }
+  ];
+  return [
+    h('p', { class: 'lede' }, 'How life works right now, and how the app is set up for it. An answer changes which fields show and what the numbers mean; nothing typed is deleted.'),
+    loadCard(),
+    h('ul', { class: 'go-list', 'aria-label': 'Profile' }, [...groups].sort((x, y) => y.n - x.n).map((g) => g.row))
+  ];
+}
+function goalsScreen({ spine, rules }) {
+  return [
+    h('section', { class: 'card', 'aria-labelledby': 'gs-set' }, h('h2', { id: 'gs-set' }, 'Assumption set'),
+      h('p', { class: 'muted' }, 'Every FI number on Today, My numbers, Plan and the One-pager reads this set.'),
+      scenarioBar(spine, rules, pickedScenario(), () => refresh())),
+    h('section', { class: 'card', 'aria-labelledby': 'gs-more' }, h('h2', { id: 'gs-more' }, 'Goals themselves'),
+      h('p', {}, h('a', { href: 'ledger.html#/goals' }, 'Goals, the FI number and the client\'s own guesses are on My numbers'), '.'))
+  ];
+}
+function homeworkScreen(ctx) {
+  const changes = ctx.spine.lifeChanges || [];
+  return [...todoScreen(ctx).flat(), h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/changes' }, h('span', { class: 'go-name' }, 'Life changes'), h('span', { class: 'go-total' }, String(changes.length)), h('span', { class: 'go-sub' }, 'Every answer changed, with its date.'))))];
+}
+function lifeScreen({ spine }) {
+  const a = answersOf(spine), f = fieldsFor(a), l2 = level2(a);
   const gut = spine.household.gutSpending ? v(spine.household.gutSpending) : null;
   return [
-    h('p', { class: 'lede' }, 'How life works right now. An answer changes which fields show and what the numbers mean; nothing typed is deleted.'),
-    loadCard(),
     gut !== null ? h('p', { class: 'muted' }, 'Their guess before we started: ' + money(gut) + ' a month.') : null,
     h('h2', {}, 'Before the call'),
     h('ul', { class: 'go-list' }, AREAS.map(([area, label]) => {
@@ -29,10 +64,7 @@ function top({ spine }) {
     })),
     h('h2', {}, 'In the session'),
     l2.length ? h('ul', { class: 'go-list' }, l2.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: '#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions')))))) : h('p', { class: 'muted' }, 'Answer the questions above first; these open from them.'),
-    f.does.length ? h('section', { class: 'card' }, h('h2', {}, 'What the answers do'), h('ul', {}, f.does.map((d) => h('li', {}, d.words)))) : null,
-    h('ul', { class: 'go-list' },
-      h('li', {}, h('a', { class: 'go-row plain', href: '#/todo' }, h('span', { class: 'go-name' }, 'To-dos'), h('span', { class: 'go-total' }, String(hw.reduce((n, g) => n + g.items.length, 0))), h('span', { class: 'go-sub' }, 'What to look up, and where.'))),
-      h('li', {}, h('a', { class: 'go-row plain', href: '#/changes' }, h('span', { class: 'go-name' }, 'Life changes'), h('span', { class: 'go-total' }, String(changes.length)), h('span', { class: 'go-sub' }, 'Every answer changed, with its date.'))))
+    f.does.length ? h('section', { class: 'card' }, h('h2', {}, 'What the answers do'), h('ul', {}, f.does.map((d) => h('li', {}, d.words)))) : null
   ];
 }
 
@@ -101,11 +133,15 @@ function changesScreen({ spine }) {
 }
 
 startPage({
-  tab: null, title: 'Profile', parent: ['Today', 'dashboard.html'],
-  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : levels[0] === 'todo' ? 'To-dos' : levels[0] === 'changes' ? 'Life changes' : AREA_NAMES[levels[0]] || null),
+  tab: 'profile', title: 'Profile',
+  name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'Goals settings', prefs: 'Preferences' })[levels[0]] || AREA_NAMES[levels[0]] || null),
   render: (ctx) => {
     const [l0, l1] = ctx.levels;
     if (!l0) return top(ctx);
+    if (l0 === 'life') return lifeScreen(ctx);
+    if (l0 === 'homework') return homeworkScreen(ctx);
+    if (l0 === 'goals') return goalsScreen(ctx);
+    if (l0 === 'prefs') return prefsScreen(ctx);
     if (l0 === 'ask' && !l1) { const l2 = level2(answersOf(ctx.spine)); return l2.length ? h('ul', { class: 'go-list' }, l2.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: '#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label))))) : h('p', { class: 'card' }, 'Nothing to ask yet.'); }
     if (l0 === 'ask') return askScreen(ctx, l1);
     if (l0 === 'todo') return todoScreen(ctx);

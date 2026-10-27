@@ -1,5 +1,5 @@
 // The shell (S-230): what every page shares, so a page only draws its own screen.
-// - Six tabs, the same on every page: at the bottom on a phone, at the top on a computer. Builder pages light none.
+// - Seven tabs (Profile joined on 2026-10-27), the same on every page: at the bottom on a phone, at the top on a computer. Builder pages light none.
 // - The header: the title, whose numbers these are, the page's own buttons, then Undo and Redo.
 // - Screen by screen: a deeper level (page.html#/debt/credit-cards/amex-blue) is its own screen and a real history
 //   entry, with a trail and a Back button. Back, the trail and the browser's back all walk the same entries, and
@@ -26,7 +26,8 @@ export const TABS = [
   ['numbers', 'My numbers', 'ledger.html'],
   ['calendar', 'Calendar', 'calendar.html'],
   ['spending', 'Spending', 'spending.html'],
-  ['plan', 'Plan', 'plan.html']
+  ['plan', 'Plan', 'plan.html'],
+  ['profile', 'Profile', 'profile.html']
 ];
 // My numbers opens at a section, and deeper, by these words: numbersHref('debt', 'credit-cards').
 export const SECTIONS = { needs: 'Needs', debt: 'Debt', assets: 'Assets', taxes: 'Taxes', income: 'Income', goals: 'Goals' };

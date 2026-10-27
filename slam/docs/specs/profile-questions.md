@@ -28,6 +28,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 - **Where do you live?** (I rent / I own / With roommates / With family, or Not sure). Shows rent or a mortgage and the bills that go with it.
 - **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
+- **Whose family?** (My parents / A partner's family / Other family, or Not sure; asked only when it applies). Names who covers the bills they pay for you.
 - **What do you pay your family?** (Rent / Some bills / Nothing, or Not sure; asked only when it applies). Rent becomes "paid to family"; utilities are covered unless you pay bills.
 - **Is there a mortgage?** (A mortgage / Paid off, or Not sure; asked only when it applies). Shows the mortgage, or only the property tax and insurance.
 - **Moving in the next year?** (Yes / Maybe / No, or Not sure). Adds moving costs as a goal to plan for.

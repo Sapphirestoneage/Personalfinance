@@ -48,7 +48,7 @@ function list(base, rules) {
   const ctx = figure(base, rules);
   return [
     h('p', { class: 'lede' }, 'How every number is figured: its formula, then the same formula with today\'s numbers.'),
-    h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'dashboard.html#scenario' }, 'change it on Today'), '.'),
+    h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(base, rules, set) + '); ', h('a', { href: 'profile.html#/goals' }, 'change it in Profile'), '.'),
     h('ul', { class: 'go-list', 'aria-label': 'Every number' }, screens(base, rules).map(([level, id]) => {
       const e = explainMetric(id, ctx);
       return h('li', {}, h('a', { class: 'go-row plain', href: '#/' + encodeURIComponent(level) },

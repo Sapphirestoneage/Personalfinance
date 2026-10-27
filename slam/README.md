@@ -94,9 +94,9 @@ pure engines. Start the server as above, then open:
   formula with today's numbers, its inputs and its rules. The rules
   themselves, with their sources, are on `rules.html`.
 
-Phase 2.5 (S-230): six tabs on every page (Today, Session, My numbers,
-Calendar, Spending, Plan; at the bottom on a phone, at the top on a
-computer). My numbers (`ledger.html`, once the Ledger) holds the six DATING
+Phase 2.5 (S-230): seven tabs on every page (Today, Session, My numbers,
+Calendar, Spending, Plan, Profile; at the bottom on a phone, at the top on a
+computer; Profile joined on 2026-10-27). My numbers (`ledger.html`, once the Ledger) holds the six DATING
 sections. The One-pager opens from a button on Today, and its Back returns
 there. Today is `dashboard.html`; Session (`session.html`) lists the five
 steps of a first call. Every change on any page can be undone from any page

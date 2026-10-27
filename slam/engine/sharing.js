@@ -11,7 +11,7 @@ import { valueOf } from './spine.js';
 const v = valueOf;
 export const SHARE_FIELDS = ['shared', 'sharedWith', 'yourShare', 'whoPays', 'covered', 'coveredBy'];
 // Who can cover a bill: built in, then the household's own names (S-176).
-export const BUILT_IN_PAYERS = ['Parents', 'Partner', 'Roommate', 'Employer', 'Family'];
+export const BUILT_IN_PAYERS = ['Parents', 'Partner', 'Partner\'s family', 'Roommate', 'Employer', 'Family'];
 export const payersOf = (spine) => [...new Set([...BUILT_IN_PAYERS, ...(spine.household.payers || [])])];
 // An expense someone else pays: covered, and by whom.
 export const coverOf = (e) => ({ covered: !!e.covered && valueOf(e.covered) === true, by: e.coveredBy ? valueOf(e.coveredBy) : null });

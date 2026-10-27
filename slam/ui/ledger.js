@@ -1095,7 +1095,7 @@ function sectionTop(sec) {
   if (sec.slug === 'goals') {
     const fi = fiCtx(cur()).s.fi, set = pickedScenario();
     return [
-      h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(cur(), rules, set) + '), the same as Today. ', h('a', { href: 'dashboard.html#scenario' }, 'Change it on Today'), '.'),
+      h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(cur(), rules, set) + '), the same as Today. ', h('a', { href: 'profile.html#/goals' }, 'Change it in Profile'), '.'),
       h('section', { class: 'card nw-pair fi-three', 'aria-label': 'Financial independence, three ways' },
         figure('FI number: today\'s spending', fi.today, null, ['fiToday'], true),
         figure('FI number: your goal', fi.goal, null, ['fiNumber'], true),
