@@ -30,6 +30,8 @@ function panel(ids, ctx, depth) {
       if (!e) return null;
       return h('section', { class: 'math-metric', 'aria-label': plainLabel(e.label) },
         h('p', { class: 'math-head' }, h('strong', {}, plainLabel(e.label)), ' ', chip(e.kind === 'computed' ? 'known' : e.kind)),
+        // One line on what the number is (the same words everywhere it shows: Monthly surplus, Left after saving).
+        e.plain ? h('p', { class: 'math-plain' }, plainLabel(e.plain)) : null,
         h('p', { class: 'math-formula' }, plainLabel(e.formula)),
         h('p', { class: 'math-plugged' }, h('code', {}, plainLabel(e.plugged))),
         e.note ? h('p', { class: 'math-note' }, plainLabel(e.note)) : null,

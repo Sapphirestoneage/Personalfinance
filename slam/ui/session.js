@@ -550,6 +550,8 @@ function overview(ctx) {
   const steps = sessionSteps(ctx.spine, summarize(ctx.spine, ctx.rules, { flags: false }));
   return [
     h('p', { class: 'lede' }, 'Five steps for a first session. Skip anything.'),
+    // The one place the order differs from Debt, Assets, Taxes, Income, Needs, Goals, on purpose (audit 3).
+    h('p', { class: 'muted' }, 'It starts with Needs, because what you spend shapes every other number; My numbers keeps the usual order.'),
     level2Card(ctx.spine),
     h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),

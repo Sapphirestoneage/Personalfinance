@@ -733,7 +733,7 @@ export function explainMetric(id, ctx) {
   const roughBecause = [...new Set([...terms.filter((t) => t.kind === 'rough').map((t) => t.label), ...(e.rough || []).map((p) => labelFor(ctx.spine, p))])];
   const missingBecause = [...new Set([...terms.filter((t) => t.kind === 'missing' || t.kind === 'incomplete').map((t) => t.label), ...(e.missing || []).map((p) => labelFor(ctx.spine, p))])];
   return {
-    id: m.id, label: m.label, unit: m.unit, formula: m.formula, op: m.op, factor: m.factor || null, screens: m.screens,
+    id: m.id, label: m.label, unit: m.unit, formula: m.formula, plain: m.plain || null, op: m.op, factor: m.factor || null, screens: m.screens,
     value: e.value, kind: e.kind, terms, groups, rules: e.rules, note: e.note || null,
     plugged: plugged(m, terms, e.value),
     roughBecause, missingBecause,

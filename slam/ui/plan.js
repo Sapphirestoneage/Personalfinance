@@ -122,9 +122,10 @@ function top(m) {
   const events = [...new Set([...(m.base.income || []), ...(m.base.expenses || [])].map((x) => x.lifeEvent).filter(Boolean))];
   const saved = readScenarios();
   return [
-    h('p', { class: 'lede' }, surplus === null ? 'Your monthly surplus is not known yet, so the steps have no dates.'
-      : surplus <= 0 ? 'No monthly surplus to put toward the steps yet.'
-        : 'Your ' + money(surplus) + ' a month goes to these steps, one at a time.'),
+    // The steps are paid from what is left after saving (cashflow.surplus), never called the monthly surplus.
+    h('p', { class: 'lede' }, surplus === null ? 'What is left after saving is not known yet, so the steps have no dates.'
+      : surplus <= 0 ? 'Nothing is left after saving to put toward the steps yet.'
+        : 'Your ' + money(surplus) + ' a month left after saving goes to these steps, one at a time.'),
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'Your steps, in order'),
@@ -293,7 +294,7 @@ function wageScreen(m) {
   const w = realHourlyWage(m.spine, m.rules, m.s);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const hours = h('input', { id: 'wage-hours', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '40' }); hours.value = w.hoursWeek === null ? '' : String(w.hoursWeek);
-  const commute = h('input', { id: 'wage-commute', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '0' }); commute.value = m.base.household.commuteHoursPerWeek && m.base.household.commuteHoursPerWeek.value !== null ? String(m.base.household.commuteHoursPerWeek.value) : '';
+  const commute = h('input', { id: 'wage-commute', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 45' }); commute.value = m.base.household.commuteHoursPerWeek && m.base.household.commuteHoursPerWeek.value !== null ? String(m.base.household.commuteHoursPerWeek.value) : '';
   return h('section', { class: 'card', 'aria-label': SCREENS.wage },
     h('p', { class: 'muted' }, 'What you keep for each hour of work and commute.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {

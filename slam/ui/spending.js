@@ -32,6 +32,7 @@ const TAGS = [...FAT, 'other'];
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
+// Cents only in the log and what is typed into it (audit 3): every summary amount is whole dollars.
 const cents = (x) => money(x, !Number.isInteger(x));
 // A level on this page: at('accommodation', 'rent') is "#/accommodation/rent" (the shell opens it as its own screen).
 const at = (...levels) => '#/' + levels.map(encodeURIComponent).join('/');
@@ -139,7 +140,7 @@ function logItem(spine, e) {
 function loggerCard(m) {
   const spine = m.spine;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const amount = h('input', { id: 'log-amount', class: 'amount-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0', 'aria-label': 'Amount' });
+  const amount = h('input', { id: 'log-amount', class: 'amount-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45', 'aria-label': 'Amount' });
   amount.value = form.amount;
   amount.addEventListener('input', () => { form.amount = amount.value; });
   const merchant = h('input', { id: 'log-merchant', type: 'text', autocomplete: 'off', placeholder: 'Store or website' });
@@ -219,10 +220,10 @@ function fixedSwitch(l, now) {
 }
 function fixedVarCard(m) {
   const fv = m.fv;
-  const amt = (a) => (a === null ? h('span', { class: 'empty' }, 'no amount') : cents(a));
+  const amt = (a) => (a === null ? h('span', { class: 'empty' }, 'no amount') : money(a));
   const trend = (l) => {
     if (!l.logged) return h('span', { class: 'fv-note' }, 'nothing logged yet');
-    const avg = 'avg ' + cents(l.average) + ' over ' + l.logged + (l.logged === 1 ? ' month' : ' months');
+    const avg = 'avg ' + money(l.average) + ' over ' + l.logged + (l.logged === 1 ? ' month' : ' months');
     if (!l.trend || !l.trend.direction) return h('span', { class: 'fv-note' }, avg);
     return h('span', { class: 'fv-note' }, avg + ', ', h('span', { class: 'fv-trend fv-' + l.trend.direction }, TREND_WORDS[l.trend.direction] + (l.trend.direction === 'steady' ? '' : ' ' + Math.abs(Math.round(l.trend.change * 100)) + '%')));
   };
@@ -365,7 +366,7 @@ function sweepCard(m) {
   const on = h('input', { type: 'checkbox', id: 'sweep-on', checked: cal.on === true });
   const to = h('select', { id: 'sweep-to' }, h('option', { value: '' }, 'Pick an account'), ...m.sim.model.accounts.filter((a) => !a.primary).map((a) => h('option', { value: a.id }, a.name)));
   to.value = cal.to || '';
-  const keepBox = h('input', { id: 'sweep-keep', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' }); keepBox.value = cal.keep !== undefined ? String(cal.keep) : '';
+  const keepBox = h('input', { id: 'sweep-keep', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' }); keepBox.value = cal.keep !== undefined ? String(cal.keep) : '';
   const submit = (e) => {
     e.preventDefault();
     const k = keepBox.value.trim() === '' ? { ok: true, value: 0 } : parseInput('money', keepBox.value);
@@ -479,14 +480,14 @@ function lineRow(m, cat, l) {
   return h('li', { class: off ? 'dropped' : null },
     h('a', { class: 'go-row plain', href: at(cat.id, l.id) },
       h('span', { class: 'go-name' }, l.label),
-      h('span', { class: 'go-sub' }, l.amount === null ? [chip('missing'), h('span', { class: 'empty' }, 'No amount yet')] : [h('span', { class: 'go-total' }, cents(l.amount)), ' a month'])),
+      h('span', { class: 'go-sub' }, l.amount === null ? [chip('missing'), h('span', { class: 'empty' }, 'No amount yet')] : [h('span', { class: 'go-total' }, money(l.amount)), ' a month'])),
     cuttable ? h('button', { type: 'button', class: 'btn small toggle', 'aria-pressed': String(off), 'aria-label': (off ? 'Put back ' : 'Try without ') + l.label, onclick: () => toggleCut(l.id) }, off ? 'Put back' : 'Try without') : null);
 }
 
 function categoryScreen(m, cat) {
   const r = cat.tag, slice = cat.slice;
   const ct = r ? m.compare.tags.find((x) => x.tag === r.tag) : null;
-  const share = slice ? cents(slice.amount) + ' a month' + (slice.share !== null ? ', ' + Math.round(slice.share * 100) + '% of ' + (m.vw.donut.total === null ? 'what is planned' : 'take-home') : '') + '.' : null;
+  const share = slice ? money(slice.amount) + ' a month' + (slice.share !== null ? ', ' + Math.round(slice.share * 100) + '% of ' + (m.vw.donut.total === null ? 'what is planned' : 'take-home') : '') + '.' : null;
   // Its lines first (what the slice was opened for), then the cut, the month's budget and the plan against the log.
   return [
     h('section', { class: 'card', 'aria-labelledby': 'cat-lines-h' },
@@ -522,7 +523,7 @@ function lineScreen(m, cat, l) {
   return [
     h('section', { class: 'card', 'aria-labelledby': 'line-h' },
       h('h2', { id: 'line-h' }, 'What it costs', a && a.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, a && a.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null),
-      l.amount === null ? h('p', { class: 'missing-row' }, chip('missing'), ' No amount yet.') : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, cents(l.amount)), h('span', { class: 'muted' }, 'a month', a ? ', ' + money(a.yearly) + ' a year' : '')),
+      l.amount === null ? h('p', { class: 'missing-row' }, chip('missing'), ' No amount yet.') : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(l.amount)), h('span', { class: 'muted' }, 'a month', a ? ', ' + money(a.yearly) + ' a year' : '')),
       a && a.subscription ? h('p', { class: 'tile-sub' }, 'Last looked at: ', a.reviewed ? shortDate(a.reviewed) : h('span', { class: 'missing-row' }, 'never')) : null,
       price ? h('p', { class: 'tile-sub' }, 'Price: ' + priceWords(price)) : null,
       trial ? h('p', { class: 'tile-sub' }, 'Free trial: ' + trialWords(trial)) : null,

@@ -161,7 +161,8 @@ function nameOf(levels, { spine, rules }) {
 const SMALL_PILLS = ['sub', 'plan', 'locked', 'logged', 'waiting', 'maybe'];
 const pills = (e, small = false) => (e.pills || []).filter((p) => !small || SMALL_PILLS.includes(p)).map((p) => h('span', { class: 'pill pill-' + p }, PILL_WORDS[p] || p));
 const amt = (e) => (e.amount === null ? null : (e.direction === 'in' ? '+' : e.direction === 'out' ? '-' : '') + money(e.amount, !Number.isInteger(e.amount)));
-const exact = (n) => money(n, !Number.isInteger(n));
+// Whole dollars on the Calendar (audit 3): cents only in Show the math and the log.
+const exact = (n) => money(n);
 const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '›');
 
 // A milestone or a deadline's own place: an account's deadline opens its "How much to max it?" panel (S-211), the rest
@@ -593,7 +594,7 @@ function yearTab(spine, rules) {
 function trayCard(c, st) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const label = h('input', { id: 'tray-label', type: 'text', autocomplete: 'off', placeholder: 'A tax refund, a gift, a side job' });
-  const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+  const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
   const likely = h('input', { id: 'tray-likely', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '50' });
   const dir = h('select', { id: 'tray-dir', 'aria-label': 'In or out' }, h('option', { value: 'in' }, 'Money in'), h('option', { value: 'out' }, 'Money out'));
   const dateIn = h('input', { id: 'tray-date', type: 'date' });

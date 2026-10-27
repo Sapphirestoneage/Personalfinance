@@ -241,7 +241,7 @@ function expenseEditor(row) {
   const now = row.fact.value || {};
   const sh = shareOf(cur(), e);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
   amount.value = inputText('money', valueOf(e.amount));
   const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
   const startMode = now.covered ? 'covered' : sh.shared ? 'shared' : 'me';
@@ -441,7 +441,7 @@ function incomeEditor(row) {
   // Whose pay it is, when two people share the household (S-211): it decides whose 401(k), IRA and HSA it counts for.
   const ps = cur().household.people || [];
   const whoseSel = ps.length > 1 ? h('select', { id: 'inc-whose' }, ps.map((p) => h('option', { value: p.id, selected: (x.personId || ps[0].id) === p.id }, p.name || p.id))) : null;
-  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
   amount.value = inputText('money', valueOf(x.amount));
   const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
   const day = h('input', { id: 'inc-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });

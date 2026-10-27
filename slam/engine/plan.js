@@ -33,7 +33,7 @@ export function surplusWaterfall(spine, rules, s) {
   const w = windfall(spine, rules, s, { amount: Math.max(0, surplus ?? 0), taxed: true, monthly: true });
   // Each step's months to fill at this pace: null when one month fills it or it takes nothing.
   const steps = w.steps.map((st) => ({ ...st, months: st.amount > 0 && st.need > st.amount ? Math.ceil(st.need / st.amount) : null }));
-  return { ...w, steps, surplus, note: surplus === null ? 'The monthly surplus is not known yet.' : surplus <= 0 ? 'There is no monthly surplus to assign: ' + Math.abs(surplus) + ' dollars more goes out than comes in.' : null };
+  return { ...w, steps, surplus, note: surplus === null ? 'What is left after saving is not known yet.' : surplus <= 0 ? 'Nothing is left after saving to assign: ' + Math.abs(surplus) + ' dollars more goes out than comes in.' : null };
 }
 
 // ---------------------------------------------------------------- the FOO ladder (E007)

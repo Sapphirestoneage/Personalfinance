@@ -84,7 +84,7 @@ function sankey(flow, width, onToggle, font) {
     const x0 = b.a.x + nw, x1 = b.b.x, xm = (x0 + x1) / 2;
     const d = 'M' + x0 + ',' + b.y0 + ' C' + xm + ',' + b.y0 + ' ' + xm + ',' + b.y1 + ' ' + x1 + ',' + b.y1 + ' L' + x1 + ',' + (b.y1 + b.w) + ' C' + xm + ',' + (b.y1 + b.w) + ' ' + xm + ',' + (b.y0 + b.w) + ' ' + x0 + ',' + (b.y0 + b.w) + ' Z';
     const cat = CAT[b.b.kind] || CAT[b.a.kind] || 'viz-0';
-    svg.append(s('path', { d, class: 'fl-band ' + cat + (b.rough ? ' fl-rough' : '') }, s('title', {}, b.a.label + ' to ' + b.b.label + ': ' + money(b.amount, true) + ' a month' + (b.rough ? ' (a guessed route)' : ''))));
+    svg.append(s('path', { d, class: 'fl-band ' + cat + (b.rough ? ' fl-rough' : '') }, s('title', {}, b.a.label + ' to ' + b.b.label + ': ' + money(b.amount) + ' a month' + (b.rough ? ' (a guessed route)' : ''))));
   }
   for (const n of nodes) {
     const cat = CAT[n.kind];
@@ -147,14 +147,14 @@ export function flowSection(flow, { open, onToggle, month, listOpen = false, onL
   const used = new Set(flow.nodes.map((n) => CAT[n.kind]).filter(Boolean));
   const name = (id) => flow.nodes.find((n) => n.id === id);
   wrap.append(
-    h('p', { class: 'flow-total' }, flow.short > 0 ? money(flow.short, true) + ' a month more goes out than comes in.' : money(flow.left, true) + ' a month is left after saving.'),
+    h('p', { class: 'flow-total' }, flow.short > 0 ? money(flow.short) + ' a month more goes out than comes in.' : money(flow.left) + ' a month is left after saving.'),
     h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' },
       LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t)),
       flow.links.some((l) => l.rough) ? h('li', {}, h('span', { class: 'sw sw-rough', 'aria-hidden': 'true' }), 'Lighter: a guessed route (main checking until you link it)') : null),
     h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec]))),
     h('div', { class: 'flow-box' }),
     h('details', { class: 'flow-list', open: listOpen || null, ontoggle: (e) => onList && onList(e.target.open) }, h('summary', {}, 'Every flow, with links to your numbers'),
-      h('ul', {}, flow.links.map((l) => { const a = name(l.from), b = name(l.to), p = b.path || a.path; return h('li', {}, p ? h('a', { href: 'ledger.html#' + encodeURIComponent(p) }, a.label + ' to ' + b.label) : a.label + ' to ' + b.label, ': ' + money(l.amount, true) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
+      h('ul', {}, flow.links.map((l) => { const a = name(l.from), b = name(l.to), p = b.path || a.path; return h('li', {}, p ? h('a', { href: 'ledger.html#' + encodeURIComponent(p) }, a.label + ' to ' + b.label) : a.label + ' to ' + b.label, ': ' + money(l.amount) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
   // Drawn once the section is on the page, at its real width.
   requestAnimationFrame(() => {
     const box = wrap.querySelector('.flow-box');
