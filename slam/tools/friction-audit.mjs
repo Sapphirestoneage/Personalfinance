@@ -1,0 +1,272 @@
+// The friction audit (Batch 0 of the practical run): plays the coach running a full first session on two made-up
+// households (Maya and Dre, no real data), from opening the app to printing the one-pager, typing every number through
+// the screens as on a call. It logs every tap, key, scroll, page change and dead end (a tap that changed nothing), and
+// every screen where the next step sits below the fold. Time is at the CLIENT_TEST pace: 5 s a tap, 45 s a typed
+// answer, 60 s a result talked through.
+//
+// Run from the repo root with the slam folder served:
+//   (cd slam && python3 -m http.server 8765 &) ; node slam/tools/friction-audit.mjs --out slam/docs/FRICTION_BEFORE.md
+// --json FILE also writes the raw numbers (the after run reads the before numbers from docs/friction-before.json).
+
+import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
+import { readFileSync, writeFileSync, existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const require = createRequire(import.meta.url);
+let playwright;
+try { playwright = require('playwright'); } catch { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
+const BASE = (process.env.SLAM_URL || 'http://localhost:8765/').replace(/\/?$/, '/');
+const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
+const PACE = { tap: 5, typed: 45, result: 60 };
+const VIEW = { width: 1280, height: 800 };
+
+// ---------------------------------------------------------------- the two households (made up)
+const HOUSEHOLDS = [
+  { name: 'Maya', filing: 'single', rent: true,
+    debts: [['credit_card', { bal: '4200', apr: '24.99', min: '120', day: '15', pay: 'minimum' }], ['student_loan', { bal: '28000', apr: '5.5', min: '310', day: '1' }]],
+    accounts: [['checking', '2400'], ['savings', '6000'], ['k401', '18500', { match: ['100', '4'] }]],
+    income: [{ type: 'w2', name: 'Salary at Northwind', amount: '2615', basis: 'salary', schedule: 'biweekly' }],
+    needs: { rent: '1650', electric: '70', internet: '60', phone: '45', groceries: '450', 'eating-out': '200', transit: '120', subscriptions: '35', gym: '40' },
+    goals: [['Emergency fund', '10000', '2027-12-31']] },
+  { name: 'Dre', filing: 'married', rent: false,
+    debts: [['auto_loan', { bal: '14500', apr: '6.9', min: '420', day: '10' }], ['credit_card', { bal: '1200', apr: '22', min: '40', day: '20', pay: 'statement' }], ['mortgage', { bal: '312000', apr: '6.1', min: '2350', day: '1' }]],
+    accounts: [['checking', '5200'], ['hysa', '22000'], ['k401', '64000', { match: ['50', '6'] }], ['hsa', '3800'], ['brokerage', '15000'], ['home', '420000']],
+    income: [{ type: 'w2', name: 'Salary at Larkspur Labs', amount: '8000', basis: 'salary', schedule: 'semimonthly' }, { type: '1099', name: 'Design work', amount: '1500' }],
+    needs: { 'property-tax': '400', 'home-insurance': '120', electric: '140', internet: '75', phone: '110', groceries: '900', 'eating-out': '300', 'car-insurance': '160', 'car-gas': '180', subscriptions: '60', miscellaneous: '200' },
+    goals: [['Kitchen', '25000', '2028-06-30']] }
+];
+
+// ---------------------------------------------------------------- the recorder
+function recorder(page) {
+  const r = { taps: 0, keys: 0, typed: 0, scrolls: 0, pages: 0, screens: 0, results: 0, dead: [], below: [], log: [], lost: [], step: 'start', perStep: {} };
+  const bump = (k, n = 1) => { r[k] += n; const s = (r.perStep[r.step] = r.perStep[r.step] || { taps: 0, typed: 0, scrolls: 0 }); if (k in s) s[k] += n; };
+  const snap = () => page.evaluate(() => location.href + '|' + (document.querySelector('main') || document.body).innerText.length + '|' + ((document.querySelector('main') || document.body).innerText.slice(0, 400)) + '|' + (document.activeElement && document.activeElement.id));
+  const inView = (loc) => loc.evaluate((el) => { const b = el.getBoundingClientRect(); return b.top >= 0 && b.bottom <= innerHeight; });
+  r.lose = (secs, words) => { r.lost.push({ step: r.step, secs, words }); };
+  r.tap = async (sel, why, { expectChange = true } = {}) => {
+    const loc = page.locator(sel).first();
+    await loc.waitFor({ state: 'visible', timeout: 8000 });
+    if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
+    const before = await snap();
+    await loc.click(); bump('taps'); r.log.push('tap ' + why); r.lastTyped = false;
+    await page.waitForTimeout(250);
+    if (expectChange && before === (await snap())) { r.dead.push({ step: r.step, what: why }); r.lose(PACE.tap, 'A tap that changed nothing: ' + why); }
+  };
+  r.type = async (sel, text, why) => {
+    const loc = page.locator(sel).first();
+    await loc.waitFor({ state: 'visible', timeout: 8000 });
+    if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
+    const focused = await loc.evaluate((el) => el === document.activeElement);
+    if (!focused) { await loc.click(); bump('taps'); if (r.lastTyped) r.lose(PACE.tap, 'Tab does not reach the next box: a tap into each one'); }
+    await loc.fill(''); await page.keyboard.type(text); await page.keyboard.press('Tab');
+    r.keys += text.length + 1; bump('typed'); r.log.push('type ' + why + ': ' + text); r.lastTyped = true;
+    await page.waitForTimeout(150);
+  };
+  r.pick = async (sel, value, why) => {
+    const loc = page.locator(sel).first();
+    if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
+    await loc.selectOption(value); bump('taps', 2); r.log.push('pick ' + why + ': ' + value); await page.waitForTimeout(200);
+  };
+  r.has = async (sel) => (await page.locator(sel).count()) > 0 && page.locator(sel).first().isVisible();
+  r.nextVisible = async () => {
+    const loc = page.locator('.step-nav .btn.primary').first();
+    if (!(await loc.count())) return;
+    if (!(await inView(loc))) { r.below.push(r.step); r.lose(PACE.tap, 'Next step below the fold on ' + r.step); }
+  };
+  r.talk = () => { r.results += 1; };
+  return r;
+}
+
+async function blankFile(name) {
+  const demo = JSON.parse(readFileSync(new URL('../fixtures/demo.json', import.meta.url), 'utf8'));
+  const person = { ...demo.household.people[0], id: name.toLowerCase(), name };
+  const blank = { ...demo, meta: { name: name + ' (made up)', asOf: demo.meta.asOf }, household: { ...demo.household, people: [person] },
+    income: [], expenses: [], accounts: [], debts: [], goals: [], taxYears: [], lent: [], log: [], feed: [], profile: {} };
+  const dir = mkdtempSync(join(tmpdir(), 'friction-'));
+  const file = join(dir, name.toLowerCase() + '.json');
+  writeFileSync(file, JSON.stringify(blank));
+  return file;
+}
+
+// ---------------------------------------------------------------- one session
+async function run(browser, hh) {
+  const ctx = await browser.newContext({ viewport: VIEW, acceptDownloads: true });
+  const page = await ctx.newPage();
+  const r = recorder(page);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  let lastPath = null;
+  page.on('framenavigated', (f) => { if (f !== page.mainFrame()) return; const path = new URL(f.url()).pathname; if (path !== lastPath) { r.pages += 1; lastPath = path; } });
+  await page.addInitScript(() => { const push = history.pushState.bind(history); history.pushState = (...a) => { window.__screens = (window.__screens || 0) + 1; return push(...a); }; window.print = () => { window.__printed = true; }; });
+  const screensNow = () => page.evaluate(() => window.__screens || 0);
+  let screens = 0;
+  const go = async (url) => { screens += await screensNow(); await page.goto(BASE + url); await page.waitForTimeout(900); };
+  const nav = async (sel, why) => { screens += await screensNow(); await r.tap(sel, why); await page.waitForTimeout(700); };
+
+  // Open the app.
+  await page.goto(BASE); await page.waitForTimeout(1200);
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); }); await page.reload(); await page.waitForTimeout(1200);
+  r.step = 'new client';
+  const file = await blankFile(hh.name);
+  if (await r.has('#client-new')) {
+    await r.tap('#client-switch', 'the client switcher');
+    await r.tap('#client-new', 'New client');
+    await r.type('#client-name', hh.name, 'the client\'s name');
+    await r.tap('#client-create', 'Create');
+  } else {
+    // No New client: start from a blank household file, through the name menu's Open file.
+    r.lose(120, 'No way to start a new client: the coach makes a blank file and opens it');
+    await r.tap('summary.whose-name', 'the name menu');
+    const chooser = page.waitForEvent('filechooser');
+    await r.tap('.whose-items button:has-text("Open file")', 'Open file', { expectChange: false });
+    await (await chooser).setFiles(file); r.taps += 1; r.log.push('pick the blank file');
+    await page.waitForTimeout(1200);
+  }
+  if (!(await page.url()).includes('session.html')) await nav('header a[href="session.html"], nav a[href="session.html"]', 'the Session tab');
+  if (await r.has('.step-nav .btn.primary:has-text("Start")')) await nav('.step-nav .btn.primary', 'Start');
+  else if (await r.has('a[href="#/debt"]')) await nav('a[href="#/debt"]', 'Debt');
+
+  // D: debts.
+  r.step = 'debt';
+  const doneEmpty = await page.evaluate(() => document.querySelectorAll('.stepper-seg.is-done').length);
+  if (doneEmpty) r.lose(PACE.result, 'The progress tracker says ' + doneEmpty + ' steps are done on an empty household');
+  const seen = new Set();
+  for (const [type, d] of hh.debts) {
+    if (await r.has('#dq-' + type) ) await r.tap('#dq-' + type, 'Yes to ' + type);
+    else if (seen.has(type) || !(await r.has('#dq-' + type))) {
+      const label = { credit_card: 'Credit card', student_loan: 'Student loan', auto_loan: 'Car loan', mortgage: 'Mortgage' }[type];
+      if (await r.has('.edit-actions button:text-is("' + label + '")')) await r.tap('.edit-actions button:text-is("' + label + '")', 'Add ' + label);
+      else { r.lose(240, 'A ' + label.toLowerCase() + ' cannot be added in the Session: done later in My numbers'); hh.later = (hh.later || []).concat([[type, d]]); continue; }
+    }
+    seen.add(type);
+    const id = await page.evaluate(() => { const x = [...document.querySelectorAll('input[id^="d-bal-"]')]; return x[x.length - 1].id.slice(6); });
+    await r.type('#d-bal-' + id, d.bal, type + ' balance');
+    await r.type('#d-apr-' + id, d.apr, type + ' rate');
+    await r.type('#d-min-' + id, d.min, type + ' payment');
+    await r.type('#d-day-' + id, d.day, type + ' due day');
+    if (d.pay && (await r.has('#d-pay-' + id))) await r.pick('#d-pay-' + id, d.pay, 'paid in full?');
+  }
+  for (const t of ['credit_card', 'student_loan', 'auto_loan', 'family_iou']) if (await r.has('#dqn-' + t)) await r.tap('#dqn-' + t, 'No to ' + t);
+  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // A: assets.
+  r.step = 'assets';
+  const LABEL = { checking: 'Checking', savings: 'Savings', hysa: 'High-yield savings', k401: '401(k)', hsa: 'HSA', brokerage: 'Brokerage', home: 'Home', car: 'Car' };
+  for (const [type, bal, more] of hh.accounts) {
+    if (type === 'k401' && (await r.has('#aq-work'))) await r.tap('#aq-work', 'Yes, a plan at work');
+    else if (type === 'savings' && (await r.has('#aq-save'))) await r.tap('#aq-save', 'Yes, savings');
+    else await r.tap('.edit-actions button:text-is("' + LABEL[type] + '")', 'Add ' + LABEL[type]);
+    const id = await page.evaluate(() => { const x = [...document.querySelectorAll('input[id^="a-bal-"]')]; return x[x.length - 1].id.slice(6); });
+    await r.type('#a-bal-' + id, bal, LABEL[type] + ' balance');
+    if (more && more.match) {
+      if (await r.has('#q-m-' + id + '-yes')) {
+        await r.tap('#q-m-' + id + '-yes', 'Yes, a match');
+        if (await r.has('#a-mr-' + id)) { await r.type('#a-mr-' + id, more.match[0], 'match rate'); await r.type('#a-mc-' + id, more.match[1], 'match up to'); }
+      }
+    }
+  }
+  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // T: taxes.
+  r.step = 'taxes';
+  if (await r.has('#t-filing')) await r.pick('#t-filing', hh.filing === 'married' ? 'mfj' : 'single', 'filing status').catch(async () => r.pick('#t-filing', { index: 1 }, 'filing status'));
+  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // I: income.
+  r.step = 'income';
+  for (const x of hh.income) {
+    await r.tap('#i-add, button:has-text("+ Add income")', '+ Add income');
+    await r.type('#add-name', x.name, 'income name');
+    await r.type('#add-amount', x.amount, 'income amount');
+    if (await r.has('#add-type')) await r.pick('#add-type', x.type, 'kind of income');
+    if (x.basis && (await r.has('#add-basis'))) await r.pick('#add-basis', x.basis, 'how it is paid');
+    if (x.schedule && (await r.has('#add-schedule'))) await r.pick('#add-schedule', x.schedule, 'how often');
+    await r.tap('form.add-form button[type=submit]', 'Add');
+  }
+  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // N: needs.
+  r.step = 'needs';
+  for (const [k, amt] of Object.entries(hh.needs)) if (await r.has('#n-' + k)) await r.type('#n-' + k, amt, k); else r.lose(60, 'No box for ' + k + ' in the Session');
+  if (hh.rent && (await r.has('#n-rent'))) await r.type('#n-rent', '1650', 'rent');
+  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // G: goals.
+  r.step = 'goals';
+  for (const [name, amt, by] of hh.goals) {
+    await r.tap('button:has-text("+ Add a goal")', '+ Add a goal');
+    await r.type('#add-name', name, 'goal name');
+    await r.type('#add-amount', amt, 'goal amount');
+    if (await r.has('#add-by')) { await page.locator('#add-by').fill(by); r.typed += 1; r.taps += 1; }
+    await r.tap('form.add-form button[type=submit]', 'Add');
+  }
+  r.talk();
+
+  // What the Session could not take: My numbers.
+  if (hh.later && hh.later.length) {
+    r.step = 'my numbers (left over)';
+    for (const [type, d] of hh.later) {
+      await go('ledger.html#/debt'); r.pages += 0;
+      await r.tap('button.btn.add', '+ Add a debt');
+      if (await r.has('#add-type')) await r.pick('#add-type', type, 'kind of debt');
+      await r.type('#add-amount', d.bal, type + ' balance');
+      await r.tap('form.add-form button[type=submit]', 'Add');
+      r.lose(90, 'Rate, payment and due day of the ' + type + ' are one screen deeper in My numbers');
+    }
+  }
+
+  // The one-pager.
+  r.step = 'one-pager';
+  if (await r.has('#end-call')) { await r.tap('#end-call', 'End call'); }
+  else { await go('onepager.html'); r.lose(PACE.tap * 2, 'The one-pager is not on the Session: the coach goes to it by address or the menu'); }
+  if (await r.has('button:has-text("Print")')) await r.tap('button:has-text("Print")', 'Print', { expectChange: false });
+  r.talk();
+  const printed = await page.evaluate(() => !!window.__printed);
+  screens += await screensNow();
+  r.screens = screens;
+  // The Session's own tracker on an empty household (seen on the way): steps with $0 read done.
+  await ctx.close();
+  return { name: hh.name, ...r, printed, errors, log: undefined, logged: r.log.length };
+}
+
+// ---------------------------------------------------------------- the report
+const minutes = (x) => Math.round(((x.taps * PACE.tap) + (x.typed * PACE.typed) + (x.results * PACE.result)) / 6) / 10;
+function report(runs, before) {
+  const L = [];
+  L.push('# Friction audit, ' + (before ? 'after' : 'before'), '');
+  L.push('Made by `node slam/tools/friction-audit.mjs` on ' + new Date().toISOString().slice(0, 10) + '. Two made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: ' + PACE.tap + ' s a tap, ' + PACE.typed + ' s a typed answer, ' + PACE.result + ' s a result talked through.', '');
+  L.push('| Household | Numbers typed | Taps | Taps per number | Keys | Scrolls | Page loads | Screen changes | Dead ends | Next below the fold | Results talked | Minutes |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const x of runs) L.push('| ' + [x.name, x.typed, x.taps, (x.taps / x.typed).toFixed(2), x.keys, x.scrolls, x.pages, x.screens, x.dead.length, x.below.length, x.results, minutes(x)].join(' | ') + ' |');
+  if (before) {
+    L.push('', '## Before and after', '', '| Household | Taps per number, before | after | Page loads + screen changes, before | after | Minutes, before | after |', '|---|---|---|---|---|---|---|');
+    for (const x of runs) { const b = before.find((y) => y.name === x.name); if (b) L.push('| ' + [x.name, (b.taps / b.typed).toFixed(2), (x.taps / x.typed).toFixed(2), b.pages + b.screens, x.pages + x.screens, minutes(b), minutes(x)].join(' | ') + ' |'); }
+  }
+  L.push('', '## Per step (taps, typed answers, scrolls)', '');
+  for (const x of runs) L.push('- ' + x.name + ': ' + Object.entries(x.perStep).map(([k, v]) => k + ' ' + v.taps + '/' + v.typed + '/' + v.scrolls).join('; '));
+  const lost = runs.flatMap((x) => x.lost.map((l) => ({ ...l, name: x.name })));
+  const byWords = new Map();
+  for (const l of lost) { const k = l.words.replace(/ (Maya|Dre)\b/, ''); const e = byWords.get(k) || { words: k, secs: 0, n: 0 }; e.secs += l.secs; e.n += 1; byWords.set(k, e); }
+  const ranked = [...byWords.values()].sort((a, b) => b.secs - a.secs);
+  L.push('', '## The worst frictions, by time lost', '');
+  ranked.slice(0, 10).forEach((e, i) => L.push((i + 1) + '. ' + e.words + ' (' + e.n + 'x, about ' + Math.round(e.secs / 6) / 10 + ' min)'));
+  if (!ranked.length) L.push('None found.');
+  L.push('', '## Dead ends', '');
+  const dead = runs.flatMap((x) => x.dead.map((d) => x.name + ', ' + d.step + ': ' + d.what));
+  L.push(...(dead.length ? dead.map((d) => '- ' + d) : ['None.']));
+  L.push('', '## Errors', '', ...(runs.some((x) => x.errors.length) ? runs.flatMap((x) => x.errors.map((e) => '- ' + x.name + ': ' + e)) : ['None.']));
+  L.push('', '## Printed', '', runs.map((x) => x.name + ': ' + (x.printed ? 'yes' : 'no')).join(', '), '');
+  return L.join('\n');
+}
+
+const browser = await playwright.chromium.launch();
+const runs = [];
+for (const hh of HOUSEHOLDS) { try { runs.push(await run(browser, structuredClone(hh))); } catch (err) { console.error(hh.name + ': ' + err.message); process.exitCode = 1; } }
+await browser.close();
+const beforeFile = arg('--before');
+const before = beforeFile && existsSync(beforeFile) ? JSON.parse(readFileSync(beforeFile, 'utf8')) : null;
+const md = report(runs, before);
+if (arg('--out')) writeFileSync(arg('--out'), md);
+if (arg('--json')) writeFileSync(arg('--json'), JSON.stringify(runs.map(({ name, taps, keys, typed, scrolls, pages, screens, results, dead, below, lost, perStep, printed }) => ({ name, taps, keys, typed, scrolls, pages, screens, results, dead, below, lost, perStep, printed })), null, 1));
+console.log(md.split('\n').slice(0, 30).join('\n'));

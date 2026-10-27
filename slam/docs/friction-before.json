@@ -1,0 +1,282 @@
+[
+ {
+  "name": "Maya",
+  "taps": 48,
+  "keys": 139,
+  "typed": 28,
+  "scrolls": 5,
+  "pages": 4,
+  "screens": 21,
+  "results": 7,
+  "dead": [],
+  "below": [
+   "debt",
+   "assets",
+   "needs"
+  ],
+  "lost": [
+   {
+    "step": "new client",
+    "secs": 120,
+    "words": "No way to start a new client: the coach makes a blank file and opens it"
+   },
+   {
+    "step": "debt",
+    "secs": 60,
+    "words": "The progress tracker says 4 steps are done on an empty household"
+   },
+   {
+    "step": "debt",
+    "secs": 5,
+    "words": "Next step below the fold on debt"
+   },
+   {
+    "step": "assets",
+    "secs": 5,
+    "words": "Next step below the fold on assets"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Next step below the fold on needs"
+   },
+   {
+    "step": "one-pager",
+    "secs": 10,
+    "words": "The one-pager is not on the Session: the coach goes to it by address or the menu"
+   }
+  ],
+  "perStep": {
+   "new client": {
+    "taps": 4,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "debt": {
+    "taps": 7,
+    "typed": 8,
+    "scrolls": 1
+   },
+   "assets": {
+    "taps": 9,
+    "typed": 5,
+    "scrolls": 1
+   },
+   "taxes": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "income": {
+    "taps": 9,
+    "typed": 2,
+    "scrolls": 0
+   },
+   "needs": {
+    "taps": 11,
+    "typed": 10,
+    "scrolls": 3
+   },
+   "goals": {
+    "taps": 2,
+    "typed": 2,
+    "scrolls": 0
+   },
+   "one-pager": {
+    "taps": 1,
+    "typed": 0,
+    "scrolls": 0
+   }
+  },
+  "printed": true
+ },
+ {
+  "name": "Dre",
+  "taps": 64,
+  "keys": 180,
+  "typed": 35,
+  "scrolls": 5,
+  "pages": 5,
+  "screens": 22,
+  "results": 7,
+  "dead": [],
+  "below": [
+   "debt"
+  ],
+  "lost": [
+   {
+    "step": "new client",
+    "secs": 120,
+    "words": "No way to start a new client: the coach makes a blank file and opens it"
+   },
+   {
+    "step": "debt",
+    "secs": 60,
+    "words": "The progress tracker says 4 steps are done on an empty household"
+   },
+   {
+    "step": "debt",
+    "secs": 240,
+    "words": "A mortgage cannot be added in the Session: done later in My numbers"
+   },
+   {
+    "step": "debt",
+    "secs": 5,
+    "words": "Next step below the fold on debt"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "my numbers (left over)",
+    "secs": 90,
+    "words": "Rate, payment and due day of the mortgage are one screen deeper in My numbers"
+   },
+   {
+    "step": "one-pager",
+    "secs": 10,
+    "words": "The one-pager is not on the Session: the coach goes to it by address or the menu"
+   }
+  ],
+  "perStep": {
+   "new client": {
+    "taps": 4,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "debt": {
+    "taps": 7,
+    "typed": 8,
+    "scrolls": 1
+   },
+   "assets": {
+    "taps": 15,
+    "typed": 8,
+    "scrolls": 0
+   },
+   "taxes": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "income": {
+    "taps": 13,
+    "typed": 4,
+    "scrolls": 1
+   },
+   "needs": {
+    "taps": 12,
+    "typed": 11,
+    "scrolls": 2
+   },
+   "goals": {
+    "taps": 2,
+    "typed": 2,
+    "scrolls": 0
+   },
+   "my numbers (left over)": {
+    "taps": 5,
+    "typed": 1,
+    "scrolls": 1
+   },
+   "one-pager": {
+    "taps": 1,
+    "typed": 0,
+    "scrolls": 0
+   }
+  },
+  "printed": true
+ }
+]
