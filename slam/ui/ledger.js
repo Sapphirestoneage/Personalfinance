@@ -195,12 +195,19 @@ function cardRateEditor(row) {
   introRate.value = cur0.intro ? inputText('rate', cur0.intro.rate) : '0';
   const introEnds = h('input', { id: 'intro-ends', type: 'date' });
   introEnds.value = (cur0.intro && cur0.intro.ends) || '';
-  // Deferred interest (owner's ask, 2026-10-27): part of the intro, ticked here.
-  const deferred = h('input', { type: 'checkbox', id: 'intro-deferred', checked: !!(cur0.intro && cur0.intro.deferred === true) });
+  // Deferred interest (owner's ask, 2026-10-27): its own question in the intro, with "Not sure" as an answer. Not sure
+  // is kept as not known (a thing to check on the statement), never as a no.
+  let deferredPick = cur0.intro && cur0.intro.deferred === true ? 'yes' : cur0.intro && cur0.intro.deferred === false ? 'no' : cur0.intro ? 'notSure' : 'no';
+  const defBtns = [['yes', 'Yes'], ['no', 'No'], ['notSure', 'Not sure']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(deferredPick === k), onclick: () => { deferredPick = k; for (const b of defBtns) b.setAttribute('aria-pressed', String(b.dataset.k === k)); dirty = true; } }, w));
+  defBtns.forEach((b, i) => { b.dataset.k = ['yes', 'no', 'notSure'][i]; });
+  const deferred = h('div', { class: 'deferred-q', role: 'group', 'aria-labelledby': 'deferred-h' },
+    h('p', { class: 'edit-label', id: 'deferred-h' }, 'Deferred interest?'),
+    h('p', { class: 'edit-hint' }, 'If any balance is left when the intro ends, interest is charged back to the start. The card\'s terms say; store cards often have it.'),
+    h('div', { class: 'segmented' }, defBtns));
   const introBox = h('div', { class: 'intro-fields', hidden: !startOn },
     h('label', { for: 'intro-rate', class: 'edit-label' }, 'Intro rate'), introRate,
     h('label', { for: 'intro-ends', class: 'edit-label' }, 'Intro ends'), introEnds,
-    h('label', { class: 'check-row', for: 'intro-deferred' }, deferred, h('span', {}, h('strong', {}, 'Deferred interest'), h('span', { class: 'choice-sub' }, 'If any balance is left when the intro ends, interest is charged back to the start'))));
+    deferred);
   const state = h('span', { class: 'switch-state' }, startOn ? 'Yes' : 'No');
   const sw = h('button', {
     type: 'button', class: 'switch', role: 'switch', id: 'intro-switch', 'aria-checked': String(startOn), 'aria-labelledby': 'intro-switch-label',
@@ -216,7 +223,7 @@ function cardRateEditor(row) {
     }
   }, h('span', { class: 'switch-track', 'aria-hidden': 'true' }, h('span', { class: 'switch-knob' })), state);
   const doSet = (kind) => {
-    const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value, deferred: deferred.checked });
+    const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value, deferred: deferredPick === 'yes' ? true : deferredPick === 'no' ? false : 'notSure' });
     if (!p.ok) { msg.textContent = p.message; return; }
     done(editCardRate(cur(), cardId, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, showValue({ apr: p.value.apr ?? rules.get('DEFAULT_CARD_APR', +cur().meta.asOf.slice(0, 4)), intro: p.value.intro }, 'cardRate') + (kind === 'rough' ? ' (a guess)' : '')));
   };

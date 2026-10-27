@@ -136,6 +136,8 @@ export function editCardRate(spine, cardId, action, { value, kind = 'known', tod
       s = put(s, 'promoEnds', { value: value.intro.ends, kind });
       // Deferred interest: yes or no when the panel says; left as it was when it does not.
       if (value.intro.deferred === true || value.intro.deferred === false) s = put(s, 'deferredInterest', { value: value.intro.deferred, kind });
+      // Not sure (owner's ask, 2026-10-27): kept as not known yet, never as a no; it shows as a thing to check.
+      else if (value.intro.deferred === 'notSure') s = put(s, 'deferredInterest', { value: null, kind: 'missing' });
     } else for (const k of ['promoApr', 'promoEnds', 'deferredInterest']) if (card[k]) s = put(s, k, { value: null, kind: 'notForMe' });
   } else if (action === 'confirm') {
     for (const k of ['apr', 'promoApr', 'promoEnds', 'deferredInterest']) if (card[k] && card[k].value !== null) s = put(s, k, { value: card[k].value, kind: 'known' });

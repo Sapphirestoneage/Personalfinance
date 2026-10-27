@@ -28,3 +28,13 @@ test('a dream spending typed on the FI goal replaces the default', () => {
   assert.equal(fi.dreamDefault, false);
   assert.equal(fi.fatFi.value, Math.round(90000 / s.assumptions.withdrawalRate.value * 100) / 100);
 });
+
+test('deferred interest: Not sure is kept as not known, never as a no (owner\'s ask)', async () => {
+  const { editCardRate } = await import('../engine/edits.js');
+  const s = s0();
+  const card = s.debts.find((d) => d.type === 'credit_card');
+  const out = editCardRate(s, card.id, 'set', { value: { apr: 0.25, intro: { rate: 0, ends: '2027-05-31', deferred: 'notSure' } }, kind: 'known', today: '2026-10-27' });
+  const f = out.debts.find((d) => d.id === card.id).deferredInterest;
+  assert.equal(f.value, null);
+  assert.equal(f.kind, 'missing');
+});

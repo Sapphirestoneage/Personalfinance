@@ -38,9 +38,11 @@ export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null,
     if (inPromo) {
       const left = Math.max(1, monthsBetween(monthKey(asOf), monthKey(ends)));
       const deferred = d.deferredInterest && v(d.deferredInterest) === true;
+      // Not sure whether interest is deferred (owner's ask): ranked as not deferred, with a line to check the terms.
+      const deferredUnknown = !d.deferredInterest || v(d.deferredInterest) === null;
       const loss = round2(bal * after / 12 * (1 + 1 / left));
       losing.push({ id: 'promo:' + d.id, rung: after >= hi ? 'highInterest' : null, label: 'Clear the ' + name + ' before its intro rate ends', loss, path, debt: d.id,
-        why: money0(bal) + ' at 0% until ' + ends + (deferred ? '; interest is deferred, so any balance left then is charged interest from the start' : '; then ' + Math.round(after * 1000) / 10 + '%') + '.' });
+        why: money0(bal) + ' at 0% until ' + ends + (deferred ? '; interest is deferred, so any balance left then is charged interest from the start' : '; then ' + Math.round(after * 1000) / 10 + '%' + (deferredUnknown ? '. Check the card\'s terms for deferred interest' : '')) + '.' });
     } else if (now !== null && now >= hi) {
       // Debt under the high-rate line keeps its place at the end of the order (low-interest debt): its minimum is paid,
       // and extra there is not money lost the way card interest is.
