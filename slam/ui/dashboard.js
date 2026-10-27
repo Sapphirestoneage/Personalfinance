@@ -20,6 +20,8 @@ import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
 import { guessesFor } from './urgency.js';
+import { netWorthWaterfallCard, netWorthTimeCard, netWorthSpark } from './chart-cards.js';
+import { netWorthAhead } from '../engine/charts.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -89,12 +91,12 @@ function questionCard(q) {
     h('div', { class: 'flag-actions' }, h('a', { class: 'btn small', href: q.path ? ledgerHref(q.path) : 'plan.html' }, 'Answer it')));
 }
 
-function tiles({ spine, s }) {
+function tiles({ spine, rules, s }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   // Net worth leads with the total; the liquid figure is named "Cash after card debt" (Krug pass), so it never reads
   // as a second cash number beside the runway's.
   const all = [
-    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : ['Cash after card debt ', metric('liquidNetWorth', summaryMoney(sh.liquidNetWorth.value))]] }),
+    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : ['Cash after card debt ', metric('liquidNetWorth', summaryMoney(sh.liquidNetWorth.value))]], extra: netWorthSpark(aheadOf(spine, rules)) }),
     // The Plan works from what is left after saving; the tile says it too, so the two never read as a disagreement.
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.monthlySurplus.value !== null && cf.saving.afterTax.value && cf.surplus.value !== null ? [metric('leftAfterSaving', summaryMoney(cf.surplus.value)), ' after saving'] : null] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 0) }),
@@ -147,13 +149,19 @@ function runwayScreen({ s }) {
       keptMath('screen-cushion', ['cushionNeeds', 'cushionMonth', 'ruleOf5Dollars'], mathCtx))
   ];
 }
-function networthScreen({ s }) {
-  const sh = s.sheet;
-  return h('section', { class: 'card', 'aria-label': 'Net worth' },
+// Net worth: the totals, then two charts (Track C): what makes it up, and how it is changing (a range switch).
+function networthScreen({ spine, rules, s }) {
+  const sh = s.sheet, range = (kept() || {}).nwRange || '1y';
+  return [h('section', { class: 'card', 'aria-label': 'Net worth' },
     h('ul', { class: 'sum-lines' }, line('Net worth', sh.netWorth.value, 'sum-total'), line('Cash after card debt', sh.liquidNetWorth.value)),
     h('a', { class: 'btn', href: numbersHref() }, 'Open My numbers'),
-    keptMath('screen-networth', DASHBOARD_MATH['tile-networth'], mathCtx));
+    keptMath('screen-networth', DASHBOARD_MATH['tile-networth'], mathCtx)),
+  h('section', { class: 'card' }, netWorthWaterfallCard(sh, spine)),
+  h('section', { class: 'card' }, netWorthTimeCard(spine, sh, aheadOf(spine, rules), { range, asOf: s.asOf, onRange: (k) => { keep({ nwRange: k }); refresh(); } }))];
 }
+// The projection's months ahead, figured once per household (the sparkline and the chart read the same months).
+let ahead = { spine: null, months: null };
+const aheadOf = (spine, rules) => { if (ahead.spine !== spine) ahead = { spine, months: netWorthAhead(spine, rules, { years: 30 }) }; return ahead.months; };
 // The money flow, on its own screen (Krug pass): Today has one row that opens it.
 function flowScreen({ spine, rules, s }) { return flowPart(spine, rules, s); }
 // Also worth doing (Krug pass): every other ranked step, the cards, the questions, and what is done, one screen.

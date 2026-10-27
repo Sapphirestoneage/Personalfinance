@@ -15,6 +15,10 @@ import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
 import { foldRow } from './rows.js';
+import { paycheckCard, monthWaterfallCard, bracketCard, fiPathCard, savingsCurveCard } from './chart-cards.js';
+import { bracketBar, fiPath, savingsCurve } from '../engine/charts.js';
+import { moneyFlow, flowTable } from '../engine/flow.js';
+import { solvers } from '../engine/plan.js';
 import { debtTab } from './debt-tab.js';
 import { debtView } from '../engine/debtview.js';
 import { planDebtExtra } from '../engine/plan.js';
@@ -1266,14 +1270,17 @@ function sectionTop(sec) {
       h('section', { class: 'card nw-pair', 'aria-label': 'How far along, and other FI numbers' },
         figure('There so far', fi.fiPercent, (x) => pctOf(x) + ' of today\'s', ['fiPercent'], true),
         figure('Lean FI', fi.leanFi, null, ['leanFi'], true), figure('Fat FI', fi.fatFi, null, ['fatFi'], true),
-        figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true))
+        figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true)),
+      fiChartsRow()
     ];
   }
   if (sec.slug === 'taxes') {
     const tx = s.tax;
-    return h('section', { class: 'card nw-pair', 'aria-label': 'This year\'s tax' },
+    const b = bracketBar(tx, rules);
+    return [h('section', { class: 'card nw-pair', 'aria-label': 'This year\'s tax' },
       figure(tx.year + ' tax still owed (estimate)', tx.balanceDue, null, ['taxBalanceDue']),
-      h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'Next payment due'), h('p', { class: 'tile-value' }, shortDate(tx.nextEstimated.date))));
+      h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'Next payment due'), h('p', { class: 'tile-value' }, shortDate(tx.nextEstimated.date)))),
+    b ? foldRow('tax-brackets', 'Your tax bracket', 'Your last dollar is taxed ' + Math.round(b.marginal * 100) + '% federal', () => bracketCard(b)) : null];
   }
   if (sec.slug === 'debt') {
     const ut = s.debt.utilization;
@@ -1283,8 +1290,21 @@ function sectionTop(sec) {
       figure('Card use, all cards', ut.overall, pctOf, ['overallUtil'])) : null,
     debtPayoffRow()];
   }
-  if (sec.slug === 'income') return unemploymentCard();
+  if (sec.slug === 'income') return [unemploymentCard(), payChartsRow()];
   return null;
+}
+
+// Charts (Track C), each behind one line: where the pay goes, and when FI comes.
+function payChartsRow() {
+  const spine = cur(), s = summaryOf(spine), flow = moneyFlow(spine, rules, s.cashflow);
+  const jobs = s.cashflow.income.streams.filter((x) => x.included && x.gross > 0 && x.type === 'w2');
+  if (!flow.links.length) return null;
+  return foldRow('pay-charts', 'Where your pay goes', jobs.length ? 'Each paycheck and the month, as charts' : 'The month, as a chart', () => [...jobs.map((x) => paycheckCard(flow, x)), monthWaterfallCard(flowTable(flow))]);
+}
+function fiChartsRow() {
+  const c = fiCtx(cur());
+  if (!c.s.fi.fiNumber.value) return null;
+  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard(savingsCurve(solvers(c.spine, rules, c.s)))]);
 }
 
 // Debt payoff dates (moved here from the Calendar): one line with the debt-free month, opening the clear dates, the

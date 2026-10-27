@@ -7,6 +7,9 @@
 // open (Show the math, a solve age, a picked event) is kept with its history entry, so coming back restores it.
 // Every number comes from engine/plan.js and the engines under it, with Show the math. Formatting only.
 
+import { foldRow } from './rows.js';
+import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
+import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
@@ -292,12 +295,13 @@ function paycheckScreen(m, p) {
 
 function goalsScreen(m) {
   const g = goalsView(m.spine, m.rules, m.s);
-  return h('section', { class: 'card', 'aria-label': SCREENS.goals },
+  const bars = goalsCard(goalBars(g));
+  return [bars ? h('section', { class: 'card' }, bars) : null, h('section', { class: 'card', 'aria-label': SCREENS.goals },
     g.setAsideTotal ? h('p', { class: 'muted' }, money(g.setAsideTotal) + ' a month goes to goals.') : null,
     g.rows.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Goal'), h('th', { class: 'num' }, 'Target'), h('th', { class: 'num' }, 'There'), h('th', { class: 'num' }, 'To go'), h('th', {}, 'Reached'), h('th', {}, 'Costs the FI date'))),
       h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? '' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
     h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
-    g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null);
+    g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null)];
 }
 
 function solveScreen(m) {
@@ -307,14 +311,16 @@ function solveScreen(m) {
   age.value = byAge;
   const parsed = byAge.trim() === '' ? { ok: true, value: null } : parseInput('int', byAge);
   const x = solvers(m.spine, m.rules, m.s, { byAge: parsed.ok ? parsed.value : null });
-  return h('section', { class: 'card', 'aria-label': SCREENS.solve },
+  return [h('section', { class: 'card', 'aria-label': SCREENS.solve },
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = age.value.trim() === '' ? { ok: true } : parseInput('int', age.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ byAge: age.value.trim() }); refresh(); } },
       h('label', { for: 'solve-age', class: 'edit-label' }, 'Financially independent by age'), age, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Solve'))),
     x.rows.length ? [h('p', { class: 'tile-sub' }, 'To reach ' + money(x.fiNumber) + ' by ' + x.targetAge + ' (' + Math.round(x.years) + ' years from ' + x.age + ') from ' + money(x.invested) + ' invested at ' + pct(x.realReturn, 1) + ' real' + (x.yearsNow !== null ? '; on the saving as it is, about ' + x.yearsNow.toFixed(1) + ' years' : '; on the saving as it is, never') + '.'),
       h('ul', {}, x.rows.map((r) => h('li', {}, h('strong', {}, r.label + ': '), r.value === null ? r.words : (r.unit === 'ratio' ? pct(r.value, 1) : money(r.value) + ' a month') + ' (' + r.words + ')'))),
       h('p', { class: 'tile-note' }, kindChip(x.kind), ' Each answer changes one thing and holds everything else the same.'),
-      math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note));
+      math('solve', x.rows.filter((r) => r.value !== null).map((r) => 'plan:solve:' + r.id), () => mathCtx(m)({ solvers: x }))] : h('p', { class: 'muted missing-row' }, x.note)),
+  // The same answer as two charts (Track C): years to FI at each savings rate, and the path to the FI number.
+  x.rows.length ? h('section', { class: 'card' }, savingsCurveCard(savingsCurve(x)), fiPathCard(fiPath(m.spine, m.rules, m.s))) : null];
 }
 
 function wageScreen(m) {
@@ -432,7 +438,7 @@ function scenariosScreen(m) {
   // Saved scenarios live in this browser, outside the household: Undo (the bar, the header or Ctrl/Cmd+Z) puts the
   // list back, and Redo the list after the change.
   const putBack = (was, now, words) => say(words, () => { keepScenarios(was); refresh(); }, () => { keepScenarios(now); refresh(); });
-  return h('section', { class: 'card', 'aria-label': SCREENS.scenarios },
+  return [h('section', { class: 'card', 'aria-label': SCREENS.scenarios },
     h('p', { class: 'muted' }, 'A scenario is a copy of your numbers as they are now, saved in this browser under a name. Compare one with today, or load it to go back to it.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
@@ -448,7 +454,9 @@ function scenariosScreen(m) {
       h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), x.id === targetId() ? h('span', { class: 'chip chip-default' }, 'Budget target') : null, h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
         h('button', { type: 'button', class: 'btn small', onclick: () => change(() => x.spine, said.changed('Your numbers', 'the scenario ' + x.name)) }, 'Load it'),
         h('button', { type: 'button', class: 'btn danger small', onclick: () => { const now = list.filter((y) => y.id !== x.id); keepScenarios(now); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, now, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : null,
-    diff ? [h('h3', { class: 'month-h' }, other.name + ' against today: ' + plural(diff.length, 'change')), diff.length ? diffList(m.base, other.spine, diff, 60) : h('p', { class: 'muted' }, 'Nothing differs.')] : null);
+    diff ? [h('h3', { class: 'month-h' }, other.name + ' against today: ' + plural(diff.length, 'change')), diff.length ? diffList(m.base, other.spine, diff, 60) : h('p', { class: 'muted' }, 'Nothing differs.')] : null),
+  // The futures side by side (Track C): each assumption set and up to two saved scenarios, as lines.
+  foldRow('scenario-chart', 'The futures side by side', 'Net worth under each, as a chart', () => scenarioCard(scenarioLines(m.base, m.rules, { saved: list })))];
 }
 // A value in a diff, worded by its field's type ($1,950, 24%, Nov 3, 2026), as My numbers words it.
 const typeAt = (a, b, p) => { try { const t = typeFor(a, p); return t === 'text' ? typeFor(b, p) : t; } catch { return 'text'; } };

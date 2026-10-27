@@ -41,7 +41,8 @@ test('Today and the One-pager lead the savings rate with take-home; gross is in 
 test('Batch 6, made simple: the Calendar leads with its lowest point, the filters fold under Filter, all marked at once', () => {
   const src = read('ui/calendar.js');
   for (const w of ["'Lowest'", "'You stay above your floor through '", "['rough', 'Rough or missing']", "'Filter'", "'Mark all '", "keys.reduce("]) assert.ok(src.includes(w), w);
-  assert.match(read('ui/cash-chart.js'), /tag\(aheadPts, 'Cash'\); tag\(debtPts, 'Debt'\)/);
+  // Each line named at its right end (now endLabel on the shared chart module, Track C).
+  assert.match(read('ui/cash-chart.js'), /endLabel: 'Debt'[^]*endLabel: 'Cash'/);
 });
 
 test('Batch 7: Spending has Do and See; See says its range and has reference lines, never a verdict', async () => {

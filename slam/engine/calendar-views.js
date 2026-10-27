@@ -159,6 +159,25 @@ export function payLaterFlags(sim) {
 // read from what the household recorded: each check-in's checking balance, carried day by day with
 // the cash entries in the log (income and refunds in, spending out; card spending moves no cash), and
 // before the first check-in in range, walked back from it. A day with nothing to read is missing.
+// The range around the cash line (Track C): the same days run without any maybe money and with all of it at its
+// likely amount, beside the line itself; each day's lowest and highest checking. null when they never differ.
+export function cashRange(spine, rules, line, { months = 1, from = null } = {}) {
+  if (!line) return null;
+  const others = ['ignore', 'likely'].map((maybeMode) => cashLine(spine, cashsim(spine, rules, { months, maybeMode }), { from }));
+  const by = (l) => new Map(((l && l.days) || []).map((d) => [d.date, d.checking]));
+  const maps = others.map(by);
+  const low = [], high = [];
+  let differs = false;
+  for (const d of line.days) {
+    if (d.checking === null || d.checking === undefined) continue;
+    const xs = [d.checking, ...maps.map((m) => m.get(d.date)).filter((x) => typeof x === 'number')];
+    const lo = Math.min(...xs), hi = Math.max(...xs);
+    if (hi - lo >= 1) differs = true;
+    low.push({ date: d.date, checking: lo }); high.push({ date: d.date, checking: hi });
+  }
+  return differs ? { low, high } : null;
+}
+
 export function cashLine(spine, sim, { from = null } = {}) {
   if (!sim || !sim.daily.length || !sim.checking.known) return null;
   const asOf = sim.start, primary = sim.model.accounts.find((a) => a.primary);

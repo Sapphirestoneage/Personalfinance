@@ -10,6 +10,7 @@ import { parseInput } from '../engine/edits.js';
 import { labelFor } from '../engine/labels.js';
 import { mathButton } from './math-panel.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
+import { debtCharts } from './chart-cards.js';
 
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const vizOf = (i) => VIZ[i % VIZ.length];
@@ -31,7 +32,9 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
   const d = debtView(spine, rules, c.sim, base.s, { extra: extra.amount });
   d.extraFrom = extra;
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
-  return [clearCard(d), ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
+  // Charts (Track C): when it is gone, what is interest, and the three orders side by side; each opens as a table.
+  const charts = h('section', { class: 'card debt-charts' }, debtCharts(spine, rules, { extra: extra.amount || 0, strategy: d.order.strategy }));
+  return [clearCard(d), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
 }
 
 // Clear dates from the Plan's run: each as its month; anything past 12 months is one line, never "not inside the

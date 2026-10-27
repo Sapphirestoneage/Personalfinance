@@ -72,7 +72,7 @@ test('10% taken out: $45 a week (Form W-4V); a blank benefit reads missing', () 
 
 test('My numbers shows the Unemployment card on Income and on Your situation', () => {
   const src = readFileSync(new URL('../ui/ledger.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(sec\.slug === 'income'\) return unemploymentCard\(\);/);
+  assert.match(src, /if \(sec\.slug === 'income'\) return \[unemploymentCard\(\), payChartsRow\(\)\];/);
   assert.match(src, /it\.key === 'household\.situation' \? unemploymentCard\(\) : null/);
   assert.match(src, /'Add the weekly benefit'/);
   assert.match(src, /removeItem\(sp, 'income', x\.id\)[^\n]*'Delete this benefit'/, 'each benefit can be deleted, undoably');

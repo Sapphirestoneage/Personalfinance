@@ -215,15 +215,19 @@ export function accrueMonth(s, iso, asOf, t) {
   return added;
 }
 
-export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, asOf, cardsOnly = false, maxMonths = 600 } = {}) {
+// trace (overnight Track C, the debt charts): also return schedule, one row a month { ym, balances: { id: balance },
+// interest, paid } read straight off the same loop; the plan itself is unchanged.
+export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, asOf, cardsOnly = false, maxMonths = 600, trace = false } = {}) {
   const t = tracker();
   const ids = order(spine, strategy, asOf, { cardsOnly, rules });
   const debts = [...ids.map((id) => spine.debts.find((d) => d.id === id)), ...(spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card') && paidInFull(spine, d))];
   const st = debts.map((d) => ({ d, bal: t.useFact(P(d, 'balance'), d.balance), interest: 0, paidYm: null, startBal: v(d.balance), deferredDone: false }));
   let ym = monthKey(asOf);
   let months = 0;
+  const schedule = [];
   while (st.some((s) => s.bal > 0.005) && months < maxMonths) {
     ym = addMonths(ym, 1); months++;
+    const before = trace ? st.map((s) => [s.bal, s.interest]) : null;
     const iso = monthStart(ym);
     let pool = extra;
     for (const s of st) {
@@ -244,6 +248,11 @@ export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, as
       s.bal -= pay; pool -= pay;
     }
     for (const s of st) if (s.bal <= 0.005 && !s.paidYm) { s.bal = 0; s.paidYm = ym; }
+    if (trace) {
+      const interest = st.reduce((a, s, i) => a + s.interest - before[i][1], 0);
+      const owedBefore = before.reduce((a, b) => a + b[0], 0), owedAfter = st.reduce((a, s) => a + s.bal, 0);
+      schedule.push({ ym, balances: Object.fromEntries(st.map((s) => [s.d.id, round2(s.bal)])), interest: round2(interest), paid: round2(owedBefore + interest - owedAfter) });
+    }
   }
   const stuck = st.some((s) => s.bal > 0.005);
   const totalInterest = st.reduce((a, s) => a + s.interest, 0);
@@ -253,7 +262,8 @@ export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, as
     debtFreeYm: stuck ? null : st.reduce((m, s) => (s.paidYm && s.paidYm > m ? s.paidYm : m), ''),
     months: stuck ? null : months,
     totalInterest: t.out(round2(totalInterest)),
-    neverPaysOff: stuck
+    neverPaysOff: stuck,
+    ...(trace ? { schedule } : {})
   };
 }
 

@@ -11,8 +11,9 @@
 
 import { startPage, change, said, go, keep, kept, refresh, say, current } from './shell.js';
 import { calendar, weekdayOf } from '../engine/calendar.js';
-import { yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashLine, waiting, itemId, itemDay } from '../engine/calendar-views.js';
+import { yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashLine, cashRange, waiting, itemId, itemDay } from '../engine/calendar-views.js';
 import { cashChartCard } from './cash-chart.js';
+import { pickedWindow } from './window.js';
 import { safeToSpend } from '../engine/spending.js';
 import { summarize } from '../engine/summary.js';
 import { putFact, confirmOccurrence, unconfirmOccurrence, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, setMaybeDate, removeMaybe, parseInput } from '../engine/edits.js';
@@ -592,7 +593,8 @@ function belowRows(v, c, m, st) {
       const first = cashLine(v.spine, sim);
       const line = first && first.backTo && st.back ? cashLine(v.spine, sim, { from: first.backTo + '-01' }) : first;
       const pre = sim.checking.known ? safeToSpend(sim).low : null;
-      return cashChartCard(line, { preCover: pre && pre.covered ? pre : null, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); }, width: Math.min(960, (app.clientWidth || 360) - 66) });
+      const range = cashRange(v.spine, v.rules, line, { months: pickedWindow(), from: line.days[0] && line.days[0].date < sim.start ? line.days[0].date : null });
+      return cashChartCard(line, { preCover: pre && pre.covered ? pre : null, range, back: st.back, onBack: (on) => { store(BACK_KEY, on ? '1' : '0'); setRoot({ back: on }); } });
     }) : null,
     foldRow('cal-month-' + m.ym, longMonth(m.ym), (m.net >= 0 ? money(m.net) + ' more in than out' : money(-m.net) + ' more out than in'), () => [
       h('p', { class: 'tile-sub' }, 'In ' + money(m.in) + ', out ' + money(m.out) + '. Lines with no amount are not in these.'),

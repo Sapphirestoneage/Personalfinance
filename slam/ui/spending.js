@@ -7,6 +7,9 @@
 // change goes through its change() with words. Every number comes from engine/spending.js, engine/cashsim.js,
 // engine/compare.js and the summary; every number has Show the math. Formatting only.
 
+import { budgetCharts } from './chart-cards.js';
+import { pref } from './prefs.js';
+import { monthsBack } from '../engine/charts.js';
 import { startPage, change, said, say, keep, kept, refresh } from './shell.js';
 import { readScenarios, keepScenarios, targetScenario, keepTarget, saveScenario, updateScenario, targetId } from './scenarios-store.js';
 import { targetColumns, targetBuys, stepToward, stepValue } from '../engine/target.js';
@@ -726,6 +729,10 @@ function budgetTab(m, state) {
   const tgt = targetOf(m, ym, range);
   const showTarget = !!tgt && state.bcols === 'target';
   const colsBar = tgt ? h('div', { class: 'segmented b-cols', role: 'group', 'aria-label': 'Show' }, [['actual', 'Actual'], ['target', 'Target']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String((showTarget ? 'target' : 'actual') === k), onclick: () => { keep({ bcols: k }); refresh(); } }, h('span', { class: 'seg-label' }, w)))) : null;
+  // Two ways to see it (Track C): the table, or charts of the same numbers (each opens as a table too).
+  const asCharts = state.bview === 'charts';
+  const viewBar = h('div', { class: 'segmented b-view', role: 'group', 'aria-label': 'See it as' }, [['table', 'Table'], ['charts', 'Charts']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String((asCharts ? 'charts' : 'table') === k), onclick: () => { keep({ bview: k }); refresh(); } }, h('span', { class: 'seg-label' }, w))));
+  const charts = asCharts ? h('section', { class: 'card', 'aria-label': 'Budget charts, ' + ymWords(ym) }, budgetCharts(m.base, rules, vw, { weekStart: pref('weekStart') === 'monday' ? 1 : 0, months: range === 'month' ? monthsBack(ym, 6) : [] })) : null;
   return [
     h('div', { class: 'b-controls' }, pick, ranges),
     // The target (target brief): one row that opens the picker; with one set, what it buys in one line.
@@ -737,7 +744,9 @@ function budgetTab(m, state) {
         h('button', { type: 'button', class: 'btn small primary', onclick: () => change((s) => editExpense(s, x.id, { amount: x.to, kind: 'known' }, todayIso()), said.changed(x.label + '\'s plan', money(x.to) + ' a month')) }, 'Update'),
         h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => keepPlan(s, x.id, x.to, todayIso()), said.changed(x.label + '\'s plan', 'kept at ' + money(x.plan))) }, 'Keep')))))) : null,
     vw.closed ? h('section', { class: 'card b-closed' }, h('p', {}, vw.closed.summary + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => reopenMonth(s, ym), said.changed(ymWords(ym), 'open again')) }, 'Reopen month'))) : null,
-    h('section', { class: 'card', 'aria-label': 'Budget, ' + ymWords(ym) },
+    viewBar,
+    charts,
+    asCharts ? null : h('section', { class: 'card', 'aria-label': 'Budget, ' + ymWords(ym) },
       vw.partial ? h('p', { class: 'muted' }, 'Held against what the plan expects by today.') : null,
       colsBar,
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table budget-table' },
