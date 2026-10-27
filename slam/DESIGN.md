@@ -17,6 +17,16 @@ there first.
    thing they explain, never in a tooltip only.
 5. Show about seven items, then "Show all N". Detail opens on request.
 
+## Slim by default
+
+20. A screen opens closed: one line per group (name, total, a chevron), the main
+    number visible without scrolling. Detail, forms and options open on request.
+21. No form is open on load. "+ Add" opens one shared form (ui/add-form.js): name
+    and amount first, the kind only for a general Add, the rest under "More
+    options". Labels above boxes, "$" and "%" inside, a hint only while empty.
+22. No "0" placeholder and no cents on a summary row; cents live in Show the
+    math and the log.
+
 ## Color
 
 6. Ink (`--text`, `--text-muted`) for words. Accent for actions and links only.

@@ -60,6 +60,7 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 8. Pressed, focus and disabled states are visible; a disabled control says why.
 9. Kind chips are labels; a tappable chip follows rule 1.
 10. `slam/affordances.html` shows every component in every state; add any new one there.
+11. Slim by default: see `slam/DESIGN.md`.
 
 Visual design (layout, color, charts, phone width): follow `slam/DESIGN.md`.
 
