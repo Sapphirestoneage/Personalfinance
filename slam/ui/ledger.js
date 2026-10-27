@@ -12,6 +12,7 @@ import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
+import { chargesCard } from './card-charges.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { unemploymentView, tenPercentOf } from '../engine/unemployment.js';
@@ -1209,6 +1210,8 @@ function itemScreen(sec, g, it, st) {
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
     h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, it.rows.length ? it.rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
+    // What is charged to a card (owner's ask, 2026-10-27).
+    it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
   ];

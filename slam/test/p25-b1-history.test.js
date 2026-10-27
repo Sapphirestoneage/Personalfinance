@@ -47,6 +47,7 @@ const CHANGES = {
   setSectionSharing: [null, (s) => E.setSectionSharing(s, 'food', { shared: true, sharedWith: 2, yourShare: 0.5 }, T)],
   addItem: [null, (s) => E.addItem(E.addItem(s, { collection: 'expenses', label: 'Gym bag', fat: null }, T).spine, { collection: 'debts', type: 'credit_card', label: 'Amex Blue' }, T).spine],
   editPayment: [null, (s) => E.editPayment(s, 'rent', { from: 'chk', day: 1 }, T)],
+  chargeTo: [null, (s) => E.chargeTo(s, 'rent', 'visa', T)],
   duplicateItem: [null, (s) => E.duplicateItem(s, 'expenses', 'gym', T, 'Gym two').spine],
   removeItem: [null, (s) => E.removeItem(E.removeItem(s, 'debts', 'visa'), 'income', 'tutoring')],
   bulkEdit: [null, (s) => E.bulkEdit(s, [{ path: 'expenses.rent.amount', type: 'money' }, { path: 'debts.visa.apr', type: 'cardRate' }], 'rough', T)],

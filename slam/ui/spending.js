@@ -20,6 +20,7 @@ import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS 
 import { logSpend, removeLog, checkIn, setSweep, parseInput, removeItem, putFact } from '../engine/edits.js';
 import { FAT } from '../engine/schema.js';
 import { mathButton } from './math-panel.js';
+import { paidWithBox } from './card-charges.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
@@ -498,6 +499,8 @@ function lineScreen(m, cat, l) {
       price ? h('p', { class: 'tile-sub' }, 'Price: ' + priceWords(price)) : null,
       trial ? h('p', { class: 'tile-sub' }, 'Free trial: ' + trialWords(trial)) : null,
       cuttable ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn toggle', 'aria-pressed': String(off), onclick: () => toggleCut(l.id) }, off ? 'Put it back' : 'Try without it')) : null,
+      // Which account or card it goes on (owner's ask, 2026-10-27).
+      min ? null : paidWithBox(m.spine, l.id),
       a || price ? mathButton([...(a ? ['spend:autopsy:' + a.id] : []), ...(price ? ['spend:priceChange:' + price.id] : [])], m.ctx) : null),
     h('section', { class: 'card has-target', 'aria-labelledby': 'line-edit-h' },
       h('h2', { id: 'line-edit-h' }, h('a', { class: 'card-link', href: ledgerHref(l.path) }, h('span', {}, 'Change it in My numbers'), chev())),

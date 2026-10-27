@@ -2,7 +2,7 @@
 // the "still guessing" list (rough and missing fields, ordered by how much
 // they change the results). No DOM here.
 
-import { listFacts, getAt, setAt, addMonths, result, valueOf } from './spine.js';
+import { listFacts, getAt, setAt, addMonths, result, valueOf, round2 } from './spine.js';
 import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
@@ -10,7 +10,7 @@ import { project } from './projection.js';
 import { shareOf, yourCost, coverOf, SHARE_FIELDS } from './sharing.js';
 import { monthlyAmount } from './cashflow.js';
 import { isSubscription } from './subscriptions.js';
-import { lineFor, paysDebtOf, linkNote } from './debt.js';
+import { lineFor, paysDebtOf, linkNote, lineMonthly } from './debt.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool,
 // choice:a|b (pick one), suggest:a|b (pick one or type another), list.
@@ -281,3 +281,10 @@ export function stillGuessing(spine, rules) {
   return r.value;
 }
 
+// What is charged to a card (owner's ask, 2026-10-27): the expenses whose Paid from is it, each a month, and the total
+// of those with an amount (missing when none has one).
+export function cardCharges(spine, cardId) {
+  const items = (spine.expenses || []).filter((e) => e.paidFrom && valueOf(e.paidFrom) === cardId).map((e) => ({ id: e.id, label: e.label, monthly: lineMonthly(e), path: 'expenses.' + e.id + '.amount' }));
+  const known = items.filter((x) => x.monthly !== null);
+  return { items, total: known.length ? round2(known.reduce((a, x) => a + x.monthly, 0)) : null };
+}

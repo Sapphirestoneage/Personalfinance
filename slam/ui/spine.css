@@ -1123,3 +1123,14 @@ a.fb-link .fb-more { justify-self: end; }
 .wait-what { flex: 1 1 14rem; min-width: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); }
 .wait-when, .wait-amt { color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .wait-btns { display: flex; gap: var(--space-1, 4px); flex: none; }
+/* Charged to this card (owner's ask, 2026-10-27): one line each. */
+.charge-list { list-style: none; margin: 0 0 var(--space-2); padding: 0; }
+.charge-line { display: flex; align-items: center; gap: var(--space-2); padding: 4px 0; border-top: 1px solid var(--border); }
+.charge-line:first-child { border-top: 0; }
+.charge-name { flex: 1 1 auto; min-width: 0; }
+.charge-amt { color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.charge-add { display: grid; gap: 4px; max-width: 480px; }
+.charge-add-row { display: flex; gap: var(--space-2); }
+.charge-add-row select { flex: 1 1 auto; min-width: 0; }
+.paid-with { display: grid; gap: 4px; max-width: 320px; margin-top: var(--space-2); }
+.charges select, .paid-with select { min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; }

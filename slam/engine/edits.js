@@ -387,6 +387,15 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
   return { spine: { ...spine, [collection]: [...list, item] }, id, firstPath: first };
 }
 
+// Attach an expense to a card or an account (owner's ask, 2026-10-27): its Paid from, keeping its day and any debt it
+// pays. from null detaches it: Paid from goes back to not given (the flow then guesses main checking).
+export function chargeTo(spine, id, from, today) {
+  const e = getAt(spine, 'expenses.' + id);
+  if (!e) throw new Error('No expense ' + id);
+  if (from === null) return setAt(spine, 'expenses.' + id + '.paidFrom', { value: null, kind: 'missing', asOf: today, source: 'ledger' });
+  return editPayment(spine, id, { from, day: e.payDay ? valueOf(e.payDay) : null }, today);
+}
+
 // An expense's payment (S-189): the account or card, and the day (blank clears it). paysDebt (S-226): the debt the
 // line pays (its payment is then counted once, under debt payments), null to unlink, undefined to keep.
 export function editPayment(spine, id, { from, day = null, paysDebt = undefined, kind = 'known' }, today) {
