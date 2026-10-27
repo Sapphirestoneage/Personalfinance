@@ -27,7 +27,7 @@ const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
 // What the tab's small forms hold between renders. The page keeps them with its screen (saved, onSave), so coming
 // back to the calendar shows the same answers.
-const FORM = { amount: '100', btCard: '', btFee: '', btMonths: '', btPost: '', solveTarget: '', solveBy: '' };
+const FORM = { amount: '100', business: '', btCard: '', btFee: '', btMonths: '', btPost: '', solveTarget: '', solveBy: '' };
 const form = { ...FORM };
 const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203A');
 
@@ -178,15 +178,19 @@ function whichCardCard(c, spine, rules, ctx, save) {
   const amount = h('input', { id: 'which-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   amount.value = form.amount;
   const parsed = form.amount.trim() === '' ? null : parseInput('money', form.amount);
-  const w = parsed && parsed.ok ? whichCard(spine, rules, c.sim, { amount: parsed.value }) : null;
+  const w = parsed && parsed.ok ? whichCard(spine, rules, c.sim, { amount: parsed.value, business: form.business === '1' }) : null;
+  // A business purchase (morning answer 8): only then are business cards in the comparison.
+  const biz = h('input', { type: 'checkbox', id: 'which-biz', checked: form.business === '1' ? 'checked' : null, onchange: (e) => { form.business = e.target.checked ? '1' : ''; save(); } });
   return h('section', { class: 'card', 'aria-labelledby': 'which-h' },
     h('h2', { id: 'which-h' }, 'Which card should I use?'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } form.amount = amount.value; save(); } },
       h('label', { for: 'which-amount', class: 'edit-label' }, 'A purchase today, in dollars'), amount, msg,
+      h('label', { class: 'check-row', for: 'which-biz' }, biz, ' A business purchase'),
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Compare the cards'))),
     w && w.rows.length ? [h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Card'), h('th', { class: 'num' }, 'Rewards'), h('th', { class: 'num' }, 'Interest'), h('th', { class: 'num' }, 'Net'), h('th', {}, 'Float'))),
       h('tbody', {}, w.rows.map((r, i) => h('tr', { class: i === 0 ? 'tight' : '' }, h('td', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, i === 0 ? [' ', h('span', { class: 'pill' }, 'best')] : null, r.utilizationWarn ? [' ', h('span', { class: 'pill' }, 'utilization')] : null), h('td', { class: 'num' }, money(r.rewards) + ' (' + pctWords(r.rate) + ')'), h('td', { class: 'num' }, r.revolving ? money(r.interest) + ' a month' : 'none'), h('td', { class: 'num' }, money(r.net)), h('td', {}, r.revolving ? 'revolving, no float' : r.interestFreeDays + ' days interest-free')))))),
+      w.left.length ? h('p', { class: 'tile-sub' }, 'Left out: ' + w.left.join(', ') + ' (a business card; tick A business purchase to compare it).') : null,
       h('p', { class: 'tile-note' }, kindChip(w.kind), ' Rewards at each card\'s own rate, else usually 1% (rough). A revolving card charges a month of interest on the purchase. Float days run to the next due date.'),
       mathButton(w.rows.map((r) => 'debt:whichCard:' + r.id), () => ctx({ which: w }))] : h('p', { class: 'muted' }, 'Type an amount to compare the cards.'));
 }

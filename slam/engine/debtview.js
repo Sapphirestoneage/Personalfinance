@@ -300,14 +300,19 @@ export function solvePayoff(spine, rules, sim, { target, byDate, maxExtra = null
 // card charges interest on it), the interest-free days until the next due
 // date, and a utilization warning. Rewards come from each card's own rate,
 // else the house default (rough).
-export function whichCard(spine, rules, sim, { amount, category = 'other' } = {}) {
+// business (morning answer 8, S-250): a business card is suggested only for a purchase marked business; an ordinary
+// purchase compares the personal cards. `left` names the business cards left out.
+export function whichCard(spine, rules, sim, { amount, category = 'other', business = false } = {}) {
   const year = +sim.start.slice(0, 4);
   const t = tracker();
   const dflt = t.rule(rules, 'APP_REWARDS_RATE', year);
   const lib = { cards: sim.model.cards.map((c) => { const d = debtOf(spine, c.id); const r = d && d.rewardsRate && d.rewardsRate.kind !== 'notForMe' ? t.useFact(P(d, 'rewardsRate'), d.rewardsRate) : null; if (r === null && d) t.addRough(P(d, 'rewardsRate')); return { id: c.id, name: c.name, earn: { other: (r ?? dflt) * 100 }, pointValueCents: 1, rate: r ?? dflt }; }) };
   if (amount === null || amount === undefined || !(amount > 0)) return { amount: null, rows: [], best: null, ...t.out(null) };
   const rows = C.whichCard(sim.model, sim.run, { cents: cents(amount), category }, lib).map((r) => ({ id: r.id, name: r.name, rewards: dollars(r.rewards), interest: dollars(r.interest), net: dollars(r.net), interestFreeDays: r.interestFreeDays, utilizationWarn: r.utilizationWarn, revolving: r.revolving, rate: (lib.cards.find((x) => x.id === r.id) || {}).rate ?? dflt, path: (sim.model.cards.find((c) => c.id === r.id) || {}).path || null }));
-  return { amount, rows, best: rows.length ? rows[0].id : null, ...t.out(rows.length ? rows[0].net : null) };
+  const isBiz = (id) => { const d = debtOf(spine, id); return !!(d && d.business && v(d.business) === true); };
+  const kept = rows.filter((r) => business || !isBiz(r.id));
+  const left = business ? [] : rows.filter((r) => isBiz(r.id)).map((r) => r.name);
+  return { amount, business, rows: kept, left, best: kept.length ? kept[0].id : null, ...t.out(kept.length ? kept[0].net : null) };
 }
 
 // A balance transfer: the fee against the interest skipped during the 0%

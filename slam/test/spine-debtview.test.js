@@ -180,7 +180,8 @@ test('the target solver: the smallest extra that clears a card by a date, and wh
 test('which card: rewards minus interest, interest-free days on a card paid in full, the house rate when none is entered', () => {
   const s = demo();
   const sim = cashsim(s, R, { months: 2 });
-  const w = whichCard(s, R, sim, { amount: 100 });
+  // The Ink is a business card, so this is a business purchase (morning answer 8); an ordinary one leaves it out.
+  const w = whichCard(s, R, sim, { amount: 100, business: true });
   assert.equal(w.rows.length, 3);
   assert.equal(w.best, 'ink', 'the card with no balance carries no interest and wins');
   const ink = w.rows.find((r) => r.id === 'ink');
@@ -192,7 +193,7 @@ test('which card: rewards minus interest, interest-free days on a card paid in f
   assert.ok(visa.interest > 0 && visa.revolving === true);
   // A card's own rate wins and is known.
   const rich = putFact(s, 'debts.ink.rewardsRate', 0.02, 'known', T);
-  const w2 = whichCard(rich, R, cashsim(rich, R, { months: 2 }), { amount: 100 });
+  const w2 = whichCard(rich, R, cashsim(rich, R, { months: 2 }), { amount: 100, business: true });
   assert.equal(w2.rows.find((r) => r.id === 'ink').rewards, 2);
   assert.ok(!w2.rough.includes('debts.ink.rewardsRate'));
   assert.equal(whichCard(s, R, sim, { amount: null }).rows.length, 0);
@@ -265,4 +266,14 @@ test('one extra at the debt: the Plan\'s step amount, the same in the debt view 
   assert.equal(Math.round(d.order.extra(1)), x.amount);
   const f = fooLadder(s, R, S);
   if (['highInterest', 'lowInterest'].includes(f.current)) assert.equal(fooGhosts(s, R, S, [s.meta.asOf.slice(0, 7)])[0].amount, x.amount);
+});
+
+test('Which card: a business card only for a purchase marked business (morning answer 8)', () => {
+  const s = demo(), sim = cashsim(s, R, { months: 12 });
+  const plain = whichCard(s, R, sim, { amount: 100 });
+  assert.ok(!plain.rows.some((r) => r.id === 'ink'), 'the business Ink card is left out of an ordinary purchase');
+  assert.ok(plain.left.length === 1 && plain.best !== 'ink');
+  const biz = whichCard(s, R, sim, { amount: 100, business: true });
+  assert.ok(biz.rows.some((r) => r.id === 'ink'));
+  assert.deepEqual(biz.left, []);
 });
