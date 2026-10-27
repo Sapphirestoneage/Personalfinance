@@ -5,7 +5,7 @@
 // cancels. The answers go to engine/add.js addWithAnswers and addMore, so every screen saves the same thing.
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
-import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
+import { addWithAnswers, addMore, addDetails, accountDetails, ACCOUNT_DETAILS, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
 import { parseInput, addMaybe } from '../engine/edits.js';
 import { setAt } from '../engine/spine.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS } from '../engine/schema.js';
@@ -146,7 +146,20 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
     note: field('add-note', 'Note', more.note)
   };
-  const showMore = () => { const on = moreFields(collection, kind()); for (const [k, el] of Object.entries(moreBox)) el.hidden = !on.includes(k); };
+  // An account's details (S-264): the fields its family has (engine/add.js ACCOUNT_DETAILS), built once, shown by kind.
+  const allDetails = accounts ? [...new Map(Object.values(ACCOUNT_DETAILS).flat().map((d) => [d[0] + ':' + d[2], d])).values()] : [];
+  const detailEl = {}, detailBox = {};
+  for (const [k, label, type, hint] of allDetails) {
+    const id = 'add-d-' + k + '-' + type;
+    const el = type === 'choice' ? select(id, [['', 'Pick one'], ...hint], '') : type === 'bool' ? select(id, [['', 'Pick one'], ['yes', 'Yes'], ['no', 'No']], '')
+      : type === 'date' ? h('input', { type: 'date', id }) : box(id, { inputmode: type === 'text' ? null : type === 'int' ? 'numeric' : 'decimal', placeholder: hint || null });
+    detailEl[k + ':' + type] = el;
+    detailBox[k + ':' + type] = field(id, label, type === 'money' ? dollars(el) : type === 'rate' ? percent(el) : el, null, null, true);
+  }
+  const details = accounts ? h('fieldset', { class: 'add-details' }, h('legend', { class: 'edit-label' }, 'Details (all optional)'), ...Object.values(detailBox)) : null;
+  const showDetails = () => { if (!details) return; const want = new Set(accountDetails(kind()).map((d) => d[0] + ':' + d[2])); for (const [k, el] of Object.entries(detailBox)) el.hidden = !want.has(k); details.hidden = !want.size; };
+  const showMore = () => { const on = moreFields(collection, kind()); for (const [k, el] of Object.entries(moreBox)) el.hidden = !on.includes(k); showDetails(); };
+  if (roth) roth.addEventListener('change', showDetails);
   if (typeSel) typeSel.addEventListener('change', showMore);
   if (typeSel && rothRow) { typeSel.addEventListener('change', syncRoth); syncRoth(); }
   showMore();
@@ -188,7 +201,18 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
     if (more.asOf.value) extra.asOf = more.asOf.value;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
-    made = addMore(made, extra, today);
+    // The account's details, each checked like any typed number.
+    const typed = {};
+    for (const [k, label, type] of accounts ? accountDetails(t) : []) {
+      const el = detailEl[k + ':' + type], raw = el.value.trim();
+      if (!raw) continue;
+      if (type === 'choice' || type === 'date' || type === 'text') { typed[k] = raw; continue; }
+      if (type === 'bool') { typed[k] = raw === 'yes'; continue; }
+      const r = parseInput(type, raw);
+      if (!r.ok || (type === 'rate' && (r.value < 0 || r.value > 1)) || ((type === 'money' || type === 'int') && r.value < 0)) { msg.textContent = label + ': ' + (r.ok ? 'check the number' : r.message); el.focus(); return; }
+      typed[k] = r.value;
+    }
+    made = addDetails(addMore(made, extra, today), typed, today);
     if (made.collection === 'goals' && ans.by) made = { ...made, spine: setAt(made.spine, 'goals.' + made.id + '.by', ans.by) };
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);
@@ -202,6 +226,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint)),
     typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
     rothRow,
+    details,
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
     maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),

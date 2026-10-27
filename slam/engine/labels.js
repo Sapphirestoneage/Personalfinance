@@ -16,7 +16,7 @@ const FIELD = {
   amount: 'amount', likelihood: 'how likely', target: 'target', fiNumber: 'FI number', annualSpending: 'yearly spending', dreamSpending: 'dream spending a year', partTimeIncome: 'part-time income a year',
   estimatedPaidFederal: 'estimated payments made (federal)', estimatedPaidState: 'estimated payments made (state)',
   capitalGainsLong: 'long-term gains', qualifiedDividends: 'qualified dividends', otherIncome: 'other income',
-  matchFormula: 'employer match', vesting: 'vesting', planType: 'plan type',
+  matchFormula: 'employer match', vesting: 'vesting', vestingType: 'vesting schedule', vestingYears: 'years until fully vested', planType: 'plan type',
   business: 'business card', reportsToPersonalCredit: 'reports to personal credit',
   setAside: 'set aside', enrolled: 'enrolled', businessExpenses: 'business expenses',
   paidFrom: 'paid from', paysDebt: 'the debt it pays', payDay: 'day paid', payDay2: 'second day paid', personId: 'whose pay', subscription: 'subscription', renews: 'next charge', reviewed: 'last reviewed', usesPerMonth: 'uses a month', cancelCandidate: 'cancel candidate', depositTo: 'paid into', fundedFrom: 'paid in from', payPolicy: 'pays each month',

@@ -80,7 +80,9 @@ export const FAMILIES = {
   fixedTerm: { label: 'Fixed-term', fields: { rate: 'rate', maturityDate: 'date', earlyWithdrawalPenalty: 'text' } },
   employerRetirement: {
     label: 'Employer retirement', fields: {
-      rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
+      rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text',
+      // The vesting schedule of the employer's money (S-264): yours now, all at once after N years, or a share each year to N.
+      vestingType: 'choice:immediate|cliff|graded', vestingYears: 'int', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
       priorYearFicaWages: 'money', allowsAfterTax: 'bool', allowsLoans: 'bool', employerType: 'choice:private|nonprofit|government|federal|self',
       // What went in for each tax year (S-211), as on an IRA: [{ year, amount, kind? }]; rollovers and conversions never count.
       contributions: 'list',

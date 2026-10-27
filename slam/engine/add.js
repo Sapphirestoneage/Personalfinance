@@ -93,6 +93,55 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
 // The add form's "More options" (slim by default), set on the item just made: institution, the rate (a debt's APR, a
 // cash account's APY, a fixed-term rate), a debt's minimum and due day, the date the amount is as of, and a note on
 // the amount. Blank leaves the field as it was: missing, never 0.
+// What to ask about a new account, by its family (owner, 2026-10-27, S-264): each a field of engine/schema.js FAMILIES,
+// so it lands where My numbers already reads it. [key, label, type, hint or options]; a choice lists [value, words].
+export const ACCOUNT_DETAILS = {
+  employerRetirement: [
+    ['monthlyContribution', 'You put in a month', 'money', 'e.g. 500'],
+    ['matchRate', 'Employer match: this share of what you put in', 'rate', 'e.g. 50'],
+    ['matchCap', 'Up to this share of your pay', 'rate', 'e.g. 6'],
+    ['vestingType', 'The employer\'s money is yours', 'choice', [['immediate', 'Right away'], ['cliff', 'All at once after some years (cliff)'], ['graded', 'A share each year (graded)']]],
+    ['vestingYears', 'Years until it is all yours', 'int', 'e.g. 3'],
+    ['employerType', 'Employer', 'choice', [['private', 'A company'], ['nonprofit', 'A nonprofit'], ['government', 'State or local government'], ['federal', 'Federal government'], ['self', 'Self-employed']]],
+    ['loanBalance', 'A loan from this plan, owed', 'money', 'e.g. 3,000']
+  ],
+  ira: [
+    ['monthlyContribution', 'You put in a month', 'money', 'e.g. 300'],
+    ['basis', 'Put in so far (your contributions)', 'money', 'e.g. 12,000'],
+    ['coveredByWorkplacePlan', 'Also covered by a plan at work?', 'bool', null]
+  ],
+  hsaFsa: [
+    ['coverageLevel', 'Health plan covers', 'choice', [['self', 'Just me'], ['family', 'Family']]],
+    ['monthlyContribution', 'You put in a month', 'money', 'e.g. 200'],
+    ['employerSeed', 'Employer puts in a year', 'money', 'e.g. 500'],
+    ['throughPayroll', 'Taken out of your paycheck?', 'bool', null],
+    ['investedPortion', 'Of it, invested', 'money', 'e.g. 2,000']
+  ],
+  cash: [['role', 'What it is for', 'choice', [['spending', 'Everyday spending'], ['emergency', 'Emergency fund'], ['sinking', 'Saving for something'], ['holding', 'Holding money']]]],
+  fixedTerm: [['maturityDate', 'Matures on', 'date', null]],
+  taxable: [
+    ['monthlyContribution', 'You put in a month', 'money', 'e.g. 200'],
+    ['costBasis', 'Paid in so far (cost basis)', 'money', 'e.g. 8,000']
+  ],
+  education: [
+    ['beneficiary', 'For whom', 'text', 'e.g. Maya'],
+    ['childBirthYear', 'Their birth year', 'int', 'e.g. 2018'],
+    ['monthlyContribution', 'You put in a month', 'money', 'e.g. 100']
+  ],
+  otherAssets: [
+    ['incomeProduced', 'It pays you a month', 'money', 'e.g. 1,200'],
+    ['appreciationRate', 'Grows a year', 'rate', 'e.g. 3']
+  ]
+};
+export const accountDetails = (type) => ACCOUNT_DETAILS[(PRESETS[type] || {}).family] || [];
+// Writes the details typed (already parsed) onto the new account, each as known.
+export function addDetails(made, details, today) {
+  if (made.collection !== 'accounts') return made;
+  const base = made.firstPath.split('.').slice(0, 2).join('.');
+  let s = made.spine;
+  for (const [k, value] of Object.entries(details)) if (value !== null && value !== undefined && value !== '') s = putFact(s, base + '.' + k, value, 'known', today);
+  return { ...made, spine: s };
+}
 export function moreFields(collection, type) {
   const fam = (PRESETS[type] || {}).family;
   if (collection === 'debts') return ['institution', 'rate', 'minimum', 'dueDay', ...(type === 'credit_card' ? ['annualFee'] : []), 'asOf', 'note'];
