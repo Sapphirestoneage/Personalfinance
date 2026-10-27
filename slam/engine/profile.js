@@ -19,13 +19,20 @@ const YES_NO = [['yes', 'Yes'], ['no', 'No']];
 // ---------------------------------------------------------------- Level 1: before the first call
 // { id, area, label, kind: one | many | text | year | state | date | count, options, when(answers), does }
 export const AREAS = [
-  ['you', 'You'], ['home', 'Home'], ['around', 'Getting around'], ['work', 'Work'], ['people', 'Money with other people'],
+  ['start', 'Why now'], ['you', 'You'], ['home', 'Home'], ['around', 'Getting around'], ['work', 'Work'], ['people', 'Money with other people'],
   ['debt', 'Debt'], ['accounts', 'Accounts'], ['health', 'Health'], ['style', 'Spending style'], ['goals', 'Goals']
 ];
 export const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const W2 = (a) => ['w2', 'both'].includes(ans(a, 'work'));
 const SELF = (a) => ['self', 'both'].includes(ans(a, 'work'));
 export const LEVEL1 = [
+  // Why now (coaching, 2026-10-27): first on the client's page. Stress is a Fact with its date, and every change is a
+  // life change with its date, so a later session can show how it moved.
+  { id: 'reachOut', area: 'start', label: 'What made you reach out now?', kind: 'text', long: true, does: 'Your words, for the first call.' },
+  { id: 'worthIt', area: 'start', label: 'What would make this worth it for you?', kind: 'text', long: true, does: 'What a good result looks like, in your words.' },
+  { id: 'stress', area: 'start', label: 'How stressed do you feel about money? (1 is calm, 10 is very)', kind: 'one', options: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((x) => [x, x]), does: 'Saved with its date, so later sessions can show the change.' },
+  { id: 'payOften', area: 'start', label: 'How often are you paid?', kind: 'one', options: [['weekly', 'Every week'], ['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Once a month'], ['varies', 'It varies']], does: 'Puts paydays on the Calendar.' },
+  { id: 'takeHome', area: 'start', label: 'About how much lands in your account a month?', kind: 'one', options: [['under2', 'Under $2,000'], ['2to4', '$2,000 to $4,000'], ['4to6', '$4,000 to $6,000'], ['6to8', '$6,000 to $8,000'], ['over8', 'Over $8,000']], does: 'A ballpark, so the first call starts in the right place.' },
   { id: 'firstName', area: 'you', label: 'Your first name', kind: 'text', does: 'Names the household on every page.' },
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
@@ -40,7 +47,6 @@ export const LEVEL1 = [
   { id: 'getAround', area: 'around', label: 'How do you get around?', kind: 'one', options: [['car', 'My own car'], ['carLoan', 'A car with a loan'], ['lease', 'A leased car'], ['transit', 'Transit'], ['rideshare', 'Rideshare'], ['mix', 'A mix']], does: 'Shows the car costs, a loan or lease, transit or rides.' },
   { id: 'work', area: 'work', label: 'What kind of work?', kind: 'one', options: [['w2', 'A job (W-2)'], ['self', 'Self-employed'], ['both', 'Both'], ['between', 'Between jobs'], ['student', 'Student'], ['retired', 'Retired']], does: 'Shows the pay fields that fit and the tax set-aside on self-employed pay.' },
   { id: 'payType', area: 'work', label: 'How are you paid?', kind: 'one', options: [['salary', 'Salary'], ['hourly', 'By the hour'], ['mix', 'Some of each']], when: W2, does: 'Salary is a yearly amount; by the hour is rate x hours.' },
-  { id: 'payOften', area: 'work', label: 'How often?', kind: 'one', options: [['weekly', 'Every week'], ['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Once a month']], when: W2, does: 'Puts paydays on the Calendar.' },
   { id: 'extras', area: 'work', label: 'Any extras?', kind: 'many', options: [['bonus', 'Bonus'], ['overtime', 'Overtime'], ['tips', 'Tips'], ['commission', 'Commission'], ['none', 'None']], exclusive: ['none'], when: W2, does: 'Each extra gets its own line, so the steady part stays steady.' },
   { id: 'offers', area: 'work', label: 'What does work offer?', kind: 'many', options: [['k401', '401(k) or similar'], ['health', 'Health insurance'], ['hsa', 'HSA'], ['fsa', 'FSA']], when: W2, does: 'Opens those accounts in the session.' },
   { id: 'quarterly', area: 'work', label: 'Paying quarterly taxes?', kind: 'one', options: YES_NO, when: SELF, does: 'No or not sure turns on a set-aside on every deposit.' },
@@ -230,7 +236,7 @@ export function cleanAnswer(id, value) {
     if (q.max) list = list.slice(0, q.max);
     return list.length ? list.sort((x, y) => q.options.findIndex(([k]) => k === x) - q.options.findIndex(([k]) => k === y)) : undefined;
   }
-  if (q.kind === 'text') return typeof value === 'string' && value.trim() ? value.trim().slice(0, 40) : undefined;
+  if (q.kind === 'text') return typeof value === 'string' && value.trim() ? value.trim().slice(0, q.long ? 400 : 40) : undefined;
   if (q.kind === 'year') return Number.isInteger(value) && value >= 1920 && value <= 2015 ? value : undefined;
   if (q.kind === 'state') return STATES.includes(value) ? value : undefined;
   if (q.kind === 'date') return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;

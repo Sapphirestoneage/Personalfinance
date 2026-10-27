@@ -25,7 +25,9 @@ test('ledger: every Fact is a row, in a DATING group, with a label and type', ()
   const cardIntro = listFacts(s).filter((x) => /^debts\.[^.]+\.(promoApr|promoEnds|deferredInterest)$/.test(x.path) && getAt(s, x.path.split('.').slice(0, 2).join('.')).type === 'credit_card');
   // A pay day folds into its income or expense row (S-189, S-199).
   const payDays = listFacts(s).filter((x) => /^(income|expenses)\.[^.]+\.payDay$/.test(x.path));
-  assert.equal(rows.length, listFacts(s).length - cardIntro.length - payDays.length);
+  // The Profile's answers are on the Profile tab, not in My numbers.
+  const answers = listFacts(s).filter((x) => x.path.startsWith('profile.'));
+  assert.equal(rows.length, listFacts(s).length - cardIntro.length - payDays.length - answers.length);
   const find = (p) => rows.find((r) => r.path === p);
   assert.equal(find('debts.visa.apr').group, 'D');
   assert.equal(find('debts.visa.apr').type, 'cardRate');
@@ -435,7 +437,7 @@ test('income: one row says how much, how often, since when and the day paid; the
   assert.equal(rows.filter((r) => r.path.startsWith('income.salary.')).some((r) => r.path.endsWith('.payDay')), false);
   assert.equal(rowPathFor(s, 'income.salary.payDay'), 'income.salary.amount');
   assert.equal(rowPathFor(s, 'income.salary.payDay2'), 'income.salary.amount', 'the second pay day lives on the same row');
-  assert.equal(rows.length, listFacts(s).length - 3 - listFacts(s).filter((x) => /\.payDay$/.test(x.path)).length, 'the three card intro facts and every pay day fold into their rows');
+  assert.equal(rows.length, listFacts(s).length - 3 - listFacts(s).filter((x) => /\.payDay$/.test(x.path) || x.path.startsWith('profile.')).length, 'the three card intro facts and every pay day fold into their rows; Profile answers live on Profile');
   // A blank clears a date; a pay day of null drops the field; bad dates are refused.
   s = editIncome(s, 'salary', { amount: 6200, cadence: 'monthly', end: null, payDay: null }, '2026-10-23');
   assert.equal(s.income.find((i) => i.id === 'salary').end, null);

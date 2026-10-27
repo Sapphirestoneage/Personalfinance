@@ -51,15 +51,26 @@ function gutCard() {
   return h('section', { class: 'card' }, h('h2', { id: 'gut-l' }, 'About how much do you spend a month?'), h('p', { class: 'muted' }, 'Your best guess. Don\'t look anything up.'), box, h('p', { class: 'edit-msg', id: 'gut-msg', role: 'alert' }));
 }
 
-function send() {
+// Send my answers (coaching, 2026-10-27): the phone's share sheet with the file when it can; else the file is saved to
+// email or text. "Copy my answers" puts them in words on the clipboard, to paste into a message.
+async function send() {
   const file = answersFile(state.answers, state.gut, todayIso());
   const name = answersFileName(state.answers.firstName, todayIso());
-  const blob = new Blob([JSON.stringify(file, null, 2) + '\n'], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+  const text = JSON.stringify(file, null, 2) + '\n';
+  try {
+    const f = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'My answers for Eli' }); note = 'Sent ' + name + '.'; draw(); return; }
+  } catch (err) { if (err && err.name === 'AbortError') return; }
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const a = h('a', { href: url, download: name });
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   note = 'Saved ' + name + '. Email or text this file to Eli.';
+  draw();
+}
+const answerWords = () => [...LEVEL1.filter((q) => state.answers[q.id] !== undefined).map((q) => { const x = state.answers[q.id]; const w = (k) => ((q.options || []).find(([o]) => o === k) || [k, k])[1]; return q.label + ' ' + (Array.isArray(x) ? x.map(w).join(', ') : x === 'notSure' ? 'Not sure' : w(x)); }), state.gut !== null ? 'About how much I spend a month: $' + state.gut.toLocaleString('en-US') : null].filter(Boolean).join('\n');
+async function copyAnswers() {
+  try { await navigator.clipboard.writeText(answerWords()); note = 'Copied. Paste it into a message to Eli.'; } catch { note = 'This browser would not copy. Use Send my answers instead.'; }
   draw();
 }
 
@@ -72,7 +83,7 @@ function draw() {
     ...AREAS.map(areaCard),
     h('section', { class: 'card' },
       h('p', { id: 'b-count' }, countWords()),
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers')),
-      h('p', { class: 'edit-msg', role: 'status' }, note || 'This saves a file. Email or text it to Eli.')));
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
+      h('p', { class: 'edit-msg', role: 'status' }, note || 'On a phone this opens the share sheet; else it saves a file to email or text to Eli.')));
 }
 draw();

@@ -24,7 +24,8 @@ export function questionEl(q, value, onAnswer, { idPrefix = 'pq' } = {}) {
     };
     body = h('div', { class: 'segmented q-seg q-many' }, ...q.options.map(([k, w]) => h('button', { type: 'button', id: id + '-' + k, class: 'seg-btn', 'aria-pressed': String(list.includes(k)), onclick: () => flip(k) }, h('span', { class: 'seg-label' }, w))), ns(q, value, onAnswer));
   } else if (q.kind === 'text') {
-    const box = h('input', { id, type: 'text', autocomplete: 'given-name', 'aria-labelledby': id + '-l', maxlength: '40' });
+    // A long answer (Why now) is a few lines; a short one is a name.
+    const box = q.long ? h('textarea', { id, rows: '2', 'aria-labelledby': id + '-l', maxlength: '400' }) : h('input', { id, type: 'text', autocomplete: 'given-name', 'aria-labelledby': id + '-l', maxlength: '40' });
     box.value = typeof value === 'string' && value !== NOT_SURE ? value : '';
     box.addEventListener('change', () => onAnswer(box.value.trim() || null));
     body = h('div', { class: 'q-field' }, box);

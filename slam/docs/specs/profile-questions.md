@@ -16,6 +16,14 @@ anything up"), saved to Numbers as a guess. "Send my answers" saves answers-<fir
 this file to Eli." It never asks for account numbers or logins, and the answers stay on the phone until sent. On the
 Profile page, "Import answers" fills the Profile and the gut number and shows what it set up.
 
+### Why now
+
+- **What made you reach out now?** (text, or Not sure). Your words, for the first call.
+- **What would make this worth it for you?** (text, or Not sure). What a good result looks like, in your words.
+- **How stressed do you feel about money? (1 is calm, 10 is very)** (1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10, or Not sure). Saved with its date, so later sessions can show the change.
+- **How often are you paid?** (Every week / Every 2 weeks / Twice a month / Once a month / It varies, or Not sure). Puts paydays on the Calendar.
+- **About how much lands in your account a month?** (Under $2,000 / $2,000 to $4,000 / $4,000 to $6,000 / $6,000 to $8,000 / Over $8,000, or Not sure). A ballpark, so the first call starts in the right place.
+
 ### You
 
 - **Your first name** (text, or Not sure). Names the household on every page.
@@ -41,7 +49,6 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 - **What kind of work?** (A job (W-2) / Self-employed / Both / Between jobs / Student / Retired, or Not sure). Shows the pay fields that fit and the tax set-aside on self-employed pay.
 - **How are you paid?** (Salary / By the hour / Some of each, or Not sure; asked only when it applies). Salary is a yearly amount; by the hour is rate x hours.
-- **How often?** (Every week / Every 2 weeks / Twice a month / Once a month, or Not sure; asked only when it applies). Puts paydays on the Calendar.
 - **Any extras?** (Bonus / Overtime / Tips / Commission / None, or Not sure; asked only when it applies). Each extra gets its own line, so the steady part stays steady.
 - **What does work offer?** (401(k) or similar / Health insurance / HSA / FSA, or Not sure; asked only when it applies). Opens those accounts in the session.
 - **Paying quarterly taxes?** (Yes / No, or Not sure; asked only when it applies). No or not sure turns on a set-aside on every deposit.

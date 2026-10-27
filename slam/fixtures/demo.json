@@ -937,5 +937,253 @@
         "kind": "known"
       }
     }
-  ]
+  ],
+  "profile": {
+    "reachOut": {
+      "value": "My card balances keep creeping up and I want a plan before they get worse.",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "worthIt": {
+      "value": "Knowing which debt to pay first, and having a real cushion.",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "stress": {
+      "value": "6",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "payOften": {
+      "value": "monthly",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "takeHome": {
+      "value": "4to6",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "firstName": {
+      "value": "Casey",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "birthYear": {
+      "value": 1994,
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "state": {
+      "value": "NY",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "livesWith": {
+      "value": [
+        "alone"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "tone": {
+      "value": "straight",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "home": {
+      "value": "rent",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "moving": {
+      "value": "no",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "getAround": {
+      "value": "mix",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "work": {
+      "value": "both",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "payType": {
+      "value": "salary",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "extras": {
+      "value": [
+        "bonus"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "offers": {
+      "value": [
+        "k401",
+        "health"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "quarterly": {
+      "value": "yes",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "publicService": {
+      "value": "no",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "getMoney": {
+      "value": "no",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "give": {
+      "value": [
+        "family"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "applyCredit": {
+      "value": "no",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "debts": {
+      "value": [
+        "cards",
+        "student"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "studentType": {
+      "value": "federal",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "cardsFull": {
+      "value": "sometimes",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "behind": {
+      "value": "no",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "accounts": {
+      "value": [
+        "checking",
+        "savings",
+        "k401",
+        "ira",
+        "brokerage"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "emergencySeparate": {
+      "value": "yes",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "health": {
+      "value": "work",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "tracking": {
+      "value": "app",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "goals": {
+      "value": [
+        "emergency",
+        "debtFree",
+        "travel"
+      ],
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    },
+    "fi": {
+      "value": "curious",
+      "asOf": "2026-10-01",
+      "source": "demo (made up)",
+      "kind": "known",
+      "by": "client"
+    }
+  }
 }

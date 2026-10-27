@@ -19,7 +19,9 @@ import * as P from '../engine/profile.js';
 
 const R = loadRules();
 const TODAY = '2026-10-26';
-const demo = () => applyDefaults(readHousehold(readJson('fixtures/demo.json'), { today: TODAY }).spine, R);
+// The demo carries a whole Profile so it demos well; these tests start from the same household with none.
+const blankDemo = () => { const r = readJson('fixtures/demo.json'); delete r.profile; return r; };
+const demo = () => applyDefaults(readHousehold(blankDemo(), { today: TODAY }).spine, R);
 const keys = (a) => P.fieldsFor(a).shown.map((f) => f.key);
 const label = (a, k) => (P.fieldsFor(a).shown.find((f) => f.key === k) || {}).label;
 const answer = (s, a) => P.applyAnswers(s, a, { today: TODAY });
@@ -162,14 +164,14 @@ test('every question changes something, says what, and "Not sure" is always allo
 });
 
 test('an older file\'s Session answers move into the Profile; income security adds cushion months', () => {
-  const raw = readJson('fixtures/demo.json');
+  const raw = blankDemo();
   raw.household.home = { value: 'family', kind: 'known', asOf: '2026-10-25', source: 'session' };
   raw.household.getAround = { value: 'both', kind: 'known', asOf: '2026-10-25', source: 'session' };
   const s = readHousehold(raw, { today: TODAY }).spine;
   assert.equal(s.household.home, undefined);
   assert.deepEqual([valueOf(s.profile.home), valueOf(s.profile.getAround)], ['family', 'mix']);
   // An old answer never hides what it used to show: a car reads as a mix; none and other are asked again.
-  const old = (home, around) => { const r = readJson('fixtures/demo.json'); r.household.home = { value: home, kind: 'known', asOf: '2026-10-25', source: 'session' }; r.household.getAround = { value: around, kind: 'known', asOf: '2026-10-25', source: 'session' }; return readHousehold(r, { today: TODAY }).spine; };
+  const old = (home, around) => { const r = blankDemo(); r.household.home = { value: home, kind: 'known', asOf: '2026-10-25', source: 'session' }; r.household.getAround = { value: around, kind: 'known', asOf: '2026-10-25', source: 'session' }; return readHousehold(r, { today: TODAY }).spine; };
   assert.equal(valueOf(old('rent', 'car').profile.getAround), 'mix');
   assert.equal(old('other', 'none').profile, undefined);
   assert.ok(validate(s).ok);
