@@ -231,9 +231,8 @@ function needs(ctx) {
     h('section', { class: 'card qs' },
       // Where you live and how you get around are Profile answers (Phase 2.5 B3): shown here, changed there.
       h('p', { class: 'q-said' }, 'Where you live: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
-      h('p', { class: 'edit-label' }, 'Fill typical amounts'),
-      h('div', { class: 'edit-actions' }, Object.values(DATA.typical || {}).filter((t) => t && t.amounts).map((t) => h('button', { type: 'button', class: 'btn small', onclick: () => fillTypical(t) }, t.label))),
-      h('p', { class: 'edit-hint' }, 'Only empty lines that fit the Profile, marked guess. Housing and getting around wait for those two answers. Typical amounts name their source on the Assumptions page.')),
+      // Fill typical amounts (High-cost city, Elsewhere) is off for now (owner's ask, 2026-10-27); fillTypical stays.
+      null),
     ...DATA.needs.map((cat) => {
       const catLine = findExpense(spine, cat.label);
       // One number for the whole category, or its lines: never both, so nothing counts twice.

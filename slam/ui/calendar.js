@@ -308,26 +308,32 @@ function actualBox(e) {
 // ---------------------------------------------------------------- maybe money: the list; the form opens from + Add only
 let trayAdding = false;
 function trayCard(c, st) {
+  // The form (owner's ask, 2026-10-27: clearer): in or out first, then what it is and how much side by side, how
+  // likely as three plain choices, and the day if known. Labels above the boxes; Enter adds, Esc cancels.
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const label = h('input', { id: 'tray-label', type: 'text', autocomplete: 'off', placeholder: 'A tax refund, a gift, a side job' });
-  const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
-  const likely = h('input', { id: 'tray-likely', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '50' });
-  const dir = h('select', { id: 'tray-dir', 'aria-label': 'In or out' }, h('option', { value: 'in' }, 'Money in'), h('option', { value: 'out' }, 'Money out'));
+  let dir = 'in', likely = 0.5;
+  const seg = (opts, get, set, label) => { const btns = opts.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(get() === k), onclick: () => { set(k); for (const [i, b] of btns.entries()) b.setAttribute('aria-pressed', String(opts[i][0] === k)); } }, h('span', { class: 'seg-label' }, w))); return h('div', { class: 'segmented', role: 'group', 'aria-label': label }, btns); };
+  const label = h('input', { id: 'tray-label', type: 'text', autocomplete: 'off', placeholder: 'e.g. Tax refund' });
+  const amount = h('input', { id: 'tray-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 1,200' });
   const dateIn = h('input', { id: 'tray-date', type: 'date' });
-  const form = h('form', { class: 'editor tray-form', novalidate: true, onsubmit: (ev) => {
+  const field = (id, words, box, short = true) => h('div', { class: 'add-field' + (short ? ' short' : '') }, h('label', { for: id, class: 'edit-label' }, words), box);
+  const cancel = () => { trayAdding = false; refresh(); };
+  const form = h('form', { class: 'editor add-form tray-form', novalidate: true, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); cancel(); } }, onsubmit: (ev) => {
     ev.preventDefault();
+    if (!label.value.trim()) { msg.textContent = 'What is it: a name, for example Tax refund'; label.focus(); return; }
     const a = parseInput('money', amount.value); if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
-    const l = likely.value.trim() === '' ? { ok: true, value: 0.5 } : parseInput('rate', likely.value); if (!l.ok || l.value < 0 || l.value > 1) { msg.textContent = 'How likely: 0 to 100'; likely.focus(); return; }
     trayAdding = false;
-    change((s) => addMaybe(s, { label: label.value, amount: a.value, likelihood: l.value, direction: dir.value, date: dateIn.value || null }).spine, said.added(label.value.trim()) + (dateIn.value ? ' on ' + shortDate(dateIn.value) : ' to maybe money'));
+    change((s) => addMaybe(s, { label: label.value, amount: a.value, likelihood: likely, direction: dir, date: dateIn.value || null }).spine, said.added(label.value.trim()) + (dateIn.value ? ' on ' + shortDate(dateIn.value) : ' to maybe money'));
   } },
-    h('label', { for: 'tray-label', class: 'edit-label' }, 'What might come in or go out'), label,
-    h('label', { for: 'tray-amount', class: 'edit-label' }, 'How much'), amount,
-    h('label', { for: 'tray-likely', class: 'edit-label' }, 'How likely, as a percent'), likely,
-    h('label', { for: 'tray-dir', class: 'edit-label' }, 'Direction'), dir,
-    h('label', { for: 'tray-date', class: 'edit-label' }, 'Day (optional)'), dateIn,
+    seg([['in', 'Money in'], ['out', 'Money out']], () => dir, (k) => { dir = k; }, 'In or out'),
+    h('div', { class: 'add-grid' },
+      field('tray-label', 'What is it?', label),
+      field('tray-amount', 'How much', h('div', { class: 'affix' }, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '$'), amount))),
+    h('p', { class: 'edit-label' }, 'How likely?'),
+    seg([[0.75, 'Likely'], [0.5, 'Maybe'], [0.25, 'Unlikely']], () => likely, (k) => { likely = k; }, 'How likely'),
+    h('div', { class: 'add-grid' }, field('tray-date', 'When, if you know', dateIn)),
     msg,
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add maybe money'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { trayAdding = false; refresh(); } }, 'Cancel')));
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn', onclick: cancel }, 'Cancel')));
   const item = (m) => {
     const d = h('input', { type: 'date', 'aria-label': 'Day for ' + m.label });
     return h('li', { class: 'tray-item', 'data-key': 'maybe:' + m.id, 'data-label': m.label, 'data-drag': 'maybe', 'data-maybe': m.id },
