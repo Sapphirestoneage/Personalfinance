@@ -163,14 +163,14 @@ export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', as
 // ---------------------------------------------------------------- Plan and FI
 export function fiPathCard(f) {
   if (!f.invested.length || !f.lines.standard) return null;
-  const hl = [['lean', 'Lean FI', 3], ['standard', 'FI number', 1], ['fat', 'Fat FI', 5]].filter(([k]) => f.lines[k]).map(([k, words, c]) => ({ y: f.lines[k], label: words + ' ' + axisMoney(f.lines[k]), c, dash: k !== 'standard' }));
+  const hl = [['lean', 'Lean FI', 3], ['standard', 'FI number', 1], ['fat', 'Fat FI', 0]].filter(([k]) => f.lines[k]).map(([k, words, c]) => ({ y: f.lines[k], label: words + ' ' + axisMoney(f.lines[k]), c, dash: k !== 'standard' }));
   const byY = new Map(f.invested);
   return chartCard({ id: 'fi-path', question: 'When do your investments reach your FI number?',
     summary: f.crossYear ? 'Invested money passes the FI number of ' + exactMoney(f.lines.standard) + ' around ' + f.crossYear + ' at this pace (a projection).' : 'At this pace, invested money does not reach the FI number in the years shown.',
     draw: (w) => lines({ width: w, height: 260, series: [{ label: 'Invested', c: 2, points: f.invested, dashed: true, endLabel: 'Invested' }, ...(f.coast.length > 1 ? [{ label: 'Coast FI', c: 4, points: f.coast, thin: true }] : [])], hlines: hl,
       dots: f.crossYear ? [{ x: f.crossYear, y: byY.get(f.crossYear), c: 2, label: 'Reaches the FI number in ' + f.crossYear }] : [],
       tips: (y) => y + ': invested ' + exactMoney(byY.get(y)), label: 'Invested money against the FI numbers' }),
-    legend: [{ c: 2, words: 'Invested, projected', dash: true }, { c: 1, words: 'FI number', cls: 'sw-line' }, { c: 3, words: 'Lean FI', dash: true }, { c: 5, words: 'Fat FI', dash: true }, ...(f.coast.length > 1 ? [{ c: 4, words: 'Coast FI: enough today to coast to ' + f.coastAge, cls: 'sw-line' }] : [])],
+    legend: [{ c: 2, words: 'Invested, projected', dash: true }, { c: 1, words: 'FI number', cls: 'sw-line' }, { c: 3, words: 'Lean FI', dash: true }, { c: 0, words: 'Fat FI', dash: true }, ...(f.coast.length > 1 ? [{ c: 4, words: 'Coast FI: enough today to coast to ' + f.coastAge, cls: 'sw-line' }] : [])],
     note: 'The invested line is a projection, so it is dashed.',
     table: { head: ['Year', 'Invested', 'Coast FI'], rows: f.invested.map(([y, x]) => [String(y), exactMoney(x), (f.coast.find((c) => c[0] === y) || [null, null])[1] === null ? '' : exactMoney(f.coast.find((c) => c[0] === y)[1])]) } });
 }
@@ -192,11 +192,12 @@ export function savingsCurveCard(c, { yearsToFi = null } = {}) {
 // ---------------------------------------------------------------- Taxes
 export function bracketCard(b) {
   if (!b) return null;
-  const segs = b.bands.map((x, i) => ({ v: x.to - x.from, c: x.filled > 0 ? 1 + (i % 5) : 0, rough: b.rough && x.filled > 0, tip: pct0(x.rate) + ' on ' + exactMoney(x.from) + ' to ' + exactMoney(x.to) + (x.filled > 0 ? ': ' + exactMoney(x.filled) + ' of your income here' : ': none of your income') }));
+  // Each band filled only as far as taxable income reaches (round 4); the rest of a band is gray.
+  const segs = b.bands.flatMap((x, i) => { const tipOf = pct0(x.rate) + ' on ' + exactMoney(x.from) + ' to ' + exactMoney(x.to); const width = x.to - x.from; return x.filled <= 0 ? [{ v: width, c: 0, tip: tipOf + ': none of your income' }] : x.filled >= width ? [{ v: width, c: 1 + (i % 5), rough: b.rough, tip: tipOf + ': ' + exactMoney(x.filled) + ' of your income here' }] : [{ v: x.filled, c: 1 + (i % 5), rough: b.rough, tip: tipOf + ': ' + exactMoney(x.filled) + ' of your income here' }, { v: width - x.filled, c: 0, tip: tipOf + ': the rest of this bracket, above your income' }]; });
   return chartCard({ id: 'tax-brackets', question: 'Which tax bracket is your last dollar in?',
     summary: 'Taxable income of ' + exactMoney(b.taxable) + ' reaches the ' + pct0(b.marginal) + ' bracket: each extra dollar pays ' + pct0(b.marginal) + ' federal; the dollars below pay less.',
     draw: (w) => bars({ width: w, rows: [{ label: 'Federal', segs, marker: { v: b.taxable, label: 'Your taxable income: ' + exactMoney(b.taxable) }, value: pct0(b.marginal) }], max: b.top, label: 'Federal brackets with your taxable income marked' }),
-    legend: b.bands.filter((x) => x.filled > 0).map((x, i) => ({ c: 1 + (i % 5), words: pct0(x.rate) + ' bracket' })).concat([{ c: 0, words: 'Brackets above yours' }]),
+    legend: b.bands.filter((x) => x.filled > 0).map((x, i) => ({ c: 1 + (i % 5), words: pct0(x.rate) + ' bracket' })).concat([{ c: 0, words: 'Not reached by your income' }]),
     note: 'The triangle marks your taxable income.' + (b.rough ? ' ' + ROUGH_NOTE : ''),
     table: { head: ['Bracket', 'From', 'To', 'Your income in it'], rows: b.bands.map((x) => [pct0(x.rate), exactMoney(x.from), exactMoney(x.to), exactMoney(x.filled)]) } });
 }

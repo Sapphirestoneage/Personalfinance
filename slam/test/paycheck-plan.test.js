@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { paycheckPlan } from '../engine/plan.js';
 
-const pc = (date, amount, bills, everyday = 0) => ({ date, label: 'Pay', amount, setAside: 0, envelopes: bills.map((b, i) => ({ date, label: 'Bill ' + i, amount: b })), everyday, free: amount - bills.reduce((a, b) => a + b, 0) - everyday });
+const pc = (date, amount, bills, everyday = 0) => ({ date, ym: date.slice(0, 7), label: 'Pay', amount, setAside: 0, envelopes: bills.map((b, i) => ({ date, label: 'Bill ' + i, amount: b })), everyday, free: amount - bills.reduce((a, b) => a + b, 0) - everyday });
 
 test('each paycheck is fully assigned, with a carry to a short one', () => {
   const alloc = { paychecks: [pc('2026-11-01', 2000, [500], 300), pc('2026-11-15', 2000, [1900], 400), pc('2026-12-01', 2000, [200], 300)], bonusMonths: [] };
@@ -17,6 +17,7 @@ test('each paycheck is fully assigned, with a carry to a short one', () => {
   assert.equal(a.jobs.find((j) => j.kind === 'plan').amount, 900);
   assert.equal(c.carryIn, 0);
   assert.equal(p.fromChecking, 0);
+  assert.deepEqual(p.byMonth, [{ ym: '2026-11', toPlan: 900, kept: 300 }, { ym: '2026-12', toPlan: 1500, kept: 0 }], 'each month added up');
 });
 
 test('two short paychecks in a row pull from the one before both; a short first comes from checking', () => {

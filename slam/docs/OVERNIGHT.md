@@ -134,3 +134,33 @@ and more metrics; recorded for the day), 29, 31, 32 (as before).
 
 **After.** Suites 1,068; root 35,911.
 
+## Round 4
+
+**Before.** qa-crawl PASS (151 x 3, 333 taps; 399 small taps reported). agree-check PASS. Suites 1,068; root 35,911.
+Reviewer: 3 high, 23 medium, 4 low (round-4/findings.md), down from 9 high. The reviewer checked the headline numbers
+by hand and found they add up (net worth, the flow, the surplus, the runway).
+
+**Fixed.**
+- 2 (high, with a test): Paychecks adds each month up after its last paycheck: "Nov: $495 to the Plan, $3,053 kept for
+  the next month's first paycheck", so the month visibly accounts for itself next to the Plan's $712.
+- 1 (high): the Calendar's Maybe money line reads "none without a day" (Income counts the dated one too).
+- 3 (high, part): Session's question counts read "N to ask", so they no longer look like My numbers' blank-field
+  counts; one list for both is QUESTIONS 159.
+- 12: one primary on the Debt screen (Compare the cards and both Work it out are plain buttons).
+- 13: "Missing: people in the household" has an "Add household size" button beside it.
+- 18: Fat FI is a gray dashed line, so it no longer looks like the projection.
+- 19: the tax bracket bar fills only up to taxable income; the rest of that bracket is gray ("Not reached by your
+  income").
+- 20: Bills worth a call points at Today's deferred-interest warning for a card on an intro rate.
+- 23: a goal's FI-date cell says "not figured: no set-aside a month" instead of a blank.
+- 26: the One-pager carries the most urgent line from Today: "Before Nov 11, 2026: move $228 from High-yield savings to
+  checking".
+- 28: "Set all back to zero" is disabled when everything is at zero, with the reason.
+
+**Left, with reason.** 4 (the month's $686 against $712 a month: the calendar month counts what others owe back), 5, 6
+(Rough marks: as round 1, 18), 7 (completeness counts: 159), 8 (the Plan's suggestion during a shortfall: what to
+suggest is a money choice; it says to check the lowest day first), 9, 10, 11, 14 (the Debt screen and Plan steps: a
+day session), 15 (the flow diagram's card lanes), 16, 17, 21, 22, 24, 25, 27, 29, 30 (as before).
+
+**After.** Suites 1,068 (the paycheck plan test grew); root 35,911.
+

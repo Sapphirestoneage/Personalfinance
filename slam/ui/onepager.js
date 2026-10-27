@@ -6,6 +6,7 @@
 // A handout (audit 6): who it is for, the date, who prepared it, and the footer; the next step is the shared ranking
 // written to the client; debt shows the Plan's own clear months, or "not yet planned".
 
+import { forecast } from './forecast.js';
 import { sharedNotes } from '../engine/notes.js';
 import { startPage, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
@@ -62,7 +63,9 @@ function render({ spine: base, rules }) {
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), ['of ', h('span', { 'data-metric': 'fiToday' }, m(s.fi.today.value)), ' at today\'s spending'], 'fiPercent')),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),
       flow,
-      goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions))),
+      goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions)),
+        // Round 4: the most urgent thing on Today goes on the handout too, in one calm line.
+        (() => { const f = forecast(spine, rules).story; return f && f.under && f.fix && f.fix.from ? h('p', { class: 'tile-note' }, 'Before ' + shortDate(f.fix.by) + ': move ' + m(f.fix.amount) + ' from ' + f.fix.from.name + ' to checking, so checking stays above your floor.') : null; })()),
       debtCard(debt),
       todoCard(base),
       notesCard(base),

@@ -211,7 +211,9 @@ export function paycheckPlan(alloc, { step = null, checking = null } = {}) {
     return { ...p, carryIn, carryInFrom: carryIn ? (i ? list[i - 1].date : 'checking') : null, carryOut, carryTo: carryOut ? list[i + 1].date : null, left, jobs, byKind: Object.fromEntries(['bill', 'everyday', 'tax', 'carry', 'plan'].map((k) => [k, round2(jobs.filter((j) => j.kind === k).reduce((a, j) => a + j.amount, 0))])), assigned: round2(jobs.reduce((a, j) => a + j.amount, 0)) };
   });
   const fromChecking = n ? needIn[0] : 0;
-  return { paychecks: rows, bonusMonths: alloc.bonusMonths, fromChecking, checking, shortBy: checking === null || checking === undefined ? null : round2(Math.max(0, fromChecking - checking)), kind: alloc.kind };
+  // Each month's paychecks added up (round 4): what they send to the Plan and what they keep for a later paycheck.
+  const byMonth = [...new Set(rows.map((p) => p.ym))].map((ym) => { const mine = rows.filter((p) => p.ym === ym); return { ym, toPlan: round2(mine.reduce((a, p) => a + (p.byKind.plan || 0), 0)), kept: round2(mine.reduce((a, p) => a + (p.byKind.carry || 0), 0)) }; });
+  return { paychecks: rows, byMonth, bonusMonths: alloc.bonusMonths, fromChecking, checking, shortBy: checking === null || checking === undefined ? null : round2(Math.max(0, fromChecking - checking)), kind: alloc.kind };
 }
 
 // ---------------------------------------------------------------- the solvers (E014)

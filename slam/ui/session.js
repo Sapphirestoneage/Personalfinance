@@ -566,7 +566,7 @@ function overview(ctx) {
     h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = qCount(openAreas(ctx.spine, st.id)); return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),
-      h('span', { class: 'go-sub' }, totalWords(st, sum.sheet.owed), n ? ' · ' + n + (n === 1 ? ' question' : ' questions') : ''))); }))
+      h('span', { class: 'go-sub' }, totalWords(st, sum.sheet.owed), n ? ' · ' + n + ' to ask' : ''))); }))
   ];
 }
 

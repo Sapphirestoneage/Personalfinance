@@ -606,7 +606,7 @@ function belowRows(v, c, m, st) {
       if (timingMemo.sim !== sim) timingMemo = { sim, t: billTiming(sim, v.rules) };
       return timingBody(timingMemo.t);
     }) : null,
-    foldRow('cal-maybe', 'Maybe money', c.tray.length ? c.tray.length + ' without a day' : 'none', () => trayCard(c, st), { add: { label: 'Add', onOpen: () => { trayAdding = true; } } }),
+    foldRow('cal-maybe', 'Maybe money', c.tray.length ? c.tray.length + ' without a day' : 'none without a day', () => trayCard(c, st), { add: { label: 'Add', onOpen: () => { trayAdding = true; } } }),
     h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt' }, h('span', { class: 'go-name' }, 'Debt payoff dates'), h('span', { class: 'go-sub' }, 'On My numbers, Debt'))),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => downloadIcs(v.base, v.rules) }, 'Add to my calendar')))
   ];

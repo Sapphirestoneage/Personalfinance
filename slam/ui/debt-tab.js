@@ -191,7 +191,7 @@ function whichCardCard(c, spine, rules, ctx, save) {
     h('h2', { id: 'which-h' }, 'Which card should I use?'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } form.amount = amount.value; save(); } },
       h('label', { for: 'which-amount', class: 'edit-label' }, 'A purchase today, in dollars'), amount, msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Compare the cards'))),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Compare the cards'))),
     w && w.rows.length ? [h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Card'), h('th', { class: 'num' }, 'Rewards'), h('th', { class: 'num' }, 'Interest'), h('th', { class: 'num' }, 'Net'), h('th', {}, 'Float'))),
       h('tbody', {}, w.rows.map((r, i) => h('tr', { class: i === 0 ? 'tight' : '' }, h('td', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, i === 0 ? [' ', h('span', { class: 'pill' }, 'best')] : null, r.utilizationWarn ? [' ', h('span', { class: 'pill' }, 'utilization')] : null), h('td', { class: 'num' }, money(r.rewards) + ' (' + pctWords(r.rate) + ')'), h('td', { class: 'num' }, r.revolving ? money(r.interest) + ' a month' : 'none'), h('td', { class: 'num' }, money(r.net)), h('td', {}, r.revolving ? 'revolving, no float' : r.interestFreeDays + ' days interest-free')))))),
@@ -218,7 +218,7 @@ function btCard(c, spine, rules, ctx, save) {
       h('label', { for: 'bt-fee', class: 'edit-label' }, 'Transfer fee, as a percent'), fee,
       h('label', { for: 'bt-months', class: 'edit-label' }, 'Months at 0%'), months,
       h('label', { for: 'bt-post', class: 'edit-label' }, 'Rate after the window, as a percent'), post,
-      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Work it out'))),
+      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Work it out'))),
     b && b.value !== null ? [h('div', { class: 'tool-result' + (b.worthIt ? '' : ' bad') }, h('strong', {}, b.worthIt ? 'Worth it: ' : 'Not worth it: '), 'moving ' + money(b.balance) + ' from ' + b.name + ' at ' + pctWords(b.apr) + ' costs a ' + money(b.fee) + ' fee and skips ' + money(b.interestSkipped) + ' of interest over ' + b.promoMonths + ' months at 0%, so ' + (b.netSaving >= 0 ? money(b.netSaving) + ' saved' : money(-b.netSaving) + ' lost') + '. Paying ' + money(b.payment) + ' a month, ' + (b.balanceLeftAfterPromo > 0 ? money(b.balanceLeftAfterPromo) + ' is left when the window ends, at ' + pctWords(b.postApr) + '.' : 'nothing is left when the window ends.')),
       h('p', { class: 'tile-note' }, kindChip(b.kind), ' Offer terms you leave blank use the usual ones.'),
       mathButton(['debt:bt'], () => ctx({ bt: b }))] : b ? h('p', { class: 'muted missing-row' }, 'Missing: the card\'s balance.') : null);
@@ -238,7 +238,7 @@ function solveCard(c, spine, rules, ctx, save) {
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; save(); } },
       h('label', { for: 'solve-target', class: 'edit-label' }, 'Clear'), pick,
       h('label', { for: 'solve-by', class: 'edit-label' }, 'By'), by,
-      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Work it out'))),
+      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Work it out'))),
     x ? [h('div', { class: 'tool-result' + (x.breaksCash ? ' bad' : '') },
       x.impossible ? 'Even ' + money(x.need) + ' a month more does not clear ' + x.name + ' by ' + shortDate(x.byDate) + (x.best ? '; the soonest is ' + shortDate(x.best) : '') + '.'
         : x.already ? x.name + ' already clears by ' + shortDate(x.date) + ' with the extra as it is (' + money(x.extraNow) + ' a month).'
@@ -260,7 +260,7 @@ function loansCard(d, ctx) {
         const kv = [];
         const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
         if (l.missingRules.length) row('Missing', h('span', { class: 'missing-row' }, (l.missingRules.length === 1 ? 'A figure' : l.missingRules.length + ' figures') + ' this plan needs, not available yet'), 'words');
-        row('Income-driven payment', l.payment === null ? h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : labelFor(ctx().spine, p)).join(', ') || 'a figure this plan needs')) : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
+        row('Income-driven payment', l.payment === null ? [h('span', { class: 'missing-row' }, 'Missing: ' + (l.missing.filter((p) => !p.startsWith('rule:')).map((p) => p === 'household.householdSize' ? 'people in the household' : labelFor(ctx().spine, p)).join(', ') || 'a figure this plan needs')), l.missing.includes('household.householdSize') ? [' ', h('a', { class: 'btn small', href: ledgerHref('household.householdSize') }, 'Add household size')] : null] : money(l.payment) + ' a month' + (l.standardPayment !== null ? ' against ' + money(l.standardPayment) + ' now' + (l.lower ? ' (lower)' : ' (not lower)') : ''), 'words');
         if (l.payment !== null) row('How', 'income ' + money(l.agi) + (l.agiSource === 'cashflow' ? ' (a year of this month\'s gross, rough)' : ' (this year\'s AGI)') + ', poverty line ' + money(l.povertyLine) + ' for ' + l.householdSize + (l.householdSize === 1 ? ' person' : ' people') + ', discretionary ' + money(l.discretionary), 'words');
         row('Forgiveness', l.forgivenessYears === null ? h('span', { class: 'missing-row' }, 'Missing: when this plan forgives what is left') : 'whatever is left after ' + l.forgivenessYears + ' years of payments, about ' + shortDate(l.forgivenessDate), 'words');
         if (l.rap) row('Repayment Assistance Plan', money(l.rap.payment) + ' a month (' + Math.round(l.rap.share * 100) + '% of income, less ' + (l.householdSize > 1 ? 'a credit for each dependent' : 'no dependents') + '); what is left is forgiven after ' + l.rap.payments / 12 + ' years, about ' + shortDate(l.rap.date), 'words');
