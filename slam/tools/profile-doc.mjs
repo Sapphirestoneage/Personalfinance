@@ -7,8 +7,8 @@ export function profileDoc() {
   const L = [
     '# Profile questions (Phase 2.5 B3)', '',
     'Written from `engine/profile.js` by `node tools/profile-doc.mjs`; do not edit by hand. Every question changes at',
-    'least one of: which fields show, what a number means, the starting guess, or what the app does. "Not sure" is always',
-    'allowed. Changing an answer hides fields and never deletes them; switching back shows what was typed. Each change is',
+    'least one of: which fields show, what a number means, the starting guess, or what the app does. "Not sure" is on',
+    'the client\'s before-the-call page only; the Profile asks for an answer. Changing an answer hides fields and never deletes them; switching back shows what was typed. Each change is',
     'logged as a life change with its date, and Undo takes it back. A number never changes which fields show.', '',
     'Where it lives: its own page (profile.html), opened by tapping the client\'s name in the header. The six tabs do not',
     'change. Each area ends with one line saying what it set up (for example "Shows Rent, your share, Utilities, your share").', '',
@@ -27,12 +27,12 @@ export function profileDoc() {
   L.push('## Level 2: in the session', '', 'Coach-guided. Opens only for what Level 1 ticked; listed on the Session\'s first screen ("To ask today").', '');
   for (const [area, label] of Object.entries(L2_AREAS)) {
     L.push('### ' + label, '');
-    for (const q of LEVEL2.filter((x) => x.area === area)) L.push('- **' + q.label + '**' + (q.options ? ' (' + q.options.map((o) => o[1]).join(' / ') + ', or Not sure)' : ' (a number in My numbers' + (q.where ? '; find it in ' + WHERE_WORDS[q.where].replace(/^./, (c) => c.toLowerCase()) : '') + ')') + (q.does ? '. ' + q.does : '.'));
+    for (const q of LEVEL2.filter((x) => x.area === area)) L.push('- **' + q.label + '**' + (q.options ? ' (' + q.options.map((o) => o[1]).join(' / ') + ')' : ' (a number in My numbers' + (q.where ? '; find it in ' + WHERE_WORDS[q.where].replace(/^./, (c) => c.toLowerCase()) : '') + ')') + (q.does ? '. ' + q.does : '.'));
     L.push('');
   }
   L.push('## Level 3: homework', '',
-    'Every Level 2 question has "I know it" (type it), "I\'ll look it up" (a to-do with where to find it) or "Not sure" (a',
-    'rough default, listed in Still guessing). The to-dos print on the One-pager and in the Profile\'s To-dos, grouped by',
+    'Every Level 2 question on the Profile has "I know it" (type it) or "I\'ll look it up" (a to-do with where to find it);',
+    'the Profile has no "Not sure" (owner, 2026-10-27; the client\'s before-the-call page keeps it). The to-dos print on the One-pager and in the Profile\'s To-dos, grouped by',
     'where to find each item:', '', ...Object.values(WHERE_WORDS).map((w) => '- ' + w), '',
     'Plus the last 2 statements for each card and bank account, as CSV.', '');
   return L.join('\n');

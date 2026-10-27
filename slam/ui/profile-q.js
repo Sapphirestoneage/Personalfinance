@@ -1,13 +1,16 @@
 // One Profile question, drawn the same way on the client's "Before our first call" page and on the coach's Profile
-// page (Phase 2.5 B3). Taps only: one choice, several, or a picker for a year, a state or a date; "Not sure" is always
-// there. onAnswer(value) gets the new answer (null clears it). Formatting only: the questions are engine/profile.js.
+// page (Phase 2.5 B3). Taps only: one choice, several, or a picker for a year, a state or a date. "Not sure" is there
+// on the client's page only (notSure: true); the Profile asks for an answer (owner's ask, 2026-10-27), and an old "Not
+// sure" there reads as not answered yet. onAnswer(value) gets the new answer (null clears it). Formatting only: the questions are engine/profile.js.
 
 import { h } from './view.js';
 import { NOT_SURE, STATES } from '../engine/profile.js';
 
-const ns = (q, value, onAnswer) => h('button', { type: 'button', class: 'seg-btn q-notsure', 'aria-pressed': String(value === NOT_SURE), onclick: () => onAnswer(value === NOT_SURE ? null : NOT_SURE) }, h('span', { class: 'seg-label' }, 'Not sure'));
+const nsBtn = (q, value, onAnswer) => h('button', { type: 'button', class: 'seg-btn q-notsure', 'aria-pressed': String(value === NOT_SURE), onclick: () => onAnswer(value === NOT_SURE ? null : NOT_SURE) }, h('span', { class: 'seg-label' }, 'Not sure'));
 
-export function questionEl(q, value, onAnswer, { idPrefix = 'pq' } = {}) {
+export function questionEl(q, raw, onAnswer, { idPrefix = 'pq', notSure = true } = {}) {
+  const value = !notSure && raw === NOT_SURE ? null : raw;
+  const ns = notSure ? nsBtn : () => null;
   const id = idPrefix + '-' + q.id;
   const label = h('p', { class: 'q-label', id: id + '-l' }, q.label);
   let body;
@@ -47,7 +50,7 @@ export function questionEl(q, value, onAnswer, { idPrefix = 'pq' } = {}) {
         if (!(y >= 1920 && y <= 2015)) { msg.textContent = 'Type a year like 1994.'; return; }
         msg.textContent = ''; onAnswer(y);
       });
-      body = h('div', { class: 'q-field' }, input, msg, h('div', { class: 'segmented q-seg' }, ns(q, value, onAnswer)));
+      body = h('div', { class: 'q-field' }, input, msg, (notSure ? h('div', { class: 'segmented q-seg' }, ns(q, value, onAnswer)) : null));
       return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body);
     }
     if (opts) {
@@ -57,7 +60,7 @@ export function questionEl(q, value, onAnswer, { idPrefix = 'pq' } = {}) {
       input.value = typeof value === 'string' && value !== NOT_SURE ? value : '';
       input.addEventListener('change', () => onAnswer(input.value || null));
     }
-    body = h('div', { class: 'q-field' }, input, h('div', { class: 'segmented q-seg' }, ns(q, value, onAnswer)));
+    body = h('div', { class: 'q-field' }, input, (notSure ? h('div', { class: 'segmented q-seg' }, ns(q, value, onAnswer)) : null));
   }
   return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body);
 }

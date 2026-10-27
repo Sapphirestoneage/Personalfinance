@@ -155,7 +155,10 @@ test('Level 2 opens only for what Level 1 ticked; Level 3 makes the to-dos, grou
   assert.match(readFileSync(new URL('../ui/onepager.js', import.meta.url), 'utf8'), /homeworkList\(spine, todayIso\(\)\)/);
 });
 
-test('every question changes something, says what, and "Not sure" is always allowed', () => {
+test('every question changes something, says what; "Not sure" is kept on the before-call page, never offered on the Profile', () => {
+  const prof = readFileSync(new URL('../ui/profile.js', import.meta.url), 'utf8');
+  assert.equal((prof.match(/questionEl\(/g) || []).length, (prof.match(/notSure: false/g) || []).length, 'every Profile question turns Not sure off');
+  assert.doesNotMatch(prof, /\['known', 'lookup', 'notSure'\]/);
   for (const q of [...P.LEVEL1, ...P.LEVEL2]) {
     assert.ok(q.does || q.kind === 'field', q.id + ' says what it does');
     assert.equal(P.cleanAnswer(q.id, P.NOT_SURE), P.NOT_SURE, q.id);

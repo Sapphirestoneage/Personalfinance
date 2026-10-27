@@ -1,8 +1,8 @@
 # Profile questions (Phase 2.5 B3)
 
 Written from `engine/profile.js` by `node tools/profile-doc.mjs`; do not edit by hand. Every question changes at
-least one of: which fields show, what a number means, the starting guess, or what the app does. "Not sure" is always
-allowed. Changing an answer hides fields and never deletes them; switching back shows what was typed. Each change is
+least one of: which fields show, what a number means, the starting guess, or what the app does. "Not sure" is on
+the client's before-the-call page only; the Profile asks for an answer. Changing an answer hides fields and never deletes them; switching back shows what was typed. Each change is
 logged as a life change with its date, and Undo takes it back. A number never changes which fields show.
 
 Where it lives: its own page (profile.html), opened by tapping the client's name in the header. The six tabs do not
@@ -104,31 +104,31 @@ Coach-guided. Opens only for what Level 1 ticked; listed on the Session's first 
 
 ### Work
 
-- **How secure is your income?** (Solid / Okay / Shaky, or Not sure). Okay adds a month to the cushion; shaky adds three.
-- **Pay changes coming?** (Yes / No, or Not sure). Yes puts the change on the Calendar with its date.
+- **How secure is your income?** (Solid / Okay / Shaky). Okay adds a month to the cushion; shaky adds three.
+- **Pay changes coming?** (Yes / No). Yes puts the change on the Calendar with its date.
 - **Your pay rate (yearly salary, or hourly rate and usual hours)** (a number in My numbers; find it in your paystub).
-- **Business structure** (Just me (sole) / LLC / S corp, or Not sure). An S corp pays you a wage; the rest stays 1099.
-- **A separate business account?** (Yes / No, or Not sure). No adds "open a business account" to the to-dos.
-- **Retirement through the business** (None / SEP IRA / Solo 401(k), or Not sure). Opens that account.
+- **Business structure** (Just me (sole) / LLC / S corp). An S corp pays you a wage; the rest stays 1099.
+- **A separate business account?** (Yes / No). No adds "open a business account" to the to-dos.
+- **Retirement through the business** (None / SEP IRA / Solo 401(k)). Opens that account.
 
 ### 401(k) or similar
 
-- **401(k): traditional, Roth or both?** (Traditional / Roth / Both, or Not sure). Sets whether it lowers your tax now.
+- **401(k): traditional, Roth or both?** (Traditional / Roth / Both). Sets whether it lowers your tax now.
 - **What goes in (% or $ per check)** (a number in My numbers; find it in your paystub).
 - **The match formula and vesting** (a number in My numbers; find it in your benefits site or HR).
-- **Getting the full match?** (Yes / No, or Not sure). No or not sure puts "Get the match" first.
-- **Old 401(k)s at past jobs?** (Yes / No, or Not sure). Yes adds them as accounts to find.
+- **Getting the full match?** (Yes / No). No or not sure puts "Get the match" first.
+- **Old 401(k)s at past jobs?** (Yes / No). Yes adds them as accounts to find.
 
 ### IRA
 
-- **IRA: traditional or Roth?** (Traditional / Roth / Both, or Not sure). Sets the IRA type.
-- **Any pre-tax IRA money?** (Yes / No, or Not sure). Yes warns before a backdoor Roth.
+- **IRA: traditional or Roth?** (Traditional / Roth / Both). Sets the IRA type.
+- **Any pre-tax IRA money?** (Yes / No). Yes warns before a backdoor Roth.
 
 ### HSA
 
-- **HSA through payroll?** (Yes / No, or Not sure). Through payroll skips Social Security and Medicare tax.
-- **HSA invested or cash?** (Invested / Cash, or Not sure). Invested counts toward FI.
-- **Saving receipts?** (Yes / No, or Not sure). No adds "keep receipts" to the to-dos.
+- **HSA through payroll?** (Yes / No). Through payroll skips Social Security and Medicare tax.
+- **HSA invested or cash?** (Invested / Cash). Invested counts toward FI.
+- **Saving receipts?** (Yes / No). No adds "keep receipts" to the to-dos.
 
 ### Brokerage
 
@@ -152,9 +152,9 @@ Coach-guided. Opens only for what Level 1 ticked; listed on the Session's first 
 
 ### Health
 
-- **A high-deductible plan?** (Yes / No, or Not sure). Yes opens an HSA.
+- **A high-deductible plan?** (Yes / No). Yes opens an HSA.
 - **Deductible, out-of-pocket max and premium** (a number in My numbers; find it in your benefits site or HR).
-- **Big medical costs expected?** (Yes / No, or Not sure). Yes adds a medical goal.
+- **Big medical costs expected?** (Yes / No). Yes adds a medical goal.
 
 ### Debt overall
 
@@ -163,7 +163,7 @@ Coach-guided. Opens only for what Level 1 ticked; listed on the Session's first 
 ### Goals
 
 - **Each goal: amount and date** (a number in My numbers).
-- **One goal at a time, or several?** (One at a time / Several at once, or Not sure). Sets how the Plan funds goals.
+- **One goal at a time, or several?** (One at a time / Several at once). Sets how the Plan funds goals.
 
 ### Statements
 
@@ -171,8 +171,8 @@ Coach-guided. Opens only for what Level 1 ticked; listed on the Session's first 
 
 ## Level 3: homework
 
-Every Level 2 question has "I know it" (type it), "I'll look it up" (a to-do with where to find it) or "Not sure" (a
-rough default, listed in Still guessing). The to-dos print on the One-pager and in the Profile's To-dos, grouped by
+Every Level 2 question on the Profile has "I know it" (type it) or "I'll look it up" (a to-do with where to find it);
+the Profile has no "Not sure" (owner, 2026-10-27; the client's before-the-call page keeps it). The to-dos print on the One-pager and in the Profile's To-dos, grouped by
 where to find each item:
 
 - Your paystub
