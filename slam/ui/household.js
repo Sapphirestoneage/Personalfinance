@@ -23,7 +23,7 @@ function readSaved() {
   try { return { raw, value: JSON.parse(raw) }; } catch { return { raw, value: undefined }; }
 }
 
-async function fetchJson(rel) {
+export async function fetchJson(rel) {
   try {
     const r = await fetch(new URL(rel, base), { cache: 'no-store' });
     return r.ok ? await r.json() : null;

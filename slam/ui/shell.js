@@ -15,6 +15,7 @@
 import { mountPage, whoseLine } from './page.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
+import { withClient } from '../engine/assumptions.js';
 import { commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { h, said, sentence as end } from './view.js';
 
@@ -71,7 +72,9 @@ function nameOf(levels, ctx) {
   const w = levels[levels.length - 1].replace(/-/g, ' ');
   return w.charAt(0).toUpperCase() + w.slice(1);
 }
-const context = (levels) => ({ spine: hist ? hist.present : undefined, rules, source, institutions, levels, state: (entry() && entry().page) || {} });
+// The rules a page reads: the house defaults with this client's own assumptions laid over (engine/assumptions.js).
+const rulesFor = (spine) => withClient(rules, spine);
+const context = (levels) => ({ spine: hist ? hist.present : undefined, rules: rulesFor(hist ? hist.present : null), source, institutions, levels, state: (entry() && entry().page) || {} });
 
 // ---------------------------------------------------------------- the page's calls
 // startPage({ tab, title, render, name, actions, parent, household }) once, at the top of the page's script.
@@ -101,7 +104,7 @@ export function change(next, text) {
   let doc;
   try { doc = typeof next === 'function' ? next(hist.present) : next; } catch (err) { say(err && err.message ? err.message : String(err)); return false; }
   if (!doc || doc === hist.present) return false;
-  hist = commit(hist, applyDefaults(doc, rules), text, HISTORY_STEPS);
+  hist = commit(hist, applyDefaults(doc, rulesFor(doc)), text, HISTORY_STEPS);
   notice = null; side = null;
   const kept = stored();
   draw();
@@ -149,7 +152,9 @@ export function restoreScroll() {
   if (Math.abs(window.scrollY - y) <= 1) wantY = null;
 }
 // The household, the rules and where the household came from, for a handler outside render.
-export const current = () => ({ spine: hist ? hist.present : undefined, rules, source, institutions });
+export const current = () => ({ spine: hist ? hist.present : undefined, rules: rulesFor(hist ? hist.present : null), source, institutions });
+// New house defaults for every client (the Assumptions page's "For everyone"): kept by the page, read from here on.
+export function useRules(next) { rules = next; if (hist) hist = { ...hist, present: applyDefaults(hist.present, rulesFor(hist.present)) }; draw(); }
 // Open a different household the page read itself (what loadAll or loadMyFile returns): a fresh history, as Load my
 // file gives; the bar says text when there is one.
 export function reopen(loaded, text) { take({ rules, institutions, ...loaded }); draw(); if (text) say(text); }
@@ -274,7 +279,8 @@ function doRedo() {
 // ---------------------------------------------------------------- drawing
 function take(loaded) {
   rules = loaded.rules; source = loaded.source; institutions = loaded.institutions || institutions;
-  hist = openHistory(loaded.spine);
+  // A guess from a house default follows this client's own assumption when there is one.
+  hist = openHistory(loaded.spine && loaded.spine.assumptionOverrides ? applyDefaults(loaded.spine, rulesFor(loaded.spine)) : loaded.spine);
   notice = loaded.problem || null;
 }
 

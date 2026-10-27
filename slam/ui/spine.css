@@ -1155,3 +1155,15 @@ a.fb-link .fb-more { justify-self: end; }
 .fv-seg .seg-btn { flex: none; justify-content: center; align-items: center; min-height: var(--btn-h, var(--tap)); padding: 4px var(--space-3); font-size: var(--text-sm); font-weight: 600; border-radius: 0; }
 .fv-seg .seg-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
 .fv-seg .seg-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -2px; }
+/* Assumptions: one row each, the value on the right, what it means and where it is used under it. */
+.as-list { list-style: none; margin: 0; padding: 0; }
+.as-row { padding: var(--space-2) 0; border-top: 1px solid var(--border); display: grid; gap: 4px; }
+.as-row:first-child { border-top: 0; }
+.as-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-2); }
+.as-name { font-weight: 600; flex: 1 1 12rem; }
+.as-value { font-variant-numeric: tabular-nums; font-weight: 600; }
+.as-means, .as-used { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.as-btns { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.as-level { max-width: 420px; margin-bottom: var(--space-2); }
+.as-level .seg-btn { align-items: center; flex: 1 1 0; }
+.as-preview { min-height: 1.5em; }

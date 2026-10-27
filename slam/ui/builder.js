@@ -5,6 +5,7 @@ import { startPage } from './shell.js';
 import { h } from './view.js';
 
 const PAGES = [
+  ['Assumptions', 'assumptions.html', 'Every number the app assumes, for everyone or for one client, with what it means and where it is used.'],
   ['Design kit', 'affordances.html', 'Every button, row, bar and chart piece in every state.'],
   ['All formulas', 'math.html', 'How every number is figured, with today\'s numbers plugged in.'],
   ['Rules', 'rules.html', 'Every limit, rate and date the law sets, its source, and changes made in this browser.'],

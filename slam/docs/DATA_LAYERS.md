@@ -65,5 +65,14 @@ Each guess carries its words in the Fact's `note`, so the screen says which one 
   engine reads them as before.
 - `household.home` and `household.getAround` (the Session's first questions, S-236) moved into the Profile
   (`profile.home`, `profile.getAround`). The loader moves an older file's answers across.
-- The stage thresholds (`STAGE_*`), the scenario sets (`SCENARIO_*`) and the app's design settings (`APP_*`) stay in
-  the rules file for now (question 101).
+- The stage thresholds (`STAGE_*`), the scenario sets (`SCENARIO_*`) and the coast age (`APP_COAST_AGE`) moved to the
+  house defaults too (question 101); the app's other design settings (`APP_*`) stay in the rules file.
+
+## Assumptions, for everyone and for one client
+
+The Assumptions page (assumptions.html, engine/assumptions.js) lists every number the app assumes: Eli's method, the
+stage lines, the order money goes in, the future guesses, the typical amounts and the law. "For everyone" changes a
+house default (kept in this browser, like the Builder's House defaults page). "For this client" saves an override on
+the household (`spine.assumptionOverrides`: `{ <rule id>: { value, asOf } }`), and every page reads the rules through
+`withClient(rules, spine)`, so the client's own value wins wherever the house default would. A client's typed numbers
+are never changed by either. Compatibility: the field is optional; a file without it reads every default as it is.

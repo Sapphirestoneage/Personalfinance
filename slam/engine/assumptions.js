@@ -1,0 +1,129 @@
+// Every number the app assumes, in one list (the Assumptions page): Eli's method (house defaults), the order money
+// goes in, the future guesses, the typical amounts and the law. Each row names itself plainly, says what it means and
+// where it is used. Two levels: "for everyone" is the house default (data/house-defaults.json, changed on the Builder);
+// "for this client" is an override saved on the household (spine.assumptionOverrides), read by every engine through
+// withClient(rules, spine). Neither ever touches a number the client typed.
+//
+// Compatibility: spine.assumptionOverrides is new and optional ({ <rule id>: { value, asOf } }); a file without it reads
+// every house default as it is.
+
+import { setAt } from './spine.js';
+import { METRICS, explainMetric } from './math.js';
+import { summarize } from './summary.js';
+
+const T = 'dashboard.html', P = 'plan.html', N = 'ledger.html', C = 'calendar.html', S = 'spending.html', W = 'windfall.html', SE = 'session.html', PR = 'profile.html';
+const used = (...xs) => xs.map(([label, href]) => ({ label, href }));
+// A row: the rule id, a plain name, one line on what it means, and the screens that read it.
+const row = (id, name, means, screens) => ({ id, name, means, screens: used(...screens) });
+
+export const GROUPS = [
+  { id: 'method', label: 'Your method', note: 'How you fill a gap until the client\'s own number is in.', rows: [
+    row('DEFAULT_CARD_APR', 'Card interest rate when unknown', 'A card with no rate typed uses this, marked as a guess.', [['My numbers, Debt', N + '#/debt'], ['Plan', P], ['Calendar', C]]),
+    row('DEFAULT_DUE_DAY', 'Due day when unknown', 'A debt with no due day is due on this day of the month, as a guess.', [['Calendar', C], ['My numbers, Debt', N + '#/debt']]),
+    row('APP_RULE_OF_5', 'Rule of 5 (age divided by)', 'Months of expenses in the cushion = age divided by this (age 32 / 5 = 6.4 months), before income security adds more.', [['Today', T], ['Plan', P]]),
+    row('CUSHION_OKAY_EXTRA', 'Extra cushion months, income okay', 'Added to the Rule of 5 when income is okay but not rock solid.', [['Today', T], ['Plan', P]]),
+    row('CUSHION_SHAKY_EXTRA', 'Extra cushion months, income shaky', 'Added to the Rule of 5 when income is shaky.', [['Today', T], ['Plan', P]]),
+    row('APP_HOUSING_REF', 'Housing line', 'The share of take-home housing is compared with. A reference, not a grade.', [['Plan', P], ['Spending', S]]),
+    row('APP_MATERIALITY', 'Too small to matter', 'A difference under this reads as on plan.', [['Spending', S], ['Today', T]]),
+    row('APP_TREND_PCT', 'Trend line for variable spending', 'A variable expense is going up or down once its latest month is this far from its average.', [['Spending', S + '#see']]),
+    row('DEFAULT_PHONE_PLAN_1', 'Phone plan for one line', 'The standard plan a phone line can fill in with one tap, as a guess.', [['My numbers, Needs', N + '#/needs']]),
+    row('DEFAULT_VEHICLE_DEPRECIATION', 'A car\'s yearly loss of value', 'How much a car is guessed to lose each year when its value is not updated.', [['My numbers, Assets', N + '#/assets']]),
+    row('DEFAULT_APY', 'Rate on a plain account', 'A cash account with no rate typed earns this, as a guess.', [['My numbers, Assets', N + '#/assets']]),
+    row('APP_CARD_MIN_PCT', 'Card minimum, share of the balance', 'A card\'s minimum when none is typed: this share of the balance.', [['Calendar', C], ['Plan', P]]),
+    row('APP_CARD_MIN_FLOOR', 'Card minimum, the least', 'The smallest minimum a card asks for.', [['Calendar', C], ['Plan', P]]),
+    row('APP_HI_RATE', 'High-rate debt line', 'Debt at or above this rate is paid down before saving past the match.', [['Plan', P]])
+  ] },
+  { id: 'stages', label: 'When a stage turns red, yellow or green', note: 'The lines the stage colours and nudges use.', rows: [
+    row('STAGE_RUNWAY_RED_MONTHS', 'Runway that reads red', 'Fewer months of cash than this is a red stage.', [['Today', T], ['Plan', P]]),
+    row('STAGE_UTIL_RED', 'Card use that reads red', 'Using more than this share of card limits is red.', [['Today', T], ['My numbers, Debt', N + '#/debt']]),
+    row('STAGE_UTIL_GREEN', 'Card use that reads green', 'Using less than this share of card limits is green.', [['Today', T]]),
+    row('STAGE_FI_YELLOW_RATIO', 'FI progress that reads yellow', 'Invested over the FI number past this share is yellow.', [['Today', T]]),
+    row('STAGE_FI_GREEN_RATIO', 'FI progress that reads green', 'Invested over the FI number past this share is green.', [['Today', T]]),
+    row('STAGE_REPLACE_YELLOW', 'Income replaced that reads yellow', 'Investments replacing this share of spending is yellow.', [['Today', T]]),
+    row('STAGE_COVERAGE_RED_DAYS', 'Days without coverage that read red', 'More days than this without health cover is red.', [['Today', T]]),
+    row('STAGE_CLIFF_MONTHS', 'Income ending soon', 'Income that stops within this many months shows a warning.', [['Today', T], ['Calendar', C]])
+  ] },
+  { id: 'order', label: 'Order and allocations', note: 'Where the next dollar goes.', rows: [
+    row('FOO_RUNGS', 'Financial order of operations', 'The steps money climbs, in order.', [['Plan', P], ['Today', T]]),
+    row('WINDFALL_ORDER', 'Windfall order', 'Where extra money goes first.', [['Got extra money?', W]]),
+    row('FOO_HYPER_RATE', 'Hyper-saving mark, of gross (how this rule is defined)', 'Saving this share of gross pay is the last step of the order.', [['Plan', P]]),
+    { id: 'REF_503020', name: '50/30/20 reference', means: 'Needs, wants and saving as a share of pay, shown as a reference line, never a grade.', screens: used(['Spending', S + '#see']), reference: 'benchmarks' }
+  ] },
+  { id: 'future', label: 'Future guesses', note: 'The sets every FI number reads. The client\'s own guesses are their numbers, on My numbers.', rows: [
+    row('SCENARIO_LIKELY_RETURN', 'Standard set: real return', 'A year\'s return after inflation in the Standard set.', [['Today', T], ['Plan', P], ['My numbers, Goals', N + '#/goals']]),
+    row('SCENARIO_LIKELY_WR', 'Standard set: withdrawal rate', 'The share taken out a year in the Standard set; it sets the FI number.', [['Today', T], ['Plan', P], ['My numbers, Goals', N + '#/goals']]),
+    row('SCENARIO_WORST_RETURN', 'Conservative set: real return', 'A year\'s return after inflation in the Conservative set.', [['Today', T], ['Plan', P]]),
+    row('SCENARIO_WORST_WR', 'Conservative set: withdrawal rate', 'The withdrawal rate in the Conservative set.', [['Today', T], ['Plan', P]]),
+    row('SCENARIO_OPT_RETURN', 'Optimistic set: real return', 'A year\'s return after inflation in the Optimistic set.', [['Today', T], ['Plan', P]]),
+    row('SCENARIO_OPT_WR', 'Optimistic set: withdrawal rate', 'The withdrawal rate in the Optimistic set.', [['Today', T], ['Plan', P]]),
+    row('APP_COAST_AGE', 'Coast age', 'The age Coast FI counts to when the client has not said.', [['Plan', P], ['My numbers, Goals', N + '#/goals']])
+  ], own: [
+    ['inflation', 'Inflation'], ['realReturn', 'Real return'], ['withdrawalRate', 'Withdrawal rate'], ['lifeExpectancy', 'Life expectancy'], ['coastAge', 'Coast age']
+  ] },
+  { id: 'typical', label: 'Typical amounts', note: 'Published averages the Session can fill blank lines with, always marked as a guess and called typical.', typical: true, screens: used(['Session', SE]) },
+  { id: 'law', label: 'Rules', note: 'The law: limits, brackets and dates. Read only here; the Builder\'s Rules page changes them.', law: true }
+];
+export const ROWS = GROUPS.flatMap((g) => g.rows || []);
+export const rowById = (id) => ROWS.find((r) => r.id === id) || null;
+export const PROFILE_HREF = PR;
+
+// ---------------------------------------------------------------- for this client
+export const clientOverrides = (spine) => (spine && spine.assumptionOverrides && typeof spine.assumptionOverrides === 'object' ? spine.assumptionOverrides : {});
+// The rules with this client's overrides laid over the house defaults: get() and meta() read the override; the rest is
+// the same object, so a page that passes rules on reads the client's numbers everywhere.
+export function withClient(rules, spine) {
+  const own = clientOverrides(spine);
+  if (!rules || !Object.keys(own).length) return rules;
+  const has = (id) => Object.prototype.hasOwnProperty.call(own, id) && own[id] && 'value' in own[id];
+  return {
+    ...rules,
+    house: rules.house || rules,
+    get: (id, year) => (has(id) ? own[id].value : rules.get(id, year)),
+    meta: (id, year) => (has(id) ? { ...rules.meta(id, year), value: own[id].value, client: true } : rules.meta(id, year))
+  };
+}
+// The household's own rules registry, never the client one, for the "your default" side of a row.
+export const houseOf = (rules) => (rules && rules.house) || rules;
+
+export function setClientAssumption(spine, id, value, today) {
+  if (!rowById(id)) throw new Error('Not an assumption that can change for a client: ' + id);
+  return setAt(spine, 'assumptionOverrides', { ...clientOverrides(spine), [id]: { value, asOf: today } });
+}
+export function resetClientAssumption(spine, id) {
+  const own = { ...clientOverrides(spine) };
+  if (!(id in own)) return spine;
+  delete own[id];
+  if (Object.keys(own).length) return setAt(spine, 'assumptionOverrides', own);
+  const next = { ...spine };
+  delete next.assumptionOverrides;
+  return next;
+}
+
+// ---------------------------------------------------------------- which formulas read a rule, and what a change moves
+// Every formula that reads each rule on this household: Map(rule id -> [{ id, label }]).
+export function formulasByRule(ctx) {
+  const out = new Map();
+  if (!ctx.s) ctx = { ...ctx, s: summarize(ctx.spine, ctx.rules, { flags: false }) };
+  for (const m of METRICS) {
+    let e = null;
+    try { e = explainMetric(m.id, ctx); } catch { e = null; }
+    for (const id of (e && e.rules) || []) { if (!out.has(id)) out.set(id, []); out.get(id).push({ id: m.id, label: m.label }); }
+  }
+  return out;
+}
+
+// Before and after a change, on this household: the first `limit` numbers that move, else the formulas that read it.
+export function previewChange(spine, rules, id, value, { limit = 2 } = {}) {
+  const after = { ...rules, get: (rid, y) => (rid === id ? value : rules.get(rid, y)), meta: (rid, y) => (rid === id ? { ...rules.meta(rid, y), value } : rules.meta(rid, y)) };
+  const a = { spine, rules, s: summarize(spine, rules, { flags: false }) };
+  const b = { spine, rules: after, s: summarize(spine, after, { flags: false }) };
+  const moved = [];
+  for (const m of METRICS) {
+    let x = null, y = null;
+    try { x = explainMetric(m.id, a); y = explainMetric(m.id, b); } catch { continue; }
+    if (!x || !y || !(x.rules || []).includes(id)) continue;
+    if (JSON.stringify(x.value) !== JSON.stringify(y.value)) moved.push({ id: m.id, label: m.label, unit: m.unit, before: x.value, after: y.value });
+    if (moved.length >= limit) break;
+  }
+  return moved;
+}

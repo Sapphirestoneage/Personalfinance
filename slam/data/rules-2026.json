@@ -1324,16 +1324,6 @@
       "verified": "app"
     },
     {
-      "id": "APP_COAST_AGE",
-      "rule": "Default age Coast FI grows to when no goal age is entered",
-      "value": 65,
-      "unit": "age",
-      "appliesTo": "FI engine",
-      "notes": "Shown as rough",
-      "source": "SLAM design (Phase 1 brief)",
-      "verified": "app"
-    },
-    {
       "id": "APP_HEALTH_PARENT_AGE",
       "rule": "Age a parent plan ends",
       "value": 26,
@@ -1364,76 +1354,6 @@
       "verified": "app"
     },
     {
-      "id": "STAGE_RUNWAY_RED_MONTHS",
-      "rule": "Cash runway under this many months is stage 1 (red)",
-      "value": 1,
-      "unit": "months",
-      "appliesTo": "Flags: runway",
-      "notes": "Stage 2 (yellow) from here to the Rule of 5 target; stage 3 (green) at the target",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_UTIL_RED",
-      "rule": "Card utilization over this is stage 1 (red)",
-      "value": 0.3,
-      "unit": "rate",
-      "appliesTo": "Flags: per card and personal utilization",
-      "notes": "Stage 2 (yellow) up to and including this",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_UTIL_GREEN",
-      "rule": "Card utilization at or under this is stage 3 (green)",
-      "value": 0.1,
-      "unit": "rate",
-      "appliesTo": "Flags: per card and personal utilization",
-      "notes": "",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_FI_YELLOW_RATIO",
-      "rule": "FI goal under this share of the spending-implied FI number is stage 1 (red)",
-      "value": 0.8,
-      "unit": "ratio",
-      "appliesTo": "Flags: FI goal",
-      "notes": "",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_FI_GREEN_RATIO",
-      "rule": "FI goal at or over this share of the spending-implied FI number is stage 3 (green)",
-      "value": 1,
-      "unit": "ratio",
-      "appliesTo": "Flags: FI goal",
-      "notes": "",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_REPLACE_YELLOW",
-      "rule": "A replacement income this likely makes an ending income stage 2 (yellow)",
-      "value": 0.5,
-      "unit": "likelihood",
-      "appliesTo": "Flags: income ending",
-      "notes": "Confirmed (likelihood 1 and an amount) is stage 3 (green)",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "STAGE_COVERAGE_RED_DAYS",
-      "rule": "A coverage change sooner than this with no plan type is stage 1 (red)",
-      "value": 90,
-      "unit": "days",
-      "appliesTo": "Flags: health coverage change",
-      "notes": "",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
       "id": "TAX_RETURN_DUE",
       "rule": "Federal income tax return and balance due date",
       "value": "04-15",
@@ -1442,76 +1362,6 @@
       "notes": "The year after the tax year. Moves to the next business day on a weekend or holiday (not modeled).",
       "source": "IRS Form 1040 instructions",
       "verified": "law"
-    },
-    {
-      "id": "STAGE_CLIFF_MONTHS",
-      "rule": "Look-ahead for certain income dropping to $0",
-      "value": 6,
-      "unit": "months",
-      "appliesTo": "Flags: income cliff",
-      "notes": "Certain income is streams with no likelihood or likelihood 1",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_LIKELY_RETURN",
-      "rule": "Real return in the likely assumption set",
-      "value": 0.06,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (Triple D)",
-      "notes": "Triple D: the default set on the Dashboard; best is the household's own assumptions",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_LIKELY_WR",
-      "rule": "Withdrawal rate in the likely assumption set",
-      "value": 0.04,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (Triple D)",
-      "notes": "Triple D: the default set on the Dashboard",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_WORST_RETURN",
-      "rule": "Real return in the worst assumption set",
-      "value": 0.04,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (Triple D)",
-      "notes": "Triple D",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_WORST_WR",
-      "rule": "Withdrawal rate in the worst assumption set",
-      "value": 0.035,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (Triple D)",
-      "notes": "Triple D",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_OPT_RETURN",
-      "rule": "Real return in the optimistic assumption set",
-      "value": 0.07,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (assumption sets)",
-      "notes": "Batch 3: about the long-run real return of US stocks (1926 on); a return above this is warned about",
-      "source": "Eli house assumption",
-      "verified": "assumption"
-    },
-    {
-      "id": "SCENARIO_OPT_WR",
-      "rule": "Withdrawal rate in the optimistic assumption set",
-      "value": 0.047,
-      "unit": "rate",
-      "appliesTo": "FI engine and projection (assumption sets)",
-      "notes": "Batch 3: Bengen's updated safe rate (A Richer Retirement, 2025); a rate above this is warned about",
-      "source": "William Bengen, A Richer Retirement (2025)",
-      "verified": "verify"
     },
     {
       "id": "SUB_REVIEW_DAYS",
