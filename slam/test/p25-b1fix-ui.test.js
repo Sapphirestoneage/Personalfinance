@@ -111,7 +111,8 @@ test('My numbers: Select several reads 0 selected after an action; the bar names
   assert.match(src, /label \+ \(subBox\.checked \? ' is now a subscription' : ' is no longer a subscription'\)/);
   assert.match(src, /e\.label \+ ' renamed to ' \+ label/);
   assert.match(src, /return costMoved \|\| !other\.length \? \[cost, \.\.\.other\]\.join\('\. '\) : other\.join\('\. '\);/);
-  assert.match(src, /'Search your numbers' \+ keyHint\('press \/'\)/);
+  assert.doesNotMatch(src, /ledger-search/, 'search is in the header now (Krug pass)');
+  assert.match(read('ui/search.js'), /e\.key !== '\/'/);
   assert.match(code('ui/calendar.js'), /'Find an item by name' \+ keyHint\('press \/'\)/);
   assert.doesNotMatch(src, /house assumption/);
 });

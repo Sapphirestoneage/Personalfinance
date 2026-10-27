@@ -1183,7 +1183,7 @@ a.fb-link .fb-more { justify-self: end; }
 .whose-menu { position: relative; display: inline-block; }
 .whose-menu > summary { list-style: none; cursor: pointer; }
 .whose-menu > summary::-webkit-details-marker { display: none; }
-.whose-menu > summary::after { content: "\25BE"; font-size: 0.8em; }
+.whose-menu > summary.btn::after { content: ""; }
 .whose-items { position: absolute; z-index: 20; top: 100%; left: 0; display: grid; gap: var(--space-1, 4px); padding: var(--space-2); background: var(--surface); border: 1.5px solid var(--btn-line); border-radius: var(--radius-sm); box-shadow: var(--btn-shadow); min-width: 160px; }
 /* Slim by default: a one-line row that opens (ui/rows.js). Rows are 44px tall; card padding 12px; 8px between. */
 .fold-row { padding: 0; margin: 0 0 8px; }
@@ -1298,3 +1298,45 @@ body { font-variant-numeric: tabular-nums; }
 .charge-add-row { flex-wrap: wrap; max-width: 100%; }
 .charge-add-row select { max-width: 100%; }
 .editor, .editor .add-field, .editor label { max-width: 100%; min-width: 0; }
+/* One header line everywhere (Krug pass): wordmark, Back (phone) or the trail (computer), the title, then whose
+   numbers, search, Undo and Redo, all on one 44px line. */
+.top:empty { display: none; }
+.screen-top { flex-wrap: nowrap; min-height: var(--tap); gap: var(--space-2); }
+.wordmark { flex: none; font-weight: 800; letter-spacing: 0.06em; font-size: var(--text-sm); color: var(--accent); text-decoration: none; min-height: var(--tap); display: inline-flex; align-items: center; }
+.top-h1 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--text-md); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen-top .trail { flex: 0 1 auto; }
+.screen-top .trail li[aria-current] { display: none; }
+.screen-top .trail li:has(+ li[aria-current])::after { content: "\203A"; margin-left: var(--space-2); color: var(--text-muted); }
+.screen-top .top-actions { flex: none; flex-wrap: nowrap; gap: var(--space-1); margin-left: auto; }
+@media (max-width: 639px) { .screen-top .trail { display: none; } }
+@media (min-width: 640px) { .screen-top .back-btn { display: none; } }
+.whose-menu { position: relative; }
+.whose-menu > summary { list-style: none; }
+.whose-menu > summary::-webkit-details-marker { display: none; }
+.whose-text { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .whose-text { max-width: 4.5rem; } }
+.whose-menu .whose-items { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; display: grid; gap: var(--space-2); min-width: 14rem; padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--btn-shadow); }
+.search-wrap { position: static; }
+.search-panel { position: absolute; left: 0; right: 0; top: 100%; z-index: 40; padding: var(--space-2) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); }
+.search-panel input { width: 100%; min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font: inherit; }
+.search-results { list-style: none; margin: var(--space-1) 0 0; padding: 0; }
+.search-hit { display: flex; justify-content: space-between; gap: var(--space-2); min-height: var(--tap); align-items: center; text-decoration: none; color: var(--text); }
+.search-kind { color: var(--text-muted); font-size: var(--text-xs); }
+.whose-menu > summary::marker { content: ""; }
+.whose-full { margin: 0; }
+@media (max-width: 639px) {
+  .screen-top { gap: var(--space-1); }
+  .screen-top .back-btn { padding: 0; min-width: var(--tap); font-size: 0; }
+  .screen-top .back-btn span { font-size: 1.4rem; }
+  .whose-text { display: none; }
+  .screen-top .top-actions .btn { padding: 0; min-width: var(--tap); }
+}
+.whose-menu > summary::marker { content: ""; }
+.whose-full { margin: 0; }
+@media (max-width: 639px) {
+  .screen-top { gap: var(--space-1); }
+  .screen-top .back-btn { padding: 0; min-width: var(--tap); font-size: 0; }
+  .screen-top .back-btn span { font-size: 1.4rem; }
+  .whose-text { display: none; }
+  .screen-top .top-actions .btn { padding: 0; min-width: var(--tap); }
+}

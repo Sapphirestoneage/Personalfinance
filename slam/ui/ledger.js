@@ -35,7 +35,7 @@ import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, 
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref, summaryMoney } from './view.js';
+import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -788,12 +788,8 @@ function filterBar(sc, q) {
   // A chip shows only its kind; tapped again, it shows everything (S-182).
   const solo = (k) => kinds.length === 1 && kinds[0] === k;
   const pick = (k) => setKinds(solo(k) ? [...KIND_ORDER] : [k]);
-  // "/" jumps to the search, so the hint shows where there is a keyboard to press it on.
-  const search = h('input', { id: 'ledger-search', type: 'search', placeholder: 'Search your numbers' + keyHint('press /'), autocomplete: 'off', 'aria-label': 'Search your numbers' });
-  search.value = q;
-  search.addEventListener('input', () => { keep({ q: search.value }); refresh(); });
-  return h('section', { class: 'card filters', 'aria-label': 'Search and show' },
-    search,
+  // Search is in the header (Krug pass); this card only filters by kind.
+  return h('section', { class: 'card filters', 'aria-label': 'Show' },
     h('div', { class: 'filter-row' },
       h('span', { class: 'filter-label' }, 'Show:'),
       ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
@@ -1421,12 +1417,6 @@ function oldLink() {
   if (p.startsWith('max:')) openMax(p.slice(4)); else openField(p);
 }
 
-// "/" jumps to the search on the top screen (S-168).
-document.addEventListener('keydown', (e) => {
-  if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
-  const i = document.getElementById('ledger-search');
-  if (i) { e.preventDefault(); i.focus(); }
-});
 // Closing or leaving the page with unsaved typing asks first.
 window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('hashchange', oldLink);

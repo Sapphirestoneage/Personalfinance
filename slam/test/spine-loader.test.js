@@ -233,13 +233,13 @@ test('whose numbers: the made-up household is the example, anyone else is named,
   for (const f of ['dashboard', 'ledger', 'calendar', 'spending', 'plan', 'windfall', 'onepager', 'math-page']) {
     const src = readFileSync(SLAM + 'ui/' + f + '.js', 'utf8');
     // A page on the shell (S-230) gets whose numbers from the shell's header.
-    assert.match(src, /whoseLine\(|startPage\(\{(?![^}]*household: false)/, f + ' shows whose numbers');
+    assert.match(src, /whoseMenu\(|startPage\(\{(?![^}]*household: false)/, f + ' shows whose numbers');
     assert.ok(!/SOURCE_WORDS\[source\]/.test(src), f + ' has no header of its own');
   }
-  assert.match(readFileSync(SLAM + 'ui/shell.js', 'utf8'), /whoseLine\(hist\.present, source, \{ rules, reopen:/, 'the shell\'s header says whose numbers');
+  assert.match(readFileSync(SLAM + 'ui/shell.js', 'utf8'), /whoseMenu\(hist\.present, \{ rules, reopen:/, 'the shell\'s header says whose numbers');
   // Open file goes through the one loader: no page reads a file another way.
   const page = readFileSync(SLAM + 'ui/page.js', 'utf8'), hh = readFileSync(SLAM + 'ui/household.js', 'utf8'), pf = readFileSync(SLAM + 'ui/profile-file.js', 'utf8');
-  assert.match(hh, /'Example household'/); assert.match(page, /profileLink\(w\.name\)/);
+  assert.match(hh, /'Example household'/); assert.match(page, /export function whoseMenu\(/); assert.match(page, /loadMyFile\(file, rules\)/);
   assert.match(readFileSync(SLAM + 'ui/builder.js', 'utf8'), /loadMyFile\(/); assert.match(hh, /readProfile\(/); assert.match(pf, /readHousehold\(/);
   assert.ok(!/fetch\(|XMLHttpRequest|sendBeacon/.test(pf), 'the file is read in the browser, never sent');
 });

@@ -3,7 +3,8 @@
 
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
-import { whose, SOURCE_WORDS } from './household.js';
+import { whose, loadMyFile } from './household.js';
+import { loadFailWords } from './profile-file.js';
 import { pref } from './prefs.js';
 
 let banner = null;
@@ -57,12 +58,23 @@ const icon = () => {
   svg.append(el('circle', { cx: '12', cy: '8', r: '4' }), el('path', { d: 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7' }));
   return h('span', { class: 'whose-icon' }, svg);
 };
-const profileLink = (name) => h('a', { class: 'btn small whose-name', href: 'profile.html', 'aria-label': name + ': Profile' }, icon(), h('span', {}, name));
-export function whoseLine(spine, source, { asOf = spine.meta.asOf } = {}) {
+// The name menu (Krug pass): a person icon and the name; it opens Profile and Open file. The file picked is read here,
+// in the browser, and the page reopens on it (reopen gets what loadAll returns).
+export function whoseMenu(spine, { rules, reopen, asOf = spine.meta.asOf } = {}) {
   const w = whose(spine);
-  const when = ' · numbers as of ' + shortDate(asOf);
-  // The name opens the Profile (bug sweep: Profile is not a tab): a person icon and the name, a button-look link.
-  if (!w.example) return h('p', { class: 'muted whose' }, profileLink(w.name), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
-  // The example: the same link, and Open file is on the Builder (bug sweep: one header for everyone).
-  return h('p', { class: 'muted whose whose-example' }, profileLink(w.name), when, ' · ', SOURCE_WORDS.demo);
+  const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
+  const msg = h('p', { class: 'edit-msg', role: 'status' });
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    try { const loaded = await loadMyFile(file, rules); reopen({ rules, ...loaded }); } catch (err) { console.warn(err); msg.textContent = loadFailWords(err, file.name); }
+  });
+  return h('details', { class: 'whose-menu' },
+    h('summary', { class: 'btn small whose-name', 'aria-label': 'Whose numbers: ' + w.name }, icon(), h('span', { class: 'whose-text' }, w.name)),
+    h('div', { class: 'whose-items' },
+      h('p', { class: 'whose-full' }, h('strong', {}, w.name)),
+      h('p', { class: 'muted' }, (w.example ? 'Made up, to try the app. ' : '') + 'Numbers as of ' + shortDate(asOf) + '.'),
+      h('a', { class: 'btn small', href: 'profile.html' }, 'Profile'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'), input, msg));
 }

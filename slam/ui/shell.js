@@ -12,7 +12,8 @@
 // - A tab tapped opens its page as it was left in this browser tab: the screen, its scroll and what was open.
 // Formatting only: the page's render reads the engines; nothing here figures a number.
 
-import { mountPage, whoseLine } from './page.js';
+import { mountPage, whoseMenu } from './page.js';
+import { searchButton } from './search.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS, yours } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { withClient } from '../engine/assumptions.js';
@@ -56,6 +57,7 @@ const rootUrl = () => location.pathname + location.search;
 
 // ---------------------------------------------------------------- what the shell holds
 const app = document.getElementById('app');
+let headLevels = [], headNames = [];
 let opts = null, hist = null, rules = null, source = null, institutions = null, notice = null, baseTitle = '';
 let pending = null, scrollTimer = null, barTimer = null, reloadTimer = null, onBar = null, drawn = '', headTitle = '';
 // A step outside the household (say with an undo): { words, undo, redo, done }. done false: undone, and redo can bring
@@ -236,9 +238,17 @@ function header(ctx, title) {
     h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'))
   ] : [];
   return [
-    h('div', { class: 'top-title' }, h('h1', {}, title), opts.household ? whoseLine(hist.present, source, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null),
-    own.length || undoing.length ? h('div', { class: 'top-actions' }, ...own, ...undoing) : null
+    h('div', { class: 'top-actions' }, ...own,
+      opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null,
+      opts.household && hist ? searchButton(() => hist.present) : null,
+      ...undoing)
   ];
+}
+// One header line everywhere (Krug pass, 44px): the SLAM wordmark (to Today), Back on a phone or the trail on a
+// computer, the title; then whose numbers, search, Undo and Redo.
+const wordmark = () => h('a', { class: 'wordmark', href: 'dashboard.html', 'aria-label': 'SLAM: Today' }, 'SLAM');
+function headLine(levels, names, ctx, title) {
+  return [wordmark(), ...screenTop(levels, names), h('h1', { class: 'top-h1' }, title), ...header(ctx, title)];
 }
 
 function bar(text, action, fn) {
@@ -325,11 +335,11 @@ function draw() {
   if (gone >= 0) { go(levels.slice(0, gone)); return; }
   const title = levels.length ? names[names.length - 1] : opts.title;
   drawn = JSON.stringify(levels);
-  topEl.replaceChildren(...screenTop(levels, names));
-  headTitle = title;
+  headTitle = title; headLevels = levels; headNames = names;
+  topEl.replaceChildren(...headLine(levels, names, ctx, title).filter(Boolean));
   if (opts.render) {
     const focus = focused();
-    headEl.replaceChildren(...header(ctx, title).filter(Boolean));
+    headEl.replaceChildren();
     screenEl.replaceChildren(...[notice ? h('p', { class: 'card', role: 'alert' }, notice) : null, ...[].concat(opts.render(ctx))].flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false));
     refocus(focus);
   }
@@ -340,7 +350,7 @@ function draw() {
 function drawHead() {
   if (!opts || !opts.render || (opts.household && !hist) || !headEl.isConnected) return;
   const focus = focused();
-  headEl.replaceChildren(...header(context(levelsNow()), headTitle).filter(Boolean));
+  topEl.replaceChildren(...headLine(headLevels, headNames, context(levelsNow()), headTitle).filter(Boolean));
   refocus(focus);
 }
 
