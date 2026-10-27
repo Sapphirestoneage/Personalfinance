@@ -55,11 +55,12 @@ test('Show the math names no rule by its id; it ends with See the formula, hidde
   assert.match(code('ui/plan.js'), /const math = keptMath;/);
 });
 
-test('Today (Batch 5): five tiles, each one tap to its own screen; the flags below; what is open is kept', () => {
+test('Today (Krug pass): four tiles, each one tap to its own screen; one Next step card; rows open the rest', () => {
   const src = code('ui/dashboard.js');
   const ids = [...src.matchAll(/tile\(spine, \{ id: '([a-z]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(ids, ['networth', 'surplus', 'savings', 'runway', 'next']);
-  for (const [id, href] of [['networth', 'numbersHref\\(\\)'], ['surplus', "'#/surplus'"], ['savings', "'#/savings'"], ['runway', "'#/runway'"], ['next', 'stepHref\\(step\\)']]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
+  assert.deepEqual(ids, ['networth', 'surplus', 'savings', 'runway']);
+  for (const [id, href] of [['networth', "'#/networth'"], ['surplus', "'#/surplus'"], ['savings', "'#/savings'"], ['runway', "'#/runway'"]]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
+  for (const w of ["'Also worth doing (' + others.length + ')'", "'Where the money goes'", "nextCard(m.spine, rank)"]) assert.ok(src.includes(w), w);
   assert.match(src, /keptMath\('flag-' \+ f\.id/);
   assert.match(src, /open: kept\(\)\.done \|\| null, ontoggle:/);
   assert.match(src, /listOpen: !!kept\(\)\.flowList/);

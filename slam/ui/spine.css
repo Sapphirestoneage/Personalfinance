@@ -1340,3 +1340,11 @@ body { font-variant-numeric: tabular-nums; }
   .whose-text { display: none; }
   .screen-top .top-actions .btn { padding: 0; min-width: var(--tap); }
 }
+/* Today's four tiles as a 2x2 on every width (Krug pass); the big number shrinks on a phone to fit. */
+.tiles.tiles-2x2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 639px) { .tiles-2x2 .tile-value { font-size: var(--text-xl); } .tiles-2x2 .tile { padding: var(--space-2) var(--space-3); } }
+/* The name menu opens under the header, inside the screen (tester: it ran past a phone's edge). */
+.screen-top .whose-menu { position: static; }
+.whose-menu:not([open]) .whose-items { display: none; }
+.screen-top .whose-menu .whose-items { right: var(--space-2); left: auto; max-width: calc(100vw - 2 * var(--space-2)); }
+.safe-short { font-size: var(--text-lg); font-weight: 700; margin: 0 0 var(--space-2); }

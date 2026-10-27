@@ -110,20 +110,17 @@ function fold(id, cls, summary, ...body) {
 
 // ---------------------------------------------------------------- pieces of the top screen
 
+// Safe to spend, said once (Krug pass): short, one line and the move; otherwise the amount and the days it lasts.
+// How it is figured (the floor, the lowest day, the bills) is behind Show the math.
 function safeCard(m) {
-  const s = m.vw.safe;
+  const s = m.vw.safe, under = m.story && m.story.under;
   return h('section', { class: 'card', 'aria-labelledby': 'safe-h' },
     h('h2', { id: 'safe-h' }, 'Safe to spend'),
     s.today === null ? [h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'), gapsCard(m.spine, m.sim)] : [
       gapsCard(m.spine, m.sim),
-      h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today)), h('span', { class: 'muted' }, s.shortfall ? 'short by ' + shortDate(s.shortfall.date) : s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
-      s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + '.') : null,
-      m.story ? h('p', { class: 'tile-sub', id: 'cash-low' }, lowWords(m.story)) : null,
-      m.story && m.story.under ? h('div', { class: 'edit-actions' }, fixButton(m.story)) : null,
-      h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
-        ? ' Set by the lowest day ahead: ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + '. Spending more today takes that day lower.'
-        : ' Cash outside the cushion, less bills due before ' + shortDate(s.through) + ', less the floor.', s.setAsideNote ? ' ' + s.setAsideNote : ''),
-      s.low ? h('p', {}, h('a', { href: 'calendar.html#' + s.low.date.slice(0, 7) }, 'See ' + shortDate(s.low.date) + ' on the calendar')) : null,
+      under ? h('p', { class: 'safe-short', id: 'cash-low' }, 'Short ' + money(Math.abs(m.story.low.amount)) + ' by ' + shortDate(m.story.low.date).replace(/, \d{4}$/, ''))
+        : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(s.today)), h('span', { class: 'muted' }, s.daysUntil ? money(s.perDay) + ' a day to payday' : 'to the end of the window')),
+      under ? h('div', { class: 'edit-actions' }, fixButton(m.story)) : null,
       mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], m.ctx)]);
 }
 

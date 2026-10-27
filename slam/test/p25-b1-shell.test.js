@@ -39,13 +39,13 @@ test('levels are real history entries: pushed, never replaced over the trail', (
   assert.match(src, /addEventListener\('pagehide', saveScroll\)/);
 });
 
-test('Today is on the shell: no page-links row, no "View in the Ledger", the whole card the target, the One-pager a button', () => {
+test('Today is on the shell: no page-links row, no "View in the Ledger", the whole card the target, the One-pager a row', () => {
   const src = read('ui/dashboard.js');
   assert.match(src, /startPage\(\{ tab: 'today', title: 'Today'/);
   assert.doesNotMatch(src, /page-links|View in the Ledger|windfall\.html|loadAll\(|mountPage\(/);
   assert.match(src, /class: 'tile' \+ \(first \? ' has-target' : ''\)/);
   assert.match(src, /h\('a', \{ class: 'card-link', href: first \}/);
-  assert.match(src, /h\('a', \{ class: 'btn', href: 'onepager\.html' \}, 'One-pager'\)/);
+  assert.match(src, /h\('a', \{ class: 'go-row plain', href: 'onepager\.html' \}, h\('span', \{ class: 'go-name' \}, 'One-pager to print'\)\)/);
   assert.match(read('dashboard.html'), /<title>SLAM Today<\/title>/);
   // The One-pager sits under Today: its Back returns there.
   assert.match(read('ui/onepager.js'), /startPage\(\{\n {2}tab: 'today', title: 'One-pager', parent: \['Today', 'dashboard\.html'\]/);

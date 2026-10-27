@@ -15,7 +15,7 @@ import { flowSection } from './flow-chart.js';
 import { pickedScenario } from './scenario.js';
 import { maxItFor } from './maxit-panel.js';
 import { h, chip, money, pct, ledgerHref, summaryMoney, stepHref } from './view.js';
-import { toneOf } from '../engine/profile.js';
+import { toneOf, answersOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
@@ -28,10 +28,10 @@ function provenance(spine, r) {
   const rough = [...new Set(r.rough || [])];
   const from = [...new Set(r.from || [])];
   const link = (p) => h('a', { href: ledgerHref(p) }, labelFor(spine, p));
-  const note = missing.length
-    ? h('p', { class: 'tile-note' }, chip(r.value === null ? 'missing' : 'incomplete'), ' Needs: ', ...missing.flatMap((p, i) => [i ? ', ' : '', link(p)]))
-    : rough.length ? h('p', { class: 'tile-note' }, chip('rough'), ' ' + rough.length + (rough.length === 1 ? ' guess' : ' guesses')) : null;
-  return [note, mathCtx && MATH_FOR._m.get(r) && (MATH_FOR._m.get(r).ids || []).length ? keptMath(MATH_FOR._m.get(r).key, MATH_FOR._m.get(r).ids, mathCtx) : null];
+  // Krug pass: a tile names only what is missing; guesses are one row on Today, and Show the math is on the tile's own
+  // screen.
+  void rough; void from;
+  return [missing.length ? h('p', { class: 'tile-note' }, chip(r.value === null ? 'missing' : 'incomplete'), ' Needs: ', ...missing.flatMap((p, i) => [i ? ', ' : '', link(p)])) : null];
 }
 
 // One tile: a label, the big number, lines under it. The whole tile opens what the card is about (target), and a
@@ -76,7 +76,8 @@ function rankOf(spine, rules, s) {
 function stepCard(step) {
   return h('li', { class: 'flag flag-red', id: 'step-' + step.id.replace(/[^a-z0-9]+/gi, '-') },
     h('h3', { class: 'flag-title' }, step.label),
-    h('p', { class: 'flag-line' }, step.loss ? 'About ' + money(step.loss) + ' a month lost until it is done. ' + (step.why || '') : step.why || ''),
+    // Said once (Krug pass): the reason, which already names the dollars; the dollars alone when there is no reason.
+    h('p', { class: 'flag-line' }, step.why || (step.loss ? 'About ' + money(step.loss) + ' a month lost until it is done.' : '')),
     h('div', { class: 'flag-actions' }, h('a', { class: 'btn primary small', href: stepHref(step) }, step.rung ? 'Make a plan' : 'Open it')));
 }
 function questionCard(q) {
@@ -92,18 +93,19 @@ function tiles({ spine, rules, s }) {
   // question on Do first, never the next step.
   const rank = rankOf(spine, rules, s);
   const step = rank.first, foo = rank.ladder;
-  const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : summaryMoney(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : summaryMoney(sh.netWorth.value)));
+  void step; void foo;
+  // Net worth leads with the total; the liquid figure is named "Cash after card debt" (Krug pass), so it never reads
+  // as a second cash number beside the runway's.
   const all = [
-    tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: both }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + summaryMoney(cf.income.takeHome.value) + ' take-home.'] }),
-    tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
-    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [sh.cash.value === null ? null : summaryMoney(sh.cash.value) + ' in cash.'] }),
-    tile(spine, { id: 'next', label: 'Next step', target: stepHref(step), result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: foo.kind === 'missing' ? 'rough' : foo.kind, from: [], rough: [], missing: [] },
-      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.loss ? 'About ' + summaryMoney(step.loss) + ' a month lost until it is done.' : step && step.need ? summaryMoney(step.need) + (step.flow ? ' a month' : '') + '.' : null] })];
-  // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped.
-  const ids = ['networth', 'surplus', 'savings', 'runway', 'next'];
+    tile(spine, { id: 'networth', label: 'Net worth', target: '#/networth', result: sh.netWorth, shown: summaryMoney(sh.netWorth.value), lines: [sh.liquidNetWorth.value === null ? null : 'Cash after card debt ' + summaryMoney(sh.liquidNetWorth.value)] }),
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value) }),
+    tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 0) }),
+    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months' })];
+  // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped. The next step is its own
+  // card below the tiles (Krug pass), so an old "next" in the preference is skipped too.
+  const ids = ['networth', 'surplus', 'savings', 'runway'];
   const want = (Array.isArray(pref('todayTiles')) ? pref('todayTiles') : ids).filter((id) => ids.includes(id));
-  return h('div', { class: 'tiles' }, want.map((id) => all[ids.indexOf(id)]));
+  return h('div', { class: 'tiles tiles-2x2' }, want.map((id) => all[ids.indexOf(id)]));
 }
 
 // ---------------------------------------------------------------- the tile screens
@@ -147,17 +149,35 @@ function runwayScreen({ s }) {
       keptMath('screen-cushion', ['cushionNeeds', 'cushionMonth', 'ruleOf5Dollars'], mathCtx))
   ];
 }
-const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen };
+function networthScreen({ s }) {
+  const sh = s.sheet;
+  return h('section', { class: 'card', 'aria-label': 'Net worth' },
+    h('ul', { class: 'sum-lines' }, line('Net worth', sh.netWorth.value, 'sum-total'), line('Cash after card debt', sh.liquidNetWorth.value)),
+    h('a', { class: 'btn', href: numbersHref() }, 'Open My numbers'),
+    keptMath('screen-networth', DASHBOARD_MATH['tile-networth'], mathCtx));
+}
+// The money flow, on its own screen (Krug pass): Today has one row that opens it.
+function flowScreen({ spine, rules, s }) { return flowPart(spine, rules, s); }
+// Also worth doing (Krug pass): every other ranked step, the cards, the questions, and what is done, one screen.
+function moreScreen(m) { return flagsSection(m.spine, m.s.flags, rankOf(m.spine, m.rules, m.s), { rest: true }); }
+const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen, networth: networthScreen, flow: flowScreen, more: moreScreen };
 
 function render({ spine: base, rules, levels }) {
   const m = model(base, rules);
   if (levels.length && SCREENS[levels[0]]) return SCREENS[levels[0]](m);
+  // Krug pass: the warning (if any), the four tiles, one Next step card, then rows that open the rest.
+  const rank = rankOf(m.spine, rules, m.s);
+  const others = alsoWorth(m.spine, m.s.flags, rank);
+  const guesses = m.s.flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-')).length;
   return [
     cashCard(base, rules),
     tiles(m),
-    flowPart(m.spine, rules, m.s),
-    h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager')),
-    flagsSection(m.spine, m.s.flags, rankOf(m.spine, rules, m.s))
+    nextCard(m.spine, rank),
+    h('ul', { class: 'go-list' },
+      others.length ? h('li', {}, h('a', { class: 'go-row plain', href: '#/more' }, h('span', { class: 'go-name' }, 'Also worth doing (' + others.length + ')'))) : null,
+      h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
+      guesses ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses + (guesses === 1 ? ' guess' : ' guesses')))) : null,
+      h('li', {}, h('a', { class: 'go-row plain', href: 'onepager.html' }, h('span', { class: 'go-name' }, 'One-pager to print'))))
   ];
 }
 
@@ -166,7 +186,7 @@ function render({ spine: base, rules, levels }) {
 function cashCard(spine, rules) {
   const { story } = forecast(spine, rules);
   if (!story) return null;
-  if (!story.under) return h('p', { class: 'tile-sub cash-line', id: 'cash-low' }, lowWords(story));
+  if (!story.under) return null;
   return h('section', { class: 'card flag flag-red cash-first', id: 'cash-low', 'aria-labelledby': 'cash-low-h' },
     h('h2', { id: 'cash-low-h', class: 'flag-title' }, 'Checking goes under your floor'),
     h('p', { class: 'flag-line' }, lowWords(story) + '. Your floor is ' + money(story.floor) + '.'),
@@ -208,7 +228,32 @@ function flagItem(spine, f) {
 
 // Three groups: Do first, Next up, Done (folded, with a count). A number that only rests on guesses is one row that
 // opens Still guessing, not a card each.
-function flagsSection(spine, flags, rank) {
+// The one Next step card on Today: the ranked step, or the question that holds the plan back.
+function nextCard(spine, rank) {
+  const step = rank && rank.first, ask = rank && rank.questions[0];
+  if (!step && !ask) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.'));
+  return h('section', { class: 'card', 'aria-labelledby': 'next-h' }, h('h2', { id: 'next-h' }, 'Next step'), h('ul', { class: 'flags' }, step ? stepCard(step) : questionCard(ask)));
+}
+// What else is worth doing: the cards that are not the next step, card use only when the Profile says they will
+// apply for credit within a year (and once), and the questions not already shown.
+function alsoWorth(spine, flags, rank) {
+  const credit = answersOf(spine).applyCredit === 'yes';
+  const isCardUse = (f) => f.id.startsWith('utilization');
+  const cards = flags.filter((f) => (f.stage === 'red' || (f.stage === 'yellow' && !f.id.startsWith('input-'))) && (!isCardUse(f) || (credit && f.id === 'utilization-personal')));
+  const steps = rank ? rank.steps.slice(1).filter((x) => !x.id.startsWith('utilization')) : [];
+  const asks = rank ? rank.questions.slice(rank.first ? 0 : 1) : [];
+  return [...steps.map((x) => ({ step: x })), ...asks.map((q) => ({ ask: q })), ...cards.map((f) => ({ flag: f }))];
+}
+function flagsSection(spine, flags, rank, { rest = false } = {}) {
+  if (rest) {
+    const done = flags.filter((f) => f.stage === 'green');
+    const items = alsoWorth(spine, flags, rank);
+    return [
+      items.length ? h('section', { class: 'card' }, h('ul', { class: 'flags' }, items.map((x) => (x.step ? stepCard(x.step) : x.ask ? questionCard(x.ask) : flagItem(spine, x.flag))))) : h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing else right now.')),
+      done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },
+        h('summary', {}, h('span', {}, 'Done'), h('span', { class: 'count' }, String(done.length))), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null
+    ];
+  }
   const guessy = flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-'));
   const first = flags.filter((f) => f.stage === 'red'), next = flags.filter((f) => f.stage === 'yellow' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
   // Do first is the one ranking's first step (the same as the Next step tile and the Plan's NEXT), with the questions
@@ -228,4 +273,4 @@ function flagsSection(spine, flags, rank) {
 }
 
 // The One-pager is a button here; its Back comes back to Today.
-startPage({ tab: 'today', title: 'Today', render, name: (levels) => ({ surplus: 'Monthly surplus', savings: 'Savings rate', runway: 'Cash runway' }[levels[0]] || null) });
+startPage({ tab: 'today', title: 'Today', render, name: (levels) => ({ surplus: 'Monthly surplus', savings: 'Savings rate', runway: 'Cash runway', networth: 'Net worth', flow: 'Where the money goes', more: 'Also worth doing' }[levels[0]] || null) });
