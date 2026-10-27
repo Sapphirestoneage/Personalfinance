@@ -13,6 +13,8 @@ import { mathButton } from './math-panel.js';
 import { addForm as newAddForm } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
+import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
+import { pickedScenario, scenarioText } from './scenario.js';
 import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { unemploymentView, tenPercentOf } from '../engine/unemployment.js';
@@ -69,6 +71,13 @@ let sumMemo = { spine: null, s: null };
 function summaryOf(spine) {
   if (sumMemo.spine !== spine) sumMemo = { spine, s: summarize(spine, rules, { flags: false }) };
   return sumMemo.s;
+}
+// The FI numbers read the assumption set picked on Today, like Today and the One-pager (question 122).
+let fiMemo = { spine: null, set: null, rules: null, ctx: null };
+function fiCtx(spine) {
+  const set = pickedScenario();
+  if (fiMemo.spine !== spine || fiMemo.set !== set || fiMemo.rules !== rules) { const sp = withScenario(spine, rules, set); fiMemo = { spine, set, rules, ctx: { spine: sp, rules, s: summarize(sp, rules, { flags: false }) } }; }
+  return fiMemo.ctx;
 }
 
 const hashFor = (levels) => '#/' + levels.map(encodeURIComponent).join('/');
@@ -1072,8 +1081,8 @@ function groupTotal(sec, g) {
 
 // What moved here from Today (Phase 2.5 Batch 5): the FI numbers on Goals, the year's tax on Taxes, the cards on Debt.
 // Each number side by side with its Show the math; a blank input reads missing, never $0.
-function figure(label, r, sub, ids) {
-  const ctx = () => ({ spine: cur(), rules, s: summaryOf(cur()) });
+function figure(label, r, sub, ids, fi = false) {
+  const ctx = () => (fi ? fiCtx(cur()) : { spine: cur(), rules, s: summaryOf(cur()) });
   return h('div', { class: 'nw-one' },
     h('p', { class: 'tile-label' }, label),
     r.value === null || r.value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, typeof sub === 'function' ? sub(r.value) : money(r.value)),
@@ -1084,16 +1093,17 @@ const pctOf = (x) => Math.round(x * 1000) / 10 + '%';
 function sectionTop(sec) {
   const s = summaryOf(cur());
   if (sec.slug === 'goals') {
-    const fi = s.fi;
+    const fi = fiCtx(cur()).s.fi, set = pickedScenario();
     return [
+      h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(cur(), rules, set) + '), the same as Today. ', h('a', { href: 'dashboard.html#scenario' }, 'Change it on Today'), '.'),
       h('section', { class: 'card nw-pair fi-three', 'aria-label': 'Financial independence, three ways' },
-        figure('FI number: today\'s spending', fi.today, null, ['fiToday']),
-        figure('FI number: your goal', fi.goal, null, ['fiNumber']),
-        figure('FI number: without debt payments', fi.implied, null, ['impliedFi'])),
+        figure('FI number: today\'s spending', fi.today, null, ['fiToday'], true),
+        figure('FI number: your goal', fi.goal, null, ['fiNumber'], true),
+        figure('FI number: without debt payments', fi.implied, null, ['impliedFi'], true)),
       h('section', { class: 'card nw-pair', 'aria-label': 'How far along, and other FI numbers' },
-        figure('There so far', fi.fiPercent, (x) => pctOf(x) + ' of today\'s', ['fiPercent']),
-        figure('Lean FI', fi.leanFi, null, ['leanFi']), figure('Fat FI', fi.fatFi, null, ['fatFi']),
-        figure('Barista FI', fi.baristaFi, null, ['baristaFi']), figure('Coast FI', fi.coastFi, null, ['coastFi']))
+        figure('There so far', fi.fiPercent, (x) => pctOf(x) + ' of today\'s', ['fiPercent'], true),
+        figure('Lean FI', fi.leanFi, null, ['leanFi'], true), figure('Fat FI', fi.fatFi, null, ['fatFi'], true),
+        figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true))
     ];
   }
   if (sec.slug === 'taxes') {

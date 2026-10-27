@@ -3,13 +3,15 @@
 // of yours opens it in My numbers; a worked-out number opens its own math),
 // the inputs grouped by DATING with subtotals, kind chips, and why the number
 // is rough. Everything shown comes from engine/math.js.
-// It is on client screens only, so it never names a rule by its id or opens a
-// Builder page (S-230): a rule is its words, plain text. The ids and their
-// links live on the Builder's All formulas and Rules pages.
+// It never names a rule by its id: a rule is its words, plain text. Each number
+// ends with "See the formula", its entry on All formulas (where the rules it
+// reads and the screens that show it are listed); client view hides that link,
+// as it hides every Builder link (Preferences).
 
 import { explainMetric, showNumber } from '../engine/math.js';
 import { h, chip, ledgerHref, plainLabel } from './view.js';
 import { keep, kept } from './shell.js';
+import { prefs } from './prefs.js';
 
 const KIND_TEXT = { known: 'known', rough: 'rough', missing: 'missing', computed: 'worked out', incomplete: 'incomplete', notForMe: 'not for me' };
 
@@ -35,7 +37,8 @@ function panel(ids, ctx, depth) {
         e.missingBecause.length ? h('p', { class: 'math-why missing' }, 'Missing or incomplete: ' + plainLabel(e.missingBecause.join(', ')) + '.') : null,
         ...e.groups.map((g) => h('div', { class: 'math-group' },
           h('p', { class: 'math-group-head' }, plainLabel(g.label), g.subtotal !== null && e.groups.length > 1 ? h('span', { class: 'math-value' }, showNumber(g.subtotal, e.unit)) : null),
-          h('ul', { class: 'math-terms' }, g.terms.map((t) => termEl(t, ctx, depth))))));
+          h('ul', { class: 'math-terms' }, g.terms.map((t) => termEl(t, ctx, depth))))),
+        prefs().view === 'client' ? null : h('p', { class: 'math-see' }, h('a', { href: 'math.html#/' + encodeURIComponent(id) }, 'See the formula')));
     }));
 }
 

@@ -45,9 +45,10 @@ test('Back at the top of a page opened from another page of the app goes back th
   assert.match(src, /onclick: \(\) => \(browserBack \? \(saveScroll\(\), history\.back\(\)\) : toParent\(0\)\)/);
 });
 
-test('Show the math opens no Builder page and names no rule by its id', () => {
+test('Show the math names no rule by its id; it ends with See the formula, hidden in client view', () => {
   const src = code('ui/math-panel.js');
-  assert.doesNotMatch(src, /math\.html|rules\.html|'Rules: '|This formula on the math page/);
+  assert.doesNotMatch(src, /rules\.html|'Rules: '|This formula on the math page/);
+  assert.match(src, /prefs\(\)\.view === 'client' \? null : h\('p', \{ class: 'math-see' \}, h\('a', \{ href: 'math\.html#\/' \+ encodeURIComponent\(id\) \}, 'See the formula'\)\)/);
   for (const part of ['e.formula', 'e.plugged', 'e.note', 'g.label', 't.label', 'e.label']) assert.ok(src.includes('plainLabel(' + part), part + ' is worded for the screen');
   // The Plan and Today keep a panel open with the one helper.
   assert.match(src, /export function keptMath\(key, ids, ctx, label\)/);

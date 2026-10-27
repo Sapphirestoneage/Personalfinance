@@ -10,6 +10,7 @@ import { METRICS, metricById, explainMetric, showNumber } from '../engine/math.j
 import { canMaxIt } from '../engine/maxit.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
+import { rowById } from '../engine/assumptions.js';
 import { h, chip, ledgerHref } from './view.js';
 
 const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
@@ -78,7 +79,17 @@ function one(level, base, rules) {
     h('h2', {}, 'Inputs (' + e.terms.length + ')'),
     e.terms.length ? h('ul', { class: 'math-terms' }, e.terms.map((t) => h('li', { class: 'math-term' }, chip(t.kind), ' ', input(t),
       ' ', h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind))))) : h('p', { class: 'muted' }, 'None.'),
-    e.rules.length ? h('p', { class: 'math-rules' }, 'Rules: ', ...e.rules.flatMap((r, i) => [i ? ', ' : '', h('a', { href: ruleHref(r) }, r)])) : null);
+    // What it assumes (owner's ask, 2026-10-27): Eli's defaults open on the Assumptions page; the law on Rules.
+    reads(e.rules, rules, 'Assumptions it reads: ', true),
+    reads(e.rules, rules, 'Rules from the law it reads: ', false),
+    reads(e.rules, rules, 'Assumptions it reads: ', true) || e.rules.some((r) => !isAssumption(r)) ? null : h('p', { class: 'muted' }, 'It reads no assumption: only your numbers.'));
+}
+const isAssumption = (id) => !!rowById(id);
+function reads(ids, rules, words, assumed) {
+  const list = ids.filter((r) => isAssumption(r) === assumed);
+  if (!list.length) return null;
+  const name = (r) => (assumed ? rowById(r).name : (() => { try { return rules.meta(r).rule || r; } catch { return r; } })());
+  return h('p', { class: 'math-rules' }, words, ...list.flatMap((r, i) => [i ? ', ' : '', h('a', { href: assumed ? 'assumptions.html#/' + encodeURIComponent(r) : ruleHref(r) }, name(r))]));
 }
 
 // Old links still land: math.html#metric-netWorth (Show the math's "This formula on the math page") opens that

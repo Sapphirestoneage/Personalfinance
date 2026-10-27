@@ -74,7 +74,8 @@ test('no code words in a sentence on a client screen', () => {
       if (!/\s/.test(s) || /^[a-z0-9 _:.#[\]="-]+$/.test(s)) continue;
       // labels.js names a reference value 'Rule <ID>' only on the Builder's pages.
       if (s === 'Rule ') continue;
-      if (BANNED.test(s.replace(/Rule of 55?/g, ''))) found.push(f + ': ' + s);
+      // "Of gross (how this rule is defined)" is the owner's own words for the hyper-saving mark (question 99).
+      if (BANNED.test(s.replace(/Rule of 55?/g, '').replace(/how this rule is defined/g, ''))) found.push(f + ': ' + s);
     }
   }
   assert.deepEqual(found, []);
