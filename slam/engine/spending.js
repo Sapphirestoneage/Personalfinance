@@ -84,11 +84,12 @@ export function safeToSpend(sim) {
   const fromCushion = (e) => e.kind === 'auto-cover' && cushion.some((a) => e.label.startsWith('From ' + a.name));
   const daysUntil = s.nextIncome ? daysBetween(sim.start, s.nextIncome) : null;
   const cash = sim.daily.length ? outside(sim.daily[0]) : null;
-  let covered = 0, held = 0, lowDay = null, low = null;
+  let covered = 0, held = 0, lowDay = null, low = null, firstUnder = null;
   for (const d of sim.daily) {
     for (const e of d.events) { if (fromCushion(e)) covered = round2(covered + e.amount); if (e.kind === 'shortfall') held = round2(held - e.amount); }
     const x = round2(outside(d) - covered - held);
     if (low === null || x < low.amount) { lowDay = d; low = { date: d.date, amount: x, asRun: outside(d), covered, held }; }
+    if (firstUnder === null && x < sim.floor.amount) firstUnder = d.date;
   }
   const byLow = s.today === null || !low ? null : round2(low.amount - sim.floor.amount);
   const binding = byLow !== null && byLow < s.today ? 'low' : 'paycheck';
@@ -99,7 +100,7 @@ export function safeToSpend(sim) {
   const primary = sim.model.accounts.find((a) => a.primary);
   // Money set aside for a goal is left out with the cushion (S-228); the page names it.
   const setAside = sim.model.accounts.filter((a) => a.earmarked).map((a) => ({ id: a.id, name: a.name, goal: a.goal || null, words: setAsideWords(a.goal), balance: round2(a.balance / 100) }));
-  return { today, byPaycheck: s.today, byLow, binding, low, through, shortfall, cashPath: primary ? 'accounts.' + primary.id + '.balance' : null, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: cushion.some((a) => !a.earmarked), setAside, setAsideNote: setAsideNote(setAside), byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
+  return { today, byPaycheck: s.today, byLow, binding, low, firstUnder, through, shortfall, cashPath: primary ? 'accounts.' + primary.id + '.balance' : null, committed: s.committed, nextIncome: s.nextIncome, daysUntil, perDay, cash, floor: sim.floor.amount, excludesCushion: cushion.some((a) => !a.earmarked), setAside, setAsideNote: setAsideNote(setAside), byDay: s.byDay.slice(0, 31), kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules };
 }
 
 // Can I spend this: the same run with the purchase added. Yes, tight or no;
@@ -330,4 +331,26 @@ export function fixedVariable(spine, rules, s, { months = 3, asOf = spine.meta.a
     return { ...x, byMonth, average, logged: seen.length, trend };
   });
   return { fixed: group(items.filter((i) => i.fixed === true)), variable, unsorted: items.filter((i) => i.fixed !== true && i.fixed !== false).map(line), months: yms };
+}
+
+// The one cash story (audit, 2026-10-27): every screen that names checking's lowest point reads this, off the same run
+// (Today, Calendar, Spending, Plan). The lowest day is the true lowest in the whole window, before any automatic move
+// from savings, never a month-only one. Under the floor, the fix: the smallest whole-dollar move that keeps checking
+// at the floor, from the cushion account with the most in it, by the first day it would dip.
+export function cashStory(sim) {
+  if (!sim || !sim.checking.known) return null;
+  const s = safeToSpend(sim);
+  if (!s.low) return null;
+  const floor = sim.floor.amount;
+  const pays = new Set(sim.daily.filter((d) => d.events.some((e) => e.kind === 'income')).map((d) => d.date));
+  const nextDay = (iso) => { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+  const low = { date: s.low.date, amount: s.low.amount, beforePayday: pays.has(nextDay(s.low.date)) };
+  const under = low.amount < floor;
+  const cushion = sim.model.accounts.filter((a) => a.cushion && !a.earmarked && !a.primary).sort((a, b) => b.balance - a.balance)[0] || null;
+  const need = under ? Math.ceil(floor - low.amount) : 0;
+  return {
+    low, floor, through: s.through, under,
+    fix: under ? { amount: need, from: cushion ? { id: cushion.id, name: cushion.name, balance: round2(cushion.balance / 100) } : null, by: s.firstUnder || low.date, enough: !!cushion && cushion.balance / 100 >= need } : null,
+    kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules
+  };
 }

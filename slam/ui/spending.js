@@ -10,7 +10,7 @@
 import { startPage, change, said, keep, kept, refresh } from './shell.js';
 import { gapsCard } from './page.js';
 import { summarize } from '../engine/summary.js';
-import { cashsim, burnTiers } from '../engine/cashsim.js';
+import { burnTiers } from '../engine/cashsim.js';
 import { spendingView, cutSimulator, canISpend, checkInForecast, cleanMerchant, TAG_WORDS, referenceBands, fixedVariable } from '../engine/spending.js';
 import { spendingStart } from '../engine/profile.js';
 import { estimatedVsActual, monthOutlook } from '../engine/compare.js';
@@ -20,6 +20,7 @@ import { proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage, FORMATS 
 import { logSpend, removeLog, checkIn, setSweep, parseInput, removeItem, putFact, setFixed } from '../engine/edits.js';
 import { FAT } from '../engine/schema.js';
 import { mathButton } from './math-panel.js';
+import { forecast, fixButton, lowWords } from './forecast.js';
 import { paidWithBox } from './card-charges.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
@@ -71,11 +72,12 @@ function model(base, rules_, months) {
   if (memo && memo.base === base && memo.rules === rules_ && memo.months === months && memo.scen === scen && memo.day === day) return memo;
   const spine = withScenario(base, rules_, scen);
   const s = summarize(spine, rules_, { flags: false });
-  const sim = cashsim(spine, rules_, { months });
+  // The one forecast every screen reads (ui/forecast.js), over this window.
+  const { sim, story } = forecast(spine, rules_, months);
   const vw = spendingView(spine, rules_, sim, s, { today: day });
   const compare = estimatedVsActual(spine, rules_, { months });
   const tiers = burnTiers(spine, rules_, s.cashflow, { extra: spine.debtPlan && spine.debtPlan.extra && spine.debtPlan.extra.value !== null ? spine.debtPlan.extra.value : 0 });
-  memo = { base, rules: rules_, months, scen, day, spine, s, sim, vw, compare, tiers, fv: fixedVariable(spine, rules_, s), cats: categories(vw), canCut: new Set(s.cashflow.expenses.items.filter((i) => i.amount).map((i) => i.id)), wage: realHourlyWage(spine, rules_, s).wage };
+  memo = { base, rules: rules_, months, scen, day, spine, s, sim, story, vw, compare, tiers, fv: fixedVariable(spine, rules_, s), cats: categories(vw), canCut: new Set(s.cashflow.expenses.items.filter((i) => i.amount).map((i) => i.id)), wage: realHourlyWage(spine, rules_, s).wage };
   memo.ctx = () => ({ spine, rules: rules_, s, sim, spend: vw, tiers, compare });
   return memo;
 }
@@ -115,6 +117,8 @@ function safeCard(m) {
       gapsCard(m.spine, m.sim),
       h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' + (s.today < 0 ? ' low' : '') }, money(s.today)), h('span', { class: 'muted' }, s.shortfall ? 'short by ' + shortDate(s.shortfall.date) : s.daysUntil ? 'until the next paycheck on ' + shortDate(s.nextIncome) + ' (' + s.daysUntil + ' days): ' + money(s.perDay) + ' a day' : 'to the end of the window')),
       s.shortfall ? h('p', { class: 'verdict no' }, 'Nothing safe to spend: checking runs ' + money(s.shortfall.amount) + ' short' + (s.floor > 0 ? ' of the floor' : '') + ' by ' + shortDate(s.shortfall.date) + '.') : null,
+      m.story ? h('p', { class: 'tile-sub', id: 'cash-low' }, lowWords(m.story)) : null,
+      m.story && m.story.under ? h('div', { class: 'edit-actions' }, fixButton(m.story)) : null,
       h('p', { class: 'tile-sub' }, kindChip(s.kind), s.binding === 'low'
         ? ' Set by the lowest day ahead: ' + money(s.low.amount) + ' on ' + shortDate(s.low.date) + '. Spending more today takes that day lower.'
         : ' Cash outside the cushion, less bills due before ' + shortDate(s.through) + ', less the floor.', s.setAsideNote ? ' ' + s.setAsideNote : ''),

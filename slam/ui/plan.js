@@ -10,6 +10,7 @@
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
+import { forecast, fixButton, lowWords } from './forecast.js';
 import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
@@ -102,10 +103,13 @@ function stepRow(r, current) {
 }
 
 // The outlook in one sentence (Batch 8); the runs are behind Show the math and on its own screen.
+// It leads with the one forecast every screen reads (ui/forecast.js), so the Plan names the same lowest day as Today,
+// the Calendar and Spending; the runs (good and bad months) are on the outlook's own screen.
 function outlookLine(m) {
-  if (!m.sim || !m.sim.checking.known) return null;
-  const o = m.outlook || (m.outlook = outlook(m.spine, m.rules, m.sim));
-  return h('p', { class: 'tile-sub outlook-line' }, 'Next three months: checking\'s lowest day is about ' + money(o.low.typical) + ' in a typical run, ' + money(o.low.bad) + ' in a bad one. ', math('outlook-top', ['plan:outlook'], () => mathCtx(m)({ outlook: o })));
+  const { story } = forecast(m.base, m.rules);
+  if (!story) return null;
+  return [h('p', { class: 'tile-sub outlook-line', id: 'cash-low' }, lowWords(story) + ' ', h('a', { href: '#/outlook' }, 'Good and bad months')),
+    story.under ? h('div', { class: 'edit-actions' }, fixButton(story)) : null];
 }
 function top(m) {
   const f = m.foo, surplus = m.s.cashflow.surplus.value;

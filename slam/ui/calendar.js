@@ -25,6 +25,7 @@ import { maxHref, maxItFor } from './maxit-panel.js';
 import { pickedWindow, windowBar, WINDOWS } from './window.js';
 import { debtTab } from './debt-tab.js';
 import { pref } from './prefs.js';
+import { forecast, fixButton } from './forecast.js';
 import { fooGhosts } from '../engine/plan.js';
 
 const app = document.getElementById('app');
@@ -371,12 +372,15 @@ function topThree(c, mathCtx) {
   // Only for this month: another month's view has its own reading below.
   const m = c.months[0];
   if (!c.sim || !m || m.ym !== c.sim.start.slice(0, 7)) return null;
-  const r = cashReading(c.sim, m.ym);
+  // The lowest point is the one forecast every screen reads (ui/forecast.js): the true lowest in the window.
+  const ctx0 = mathCtx(), story = forecast(ctx0.spine, ctx0.rules).story;
+  const r = story ? { low: story.low } : null;
   const one = (label, value, sub, ids, extra) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(value)), sub ? h('p', { class: 'tile-sub muted' }, sub) : null, mathButton(ids, () => ({ ...mathCtx(), ...extra })));
   return h('section', { class: 'card nw-pair cal-three', 'aria-label': 'Cash in three numbers' },
     one('Cash today', m.cash.today, 'Every cash account', ['cash'], {}),
     one('Left this month', m.cash.value, 'Checking at the end of ' + longMonth(m.ym), ['calendar:monthCash'], { month: m }),
-    one('Lowest point', r ? r.low.amount : null, r ? shortDate(r.low.date) + (r.low.beforePayday ? ', the day before payday' : '') : null, ['calendar:lowPoint'], { low: r ? { ...r.low, floor: c.sim.floor.amount } : null }));
+    one('Lowest point', r ? r.low.amount : null, r ? shortDate(r.low.date) + (r.low.beforePayday ? ', the day before payday' : '') : null, ['calendar:lowPoint'], { low: r ? { ...r.low, floor: c.sim.floor.amount } : null }),
+    story && story.under ? h('div', { class: 'edit-actions' }, fixButton(story)) : null);
 }
 
 // Waiting (S-209, the Budget's Track card): due on or before today and not marked yet. One tap each way; Open it opens
@@ -435,7 +439,7 @@ function readingLines(c, m) {
   const n = (k, word) => k + ' day' + (k === 1 ? '' : 's') + ' ' + word;
   return h('ul', { class: 'flow-list', 'aria-label': 'Checking in ' + longMonth(m.ym) + ' in words' },
     r.today ? h('li', {}, 'Checking on ' + shortDate(r.today.date) + ': ' + money(r.today.amount) + '.') : null,
-    h('li', {}, 'The lowest point is ' + money(r.low.amount) + ' on ' + shortDate(r.low.date) + (r.low.beforePayday ? ', the day before payday' : '') + '.'),
+    h('li', {}, 'The lowest point in ' + longMonth(m.ym) + ' is ' + money(r.low.amount) + ' on ' + shortDate(r.low.date) + (r.low.beforePayday ? ', the day before payday' : '') + '.'),
     r.belowZero.days ? h('li', {}, n(r.belowZero.days, 'below zero') + ', from ' + shortDate(r.belowZero.first) + '.') : null,
     r.underFloor.days ? h('li', {}, n(r.underFloor.days, 'under the floor of ' + money(r.underFloor.floor)) + ', from ' + shortDate(r.underFloor.first) + '.') : null,
     r.toppedUp.days ? h('li', {}, n(r.toppedUp.days, 'topped up from the cushion') + ', from ' + shortDate(r.toppedUp.first) + '. Spending less before then, or moving a bill (Bill timing below), keeps the cushion whole.') : null);

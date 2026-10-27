@@ -18,6 +18,7 @@ import { maxItFor } from './maxit-panel.js';
 import { h, chip, money, pct, ledgerHref, summaryMoney } from './view.js';
 import { toneOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
+import { forecast, fixButton, lowWords } from './forecast.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -135,11 +136,24 @@ function render({ spine: base, rules, levels }) {
   const m = model(base, rules);
   if (levels.length && SCREENS[levels[0]]) return SCREENS[levels[0]](m);
   return [
+    cashCard(base, rules),
     tiles(m),
     flowPart(m.spine, rules, m.s),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager')),
     flagsSection(m.spine, m.s.flags)
   ];
+}
+
+// Cash ahead (audit, 2026-10-27): the one forecast every screen reads. Under the floor it is the first card, ending
+// with the fix as a button; above it, one line.
+function cashCard(spine, rules) {
+  const { story } = forecast(spine, rules);
+  if (!story) return null;
+  if (!story.under) return h('p', { class: 'tile-sub cash-line', id: 'cash-low' }, lowWords(story));
+  return h('section', { class: 'card flag flag-red cash-first', id: 'cash-low', 'aria-labelledby': 'cash-low-h' },
+    h('h2', { id: 'cash-low-h', class: 'flag-title' }, 'Checking goes under your floor'),
+    h('p', { class: 'flag-line' }, lowWords(story) + '. Your floor is ' + money(story.floor) + '.'),
+    h('div', { class: 'flag-actions' }, fixButton(story)));
 }
 
 // The money flow (S-192); a split or join redraws only this section.
