@@ -3,15 +3,13 @@
 Written by `node tools/qa-crawl.mjs` on the demo household (made up).
 
 ```
-SLAM tester: 151 screens x 3 looks, 330 taps, 662s.
+SLAM tester: 151 screens x 3 looks, 333 taps, 678s.
 PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
-  cents: 3
-  placeholder looks typed: 6
-  raw date: 3
-  small tap: 429
+  dead click: 1
+  small tap: 399
 ```
 
-## small tap (140)
+## small tap (133)
 
 - affordances.html: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
@@ -23,7 +21,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - calendar.html: button.cell-open "Thu Oct 1, 3 items" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html: button.cell-open "Fri Oct 2, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html: button.cell-open "Sat Oct 3, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
@@ -76,7 +73,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#app: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#app: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#app: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html#app: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - affordances.html#l-h: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#l-h: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#l-h: button.dot.dot-missing "1 missing" is 23px tall [375 light, 375 dark, 1280 light]
@@ -87,7 +83,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#l-h: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#l-h: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#l-h: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html#l-h: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - affordances.html#checkin: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#checkin: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#checkin: button.dot.dot-missing "1 missing" is 23px tall [375 light, 375 dark, 1280 light]
@@ -98,7 +93,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#checkin: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#checkin: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#checkin: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html#checkin: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.dot.dot-missing "1 missing" is 23px tall [375 light, 375 dark, 1280 light]
@@ -109,7 +103,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#nav-h: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#nav-h: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html#nav-h: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - affordances.html#ov-h: button.btn.primary "Save" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#ov-h: button.btn.is-pressed "Save as a guess" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#ov-h: button.dot.dot-missing "1 missing" is 23px tall [375 light, 375 dark, 1280 light]
@@ -120,7 +113,6 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - affordances.html#ov-h: button.btn.back-btn "‹Back" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#ov-h: button.btn.is-pressed "Undo" is 43px tall [375 light, 375 dark, 1280 light]
 - affordances.html#ov-h: button.btn.small "Marked to cancel" is 43px tall [375 light, 375 dark, 1280 light]
-- affordances.html#ov-h: summary "Call script" is 22px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Thu Oct 1, 3 items" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Fri Oct 2, nothing on it" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Sat Oct 3, 1 item" is 21px tall [375 light, 375 dark, 1280 light]
@@ -152,22 +144,10 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - calendar.html#app: button.cell-open "Thu Oct 29, nothing on it, checking after $2,708" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Fri Oct 30, nothing on it, checking after $2,672" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Sat Oct 31, nothing on it, checking after $2,636" is 21px tall [375 light, 375 dark, 1280 light]
-- plan.html#/calls: summary "Call script" is 22px tall [375 light, 375 light, 375 light, 375 light, 375 dark, 375 dark, 375 dark, 375 dark, 1280 light, 1280 light, 1280 light, 1280 light]
 
 
-## cents (1)
+## dead click (1)
 
-- plan.html#/surplus: $650.00 in span.rung-why "The 2026 limit is $7,500. In for 2026 so far: abou" [375 light, 375 dark, 1280 light]
-
-
-## raw date (1)
-
-- profile.html#/prefs: 2026-10-01 in span.seg-label "2026-10-01" [375 light, 375 dark, 1280 light]
-
-
-## placeholder looks typed (2)
-
-- spending.html#/checkin: input#ci-chk "2781.3" [375 light, 375 dark, 1280 light]
-- spending.html#/checkin: input#ci-hysa "9000" [375 light, 375 dark, 1280 light]
+- session.html: "Add the note" [375 light]
 
 
