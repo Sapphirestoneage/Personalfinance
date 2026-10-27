@@ -95,7 +95,7 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
 // the amount. Blank leaves the field as it was: missing, never 0.
 export function moreFields(collection, type) {
   const fam = (PRESETS[type] || {}).family;
-  if (collection === 'debts') return ['institution', 'rate', 'minimum', 'dueDay', 'asOf', 'note'];
+  if (collection === 'debts') return ['institution', 'rate', 'minimum', 'dueDay', ...(type === 'credit_card' ? ['annualFee'] : []), 'asOf', 'note'];
   if (collection === 'accounts') return ['institution', ...(fam === 'cash' || fam === 'fixedTerm' ? ['rate'] : []), 'asOf', 'note'];
   return ['asOf', 'note'];
 }
@@ -105,7 +105,7 @@ export function addMore(made, more = {}, today) {
   const fam = (PRESETS[item.type] || {}).family;
   const rateField = made.collection === 'debts' ? 'apr' : fam === 'cash' ? 'apy' : 'rate';
   let s = made.spine;
-  for (const k of ['institution', 'rate', 'minimum', 'dueDay']) if (more[k] !== null && more[k] !== undefined && more[k] !== '') s = putFact(s, base + '.' + (k === 'rate' ? rateField : k), more[k], 'known', today);
+  for (const k of ['institution', 'rate', 'minimum', 'dueDay', 'annualFee']) if (more[k] !== null && more[k] !== undefined && more[k] !== '') s = putFact(s, base + '.' + (k === 'rate' ? rateField : k), more[k], 'known', today);
   const f = getAt(s, made.firstPath);
   if (f && f.value !== null && f.value !== undefined && ((more.asOf && more.asOf !== f.asOf) || more.note)) s = setAt(s, made.firstPath, { ...f, ...(more.asOf ? { asOf: more.asOf } : {}), ...(more.note ? { note: String(more.note).trim().slice(0, 200) } : {}) });
   return { ...made, spine: s };

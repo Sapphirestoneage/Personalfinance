@@ -418,6 +418,13 @@ export function setChargeDay(spine, id, day, today) {
   if (next < today) next = m === 12 ? on(y + 1, 1) : on(y, m + 1);
   return putFact(spine, 'expenses.' + id + '.renews', next, 'known', today);
 }
+// A card's annual fee row (owner's ask, 2026-10-27): added blank (missing, never $0) so it can be typed.
+export function addFee(spine, id, today) {
+  const d = getAt(spine, 'debts.' + id);
+  if (!d || d.type !== 'credit_card') throw new Error('No card ' + id);
+  if (d.annualFee) return spine;
+  return setAt(spine, 'debts.' + id + '.annualFee', { value: null, kind: 'missing', asOf: today, source: 'ledger' });
+}
 // Mark a line a subscription, or not (Move to Subscriptions, bug sweep).
 export function markSubscription(spine, id, on, today) {
   if (!getAt(spine, 'expenses.' + id)) throw new Error('No expense ' + id);

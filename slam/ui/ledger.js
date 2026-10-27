@@ -30,7 +30,7 @@ import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
 import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription, addFee } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
@@ -1319,6 +1319,8 @@ function itemScreen(sec, g, it, st) {
     h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, it.rows.length ? it.rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
+    // A card's annual fee (owner's ask, 2026-10-27): one tap adds the row and opens it to type the fee.
+    it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card' && !d.annualFee) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(addFee(cur(), it.id, today()), 'Annual fee added to ' + it.label)) openField('debts.' + it.id + '.annualFee'); } }, '+ Add an annual fee')) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
   ];

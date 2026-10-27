@@ -96,7 +96,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   // More options: built once; which boxes show follows the kind.
   const more = {
     institution: box('add-inst', { placeholder: 'e.g. Chase' }), rate: box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }),
-    minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), dueDay: box('add-due', { inputmode: 'numeric', placeholder: '1 to 31' }),
+    minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: box('add-due', { inputmode: 'numeric', placeholder: '1 to 31' }),
     asOf: h('input', { type: 'date', id: 'add-asof', value: today }), note: box('add-note', { maxlength: '200' })
   };
   const moreBox = {
@@ -104,6 +104,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     rate: field('add-rate', collection === 'debts' ? 'APR' : 'Rate', percent(more.rate), null, null, true),
     minimum: field('add-min', 'Minimum payment', dollars(more.minimum), null, null, true),
     dueDay: field('add-due', 'Due day of the month', more.dueDay, null, null, true),
+    annualFee: field('add-fee', 'Annual fee', dollars(more.annualFee), null, null, true),
     asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
     note: field('add-note', 'Note', more.note)
   };
@@ -137,7 +138,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       if (!r.ok || !ok(r.value)) { msg.textContent = words + ': ' + (r.ok ? 'check the number' : r.message); more[k].focus(); return false; }
       extra[k] = r.value; return true;
     };
-    if (!read('rate', 'rate', 'Rate', (x) => x >= 0 && x <= 1) || !read('minimum', 'money', 'Minimum', (x) => x >= 0) || !read('dueDay', 'int', 'Due day', (x) => x >= 1 && x <= 31)) return;
+    if (!read('rate', 'rate', 'Rate', (x) => x >= 0 && x <= 1) || !read('minimum', 'money', 'Minimum', (x) => x >= 0) || !read('annualFee', 'money', 'Annual fee', (x) => x >= 0) || !read('dueDay', 'int', 'Due day', (x) => x >= 1 && x <= 31)) return;
     if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
     if (more.asOf.value) extra.asOf = more.asOf.value;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
