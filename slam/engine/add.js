@@ -7,6 +7,7 @@
 //   null leaves it missing (never $0).
 
 import { addItem, putFact, setPay, editIncome } from './edits.js';
+import { getAt, setAt } from './spine.js';
 import { inForce, addDays } from './spine.js';
 import { PRESETS } from './schema.js';
 
@@ -87,4 +88,25 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
     if (a.purpose === 'allowance') s = putFact(s, base + '.allowanceMode', 'gift', 'known', today);
   }
   return { spine: s, id, firstPath: made.firstPath, collection: 'income' };
+}
+
+// The add form's "More options" (slim by default), set on the item just made: institution, the rate (a debt's APR, a
+// cash account's APY, a fixed-term rate), a debt's minimum and due day, the date the amount is as of, and a note on
+// the amount. Blank leaves the field as it was: missing, never 0.
+export function moreFields(collection, type) {
+  const fam = (PRESETS[type] || {}).family;
+  if (collection === 'debts') return ['institution', 'rate', 'minimum', 'dueDay', 'asOf', 'note'];
+  if (collection === 'accounts') return ['institution', ...(fam === 'cash' || fam === 'fixedTerm' ? ['rate'] : []), 'asOf', 'note'];
+  return ['asOf', 'note'];
+}
+export function addMore(made, more = {}, today) {
+  const base = made.firstPath.split('.').slice(0, 2).join('.');
+  const item = getAt(made.spine, base) || {};
+  const fam = (PRESETS[item.type] || {}).family;
+  const rateField = made.collection === 'debts' ? 'apr' : fam === 'cash' ? 'apy' : 'rate';
+  let s = made.spine;
+  for (const k of ['institution', 'rate', 'minimum', 'dueDay']) if (more[k] !== null && more[k] !== undefined && more[k] !== '') s = putFact(s, base + '.' + (k === 'rate' ? rateField : k), more[k], 'known', today);
+  const f = getAt(s, made.firstPath);
+  if (f && f.value !== null && f.value !== undefined && ((more.asOf && more.asOf !== f.asOf) || more.note)) s = setAt(s, made.firstPath, { ...f, ...(more.asOf ? { asOf: more.asOf } : {}), ...(more.note ? { note: String(more.note).trim().slice(0, 200) } : {}) });
+  return { ...made, spine: s };
 }

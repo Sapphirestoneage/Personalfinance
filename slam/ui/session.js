@@ -16,7 +16,7 @@ import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/sce
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
 import { h, chip, money, pct } from './view.js';
-import { addForm } from './add-form.js';
+import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
 
 // The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
@@ -298,7 +298,7 @@ function debt(ctx) {
 // Adding income (S-237): the same form My numbers uses (ui/add-form.js), questions first, built once while open.
 let addingIncome = false, incomeFormEl = null;
 function incomeAdd(spine, today) {
-  if (!addingIncome) { incomeFormEl = null; return h('button', { type: 'button', id: 'i-add', class: 'btn add', onclick: () => { addingIncome = true; refresh(); document.getElementById('add-type')?.focus(); } }, '+ Add income'); }
+  if (!addingIncome) { incomeFormEl = null; return h('button', { type: 'button', id: 'i-add', class: 'btn add', onclick: () => { addingIncome = true; refresh(); focusAdd(); } }, '+ Add income'); }
   if (!incomeFormEl) incomeFormEl = addForm({ spine: () => current().spine, collection: 'income', types: INCOME_FIRST.map(([k]) => k), today,
     onDone: (made, label) => { addingIncome = false; incomeFormEl = null; change(made.spine, said.added(label)); },
     onCancel: () => { addingIncome = false; incomeFormEl = null; refresh(); } });

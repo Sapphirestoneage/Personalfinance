@@ -10,7 +10,7 @@ import { startPage, change, said, go, keep, kept, refresh, say, current, reopen,
 import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
-import { addForm as newAddForm } from './add-form.js';
+import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
 import { foldRow } from './rows.js';
@@ -941,10 +941,18 @@ const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', e
 function addForm(n) {
   const { collection, types = [], fat } = n.add;
   return newAddForm({ spine: cur, collection, types, fat: fat ?? null, today: today(),
-    onDone: (made, label) => { adding = null; if (change(made.spine, said.added(label))) openField(made.firstPath); },
+    // Add saves and closes; the new row is marked on the list, and the group's button offers "Add another" (slim).
+    onDone: (made, label) => { adding = null; added = n.key; if (change(made.spine, said.added(label))) markAdded(label); },
     onCancel: () => { adding = null; refresh(); } });
 }
 
+let added = null;
+function markAdded(label) {
+  requestAnimationFrame(() => {
+    const row = [...document.querySelectorAll('.go-row .go-name')].find((x) => x.textContent.trim().startsWith(label));
+    if (row) row.closest('.go-row').classList.add('just-added');
+  });
+}
 function addButton(n) {
   if (!n || !n.add || selecting) return null;
   if (adding === n.key) return addForm(n);
@@ -956,7 +964,7 @@ function addButton(n) {
   const acronym = noun && /^[A-Z]{2}/.test(noun);
   const an = noun && (acronym ? 'AEFHILMNORSX'.includes(noun[0]) : /^[aeiou]/i.test(noun) && !/^(Roth|Uni)/.test(noun));
   const what = noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
-  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; refresh(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
+  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; refresh(); focusAdd(); } }, added === n.key ? '+ Add another' : '+ Add ' + what);
 }
 
 // Duplicate (S-190): the copy keeps everything but its name and amount, and opens on its own screen.

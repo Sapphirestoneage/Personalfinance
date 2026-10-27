@@ -1,9 +1,11 @@
-// The add form (S-237): one form for every item type, used by the Session and by My numbers. It asks first (what kind,
-// then the questions for that kind), then the name, then the amount, which is always there. Every dropdown shows
-// plain words. The answers go to engine/add.js addWithAnswers, so both screens save the same thing.
+// The add form (S-237): one form for every item type, used by the Session and by My numbers. Slim by default: the name
+// and the amount first ("$" in the box; "1k", "1,000" and "$1,000" all read), then what kind only for a general Add (an
+// Add from a group starts on that group's kind), then the questions for that kind, and the rest under More options
+// (institution, rate, minimum and due day, as of, a note). A hint shows only while its box is empty. Enter adds, Esc
+// cancels. The answers go to engine/add.js addWithAnswers and addMore, so every screen saves the same thing.
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
-import { addWithAnswers, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
+import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
 import { parseInput } from '../engine/edits.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
@@ -12,7 +14,18 @@ import { h } from './view.js';
 const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
 const FAT_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation' };
 
-const field = (id, label, control, hint) => h('div', { class: 'add-field' }, h('label', { for: id, class: 'edit-label' }, label), control, hint ? h('p', { class: 'edit-hint' }, hint) : null);
+// A labeled box; its hint shows only while the box (input) is empty. short: half width on a computer.
+const field = (id, label, control, hint, input = null, short = false) => {
+  const tip = hint ? h('p', { class: 'edit-hint' }, hint) : null;
+  if (tip && input) { const sync = () => { tip.hidden = input.value.trim() !== ''; }; input.addEventListener('input', sync); sync(); }
+  return h('div', { class: 'add-field' + (short ? ' short' : '') }, h('label', { for: id, class: 'edit-label' }, label), control, tip);
+};
+const box = (id, attrs = {}) => h('input', { type: 'text', id, autocomplete: 'off', ...attrs });
+// "$" inside a money box, "%" at the end of a rate box.
+const dollars = (input) => h('div', { class: 'affix' }, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '$'), input);
+const percent = (input) => h('div', { class: 'affix affix-end' }, input, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '%'));
+// Opening a form never scrolls the page.
+export const focusAdd = () => document.getElementById('add-name')?.focus({ preventScroll: true });
 const select = (id, options, value) => h('select', { id }, options.map(([k, w]) => h('option', { value: k, selected: k === value || null }, w)));
 
 // addForm({ spine (the household, or a function returning it), collection, types, fat, today, onDone, onCancel }) -> a <form>
@@ -29,8 +42,8 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const typeSel = typeList.length > 1 ? select('add-type', typeList, first) : null;
   const kind = () => (typeSel ? typeSel.value : first);
 
-  const name = h('input', { type: 'text', id: 'add-name', autocomplete: 'off' });
-  const amount = h('input', { type: 'text', id: 'add-amount', inputmode: 'decimal', autocomplete: 'off', placeholder: '$' });
+  const name = box('add-name');
+  const amount = box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' });
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
   const often = income || collection === 'expenses' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
   if (often) often.setAttribute('aria-label', 'How often');
@@ -80,6 +93,24 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   if (typeSel) typeSel.addEventListener('change', () => { ans.payBasis = null; draw(); });
   draw();
 
+  // More options: built once; which boxes show follows the kind.
+  const more = {
+    institution: box('add-inst', { placeholder: 'e.g. Chase' }), rate: box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }),
+    minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), dueDay: box('add-due', { inputmode: 'numeric', placeholder: '1 to 31' }),
+    asOf: h('input', { type: 'date', id: 'add-asof', value: today }), note: box('add-note', { maxlength: '200' })
+  };
+  const moreBox = {
+    institution: field('add-inst', 'Bank or lender', more.institution, null, null, true),
+    rate: field('add-rate', collection === 'debts' ? 'APR' : 'Rate', percent(more.rate), null, null, true),
+    minimum: field('add-min', 'Minimum payment', dollars(more.minimum), null, null, true),
+    dueDay: field('add-due', 'Due day of the month', more.dueDay, null, null, true),
+    asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
+    note: field('add-note', 'Note', more.note)
+  };
+  const showMore = () => { const on = moreFields(collection, kind()); for (const [k, el] of Object.entries(moreBox)) el.hidden = !on.includes(k); };
+  if (typeSel) typeSel.addEventListener('change', showMore);
+  showMore();
+
   const submit = (e) => {
     e.preventDefault();
     msg.textContent = '';
@@ -99,16 +130,32 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     const cadence = t === 'w2' ? ans.schedule : often && !often.hidden ? often.value : 'monthly';
     let made;
     try { made = addWithAnswers(now(), { collection, type: t, label: name.value, amount: a.value, cadence, fat: fatSel ? fatSel.value || null : fat, answers }, today); } catch (err) { msg.textContent = err.message; return; }
+    const extra = {}, on = moreFields(made.collection, t);
+    const read = (k, type, words, ok = () => true) => {
+      if (!on.includes(k) || !more[k].value.trim()) return true;
+      const r = parseInput(type, more[k].value);
+      if (!r.ok || !ok(r.value)) { msg.textContent = words + ': ' + (r.ok ? 'check the number' : r.message); more[k].focus(); return false; }
+      extra[k] = r.value; return true;
+    };
+    if (!read('rate', 'rate', 'Rate', (x) => x >= 0 && x <= 1) || !read('minimum', 'money', 'Minimum', (x) => x >= 0) || !read('dueDay', 'int', 'Due day', (x) => x >= 1 && x <= 31)) return;
+    if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
+    if (more.asOf.value) extra.asOf = more.asOf.value;
+    if (more.note.value.trim()) extra.note = more.note.value.trim();
+    made = addMore(made, extra, today);
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);
   };
 
-  return h('form', { class: 'editor add-form', onsubmit: submit },
+  const amountHint = h('p', { class: 'edit-hint' }, 'Blank is fine for now.');
+  amount.addEventListener('input', () => { amountHint.hidden = amount.value.trim() !== ''; });
+  return h('form', { class: 'editor add-form', onsubmit: submit, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); onCancel(); } } },
+    h('div', { class: 'add-grid' },
+      field('add-name', 'Name', name, null, null, true),
+      h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint)),
     typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
     qs,
-    field('add-name', 'Name', name),
-    h('div', { class: 'add-field' }, amountLabel, h('div', { class: 'amount-row' }, amount, often), h('p', { class: 'edit-hint' }, 'Blank is fine for now.')),
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
+    h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),
     msg,
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn ghost', onclick: onCancel }, 'Cancel')));
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn', onclick: onCancel }, 'Cancel')));
 }

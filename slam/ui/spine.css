@@ -1262,3 +1262,16 @@ a.fb-link .fb-more { justify-self: end; }
 .onepager .op-who { font-size: var(--text-lg); font-weight: 700; margin: 0; }
 .onepager .op-meta, .onepager .op-foot { color: var(--text-muted); font-size: var(--text-sm); margin: 0; }
 .onepager .op-foot { margin-top: var(--space-4); border-top: 1px solid var(--border); padding-top: var(--space-2); }
+/* The shared add form, slim by default: name and amount side by side on a computer, stacked on a phone; "$" and "%"
+   inside their boxes; More options folded; the row just added is marked for a moment. */
+.add-form .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-3); }
+.add-form .add-grid > .add-field:not(.short) { grid-column: 1 / -1; }
+@media (max-width: 600px) { .add-form .add-grid { grid-template-columns: 1fr; } }
+.affix { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
+.affix input { width: 100%; padding-left: 1.6em; }
+.affix-end input { padding-left: var(--space-2); padding-right: 1.8em; }
+.affix-sym { position: absolute; left: 0.6em; color: var(--text-muted); pointer-events: none; }
+.affix-end .affix-sym { left: auto; right: 0.6em; }
+.add-more > summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--accent); font-weight: 600; }
+.go-row.just-added { animation: just-added 2.4s ease-out; }
+@keyframes just-added { from { background: var(--accent-soft, rgba(37, 99, 235, 0.18)); } to { background: transparent; } }

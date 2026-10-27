@@ -11,7 +11,10 @@ export function parseInput(type, text) {
   const raw = String(text ?? '').trim();
   if (raw === '') return { ok: false, message: 'Type a value, or use Not for me' };
   if (type === 'money' || type === 'int' || type === 'rate') {
-    const n = Number(raw.replace(/[$,%\s]/g, ''));
+    // "1k" and "$1.5K" are thousands, for money only (slim by default): 1k is 1000.
+    const k = type === 'money' && /^\$?\s*[\d,.]+\s*k$/i.test(raw);
+    const digits = raw.replace(/[$,%\s]/g, '').replace(/k$/i, '');
+    const n = /\d/.test(digits) ? Number(digits) * (k ? 1000 : 1) : NaN;
     if (!Number.isFinite(n)) return { ok: false, message: 'Type a number' };
     if (type === 'int' && !Number.isInteger(n)) return { ok: false, message: 'Type a whole number' };
     return { ok: true, value: type === 'rate' ? Math.round(n * 1e6) / 1e8 : n };
