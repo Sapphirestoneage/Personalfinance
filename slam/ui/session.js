@@ -96,6 +96,8 @@ function more(label, ...body) {
   return d;
 }
 const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...kids);
+// Every saved row can be deleted (owner's ask, 2026-10-27): a red-outline Delete, one change, so Undo brings it back.
+const delBtn = (collection, id, name) => h('button', { type: 'button', class: 'btn small danger srow-del', 'aria-label': 'Delete ' + name, onclick: () => change((s) => removeItem(s, collection, id), said.deleted(name)) }, 'Delete');
 
 // ---------------------------------------------------------------- the step frame
 // Each step's total, as its formula (Track L): the same registry ids My numbers' sections use.
@@ -185,7 +187,7 @@ function needRow(spine, item, fat, key, sub = false) {
       h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: true }, fat, todayIso()).spine, said.added(item.label + ', a need')) }, 'Need'),
       h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: false }, fat, todayIso()).spine, said.added(item.label + ', a want')) }, 'Want'),
       h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
-  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), needWant(e), more(item.label, ...whoPays(spine, e)));
+  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), needWant(e), more(item.label, ...whoPays(spine, e)), delBtn('expenses', e.id, e.label));
 }
 // Need or want, on every line in plain sight (S-231): two pressed-or-not buttons.
 function needWant(e) {
@@ -307,7 +309,8 @@ function debt(ctx) {
           moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'a month'),
           intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x)))),
           // A card: paid in full every month, or carried? It decides whether the balance costs interest.
-          d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full? Not set (counted as carried)'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null);
+          d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full? Not set (counted as carried)'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null,
+          delBtn('debts', d.id, name));
       })) : h('p', { class: 'muted' }, 'No debts yet.'),
       list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
@@ -410,6 +413,7 @@ function incomeRows(spine) {
       pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1])))];
     return lineRow('income' + (x.type === 'w2' || isSelfEmployment(x) || x.type === 'unemployment' ? ' asks' : ''), h('span', { class: 'srow-name' }, x.label, guessChip(x.amount, 'income.' + x.id + '.amount')),
       amountBox,
+      delBtn('income', x.id, x.label),
       x.cadence === 'monthly' || x.cadence === 'semimonthly' ? intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d)))) : null,
       x.type === 'w2' ? h('div', { class: 'srow-q' }, ...w2Bits(spine, x)) : null,
       isSelfEmployment(x) && x.type !== 'person' ? h('div', { class: 'srow-q' }, ...selfBits(x)) : null,
@@ -494,6 +498,7 @@ function assets(ctx) {
         const name = v(a.name) || a.id, p = 'accounts.' + a.id, part = liquidPart(s, a), on = part !== null;
         return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance, 'accounts.' + a.id + '.balance')),
           moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x)))),
+          delBtn('accounts', a.id, name),
           h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => change((sp) => (!on === (s.sheet.liquid.defaults[a.id] !== 'none') ? setAt(sp, p, drop(getAt(sp, p), 'liquid')) : putFact(sp, p + '.liquid', !on, 'known', today)), said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
           a.family === 'taxable' ? holdings(a) : null,
           // A plan at work: does the employer match, and up to what share of pay?
@@ -541,6 +546,7 @@ function goals(ctx) {
           lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, (cards.missing || []).length ? 'missing a balance' : cards.value ? money(cards.value) + ' to go' : 'Done')),
           ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target, 'goals.' + g.id + '.target')),
             moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
+            delBtn('goals', g.id, 'Goal ' + g.label),
             (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
         goalForm || h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { goalAdding = true; refresh(); requestAnimationFrame(focusAdd); } }, '+ Add a goal')),
         h('p', { class: 'edit-label' }, 'Fund goals'),
