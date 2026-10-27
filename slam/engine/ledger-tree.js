@@ -66,8 +66,12 @@ export function ledgerTree(spine, inst) {
     const itemOf = (d) => { const r = take(byPrefix('debts.' + d.id)); return item('debts.' + d.id, v(d.name) || d.id, r, { collection: 'debts', id: d.id, summary: summaryOf(spine, 'debts.' + d.id, r) }); };
     let children;
     if (t === 'credit_card') {
-      const names = [...new Set(ds.map((d) => institutionOf(d, inst) || 'Other'))];
-      children = names.map((n) => node('D:' + t + ':' + n, n, ds.filter((d) => (institutionOf(d, inst) || 'Other') === n).map(itemOf)));
+      // Personal cards by bank, then business cards apart (owner's ask, 2026-10-27): "Business cards", or
+      // "Business cards, Chase" when they come from more than one bank.
+      const bankOf = (d) => institutionOf(d, inst) || 'No bank given yet';
+      const biz = (d) => v(d.business) === true;
+      const byBank = (list, words) => [...new Set(list.map(bankOf))].map((n, i, all) => node('D:' + t + ':' + (words ? 'biz:' : '') + n, words ? (all.length > 1 ? words + ', ' + n : words) : n, list.filter((d) => bankOf(d) === n).map(itemOf)));
+      children = [...byBank(ds.filter((d) => !biz(d))), ...byBank(ds.filter(biz), 'Business cards')];
       // The pay setting every card follows unless it says otherwise (S-189) leads the cards.
       const every = take(byPrefix('household.cardPayPolicy'));
       if (every.length) children.unshift(item('household.cardPayPolicy', 'Every card', every));

@@ -25,6 +25,8 @@ export function upgradeSpine(spine) {
   for (const d of list(s.debts)) {
     if (d.type !== 'credit_card') continue;
     if (!d.business) d.business = fact(null, stamp);
+    // A card's bank groups it in My numbers (2026-10-27); an older file's card asks for it.
+    if (!d.institution) d.institution = fact(null, stamp);
     if (!d.reportsToPersonalCredit) {
       const b = d.business.value;
       d.reportsToPersonalCredit = b === null ? fact(null, stamp) : b ? fact(false, { ...stamp, kind: 'rough' }) : fact(true, { ...stamp, kind: d.business.kind });
@@ -174,6 +176,7 @@ export function fromProfile(p, { today = null } = {}) {
     // the business default is rough because some issuers do report.
     if (d.type === 'credit_card') {
       if (!out.business) out.business = F(null);
+      out.institution = F(d.institution ?? null, K(d, 'institution'));
       if (!out.reportsToPersonalCredit) {
         const b = out.business.value;
         out.reportsToPersonalCredit = b === null ? F(null)

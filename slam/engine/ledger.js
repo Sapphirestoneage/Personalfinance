@@ -159,8 +159,7 @@ export function ledgerRows(spine) {
     // A section's sharing default is set on the section, not as a row. Profile answers live on the Profile page.
     if ((s[0] === 'household' && s[1] === 'expenseDefaults') || s[0] === 'profile') continue;
     const type = typeFor(spine, path);
-    rows.push(linkedDebtRow(spine, { path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) }));
-  }
+    rows.push(linkedDebtRow(spine, { path, label: labelFor(spine, path), group: groupFor(path), type, fact, ...(type.startsWith('link:') && fact.value !== null ? { display: linkName(spine, fact.value) } : {}) }));  }
   return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }));
 }
 

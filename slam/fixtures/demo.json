@@ -611,6 +611,12 @@
         "source": "demo (made up)",
         "kind": "known"
       },
+      "institution": {
+        "value": "Chase",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
       "balance": {
         "value": 3000,
         "asOf": "2026-10-01",
@@ -666,6 +672,12 @@
       "type": "credit_card",
       "name": {
         "value": "Store card",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "institution": {
+        "value": "Synchrony",
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"
@@ -751,6 +763,12 @@
       "type": "credit_card",
       "name": {
         "value": "Business card",
+        "asOf": "2026-10-01",
+        "source": "demo (made up)",
+        "kind": "known"
+      },
+      "institution": {
+        "value": "Chase",
         "asOf": "2026-10-01",
         "source": "demo (made up)",
         "kind": "known"
