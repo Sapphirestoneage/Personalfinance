@@ -3,3 +3,11 @@
   60 screens, 61 queued
   80 screens, 48 queued
   100 screens, 42 queued
+  120 screens, 31 queued
+  140 screens, 11 queued
+SLAM tester: 151 screens x 3 looks, 330 taps, 662s.
+PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
+  cents: 3
+  placeholder looks typed: 6
+  raw date: 3
+  small tap: 429
