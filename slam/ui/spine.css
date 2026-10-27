@@ -1446,3 +1446,25 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 /* Rough now and later: a guess that is fine for now shows a small gray dot, never a chip. */
 .dot-fine { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); opacity: .55; flex: none; align-self: center; }
 .guessing h2 .count, .fold-card summary .count { margin-left: 8px; font-size: .85em; color: var(--text-muted); font-weight: 500; }
+
+/* Screen-reader-only words (labels inside tables). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Still guessing: Sort and Group on the right of its heading; where to find a number under its name, muted. */
+.guess-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.guess-controls { display: flex; gap: 8px 12px; flex-wrap: nowrap; width: 100%; max-width: 420px; }
+.guess-controls .pick-label { display: flex; align-items: center; gap: 6px; flex: 1 1 140px; font-size: var(--text-sm); color: var(--text-muted); }
+.guess-controls .pick-box { min-height: 44px; width: 100%; min-width: 0; }
+.row-sub { display: block; font-size: var(--text-xs); color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+.guess-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.guess-group-head h3 { margin: 0; font-size: var(--text-sm); }
+.where-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.where-kind { border-top: 1px solid var(--border); padding-top: 12px; }
+.where-kind:first-child { border-top: 0; padding-top: 0; }
+.where-kind h3 { margin: 0 0 8px; font-size: var(--text-sm); }
+.where-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; align-items: end; }
+.where-field label { display: block; font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 4px; }
+.where-field input { width: 100%; min-width: 0; }
+.where-field.wide { grid-column: 1 / -1; }
+.where-save { grid-column: 1 / -1; }
+@media (min-width: 720px) { .where-fields { grid-template-columns: 3fr 2fr 1fr auto; } .where-field.wide, .where-save { grid-column: auto; } }

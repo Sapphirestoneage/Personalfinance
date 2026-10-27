@@ -6,7 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
-import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
+import { HOUSEHOLD_ANSWERS, addLookups } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
@@ -36,6 +36,8 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
+import { whereTable } from './where-data.js';
+import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
 import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
@@ -798,7 +800,7 @@ function pickRow(row, full = false) {
 const lineName = (row) => (rowByPath('expenses.' + String(row.linePath).split('.')[1] + '.amount') || rowByPath(row.linePath)).label;
 // One row: tap it to open its editor in place (one at a time). On an item's screen it reads the field's own name; on
 // Still guessing and Subscriptions (full) the item's too, and why it is listed (note).
-function rowEl(row, openPath, { full = false, note = null } = {}) {
+function rowEl(row, openPath, { full = false, note = null, sub = null } = {}) {
   if (selecting) return pickRow(row, full);
   const f = row.fact;
   const isOpen = openPath === row.path;
@@ -811,7 +813,7 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
   const worked = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
     h('button', { type: 'button', class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; setOpen(isOpen ? null : row.path); } },
-      h('span', { class: 'row-label' }, label, row.linked ? null : tags(row)),
+      h('span', { class: 'row-label' }, label, row.linked ? null : tags(row), sub && !isOpen ? h('span', { class: 'row-sub' }, sub) : null),
       h('span', { class: 'row-value' + (!row.linked && f.value === null ? ' empty' : '') }, rowValue(row)),
       kindMark(row.path, f.kind)),
     // Krug pass: no sentence under a closed row; open, a default says so with a small chip, and its note.
@@ -948,28 +950,55 @@ function guessRow() {
 // Why a guess is listed, in plain words: what a 20% miss could move ("could move your FI number by $30,000").
 function whyOf(it) {
   if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
+  // The rule's own reason first, so a guess worth checking now always says what it moves.
+  if (it.top) {
+    const [k, d] = it.top;
+    if (k === 'yearsToFi') return 'Could move your FI year' + (Math.abs(d) >= 1.5 ? ' by about ' + Math.round(Math.abs(d)) + ' years' : '');
+    return 'Could move your ' + (k === 'runway' ? 'cash cushion' : MOVE_WORDS[k] || BLOCK_WORDS[k] || k) + ' by ' + money(Math.abs(d));
+  }
   const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
   return top ? 'Could move your ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
 }
+// Sort and group (step 5), remembered per browser: Quick wins by default, no groups.
+const GUESS_VIEW_KEY = 'slam-guess-view:v1';
+const guessView = () => { try { const v = JSON.parse(localStorage.getItem(GUESS_VIEW_KEY) || 'null'); if (v && SORTS[v.sort] && ['none', 'where', 'group'].includes(v.group)) return v; } catch { /* storage blocked */ } return { sort: 'quick', group: 'none' }; };
+const setGuessView = (patch) => { try { localStorage.setItem(GUESS_VIEW_KEY, JSON.stringify({ ...guessView(), ...patch })); } catch { /* storage blocked */ } refresh(); };
+function guessControls() {
+  const v = guessView();
+  const pick = (id, label, options, value, key) => h('label', { class: 'pick-label' }, h('span', {}, label),
+    h('select', { id, class: 'pick-box', onchange: (e) => setGuessView({ [key]: e.target.value }) }, options.map(([k, w]) => h('option', { value: k, selected: k === value }, w))));
+  return h('div', { class: 'guess-controls' },
+    pick('gs-sort', 'Sort', Object.entries(SORTS).map(([k, x]) => [k, x.label]), v.sort, 'sort'),
+    pick('gs-group', 'Group', [['none', 'None'], ['where', 'Where to find it'], ['group', 'Section']], v.group, 'group'));
+}
 function guessList() {
   if (!guess) return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' }, h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter...'));
-  const stale = guessFor !== cur();
-  const now = guess.items.filter((it) => it.urgency === 'now');
-  const fine = guess.items.filter((it) => it.urgency === 'fine');
-  const later = guess.items.filter((it) => it.urgency === 'later').sort((a, b) => (a.until < b.until ? -1 : 1));
-  // Each guess opens its editor right here, so the list stays the screen Back comes back to.
+  const stale = guessFor !== cur(), table = whereTable(), v = guessView();
+  const all = table ? withWhere(cur(), guess.items, table) : guess.items.map((it) => ({ ...it, where: null, short: null, minutes: 1, whereId: 'other' }));
+  const sorted = (list) => sortGuesses(cur(), list, v.sort);
+  const now = sorted(all.filter((it) => it.urgency === 'now'));
+  const fine = sorted(all.filter((it) => it.urgency === 'fine'));
+  const later = all.filter((it) => it.urgency === 'later').sort((a, b) => (a.until < b.until ? -1 : 1));
+  // Each guess opens its editor right here, so the list stays the screen Back comes back to. Closed, it says where to
+  // find it and what a miss could move ("Paystub, 5 min. Could move your FI number by $30,000").
   const open = kept().open || null;
-  const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: whyOf(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label), kindMark(it.path, it.kind)), h('p', { class: 'row-why' }, whyOf(it))); };
+  const subOf = (it) => [it.short ? it.short + ' \u00b7 ' + it.minutes + ' min' : null, whyOf(it)].filter(Boolean).join('. ');
+  const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: whyOf(it), sub: subOf(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label, h('span', { class: 'row-sub' }, subOf(it))), kindMark(it.path, it.kind))); };
+  // Grouped by where: one visit finds the group, so each group can go to the homework at once.
+  const toHomework = (g) => change((sp) => addLookups(sp, g.items.map((it) => ({ path: it.path, label: it.label, where: it.where })), { today: today() }), g.items.length + (g.items.length === 1 ? ' number' : ' numbers') + ' added to homework: ' + g.where);
+  const listOf = (list) => groupGuesses(list, v.group).map((g) => [
+    g.title ? h('div', { class: 'guess-group-head' }, h('h3', {}, g.title), v.group === 'where' ? h('button', { type: 'button', class: 'btn small', onclick: () => toHomework(g) }, 'Add to homework') : null) : null,
+    h('ul', { class: 'rows guess-rows' }, g.items.map(row))]).flat();
   // Fine for now and Later are folded; open or closed is kept per browser.
-  const fold = (key, title, list, extra = null) => (list.length ? h('details', { class: 'card fold-card done-group', open: kept()[key] || null, ontoggle: (e) => { if (!!kept()[key] !== e.target.open) keep({ [key]: e.target.open }); } },
-    h('summary', {}, h('span', {}, title), h('span', { class: 'count' }, String(list.length))), extra, h('ul', { class: 'rows guess-rows' }, list.map(row))) : null);
+  const fold = (key, title, list, body) => (list.length ? h('details', { class: 'card fold-card done-group', open: kept()[key] || null, ontoggle: (e) => { if (!!kept()[key] !== e.target.open) keep({ [key]: e.target.open }); } },
+    h('summary', {}, h('span', {}, title), h('span', { class: 'count' }, String(list.length))), body) : null);
   return [
     h('section', { class: 'card guessing', 'aria-labelledby': 'gs-now' },
-      h('h2', { id: 'gs-now' }, 'Check now', h('span', { class: 'count' }, String(now.length))),
+      h('div', { class: 'guess-head' }, h('h2', { id: 'gs-now' }, 'Check now', h('span', { class: 'count' }, String(now.length))), guessControls()),
       stale ? h('p', { class: 'muted', role: 'status' }, 'Updating for your last change...') : null,
-      now.length ? h('ul', { class: 'rows guess-rows' }, now.map(row)) : h('p', { class: 'muted' }, 'Nothing worth checking now. The guesses below are fine as they are.')),
-    fold('fineOpen', 'Fine for now', fine),
-    fold('laterOpen', 'Later', later)
+      now.length ? listOf(now) : h('p', { class: 'muted' }, 'Nothing worth checking now. The guesses below are fine as they are.')),
+    fold('fineOpen', 'Fine for now', fine, listOf(fine)),
+    fold('laterOpen', 'Later', later, h('ul', { class: 'rows guess-rows' }, later.map((it) => row({ ...it, short: null, why: null })))) 
   ];
 }
 

@@ -481,10 +481,22 @@ export function setHomework(spine, id, status, { today }) {
   list.push({ id, label: q.label, where: q.where ? WHERE[q.where] : null, status, date: today });
   return { ...spine, coaching: { ...(spine.coaching || {}), homework: list } };
 }
+// Numbers to look up (Still guessing, grouped by where to find them): each joins the homework as a look-up with its
+// where words, once; [{ path, label, where }]. Kept with the homework, so the one-pager lists them under their where.
+export function addLookups(spine, items, { today }) {
+  const list = [...((spine.coaching && spine.coaching.homework) || [])];
+  for (const it of items) {
+    const id = 'fact:' + it.path, at = list.findIndex((x) => x.id === id), entry = { id, label: it.label, where: it.where || null, status: 'lookup', date: today };
+    if (at >= 0) list[at] = entry; else list.push(entry);
+  }
+  return { ...spine, coaching: { ...(spine.coaching || {}), homework: list } };
+}
 // The client's to-dos, grouped by where to find each item, for the one-pager and the recap.
 // With asOf, numbers whose "check later" date has come join the list under "Check again" (Rough now and later).
 export function homeworkList(spine, asOf) {
-  const items = ((spine.coaching && spine.coaching.homework) || []).filter((x) => x.status === 'lookup');
+  // A number to look up leaves the list once it is filled in (known), with nothing to tick.
+  const stillOpen = (x) => !x.id.startsWith('fact:') || (() => { const f = getAt(spine, x.id.slice(5)); return !!f && (f.kind === 'rough' || f.kind === 'missing'); })();
+  const items = ((spine.coaching && spine.coaching.homework) || []).filter((x) => x.status === 'lookup' && stillOpen(x));
   const groups = new Map();
   const put = (k, label) => { if (!groups.has(k)) groups.set(k, []); groups.get(k).push(label); };
   for (const x of items) put(x.where || 'Ask Eli', x.label);

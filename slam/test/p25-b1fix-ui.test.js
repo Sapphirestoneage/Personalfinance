@@ -98,7 +98,7 @@ test('the Builder link is plain words on the Builder itself', () => {
 
 test('My numbers: Still guessing and Subscriptions open a row in place; a linked debt opens its line in place', () => {
   const src = code('ui/ledger.js');
-  assert.match(src, /return r \? rowEl\(r, open, \{ full: true, note: whyOf\(it\) \}\)/, 'a guess opens its editor on Still guessing');
+  assert.match(src, /return r \? rowEl\(r, open, \{ full: true, note: whyOf\(it\), sub: subOf\(it\) \}\)/, 'a guess opens its editor on Still guessing');
   assert.match(src, /return r \? h\('ul', \{ class: 'rows' \}, rowEl\(r, open, \{ full: true \}\)\)/, 'a subscription opens its editor on Subscriptions');
   assert.doesNotMatch(src.slice(src.indexOf('function guessList'), src.indexOf('function pickerCard')), /fieldLink\(/);
   assert.doesNotMatch(src.slice(src.indexOf('function subsScreen'), src.indexOf('const ADD_WORDS')), /fieldLink\(/);

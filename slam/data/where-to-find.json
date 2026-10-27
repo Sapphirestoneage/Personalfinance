@@ -1,0 +1,226 @@
+{
+  "about": "Where each kind of number is found, and about how long it takes to look up (Rough now and later, step 5). The first kind whose match fits a number is used; the last, other, fits everything. Builder edits these in this browser (Builder, Where to find).",
+  "version": 1,
+  "kinds": [
+    {
+      "id": "choice",
+      "where": "Ask yourself",
+      "short": "Ask yourself",
+      "minutes": 1,
+      "match": [
+        {
+          "fields": [
+            "paidFrom",
+            "depositTo",
+            "fundedFrom",
+            "need",
+            "reportsToPersonalCredit",
+            "stress",
+            "likelihood",
+            "business"
+          ]
+        },
+        {
+          "collection": "household",
+          "fields": [
+            "cardPayPolicy"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dueDay",
+      "where": "A statement",
+      "short": "Statement",
+      "minutes": 1,
+      "match": [
+        {
+          "collection": "debts",
+          "fields": [
+            "dueDay",
+            "statementDay"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cardRate",
+      "where": "The card statement or app",
+      "short": "Card app",
+      "minutes": 2,
+      "match": [
+        {
+          "collection": "debts",
+          "when": "card",
+          "fields": [
+            "apr",
+            "promoApr",
+            "promoEnds",
+            "deferredInterest",
+            "limit",
+            "minimum",
+            "annualFee"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loan",
+      "where": "The loan servicer's site",
+      "short": "Servicer site",
+      "minutes": 3,
+      "match": [
+        {
+          "collection": "debts",
+          "when": "loan"
+        }
+      ]
+    },
+    {
+      "id": "value",
+      "where": "A price guide (Kelley Blue Book, Zillow)",
+      "short": "Price guide",
+      "minutes": 5,
+      "match": [
+        {
+          "collection": "accounts",
+          "when": "property",
+          "fields": [
+            "balance",
+            "appreciationRate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "balance",
+      "where": "Your bank or card app",
+      "short": "Bank app",
+      "minutes": 1,
+      "match": [
+        {
+          "collection": "accounts",
+          "fields": [
+            "balance"
+          ]
+        },
+        {
+          "collection": "debts",
+          "fields": [
+            "balance"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "k401",
+      "where": "HR or the benefits portal",
+      "short": "Benefits portal",
+      "minutes": 15,
+      "match": [
+        {
+          "collection": "accounts",
+          "when": "retirement",
+          "fields": [
+            "match",
+            "matchFormula",
+            "vesting",
+            "contribution",
+            "contributions",
+            "employerMatch"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pay",
+      "where": "A paystub",
+      "short": "Paystub",
+      "minutes": 5,
+      "match": [
+        {
+          "collection": "income"
+        }
+      ]
+    },
+    {
+      "id": "insurance",
+      "where": "The insurance card or plan page",
+      "short": "Plan page",
+      "minutes": 10,
+      "match": [
+        {
+          "collection": "household",
+          "fields": [
+            "healthCoverage"
+          ]
+        },
+        {
+          "collection": "expenses",
+          "when": "insurance"
+        }
+      ]
+    },
+    {
+      "id": "tax",
+      "where": "Last year's tax return",
+      "short": "Tax return",
+      "minutes": 10,
+      "match": [
+        {
+          "collection": "taxYears"
+        },
+        {
+          "collection": "household",
+          "fields": [
+            "filingStatus"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subscription",
+      "where": "The app's billing page or a card statement",
+      "short": "Billing page",
+      "minutes": 2,
+      "match": [
+        {
+          "collection": "expenses",
+          "when": "subscription"
+        }
+      ]
+    },
+    {
+      "id": "housing",
+      "where": "The lease or a bill",
+      "short": "Lease or bill",
+      "minutes": 2,
+      "match": [
+        {
+          "collection": "expenses",
+          "when": "housing"
+        }
+      ]
+    },
+    {
+      "id": "spending",
+      "where": "A statement download",
+      "short": "Statement",
+      "minutes": 10,
+      "match": [
+        {
+          "collection": "expenses"
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "where": "Ask yourself",
+      "short": "Ask yourself",
+      "minutes": 1,
+      "match": [
+        {}
+      ]
+    }
+  ]
+}

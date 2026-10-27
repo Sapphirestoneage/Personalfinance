@@ -14,6 +14,7 @@ const TOP = [
 const PAGES = [
   ['Design kit', 'affordances.html', 'Every button, row, bar and chart piece in every state.'],
   ['Rules', 'rules.html', 'Every limit, rate and date the law sets, its source, and changes made in this browser.'],
+  ['Where to find', 'where.html', 'Where each kind of number is found and about how long it takes; Still guessing sorts by it.'],
   ['House defaults', 'house.html', 'Eli\'s method for every client, as the file has it; the Assumptions page shows the same in plain words.'],
   ['Client list (old)', 'clients.html', 'The old Budget app and its client list, until Phase 3 replaces it.']
 ];

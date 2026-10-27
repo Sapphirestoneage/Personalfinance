@@ -176,3 +176,6 @@ Default used: COBRA or a retiree plan makes employer health insurance while not 
 
 ## 147. The spreadsheet importer (2026-10-27)
 Default used: this branch has no spreadsheet importer, so step 4 of Rough now and later covers the Session only. Any importer that saves rough Facts is sorted by the same rule automatically, since the rule reads every rough or missing Fact.
+
+## 148. Sorting the homework list (2026-10-27)
+Default used: the Profile homework stays grouped by where to find it (one visit finds a group), so the Sort control lives on Still guessing only. Numbers added from a Still guessing group join the homework with their where words and drop off once filled in.
