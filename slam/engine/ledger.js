@@ -133,6 +133,9 @@ export function rowPathFor(spine, path) {
   return path;
 }
 
+// Fully covered by someone else (a parent, an employer, a partner) or marked Not for me: nothing leaves your account.
+export const othersPay = (e) => !!e && ((e.covered && valueOf(e.covered) === true) || (e.amount && e.amount.kind === 'notForMe'));
+const NOT_ASKED = ['paidFrom', 'payDay', 'paysDebt', 'renews', 'reviewed', 'trialEnds'];
 export function ledgerRows(spine) {
   const rows = [];
   for (const { path, fact } of listFacts(spine)) {
@@ -152,6 +155,9 @@ export function ledgerRows(spine) {
       if (s[2] === 'amount') rows.push(incomeRow(spine, getAt(spine, 'income.' + s[1])));
       continue;
     }
+    // A line someone else pays in full, or marked Not for me (bug sweep): its name, real cost, who covers it and need or
+    // want stay; how and when it is paid are not asked, so they are never missing or rough.
+    if (s[0] === 'expenses' && NOT_ASKED.includes(s[2]) && othersPay(getAt(spine, 'expenses.' + s[1]))) continue;
     // An expense's account and day are one row: "Main checking, on the 5th" (S-189).
     if (s[0] === 'expenses' && (s[2] === 'paidFrom' || s[2] === 'payDay' || s[2] === 'paysDebt')) {
       if (s[2] === 'paidFrom') rows.push(paymentRow(spine, getAt(spine, 'expenses.' + s[1])));
@@ -261,6 +267,9 @@ export function* stillGuessingSteps(spine, rules) {
   const items = [];
   for (const { path, fact } of listFacts(spine)) {
     if (fact.kind !== 'rough' && fact.kind !== 'missing') continue;
+    // A line someone else pays is never a guess to firm up (bug sweep): its payment fields are not asked.
+    const p = path.split('.');
+    if (p[0] === 'expenses' && NOT_ASKED.includes(p[2]) && othersPay(getAt(spine, 'expenses.' + p[1]))) continue;
     const item = { path, label: labelFor(spine, path), kind: fact.kind, group: groupFor(path), blocks: blocks.get(path) || [], score: 0, moves: {} };
     if (fact.kind === 'rough' && typeof fact.value === 'number' && fact.value !== 0) {
       const moved = setAt(spine, path, { ...fact, value: fact.value * (1 + swing) });
@@ -292,4 +301,12 @@ export function cardCharges(spine, cardId) {
   const items = (spine.expenses || []).filter((e) => e.paidFrom && valueOf(e.paidFrom) === cardId).map((e) => ({ id: e.id, label: e.label, monthly: lineMonthly(e), path: 'expenses.' + e.id + '.amount' }));
   const known = items.filter((x) => x.monthly !== null);
   return { items, total: known.length ? round2(known.reduce((a, x) => a + x.monthly, 0)) : null };
+}
+
+// Covered by others (bug sweep): every line someone else pays in full, its real cost a month and who covers it. Needs
+// shows the total as one line that opens this list. A line with no amount still lists, with its cost not given.
+export function coveredByOthers(spine) {
+  const items = (spine.expenses || []).filter((e) => coverOf(e).covered).map((e) => ({ id: e.id, label: e.label, by: coverOf(e).by, monthly: lineMonthly(e), path: 'expenses.' + e.id + '.amount' }));
+  const known = items.filter((i) => i.monthly !== null);
+  return { items, monthly: items.length ? round2(known.reduce((x, i) => x + i.monthly, 0)) : null };
 }

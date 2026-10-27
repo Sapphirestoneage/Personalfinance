@@ -8,7 +8,7 @@
 
 import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
-import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName } from '../engine/ledger.js';
+import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName, coveredByOthers } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
@@ -919,6 +919,19 @@ function pickerCard() {
 
 // ---------------------------------------------------------------- subscriptions (under Needs)
 // Subscriptions to look at (S-191): soonest charge first, each with Reviewed today.
+// Covered by others (bug sweep): one line on Needs, opening the list with who covers each.
+function coveredRow() {
+  const c = coveredByOthers(cur());
+  if (!c.items.length) return null;
+  return goRow(hashFor(['needs', 'covered']), { name: 'Covered by others', sub: [h('span', { class: 'go-total' }, money(c.monthly)), ' a month, ' + c.items.length + (c.items.length === 1 ? ' line' : ' lines')] });
+}
+function coveredScreen() {
+  const c = coveredByOthers(cur());
+  if (!c.items.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing is covered by someone else.'));
+  return h('section', { class: 'card', 'aria-label': 'Covered by others' },
+    h('p', { class: 'muted' }, money(c.monthly) + ' a month that someone else pays, $0 to you.'),
+    h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? 'cost not given' : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
+}
 function subsRow() {
   if (!(cur().expenses || []).length) return null;
   const sub = summaryOf(cur()).subs;
@@ -1247,7 +1260,7 @@ function sectionScreen(sec) {
       name: g.label,
       sub: [groupTotal(sec, g), dots(g.counts)]
     }))) : h('p', { class: 'muted' }, 'Nothing here yet.'),
-    sec.slug === 'needs' ? h('ul', { class: 'go-list' }, subsRow()) : null,
+    sec.slug === 'needs' ? h('ul', { class: 'go-list' }, subsRow(), coveredRow()) : null,
     addButton(sec)
   ];
 }
@@ -1304,6 +1317,7 @@ function nameOf(levels, ctx) {
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
   if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
+  if (levels[0] === 'needs' && levels[1] === 'covered') return levels.length === 2 ? 'Covered by others' : null;
   const at = screenAt(screensOf(ctx.spine), levels);
   if (!at) return null;
   return levels.length === 1 ? at.section.label : levels.length === 2 ? at.group.label : at.item.label;
@@ -1334,6 +1348,7 @@ function render(ctx) {
   if (levels[0] === 'still-guessing') body = guessList();
   else if (levels[0] === 'pick') body = pickerCard();
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
+  else if (levels[0] === 'needs' && levels[1] === 'covered') body = coveredScreen();
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
