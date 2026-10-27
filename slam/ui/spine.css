@@ -1442,3 +1442,7 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .odd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .odd-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .odd-list p { margin: 0; flex: 1 1 240px; }
+
+/* Rough now and later: a guess that is fine for now shows a small gray dot, never a chip. */
+.dot-fine { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); opacity: .55; flex: none; align-self: center; }
+.guessing h2 .count, .fold-card summary .count { margin-left: 8px; font-size: .85em; color: var(--text-muted); font-weight: 500; }

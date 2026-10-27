@@ -36,7 +36,7 @@ test('a tab reopens its page where it was left; the lit tab goes to its top; a p
   assert.match(src, /export function keep\(patch\) \{ const e = entry\(\); if \(e\) \{ history\.replaceState\(stateWith\(\{ \.\.\.e, page: \{ \.\.\.e\.page, \.\.\.patch \} \}\), ''\); remember\(\); \} \}/);
   // Content figured after the first draw (Still guessing) gets the scroll it was left at.
   assert.match(src, /export function restoreScroll\(\)/);
-  assert.match(code('ui/ledger.js'), /if \(document\.querySelector\('section\.guessing'\)\) \{ refresh\(\); restoreScroll\(\); \}/);
+  assert.match(code('ui/ledger.js'), /guess = res; guessFor = spine; refresh\(\); restoreScroll\(\);/);
 });
 
 test('Back at the top of a page opened from another page of the app goes back there, as the browser\'s back does', () => {
@@ -98,7 +98,7 @@ test('the Builder link is plain words on the Builder itself', () => {
 
 test('My numbers: Still guessing and Subscriptions open a row in place; a linked debt opens its line in place', () => {
   const src = code('ui/ledger.js');
-  assert.match(src, /return r \? rowEl\(r, open, \{ full: true, note: why\(it\) \}\)/, 'a guess opens its editor on Still guessing');
+  assert.match(src, /return r \? rowEl\(r, open, \{ full: true, note: whyOf\(it\) \}\)/, 'a guess opens its editor on Still guessing');
   assert.match(src, /return r \? h\('ul', \{ class: 'rows' \}, rowEl\(r, open, \{ full: true \}\)\)/, 'a subscription opens its editor on Subscriptions');
   assert.doesNotMatch(src.slice(src.indexOf('function guessList'), src.indexOf('function pickerCard')), /fieldLink\(/);
   assert.doesNotMatch(src.slice(src.indexOf('function subsScreen'), src.indexOf('const ADD_WORDS')), /fieldLink\(/);

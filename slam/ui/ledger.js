@@ -8,7 +8,7 @@
 
 import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
-import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
+import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
@@ -35,6 +35,7 @@ import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, 
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
+import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
 import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
@@ -175,7 +176,6 @@ function laterBtn(row) {
     h('div', { class: 'later-pick' }, when, h('button', { type: 'button', class: 'btn', onclick: () => { if (!when.value) { say('Pick a day first'); when.focus(); return; } put('later', when.value, row.label + ': check again ' + shortDate(when.value)); } }, 'Check on that day'))
   ];
 }
-const isLater = (path) => { const c = checkOf(rowPathFor(cur(), path)); return !!c && c.mode === 'later' && c.until > today(); };
 
 // One panel for a card's interest rate (S-161): the APR, a switch for an intro
 // rate, and when it is on, the intro rate and its end date; the APR then reads
@@ -791,7 +791,7 @@ function pickRow(row, full = false) {
       h('input', { type: 'checkbox', checked: on, onchange: () => { if (on) selected.delete(row.path); else selected.add(row.path); refresh(); } }),
       h('span', { class: 'row-label' }, full ? row.label : row.field || row.label),
       h('span', { class: 'row-value' + (f.value === null ? ' empty' : '') }, rowValue(row)),
-      chip(f.kind)));
+      kindMark(row.path, f.kind)));
 }
 
 // The budget line that pays a linked debt, by its own name ("Gym").
@@ -806,24 +806,29 @@ function rowEl(row, openPath, { full = false, note = null } = {}) {
   // A debt a budget line pays (answer 35): its minimum is the line's to set, so the row opens the line's editor here,
   // in place, and the screen stays where Back expects it.
   const line = row.linked ? rowByPath(row.linePath) : null;
-  if (row.linked && !line) return h('li', { class: 'row kind-' + f.kind, id: 'f-' + row.path }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, label), h('span', { class: 'row-value' }, rowValue(row)), chip(f.kind)));
+  if (row.linked && !line) return h('li', { class: 'row kind-' + f.kind, id: 'f-' + row.path }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, label), h('span', { class: 'row-value' }, rowValue(row)), kindMark(row.path, f.kind)));
   // A value worked out from others (an expense's cost to you) shows its math (S-177).
   const worked = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
     h('button', { type: 'button', class: 'row-main', 'aria-expanded': isOpen ? 'true' : 'false', onclick: () => { if (!canLeave()) return; setOpen(isOpen ? null : row.path); } },
       h('span', { class: 'row-label' }, label, row.linked ? null : tags(row)),
       h('span', { class: 'row-value' + (!row.linked && f.value === null ? ' empty' : '') }, rowValue(row)),
-      chip(f.kind)),
+      kindMark(row.path, f.kind)),
     // Krug pass: no sentence under a closed row; open, a default says so with a small chip, and its note.
-    isOpen && (note || whoSupplies(f) === 'default') ? h('p', { class: 'row-why' }, whoSupplies(f) === 'default' ? [h('span', { class: 'chip chip-default' }, 'default'), ' '] : null, note && !/^using Eli.s default$/i.test(note) ? note : null) : null,
+    isOpen && (note || whoSupplies(f) === 'default' || laterWords(row.path)) ? h('p', { class: 'row-why' }, whoSupplies(f) === 'default' ? [h('span', { class: 'chip chip-default' }, 'default'), ' '] : null, note && !/^using Eli.s default$/i.test(note) ? note : null, laterWords(row.path) ? [note ? '. ' : null, capitalize(laterWords(row.path))] : null) : null,
     worked && !isOpen ? mathButton(['expenseCost:' + row.path.split('.')[1]], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null,
     isOpen ? (line ? [h('p', { class: 'row-why' }, 'Set by ' + lineName(row) + ' in Needs. You can change it here.'), openEditor(line)] : openEditor(row)) : null);
 }
 
 // "3 missing", "2 rough": small labels on a row that opens (the filters at the top show only those).
-const dots = (c) => (c.missing || c.rough ? h('span', { class: 'group-counts' },
-  c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
-  c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + ' rough') : null) : null);
+// Only what is worth checking now counts (Rough now and later): a guess that is fine for now is never in a count.
+const dots = (x) => {
+  const rows = x.allRows || x.rows, m = umap();
+  const c = rows ? { missing: rows.filter((r) => r.fact.kind === 'missing' && worthNow(m, r.path, 'missing')).length, rough: rows.filter((r) => r.fact.kind === 'rough' && worthNow(m, r.path, 'rough')).length } : x.counts || x;
+  return c.missing || c.rough ? h('span', { class: 'group-counts' },
+    c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
+    c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + (c.rough === 1 ? ' guess' : ' guesses') + ' to check') : null) : null;
+};
 // To fill in (owner's ask, 2026-10-27): one switch at the top of every screen here shows only what is missing or a
 // guess, so filling in goes fast. It is the page's kind filter (Missing and Rough on, the rest off), kept in this browser.
 const fillOn = () => kinds.length && kinds.every((k) => k === 'missing' || k === 'rough');
@@ -893,7 +898,7 @@ function results(sc, q) {
   const all = sc.sections.flatMap((g) => g.allRows);
   const found = all.filter((r) => shows(r, q));
   const resultRow = (row) => (selecting ? pickRow(row, true) : h('li', { class: 'row kind-' + row.fact.kind },
-    fieldLink(row.path, [h('span', { class: 'row-label' }, row.label, tags(row)), h('span', { class: 'row-value' + (row.fact.value === null ? ' empty' : '') }, rowValue(row)), chip(row.fact.kind)], { class: 'row-main row-link' })));
+    fieldLink(row.path, [h('span', { class: 'row-label' }, row.label, tags(row)), h('span', { class: 'row-value' + (row.fact.value === null ? ' empty' : '') }, rowValue(row)), kindMark(row.path, row.fact.kind)], { class: 'row-main row-link' })));
   return [
     h('p', { class: 'muted', role: 'status' }, 'Showing ' + found.length + ' of ' + all.length + '.'),
     ...sc.sections.map((sec) => {
@@ -911,59 +916,61 @@ function sectionList(sc) {
     const r = steps[sec.slug];
     const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total' }, money(r.value)), TOTAL_WORDS[sec.slug]) : h('span', {}, filledWords(sec.counts));
     // A total built on a missing line says so; how many lines are rough or missing shows beside it.
-    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec.counts)] });
+    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec)] });
   }));
 }
 
 // ---------------------------------------------------------------- still guessing (its own screen)
-// The still-guessing ranking takes about a second, so it runs in slices of a
-// few milliseconds after the page has redrawn (S-184); taps are never held up.
-// Until it finishes, the last list shows with "Updating". Only its own row and list are replaced; they hold no inputs.
-let guess = null, guessJob = 0, guessFor = null, guessOf = null;
+// The ranking and which guesses matter now come from ui/urgency.js (one run per household version, shared by every
+// page). Until a new answer is in, the last one shows with "Updating"; when it lands the page redraws once (an open
+// editor and its typing stay) and the scroll comes back.
+let guess = null, guessFor = null;
 function refreshGuess(spine) {
-  if (guessOf === spine) return;
-  guessOf = spine;
-  const job = ++guessJob;
-  const it = stillGuessingSteps(spine, rules);
-  const run = () => {
-    if (job !== guessJob) return;
-    const end = performance.now() + 8;
-    let r;
-    while (!(r = it.next()).done) if (performance.now() > end) { setTimeout(run, 0); return; }
-    guess = r.value; guessFor = spine;
-    document.getElementById('guess-row')?.closest('li')?.replaceWith(guessRow());
-    // On its own screen the list holds rows that open in place, so the shell redraws it (an open editor and its typing
-    // stay), then the scroll it was left at, which the short "Working out" screen could not reach, comes back.
-    if (document.querySelector('section.guessing')) { refresh(); restoreScroll(); }
-  };
-  setTimeout(run, 0);
+  const r = guessesFor(spine, rules, (res) => { if (cur() !== spine) return; guess = res; guessFor = spine; refresh(); restoreScroll(); });
+  if (r) { guess = r; guessFor = spine; }
 }
+// "check in Jan" for a number set to check later, inside its row's detail.
+const laterWords = (path) => { const c = checkOf(path); return c && c.mode === 'later' && c.until > today() ? checkInWords(c.until, today()) : null; };
+const capitalize = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+// Which rows are worth checking now. The last answer stands while a new one is worked out, so marks never flicker.
+const umap = () => (guess ? mapOf(guess, cur()) : null);
+// A row's mark: the red Missing or amber Rough chip when it is worth checking now; a small gray dot when it is fine
+// for now or set for later; nothing for a known number.
+function kindMark(path, kind) {
+  if ((kind === 'rough' || kind === 'missing') && !worthNow(umap(), path, kind)) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': kind === 'missing' ? 'Missing, fine for now' : 'A guess, fine for now', title: 'Fine for now' });
+  return chip(kind);
+}
+const nowCount = () => (guess ? guess.items.filter((it) => it.urgency === 'now').length : null);
 function guessRow() {
-  const n = guess ? guess.items.filter((it) => !isLater(it.path)).length : null;
-  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter most...' : n ? n + ' to firm up, most important first' : 'Nothing left to firm up' });
+  const n = nowCount();
+  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter...' : n ? n + ' worth checking now' : 'Nothing worth checking now' });
+}
+// Why a guess is listed, in plain words: what a 20% miss could move ("could move your FI number by $30,000").
+function whyOf(it) {
+  if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
+  const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+  return top ? 'Could move your ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
 }
 function guessList() {
-  if (!guess) return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' }, h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter most...'));
-  const showAll = !!kept().all;
+  if (!guess) return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' }, h('p', { class: 'muted', role: 'status' }, 'Working out which guesses matter...'));
   const stale = guessFor !== cur();
-  const items = guess.items.filter((it) => !isLater(it.path));
-  const setAside = guess.items.filter((it) => isLater(it.path));
-  const list = showAll ? items : items.slice(0, 8);
-  const why = (it) => {
-    if (it.kind === 'missing') return it.blocks.length ? 'Needed for ' + it.blocks.map((b) => BLOCK_WORDS[b] || b).join(', ') : 'Not needed by a result yet';
-    const top = Object.entries(it.moves).filter(([k, d]) => MOVE_WORDS[k] && Math.abs(d) >= 1).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
-    return top ? 'Could move your ' + MOVE_WORDS[top[0]] + ' by ' + money(Math.abs(top[1])) : 'Changes little';
-  };
+  const now = guess.items.filter((it) => it.urgency === 'now');
+  const fine = guess.items.filter((it) => it.urgency === 'fine');
+  const later = guess.items.filter((it) => it.urgency === 'later').sort((a, b) => (a.until < b.until ? -1 : 1));
   // Each guess opens its editor right here, so the list stays the screen Back comes back to.
   const open = kept().open || null;
-  const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: why(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label), chip(it.kind)), h('p', { class: 'row-why' }, why(it))); };
-  return h('section', { class: 'card guessing', 'aria-label': 'Still guessing' },
-    h('p', { class: 'muted', role: 'status' }, stale ? 'Updating for your last change...' : 'Missing first, then the guesses that matter most.'),
-    h('ul', { class: 'rows guess-rows' }, list.map(row)),
-    items.length > 8 && h('button', { type: 'button', class: 'btn ghost', onclick: () => { keep({ all: !showAll }); refresh(); } }, showAll ? 'Show fewer' : 'Show all ' + items.length),
-    setAside.length ? h('details', { class: 'later-list' }, h('summary', {}, 'Not now (' + setAside.length + ')'),
-      h('ul', {}, setAside.map((it) => h('li', {}, chip(it.kind), ' ', it.label, ' ',
-        h('button', { type: 'button', class: 'btn small', onclick: () => change((sp) => setCheck(sp, rowPathFor(cur(), it.path), null, null, today()), it.label + ': check again now') }, 'Check now'))))) : null);
+  const row = (it) => { const r = rowByPath(rowPathFor(cur(), it.path)); return r ? rowEl(r, open, { full: true, note: whyOf(it) }) : h('li', { class: 'row kind-' + it.kind }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, it.label), kindMark(it.path, it.kind)), h('p', { class: 'row-why' }, whyOf(it))); };
+  // Fine for now and Later are folded; open or closed is kept per browser.
+  const fold = (key, title, list, extra = null) => (list.length ? h('details', { class: 'card fold-card done-group', open: kept()[key] || null, ontoggle: (e) => { if (!!kept()[key] !== e.target.open) keep({ [key]: e.target.open }); } },
+    h('summary', {}, h('span', {}, title), h('span', { class: 'count' }, String(list.length))), extra, h('ul', { class: 'rows guess-rows' }, list.map(row))) : null);
+  return [
+    h('section', { class: 'card guessing', 'aria-labelledby': 'gs-now' },
+      h('h2', { id: 'gs-now' }, 'Check now', h('span', { class: 'count' }, String(now.length))),
+      stale ? h('p', { class: 'muted', role: 'status' }, 'Updating for your last change...') : null,
+      now.length ? h('ul', { class: 'rows guess-rows' }, now.map(row)) : h('p', { class: 'muted' }, 'Nothing worth checking now. The guesses below are fine as they are.')),
+    fold('fineOpen', 'Fine for now', fine),
+    fold('laterOpen', 'Later', later)
+  ];
 }
 
 // ---------------------------------------------------------------- pick what you have (its own screen)
@@ -1356,7 +1363,7 @@ function sectionScreen(sec) {
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
       name: g.label,
-      sub: [groupTotal(sec, g), dots(g.counts)]
+      sub: [groupTotal(sec, g), dots(g)]
     }))) : fillOn() ? null : h('p', { class: 'muted' }, 'Nothing here yet.'),
     sec.slug === 'needs' && !fillOn() ? h('ul', { class: 'go-list' }, subsRow(), coveredRow()) : null,
     addButton(sec)
@@ -1375,7 +1382,7 @@ function groupScreen(sec, g, st = {}) {
   const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
-    sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
+    sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it)]
   });
   return [
     fillBar(toFill(g.node.counts)),

@@ -19,6 +19,7 @@ import { toneOf, answersOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
+import { guessesFor } from './urgency.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -159,7 +160,7 @@ function networthScreen({ s }) {
 // The money flow, on its own screen (Krug pass): Today has one row that opens it.
 function flowScreen({ spine, rules, s }) { return flowPart(spine, rules, s); }
 // Also worth doing (Krug pass): every other ranked step, the cards, the questions, and what is done, one screen.
-function moreScreen(m) { return flagsSection(m.spine, m.s.flags, rankOf(m.spine, m.rules, m.s), { rest: true }); }
+function moreScreen(m) { return flagsSection(m.spine, m.s.flags, rankOf(m.spine, m.rules, m.s)); }
 const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen, networth: networthScreen, flow: flowScreen, more: moreScreen };
 
 function render({ spine: base, rules, levels }) {
@@ -168,7 +169,9 @@ function render({ spine: base, rules, levels }) {
   // Krug pass: the warning (if any), the four tiles, one Next step card, then rows that open the rest.
   const rank = rankOf(m.spine, rules, m.s);
   const others = alsoWorth(m.spine, m.s.flags, rank);
-  const guesses = m.s.flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-')).length;
+  // Guesses worth checking now (Rough now and later): the shared ranking, worked out after the page draws.
+  const g = guessesFor(base, rules, () => refresh());
+  const guesses = g ? g.items.filter((it) => it.urgency === 'now').length : null;
   return [
     cashCard(base, rules),
     tiles(m),
@@ -176,7 +179,7 @@ function render({ spine: base, rules, levels }) {
     h('ul', { class: 'go-list' },
       others.length ? h('li', {}, h('a', { class: 'go-row plain', href: '#/more' }, h('span', { class: 'go-name' }, 'Also worth doing (' + others.length + ')'))) : null,
       h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
-      guesses ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses + (guesses === 1 ? ' guess' : ' guesses')))) : null,
+      guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : guesses + ' worth checking now'), guesses === null ? h('span', { class: 'go-sub' }, 'Working out which matter...') : null)) : null,
       h('li', {}, h('a', { class: 'go-row plain', href: 'onepager.html' }, h('span', { class: 'go-name' }, 'One-pager to print'))))
   ];
 }
@@ -244,29 +247,12 @@ function alsoWorth(spine, flags, rank) {
   const asks = rank ? rank.questions.slice(rank.first ? 0 : 1) : [];
   return [...steps.map((x) => ({ step: x })), ...asks.map((q) => ({ ask: q })), ...cards.map((f) => ({ flag: f }))];
 }
-function flagsSection(spine, flags, rank, { rest = false } = {}) {
-  if (rest) {
-    const done = flags.filter((f) => f.stage === 'green');
-    const items = alsoWorth(spine, flags, rank);
-    return [
-      items.length ? h('section', { class: 'card' }, h('ul', { class: 'flags' }, items.map((x) => (x.step ? stepCard(x.step) : x.ask ? questionCard(x.ask) : flagItem(spine, x.flag))))) : h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing else right now.')),
-      done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },
-        h('summary', {}, h('span', {}, 'Done'), h('span', { class: 'count' }, String(done.length))), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null
-    ];
-  }
-  const guessy = flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-'));
-  const first = flags.filter((f) => f.stage === 'red'), next = flags.filter((f) => f.stage === 'yellow' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
-  // Do first is the one ranking's first step (the same as the Next step tile and the Plan's NEXT), with the questions
-  // that hold a step back; every other card is Next up. The Profile's tone: gently, the step alone first.
-  const gentle = toneOf(spine) === 'gentle';
-  const group = (id, title, list) => (list.length ? h('section', { class: 'card', 'aria-labelledby': id }, h('h2', { id }, title), h('ul', { class: 'flags' }, list.map((f) => flagItem(spine, f)))) : null);
-  const top = rank && rank.first ? [stepCard(rank.first)] : [], asks = rank ? rank.questions.map(questionCard) : [];
+// Also worth doing: every other ranked step, the questions, the cards, and what is done.
+function flagsSection(spine, flags, rank) {
+  const done = flags.filter((f) => f.stage === 'green');
+  const items = alsoWorth(spine, flags, rank);
   return [
-    top.length || asks.length ? h('section', { class: 'card', 'aria-labelledby': 'do-first-h' }, h('h2', { id: 'do-first-h' }, gentle ? 'One step to start with' : 'Do first'), h('ul', { class: 'flags' }, ...top, ...(gentle ? [] : asks))) : null,
-    group('next-up-h', 'Next up', [...first, ...next]),
-    gentle && asks.length ? h('section', { class: 'card', 'aria-labelledby': 'asks-h' }, h('h2', { id: 'asks-h' }, 'When you have a moment'), h('ul', { class: 'flags' }, ...asks)) : null,
-    !top.length && !first.length && !next.length ? h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.')) : null,
-    guessy.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guessy.length + (guessy.length === 1 ? ' number is a guess' : ' numbers are guesses'))))) : null,
+    items.length ? h('section', { class: 'card' }, h('ul', { class: 'flags' }, items.map((x) => (x.step ? stepCard(x.step) : x.ask ? questionCard(x.ask) : flagItem(spine, x.flag))))) : h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing else right now.')),
     done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },
       h('summary', {}, h('span', {}, 'Done'), h('span', { class: 'count' }, String(done.length))), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null
   ];
