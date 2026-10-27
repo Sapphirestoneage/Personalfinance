@@ -31,5 +31,5 @@ test('an Add from a group starts on that group\'s kind; only a general Add asks 
   for (const n of ledgerTree(s, { names: [], aliases: {} })) walk(n);
   const checking = nodes.find((n) => n.add && n.add.types && n.add.types.length === 1 && n.add.types[0] === 'checking');
   assert.ok(checking, 'the Checking group adds a checking account');
-  assert.match(code('ui/add-form.js'), /const typeSel = typeList\.length > 1 \? select\('add-type'/, 'the kind list shows only when there is a choice');
+  assert.match(code('ui/add-form.js'), /const typeSel = typeList\.length > 1 \? \(accounts \? accountSelect\(typeList\.map\(\(\[k\]\) => k\), first\) : select\('add-type'/, 'the kind list shows only when there is a choice');
 });

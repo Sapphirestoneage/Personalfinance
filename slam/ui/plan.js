@@ -233,7 +233,7 @@ function stepScreen(m, r) {
     when ? h('p', { class: 'tile-sub' }, when) : null,
     // How long the gap takes at a few paces (S-263), so a step with no surplus yet still has a date to aim at.
     (() => { const ps = stepPaces(r, f.surplus, m.base.meta.asOf); return ps.length ? h('div', { class: 'paces' }, h('p', { class: 'edit-label' }, money(r.need) + ' to go, at a pace you choose'),
-      h('ul', { class: 'flow-list' }, ps.map((x) => h('li', {}, h('strong', {}, money(x.perMonth) + ' a month'), x.label ? ' (' + x.label + ')' : '', ': done by ' + monthWords(x.by) + ', ' + x.months + (x.months === 1 ? ' month' : ' months'))))),
+      h('ul', { class: 'flow-list' }, ps.map((x) => h('li', {}, h('strong', {}, money(x.perMonth) + ' a month'), x.label ? ' (' + x.label + ')' : '', ': done by ' + monthWords(x.by) + ', ' + x.months + (x.months === 1 ? ' month' : ' months')))),
       r.completes ? h('p', { class: 'tile-note' }, 'Each counts from now. The Plan\'s own date above is later when the steps before this one take the money first.') : null) : null; })(),
     // The deductible's own box is right below, so its step says to type it there.
     h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null && starterBasisOf(m.base) === 'deductible' ? 'Type the biggest deductible below.' : r.why),
