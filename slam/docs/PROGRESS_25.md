@@ -99,3 +99,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answer 8 (2026-10-27): Which card leaves business cards out unless the purchase is marked business, with a test (S-250).
 - Morning answer 9 (2026-10-27): Got extra money? asks only where the money came from (seven answers) and sets the tax from it; the step and Show the math name the rule, with a test (S-251).
 - Morning answer 10 (2026-10-27): one list of open questions (missing or worth checking now) read by My numbers, Taxes, Session, Still guessing, Today and the Profile; 6 on the demo everywhere; agree-check reads list:open on every one, with a test (S-252).
+- Owner's ask from the phone (2026-10-27): tapping a Calendar day opens the day (its summary and a link to each item); the panel under the grid and its Open the day button are gone (S-253).

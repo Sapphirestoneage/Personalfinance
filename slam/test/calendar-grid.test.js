@@ -25,13 +25,15 @@ test('the .ics file: bills, paydays and deadlines for the next 12 months, one al
   assert.equal((text.match(/BEGIN:VEVENT/g) || []).length, ev.length);
 });
 
-test('the Calendar opens on the month grid: chips on a computer, dots on a phone, a day panel, a week view', () => {
+test('the Calendar opens on the month grid: chips on a computer, dots on a phone, a tap opens the day, a week view', () => {
   const src = code('ui/calendar.js');
   assert.match(src, /view: VIEWS\.some\(\(\[id\]\) => id === s\.view\) \? s\.view : 'month'/);
   assert.match(src, /function dayChip\(e\)/);
   assert.match(src, /'\+' \+ \(its\.length - CHIPS\) \+ ' more'/);
   assert.match(src, /function weekView\(/);
-  assert.match(src, /function dayPanel\(m, st\)/);
+  // Tapping a day opens its own screen (owner's ask, 2026-10-27); no panel and no Open the day button.
+  assert.match(src, /const open = \(\) => \{ setRoot\(\{ day: date \}\); location\.hash = dayHref\(date\); \};/);
+  assert.doesNotMatch(src, /Open the day|function dayPanel/);
   assert.match(src, /'Add to my calendar'/);
   assert.match(src, /const grip = e\.target\.closest\('\.grip, \.chip-grip'\)/, 'a chip drags like a row\'s grip');
 });

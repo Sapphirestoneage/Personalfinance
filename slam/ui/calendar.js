@@ -455,7 +455,7 @@ function listView(v, c, m, st, today) {
 // ---------------------------------------------------------------- the month grid (overnight Track A: a calendar)
 // Like a wall calendar: each day its items as short colored chips (a dot each on a phone), "+N more" when it is full,
 // and checking at the end of the day in small figures. Today is ringed; pay periods sit on alternating faint bands;
-// days under the floor are shaded. Tap a day: its items in a panel beside the grid (under it on a phone). Tap a chip:
+// days under the floor are shaded. Tap a day: it opens as its own screen, its summary and a link to each item. Tap a chip:
 // its own screen. Drag a chip onto another day to move it (Undo takes it back).
 const CHIPS = 3;
 const shortMoney = (x) => { const a = Math.abs(x); return '$' + (a >= 10000 ? Math.round(a / 1000) + 'k' : a >= 1000 ? (Math.round(a / 100) / 10) + 'k' : Math.round(a)); };
@@ -476,9 +476,10 @@ function dayCell(date, m, st, today, ctx) {
   const d = m.days.find((x) => x.date === date), bal = m.line.find((x) => x.date === date);
   const its = d ? d.events.filter((e) => !isDateToKnow(e)) : [];
   const tint = bal && ctx.floor !== null && bal.primary < ctx.floor ? ' under' : bal && ctx.near !== null && bal.primary < ctx.near ? ' near' : '';
-  const open = () => setRoot({ day: st.day === date ? null : date });
+  // Tapping a day opens it (owner's ask, 2026-10-27): its own screen with the day's summary and a link to each item.
+  const open = () => { setRoot({ day: date }); location.hash = dayHref(date); };
   return h('div', { class: 'cell band-' + ctx.band(date) + (date === today ? ' today' : '') + (date === ctx.low ? ' low' : '') + tint + (st.day === date ? ' is-picked' : ''), 'data-date': date, role: 'gridcell' },
-    h('button', { type: 'button', class: 'cell-open', 'aria-pressed': String(st.day === date),
+    h('button', { type: 'button', class: 'cell-open',
       'aria-label': dayWords(date) + (its.length ? ', ' + its.length + (its.length === 1 ? ' item' : ' items') : ', nothing on it') + (bal ? ', checking after ' + money(bal.primary) : ''), onclick: open },
       h('span', { class: 'cell-day' }, String(+date.slice(8, 10)))),
     its.length ? h('div', { class: 'cell-chips' }, its.slice(0, CHIPS).map(dayChip), its.length > CHIPS ? h('button', { type: 'button', class: 'cell-more', onclick: open }, '+' + (its.length - CHIPS) + ' more') : null) : null,
@@ -489,16 +490,6 @@ function gridCtx(c, m) {
   const floor = c.sim ? c.sim.floor.amount : null, near = floor === null ? null : floor + (c.sim.everydayPerDay || 0) * 7;
   const low = m.line.length ? m.line.reduce((a, x) => (x.primary < a.primary ? x : a), m.line[0]).date : null;
   return { floor, near, low, band: payBands(m.days) };
-}
-// The picked day, beside the grid: its items (each opens; the grip drags), checking after, and its own screen.
-function dayPanel(m, st) {
-  if (!st.day || st.day.slice(0, 7) !== m.ym) return h('aside', { class: 'card day-panel muted-panel', 'aria-label': 'A day' }, h('p', { class: 'muted' }, 'Tap a day to see what lands on it.'));
-  const d = m.days.find((x) => x.date === st.day), bal = m.line.find((x) => x.date === st.day);
-  return h('aside', { class: 'card day-panel', 'aria-labelledby': 'picked-h' },
-    h('h2', { id: 'picked-h' }, dayWords(st.day)),
-    d && d.events.length ? h('ul', { class: 'cal-items' }, d.events.map(itemRow)) : h('p', { class: 'muted' }, 'Nothing lands on this day.'),
-    bal ? h('p', { class: 'cal-after' }, 'Checking after: ' + money(bal.primary)) : null,
-    h('a', { class: 'go-row plain', href: dayHref(st.day) }, h('span', { class: 'go-name' }, 'Open the day'), h('span', { class: 'go-sub' }, 'Move, skip or mark what happened')));
 }
 // On a phone, a sideways swipe on the grid moves a month (the arrows above do the same).
 function swipeMonths(el, ym) {
@@ -521,9 +512,7 @@ function monthView(v, c, m, st, today) {
   for (let day = 1; day <= n; day++) cells.push(dayCell(m.ym + '-' + String(day).padStart(2, '0'), m, st, today, ctx));
   return [
     monthDates(v, c, m),
-    h('div', { class: 'month-layout' },
-      swipeMonths(h('div', { class: 'grid-wrap' }, h('div', { class: 'grid-dow', 'aria-hidden': 'true' }, dowList().map((x) => h('span', {}, x))), h('div', { class: 'grid', role: 'grid', 'aria-label': longMonth(m.ym) }, cells)), m.ym),
-      dayPanel(m, st)),
+    swipeMonths(h('div', { class: 'grid-wrap' }, h('div', { class: 'grid-dow', 'aria-hidden': 'true' }, dowList().map((x) => h('span', {}, x))), h('div', { class: 'grid', role: 'grid', 'aria-label': longMonth(m.ym) }, cells)), m.ym),
     gridKey()
   ];
 }
@@ -541,7 +530,7 @@ function weekView(v, c, m, st, today) {
     const d = m.days.find((x) => x.date === date), bal = m.line.find((x) => x.date === date);
     const its = d ? d.events.filter((e) => !isDateToKnow(e)) : [];
     return h('div', { class: 'week-col band-' + ctx.band(date) + (date === today ? ' today' : '') + (bal && ctx.floor !== null && bal.primary < ctx.floor ? ' under' : ''), 'data-date': date },
-      h('button', { type: 'button', class: 'week-h cell-open', onclick: () => setRoot({ day: date }) }, dayWords(date)),
+      h('button', { type: 'button', class: 'week-h cell-open', onclick: () => { setRoot({ day: date }); location.hash = dayHref(date); } }, dayWords(date)),
       its.length ? h('div', { class: 'cell-chips' }, its.map(dayChip)) : h('p', { class: 'muted week-none' }, 'Nothing'),
       bal ? h('p', { class: 'cell-cash' }, money(bal.primary)) : null);
   };
