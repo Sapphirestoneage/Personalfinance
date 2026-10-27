@@ -744,7 +744,7 @@ function openEditor(row) {
 function notesBlock(row) {
   const list = notesFor(cur(), row.path);
   const box = h('input', { id: 'note-box', type: 'text', autocomplete: 'off', placeholder: 'e.g. Lease renews in March', 'aria-describedby': 'note-hint' });
-  const add = (e) => { e.preventDefault(); const t = box.value.trim(); if (!t) { box.focus(); return; } change((x) => addNote(x, { path: row.path, text: t }, today()), said.added('A note on ' + row.label)); };
+  const add = (e) => { e.preventDefault(); const t = box.value.trim(); if (!t) { say('Type the note first'); box.focus(); return; } change((x) => addNote(x, { path: row.path, text: t }, today()), said.added('A note on ' + row.label)); };
   return h('details', { class: 'row-notes', id: 'row-notes', open: list.length ? true : null },
     h('summary', {}, list.length ? 'Notes (' + list.length + ')' : 'Notes'),
     list.length ? h('ul', { class: 'note-list' }, list.map((n) => h('li', {}, h('span', { class: 'note-date' }, shortDate(n.date)), h('span', { class: 'note-text' }, n.text),

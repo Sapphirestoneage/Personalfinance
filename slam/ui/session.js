@@ -572,7 +572,7 @@ const noteBox = h('textarea', { id: 'session-note', rows: 3, placeholder: 'e.g. 
 const noteShare = h('input', { type: 'checkbox', id: 'session-note-share' });
 function sessionNotesRow(ctx) {
   const list = sessionNotes(ctx.spine), shared = list.filter((n) => n.shared).length;
-  const add = (e) => { e.preventDefault(); const t = noteBox.value.trim(); if (!t) { noteBox.focus(); return; } const sh = noteShare.checked; noteBox.value = ''; noteShare.checked = false; change((x) => addNote(x, { text: t, shared: sh }, todayIso()), said.added(sh ? 'A shared note' : 'A note')); };
+  const add = (e) => { e.preventDefault(); const t = noteBox.value.trim(); if (!t) { say('Type the note first'); noteBox.focus(); return; } const sh = noteShare.checked; noteBox.value = ''; noteShare.checked = false; change((x) => addNote(x, { text: t, shared: sh }, todayIso()), said.added(sh ? 'A shared note' : 'A note')); };
   return foldRow('session-notes', 'Session notes', list.length ? list.length + (list.length === 1 ? ' note' : ' notes') + (shared ? ', ' + shared + ' on the One-pager' : '') : 'What was said, dated', () => [
     h('form', { class: 'note-form', novalidate: true, onsubmit: add },
       h('label', { for: 'session-note', class: 'edit-label' }, 'A note from this session'), noteBox,
