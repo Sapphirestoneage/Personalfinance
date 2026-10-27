@@ -3,9 +3,8 @@
 Written by `node tools/qa-crawl.mjs` on the demo household (made up).
 
 ```
-SLAM tester: 151 screens x 3 looks, 333 taps, 678s.
+SLAM tester: 151 screens x 3 looks, 333 taps, 677s.
 PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
-  dead click: 1
   small tap: 399
 ```
 
@@ -144,10 +143,5 @@ PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
 - calendar.html#app: button.cell-open "Thu Oct 29, nothing on it, checking after $2,708" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Fri Oct 30, nothing on it, checking after $2,672" is 21px tall [375 light, 375 dark, 1280 light]
 - calendar.html#app: button.cell-open "Sat Oct 31, nothing on it, checking after $2,636" is 21px tall [375 light, 375 dark, 1280 light]
-
-
-## dead click (1)
-
-- session.html: "Add the note" [375 light]
 
 
