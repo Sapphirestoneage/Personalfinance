@@ -1,5 +1,6 @@
 // The bill negotiation list (overnight Track H).
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { readJson, loadRules } from './spine-helpers.js';
 import { loadHousehold } from '../engine/normalize.js';
@@ -26,7 +27,7 @@ test('phone and gym bills and high-rate cards are listed, with scripts', () => {
   assert.ok(card && card.now >= ref.cardRateAbove && /\d+(\.\d)?%/.test(card.script));
   assert.ok(!list.some((x) => x.label === 'Rent'));
   assert.ok(list.every((x, i) => !i || x.stake <= list[i - 1].stake), 'most dollars a month at stake first');
-  assert.equal(list[0].kind, 'card', 'the Visa (about $55 a month of interest) before the gym ($10 above typical)');
+  assert.equal(list[0].type, 'phone', 'with the table a placeholder, bills rank by what they cost a month (the $60 phone first, then the Visa'\''s $55 of interest a month)');
   assert.ok(!list.some((x) => x.label === 'Miscellaneous'), 'whole words only: Miscellaneous is not a cell phone');
 });
 
@@ -42,4 +43,15 @@ test('I called: the new price lands in My numbers and the call is kept, valid', 
   const m = recordCall(n, card, 0.18, '2026-10-27');
   assert.equal(v(m.debts.find((d) => d.id === card.id).apr), 0.18);
   assert.ok(validate(m).ok, validate(m).errors.map((e) => e.path + ' ' + e.message).join('; '));
+});
+
+test('until the price table is sourced, nothing is called above typical; every negotiable bill is listed (morning answer 5)', () => {
+  assert.equal(ref.placeholder, true, 'the file keeps its placeholder flag');
+  const s = demo(), list = negotiationList(s, summarize(s, R).cashflow, ref);
+  const bills = list.filter((x) => x.kind === 'bill');
+  assert.ok(bills.length >= 2 && bills.every((x) => x.typical === null && x.above === null && x.script));
+  const sourced = negotiationList(s, summarize(s, R).cashflow, { ...ref, placeholder: false });
+  assert.ok(sourced.filter((x) => x.kind === 'bill').every((x) => typeof x.typical === 'number'), 'a sourced table compares again');
+  const ui = readFileSync(new URL('../ui/plan.js', import.meta.url), 'utf8');
+  assert.match(ui, /bills\.some\(\(x\) => x\.typical !== null\) \? h\('section'/, 'the chart against typical waits for a sourced table');
 });

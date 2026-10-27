@@ -407,13 +407,13 @@ try { const r = await fetch(new URL('../data/negotiable-2026.json', import.meta.
 const callsOf = (m) => m.calls || (m.calls = negotiationList(m.base, summarize(m.base, m.rules, { flags: false }).cashflow, negotiable));
 function callsFact(m) {
   const list = callsOf(m), over = list.filter((x) => x.above > 0);
-  return !negotiable ? 'The list of typical prices did not load' : !list.length ? 'Nothing on the list' : over.length ? plural(over.length, 'bill') + ' above typical' : plural(list.length, 'bill') + ' worth a look';
+  return !negotiable ? 'The list of bills to call about did not load' : !list.length ? 'Nothing on the list' : over.length ? plural(over.length, 'bill') + ' above typical' : plural(list.length, list.every((x) => x.kind === 'card') ? 'card' : 'bill') + ' worth a call';
 }
 const rateWords = (r) => Math.round(r * 10000) / 100 + '%';
 const nowWords = (x) => (x.kind === 'card' ? rateWords(x.now) + ' a year' : money(x.now) + ' a month');
 function callsScreen(m) {
   const list = callsOf(m);
-  if (!negotiable) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'The list of typical prices did not load. Try again when online.'));
+  if (!negotiable) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'The list of bills to call about did not load. Try again when online.'));
   if (!list.length) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'No phone, internet, TV, insurance or gym bills, and no card above ' + pct(negotiable.cardRateAbove, 0) + '.'));
   const call = (x) => {
     const box = h('input', { id: 'call-' + x.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: x.kind === 'card' ? 'e.g. 18%' : 'e.g. 45', 'aria-describedby': 'call-' + x.id + '-hint' });
@@ -432,19 +432,20 @@ function callsScreen(m) {
   const bills = list.filter((x) => x.kind === 'bill');
   return [
     h('section', { class: 'card', 'aria-label': SCREENS.calls },
-      h('p', { class: 'muted' }, 'One call each, most dollars a month at stake first. Typical prices are a starting table to check, not a promise.'),
+      h('p', { class: 'muted' }, negotiable.placeholder === false ? 'One call each, most dollars a month at stake first. Typical prices are a starting table to check, not a promise.' : 'One call each, the biggest first. Each has a script; after the call, tap I called and type the new price.'),
       h('ol', { class: 'audit-list' }, list.map((x) => h('li', { class: 'audit-row' },
         h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(x.path) }, x.label), h('span', { class: 'audit-cost' }, nowWords(x))),
-        h('p', { class: 'tile-sub' }, x.kind === 'card' ? (x.promo ? 'Intro ' + rateWords(x.promo.rate) + ' until ' + shortDate(x.promo.ends) + ', then ' + rateWords(x.now) + ' (see Today: interest held back now may be charged if any is left then); about ' + money(x.stake) + ' a month after that' : 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance') : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
+        h('p', { class: 'tile-sub' }, x.kind === 'card' ? (x.promo ? 'Intro ' + rateWords(x.promo.rate) + ' until ' + shortDate(x.promo.ends) + ', then ' + rateWords(x.now) + ' (see Today: interest held back now may be charged if any is left then); about ' + money(x.stake) + ' a month after that' : 'Above ' + pct(x.typical, 0) + '; about ' + money(x.yearCost) + ' of interest a year at this balance') : x.typical === null ? 'Worth one call: a bill like this often comes down when you ask.' : x.above > 0 ? money(x.above) + ' a month above a typical ' + money(x.typical) : 'About typical (' + money(x.typical) + ')'),
         x.called ? h('p', { class: 'tile-sub' }, 'Called ' + shortDate(x.called.date) + ': ' + (x.kind === 'card' ? rateWords(x.called.from) + ' to ' + rateWords(x.called.to) : money(x.called.from) + ' to ' + money(x.called.to))) : null,
         h('details', { class: 'script-fold' }, h('summary', {}, 'Call script'), h('p', { class: 'script' }, x.script),
           h('button', { type: 'button', class: 'btn small', onclick: () => { try { navigator.clipboard.writeText(x.script); say('Script copied'); } catch { say('Copy did not work here; select the words instead'); } } }, 'Copy the script')),
         call(x))))),
-    bills.length ? h('section', { class: 'card' }, chartCard({ id: 'calls-chart', question: 'Which bills are above typical?',
+    // The chart against typical prices waits for a sourced table (morning answer 5).
+    bills.some((x) => x.typical !== null) ? h('section', { class: 'card' }, chartCard({ id: 'calls-chart', question: 'Which bills are above typical?',
       summary: bills.filter((x) => x.above > 0).length ? bills.filter((x) => x.above > 0).map((x) => x.label + ' by ' + money(x.above)).join('; ') + '.' : 'Every bill on the list is at or under typical.',
-      draw: (w) => bars({ width: w, rows: bills.map((x) => ({ label: x.label, range: { v0: 0, v1: x.typical }, segs: [{ v: x.now, c: x.above > 0 ? 2 : 1, tip: x.label + ': ' + money(x.now) + ' a month, typical ' + money(x.typical) }], target: x.typical, targetTip: 'Typical: ' + money(x.typical), value: money(x.now) })), label: 'Bills against typical' }),
+      draw: (w) => bars({ width: w, rows: bills.filter((x) => x.typical !== null).map((x) => ({ label: x.label, range: { v0: 0, v1: x.typical }, segs: [{ v: x.now, c: x.above > 0 ? 2 : 1, tip: x.label + ': ' + money(x.now) + ' a month, typical ' + money(x.typical) }], target: x.typical, targetTip: 'Typical: ' + money(x.typical), value: money(x.now) })), label: 'Bills against typical' }),
       legend: [{ c: 1, words: 'At or under typical' }, { c: 2, words: 'Above typical' }, { c: 0, words: 'Typical (the tick)', cls: 'sw-band' }],
-      table: { head: ['Bill', 'A month', 'Typical', 'Above'], rows: bills.map((x) => [x.label, money(x.now), money(x.typical), x.above > 0 ? money(x.above) : '']) } })) : null
+      table: { head: ['Bill', 'A month', 'Typical', 'Above'], rows: bills.filter((x) => x.typical !== null).map((x) => [x.label, money(x.now), money(x.typical), x.above > 0 ? money(x.above) : '']) } })) : null
   ];
 }
 

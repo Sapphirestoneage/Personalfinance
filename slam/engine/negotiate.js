@@ -3,6 +3,10 @@
 // what is typical, a call script, and, once "I called" is answered, the call and the new price. Pure: the reference
 // table is passed in.
 //
+// Morning answer 5 (S-247): until the table is sourced (its `placeholder` flag is false), no bill is compared with a
+// typical price: every negotiable bill is listed with its script and "I called", typical and above are null, and the
+// bills rank by what they cost a month.
+//
 // Compatibility: lifeChanges gains entries of kind "called" ({ id, date, kind, path, label, from, to }); older files
 // have none.
 
@@ -23,7 +27,8 @@ export function negotiationList(spine, cf, ref) {
     const kind = ref.kinds.find((k) => new RegExp(k.match, 'i').test(i.label));
     if (!kind) continue;
     const path = 'expenses.' + i.id + '.amount';
-    out.push({ id: i.id, kind: 'bill', type: kind.id, label: i.label, path, now: i.amount, typical: kind.typical, above: round2(i.amount - kind.typical), words: kind.words, script: kind.script, called: lastCall(path) });
+    const sourced = ref.placeholder === false;
+    out.push({ id: i.id, kind: 'bill', type: kind.id, label: i.label, path, now: i.amount, typical: sourced ? kind.typical : null, above: sourced ? round2(i.amount - kind.typical) : null, words: kind.words, script: kind.script, called: lastCall(path) });
   }
   for (const d of spine.debts || []) {
     const apr = v(d.apr), bal = v(d.balance);
@@ -35,7 +40,8 @@ export function negotiationList(spine, cf, ref) {
   }
   // Ranked by dollars a month at stake (round 1, money logic: dollars lost a month): a card's interest a month, a
   // bill's amount above typical; a bill at or under typical last.
-  for (const x of out) x.stake = x.kind === 'card' ? round2(x.yearCost / 12) : Math.max(0, x.above);
+  // With no sourced typical price, a bill's stake is what it costs a month.
+  for (const x of out) x.stake = x.kind === 'card' ? round2(x.yearCost / 12) : x.above === null ? x.now : Math.max(0, x.above);
   return out.sort((a, b) => b.stake - a.stake || a.label.localeCompare(b.label));
 }
 
