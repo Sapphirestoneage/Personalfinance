@@ -1741,3 +1741,22 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .srow .day-box, .srow-fields .day-box { width: 5.5rem; }
 .script-fold > summary { list-style: none; } .script-fold > summary::before { content: "\203A"; display: inline-block; margin-right: 8px; transition: transform 0.15s ease; } .script-fold[open] > summary::before { transform: rotate(90deg); } .script-fold > summary { color: var(--accent); font-weight: 600; }
 .pay-month { list-style: none; padding: 2px var(--space-4) var(--space-2); font-size: var(--text-sm); color: var(--text); font-weight: 600; }
+
+/* The progress tracker (S-265): Plan and Session steps. One segment per step; the whole segment is the target. */
+.stepper { margin: 0 0 var(--space-3); }
+.stepper-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin-bottom: 6px; }
+.stepper-at { font-weight: 700; color: var(--text); }
+.stepper-done { color: var(--text-muted); font-size: var(--text-sm); }
+.stepper-bar { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; }
+.stepper-seg { flex: 1 1 0; min-width: 0; }
+.stepper-seg a { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); text-decoration: none; font-weight: 700; font-size: var(--text-sm); position: relative; }
+.stepper-seg a::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 5px; height: 4px; border-radius: 2px; background: var(--border); }
+.stepper-seg.is-done a { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.stepper-seg.is-done a::after { background: var(--good); }
+.stepper-seg.is-question a { border-style: dashed; color: var(--text); }
+.stepper-seg.is-current a::after { background: var(--accent); }
+.stepper-seg.is-at a { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.stepper-seg.is-at a::after { background: var(--accent-text); opacity: .6; }
+.stepper-seg a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stepper-nav { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-2); }
+.stepper-nav .btn { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -14,6 +14,7 @@ import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-c
 import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
+import { stepper } from './stepper.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
@@ -217,7 +218,13 @@ function deductibleForm(m) {
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the deductible')));
 }
 
+// A step's screen leads with the progress tracker (S-265): where this step sits among all nine, each one a tap away.
 function stepScreen(m, r) {
+  const f = m.foo, state = (x) => (x.done ? 'done' : x.need === null ? 'question' : x.id === f.current ? 'current' : 'todo');
+  const steps = f.rungs.map((x) => ({ label: x.rung + '. ' + x.label, href: '#/' + slug(x.id), state: state(x) }));
+  return [stepper(steps, f.rungs.indexOf(r)), stepBody(m, r)];
+}
+function stepBody(m, r) {
   const f = m.foo;
   const big = r.need === null ? h('p', { class: 'max-big missing-text' }, 'Missing') : h('p', { class: 'max-big' }, r.done ? 'Done' : money(r.need) + (r.flow ? ' a month' : ''));
   const when = r.need === null || r.done ? null : r.completes ? (r.flow ? 'From about ' : 'Done about ') + monthWords(r.completes.slice(0, 7)) + '.' : r.months === null ? 'No surplus to fund it yet.' : null;

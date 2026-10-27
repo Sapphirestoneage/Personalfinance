@@ -10,6 +10,7 @@ import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps, SESSION_ORDER } from '../engine/summary.js';
+import { stepper } from './stepper.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
 import { setAt, getAt, valueOf as v, addDays, whoSupplies } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
@@ -108,9 +109,11 @@ function frame(ctx, id, body) {
   const i = STEPS.findIndex((x) => x[0] === id), step = steps.find((x) => x.id === id);
   const prev = STEPS[i - 1], next = STEPS[i + 1];
   return [
-    h('section', { class: 'card step-head', 'aria-label': 'Step ' + (i + 1) + ' of ' + STEPS.length },
+    // The progress tracker (S-265): every step, done when its total is in, each a tap away; Back and Next stay below.
+    stepper(STEPS.map(([sid, , label]) => { const st = steps.find((x) => x.id === sid); return { label, href: '#/' + sid, state: sid === id ? 'current' : st && st.result && st.result.value !== null ? 'done' : 'todo' }; }), i, { nav: false }),
+    h('section', { class: 'card step-head', 'aria-label': STEPS[i][2] },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
-      h('span', { class: 'step-name' }, 'Step ' + (i + 1) + ' of ' + STEPS.length + ': ' + STEPS[i][2]),
+      h('span', { class: 'step-name' }, STEPS[i][2]),
       h('span', { class: 'step-total' }, totalWords(step, s.sheet.owed)),
       STEP_METRIC[id] ? mathButton([STEP_METRIC[id]], () => ({ spine: ctx.spine, rules: ctx.rules, s })) : null),
     ...[].concat(body(s)),

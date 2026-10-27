@@ -109,3 +109,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Owner (2026-10-27): the account picker grouped (401(k)s together, IRAs together) with a Roth tick box (S-262).
 - Owner (2026-10-27): every saving step in the Plan shows when its gap is done at 3, 6 and 12 months and at the whole surplus (S-263).
 - Owner (2026-10-27): adding an account asks its details by kind; a 401(k) asks the match, vesting schedule, employer and loan (S-264).
+- Owner (2026-10-27): a progress tracker on every Plan and Session step (S-265).
