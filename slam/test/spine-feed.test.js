@@ -11,11 +11,11 @@ import { validate } from '../engine/schema.js';
 import { putFact } from '../engine/edits.js';
 import { parseCsv, detectFormat, readCsv, classifyKind, matchExpense, proposeCsv, proposeBudget, applyImport, budgetDocsFromStorage } from '../engine/feed.js';
 import { estimatedVsActual } from '../engine/compare.js';
-import { readJson, loadRules } from './spine-helpers.js';
+import { readJson, loadRules, emptyLog } from './spine-helpers.js';
 
 const R = loadRules();
 const SLAM = new URL('../', import.meta.url).pathname;
-const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const demo = () => emptyLog(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R));
 const MR = readJson('data/merchant-rules.json');
 const chase = readFileSync(SLAM + 'test/households/jordan-chase.csv', 'utf8');
 const checking = readFileSync(SLAM + 'test/households/jordan-checking.csv', 'utf8');

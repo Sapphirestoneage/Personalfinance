@@ -12,10 +12,10 @@ import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { logSpend, removeLog, checkIn, setSweep, putFact } from '../engine/edits.js';
 import { cleanMerchant, monthLog, tagBudgets, safeToSpend, canISpend, cutSimulator, donut, billAutopsy, priceChanges, freeTrials, checkInForecast, drift, staleness, momentum, sweepReading, spendingView } from '../engine/spending.js';
-import { readJson, loadRules } from './spine-helpers.js';
+import { readJson, loadRules, emptyLog } from './spine-helpers.js';
 
 const R = loadRules();
-const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const demo = () => emptyLog(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R));
 const T = '2026-10-22';
 const S = (s) => summarize(s, R, { flags: false });
 

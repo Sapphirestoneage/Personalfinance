@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SLAM, readJson, loadRules } from './spine-helpers.js';
+import { SLAM, readJson, loadRules, emptyLog } from './spine-helpers.js';
 import { loadHousehold } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { validate } from '../engine/schema.js';
@@ -18,7 +18,7 @@ import { removeItem, putFact, createHistory, commit, undo } from '../engine/edit
 const R = loadRules();
 const T = '2026-10-25';
 const src = readFileSync(SLAM + 'ui/spending.js', 'utf8');
-const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const demo = () => emptyLog(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R));
 // Words a client screen never shows (THE COPY RULE), as the shell test reads them.
 const JARGON = /\b(engine|registry|rules|spine|kind|path|field|stored|simulation|template|schema|computed|derived)\b|S-\d{3}|Ledger|what-if on this page only/i;
 const strings = (s) => [...s.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).filter((x) => /\s/.test(x) && /^[A-Z ]/.test(x));

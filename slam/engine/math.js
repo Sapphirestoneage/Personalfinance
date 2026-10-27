@@ -204,7 +204,7 @@ const PLAIN = {
 for (const m of M) if (!m.plain && PLAIN[m.id]) m.plain = PLAIN[m.id];
 
 export const METRICS = M;
-export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || checkNowMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || planMetric(id);
+export const metricById = (id) => M.find((m) => m.id === id) || cardUtilMetric(id) || expenseCostMetric(id) || checkNowMetric(id) || earnedMetric(id) || maxitMetric(id) || windfallMetric(id) || calendarMetric(id) || debtMetric(id) || spendMetric(id) || compareMetric(id) || budgetMetric(id) || planMetric(id);
 
 // "How much to max it?" (S-211): one family, "maxit:<account>:<year>:<what>" for one
 // account and tax year (room, lump, month, paycheck, low, payoff), and
@@ -637,6 +637,21 @@ function compareMetric(id) {
   if (what === 'savingsReal') return { id, label: 'Savings rate from the real ledger', unit: 'ratio', op: 'custom', screens: COMPARE_SCREENS, formula: 'Real savings rate = (income logged - spending logged) / income logged, over the window',
     explain: ({ compare: c }) => (c ? out({ value: c.savingsRate.real, kind: c.savingsRate.real === null ? 'missing' : 'known', from: [], rough: [], missing: [], rules: [] }, [term('Income logged, ' + win(c), c.income.actual, 'usd', c.income.actual === null ? 'missing' : 'known', 'arg'), term('Spending logged, ' + win(c), c.spend.actual, 'usd', 'known', 'arg')]) : out(null, [])),
     recompute: (t) => (t[0].value === null || !t[0].value ? null : Math.round((t[0].value - t[1].value) / t[0].value * 10000) / 10000) };
+  return null;
+}
+// The Budget view (Budget brief): "budget:cat:<key>", "budget:income", read from ctx.budget (engine/budget.js).
+const BUDGET_SCREENS = ['spending#see'];
+const ACTUAL_RULE = 'Actual = what is in the log for these months: bills and paychecks marked happened, imported lines once reviewed, purchases added; a refund comes off; card payments, transfers and money coming back from shared bills are never spending; a shared bill you pay all of counts your part.';
+function budgetMetric(id) {
+  if (!id || !id.startsWith('budget:')) return null;
+  const [, what, key] = id.split(':');
+  if (what === 'cat') return { id, label: 'Budget: actual against the plan', unit: 'usd', op: 'sum', blockOnMissing: true, screens: BUDGET_SCREENS, formula: 'Difference = actual - planned (by today, mid-month). ' + ACTUAL_RULE,
+    explain: ({ budget: b }) => { const c = b && b.cats.find((x) => x.key === key); if (!c) return out(null, [], [], { note: 'Not on this Budget view.' });
+      return out({ value: c.diff, kind: c.plan === null ? 'missing' : 'computed', from: c.lines.map((l) => l.path), rough: [], missing: c.lines.filter((l) => l.plan === null).map((l) => l.path), rules: ['APP_MATERIALITY', 'APP_BUDGET_SHARE'] },
+        [...c.lines.map((l) => term(l.label + ', logged (' + l.entries.length + ')', l.actual, 'usd', 'known', 'plus')), ...(c.unassigned ? [term('Logged under ' + c.label + ' with no line', c.unassigned, 'usd', 'known', 'plus')] : []),
+          term(b.partial ? 'Planned by today' : 'Planned', c.expected, 'usd', c.plan === null ? 'missing' : 'computed', 'minus')]); } };
+  if (what === 'income') return { id, label: 'Budget: pay logged against the plan', unit: 'usd', op: 'sum', screens: BUDGET_SCREENS, formula: 'Difference = income logged - take-home planned',
+    explain: ({ budget: b }) => (b ? out({ value: b.income.diff, kind: b.income.actual === null ? 'missing' : 'computed', from: [], rough: [], missing: [], rules: [] }, [term('Pay logged (' + b.income.entries.length + ')', b.income.actual, 'usd', b.income.actual === null ? 'missing' : 'known', 'plus'), term('Take-home planned', b.income.plan, 'usd', 'computed', 'minus')]) : out(null, [], [])) };
   return null;
 }
 const monthWordsShort = (ym) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);

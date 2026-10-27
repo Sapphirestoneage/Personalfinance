@@ -11,10 +11,10 @@ import { cashsim } from '../engine/cashsim.js';
 import { calendar } from '../engine/calendar.js';
 import { weeks, agenda, yearStrip, paychecks, milestones, searchEvents } from '../engine/calendar-views.js';
 import { editIncome, putFact, moveOccurrence, skipOccurrence, repriceOccurrence, lockOccurrence, addMaybe, setMaybeDate, removeMaybe } from '../engine/edits.js';
-import { readJson, loadRules } from './spine-helpers.js';
+import { readJson, loadRules, emptyLog } from './spine-helpers.js';
 
 const R = loadRules();
-const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const demo = () => emptyLog(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R));
 const near = (a, b, msg = '', eps = 0.01) => assert.ok(Math.abs(a - b) <= eps, a + ' is not ' + b + (msg ? ': ' + msg : ''));
 
 test('weeks: in, out and the ending balance per week, each week starting where the last ended', () => {

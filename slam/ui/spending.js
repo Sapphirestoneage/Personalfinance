@@ -26,6 +26,8 @@ import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
+import { budgetView, startMonth, RANGES, realDifferences, closeMonth, reopenMonth, planSuggestions, keepPlan, sortEntry, setMerchantRule, merchantRules as learnedMerchants, OVER_CHOICES, UNDER_CHOICES } from '../engine/budget.js';
+import { editExpense } from '../engine/edits.js';
 
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const TAGS = [...FAT, 'other'];
@@ -79,7 +81,7 @@ function model(base, rules_, months) {
   const compare = estimatedVsActual(spine, rules_, { months });
   const tiers = burnTiers(spine, rules_, s.cashflow, { extra: spine.debtPlan && spine.debtPlan.extra && spine.debtPlan.extra.value !== null ? spine.debtPlan.extra.value : 0 });
   memo = { base, rules: rules_, months, scen, day, spine, s, sim, story, vw, compare, tiers, fv: fixedVariable(spine, rules_, s), cats: categories(vw), canCut: new Set(s.cashflow.expenses.items.filter((i) => i.amount).map((i) => i.id)), wage: realHourlyWage(spine, rules_, s).wage };
-  memo.ctx = () => ({ spine, rules: rules_, s, sim, spend: vw, tiers, compare });
+  memo.ctx = () => ({ spine, rules: rules_, s, sim, spend: vw, tiers, compare, budget: memo.budget });
   return memo;
 }
 
@@ -535,11 +537,40 @@ function lineScreen(m, cat, l) {
       h('h2', { id: 'line-cmp-h' }, 'Plan vs spent, ' + windowWords(m.compare)),
       h('p', {}, 'Planned ' + (cl.missing ? 'missing' : money(cl.planned)) + ', spent ' + money(cl.actual) + ' in ' + cl.entries + (cl.entries === 1 ? ' purchase' : ' purchases') + ' (' + diffWords(cl.diff) + ').'),
       mathButton(['compare:line:' + cl.id], m.ctx)) : null,
+    min ? null : lineBudget(m, l),
     min ? null : h('section', { class: 'card', 'aria-labelledby': 'line-log-h' },
       h('h2', { id: 'line-log-h' }, 'Added this month ', h('span', { class: 'count' }, String(logged.length))),
       logged.length ? h('ul', { class: 'log-list' }, logged.map((e) => logItem(m.spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.')),
     cutCard(m)
   ];
+}
+
+// A line on the Budget (Budget brief): its plan, edited in place; the last three months, plan against actual; and the
+// entries behind the actual for the Budget's month (date, store, amount, where it came from).
+const SOURCE_WORDS = { typed: 'added', import: 'from a statement', scheduled: 'marked happened', 'demo (made up)': 'example' };
+function lineBudget(m, l) {
+  const ym = lastYm || startMonth(m.base, todayIso());
+  const months = [shiftYm(ym, -2), shiftYm(ym, -1), ym];
+  const rows = months.map((x) => { const vw = budgetOf(m, x, 'month'); const line = vw.cats.flatMap((c) => c.lines).find((y) => y.id === l.id); return { ym: x, line }; });
+  const here = rows[2].line;
+  const box = h('input', { id: 'line-plan', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  box.value = l.amount === null ? '' : String(Math.round(l.amount * 100) / 100);
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const exp = (m.base.expenses || []).find((e) => e.id === l.id);
+  return h('section', { class: 'card', 'aria-labelledby': 'line-b-h' },
+    h('h2', { id: 'line-b-h' }, 'On the Budget'),
+    exp && exp.cadence === 'monthly' ? h('form', { class: 'line-plan', novalidate: true, onsubmit: (e) => {
+      e.preventDefault();
+      const p = parseInput('money', box.value);
+      if (!p.ok) { msg.textContent = p.message; box.focus(); return; }
+      change((x) => editExpense(x, l.id, { amount: p.value, kind: 'known' }, todayIso()), said.changed(l.label + '\'s plan', money(p.value) + ' a month'));
+    } }, h('label', { for: 'line-plan', class: 'edit-label' }, 'Plan a month'), h('div', { class: 'line-plan-row' }, box, h('button', { type: 'submit', class: 'btn small' }, 'Save')), msg) : null,
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
+      h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Month'), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, 'Actual'), h('th', { scope: 'col' }, 'Difference'))),
+      h('tbody', {}, rows.map((r) => h('tr', {}, h('th', { scope: 'row' }, MONTH_LONG[+r.ym.slice(5, 7) - 1].slice(0, 3)),
+        h('td', { class: 'num' }, r.line && r.line.plan !== null ? money(r.line.plan) : '-'), h('td', { class: 'num' }, r.line ? money(r.line.actual) : '-'), h('td', {}, r.line ? r.line.words : '')))))),
+    here && here.entries.length ? [h('h3', { class: 'part-h' }, 'Behind the actual, ' + ymWords(ym)),
+      h('ul', { class: 'log-list' }, here.entries.map((e) => h('li', {}, h('span', {}, shortDate(e.date)), h('span', {}, h('strong', {}, e.merchant || 'No store'), ' (' + (SOURCE_WORDS[e.source] || e.source || 'added') + ')'), h('span', { class: 'log-amt' }, (e.kind === 'refund' ? '+' : '-') + cents(e.amount)))))] : null);
 }
 
 // ---------------------------------------------------------------- the screens
@@ -551,7 +582,7 @@ try { const r = await fetch(new URL('../data/benchmarks.json', import.meta.url),
 const tabOf = (state) => (state.tab === 'see' || state.tab === 'do' ? state.tab : 'do');
 function tabsBar(tab) {
   return h('div', { class: 'segmented spend-tabs', role: 'group', 'aria-label': 'Spending' },
-    [['do', 'Do'], ['see', 'See']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
+    [['do', 'Do'], ['see', 'Budget']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
 }
 function referenceCard(m) {
   const r = referenceBands(m.s, BENCH);
@@ -573,6 +604,24 @@ const TOOLS = {
   sweep: ['Month-end sweep', () => 'Move what is left at the end of the month', (m) => sweepCard(m)]
 };
 const TOOL_IDS = ['import', 'checkin', 'ask', 'sweep'];
+// Budget's other views (Budget brief: nothing that worked is lost; each is one row under the table that opens it).
+Object.assign(TOOLS, {
+  'by-category': ['Budgets with pace', (m) => (m.vw.tags.rows.filter((r) => r.hot).length ? m.vw.tags.rows.filter((r) => r.hot).length + ' past their pace' : 'Each category this month'), (m) => [controls(m, monthsOf({})), tagsCard(m)]],
+  'fixed-variable': ['Fixed and variable', () => 'What stays the same and what moves', (m) => fixedVarCard(m)],
+  'estimated': ['Estimated vs actual', (m) => windowWords(m.compare), (m) => [controls(m, monthsOf({})), rangeWords(m), compareCard(m)]],
+  'reference': ['Beside a common reference', () => 'The 50/30/20 lines, not a grade', (m) => referenceCard(m)],
+  'where': ['Where it goes', (m) => (m.vw.donut.total === null ? 'Shares of the month' : money(m.vw.donut.total) + ' a month'), (m) => donutCard(m)],
+  'layers': ['Layers of spending', () => 'How long cash lasts on each layer', (m) => tiersCard(m)],
+  'outlook': ['How the month could end', () => 'So far and expected by month end', (m) => outlookCard(m)],
+  'cut': ['Try cutting something', () => 'See what a line is worth', (m) => cutCard(m)],
+  'autopsy': ['Each bill, a year', () => 'What each bill costs a year', (m) => autopsyCard(m)],
+  'prices': ['Price changes', (m) => (m.vw.prices.rows.length ? m.vw.prices.rows.length + ' changed' : 'None this month'), (m) => pricesCard(m)],
+  'merchants': ['Stores and their lines', (m) => learnedMerchants(m.base).length + ' learned', (m) => merchantsScreen(m)],
+  'not-sorted': ['Not sorted yet', () => '', (m) => sortScreen(m)],
+  'close': ['Close the month', () => '', (m, state) => closeScreen(m, state)]
+});
+const SEE_ROWS = ['by-category', 'estimated', 'where', 'fixed-variable', 'reference', 'layers', 'outlook', 'cut', 'autopsy', 'prices', 'merchants'];
+
 function topScreen(m, months, state) {
   const tab = /^#(checkin|log)$/.test(location.hash) ? 'do' : tabOf(state);
   const addFirst = spendingStart(m.base || m.spine) === 'add';
@@ -583,21 +632,128 @@ function topScreen(m, months, state) {
       loggerCard(m),
       // The rest of Do are rows that open their own screen (audit 4); Import leads when the Profile says they import.
       h('ul', { class: 'go-list', 'aria-label': 'More to do' }, (addFirst ? TOOL_IDS : ['import', ...TOOL_IDS.filter((x) => x !== 'import')]).map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
-    ] : [
-      controls(m, months),
-      rangeWords(m),
-      tagsCard(m),
-      fixedVarCard(m),
-      compareCard(m),
-      referenceCard(m),
-      donutCard(m),
-      tiersCard(m),
-      outlookCard(m),
-      cutCard(m),
-      autopsyCard(m),
-      pricesCard(m)
-    ])
+    ] : budgetTab(m, state))
   ];
+}
+
+// ---------------------------------------------------------------- the Budget view (Budget brief)
+// One table, one row per category (its lines fold under it on its own screen): Plan, Actual, Difference in plain words,
+// no red. Income on top, then Needs by category, then saving. A month picker and a range. Only real differences are
+// marked (engine/budget.js). The month and range are kept with the screen.
+const MONTH_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const ymWords = (ym) => MONTH_LONG[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
+const shiftYm = (ym, n) => { const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+const budgetMonth = (m, state) => (/^\d{4}-\d{2}$/.test(state.bym || '') ? state.bym : startMonth(m.base, todayIso()));
+const budgetRange = (state) => (RANGES.some(([k]) => k === state.brange) ? state.brange : 'month');
+let budgetMemo = null, lastYm = null;
+function budgetOf(m, ym, range) {
+  if (budgetMemo && budgetMemo.base === m.base && budgetMemo.ym === ym && budgetMemo.range === range) return budgetMemo.vw;
+  const vw = budgetView(m.base, rules, { ym, range, asOf: todayIso() });
+  budgetMemo = { base: m.base, ym, range, vw };
+  return vw;
+}
+const markOf = (r) => (r.mark ? h('span', { class: 'pill pill-' + r.mark }, r.mark) : null);
+function budgetRow(r, href) {
+  return h('tr', { class: r.mark ? 'b-marked' : null },
+    h('th', { scope: 'row' }, href ? h('a', { class: 'cell-link', href }, r.label, chev()) : r.label),
+    h('td', { class: 'num' }, r.plan === null ? h('span', { class: 'missing-text' }, 'missing') : money(r.plan)),
+    h('td', { class: 'num' }, r.actual === null ? h('span', { class: 'muted' }, 'none') : money(r.actual)),
+    h('td', { class: 'b-words' }, r.words, ' ', markOf(r)));
+}
+function budgetTab(m, state) {
+  const ym = budgetMonth(m, state), range = budgetRange(state), vw = budgetOf(m, ym, range);
+  m.budget = vw; lastYm = ym;
+  const now = todayIso().slice(0, 7);
+  const sug = planSuggestions(m.base, rules, { asOf: todayIso() });
+  const closes = (m.base.closes || []).slice().reverse();
+  const pick = h('div', { class: 'b-picker' },
+    h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Month before', onclick: () => { keep({ bym: shiftYm(ym, -1) }); refresh(); } }, '‹'),
+    h('span', { class: 'b-month', 'aria-live': 'polite' }, ymWords(ym)),
+    h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Month after', disabled: ym >= now, title: ym >= now ? 'This is the latest month' : null, onclick: () => { keep({ bym: shiftYm(ym, 1) }); refresh(); } }, '›'));
+  const ranges = h('div', { class: 'segmented b-range', role: 'group', 'aria-label': 'Range' }, RANGES.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(range === k), onclick: () => { keep({ brange: k }); refresh(); } }, h('span', { class: 'seg-label' }, w))));
+  const canClose = range === 'month' && ym < now && !vw.closed && vw.anyLogged;
+  return [
+    h('div', { class: 'b-controls' }, pick, ranges),
+    vw.notSorted.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/not-sorted' }, h('span', { class: 'go-name' }, 'Not sorted yet (' + vw.notSorted.length + ')'), h('span', { class: 'go-sub' }, money(vw.notSorted.reduce((t, e) => t + e.amount, 0)) + ' to put on a line')))) : null,
+    sug.length ? h('section', { class: 'card', 'aria-label': 'The plan could learn' }, h('ul', { class: 'sug-list' }, sug.map((x) => h('li', {},
+      h('p', {}, x.words),
+      h('div', { class: 'edit-actions' },
+        h('button', { type: 'button', class: 'btn small primary', onclick: () => change((s) => editExpense(s, x.id, { amount: x.to, kind: 'known' }, todayIso()), said.changed(x.label + '\'s plan', money(x.to) + ' a month')) }, 'Update'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => keepPlan(s, x.id, x.to, todayIso()), said.changed(x.label + '\'s plan', 'kept at ' + money(x.plan))) }, 'Keep')))))) : null,
+    vw.closed ? h('section', { class: 'card b-closed' }, h('p', {}, vw.closed.summary + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => reopenMonth(s, ym), said.changed(ymWords(ym), 'open again')) }, 'Reopen month'))) : null,
+    h('section', { class: 'card', 'aria-label': 'Budget, ' + ymWords(ym) },
+      vw.partial ? h('p', { class: 'muted' }, 'Held against what the plan expects by today.') : null,
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table budget-table' },
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Line')), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, 'Actual'), h('th', { scope: 'col' }, 'Difference'))),
+        h('tbody', {}, budgetRow(vw.income, null)),
+        h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'Needs')), vw.cats.map((c) => budgetRow(c, at(c.key)))),
+        vw.cycles.length ? h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'On their own cycle')), vw.cycles.map((c) => h('tr', {}, h('th', { scope: 'row' }, c.label), h('td', { class: 'b-words', colspan: '3' }, c.words)))) : null,
+        h('tbody', {}, budgetRow(vw.saving, null)))),
+      mathButton(['budget:income', ...vw.cats.map((c) => 'budget:cat:' + c.key)], m.ctx)),
+    canClose ? h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/close' }, 'Close ' + MONTH_LONG[+ym.slice(5, 7) - 1])) : null,
+    closes.length ? fold('history', 'later-list', 'History (' + closes.length + ')', h('ul', {}, closes.map((c) => h('li', {}, c.summary + '. Closed ' + shortDate(c.date) + '.')))) : null,
+    h('ul', { class: 'go-list', 'aria-label': 'More views' }, SEE_ROWS.map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
+  ];
+}
+
+// Not sorted yet: each entry gets a line; the merchant is learned from the line, so the next one goes there too.
+function sortScreen(m) {
+  const list = (m.base.log || []).filter((e) => e.kind !== 'income' && !e.expenseId && !e.tag).sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (!list.length) return [h('p', { class: 'muted' }, 'Everything is sorted.'), h('a', { class: 'btn', href: '#' }, 'Back to Budget')];
+  return h('section', { class: 'card' }, h('ul', { class: 'sort-list' }, list.map((e) => {
+    const pickId = 'sort-' + e.id;
+    const box = h('select', { id: pickId, class: 'pick-box' }, h('option', { value: '' }, 'Pick a line'),
+      [...FAT, 'other'].map((tag) => h('optgroup', { label: TAG_WORDS[tag] }, (m.base.expenses || []).filter((x) => (x.fat || 'other') === tag).map((x) => h('option', { value: x.id }, x.label)))));
+    return h('li', {}, h('div', { class: 'owed-head' }, h('span', {}, (e.merchant || 'Unnamed') + ', ' + shortDate(e.date)), h('span', { class: 'owed-amt' }, cents(e.amount))),
+      h('label', { for: pickId, class: 'edit-label' }, 'Which line'), box,
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small primary', onclick: () => { if (!box.value) return; const x = m.base.expenses.find((y) => y.id === box.value); change((s) => sortEntry(s, e.id, { expenseId: box.value }), said.changed((e.merchant || 'The purchase') + ' on ' + shortDate(e.date), x.label + (e.merchant ? ', and next time too' : ''))); } }, 'Sort it')));
+  })));
+}
+// Stores and their lines (the household's merchant memory): what each store is sorted to; change or remove one. data/merchant-rules.json is the starting set.
+function merchantsScreen(m) {
+  const list = learnedMerchants(m.base);
+  if (!list.length) return h('p', { class: 'muted' }, 'No stores learned yet. Sort a purchase onto a line and its store is remembered.');
+  return h('section', { class: 'card' }, h('ul', { class: 'sort-list' }, list.map((r, i) => {
+    const box = h('select', { id: 'mr-' + i, class: 'pick-box' }, (m.base.expenses || []).map((x) => h('option', { value: x.id, selected: x.id === r.expenseId }, x.label)));
+    return h('li', {}, h('label', { for: 'mr-' + i, class: 'edit-label' }, r.merchant), box,
+      h('div', { class: 'edit-actions' },
+        h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => setMerchantRule(s, r.merchant, box.value), said.changed(r.merchant, box.selectedOptions[0].textContent)) }, 'Save'),
+        h('button', { type: 'button', class: 'btn small danger', onclick: () => change((s) => setMerchantRule(s, r.merchant, null), said.deleted(r.merchant + ' as a known store')) }, 'Remove')));
+  })));
+}
+
+// Close the month (the money date): each real difference, one at a time, one choice each, then one summary line to
+// History and the month locks. The choices are kept with the screen until Close.
+const CHOICE_LABEL = { cover: 'Cover it from a category with money left', savings: 'Cover it from savings', carry: 'Carry it into next month', roll: 'Roll it over in this category', fund: 'Move it to a sinking fund or goal', sweep: 'Sweep it to savings' };
+function closeScreen(m, state) {
+  const ym = lastYm || budgetMonth(m, state), vw = budgetOf(m, ym, 'month');
+  const name = MONTH_LONG[+ym.slice(5, 7) - 1];
+  if (vw.closed) return [h('p', {}, vw.closed.summary + '.'), h('a', { class: 'btn', href: '#' }, 'Back to Budget')];
+  const diffs = realDifferences(vw);
+  const picks = state.closePicks || {};
+  const i = diffs.findIndex((d) => !picks[d.key]);
+  const finish = () => {
+    const choices = diffs.map((d) => ({ ...d, ...picks[d.key] }));
+    keep({ closePicks: null });
+    if (change((s) => closeMonth(s, ym, choices, todayIso()), said.changed(name, 'closed'))) history.back();
+  };
+  if (i < 0) return h('section', { class: 'card' },
+    h('h2', {}, diffs.length ? 'Ready to close ' + name : name + ' was on plan'),
+    diffs.length ? h('ul', {}, diffs.map((d) => h('li', {}, money(d.amount) + ' ' + d.kind + ' on ' + d.label + ': ' + CHOICE_LABEL[picks[d.key].choice].toLowerCase() + (picks[d.key].fromLabel ? ', ' + picks[d.key].fromLabel : picks[d.key].toLabel ? ', ' + picks[d.key].toLabel : '')))) : null,
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: finish }, 'Close ' + name), diffs.length ? h('button', { type: 'button', class: 'btn', onclick: () => { keep({ closePicks: null }); refresh(); } }, 'Start over') : null));
+  const d = diffs[i];
+  const left = vw.cats.filter((c) => c.key !== d.key && c.diff !== null && c.diff < 0);
+  const goals = (m.base.goals || []).filter((g) => g.type !== 'fi');
+  const choose = (choice, extra = {}) => { keep({ closePicks: { ...picks, [d.key]: { choice, ...extra } } }); refresh(); };
+  const options = d.kind === 'over' ? OVER_CHOICES : UNDER_CHOICES;
+  return h('section', { class: 'card' },
+    h('p', { class: 'muted' }, (i + 1) + ' of ' + diffs.length),
+    h('h2', {}, money(d.amount) + (d.kind === 'over' ? ' over on ' : ' left on ') + d.label),
+    h('div', { class: 'choice-list' }, options.map((c) => {
+      if (c === 'cover') return left.map((x) => h('button', { type: 'button', class: 'btn', onclick: () => choose('cover', { from: x.key, fromLabel: x.label }) }, 'Cover it from ' + x.label + ' (' + money(-x.diff) + ' left)'));
+      if (c === 'fund') return goals.map((g) => h('button', { type: 'button', class: 'btn', onclick: () => choose('fund', { to: g.id, toLabel: g.label }) }, 'Move it to ' + g.label));
+      return h('button', { type: 'button', class: 'btn', onclick: () => choose(c) }, CHOICE_LABEL[c]);
+    })));
 }
 
 function render(ctx) {

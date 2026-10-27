@@ -8,10 +8,10 @@ import { loadHousehold } from '../engine/normalize.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { logSpend, putFact, confirmOccurrence } from '../engine/edits.js';
 import { estimatedVsActual } from '../engine/compare.js';
-import { readJson, loadRules } from './spine-helpers.js';
+import { readJson, loadRules, emptyLog } from './spine-helpers.js';
 
 const R = loadRules();
-const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const demo = () => emptyLog(applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R));
 const T = '2026-10-22';
 
 test('one month: planned per line from the cash flow, actual from the log, the difference, and the tag totals', () => {

@@ -1523,3 +1523,23 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .owed-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .owed-note { font-size: var(--text-sm); }
 .lent-form h2 { margin-top: 0; }
+
+/* The Budget view: the month picker and range on one line, the table with plain words and a small mark. */
+.b-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 8px; }
+.b-picker { display: flex; align-items: center; gap: 8px; }
+.b-month { font-weight: 600; min-width: 9rem; text-align: center; }
+.b-range { flex: 1 1 260px; max-width: 420px; }
+.b-range .seg-btn { flex: 1 1 0; justify-content: center; }
+.budget-table th[scope="row"] { font-size: var(--text-sm); text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 500; }
+.budget-table .b-group th { font-size: var(--text-xs); padding-top: 12px; }
+.budget-table .b-words { white-space: normal; }
+.pill-over, .pill-under { margin-left: 4px; }
+.pill-over { background: var(--warn-soft); color: var(--st-roughly); }
+.pill-under { background: var(--accent-soft, var(--border)); color: var(--text); }
+.sug-list, .sort-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sug-list p { margin: 0 0 6px; }
+.choice-list { display: grid; gap: 8px; }
+.choice-list .btn { justify-content: flex-start; text-align: left; }
+.b-closed p { margin: 0 0 8px; }
+.line-plan-row { display: flex; gap: 8px; align-items: center; max-width: 320px; }
+.line-plan-row input { flex: 1 1 auto; min-width: 0; }

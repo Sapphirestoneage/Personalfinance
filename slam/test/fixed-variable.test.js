@@ -5,10 +5,10 @@ import { validate } from '../engine/schema.js';
 import { summarize } from '../engine/summary.js';
 import { fixedVariable } from '../engine/spending.js';
 import { logSpend, setFixed } from '../engine/edits.js';
-import { readJson, loadRules } from './spine-helpers.js';
+import { readJson, loadRules, emptyLog } from './spine-helpers.js';
 
 const R = loadRules();
-const demo = () => loadHousehold(readJson('fixtures/demo.json'));
+const demo = () => emptyLog(loadHousehold(readJson('fixtures/demo.json')));
 const fv = (s) => fixedVariable(s, R, summarize(s, R, { flags: false }), { months: 3, asOf: '2026-10-15' });
 
 // Fixed and variable (owner's ask, 2026-10-27).

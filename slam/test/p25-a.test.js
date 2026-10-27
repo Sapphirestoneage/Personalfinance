@@ -46,7 +46,7 @@ test('Batch 6, made simple: the Calendar leads with its lowest point, the filter
 
 test('Batch 7: Spending has Do and See; See says its range and has reference lines, never a verdict', async () => {
   const src = read('ui/spending.js');
-  assert.match(src, /\[\['do', 'Do'\], \['see', 'See'\]\]/);
+  assert.match(src, /\[\['do', 'Do'\], \['see', 'Budget'\]\]/, 'See became the Budget view');
   assert.match(src, /'Showing ' \+ windowWords\(m\.compare\)/);
   assert.doesNotMatch(src, /running hot|'on track'/);
   const { referenceBands } = await import('../engine/spending.js');

@@ -173,6 +173,16 @@
       "verified": "house"
     },
     {
+      "id": "APP_BUDGET_SHARE",
+      "rule": "On the Budget view, a difference is marked only when it is at least this share of the line's plan (or the too-small-to-matter amount, whichever is larger)",
+      "value": 0.1,
+      "unit": "rate",
+      "appliesTo": "Spending, Budget",
+      "notes": "",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
       "id": "APP_TREND_PCT",
       "rule": "A variable expense's latest month is up or down when it is this far from its own average; closer reads steady",
       "value": 0.1,

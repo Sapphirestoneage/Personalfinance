@@ -179,3 +179,9 @@ Default used: this branch has no spreadsheet importer, so step 4 of Rough now an
 
 ## 148. Sorting the homework list (2026-10-27)
 Default used: the Profile homework stays grouped by where to find it (one visit finds a group), so the Sort control lives on Still guessing only. Numbers added from a Still guessing group join the homework with their where words and drop off once filled in.
+
+## 149. Budget: Phase 3, not now (2026-10-27)
+Build Queue notes, not built: 12-month and multi-year trends, seasonal patterns, year over year, lifestyle creep alerts, forecasting from history, trend charts.
+
+## 150. Budget: what the Saving row shows (2026-10-27)
+Default used: Saving shows the plan's saving from take-home and, as its actual, what was left after spending once pay is logged (the log has no transfers to read). Say if the actual should instead come from account balances at month end.

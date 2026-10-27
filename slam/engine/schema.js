@@ -494,6 +494,12 @@ export function validate(spine) {
     }
   }
   // The feed's memory (S-207): a merchant learned to a line.
+  // Closed budget months (engine/budget.js): one entry a month, its choices and its summary line.
+  if (spine.closes !== undefined) {
+    if (!Array.isArray(spine.closes)) err('closes', 'must be a list');
+    else for (const c of spine.closes) { if (!/^\d{4}-\d{2}$/.test(c.ym || '')) err('closes', 'each close names its month (YYYY-MM)'); if (!Array.isArray(c.choices)) err('closes.' + c.ym, 'its choices are a list'); if (typeof c.summary !== 'string') err('closes.' + c.ym, 'a summary line'); }
+  }
+  if (spine.planKept !== undefined && (typeof spine.planKept !== 'object' || spine.planKept === null || Array.isArray(spine.planKept))) err('planKept', 'an object');
   // Money lent to someone (engine/owed.js): owed to you until repaid; a gift never is.
   if (spine.lent !== undefined) {
     if (!Array.isArray(spine.lent)) err('lent', 'must be a list');
