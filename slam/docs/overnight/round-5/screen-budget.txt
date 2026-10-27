@@ -1,0 +1,16 @@
+Screen budget (/home/user/Personalfinance/slam/)
+screen                   words390 target  height390  buttons chips | words1024 height1024
+Today                         101    150       1064        5     0 |       103       1020
+Session                        59     60        844        4     3 |        61        800
+My numbers                     91      -       1094       16     1 |        93        974
+Still guessing                 90    100        844       41     5 |        93        800
+A card (Visa)                  60     80        990       21     0 |        66        998
+Needs                          39      -        844        7     0 |        42        800
+Calendar                      155    150       1360       48     0 |       196       1504 over
+Spending                      103     90       1382       13     0 |       105       1277 over
+Plan                          172    150       1315        5     5 |       174       1144 over
+Profile                        46     60        844        5     0 |        48        800
+Assumptions                    31      -        844       41    20 |        33        800
+One-pager                     229      -       1792        5     0 |       231       1599
+Before our first call         122      -       1076       24     0 |       122        814
+Got extra money?               99      -        879        5     0 |       101        843

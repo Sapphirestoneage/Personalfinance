@@ -17,14 +17,14 @@
  },
  "Session": {
   "390": {
-   "words": 54,
+   "words": 59,
    "height": 844,
    "buttons": 4,
    "chips": 3,
    "primary": 1
   },
   "1024": {
-   "words": 56,
+   "words": 61,
    "height": 800,
    "buttons": 4,
    "chips": 3,
@@ -65,10 +65,10 @@
  },
  "A card (Visa)": {
   "390": {
-   "words": 61,
+   "words": 60,
    "height": 990,
    "buttons": 21,
-   "chips": 1,
+   "chips": 0,
    "primary": 1
   },
   "1024": {
@@ -88,7 +88,7 @@
    "primary": 0
   },
   "1024": {
-   "words": 52,
+   "words": 42,
    "height": 800,
    "buttons": 6,
    "chips": 0,
@@ -97,14 +97,14 @@
  },
  "Calendar": {
   "390": {
-   "words": 152,
+   "words": 155,
    "height": 1360,
    "buttons": 48,
    "chips": 0,
    "primary": 0
   },
   "1024": {
-   "words": 193,
+   "words": 196,
    "height": 1504,
    "buttons": 48,
    "chips": 0,
@@ -177,15 +177,15 @@
  },
  "One-pager": {
   "390": {
-   "words": 212,
-   "height": 1751,
+   "words": 229,
+   "height": 1792,
    "buttons": 5,
    "chips": 0,
    "primary": 0
   },
   "1024": {
-   "words": 214,
-   "height": 1579,
+   "words": 231,
+   "height": 1599,
    "buttons": 4,
    "chips": 0,
    "primary": 0
