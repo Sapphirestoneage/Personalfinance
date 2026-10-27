@@ -10,6 +10,7 @@ import { valueOf as v, tracker, round2, monthKey, addMonths, daysBetween } from 
 import { order, orderDetail, payoffPlan, rateOn, minimumPayment } from './debt.js';
 import * as C from './vendor/cashcal.js';
 import { yearTax } from './tax.js';
+import { planPayoff } from './plan.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
@@ -38,21 +39,12 @@ export function clearDates(sim) {
   };
 }
 
-// Clear dates from the Plan's run (payoffPlan through the order list): high-interest free, cards, loans, all, each as the
-// month it lands. A date more than 12 months out reads as one line, "Past <the date 12 months on>", with what it holds.
-export function planClearDates(spine, rules, o, asOf = spine.meta.asOf) {
-  const hi = rules.get('APP_HI_RATE', +asOf.slice(0, 4));
-  const last = (rows) => { if (!rows.length) return monthKey(asOf); if (rows.some((r) => !r.planYm)) return null; return rows.map((r) => r.planYm).sort().pop(); };
-  const owing = o.rows.filter((r) => (r.balance ?? 0) > 0);
-  const horizon = addMonths(monthKey(asOf), 12);
-  const row = (id, label, ym) => ({ id, label, ym, past: !ym || ym > horizon });
-  const rows = [
-    row('hiFree', 'High-interest free (nothing above ' + Math.round(hi * 100) + '%)', last(owing.filter((r) => (r.rate ?? 0) >= hi || r.promo))),
-    row('cardsFree', 'Every card clear', last(owing.filter((r) => r.kind === 'card'))),
-    row('loansFree', 'Loans paid off', last(owing.filter((r) => r.kind === 'loan'))),
-    row('allFree', 'Debt free', o.debtFreeYm || last(owing))
-  ];
-  return { rows: rows.filter((r) => !r.past), past: rows.filter((r) => r.past), horizon, extra: o.extra, kind: o.kind };
+// The lead dates (morning answers 1 and 2, S-243): the Plan's (engine/plan.js planPayoff), never the day-by-day run's.
+// High-interest debt gone (the Plan's high-interest step), all debt gone on the plan, and the comparison: the month
+// if every extra dollar went to debt from now on.
+export function planClearDates(plan) {
+  if (!plan || plan.none) return { none: true, hiYm: null, hasHi: false, allYm: null, everyYm: null, interest: null, everyInterest: null };
+  return { none: false, hiYm: plan.hiYm, hasHi: plan.hasHi, allYm: plan.allYm, waits: plan.waits ? plan.waits.label : null, everyYm: plan.every.debtFreeYm, everyExtra: plan.every.extra, interest: plan.interest.value, everyInterest: plan.every.interest.value, kind: plan.interest.kind };
 }
 
 // The payoff Gantt: one bar per card and loan from the start of the window to
@@ -339,12 +331,15 @@ export function balanceTransfer(spine, rules, { cardId, feeShare = null, promoMo
 // Everything the Debt tab shows, from one run.
 // extra: the extra a month at the debt from the Plan (planDebtExtra), so the order and the clear dates read the same
 // number the Plan shows; the clear dates come from the Plan's month-by-month run (never "not inside the window").
-export function debtView(spine, rules, sim, s = null, { asOf = spine.meta.asOf, extra = null } = {}) {
+// plan: the Plan's payoff (planPayoff); figured here from the summary when not passed. Its month-by-month extra drives
+// the order list, so every date and interest total on the Debt screen is the Plan's.
+export function debtView(spine, rules, sim, s = null, { asOf = spine.meta.asOf, extra = null, plan = null } = {}) {
+  const pp = plan || (s ? planPayoff(spine, rules, s, { sim, asOf }) : null);
   const cards = cardTiles(spine, rules, sim, asOf);
   const loans = (spine.debts || []).filter((d) => STUDENT.includes(d.type) || (d.federal && v(d.federal) === true)).map((d) => idr(spine, rules, d, s, asOf));
   return {
     asOf, window: { from: sim.start, days: sim.days },
-    ...(() => { const o = orderList(spine, rules, sim, asOf, extra); return { order: o, clearDates: planClearDates(spine, rules, o, asOf), gantt: gantt(sim) }; })(), interest: interestTimeline(sim),
+    ...(() => { const o = orderList(spine, rules, sim, asOf, pp ? pp.extraFn : extra); if (pp && !pp.none) Object.assign(o, { debtFreeYm: pp.allYm, neverPaysOff: pp.neverPaysOff, totalInterest: pp.interest }); return { order: o, plan: pp, clearDates: planClearDates(pp), gantt: gantt(sim) }; })(), interest: interestTimeline(sim),
     cards, utilization: utilizationAtReport(spine, rules, sim), loans,
     kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: sim.rules
   };

@@ -21,7 +21,7 @@ import { emergency } from './emergency.js';
 import { mainChecking } from './defaults.js';
 import { shareOf, coverOf } from './sharing.js';
 import { isSubscription, nextCharge } from './subscriptions.js';
-import { DEFAULT_MIN_SOURCE, payPolicyOf, paymentOn, lineFor, lineMonthly, paysDebtOf, debtOrder, debtLoss } from './debt.js';
+import { DEFAULT_MIN_SOURCE, payPolicyOf, paymentOn, lineFor, lineMonthly, paysDebtOf, debtOrder, debtLoss, deferredCharge } from './debt.js';
 import * as C from './vendor/cashcal.js';
 import { MATCH_DAYS, matchOccurrence } from './feed.js';
 import { TAG_WORDS } from './spending.js';
@@ -489,6 +489,23 @@ export function cashsim(spine, rules, opts = {}) {
     chargedBack = true;
   }
   if (chargedBack) run = C.simulate(model, simOpts);
+  // Deferred interest (morning answer 1, QUESTIONS 161): a card marked deferred interest whose promo ends inside the
+  // run with part of the promo balance still owed (its first statement after the end, less that cycle's new charges
+  // and interest) is charged the interest back the day after, the same amount the Plan's run charges (deferredCharge).
+  const lastDay = run.days.length ? run.days[run.days.length - 1].date : model.start;
+  const deferred = [];
+  for (const d of spine.debts || []) {
+    const c = model.cards.find((x) => x.id === d.id);
+    const ends = v(d.promoEnds);
+    if (!c || v(d.deferredInterest) !== true || !ends || v(d.apr) === null || ends < model.start || ends >= lastDay) continue;
+    const st = run.cards[d.id], after = st && st.statements.find((x) => x.date > ends);
+    if (!after || after.balance - after.charges - after.interest <= 0) continue;
+    const amount = round2(deferredCharge(d, v(d.balance), rules, spine.meta.asOf));
+    if (!(amount > 0)) continue;
+    model.extras.push({ id: 'deferred:' + d.id, kind: 'interest', label: c.name + ': deferred interest, if the promo balance is still owed', cents: cents(amount), cadence: 'once', date: addDays(ends, 1), direction: 'out', paidWith: d.id, category: 'card' });
+    deferred.push({ id: d.id, name: c.name, date: addDays(ends, 1), amount });
+  }
+  if (deferred.length) run = C.simulate(model, simOpts);
   const ev = (e) => ({ kind: e.kind, label: e.label, amount: dollars(e.cents), account: e.account || null, card: e.card || null, statement: e.stmt !== undefined ? dollars(e.stmt) : undefined, due: e.due || undefined, partial: !!e.partial, guarded: !!e.guarded });
   // A carried statement (S-209) left the card's opening balance so the engine would not charge it twice;
   // until checking pays it on its due day it is still owed, so the debt reading carries it back.
@@ -522,6 +539,7 @@ export function cashsim(spine, rules, opts = {}) {
   const raid = run.days.find((d) => d.events.some((e) => e.kind === 'auto-cover'));
   const kind = missing.length ? 'incomplete' : rough.length ? 'rough' : 'computed';
   return {
+    deferred,
     start: model.start, days: model.days, mode, model, run, needs, cf, claims, fromLog,
     // Empty is not zero (S-209): with no balance on main checking the engine's "checking" is every cash account,
     // savings included, so nothing that reads checking is shown until it has one.

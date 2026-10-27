@@ -27,6 +27,10 @@ const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // A date in words for a step's sentence ("Feb 28, 2027").
 const dayWords = (iso) => (iso ? MONTH_SHORT[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : 'its end date');
 const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), months); const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return ym + '-' + String(Math.min(+iso.slice(8, 10), last)).padStart(2, '0'); };
+// Months from one YYYY-MM to another.
+const ymIndex = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
+// The Plan's extra at the debt in month k (1 the first): the surplus inside a debt step's window, plus any typed extra.
+const windowExtra = (windows, surplus, typed) => (k) => typed + (windows.some((w) => k >= w.from && k <= w.to) ? surplus : 0);
 const monthsToFill = (need, perMonth) => (need <= 0 ? 0 : perMonth > 0 ? Math.ceil(need / perMonth) : null);
 
 // ---------------------------------------------------------------- the surplus waterfall (E008)
@@ -63,12 +67,29 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   const hi = rules.get('APP_HI_RATE', year);
   const rungs = [];
   let monthsSoFar = 0, afterAll = true;
-  const push = (id, t, { need, flow = false, why, path = null, done = null, ids = null }) => {
+  // The Plan's debt run (morning answer 1, S-243): the debt steps' months come from the monthly payoff run
+  // (engine/debt.js payoffPlan, interest, minimums and deferred interest included), with the surplus at the debt only
+  // while a debt step is the one being filled (its window) and any typed extra every month. planPayoff reads the same
+  // windows, so its dates and interest are the Plan's.
+  const strategy = (spine.debtPlan && v(spine.debtPlan.strategy)) === 'snowball' ? 'snowball' : 'avalanche';
+  const typed = (spine.debtPlan && spine.debtPlan.extra && v(spine.debtPlan.extra)) || 0;
+  const windows = [];
+  const debtMonths = (ids) => {
+    if (!ids.length || !afterAll) return undefined;
+    const start = monthsSoFar;
+    const r = payoffPlan(spine, rules, { strategy, extra: windowExtra([...windows, { from: start + 1, to: Infinity }], surplus, typed), asOf });
+    const yms = ids.map((id) => (r.debts.find((d) => d.id === id) || {}).payoffYm || null);
+    if (yms.some((y) => !y)) return null;
+    const m = Math.max(0, ymIndex(monthKey(asOf), yms.sort().pop()) - start);
+    windows.push({ from: start + 1, to: start + m });
+    return m;
+  };
+  const push = (id, t, { need, flow = false, why, path = null, done = null, ids = null, runMonths = undefined }) => {
     const snap = t.snapshot();
     const n = need === null ? null : Math.max(0, round2(need));
     const isDone = done !== null ? done : n !== null ? n <= 0 : null;
     // A flow rung (a monthly amount) takes from the surplus for good; a stock rung is filled once.
-    const months = n === null ? null : isDone ? 0 : flow ? 0 : monthsToFill(n, surplus);
+    const months = n === null ? null : isDone ? 0 : runMonths !== undefined ? runMonths : flow ? 0 : monthsToFill(n, surplus);
     // A flow rung after one that never finishes has no date either.
     const completes = n === null ? null : isDone ? asOf : months === null || (flow && !afterAll) ? null : sameDayLater(asOf, monthsSoFar + months);
     if (n !== null && !isDone) { if (months === null) afterAll = false; else monthsSoFar += months; }
@@ -84,7 +105,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     else if (id === 'employerMatch') { const st = step('employerMatch'); t.absorb({ ...st, value: undefined }); push(id, t, { need: st.need, flow: true, why: st.why, path: st.path, done: st.need === null ? null : st.need <= 0 }); }
     // High-interest debt (Krug pass): the debts the one ranking says lose money (engine/debt.js debtLoss), in its order,
     // so a deferred-interest promo that becomes high-interest at its cliff is in this step, first.
-    else if (id === 'highInterest') { const list = debtOrder(spine, rules, asOf).map((x) => (spine.debts || []).find((d) => d.id === x)).filter((d) => { const l = debtLoss(spine, rules, d, asOf); t.useFact('debts.' + d.id + '.balance', d.balance); return l && (!l.promo || l.after >= hi); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => { const l = debtLoss(spine, rules, d, asOf); return (v(d.name) || d.id) + ' ' + money(v(d.balance)) + (l && l.promo ? ' (0% until ' + dayWords(v(d.promoEnds)) + ', then ' + Math.round(l.after * 1000) / 10 + '%)' : ''); }).join(', ') + ': at or above ' + Math.round(hi * 100) + '%, now or after an intro rate.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id) }); }
+    else if (id === 'highInterest') { const list = debtOrder(spine, rules, asOf).map((x) => (spine.debts || []).find((d) => d.id === x)).filter((d) => { const l = debtLoss(spine, rules, d, asOf); t.useFact('debts.' + d.id + '.balance', d.balance); return l && (!l.promo || l.after >= hi); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => { const l = debtLoss(spine, rules, d, asOf); return (v(d.name) || d.id) + ' ' + money(v(d.balance)) + (l && l.promo ? ' (0% until ' + dayWords(v(d.promoEnds)) + ', then ' + Math.round(l.after * 1000) / 10 + '%)' : ''); }).join(', ') + ': at or above ' + Math.round(hi * 100) + '%, now or after an intro rate.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id), runMonths: need > 0 ? debtMonths(list.map((d) => d.id)) : undefined }); }
     else if (id === 'reserves') { const gap = s.emergency.gap; t.absorb({ ...gap, value: undefined }); push(id, t, { need: gap.value, why: gap.value === null ? 'The cushion target needs a birth date and monthly spending.' : gap.value > 0 ? money(gap.value) + ' to the cushion target (' + money(s.emergency.targetDollars.value) + ').' : 'Cash reaches the cushion target.', path: gap.missing[0] || s.sheet.cash.from[0] || null }); }
     // Roth and HSA room, and retirement maxed (S-211): both read "How much to max it?" (engine/maxit.js), each shared
     // limit once, for every tax year still open: the new money a month that fills the room by each deadline, on top of
@@ -156,11 +177,11 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     // Goals to save for (a payoff goal is debt, counted by the debt steps). A goal with no target yet is left out of the
     // sum and named, and the step reads incomplete (never $0 for it), so the steps after it keep their dates.
     else if (id === 'prepaid') { const goals = (spine.goals || []).filter((g) => g.type !== 'fi' && g.type !== 'payoff' && g.target); let need = 0; const blank = []; for (const g of goals) { const tg = t.useFact('goals.' + g.id + '.target', g.target); if (tg === null) blank.push(g); else need += tg; } const known = goals.length - blank.length; push(id, t, { need: known || !blank.length ? need : null, why: goals.length ? (known ? money(need) + ' across ' + known + ' goal' + (known === 1 ? '' : 's') + '.' : '') + (blank.length ? (known ? ' ' : '') + blank.map((g) => g.label || g.id).join(', ') + (blank.length === 1 ? ' has' : ' have') + ' no target yet.' : '') : 'No goals beyond financial independence.', path: goals.length ? 'goals.' + (blank[0] || goals[0]).id + '.target' : null, done: goals.length ? null : true }); }
-    else if (id === 'lowInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); if (r === null || r >= hi || !(b > 0) || paidInFull(spine, d)) return false; const l = debtLoss(spine, rules, d, asOf); return !(l && l.promo && l.after >= hi); }); /* a promo card whose rate after is high is the high-interest step's (round 2) */ const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' under ' + Math.round(hi * 100) + '%.' : 'Nothing under ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id) }); }
+    else if (id === 'lowInterest') { const list = (spine.debts || []).filter((d) => { const r = rateOn(d, asOf).rate; const b = t.useFact('debts.' + d.id + '.balance', d.balance); if (r === null || r >= hi || !(b > 0) || paidInFull(spine, d)) return false; const l = debtLoss(spine, rules, d, asOf); return !(l && l.promo && l.after >= hi); }); /* a promo card whose rate after is high is the high-interest step's (round 2) */ const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' under ' + Math.round(hi * 100) + '%.' : 'Nothing under ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id), runMonths: need > 0 ? debtMonths(list.map((d) => d.id)) : undefined }); }
   }
   const current = rungs.find((r) => r.done === false) || null;
   const out = all.out(surplus);
-  return { rungs, current: current ? current.id : null, surplus, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => (v(a.matchRate) ?? 0) > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { rungs, current: current ? current.id : null, surplus, debtRun: { strategy, typed, windows }, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => (v(a.matchRate) ?? 0) > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 const money = (x) => (x === null || x === undefined ? 'missing' : '$' + Math.round(x).toLocaleString('en-US'));
 
@@ -473,6 +494,31 @@ export function planDebtExtra(spine, rules, s, { sim = null, ladder = null } = {
   const cur = f.rungs.find((r) => r.id === f.current) || null;
   if (!cur || !['highInterest', 'lowInterest'].includes(cur.id) || !(f.surplus > 0) || !(cur.need > 0)) return { amount: 0, from: 'plan' };
   return { amount: Math.round(Math.min(f.surplus, cur.need)), from: 'plan', step: cur.label };
+}
+
+// The Plan's payoff (morning answer 1, S-243): the one source for every payoff date and interest total a client sees
+// (Debt, the One-pager, What if, Today, Goals). High-interest debt gone and all debt gone are the Plan's debt steps'
+// months; the interest is the same monthly run's. `every` is the comparison only: every extra dollar at the debt from
+// now (the surplus and any typed extra every month), shown beside the Plan's date, never instead of it.
+export function planPayoff(spine, rules, s, { ladder = null, sim = null, asOf = spine.meta.asOf, trace = false } = {}) {
+  const f = ladder || fooLadder(spine, rules, s, { sim, asOf });
+  const owing = (spine.debts || []).some((d) => (v(d.balance) ?? 0) > 0);
+  if (!owing) return { none: true, hiYm: null, allYm: null, interest: null, every: null, debts: [], strategy: f.debtRun.strategy };
+  const { strategy, typed, windows } = f.debtRun;
+  const run = payoffPlan(spine, rules, { strategy, extra: windowExtra(windows, f.surplus, typed), asOf, trace });
+  const rung = (id) => f.rungs.find((r) => r.id === id) || null;
+  const ym = (r) => (r && r.completes ? monthKey(r.completes) : null);
+  const hiR = rung('highInterest'), loR = rung('lowInterest');
+  const hasHi = !!(hiR && hiR.need > 0), hasLo = !!(loR && loR.need > 0);
+  const hiYm = hasHi ? ym(hiR) : null;
+  const allYm = hasLo ? ym(loR) : hasHi ? hiYm : run.debtFreeYm;
+  const everyRun = payoffPlan(spine, rules, { strategy, extra: Math.max(0, f.surplus) + typed, asOf });
+  return {
+    none: false, strategy, extraFn: windowExtra(windows, f.surplus, typed), hiYm, hasHi, allYm, neverPaysOff: !allYm, interest: run.totalInterest, debts: run.debts, order: run.order,
+    waits: !allYm && (hasLo ? loR : hiR) ? (hasLo ? loR : hiR) : null,
+    every: { debtFreeYm: everyRun.neverPaysOff ? null : everyRun.debtFreeYm, interest: everyRun.totalInterest, extra: Math.max(0, f.surplus) + typed },
+    ...(trace ? { schedule: run.schedule } : {})
+  };
 }
 
 // FOO ghost chips (row 60): the surplus the current rung takes, as a plan event on the last day of each month in the window.

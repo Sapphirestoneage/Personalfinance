@@ -10,7 +10,7 @@
 
 import { valueOf as v, round2, getAt } from './spine.js';
 import { summarize } from './summary.js';
-import { payoffPlan } from './debt.js';
+import { planPayoff } from './plan.js';
 import { windfall as windfallOrder } from './windfall.js';
 import { editExpense, editIncome, putFact } from './edits.js';
 import { mainChecking } from './defaults.js';
@@ -52,14 +52,13 @@ export function movedSpine(spine, rules, { spendLess = 0, earnMore = 0, extraDeb
 }
 
 // The numbers a slider moves, read the same way for any household.
+// Debt dates and interest are the Plan's (morning answer 1, planPayoff); `every` is the comparison only.
 export function outcome(spine, rules) {
   const s = summarize(spine, rules, { flags: false });
-  const strategy = (spine.debtPlan && v(spine.debtPlan.strategy)) || 'avalanche';
-  const extra = Math.max(0, s.cashflow.surplus.value || 0) + ((spine.debtPlan && v(spine.debtPlan.extra)) || 0);
   const hasDebt = (spine.debts || []).some((d) => (v(d.balance) ?? 0) > 0);
-  const p = hasDebt ? payoffPlan(spine, rules, { strategy, extra, asOf: s.asOf }) : null;
+  const p = hasDebt ? planPayoff(spine, rules, s) : null;
   const y = s.fi.yearsToFi.value;
-  return { surplus: s.cashflow.surplus.value, debtFreeYm: p && !p.neverPaysOff ? p.debtFreeYm : null, neverPaysOff: !!(p && p.neverPaysOff), interest: p ? p.totalInterest.value : 0, yearsToFi: y, fiYear: y === null ? null : Math.floor(+s.asOf.slice(0, 4) + (+s.asOf.slice(5, 7) - 1) / 12 + y) };
+  return { surplus: s.cashflow.surplus.value, hiYm: p ? p.hiYm : null, debtFreeYm: p ? p.allYm : null, neverPaysOff: !!(p && p.neverPaysOff), interest: p ? p.interest.value : 0, everyYm: p ? p.every.debtFreeYm : null, yearsToFi: y, fiYear: y === null ? null : Math.floor(+s.asOf.slice(0, 4) + (+s.asOf.slice(5, 7) - 1) / 12 + y) };
 }
 
 export function whatIf(spine, rules, moves, today) {

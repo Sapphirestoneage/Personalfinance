@@ -6,7 +6,7 @@
 // (engine/debt.js); the log is a record of what happened. Views only format.
 
 import { valueOf as v, tracker, round2, monthKey, addMonths, daysBetween, daysInMonth } from './spine.js';
-import { payoffPlan } from './debt.js';
+import { planPayoff } from './plan.js';
 import { FAT, isEarmarked, SECTION_WORDS } from './schema.js';
 import { setAsideFor, setAsideWords, setAsideNote } from './networth.js';
 import * as C from './vendor/cashcal.js';
@@ -140,8 +140,11 @@ export function cutSimulator(spine, rules, s, { dropped = [], towardDebt = false
     const plan = spine.debtPlan || {};
     const extraNow = plan.extra ? t.useFact('debtPlan.extra', plan.extra) ?? 0 : 0;
     const strategy = plan.strategy && v(plan.strategy) === 'snowball' ? 'snowball' : 'avalanche';
-    const before = payoffPlan(spine, rules, { strategy, extra: extraNow, asOf });
-    const after = payoffPlan(spine, rules, { strategy, extra: round2(extraNow + saved), asOf });
+    // The Plan's payoff before and after (morning answer 1): what is saved goes to the debt every month, on top of
+    // the Plan's own extra, as a typed extra would.
+    const pp = (sp) => { const p = planPayoff(sp, rules, s, { asOf }); return { debtFreeYm: p.allYm, neverPaysOff: p.neverPaysOff, totalInterest: p.interest }; };
+    const before = pp(spine);
+    const after = pp({ ...spine, debtPlan: { ...plan, extra: { value: round2(extraNow + saved), kind: 'known', asOf, source: 'typed' } } });
     t.absorb({ ...before.totalInterest, value: undefined });
     const months = before.debtFreeYm && after.debtFreeYm ? (+before.debtFreeYm.slice(0, 4) - +after.debtFreeYm.slice(0, 4)) * 12 + (+before.debtFreeYm.slice(5) - +after.debtFreeYm.slice(5)) : null;
     debt = { extraNow, extraAfter: round2(extraNow + saved), strategy, debtFreeBefore: before.debtFreeYm, debtFreeAfter: after.debtFreeYm, neverBefore: before.neverPaysOff, neverAfter: after.neverPaysOff, interestBefore: before.totalInterest.value, interestAfter: after.totalInterest.value, interestSaved: before.totalInterest.value === null || after.totalInterest.value === null ? null : round2(before.totalInterest.value - after.totalInterest.value), monthsSooner: months };

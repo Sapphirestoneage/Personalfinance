@@ -1,16 +1,17 @@
 // Debt payoff dates (S-205), on My numbers' Debt screen since the Calendar was made simple: formatting of
-// engine/debtview.js. The extra at the debt is the Plan's one number (planDebtExtra).
+// engine/debtview.js. Every payoff date and interest total is the Plan's (planPayoff, morning answer 1).
 // Every number has Show the math; a missing input reads as a missing row in
 // words, never a number. A card or a loan is a whole-card target with a
 // chevron that opens it in My numbers (S-230). Formatting only.
 
 import { debtView, solvePayoff, whichCard, balanceTransfer } from '../engine/debtview.js';
-import { planDebtExtra } from '../engine/plan.js';
+import { planPayoff } from '../engine/plan.js';
 import { parseInput } from '../engine/edits.js';
 import { labelFor } from '../engine/labels.js';
 import { mathButton } from './math-panel.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 import { debtCharts } from './chart-cards.js';
+import { leadLines } from './debt-lead.js';
 import { methodPaths, recommendOrder, METHOD_WORDS } from '../engine/charts.js';
 import { putFact } from '../engine/edits.js';
 import { change } from './shell.js';
@@ -36,13 +37,12 @@ export function debtTab({ c, spine, rules, mathCtx, rerender, saved = null, onSa
   if (saved) for (const k of Object.keys(FORM)) if (typeof saved[k] === 'string') form[k] = saved[k];
   const keepForm = () => (onSave ? onSave({ ...form }) : rerender());
   const base = mathCtx();
-  const extra = planDebtExtra(spine, rules, base.s, { sim: c.sim });
-  const d = debtView(spine, rules, c.sim, base.s, { extra: extra.amount });
-  d.extraFrom = extra;
+  const plan = planPayoff(spine, rules, base.s, { sim: c.sim });
+  const d = debtView(spine, rules, c.sim, base.s, { plan });
   const ctx = (extra = {}) => ({ ...base, sim: c.sim, debt: d, ...extra });
   // Charts (Track C): when it is gone, what is interest, and the three orders side by side; each opens as a table.
-  const charts = h('section', { class: 'card debt-charts' }, debtCharts(spine, rules, { extra: extra.amount || 0, strategy: d.order.strategy }));
-  return [clearCard(d), methodsCard(spine, rules, d, extra.amount || 0), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
+  const charts = h('section', { class: 'card debt-charts' }, debtCharts(spine, rules, { extra: plan.extraFn || 0, strategy: d.order.strategy, every: plan.every }));
+  return [clearCard(d), methodsCard(spine, rules, d, plan.extraFn || 0), charts, ganttCard(d), orderCard(d, ctx), interestCard(d, ctx), cardsCard(d, ctx), utilCard(d, ctx), whichCardCard(c, spine, rules, ctx, keepForm), btCard(c, spine, rules, ctx, keepForm), solveCard(c, spine, rules, ctx, keepForm), loansCard(d, ctx)].filter(Boolean);
 }
 
 // The orders side by side (Track E): each one's debt-free month, its interest and the first debt it clears, the
@@ -56,7 +56,7 @@ function methodsCard(spine, rules, d, extra) {
   // nothing to choose; one sentence says so instead of identical cards.
   const tie = new Set(m.map((x) => [x.debtFreeYm, Math.round(x.interest ?? -1), x.first ? x.first.name + x.first.ym : ''].join('|'))).size === 1;
   if (tie) return h('section', { class: 'card', 'aria-labelledby': 'methods-h' }, h('h2', { id: 'methods-h' }, 'Which order?'),
-    h('p', {}, 'Every order ends ' + (m[0].neverPaysOff ? 'never, at this pace' : monthWords(m[0].debtFreeYm)) + ' with ' + money(m[0].interest) + ' of interest and clears ' + (m[0].first ? m[0].first.name + ' first' : 'nothing first') + ', so there is nothing to choose at ' + money(extra) + ' a month extra. The plan uses ' + METHOD_WORDS[d.order.strategy].toLowerCase() + '.'));
+    h('p', {}, 'Every order ends ' + (m[0].neverPaysOff ? 'never, at this pace' : monthWords(m[0].debtFreeYm)) + ' with ' + money(m[0].interest) + ' of interest and clears ' + (m[0].first ? m[0].first.name + ' first' : 'nothing first') + ', so there is nothing to choose on your plan. The plan uses ' + METHOD_WORDS[d.order.strategy].toLowerCase() + '.'));
   const now = d.order.strategy;
   const use = (id) => change((s) => putFact(s, 'debtPlan.strategy', id, 'known', todayIso()), said.changed('Payoff order', METHOD_WORDS[id].toLowerCase()));
   return h('section', { class: 'card', 'aria-labelledby': 'methods-h' },
@@ -71,54 +71,43 @@ function methodsCard(spine, rules, d, extra) {
       x.id === 'stress' ? h('p', { class: 'muted' }, 'To compare: the plan runs the other two.')
         : x.id === now ? h('button', { type: 'button', class: 'btn small', disabled: true, title: 'This is the order the plan uses now' }, 'In use now')
           : h('button', { type: 'button', class: 'btn small' + (pick && pick.id === x.id ? ' primary' : ''), onclick: () => use(x.id) }, 'Use this order')))),
-    h('p', { class: 'tile-note' }, 'Each with ' + money(extra) + ' a month extra at the debt, on the monthly plan.'));
+    h('p', { class: 'tile-note' }, 'Each on your plan: the extra goes to the debt while the Plan\'s debt steps are being filled.'));
 }
 
-// Clear dates from the Plan's run: each as its month; anything past 12 months is one line, never "not inside the
-// window" four times (Calendar audit).
+// What the client sees first (morning answer 2, S-243): high-interest debt gone (the Plan's high-interest step), all
+// debt gone on the plan, then the comparison with every extra dollar at the debt. The One-pager says the same three.
 function clearCard(d) {
-  const cd = d.clearDates, x = d.extraFrom || { amount: cd.extra, from: 'plan' };
+  const cd = d.clearDates;
+  if (cd.none) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'clear-h' },
-    h('h2', { id: 'clear-h' }, 'Clear dates'),
-    cd.rows.length ? h('div', { class: 'clear-grid' }, cd.rows.map((r) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': r.label },
-      h('span', { class: 'clear-date' }, monthWords(r.ym)), h('span', { class: 'clear-label' }, r.label)))) : null,
-    cd.past.length ? h('p', { class: 'tile-sub' }, 'The 12-month run ends ' + monthWords(cd.horizon) + '; ' + cd.past.map((r) => r.label.replace(/ \(.*\)$/, '').toLowerCase()).join(' and ') + ' come later' + (d.order.debtFreeYm ? ', debt free about ' + monthWords(d.order.debtFreeYm) + ' on the monthly plan.' : '.')) : null,
-    h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan\'s month-by-month run, with ' + money(x.amount) + ' a month extra at the debt' + (x.from === 'typed' ? ' (the amount you set).' : x.step ? ' (the Plan\'s step: ' + x.step.toLowerCase() + ').' : '.')));
+    h('h2', { id: 'clear-h' }, 'When your debt is gone'),
+    h('div', { class: 'clear-grid' }, leadLines(cd).filter((x) => x[0]).map(([label, words]) => h('div', { class: 'clear-tile', role: 'group', 'aria-label': label },
+      h('span', { class: 'clear-date' }, words), h('span', { class: 'clear-label' }, label)))),
+    leadLines(cd).filter((x) => !x[0]).map(([, words]) => h('p', { class: 'tile-sub' }, words[0].toUpperCase() + words.slice(1) + (cd.everyInterest !== null && cd.interest !== null ? ' (' + money(cd.everyInterest) + ' of interest instead of ' + money(cd.interest) + ')' : '') + '.')),
+    h('p', { class: 'tile-note' }, kindChip(d.kind), ' From the Plan: the extra goes to the debt while its debt steps are being filled (Plan, step by step).'));
 }
 
+// Each debt's month on the Plan (the day-by-day run's own clear dates are not shown: morning answer 1).
 function ganttCard(d) {
-  const g = d.gantt;
-  if (!g.rows.length) return null;
-  // The timeline only when its bars differ (something clears inside the window); else each debt and its clear month.
-  if (new Set(g.rows.map((r) => r.clearDate || 'past')).size < 2) return h('section', { class: 'card', 'aria-labelledby': 'gantt-h' }, h('h2', { id: 'gantt-h' }, 'When each debt clears'),
-    h('ul', { class: 'flow-list' }, d.order.rows.filter((r) => (r.balance ?? 0) > 0).map((r) => h('li', {}, h('a', { href: ledgerHref(r.path) }, r.name), ': ' + (r.planYm ? monthWords(r.planYm) : 'past ' + monthWords(d.clearDates.horizon))))));
-  const left = (f) => 'left:' + pc(f);
-  const shown = g.ticks.filter((t, i) => g.ticks.length <= 6 || i % Math.ceil(g.ticks.length / 6) === 0);
-  return h('section', { class: 'card', 'aria-labelledby': 'gantt-h' },
-    h('h2', { id: 'gantt-h' }, 'Payoff timeline'),
-    h('p', { class: 'muted' }, 'Each bar runs from today to the day the debt clears. A striped bar runs past the window.'),
-    h('div', { class: 'gantt', role: 'img', 'aria-label': 'Payoff timeline: ' + g.rows.map((r) => r.name + (r.clearDate ? ' clears ' + shortDate(r.clearDate) : ' runs past the window')).join('; ') },
-      g.rows.map((r, i) => h('div', { class: 'gantt-row' }, h('span', { class: 'gantt-label' }, r.name),
-        h('div', { class: 'gantt-track' }, h('div', { class: 'gantt-bar ' + vizOf(debtIndex(r.id)) + (r.beyond ? ' beyond' : ''), style: 'width:' + pc(r.fraction) }), ...g.ticks.map((t) => h('span', { class: 'gantt-tick', style: left(t.fraction) })))))),
-    h('div', { class: 'gantt-axis', 'aria-hidden': 'true' }, h('span', {}), h('div', { class: 'axis' }, shown.map((t) => h('span', { style: left(t.fraction) }, monthWords(t.ym).slice(0, 3))))),
-    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, g.rows.map((r) => h('li', {}, h('span', { class: 'sw ' + vizOf(debtIndex(r.id)), 'aria-hidden': 'true' }), r.name))),
-    h('details', { class: 'flow-list' }, h('summary', {}, 'The same timeline as a list'),
-      h('ul', {}, g.rows.map((r) => h('li', {}, r.path ? h('a', { href: ledgerHref(r.path) }, r.name) : r.name, ': ' + money(r.startBalance) + ' today, ' + (r.clearDate ? 'clears ' + shortDate(r.clearDate) : money(r.endBalance) + ' left at the end of the window') + ', interest in the window ' + money(r.interest))))));
+  const rows = d.order.rows.filter((r) => (r.balance ?? 0) > 0);
+  if (!rows.length) return null;
+  return h('section', { class: 'card', 'aria-labelledby': 'gantt-h' }, h('h2', { id: 'gantt-h' }, 'When each debt clears'),
+    h('ul', { class: 'flow-list' }, rows.map((r) => h('li', {}, h('a', { href: ledgerHref(r.path) }, r.name), ': ' + (r.planYm ? monthWords(r.planYm) + ' on your plan' : 'not at this pace')))));
 }
 
 function orderCard(d, ctx) {
   const o = d.order;
   return h('section', { class: 'card', 'aria-labelledby': 'order-h' },
     h('h2', { id: 'order-h' }, 'Payoff order ', h('span', { class: 'count' }, o.strategy === 'snowball' ? 'smallest balance first' : 'highest rate first')),
-    h('p', { class: 'muted' }, 'The extra at the debt (' + money(o.extra) + ' a month) goes to the first unpaid debt in this order. A promo card whose interest would come back (deferred interest) comes first, to clear before its promo ends; a debt marked paid last waits for the others.'),
+    h('p', { class: 'muted' }, 'The Plan\'s extra at the debt goes to the first unpaid debt in this order. A promo card whose interest would come back (deferred interest) comes first, to clear before its promo ends; a debt marked paid last waits for the others.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Debt'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Rate today'), h('th', {}, 'Clears'), h('th', { class: 'num' }, 'Interest, next 12 months'))),
       h('tbody', {}, o.rows.map((r) => h('tr', {}, h('td', {}, String(r.position)), h('td', {}, h('a', { href: ledgerHref(r.path) }, r.name), r.payLast ? [' ', h('span', { class: 'pill' }, 'paid last')] : null), h('td', { class: 'num' }, r.balance === null ? 'missing' : money(r.balance)),
         h('td', { class: 'num' }, pctWords(r.rate) + (r.promo ? ' (intro, ends ' + (r.promoEnds ? shortDate(r.promoEnds) : 'date not entered') + ')' : '')),
-        h('td', {}, r.clearDate ? shortDate(r.clearDate) : r.planYm ? 'about ' + monthWords(r.planYm) + ' (monthly plan, rough)' : 'not inside the window'),
+        h('td', {}, r.planYm ? monthWords(r.planYm) : 'not at this pace'),
         h('td', { class: 'num' }, money(r.interestInWindow))))))),
-    h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day, with new charges on the cards; the total below is the monthly plan to the end, without them, so the two are not meant to add up.'),
-    h('p', { class: 'tile-sub' }, o.neverPaysOff ? 'At this pace the monthly plan never pays everything off.' : o.debtFreeYm ? 'Debt free about ' + monthWords(o.debtFreeYm) + ' on the monthly plan, ' + (o.totalInterest.value === null ? 'interest unknown' : money(o.totalInterest.value) + ' of interest in all') + '.' : ''),
+    h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day, with new charges on the cards; the total below is the Plan\'s to the end, without them, so the two are not meant to add up.'),
+    h('p', { class: 'tile-sub' }, o.neverPaysOff ? 'At this pace the Plan does not pay everything off.' : o.debtFreeYm ? ['All debt gone ' + monthWords(o.debtFreeYm) + ' on your plan, ', o.totalInterest.value === null ? 'interest unknown' : h('span', { 'data-metric': 'plan:debtInterest' }, money(o.totalInterest.value)), ' of interest in all.'] : ''),
     mathButton(['debt:interestWindow'], ctx));
 }
 
@@ -141,7 +130,10 @@ function cardTile(t, d, ctx) {
   const row = (k, val, cls = '') => kv.push(h('dt', {}, k), h('dd', { class: cls }, val));
   // Round 1: today's balance (the one every screen shows) first; where the run leaves it is its own row, named.
   row('Balance today', t.startBalance === null ? 'missing' : money(t.startBalance), t.startBalance === null ? 'words missing-row' : '');
-  row(t.clearDate ? 'Clears' : 'At the end of the run', t.clearDate ? shortDate(t.clearDate) : t.balance === null ? 'missing' : money(t.balance) + (t.revolving ? ', revolving' : ''), t.balance === null && !t.clearDate ? 'words missing-row' : 'words');
+  // The month it clears is the Plan's (morning answer 1); the day-by-day run says only where the next 12 months leave it.
+  const onPlan = d.order.rows.find((r) => r.id === t.id);
+  if (onPlan && (onPlan.balance ?? 0) > 0) row('Clears', onPlan.planYm ? monthWords(onPlan.planYm) + ' on your plan' : 'not at this pace', 'words');
+  if (!t.clearDate) row('In 12 months', t.balance === null ? 'missing' : money(t.balance) + (t.revolving ? ', revolving' : ''), t.balance === null ? 'words missing-row' : 'words');
   row('Rate', pctWords(t.apr) + (t.promoApr !== null && t.promoEnd ? ', intro ' + pctWords(t.promoApr) + ' until ' + (String(t.promoEnd).length === 7 ? monthWords(t.promoEnd) : shortDate(t.promoEnd)) : ''), 'words');
   row('Closes', 'day ' + t.cycle.stmtDay + (t.cycle.closeRough ? ' (a guess from the due day)' : ''), 'words');
   row('Due', 'day ' + t.cycle.dueDay + ', ' + t.cycle.graceDays + ' days of grace', 'words');

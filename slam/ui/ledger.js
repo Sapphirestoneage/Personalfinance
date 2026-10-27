@@ -23,8 +23,8 @@ import { bracketBar, fiPath, savingsCurve } from '../engine/charts.js';
 import { moneyFlow, flowTable } from '../engine/flow.js';
 import { solvers } from '../engine/plan.js';
 import { debtTab } from './debt-tab.js';
-import { debtView } from '../engine/debtview.js';
-import { planDebtExtra } from '../engine/plan.js';
+import { planClearDates } from '../engine/debtview.js';
+import { planPayoff } from '../engine/plan.js';
 import { forecast } from './forecast.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
@@ -1382,9 +1382,9 @@ function debtPayoffRow() {
   if (!(spine.debts || []).some((d) => (valueOf(d.balance) ?? 0) > 0)) return null;
   if (payoffMemo.spine !== spine || payoffMemo.rules !== rules) {
     const s = summaryOf(spine), sim = forecast(spine, rules, 12).sim;
-    const x = planDebtExtra(spine, rules, s, { sim }), d = debtView(spine, rules, sim, s, { extra: x.amount });
-    const free = [...d.clearDates.rows, ...d.clearDates.past].find((r) => r.id === 'allFree');
-    payoffMemo = { spine, rules, sim, s, fact: free && !free.past ? 'Debt free ' + monthWordsOf(free.ym) : d.order.debtFreeYm ? 'Debt free about ' + monthWordsOf(d.order.debtFreeYm) : 'Debt free past ' + monthWordsOf(d.clearDates.horizon) };
+    // The Plan's month (morning answer 1), the same as the Debt screen's lead.
+    const cd = planClearDates(planPayoff(spine, rules, s, { sim }));
+    payoffMemo = { spine, rules, sim, s, fact: cd.allYm ? 'All debt gone ' + monthWordsOf(cd.allYm) + ' on your plan' : 'Not yet on your plan' };
   }
   const m = payoffMemo;
   return foldRow('debt-payoff', 'Payoff dates', m.fact, () => debtTab({ c: { sim: m.sim }, spine, rules, mathCtx: () => ({ spine, rules, s: m.s }), rerender: refresh }));

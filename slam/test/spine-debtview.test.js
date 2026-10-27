@@ -23,16 +23,16 @@ test('the Debt tab reads one run: clear dates, a Gantt bar per debt, the order, 
   const s = demo();
   const sim = cashsim(s, R, { months: 12 });
   const d = debtView(s, R, sim, summarize(s, R, { flags: false }));
-  // Clear dates from the Plan's run: each one a month inside 12 months, or one "Past" line (Calendar audit).
-  assert.deepEqual([...d.clearDates.rows, ...d.clearDates.past].map((r) => r.id).sort(), ['allFree', 'cardsFree', 'hiFree', 'loansFree']);
-  assert.ok(d.clearDates.rows.every((r) => /^\d{4}-\d{2}$/.test(r.ym)));
+  // The lead dates are the Plan's (morning answer 1): high-interest gone, all gone, and the comparison.
+  for (const k of ['hiYm', 'allYm', 'everyYm']) assert.match(d.clearDates[k], /^\d{4}-\d{2}$/, k);
+  assert.ok(d.clearDates.hiYm <= d.clearDates.allYm && d.clearDates.everyYm <= d.clearDates.allYm);
   assert.deepEqual(d.gantt.rows.map((r) => r.id), ['visa', 'store', 'sl'], 'the zero-balance business card has no bar');
   for (const r of d.gantt.rows) { assert.ok(r.fraction > 0 && r.fraction <= 1); assert.ok(r.startBalance > 0); assert.equal(typeof r.beyond, 'boolean'); }
   assert.ok(d.gantt.ticks.length >= 11, 'a tick per month start inside the window');
   assert.deepEqual(d.order.rows.map((r) => r.position), [1, 2, 3]);
   assert.equal(d.order.rows[0].id, 'store', 'the one ranking: the deferred-interest Store card before its cliff, then the 22% Visa (Krug pass)');
   assert.equal(d.order.strategy, 'avalanche');
-  assert.ok(d.order.rows.every((r) => r.clearDate || r.planYm), 'every debt has a date inside the window or a month from the monthly plan');
+  assert.ok(d.order.rows.every((r) => r.planYm), 'every debt has its month on the Plan');
   assert.ok(d.interest.months.length >= 12 && d.interest.debts.some((x) => x.id === 'visa'));
   assert.ok(d.interest.total > 0 && d.interest.max > 0);
   assert.equal(d.cards.length, 3);
@@ -260,8 +260,9 @@ test('one extra at the debt: the Plan\'s step amount, the same in the debt view 
   const s = demo(), S = summarize(s, R, { flags: false });
   const x = planDebtExtra(s, R, S);
   const sim = cashsim(s, R, { months: 12 });
-  const d = debtView(s, R, sim, S, { extra: x.amount });
-  assert.equal(d.order.extra, x.amount);
+  const d = debtView(s, R, sim, S);
+  // The order runs on the Plan's extra month by month (morning answer 1): this month, the step's amount.
+  assert.equal(Math.round(d.order.extra(1)), x.amount);
   const f = fooLadder(s, R, S);
   if (['highInterest', 'lowInterest'].includes(f.current)) assert.equal(fooGhosts(s, R, S, [s.meta.asOf.slice(0, 7)])[0].amount, x.amount);
 });

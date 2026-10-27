@@ -221,3 +221,7 @@ Today and the One-pager warn that about $360 of deferred interest lands if the S
 
 ## 162. "Paid last" on the everyday card (round 3, finding 1)
 The Visa is marked as the everyday card, so the day-by-day run pays it last ("nothing extra reaches it"), while the monthly plan's order ranks it second and clears it about Apr 2027. Default used: both shown, each labelled; one rule for "paid last" in both runs is engine work (with 155).
+
+## Answers to the morning decisions (2026-10-27)
+- **154, 155, 161, 162 (one debt model), answered 2026-10-27:** the monthly Plan is the source for every payoff date and interest total a client sees (Debt, One-pager, What if, Today, Goals). The Plan's debt steps take their months from the monthly payoff run, with the surplus at the debt only while a debt step is being filled; the day-by-day run is for cash and the next 12 months and shows no debt-free date. "Every extra dollar at debt" is a labeled comparison beside the Plan's date. The day-by-day run charges deferred interest when a deferred-interest promo ends unpaid (the same amount as the warning). S-243.
+- **154 (what the client sees first), answered 2026-10-27:** Debt and the One-pager lead with "High-interest debt gone: <month>", "All debt gone: <month> on your plan", then "<month> if every extra dollar went to debt". S-243.

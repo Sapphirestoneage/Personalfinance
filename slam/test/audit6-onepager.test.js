@@ -20,7 +20,8 @@ test('the next step is the shared ranking, in words with no screen names', () =>
   assert.doesNotMatch(words, /Plan page|My numbers|on Today/);
 });
 
-test('debt shows the Plan\'s clear months or "not yet planned"', () => {
-  assert.match(src, /r\.planYm \? 'clear by ' \+ monthWords\(r\.planYm\) : 'not yet planned'/);
-  assert.match(src, /planDebtExtra\(spine, rules, s,/);
+test('debt shows the Plan\'s clear months or "not yet on your plan", under the Debt screen\'s three lead lines', () => {
+  assert.match(src, /r\.planYm \? 'clear by ' \+ monthWords\(r\.planYm\) : 'not yet on your plan'/);
+  assert.match(src, /leadLines\(d\.clearDates\)/);
+  assert.match(src, /planPayoff\(spine, rules, s,/);
 });

@@ -192,12 +192,18 @@ export function order(spine, strategy, asOf, { cardsOnly = false, rules = null }
 // One month of interest on a debt's running state { d, bal, interest,
 // startBal, deferredDone }, including a deferred-interest charge the month a
 // deferred promo ends with a balance. Returns the interest added.
-export function accrueMonth(s, iso, asOf, t) {
+// The deferred-interest charge-back, one formula for the Plan's run, the day-by-day run and the next-step warning
+// (debtLoss): the rate after the promo on the balance, for APP_DEFERRED_MONTHS (the house default: interest runs from
+// each purchase date, so the promo's whole length, not only the months left).
+export function deferredCharge(d, bal, rules, asOf) {
+  return (bal || 0) * (v(d.apr) ?? 0) * rules.get('APP_DEFERRED_MONTHS', +asOf.slice(0, 4)) / 12;
+}
+export function accrueMonth(s, iso, asOf, t, rules) {
   const { rate, path, promo } = rateOn(s.d, iso);
   if (rate === null && t) t.addMissing(path);
   let added = 0;
   if (!promo && !s.deferredDone && v(s.d.deferredInterest) === true && v(s.d.promoEnds) && v(s.d.apr) !== null) {
-    added += s.startBal * v(s.d.apr) * paymentsBefore(asOf, v(s.d.promoEnds)) / 12;
+    added += deferredCharge(s.d, s.startBal, rules, asOf);
     s.deferredDone = true;
   }
   // An intro that ends inside this month: intro rate up to its end date, the
@@ -229,12 +235,13 @@ export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, as
     ym = addMonths(ym, 1); months++;
     const before = trace ? st.map((s) => [s.bal, s.interest]) : null;
     const iso = monthStart(ym);
-    let pool = extra;
+    // extra: a steady amount, or the Plan's month by month (a function of the month number, 1 the first month).
+    let pool = typeof extra === 'function' ? extra(months) : extra;
     for (const s of st) {
       // A paid-off debt frees its payment for the next one; a card paid by its statement frees nothing (its payment
       // is its new charges) and never accrues interest (answer 38).
       if (s.bal <= 0.005) { if (accrues(spine, s.d)) { const m = paymentOn(spine, rules, s.d, iso, s.startBal); pool += m.value ?? 0; } continue; }
-      if (accrues(spine, s.d)) accrueMonth(s, iso, asOf, t);
+      if (accrues(spine, s.d)) accrueMonth(s, iso, asOf, t, rules);
       const m = paymentOn(spine, rules, s.d, iso, s.bal);
       t.absorb({ ...m, value: undefined });
       const pay = Math.min(s.bal, m.value ?? 0);
@@ -372,7 +379,7 @@ export function debtSchedule(spine, rules, asOf, untilYm) {
     let paid = 0, interest = 0;
     for (const s of states) {
       if (s.bal <= 0.005) continue;
-      if (accrues(spine, s.d)) interest += accrueMonth(s, iso, asOf, t);
+      if (accrues(spine, s.d)) interest += accrueMonth(s, iso, asOf, t, rules);
       const m = paymentOn(spine, rules, s.d, iso, s.bal);
       t.absorb({ ...m, value: undefined });
       if (m.value === null) t.addMissing(P(s.d, 'minimum'));
@@ -400,7 +407,7 @@ export function debtLoss(spine, rules, d, asOf = spine.meta.asOf) {
   if (ends && ends >= asOf && now !== null && after !== null && now < after) {
     const left = Math.max(1, monthsTo(asOf, ends));
     const deferred = !!d.deferredInterest && v(d.deferredInterest) === true;
-    const back = deferred ? bal * after * rules.get('APP_DEFERRED_MONTHS', year) / 12 : 0;
+    const back = deferred ? deferredCharge(d, bal, rules, asOf) : 0;
     const loss = deferred ? Math.round((back / left + bal * after / 12) * 100) / 100 : Math.round(bal * after / 12 * (1 + 1 / left) * 100) / 100;
     return { loss, promo: true, deferred, monthsLeft: left, rate: now, after, back: Math.round(back * 100) / 100 };
   }

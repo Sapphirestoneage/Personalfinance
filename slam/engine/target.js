@@ -7,7 +7,7 @@
 
 import { cashflow } from './cashflow.js';
 import { summarize } from './summary.js';
-import { payoffPlan } from './debt.js';
+import { planPayoff } from './plan.js';
 import { budgetView } from './budget.js';
 import { getAt, valueOf as v, round2, monthKey } from './spine.js';
 import { editExpense, editIncome } from './edits.js';
@@ -38,7 +38,8 @@ export function targetBuys(spine, target, rules) {
   const a = summarize(spine, rules, { flags: false }), b = summarize(tgt, rules, { flags: false });
   const more = a.cashflow.surplus.value === null || b.cashflow.surplus.value === null ? null : round2(b.cashflow.surplus.value - a.cashflow.surplus.value);
   const fiYear = (s) => (s.fi.yearsToFi.value === null ? null : Math.floor(year + s.fi.yearsToFi.value));
-  const free = (sp, s) => { const extra = Math.max(0, s.cashflow.surplus.value || 0); const p = payoffPlan(sp, rules, { extra, asOf }); return p.neverPaysOff ? null : p.debtFreeYm || null; };
+  // All debt gone on the Plan (morning answer 1).
+  const free = (sp, s) => ((sp.debts || []).some((d) => (v(d.balance) ?? 0) > 0) ? planPayoff(sp, rules, s, { asOf }).allYm : null);
   const fiNow = fiYear(a), fiTarget = fiYear(b), freeNow = free(spine, a), freeTarget = free(tgt, b);
   const parts = [];
   if (more !== null && Math.abs(more) >= 1) parts.push(dollars(more) + (more > 0 ? ' more' : ' less') + ' a month');

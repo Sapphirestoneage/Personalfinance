@@ -360,7 +360,8 @@ function whatIfScreen(m) {
     const dm = a.debtFreeYm && b.debtFreeYm ? months(b.debtFreeYm, a.debtFreeYm) : 0;
     out.replaceChildren(
       row('Left after saving, a month', money(a.surplus), money(b.surplus)),
-      row('Debt free (all extra at the debt)', free(a), free(b), dm > 0 ? plural(dm, 'month') + ' sooner' : dm < 0 ? plural(-dm, 'month') + ' later' : null),
+      a.hiYm || b.hiYm ? row('High-interest debt gone', a.hiYm ? monthWords(a.hiYm) : 'none left', b.hiYm ? monthWords(b.hiYm) : 'none left') : null,
+      row('All debt gone, on your plan', free(a), free(b), dm > 0 ? plural(dm, 'month') + ' sooner' : dm < 0 ? plural(-dm, 'month') + ' later' : null),
       row('Interest on the way', money(a.interest), money(b.interest)),
       row('Financial independence', a.fiYear === null ? 'not at this pace' : 'about ' + a.fiYear, b.fiYear === null ? 'not at this pace' : 'about ' + b.fiYear, a.fiYear !== null && b.fiYear !== null && a.fiYear !== b.fiYear ? plural(Math.abs(a.fiYear - b.fiYear), 'year') + (b.fiYear < a.fiYear ? ' sooner' : ' later') : null));
   };

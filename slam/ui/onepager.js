@@ -12,7 +12,8 @@ import { startPage, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { debtView } from '../engine/debtview.js';
-import { planDebtExtra } from '../engine/plan.js';
+import { planPayoff } from '../engine/plan.js';
+import { leadLines } from './debt-lead.js';
 import { rankSteps } from '../engine/next-step.js';
 import { maxItFor } from './maxit-panel.js';
 import { whose } from './household.js';
@@ -41,7 +42,7 @@ function render({ spine: base, rules }) {
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
   const rank = rankSteps(spine, rules, s, { sim: maxItFor(spine, rules).sim });
-  const debt = debtView(spine, rules, sim, s, { extra: planDebtExtra(spine, rules, s, { sim, ladder: rank.ladder }).amount });
+  const debt = debtView(spine, rules, sim, s, { plan: planPayoff(spine, rules, s, { sim, ladder: rank.ladder }) });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
   const step = rank.first, who = whose(base);
   // The money flow as a small table (Krug pass): in, then where it ends up; a guessed amount is marked "about".
@@ -80,13 +81,13 @@ function nextWords(step, questions) {
   if (questions.length) return 'First, we need one answer from you: ' + questions[0].question;
   return 'Every step is done. Keep going as you are.';
 }
-// Each debt with a balance and the month the Plan's run clears it, else "not yet planned".
+// Debt (morning answer 2): the same three lines the Debt screen leads with, then each debt and its month on the Plan.
 function debtCard(d) {
   const owing = d.order.rows.filter((r) => (r.balance ?? 0) > 0);
   if (!owing.length) return h('section', { class: 'card' }, h('h2', {}, 'Debt'), h('p', {}, 'No debt to pay off.'));
-  return goCard('Debt', numbersHref('debt'), h('ul', {}, owing.map((r) => h('li', {}, r.name + ' (' + m(r.balance) + '): ' + (r.planYm ? 'clear by ' + monthWords(r.planYm) : 'not yet planned')))),
-    d.clearDates.rows.length ? h('p', { class: 'tile-note' }, d.clearDates.rows.map((r) => r.label.replace(/ \(.*\)$/, '') + ' by ' + monthWords(r.ym)).join('. ') + '.') : null,
-    h('p', { class: 'tile-note' }, 'With ' + m(d.order.extra) + ' a month extra at the debt, in this order.'));
+  return goCard('Debt', numbersHref('debt'),
+    h('ul', { class: 'op-lead' }, leadLines(d.clearDates).map(([label, words]) => h('li', {}, label ? [h('strong', {}, label + ': '), words] : words[0].toUpperCase() + words.slice(1)))),
+    h('ul', {}, owing.map((r) => h('li', {}, r.name + ' (' + m(r.balance) + '): ' + (r.planYm ? 'clear by ' + monthWords(r.planYm) : 'not yet on your plan')))));
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

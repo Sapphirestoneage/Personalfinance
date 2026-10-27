@@ -126,7 +126,9 @@ export function cashLineCard(line, range = null) {
 
 // ---------------------------------------------------------------- Debt
 const ymWords = (ym) => (ym ? monthWords(ym) : 'not in sight');
-export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', asOf = spine.meta.asOf } = {}) {
+// extra: the Plan's extra month by month (planPayoff's extraFn), so the chart's date is the Plan's (morning answer 1);
+// every: the comparison with every extra dollar at the debt, said beside it.
+export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', asOf = spine.meta.asOf, every: allIn = null } = {}) {
   const p = C.debtPath(spine, rules, { strategy, extra, asOf });
   if (!p.debts.length) return [];
   const T = p.months.map(ymT);
@@ -136,7 +138,7 @@ export function debtCharts(spine, rules, { extra = 0, strategy = 'avalanche', as
   const tips = (t) => { const j = T.indexOf(t); return j < 0 ? null : monthWords(p.months[j]) + ': ' + p.debts.map((d) => d.name + ' ' + exactMoney(d.points[j])).join(', '); };
   const every = Math.max(1, Math.ceil(p.months.length / 24));
   const area = chartCard({ id: 'debt-area', question: 'When is your debt gone?',
-    summary: p.neverPaysOff ? 'At this pace the debt is never paid off.' : 'Debt free ' + ymWords(p.debtFreeYm) + ', with ' + exactMoney(p.totalInterest) + ' of interest on the way, paying ' + exactMoney(extra) + ' a month extra.',
+    summary: p.neverPaysOff ? 'At this pace the debt is never paid off.' : 'All debt gone ' + ymWords(p.debtFreeYm) + ' on your plan, with ' + exactMoney(p.totalInterest) + ' of interest on the way' + (allIn && allIn.debtFreeYm && allIn.debtFreeYm !== p.debtFreeYm ? '; ' + ymWords(allIn.debtFreeYm) + ' if every extra dollar went to debt.' : '.'),
     draw: (w) => lines({ width: w, series, xFmt: (t) => String(yearOf(t)), tips, label: 'Debt, stacked, to zero' }),
     legend: p.debts.map((d) => ({ c: colorOf(d.id), words: d.name })), note: p.rough ? ROUGH_NOTE : null,
     table: { head: ['Month', ...p.debts.map((d) => d.name)], rows: p.months.filter((_, j) => j % every === 0 || j === p.months.length - 1).map((ym) => { const j = p.months.indexOf(ym); return [monthWords(ym), ...p.debts.map((d) => exactMoney(d.points[j]))]; }) } });
