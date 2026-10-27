@@ -8,6 +8,7 @@
 // Every number comes from engine/plan.js and the engines under it, with Show the math. Formatting only.
 
 import { foldRow } from './rows.js';
+import { whatIf } from '../engine/whatif.js';
 import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
 import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
@@ -27,7 +28,7 @@ import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
 import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue, metric } from './view.js';
 import { typeFor } from '../engine/ledger.js';
-import { readScenarios, keepScenarios, targetId, keepTarget } from './scenarios-store.js';
+import { readScenarios, keepScenarios, targetId, keepTarget, saveScenario } from './scenarios-store.js';
 
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -72,7 +73,7 @@ const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', h
 const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
   surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
-  solve: 'What it takes to get there', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
+  solve: 'What it takes to get there', whatif: 'What if', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
   outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import'
 };
 const payId = (p) => p.date + '-' + p.streamId;
@@ -93,7 +94,7 @@ function render({ spine: base, rules, levels }) {
   const [a, b] = levels;
   if (!a) return top(m);
   if (a === 'paychecks') return b ? paycheckScreen(m, paycheckOf(m, b)) : paychecksScreen(m);
-  const screen = { surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
+  const screen = { surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
   return screen ? screen(m) : stepScreen(m, stepOf(m, a));
 }
 
@@ -172,6 +173,7 @@ function top(m) {
         h('ul', { class: 'go-list' },
           goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
           goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
+          goRow('#/whatif', SCREENS.whatif, 'Spend less, earn more, pay debt faster: watch the dates move'),
           goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
           goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
           goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
@@ -322,6 +324,62 @@ function goalsScreen(m) {
       h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? '' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet'), h('td', {}, r.fiCostMonths === null ? '' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
     h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
     g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null)];
+}
+
+// What if (Track F): four sliders move a copy of the numbers in memory; the dates move as they slide. Nothing changes
+// in My numbers; "Save as a scenario" keeps the moved copy beside the others (Undo takes the save back).
+// LIVE-FORM: built once. A slide redraws only the results under the sliders, never the sliders.
+const MOVES = [
+  ['spendLess', 'Spend less a month', 0, 1000, 25, 'Off the everyday lines (not rent or other fixed costs), shared by their size'],
+  ['earnMore', 'Earn more a month, before tax', 0, 2000, 50, 'On your biggest paycheck, taxed like the rest of it'],
+  ['extraDebt', 'Extra to debt a month', 0, 1000, 25, 'On top of the extra already set, in the plan\'s order'],
+  ['windfall', 'A windfall, once', 0, 50000, 500, 'Sent where Got extra money? would send it']
+];
+function whatIfScreen(m) {
+  const moves = { spendLess: 0, earnMore: 0, extraDebt: 0, windfall: 0, ...(kept().moves || {}) };
+  const out = h('div', { class: 'wi-out', 'aria-live': 'polite' });
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  let last = null, timer = null;
+  const months = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
+  const row = (label, now, then, words) => h('div', { class: 'wi-row' + (now !== then ? ' is-moved' : '') }, h('span', { class: 'wi-label' }, label), h('span', { class: 'wi-now' }, now), h('span', { class: 'wi-arrow', 'aria-hidden': 'true' }, '\u2192'), h('span', { class: 'wi-then' }, then), words ? h('span', { class: 'wi-words' }, words) : null);
+  const draw = () => {
+    last = whatIf(m.base, m.rules, moves, todayIso());
+    const a = last.now, b = last.then;
+    const free = (x) => (x.neverPaysOff ? 'not at this pace' : x.debtFreeYm ? monthWords(x.debtFreeYm) : 'no debt');
+    const dm = a.debtFreeYm && b.debtFreeYm ? months(b.debtFreeYm, a.debtFreeYm) : 0;
+    out.replaceChildren(
+      row('Left after saving, a month', money(a.surplus), money(b.surplus)),
+      row('Debt free', free(a), free(b), dm > 0 ? plural(dm, 'month') + ' sooner' : dm < 0 ? plural(-dm, 'month') + ' later' : null),
+      row('Interest on the way', money(a.interest), money(b.interest)),
+      row('Financial independence', a.fiYear === null ? 'not at this pace' : 'about ' + a.fiYear, b.fiYear === null ? 'not at this pace' : 'about ' + b.fiYear, a.fiYear !== null && b.fiYear !== null && a.fiYear !== b.fiYear ? plural(Math.abs(a.fiYear - b.fiYear), 'year') + (b.fiYear < a.fiYear ? ' sooner' : ' later') : null));
+  };
+  const soon = () => { clearTimeout(timer); timer = setTimeout(() => { keep({ moves: { ...moves } }); draw(); }, 120); };
+  const sliders = MOVES.map(([key, label, min, max, step, hint]) => {
+    const read = h('output', { class: 'wi-value', for: 'wi-' + key }, money(moves[key]));
+    const r = h('input', { type: 'range', id: 'wi-' + key, min, max, step, value: moves[key], 'aria-describedby': 'wi-' + key + '-hint' });
+    r.addEventListener('input', () => { moves[key] = +r.value; read.textContent = money(moves[key]); soon(); });
+    return h('div', { class: 'wi-field' }, h('div', { class: 'wi-head' }, h('label', { for: 'wi-' + key, class: 'edit-label' }, label), read), r, h('p', { class: 'edit-hint', id: 'wi-' + key + '-hint' }, hint));
+  });
+  const name = h('input', { id: 'wi-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Cut back and pay debt' });
+  const save = (e) => {
+    e.preventDefault();
+    if (!Object.values(moves).some((x) => x > 0)) { msg.textContent = 'Move a slider first'; return; }
+    const before = readScenarios();
+    const entry = saveScenario(name.value.trim() || 'What if: ' + MOVES.filter(([k]) => moves[k] > 0).map(([k, label]) => label.toLowerCase().replace(/ a month.*|, once/, '') + ' ' + money(moves[k])).join(', '), (last || whatIf(m.base, m.rules, moves, todayIso())).spine);
+    if (!entry) { msg.textContent = 'This browser will not keep it (storage is blocked)'; return; }
+    msg.textContent = '';
+    say(said.added('Scenario ' + entry.name), () => { keepScenarios(before); refresh(); }, () => { keepScenarios([...before, entry]); refresh(); });
+  };
+  draw();
+  return h('section', { class: 'card', 'aria-label': SCREENS.whatif },
+    h('p', { class: 'muted' }, 'Slide to see what moves. Your numbers stay as they are.'),
+    h('div', { class: 'wi-sliders' }, sliders),
+    out,
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: save },
+      h('label', { for: 'wi-name', class: 'edit-label' }, 'Name it (optional)'), name, msg,
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as a scenario'),
+        h('button', { type: 'button', class: 'btn', onclick: () => { keep({ moves: null }); refresh(); } }, 'Set all back to zero'))),
+    h('ul', { class: 'go-list' }, goRow('#/scenarios', SCREENS.scenarios, 'Compare or load a saved one')));
 }
 
 function solveScreen(m) {

@@ -1692,3 +1692,14 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .method-facts dt { color: var(--text-muted); }
 .method-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
 .method-col .btn { align-self: start; margin-top: auto; }
+/* What if (Track F) */
+.wi-sliders { display: grid; gap: var(--space-4); margin: var(--space-3) 0; }
+.wi-field input[type=range] { width: 100%; min-height: var(--tap); accent-color: var(--accent); }
+.wi-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+.wi-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.wi-out { display: grid; gap: var(--space-2); margin: var(--space-4) 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); }
+.wi-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: var(--space-1) var(--space-2); align-items: baseline; font-variant-numeric: tabular-nums; }
+.wi-label { color: var(--text-muted); }
+.wi-row.is-moved .wi-then { font-weight: 700; }
+.wi-words { grid-column: 1 / -1; font-size: var(--text-sm); color: var(--text-muted); justify-self: end; }
+@media (max-width: 480px) { .wi-row { grid-template-columns: 1fr auto auto auto; font-size: var(--text-sm); } }
