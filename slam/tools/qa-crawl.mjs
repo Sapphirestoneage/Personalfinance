@@ -59,7 +59,8 @@ function inspect({ builder }) {
   for (const el of over) if (!over.includes(el.parentElement)) add('overflow', where(el) + ' ends at ' + Math.round(el.getBoundingClientRect().right) + 'px of ' + W);
   if (document.documentElement.scrollWidth > W + 1 && !over.length) add('overflow', 'the page scrolls sideways (' + document.documentElement.scrollWidth + 'px)');
   // Words that should never show.
-  const text = document.body.innerText;
+  // Closed menus (the editor's ⋯) hide their words from innerText, so their text is read too.
+  const text = document.body.innerText + '\n' + [...document.querySelectorAll('details:not([open]) > :not(summary)')].map((el) => el.textContent).join('\n');
   for (const [re, w] of [[/\bundefined\b/, 'undefined'], [/\bNaN\b/, 'NaN'], [/\bnull\b/, 'null'], [/\[object/, '[object'], [/\bInfinity\b/, 'Infinity'], [/—/, 'an em dash'], [/\b(127\.0\.0\.1|localhost):\d+/, 'the app\'s own address']]) {
     const m = text.match(re);
     if (m) { const i = text.indexOf(m[0]); add('bad text', w + ': "' + text.slice(Math.max(0, i - 40), i + 30).replace(/\s+/g, ' ') + '"'); }
@@ -151,6 +152,8 @@ const ROW_PAGES = /\/(math|rules|house|assumptions)\.html$/;
 
 async function crawl(browser, base) {
   const files = (await readdir(ROOT)).filter((f) => f.endsWith('.html') && (!ONLY || f === ONLY));
+  // Two field screens, so a row's editor and its ⋯ menu get tapped too (a guessed row's menu printed "[object").
+  if (!ONLY || ONLY === 'ledger.html') files.push('ledger.html#/income/paychecks-w-2/salary', 'ledger.html#/debt/credit-cards/visa');
   const queue = files.map((f) => ({ url: base + f, depth: 0 })), seen = new Set(queue.map((q) => q.url));
   const patterns = new Map();
   const screens = [];
@@ -222,6 +225,10 @@ async function tapAll(browser, base) {
       const after = await page.evaluate(() => location.href + '\n' + document.body.innerHTML).catch(() => null);
       for (const [k, w] of errors) note(f, look.id, k === 'page error' || k === 'console error' ? 'click error' : k, '"' + it.text + '": ' + w);
       if (after === before && !it.on) note(f, look.id, 'dead click', '"' + it.text + '"');
+      // What a tap opens (an editor and its closed ⋯ menu) is read for words that should never show.
+      const shown = await page.evaluate(() => document.body.innerText + '\n' + [...document.querySelectorAll('details:not([open]) > :not(summary)')].map((el) => el.textContent).join('\n')).catch(() => '');
+      const junk = shown.match(/\[object \w+\]|\bundefined\b|\bNaN\b/);
+      if (junk) note(f, look.id, 'bad text', 'after "' + it.text + '": ' + junk[0]);
       // Anything changed: start again from fresh storage, so the next tap meets the page as a person would.
       if (after !== before || errors.length) {
         await ctx.close();
