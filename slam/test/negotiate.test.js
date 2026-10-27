@@ -27,7 +27,7 @@ test('phone and gym bills and high-rate cards are listed, with scripts', () => {
   assert.ok(card && card.now >= ref.cardRateAbove && /\d+(\.\d)?%/.test(card.script));
   assert.ok(!list.some((x) => x.label === 'Rent'));
   assert.ok(list.every((x, i) => !i || x.stake <= list[i - 1].stake), 'most dollars a month at stake first');
-  assert.equal(list[0].type, 'phone', 'with the table a placeholder, bills rank by what they cost a month (the $60 phone first, then the Visa'\''s $55 of interest a month)');
+  assert.equal(list[0].type, 'phone', 'with the table a placeholder, bills rank by what they cost a month (the $60 phone first, then the Visa at $55 of interest a month)');
   assert.ok(!list.some((x) => x.label === 'Miscellaneous'), 'whole words only: Miscellaneous is not a cell phone');
 });
 
