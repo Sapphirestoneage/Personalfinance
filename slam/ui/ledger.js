@@ -8,7 +8,7 @@
 
 import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
-import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
+import { stillGuessingSteps, rowPathFor, previewCost, linkOptions, linkName } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
@@ -30,7 +30,7 @@ import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
 import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
-import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed } from '../engine/edits.js';
+import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
@@ -400,7 +400,9 @@ function expenseEditor(row) {
         h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
         row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label)) }, 'Confirm'),
         row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(e.label)) }, 'Not for me'),
-        laterBtn(row)]));
+        laterBtn(row),
+        // Move to Subscriptions (bug sweep): it shows there, wherever it is filed.
+        !isSubscription(e) && h('button', { type: 'button', class: 'btn', onclick: () => done(markSubscription(cur(), id, true, today()), e.label + ' moved to Subscriptions') }, 'Move to Subscriptions')]));
 }
 
 // Start and end dates for an income stream or an expense (S-199), folded
@@ -922,18 +924,45 @@ function subsRow() {
   const sub = summaryOf(cur()).subs;
   return goRow(hashFor(['needs', 'subscriptions']), { name: 'Subscriptions', sub: sub.items.length ? [h('span', {}, h('span', { class: 'go-total' }, money(sub.monthly.value)), ' a month, ' + sub.items.length + ' marked'), sub.toLook.length ? h('span', { class: 'dot dot-rough' }, sub.toLook.length + ' to look at') : null] : 'None marked yet' });
 }
+// Subscriptions (bug sweep): one row each with its amount, its day and what it is paid with; the row opens its editor
+// in place. Tick several to set the card or the day for all of them at once.
+let subsPicked = new Set();
+const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+const roughFact = (f) => !!f && f.kind === 'rough';
 function subsScreen() {
   const sub = summaryOf(cur()).subs;
-  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None marked yet. Open a bill and tick This is a subscription.'));
-  const when = (i) => i.renews ? 'Next charge ' + shortDate(i.renews) + (i.daysToCharge === 0 ? ' (today)' : ' (in ' + i.daysToCharge + ' day' + (i.daysToCharge === 1 ? '' : 's') + ')') : 'Next charge not given';
-  // Each one opens its editor right here, so the list stays the screen Back comes back to.
+  if (!sub.items.length) return h('section', { class: 'card subs' }, h('p', { class: 'muted' }, 'None yet. Open a bill and pick Move to Subscriptions.'));
   const open = kept().open || null;
-  const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : h('div', { class: 'sub-main' }, h('span', {}, i.label), h('span', { class: 'sub-cost' }, i.monthly === null ? 'amount not given' : money(i.monthly, true) + ' a month')); };
+  subsPicked = new Set([...subsPicked].filter((id) => sub.items.some((i) => i.id === id)));
+  const exp = (id) => getAt(cur(), 'expenses.' + id);
+  const dayOf = (i) => (i.renews ? 'on the ' + ordinal(+i.renews.slice(8, 10)) + (roughFact(exp(i.id).renews) ? ' (a guess)' : '') : 'no day yet');
+  const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with not given'; };
+  const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : h('span', {}, i.label); };
+  const tick = (i) => h('input', { type: 'checkbox', id: 'sub-pick-' + i.id, checked: subsPicked.has(i.id) || null, onchange: (ev) => { if (ev.target.checked) subsPicked.add(i.id); else subsPicked.delete(i.id); refresh(); } });
+  const many = [...subsPicked];
+  const card = linkSelect('link:cash|card', null, 'subs-card');
+  const day = h('input', { id: 'subs-day', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '1 to 31' });
+  const apply = () => {
+    const d = day.value.trim() ? parseInput('int', day.value) : null;
+    if (d && (!d.ok || d.value < 1 || d.value > 31)) { say('Day: a number from 1 to 31'); return; }
+    if (!card.value && !d) { say('Pick a card or type a day first'); return; }
+    let s = cur();
+    for (const id of many) { if (card.value) s = chargeTo(s, id, card.value, today()); if (d) s = setChargeDay(s, id, d.value, today()); }
+    subsPicked = new Set();
+    change(s, many.length + ' subscriptions set' + (card.value ? ' to ' + linkName(cur(), card.value) : '') + (d ? ', on the ' + ordinal(d.value) : ''));
+  };
   return h('section', { class: 'card subs', 'aria-label': 'Subscriptions' },
-    h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year. ' + (sub.toLook.length ? sub.toLook.length + ' to look at: charging within ' + sub.soonDays + ' days or not reviewed in ' + sub.reviewDays + '.' : 'All reviewed recently.')),
+    h('p', { class: 'muted' }, money(sub.monthly.value) + ' a month, ' + money(sub.yearly) + ' a year.'),
+    many.length ? h('div', { class: 'subs-bulk', role: 'group', 'aria-label': 'Set for the ticked ones' },
+      h('p', { class: 'edit-label' }, many.length + ' ticked'),
+      h('div', { class: 'add-field' }, h('label', { for: 'subs-card', class: 'edit-label' }, 'Paid with'), card),
+      h('div', { class: 'add-field' }, h('label', { for: 'subs-day', class: 'edit-label' }, 'Day of the month'), day),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Set for ' + many.length),
+        h('button', { type: 'button', class: 'btn', onclick: () => { subsPicked = new Set(); refresh(); } }, 'Clear'))) : null,
     h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub' + (i.soon || i.due ? ' sub-look' : '') },
-      line(i),
-      h('p', { class: 'sub-when' }, when(i), ' · ', i.reviewed ? 'Reviewed ' + shortDate(i.reviewed) : 'Never reviewed', i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
+      h('div', { class: 'sub-row' }, h('label', { class: 'check-row sub-tick', for: 'sub-pick-' + i.id, 'aria-label': 'Tick ' + i.label }, tick(i)), line(i)),
+      h('p', { class: 'sub-when' }, (i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month') + ' · ' + dayOf(i) + ' · ' + withWhat(i),
+        i.soon ? h('span', { class: 'stage-chip stage-yellow' }, 'Charging soon') : null),
       h('button', { type: 'button', class: 'btn small', onclick: () => change(putFact(cur(), 'expenses.' + i.id + '.reviewed', today(), 'known', today()), i.label + ' marked reviewed today') }, 'Reviewed today')))));
 }
 

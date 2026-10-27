@@ -406,6 +406,22 @@ export function chargeTo(spine, id, from, today) {
   return editPayment(spine, id, { from, day: e.payDay ? valueOf(e.payDay) : null }, today);
 }
 
+// A subscription's charge day (bug sweep): its next charge becomes the next date on that day of the month from today.
+export function setChargeDay(spine, id, day, today) {
+  if (!getAt(spine, 'expenses.' + id)) throw new Error('No expense ' + id);
+  if (!Number.isInteger(day) || day < 1 || day > 31) throw new Error('A day from 1 to 31');
+  const y = +today.slice(0, 4), m = +today.slice(5, 7);
+  const on = (yy, mm) => { const last = new Date(Date.UTC(yy, mm, 0)).getUTCDate(); return yy + '-' + String(mm).padStart(2, '0') + '-' + String(Math.min(day, last)).padStart(2, '0'); };
+  let next = on(y, m);
+  if (next < today) next = m === 12 ? on(y + 1, 1) : on(y, m + 1);
+  return putFact(spine, 'expenses.' + id + '.renews', next, 'known', today);
+}
+// Mark a line a subscription, or not (Move to Subscriptions, bug sweep).
+export function markSubscription(spine, id, on, today) {
+  if (!getAt(spine, 'expenses.' + id)) throw new Error('No expense ' + id);
+  return putFact(spine, 'expenses.' + id + '.subscription', !!on, 'known', today);
+}
+
 // An expense's payment (S-189): the account or card, and the day (blank clears it). paysDebt (S-226): the debt the
 // line pays (its payment is then counted once, under debt payments), null to unlink, undefined to keep.
 export function editPayment(spine, id, { from, day = null, paysDebt = undefined, kind = 'known' }, today) {

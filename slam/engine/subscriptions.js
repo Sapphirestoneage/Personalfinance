@@ -18,7 +18,9 @@ export function nextCharge(date, cadence, asOf) {
   return d;
 }
 
-export const isSubscription = (e) => !!e.subscription && v(e.subscription) === true;
+// A subscription is one marked so, or anything with a next charge typed in (bug sweep), wherever it was filed; a line
+// marked "not a subscription" stays out. A next charge the house default filled in does not count on its own.
+export const isSubscription = (e) => (e.subscription && v(e.subscription) !== null ? v(e.subscription) === true : !!e.renews && v(e.renews) !== null && e.renews.source !== 'DEFAULT_DUE_DAY');
 
 export function subscriptions(spine, rules, cf, asOf) {
   const year = +asOf.slice(0, 4);

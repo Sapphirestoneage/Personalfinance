@@ -5,6 +5,7 @@
 import { fact, setAt, valueOf, getAt, whoSupplies } from './spine.js';
 import { estimateCardMinimum, DEFAULT_MIN_SOURCE } from './debt.js';
 import { isEarmarked, fromPaycheck } from './schema.js';
+import { isSubscription } from './subscriptions.js';
 
 // Blank: nothing typed. A guess this file put in from a house default (its source is that default's id) counts as
 // blank too, so changing a house default on the Builder changes every guess that used it, and nothing typed.
@@ -33,6 +34,16 @@ export function applyDefaults(spine, rules) {
     }
     const paysSomething = d.type !== 'family_iou' || (valueOf(d.minimum) ?? 0) > 0;
     if (paysSomething && blank(d.dueDay, 'DEFAULT_DUE_DAY')) out = setAt(out, base + '.dueDay', rough(rules.get('DEFAULT_DUE_DAY', year), 'DEFAULT_DUE_DAY', DEFAULT_WORDS + ' until the real due day is entered'));
+  }
+  // A subscription with no next charge (bug sweep) charges on the house default due day, the next one from the as-of
+  // date, marked rough, so it lands on the Calendar; a typed date replaces it. Not for a line someone else pays.
+  const dueDay = rules.get('DEFAULT_DUE_DAY', year);
+  for (const e of spine.expenses || []) {
+    if (!isSubscription(e) || (e.covered && valueOf(e.covered) === true) || !blank(e.renews, 'DEFAULT_DUE_DAY')) continue;
+    const d = String(Math.min(dueDay, 28)).padStart(2, '0');
+    let next = asOf.slice(0, 8) + d;
+    if (next < asOf) { const m = +asOf.slice(5, 7), y = +asOf.slice(0, 4); next = (m === 12 ? y + 1 : y) + '-' + String(m === 12 ? 1 : m + 1).padStart(2, '0') + '-' + d; }
+    out = setAt(out, 'expenses.' + e.id + '.renews', rough(next, 'DEFAULT_DUE_DAY', DEFAULT_WORDS + ' (the usual due day) until the next charge is entered'));
   }
   // Links (S-189): until said otherwise, money comes in and goes out through
   // the main checking account, as a guess. A covered expense is paid by

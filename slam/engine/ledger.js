@@ -169,8 +169,13 @@ export function ledgerRows(spine) {
 export function linkOptions(spine, type) {
   const want = type.slice(5).split('|');
   const out = [];
-  if (want.includes('cash')) for (const a of spine.accounts || []) if (a.family === 'cash') out.push({ value: a.id, label: valueOf(a.name) || a.id, group: 'Accounts' });
-  if (want.includes('card')) for (const d of spine.debts || []) if (d.type === 'credit_card') out.push({ value: d.id, label: valueOf(d.name) || d.id, group: 'Cards' });
+  // Checking and every card, grouped by bank (bug sweep); one with no bank given sits under Accounts or Cards.
+  const bank = (x, none) => (x.institution && valueOf(x.institution) ? String(valueOf(x.institution)).trim() : none);
+  const money = [];
+  if (want.includes('cash')) for (const a of spine.accounts || []) if (a.family === 'cash') money.push({ value: a.id, label: valueOf(a.name) || a.id, group: bank(a, 'Accounts') });
+  if (want.includes('card')) for (const d of spine.debts || []) if (d.type === 'credit_card') money.push({ value: d.id, label: valueOf(d.name) || d.id, group: bank(d, 'Cards') });
+  const order = [...new Set(money.map((o) => o.group))];
+  out.push(...order.flatMap((g) => money.filter((o) => o.group === g)));
   if (want.includes('paycheck')) out.push({ value: 'paycheck', label: 'Taken from my paycheck', group: 'Paycheck' });
   if (want.includes('job')) for (const s of spine.income || []) if (s.type === 'w2' && s.cadence !== 'once') out.push({ value: s.id, label: s.label, group: 'Jobs' });
   return out;

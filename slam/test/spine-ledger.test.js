@@ -343,7 +343,8 @@ test('an expense\'s payment: the account or card and the day, one row', () => {
   const s0 = applyDefaults(demo(), R);
   const card = s0.debts.find((d) => d.type === 'credit_card');
   const e = s0.expenses[0];
-  assert.ok(linkOptions(s0, 'link:cash|card').some((o) => o.value === card.id && o.group === 'Cards'));
+  // Grouped by bank (bug sweep): the card sits under its bank's name, or Cards when none is given.
+  assert.ok(linkOptions(s0, 'link:cash|card').some((o) => o.value === card.id && o.group === (card.institution && card.institution.value ? card.institution.value : 'Cards')));
   const s = editPayment(s0, e.id, { from: card.id, day: 5 }, '2026-10-23');
   const row = paymentRow(s, s.expenses[0]);
   // paysDebt (S-226): the debt the line pays; none here.
