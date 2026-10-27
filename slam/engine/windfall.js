@@ -104,7 +104,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       t.absorb({ ...s.cashflow.surplus, value: undefined });
       const sure = Math.max(0, surplus ?? 0);
       let reduce = Math.max(0, pr.monthly.value - sure);
-      if (reduce <= 0.005) return { need: 0, why: 'Clearing them takes ' + money(pr.monthly.value, true) + ' a month and the monthly surplus is ' + money(surplus) + ', so the surplus clears them in time on its own.', path: 'debts.' + pr.items[0].id + '.balance' };
+      if (reduce <= 0.005) return { need: 0, why: 'Clearing them takes ' + money(Math.round(pr.monthly.value)) + ' a month and the monthly surplus is ' + money(surplus) + ', so the surplus clears them in time on its own.', path: 'debts.' + pr.items[0].id + '.balance' };
       // Deferred-interest promos first (the costliest to miss), then the earliest deadline.
       const items = [...pr.items].sort((a, b) => (b.deferredInterest === true) - (a.deferredInterest === true) || (a.promoEnds < b.promoEnds ? -1 : a.promoEnds > b.promoEnds ? 1 : 0));
       const out = [];
@@ -117,7 +117,7 @@ export function windfall(spine, rules, s, { amount, taxed = true, source = 'othe
       }
       const need = out.reduce((a, x) => a + x.pay, 0);
       const after = round2(pr.monthly.value - out.reduce((a, x) => a + x.pay / Math.max(1, x.paymentsLeft), 0));
-      return { need, items: out, why: 'Clearing them takes ' + money(pr.monthly.value, true) + ' a month and the monthly surplus is ' + (surplus === null ? 'not known yet' : money(surplus)) + '. Paying ' + out.map((x) => money(x.pay) + ' off ' + x.name + (x.deferredInterest === true ? ' (deferred interest)' : '')).join(' and ') + ' now brings that to ' + money(Math.max(0, after), true) + ' a month, which the surplus covers.', path: out[0].path };
+      return { need, items: out, why: 'Clearing them takes ' + money(Math.round(pr.monthly.value)) + ' a month and the monthly surplus is ' + (surplus === null ? 'not known yet' : money(surplus)) + '. Paying ' + out.map((x) => money(x.pay) + ' off ' + x.name + (x.deferredInterest === true ? ' (deferred interest)' : '')).join(' and ') + ' now brings that to ' + money(Math.round(Math.max(0, after))) + ' a month, which the surplus covers.', path: out[0].path };
     });
     else if (id === 'employerMatch') run(id, (t) => {
       const accts = (spine.accounts || []).filter((a) => a.family === 'employerRetirement' && a.matchRate && a.matchRate.kind !== 'notForMe');

@@ -36,6 +36,7 @@ export const LEVEL1 = [
   { id: 'firstName', area: 'you', label: 'Your first name', kind: 'text', does: 'Names the household on every page.' },
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
+  { id: 'county', area: 'you', label: 'Your county', kind: 'text', does: 'Picks a local tax where there is one.' },
   { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['adults', 'Other adults']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.' },
   { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },
   { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['roommates', 'With roommates'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
@@ -79,7 +80,25 @@ const L1 = new Map(LEVEL1.map((q) => [q.id, q]));
 
 // ---------------------------------------------------------------- reading the answers
 // answers: a plain map { id: value } (the before-call page keeps one), or read from a spine's Facts.
-export const answersOf = (spine) => Object.fromEntries(Object.entries((spine && spine.profile) || {}).map(([k, f]) => [k, v(f)]).filter(([, x]) => x !== null && x !== undefined));
+// One stored answer (bug sweep): the birth year, the state and the county live on the household's own fields, which
+// Taxes > Filing shows read-only; the Profile asks for them and writes them there. An older file's Profile answer is
+// read only while the household field is blank.
+const firstPerson = (spine) => ((spine && spine.household && spine.household.people) || [])[0] || null;
+export const HOUSEHOLD_ANSWERS = {
+  birthYear: (spine) => (firstPerson(spine) ? 'household.people.' + firstPerson(spine).id + '.birthDate' : null),
+  state: () => 'household.state',
+  county: () => 'household.county'
+};
+const fromHousehold = (spine, id) => {
+  const path = HOUSEHOLD_ANSWERS[id](spine), f = path ? getAt(spine, path) : null, x = f ? v(f) : null;
+  if (x === null || x === undefined || (f && f.kind === 'missing')) return null;
+  return id === 'birthYear' ? +String(x).slice(0, 4) : x;
+};
+export const answersOf = (spine) => {
+  const out = Object.fromEntries(Object.entries((spine && spine.profile) || {}).map(([k, f]) => [k, v(f)]).filter(([, x]) => x !== null && x !== undefined));
+  if (spine && spine.household) for (const id of Object.keys(HOUSEHOLD_ANSWERS)) { const x = fromHousehold(spine, id); if (x !== null) out[id] = x; }
+  return out;
+};
 export function ans(a, id) { const x = a ? a[id] : null; return x === undefined ? null : x; }
 export function has(a, id, val) { const x = ans(a, id); return Array.isArray(x) ? x.includes(val) : x === val; }
 // Open: not answered, not sure, or one of vals. A field shows while its question is open, so nothing is hidden before
@@ -256,6 +275,7 @@ export function cleanAnswer(id, value) {
 export function applyAnswer(spine, id, value, { today, by = 'client', source = NAME_SOURCE } = {}) {
   const clean = value === null ? null : cleanAnswer(id, value);
   if (clean === undefined) return spine;
+  if (HOUSEHOLD_ANSWERS[id] && spine.household) return householdAnswer(spine, id, clean, today);
   const before = spine.profile && spine.profile[id] ? v(spine.profile[id]) : null;
   if (JSON.stringify(before) === JSON.stringify(clean)) return spine;
   const profile = { ...(spine.profile || {}) };
@@ -295,8 +315,6 @@ export function syncProfile(spine, { today, changed = null }) {
   const guess = (path, value) => { const cur = getAt(s, path); if (!cur || cur.kind === 'missing' || cur.source === NAME_SOURCE || whoSupplies(cur) === 'default') s = setAt(s, path, fact(value, { kind: 'rough', asOf: today, source: NAME_SOURCE, by: 'client', note: 'a guess from your profile' })); };
   const person = (s.household.people || [])[0];
   if (person && a.firstName && (!person.name || person.name === 'You' || person.nameFrom === NAME_SOURCE)) s = setAt(s, 'household.people', s.household.people.map((p, i) => (i ? p : { ...p, name: a.firstName, nameFrom: NAME_SOURCE })));
-  if (person && Number.isInteger(a.birthYear)) guess('household.people.' + person.id + '.birthDate', a.birthYear + '-07-01');
-  if (a.state && a.state !== NOT_SURE) guess('household.state', a.state);
   if (has(a, 'debts', 'cards') && a.cardsFull && a.cardsFull !== NOT_SURE) guess('household.cardPayPolicy', a.cardsFull === 'always' ? 'statement' : 'minimum');
   // How the paycheck is figured follows the answer (salary is a yearly amount, by the hour is rate x hours): the first
   // W-2 line takes that basis and the pay frequency. setPay keeps the other way's numbers, so switching back finds them.
@@ -466,4 +484,23 @@ export function protectionGaps(a) {
   if (is('beneficiaries', 'no')) gaps.push({ id: 'beneficiaries', short: 'beneficiaries', label: 'Update the beneficiaries on your accounts', why: 'Retirement accounts go to whoever is named on them, whatever a will says.' });
   if (depends && is('will', 'no')) gaps.push({ id: 'will', short: 'a will', label: 'Write a will', why: 'Someone depends on you; a will says who looks after them and your things.' });
   return gaps;
+}
+
+// An answer stored on the household (HOUSEHOLD_ANSWERS): set there, logged as a life change, never kept twice. A birth
+// year keeps the month and day already known; with none, July 1 stands in, marked rough.
+function householdAnswer(spine, id, clean, today) {
+  const path = HOUSEHOLD_ANSWERS[id](spine);
+  if (!path) return spine;
+  const before = fromHousehold(spine, id);
+  if (JSON.stringify(before) === JSON.stringify(clean === NOT_SURE ? null : clean)) return spine;
+  const cur = getAt(spine, path), was = cur ? v(cur) : null;
+  let next;
+  if (clean === null || clean === NOT_SURE) next = fact(null, { kind: 'missing', asOf: today, source: NAME_SOURCE });
+  else if (id === 'birthYear') next = was && /^\d{4}-\d{2}-\d{2}$/.test(was) && cur.kind !== 'rough' ? fact(clean + was.slice(4), { kind: 'known', asOf: today, source: NAME_SOURCE, by: 'client' }) : fact(clean + '-07-01', { kind: 'rough', asOf: today, source: NAME_SOURCE, by: 'client', note: 'the year from your profile' });
+  else next = fact(clean, { kind: 'known', asOf: today, source: NAME_SOURCE, by: 'client' });
+  let s = setAt(spine, path, next);
+  const profile = { ...(s.profile || {}) }; delete profile[id];
+  const log = [...(s.lifeChanges || [])];
+  log.push({ id: 'lc-' + (log.length + 1), date: today, question: id, from: before, to: clean });
+  return syncProfile({ ...s, profile, lifeChanges: log }, { today, changed: id });
 }

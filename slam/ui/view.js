@@ -3,7 +3,7 @@
 
 import { money as dollars, pct } from '../src/ui/format.js';
 import { hoursOf, fiDaysOf } from '../engine/money-as.js';
-import { LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
+import { FILING_STATUSES, LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
 
 export { pct };
 
@@ -52,6 +52,7 @@ export const ROLE_WORDS = { spending: 'Spending money', emergency: 'Emergency cu
 export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what I carry', statement: 'The full statement balance' };
 
 // A stored value, worded by its field type.
+const FILING_WORDS = { single: 'Single', mfj: 'Married filing jointly', mfs: 'Married filing separately', hoh: 'Head of household' };
 export function showValue(value, type) {
   if (value === null || value === undefined) return '';
   // An expense: how much, how often, and who pays (S-175, S-176).
@@ -94,6 +95,7 @@ export function showValue(value, type) {
   if (type === 'choice:spending|emergency|sinking|holding') return ROLE_WORDS[value] || words(value);
   if (type === 'choice:' + PERSON_PURPOSES.join('|')) return PERSON_PURPOSE_WORDS[value] || words(value);
   if (type === 'choice:' + ALLOWANCE_MODES.join('|')) return value === 'time' ? 'Pay for my time' : 'A gift';
+  if (type === 'choice:' + FILING_STATUSES.join('|')) return FILING_WORDS[value] || words(value);
   if (type === 'choice:oneAtATime|byDeadline') return value === 'byDeadline' ? 'By deadline' : 'One at a time';
   if (type.startsWith('choice:')) return words(value);
   if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
@@ -102,7 +104,9 @@ export function showValue(value, type) {
 
 // The kind chip: green known, yellow rough, red missing.
 export const KIND_WORDS = { known: 'Known', rough: 'Rough', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me', incomplete: 'Incomplete' };
-export const chip = (kind) => h('span', { class: 'chip chip-' + kind }, KIND_WORDS[kind] || kind);
+// Known and worked-out numbers wear no chip (bug sweep): only what needs a look (Rough, Missing, Incomplete) is marked.
+// A screen that lists the kinds themselves (the Design kit, a filter) asks for the label with always.
+export const chip = (kind, { always = false } = {}) => (!always && (kind === 'known' || kind === 'computed') ? null : h('span', { class: 'chip chip-' + kind }, KIND_WORDS[kind] || kind));
 
 export const ledgerHref = (path) => 'ledger.html#' + encodeURIComponent(path);
 

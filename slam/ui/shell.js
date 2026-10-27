@@ -31,9 +31,9 @@ export const TABS = [
   ['numbers', 'My numbers', 'ledger.html'],
   ['calendar', 'Calendar', 'calendar.html'],
   ['spending', 'Spending', 'spending.html'],
-  ['plan', 'Plan', 'plan.html'],
-  ['profile', 'Profile', 'profile.html']
+  ['plan', 'Plan', 'plan.html']
 ];
+// Profile is not a tab (bug sweep): it opens from the household name in every header, a person icon and the name.
 // My numbers opens at a section, and deeper, by these words: numbersHref('debt', 'credit-cards').
 export const SECTIONS = { needs: 'Needs', debt: 'Debt', assets: 'Assets', taxes: 'Taxes', income: 'Income', goals: 'Goals' };
 export const numbersHref = (...levels) => 'ledger.html' + hashOf(levels);

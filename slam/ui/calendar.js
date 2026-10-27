@@ -166,6 +166,8 @@ const chev = () => h('span', { class: 'chev', 'aria-hidden': 'true' }, '›');
 // A milestone or a deadline's own place: an account's deadline opens its "How much to max it?" panel (S-211), the rest
 // their numbers.
 const evHref = (e) => (e.kind === 'maxDeadline' && e.accountId ? maxHref(e.accountId) : e.path ? ledgerHref(e.path) : null);
+// The milestones that fall on a day (a debt cleared, a deadline), each a link to where it lives.
+const msOn = (ms, date) => ms.filter((x) => x.date === date).map((x) => h('span', { class: 'ms' }, evHref(x) ? h('a', { href: evHref(x) }, x.label) : x.label));
 
 
 // One day as its own screen: what checking ends at, what comes in and goes out, and its items, each opening its own.
@@ -384,7 +386,8 @@ function dragSetup(root) {
 // A filled dot: it happened. A hollow dot: expected. "~" before an amount: a guess. No chips or bracketed notes on a
 // row: the detail lives inside the item.
 const markOf = (e) => (e.logged ? 'done' : 'expected');
-const isDateToKnow = (e) => MARKER_KINDS.includes(e.kind) || e.kind === 'taxReturn' || e.kind === 'foo' || (e.kind === 'estimatedTax' && e.amount === null);
+// Dates only (bug sweep): deadlines, promo ends and tax dates; a plan item is an item on its day, not a date to know.
+const isDateToKnow = (e) => MARKER_KINDS.includes(e.kind) || e.kind === 'taxReturn' || (e.kind === 'estimatedTax' && e.amount === null);
 const dotEl = (e) => h('span', { class: 'mk mk-' + markOf(e) + ' ' + (CAT[e.kind] || 'viz-0'), role: 'img', 'aria-label': markOf(e) === 'done' ? 'happened' : 'expected' });
 const dayWords = (date) => DOW[weekdayOf(date)] + ' ' + shortDate(date).replace(/, \d{4}$/, '').replace(/\/\d{4}$/, '');
 function itemRow(e) {
@@ -439,10 +442,11 @@ function listView(v, c, m, st, today) {
     const pay = d.events.some((e) => e.kind === 'pay');
     const bal = m.line.find((x) => x.date === d.date);
     const pc = pay ? pays.find((p) => p.date === d.date) : null;
-    // A payday is a highlighted divider; grouped by paycheck, it says what that paycheck covers.
-    if (pay) out.push(h('li', { class: 'cal-payday' }, h('span', {}, 'Payday, ' + dayWords(d.date)), pc ? h('span', { class: 'cal-pay-cover' }, 'covers to ' + (pc.until ? shortDate(pc.until).replace(/, \d{4}$/, '') : 'month end') + ', ' + (pc.short ? 'short ' : 'left ') + money(Math.abs(pc.left))) : null));
-    out.push(h('li', { class: 'cal-day' + (d.date === today ? ' today' : ''), 'data-date': d.date },
-      h('p', { class: 'cal-day-h' }, h('a', { href: dayHref(d.date) }, dayWords(d.date)), d.date === today ? h('span', { class: 'stage-chip stage-green' }, 'Today') : null),
+    // A payday is the day's own heading, highlighted ("Thu Oct 15 · Payday"); grouped by paycheck, it says what that
+    // paycheck covers. One heading per day, never a divider above it repeating the date.
+    out.push(h('li', { class: 'cal-day' + (d.date === today ? ' today' : '') + (pay ? ' cal-payday' : ''), 'data-date': d.date },
+      h('p', { class: 'cal-day-h' }, h('a', { href: dayHref(d.date) }, dayWords(d.date) + (pay ? ' · Payday' : '')), d.date === today ? h('span', { class: 'stage-chip stage-green' }, 'Today') : null,
+        pc ? h('span', { class: 'cal-pay-cover' }, 'covers to ' + (pc.until ? shortDate(pc.until).replace(/, \d{4}$/, '') : 'month end') + ', ' + (pc.short ? 'short ' : 'left ') + money(Math.abs(pc.left))) : null),
       h('ul', { class: 'cal-items' }, items(d).map(itemRow)),
       bal ? h('p', { class: 'cal-after' + (floor !== null && bal.primary < floor ? ' under' : near !== null && bal.primary < near ? ' near' : '') }, 'Checking after: ' + money(bal.primary)) : null));
   }

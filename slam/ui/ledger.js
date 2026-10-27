@@ -6,6 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { HOUSEHOLD_ANSWERS } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
 import { stillGuessingSteps, rowPathFor, previewCost, linkOptions } from '../engine/ledger.js';
 import { payersOf, shareOf, evenShare, shareFromAmount } from '../engine/sharing.js';
@@ -225,13 +226,11 @@ function cardRateEditor(row) {
     h('div', { class: 'switch-row' }, h('span', { id: 'intro-switch-label', class: 'edit-label' }, 'Has an intro rate?'), sw),
     introBox,
     msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
-    ));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => act('confirm') }, 'Confirm'),
+        row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => act('notForMe') }, 'Not for me'),
+        laterBtn(row)]));
 }
 
 // The expense panel (S-175, S-176): one question at a time. How much, and how
@@ -397,12 +396,11 @@ function expenseEditor(row) {
     h('div', { class: 'slim-often' }, h('label', { for: 'exp-often', class: 'edit-label' }, 'How often'), often));
   return editorForm(() => doSet('known'),
     slim, amountHint, stdBtn, more, yours, msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label)) }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(e.label)) }, 'Not for me'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label)) }, 'Confirm'),
+        row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(e.label)) }, 'Not for me'),
+        laterBtn(row)]));
 }
 
 // Start and end dates for an income stream or an expense (S-199), folded
@@ -498,12 +496,11 @@ function incomeEditor(row) {
     h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
     h('p', { class: 'edit-hint' }, 'Before anything is taken out.'),
     dayBox, day2Box, dates.box, msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(x.label)) }, 'Confirm'),
-      row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(x.label)) }, 'Not for me'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(x.label)) }, 'Confirm'),
+        row.fact.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(x.label)) }, 'Not for me'),
+        laterBtn(row)]));
 }
 
 // A section's sharing default (S-175): "Bills here are just mine" or "shared",
@@ -577,11 +574,10 @@ function suggestEditor(row) {
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.label),
     pickEl, ownBox, amountBox, msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
+        laterBtn(row)]));
 }
 
 // A pick list of the household's accounts (and cards, or the paycheck) for a link (S-189).
@@ -622,14 +618,23 @@ function paymentEditor(row) {
     h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'),
     pays ? [h('label', { for: 'pay-debt', class: 'edit-label' }, 'The debt it pays (optional)'), pays, h('p', { class: 'edit-hint' }, 'For example a car payment that pays the car loan, so it counts once.')] : null,
     msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label + ': paid from')) }, 'Confirm'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        row.fact.value !== null && row.fact.kind === 'rough' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(e.label + ': paid from')) }, 'Confirm'),
+        laterBtn(row)]));
 }
 
+// The field editor's buttons (bug sweep): Save and Cancel, and a "⋯" menu with the rest (Save as a guess, Confirm,
+// Not for me, Not now). The form's submit is Save.
+const editActions = (cancel, more) => h('div', { class: 'edit-actions' },
+  h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
+  h('button', { type: 'button', class: 'btn', onclick: cancel }, 'Cancel'),
+  h('details', { class: 'more-menu' }, h('summary', { class: 'btn', 'aria-label': 'More choices' }, '\u22EF'), h('div', { class: 'more-items' }, more.filter(Boolean))));
+// Birth date, state and county are the Profile's answers (one stored answer, bug sweep): shown here, edited there.
+const fromProfile = (path) => Object.values(HOUSEHOLD_ANSWERS).some((at) => at(cur()) === path);
 function editor(row) {
+  if (fromProfile(row.path)) return h('div', { class: 'editor' }, h('p', { class: 'edit-hint' }, 'This comes from your Profile, so it is changed there.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: 'profile.html#/you' }, 'Change in Profile'), h('button', { type: 'button', class: 'btn', onclick: () => { closeEditor(); refresh(); } }, 'Cancel')));
   if (row.type === 'cardRate') return cardRateEditor(row);
   if (row.type === 'expense') return expenseEditor(row);
   if (row.type === 'income') return incomeEditor(row);
@@ -666,13 +671,11 @@ function editor(row) {
     input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
-    h('div', { class: 'edit-actions' },
-      h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-      h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
-      f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)) }, 'Confirm'),
-      f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
-      laterBtn(row), h('button', { type: 'button', class: 'btn ghost', onclick: cancel }, 'Cancel')
-    ));
+    editActions(cancel, [
+        h('button', { type: 'button', class: 'btn', onclick: () => doSet('rough') }, 'Save as a guess'),
+        f.value !== null && f.kind !== 'known' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)) }, 'Confirm'),
+        f.kind !== 'notForMe' && h('button', { type: 'button', class: 'btn', onclick: () => done(editFact(cur(), row.path, 'notForMe', { today: today() }), notMine(row.label)) }, 'Not for me'),
+        laterBtn(row)]));
 }
 // The open row's editor: the one already built while it is open and typed in, else a fresh one.
 function openEditor(row) {

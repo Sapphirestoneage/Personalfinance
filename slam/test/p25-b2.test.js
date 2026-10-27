@@ -12,11 +12,11 @@ const read = (f) => readFileSync(SLAM + f, 'utf8');
 // The code without its comments, so a comment's words are not read as the screen's.
 const code = (f) => read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"\\])\/\/.*$/gm, '$1');
 
-test('sizes: 15px body, 40px buttons and 32px row actions, each with a 44px tap area; spacing about half', () => {
+test('sizes: 15px body, 44px buttons and row actions (bug sweep: every tap target 44px tall); spacing about half', () => {
   const css = read('ui/spine.css');
   const b2 = css.slice(css.indexOf('Phase 2.5, Batch 2'));
   assert.match(b2, /--text-md: 0\.9375rem/, 'body 15px');
-  assert.match(b2, /--btn-h: 40px; --row-btn-h: 32px;/);
+  assert.match(b2, /--btn-h: 44px; --row-btn-h: 44px;/);
   assert.match(b2, /\.btn \{ min-height: var\(--btn-h\);/);
   assert.match(b2, /\.btn\.small \{ min-height: var\(--row-btn-h\);/);
   assert.match(b2, /\.btn::after, \.filter-chip::after, \.tag-chip::after, \.seg-btn::after \{ content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max\(100%, var\(--tap\)\);/, 'the target stays 44px');

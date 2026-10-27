@@ -981,20 +981,6 @@
       "kind": "known",
       "by": "client"
     },
-    "birthYear": {
-      "value": 1994,
-      "asOf": "2026-10-01",
-      "source": "demo (made up)",
-      "kind": "known",
-      "by": "client"
-    },
-    "state": {
-      "value": "NY",
-      "asOf": "2026-10-01",
-      "source": "demo (made up)",
-      "kind": "known",
-      "by": "client"
-    },
     "livesWith": {
       "value": [
         "alone"

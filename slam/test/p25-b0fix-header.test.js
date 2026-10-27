@@ -111,10 +111,7 @@ test('the Calendar adds its drag listeners once, so Open file never makes one dr
   assert.equal((src.match(/^dragSetup\(app\);$/gm) || []).length, 1);
 });
 
-test('the header keeps a Open file message across redraws, and the example screen has one filled button', () => {
-  const page = readFileSync(SLAM + 'ui/page.js', 'utf8');
-  assert.match(page, /let said = ''/);
-  assert.match(page, /h\('p', \{ class: 'edit-msg', role: 'alert' \}, said\)/);
+test('the example screen has one filled button (Open file is on the Builder since the bug sweep)', () => {
   assert.match(readFileSync(SLAM + 'ui/onepager.js', 'utf8'), /class: whose\(base\)\.example \? 'btn' : 'btn primary', onclick: \(\) => window\.print\(\)/);
   assert.match(readFileSync(SLAM + 'ui/ledger.js', 'utf8'), /class: matchesFile\(spine\) \|\| whose\(spine\)\.example \? 'btn' : 'btn primary', onclick: saveFile/);
 });

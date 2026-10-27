@@ -47,7 +47,8 @@ export { payDatesOf, CONTRIBUTION_KINDS };
 export { jobsOf, paidThroughOf, paidThroughGuess } from './cashflow.js';
 
 // Whole dollars read as whole dollars, anything else to the cent.
-const money = (x) => (x === null || x === undefined ? 'missing' : fmt(x, Math.round(x) !== Math.round(x * 100) / 100));
+// Whole dollars in every sentence (bug sweep): cents live in Show the math.
+const money = (x) => (x === null || x === undefined ? 'missing' : fmt(Math.round(x)));
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const longDay = (iso) => MONTHS[+iso.slice(5, 7) - 1] + ' ' + (+iso.slice(8, 10)) + ', ' + iso.slice(0, 4);
 const ceil2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;

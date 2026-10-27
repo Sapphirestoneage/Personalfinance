@@ -18,10 +18,11 @@ const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), 
 const JARGON = /\b(engine|registry|rules|spine|kind|path|field|stored|simulation|template|schema|computed|derived)\b|S-\d{3}|the Ledger/i;
 const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).filter((x) => /\s/.test(x) && /^[A-Z ]/.test(x));
 
-test('seven tabs, the same on every page, in order (Profile joined 2026-10-27)', () => {
+test('six tabs, the same on every page, in order; Profile opens from the household name (bug sweep)', () => {
   const src = read('ui/shell.js');
   const tabs = [...src.slice(src.indexOf('export const TABS'), src.indexOf('];', src.indexOf('export const TABS'))).matchAll(/\['(\w+)', '([^']+)', '([\w.]+)'\]/g)].map((m) => [m[2], m[3]]);
-  assert.deepEqual(tabs, [['Today', 'dashboard.html'], ['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Calendar', 'calendar.html'], ['Spending', 'spending.html'], ['Plan', 'plan.html'], ['Profile', 'profile.html']]);
+  assert.deepEqual(tabs, [['Today', 'dashboard.html'], ['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Calendar', 'calendar.html'], ['Spending', 'spending.html'], ['Plan', 'plan.html']]);
+  assert.match(read('ui/page.js'), /const profileLink = \(name\) => h\('a', \{ class: 'btn small whose-name', href: 'profile\.html'/);
   for (const [, page] of tabs) assert.ok(existsSync(SLAM + page), page + ' exists, so no tab is a dead click');
   assert.match(src, /'aria-current': id === lit \? 'page' : null/);
   const css = read('ui/spine.css');

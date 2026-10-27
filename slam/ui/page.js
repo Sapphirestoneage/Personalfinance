@@ -3,8 +3,7 @@
 
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
-import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
-import { loadFailWords } from './profile-file.js';
+import { whose, SOURCE_WORDS } from './household.js';
 import { pref } from './prefs.js';
 
 let banner = null;
@@ -49,35 +48,21 @@ export function gapsCard(spine, sim) {
   return h('p', { class: 'muted missing-row' }, 'No balance for ', ...g.missing.flatMap((m, i) => [i ? ', ' : '', h('a', { href: ledgerHref(m.path) }, m.name)]), ', so ' + (g.missing.length === 1 ? 'it is' : 'they are') + ' left out of the cash line.');
 }
 
-// Whose numbers (S-228): every page's header says whose numbers these are. The made-up household reads "Example
-// household" with a filled "Open file" button: the file picked is read here, in the browser, and saved in this
-// browser only, and the page reopens on it (reopen gets what loadAll returns). Anyone else's reads their name.
-// The last thing said about Open file. The header is rebuilt on every render (a resize redraws the Calendar), so the
-// words live here and are written to whichever header is on the page when the file is read.
-let said = '';
-const say = (text) => { said = text; for (const m of document.querySelectorAll('.whose .edit-msg')) m.textContent = text; };
-export function whoseLine(spine, source, { asOf = spine.meta.asOf, rules, reopen } = {}) {
+// Whose numbers (S-228): every page's header says whose numbers these are, as a person icon and the name, which opens
+// Profile. The made-up household reads "Example household"; Open file is on the Builder.
+// A person icon, drawn as an outline in the text color.
+const icon = () => {
+  const NS = 'http://www.w3.org/2000/svg', el = (tag, at) => { const x = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(at)) x.setAttribute(k, v); return x; };
+  const svg = el('svg', { viewBox: '0 0 24 24', width: '18', height: '18', 'aria-hidden': 'true', focusable: 'false', fill: 'none', stroke: 'currentColor', 'stroke-width': '2' });
+  svg.append(el('circle', { cx: '12', cy: '8', r: '4' }), el('path', { d: 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7' }));
+  return h('span', { class: 'whose-icon' }, svg);
+};
+const profileLink = (name) => h('a', { class: 'btn small whose-name', href: 'profile.html', 'aria-label': name + ': Profile' }, icon(), h('span', {}, name));
+export function whoseLine(spine, source, { asOf = spine.meta.asOf } = {}) {
   const w = whose(spine);
   const when = ' · numbers as of ' + shortDate(asOf);
-  // The name opens the Profile (Phase 2.5 B3): how this household's life works right now.
-  if (!w.example) return h('p', { class: 'muted whose' }, h('a', { class: 'whose-name', href: 'profile.html' }, h('strong', {}, w.name)), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
-  const msg = h('p', { class: 'edit-msg', role: 'alert' }, said);
-  const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your household file' });
-  input.addEventListener('change', async () => {
-    const file = input.files && input.files[0];
-    if (!file) return;
-    say('Reading ' + file.name + '...');
-    try { const loaded = await loadMyFile(file, rules); say(''); reopen({ rules, ...loaded }); }
-    catch (err) { console.warn(err); say(loadFailWords(err, file.name)); }
-    input.value = '';
-  });
-  // The household menu (audit 4): Open file lives here and on the Builder, not as a button on every header.
-  return h('div', { class: 'whose whose-example' },
-    h('details', { class: 'whose-menu' },
-      h('summary', { class: 'btn small whose-name' }, 'Example household'),
-      h('div', { class: 'whose-items' },
-        h('a', { class: 'btn small', href: 'profile.html' }, 'Profile'),
-        h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open file'),
-        input)),
-    msg);
+  // The name opens the Profile (bug sweep: Profile is not a tab): a person icon and the name, a button-look link.
+  if (!w.example) return h('p', { class: 'muted whose' }, profileLink(w.name), when, ' · ', SOURCE_WORDS[source] || SOURCE_WORDS.saved);
+  // The example: the same link, and Open file is on the Builder (bug sweep: one header for everyone).
+  return h('p', { class: 'muted whose whose-example' }, profileLink(w.name), when, ' · ', SOURCE_WORDS.demo);
 }

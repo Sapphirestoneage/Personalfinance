@@ -153,7 +153,8 @@ export function flowSection(flow, { open, onToggle, month, listOpen = false, onL
       LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t)),
       flow.links.some((l) => l.rough) ? h('li', {}, h('span', { class: 'sw sw-rough', 'aria-hidden': 'true' }), 'Lighter: a guessed route (main checking until you link it)') : null),
     // Split lives on My numbers (audit 4): a page with no onToggle draws no Split buttons; a section opens its screen.
-    !onToggle ? null : h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec]))),
+    // Native append writes a null as the word "null", so the missing part is spread away, never passed.
+    ...(onToggle ? [h('div', { class: 'flow-secs', role: 'group', 'aria-label': 'Split a section into its expenses' }, secs.map((sec) => h('button', { type: 'button', class: 'btn small', 'aria-pressed': String(open.includes(sec)), onclick: () => onToggle(sec) }, (open.includes(sec) ? 'Join ' : 'Split ') + flow.sections[sec])))] : []),
     h('div', { class: 'flow-box' }),
     h('details', { class: 'flow-list', open: listOpen || null, ontoggle: (e) => onList && onList(e.target.open) }, h('summary', {}, 'Every flow, with links to your numbers'),
       h('ul', {}, flow.links.map((l) => { const a = name(l.from), b = name(l.to), p = b.path || a.path; return h('li', {}, p ? h('a', { href: 'ledger.html#' + encodeURIComponent(p) }, a.label + ' to ' + b.label) : a.label + ' to ' + b.label, ': ' + money(l.amount) + ' a month' + (l.rough ? ' (guessed route)' : '')); }))));
