@@ -1096,3 +1096,16 @@ details.more-opts > .sub-fields { margin-top: var(--space-2); max-width: 420px; 
 .tick-chip input { width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); flex: none; }
 .more-opts .part-group { display: flex; flex-wrap: wrap; column-gap: var(--space-4); }
 .more-opts .radio input { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; }
+/* Need or want on a Session line: two small pressed-or-not buttons (S-231). */
+.nw-seg { gap: 0; flex-wrap: nowrap; }
+.nw-seg .seg-btn { flex: none; justify-content: center; min-height: var(--btn-h, var(--tap)); min-width: var(--tap); padding: 4px var(--space-3); align-items: center; font-size: var(--text-sm); font-weight: 600; border-radius: 0; }
+.nw-seg .seg-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.nw-seg .seg-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -2px; }
+/* A flow row opens its screen in My numbers; a section's Split sits under it. */
+a.fb-link { display: grid; text-decoration: none; color: inherit; }
+a.fb-link .fb-more { justify-self: end; }
+.fb-split { margin-top: var(--space-1, 4px); }
+.fl-link { cursor: pointer; }
+.fl-link:hover .fl-name { text-decoration: underline; }
+.fl-link:focus-visible { outline: 3px solid var(--focus); }
+.onepager .op-flow .fb-split { display: none; }

@@ -7,7 +7,11 @@
 // with a link to its line in My numbers. The gutters are as wide as the
 // longest label, so no label is cut off.
 
-import { h, money } from './view.js';
+import { h, money, ledgerHref } from './view.js';
+
+// Where a row goes to be edited (owner's ask, 2026-10-26): its own line, or its screen in My numbers.
+const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+export const editHref = (n) => (n.path ? ledgerHref(n.path) : n.kind === 'debt' ? 'ledger.html#/debt' : n.kind === 'tax' ? 'ledger.html#/taxes' : n.section ? 'ledger.html#/needs/' + slug(n.label) : null);
 
 const SVG = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}, ...kids) => {
@@ -103,7 +107,9 @@ function sankey(flow, width, onToggle, font) {
       }
     } else if (n.col === 2) g.append(s('text', { x: n.x + nw, y: n.y - 6, 'text-anchor': 'end', class: 'fl-name fl-small' }, name + '  ' + amt));
     else g.append(s('text', { x: n.x, y: n.y - 6, class: 'fl-name fl-small' }, name + '  ' + amt));
-    svg.append(g);
+    // An income or a destination that is its own line opens its screen in My numbers.
+    const to = (n.col === 0 || n.col === 3) && !(n.section && !n.path) ? editHref(n) : null;
+    svg.append(to ? s('a', { href: to, class: 'fl-link', 'aria-label': 'Edit ' + name }, s('title', {}, 'Edit ' + name), g) : g);
   }
   return svg;
 }
@@ -116,8 +122,10 @@ function barList(flow, onToggle, open) {
     const tap = n.section && !n.path;
     const head = h('div', { class: 'fb-head' }, h('span', { class: 'fb-name' }, n.label), h('span', { class: 'fb-amt' }, money(n.amount) + ' a month'));
     const bar = h('div', { class: 'fb-track' }, h('div', { class: 'fb-bar ' + (CAT[n.kind] || 'fl-pass'), style: 'width:' + Math.max(2, Math.round(n.amount / max * 100)) + '%' }));
-    return tap ? h('li', {}, h('button', { type: 'button', class: 'fb-row fb-tap', 'aria-expanded': String(!!n.open), onclick: () => onToggle(n.section) }, head, bar, h('span', { class: 'fb-more' }, n.open ? 'Join' : 'Split into expenses')))
-      : h('li', {}, h('div', { class: 'fb-row' }, head, bar));
+    const to = editHref(n);
+    // The whole row opens its screen; a section's Split is its own button under it.
+    const main = to ? h('a', { class: 'fb-row fb-tap fb-link', href: to, 'aria-label': 'Edit ' + n.label + ', ' + money(n.amount) + ' a month' }, head, bar, h('span', { class: 'fb-more' }, 'Edit \u203A')) : h('div', { class: 'fb-row' }, head, bar);
+    return h('li', {}, main, tap ? h('button', { type: 'button', class: 'btn small fb-split', 'aria-expanded': String(!!n.open), onclick: () => onToggle(n.section) }, n.open ? 'Join' : 'Split into expenses') : null);
   };
   const through = flow.nodes.filter((n) => n.col === 1 || n.col === 2);
   return h('div', { class: 'flow-bars' },
