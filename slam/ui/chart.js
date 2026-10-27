@@ -124,9 +124,9 @@ export function lines({ width = 600, height = 240, series = [], bands = [], rang
 export function bars({ width = 600, rows = [], fmt = 'money', max = null, min = null, diverging = false, rowH = 30, label: aria, valueWords = null } = {}) {
   const W = Math.max(280, Math.round(width));
   const valW = Math.max(56, ...rows.map((r) => textWidth(r.value !== undefined ? r.value : '', 12) + 10));
-  const labW = Math.min(Math.round(W * 0.42), Math.max(...rows.map((r) => textWidth(r.label, 13)), 40) + 10);
+  const labW = Math.min(Math.round(W * 0.42), Math.max(...rows.map((r) => textWidth(r.label, 13)), 40) + 12);
   // A label longer than its gutter is cut with an ellipsis; the whole words are in the tip and the table.
-  const fit = (words) => { const n = Math.floor((labW - 12) / (13 * 0.56)); return words.length > n ? words.slice(0, Math.max(1, n - 1)).trimEnd() + '\u2026' : words; };
+  const fit = (words) => { const n = Math.floor((labW - 8) / (13 * 0.56)); return words.length > n ? words.slice(0, Math.max(1, n - 1)).trimEnd() + '\u2026' : words; };
   const T = 4, H = T + rows.length * (rowH + (rows.some((r) => r.sub) ? 14 : 0)) + 4;
   const ends = rows.flatMap((r) => { let t = r.from || 0; const out = [t]; for (const g of r.segs || []) { t += g.v; out.push(t); } if (r.target !== undefined && r.target !== null) out.push(r.target); if (r.marker) out.push(r.marker.v); if (r.range) out.push(r.range.v0, r.range.v1); return out; }).filter(Number.isFinite);
   const hi = max ?? Math.max(...ends, 1), lo = min ?? (diverging ? -Math.max(Math.abs(Math.min(...ends)), Math.abs(hi)) : Math.min(0, ...ends));

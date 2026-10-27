@@ -9,13 +9,14 @@
 
 import { foldRow } from './rows.js';
 import { goalsCard, savingsCurveCard, fiPathCard, scenarioCard } from './chart-cards.js';
+import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
-import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
+import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
 import { valueOf } from '../engine/spine.js';
@@ -273,23 +274,42 @@ function surplusScreen(m) {
     math('surplus', w.steps.map((st) => 'windfall:' + st.id), () => ({ ...mathCtx(m)(), windfall: w })));
 }
 
+// Paychecks (Track D): every dollar of each one has a job. A stacked bar per paycheck (bills, everyday, tax, kept for a
+// later paycheck, the Plan's step), an arrow where one paycheck carries a later short one, and three-paycheck months
+// marked. Tap a paycheck for its jobs line by line.
+const JOB = { bill: [1, 'Bills'], everyday: [3, 'Everyday spending'], tax: [4, 'Tax set aside'], carry: [5, 'Kept for a later paycheck'], plan: [2, 'To the Plan'] };
+const jobLabel = (j) => (j.kind === 'carry' ? 'Kept for the ' + shortDate(j.to) + ' paycheck' : j.label);
+const planOf = (m) => m.pplan || (m.pplan = paycheckPlan(allocOf(m), { step: (() => { const r = m.foo.rungs.find((x) => x.id === m.foo.current); return r ? { id: r.id, label: 'Plan step: ' + r.label } : null; })() }));
 function paychecksScreen(m) {
-  const a = allocOf(m);
+  const a = planOf(m);
   if (!a.paychecks.length) return h('p', { class: 'card muted' }, 'No paychecks in the next three months.');
+  const third = (p) => p.bonus ? h('span', { class: 'pill' }, (p.cadence === 'weekly' ? '5th' : '3rd') + ' paycheck in ' + monthWords(p.ym).split(' ')[0]) : null;
+  const totals = (p) => Object.keys(JOB).map((k) => ({ k, v: p.byKind[k] })).filter((x) => x.v > 0);
+  const chart = chartCard({ id: 'paycheck-jobs', question: 'What does each paycheck pay for?',
+    summary: 'Every dollar of each paycheck has a job until the next one.' + (a.paychecks.some((p) => p.carryOut) ? ' Where one would come up short, the one before it keeps the difference.' : '') + (a.fromChecking ? ' ' + money(a.fromChecking) + ' comes from checking already there.' : ''),
+    draw: (w) => bars({ width: w, rows: a.paychecks.map((p) => ({ label: shortDate(p.date).replace(/, \d{4}$/, ''), segs: totals(p).map((x) => ({ v: x.v, c: JOB[x.k][0], tip: shortDate(p.date) + ', ' + JOB[x.k][1].toLowerCase() + ': ' + money(x.v) })), value: money(p.assigned) })), label: 'Each paycheck by its jobs' }),
+    legend: Object.values(JOB).map(([c, words]) => ({ c, words })),
+    table: { head: ['Paycheck', ...Object.values(JOB).map((x) => x[1]), 'In all'], rows: a.paychecks.map((p) => [shortDate(p.date) + ': ' + p.label, ...Object.keys(JOB).map((k) => money(p.byKind[k])), money(p.assigned)]) } });
   return [
-    h('p', { class: 'lede' }, 'What each paycheck covers until the next one.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
-    h('ul', { class: 'go-list' }, a.paychecks.map((p) => goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, p.bonus ? [' ', h('span', { class: 'pill' }, 'bonus paycheck')] : null],
-      [h('span', { class: 'go-total' }, money(p.amount)), p.short ? h('span', { class: 'missing-row' }, 'short by ' + money(-p.free)) : money(p.free) + ' free'])))
+    h('p', { class: 'lede' }, 'Every dollar of each paycheck, assigned until the next one.' + (a.bonusMonths.length ? ' Three-paycheck months: ' + a.bonusMonths.map(monthWords).join(', ') + '.' : '')),
+    h('ul', { class: 'go-list pay-list' }, a.paychecks.flatMap((p) => [
+      goRow('#/paychecks/' + encodeURIComponent(payId(p)), [shortDate(p.date) + ': ' + p.label, third(p) ? [' ', third(p)] : null],
+        [h('span', { class: 'go-total' }, money(p.amount)), p.carryIn ? ' plus ' + money(p.carryIn) + ' carried in' : '', '; ' + (p.left > 0.004 ? money(p.left) + ' to the Plan' : 'all to bills and spending')]),
+      p.carryOut ? h('li', { class: 'pay-arrow', 'aria-label': money(p.carryOut) + ' carried to the ' + shortDate(p.carryTo) + ' paycheck' }, h('span', { 'aria-hidden': 'true' }, '\u2193'), ' ' + money(p.carryOut) + ' carried to the ' + shortDate(p.carryTo) + ' paycheck') : null])),
+    h('section', { class: 'card' }, chart)
   ];
 }
 
-function paycheckScreen(m, p) {
+function paycheckScreen(m, p0) {
+  const p = planOf(m).paychecks.find((x) => payId(x) === payId(p0)) || p0;
+  const jobs = p.jobs || [];
   return h('section', { class: 'card', 'aria-label': shortDate(p.date) + ': ' + p.label },
     h('p', { class: 'max-big' }, money(p.amount)),
-    h('p', { class: 'tile-sub' }, (p.bonus ? 'A bonus paycheck. ' : '') + (p.short ? 'Short by ' + money(-p.free) + ' before the next one.' : money(p.free) + ' free after the bills until the next one.')),
-    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Envelope'), h('th', {}, 'Due'), h('th', { class: 'num' }, 'Amount'))),
-      h('tbody', {}, p.is1099 ? h('tr', {}, h('td', {}, 'Tax set aside (' + pct(p.setAsideRate, 1) + ' of a 1099 deposit)' + (p.setAsideMissing ? '; the rate is partly missing' : '')), h('td', {}, 'on arrival'), h('td', { class: 'num' }, money(p.setAside))) : null, ...p.envelopes.map((e) => h('tr', {}, h('td', {}, e.label), h('td', {}, shortDate(e.date)), h('td', { class: 'num' }, money(e.amount)))), h('tr', {}, h('td', {}, 'Everyday spending until the next paycheck'), h('td', {}, ''), h('td', { class: 'num' }, money(p.everyday)))),
-      h('tfoot', {}, h('tr', {}, h('td', {}, h('strong', {}, p.short ? 'Short by' : 'Free')), h('td', {}), h('td', { class: 'num' }, money(Math.abs(p.free))))))),
+    h('p', { class: 'tile-sub' }, (p.bonus ? 'A bonus paycheck: monthly bills are already covered by the others. ' : '') + (p.carryIn ? money(p.carryIn) + ' carried in from ' + (p.carryInFrom === 'checking' ? 'checking already there' : 'the ' + shortDate(p.carryInFrom) + ' paycheck') + '. ' : '') + 'Every dollar has a job until the next paycheck.'),
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Job'), h('th', {}, 'Due'), h('th', { class: 'num' }, 'Amount'))),
+      h('tbody', {}, p.carryIn ? h('tr', { class: 'muted' }, h('td', {}, 'Carried in'), h('td', {}, ''), h('td', { class: 'num' }, '+' + money(p.carryIn))) : null,
+        ...jobs.map((j) => h('tr', {}, h('td', {}, j.kind === 'tax' ? 'Tax set aside (' + pct(p.setAsideRate, 1) + ' of a 1099 deposit)' + (p.setAsideMissing ? '; the rate is partly missing' : '') : j.kind === 'plan' && j.step ? h('a', { href: '#/' + slug(j.step) }, jobLabel(j)) : jobLabel(j)), h('td', {}, j.date ? shortDate(j.date) : j.kind === 'carry' ? shortDate(j.to) : ''), h('td', { class: 'num' }, money(j.amount))))),
+      h('tfoot', {}, h('tr', {}, h('td', {}, h('strong', {}, 'Assigned')), h('td', {}), h('td', { class: 'num' }, money(p.assigned)))))),
     math('pay', ['plan:pay:' + p.date + ':' + p.streamId], mathCtx(m)));
 }
 

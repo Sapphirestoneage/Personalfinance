@@ -185,6 +185,33 @@ export function allocator(spine, rules, sim, s) {
   return { paychecks: out, bonusMonths, kind: sim.kind, from: sim.from, rough: sim.rough, missing: sim.missing, rules: [...(sim.rules || []), ...(rate.rules || [])] };
 }
 
+// ---------------------------------------------------------------- every dollar of each paycheck (overnight Track D)
+// The allocator's paychecks with every dollar given a job: the tax set aside, each bill until the next paycheck, the
+// everyday spending, what is carried to a later paycheck that would come up short, and the rest to the Plan's current
+// step. Carries run backward from the last paycheck: each one hands the next exactly what that one (and the ones after
+// it) would be short, so a short paycheck shows an arrow from the one before it. A shortfall the first paycheck
+// cannot cover comes from checking already there. Each paycheck's jobs add up to its amount plus what was carried in.
+// step: { id, label } for the leftover (the Plan's current step), or null ("Left to assign").
+export function paycheckPlan(alloc, { step = null } = {}) {
+  const list = alloc.paychecks;
+  const n = list.length;
+  const needIn = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) { const out = i < n - 1 ? needIn[i + 1] : 0; needIn[i] = round2(Math.max(0, out - list[i].free)); }
+  const rows = list.map((p, i) => {
+    const carryIn = needIn[i], carryOut = i < n - 1 ? needIn[i + 1] : 0;
+    const left = round2(p.free + carryIn - carryOut);
+    const jobs = [
+      ...(p.setAside ? [{ kind: 'tax', label: 'Tax set aside', amount: p.setAside }] : []),
+      ...p.envelopes.map((e) => ({ kind: 'bill', label: e.label, date: e.date, amount: e.amount })),
+      ...(p.everyday ? [{ kind: 'everyday', label: 'Everyday spending until the next paycheck', amount: p.everyday }] : []),
+      ...(carryOut ? [{ kind: 'carry', label: 'Kept for the ' + list[i + 1].date + ' paycheck', to: list[i + 1].date, amount: carryOut }] : []),
+      ...(left > 0.004 ? [{ kind: 'plan', label: step ? step.label : 'Left to assign', step: step ? step.id : null, amount: left }] : [])
+    ];
+    return { ...p, carryIn, carryInFrom: carryIn ? (i ? list[i - 1].date : 'checking') : null, carryOut, carryTo: carryOut ? list[i + 1].date : null, left, jobs, byKind: Object.fromEntries(['bill', 'everyday', 'tax', 'carry', 'plan'].map((k) => [k, round2(jobs.filter((j) => j.kind === k).reduce((a, j) => a + j.amount, 0))])), assigned: round2(jobs.reduce((a, j) => a + j.amount, 0)) };
+  });
+  return { paychecks: rows, bonusMonths: alloc.bonusMonths, fromChecking: n ? needIn[0] : 0, kind: alloc.kind };
+}
+
 // ---------------------------------------------------------------- the solvers (E014)
 // What it takes to reach the FI number by an age: the savings rate, the spending
 // level, the income, or the return; each found by halving on the FI engine's own

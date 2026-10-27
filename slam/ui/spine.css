@@ -1683,3 +1683,4 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .sw-pat-2 { border-top-style: dotted; }
 .b-view { margin: 0 0 var(--space-3); max-width: 320px; } .b-view .seg-btn { flex: 1 1 4rem; align-items: center; text-align: center; }
 .cl-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-3); }
+.pay-arrow { list-style: none; padding: 2px var(--space-4); color: var(--text-muted); font-size: var(--text-sm); }
