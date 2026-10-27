@@ -117,6 +117,17 @@ export function keepHistory(hist) {
     if (past.length) past = past.slice(1); else future = future.slice(0, -1);
   }
 }
+// The example, edited, as the person's own household (bug sweep): no longer marked as the example, its "(demo)" name
+// gone, so the header reads the person's name, or "Your household" until there is one.
+export function yours(doc) {
+  const meta = { ...doc.meta, demo: false, name: 'Household' };
+  delete meta.from;
+  return { ...doc, meta };
+}
+// Try with example numbers (bug sweep): forget the household kept in this browser, so every page opens on the example.
+// The caller asks first when what is kept is someone's own numbers (keptIsYours).
+export function keptIsYours() { const s = readSaved(); if (!s) return false; if (s.value === undefined) return true; return !(s.value && s.value.meta && s.value.meta.demo === true) && !(s.value && s.value._meta && s.value._meta.demo === true); }
+export function useExample() { try { localStorage.removeItem(KEY); } catch { /* storage blocked: nothing was kept */ } clearHistory(); }
 export function clearHistory() { try { localStorage.removeItem(HISTORY_KEY); } catch { /* storage blocked: nothing kept */ } }
 // The keys whose change in another tab means this page's household is out of date.
 export const HOUSEHOLD_KEYS = [KEY, HISTORY_KEY, RULES_KEY];

@@ -2,7 +2,7 @@
 // bottom of every page. A plain list of the five (the old client list stays here only until Phase 3). Clients never need these.
 
 import { startPage, say } from './shell.js';
-import { loadMyFile, loadRules } from './household.js';
+import { loadMyFile, loadRules, keptIsYours, useExample } from './household.js';
 import { loadFailWords } from './profile-file.js';
 import { h } from './view.js';
 
@@ -28,7 +28,12 @@ function openCard() {
   });
   return h('section', { class: 'card', 'aria-labelledby': 'b-open' }, h('h2', { id: 'b-open' }, 'A household file'),
     h('p', { class: 'muted' }, 'Read a household file in this browser; every page opens on it. Nothing is uploaded.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Open file'), input));
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Open file'), input,
+      // The example never replaces someone's own numbers without asking.
+      h('button', { type: 'button', class: 'btn', onclick: () => {
+        if (keptIsYours() && !confirm('Replace the numbers kept in this browser with the example? Download a copy first if you want to keep them.')) return;
+        useExample(); say('The example household is open on every page.');
+      } }, 'Try with example numbers')));
 }
 const rows = (list) => h('ul', { class: 'go-list' }, list.map(([name, href, sub]) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, sub)))));
 

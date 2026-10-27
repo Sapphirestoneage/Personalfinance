@@ -13,7 +13,7 @@
 // Formatting only: the page's render reads the engines; nothing here figures a number.
 
 import { mountPage, whoseLine } from './page.js';
-import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS } from './household.js';
+import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS, yours } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { withClient } from '../engine/assumptions.js';
 import { applyPrefs, prefs } from './prefs.js';
@@ -107,15 +107,24 @@ export async function startPage(o) {
 // Every change goes through here: next is the new household, or a function from the household now to the next one;
 // text says what changed, in words (said.*). Saves, records, redraws and shows the bar. False when nothing changed,
 // or when the change could not be made (the bar says why).
+export const YOURS_NOTE = 'These are your numbers now. Download a copy to keep them safe.';
+const NOTE_KEY = 'slam-yours-note:v1';
+function seenYoursNote() { try { if (localStorage.getItem(NOTE_KEY)) return true; localStorage.setItem(NOTE_KEY, '1'); } catch { /* storage blocked: say it each time */ } return false; }
 export function change(next, text) {
   let doc;
   try { doc = typeof next === 'function' ? next(hist.present) : next; } catch (err) { say(err && err.message ? err.message : String(err)); return false; }
   if (!doc || doc === hist.present) return false;
+  // Whose numbers (bug sweep): the first edit to the example makes it theirs. It stops being the example, the header
+  // reads the person's name (or "Your household"), and a one-time note says to keep a copy. Undo brings the example
+  // back with the rest.
+  const mine = !!(hist.present.meta && hist.present.meta.demo === true);
+  if (mine) doc = yours(doc);
   hist = commit(hist, applyDefaults(doc, rulesFor(doc)), text, HISTORY_STEPS);
   notice = null; side = null;
   const kept = stored();
   draw();
-  bar(kept ? end(text) : 'This browser will not keep it, so it lasts until the page closes. ' + end(text), 'Undo', doUndo);
+  const first = mine && !seenYoursNote();
+  bar(first ? YOURS_NOTE + ' ' + end(text) : kept ? end(text) : 'This browser will not keep it, so it lasts until the page closes. ' + end(text), 'Undo', doUndo);
   return true;
 }
 
