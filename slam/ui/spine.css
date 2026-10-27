@@ -1109,3 +1109,8 @@ a.fb-link .fb-more { justify-self: end; }
 .fl-link:hover .fl-name { text-decoration: underline; }
 .fl-link:focus-visible { outline: 3px solid var(--focus); }
 .onepager .op-flow .fb-split { display: none; }
+/* A bank's business cards sit under it (owner's ask, 2026-10-27). */
+.part-h.part-sub { margin: var(--space-2) 0 var(--space-2) var(--space-4); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; }
+.part-sub + .go-list { margin-left: var(--space-4); }
+.biz-filter { max-width: 360px; margin-bottom: var(--space-2); }
+.biz-filter .seg-btn { align-items: center; flex: 1 1 0; }

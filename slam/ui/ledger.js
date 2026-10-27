@@ -1170,7 +1170,15 @@ function sectionScreen(sec) {
   ];
 }
 
-function groupScreen(sec, g) {
+function groupScreen(sec, g, st = {}) {
+  // Business only (owner's ask, 2026-10-27): on a screen with business sub-groups, a filter shows just those.
+  const hasBiz = g.parts.some((p) => p.node && p.node.business);
+  const bizOnly = hasBiz && !!st.bizOnly;
+  const filter = hasBiz ? h('div', { class: 'segmented biz-filter', role: 'group', 'aria-label': 'Which cards' },
+    [[false, 'All cards'], [true, 'Business only']].map(([on, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(bizOnly === on), onclick: () => { if (bizOnly !== on) { keep({ bizOnly: on }); refresh(); } } }, h('span', { class: 'seg-label' }, w)))) : null;
+  // A bank's heading stays when only its business cards show; its business part reads "Business" under it.
+  const parts = bizOnly ? g.parts.filter((p) => p.node && p.node.business) : g.parts;
+  const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
     sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it.counts)]
@@ -1178,11 +1186,13 @@ function groupScreen(sec, g) {
   return [
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
-    ...g.parts.map((p) => [
-      p.heading ? h('h2', { class: 'part-h' }, p.heading) : null,
-      h('ul', { class: 'go-list' }, p.items.map(itemRow)),
+    filter,
+    ...parts.map((p, i) => [
+      head(p, i),
+      p.items.length ? h('ul', { class: 'go-list' }, p.items.map(itemRow)) : null,
       addButton(p.node)
     ]),
+    bizOnly && !parts.length ? h('p', { class: 'muted' }, 'No business cards yet.') : null,
     addButton(g.node)
   ];
 }
@@ -1242,7 +1252,7 @@ function render(ctx) {
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else {
     const at = screenAt(sc, levels) || {};
-    body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group);
+    body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
   }
   return [body, bulkBar(sc)];
 }

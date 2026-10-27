@@ -66,12 +66,15 @@ export function ledgerTree(spine, inst) {
     const itemOf = (d) => { const r = take(byPrefix('debts.' + d.id)); return item('debts.' + d.id, v(d.name) || d.id, r, { collection: 'debts', id: d.id, summary: summaryOf(spine, 'debts.' + d.id, r) }); };
     let children;
     if (t === 'credit_card') {
-      // Personal cards by bank, then business cards apart (owner's ask, 2026-10-27): "Business cards", or
-      // "Business cards, Chase" when they come from more than one bank.
+      // By bank, and under each bank its business cards as a sub-group (owner's ask, 2026-10-27).
       const bankOf = (d) => institutionOf(d, inst) || 'No bank given yet';
       const biz = (d) => v(d.business) === true;
-      const byBank = (list, words) => [...new Set(list.map(bankOf))].map((n, i, all) => node('D:' + t + ':' + (words ? 'biz:' : '') + n, words ? (all.length > 1 ? words + ', ' + n : words) : n, list.filter((d) => bankOf(d) === n).map(itemOf)));
-      children = [...byBank(ds.filter((d) => !biz(d))), ...byBank(ds.filter(biz), 'Business cards')];
+      children = [...new Set(ds.map(bankOf))].flatMap((n) => {
+        const mine = ds.filter((d) => bankOf(d) === n);
+        const personal = mine.filter((d) => !biz(d)), business = mine.filter(biz);
+        return [node('D:' + t + ':' + n, n, personal.map(itemOf), { bank: n }),
+          ...(business.length ? [node('D:' + t + ':' + n + ':biz', 'Business', business.map(itemOf), { bank: n, business: true, sub: true })] : [])];
+      });
       // The pay setting every card follows unless it says otherwise (S-189) leads the cards.
       const every = take(byPrefix('household.cardPayPolicy'));
       if (every.length) children.unshift(item('household.cardPayPolicy', 'Every card', every));
@@ -243,7 +246,10 @@ export function statementOrder(screens, spine, s) {
       // Items biggest first, inside each part, keeping each item's address with it.
       const slugOf = new Map(g.items.map((it, k) => [it, g.slugs[k]]));
       for (const p of g.parts) p.items.sort(byAmount);
-      if (g.parts.length > 1) g.parts.sort((a, b) => (b.items[0] ? b.items[0].amount ?? -Infinity : -Infinity) - (a.items[0] ? a.items[0].amount ?? -Infinity : -Infinity));
+      // Largest first; a bank's parts (its cards, then its business cards) stay together, ranked by its largest card.
+      const top = (p) => (p.items[0] ? p.items[0].amount ?? -Infinity : -Infinity);
+      const rank = (p) => (p.node && p.node.bank ? Math.max(...g.parts.filter((x) => x.node && x.node.bank === p.node.bank).map(top)) : top(p));
+      if (g.parts.length > 1) g.parts.sort((a, b) => rank(b) - rank(a) || (a.node && a.node.bank && b.node && a.node.bank === b.node.bank ? (a.node.sub ? 1 : 0) - (b.node.sub ? 1 : 0) : 0));
       if (g.parts.length) g.items = g.parts.flatMap((p) => p.items);
       g.slugs = g.items.map((it) => slugOf.get(it));
     }
