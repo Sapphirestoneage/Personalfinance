@@ -59,7 +59,7 @@ test('Today (Batch 5): five tiles, each one tap to its own screen; the flags bel
   const src = code('ui/dashboard.js');
   const ids = [...src.matchAll(/tile\(spine, \{ id: '([a-z]+)'/g)].map((m) => m[1]);
   assert.deepEqual(ids, ['networth', 'surplus', 'savings', 'runway', 'next']);
-  for (const [id, href] of [['networth', 'numbersHref\\(\\)'], ['surplus', "'#/surplus'"], ['savings', "'#/savings'"], ['runway', "'#/runway'"], ['next', "step \\? 'plan\\.html#/'"]]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
+  for (const [id, href] of [['networth', 'numbersHref\\(\\)'], ['surplus', "'#/surplus'"], ['savings', "'#/savings'"], ['runway', "'#/runway'"], ['next', 'stepHref\\(step\\)']]) assert.match(src, new RegExp("id: '" + id + "', label: [^\\n]*target: " + href), id);
   assert.match(src, /keptMath\('flag-' \+ f\.id/);
   assert.match(src, /open: kept\(\)\.done \|\| null, ontoggle:/);
   assert.match(src, /listOpen: !!kept\(\)\.flowList/);

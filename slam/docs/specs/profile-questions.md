@@ -57,6 +57,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 ### Debt
 
+- **Planning to apply for credit in the next 12 months?** (Yes / No, or Not sure). A loan, a card or a lease: card use then comes first, since it is part of a credit score.
 - **Which debts do you have?** (Credit cards / Student loans / Car / Mortgage / Personal loan / Owed to family / Buy now, pay later / Medical / None, or Not sure). Opens each debt in the session.
 - **Student loans: federal or private?** (Federal / Private / Some of each, or Not sure; asked only when it applies). Federal loans show plans and forgiveness.
 - **In the last 3 months, did you pay the full statement?** (Always / Sometimes / No, or Not sure; asked only when it applies). Always means cards are paid in full; otherwise the rate matters.

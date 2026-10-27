@@ -11,6 +11,7 @@ import { startPage, change, said, keep, kept, refresh, say, numbersHref } from '
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
+import { rankSteps } from '../engine/next-step.js';
 import { fooLadder, surplusWaterfall, allocator, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
@@ -48,7 +49,10 @@ function model(base, rules) {
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
   // The steps read the same "How much to max it?" rows as its card (one run).
-  memo = { base, rules, scenario, spine, s, sim, foo: fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim }) };
+  const foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
+  // NEXT is the one ranking's first step (engine/next-step.js), the same as Today's Next step and Do first.
+  const rank = rankSteps(spine, rules, s, { foo });
+  memo = { base, rules, scenario, spine, s, sim, rank, foo: { ...foo, current: rank.first && rank.first.rung ? rank.first.rung : foo.current } };
   return memo;
 }
 const allocOf = (m) => m.alloc || (m.alloc = allocator(m.spine, m.rules, m.sim, m.s));

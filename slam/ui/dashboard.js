@@ -13,12 +13,12 @@ import { withScenario } from '../engine/scenarios.js';
 import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario } from './scenario.js';
-import { fooLadder } from '../engine/plan.js';
 import { maxItFor } from './maxit-panel.js';
 import { h, chip, money, pct, ledgerHref, summaryMoney } from './view.js';
 import { toneOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
+import { rankSteps } from '../engine/next-step.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -70,19 +70,40 @@ function model(base, rules) {
   return { spine, rules, s };
 }
 
+let rankMemo = { spine: null, rules: null, s: null, rank: null };
+function rankOf(spine, rules, s) {
+  if (rankMemo.spine !== spine || rankMemo.rules !== rules || rankMemo.s !== s) rankMemo = { spine, rules, s, rank: rankSteps(spine, rules, s, { sim: maxItFor(spine, rules).sim }) };
+  return rankMemo.rank;
+}
+const stepHref = (step) => (step && step.rung ? 'plan.html#/' + slugOf(step.rung) : step && step.path ? ledgerHref(step.path) : 'plan.html');
+// The ranked step and the questions, as Do first's cards: a headline, one line, one button with a verb.
+function stepCard(step) {
+  return h('li', { class: 'flag flag-red', id: 'step-' + step.id.replace(/[^a-z0-9]+/gi, '-') },
+    h('h3', { class: 'flag-title' }, step.label),
+    h('p', { class: 'flag-line' }, step.loss ? 'About ' + money(step.loss) + ' a month lost until it is done. ' + (step.why || '') : step.why || ''),
+    h('div', { class: 'flag-actions' }, h('a', { class: 'btn primary small', href: stepHref(step) }, step.rung ? 'Make a plan' : 'Open it')));
+}
+function questionCard(q) {
+  return h('li', { class: 'flag flag-yellow', id: 'ask-' + q.rung },
+    h('h3', { class: 'flag-title' }, q.question),
+    h('p', { class: 'flag-line' }, 'One number, so the plan can count "' + q.label.toLowerCase() + '".'),
+    h('div', { class: 'flag-actions' }, h('a', { class: 'btn small', href: q.path ? ledgerHref(q.path) : 'plan.html' }, 'Answer it')));
+}
+
 function tiles({ spine, rules, s }) {
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  const foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
-  // The first step not done yet, a blank one too (a blank deductible is not skipped).
-  const step = foo.rungs.find((r) => r.done !== true) || null;
+  // The one ranking (engine/next-step.js): the step that loses the most a month first; a step waiting on a number is a
+  // question on Do first, never the next step.
+  const rank = rankOf(spine, rules, s);
+  const step = rank.first, foo = rank.ladder;
   const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : summaryMoney(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : summaryMoney(sh.netWorth.value)));
   const all = [
     tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: both }),
     tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + summaryMoney(cf.income.takeHome.value) + ' take-home.'] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
     tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [sh.cash.value === null ? null : summaryMoney(sh.cash.value) + ' in cash.'] }),
-    tile(spine, { id: 'next', label: 'Next step', target: step ? 'plan.html#/' + slugOf(step.id) : 'plan.html', result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: step ? step.kind : foo.kind, from: [], rough: [], missing: [] },
-      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.need !== null && !step.done ? summaryMoney(step.need) + (step.flow ? ' a month' : '') + '.' : null] })];
+    tile(spine, { id: 'next', label: 'Next step', target: stepHref(step), result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: foo.kind === 'missing' ? 'rough' : foo.kind, from: [], rough: [], missing: [] },
+      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.loss ? 'About ' + summaryMoney(step.loss) + ' a month lost until it is done.' : step && step.need ? summaryMoney(step.need) + (step.flow ? ' a month' : '') + '.' : null] })];
   // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped.
   const ids = ['networth', 'surplus', 'savings', 'runway', 'next'];
   const want = (Array.isArray(pref('todayTiles')) ? pref('todayTiles') : ids).filter((id) => ids.includes(id));
@@ -140,7 +161,7 @@ function render({ spine: base, rules, levels }) {
     tiles(m),
     flowPart(m.spine, rules, m.s),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager')),
-    flagsSection(m.spine, m.s.flags)
+    flagsSection(m.spine, m.s.flags, rankOf(m.spine, rules, m.s))
   ];
 }
 
@@ -194,16 +215,19 @@ function flagItem(spine, f) {
 
 // Three groups: Do first, Next up, Done (folded, with a count). A number that only rests on guesses is one row that
 // opens Still guessing, not a card each.
-function flagsSection(spine, flags) {
+function flagsSection(spine, flags, rank) {
   const guessy = flags.filter((f) => f.stage === 'yellow' && f.id.startsWith('input-'));
   const first = flags.filter((f) => f.stage === 'red'), next = flags.filter((f) => f.stage === 'yellow' && !guessy.includes(f)), done = flags.filter((f) => f.stage === 'green');
-  // The Profile's tone (Level 1): gently, one step to start with and the rest under Next up; straight to it, all of it.
+  // Do first is the one ranking's first step (the same as the Next step tile and the Plan's NEXT), with the questions
+  // that hold a step back; every other card is Next up. The Profile's tone: gently, the step alone first.
   const gentle = toneOf(spine) === 'gentle';
   const group = (id, title, list) => (list.length ? h('section', { class: 'card', 'aria-labelledby': id }, h('h2', { id }, title), h('ul', { class: 'flags' }, list.map((f) => flagItem(spine, f)))) : null);
+  const top = rank && rank.first ? [stepCard(rank.first)] : [], asks = rank ? rank.questions.map(questionCard) : [];
   return [
-    group('do-first-h', gentle ? 'One step to start with' : 'Do first', gentle ? first.slice(0, 1) : first),
-    group('next-up-h', 'Next up', gentle ? [...first.slice(1), ...next] : next),
-    !first.length && !next.length ? h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.')) : null,
+    top.length || asks.length ? h('section', { class: 'card', 'aria-labelledby': 'do-first-h' }, h('h2', { id: 'do-first-h' }, gentle ? 'One step to start with' : 'Do first'), h('ul', { class: 'flags' }, ...top, ...(gentle ? [] : asks))) : null,
+    group('next-up-h', 'Next up', [...first, ...next]),
+    gentle && asks.length ? h('section', { class: 'card', 'aria-labelledby': 'asks-h' }, h('h2', { id: 'asks-h' }, 'When you have a moment'), h('ul', { class: 'flags' }, ...asks)) : null,
+    !top.length && !first.length && !next.length ? h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.')) : null,
     guessy.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guessy.length + (guessy.length === 1 ? ' number is a guess' : ' numbers are guesses'))))) : null,
     done.length ? h('details', { class: 'card done-group', open: kept().done || null, ontoggle: (e) => { if (!!kept().done !== e.target.open) keep({ done: e.target.open }); } },
       h('summary', {}, h('span', {}, 'Done'), h('span', { class: 'count' }, String(done.length))), h('ul', { class: 'flags' }, done.map((f) => flagItem(spine, f)))) : null
