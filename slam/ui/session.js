@@ -151,8 +151,6 @@ function whoPays(spine, e) {
     h('label', { class: 'mini-label', for: 'who-' + e.id }, 'Who pays'),
     pickBox('who-' + e.id, 'Who pays ' + e.label, [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], now, (x) => set(x)),
     now === 'covered' ? [h('label', { class: 'mini-label', for: 'by-' + e.id }, 'Covered by'), pickBox('by-' + e.id, e.label + ' covered by', names.map((n) => [n, n]), cover, (x) => set('covered', x))] : null,
-    h('label', { class: 'mini-label', for: 'nw-' + e.id }, 'Need or want'),
-    pickBox('nw-' + e.id, e.label + ': need or want', [['true', 'Need'], ['false', 'Want']], String(v(e.need) !== false), (x) => change((s) => putFact(s, 'expenses.' + e.id + '.need', x === 'true', 'known', today), said.changed(e.label, x === 'true' ? 'a need' : 'a want'))),
     h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in My numbers'))
   ];
 }
@@ -164,11 +162,21 @@ function needRow(spine, item, fat, key, sub = false) {
   const by = e && e.covered && v(e.covered) ? v(e.coveredBy) : null;
   const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount) : null, by ? h('span', { class: 'chip chip-notForMe' }, 'covered by ' + by) : null);
   const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x));
+  // Not in your numbers yet: Need or Want adds it as that, No hides it.
   if (!e) return lineRow(sub ? 'sub' : '', name, amt,
     h('span', { class: 'tick', role: 'group', 'aria-label': item.label + ': do you have it?' },
-      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, item, fat, todayIso()).spine, said.added(item.label)) }, 'Yes'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: true }, fat, todayIso()).spine, said.added(item.label + ', a need')) }, 'Need'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: false }, fat, todayIso()).spine, said.added(item.label + ', a want')) }, 'Want'),
       h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
-  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), more(item.label, ...whoPays(spine, e)));
+  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), needWant(e), more(item.label, ...whoPays(spine, e)));
+}
+// Need or want, on every line in plain sight (S-231): two pressed-or-not buttons.
+function needWant(e) {
+  const need = v(e.need) !== false;
+  const set = (x) => { if (x !== need) change((s) => putFact(s, 'expenses.' + e.id + '.need', x, 'known', todayIso()), said.changed(e.label, x ? 'a need' : 'a want')); };
+  return h('span', { class: 'segmented nw-seg', role: 'group', 'aria-label': e.label + ': need or want' },
+    h('button', { type: 'button', id: 'nw-' + e.id, class: 'seg-btn', 'aria-pressed': String(need), onclick: () => set(true) }, h('span', { class: 'seg-label' }, 'Need')),
+    h('button', { type: 'button', id: 'nw-' + e.id + '-want', class: 'seg-btn', 'aria-pressed': String(!need), onclick: () => set(false) }, h('span', { class: 'seg-label' }, 'Want')));
 }
 // A question as a row of buttons; the answer is pressed. Answering changes which lines show and what they mean.
 function question(id, label, options, value, onPick) {
@@ -177,7 +185,17 @@ function question(id, label, options, value, onPick) {
     h('div', { class: 'segmented q-seg' }, options.map(([k, w]) => h('button', { type: 'button', id: 'q-' + id + '-' + k, class: 'seg-btn', 'aria-pressed': String(value === k), onclick: () => { if (value !== k) onPick(k); } }, h('span', { class: 'seg-label' }, w)))));
 }
 // A line shows unless the Profile hides it (engine/profile.js): with no answer yet, every line shows.
-const applies = (spine, item) => showsKey(answersOf(spine), item.key);
+// Before the Profile says where they live, a filled rent or mortgage line answers it for this list: renters do not
+// see the mortgage lines, owners do not see rent. Nothing is stored; a line already in their numbers still shows.
+const RENT_KEYS = ['rent', 'renters-insurance'], OWN_KEYS = ['mortgage', 'property-tax', 'home-insurance'];
+function seenAnswers(spine) {
+  const a = answersOf(spine);
+  if (a.home) return a;
+  const filled = (keys) => allItems().some((x) => keys.includes(x.key) && ((e) => e && v(e.amount) !== null)(findExpense(spine, x.label)));
+  const rent = filled(RENT_KEYS), own = filled(OWN_KEYS);
+  return rent && !own ? { ...a, home: 'rent' } : own && !rent ? { ...a, home: 'own' } : a;
+}
+const applies = (spine, item) => showsKey(seenAnswers(spine), item.key);
 const allItems = () => DATA.needs.flatMap((c) => c.items.flatMap((x) => [x, ...(x.subs || [])]));
 // Typical amounts for the lines that fit the answers, on empty lines only, marked guess.
 function fillTypical(t) {
