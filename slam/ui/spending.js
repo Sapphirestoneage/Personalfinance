@@ -127,7 +127,7 @@ function safeCard(m) {
       gapsCard(m.spine, m.sim),
       under ? h('p', { class: 'safe-short', id: 'cash-low' }, 'Short ' + money(Math.abs(m.story.low.amount)) + ' by ' + shortDate(m.story.low.date).replace(/, \d{4}$/, ''))
         : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(s.today)), h('span', { class: 'muted' }, s.daysUntil ? money(s.perDay) + ' a day to payday' : 'to the end of the window')),
-      under ? h('div', { class: 'edit-actions' }, fixButton(m.story)) : null,
+      under ? h('div', { class: 'edit-actions' }, fixButton(m.story, 'btn small')) : null,
       mathButton(['spend:safeToday', ...(s.daysUntil && !s.shortfall ? ['spend:safePerDay'] : [])], m.ctx)]);
 }
 

@@ -74,6 +74,13 @@ function inspect({ builder }) {
       if (seen.has(m[0])) continue; seen.add(m[0]);
       add('cents', m[0] + ' in ' + where(n.parentElement));
     }
+    // A date in its stored form (2027-02-28) in words a client reads (overnight round 1): reported, not blocking.
+    const dw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = dw.nextNode(); n; n = dw.nextNode()) {
+      const m = n.nodeValue.match(/\b20\d\d-\d\d-\d\d\b/);
+      if (!m || !n.parentElement || !visible(n.parentElement) || n.parentElement.closest('.math-panel, .math-page, .log-list, .log, .ch-table, input, textarea, [data-cents]')) continue;
+      add('raw date', m[0] + ' in ' + where(n.parentElement));
+    }
   }
   const fields = [...document.querySelectorAll('input, select, textarea')].filter((el) => visible(el) && !['hidden', 'submit', 'button'].includes(el.type));
   for (const el of fields) {

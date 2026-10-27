@@ -11,6 +11,10 @@
 // deductibles rung): ahead of the dollars-lost steps once that fund is there, else just after it.
 
 import { valueOf as v, round2 } from './spine.js';
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// A date in words for a sentence ("Feb 28, 2027"), never the stored form.
+const dateWords = (iso) => (iso ? MONTH_NAMES[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : 'its end date');
 import { debtLoss } from './debt.js';
 import { fooLadder, RUNG_LABELS } from './plan.js';
 import { answersOf, protectionGaps } from './profile.js';
@@ -34,7 +38,7 @@ export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null,
     const bal = v(d.balance), name = v(d.name) || d.id, path = 'debts.' + d.id + '.balance', ends = d.promoEnds ? v(d.promoEnds) : null;
     const deferredUnknown = l.promo && (!d.deferredInterest || v(d.deferredInterest) === null);
     if (l.promo) losing.push({ id: 'promo:' + d.id, rung: l.after >= hi ? 'highInterest' : null, label: 'Clear the ' + name + ' before its intro rate ends', loss: l.loss, path, debt: d.id,
-      why: money0(bal) + ' at 0% until ' + ends + (l.deferred ? '; interest is deferred, so any balance left then is charged about ' + money0(l.back) + ' of interest' : '; then ' + Math.round(l.after * 1000) / 10 + '%' + (deferredUnknown ? '. Check the card\'s terms for deferred interest' : '')) + '.' });
+      why: money0(bal) + ' at 0% until ' + dateWords(ends) + (l.deferred ? '; interest is deferred, so any balance left then is charged about ' + money0(l.back) + ' of interest' : '; then ' + Math.round(l.after * 1000) / 10 + '%' + (deferredUnknown ? '. Check the card\'s terms for deferred interest' : '')) + '.' });
     else losing.push({ id: 'interest:' + d.id, rung: 'highInterest', label: 'Pay down the ' + name + ' (' + Math.round(l.rate * 1000) / 10 + '%)', loss: l.loss, path, debt: d.id,
       why: money0(bal) + ' at ' + Math.round(l.rate * 1000) / 10 + '% costs about ' + money0(l.loss) + ' a month in interest.' });
   }

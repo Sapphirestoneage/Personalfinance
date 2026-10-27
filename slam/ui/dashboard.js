@@ -198,7 +198,7 @@ function cashCard(spine, rules) {
   return h('section', { class: 'card flag flag-red cash-first', id: 'cash-low', 'aria-labelledby': 'cash-low-h' },
     h('h2', { id: 'cash-low-h', class: 'flag-title' }, 'Checking goes under your floor'),
     h('p', { class: 'flag-line' }, lowWords(story) + '. Your floor is ' + money(story.floor) + '.'),
-    h('div', { class: 'flag-actions' }, fixButton(story)));
+    h('div', { class: 'flag-actions' }, fixButton(story, 'btn small')));
 }
 
 // The money flow (S-192). No Split here (audit 4): each section opens its screen in My numbers, where its lines are.
