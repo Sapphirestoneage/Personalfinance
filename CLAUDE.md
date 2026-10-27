@@ -86,6 +86,7 @@ Long reasoning belongs in the commit message, not the log.
 - One commit per room; systemic passes get their own commit.
 - Verify before "done": `node test/run.js`; for any room with typed input,
   `node test/forms.js`; serve with `python3 -m http.server` and check the console.
+- A run is not done until `node slam/tools/qa-crawl.mjs` passes; paste its summary in the report.
 - End with `/wrap`. `node tools/context/build.js --check` fails if the
   context files are stale.
 
