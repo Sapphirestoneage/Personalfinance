@@ -7,12 +7,11 @@ Everything below is on the demo household. Nothing real was read or written.
 
 ## In one paragraph
 
-All twelve tracks (A to L) are built, each in its own commit, then four review rounds with a fresh reviewer each time.
+All twelve tracks (A to L) are built, each in its own commit, then five review rounds with a fresh reviewer each time.
 The app now has a calendar that is a calendar, a command bar, one chart module behind about 20 charts, a paycheck view
 where every dollar has a job, the debt orders side by side, what-if sliders, a subscription audit, a bill negotiation
 list, notes, keyboard shortcuts, a Design kit with every chart, and Show the math on the busiest screens that lacked
-it. qa-crawl and agree-check pass. Both test suites pass. The reviewers' worst findings fell from 14 high in round 1
-to ROUND4_HIGH in round 4; what is left is mostly one engine question: the Debt screen runs two payoff models (a
+it. qa-crawl and agree-check pass. Both test suites pass. The reviewers' high findings went 14, 8, 9, 3, 3 over the five rounds; what is left is mostly one engine question: the Debt screen runs two payoff models (a
 12-month day-by-day run and a monthly plan) that do not always agree, and that needs a decision and a day session.
 
 ## What was built (A to L)
@@ -37,10 +36,10 @@ to ROUND4_HIGH in round 4; what is left is mostly one engine question: the Debt 
 ![Charts, light](overnight/charts-light.jpg)
 ![Charts, dark](overnight/charts-dark.jpg)
 
-### A few screens (round 4, phone and computer)
+### A few screens (round 5, phone and computer)
 
-![Today](overnight/round-4/today-390.jpg) ![Debt](overnight/round-4/debt-1024-dark.jpg)
-![Paychecks](overnight/round-4/paychecks-390.jpg) ![What if](overnight/round-4/whatif-1024-dark.jpg)
+![Today](overnight/round-5/today-390.jpg) ![Debt](overnight/round-5/debt-1024-dark.jpg)
+![Paychecks](overnight/round-5/paychecks-390.jpg) ![What if](overnight/round-5/whatif-1024-dark.jpg)
 
 Every client screen, both sizes, every round: `docs/overnight/round-N/`.
 
@@ -62,14 +61,38 @@ variable, 50/30/20, Life events, the One-pager, Still guessing) plus What if and
 | 1 | 14 | 13 | 3 | PASS (3 cents, 6 typed-looking placeholders, 3 raw dates) | PASS |
 | 2 | 8 | 18 | 4 | PASS (1 dead click) | PASS |
 | 3 | 9 | 17 | 6 | PASS | PASS |
-| 4 | ROUND4_HIGH | ROUND4_MED | ROUND4_LOW | ROUND4_QA | ROUND4_AGREE |
+| 4 | 3 | 23 | 4 | PASS | PASS |
+| 5 | 3 | 12 | 13 | PASS | PASS |
 
 What was fixed each round, what went to QUESTIONS and what was left (with reasons): `docs/OVERNIGHT.md`.
 Each round's findings: `docs/overnight/round-N/findings.md`.
 
 ### Per screen, first round and last
 
-SCREEN_TABLE
+Words on the phone at 390px (from screen-budget) and the reviewer's worst problem, first round and last.
+
+| Screen | Words, round 1 | Words, round 5 | Round 1 reviewer | Round 5 reviewer |
+|---|---|---|---|---|
+| Today | 102 | 101 | Fine; net worth parts did not visibly add up | Fine (an unlabelled sparkline) |
+| Net worth | | | Assets less debt did not make net worth | Fine: the waterfall adds to $62,976 |
+| Where the money goes | | | Fine | Fine: totals reconcile to $6,500 and $712 |
+| Session | 49 | 59 | Rough flags disagreed | Question counts against My numbers (159) |
+| Session, Needs | | | Lines did not add to the total | The total reconciles; still many open lines |
+| My numbers | 101 | 91 | Assets $87,000 less debt was not net worth | Open-question count (159) |
+| Debt | | | Card balances on two runs, 670px wide on a phone | Long; its tables clip on a phone; two runs (155) |
+| Income | | | "$4,211 take-home" against $4,711 | Fine |
+| Taxes | | | Fine | Fine |
+| Goals (FI) | | | Three FI years | Progress and chart use two FI targets |
+| Subscriptions | | | A dead end | Offers bills to mark; empty on the demo |
+| Calendar | 140 | 155 | The cash line never went below $0 | A month against the Plan's figure (now said in words) |
+| Spending | 103 | 103 | Two primary buttons | The purchase form open by default |
+| Plan | 172 | 172 | Two debt-free dates (154) | A 0% card in step 3 (now said why) |
+| Paychecks | | | Disagreed with the cash forecast | Short against the Calendar's run (155) |
+| What if | | | FI 2048 against 2046 | Fine |
+| Bills worth a call | | | Ranked by the wrong thing | Fine |
+| What it takes | | | "0.0% needed" for an age nobody typed | Fine |
+| One-pager | 192 | 229 | Its numbers (fixed elsewhere) | Fine |
+| Got extra money? | 99 | 99 | Tax asked twice (158) | Fine (158) |
 
 ## Decisions for you (10)
 
@@ -105,7 +128,8 @@ SCREEN_TABLE
   pass of their own.
 - **agree-check covers 21 metrics.** The disagreements the reviewers found were in numbers it does not track
   (debt-free month, interest totals, to the Plan a month). Registering them is the next step for that tool.
-- **One more round**: the loop stopped after round 4 because rounds 3 and 4 changed little (STOP_REASON).
+- **More rounds**: the loop stopped at five rounds, the limit; rounds 4 and 5 each left 3 high findings, the same two
+  questions each time (the two debt runs, and the open-question counts).
 
 ## Checks at the end
 
