@@ -573,6 +573,17 @@ export function planPayoff(spine, rules, s, { ladder = null, sim = null, asOf = 
   };
 }
 
+// When a step is done at a few paces (owner, 2026-10-27, S-263): its gap set aside over 3, 6 and 12 months, each with the
+// month it lands, counted from the as-of date; plus the surplus's own pace when there is one. A monthly step (a flow)
+// has no gap to fill, so none.
+export function stepPaces(rung, surplus, asOf) {
+  if (!rung || rung.flow || rung.done || !(rung.need > 0)) return [];
+  const pace = (months, label) => ({ months, perMonth: Math.ceil(rung.need / months), by: monthKey(sameDayLater(asOf, months)), label });
+  const out = [3, 6, 12].map((n) => pace(n, null));
+  if (surplus > 0) { const n = Math.ceil(rung.need / surplus); if (![3, 6, 12].includes(n)) out.push({ ...pace(n, 'everything left over, starting now'), perMonth: Math.round(surplus) }); }
+  return out.sort((a, b) => a.months - b.months);
+}
+
 // FOO ghost chips (row 60): the surplus the current rung takes, as a plan event on the last day of each month in the window.
 export function fooGhosts(spine, rules, s, months, { sim = null } = {}) {
   const f = fooLadder(spine, rules, s, { sim });

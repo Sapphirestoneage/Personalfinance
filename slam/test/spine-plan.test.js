@@ -269,3 +269,13 @@ test('Step 1, the starter cushion: a fixed $1,000, the biggest deductible, a mon
   const old = putFact(s, 'household.deductible', 2500, 'known', T);
   assert.match(fooLadder(old, R, S(old)).rungs[0].why, /the biggest deductible \(\$2,500\)/);
 });
+
+test('each saving step says when its gap is done at 3, 6 and 12 months, and at the whole surplus (S-263)', async () => {
+  const { stepPaces } = await import('../engine/plan.js');
+  const r = { need: 406, flow: false, done: false };
+  const p = stepPaces(r, 0, '2026-10-27');
+  assert.deepEqual(p.map((x) => [x.months, x.perMonth, x.by]), [[3, 136, '2027-01'], [6, 68, '2027-04'], [12, 34, '2027-10']]);
+  assert.deepEqual(stepPaces(r, 100, '2026-10-27').find((x) => x.label).months, 5);
+  assert.deepEqual(stepPaces({ need: 300, flow: true }, 100, '2026-10-27'), [], 'a monthly step has no gap');
+  assert.deepEqual(stepPaces({ need: 0, done: true }, 100, '2026-10-27'), []);
+});

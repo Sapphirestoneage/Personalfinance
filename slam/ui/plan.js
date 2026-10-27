@@ -18,7 +18,7 @@ import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
-import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv, starterBasisOf, STARTER_WORDS } from '../engine/plan.js';
+import { fooLadder, surplusWaterfall, allocator, paycheckPlan, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv, starterBasisOf, STARTER_WORDS, stepPaces } from '../engine/plan.js';
 import { STEP_LABELS } from '../engine/windfall.js';
 import { putFact, parseInput, recordDebtPayment } from '../engine/edits.js';
 import { valueOf } from '../engine/spine.js';
@@ -231,6 +231,10 @@ function stepScreen(m, r) {
     r.id === f.current ? h('p', {}, h('span', { class: 'pill pill-locked' }, 'Your next step')) : null,
     big,
     when ? h('p', { class: 'tile-sub' }, when) : null,
+    // How long the gap takes at a few paces (S-263), so a step with no surplus yet still has a date to aim at.
+    (() => { const ps = stepPaces(r, f.surplus, m.base.meta.asOf); return ps.length ? h('div', { class: 'paces' }, h('p', { class: 'edit-label' }, money(r.need) + ' to go, at a pace you choose'),
+      h('ul', { class: 'flow-list' }, ps.map((x) => h('li', {}, h('strong', {}, money(x.perMonth) + ' a month'), x.label ? ' (' + x.label + ')' : '', ': done by ' + monthWords(x.by) + ', ' + x.months + (x.months === 1 ? ' month' : ' months'))))),
+      r.completes ? h('p', { class: 'tile-note' }, 'Each counts from now. The Plan\'s own date above is later when the steps before this one take the money first.') : null) : null; })(),
     // The deductible's own box is right below, so its step says to type it there.
     h('p', {}, kindChip(r.kind), ' ', r.id === 'deductibles' && r.need === null && starterBasisOf(m.base) === 'deductible' ? 'Type the biggest deductible below.' : r.why),
     r.flow ? h('p', { class: 'tile-note' }, 'A monthly amount: once the surplus gets here, this much goes to it every month.') : null,
