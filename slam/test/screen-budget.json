@@ -8,7 +8,7 @@
    "primary": 1
   },
   "1024": {
-   "words": 104,
+   "words": 103,
    "height": 1020,
    "buttons": 5,
    "chips": 0,
@@ -17,14 +17,14 @@
  },
  "Session": {
   "390": {
-   "words": 49,
+   "words": 54,
    "height": 844,
    "buttons": 4,
    "chips": 3,
    "primary": 1
   },
   "1024": {
-   "words": 51,
+   "words": 56,
    "height": 800,
    "buttons": 4,
    "chips": 3,
@@ -97,14 +97,14 @@
  },
  "Calendar": {
   "390": {
-   "words": 147,
+   "words": 152,
    "height": 1360,
    "buttons": 48,
    "chips": 0,
    "primary": 0
   },
   "1024": {
-   "words": 188,
+   "words": 193,
    "height": 1504,
    "buttons": 48,
    "chips": 0,
@@ -177,14 +177,14 @@
  },
  "One-pager": {
   "390": {
-   "words": 203,
+   "words": 212,
    "height": 1751,
    "buttons": 5,
    "chips": 0,
    "primary": 0
   },
   "1024": {
-   "words": 205,
+   "words": 214,
    "height": 1579,
    "buttons": 4,
    "chips": 0,
