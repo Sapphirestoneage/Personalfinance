@@ -330,6 +330,8 @@ export function applyAnswers(spine, answers, opts) {
 }
 // The words for one life change: "Where do you live?: I rent to With family".
 export function changeWords(c) {
+  // A step toward the Budget's target (engine/target.js): "Groceries $500 to $575, toward a target of $650".
+  if (c.kind === 'target') { const d = (x) => '$' + Math.round(x).toLocaleString('en-US'); return c.label + ' ' + d(c.from) + ' to ' + d(c.to) + ', toward a target of ' + d(c.target); }
   const q = L1.get(c.question) || L2.get(c.question);
   const say = (x) => (x === null || x === undefined ? 'blank' : x === NOT_SURE ? 'Not sure' : Array.isArray(x) ? x.map((k) => optWords(q, k)).join(', ') : optWords(q, x));
   return (q ? q.label : c.question) + ' ' + say(c.from) + ' to ' + say(c.to);

@@ -7,7 +7,9 @@
 // change goes through its change() with words. Every number comes from engine/spending.js, engine/cashsim.js,
 // engine/compare.js and the summary; every number has Show the math. Formatting only.
 
-import { startPage, change, said, keep, kept, refresh } from './shell.js';
+import { startPage, change, said, say, keep, kept, refresh } from './shell.js';
+import { readScenarios, keepScenarios, targetScenario, keepTarget, saveScenario, updateScenario, targetId } from './scenarios-store.js';
+import { targetColumns, targetBuys, stepToward, stepValue } from '../engine/target.js';
 import { gapsCard } from './page.js';
 import { summarize } from '../engine/summary.js';
 import { burnTiers } from '../engine/cashsim.js';
@@ -569,8 +571,43 @@ function lineBudget(m, l) {
       h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Month'), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, 'Actual'), h('th', { scope: 'col' }, 'Difference'))),
       h('tbody', {}, rows.map((r) => h('tr', {}, h('th', { scope: 'row' }, MONTH_LONG[+r.ym.slice(5, 7) - 1].slice(0, 3)),
         h('td', { class: 'num' }, r.line && r.line.plan !== null ? money(r.line.plan) : '-'), h('td', { class: 'num' }, r.line ? money(r.line.actual) : '-'), h('td', {}, r.line ? r.line.words : '')))))),
+    lineTarget(m, l),
     here && here.entries.length ? [h('h3', { class: 'part-h' }, 'Behind the actual, ' + ymWords(ym)),
       h('ul', { class: 'log-list' }, here.entries.map((e) => h('li', {}, h('span', {}, shortDate(e.date)), h('span', {}, h('strong', {}, e.merchant || 'No store'), ' (' + (SOURCE_WORDS[e.source] || e.source || 'added') + ')'), h('span', { class: 'log-amt' }, (e.kind === 'refund' ? '+' : '-') + cents(e.amount)))))] : null);
+}
+
+// A line's target (target brief): change what the target has for it (the target's own copy, never My numbers), and
+// step toward it: all the way, halfway, or an amount. A step changes My numbers with Undo and a dated life change.
+function lineTarget(m, l) {
+  const t = targetScenario();
+  const exp = (m.base.expenses || []).find((e) => e.id === l.id);
+  if (!t || !exp) return null;
+  const te = (t.spine.expenses || []).find((e) => e.id === l.id);
+  const tv = te && te.amount ? te.amount.value : null, now = exp.amount ? exp.amount.value : null;
+  const box = h('input', { id: 'line-target', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 400' });
+  box.value = tv === null ? '' : String(tv);
+  const amt = h('input', { id: 'step-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 25', 'aria-label': 'Step by this much' });
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const path = 'expenses.' + l.id + '.amount';
+  const step = (how, words) => change((x) => stepToward(x, t.spine, path, how, todayIso()), said.changed(l.label, words));
+  const gap = tv !== null && now !== null && Math.abs(tv - now) >= 1;
+  return h('div', { class: 'line-target' },
+    h('h3', { class: 'part-h' }, targetName(t.name)),
+    h('form', { class: 'line-plan', novalidate: true, onsubmit: (e) => {
+      e.preventDefault();
+      const p = parseInput('money', box.value);
+      if (!p.ok) { msg.textContent = p.message; box.focus(); return; }
+      const was = t.spine;
+      updateScenario(t.id, (sp) => editExpense(sp, l.id, { amount: p.value, kind: 'known' }, todayIso()));
+      refresh();
+      say(t.name + ': ' + l.label + ' at ' + money(p.value), () => { updateScenario(t.id, () => was); refresh(); });
+    } }, h('label', { for: 'line-target', class: 'edit-label' }, 'This line on the target'), h('div', { class: 'line-plan-row' }, box, h('button', { type: 'submit', class: 'btn small' }, 'Save')), msg),
+    gap ? h('div', { class: 'step-target' },
+      h('p', {}, money(now) + ' now, ' + money(tv) + ' on the target.'),
+      h('div', { class: 'edit-actions' },
+        h('button', { type: 'button', class: 'btn small primary', onclick: () => step('all', money(tv) + ' a month, the target') }, 'All the way'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => step('half', money(stepValue(now, tv, 'half')) + ' a month, halfway to the target') }, 'Halfway')),
+      h('div', { class: 'line-plan-row' }, amt, h('button', { type: 'button', class: 'btn small', onclick: () => { const p = parseInput('money', amt.value); if (!p.ok || !(p.value > 0)) { msg.textContent = 'Step by an amount above $0'; amt.focus(); return; } step(p.value, money(p.value) + ' toward the target'); } }, 'Step by this much'))) : null);
 }
 
 // ---------------------------------------------------------------- the screens
@@ -618,7 +655,8 @@ Object.assign(TOOLS, {
   'prices': ['Price changes', (m) => (m.vw.prices.rows.length ? m.vw.prices.rows.length + ' changed' : 'None this month'), (m) => pricesCard(m)],
   'merchants': ['Stores and their lines', (m) => learnedMerchants(m.base).length + ' learned', (m) => merchantsScreen(m)],
   'not-sorted': ['Not sorted yet', () => '', (m) => sortScreen(m)],
-  'close': ['Close the month', () => '', (m, state) => closeScreen(m, state)]
+  'close': ['Close the month', () => '', (m, state) => closeScreen(m, state)],
+  'target': ['Set a target', () => '', (m) => targetScreen(m)]
 });
 const SEE_ROWS = ['by-category', 'estimated', 'where', 'fixed-variable', 'reference', 'layers', 'outlook', 'cut', 'autopsy', 'prices', 'merchants'];
 
@@ -653,12 +691,25 @@ function budgetOf(m, ym, range) {
   return vw;
 }
 const markOf = (r) => (r.mark ? h('span', { class: 'pill pill-' + r.mark }, r.mark) : null);
-function budgetRow(r, href) {
-  return h('tr', { class: r.mark ? 'b-marked' : null },
+// tg: the row's target column ({ target, words }) when the table shows the target instead of the actual.
+function budgetRow(r, href, tg = null) {
+  return h('tr', { class: r.mark && !tg ? 'b-marked' : null },
     h('th', { scope: 'row' }, href ? h('a', { class: 'cell-link', href }, r.label, chev()) : r.label),
     h('td', { class: 'num' }, r.plan === null ? h('span', { class: 'missing-text' }, 'missing') : money(r.plan)),
-    h('td', { class: 'num' }, r.actual === null ? h('span', { class: 'muted' }, 'none') : money(r.actual)),
-    h('td', { class: 'b-words' }, r.words, ' ', markOf(r)));
+    tg ? h('td', { class: 'num' }, tg.target === null ? h('span', { class: 'missing-text' }, 'missing') : money(tg.target)) : h('td', { class: 'num' }, r.actual === null ? h('span', { class: 'muted' }, 'none') : money(r.actual)),
+    tg ? h('td', { class: 'b-words' }, tg.words) : h('td', { class: 'b-words' }, r.words, ' ', markOf(r)));
+}
+// A target's name with "Target:" said once, whatever it was saved as.
+const targetName = (n) => 'Target: ' + String(n).replace(/^target:\s*/i, '');
+// The target (a saved scenario) and its columns, read in memory; null when none is set.
+let targetMemo = null;
+function targetOf(m, ym, range) {
+  const t = targetScenario();
+  if (!t) return null;
+  if (targetMemo && targetMemo.base === m.base && targetMemo.id === t.id && targetMemo.savedAt === t.savedAt && targetMemo.stamp === JSON.stringify(t.spine).length && targetMemo.ym === ym && targetMemo.range === range) return targetMemo.out;
+  const out = { scenario: t, cols: targetColumns(m.base, t.spine, rules, { ym, range, asOf: todayIso() }), buys: targetBuys(m.base, t.spine, rules) };
+  targetMemo = { base: m.base, id: t.id, savedAt: t.savedAt, stamp: JSON.stringify(t.spine).length, ym, range, out };
+  return out;
 }
 function budgetTab(m, state) {
   const ym = budgetMonth(m, state), range = budgetRange(state), vw = budgetOf(m, ym, range);
@@ -672,8 +723,13 @@ function budgetTab(m, state) {
     h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Month after', disabled: ym >= now, title: ym >= now ? 'This is the latest month' : null, onclick: () => { keep({ bym: shiftYm(ym, 1) }); refresh(); } }, '›'));
   const ranges = h('div', { class: 'segmented b-range', role: 'group', 'aria-label': 'Range' }, RANGES.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(range === k), onclick: () => { keep({ brange: k }); refresh(); } }, h('span', { class: 'seg-label' }, w))));
   const canClose = range === 'month' && ym < now && !vw.closed && vw.anyLogged;
+  const tgt = targetOf(m, ym, range);
+  const showTarget = !!tgt && state.bcols === 'target';
+  const colsBar = tgt ? h('div', { class: 'segmented b-cols', role: 'group', 'aria-label': 'Show' }, [['actual', 'Actual'], ['target', 'Target']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String((showTarget ? 'target' : 'actual') === k), onclick: () => { keep({ bcols: k }); refresh(); } }, h('span', { class: 'seg-label' }, w)))) : null;
   return [
     h('div', { class: 'b-controls' }, pick, ranges),
+    // The target (target brief): one row that opens the picker; with one set, what it buys in one line.
+    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/target' }, h('span', { class: 'go-name' }, tgt ? targetName(tgt.scenario.name) : 'Set a target'), h('span', { class: 'go-sub' }, tgt ? tgt.buys.words : 'A saved scenario to aim at, beside the plan')))),
     vw.notSorted.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/not-sorted' }, h('span', { class: 'go-name' }, 'Not sorted yet (' + vw.notSorted.length + ')'), h('span', { class: 'go-sub' }, money(vw.notSorted.reduce((t, e) => t + e.amount, 0)) + ' to put on a line')))) : null,
     sug.length ? h('section', { class: 'card', 'aria-label': 'The plan could learn' }, h('ul', { class: 'sug-list' }, sug.map((x) => h('li', {},
       h('p', {}, x.words),
@@ -683,16 +739,45 @@ function budgetTab(m, state) {
     vw.closed ? h('section', { class: 'card b-closed' }, h('p', {}, vw.closed.summary + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => reopenMonth(s, ym), said.changed(ymWords(ym), 'open again')) }, 'Reopen month'))) : null,
     h('section', { class: 'card', 'aria-label': 'Budget, ' + ymWords(ym) },
       vw.partial ? h('p', { class: 'muted' }, 'Held against what the plan expects by today.') : null,
+      colsBar,
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table budget-table' },
-        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Line')), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, 'Actual'), h('th', { scope: 'col' }, 'Difference'))),
-        h('tbody', {}, budgetRow(vw.income, null)),
-        h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'Needs')), vw.cats.map((c) => budgetRow(c, at(c.key)))),
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Line')), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, showTarget ? 'Target' : 'Actual'), h('th', { scope: 'col' }, showTarget ? 'To target' : 'Difference'))),
+        h('tbody', {}, budgetRow(vw.income, null, showTarget ? tgt.cols.income : null)),
+        h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'Needs')), vw.cats.map((c) => budgetRow(c, at(c.key), showTarget ? tgt.cols.cats.get(c.key) || { target: 0, words: 'same' } : null))),
         vw.cycles.length ? h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'On their own cycle')), vw.cycles.map((c) => h('tr', {}, h('th', { scope: 'row' }, c.label), h('td', { class: 'b-words', colspan: '3' }, c.words)))) : null,
-        h('tbody', {}, budgetRow(vw.saving, null)))),
+        h('tbody', {}, budgetRow(vw.saving, null, showTarget ? tgt.cols.saving : null)))),
+      showTarget && tgt.buys.changes.length ? fold('target-lines', 'later-list', 'What the target changes (' + tgt.buys.changes.length + ')', h('ul', {}, tgt.buys.changes.map((c) => h('li', {}, c.label + ': ' + (c.now === null ? 'none' : money(c.now)) + ' now, ' + money(c.target) + ' at target')))) : null,
       mathButton(['budget:income', ...vw.cats.map((c) => 'budget:cat:' + c.key)], m.ctx)),
     canClose ? h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/close' }, 'Close ' + MONTH_LONG[+ym.slice(5, 7) - 1])) : null,
     closes.length ? fold('history', 'later-list', 'History (' + closes.length + ')', h('ul', {}, closes.map((c) => h('li', {}, c.summary + '. Closed ' + shortDate(c.date) + '.')))) : null,
     h('ul', { class: 'go-list', 'aria-label': 'More views' }, SEE_ROWS.map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
+  ];
+}
+
+// Set a target (target brief): pick a saved scenario, or save today's plan as one ("Target: Moving out"); one target at
+// a time, switching is one tap; Clear it takes the column away (Undo brings it back). The target is a copy kept in this
+// browser; nothing here changes My numbers.
+function targetScreen(m) {
+  const list = readScenarios(), cur = targetId();
+  const name = h('input', { id: 'target-name', type: 'text', autocomplete: 'off', maxlength: '60', placeholder: 'e.g. Target: Moving out' });
+  const msg = h('p', { class: 'edit-msg', role: 'alert' });
+  const pickT = (id, words) => { const was = targetId(); keepTarget(id); refresh(); say(words, () => { keepTarget(was); refresh(); }, () => { keepTarget(id); refresh(); }); };
+  return [
+    list.length ? h('section', { class: 'card', 'aria-label': 'Saved scenarios' }, h('ul', { class: 'sort-list' }, list.map((x) => h('li', { class: 'target-pick' },
+      h('span', {}, h('strong', {}, x.name), ' ', h('span', { class: 'muted' }, shortDate(x.savedAt.slice(0, 10)))),
+      x.id === cur ? h('span', { class: 'chip chip-default' }, 'the target') : h('button', { type: 'button', class: 'btn small', onclick: () => pickT(x.id, 'Target set: ' + x.name) }, 'Use as target'))))) : null,
+    h('form', { class: 'card editor', novalidate: true, onsubmit: (e) => {
+      e.preventDefault();
+      const n = name.value.trim();
+      if (!n) { msg.textContent = 'Give it a name, like Target: FI by 40'; name.focus(); return; }
+      const entry = saveScenario(n, m.base);
+      if (!entry) { msg.textContent = 'This browser will not keep it (storage is blocked)'; return; }
+      pickT(entry.id, 'Target set: ' + n + ', a copy of today\'s plan to change line by line');
+    } },
+      h('label', { for: 'target-name', class: 'edit-label' }, 'Save today\'s plan as a target'), name, msg,
+      h('p', { class: 'edit-hint' }, 'Then change its lines on each line\'s screen; My numbers stay as they are.'),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as the target'))),
+    cur ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger', onclick: () => pickT(null, 'Target cleared') }, 'Clear the target')) : null
   ];
 }
 

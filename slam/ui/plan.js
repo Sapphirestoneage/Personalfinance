@@ -23,14 +23,12 @@ import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
 import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue } from './view.js';
 import { typeFor } from '../engine/ledger.js';
+import { readScenarios, keepScenarios, targetId, keepTarget } from './scenarios-store.js';
 
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-const SCEN_KEY = 'slam-scenarios:v1';
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
 const plural = (n, one, many = one + 's') => n + ' ' + (n === 1 ? one : many);
-const readScenarios = () => { try { return JSON.parse(localStorage.getItem(SCEN_KEY) || '[]'); } catch { return []; } };
-const keepScenarios = (list) => { try { localStorage.setItem(SCEN_KEY, JSON.stringify(list)); return true; } catch { return false; } };
 // A file read for import and waiting for Apply or Discard (not kept across a reload: it can be large).
 let pending = null;
 
@@ -447,7 +445,7 @@ function scenariosScreen(m) {
       h('label', { for: 'scen-name', class: 'edit-label' }, 'Save today as'), nameBox, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the scenario'))),
     list.length ? [h('label', { for: 'scen-pick', class: 'edit-label' }, 'Compare'), pick,
-      h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
+      h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), x.id === targetId() ? h('span', { class: 'chip chip-default' }, 'Budget target') : null, h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
         h('button', { type: 'button', class: 'btn small', onclick: () => change(() => x.spine, said.changed('Your numbers', 'the scenario ' + x.name)) }, 'Load it'),
         h('button', { type: 'button', class: 'btn danger small', onclick: () => { const now = list.filter((y) => y.id !== x.id); keepScenarios(now); if (kept().compareWith === x.id) keep({ compareWith: '' }); refresh(); putBack(list, now, said.deleted('Scenario ' + x.name)); } }, 'Delete'))))] : null,
     diff ? [h('h3', { class: 'month-h' }, other.name + ' against today: ' + plural(diff.length, 'change')), diff.length ? diffList(m.base, other.spine, diff, 60) : h('p', { class: 'muted' }, 'Nothing differs.')] : null);

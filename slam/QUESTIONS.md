@@ -185,3 +185,9 @@ Build Queue notes, not built: 12-month and multi-year trends, seasonal patterns,
 
 ## 150. Budget: what the Saving row shows (2026-10-27)
 Default used: Saving shows the plan's saving from take-home and, as its actual, what was left after spending once pay is logged (the log has no transfers to read). Say if the actual should instead come from account balances at month end.
+
+## 151. Budget target: Phase 3, not now (2026-10-27)
+Build Queue note, not built: progress toward the target over time.
+
+## 152. Where the target lives (2026-10-27)
+Default used: the target is a saved scenario, and saved scenarios live in this browser, so the target does too (one per browser, which in practice is one per household on this machine). Say if it should travel inside the household file instead.
