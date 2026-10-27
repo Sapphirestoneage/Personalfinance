@@ -23,6 +23,9 @@ import * as C from './vendor/cashcal.js';
 
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// A date in words for a step's sentence ("Feb 28, 2027").
+const dayWords = (iso) => (iso ? MONTH_SHORT[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : 'its end date');
 const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), months); const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return ym + '-' + String(Math.min(+iso.slice(8, 10), last)).padStart(2, '0'); };
 const monthsToFill = (need, perMonth) => (need <= 0 ? 0 : perMonth > 0 ? Math.ceil(need / perMonth) : null);
 
@@ -81,7 +84,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
     else if (id === 'employerMatch') { const st = step('employerMatch'); t.absorb({ ...st, value: undefined }); push(id, t, { need: st.need, flow: true, why: st.why, path: st.path, done: st.need === null ? null : st.need <= 0 }); }
     // High-interest debt (Krug pass): the debts the one ranking says lose money (engine/debt.js debtLoss), in its order,
     // so a deferred-interest promo that becomes high-interest at its cliff is in this step, first.
-    else if (id === 'highInterest') { const list = debtOrder(spine, rules, asOf).map((x) => (spine.debts || []).find((d) => d.id === x)).filter((d) => { const l = debtLoss(spine, rules, d, asOf); t.useFact('debts.' + d.id + '.balance', d.balance); return l && (!l.promo || l.after >= hi); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => (v(d.name) || d.id) + ' ' + money(v(d.balance))).join(', ') + ' at or above ' + Math.round(hi * 100) + '%.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id) }); }
+    else if (id === 'highInterest') { const list = debtOrder(spine, rules, asOf).map((x) => (spine.debts || []).find((d) => d.id === x)).filter((d) => { const l = debtLoss(spine, rules, d, asOf); t.useFact('debts.' + d.id + '.balance', d.balance); return l && (!l.promo || l.after >= hi); }); const need = list.reduce((a, d) => a + (v(d.balance) || 0), 0); t.rule(rules, 'APP_HI_RATE', year); push(id, t, { need, why: list.length ? list.map((d) => { const l = debtLoss(spine, rules, d, asOf); return (v(d.name) || d.id) + ' ' + money(v(d.balance)) + (l && l.promo ? ' (0% until ' + dayWords(v(d.promoEnds)) + ', then ' + Math.round(l.after * 1000) / 10 + '%)' : ''); }).join(', ') + ': at or above ' + Math.round(hi * 100) + '%, now or after an intro rate.' : 'Nothing at or above ' + Math.round(hi * 100) + '%.', path: list.length ? 'debts.' + list[0].id + '.balance' : null, ids: list.map((d) => d.id) }); }
     else if (id === 'reserves') { const gap = s.emergency.gap; t.absorb({ ...gap, value: undefined }); push(id, t, { need: gap.value, why: gap.value === null ? 'The cushion target needs a birth date and monthly spending.' : gap.value > 0 ? money(gap.value) + ' to the cushion target (' + money(s.emergency.targetDollars.value) + ').' : 'Cash reaches the cushion target.', path: gap.missing[0] || s.sheet.cash.from[0] || null }); }
     // Roth and HSA room, and retirement maxed (S-211): both read "How much to max it?" (engine/maxit.js), each shared
     // limit once, for every tax year still open: the new money a month that fills the room by each deadline, on top of

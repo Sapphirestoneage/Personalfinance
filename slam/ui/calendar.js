@@ -599,6 +599,8 @@ function belowRows(v, c, m, st) {
     }) : null,
     foldRow('cal-month-' + m.ym, longMonth(m.ym), (m.net >= 0 ? money(m.net) + ' more in than out' : money(-m.net) + ' more out than in'), () => [
       h('p', { class: 'tile-sub' }, 'In ' + money(m.in) + ', out ' + money(m.out) + '. Lines with no amount are not in these.'),
+      // Round 5: why a calendar month can differ from the Plan's monthly figure.
+      (() => { const sv = sumOf(v).cashflow.surplus.value; return sv === null ? null : h('p', { class: 'tile-sub' }, 'The Plan\'s ' + money(sv) + ' a month is a month after saving, with your part of shared bills; this month counts what lands in it, including a shared bill paid in full that is owed back to you.'); })(),
       m.cash.value !== null ? h('p', { class: 'tile-sub' }, 'Checking at the end of the month: ' + money(m.cash.value) + '.') : null,
       ...payLaterLines(c, m), skippedList(m, v.base),
       m.monthCash ? mathButton(['calendar:monthCash'], () => ({ spine: v.spine, rules: v.rules, s: sumOf(v), month: m })) : null]),

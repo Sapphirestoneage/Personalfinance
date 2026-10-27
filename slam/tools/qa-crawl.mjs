@@ -60,7 +60,7 @@ function inspect({ builder }) {
   if (document.documentElement.scrollWidth > W + 1 && !over.length) add('overflow', 'the page scrolls sideways (' + document.documentElement.scrollWidth + 'px)');
   // Words that should never show.
   const text = document.body.innerText;
-  for (const [re, w] of [[/\bundefined\b/, 'undefined'], [/\bNaN\b/, 'NaN'], [/\bnull\b/, 'null'], [/\[object/, '[object'], [/\bInfinity\b/, 'Infinity'], [/—/, 'an em dash']]) {
+  for (const [re, w] of [[/\bundefined\b/, 'undefined'], [/\bNaN\b/, 'NaN'], [/\bnull\b/, 'null'], [/\[object/, '[object'], [/\bInfinity\b/, 'Infinity'], [/—/, 'an em dash'], [/\b(127\.0\.0\.1|localhost):\d+/, 'the app\'s own address']]) {
     const m = text.match(re);
     if (m) { const i = text.indexOf(m[0]); add('bad text', w + ': "' + text.slice(Math.max(0, i - 40), i + 30).replace(/\s+/g, ' ') + '"'); }
   }

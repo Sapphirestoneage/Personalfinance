@@ -164,3 +164,29 @@ day session), 15 (the flow diagram's card lanes), 16, 17, 21, 22, 24, 25, 27, 29
 
 **After.** Suites 1,068 (the paycheck plan test grew); root 35,911.
 
+## Round 5 (the last: five rounds is the limit)
+
+**Before.** qa-crawl PASS (151 x 3, 333 taps; 399 small taps reported). agree-check PASS. Suites 1,068; root 35,911.
+Reviewer: 3 high, 12 medium, 13 low (round-5/findings.md). The reviewer found the headline numbers agree everywhere
+and the Needs total reconciles line by line.
+
+**Fixed.**
+- 1 (high, my own bug from round 4): the student loan's "Add household size" button printed its address as text (an
+  array nested one level too deep turned into words), which also widened the phone Debt screen to 507px. It is a
+  button now; qa-crawl now blocks the app's own address showing as text.
+- 3 (high): a Calendar month says why it can differ from the Plan's figure a month (your part of shared bills against
+  a shared bill paid in full that is owed back).
+- 20: Plan step 3 says why a 0% card is in it: "Store card $1,200 (0% until Feb 28, 2027, then 30%)".
+
+**Left, with reason.** 2 (open-question counts: QUESTIONS 159), 4 and 8 (Paychecks against the Calendar's day-by-day
+low, and what the Plan suggests during a shortfall: the two-runs question, 155), 5 to 7 and the rest (as in earlier
+rounds, each recorded there).
+
+**After.** Suites 1,068; root 35,911.
+
+## How the loop ended
+
+Five rounds, the limit. High findings by round: 14, 8, 9, 3, 3. What remains high is the same two things each round:
+the Debt screen's two payoff runs (QUESTIONS 154, 155, 161, 162) and open-question counts read from different lists
+(159). Both are engine work and a decision, written up in docs/MORNING.md.
+
