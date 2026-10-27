@@ -561,11 +561,15 @@ function confirmScreen(spine, rules, today) {
   return [
     h('ul', { class: 'confirm-list' }, list.map((e) => h('li', { class: 'confirm-row' },
       h('p', { class: 'wait-what' }, h('strong', {}, e.label), h('span', { class: 'wait-when' }, shortDate(e.date).replace(/, \d{4}$/, '')), h('span', { class: 'wait-amt' }, e.amount === null ? 'no estimate' : (e.direction === 'in' ? '+' : '-') + exact(e.amount))),
-      h('button', { type: 'button', class: 'btn small primary', 'aria-label': 'It happened: ' + e.label, onclick: () => happened(e) }, 'Happened'),
-      h('details', { class: 'confirm-more' }, h('summary', { class: 'btn small' }, 'More'),
-        h('div', { class: 'confirm-more-body' }, actualBox(e),
+      // The row's buttons sit side by side on the right; More opens its choices on a line of their own under the row,
+      // so nothing moves (owner's ask: buttons in line and even).
+      ...(() => {
+        const body = h('div', { class: 'confirm-more-body', id: 'more-' + e.key.replace(/[^a-z0-9]+/gi, '-'), hidden: true }, actualBox(e),
           h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => skipOccurrence(s, e.key, true), e.label + ' did not happen on ' + shortDate(e.origDate)) }, 'Didn\'t happen'),
-          h('a', { class: 'btn small', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Moved: open it')))))),
+          h('a', { class: 'btn small', href: '#/' + e.date + '/' + encodeURIComponent(e.key) }, 'Moved: open it'));
+        const more = h('button', { type: 'button', class: 'btn small', 'aria-expanded': 'false', 'aria-controls': body.id, onclick: () => { body.hidden = !body.hidden; more.setAttribute('aria-expanded', String(!body.hidden)); } }, 'More');
+        return [h('div', { class: 'confirm-acts' }, h('button', { type: 'button', class: 'btn small primary', 'aria-label': 'It happened: ' + e.label, onclick: () => happened(e) }, 'Happened'), more), body];
+      })()))),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', id: 'confirm-all', onclick: all }, 'Mark all ' + list.length + ' happened'))
   ];
 }

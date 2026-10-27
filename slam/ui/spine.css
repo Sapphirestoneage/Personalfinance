@@ -1353,3 +1353,30 @@ body { font-variant-numeric: tabular-nums; }
 .fill-bar { margin: 0 0 var(--space-2); }
 .fill-bar .seg-btn { flex: 1 1 0; }
 .page-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; width: 100%; }
+/* Did these happen? (owner's ask: buttons in line and even): what on the left, Happened and More together on the
+   right, More's choices on their own line under the row, right-aligned, the same height as every button. */
+.confirm-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-3); }
+.confirm-acts { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.confirm-acts .btn { min-width: 6.5rem; justify-content: center; }
+.confirm-more-body { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; align-items: center; padding-top: var(--space-2); }
+.confirm-more-body[hidden] { display: none; }
+@media (max-width: 600px) { .confirm-row { grid-template-columns: 1fr; } .confirm-acts { justify-content: stretch; } .confirm-acts .btn { flex: 1 1 0; } .confirm-more-body { justify-content: stretch; } .confirm-more-body > * { flex: 1 1 auto; } }
+@media (max-width: 600px) {
+  .confirm-more-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .confirm-more-body .wait-act { grid-column: 1 / -1; display: flex; }
+  .confirm-more-body .wait-act .wait-actual, .waiting-list .confirm-more-body .wait-actual { flex: 1 1 auto; width: auto; max-width: none; }
+  .confirm-more-body .btn { justify-content: center; }
+}
+/* Every button the same (owner's ask, 2026-10-27: sized right, in line, even, professional): one height, one padding,
+   one weight, the label centered; every row of actions lines up on the same baseline with the same gap. */
+.btn, .btn.small { min-height: var(--tap); padding: 0 var(--space-4); font-size: var(--text-sm); font-weight: 600; line-height: 1.2; justify-content: center; text-align: center; white-space: nowrap; }
+.btn.icon-btn { padding: 0; min-width: var(--tap); }
+.edit-actions, .item-actions, .flag-actions, .page-actions, .pick-actions, .confirm-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.item-actions { padding-left: 0; }
+@media (max-width: 479px) { .edit-actions > .btn, .item-actions > .btn, .flag-actions > .btn { flex: 1 1 auto; } }
+/* A row on a phone (Krug pass): label and value on one line, value right-aligned; a long value wraps in its column. */
+@media (max-width: 639px) {
+  .row-main { grid-template-columns: minmax(0, 1fr) auto auto 20px; grid-template-areas: "label value chip chev"; align-items: center; }
+  .row-main .row-value { max-width: 55vw; text-align: right; }
+  .row-main.row-pick { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "box label value chip"; }
+}
