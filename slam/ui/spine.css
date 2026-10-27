@@ -1257,3 +1257,8 @@ a.fb-link .fb-more { justify-self: end; }
 .cal-item { position: relative; }
 .cal-item .ev-go::after { content: ""; position: absolute; inset: 0; }
 .cal-item .grip, .cal-item a:not(.ev-go) { position: relative; z-index: 1; }
+/* The One-pager as a handout (audit 6): who it is for and who prepared it on top, the footer at the end. */
+.onepager .op-head { margin-bottom: var(--space-3); }
+.onepager .op-who { font-size: var(--text-lg); font-weight: 700; margin: 0; }
+.onepager .op-meta, .onepager .op-foot { color: var(--text-muted); font-size: var(--text-sm); margin: 0; }
+.onepager .op-foot { margin-top: var(--space-4); border-top: 1px solid var(--border); padding-top: var(--space-2); }

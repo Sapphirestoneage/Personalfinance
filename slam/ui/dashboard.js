@@ -14,7 +14,7 @@ import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
 import { pickedScenario } from './scenario.js';
 import { maxItFor } from './maxit-panel.js';
-import { h, chip, money, pct, ledgerHref, summaryMoney } from './view.js';
+import { h, chip, money, pct, ledgerHref, summaryMoney, stepHref } from './view.js';
 import { toneOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
@@ -60,7 +60,6 @@ function tile(spine, { id, label, result, shown, missingText, target = null, lin
 // and Spending.
 let scenario = pickedScenario();
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const slugOf = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 function model(base, rules) {
   const spine = withScenario(base, rules, scenario);
   const s = summarize(spine, rules);
@@ -73,7 +72,6 @@ function rankOf(spine, rules, s) {
   if (rankMemo.spine !== spine || rankMemo.rules !== rules || rankMemo.s !== s) rankMemo = { spine, rules, s, rank: rankSteps(spine, rules, s, { sim: maxItFor(spine, rules).sim }) };
   return rankMemo.rank;
 }
-const stepHref = (step) => (step && step.rung ? 'plan.html#/' + slugOf(step.rung) : step && step.path ? ledgerHref(step.path) : 'plan.html');
 // The ranked step and the questions, as Do first's cards: a headline, one line, one button with a verb.
 function stepCard(step) {
   return h('li', { class: 'flag flag-red', id: 'step-' + step.id.replace(/[^a-z0-9]+/gi, '-') },

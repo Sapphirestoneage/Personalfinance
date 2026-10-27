@@ -3,18 +3,21 @@
 // from the One-pager button on Today, and its Back returns there (S-230). A card
 // with more behind it (Debt, the next rung, Spending) is the target as a whole,
 // with a chevron, and opens where that detail lives; the rest is plain text.
+// A handout (audit 6): who it is for, the date, who prepared it, and the footer; the next step is the shared ranking
+// written to the client; debt shows the Plan's own clear months, or "not yet planned".
 
 import { startPage, numbersHref } from './shell.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
-import { clearDates } from '../engine/debtview.js';
-import { fooLadder } from '../engine/plan.js';
+import { debtView } from '../engine/debtview.js';
+import { planDebtExtra } from '../engine/plan.js';
+import { rankSteps } from '../engine/next-step.js';
 import { maxItFor } from './maxit-panel.js';
 import { whose } from './household.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { money as dollars } from '../src/ui/format.js';
-import { h, money, pct, shortDate } from './view.js';
+import { h, pct, monthWords, shortDate, stepHref } from './view.js';
 import { homeworkList } from '../engine/profile.js';
 import { moneyFlow } from '../engine/flow.js';
 import { flowSection } from './flow-chart.js';
@@ -31,12 +34,14 @@ function render({ spine: base, rules }) {
   const spine = withScenario(base, rules, pickedScenario());
   const s = summarize(spine, rules, { flags: false });
   const sim = cashsim(spine, rules, { months: 3 });
-  const cd = clearDates(sim), foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
+  const rank = rankSteps(spine, rules, s, { sim: maxItFor(spine, rules).sim });
+  const debt = debtView(spine, rules, sim, s, { extra: planDebtExtra(spine, rules, s, { sim, ladder: rank.ladder }).amount });
   const cf = s.cashflow, sh = s.sheet, em = s.emergency;
-  const step = foo.rungs.find((r) => r.done !== true) || null;
+  const step = rank.first, who = whose(base);
   const flow = flowSection(moneyFlow(spine, rules, cf, { open: [] }), { open: [], onToggle: () => {}, month: MONTHS[+s.ym.slice(5, 7) - 1] });
   flow.classList.add('op-flow');
   return h('div', { class: 'onepager' },
+      h('header', { class: 'op-head' }, h('p', { class: 'op-who' }, clientName(base) + (who.example ? ' (example, made up)' : '')), h('p', { class: 'op-meta' }, shortDate(new Date().toISOString().slice(0, 10)) + '. Prepared by Eli Saperstein, financial coach.')),
       h('section', { class: 'card' }, h('h2', {}, 'Where things stand'), h('div', { class: 'op-grid' },
         cell('Liquid net worth', m(sh.liquidNetWorth.value), 'what you can reach, less all you owe'),
         cell('Total net worth', m(sh.netWorth.value), 'all you own, less all you owe'),
@@ -46,9 +51,26 @@ function render({ spine: base, rules }) {
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), 'of ' + m(s.fi.today.value) + ' at today\'s spending')),
         sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),
       flow,
-      goCard('Next step', step ? 'plan.html#/' + step.id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) : 'plan.html', h('p', {}, step ? step.label + ': ' + step.why : foo.rungs.every((r) => r.done) ? 'Every step is done.' : 'The steps need a few answers on the Plan page.')),
-      goCard('Debt', numbersHref('debt'), h('ul', {}, cd.rows.slice(0, 4).map((r) => h('li', {}, r.label + ': ' + (r.date ? shortDate(r.date) : 'not in the next 3 months'))))),
-      todoCard(base));
+      goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions))),
+      debtCard(debt),
+      todoCard(base),
+      h('footer', { class: 'op-foot' }, 'For education and planning. Not investment, tax or legal advice.'));
+}
+
+// The client's name on the handout: the first person's, else the household's.
+const clientName = (spine) => { const p = ((spine.household && spine.household.people) || [])[0]; return p && typeof p.name === 'string' && p.name.trim() ? p.name.trim() : whose(spine).name; };
+// The next step to the client, in their words: what to do and why, never a screen name.
+function nextWords(step, questions) {
+  if (step) return step.label + '. ' + (step.why || '');
+  if (questions.length) return 'First, we need one answer from you: ' + questions[0].question;
+  return 'Every step is done. Keep going as you are.';
+}
+// Each debt with a balance and the month the Plan's run clears it, else "not yet planned".
+function debtCard(d) {
+  const owing = d.order.rows.filter((r) => (r.balance ?? 0) > 0);
+  if (!owing.length) return h('section', { class: 'card' }, h('h2', {}, 'Debt'), h('p', {}, 'No debt to pay off.'));
+  return goCard('Debt', numbersHref('debt'), h('ul', {}, owing.map((r) => h('li', {}, r.name + ' (' + m(r.balance) + '): ' + (r.planYm ? 'clear by ' + monthWords(r.planYm) : 'not yet planned')))),
+    d.clearDates.rows.length ? h('p', { class: 'tile-note' }, d.clearDates.rows.map((r) => r.label.replace(/ \(.*\)$/, '') + ' by ' + monthWords(r.ym)).join('. ') + '.') : null);
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
