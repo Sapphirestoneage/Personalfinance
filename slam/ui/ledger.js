@@ -43,6 +43,7 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
+import { openQuestions, isOpenItem } from '../engine/questions.js';
 import { shareEditor, threeNumbers } from './share-editor.js';
 import { setSharers, owedToYou } from '../engine/owed.js';
 import { owedScreen, personScreen, owedFigure, personSlug, resetOwedForms } from './owed.js';
@@ -818,22 +819,28 @@ function rowEl(row, openPath, { full = false, note = null, sub = null } = {}) {
 
 // "3 missing", "2 rough": small labels on a row that opens (the filters at the top show only those).
 // Only what is worth checking now counts (Rough now and later): a guess that is fine for now is never in a count.
-const dots = (x) => {
-  const rows = x.allRows || x.rows || (x.node && (x.node.allRows || x.node.rows)), m = umap();
-  const c = rows ? { missing: rows.filter((r) => r.fact.kind === 'missing' && worthNow(m, r.path, 'missing', guessFor === cur())).length, rough: rows.filter((r) => r.fact.kind === 'rough' && worthNow(m, r.path, 'rough', guessFor === cur())).length } : x.counts || x;
-  return c.missing || c.rough ? h('span', { class: 'group-counts' },
-    c.missing ? h('span', { class: 'dot dot-missing' }, c.missing + ' missing') : null,
-    c.rough ? h('span', { class: 'dot dot-rough' }, c.rough + (c.rough === 1 ? ' guess' : ' guesses') + ' to check') : null) : null;
+const dots = (x, tagged = false) => {
+  // One count per section or item (morning answer 10): its open questions, the same number To fill in shows.
+  const rows = x.allRows || x.rows || (x.node && (x.node.allRows || x.node.rows));
+  if (!rows) return null;
+  const open = openRows(rows), n = open.length;
+  return n ? h('span', { class: 'group-counts' }, h('span', { class: 'dot ' + (open.some((r) => r.fact.kind === 'missing') ? 'dot-missing' : 'dot-rough') },
+    h('span', { 'data-metric': fresh() && tagged ? 'list:open:' + x.slug : null }, String(n)), ' to answer')) : null;
 };
 // To fill in (owner's ask, 2026-10-27): one switch at the top of every screen here shows only what is missing or a
 // guess, so filling in goes fast. It is the page's kind filter (Missing and Rough on, the rest off), kept in this browser.
 const fillOn = () => kinds.length && kinds.every((k) => k === 'missing' || k === 'rough');
-const toFill = (c) => (c.missing || 0) + (c.rough || 0);
-function fillBar(n) {
+// How many are open questions (morning answer 10, S-252): the rows the one rule (engine/questions.js, through
+// worthNow) calls missing or worth checking now. Before the ranking is in, every missing or rough row counts and no
+// count is tagged for the agreement check.
+const fresh = () => !!guess && guessFor === cur();
+const openRows = (rows) => rows.filter((r) => worthNow(umap(), r.path, r.fact.kind, fresh()));
+const toFill = (x) => openRows(x.allRows || x.rows || (x.node && (x.node.allRows || x.node.rows)) || []).length;
+function fillBar(n, metric = 'list:open') {
   const on = fillOn();
   return h('div', { class: 'segmented fill-bar', role: 'group', 'aria-label': 'Show' },
     h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!on), onclick: () => { if (on) setKinds([...KIND_ORDER]); } }, h('span', { class: 'seg-label' }, 'Everything')),
-    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(on), onclick: () => { if (!on) setKinds(['missing', 'rough']); } }, h('span', { class: 'seg-label' }, 'To fill in (' + n + ')')));
+    h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(on), onclick: () => { if (!on) setKinds(['missing', 'rough']); } }, h('span', { class: 'seg-label' }, 'To fill in (', h('span', { 'data-metric': fresh() ? metric : null }, String(n)), ')')));
 }
 const filledWords = (c) => c.filled + ' of ' + c.asked + ' filled in';
 // A row that opens a deeper screen: the whole row is the target, with a chevron.
@@ -867,7 +874,7 @@ function setKinds(k, q = null) {
   if (q !== null) keep({ q });
   refresh();
 }
-const shows = (row, q) => kinds.includes(row.fact.kind) && (!q || (row.label + ' ' + row.path).toLowerCase().includes(q.toLowerCase()));
+const shows = (row, q) => (fillOn() ? openRows([row]).length > 0 : kinds.includes(row.fact.kind)) && (!q || (row.label + ' ' + row.path).toLowerCase().includes(q.toLowerCase()));
 const filtering = (q) => !!q || kinds.length !== KIND_ORDER.length;
 
 function filterBar(sc, q) {
@@ -912,7 +919,7 @@ function sectionList(sc) {
     const r = steps[sec.slug];
     const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug], sec.slug === 'assets' && summaryOf(cur()).sheet.owed ? ', plus ' + money(summaryOf(cur()).sheet.owed) + ' owed to you' : null) : h('span', {}, filledWords(sec.counts));
     // A total built on a missing line says so; how many lines are rough or missing shows beside it.
-    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec)] });
+    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec, true)] });
   }));
 }
 
@@ -936,10 +943,11 @@ function kindMark(path, kind) {
   if ((kind === 'rough' || kind === 'missing') && !worthNow(umap(), path, kind, guessFor === cur())) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': kind === 'missing' ? 'Missing, fine for now' : 'A guess, fine for now', title: 'Fine for now' });
   return chip(kind);
 }
-const nowCount = () => (guess ? guess.items.filter((it) => it.urgency === 'now').length : null);
+// Still guessing counts the one list of open questions (morning answer 10), the total every screen shows.
+const nowCount = () => (guess ? openQuestions(cur(), guess).length : null);
 function guessRow() {
   const n = nowCount();
-  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter...' : n ? n + ' worth checking now' : 'Nothing worth checking now' });
+  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter...' : n ? [h('span', { 'data-metric': fresh() ? 'list:open' : null }, String(n)), ' open: missing or worth checking now'] : 'Nothing open' });
 }
 // Why a guess is listed, in plain words: what a 20% miss could move ("could move your FI number by $30,000").
 function whyOf(it) {
@@ -970,8 +978,8 @@ function guessList() {
   const stale = guessFor !== cur(), table = whereTable(), v = guessView();
   const all = table ? withWhere(cur(), guess.items, table) : guess.items.map((it) => ({ ...it, where: null, short: null, minutes: 1, whereId: 'other' }));
   const sorted = (list) => sortGuesses(cur(), list, v.sort);
-  const now = sorted(all.filter((it) => it.urgency === 'now'));
-  const fine = sorted(all.filter((it) => it.urgency === 'fine'));
+  const now = sorted(all.filter(isOpenItem));
+  const fine = sorted(all.filter((it) => it.urgency === 'fine' && !isOpenItem(it)));
   const later = all.filter((it) => it.urgency === 'later').sort((a, b) => (a.until < b.until ? -1 : 1));
   // Each guess opens its editor right here, so the list stays the screen Back comes back to. Closed, it says where to
   // find it and what a miss could move ("Paystub, 5 min. Could move your FI number by $30,000").
@@ -1268,7 +1276,7 @@ function topScreen(sc, st) {
   const q = st.q || '';
   return [
     // The filter first (owner's ask, 2026-10-27): To fill in, then the kinds folded under Filter, what they find right under.
-    fillBar(sc.sections.reduce((n, x) => n + toFill(x.counts), 0)),
+    fillBar(sc.sections.reduce((n, x) => n + toFill(x), 0)),
     h('details', { class: 'flow-list card find-fold', open: (filtering(q) && !fillOn()) || null }, h('summary', {}, 'Filter'), filterBar(sc, q)),
     filtering(q) ? results(sc, q) : null,
     problemsCard(spine),
@@ -1445,9 +1453,9 @@ function unemploymentCard() {
 }
 
 function sectionScreen(sec) {
-  const groups = fillOn() ? sec.groups.filter((g) => toFill(g.counts)) : sec.groups;
+  const groups = fillOn() ? sec.groups.filter((g) => toFill(g)) : sec.groups;
   return [
-    fillBar(toFill(sec.counts)),
+    fillBar(toFill(sec), 'list:open:' + sec.slug),
     sectionTop(sec),
     selectAll(sec.allRows, 'Select all here'),
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
@@ -1468,14 +1476,14 @@ function groupScreen(sec, g, st = {}) {
     [[false, 'All cards'], [true, 'Business only']].map(([on, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(bizOnly === on), onclick: () => { if (bizOnly !== on) { keep({ bizOnly: on }); refresh(); } } }, h('span', { class: 'seg-label' }, w)))) : null;
   // A bank's heading stays when only its business cards show; its business part reads "Business" under it.
   const parts0 = bizOnly ? g.parts.filter((p) => p.node && p.node.business) : g.parts;
-  const parts = fillOn() ? parts0.map((p) => ({ ...p, items: p.items.filter((it) => toFill(it.counts)) })).filter((p) => p.items.length) : parts0;
+  const parts = fillOn() ? parts0.map((p) => ({ ...p, items: p.items.filter((it) => toFill(it)) })).filter((p) => p.items.length) : parts0;
   const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
     sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it)]
   });
   return [
-    fillBar(toFill(g.node.counts)),
+    fillBar(toFill(g.node), null),
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
     filter,
@@ -1501,8 +1509,8 @@ function itemScreen(sec, g, it, st) {
     g.item && it.label !== g.label ? h('p', { class: 'muted' }, it.label) : null,
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
-    fillBar(toFill(it.counts)),
-    (() => { const all = fillOn() ? it.rows.filter((r) => kinds.includes(r.fact.kind)) : it.rows;
+    fillBar(toFill(it), null),
+    (() => { const all = fillOn() ? openRows(it.rows) : it.rows;
       // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
       // numbers come first; it opens by itself when one of its rows is open.
       const feel = (r) => /\.(stress|reasonsToKeep)$/.test(r.path), rows = all.filter((r) => !feel(r)), feels = all.filter(feel);

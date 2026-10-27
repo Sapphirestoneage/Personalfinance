@@ -20,6 +20,7 @@ import { pref } from './prefs.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
 import { guessesFor } from './urgency.js';
+import { openQuestions } from '../engine/questions.js';
 import { netWorthWaterfallCard, netWorthTimeCard, netWorthSpark } from './chart-cards.js';
 import { netWorthAhead } from '../engine/charts.js';
 
@@ -176,7 +177,8 @@ function render({ spine: base, rules, levels }) {
   const others = alsoWorth(m.spine, m.s.flags, rank);
   // Guesses worth checking now (Rough now and later): the shared ranking, worked out after the page draws.
   const g = guessesFor(base, rules, () => refresh());
-  const guesses = g ? g.items.filter((it) => it.urgency === 'now').length : null;
+  // The one list of open questions (morning answer 10): the total My numbers, Still guessing and the Profile show.
+  const guesses = g ? openQuestions(base, g).length : null;
   return [
     cashCard(base, rules),
     tiles(m),
@@ -184,7 +186,7 @@ function render({ spine: base, rules, levels }) {
     h('ul', { class: 'go-list' },
       others.length ? h('li', {}, h('a', { class: 'go-row plain', href: '#/more' }, h('span', { class: 'go-name' }, 'Also worth doing (' + others.length + ')'))) : null,
       h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
-      guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : guesses + ' worth checking now'), guesses === null ? h('span', { class: 'go-sub' }, 'Working out which matter...') : null)) : null,
+      guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' open: missing or worth checking now']), guesses === null ? h('span', { class: 'go-sub' }, 'Working out which matter...') : null)) : null,
       h('li', {}, h('a', { class: 'go-row plain', href: 'onepager.html' }, h('span', { class: 'go-name' }, 'One-pager to print'))))
   ];
 }

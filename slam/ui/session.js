@@ -20,6 +20,7 @@ import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, starts
 import { h, chip, money, pct, shortDate } from './view.js';
 import { addNote, removeNote, setShared, sessionNotes } from '../engine/notes.js';
 import { guessesFor, mapOf, worthNow } from './urgency.js';
+import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
 
@@ -552,7 +553,6 @@ function goals(ctx) {
 // themselves sit at the top of each step. "Start with Needs" leads.
 const STEP_AREAS = { needs: ['health', 'statements'], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
 const openAreas = (spine, step) => { const a = answersOf(spine); return Object.keys(a).length ? level2(a).filter((x) => STEP_AREAS[step].includes(x.area)) : []; };
-const qCount = (areas) => areas.reduce((n, x) => n + x.questions.length, 0);
 function stepQuestions(spine, step) {
   const areas = openAreas(spine, step);
   if (!areas.length) return null;
@@ -561,12 +561,15 @@ function stepQuestions(spine, step) {
 
 function overview(ctx) {
   const sum = summarize(ctx.spine, ctx.rules, { flags: false }), steps = sessionSteps(ctx.spine, sum);
+  // Each step's open questions (morning answer 10): the one list My numbers counts, once the ranking is in.
+  const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  const open = openCounts(openQuestions(ctx.spine, g));
   return [
     h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go(['needs']) }, 'Start with Needs ›')),
-    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = qCount(openAreas(ctx.spine, st.id)); return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
+    h('ol', { class: 'go-list', 'aria-label': 'The steps, in order' }, steps.map((st) => { const n = open ? open[st.id] : null; return h('li', {}, h('a', { class: 'go-row', href: '#/' + st.id },
       h('span', { class: 'go-mark', 'aria-hidden': 'true' }, st.letter),
       h('span', { class: 'go-name' }, st.label),
-      h('span', { class: 'go-sub' }, totalWords(st, sum.sheet.owed), n ? ' · ' + n + ' to ask' : ''))); }))
+      h('span', { class: 'go-sub' }, totalWords(st, sum.sheet.owed), n ? [' · ', h('span', { 'data-metric': 'list:open:' + st.id }, String(n)), ' to answer'] : ''))); }))
   ];
 }
 

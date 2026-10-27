@@ -19,7 +19,9 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 export const SCREENS = [
   'dashboard.html', 'dashboard.html#/networth', 'dashboard.html#/surplus', 'dashboard.html#/savings', 'dashboard.html#/runway',
   'ledger.html', 'ledger.html#/debt', 'ledger.html#/assets', 'ledger.html#/income', 'ledger.html#/needs', 'ledger.html#/goals',
-  'session.html', 'plan.html', 'onepager.html', 'spending.html', 'calendar.html'
+  'session.html', 'plan.html', 'onepager.html', 'spending.html', 'calendar.html',
+  // Morning answer 10: every screen that counts open questions, and the Debt screen's payoff lines.
+  'ledger.html#/taxes', 'ledger.html#/profile', 'ledger.html#/still-guessing', 'profile.html', 'plan.html#/paychecks'
 ];
 
 function serve() {
@@ -30,8 +32,12 @@ function serve() {
   return new Promise((ok) => server.listen(0, '127.0.0.1', () => ok(server)));
 }
 // "$62,976" -> { n: 62976, dp: 0 }; "15%" -> { n: 15, dp: 0 }; "3.4 months" -> { n: 3.4, dp: 1 }; "-$219" -> -219.
+const MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 export function reading(text) {
   const t = String(text).replace(/−/g, '-').trim();
+  // A month ("Apr 2027", "July 2031") reads as a month, so Apr and Jul of one year do not agree (morning answers).
+  const mo = t.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? (\d{4})$/i);
+  if (mo) return { n: +mo[2] * 12 + MON.indexOf(mo[1].slice(0, 3).toLowerCase()), dp: 0, text: t };
   const m = t.match(/(-)?\$?\s?(-)?([\d,]+(?:\.(\d+))?)/);
   if (!m) return null;
   const n = Number(m[3].replace(/,/g, '')) * (m[1] || m[2] ? -1 : 1);
@@ -51,11 +57,16 @@ export async function agreeCheck() {
   try {
     for (const url of SCREENS) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      // The folds a number hides in open, as qa-crawl opens them (the Debt screen's payoff lines live in one).
+      await ctx.addInitScript(() => { try { if (!localStorage.getItem('slam-open:v1')) localStorage.setItem('slam-open:v1', JSON.stringify(['debt-payoff', 'pay-charts', 'tax-brackets', 'fi-charts'])); } catch {} });
       const page = await ctx.newPage();
       page.on('pageerror', (e) => errors.push(url + ': ' + e.message));
       try {
         await page.goto(base + url, { waitUntil: 'load' });
         await page.waitForTimeout(1500);
+        // The open-questions ranking takes a few seconds; its counts are tagged only once it is in (morning answer 10).
+        await page.waitForFunction(() => { try { return !!localStorage.getItem('slam-urgency:v1'); } catch { return true; } }, null, { timeout: 9000 }).catch(() => {});
+        await page.waitForTimeout(400);
         const found = await page.evaluate(() => [...document.querySelectorAll('[data-metric]')].filter((el) => el.getAttribute('data-metric')).map((el) => [el.getAttribute('data-metric'), (el.textContent || '').trim()]));
         for (const [id, text] of found) {
           const r = reading(text);

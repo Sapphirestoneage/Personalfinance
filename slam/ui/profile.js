@@ -14,10 +14,12 @@ import { prefsScreen, prefsSummary } from './prefs-screen.js';
 import { pref } from './prefs.js';
 import { h, money, shortDate, todayIso, ledgerHref } from './view.js';
 import { questionEl } from './profile-q.js';
-import { AREAS, LEVEL1, asked, choicesFor, disagreements, questionById, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
+import { AREAS, LEVEL1, asked, choicesFor, disagreements, questionById, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
 import { valueOf as v } from '../engine/spine.js';
 import { summarize } from '../engine/summary.js';
 import { putFact } from '../engine/edits.js';
+import { guessesFor } from './urgency.js';
+import { openQuestions } from '../engine/questions.js';
 
 const AREA_NAMES = Object.fromEntries(AREAS);
 const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: todayIso(), by: 'coach' }), q.label + (x === null ? ' cleared' : ' answered') + '. Logged as a life change');
@@ -29,7 +31,10 @@ function top({ spine, rules }) {
   const a = answersOf(spine), hw = homeworkList(spine, todayIso()), own = Object.keys(clientOverrides(spine)).length;
   const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
   const todo = hw.reduce((n, g) => n + g.items.length, 0);
+  // The one list of open questions (morning answer 10): the same total as My numbers and Still guessing.
+  const open = openQuestions(spine, guessesFor(spine, rules, () => refresh()));
   const groups = [
+    { n: open ? open.length : 0, row: h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/still-guessing' }, h('span', { class: 'go-name' }, 'Open questions'), h('span', { class: 'go-sub' }, open === null ? 'Working out which guesses matter...' : open.length ? [h('span', { class: 'go-total', 'data-metric': 'list:open' }, String(open.length)), ' missing or worth checking now'] : 'None open'))) },
     { n: l1.length, row: goRow('#/life', 'L', 'Your life', done + ' of ' + l1.length, 'answered') },
     { n: todo, row: goRow('#/homework', 'H', 'Homework', String(todo), todo === 1 ? 'thing to look up' : 'things to look up') },
     { n: own, row: goRow('assumptions.html', 'A', 'Your assumptions', own ? own + ' changed' : 'none changed', own ? 'for this client' : 'all your defaults') },
@@ -130,8 +135,9 @@ function askScreen({ spine }, area) {
 const whereWords = (q) => ({ paystub: 'your paystub', benefits: 'your benefits site or HR', plan: 'the plan or brokerage site', card: 'the card app or a statement', studentaid: 'studentaid.gov or your loan servicer', lender: 'the lender app', taxReturn: 'last year\'s tax return', bank: 'bank statements' }[q.where] || q.where);
 
 // ---------------------------------------------------------------- to-dos and life changes
-function todoScreen({ spine }) {
-  const groups = homeworkList(spine, todayIso()), guessing = stillGuessing(spine);
+function todoScreen({ spine, rules }) {
+  // Still guessing here is the one list of open questions (morning answer 10), not a list of its own.
+  const groups = homeworkList(spine, todayIso()), guessing = openQuestions(spine, guessesFor(spine, rules, () => refresh())) || [];
   return [
     groups.length ? groups.map((g) => h('section', { class: 'card' }, h('h2', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x))))) : h('p', { class: 'card' }, 'Nothing to look up yet. In the session, "I\'ll look it up" adds a to-do here.'),
     guessing.length ? h('section', { class: 'card' }, h('h2', {}, 'Still guessing'), h('ul', {}, guessing.map((x) => h('li', {}, x.label)))) : null,

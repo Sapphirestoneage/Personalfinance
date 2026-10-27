@@ -98,3 +98,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Morning answer 7 (2026-10-27): What it takes solves for the FI assumptions' age, else 65 as a guess with Change, with a test (S-249).
 - Morning answer 8 (2026-10-27): Which card leaves business cards out unless the purchase is marked business, with a test (S-250).
 - Morning answer 9 (2026-10-27): Got extra money? asks only where the money came from (seven answers) and sets the tax from it; the step and Show the math name the rule, with a test (S-251).
+- Morning answer 10 (2026-10-27): one list of open questions (missing or worth checking now) read by My numbers, Taxes, Session, Still guessing, Today and the Profile; 6 on the demo everywhere; agree-check reads list:open on every one, with a test (S-252).

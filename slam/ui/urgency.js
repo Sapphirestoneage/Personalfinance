@@ -4,6 +4,7 @@
 // Formatting only: the rule is the engine's.
 
 import { stillGuessingSteps, rowPathFor } from '../engine/ledger.js';
+import { isOpenItem } from '../engine/questions.js';
 
 const KEY = 'slam-urgency:v1';
 let mem = { spine: null, hash: null, result: null };
@@ -72,7 +73,8 @@ export function worthNow(map, path, kind, fresh = true) {
   if (kind !== 'rough' && kind !== 'missing') return false;
   if (!map) return true;
   const u = map.get(path);
-  return u ? u.urgency === 'now' : !fresh;
+  // Open questions (morning answer 10): the engine's one rule, so a row's mark and every count agree.
+  return u ? isOpenItem({ kind, urgency: u.urgency }) : !fresh;
 }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // "check in Jan" (this year or next, the year added when it is not within 12 months).
