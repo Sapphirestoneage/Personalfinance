@@ -8,6 +8,7 @@
 import { fact, monthEnd, getAt, isFact, isDay, KINDS } from './spine.js';
 import { SCHEMA_ID, PRESETS, FAMILIES, validate, isSelfEmployment, ANSWER_ON_HOUSEHOLD } from './schema.js';
 import { labelFor, namedPath } from './labels.js';
+import { parseMatchText } from './features.js';
 
 const list = (x) => (Array.isArray(x) ? x.filter((y) => y && typeof y === 'object') : []);
 
@@ -18,6 +19,13 @@ export function upgradeSpine(spine) {
   const s = structuredClone(spine);
   const asOf = s.meta && s.meta.asOf;
   const stamp = { asOf, source: 'upgrade' };
+  // Match words became tiers (S-266): a plan whose match is typed as words gets matchTiers read from them, same date and
+  // source; the words stay (matchFormula), so nothing typed is lost.
+  for (const a of list(s.accounts)) {
+    if (a.family !== 'employerRetirement' || a.matchTiers || !a.matchFormula || typeof a.matchFormula.value !== 'string') continue;
+    const tiers = parseMatchText(a.matchFormula.value);
+    if (tiers) a.matchTiers = { ...a.matchFormula, value: tiers };
+  }
   // Why now and Worth it became choices (S-254): a typed answer becomes Other, its words go to Anything else (added to
   // what is there), with the same date and source.
   const CHOICES = { reachOut: ['debt', 'tight', 'change', 'other'], worthIt: ['plan', 'debtFree', 'saving', 'other'] };

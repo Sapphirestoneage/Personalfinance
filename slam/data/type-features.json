@@ -1,0 +1,3268 @@
+{
+ "_doc": "What each account, debt and income type has (S-266). A feature is a yes, no or not sure question; yes opens its fields. tier core moves a headline number by more than APP_MATERIALITY and shows in the Session; extra shows in My numbers. supplier: client (the client knows it), coach (the coach can look it up), guess (a house default or a guess, always shown as a guess). added: not on the owner's starting list. Read by engine/features.js.",
+ "families": {
+  "employerRetirement": {
+   "contributing": {
+    "id": "contributing",
+    "question": "Do you put money in from each paycheck?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "plan",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "monthlyContribution",
+      "type": "money",
+      "label": "You put in a month",
+      "supplier": "client",
+      "hint": "e.g. 500"
+     },
+     {
+      "field": "contributionPct",
+      "type": "rate",
+      "label": "Or: this share of your pay",
+      "supplier": "client",
+      "hint": "e.g. 6"
+     },
+     {
+      "field": "perPaycheck",
+      "type": "money",
+      "label": "Or: this much each paycheck",
+      "supplier": "client",
+      "hint": "e.g. 250"
+     }
+    ]
+   },
+   "rothSplit": {
+    "id": "rothSplit",
+    "question": "Does some of it go in as Roth?",
+    "tier": "extra",
+    "engines": [
+     "maxit",
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "rothShare",
+      "type": "rate",
+      "label": "Share that goes in as Roth",
+      "supplier": "client",
+      "hint": "e.g. 50"
+     }
+    ]
+   },
+   "match": {
+    "id": "match",
+    "question": "Does your employer match?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "plan",
+     "windfall",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "matchTiers",
+      "type": "tiers",
+      "label": "The match, tier by tier",
+      "supplier": "client",
+      "hint": "e.g. 100% of the first 3% of pay, then 50% of the next 2%"
+     },
+     {
+      "field": "trueUp",
+      "type": "bool",
+      "label": "A year-end true-up?",
+      "supplier": "coach",
+      "default": {
+       "guess": false
+      }
+     }
+    ]
+   },
+   "employerExtra": {
+    "id": "employerExtra",
+    "question": "Does your employer add money even if you put none in (non-elective or profit sharing)?",
+    "tier": "extra",
+    "engines": [
+     "networth"
+    ],
+    "reveals": [
+     {
+      "field": "employerNonElective",
+      "type": "rate",
+      "label": "Employer puts in this share of pay",
+      "supplier": "client",
+      "hint": "e.g. 3"
+     },
+     {
+      "field": "profitSharing",
+      "type": "money",
+      "label": "Profit sharing a year",
+      "supplier": "client",
+      "hint": "e.g. 2,000"
+     }
+    ]
+   },
+   "vesting": {
+    "id": "vesting",
+    "question": "Does the employer money take time to become yours (vesting)?",
+    "tier": "core",
+    "engines": [
+     "networth"
+    ],
+    "reveals": [
+     {
+      "field": "vestingType",
+      "type": "choice:immediate|cliff|graded",
+      "label": "How it vests",
+      "supplier": "coach"
+     },
+     {
+      "field": "vestingYears",
+      "type": "int",
+      "label": "Years until it is all yours",
+      "supplier": "coach",
+      "default": {
+       "guess": 3
+      }
+     },
+     {
+      "field": "yearsOfService",
+      "type": "int",
+      "label": "Years you have worked there",
+      "supplier": "client",
+      "hint": "e.g. 2"
+     },
+     {
+      "field": "employerBalance",
+      "type": "money",
+      "label": "Of the balance, money the employer put in",
+      "supplier": "coach",
+      "hint": "e.g. 4,000"
+     }
+    ]
+   },
+   "ytd": {
+    "id": "ytd",
+    "question": "Do you know how much you have put in so far this year?",
+    "tier": "extra",
+    "engines": [
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "contributedYtd",
+      "type": "money",
+      "label": "Put in so far this year",
+      "supplier": "coach",
+      "hint": "e.g. 7,500"
+     }
+    ],
+    "added": true
+   },
+   "autoIncrease": {
+    "id": "autoIncrease",
+    "question": "Does your contribution rise by itself each year (auto-increase)?",
+    "tier": "extra",
+    "engines": [],
+    "reveals": [
+     {
+      "field": "autoIncrease",
+      "type": "rate",
+      "label": "It rises by this much of pay a year",
+      "supplier": "coach",
+      "default": {
+       "guess": 0.01
+      }
+     }
+    ]
+   },
+   "loan": {
+    "id": "loan",
+    "question": "Do you have a loan from this plan?",
+    "tier": "core",
+    "engines": [
+     "networth",
+     "debt",
+     "cashflow"
+    ],
+    "reveals": [
+     {
+      "field": "loanDebt",
+      "type": "link",
+      "label": "The loan (in Debt)",
+      "supplier": "client"
+     },
+     {
+      "field": "loanBalance",
+      "type": "money",
+      "label": "Loan owed",
+      "supplier": "client",
+      "hint": "e.g. 3,000"
+     }
+    ]
+   },
+   "afterTax": {
+    "id": "afterTax",
+    "question": "Does the plan take after-tax money and convert it to Roth inside the plan (mega backdoor)?",
+    "tier": "extra",
+    "engines": [
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "allowsAfterTax",
+      "type": "bool",
+      "label": "Takes after-tax money",
+      "supplier": "coach"
+     },
+     {
+      "field": "allowsInPlanRoth",
+      "type": "bool",
+      "label": "Converts it to Roth in the plan",
+      "supplier": "coach"
+     }
+    ]
+   },
+   "funds": {
+    "id": "funds",
+    "question": "Do you know the funds it holds and what they cost?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "expenseRatio",
+      "type": "rate",
+      "label": "Fund fees a year (expense ratio)",
+      "supplier": "coach",
+      "hint": "e.g. 0.15"
+     },
+     {
+      "field": "stockShare",
+      "type": "rate",
+      "label": "Share in stocks (the rest in bonds and cash)",
+      "supplier": "coach",
+      "hint": "e.g. 90"
+     }
+    ]
+   },
+   "beneficiary": {
+    "id": "beneficiary",
+    "question": "Is a beneficiary named?",
+    "tier": "extra",
+    "engines": [],
+    "reveals": [
+     {
+      "field": "beneficiaryNamed",
+      "type": "bool",
+      "label": "Beneficiary named",
+      "supplier": "client"
+     }
+    ]
+   },
+   "oldJob": {
+    "id": "oldJob",
+    "question": "Is this from a job you have left?",
+    "tier": "core",
+    "engines": [
+     "emergency",
+     "plan"
+    ],
+    "reveals": [
+     {
+      "field": "separatedFromEmployer",
+      "type": "bool",
+      "label": "Left that job",
+      "supplier": "client",
+      "default": {
+       "value": true
+      }
+     },
+     {
+      "field": "separationYear",
+      "type": "int",
+      "label": "Year you left",
+      "supplier": "client",
+      "hint": "e.g. 2024"
+     }
+    ],
+    "note": "A plan from an old job is a rollover candidate; leaving in or after the year you turn 55 opens it without the 10% early-withdrawal penalty."
+   }
+  },
+  "ira": {
+   "contributing": {
+    "id": "contributing",
+    "question": "Do you put money in regularly?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "monthlyContribution",
+      "type": "money",
+      "label": "You put in a month",
+      "supplier": "client",
+      "hint": "e.g. 300"
+     }
+    ]
+   },
+   "rothBasis": {
+    "id": "rothBasis",
+    "question": "Do you know how much you have put in over the years (not the growth)?",
+    "tier": "core",
+    "engines": [
+     "emergency",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "basis",
+      "type": "money",
+      "label": "Put in so far (your contributions)",
+      "supplier": "coach",
+      "hint": "e.g. 12,000"
+     },
+     {
+      "field": "firstRothYear",
+      "type": "int",
+      "label": "Year of your first Roth contribution (starts the 5-year clock)",
+      "supplier": "coach",
+      "hint": "e.g. 2019"
+     }
+    ]
+   },
+   "deductible": {
+    "id": "deductible",
+    "question": "Did you deduct what you put in on your taxes?",
+    "tier": "extra",
+    "engines": [
+     "tax",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "nondeductibleBasis",
+      "type": "money",
+      "label": "Put in without a deduction (Form 8606 basis)",
+      "supplier": "coach",
+      "hint": "e.g. 6,500"
+     }
+    ]
+   },
+   "backdoor": {
+    "id": "backdoor",
+    "question": "Do you use the backdoor Roth (put in after tax, then convert)?",
+    "tier": "extra",
+    "engines": [
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "conversions",
+      "type": "list",
+      "label": "Conversions by year",
+      "supplier": "coach"
+     },
+     {
+      "field": "proRataExposure",
+      "type": "money",
+      "label": "Pre-tax IRA money that makes part of a conversion taxed (pro-rata)",
+      "supplier": "coach"
+     }
+    ]
+   },
+   "coveredAtWork": {
+    "id": "coveredAtWork",
+    "question": "Are you also covered by a plan at work?",
+    "tier": "core",
+    "engines": [
+     "maxit",
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "coveredByWorkplacePlan",
+      "type": "bool",
+      "label": "Covered at work",
+      "supplier": "client"
+     }
+    ]
+   },
+   "funds": {
+    "id": "funds",
+    "question": "Do you know the funds it holds and what they cost?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "expenseRatio",
+      "type": "rate",
+      "label": "Fund fees a year (expense ratio)",
+      "supplier": "coach",
+      "hint": "e.g. 0.10"
+     },
+     {
+      "field": "stockShare",
+      "type": "rate",
+      "label": "Share in stocks",
+      "supplier": "coach",
+      "hint": "e.g. 90"
+     }
+    ]
+   },
+   "beneficiary": {
+    "id": "beneficiary",
+    "question": "Is a beneficiary named?",
+    "tier": "extra",
+    "engines": [],
+    "reveals": [
+     {
+      "field": "beneficiaryNamed",
+      "type": "bool",
+      "label": "Beneficiary named",
+      "supplier": "client"
+     }
+    ]
+   }
+  },
+  "hsaFsa": {
+   "coverage": {
+    "id": "coverage",
+    "question": "Does your health plan cover just you, or family?",
+    "tier": "core",
+    "engines": [
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "coverageLevel",
+      "type": "choice:self|family",
+      "label": "Covers",
+      "supplier": "client"
+     }
+    ]
+   },
+   "contributing": {
+    "id": "contributing",
+    "question": "Do you put money in?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "maxit"
+    ],
+    "reveals": [
+     {
+      "field": "monthlyContribution",
+      "type": "money",
+      "label": "You put in a month",
+      "supplier": "client",
+      "hint": "e.g. 200"
+     },
+     {
+      "field": "throughPayroll",
+      "type": "bool",
+      "label": "Taken out of your paycheck",
+      "supplier": "client",
+      "default": {
+       "guess": true
+      }
+     }
+    ]
+   },
+   "seed": {
+    "id": "seed",
+    "question": "Does your employer put money in?",
+    "tier": "core",
+    "engines": [
+     "maxit",
+     "networth"
+    ],
+    "reveals": [
+     {
+      "field": "employerSeed",
+      "type": "money",
+      "label": "Employer puts in a year",
+      "supplier": "client",
+      "hint": "e.g. 500"
+     }
+    ]
+   },
+   "invested": {
+    "id": "invested",
+    "question": "Is some of it invested?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "investedPortion",
+      "type": "money",
+      "label": "Of it, invested",
+      "supplier": "client",
+      "hint": "e.g. 2,000"
+     }
+    ]
+   },
+   "receipts": {
+    "id": "receipts",
+    "question": "Are you saving receipts to pay yourself back later?",
+    "tier": "extra",
+    "engines": [
+     "emergency"
+    ],
+    "reveals": [
+     {
+      "field": "unreimbursedReceipts",
+      "type": "money",
+      "label": "Receipts saved, not yet paid back",
+      "supplier": "client",
+      "hint": "e.g. 900"
+     }
+    ]
+   }
+  },
+  "cash": {
+   "role": {
+    "id": "role",
+    "question": "Is this money set aside for something?",
+    "tier": "core",
+    "engines": [
+     "networth",
+     "emergency",
+     "plan"
+    ],
+    "reveals": [
+     {
+      "field": "role",
+      "type": "choice:spending|emergency|sinking|holding",
+      "label": "What it is for",
+      "supplier": "client"
+     }
+    ]
+   },
+   "interest": {
+    "id": "interest",
+    "question": "Does it pay interest?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "apy",
+      "type": "rate",
+      "label": "Interest a year (APY)",
+      "supplier": "client",
+      "hint": "e.g. 4.2"
+     }
+    ]
+   },
+   "fees": {
+    "id": "fees",
+    "question": "Is there a minimum balance or a monthly fee?",
+    "tier": "extra",
+    "engines": [
+     "cashflow"
+    ],
+    "reveals": [
+     {
+      "field": "minBalance",
+      "type": "money",
+      "label": "Minimum balance",
+      "supplier": "client",
+      "hint": "e.g. 500"
+     },
+     {
+      "field": "monthlyFee",
+      "type": "money",
+      "label": "Monthly fee",
+      "supplier": "client",
+      "hint": "e.g. 12"
+     }
+    ]
+   },
+   "insured": {
+    "id": "insured",
+    "question": "Is it FDIC or NCUA insured?",
+    "tier": "extra",
+    "engines": [],
+    "reveals": [
+     {
+      "field": "fdic",
+      "type": "bool",
+      "label": "Insured",
+      "supplier": "client",
+      "default": {
+       "guess": true
+      }
+     }
+    ],
+    "added": true
+   },
+   "bonus": {
+    "id": "bonus",
+    "question": "Is there a signup bonus to earn?",
+    "tier": "extra",
+    "engines": [
+     "calendar"
+    ],
+    "reveals": [
+     {
+      "field": "signupBonus",
+      "type": "money",
+      "label": "Bonus",
+      "supplier": "client",
+      "hint": "e.g. 300"
+     },
+     {
+      "field": "bonusBy",
+      "type": "date",
+      "label": "Earn it by",
+      "supplier": "client"
+     }
+    ]
+   }
+  },
+  "fixedTerm": {
+   "terms": {
+    "id": "terms",
+    "question": "Do you know the rate and when it matures?",
+    "tier": "core",
+    "engines": [
+     "projection",
+     "calendar"
+    ],
+    "reveals": [
+     {
+      "field": "rate",
+      "type": "rate",
+      "label": "Rate a year",
+      "supplier": "client",
+      "hint": "e.g. 4.5"
+     },
+     {
+      "field": "maturityDate",
+      "type": "date",
+      "label": "Matures on",
+      "supplier": "client"
+     },
+     {
+      "field": "purchaseDate",
+      "type": "date",
+      "label": "Bought on",
+      "supplier": "client"
+     }
+    ]
+   },
+   "penalty": {
+    "id": "penalty",
+    "question": "Is there a penalty for taking it out early?",
+    "tier": "extra",
+    "engines": [
+     "emergency"
+    ],
+    "reveals": [
+     {
+      "field": "earlyWithdrawalPenalty",
+      "type": "text",
+      "label": "The penalty",
+      "supplier": "coach",
+      "hint": "e.g. 3 months of interest"
+     }
+    ]
+   }
+  },
+  "taxable": {
+   "contributing": {
+    "id": "contributing",
+    "question": "Do you add money regularly?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "monthlyContribution",
+      "type": "money",
+      "label": "You add a month",
+      "supplier": "client",
+      "hint": "e.g. 200"
+     }
+    ]
+   },
+   "basis": {
+    "id": "basis",
+    "question": "Do you know what you paid in (cost basis)?",
+    "tier": "core",
+    "engines": [
+     "tax",
+     "windfall"
+    ],
+    "reveals": [
+     {
+      "field": "costBasis",
+      "type": "money",
+      "label": "Paid in so far",
+      "supplier": "coach",
+      "hint": "e.g. 8,000"
+     },
+     {
+      "field": "longTermShare",
+      "type": "rate",
+      "label": "Share held more than a year",
+      "supplier": "coach",
+      "hint": "e.g. 80"
+     }
+    ]
+   },
+   "funds": {
+    "id": "funds",
+    "question": "Do you know the funds and their fees?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "holdings",
+      "type": "list",
+      "label": "Holdings",
+      "supplier": "coach"
+     },
+     {
+      "field": "expenseRatio",
+      "type": "rate",
+      "label": "Fund fees a year (expense ratio)",
+      "supplier": "coach",
+      "hint": "e.g. 0.05"
+     },
+     {
+      "field": "stockShare",
+      "type": "rate",
+      "label": "Share in stocks",
+      "supplier": "coach",
+      "hint": "e.g. 90"
+     }
+    ]
+   },
+   "dividends": {
+    "id": "dividends",
+    "question": "Are dividends reinvested?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "dividendsReinvested",
+      "type": "bool",
+      "label": "Reinvested",
+      "supplier": "client",
+      "default": {
+       "guess": true
+      }
+     }
+    ],
+    "added": true
+   },
+   "concentration": {
+    "id": "concentration",
+    "question": "Is a big part in your employer's stock?",
+    "tier": "core",
+    "engines": [
+     "plan"
+    ],
+    "reveals": [
+     {
+      "field": "employerStockShare",
+      "type": "rate",
+      "label": "Share in employer stock",
+      "supplier": "client",
+      "hint": "e.g. 30"
+     }
+    ]
+   }
+  },
+  "education": {
+   "beneficiary": {
+    "id": "beneficiary",
+    "question": "Who is it for?",
+    "tier": "core",
+    "engines": [
+     "plan"
+    ],
+    "reveals": [
+     {
+      "field": "beneficiary",
+      "type": "text",
+      "label": "For whom",
+      "supplier": "client",
+      "hint": "e.g. Maya"
+     },
+     {
+      "field": "childBirthYear",
+      "type": "int",
+      "label": "Their birth year",
+      "supplier": "client",
+      "hint": "e.g. 2018"
+     }
+    ]
+   },
+   "contributing": {
+    "id": "contributing",
+    "question": "Do you put money in regularly?",
+    "tier": "core",
+    "engines": [
+     "cashflow"
+    ],
+    "reveals": [
+     {
+      "field": "monthlyContribution",
+      "type": "money",
+      "label": "You put in a month",
+      "supplier": "client",
+      "hint": "e.g. 100"
+     }
+    ]
+   },
+   "stateDeduction": {
+    "id": "stateDeduction",
+    "question": "Does your state give a tax break for it?",
+    "tier": "extra",
+    "engines": [
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "stateTaxDeduction",
+      "type": "bool",
+      "label": "State tax break",
+      "supplier": "coach"
+     },
+     {
+      "field": "stateDeduction",
+      "type": "money",
+      "label": "Deduction a year",
+      "supplier": "coach"
+     }
+    ]
+   }
+  }
+ },
+ "types": {
+  "k401": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "match",
+    "employerExtra",
+    "vesting",
+    "ytd",
+    "autoIncrease",
+    "loan",
+    "afterTax",
+    "funds",
+    "beneficiary",
+    "oldJob"
+   ],
+   "own": []
+  },
+  "k403b": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "match",
+    "employerExtra",
+    "vesting",
+    "ytd",
+    "autoIncrease",
+    "loan",
+    "afterTax",
+    "funds",
+    "beneficiary",
+    "oldJob"
+   ],
+   "own": []
+  },
+  "tsp": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "match",
+    "employerExtra",
+    "vesting",
+    "ytd",
+    "autoIncrease",
+    "loan",
+    "afterTax",
+    "funds",
+    "beneficiary",
+    "oldJob"
+   ],
+   "own": [
+    {
+     "id": "tspFunds",
+     "question": "Which TSP funds (G, F, C, S, I, L)?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "tspFunds",
+       "type": "text",
+       "label": "Funds",
+       "supplier": "client",
+       "hint": "e.g. 70% C, 20% S, 10% I"
+      }
+     ]
+    }
+   ]
+  },
+  "k457b": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "match",
+    "employerExtra",
+    "vesting",
+    "ytd",
+    "autoIncrease",
+    "loan",
+    "afterTax",
+    "funds",
+    "beneficiary",
+    "oldJob"
+   ],
+   "own": [
+    {
+     "id": "access457",
+     "question": "Is this a governmental 457(b)?",
+     "tier": "core",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "employerType",
+       "type": "choice:private|nonprofit|government|federal|self",
+       "label": "Employer",
+       "supplier": "coach",
+       "default": {
+        "guess": "government"
+       }
+      }
+     ],
+     "note": "After you leave the job, a governmental 457(b) has no 10% early-withdrawal penalty."
+    }
+   ]
+  },
+  "roth_k401": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "match",
+    "employerExtra",
+    "vesting",
+    "ytd",
+    "autoIncrease",
+    "loan",
+    "afterTax",
+    "funds",
+    "beneficiary",
+    "oldJob"
+   ],
+   "own": []
+  },
+  "solo_k401": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "rothSplit",
+    "funds",
+    "beneficiary",
+    "ytd"
+   ],
+   "own": [
+    {
+     "id": "soloParts",
+     "question": "How much goes in as employee, and as employer?",
+     "tier": "core",
+     "engines": [
+      "maxit"
+     ],
+     "reveals": [
+      {
+       "field": "perPaycheck",
+       "type": "money",
+       "label": "As employee (deferral) a month",
+       "supplier": "client"
+      },
+      {
+       "field": "soloEmployerPart",
+       "type": "money",
+       "label": "As employer (profit sharing) a year",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "after_tax_k401": {
+   "family": "employerRetirement",
+   "uses": [
+    "contributing",
+    "afterTax",
+    "funds",
+    "ytd"
+   ],
+   "own": []
+  },
+  "traditional_ira": {
+   "family": "ira",
+   "uses": [
+    "contributing",
+    "rothBasis",
+    "deductible",
+    "backdoor",
+    "coveredAtWork",
+    "funds",
+    "beneficiary"
+   ],
+   "own": []
+  },
+  "roth_ira": {
+   "family": "ira",
+   "uses": [
+    "contributing",
+    "rothBasis",
+    "deductible",
+    "backdoor",
+    "coveredAtWork",
+    "funds",
+    "beneficiary"
+   ],
+   "own": []
+  },
+  "rollover_ira": {
+   "family": "ira",
+   "uses": [
+    "contributing",
+    "rothBasis",
+    "deductible",
+    "backdoor",
+    "coveredAtWork",
+    "funds",
+    "beneficiary"
+   ],
+   "own": []
+  },
+  "spousal_ira": {
+   "family": "ira",
+   "uses": [
+    "contributing",
+    "rothBasis",
+    "deductible",
+    "backdoor",
+    "coveredAtWork",
+    "funds",
+    "beneficiary"
+   ],
+   "own": []
+  },
+  "inherited_ira": {
+   "family": "ira",
+   "uses": [
+    "funds",
+    "beneficiary"
+   ],
+   "own": [
+    {
+     "id": "inherited",
+     "question": "When did you inherit it, and from whom?",
+     "tier": "core",
+     "engines": [
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "inheritedDate",
+       "type": "date",
+       "label": "Date inherited",
+       "supplier": "client"
+      },
+      {
+       "field": "beneficiaryType",
+       "type": "choice:spouse|eligible|designated",
+       "label": "You are the owner's",
+       "supplier": "coach"
+      },
+      {
+       "field": "mustEmptyBy",
+       "type": "date",
+       "label": "Must be emptied by (10 years after you inherit it)",
+       "supplier": "guess"
+      }
+     ],
+     "note": "Most non-spouse heirs since 2020 must empty it within 10 years."
+    }
+   ]
+  },
+  "sep_ira": {
+   "family": "ira",
+   "uses": [
+    "funds",
+    "beneficiary"
+   ],
+   "own": [
+    {
+     "id": "sepPct",
+     "question": "What share of pay goes in?",
+     "tier": "core",
+     "engines": [
+      "maxit"
+     ],
+     "reveals": [
+      {
+       "field": "sepEmployerPct",
+       "type": "rate",
+       "label": "Employer puts in this share of pay",
+       "supplier": "client",
+       "hint": "e.g. 10"
+      }
+     ]
+    }
+   ]
+  },
+  "simple_ira": {
+   "family": "ira",
+   "uses": [
+    "contributing",
+    "funds",
+    "beneficiary"
+   ],
+   "own": [
+    {
+     "id": "simpleStart",
+     "question": "When did you first put money in?",
+     "tier": "extra",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "simpleStartDate",
+       "type": "date",
+       "label": "First money in",
+       "supplier": "client"
+      }
+     ],
+     "note": "Taking money out in the first 2 years costs a 25% penalty, not 10%."
+    }
+   ]
+  },
+  "hsa": {
+   "family": "hsaFsa",
+   "uses": [
+    "coverage",
+    "contributing",
+    "seed",
+    "invested",
+    "receipts"
+   ],
+   "own": []
+  },
+  "health_fsa": {
+   "family": "hsaFsa",
+   "uses": [
+    "contributing",
+    "seed"
+   ],
+   "own": [
+    {
+     "id": "planYear",
+     "question": "When does the plan year end, and what carries over?",
+     "tier": "core",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "planYearEnd",
+       "type": "date",
+       "label": "Plan year ends",
+       "supplier": "client"
+      },
+      {
+       "field": "rolloverRule",
+       "type": "choice:rolls|forfeit",
+       "label": "Money left at the end",
+       "supplier": "coach"
+      },
+      {
+       "field": "graceAmount",
+       "type": "money",
+       "label": "Amount that carries over or has a grace period",
+       "supplier": "coach",
+       "default": {
+        "rule": "FSA_CARRYOVER"
+       }
+      }
+     ],
+     "note": "Use it or lose it: plan the spending before the year ends."
+    }
+   ]
+  },
+  "lp_fsa": {
+   "family": "hsaFsa",
+   "uses": [
+    "contributing",
+    "seed"
+   ],
+   "own": [
+    {
+     "id": "planYear",
+     "question": "When does the plan year end, and what carries over?",
+     "tier": "core",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "planYearEnd",
+       "type": "date",
+       "label": "Plan year ends",
+       "supplier": "client"
+      },
+      {
+       "field": "rolloverRule",
+       "type": "choice:rolls|forfeit",
+       "label": "Money left at the end",
+       "supplier": "coach"
+      },
+      {
+       "field": "graceAmount",
+       "type": "money",
+       "label": "Amount that carries over or has a grace period",
+       "supplier": "coach",
+       "default": {
+        "rule": "FSA_CARRYOVER"
+       }
+      }
+     ],
+     "note": "Use it or lose it: plan the spending before the year ends."
+    }
+   ]
+  },
+  "dc_fsa": {
+   "family": "hsaFsa",
+   "uses": [
+    "contributing",
+    "seed"
+   ],
+   "own": [
+    {
+     "id": "planYear",
+     "question": "When does the plan year end, and what carries over?",
+     "tier": "core",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "planYearEnd",
+       "type": "date",
+       "label": "Plan year ends",
+       "supplier": "client"
+      },
+      {
+       "field": "rolloverRule",
+       "type": "choice:rolls|forfeit",
+       "label": "Money left at the end",
+       "supplier": "coach"
+      },
+      {
+       "field": "graceAmount",
+       "type": "money",
+       "label": "Amount that carries over or has a grace period",
+       "supplier": "coach",
+       "default": {
+        "rule": "FSA_CARRYOVER"
+       }
+      }
+     ],
+     "note": "Use it or lose it: plan the spending before the year ends."
+    }
+   ]
+  },
+  "checking": {
+   "family": "cash",
+   "uses": [
+    "role",
+    "interest",
+    "fees",
+    "insured",
+    "bonus"
+   ],
+   "own": []
+  },
+  "savings": {
+   "family": "cash",
+   "uses": [
+    "role",
+    "interest",
+    "fees",
+    "insured",
+    "bonus"
+   ],
+   "own": []
+  },
+  "hysa": {
+   "family": "cash",
+   "uses": [
+    "role",
+    "interest",
+    "fees",
+    "insured",
+    "bonus"
+   ],
+   "own": []
+  },
+  "money_market": {
+   "family": "cash",
+   "uses": [
+    "role",
+    "interest",
+    "fees",
+    "insured",
+    "bonus"
+   ],
+   "own": []
+  },
+  "cd": {
+   "family": "fixedTerm",
+   "uses": [
+    "terms",
+    "penalty"
+   ],
+   "own": []
+  },
+  "treasury": {
+   "family": "fixedTerm",
+   "uses": [
+    "terms"
+   ],
+   "own": []
+  },
+  "i_bond": {
+   "family": "fixedTerm",
+   "uses": [
+    "terms"
+   ],
+   "own": [
+    {
+     "id": "ibondLock",
+     "question": "When did you buy it?",
+     "tier": "core",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "purchaseDate",
+       "type": "date",
+       "label": "Bought on",
+       "supplier": "client"
+      }
+     ],
+     "note": "Locked for 12 months; cashed before 5 years it loses the last 3 months of interest."
+    }
+   ]
+  },
+  "brokerage": {
+   "family": "taxable",
+   "uses": [
+    "contributing",
+    "basis",
+    "funds",
+    "dividends",
+    "concentration"
+   ],
+   "own": []
+  },
+  "joint_brokerage": {
+   "family": "taxable",
+   "uses": [
+    "contributing",
+    "basis",
+    "funds",
+    "dividends",
+    "concentration"
+   ],
+   "own": []
+  },
+  "crypto": {
+   "family": "taxable",
+   "uses": [
+    "contributing",
+    "basis"
+   ],
+   "own": []
+  },
+  "espp": {
+   "family": "taxable",
+   "uses": [
+    "basis",
+    "concentration"
+   ],
+   "own": [
+    {
+     "id": "espp",
+     "question": "What is the discount and when does the offering period end?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "esppDiscount",
+       "type": "rate",
+       "label": "Discount",
+       "supplier": "coach",
+       "default": {
+        "guess": 0.15
+       }
+      },
+      {
+       "field": "offeringPeriodEnd",
+       "type": "date",
+       "label": "Offering period ends",
+       "supplier": "client"
+      },
+      {
+       "field": "monthlyContribution",
+       "type": "money",
+       "label": "Taken from pay a month",
+       "supplier": "client",
+       "hint": "e.g. 400"
+      }
+     ]
+    }
+   ]
+  },
+  "rsu": {
+   "family": "taxable",
+   "uses": [
+    "basis",
+    "concentration"
+   ],
+   "own": [
+    {
+     "id": "rsuVest",
+     "question": "When does the next batch vest, and how often?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "tax",
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "rsuNextVest",
+       "type": "date",
+       "label": "Next vest",
+       "supplier": "client"
+      },
+      {
+       "field": "rsuVestValue",
+       "type": "money",
+       "label": "Worth about, each vest",
+       "supplier": "client",
+       "hint": "e.g. 5,000"
+      },
+      {
+       "field": "rsuVestSchedule",
+       "type": "choice:monthly|quarterly|yearly",
+       "label": "Vests every",
+       "supplier": "coach"
+      }
+     ],
+     "note": "Vested shares are taxed as pay; withholding is often too low."
+    }
+   ]
+  },
+  "k529": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing",
+    "stateDeduction"
+   ],
+   "own": [
+    {
+     "id": "rothRollover",
+     "question": "When was it opened? (After 15 years, up to $35,000 can move to the beneficiary's Roth IRA.)",
+     "tier": "extra",
+     "engines": [
+      "maxit"
+     ],
+     "reveals": [
+      {
+       "field": "openDate",
+       "type": "date",
+       "label": "Opened on",
+       "supplier": "client"
+      },
+      {
+       "field": "rothRolloverUsed",
+       "type": "money",
+       "label": "Already moved to a Roth",
+       "supplier": "coach"
+      }
+     ]
+    }
+   ]
+  },
+  "coverdell": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing",
+    "stateDeduction"
+   ],
+   "own": []
+  },
+  "utma": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing"
+   ],
+   "own": []
+  },
+  "custodial_roth": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing"
+   ],
+   "own": []
+  },
+  "able": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing"
+   ],
+   "own": []
+  },
+  "trump": {
+   "family": "education",
+   "uses": [
+    "beneficiary",
+    "contributing"
+   ],
+   "own": []
+  },
+  "home": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "Do you know about what it is worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "client",
+       "hint": "e.g. 350,000"
+      }
+     ]
+    },
+    {
+     "id": "costs",
+     "question": "What do property tax and insurance cost a year?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "propertyTaxYear",
+       "type": "money",
+       "label": "Property tax a year",
+       "supplier": "client",
+       "hint": "e.g. 6,000"
+      },
+      {
+       "field": "insuranceYear",
+       "type": "money",
+       "label": "Insurance a year",
+       "supplier": "client",
+       "hint": "e.g. 1,800"
+      }
+     ]
+    },
+    {
+     "id": "mortgage",
+     "question": "Is there a mortgage on it?",
+     "tier": "core",
+     "engines": [
+      "networth",
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "linkedDebt",
+       "type": "link",
+       "label": "The mortgage (in Debt)",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Do you expect it to grow in value?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Grows a year",
+       "supplier": "guess",
+       "default": {
+        "guess": 0.03
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "rental": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "Do you know about what it is worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "client",
+       "hint": "e.g. 350,000"
+      }
+     ]
+    },
+    {
+     "id": "costs",
+     "question": "What do property tax and insurance cost a year?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "propertyTaxYear",
+       "type": "money",
+       "label": "Property tax a year",
+       "supplier": "client",
+       "hint": "e.g. 6,000"
+      },
+      {
+       "field": "insuranceYear",
+       "type": "money",
+       "label": "Insurance a year",
+       "supplier": "client",
+       "hint": "e.g. 1,800"
+      }
+     ]
+    },
+    {
+     "id": "mortgage",
+     "question": "Is there a mortgage on it?",
+     "tier": "core",
+     "engines": [
+      "networth",
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "linkedDebt",
+       "type": "link",
+       "label": "The mortgage (in Debt)",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Do you expect it to grow in value?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Grows a year",
+       "supplier": "guess",
+       "default": {
+        "guess": 0.03
+       }
+      }
+     ]
+    },
+    {
+     "id": "rent",
+     "question": "What does it rent for, and what does it cost to run?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "tax"
+     ],
+     "reveals": [
+      {
+       "field": "incomeProduced",
+       "type": "money",
+       "label": "Rent a month",
+       "supplier": "client",
+       "hint": "e.g. 1,800"
+      },
+      {
+       "field": "rentalExpenses",
+       "type": "money",
+       "label": "Running costs a month (repairs, management)",
+       "supplier": "client",
+       "hint": "e.g. 300"
+      },
+      {
+       "field": "vacancyRate",
+       "type": "rate",
+       "label": "Empty part of the year",
+       "supplier": "guess",
+       "default": {
+        "guess": 0.05
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "pension": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "pension",
+     "question": "What will it pay, and from what age?",
+     "tier": "core",
+     "engines": [
+      "fi",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "pensionMonthly",
+       "type": "money",
+       "label": "Pays a month at the start",
+       "supplier": "coach",
+       "hint": "e.g. 2,100"
+      },
+      {
+       "field": "pensionStartAge",
+       "type": "int",
+       "label": "Starting at age",
+       "supplier": "coach",
+       "default": {
+        "guess": 65
+       }
+      },
+      {
+       "field": "cola",
+       "type": "bool",
+       "label": "Rises with inflation (COLA)",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "lumpSum",
+     "question": "Is there a lump-sum option?",
+     "tier": "extra",
+     "engines": [
+      "fi"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Lump sum offered",
+       "supplier": "coach"
+      }
+     ]
+    }
+   ]
+  },
+  "car": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "About what is it worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "coach",
+       "hint": "e.g. 14,000"
+      }
+     ]
+    },
+    {
+     "id": "loan",
+     "question": "Is there a loan on it?",
+     "tier": "core",
+     "engines": [
+      "networth",
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "linkedDebt",
+       "type": "link",
+       "label": "The car loan (in Debt)",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Loses value each year?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Changes a year",
+       "supplier": "guess",
+       "default": {
+        "guess": -0.15
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "business": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "Do you know about what it is worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "income",
+     "question": "Does it pay you anything?",
+     "tier": "extra",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "incomeProduced",
+       "type": "money",
+       "label": "Pays a month",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Do you expect it to grow in value?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Grows a year",
+       "supplier": "guess"
+      }
+     ]
+    }
+   ]
+  },
+  "cash_value_life": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "Do you know about what it is worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "income",
+     "question": "Does it pay you anything?",
+     "tier": "extra",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "incomeProduced",
+       "type": "money",
+       "label": "Pays a month",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Do you expect it to grow in value?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Grows a year",
+       "supplier": "guess"
+      }
+     ]
+    }
+   ]
+  },
+  "annuity": {
+   "family": "otherAssets",
+   "uses": [],
+   "own": [
+    {
+     "id": "value",
+     "question": "Do you know about what it is worth?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "balance",
+       "type": "money",
+       "label": "Worth about",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "income",
+     "question": "Does it pay you anything?",
+     "tier": "extra",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "incomeProduced",
+       "type": "money",
+       "label": "Pays a month",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "growth",
+     "question": "Do you expect it to grow in value?",
+     "tier": "extra",
+     "engines": [
+      "projection"
+     ],
+     "reveals": [
+      {
+       "field": "appreciationRate",
+       "type": "rate",
+       "label": "Grows a year",
+       "supplier": "guess"
+      }
+     ]
+    }
+   ]
+  },
+  "credit_card": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "promo",
+     "question": "Is there an intro (promo) rate?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "promoApr",
+       "type": "rate",
+       "label": "Intro rate",
+       "supplier": "client",
+       "hint": "e.g. 0"
+      },
+      {
+       "field": "promoEnds",
+       "type": "date",
+       "label": "Intro ends",
+       "supplier": "client"
+      },
+      {
+       "field": "deferredInterest",
+       "type": "bool",
+       "label": "Interest comes back if not paid by then (deferred interest)",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "limit",
+     "question": "Do you know the credit limit?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "limit",
+       "type": "money",
+       "label": "Credit limit",
+       "supplier": "client",
+       "hint": "e.g. 8,000"
+      }
+     ]
+    },
+    {
+     "id": "fee",
+     "question": "Is there an annual fee?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "annualFee",
+       "type": "money",
+       "label": "Annual fee",
+       "supplier": "client",
+       "hint": "e.g. 95"
+      },
+      {
+       "field": "annualValue",
+       "type": "money",
+       "label": "What it gives back a year",
+       "supplier": "client",
+       "hint": "e.g. 300"
+      }
+     ]
+    },
+    {
+     "id": "rewards",
+     "question": "Does it earn rewards?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "rewardsRate",
+       "type": "rate",
+       "label": "Rewards on everyday spending",
+       "supplier": "guess",
+       "default": {
+        "rule": "APP_REWARDS_RATE"
+       }
+      }
+     ]
+    },
+    {
+     "id": "business",
+     "question": "Is it a business card?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "business",
+       "type": "bool",
+       "label": "Business card",
+       "supplier": "client"
+      },
+      {
+       "field": "reportsToPersonalCredit",
+       "type": "bool",
+       "label": "Shows on personal credit",
+       "supplier": "coach"
+      }
+     ]
+    }
+   ]
+  },
+  "student_loan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "federal",
+     "question": "Which kind of federal loan, and who services it?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "federalLoanType",
+       "type": "choice:direct|ffel|perkins|parentPlus",
+       "label": "Loan kind",
+       "supplier": "coach"
+      },
+      {
+       "field": "servicer",
+       "type": "text",
+       "label": "Servicer",
+       "supplier": "coach",
+       "hint": "e.g. MOHELA"
+      }
+     ]
+    },
+    {
+     "id": "plan",
+     "question": "Is it on an income-driven plan?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "plan",
+       "type": "choice:standard|graduated|extended|ibr|paye|icr|save|rap|paused",
+       "label": "Plan",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "pslf",
+     "question": "Do you work for government or a nonprofit (Public Service Loan Forgiveness)?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "pslf",
+       "type": "bool",
+       "label": "Working toward PSLF",
+       "supplier": "client"
+      },
+      {
+       "field": "pslfPayments",
+       "type": "int",
+       "label": "Qualifying payments made (of 120)",
+       "supplier": "coach",
+       "hint": "e.g. 48"
+      },
+      {
+       "field": "forgivenessDate",
+       "type": "date",
+       "label": "Expected forgiveness",
+       "supplier": "guess"
+      }
+     ]
+    }
+   ]
+  },
+  "private_student_loan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "servicer",
+     "question": "Who services it, and is the rate fixed?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "servicer",
+       "type": "text",
+       "label": "Servicer",
+       "supplier": "coach"
+      },
+      {
+       "field": "rateType",
+       "type": "choice:fixed|arm",
+       "label": "Rate",
+       "supplier": "client",
+       "default": {
+        "guess": "fixed"
+       }
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "mortgage": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 6.25"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment (principal and interest)",
+       "supplier": "client",
+       "hint": "e.g. 1,900"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "loanShape",
+     "question": "Is it fixed or adjustable, and how long?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "rateType",
+       "type": "choice:fixed|arm",
+       "label": "Rate",
+       "supplier": "client",
+       "default": {
+        "guess": "fixed"
+       }
+      },
+      {
+       "field": "termYears",
+       "type": "int",
+       "label": "Term in years",
+       "supplier": "client",
+       "default": {
+        "guess": 30
+       }
+      },
+      {
+       "field": "startDate",
+       "type": "date",
+       "label": "Started on",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "pmi",
+     "question": "Do you pay mortgage insurance (PMI)?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "pmiMonthly",
+       "type": "money",
+       "label": "PMI a month",
+       "supplier": "client",
+       "hint": "e.g. 120"
+      },
+      {
+       "field": "pmiEnds",
+       "type": "date",
+       "label": "PMI ends (about 78% of the original value owed)",
+       "supplier": "guess"
+      }
+     ]
+    },
+    {
+     "id": "escrow",
+     "question": "Are taxes and insurance paid through escrow?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "escrowMonthly",
+       "type": "money",
+       "label": "Escrow a month",
+       "supplier": "client",
+       "hint": "e.g. 650"
+      }
+     ]
+    },
+    {
+     "id": "extra",
+     "question": "Do you pay extra principal?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "extraPrincipal",
+       "type": "money",
+       "label": "Extra a month",
+       "supplier": "client",
+       "hint": "e.g. 100"
+      }
+     ]
+    },
+    {
+     "id": "home",
+     "question": "Which home does it belong to?",
+     "tier": "extra",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "securedBy",
+       "type": "link",
+       "label": "The home (in Assets)",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "heloc": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "limit",
+     "question": "What is the line, and when does the draw period end?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "limit",
+       "type": "money",
+       "label": "Line of credit",
+       "supplier": "client",
+       "hint": "e.g. 50,000"
+      },
+      {
+       "field": "drawEnds",
+       "type": "date",
+       "label": "Draw period ends",
+       "supplier": "client"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "home",
+     "question": "Which home secures it?",
+     "tier": "extra",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "securedBy",
+       "type": "link",
+       "label": "The home (in Assets)",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "auto_loan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "left",
+     "question": "How many payments are left?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "monthsLeft",
+       "type": "int",
+       "label": "Payments left",
+       "supplier": "client",
+       "hint": "e.g. 36"
+      }
+     ]
+    },
+    {
+     "id": "car",
+     "question": "Which car does it belong to?",
+     "tier": "extra",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "securedBy",
+       "type": "link",
+       "label": "The car (in Assets)",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "personal_loan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "left",
+     "question": "How many payments are left?",
+     "tier": "extra",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "monthsLeft",
+       "type": "int",
+       "label": "Payments left",
+       "supplier": "client"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "bnpl": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "plan",
+     "question": "How many payments are left, and how often?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Each payment",
+       "supplier": "client",
+       "hint": "e.g. 50"
+      },
+      {
+       "field": "monthsLeft",
+       "type": "int",
+       "label": "Payments left",
+       "supplier": "client",
+       "hint": "e.g. 3"
+      }
+     ]
+    }
+   ]
+  },
+  "payday": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "rollover",
+     "question": "Is it rolled over each payday?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Next due day",
+       "supplier": "client"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "medical": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "medical",
+     "question": "Is it on a 0% payment plan with the provider?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Rate",
+       "supplier": "client",
+       "default": {
+        "guess": 0
+       }
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "irs_plan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "Do you know the rate and the monthly payment?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow",
+      "plan"
+     ],
+     "reveals": [
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate",
+       "supplier": "client",
+       "hint": "e.g. 7.5"
+      },
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Monthly payment",
+       "supplier": "client",
+       "hint": "e.g. 250"
+      },
+      {
+       "field": "dueDay",
+       "type": "int",
+       "label": "Due day",
+       "supplier": "guess",
+       "default": {
+        "rule": "DEFAULT_DUE_DAY"
+       }
+      }
+     ]
+    },
+    {
+     "id": "irs",
+     "question": "Is it an installment agreement with the IRS?",
+     "tier": "core",
+     "engines": [
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "servicer",
+       "type": "text",
+       "label": "Agreement or notice number",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "k401_loan": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "terms",
+     "question": "What is the payment, and how many are left?",
+     "tier": "core",
+     "engines": [
+      "debt",
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Payment a month",
+       "supplier": "client",
+       "hint": "e.g. 180"
+      },
+      {
+       "field": "monthsLeft",
+       "type": "int",
+       "label": "Payments left",
+       "supplier": "client",
+       "hint": "e.g. 30"
+      },
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest rate (paid back to yourself)",
+       "supplier": "coach"
+      }
+     ]
+    },
+    {
+     "id": "account",
+     "question": "Which plan is it from?",
+     "tier": "core",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "fromAccount",
+       "type": "link",
+       "label": "The plan (in Assets)",
+       "supplier": "client"
+      }
+     ],
+     "note": "Leaving the job can make the rest due by the next tax filing date."
+    }
+   ]
+  },
+  "family_iou": {
+   "family": "debt",
+   "uses": [],
+   "own": [
+    {
+     "id": "iou",
+     "question": "Is there a plan to pay it back?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "debt"
+     ],
+     "reveals": [
+      {
+       "field": "minimum",
+       "type": "money",
+       "label": "Paying back a month",
+       "supplier": "client",
+       "hint": "e.g. 100"
+      },
+      {
+       "field": "apr",
+       "type": "rate",
+       "label": "Interest, if any",
+       "supplier": "client",
+       "default": {
+        "guess": 0
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "income": {
+  "w2": [
+   {
+    "id": "pretax",
+    "question": "Does anything come out before tax (health insurance, FSA, commuter)?",
+    "tier": "core",
+    "engines": [
+     "tax",
+     "cashflow"
+    ],
+    "reveals": [
+     {
+      "field": "pretaxDeductions",
+      "type": "money",
+      "label": "Taken out before tax a month",
+      "supplier": "client",
+      "hint": "e.g. 300"
+     }
+    ]
+   },
+   {
+    "id": "bonus",
+    "question": "Do you get a bonus?",
+    "tier": "core",
+    "engines": [
+     "cashflow",
+     "tax",
+     "windfall"
+    ],
+    "reveals": [
+     {
+      "field": "bonusAmount",
+      "type": "money",
+      "label": "Bonus a year, before tax",
+      "supplier": "client",
+      "hint": "e.g. 5,000"
+     },
+     {
+      "field": "bonusMonth",
+      "type": "int",
+      "label": "Paid in month (1 to 12)",
+      "supplier": "client",
+      "hint": "e.g. 3"
+     }
+    ]
+   },
+   {
+    "id": "raise",
+    "question": "Is a raise coming?",
+    "tier": "extra",
+    "engines": [
+     "projection"
+    ],
+    "reveals": [
+     {
+      "field": "raiseDate",
+      "type": "date",
+      "label": "Raise on",
+      "supplier": "client"
+     },
+     {
+      "field": "raisePct",
+      "type": "rate",
+      "label": "About this much",
+      "supplier": "guess",
+      "default": {
+       "guess": 0.03
+      }
+     }
+    ]
+   }
+  ],
+  "1099": [
+   {
+    "id": "quarterly",
+    "question": "Do you pay quarterly estimated taxes?",
+    "tier": "core",
+    "engines": [
+     "tax",
+     "calendar"
+    ],
+    "reveals": [
+     {
+      "field": "quarterlyEstimates",
+      "type": "bool",
+      "label": "Paying quarterly",
+      "supplier": "client"
+     },
+     {
+      "field": "estimatesPaid",
+      "type": "money",
+      "label": "Paid so far this year",
+      "supplier": "coach"
+     }
+    ]
+   },
+   {
+    "id": "expenses",
+    "question": "Do you have business expenses?",
+    "tier": "core",
+    "engines": [
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "businessExpenses",
+      "type": "money",
+      "label": "Business expenses a month",
+      "supplier": "client",
+      "hint": "e.g. 200"
+     }
+    ]
+   }
+  ],
+  "side": [
+   {
+    "id": "expenses",
+    "question": "Do you have business expenses?",
+    "tier": "extra",
+    "engines": [
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "businessExpenses",
+      "type": "money",
+      "label": "Business expenses a month",
+      "supplier": "client"
+     }
+    ]
+   }
+  ],
+  "tips": [
+   {
+    "id": "cashTips",
+    "question": "Are your tips mostly cash?",
+    "tier": "extra",
+    "engines": [
+     "tax"
+    ],
+    "reveals": [
+     {
+      "field": "cashShare",
+      "type": "rate",
+      "label": "Share in cash",
+      "supplier": "client",
+      "default": {
+       "guess": 0.5
+      }
+     }
+    ],
+    "added": true
+   }
+  ],
+  "rental": [
+   {
+    "id": "expenses",
+    "question": "What does it cost to run?",
+    "tier": "core",
+    "engines": [
+     "tax",
+     "cashflow"
+    ],
+    "reveals": [
+     {
+      "field": "businessExpenses",
+      "type": "money",
+      "label": "Running costs a month",
+      "supplier": "client"
+     }
+    ],
+    "added": true
+   }
+  ],
+  "pension": [
+   {
+    "id": "cola",
+    "question": "Does it rise with inflation (COLA)?",
+    "tier": "extra",
+    "engines": [
+     "fi"
+    ],
+    "reveals": [
+     {
+      "field": "cola",
+      "type": "bool",
+      "label": "Rises with inflation",
+      "supplier": "coach"
+     }
+    ],
+    "added": true
+   }
+  ],
+  "ss": [
+   {
+    "id": "claim",
+    "question": "At what age do (or will) you claim?",
+    "tier": "core",
+    "engines": [
+     "fi"
+    ],
+    "reveals": [
+     {
+      "field": "claimAge",
+      "type": "int",
+      "label": "Claiming at age",
+      "supplier": "client",
+      "default": {
+       "guess": 67
+      }
+     }
+    ],
+    "added": true
+   }
+  ],
+  "unemployment": [],
+  "maybeMoney": [],
+  "other": [],
+  "person": []
+ }
+}

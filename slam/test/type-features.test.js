@@ -1,0 +1,81 @@
+// The type catalog (S-266): every account, debt and income type lists what it has; every field it opens is a schema field.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { readJson, loadRules } from './spine-helpers.js';
+import { loadHousehold, upgradeSpine } from '../engine/normalize.js';
+import { applyDefaults } from '../engine/defaults.js';
+import { PRESETS, INCOME_TYPES, FAMILIES, INCOME_DEPTH, validate } from '../engine/schema.js';
+import { featuresOf, tickFeature, tickTodos, tickCount, matchTiersOf, matchOn, parseMatchText } from '../engine/features.js';
+import { addItem } from '../engine/edits.js';
+
+const cat = JSON.parse(readFileSync(new URL('../data/type-features.json', import.meta.url), 'utf8'));
+const R = loadRules();
+const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
+const T = '2026-10-27';
+const INCOME_FIELDS = { ...INCOME_DEPTH, businessExpenses: 'money' };
+
+test('every preset and income type is in the catalog, each feature well formed, each field in the schema', () => {
+  for (const t of Object.keys(PRESETS)) assert.ok(cat.types[t], t);
+  for (const t of INCOME_TYPES) assert.ok(t in cat.income, t);
+  const check = (f, fields, where) => {
+    assert.ok(f.id && /\?/.test(f.question) && ['core', 'extra'].includes(f.tier) && Array.isArray(f.engines), where + ' ' + f.id);
+    for (const r of f.reveals) {
+      assert.ok(['client', 'coach', 'guess'].includes(r.supplier), where + ' ' + r.field);
+      assert.ok(r.field in fields, where + ': ' + r.field + ' is not a field');
+    }
+  };
+  for (const [t, x] of Object.entries(cat.types)) {
+    const fields = { ...FAMILIES.base.fields, ...FAMILIES[x.family].fields };
+    const fs = featuresOf(cat, { type: t }, x.family === 'debt' ? 'debts' : 'accounts');
+    assert.ok(fs.length, t + ' has features');
+    assert.equal(new Set(fs.map((f) => f.id)).size, fs.length, t + ': ids unique');
+    for (const f of fs) check(f, fields, t);
+  }
+  for (const [t, fs] of Object.entries(cat.income)) for (const f of fs) check(f, INCOME_FIELDS, 'income ' + t);
+});
+
+test('a 401(k) has the match tiers, true-up, vesting, loan, mega backdoor, funds, old job and more', () => {
+  const ids = featuresOf(cat, { type: 'k401' }, 'accounts').map((f) => f.id);
+  for (const id of ['contributing', 'rothSplit', 'match', 'employerExtra', 'vesting', 'ytd', 'autoIncrease', 'loan', 'afterTax', 'funds', 'beneficiary', 'oldJob']) assert.ok(ids.includes(id), id);
+  assert.ok(featuresOf(cat, { type: 'k401' }, 'accounts').find((f) => f.id === 'match').reveals.some((r) => r.field === 'matchTiers' && r.type === 'tiers'));
+});
+
+test('yes opens the fields (a default as a guess), no sets them not for me and keeps what was typed, not sure makes a to-do', () => {
+  let { spine: s, id } = addItem(demo(), { collection: 'accounts', type: 'k401', label: 'Acme 401(k)' }, T);
+  const base = 'accounts.' + id, f = (fid) => featuresOf(cat, { type: 'k401' }, 'accounts').find((x) => x.id === fid);
+  s = tickFeature(s, base, f('vesting'), 'yes', { rules: R, today: T });
+  const a = s.accounts.find((x) => x.id === id);
+  assert.deepEqual([a.vestingYears.value, a.vestingYears.kind], [3, 'rough'], 'the guess fills as a guess, never as known');
+  assert.equal(a.vestingType.kind, 'missing');
+  assert.equal(a.ticks.vesting, 'yes');
+  s = tickFeature(s, base, f('vesting'), 'no', { rules: R, today: T });
+  assert.equal(s.accounts.find((x) => x.id === id).vestingYears.kind, 'notForMe');
+  s = tickFeature(s, base, f('vesting'), 'yes', { rules: R, today: T });
+  assert.equal(s.accounts.find((x) => x.id === id).vestingYears.value, 3, 'yes again brings back what was there');
+  s = tickFeature(s, base, f('match'), 'notSure', { rules: R, today: T });
+  const todo = tickTodos(cat, s).find((x) => x.path.startsWith(base));
+  assert.equal(todo.who, 'client');
+  assert.match(todo.words, /Acme 401\(k\): Does your employer match\?/);
+  assert.deepEqual(tickCount(cat, s.accounts.find((x) => x.id === id), 'accounts'), { checked: 2, total: 12 });
+  assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('; '));
+});
+
+test('match tiers: worked out tier by tier; old words become tiers and stay as written', () => {
+  assert.deepEqual(parseMatchText('100% of the first 3%, 50% of the next 2%'), [{ rate: 1, upTo: 0.03 }, { rate: 0.5, upTo: 0.02 }]);
+  assert.deepEqual(parseMatchText('dollar for dollar up to 4%'), [{ rate: 1, upTo: 0.04 }]);
+  assert.equal(parseMatchText('they match some'), null);
+  // $400 in on $10,000 of pay: the first $300 matched in full, the next $100 at half.
+  assert.equal(matchOn([{ rate: 1, upTo: 0.03 }, { rate: 0.5, upTo: 0.02 }], 400, 10000), 350);
+  assert.deepEqual(matchTiersOf({ matchRate: { value: 0.5, kind: 'known' }, matchCap: { value: 0.06, kind: 'known' } }), [{ rate: 0.5, upTo: 0.06 }]);
+  const d = demo();
+  const k = d.accounts.find((a) => a.family === 'employerRetirement');
+  const strip = ({ matchTiers, ...rest }) => rest;
+  const old = { ...d, accounts: d.accounts.map((a) => (a === k ? { ...strip(a), matchFormula: { value: '100% of the first 3%, 50% of the next 2%', kind: 'known', asOf: '2026-01-01', source: 'ledger' } } : a)) };
+  // The demo's own words ("100% of first 4%") read as one tier too.
+  assert.deepEqual(k.matchTiers.value, [{ rate: 1, upTo: 0.04 }]);
+  const up = upgradeSpine(old).accounts.find((a) => a.id === k.id);
+  assert.deepEqual(up.matchTiers.value, [{ rate: 1, upTo: 0.03 }, { rate: 0.5, upTo: 0.02 }]);
+  assert.equal(up.matchFormula.value, '100% of the first 3%, 50% of the next 2%', 'the words stay');
+  assert.ok(validate(upgradeSpine(old)).ok);
+});

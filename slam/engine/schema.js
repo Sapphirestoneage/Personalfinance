@@ -123,6 +123,25 @@ export const FAMILIES = {
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
 };
+// Type depth (S-266): the fields data/type-features.json reveals, by family, on top of the ones above. All optional.
+// matchTiers: [{ rate, upTo }] (rate: the share of what you put in that is matched; upTo: up to this share of pay,
+// counted from where the tier before it stopped), in order; it replaces matchRate and matchCap when present.
+const DEPTH = {
+  employerRetirement: { contributionPct: 'rate', perPaycheck: 'money', matchTiers: 'tiers', trueUp: 'bool', employerNonElective: 'rate', profitSharing: 'money', yearsOfService: 'int', employerBalance: 'money', contributedYtd: 'money', autoIncrease: 'rate', loanDebt: 'link', allowsInPlanRoth: 'bool', expenseRatio: 'rate', stockShare: 'rate', beneficiaryNamed: 'bool', separatedFromEmployer: 'bool', separationYear: 'int', tspFunds: 'text', soloEmployerPart: 'money' },
+  ira: { expenseRatio: 'rate', stockShare: 'rate', beneficiaryNamed: 'bool', inheritedDate: 'date', beneficiaryType: 'choice:spouse|eligible|designated', mustEmptyBy: 'date', sepEmployerPct: 'rate', simpleStartDate: 'date' },
+  hsaFsa: { planYearEnd: 'date', graceAmount: 'money' },
+  cash: { fdic: 'bool', signupBonus: 'money', bonusBy: 'date' },
+  fixedTerm: { purchaseDate: 'date' },
+  taxable: { longTermShare: 'rate', expenseRatio: 'rate', stockShare: 'rate', dividendsReinvested: 'bool', esppDiscount: 'rate', offeringPeriodEnd: 'date', rsuNextVest: 'date', rsuVestValue: 'money', rsuVestSchedule: 'choice:monthly|quarterly|yearly' },
+  education: { rothRolloverUsed: 'money' },
+  otherAssets: { propertyTaxYear: 'money', insuranceYear: 'money', rentalExpenses: 'money', vacancyRate: 'rate', pensionMonthly: 'money', pensionStartAge: 'int', cola: 'bool' },
+  debt: { federalLoanType: 'choice:direct|ffel|perkins|parentPlus', servicer: 'text', pslfPayments: 'int', forgivenessDate: 'date', rateType: 'choice:fixed|arm', termYears: 'int', startDate: 'date', pmiMonthly: 'money', pmiEnds: 'date', escrowMonthly: 'money', extraPrincipal: 'money', securedBy: 'link', drawEnds: 'date', monthsLeft: 'int', fromAccount: 'link' }
+};
+for (const [f, x] of Object.entries(DEPTH)) Object.assign(FAMILIES[f].fields, x);
+// An income line's optional depth fields (S-266).
+export const INCOME_DEPTH = { pretaxDeductions: 'money', bonusAmount: 'money', bonusMonth: 'int', raiseDate: 'date', raisePct: 'rate', quarterlyEstimates: 'bool', estimatesPaid: 'money', cashShare: 'rate', cola: 'bool', claimAge: 'int' };
+// A feature's tick (S-266): ticks: { featureId: 'yes' | 'no' | 'notSure' } on an account, debt or income line.
+export const TICKS = ['yes', 'no', 'notSure'];
 
 // ---------------------------------------------------------------- presets
 // Each account type is a preset of its family (Account Rules tab). limitRule
@@ -214,6 +233,7 @@ export function validate(spine) {
   const isDate = isDay;
   const optDate = (path, s) => { if (s !== null && s !== undefined && !isDate(s)) err(path, 'not a date (YYYY-MM-DD)'); };
 
+  function checkTicks(p, t) { if (!t || typeof t !== 'object' || Array.isArray(t)) { err(p + '.ticks', 'a map of feature to yes, no or notSure'); return; } for (const [k, x] of Object.entries(t)) if (!TICKS.includes(x)) err(p + '.ticks.' + k, 'yes, no or notSure'); }
   function checkFact(path, f, type, required = true) {
     if (f === undefined) { if (required) err(path, 'missing field (store a Fact with kind missing instead)'); return; }
     if (!isFact(f)) { err(path, 'not a Fact { value, asOf, source, kind }'); return; }
@@ -233,6 +253,7 @@ export function validate(spine) {
     // A link names an account or card by id, or "paycheck" (S-189).
     else if (type === 'link') { if (typeof v !== 'string' || !v) err(path, 'must name an account'); }
     else if (type === 'list') { if (!Array.isArray(v)) err(path, 'must be a list'); }
+    else if (type === 'tiers') { if (!Array.isArray(v) || v.some((x) => !x || typeof x.rate !== 'number' || typeof x.upTo !== 'number' || x.rate < 0 || x.upTo <= 0 || x.upTo > 1)) err(path, 'tiers of { rate, upTo } (shares of pay)'); }
     else if (type.startsWith('choice:')) { if (!type.slice(7).split('|').includes(v)) err(path, 'not one of ' + type.slice(7)); }
   }
 
@@ -337,6 +358,8 @@ export function validate(spine) {
       checkFact(p + '.payBasis', s.payBasis, PAY_BASES, false);
       for (const k of ['salary', 'hourlyRate', 'yearTotal']) checkFact(p + '.' + k, s[k], 'money', false);
       checkFact(p + '.hoursPerWeek', s.hoursPerWeek, 'int', false);
+      for (const [k, t] of Object.entries(INCOME_DEPTH)) checkFact(p + '.' + k, s[k], t, false);
+      if (s.ticks !== undefined) checkTicks(p, s.ticks);
       if (s.type === 'person') {
         checkFact(p + '.from', s.from, 'text', false);
         checkFact(p + '.purpose', s.purpose, PERSON_PURPOSES);
@@ -413,6 +436,7 @@ export function validate(spine) {
       checkFact(p + '.balance', a.balance, 'money');
       for (const k of Object.keys(a)) {
         if (['id', 'family', 'type', 'notes'].includes(k)) continue;
+        if (k === 'ticks') { checkTicks(p, a.ticks); continue; }
         if (!(k in fields)) { err(p + '.' + k, 'not a field of the ' + a.family + ' family'); continue; }
         checkFact(p + '.' + k, a[k], fields[k]);
       }
