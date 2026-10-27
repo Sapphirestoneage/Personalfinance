@@ -11,6 +11,7 @@ import { clientOverrides } from '../engine/assumptions.js';
 import { scenarioBar, pickedScenario } from './scenario.js';
 import { SCENARIO_WORDS } from '../engine/scenarios.js';
 import { prefsScreen, prefsSummary } from './prefs-screen.js';
+import { pref } from './prefs.js';
 import { h, money, shortDate } from './view.js';
 import { questionEl } from './profile-q.js';
 import { AREAS, LEVEL1, asked, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
@@ -35,7 +36,8 @@ function top({ spine, rules }) {
   ];
   return [
     h('p', { class: 'lede' }, 'How life works right now, and how the app is set up for it. An answer changes which fields show and what the numbers mean; nothing typed is deleted.'),
-    loadCard(),
+    // Import answers is the coach's tool: client view hides it (Preferences).
+    pref('view') === 'client' ? null : loadCard(),
     h('ul', { class: 'go-list', 'aria-label': 'Profile' }, [...groups].sort((x, y) => y.n - x.n).map((g) => g.row))
   ];
 }

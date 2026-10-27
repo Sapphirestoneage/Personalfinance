@@ -1,0 +1,16 @@
+{
+  "note": "Preferences (layer 13): how the app shows things. One line each: id, label, hint, kind, options [value, words], default, and where it is saved (browser unless noted). ui/prefs.js reads this list; ui/prefs-screen.js draws one control per line.",
+  "prefs": [
+    { "id": "moneyAs", "label": "Show money as", "hint": "Dollars, or what each amount costs in hours of work or in days of FI pushed later. Every screen follows it.", "kind": "choice", "options": [["dollars", "Dollars"], ["hours", "Hours of work"], ["fiDays", "Days of FI later"]], "default": "dollars", "saved": "browser" },
+    { "id": "hide", "label": "Hide numbers", "hint": "For screen sharing or in public: amounts blur until you tap them.", "kind": "choice", "options": [["off", "Show"], ["on", "Hide"]], "default": "off", "saved": "browser" },
+    { "id": "round", "label": "Round amounts", "hint": "On summary screens (Today, My numbers totals). Show the math and the log keep cents.", "kind": "choice", "options": [["1", "To the dollar"], ["10", "To $10"], ["100", "To $100"]], "default": "1", "saved": "browser" },
+    { "id": "theme", "label": "Theme", "hint": "Light, dark, or whatever this device is set to.", "kind": "choice", "options": [["device", "Match the device"], ["light", "Light"], ["dark", "Dark"]], "default": "device", "saved": "browser" },
+    { "id": "textSize", "label": "Text size", "hint": "Larger makes every screen easier to read.", "kind": "choice", "options": [["normal", "Normal"], ["larger", "Larger"]], "default": "normal", "saved": "browser" },
+    { "id": "weekStart", "label": "Week starts on", "hint": "For the Calendar's weeks.", "kind": "choice", "options": [["sunday", "Sunday"], ["monday", "Monday"]], "default": "sunday", "saved": "browser" },
+    { "id": "dateStyle", "label": "Date style", "hint": "How dates read everywhere.", "kind": "choice", "options": [["words", "Oct 1, 2026"], ["us", "10/1/2026"], ["iso", "2026-10-01"]], "default": "words", "saved": "browser" },
+    { "id": "window", "label": "Default time window", "hint": "What Spending and the Calendar open on; each can still change it.", "kind": "choice", "options": [["1", "1 month"], ["3", "3 months"], ["6", "6 months"], ["12", "12 months"]], "default": "1", "saved": "browser" },
+    { "id": "tone", "label": "Tone", "hint": "How nudges are worded. It never changes a number.", "kind": "choice", "options": [["gentle", "Gentle"], ["straight", "Straight"], ["numbers", "Numbers only"]], "default": "straight", "saved": "client" },
+    { "id": "todayTiles", "label": "What Today shows", "hint": "Pick the tiles and their order.", "kind": "order", "options": [["networth", "Net worth"], ["surplus", "Monthly surplus"], ["savings", "Savings rate"], ["runway", "Cash runway"], ["next", "Next step"]], "default": ["networth", "surplus", "savings", "runway", "next"], "saved": "browser" },
+    { "id": "view", "label": "Coach view or client view", "hint": "Client view hides the Builder links and the coach's own tools.", "kind": "choice", "options": [["coach", "Coach view"], ["client", "Client view"]], "default": "coach", "saved": "browser" }
+  ]
+}

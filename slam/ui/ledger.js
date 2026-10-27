@@ -29,7 +29,7 @@ import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, 
 import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
-import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref } from './view.js';
+import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref, summaryMoney } from './view.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -1076,7 +1076,7 @@ function rowFigure(sec, it) {
 function groupTotal(sec, g) {
   if (g.total === undefined || (g.total === null && !g.totalIncomplete)) return g.item ? headline(g.item) : h('span', {}, g.items.length + (g.items.length === 1 ? ' item' : ' items'));
   if (g.total === null) return h('span', {}, chip('missing'), h('span', { class: 'empty' }, ' No amounts yet'));
-  return h('span', {}, h('span', { class: 'go-total' }, money(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
+  return h('span', {}, h('span', { class: 'go-total' }, summaryMoney(g.total)), TOTAL_WORDS[sec.slug] || '', g.totalIncomplete ? [' ', chip('incomplete')] : null);
 }
 
 // What moved here from Today (Phase 2.5 Batch 5): the FI numbers on Goals, the year's tax on Taxes, the cards on Debt.

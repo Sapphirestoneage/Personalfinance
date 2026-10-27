@@ -30,7 +30,7 @@ export const LEVEL1 = [
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the Rule of 5 cushion, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
   { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['adults', 'Other adults']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.' },
-  { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it']], does: 'Sets how Today words the next step.' },
+  { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },
   { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['roommates', 'With roommates'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
   { id: 'roommates', area: 'home', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => ans(a, 'home') === 'roommates', does: 'Rent and the bills read as your share.' },
   { id: 'whoseFamily', area: 'home', label: 'Whose family?', kind: 'one', options: [['parents', 'My parents'], ['partner', 'A partner\'s family'], ['other', 'Other family']], when: (a) => ans(a, 'home') === 'family', does: 'Names who covers the bills they pay for you.' },
@@ -163,7 +163,7 @@ export function fieldsFor(a = {}) {
   if (has(a, 'debts', 'cards')) does.push({ id: 'cardPay', words: ans(a, 'cardsFull') === 'always' ? 'Cards are paid in full each month.' : 'Cards carry a balance, so each card\'s rate matters.' });
   if (ans(a, 'health') === 'parent') does.push({ id: 'turning26', words: 'The Calendar shows the day a parent\'s plan ends at 26.' });
   if (ans(a, 'tracking')) does.push({ id: 'spendingStart', words: ans(a, 'tracking') === 'none' ? 'Spending opens on adding a purchase.' : 'Spending opens on importing a statement.' });
-  if (ans(a, 'tone')) does.push({ id: 'tone', words: ans(a, 'tone') === 'gentle' ? 'Today starts with one gentle next step.' : 'Today says what to do first, plainly.' });
+  if (ans(a, 'tone')) does.push({ id: 'tone', words: ans(a, 'tone') === 'gentle' ? 'Today starts with one gentle next step.' : ans(a, 'tone') === 'numbers' ? 'Today shows the numbers and the button, without the sentences.' : 'Today says what to do first, plainly.' });
   if (ans(a, 'fi') === 'notNow') does.push({ id: 'fiOff', words: 'FI stays off Today.' });
   return { shown, hidden, covered, meaning, does, setup: setupLines(a, shown, covered) };
 }

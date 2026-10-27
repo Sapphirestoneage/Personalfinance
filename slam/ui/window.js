@@ -3,12 +3,15 @@
 // both pages open on the same window.
 
 import { h } from './view.js';
+import { pref } from './prefs.js';
 
 export const WINDOWS = [[1, '1 month'], [2, '2 months'], [3, '3 months'], [6, '6 months'], [12, '12 months']];
 const KEY = 'slam-window:v1';
 
 export function pickedWindow() {
-  try { const v = localStorage.getItem(KEY); return WINDOWS.some(([n]) => String(n) === v) ? +v : 1; } catch { return 1; }
+  // A window picked on the page wins; else the default from Preferences; else 1 month.
+  const dflt = WINDOWS.some(([n]) => n === +pref('window')) ? +pref('window') : 1;
+  try { const v = localStorage.getItem(KEY); return WINDOWS.some(([n]) => String(n) === v) ? +v : dflt; } catch { return dflt; }
 }
 export function keepWindow(n) { try { localStorage.setItem(KEY, String(n)); } catch { /* storage blocked: lasts until the page closes */ } }
 

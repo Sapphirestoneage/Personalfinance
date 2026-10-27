@@ -5,6 +5,7 @@ import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile, SOURCE_WORDS } from './household.js';
 import { loadFailWords } from './profile-file.js';
+import { pref } from './prefs.js';
 
 let banner = null;
 function showError(text) {
@@ -14,7 +15,8 @@ function showError(text) {
 }
 
 // The Builder link; on the Builder itself it is where you are, so it is plain words, not a link to the same screen.
-const builderLink = () => (/\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
+// Client view (Preferences) hides it.
+const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
 
 // Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
 // the app, the footer line and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live

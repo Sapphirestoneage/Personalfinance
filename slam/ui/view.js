@@ -1,10 +1,26 @@
 // Display helpers shared by the Ledger and Dashboard. Formatting only; every
 // number arrives already computed by the engines.
 
-import { money, pct } from '../src/ui/format.js';
+import { money as dollars, pct } from '../src/ui/format.js';
+import { hoursOf, fiDaysOf } from '../engine/money-as.js';
 import { LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
 
-export { money, pct };
+export { pct };
+
+// How this browser shows money and dates (Preferences): the shell sets it on every page from the choices kept here
+// and the household's real hourly wage and saving pace. Dollars always lead; hours of work or days of FI follow in
+// a short tag, and only when the number they need is known. Exact amounts (cents, Show the math) stay dollars alone.
+let display = { moneyAs: 'dollars', wage: null, perDay: null, dateStyle: 'words', round: 1 };
+export const setDisplay = (d) => { display = { ...display, ...d }; };
+export function money(x, exact = false) {
+  const base = dollars(x, exact);
+  if (exact || x === null || x === undefined || Number.isNaN(x) || Math.abs(x) < 1 || display.moneyAs === 'dollars') return base;
+  if (display.moneyAs === 'hours') { const n = hoursOf(Math.abs(x), display.wage); return n === null ? base : base + ' (' + n + ' h of work)'; }
+  if (display.moneyAs === 'fiDays') { const n = fiDaysOf(Math.abs(x), display.perDay); return n === null ? base : base + ' (' + n + (n === 1 ? ' day' : ' days') + ' of FI)'; }
+  return base;
+}
+// A summary number (Today's tiles, My numbers' totals): rounded to the dollar, $10 or $100 as picked.
+export const summaryMoney = (x) => (x === null || x === undefined || display.round <= 1 ? money(x) : money(Math.round(x / display.round) * display.round));
 
 export function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);
@@ -19,7 +35,12 @@ export function h(tag, attrs = {}, ...kids) {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-export const shortDate = (iso) => (iso ? MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : '');
+export const shortDate = (iso) => {
+  if (!iso) return '';
+  if (display.dateStyle === 'iso') return iso.slice(0, 10);
+  if (display.dateStyle === 'us') return +iso.slice(5, 7) + '/' + +iso.slice(8, 10) + '/' + iso.slice(0, 4);
+  return MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
+};
 export const monthWords = (ym) => MONTHS[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
 export const words = (s) => String(s).replace(/_/g, ' ');
 export const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');

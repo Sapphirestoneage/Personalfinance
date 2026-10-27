@@ -24,6 +24,7 @@ import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, i
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pickedWindow, windowBar, WINDOWS } from './window.js';
 import { debtTab } from './debt-tab.js';
+import { pref } from './prefs.js';
 import { fooGhosts } from '../engine/plan.js';
 
 const app = document.getElementById('app');
@@ -518,7 +519,7 @@ function monthTab(v, c, today, ms, mathCtx, st) {
 
 function weeksTab(c, mathCtx, asOf) {
   if (!c.sim) return pastWords(asOf);
-  const w = weeks(c.sim);
+  const w = weeks(c.sim, { startsOn: pref('weekStart') === 'monday' ? 1 : 0 });
   return h('section', { class: 'card', 'aria-labelledby': 'weeks-h' },
     h('h2', { id: 'weeks-h' }, 'Week by week'),
     null,

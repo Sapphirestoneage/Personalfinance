@@ -249,7 +249,8 @@ export function realHourlyWage(spine, rules, s, { asOf = spine.meta.asOf } = {})
   const out = t.out(wage);
   return { wage, naive, takeHome, costMonthly, costs: costs.map((i) => ({ id: i.id, label: i.label, amount: i.amount, path: 'expenses.' + i.id + '.amount' })), hoursWeek: hours, commuteWeek: commute, hoursMonthly, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
-export const hoursOf = (amount, wage) => (amount === null || amount === undefined || !wage ? null : Math.round(amount / wage * 10) / 10);
+// Hours of work an amount costs: one function, in engine/money-as.js.
+export { hoursOf } from './money-as.js';
 
 // ---------------------------------------------------------------- DRAFTT (L002)
 // Debt, Retirement, Accommodation, Food, Transportation, Therapy (B2): each letter as a share of take-home, and

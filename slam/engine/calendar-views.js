@@ -18,13 +18,14 @@ const PER_MONTH = { weekly: 52 / 12, biweekly: 26 / 12 };
 
 // Weeks (Sunday to Saturday) across the simulation: what came in, what went
 // out, where checking ends, and the week's lowest day.
-export function weeks(sim) {
+// startsOn: 0 for Sunday (the default), 1 for Monday (Preferences).
+export function weeks(sim, { startsOn = 0 } = {}) {
   const out = [];
   let i = 0;
   const days = sim.daily;
   while (i < days.length) {
     const first = days[i];
-    const span = 7 - weekdayOf(first.date);
+    const span = 7 - ((weekdayOf(first.date) - startsOn + 7) % 7);
     const slice = days.slice(i, i + span);
     const last = slice[slice.length - 1];
     const lowest = slice.reduce((a, d) => (d.primary < a.primary ? d : a), slice[0]);

@@ -15,8 +15,9 @@ import { flowSection } from './flow-chart.js';
 import { pickedScenario } from './scenario.js';
 import { fooLadder } from '../engine/plan.js';
 import { maxItFor } from './maxit-panel.js';
-import { h, chip, money, pct, ledgerHref } from './view.js';
+import { h, chip, money, pct, ledgerHref, summaryMoney } from './view.js';
 import { toneOf } from '../engine/profile.js';
+import { pref } from './prefs.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -73,14 +74,18 @@ function tiles({ spine, rules, s }) {
   const foo = fooLadder(spine, rules, s, { sim: maxItFor(spine, rules).sim });
   // The first step not done yet, a blank one too (a blank deductible is not skipped).
   const step = foo.rungs.find((r) => r.done !== true) || null;
-  const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : money(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : money(sh.netWorth.value)));
-  return h('div', { class: 'tiles' },
+  const both = h('p', { class: 'tile-value nw-two' }, h('span', {}, h('small', {}, 'Liquid '), sh.liquidNetWorth.value === null ? 'missing' : summaryMoney(sh.liquidNetWorth.value)), h('span', {}, h('small', {}, 'Total '), sh.netWorth.value === null ? 'missing' : summaryMoney(sh.netWorth.value)));
+  const all = [
     tile(spine, { id: 'networth', label: 'Net worth', target: numbersHref(), result: sh.netWorth, shown: both }),
-    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: money(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + money(cf.income.takeHome.value) + ' take-home.'] }),
+    tile(spine, { id: 'surplus', label: 'Monthly surplus', target: '#/surplus', result: cf.monthlySurplus, shown: summaryMoney(cf.monthlySurplus.value), lines: [cf.income.takeHome.value === null ? null : 'Left of ' + summaryMoney(cf.income.takeHome.value) + ' take-home.'] }),
     tile(spine, { id: 'savings', label: 'Savings rate', target: '#/savings', result: cf.savingsRate.net, shown: pct(cf.savingsRate.net.value, 1) + ' of take-home' }),
-    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [sh.cash.value === null ? null : money(sh.cash.value) + ' in cash.'] }),
+    tile(spine, { id: 'runway', label: 'Cash runway', target: '#/runway', result: em.tiers.full.runway, shown: months(em.tiers.full.runway.value) + ' months', lines: [sh.cash.value === null ? null : summaryMoney(sh.cash.value) + ' in cash.'] }),
     tile(spine, { id: 'next', label: 'Next step', target: step ? 'plan.html#/' + slugOf(step.id) : 'plan.html', result: { value: step ? 1 : foo.rungs.every((r) => r.done) ? 1 : null, kind: step ? step.kind : foo.kind, from: [], rough: [], missing: [] },
-      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.need !== null && !step.done ? money(step.need) + (step.flow ? ' a month' : '') + '.' : null] }));
+      shown: step ? step.label : 'Every step is done', missingText: 'Answer a few things on the Plan first', lines: [step && step.need !== null && !step.done ? summaryMoney(step.need) + (step.flow ? ' a month' : '') + '.' : null] })];
+  // Which tiles and in what order (Preferences, "What Today shows"); an unknown id is skipped.
+  const ids = ['networth', 'surplus', 'savings', 'runway', 'next'];
+  const want = (Array.isArray(pref('todayTiles')) ? pref('todayTiles') : ids).filter((id) => ids.includes(id));
+  return h('div', { class: 'tiles' }, want.map((id) => all[ids.indexOf(id)]));
 }
 
 // ---------------------------------------------------------------- the tile screens
@@ -162,8 +167,10 @@ function actionEl(a, cls) {
 // one; then Show the math, small, after the action. The detail is behind Show the math.
 function flagItem(spine, f) {
   const c = f.card || { headline: f.title, line: '', action: null };
+  // Numbers only (tone): the numbers line and the button, no sentence around them; a card with no numbers keeps its headline.
+  const bare = toneOf(spine) === 'numbers' && c.line;
   return h('li', { class: 'flag flag-' + f.stage, id: 'flag-' + f.id },
-    h('h3', { class: 'flag-title' }, c.headline),
+    bare ? null : h('h3', { class: 'flag-title' }, c.headline),
     c.line ? h('p', { class: 'flag-line' }, c.line) : null,
     h('div', { class: 'flag-actions' },
       actionEl(c.action, f.stage === 'green' ? 'btn small' : 'btn primary small'),

@@ -16,6 +16,11 @@ import { mountPage, whoseLine } from './page.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
 import { withClient } from '../engine/assumptions.js';
+import { applyPrefs, prefs } from './prefs.js';
+import { setDisplay } from './view.js';
+import { summarize } from '../engine/summary.js';
+import { realHourlyWage } from '../engine/plan.js';
+import { savedPerDay } from '../engine/money-as.js';
 import { commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { h, said, sentence as end } from './view.js';
 
@@ -83,6 +88,7 @@ export async function startPage(o) {
   opts = { household: true, ...o };
   if (opts.tab === undefined) opts.tab = (TABS.find((t) => location.pathname.endsWith('/' + t[2])) || [null])[0];
   baseTitle = document.title;
+  applyPrefs();
   try { history.scrollRestoration = 'manual'; } catch { /* an old browser: it restores scroll itself */ }
   mountPage({ app });
   const tabs = tabBar(opts.tab);
@@ -285,9 +291,22 @@ function take(loaded) {
   notice = loaded.problem || null;
 }
 
+// How money and dates read on every page (Preferences): the household's wage and saving pace, once per version.
+let rateMemo = { spine: null, rules: null, wage: null, perDay: null };
+function display() {
+  const p = prefs(), spine = hist ? hist.present : null;
+  if (spine && (p.moneyAs === 'hours' || p.moneyAs === 'fiDays') && (rateMemo.spine !== spine || rateMemo.rules !== rules)) {
+    let wage = null, perDay = null;
+    try { const r = rulesFor(spine), s = summarize(spine, r, { flags: false }); wage = realHourlyWage(spine, r, s).wage; const t = s.cashflow.saving.total; perDay = savedPerDay(t && typeof t === 'object' ? t.value : t); } catch { /* dollars alone */ }
+    rateMemo = { spine, rules, wage, perDay };
+  }
+  setDisplay({ moneyAs: p.moneyAs || 'dollars', wage: rateMemo.wage, perDay: rateMemo.perDay, dateStyle: p.dateStyle || 'words', round: +p.round || 1 });
+}
+
 function draw() {
   // Still loading the household (a back or a level link tapped meanwhile): arrive() draws the screen the address names.
   if (opts.household && !hist) return;
+  display();
   const levels = levelsNow();
   const ctx = context(levels);
   const names = levels.map((_, i) => nameOf(levels.slice(0, i + 1), ctx));
