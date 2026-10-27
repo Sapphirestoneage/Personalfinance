@@ -12,11 +12,14 @@ const R = loadRules();
 const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), R);
 const rank = (s) => rankSteps(s, R, summarize(s, R));
 
-test('one ranking by dollars lost a month: the Visa at 22% leads the demo; a missing number is a question, never the step', () => {
+test('one ranking by dollars lost a month: the deferred-interest Store card leads the demo, then the Visa; a missing number is a question', () => {
   const r = rank(demo());
-  assert.equal(r.first.id, 'interest:visa');
-  assert.equal(r.first.loss, 55);
-  assert.equal(r.steps[1].id, 'promo:store', 'the deferred-interest promo, weighted by months left, comes next');
+  // Krug pass: $1,200 at 29.99% charged back over 12 months ($360) spread over the 4 months left, plus a month of
+  // interest after: about $120 a month, more than the Visa's $55.
+  assert.equal(r.first.id, 'promo:store');
+  assert.ok(r.first.loss > 55);
+  assert.equal(r.steps[1].id, 'interest:visa');
+  assert.equal(r.steps[1].loss, 55);
   assert.ok(r.steps.every((x) => !x.id.startsWith('ask:')));
   assert.deepEqual(r.questions.map((q) => q.question), ['What is your highest insurance deductible?']);
   assert.ok(!r.steps.some((x) => x.id === 'interest:sl'), 'debt under the high-rate line keeps its place in the order');

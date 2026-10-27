@@ -30,7 +30,7 @@ test('the Debt tab reads one run: clear dates, a Gantt bar per debt, the order, 
   for (const r of d.gantt.rows) { assert.ok(r.fraction > 0 && r.fraction <= 1); assert.ok(r.startBalance > 0); assert.equal(typeof r.beyond, 'boolean'); }
   assert.ok(d.gantt.ticks.length >= 11, 'a tick per month start inside the window');
   assert.deepEqual(d.order.rows.map((r) => r.position), [1, 2, 3]);
-  assert.equal(d.order.rows[0].id, 'visa', 'avalanche: the 22% card before the 0% promo card and the 5% loan');
+  assert.equal(d.order.rows[0].id, 'store', 'the one ranking: the deferred-interest Store card before its cliff, then the 22% Visa (Krug pass)');
   assert.equal(d.order.strategy, 'avalanche');
   assert.ok(d.order.rows.every((r) => r.clearDate || r.planYm), 'every debt has a date inside the window or a month from the monthly plan');
   assert.ok(d.interest.months.length >= 12 && d.interest.debts.some((x) => x.id === 'visa'));

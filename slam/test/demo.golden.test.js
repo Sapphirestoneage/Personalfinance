@@ -83,7 +83,9 @@ test('demo golden values as of 2026-10-22', async (t) => {
     assert.equal(s.debt.promo.total.value, 1200);
     assert.equal(s.debt.promo.items[0].paymentsLeft, 4); // Nov, Dec, Jan, Feb
     near(s.debt.promo.monthly.value, 300);
-    assert.deepEqual(s.debt.avalanche, ['visa', 'sl', 'store']); // 22%, 5%, then the 0% promo
+    // Krug pass: the debts losing money first, most lost a month first (the deferred-interest Store card's charge-back
+    // before its Feb 2027 cliff, then the Visa at 22%), then the rest by rate.
+    assert.deepEqual(s.debt.avalanche, ['store', 'visa', 'sl']);
     const po = payoffOrders(spine, R, s);
     assert.deepEqual(po.snowball.order, ['store', 'visa', 'sl']);
     assert.deepEqual(po.stress.order, ['store', 'visa', 'sl']); // stress 8, 6, 3

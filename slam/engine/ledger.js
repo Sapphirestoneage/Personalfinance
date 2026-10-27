@@ -287,7 +287,10 @@ export function* stillGuessingSteps(spine, rules) {
     }
     items.push(item);
   }
-  items.sort((a, b) => (a.kind !== b.kind ? (a.kind === 'missing' ? -1 : 1) : a.kind === 'missing' ? b.blocks.length - a.blocks.length || a.path.localeCompare(b.path) : b.score - a.score));
+  // By impact on a result only (Krug pass): a missing number a result waits on, then guesses by how far a miss moves
+  // the results, then guesses that move little, and last what no result needs yet.
+  const tier = (x) => (x.kind === 'missing' ? (x.blocks.length ? 0 : 3) : x.score > 0 ? 1 : 2);
+  items.sort((a, b) => tier(a) - tier(b) || b.blocks.length - a.blocks.length || b.score - a.score || a.path.localeCompare(b.path));
   return { swing, items };
 }
 

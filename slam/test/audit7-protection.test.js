@@ -19,9 +19,9 @@ test('a gap is only a gap when it applies; not sure is never one', () => {
   assert.deepEqual(protectionGaps({ dependents: 'yes', lifeInsurance: 'none', will: 'no', beneficiaries: 'notSure' }).map((g) => g.id), ['lifeInsurance', 'will']);
 });
 
-test('the demo has no gap, so its first step stays the Visa; a gap ranks right after the starter fund', () => {
+test('the demo has no gap, so its first step is still the debt one; a gap ranks right after the starter fund', () => {
   const s0 = demo();
-  assert.equal(rankSteps(s0, R, summarize(s0, R)).first.label, 'Pay down the Visa (22%)');
+  assert.equal(rankSteps(s0, R, summarize(s0, R)).first.label, 'Clear the Store card before its intro rate ends');
   const s1 = applyDefaults(applyAnswer(s0, 'disability', 'none', { today: '2026-10-27' }), R);
   const r = rankSteps(s1, R, summarize(s1, R));
   const starter = r.ladder.rungs.find((x) => x.id === 'deductibles');

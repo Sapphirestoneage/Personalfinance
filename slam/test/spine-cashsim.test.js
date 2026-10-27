@@ -141,13 +141,16 @@ test('7. null is never zero: a line with no amount is left out and named in need
   assert.ok(r.missing.includes('expenses.rent.amount'));
 });
 
-test('8. a 0% promo card sorts last in avalanche until it reverts; student loans wait', () => {
+test('8. a deferred-interest promo is cleared first; a plain 0% promo sorts last until it reverts; student loans wait', () => {
   let s = richer(demo());
   s = put(s, 'debtPlan.extra', 300);
   s = put(s, 'debtPlan.stopAtHi', false);
   const r = cashsim(s, R, { months: 2 });
   const first = r.extraLog[0];
-  assert.ok(first && first.to === 'visa', 'the extra goes to the Visa at 22%, not the Store card at 0% nor the student loan: ' + JSON.stringify(first));
+  // Krug pass: the Store card's deferred interest would be charged back at its cliff, so the extra clears it first.
+  assert.ok(first && first.to === 'store', 'the extra goes to the deferred-interest Store card first: ' + JSON.stringify(first));
+  // Not deferred, the same 0% card waits for its intro to end (below).
+  s = set(s, 'debts.store.deferredInterest', false);
   // With the Visa at 10%: the extra stays on it while the store card is at 0%, and moves to the store card the month its intro reverts to 29.99%.
   const later = cashsim(set(s, 'debts.visa.apr', 0.10), R, { months: 6 });
   assert.ok(!later.extraLog.some((x) => x.to === 'store' && x.date < '2027-03-01'), 'not while the store card is at 0%');

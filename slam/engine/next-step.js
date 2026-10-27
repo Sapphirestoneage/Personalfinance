@@ -10,8 +10,8 @@
 // Protection (audit 7): each gap from the Profile (protectionGaps) ranks right after the starter emergency fund (the
 // deductibles rung): ahead of the dollars-lost steps once that fund is there, else just after it.
 
-import { valueOf as v, round2, monthKey } from './spine.js';
-import { rateOn, paidInFull } from './debt.js';
+import { valueOf as v, round2 } from './spine.js';
+import { debtLoss } from './debt.js';
 import { fooLadder, RUNG_LABELS } from './plan.js';
 import { answersOf, protectionGaps } from './profile.js';
 
@@ -22,7 +22,6 @@ const QUESTIONS = {
   rothHsa: 'What goes into your IRA and HSA now?',
   maxRetirement: 'What goes into your workplace retirement plan now?'
 };
-const monthsBetween = (fromIso, toIso) => Math.max(0, (+toIso.slice(0, 4) - +fromIso.slice(0, 4)) * 12 + (+toIso.slice(5, 7) - +fromIso.slice(5, 7)));
 
 export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null, foo = null } = {}) {
   const year = +asOf.slice(0, 4);
@@ -30,25 +29,14 @@ export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null,
   const hi = rules.get('APP_HI_RATE', year);
   const losing = [];
   for (const d of spine.debts || []) {
-    const bal = v(d.balance);
-    if (!bal || bal <= 0 || paidInFull(spine, d)) continue;
-    const name = v(d.name) || d.id, now = rateOn(d, asOf).rate, path = 'debts.' + d.id + '.balance';
-    const ends = d.promoEnds ? v(d.promoEnds) : null, after = d.apr ? v(d.apr) : null;
-    const inPromo = ends && ends >= asOf && now !== null && after !== null && now < after;
-    if (inPromo) {
-      const left = Math.max(1, monthsBetween(monthKey(asOf), monthKey(ends)));
-      const deferred = d.deferredInterest && v(d.deferredInterest) === true;
-      // Not sure whether interest is deferred (owner's ask): ranked as not deferred, with a line to check the terms.
-      const deferredUnknown = !d.deferredInterest || v(d.deferredInterest) === null;
-      const loss = round2(bal * after / 12 * (1 + 1 / left));
-      losing.push({ id: 'promo:' + d.id, rung: after >= hi ? 'highInterest' : null, label: 'Clear the ' + name + ' before its intro rate ends', loss, path, debt: d.id,
-        why: money0(bal) + ' at 0% until ' + ends + (deferred ? '; interest is deferred, so any balance left then is charged interest from the start' : '; then ' + Math.round(after * 1000) / 10 + '%' + (deferredUnknown ? '. Check the card\'s terms for deferred interest' : '')) + '.' });
-    } else if (now !== null && now >= hi) {
-      // Debt under the high-rate line keeps its place at the end of the order (low-interest debt): its minimum is paid,
-      // and extra there is not money lost the way card interest is.
-      losing.push({ id: 'interest:' + d.id, rung: 'highInterest', label: 'Pay down the ' + name + ' (' + Math.round(now * 1000) / 10 + '%)', loss: round2(bal * now / 12), path, debt: d.id,
-        why: money0(bal) + ' at ' + Math.round(now * 1000) / 10 + '% costs about ' + money0(round2(bal * now / 12)) + ' a month in interest.' });
-    }
+    const l = debtLoss(spine, rules, d, asOf);
+    if (!l) continue;
+    const bal = v(d.balance), name = v(d.name) || d.id, path = 'debts.' + d.id + '.balance', ends = d.promoEnds ? v(d.promoEnds) : null;
+    const deferredUnknown = l.promo && (!d.deferredInterest || v(d.deferredInterest) === null);
+    if (l.promo) losing.push({ id: 'promo:' + d.id, rung: l.after >= hi ? 'highInterest' : null, label: 'Clear the ' + name + ' before its intro rate ends', loss: l.loss, path, debt: d.id,
+      why: money0(bal) + ' at 0% until ' + ends + (l.deferred ? '; interest is deferred, so any balance left then is charged about ' + money0(l.back) + ' of interest' : '; then ' + Math.round(l.after * 1000) / 10 + '%' + (deferredUnknown ? '. Check the card\'s terms for deferred interest' : '')) + '.' });
+    else losing.push({ id: 'interest:' + d.id, rung: 'highInterest', label: 'Pay down the ' + name + ' (' + Math.round(l.rate * 1000) / 10 + '%)', loss: l.loss, path, debt: d.id,
+      why: money0(bal) + ' at ' + Math.round(l.rate * 1000) / 10 + '% costs about ' + money0(l.loss) + ' a month in interest.' });
   }
   // The employer match not taken: the contribution short a month, times the match rate.
   const em = ladder.rungs.find((r) => r.id === 'employerMatch');

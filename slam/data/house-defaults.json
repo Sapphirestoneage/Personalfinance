@@ -133,6 +133,16 @@
       "verified": "house"
     },
     {
+      "id": "APP_DEFERRED_MONTHS",
+      "rule": "Deferred interest: months of interest charged back when a promo ends with a balance, when the card's promo start is not known",
+      "value": 12,
+      "unit": "months",
+      "appliesTo": "Next step and the plan's order of debts",
+      "notes": "Most deferred-interest promos run 6 to 24 months; the charge-back is the interest at the card's rate over the whole promo. Shown as rough",
+      "source": "Eli's default (Krug pass, 2026-10-27)",
+      "verified": "house"
+    },
+    {
       "id": "WINDFALL_ORDER",
       "rule": "The order a lump sum is assigned in the Windfall room",
       "value": [

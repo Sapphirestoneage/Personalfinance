@@ -21,7 +21,7 @@ import { emergency } from './emergency.js';
 import { mainChecking } from './defaults.js';
 import { shareOf, coverOf } from './sharing.js';
 import { isSubscription, nextCharge } from './subscriptions.js';
-import { DEFAULT_MIN_SOURCE, payPolicyOf, paymentOn, lineFor, lineMonthly, paysDebtOf } from './debt.js';
+import { DEFAULT_MIN_SOURCE, payPolicyOf, paymentOn, lineFor, lineMonthly, paysDebtOf, debtOrder, debtLoss } from './debt.js';
 import * as C from './vendor/cashcal.js';
 import { MATCH_DAYS, matchOccurrence } from './feed.js';
 import { TAG_WORDS } from './spending.js';
@@ -363,6 +363,18 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
     t.absorb({ ...em.tiers.full.burn, value: undefined });
   }
   model.extra = debtPlanOf(spine, rules, t, year);
+  // The extra follows the one ranking (Krug pass, engine/debt.js debtOrder): when the debt losing the most a month is a
+  // promo card (a deferred-interest balance before its cliff), it is paid first, so it clears before the promo ends;
+  // the rest wait as "pay last" for this run and then go by rate. The vendored engine is untouched.
+  if (model.extra.strategy !== 'snowball') {
+    // Only a deferred-interest promo jumps the queue: a plain 0% balance costs nothing until it ends, so the extra keeps
+    // going by rate meanwhile.
+    const top = debtOrder(spine, rules, asOf)[0];
+    const topDebt = top && (spine.debts || []).find((d) => d.id === top);
+    const loss = topDebt ? debtLoss(spine, rules, topDebt, asOf) : null;
+    const promoTop = loss && loss.deferred && model.cards.find((c) => c.id === top);
+    if (promoTop) { for (const c of model.cards) if (c.id !== top) c.payLast = true; for (const l of model.loans) if (l.id !== top) l.payLast = true; }
+  }
   for (const m of cal.maybe || []) if (m.date >= asOf && m.date <= end) model.maybe.push({ id: m.id, label: m.label, cents: cents(m.amount), date: m.date, likelihood: typeof m.likelihood === 'number' ? m.likelihood : 0.5, direction: m.direction || 'in', tray: true });
   for (const [key, o] of Object.entries(cal.overrides || {})) { const ov = {}; if (o.date) ov.date = o.date; if (typeof o.amount === 'number') ov.cents = cents(o.amount); if (o.skip) ov.skip = true; model.overrides[key] = { ...(model.overrides[key] || {}), ...ov }; }
   // Moved from before the as-of date to on or after it (S-209): it had not gone out (or come in) yet, so the

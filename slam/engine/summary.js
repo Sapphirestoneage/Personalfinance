@@ -44,8 +44,8 @@ export function summarize(spine, rules, { asOf = spine.meta.asOf, flags = true }
     // and the credit score note by personal utilization.
     creditScore: creditScoreNote(spine, rules, asOf, util),
     promo: promoDeadlines(spine, asOf),
-    avalanche: order(spine, 'avalanche', asOf),
-    avalancheCards: order(spine, 'avalanche', asOf, { cardsOnly: true })
+    avalanche: order(spine, 'avalanche', asOf, { rules }),
+    avalancheCards: order(spine, 'avalanche', asOf, { cardsOnly: true, rules })
   };
   debt.avalancheCardsDetail = orderDetail(spine, debt.avalancheCards, asOf);
   const s = {

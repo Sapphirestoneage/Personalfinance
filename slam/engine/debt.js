@@ -173,9 +173,14 @@ export const STRATEGIES = {
   stress: (asOf) => (a, b) => cmp(v(a.stress), v(b.stress)) || (v(b.stress) ?? 0) - (v(a.stress) ?? 0) || byRateThenPromo(asOf)(a, b)
 };
 
-export function order(spine, strategy, asOf, { cardsOnly = false } = {}) {
+export function order(spine, strategy, asOf, { cardsOnly = false, rules = null } = {}) {
   const list = (spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card') && !paidInFull(spine, d));
-  return list.slice().sort(STRATEGIES[strategy](asOf)).map((d) => d.id);
+  const ids = list.slice().sort(STRATEGIES[strategy](asOf)).map((d) => d.id);
+  // Avalanche with the rules in hand (Krug pass): the debts that lose money first, most lost a month first (debtOrder,
+  // so a deferred-interest balance leads while its promo runs), then the rest in rate order.
+  if (strategy !== 'avalanche' || !rules) return ids;
+  const first = debtOrder(spine, rules, asOf).filter((id) => ids.includes(id));
+  return [...first, ...ids.filter((id) => !first.includes(id))];
 }
 
 // ---------------------------------------------------------------- payoff
@@ -212,7 +217,7 @@ export function accrueMonth(s, iso, asOf, t) {
 
 export function payoffPlan(spine, rules, { strategy = 'avalanche', extra = 0, asOf, cardsOnly = false, maxMonths = 600 } = {}) {
   const t = tracker();
-  const ids = order(spine, strategy, asOf, { cardsOnly });
+  const ids = order(spine, strategy, asOf, { cardsOnly, rules });
   const debts = [...ids.map((id) => spine.debts.find((d) => d.id === id)), ...(spine.debts || []).filter((d) => (v(d.balance) ?? 0) > 0 && (!cardsOnly || d.type === 'credit_card') && paidInFull(spine, d))];
   const st = debts.map((d) => ({ d, bal: t.useFact(P(d, 'balance'), d.balance), interest: 0, paidYm: null, startBal: v(d.balance), deferredDone: false }));
   let ym = monthKey(asOf);
@@ -369,4 +374,30 @@ export function debtSchedule(spine, rules, asOf, untilYm) {
     months.set(ym, { payments, paid: round2(paid), interest: round2(interest), debt: round2(states.reduce((a, s) => a + s.bal, 0)), paidOff });
   }
   return { months, ...t.snapshot() };
+}
+
+// What a debt loses a month (Krug pass): one formula for the next step and the plan's order of debts.
+//   interest: balance x rate / 12, for a debt charging at or above the high-rate line now;
+//   a promo's cliff: the interest a month once it ends, plus, for deferred interest, the charge-back (the rate over
+//     APP_DEFERRED_MONTHS of the balance) spread over the months left, so a deferred balance is cleared before it ends.
+// Returns { loss, promo, deferred, monthsLeft, rate, after } or null when it loses nothing worth ranking.
+const monthsTo = (fromIso, toIso) => Math.max(0, (+toIso.slice(0, 4) - +fromIso.slice(0, 4)) * 12 + (+toIso.slice(5, 7) - +fromIso.slice(5, 7)));
+export function debtLoss(spine, rules, d, asOf = spine.meta.asOf) {
+  const bal = v(d.balance), year = +asOf.slice(0, 4);
+  if (!bal || bal <= 0 || paidInFull(spine, d)) return null;
+  const now = rateOn(d, asOf).rate, hi = rules.get('APP_HI_RATE', year);
+  const ends = d.promoEnds ? v(d.promoEnds) : null, after = d.apr ? v(d.apr) : null;
+  if (ends && ends >= asOf && now !== null && after !== null && now < after) {
+    const left = Math.max(1, monthsTo(asOf, ends));
+    const deferred = !!d.deferredInterest && v(d.deferredInterest) === true;
+    const back = deferred ? bal * after * rules.get('APP_DEFERRED_MONTHS', year) / 12 : 0;
+    const loss = deferred ? Math.round((back / left + bal * after / 12) * 100) / 100 : Math.round(bal * after / 12 * (1 + 1 / left) * 100) / 100;
+    return { loss, promo: true, deferred, monthsLeft: left, rate: now, after, back: Math.round(back * 100) / 100 };
+  }
+  if (now !== null && now >= hi) return { loss: Math.round(bal * now / 12 * 100) / 100, promo: false, deferred: false, monthsLeft: null, rate: now, after };
+  return null;
+}
+// The debts that lose money, most lost a month first: the order the plan's extra pays them in.
+export function debtOrder(spine, rules, asOf = spine.meta.asOf) {
+  return (spine.debts || []).map((d) => ({ id: d.id, l: debtLoss(spine, rules, d, asOf) })).filter((x) => x.l).sort((a, b) => b.l.loss - a.l.loss).map((x) => x.id);
 }

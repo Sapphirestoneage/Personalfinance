@@ -84,7 +84,7 @@ export function gantt(sim) {
 // it falls beyond the window (rough), and the interest each one costs.
 export function orderList(spine, rules, sim, asOf = spine.meta.asOf, extraOverride = null) {
   const strategy = sim.extra.strategy === 'snowball' ? 'snowball' : 'avalanche';
-  const ids = order(spine, strategy, asOf);
+  const ids = order(spine, strategy, asOf, { rules });
   const detail = orderDetail(spine, ids, asOf);
   const extra = extraOverride ?? (sim.extra.amount || 0);
   const plan = payoffPlan(spine, rules, { strategy, extra, asOf });

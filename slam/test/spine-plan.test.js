@@ -86,7 +86,7 @@ test('the FOO ladder: nine rungs in the rule order, a completion month per rung,
   assert.equal(d.done, true, 'cash of 12,000 covers a 2,500 deductible');
   assert.equal(d.completes, T);
   const hi = f1.rungs.find((r) => r.id === 'highInterest');
-  assert.equal(hi.need, 3000, 'the Visa at 22%');
+  assert.equal(hi.need, 4200, 'the Store card before its deferred-interest cliff, then the Visa at 22% (Krug pass)');
   assert.ok(hi.months > 0 && hi.completes > T, 'funded by the surplus month by month: ' + hi.completes);
   const later = f1.rungs.find((r) => r.id === 'reserves');
   assert.ok(later.completes === null || later.completes >= hi.completes, 'each rung starts after the one before');
