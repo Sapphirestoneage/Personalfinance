@@ -12,9 +12,9 @@ import { scenarioBar, pickedScenario } from './scenario.js';
 import { SCENARIO_WORDS } from '../engine/scenarios.js';
 import { prefsScreen, prefsSummary } from './prefs-screen.js';
 import { pref } from './prefs.js';
-import { h, money, shortDate, todayIso } from './view.js';
+import { h, money, shortDate, todayIso, ledgerHref } from './view.js';
 import { questionEl } from './profile-q.js';
-import { AREAS, LEVEL1, asked, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
+import { AREAS, LEVEL1, asked, choicesFor, disagreements, questionById, answersOf, applyAnswer, fieldsFor, level2, L2_AREAS, setHomework, homeworkList, stillGuessing, readAnswersFile, loadAnswers, changeWords } from '../engine/profile.js';
 import { valueOf as v } from '../engine/spine.js';
 import { summarize } from '../engine/summary.js';
 import { putFact } from '../engine/edits.js';
@@ -38,7 +38,11 @@ function top({ spine, rules }) {
     // The quarterly review (owner's ask, 2026-10-27): each subscription, still wanted or not, every few months.
     (() => { const subs = summarize(spine, rules, { flags: false }).subs, due = subs.items.filter((i) => i.due).length; return { n: due, row: goRow('#/review', 'R', 'Quarterly review', subs.items.length ? String(due) : null, subs.items.length ? (due === 1 ? 'subscription to look at' : 'subscriptions to look at') : 'no subscriptions yet') }; })()
   ];
+  // Answers that cannot both be true come first, each with a way to the question that fixes it.
+  const odd = disagreements(spine, todayIso());
   return [
+    odd.length ? h('section', { class: 'card odd-card', 'aria-labelledby': 'odd-h' }, h('h2', { id: 'odd-h' }, odd.length === 1 ? 'Two answers disagree' : 'Some answers disagree (' + odd.length + ')'),
+      h('ul', { class: 'odd-list' }, odd.map((x) => h('li', {}, h('p', {}, x.words), h('a', { class: 'btn small', href: x.path ? ledgerHref(x.path) : '#/' + questionById(x.ids[x.ids.length - 1]).area }, 'Fix it'))))) : null,
     // Import answers is the coach's tool: client view hides it (Preferences).
     pref('view') === 'client' ? null : loadCard(),
     h('ul', { class: 'go-list', 'aria-label': 'Profile' }, [...groups].sort((x, y) => y.n - x.n).map((g) => g.row))
@@ -99,7 +103,7 @@ function areaScreen({ spine }, area) {
   const qs = LEVEL1.filter((q) => q.area === area && asked(a, q));
   const line = fieldsFor(a).setup[area];
   return [
-    h('section', { class: 'card qs' }, ...qs.map((q) => [questionEl(q, a[q.id] ?? null, answer(q)), h('p', { class: 'edit-hint' }, q.does)])),
+    h('section', { class: 'card qs' }, ...qs.map((q) => [questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)), h('p', { class: 'edit-hint' }, q.does)])),
     h('p', { class: 'setup-line' }, h('strong', {}, 'Set up: '), line ? line + '.' : 'nothing yet.')
   ];
 }
@@ -115,7 +119,7 @@ function askScreen({ spine }, area) {
     const st = hw.get(q.id);
     const trio = h('div', { class: 'segmented q-seg' }, ...['known', 'lookup', 'notSure'].map((k) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!!st && st.status === k), onclick: () => mark(q, k) }, h('span', { class: 'seg-label' }, STATUS_WORDS[k]))));
     return h('section', { class: 'card qs' },
-      q.kind === 'one' ? questionEl(q, a[q.id] ?? null, answer(q)) : h('p', { class: 'q-label' }, q.label),
+      q.kind === 'one' ? questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)) : h('p', { class: 'q-label' }, q.label),
       trio,
       q.kind === 'field' && st && st.status === 'known' ? h('p', { class: 'edit-hint' }, h('a', { href: 'session.html' }, 'Type it in the Session'), ' or ', h('a', { href: 'ledger.html' }, 'in My numbers'), '.') : null,
       q.where ? h('p', { class: 'edit-hint' }, 'Where to find it: ' + whereWords(q) + '.') : null,

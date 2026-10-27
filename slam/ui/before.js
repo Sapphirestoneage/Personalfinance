@@ -8,7 +8,7 @@ import { applyPrefs } from './prefs.js';
 
 applyPrefs();
 import { questionEl } from './profile-q.js';
-import { AREAS, LEVEL1, asked, answersFile, answersFileName, fieldsFor } from '../engine/profile.js';
+import { AREAS, LEVEL1, asked, choicesFor, answersFile, answersFileName, fieldsFor } from '../engine/profile.js';
 import { parseInput, inputText } from '../engine/edits.js';
 
 const KEY = 'slam-before:v1';
@@ -32,7 +32,7 @@ function areaCard([area, label]) {
   const line = fieldsFor(state.answers).setup[area];
   return h('section', { class: 'card before-area', 'aria-labelledby': 'a-' + area },
     h('h2', { id: 'a-' + area }, label, h('span', { class: 'count' }, done + ' of ' + qs.length)),
-    ...qs.map((q) => questionEl(q, state.answers[q.id] ?? null, (x) => set(q.id, x), { idPrefix: 'b' })),
+    ...qs.map((q) => questionEl(choicesFor(q, state.answers), state.answers[q.id] ?? null, (x) => set(q.id, x), { idPrefix: 'b' })),
     line ? h('p', { class: 'muted setup-line' }, line + '.') : null);
 }
 

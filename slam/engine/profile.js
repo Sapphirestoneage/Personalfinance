@@ -12,6 +12,7 @@
 
 import { fact, setAt, getAt, valueOf as v, whoSupplies, listFacts } from './spine.js';
 import { labelFor } from './labels.js';
+import { ANSWER_ON_HOUSEHOLD } from './schema.js';
 import { setPay } from './edits.js';
 
 export const NOT_SURE = 'notSure';
@@ -72,12 +73,43 @@ export const LEVEL1 = [
   { id: 'lifeInsurance', area: 'protect', label: 'Do you have life insurance?', kind: 'one', options: [['work', 'Through work'], ['own', 'My own policy'], ['none', 'None']], does: 'Needed when someone depends on your income.' },
   { id: 'beneficiaries', area: 'protect', label: 'Are the beneficiaries on your accounts up to date?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'Retirement accounts go to whoever is named, whatever a will says.' },
   { id: 'will', area: 'protect', label: 'Do you have a will?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], does: 'Says who looks after your kids and your things.' },
-  { id: 'health', area: 'health', label: 'Where is your health insurance from?', kind: 'one', options: [['work', 'Work'], ['parent', 'A parent\'s plan'], ['marketplace', 'Marketplace'], ['medicaid', 'Medicaid'], ['none', 'None']], does: 'A parent\'s plan sets the turning-26 switch on the Calendar.' },
+  { id: 'health', area: 'health', label: 'Where is your health insurance from?', kind: 'one', options: [['work', 'Work'], ['parent', 'A parent\'s plan'], ['own', 'My own plan'], ['marketplace', 'Marketplace'], ['medicaid', 'Medicaid'], ['medicare', 'Medicare'], ['other', 'Other'], ['none', 'None']], does: 'A parent\'s plan sets the turning-26 switch on the Calendar.' },
   { id: 'tracking', area: 'style', label: 'How do you keep track now?', kind: 'one', options: [['none', 'I don\'t'], ['app', 'An app'], ['spreadsheet', 'A spreadsheet'], ['statements', 'Statements']], does: 'Spending opens on what fits: adding purchases, or importing a statement.' },
   { id: 'goals', area: 'goals', label: 'Pick your top 3', kind: 'many', max: 3, options: [['emergency', 'An emergency fund'], ['debtFree', 'Out of debt'], ['home', 'Buy a home'], ['car', 'A car'], ['travel', 'Travel'], ['wedding', 'A wedding'], ['kids', 'Kids'], ['invest', 'Start investing'], ['business', 'Start a business'], ['school', 'School']], does: 'Adds those goals, ready for an amount and a date.' },
   { id: 'fi', area: 'goals', label: 'Financial independence?', kind: 'one', options: [['yes', 'Yes'], ['curious', 'Curious'], ['notNow', 'Not now']], does: 'Not now keeps FI off Today.' }
 ];
 const L1 = new Map(LEVEL1.map((q) => [q.id, q]));
+
+// The choices a question offers, given the other answers, so a contradiction is never offered (owner's ask,
+// 2026-10-27). Not working: health "Work" reads as a past job's plan (COBRA or a retiree plan), and disability or
+// life cover "Through work" is not offered, since it ends with the job. An answer already picked always stays visible.
+const WORKING = (a) => { const w = ans(a, 'work'); return w === null || w === NOT_SURE || ['w2', 'both'].includes(w); };
+export function choicesFor(q, a) {
+  if (!q.options || WORKING(a)) return q;
+  if (q.id === 'health') return { ...q, options: q.options.map(([k, w]) => [k, k === 'work' ? 'A past job (COBRA or retiree plan)' : w]) };
+  if (q.id === 'disability' || q.id === 'lifeInsurance') return { ...q, options: q.options.filter(([k]) => k !== 'work' || ans(a, q.id) === 'work') };
+  return q;
+}
+
+// Answers and numbers that cannot both be true: [{ words, ids, path? }], ids naming the questions to fix, path a number
+// in My numbers to fix instead. Shown on Profile.
+export function disagreements(spine, asOf) {
+  const a = answersOf(spine), out = [], say = (words, ...ids) => out.push({ words, ids });
+  const notWorking = !WORKING(a), answered = (id) => ans(a, id) !== null && ans(a, id) !== NOT_SURE;
+  if (notWorking && has(a, 'disability', 'work')) say('Disability insurance is through work, but you are not working now. That cover usually ends with the job.', 'work', 'disability');
+  if (notWorking && has(a, 'lifeInsurance', 'work')) say('Life insurance is through work, but you are not working now. That cover usually ends with the job.', 'work', 'lifeInsurance');
+  if (has(a, 'ownLoan', 'mortgage') && answered('debts') && !has(a, 'debts', 'mortgage')) say('There is a mortgage on the home, but Mortgage is not ticked under debts.', 'ownLoan', 'debts');
+  if (has(a, 'debts', 'mortgage') && answered('home') && ans(a, 'home') !== 'own') say('A mortgage is ticked under debts, but you do not own your home.', 'home', 'debts');
+  if (has(a, 'getAround', 'carLoan') && answered('debts') && !has(a, 'debts', 'car')) say('The car has a loan, but Car is not ticked under debts.', 'getAround', 'debts');
+  if (has(a, 'livesWith', 'kids') && has(a, 'dependents', 'no')) say('Kids live with you, but no one depends on your income.', 'livesWith', 'dependents');
+  if (notWorking && answered('work') && asOf) {
+    const endOf = (x) => (x.end && typeof x.end === 'object' ? v(x.end) : x.end) || null;
+    for (const x of spine.income || []) if (x.type === 'w2' && x.cadence !== 'once' && x.amount && v(x.amount) > 0 && (!endOf(x) || endOf(x) > asOf)) out.push({ words: 'A job\'s pay (' + (x.label || 'a paycheck') + ') is still coming in, but you are not working now. If the job ended, give it an end date.', ids: ['work'], path: 'income.' + x.id + '.end' });
+  }
+  const cov = (spine.household.healthCoverage || []).find((x) => x.id === 'now');
+  if (cov && cov.planType && v(cov.planType) !== null && ['none', 'medicaid', 'medicare'].includes(v(cov.value))) say('A health plan type is set, but your health insurance is ' + optWords(L1.get('health'), toAnswer('health', v(cov.value))) + '.', 'health');
+  return out;
+}
 
 // ---------------------------------------------------------------- reading the answers
 // answers: a plain map { id: value } (the before-call page keeps one), or read from a spine's Facts.
@@ -85,15 +117,21 @@ const L1 = new Map(LEVEL1.map((q) => [q.id, q]));
 // Taxes > Filing shows read-only; the Profile asks for them and writes them there. An older file's Profile answer is
 // read only while the household field is blank.
 const firstPerson = (spine) => ((spine && spine.household && spine.household.people) || [])[0] || null;
+const nowRow = (at) => (spine) => ((spine.household[at] || []).some((x) => x.id === 'now') ? 'household.' + at + '.now.value' : null);
 export const HOUSEHOLD_ANSWERS = {
   birthYear: (spine) => (firstPerson(spine) ? 'household.people.' + firstPerson(spine).id + '.birthDate' : null),
   state: () => 'household.state',
-  county: () => 'household.county'
+  county: () => 'household.county',
+  work: nowRow('situation'),
+  health: nowRow('healthCoverage')
 };
+// The answer word for a stored value and back (ANSWER_ON_HOUSEHOLD), for work and health.
+const toStored = (id, x) => (ANSWER_ON_HOUSEHOLD[id] ? ANSWER_ON_HOUSEHOLD[id].map[x] ?? null : x);
+const toAnswer = (id, x) => (ANSWER_ON_HOUSEHOLD[id] ? (Object.entries(ANSWER_ON_HOUSEHOLD[id].map).find(([, y]) => y === x) || [null])[0] : x);
 const fromHousehold = (spine, id) => {
   const path = HOUSEHOLD_ANSWERS[id](spine), f = path ? getAt(spine, path) : null, x = f ? v(f) : null;
   if (x === null || x === undefined || (f && f.kind === 'missing')) return null;
-  return id === 'birthYear' ? +String(x).slice(0, 4) : x;
+  return id === 'birthYear' ? +String(x).slice(0, 4) : toAnswer(id, x);
 };
 export const answersOf = (spine) => {
   const out = Object.fromEntries(Object.entries((spine && spine.profile) || {}).map(([k, f]) => [k, v(f)]).filter(([, x]) => x !== null && x !== undefined));
@@ -505,7 +543,7 @@ function householdAnswer(spine, id, clean, today) {
   let next;
   if (clean === null || clean === NOT_SURE) next = fact(null, { kind: 'missing', asOf: today, source: NAME_SOURCE });
   else if (id === 'birthYear') next = was && /^\d{4}-\d{2}-\d{2}$/.test(was) && cur.kind !== 'rough' ? fact(clean + was.slice(4), { kind: 'known', asOf: today, source: NAME_SOURCE, by: 'client' }) : fact(clean + '-07-01', { kind: 'rough', asOf: today, source: NAME_SOURCE, by: 'client', note: 'the year from your profile' });
-  else next = fact(clean, { kind: 'known', asOf: today, source: NAME_SOURCE, by: 'client' });
+  else next = fact(toStored(id, clean), { kind: 'known', asOf: today, source: NAME_SOURCE, by: 'client' });
   let s = setAt(spine, path, next);
   const profile = { ...(s.profile || {}) }; delete profile[id];
   const log = [...(s.lifeChanges || [])];

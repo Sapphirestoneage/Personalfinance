@@ -1436,3 +1436,9 @@ input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-
 .sub-open { grid-column: 1 / -1; padding: 0 0 var(--space-2) var(--tap); }
 .add-form .add-field { display: grid; gap: 4px; align-content: start; }
 .add-form .add-field select, .add-form .add-field input { width: 100%; }
+
+/* Answers that disagree (Profile top): an amber edge, each line with its own Fix it button. */
+.odd-card { border-left: 4px solid var(--st-roughly); }
+.odd-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.odd-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.odd-list p { margin: 0; flex: 1 1 240px; }

@@ -6,7 +6,7 @@
 // named in the problems the Ledger shows.
 
 import { fact, monthEnd, getAt, isFact, isDay, KINDS } from './spine.js';
-import { SCHEMA_ID, PRESETS, FAMILIES, validate, isSelfEmployment } from './schema.js';
+import { SCHEMA_ID, PRESETS, FAMILIES, validate, isSelfEmployment, ANSWER_ON_HOUSEHOLD } from './schema.js';
 import { labelFor, namedPath } from './labels.js';
 
 const list = (x) => (Array.isArray(x) ? x.filter((y) => y && typeof y === 'object') : []);
@@ -31,6 +31,14 @@ export function upgradeSpine(spine) {
       const b = d.business.value;
       d.reportsToPersonalCredit = b === null ? fact(null, stamp) : b ? fact(false, { ...stamp, kind: 'rough' }) : fact(true, { ...stamp, kind: d.business.kind });
     }
+  }
+  // The work and health answers moved onto the household's "now" rows (2026-10-27). An older file kept them in the
+  // profile too; the client's answer wins and the profile copy goes, so the two can never disagree.
+  for (const [id, { at, map }] of Object.entries(ANSWER_ON_HOUSEHOLD)) {
+    const f = s.profile && s.profile[id], row = s.household && list(s.household[at]).find((x) => x.id === 'now');
+    if (!f) continue;
+    if (row && map[f.value]) row.value = fact(map[f.value], { kind: 'known', asOf: f.asOf ?? asOf, source: f.source ?? 'upgrade', by: f.by });
+    if (row) delete s.profile[id];
   }
   return s;
 }

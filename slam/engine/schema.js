@@ -11,6 +11,12 @@ export const FILING_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
 export const SITUATIONS = ['employed', 'self_employed', 'between_jobs', 'student', 'retired', 'mixed'];
 export const COVERAGES = ['employer', 'parent_plan', 'own_plan', 'marketplace', 'medicaid', 'medicare', 'none', 'other'];
 // HSA-eligible plan types (HDHP_MIN_S notes: bronze and catastrophic count from 2026).
+// Two Profile answers live on the household's "now" rows, never kept twice (owner's ask, 2026-10-27: "if I'm
+// unemployed how do I have employer health insurance"): the answer word on the left, the stored value on the right.
+export const ANSWER_ON_HOUSEHOLD = {
+  work: { at: 'situation', map: { w2: 'employed', self: 'self_employed', both: 'mixed', between: 'between_jobs', student: 'student', retired: 'retired' } },
+  health: { at: 'healthCoverage', map: { work: 'employer', parent: 'parent_plan', own: 'own_plan', marketplace: 'marketplace', medicaid: 'medicaid', medicare: 'medicare', none: 'none', other: 'other' } }
+};
 export const PLAN_TYPES = ['hdhp', 'bronze', 'catastrophic', 'other'];
 export const HSA_ELIGIBLE_PLANS = ['hdhp', 'bronze', 'catastrophic'];
 // How a card is paid each month (S-189): the new charges plus the minimum on

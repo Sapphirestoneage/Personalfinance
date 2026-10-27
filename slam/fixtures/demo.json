@@ -48,7 +48,7 @@
         "id": "now",
         "from": null,
         "value": {
-          "value": "employed",
+          "value": "mixed",
           "asOf": "2026-10-01",
           "source": "demo (made up)",
           "kind": "known"
@@ -1018,13 +1018,6 @@
       "kind": "known",
       "by": "client"
     },
-    "work": {
-      "value": "both",
-      "asOf": "2026-10-01",
-      "source": "demo (made up)",
-      "kind": "known",
-      "by": "client"
-    },
     "payType": {
       "value": "salary",
       "asOf": "2026-10-01",
@@ -1134,13 +1127,6 @@
     },
     "emergencySeparate": {
       "value": "yes",
-      "asOf": "2026-10-01",
-      "source": "demo (made up)",
-      "kind": "known",
-      "by": "client"
-    },
-    "health": {
-      "value": "work",
       "asOf": "2026-10-01",
       "source": "demo (made up)",
       "kind": "known",

@@ -121,8 +121,8 @@ test('the client answers file round-trips, gut number and all', () => {
   assert.equal(read.gut, 2400);
   assert.equal(P.answersFileName('Maya', TODAY), 'answers-maya-2026-10-26.json');
   const s = P.loadAnswers(demo(), read, { today: TODAY });
-  // The county is the household's own field (one stored answer, bug sweep), so it reads back with the answers.
-  assert.deepEqual(P.answersOf(s), { ...file.answers, county: 'Albany' });
+  // The county and health coverage are the household's own fields (one stored answer), so they read back with the answers.
+  assert.deepEqual(P.answersOf(s), { ...file.answers, county: 'Albany', health: 'work' });
   assert.equal(valueOf(s.household.state), 'NY', 'the state is stored on the household, once');
   assert.equal(s.profile.state, undefined);
   assert.equal(valueOf(s.household.gutSpending), 2400);
@@ -131,7 +131,7 @@ test('the client answers file round-trips, gut number and all', () => {
   assert.equal(valueOf(s.household.cardPayPolicy), 'statement', 'always paid in full');
   assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('\n'));
   // Out again from the loaded profile: the same file.
-  const { county, ...back } = P.answersOf(s);
+  const { county, health, ...back } = P.answersOf(s);
   assert.equal(county, 'Albany');
   assert.deepEqual(P.answersFile(back, valueOf(s.household.gutSpending), TODAY), file);
   assert.throws(() => P.readAnswersFile({ kind: 'nope' }), /not a "Before our first call" answers file/);

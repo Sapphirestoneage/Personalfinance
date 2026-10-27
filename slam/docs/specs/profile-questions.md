@@ -78,7 +78,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 
 ### Health
 
-- **Where is your health insurance from?** (Work / A parent's plan / Marketplace / Medicaid / None, or Not sure). A parent's plan sets the turning-26 switch on the Calendar.
+- **Where is your health insurance from?** (Work / A parent's plan / My own plan / Marketplace / Medicaid / Medicare / Other / None, or Not sure). A parent's plan sets the turning-26 switch on the Calendar.
 
 ### Protection
 

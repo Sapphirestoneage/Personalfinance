@@ -32,5 +32,5 @@ test('Send my answers uses the share sheet when it can; Copy my answers is besid
 test('the demo household has a whole Profile', () => {
   const a = answersOf(readJson('fixtures/demo.json'));
   for (const k of ['reachOut', 'stress', 'firstName', 'home', 'work', 'debts', 'accounts', 'health', 'goals']) assert.ok(a[k] !== undefined, k);
-  assert.equal(a.work, 'both');
+  assert.equal(a.work, 'both'); // stored on the household's situation row (mixed)
 });
