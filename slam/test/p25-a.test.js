@@ -32,7 +32,8 @@ test('Today and the One-pager lead the savings rate with take-home; gross is in 
   // Krug pass: the tile shows the rate alone; its screen says "of take-home".
   assert.match(read('ui/dashboard.js'), /result: cf\.savingsRate\.net, shown: pct\(cf\.savingsRate\.net\.value, 1\)/);
   // Round 3: the base is pay after tax with what goes from pay to saving (take-home alone gives a different rate).
-  assert.match(read('ui/dashboard.js'), /h\('p', \{ class: 'tile-value' \}, pct\(cf\.savingsRate\.net\.value, 1\) \+ ' of pay after tax'\)/);
+  // A missing rate says "Not yet" (never a bare dot), else the rate leads.
+  assert.match(read('ui/dashboard.js'), /h\('p', \{ class: 'tile-value' \}, cf\.savingsRate\.net\.value === null \|\| blank \? 'Not yet' : pct\(cf\.savingsRate\.net\.value, 1\) \+ ' of pay after tax'\)/);
   assert.doesNotMatch(read('ui/dashboard.js'), /' of gross'/);
   assert.match(read('ui/onepager.js'), /'of pay after tax, with what goes from pay to saving'/);
   const { DASHBOARD_MATH } = await import('../engine/math.js');

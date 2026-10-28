@@ -20,6 +20,10 @@ export function blankHousehold(name, today) {
   };
 }
 
+// Nothing entered yet: no income, expenses, accounts or debts (a new client as it starts, or one with only a name and
+// a few answers). Empty is not zero: a screen says "Not yet" for a number that would otherwise read as $0.
+export const nothingEntered = (spine) => ['income', 'expenses', 'accounts', 'debts'].every((c) => !(spine && Array.isArray(spine[c]) && spine[c].length));
+
 // A client renamed: the household's name, and its first person's name when it was the client's name.
 export function renameHousehold(spine, name, oldName) {
   const people = (spine.household.people || []).map((p, i) => (i === 0 && (!p.name || p.name === oldName) ? { ...p, name } : p));

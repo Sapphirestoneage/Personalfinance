@@ -47,7 +47,7 @@ export function fiReveal(spine, rules) {
   const start = callStart();
   const card = h('section', { class: 'card reveal', 'aria-labelledby': 'rv-h' },
     h('h2', { id: 'rv-h', class: 'reveal-label' }, 'Free to stop working'),
-    h('p', { class: 'reveal-year' }, year === null ? 'Not at this pace yet' : String(year)),
+    h('p', { class: 'reveal-year' }, year === null ? 'Not at this pace' : String(year)),
     y !== null ? h('p', { class: 'reveal-sub' }, (s.fi.yearsToFi.kind === 'rough' ? 'About ' : '') + yearsWords(y) + ' from now') : null,
     start ? [h('h3', {}, 'What moved it most today'), list] : null);
   if (start) setTimeout(() => {
@@ -75,7 +75,7 @@ export function endCallScreen(spine, ranking, catalog, today) {
         h('a', { class: 'btn primary', id: 'ec-print', href: 'onepager.html' }, 'Print or save the one-pager'),
         h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Save another backup'))),
     h('section', { class: 'card', 'aria-labelledby': 'ec-you' }, h('h2', { id: 'ec-you' }, 'Your to-dos (' + theirs.length + ')'),
-      h('p', { class: 'muted' }, 'Numbers to send or look up on a statement before we talk again.'), list(theirs, 'Nothing to look up.')),
+      h('p', { class: 'muted' }, 'Things to tell us or look up before we talk again.'), list(theirs, 'Nothing to look up.')),
     h('section', { class: 'card coach-only', 'aria-labelledby': 'ec-me' }, h('h2', { id: 'ec-me' }, 'Coach to-dos (' + mine.length + ')'),
       h('p', { class: 'muted' }, 'Guesses to look up or keep, and what you can find without the client.'), list(mine, 'Nothing left for you.'))
   ];

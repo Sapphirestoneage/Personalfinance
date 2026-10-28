@@ -16,7 +16,7 @@ const sum = (s) => summarize(s, R, { flags: false });
 test('one sentence from the engine\'s numbers, "about" when it rests on guesses', () => {
   const s = demo(), x = sum(s);
   const said = moneySentence(s, x);
-  assert.equal(said, 'You keep about $1,012 a month after bills and saving, you save about 19% of your pay, and at this pace you could stop working around ' + (2026 + Math.round(x.fi.yearsToFi.value)) + '.');
+  assert.equal(said, 'You keep about $1,012 a month after bills and debt payments, you save about 19% of your pay, and at this pace you could stop working around ' + (2026 + Math.round(x.fi.yearsToFi.value)) + '.');
   const exact = { ...x, cashflow: { ...x.cashflow, monthlySurplus: { value: 500, kind: 'known' }, savingsRate: { net: { value: 0.1, kind: 'known' } } }, fi: { ...x.fi, yearsToFi: { value: 10, kind: 'known' } } };
   assert.match(moneySentence(s, exact), /^You keep \$500 a month.*save 10%.*stop working in 2036\.$/);
 });

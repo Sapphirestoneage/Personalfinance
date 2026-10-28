@@ -9,6 +9,7 @@ import { keepPref } from './prefs.js';
 import { summarize } from '../engine/summary.js';
 import { isCouple, peopleOf, personView } from '../engine/couple.js';
 import { refresh } from './shell.js';
+import { nothingEntered } from '../engine/blank.js';
 
 // A couple (Batch 7, S-277): a small toggle, Together (the household, as always) or one person's own numbers: their
 // share of what is owned and owed (half of anything joint), their take-home, their share of the bills and what is
@@ -33,10 +34,13 @@ export function headlineStrip(spine, rules, { timeSwitch: withSwitch = false } =
   if (!two) stripWho = 0;
   if (two && stripWho) return personStrip(spine, s);
   const year = years === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(years);
+  // Empty is not zero: with nothing entered yet, every cell says so instead of $0.
+  const known = (x) => (nothingEntered(spine) ? null : x);
+  const nw = known(sh.netWorth.value), left = known(cf.monthlySurplus.value), rate = known(cf.savingsRate.net.value);
   const cells = [
-    ['netWorth', 'Net worth', sh.netWorth.value === null ? 'Not yet' : metric('netWorth', summaryMoney(sh.netWorth.value, true)), sh.netWorth.value],
-    ['surplus', 'Left a month', cf.monthlySurplus.value === null ? 'Not yet' : metric('surplus', summaryMoney(cf.monthlySurplus.value, true)), cf.monthlySurplus.value],
-    ['savingsRateNet', 'Savings rate', cf.savingsRate.net.value === null ? 'Not yet' : metric('savingsRateNet', pct(cf.savingsRate.net.value, 1)), cf.savingsRate.net.value],
+    ['netWorth', 'Net worth', nw === null ? 'Not yet' : metric('netWorth', summaryMoney(nw, true)), nw],
+    ['surplus', 'Left a month', left === null ? 'Not yet' : metric('surplus', summaryMoney(left, true)), left],
+    ['savingsRateNet', 'Savings rate', rate === null ? 'Not yet' : metric('savingsRateNet', pct(rate, 1)), rate],
     ['yearsToFi', 'FI', years === null ? 'Not at this pace' : [metric('yearsToFi', years + ' years'), h('span', { class: 'strip-sub' }, ' (about ' + year + ')')], years]
   ];
   const before = last;

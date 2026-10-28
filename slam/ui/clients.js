@@ -28,7 +28,7 @@ export function clients() {
 const write = (reg) => put(LIST, JSON.stringify(reg));
 function freshId(reg, name) { const base = slugOf(name); let id = base, n = 2; while (reg.list.some((c) => c.id === id)) id = base + '-' + n++; return id; }
 // The example, edited on screen, is someone's own numbers now: it joins the list as the current client.
-export function adopt(name) { const reg = clients(); if (reg.current || !name) return reg; const id = freshId(reg, name); reg.list.push({ id, name }); reg.current = id; write(reg); return reg; }
+export function adopt(name) { const reg = clients(); if (reg.current || !name) return reg; const id = freshId(reg, name); reg.list.push({ id, name }); reg.current = id; claimStart(id); write(reg); return reg; }
 export const currentClient = () => { const reg = clients(); return reg.list.find((c) => c.id === reg.current) || null; };
 
 // Puts the household on screen away in its client's slot (the example is never kept).
@@ -36,7 +36,7 @@ function stash(reg) {
   if (!reg.current) {
     // The example, once edited, is someone's own numbers: it becomes a client rather than being dropped.
     const raw = get(SPINE), nm = raw ? nameIn(raw) : null;
-    if (nm) { const id = freshId(reg, nm); reg.list.push({ id, name: nm }); put(slot(id), raw); put(hslot(id), get(HISTORY)); }
+    if (nm) { const id = freshId(reg, nm); reg.list.push({ id, name: nm }); put(slot(id), raw); put(hslot(id), get(HISTORY)); claimStart(id); }
     put(SPINE, null); put(HISTORY, null); return;
   }
   put(slot(reg.current), get(SPINE)); put(hslot(reg.current), get(HISTORY));
@@ -122,7 +122,13 @@ export function markCallStart(spine) {
   try { const was = JSON.parse(get(startSlot()) || 'null'); if (was && was.date === todayIso()) return; } catch { /* start fresh */ }
   put(startSlot(), JSON.stringify({ date: todayIso(), spine }));
 }
-// The example made into a client starts under no name: its start is read from there until it has one.
+// The example made into a client was stamped under no name (the first edit stamps it before the client exists); the
+// moment it becomes a client, today's start moves to its own slot, so a reload still finds it.
+function claimStart(id) {
+  const here = 'slam-call-start:here';
+  try { const x = JSON.parse(get(here) || 'null'); if (!x || x.date !== todayIso()) return; put('slam-call-start:' + id, JSON.stringify(x)); put(here, null); } catch { /* nothing to move */ }
+}
+// Until the move has happened, the start is read from the unnamed slot.
 export function callStart() {
   for (const k of [startSlot(), 'slam-call-start:here']) { try { const x = JSON.parse(get(k) || 'null'); if (x && x.date === todayIso()) return x.spine; } catch { /* next */ } }
   return null;

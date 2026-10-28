@@ -38,6 +38,6 @@ test('My numbers, Taxes, Session, Still guessing, Today and the Profile all coun
   assert.match(SRC('ui/ledger.js'), /const nowCount = \(\) => \(guess \? openQuestions\(cur\(\), guess\)\.length : null\);/);
   assert.match(SRC('ui/guide.js'), /openCounts\(openQuestions\(ctx\.spine, g\)\)/);
   assert.match(SRC('ui/profile.js'), /openQuestions\(spine, guessesFor\(spine, rules/);
-  assert.match(SRC('ui/dashboard.js'), /openQuestions\(base, g\)\.length/);
+  assert.match(SRC('ui/dashboard.js'), /const open = openQuestions\(base, g\);[\s\S]*?const guesses = open \? open\.length : null;/);
   assert.match(SRC('tools/agree-check.mjs'), /'ledger\.html#\/taxes', 'ledger\.html#\/profile', 'ledger\.html#\/still-guessing', 'profile\.html'/);
 });
