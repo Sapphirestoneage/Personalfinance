@@ -30,7 +30,7 @@ import { paidWithBox } from './card-charges.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
-import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
+import { h, chip, money, shortDate, monthWords, ledgerHref, MISSING_WORDS } from './view.js';
 import { echo, dateBox } from './understood.js';
 import { foldRow } from './rows.js';
 import { budgetView, startMonth, RANGES, realDifferences, closeMonth, reopenMonth, planSuggestions, keepPlan, sortEntry, setMerchantRule, merchantRules as learnedMerchants, OVER_CHOICES, UNDER_CHOICES } from '../engine/budget.js';
