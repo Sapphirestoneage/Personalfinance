@@ -5,7 +5,7 @@
 // Storage: 'slam-clients:v1' = { current: id | null, list: [{ id, name }] }; a waiting client's household and history
 // at 'slam-client:<id>' and 'slam-client-history:<id>'. current null: the example household is on screen.
 
-import { blankHousehold, slugOf } from '../engine/blank.js';
+import { blankHousehold, renameHousehold, slugOf } from '../engine/blank.js';
 
 const LIST = 'slam-clients:v1', SPINE = 'slam-spine:v1', HISTORY = 'slam-history:v1', LAST = 'slam-last-step:v1', DELETED = 'slam-deleted-client:v1';
 const slot = (id) => 'slam-client:' + id, hslot = (id) => 'slam-client-history:' + id;
@@ -62,7 +62,8 @@ export function duplicateClient() {
   const reg = clients(), at = reg.list.find((c) => c.id === reg.current), raw = get(SPINE);
   if (!at || !raw) return null;
   const nm = at.name + ' (copy)', id = freshId(reg, nm);
-  const s = JSON.parse(raw); s.meta = { ...s.meta, name: nm };
+  // Renamed the way Rename does (the first person too): the header reads the person, and syncs the list from it.
+  const s = renameHousehold(JSON.parse(raw), nm, at.name);
   stash(reg);
   reg.list.push({ id, name: nm });
   put(slot(id), JSON.stringify(s));

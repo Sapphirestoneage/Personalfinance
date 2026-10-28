@@ -1,7 +1,8 @@
 // One Profile question, drawn the same way on the client's "Before our first call" page and on the coach's Profile
 // page (Phase 2.5 B3). Taps only: one choice, several, or a picker for a year, a state or a date. No question offers
-// "Not sure" (owner's ask, 2026-10-27); an old "Not sure" answer reads as not answered yet. onAnswer(value) gets the
-// new answer (null clears it). Formatting only: the questions are engine/profile.js.
+// "Not sure" (owner's ask, 2026-10-27); an old "Not sure" answer (from the client's file) shows nothing pressed and one
+// line saying so, so it is asked. onAnswer(value) gets the new answer (null clears it). Formatting only: the questions
+// are engine/profile.js.
 
 import { h } from './view.js';
 import { NOT_SURE, STATES } from '../engine/profile.js';
@@ -11,6 +12,7 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
   const value = raw === NOT_SURE ? null : raw;
   const id = idPrefix + '-' + q.id;
   const label = h('p', { class: 'q-label', id: id + '-l' }, q.label);
+  const hint = raw === NOT_SURE ? h('p', { class: 'edit-hint' }, 'Not sure before the call; ask it.') : null;
   let body;
   if (q.kind === 'one') {
     // A scale (1 to 10) is five small buttons to a row, not ten rows.
@@ -21,14 +23,17 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
     const flip = (k) => {
       if ((q.exclusive || []).includes(k)) return onAnswer(list.includes(k) ? null : [k]);
       let next = list.filter((x) => !(q.exclusive || []).includes(x));
+      // A full pick (top 3) takes no more; the line under the strip says to take one off first.
+      if (q.max && !next.includes(k) && next.length >= q.max) return;
       next = next.includes(k) ? next.filter((x) => x !== k) : [...next, k];
-      if (q.max && next.length > q.max) next = next.slice(next.length - q.max);
       onAnswer(next.length ? next : null);
     };
-    body = h('div', { class: 'segmented q-seg q-many' }, ...q.options.map(([k, w]) => h('button', { type: 'button', id: id + '-' + k, class: 'seg-btn', 'aria-pressed': String(list.includes(k)), onclick: () => flip(k) }, h('span', { class: 'seg-label' }, w))));
+    const picked = list.filter((x) => !(q.exclusive || []).includes(x)).length;
+    body = [h('div', { class: 'segmented q-seg q-many' }, ...q.options.map(([k, w]) => h('button', { type: 'button', id: id + '-' + k, class: 'seg-btn', 'aria-pressed': String(list.includes(k)), onclick: () => flip(k) }, h('span', { class: 'seg-label' }, w)))),
+      q.max ? h('p', { class: 'edit-hint' }, picked + ' of ' + q.max + ' picked' + (picked >= q.max ? '; tap one to take it off before adding another.' : '.')) : null];
   } else if (q.kind === 'text') {
     // A long answer (Why now) is a few lines; a short one is a name.
-    const box = q.long ? h('textarea', { id, rows: '2', 'aria-labelledby': id + '-l', maxlength: '400' }) : h('input', { id, type: 'text', autocomplete: 'given-name', 'aria-labelledby': id + '-l', maxlength: '40' });
+    const box = q.long ? h('textarea', { id, rows: '4', 'aria-labelledby': id + '-l', maxlength: '400' }) : h('input', { id, type: 'text', autocomplete: 'given-name', 'aria-labelledby': id + '-l', maxlength: '40' });
     box.value = typeof value === 'string' && value !== NOT_SURE ? value : '';
     box.addEventListener('change', () => onAnswer(box.value.trim() || null));
     body = h('div', { class: 'q-field' }, box);
@@ -49,7 +54,7 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
         msg.textContent = ''; onAnswer(y);
       });
       body = h('div', { class: 'q-field' }, input, msg);
-      return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body);
+      return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body, hint);
     }
     if (opts) {
       input = h('select', { id, class: 'pick-box', 'aria-labelledby': id + '-l', onchange: () => onAnswer(input.value === '' ? null : input.value) }, h('option', { value: '' }, 'Pick one'), ...opts.map(([k, w]) => h('option', { value: k, selected: String(value) === k }, w)));
@@ -60,5 +65,5 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
     }
     body = h('div', { class: 'q-field' }, input);
   }
-  return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body);
+  return h('div', { class: 'q', role: 'group', 'aria-labelledby': id + '-l' }, label, body, hint);
 }

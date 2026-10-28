@@ -5,6 +5,7 @@
 
 import { saveFile, framed } from './save-file.js';
 import { h } from './view.js';
+import { enhanceSelects } from './picker.js';
 import { applyPrefs } from './prefs.js';
 
 applyPrefs();
@@ -28,7 +29,8 @@ const TYPED = new Set(['text', 'year', 'state', 'date']);
 const set = (id, value) => { const a = { ...state.answers }; if (value === null) delete a[id]; else a[id] = value; state = { ...state, answers: a }; keep(); if (!TYPED.has((LEVEL1.find((q) => q.id === id) || {}).kind)) draw(); else count(); };
 // The answer count at the bottom, updated in place.
 const count = () => { const el = document.getElementById('b-count'); if (el) el.textContent = countWords(); };
-const countWords = () => { const n = Object.keys(state.answers).length; return n + (n === 1 ? ' answer' : ' answers') + (state.gut === null ? '.' : ' and your spending guess.'); };
+const nothingYet = () => !Object.keys(state.answers).length && state.gut === null;
+const countWords = () => { const n = Object.keys(state.answers).length; return nothingYet() ? 'Nothing answered yet. Tap Back to answer a few, or send it anyway.' : n + (n === 1 ? ' answer' : ' answers') + (state.gut === null ? '.' : ' and your spending guess.'); };
 
 // One section at a time (Krug pass): the areas that have questions, the spending guess after Why now, then Send.
 const STEPS = () => {
@@ -93,7 +95,8 @@ function sendCard() {
   return h('section', { class: 'card', 'aria-labelledby': 'send-h' },
     h('h2', { id: 'send-h' }, 'Send your answers to Eli'),
     h('p', { id: 'b-count' }, countWords()),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
+    // With nothing answered, Back leads (the step bar) and Send is a plain button: one primary a screen.
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: nothingYet() ? 'btn' : 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
     // Good news reads as a plain line; red is only for something that went wrong (owner's ask, 2026-10-28).
     h('p', { class: 'edit-hint', role: 'status' }, note || (framed() ? 'In this window, Send shows your answers ready to copy into an email or text to Eli.' : 'On a phone this opens the share sheet; on a computer it saves a file to email or text to Eli.')),
     showWords ? wordsBox() : null);
@@ -109,7 +112,9 @@ function draw() {
     at === 0 ? h('p', { class: 'lede' }, 'About 5 minutes. Skip anything you do not know; your coach asks it on the call. Your answers stay on your phone until you send them; this never asks for account numbers or logins.') : null,
     id === 'gut' ? gutCard() : id === 'send' ? sendCard() : areaCard(steps[at]),
     h('nav', { class: 'step-nav', 'aria-label': 'Steps' },
-      at > 0 ? h('button', { type: 'button', class: 'btn', onclick: () => goTo(at - 1) }, 'Back') : h('span'),
+      at > 0 ? h('button', { type: 'button', class: id === 'send' && nothingYet() ? 'btn primary' : 'btn', onclick: () => goTo(at - 1) }, 'Back') : h('span'),
       at < steps.length - 1 ? h('button', { type: 'button', class: 'btn primary', onclick: () => goTo(at + 1) }, at === steps.length - 2 ? 'Done, send it' : 'Next') : null)].filter(Boolean));
+  // One picker (S-284): the state list types to pick here too, as it does on the coach's Profile.
+  enhanceSelects(app);
 }
 draw();

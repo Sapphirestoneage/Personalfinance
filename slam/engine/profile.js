@@ -56,7 +56,7 @@ export const LEVEL1 = [
   { id: 'work', area: 'work', label: 'What kind of work?', kind: 'one', options: [['w2', 'A job (W-2)'], ['self', 'Self-employed'], ['both', 'Both'], ['between', 'Between jobs'], ['student', 'Student'], ['retired', 'Retired']], does: 'Shows the pay fields that fit and the tax set-aside on self-employed pay.' },
   { id: 'payType', area: 'work', label: 'How are you paid?', kind: 'one', options: [['salary', 'Salary'], ['hourly', 'By the hour'], ['mix', 'Some of each']], when: W2, does: 'Salary is a yearly amount; by the hour is rate x hours.' },
   { id: 'extras', area: 'work', label: 'Any extras?', kind: 'many', options: [['bonus', 'Bonus'], ['overtime', 'Overtime'], ['tips', 'Tips'], ['commission', 'Commission'], ['none', 'None']], exclusive: ['none'], when: W2, does: 'Each extra gets its own line, so the steady part stays steady.' },
-  { id: 'offers', area: 'work', label: 'What does work offer?', kind: 'many', options: [['k401', '401(k) or similar'], ['health', 'Health insurance'], ['hsa', 'HSA'], ['fsa', 'FSA']], when: W2, does: 'Opens those accounts in the session.' },
+  { id: 'offers', area: 'work', label: 'What does work offer?', kind: 'many', options: [['k401', '401(k) or similar'], ['health', 'Health insurance'], ['hsa', 'HSA'], ['fsa', 'FSA'], ['none', 'Nothing']], exclusive: ['none'], when: W2, does: 'Opens those accounts in the session.' },
   { id: 'quarterly', area: 'work', label: 'Paying quarterly taxes?', kind: 'one', options: YES_NO, when: SELF, does: 'No or not sure turns on a set-aside on every deposit.' },
   { id: 'unemployment', area: 'work', label: 'Getting unemployment?', kind: 'one', options: YES_NO, when: (a) => ans(a, 'work') === 'between', does: 'Shows the weekly benefit and its end date.' },
   { id: 'unemploymentEnd', area: 'work', label: 'When does it end? (if you know)', kind: 'date', when: (a) => ans(a, 'work') === 'between' && ans(a, 'unemployment') === 'yes', does: 'Ends the benefit on the Calendar.' },
@@ -346,9 +346,10 @@ export function changeWords(c) {
   // A step toward the Budget's target (engine/target.js): "Groceries $500 to $575, toward a target of $650".
   if (c.kind === 'target') { const d = (x) => '$' + Math.round(x).toLocaleString('en-US'); return c.label + ' ' + d(c.from) + ' to ' + d(c.to) + ', toward a target of ' + d(c.target); }
   const q = L1.get(c.question) || L2.get(c.question);
-  const say = (x) => (x === null || x === undefined ? 'blank' : x === NOT_SURE ? 'Not sure' : Array.isArray(x) ? x.map((k) => optWords(q, k)).join(', ') : optWords(q, x));
-  return (q ? q.label : c.question) + ' ' + say(c.from) + ' to ' + say(c.to);
+  return (q ? q.label : c.question) + ' ' + answerWords(q, c.from) + ' to ' + answerWords(q, c.to);
 }
+// An answer in its option words ("A mortgage"; a list joined with commas; blank; Not sure), for the log and the Profile.
+export const answerWords = (q, x) => (x === null || x === undefined ? 'blank' : x === NOT_SURE ? 'Not sure' : Array.isArray(x) ? x.map((k) => optWords(q, k)).join(', ') : optWords(q, x));
 const optWords = (q, k) => (q && q.options ? (q.options.find(([x]) => x === k) || [k, String(k)])[1] : String(k));
 
 // What the answers move, idempotent: run after every answer. It touches only what the profile set (a cover marked
