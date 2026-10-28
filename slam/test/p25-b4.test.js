@@ -45,12 +45,13 @@ test('a blank amount makes its group incomplete, never smaller', () => {
   assert.equal(f2.total, null, 'every line blank: missing, never $0');
 });
 
-test('liquid and total net worth, each with Show the math listing what it counts', () => {
+test('reachable net worth with Show the math listing what it counts; net worth itself is in the strip', () => {
   const s = demo(), sum = summarize(s, R, { flags: false });
   assert.equal(sum.sheet.liquidNetWorth.value, sum.sheet.liquid.value - sum.sheet.debts.value);
   const e = explainMetric('liquidAssets', { spine: s, rules: R, s: sum });
   assert.deepEqual(e.terms.map((t) => t.label), ['Checking', 'High-yield savings', 'Roth IRA (contributions)', 'Brokerage']);
   const src = readFileSync(new URL('../ui/ledger.js', import.meta.url), 'utf8');
-  assert.match(src, /one\('liquid', 'Reachable after all debts', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth'\]\)/);
-  assert.match(src, /one\('total', 'Net worth', s\.sheet\.netWorth, .*\['netWorth'\]\)/);
+  // Net worth itself is in the headline strip (S-283), so the one tile's Show the math covers both figures.
+  assert.match(src, /one\('liquid', 'Reachable after all debts', s\.sheet\.liquidNetWorth, .*\['liquidNetWorth', 'netWorth'\]\)/);
+  assert.doesNotMatch(src, /one\('total', 'Net worth'/);
 });
