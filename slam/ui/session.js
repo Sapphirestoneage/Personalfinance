@@ -86,6 +86,9 @@ const pickBox = (id, label, options, value, onPick) => {
   const s = h('select', { id, class: 'pick-box', 'aria-label': label, onchange: () => onPick(s.value) }, options.map(([val, words]) => h('option', { value: val, selected: val === value }, words)));
   return s;
 };
+// A box with its own visible label above it (owner, 2026-10-28: boxes in a row never go unnamed). A row with one box
+// uses the row's name as its label; a row with more names each one. DESIGN.md "Fields never collide".
+const cell = (cap, box) => h('div', { class: 'field-cell' }, h('label', { class: 'field-cap', for: box.id }, cap), box);
 // A guess says so on its row.
 // Only a guess worth checking now gets a chip (Rough now and later); one that is fine for now shows a small gray dot,
 // so a first session ends with a short list, not dozens of chips.
@@ -234,7 +237,7 @@ function needRow(spine, item, fat, key, sub = false) {
       h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: true }, fat, todayIso()).spine, said.added(item.label + ', a need')) }, 'Need'),
       h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: false }, fat, todayIso()).spine, said.added(item.label + ', a want')) }, 'Want'),
       h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
-  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), needWant(e), more(item.label, ...whoPays(spine, e)), delBtn('expenses', e.id, e.label));
+  return lineRow(sub ? 'sub' : '', name, cell('A month', amt), cell('Day paid', intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d), { placeholder: 'e.g. 5' })), needWant(e), more(item.label, ...whoPays(spine, e)), delBtn('expenses', e.id, e.label));
 }
 // Need or want, on every line in plain sight (S-231): two pressed-or-not buttons.
 function needWant(e) {
@@ -351,12 +354,12 @@ function debt(ctx) {
       list.length ? h('ul', { class: 'srows' }, list.map((d) => {
         const name = v(d.name) || d.id, p = 'debts.' + d.id;
         return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance, 'debts.' + d.id + '.balance')),
-          moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'owed'),
-          rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2)))),
-          moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'a month'),
-          intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x)))),
+          cell('Owed', moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200')),
+          cell('Rate (%)', rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2))))),
+          cell('Payment a month', moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'e.g. 120')),
+          cell('Due day', intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x))), { placeholder: 'e.g. 15' })),
           // A card: paid in full every month, or carried? It decides whether the balance costs interest.
-          d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full? Not set (counted as carried)'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null,
+          d.type === 'credit_card' ? cell('Paid in full each month?', pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Not set yet'], ['statement', 'Yes, in full'], ['minimum', 'No, I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank')))) : null,
           delBtn('debts', d.id, name),
           coreTicks(spine, ctx.rules, 'debts', d));
       })) : h('p', { class: 'muted' }, 'No debts yet.'),
@@ -457,12 +460,12 @@ function incomeRows(spine, rules) {
   return (spine.income || []).filter((x) => x.type !== 'maybeMoney').map((x) => {
     const asked = (x.type === 'w2' && v(x.payBasis)) || (isSelfEmployment(x) && v(x.payBasis) === 'lumpy');
     const amountBox = asked ? null : [
-      moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a)))),
-      pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1])))];
+      cell('Before tax', moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a))), 'e.g. 2,600')),
+      cell('How often', pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1]))))];
     return lineRow('income' + (x.type === 'w2' || isSelfEmployment(x) || x.type === 'unemployment' ? ' asks' : ''), h('span', { class: 'srow-name' }, x.label, guessChip(x.amount, 'income.' + x.id + '.amount')),
       amountBox,
       delBtn('income', x.id, x.label),
-      x.cadence === 'monthly' || x.cadence === 'semimonthly' ? intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d)))) : null,
+      x.cadence === 'monthly' || x.cadence === 'semimonthly' ? cell('Day paid', intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d))), { placeholder: 'e.g. 15' })) : null,
       x.type === 'w2' ? h('div', { class: 'srow-q' }, ...w2Bits(spine, x)) : null,
       isSelfEmployment(x) && x.type !== 'person' ? h('div', { class: 'srow-q' }, ...selfBits(x)) : null,
       x.type === 'unemployment' ? h('div', { class: 'srow-q' }, ...unemploymentBits(x)) : null,
@@ -561,7 +564,7 @@ function assets(ctx) {
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Add one'),
       h('div', { class: 'edit-actions' }, ASSET_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(type, label) }, label))),
       h('div', { class: 'edit-actions' },
-        pickBox('a-ira', 'IRA type', IRA_TYPES, iraPick, (x) => { iraPick = x; }),
+        cell('IRA type', pickBox('a-ira', 'IRA type', IRA_TYPES, iraPick, (x) => { iraPick = x; })),
         h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(iraPick, PRESETS[iraPick].label) }, 'Add an IRA')))
   ]);
 }

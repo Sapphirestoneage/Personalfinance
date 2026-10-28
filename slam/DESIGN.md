@@ -27,6 +27,21 @@ there first.
 22. No "0" placeholder and no cents on a summary row; cents live in Show the
     math and the log.
 
+## Fields never collide (owner, 2026-10-28)
+
+23. A row wraps before it squeezes. A name keeps its whole width (at least 10rem) and is never cut to a few letters;
+    when a row runs out of room, its boxes go to the next line.
+24. Every box has a visible label. A row with one box may use the row's name; a row with more labels each box above
+    it ("Owed", "Rate (%)", "Payment a month", "Due day"). A table of boxes labels its columns once.
+25. A picker is as wide as its longest choice, and its choices are short ("Not set yet", "Yes, in full", "No, I carry
+    a balance"); the question goes in the label above it, never inside the choice.
+26. Nothing overlaps: no box over a word, no word over a box, no two pieces of a row on top of each other, at a laptop
+    width and at a phone width.
+27. A class name means one thing in the whole app: look before naming a new one (a calendar's `.cell` is not a
+    field's cell).
+Check: `node slam/tools/collide-check.mjs` (Session steps, a My numbers screen and the Plan, at 1280 and 390 wide,
+on a household with many long-named cards) must print "No field collides".
+
 ## Color
 
 6. Ink (`--text`, `--text-muted`) for words. Accent for actions and links only.
@@ -60,5 +75,5 @@ there first.
 ## Before "done"
 
 18. Look at every changed screen at 375px and 1280px wide, light and dark:
-    no overlap, no clipped text, no horizontal scroll, every tap 44px.
+    no overlap, no clipped text, no horizontal scroll, every tap 44px; then run the collide check (rules 23 to 27).
 19. Screenshots of the changed screens go with the report.
