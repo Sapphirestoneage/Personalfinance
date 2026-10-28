@@ -114,23 +114,24 @@ export const featuresForType = (type, collection) => (catalog ? featuresOfType(c
 
 // ---------------------------------------------------------------- fields in place (the Session and the add form)
 // One box for one field the catalog reveals, saved when it is left (Tab or Enter): onSet(value | null). A label above,
-// "e.g." inside. A link or a list is set on the item's screen in My numbers.
+// "e.g." inside. A link or a list is set on the item's screen in Numbers.
+// Under a detail titled with the same words the box has no second label (the title is its name).
 const BOXED = /^(money|rate|int|text|date|bool|tiers)$|^choice:/;
-export function fieldBox(r, value, onSet, id) {
+export function fieldBox(r, value, onSet, id, title = null) {
   const msg = h('span', { class: 'edit-msg', role: 'alert' });
   const parse = (raw) => (r.type === 'text' ? { ok: true, value: raw } : parseInput(r.type, raw));
   let box;
-  if (!BOXED.test(r.type)) return h('p', { class: 'muted tick-later' }, r.label + ': set it on this item in My numbers.');
+  if (!BOXED.test(r.type)) return h('p', { class: 'muted tick-later' }, r.label + ': set it on this item in Numbers.');
   if (r.type === 'tiers') return tiersBox(r, value, onSet, id);
   if (r.type === 'bool' || r.type.startsWith('choice:')) {
     const opts = r.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : r.type.slice(7).split('|').map((x) => [x, showValue(x, r.type)]);
     box = h('select', { id, onchange: () => onSet(box.value === '' ? null : r.type === 'bool' ? box.value === 'true' : box.value) }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: value !== null && value !== undefined && String(value) === v }, t)));
   } else {
-    box = h('input', { id, type: r.type === 'date' ? 'date' : 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null });
+    box = h('input', { id, type: r.type === 'date' ? 'date' : 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null, 'aria-label': title === r.label ? r.label : null });
     box.value = value === null || value === undefined ? '' : r.type === 'date' || r.type === 'text' ? String(value) : inputText(r.type, value);
     box.addEventListener('change', () => { const raw = box.value.trim(); if (!raw) { msg.textContent = ''; onSet(null); return; } const p = parse(raw); if (!p.ok) { msg.textContent = p.message; return; } msg.textContent = ''; onSet(p.value); });
   }
-  return h('div', { class: 'tick-box' }, h('label', { for: id, class: 'mini-label' }, r.label + (r.type === 'rate' ? ' (%)' : '')), box, msg);
+  return h('div', { class: 'tick-box' }, title === r.label ? null : h('label', { for: id, class: 'mini-label' }, r.label + (r.type === 'rate' ? ' (%)' : '')), box, msg);
 }
 // A match, tier by tier: a pair of boxes a tier, and + Add a tier. Saved once every pair is whole.
 function tiersBox(r, value, onSet, id) {
@@ -157,7 +158,7 @@ function tiersBox(r, value, onSet, id) {
 // The ticks with their fields in place under a Yes: the Session (screen-one ticks only) and the add form.
 // get(field) -> value; onSet(field, value, reveal); onAnswer(feature, answer | null).
 export function inlineTicks({ title, features, ticks = {}, onAnswer, get, onSet, open = false, ontoggle = null, idBase }) {
-  const boxes = (f) => h('div', { class: 'tick-fields' }, f.reveals.map((r) => fieldBox(r, get(r.field), (x) => onSet(r.field, x, r), idBase + '-' + r.field)));
+  const boxes = (f) => h('div', { class: 'tick-fields' }, f.reveals.map((r) => fieldBox(r, get(r.field), (x) => onSet(r.field, x, r), idBase + '-' + r.field, f.kind === 'ask' ? f.title || f.question : null)));
   return tickList({ title, features, ticks, onAnswer, open, ontoggle, idBase, below: (f, ans) => (ans === 'yes' ? boxes(f) : null), details: boxes });
 }
 
