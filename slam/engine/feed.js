@@ -183,7 +183,7 @@ function plannedMatch(spine, amount, date) {
 const LOG_KIND = { spend: 'spend', fee: 'spend', refund: 'refund', reimbursement: 'refund', income: 'income' };
 
 // Turn rows (from a statement or a Budget log) into proposals against the spine's log.
-function propose(spine, items, { source }) {
+export function propose(spine, items, { source }) {
   const have = new Set((spine.log || []).map((e) => e.importKey).filter(Boolean));
   const merchantCounts = {};
   for (const e of spine.log || []) if (e.merchant) merchantCounts[e.merchant] = (merchantCounts[e.merchant] || 0) + 1;

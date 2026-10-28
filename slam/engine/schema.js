@@ -66,11 +66,14 @@ export const FAMILIES = {
       taxTreatment: 'choice:pretax|roth|taxable|tripleTaxFree|na', liquidity: 'choice:instant|days|penalty|locked|na',
       monthlyContribution: 'money', linkedGoal: 'text', fundedFrom: 'link',
       // Counted in liquid net worth (Batch 3): set only to override the default by type (liquidDefault in networth.js).
-      liquid: 'bool'
+      liquid: 'bool',
+      // From a statement (S-243): the last four digits (never more), the product's name, the name(s) printed on it, a
+      // business name when one is printed, and the day the newest statement closed.
+      lastFour: 'text', product: 'text', nameOnAccount: 'text', businessName: 'text', statementClose: 'date'
     }
   },
-  cash: { label: 'Cash', fields: { apy: 'rate', minBalance: 'money', monthlyFee: 'money', role: 'choice:spending|emergency|sinking|holding' } },
-  fixedTerm: { label: 'Fixed-term', fields: { rate: 'rate', maturityDate: 'date', earlyWithdrawalPenalty: 'text' } },
+  cash: { label: 'Cash', fields: { apy: 'rate', minBalance: 'money', monthlyFee: 'money', role: 'choice:spending|emergency|sinking|holding', ytdInterest: 'money' } },
+  fixedTerm: { label: 'Fixed-term', fields: { rate: 'rate', maturityDate: 'date', earlyWithdrawalPenalty: 'text', openDate: 'date', term: 'text' } },
   employerRetirement: {
     label: 'Employer retirement', fields: {
       rothShare: 'rate', matchFormula: 'text', matchRate: 'rate', matchCap: 'rate', vesting: 'text', annualLimit: 'money', catchUpEligible: 'bool', loanBalance: 'money',
@@ -78,13 +81,19 @@ export const FAMILIES = {
       // What went in for each tax year (S-211), as on an IRA: [{ year, amount, kind? }]; rollovers and conversions never count.
       contributions: 'list',
       // The job a plan from pay is paid through (S-227, answer 60): one of the owner's W-2 lines; blank, the sponsoring job.
-      paidThrough: 'link'
+      paidThrough: 'link',
+      // From a plan statement (S-243): the plan and employer, vesting, the rate going in, this year's money in from each
+      // side, a loan's payment, the balance by source and the funds held, the personal return and the fees.
+      planName: 'text', employer: 'text', vestedBalance: 'money', vestedPct: 'rate', unvestedMatch: 'money', contributionRate: 'rate', ytdEmployee: 'money', ytdEmployer: 'money',
+      loanPayment: 'money', sources: 'list', funds: 'list', personalReturn: 'rate', fees: 'money'
     }
   },
   ira: {
     label: 'IRA', fields: {
       annualLimit: 'money', incomeLimitApplies: 'bool', basis: 'money', contributions: 'list', firstRothYear: 'int', conversions: 'list',
-      proRataExposure: 'money', nondeductibleBasis: 'money', coveredByWorkplacePlan: 'bool', rmdApplies: 'bool'
+      proRataExposure: 'money', nondeductibleBasis: 'money', coveredByWorkplacePlan: 'bool', rmdApplies: 'bool',
+      // From a statement (S-243).
+      holdings: 'list', cashBalance: 'money', sweepYield: 'rate', ytdDividends: 'money', ytdInterest: 'money', ytdDistributions: 'money', rolloverIn: 'money', fees: 'money', costBasis: 'money', unrealizedGain: 'money', ytdRealizedShort: 'money', ytdRealizedLong: 'money'
     }
   },
   hsaFsa: {
@@ -92,12 +101,16 @@ export const FAMILIES = {
       coverageLevel: 'choice:self|family', annualLimit: 'money', investedPortion: 'money', unreimbursedReceipts: 'money',
       rolloverRule: 'choice:rolls|forfeit', planEligible: 'choice:hdhp|bronze|catastrophic|no', monthsEligible: 'int', employerSeed: 'money', contributions: 'list',
       // An HSA's monthly amount comes out of the paycheck only when this is on (S-227, answer 47); off, from take-home.
-      throughPayroll: 'bool'
+      throughPayroll: 'bool',
+      // From a statement (S-243).
+      cashBalance: 'money', holdings: 'list', ytdDistributions: 'money', investmentThreshold: 'money'
     }
   },
-  education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list' } },
+  education: { label: 'Education / kids', fields: { beneficiary: 'text', stateTaxDeduction: 'bool', annualLimit: 'money', ageOfControl: 'int', stateDeduction: 'money', openDate: 'date', childBirthYear: 'int', contributions: 'list', planState: 'text', holdings: 'list' } },
   // holdings (Batch 3): optional rows [{ ticker, share, expenseRatio, managedBy, advisoryFee }]; share and the two fees are rates.
-  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate', holdings: 'list' } },
+  taxable: { label: 'Taxable investing', fields: { costBasis: 'money', unrealizedGain: 'money', expectedReturn: 'rate', employerStockShare: 'rate', holdings: 'list',
+    // From a statement (S-243): cash waiting in the account and its yield, this year's dividends, interest, gains sold and fees.
+    cashBalance: 'money', sweepYield: 'rate', ytdDividends: 'money', ytdInterest: 'money', ytdRealizedShort: 'money', ytdRealizedLong: 'money', fees: 'money' } },
   debt: {
     label: 'Debt', fields: {
       apr: 'rate', promoApr: 'rate', promoEnds: 'date', deferredInterest: 'bool', limit: 'money', minimum: 'money', dueDay: 'int',
@@ -109,7 +122,15 @@ export const FAMILIES = {
       // the rewards rate on everyday spending, a signup bonus (spend required, by when, spent so far, what it is worth),
       // and whether a federal loan is on track for Public Service Loan Forgiveness.
       reportDay: 'int', annualFee: 'money', annualValue: 'money', rewardsRate: 'rate',
-      bonusSpend: 'money', bonusBy: 'date', bonusSpent: 'money', bonusValue: 'money', pslf: 'bool'
+      bonusSpend: 'money', bonusBy: 'date', bonusSpent: 'money', bonusValue: 'money', pslf: 'bool',
+      // From a statement (S-243). A card: its other rates, every purchase rate tier with the balance it applied to
+      // ([{ kind, label, apr, subject, interest, until }]), the late fee cap, the cash line, AutoPay and its amount,
+      // the points balance, the statement balance and its due date, this year's interest and fees, what is past due.
+      cashApr: 'rate', transferApr: 'rate', penaltyApr: 'rate', loanApr: 'rate', aprTiers: 'list', lateFeeMax: 'money', cashLine: 'money',
+      autopay: 'choice:off|minimum|full|fixed', autopayAmount: 'money', points: 'int', statementBalance: 'money', dueDate: 'date', ytdInterest: 'money', ytdFees: 'money', pastDue: 'money',
+      // A loan: fixed or variable, what was borrowed, months left, the loan's own words for its type; a mortgage's
+      // escrow and its parts and the property; a federal student loan's count of qualifying payments.
+      fixedRate: 'bool', originalAmount: 'money', remainingTerm: 'int', loanType: 'text', escrowBalance: 'money', escrowTaxes: 'money', escrowInsurance: 'money', escrowPmi: 'money', propertyAddress: 'text', qualifyingPayments: 'int'
     }
   },
   otherAssets: { label: 'Other assets', fields: { appreciationRate: 'rate', linkedDebt: 'text', incomeProduced: 'money' } }
@@ -490,6 +511,21 @@ export function validate(spine) {
       if (typeof c.balances !== 'object' || c.balances === null) err(p + '.balances', 'an object of account id to amount');
       else for (const [id, amt] of Object.entries(c.balances)) if (typeof amt !== 'number') err(p + '.balances.' + id, 'a number');
       if (c.forecast !== undefined && (typeof c.forecast !== 'object' || c.forecast === null)) err(p + '.forecast', 'an object of account id to amount or null');
+    }
+  }
+
+  // Statement snapshots (S-243): one plain record per statement read in, kept for month-end; never a full account number.
+  const sts = spine.statements || [];
+  if (!Array.isArray(sts)) err('statements', 'a list');
+  else {
+    uniqueIds('statements', sts);
+    for (const x of sts) {
+      const p = 'statements.' + x.id;
+      if (typeof x.accountId !== 'string' || !x.accountId) err(p + '.accountId', 'names the account');
+      if (!['accounts', 'debts'].includes(x.coll)) err(p + '.coll', 'accounts or debts');
+      if (x.close !== null && x.close !== undefined && !isDate(x.close)) err(p + '.close', 'not a date (YYYY-MM-DD)');
+      if (x.lastFour !== null && x.lastFour !== undefined && !/^\d{4}$/.test(String(x.lastFour))) err(p + '.lastFour', 'four digits at most, never a full number');
+      if (x.values && typeof x.values !== 'object') err(p + '.values', 'a record of numbers');
     }
   }
 

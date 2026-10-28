@@ -35,6 +35,16 @@ const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County',
 const words = (k) => FIELD[k] || String(k ?? '').replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };
+// Fields a statement fills (S-243), in words, for any account or debt.
+const STATEMENT_FIELD = {
+  lastFour: 'last 4 digits', product: 'product', nameOnAccount: 'name on the account', businessName: 'business name', statementClose: 'statement closed on',
+  cashApr: 'cash advance rate', transferApr: 'balance transfer rate', penaltyApr: 'penalty rate', loanApr: 'loan rate', aprTiers: 'rate tiers', lateFeeMax: 'late fee, up to', cashLine: 'cash access line',
+  autopay: 'AutoPay', autopayAmount: 'AutoPay amount', points: 'points balance', statementBalance: 'statement balance', dueDate: 'payment due on', ytdInterest: 'interest this year', ytdFees: 'fees this year', pastDue: 'past due',
+  fixedRate: 'fixed rate', originalAmount: 'original amount', remainingTerm: 'months left', loanType: 'loan type', escrowBalance: 'escrow balance', escrowTaxes: 'escrow: taxes', escrowInsurance: 'escrow: insurance', escrowPmi: 'escrow: mortgage insurance', propertyAddress: 'property', qualifyingPayments: 'qualifying payments',
+  openDate: 'opened on', term: 'term', planName: 'plan', employer: 'employer', vestedBalance: 'vested balance', vestedPct: 'vested', unvestedMatch: 'employer money not yet vested', contributionRate: 'contribution rate', ytdEmployee: 'your contributions this year', ytdEmployer: 'employer contributions this year',
+  loanPayment: 'loan payment', sources: 'balance by source', funds: 'funds', personalReturn: 'personal rate of return', fees: 'fees', holdings: 'holdings', cashBalance: 'cash in the account', sweepYield: 'cash yield', ytdDividends: 'dividends this year', ytdDistributions: 'taken out this year', rolloverIn: 'rolled in',
+  ytdRealizedShort: 'short-term gains this year', ytdRealizedLong: 'long-term gains this year', planState: 'plan state', investmentThreshold: 'cash kept before investing', costBasis: 'cost basis', unrealizedGain: 'unrealized gain'
+};
 // A duplicate starts with no name until one is typed (S-190).
 export const UNNAMED = 'No name yet';
 const dateWords = (iso) => (iso ? 'from ' + iso : 'now');
@@ -81,7 +91,7 @@ export function labelFor(spine, path) {
     case 'accounts': case 'debts': {
       const x = item(s[0], s[1]);
       const name = x ? valueOf(x.name) || s[1] : s[1];
-      return name + ': ' + ((x && x.type === 'credit_card' && CARD_FIELD[s[2]]) || words(s[2]));
+      return name + ': ' + ((x && x.type === 'credit_card' && CARD_FIELD[s[2]]) || STATEMENT_FIELD[s[2]] || words(s[2]));
     }
     case 'goals': { const x = item('goals', s[1]); return 'Goal ' + (x ? x.label || UNNAMED : s[1]) + ': ' + words(s[2]); }
     case 'assumptions': return ASSUME[s[1]] || words(s[1]);
