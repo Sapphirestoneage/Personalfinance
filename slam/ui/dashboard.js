@@ -29,6 +29,8 @@ import { lastStep } from './clients.js';
 import { homeworkList, LEVEL1, asked } from '../engine/profile.js';
 import { tickTodos } from '../engine/features.js';
 import { catalog } from './ticks.js';
+import { sentenceCard, tryItCard } from './try-it.js';
+import { todayIso } from './view.js';
 const catalogNow = () => catalog;
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
@@ -190,10 +192,12 @@ function render(ctx) {
   const g = guessesFor(base, rules, () => refresh());
   const guesses = g ? openQuestions(base, g).length : null;
   return [
+    sentenceCard(base, rules),
     headlineStrip(base, rules),
     cashCard(base, rules),
     agendaCard(base, rules),
     nextFill(ctx),
+    tryItCard(base, rules, todayIso()),
     beforeCard(base),
     h('details', { class: 'card done-group home-more', open: kept().all || null, ontoggle: (e) => { if (!!kept().all !== e.target.open) keep({ all: e.target.open }); } },
       h('summary', {}, h('span', {}, 'Today\'s numbers in full'), h('span', { class: 'count' }, 'net worth, runway, cards, FI')),

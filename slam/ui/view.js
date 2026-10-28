@@ -16,11 +16,14 @@ export function money(x, exact = false) {
   const base = dollars(x, exact);
   if (exact || x === null || x === undefined || Number.isNaN(x) || Math.abs(x) < 1 || display.moneyAs === 'dollars') return base;
   if (display.moneyAs === 'hours') { const n = hoursOf(Math.abs(x), display.wage); return n === null ? base : base + ' (' + n + ' h of work)'; }
-  if (display.moneyAs === 'fiDays') { const n = fiDaysOf(Math.abs(x), display.perDay); return n === null ? base : base + ' (' + n + (n === 1 ? ' day' : ' days') + ' of FI)'; }
+  if (display.moneyAs === 'fiDays') { const n = fiDaysOf(Math.abs(x), display.perDay); return n === null ? base : base + ' = ' + n + (n === 1 ? ' day' : ' days') + ' later to freedom'; }
   return base;
 }
 // A summary number (Today's tiles, My numbers' totals): rounded to the dollar, $10 or $100 as picked.
-export const summaryMoney = (x) => (x === null || x === undefined || display.round <= 1 ? money(x) : money(Math.round(x / display.round) * display.round));
+export const summaryMoney = (x, plain = false) => { const r = x === null || x === undefined || display.round <= 1 ? x : Math.round(x / display.round) * display.round; return plain ? (r === null || r === undefined ? money(r) : dollars(r)) : money(r); };
+// Money as time (S-286): on or off, and what $100 costs in days of freedom at today's saving pace.
+export const asTime = () => display.moneyAs === 'fiDays';
+export const daysFor = (x) => fiDaysOf(x, display.perDay);
 
 export function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);

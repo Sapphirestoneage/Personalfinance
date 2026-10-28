@@ -4,7 +4,8 @@
 // change, and the number that just moved flashes once, so the client sees an answer land. Formatting only: every value
 // comes from the summary (engine/summary.js), tagged with its formula's id for tools/agree-check.mjs.
 
-import { h, metric, summaryMoney, pct } from './view.js';
+import { h, metric, summaryMoney, pct, money, asTime, daysFor } from './view.js';
+import { keepPref } from './prefs.js';
 import { summarize } from '../engine/summary.js';
 import { isCouple, peopleOf, personView } from '../engine/couple.js';
 import { refresh } from './shell.js';
@@ -33,8 +34,8 @@ export function headlineStrip(spine, rules) {
   if (two && stripWho) return personStrip(spine, s);
   const year = years === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(years);
   const cells = [
-    ['netWorth', 'Net worth', sh.netWorth.value === null ? 'Not yet' : metric('netWorth', summaryMoney(sh.netWorth.value)), sh.netWorth.value],
-    ['surplus', 'Left a month', cf.monthlySurplus.value === null ? 'Not yet' : metric('surplus', summaryMoney(cf.monthlySurplus.value)), cf.monthlySurplus.value],
+    ['netWorth', 'Net worth', sh.netWorth.value === null ? 'Not yet' : metric('netWorth', summaryMoney(sh.netWorth.value, true)), sh.netWorth.value],
+    ['surplus', 'Left a month', cf.monthlySurplus.value === null ? 'Not yet' : metric('surplus', summaryMoney(cf.monthlySurplus.value, true)), cf.monthlySurplus.value],
     ['savingsRateNet', 'Savings rate', cf.savingsRate.net.value === null ? 'Not yet' : metric('savingsRateNet', pct(cf.savingsRate.net.value, 1)), cf.savingsRate.net.value],
     ['yearsToFi', 'FI', years === null ? 'Not at this pace' : [metric('yearsToFi', years + ' years'), h('span', { class: 'strip-sub' }, ' (about ' + year + ')')], years]
   ];
@@ -42,5 +43,13 @@ export function headlineStrip(spine, rules) {
   last = Object.fromEntries(cells.map(([id, , , v]) => [id, v]));
   return h('section', { class: 'headline-strip', 'aria-label': 'Your headline numbers' }, two ? whoToggle(spine) : null,
     h('dl', {}, cells.map(([id, label, shown, v]) => h('div', { class: 'strip-cell' + (before && id in before && before[id] !== v ? ' is-moved' : '') },
-      h('dt', {}, label), h('dd', {}, shown)))));
+      h('dt', {}, label), h('dd', {}, shown)))),
+    timeSwitch());
+}
+// Money as time (S-286): one switch; on, every amount on every screen also says how much later it makes freedom.
+function timeSwitch() {
+  const on = asTime(), n = daysFor(100);
+  return h('div', { class: 'time-switch' },
+    h('button', { type: 'button', class: 'btn small switch-btn', role: 'switch', 'aria-checked': String(on), onclick: () => { keepPref('moneyAs', on ? 'dollars' : 'fiDays'); refresh(); } }, h('span', { class: 'switch-knob', 'aria-hidden': 'true' }), 'Money as time'),
+    on ? h('span', { class: 'time-example' }, n === null ? 'Needs what is saved each month first.' : 'For example, ' + money(100)) : null);
 }

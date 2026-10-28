@@ -113,3 +113,17 @@ export function showExample() { const reg = clients(); stash(reg); bring(reg, nu
 // Pick up where we left off: the Session step each client was last on.
 export function rememberStep(step) { const reg = clients(); let all = {}; try { all = JSON.parse(get(LAST) || '{}') || {}; } catch { all = {}; } all[reg.current || 'example'] = step; put(LAST, JSON.stringify(all)); }
 export function lastStep() { const reg = clients(); try { return (JSON.parse(get(LAST) || '{}') || {})[reg.current || 'example'] || null; } catch { return null; } }
+
+// The household as it stood when today's call started (S-286): the first time it opens on a day, kept per client, so
+// End call can say what moved the FI date since. Stays in this browser.
+const startSlot = () => 'slam-call-start:' + (clients().current || 'here');
+export function markCallStart(spine) {
+  if (!spine) return;
+  try { const was = JSON.parse(get(startSlot()) || 'null'); if (was && was.date === todayIso()) return; } catch { /* start fresh */ }
+  put(startSlot(), JSON.stringify({ date: todayIso(), spine }));
+}
+// The example made into a client starts under no name: its start is read from there until it has one.
+export function callStart() {
+  for (const k of [startSlot(), 'slam-call-start:here']) { try { const x = JSON.parse(get(k) || 'null'); if (x && x.date === todayIso()) return x.spine; } catch { /* next */ } }
+  return null;
+}

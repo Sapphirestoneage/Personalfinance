@@ -27,7 +27,7 @@ import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
-import { endCallScreen } from './end-call.js';
+import { endCallScreen, fiReveal } from './end-call.js';
 import { headlineStrip } from './strip.js';
 import { catalog, inlineTicks, tickWords } from './ticks.js';
 import { featuresOf, tickFeature } from '../engine/features.js';
@@ -796,5 +796,5 @@ export { nextCard, sessionNotesRow };
 // End call (on Home, S-280): the end-of-call screen, with the session notes.
 export function endCall(ctx) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
-  return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
+  return [fiReveal(ctx.spine, ctx.rules), endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
 }

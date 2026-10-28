@@ -13,7 +13,8 @@
 // Formatting only: the page's render reads the engines; nothing here figures a number.
 
 import { mountPage, whoseMenu } from './page.js';
-import { takeDeleted, restoreClient, clients, switchTo } from './clients.js';
+import { takeDeleted, restoreClient, clients, switchTo, markCallStart } from './clients.js';
+import { milestones } from '../engine/story.js';
 import { renameHousehold } from '../engine/blank.js';
 import { whose } from './household.js';
 import { searchButton } from './search.js';
@@ -145,13 +146,32 @@ export function change(next, text) {
   // back with the rest.
   const mine = !!(hist.present.meta && hist.present.meta.demo === true);
   if (mine) doc = yours(doc);
+  const before = hist.present;
   hist = commit(hist, applyDefaults(doc, rulesFor(doc)), text, HISTORY_STEPS);
+  if (mine) markCallStart(before);
   notice = null; side = null;
   const kept = stored();
   draw();
   const first = mine && !seenYoursNote();
   bar(first ? YOURS_NOTE + ' ' + end(text) : kept ? end(text) : 'This browser will not keep it, so it lasts until the page closes. ' + end(text), 'Undo', doUndo);
+  celebrate(before, hist.present);
   return true;
+}
+
+// Calm celebrations (S-286): a real milestone only (a debt paid off, net worth above zero, the cushion full, a fifth of
+// pay saved, FI a year sooner): a short glow on the numbers, a check and one line. No confetti, no sound.
+const sums = new WeakMap();
+const sumOf = (sp) => { if (!sums.has(sp)) sums.set(sp, summarize(sp, rulesFor(sp), { flags: false })); return sums.get(sp); };
+function celebrate(before, after) {
+  let lines = [];
+  try { lines = milestones(sumOf(before), sumOf(after), before, after); } catch { return; }
+  if (!lines.length) return;
+  document.querySelector('.celebrate')?.remove();
+  const note = h('div', { class: 'celebrate', role: 'status' }, h('span', { class: 'celebrate-check', 'aria-hidden': 'true' }, '\u2713'), ' ', lines[0]);
+  document.body.append(note);
+  document.querySelector('.headline-strip')?.classList.add('is-glow');
+  setTimeout(() => { note.classList.add('is-gone'); document.querySelector('.headline-strip')?.classList.remove('is-glow'); }, 3500);
+  setTimeout(() => note.remove(), 4200);
 }
 
 // A line from the command bar (ui/search.js, engine/command.js): a change in its words (so Undo takes it back), a
@@ -364,6 +384,7 @@ function take(loaded) {
   // A guess from a house default follows this client's own assumption when there is one.
   hist = openHistory(loaded.spine && loaded.spine.assumptionOverrides ? applyDefaults(loaded.spine, rulesFor(loaded.spine)) : loaded.spine);
   notice = loaded.problem || null;
+  if (hist && hist.present && !(hist.present.meta && hist.present.meta.demo === true)) markCallStart(hist.present);
 }
 
 // How money and dates read on every page (Preferences): the household's wage and saving pace, once per version.
