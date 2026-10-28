@@ -33,3 +33,7 @@ money-rooms-v3/screenshots/level-stage/
 # Real-data sign-off notes and screenshots stay on this machine (SIGNOFF.local.md, signoff.local/).
 **/signoff.local/
 **/*.local.md
+
+# SLAM statement uploader: real credit card statements and their extracted
+# values never enter this public repository. Private fixtures stay on this machine.
+slam/tests/private-fixtures/
