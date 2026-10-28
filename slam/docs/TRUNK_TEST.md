@@ -1,6 +1,6 @@
 # Trunk test
 
-Krug's trunk test, run by `tools/trunk-test.mjs` on the made-up example household: every main tab, every second-level tab, and a level-3 (group) and level-4 (item) screen in each section, at phone (390px) and computer (1280px) width. Pass is a check mark.
+Krug's trunk test, run by `tools/trunk-check.mjs` on the made-up example household: every main tab, every second-level tab, and a level-3 (group) and level-4 (item) screen in each section, at phone (390px) and computer (1280px) width. Pass is a check mark.
 
 - Site ID: "Stress Less About Money" shows top left.
 - Page name: the page title shows.
