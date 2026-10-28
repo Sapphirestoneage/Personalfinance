@@ -2,7 +2,10 @@
 // household (a download, every time), shows the one-pager to print or save, and splits what is still open into the
 // client's to-dos and the coach's.
 
-import { h, ledgerHref } from './view.js';
+import { h, ledgerHref, shortDate } from './view.js';
+import { fiPoint, fiMove, movers, moveWords } from '../engine/reveal.js';
+import { fiWords } from './future.js';
+import { currentClient } from './clients.js';
 import { saveFile } from './save-file.js';
 import { whose } from './household.js';
 import { slugOf } from '../engine/blank.js';
@@ -30,14 +33,45 @@ export function downloadBackup(spine, today) {
   return saveFile(name, JSON.stringify(spine, null, 2) + '\n') === 'saved' ? name : null;
 }
 
+// The big reveal (S-286): the FI date, large, how far it moved since the last call, and the three changes that moved
+// it most this call (the household's last 25 changes, each with the FI date before and after). The last call's date is
+// kept per client in this browser: { prev, last }, each { date, ym, years }; opening End call on a new day moves last
+// to prev, so the comparison is always with the call before this one.
+const CALL_KEY = 'slam-last-call:v1';
+function callNotes() { try { const o = JSON.parse(localStorage.getItem(CALL_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+export function noteCall(clientId, point, today, notes = callNotes(), keep = (o) => { try { localStorage.setItem(CALL_KEY, JSON.stringify(o)); } catch { /* lasts until the page closes */ } }) {
+  const mine = notes[clientId] || { prev: null, last: null };
+  if (mine.last && mine.last.date !== today) mine.prev = mine.last;
+  mine.last = { date: today, ym: point.ym, years: point.years };
+  keep({ ...notes, [clientId]: mine });
+  return mine.prev;
+}
+// The movers take a moment (a projection per change): figured once per history, kept across redraws of the screen.
+let moversMemo = { past: null, spine: null, top: [] };
+export function revealCard(spine, rules, past, today) {
+  if (!rules) return null;
+  let point;
+  try { point = fiPoint(spine, rules); } catch { return null; }
+  const prev = noteCall((currentClient() || {}).id || 'example', point, today);
+  const since = prev ? fiMove(prev, point) : null;
+  if (moversMemo.past !== past || moversMemo.spine !== spine) moversMemo = { past, spine, top: movers(past || [], spine, rules, 3) };
+  const top = moversMemo.top;
+  return h('section', { class: 'card reveal', 'aria-labelledby': 'rv-h' },
+    h('h2', { id: 'rv-h' }, 'When you can stop working'),
+    h('p', { class: 'reveal-big' }, fiWords(point).replace(/^about /, 'About ').replace(/^now$/, 'Now').replace(/^not/, 'Not')),
+    prev ? h('p', { class: 'reveal-since' }, 'Since our last call on ' + shortDate(prev.date) + ': ' + (since ? moveWords(since) : 'the same date')) : h('p', { class: 'reveal-since' }, 'Our first call: this is the starting line.'),
+    top.length ? [h('h3', {}, 'What moved it most this call'), h('ol', { class: 'reveal-movers' }, top.map((m) => h('li', {}, h('span', {}, m.label), ': ', h('strong', {}, moveWords(m.move)))))] : h('p', { class: 'muted' }, 'Nothing moved the date this call.'));
+}
+
 let savedFor = null;
-export function endCallScreen(spine, ranking, catalog, today) {
+export function endCallScreen(spine, ranking, catalog, today, { rules = null, past = [] } = {}) {
   // Once per visit to this screen: a redraw (Undo, a late ranking) does not download it again.
   const file = savedFor && savedFor.spine === spine ? savedFor.file : downloadBackup(spine, today);
   savedFor = { spine, file };
   const todos = endCallTodos(spine, ranking, catalog), mine = todos.filter((t) => t.who === 'coach'), theirs = todos.filter((t) => t.who === 'client');
   const list = (xs, none) => (xs.length ? h('ul', { class: 'todo-list' }, xs.map((t) => h('li', {}, t.path ? h('a', { href: ledgerHref(t.path) }, t.words) : t.words))) : h('p', { class: 'muted' }, none));
   return [
+    revealCard(spine, rules, past, today),
     h('section', { class: 'card', 'aria-labelledby': 'ec-h' }, h('h2', { id: 'ec-h' }, 'End of the call'),
       file ? h('p', {}, 'A backup of ' + whose(spine).name + '\'s numbers was saved to your downloads as ', h('strong', {}, file), '.')
         : h('p', {}, 'This window can\'t save files, so no backup was saved here. The numbers stay in this browser; open SLAM in its own tab to save a backup.'),

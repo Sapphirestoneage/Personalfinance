@@ -5,6 +5,8 @@
 //   extraDebt  dollars a month more at the debt, on top of the extra already set
 //   windfall   dollars once, sent where the Windfall order sends it (tax bill, cash floor, promo and card balances,
 //              the cushion, Roth room; what is left lands in checking)
+//   rent       dollars a month more (or, negative, less) on the housing line (Home's Drag to see the future, S-286)
+//   saveMore   dollars a month more saved, off the everyday lines like spendLess (Home's slider, in the client's words)
 // whatIf(spine, rules, moves) -> { spine, now, then }: now and then are { surplus, debtFreeYm, interest, fiYear,
 // yearsToFi }, read the same way for both, so they compare.
 
@@ -17,9 +19,22 @@ import { mainChecking } from './defaults.js';
 
 const bump = (spine, path, by, today) => { const was = v(getAt(spine, path)) ?? 0; return putFact(spine, path, round2(was + by), 'rough', today); };
 
-export function movedSpine(spine, rules, { spendLess = 0, earnMore = 0, extraDebt = 0, windfall = 0 } = {}, today = spine.meta.asOf) {
+// The housing line a rent slider moves: the accommodation line named rent or mortgage, else the biggest one; null when
+// there is none (the slider then says so instead of guessing).
+export function housingLine(spine) {
+  const lines = (spine.expenses || []).filter((e) => e.fat === 'accommodation' && typeof v(e.amount) === 'number');
+  if (!lines.length) return null;
+  return lines.find((e) => /\b(rent|mortgage)\b/i.test(String(e.label || e.id))) || lines.slice().sort((a, b) => v(b.amount) - v(a.amount))[0];
+}
+
+export function movedSpine(spine, rules, { spendLess = 0, earnMore = 0, extraDebt = 0, windfall = 0, rent = 0, saveMore = 0 } = {}, today = spine.meta.asOf) {
   let s = spine;
   const base = summarize(spine, rules, { flags: false });
+  if (rent) {
+    const line = housingLine(spine);
+    if (line) s = editExpense(s, line.id, { amount: round2(Math.max(0, v(line.amount) + rent)), kind: 'rough' }, today);
+  }
+  spendLess = (spendLess > 0 ? spendLess : 0) + (saveMore > 0 ? saveMore : 0);
   if (spendLess > 0) {
     const flex = base.cashflow.expenses.items.filter((i) => !i.fixed && i.amount > 0);
     const total = flex.reduce((a, i) => a + i.amount, 0);

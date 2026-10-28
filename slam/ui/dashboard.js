@@ -24,6 +24,8 @@ import { openQuestions } from '../engine/questions.js';
 import { netWorthWaterfallCard, netWorthTimeCard, netWorthSpark } from './chart-cards.js';
 import { netWorthAhead } from '../engine/charts.js';
 import { headlineStrip } from './strip.js';
+import { sentencePieces, sentenceWords } from '../engine/sentence.js';
+import { futureCard } from './future.js';
 import { endCall, nextCard as guideNext, STEPS as GUIDE_STEPS } from './guide.js';
 import { lastStep } from './clients.js';
 import { homeworkList, LEVEL1, asked } from '../engine/profile.js';
@@ -191,9 +193,13 @@ function render(ctx) {
   const guesses = g ? openQuestions(base, g).length : null;
   return [
     headlineStrip(base, rules),
+    // Their money in one sentence (S-286): the first thing on Home, rewritten whenever the numbers change; the sliders
+    // below rewrite it live while dragging (a dashed box and a "with these changes" tag until kept or put back).
+    sentenceCard(baseOf(base, rules)),
     cashCard(base, rules),
     agendaCard(base, rules),
     nextFill(ctx),
+    futureCard(base, rules, baseOf(base, rules).s, { onPreview: previewSentence }),
     beforeCard(base),
     h('details', { class: 'card done-group home-more', open: kept().all || null, ontoggle: (e) => { if (!!kept().all !== e.target.open) keep({ all: e.target.open }); } },
       h('summary', {}, h('span', {}, 'Today\'s numbers in full'), h('span', { class: 'count' }, 'net worth, runway, cards, FI')),
@@ -204,6 +210,27 @@ function render(ctx) {
         h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
         guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' guesses worth checking']))) : null))
   ];
+}
+
+// Their money in one sentence (S-286, engine/sentence.js): plain words from the real numbers, "about" where they rest
+// on guesses. The sliders' preview rewrites the same line from the moved numbers.
+// The household as entered, the way the strip reads it (not the picked assumption set the tiles read), so the sentence,
+// the sliders, the strip and End call's reveal all say the same FI date. Figured once per household.
+let baseMemo = { spine: null, rules: null, s: null };
+function baseOf(spine, rules) {
+  if (baseMemo.spine !== spine || baseMemo.rules !== rules) baseMemo = { spine, rules, s: summarize(spine, rules, { flags: false }) };
+  return baseMemo;
+}
+function sentenceCard({ spine, rules, s }) {
+  return h('section', { class: 'card sentence-card', 'aria-label': 'Your money in one sentence' },
+    h('p', { class: 'money-sentence', id: 'money-sentence' }, sentenceWords(sentencePieces(spine, rules, s), money)));
+}
+function previewSentence(moved, s2) {
+  const el = document.getElementById('money-sentence');
+  if (!el || !baseMemo.spine) return;
+  if (!moved) { el.classList.remove('is-preview'); el.replaceChildren(sentenceWords(sentencePieces(baseMemo.spine, baseMemo.rules, baseMemo.s), money)); return; }
+  el.classList.add('is-preview');
+  el.replaceChildren(sentenceWords(sentencePieces(moved, baseMemo.rules, s2), money), ' ', h('span', { class: 'preview-tag' }, 'with these changes'));
 }
 
 // The agenda (S-280): where the call stopped (Guide me, at that step), and the open to-dos from last time.

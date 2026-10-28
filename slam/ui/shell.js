@@ -29,6 +29,8 @@ import { realHourlyWage } from '../engine/plan.js';
 import { savedPerDay } from '../engine/money-as.js';
 import { commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { h, said, sentence as end } from './view.js';
+import { reached } from '../engine/cheers.js';
+import { cheer } from './cheer.js';
 
 // The map (S-280, "make it effortless"): five main tabs, the same on every page, in this order. [id, words, page].
 export const TABS = [
@@ -145,14 +147,30 @@ export function change(next, text) {
   // back with the rest.
   const mine = !!(hist.present.meta && hist.present.meta.demo === true);
   if (mine) doc = yours(doc);
+  const before = hist.present;
   hist = commit(hist, applyDefaults(doc, rulesFor(doc)), text, HISTORY_STEPS);
   notice = null; side = null;
   const kept = stored();
   draw();
+  cheerReached(before, hist.present);
   const first = mine && !seenYoursNote();
   bar(first ? YOURS_NOTE + ' ' + end(text) : kept ? end(text) : 'This browser will not keep it, so it lasts until the page closes. ' + end(text), 'Undo', doUndo);
   return true;
 }
+
+// Celebrations (S-286): a real milestone a change reached (engine/cheers.js) is said once, calmly. The summary of the
+// household before is the one kept from the last change, so each change costs one summary.
+let cheerMemo = { spine: null, s: null };
+function cheerReached(before, after) {
+  try {
+    const r = rulesFor(after), sAfter = summarize(after, r, { flags: false });
+    const lines = reached(before, after, r, { sBefore: cheerMemo.spine === before ? cheerMemo.s : null, sAfter });
+    cheerMemo = { spine: after, s: sAfter };
+    if (lines.length) cheer(lines);
+  } catch { /* a household the engines cannot read yet: nothing to cheer */ }
+}
+// The household's history (the last 25 changes in words, with the household before each), for End call's reveal.
+export const householdHistory = () => hist;
 
 // A line from the command bar (ui/search.js, engine/command.js): a change in its words (so Undo takes it back), a
 // screen, or undo.

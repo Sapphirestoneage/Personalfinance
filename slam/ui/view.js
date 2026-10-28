@@ -16,7 +16,8 @@ export function money(x, exact = false) {
   const base = dollars(x, exact);
   if (exact || x === null || x === undefined || Number.isNaN(x) || Math.abs(x) < 1 || display.moneyAs === 'dollars') return base;
   if (display.moneyAs === 'hours') { const n = hoursOf(Math.abs(x), display.wage); return n === null ? base : base + ' (' + n + ' h of work)'; }
-  if (display.moneyAs === 'fiDays') { const n = fiDaysOf(Math.abs(x), display.perDay); return n === null ? base : base + ' (' + n + (n === 1 ? ' day' : ' days') + ' of FI)'; }
+  // Money as time (S-286): "$14 = 3 days of freedom", one day of FI later for one day of what is saved now.
+  if (display.moneyAs === 'fiDays') { const n = fiDaysOf(Math.abs(x), display.perDay); return n === null ? base : base + ' = ' + n + (n === 1 ? ' day' : ' days') + ' of freedom'; }
   return base;
 }
 // A summary number (Today's tiles, My numbers' totals): rounded to the dollar, $10 or $100 as picked.

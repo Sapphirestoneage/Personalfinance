@@ -10,7 +10,7 @@ import { placeLibEntries, LIB } from './libraries.js';
 import { placeOf } from '../engine/library.js';
 import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
-import { startPage, change, said, say, refresh, go, current } from './shell.js';
+import { startPage, change, said, say, refresh, go, current, householdHistory } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { stepper, purposeCard, nowHave } from './stepper.js';
 import { STEP_MAP, stepChecks } from '../engine/step-map.js';
@@ -796,5 +796,5 @@ export { nextCard, sessionNotesRow };
 // End call (on Home, S-280): the end-of-call screen, with the session notes.
 export function endCall(ctx) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
-  return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
+  return [endCallScreen(ctx.spine, r, catalog, todayIso(), { rules: ctx.rules, past: (householdHistory() || {}).past || [] }), sessionNotesRow(ctx)];
 }

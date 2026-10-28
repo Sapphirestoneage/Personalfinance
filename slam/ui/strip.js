@@ -8,6 +8,7 @@ import { h, metric, summaryMoney, pct } from './view.js';
 import { summarize } from '../engine/summary.js';
 import { isCouple, peopleOf, personView } from '../engine/couple.js';
 import { refresh } from './shell.js';
+import { pref, keepPref } from './prefs.js';
 
 // A couple (Batch 7, S-277): a small toggle, Together (the household, as always) or one person's own numbers: their
 // share of what is owned and owed (half of anything joint), their take-home, their share of the bills and what is
@@ -22,7 +23,16 @@ function personStrip(spine, s) {
   const p = personView(spine, s, stripWho - 1);
   const cells = [['Net worth (their share)', p.netWorth], ['Take-home a month', p.takeHome], ['Their share of bills', p.spending + p.minimums], ['Left a month', p.left]];
   return h('section', { class: 'headline-strip', 'aria-label': p.name + '\'s own numbers' }, whoToggle(spine),
-    h('dl', {}, cells.map(([label, x]) => h('div', { class: 'strip-cell' }, h('dt', {}, label), h('dd', {}, summaryMoney(x))))));
+    h('dl', {}, cells.map(([label, x]) => h('div', { class: 'strip-cell' }, h('dt', {}, label), h('dd', {}, summaryMoney(x))))),
+    timeSwitch());
+}
+
+// Money as time (S-286): one switch in the strip turns every amount on every page into days of freedom too
+// ("$14 = 3 days of freedom", one day of FI later for one day of what is saved now; Preferences, Show money as).
+function timeSwitch() {
+  const on = pref('moneyAs') === 'fiDays';
+  return h('button', { type: 'button', class: 'btn small strip-time', id: 'money-as-time', 'aria-pressed': String(on), title: 'Show every amount as days of freedom too', onclick: () => { keepPref('moneyAs', on ? 'dollars' : 'fiDays'); refresh(); } },
+    h('span', { class: 'switch-knob', 'aria-hidden': 'true' }), 'Money as time: ' + (on ? 'on' : 'off'));
 }
 
 let last = null;
@@ -42,5 +52,6 @@ export function headlineStrip(spine, rules) {
   last = Object.fromEntries(cells.map(([id, , , v]) => [id, v]));
   return h('section', { class: 'headline-strip', 'aria-label': 'Your headline numbers' }, two ? whoToggle(spine) : null,
     h('dl', {}, cells.map(([id, label, shown, v]) => h('div', { class: 'strip-cell' + (before && id in before && before[id] !== v ? ' is-moved' : '') },
-      h('dt', {}, label), h('dd', {}, shown)))));
+      h('dt', {}, label), h('dd', {}, shown)))),
+    timeSwitch());
 }

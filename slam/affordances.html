@@ -404,6 +404,20 @@
     <details class="card done-group more-drawer"><summary><span>More</span><span class="count">3 details</span></summary><p class="muted">Screen-two details: fund fees, the stocks and bonds mix, the beneficiary.</p></details>
     <details class="keys-hint" open><summary>Keys</summary><dl><dt><kbd>Tab</kbd></dt><dd>Next box</dd><dt><kbd>Enter</kbd></dt><dd>Save the box and move on</dd><dt><kbd>Y  N  S</kbd></dt><dd>Answer the question in focus: Yes, No, Not sure</dd><dt><kbd>M</kbd></dt><dd>Open or close More</dd></dl></details>
   </section>
+
+  <section class="card" aria-labelledby="dl-h">
+    <h2 id="dl-h">Delight, warm but calm (S-286)</h2>
+    <p class="muted">The one-sentence summary (and its preview while a slider moves), the sliders, the money-as-time switch in the strip, the calm check for a real milestone, and End call's reveal.</p>
+    <section class="card sentence-card" aria-label="Sample sentence"><p class="money-sentence">You keep about $1,012 a month, your cards are gone by April 2027, and you are on track to stop working at about 54.</p></section>
+    <section class="card sentence-card" aria-label="Sample sentence, previewing"><p class="money-sentence is-preview">You keep about $1,312 a month, your cards are gone by January 2027, and you are on track to stop working at about 50. <span class="preview-tag">with these changes</span></p></section>
+    <section class="card future" aria-label="Sample sliders"><h3>Drag to see the future</h3>
+      <div class="fut-row"><div class="fut-head"><label for="af-fut">Rent a month</label><output class="fut-value" for="af-fut">$1,500 (now $1,800)</output></div><input type="range" id="af-fut" min="-500" max="500" step="25" value="-300"></div>
+      <p class="fut-fi">Stop working: <span class="fut-now">about Aug 2048 (age 54)</span> &#8594; <strong class="fut-then">about Oct 2046 (age 52)</strong><span class="fut-move"> (1 year 10 months sooner)</span></p>
+      <div class="edit-actions"><button type="button" class="btn primary">Keep this</button><button type="button" class="btn">Put it back</button></div></section>
+    <section class="headline-strip" aria-label="Sample strip with the time switch"><dl><div class="strip-cell"><dt>Left a month</dt><dd>$1,012 = 21 days of freedom</dd></div></dl><button type="button" class="btn small strip-time" aria-pressed="true"><span class="switch-knob" aria-hidden="true"></span>Money as time: on</button></section>
+    <div class="cheer is-on" style="position: static; transform: none; opacity: 1; animation: none; display: inline-flex;" role="status"><span class="cheer-mark" aria-hidden="true">&#10003;</span><span class="cheer-words">Visa: paid off</span></div>
+    <section class="card reveal" aria-labelledby="af-rv"><h3 id="af-rv">When you can stop working</h3><p class="reveal-big">About Aug 2048 (age 54)</p><p class="reveal-since">Since our last call on Oct 14: 7 months sooner</p><h4>What moved it most this call</h4><ol class="reveal-movers"><li><span>Rent changed to $1,500</span>: <strong>5 months sooner</strong></li><li><span>Salary changed to $6,500</span>: <strong>2 months sooner</strong></li></ol></section>
+  </section>
 </main>
 <script type="module">
   import { startPage, say } from './ui/shell.js';
