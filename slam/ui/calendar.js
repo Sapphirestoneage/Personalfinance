@@ -81,7 +81,8 @@ const FIXED = {
   promoEnds: 'Set by the date the card\'s intro rate ends.',
   bonusBy: 'Set by the card\'s signup bonus deadline.',
   planning: 'A date worth knowing ahead. Change it on the item in Numbers.',
-  foo: 'A suggestion from your plan for the end of the month. It is not counted, and it follows the plan.'
+  foo: 'A suggestion from your plan for the end of the month. It is not counted, and it follows the plan.',
+  ask: 'A reminder to ask for your money back. It is not counted in your cash until it is paid.'
 };
 const fixedWords = (e) => FIXED[e.kind] || 'Change its date in Numbers.';
 
@@ -228,11 +229,12 @@ function itemScreen(v, date, id) {
   return [
     h('section', { class: 'card', 'aria-labelledby': 'item-h' },
       h('h2', { id: 'item-h' }, longDay(e.date)),
-      h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : MISSING_WORDS),
+      // A reminder to ask someone (its heading names the dollars) has no amount of its own to be missing.
+      e.kind === 'ask' ? null : h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : MISSING_WORDS),
       tags.length || e.rough || (!e.counted && e.amount !== null && e.kind !== 'maybe') ? h('p', { class: 'ev-name' }, ...tags, e.rough ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null) : null,
       note ? h('p', { class: 'tile-sub' }, sentence(cap(note))) : null,
       e.moved ? h('p', { class: 'tile-sub' }, 'Moved from ' + shortDate(e.origDate) + '. Other months stay put.') : null,
-      e.movable ? null : h('p', { class: 'tile-sub why-fixed' }, h('strong', {}, 'This date is set elsewhere. '), fixedWords(e)),
+      e.movable ? null : e.kind === 'ask' ? h('p', { class: 'tile-sub why-fixed' }, fixedWords(e)) : h('p', { class: 'tile-sub why-fixed' }, h('strong', {}, 'This date is set elsewhere. '), fixedWords(e)),
       asks ? happenedRow(e) : null,
       e.kind === 'pay' ? payFold(e) : null,
       e.kind === 'ask' ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: async (ev) => { try { await navigator.clipboard.writeText(e.note); ev.target.textContent = 'Copied'; } catch { ev.target.textContent = 'Could not copy'; } } }, 'Copy message')) : null),
@@ -295,7 +297,9 @@ function changeCard(e, asks = false) {
       h('div', { class: 'edit-actions' },
         h('button', { type: 'submit', class: asks ? 'btn' : 'btn primary' }, 'Move'),
         e.moved && !isMaybe ? h('button', { type: 'button', class: 'btn', onclick: () => change((s) => moveOccurrence(s, e.key, e.origDate), said.moved(e.label, e.origDate)) }, 'Put it back on ' + shortDate(e.origDate)) : null)),
-    isMaybe ? null : h('form', { class: 'editor', novalidate: true, onsubmit: (ev) => { ev.preventDefault(); doPrice(); } },
+    // One amount box a screen (calendar-24): on a past item the happened row's box says what it was, so this one is
+    // drawn only while an earlier change of amount is there to take back.
+    isMaybe || (asks && !e.repriced) ? null : h('form', { class: 'editor', novalidate: true, onsubmit: (ev) => { ev.preventDefault(); doPrice(); } },
       h('label', { for: 'mv-amount', class: 'edit-label' }, 'Amount this time'), price,
       h('p', { class: 'edit-hint' }, 'Blank keeps the usual amount.'),
       priceMsg,

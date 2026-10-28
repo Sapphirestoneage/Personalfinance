@@ -98,9 +98,9 @@ export function showValue(value, type) {
   }
   // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".
   if (type === 'cardRate') {
-    const after = value.apr === null ? 'not given' : showValue(value.apr, 'rate');
+    const after = value.apr === null ? MISSING_WORDS.toLowerCase() : showValue(value.apr, 'rate');
     if (!value.intro) return after;
-    return (value.intro.rate === null ? 'intro rate not given' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given)') + (value.intro.deferred === true ? ' (deferred interest)' : value.intro.deferred === null || value.intro.deferred === undefined ? ' (deferred interest: not sure)' : '') + ', then ' + after;
+    return (value.intro.rate === null ? 'intro rate not given yet' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given yet)') + (value.intro.deferred === true ? ' (deferred interest)' : value.intro.deferred === null || value.intro.deferred === undefined ? ' (deferred interest: not sure)' : '') + ', then ' + after;
   }
   if (type === 'money') return money(value, !Number.isInteger(value));
   // Whole percents plain, others to two places without a trailing zero (3.5%, 24.99%).

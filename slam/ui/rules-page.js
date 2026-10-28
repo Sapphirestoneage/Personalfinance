@@ -146,7 +146,7 @@ startPage({
     if (levels.length) return ruleScreen(byId().get(levels[0]));
     const own = mine(), rules = inUse().rules;
     return [
-      h('p', { class: 'lede' }, ON_HOUSE ? 'Eli\'s method, used for every client until their own number is in. Change one here and every guess that used it changes on every page; nothing a client typed changes. Client screens mark it default.' : 'Every rule the law sets for ' + YEAR + ', with its value, source and note. Eli\'s own defaults are on House defaults. A change here is kept in this browser and used on every page.'),
+      h('p', { class: 'lede' }, ON_HOUSE ? 'Eli\'s method, used for every client until their own number is in. Change one here and every guess that used it changes on every page; nothing a client typed changes. Client screens mark it default.' : 'Every rule the law sets for ' + YEAR + ', with its value. Tap one for its source and note. Eli\'s own defaults are on House defaults. A change here is kept in this browser and used on every page.'),
       importCard(),
       h('ul', { class: 'go-list', 'aria-label': rules.length + ' ' + THINGS }, rules.map((r) => row(r, !!own[r.id])))
     ];

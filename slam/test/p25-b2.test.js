@@ -83,6 +83,7 @@ test('no code words in a sentence on a client screen', () => {
 
 test('the copy pass: Add a purchase, never Log a spend, on every client screen', () => {
   for (const f of CLIENT) assert.ok(!code(f).includes('Log a spend'), f);
-  assert.match(code('ui/spending.js'), /'Add a purchase'/);
+  // The words a user sees: the fold line's button label ("+ Add a purchase"), not only the form's aria-label.
+  assert.match(code('ui/spending.js'), /add: \{ label: 'Add a purchase'/);
   assert.match(read('docs/COPY_PASS.md'), /\| Before \| After \|/);
 });

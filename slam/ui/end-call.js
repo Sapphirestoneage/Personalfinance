@@ -5,6 +5,8 @@
 import { h, ledgerHref, money, pct } from './view.js';
 import { summarize } from '../engine/summary.js';
 import { fiMovers } from '../engine/story.js';
+import { withScenario } from '../engine/scenarios.js';
+import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
 import { callStart } from './clients.js';
 import { saveFile } from './save-file.js';
@@ -41,7 +43,9 @@ let savedFor = null;
 const yearsWords = (y) => { const n = Math.abs(y), r = n >= 1 ? Math.round(n) + (Math.round(n) === 1 ? ' year' : ' years') : Math.round(n * 12) + (Math.round(n * 12) === 1 ? ' month' : ' months'); return r; };
 const valWords = (x) => (typeof x !== 'number' ? String(x) : Math.abs(x) < 1 && x !== 0 ? pct(x, 1) : money(x));
 const itemName = (spine, path) => { const [c, id] = path.split('.'), x = (spine[c] || []).find((i) => i.id === id) || {}; return (x.name && typeof x.name === 'object' ? x.name.value : x.name) || x.label || id; };
-export function fiReveal(spine, rules) {
+// The picked assumption set, as the strip and the sentence on Home use it, so the FI year reads one way everywhere.
+export function fiReveal(base, rules) {
+  const scen = pickedScenario(), spine = withScenario(base, rules, scen);
   const s = summarize(spine, rules, { flags: false }), y = s.fi.yearsToFi.value;
   const year = y === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(y);
   const list = h('ol', { class: 'reveal-movers' }, h('li', { class: 'muted' }, 'Working out what moved it...'));
@@ -53,7 +57,7 @@ export function fiReveal(spine, rules) {
     start ? [h('h3', {}, 'What moved it most today'), list] : null);
   if (start) setTimeout(() => {
     let r;
-    try { r = fiMovers(start, spine, rules); } catch { list.replaceChildren(h('li', { class: 'muted' }, 'Could not work it out this time.')); return; }
+    try { r = fiMovers(withScenario(start, rules, scen), spine, rules); } catch { list.replaceChildren(h('li', { class: 'muted' }, 'Could not work it out this time.')); return; }
     if (!r.movers.length) { list.replaceChildren(h('li', { class: 'muted' }, 'Nothing changed today moved the date.')); return; }
     list.replaceChildren(...r.movers.map((m) => h('li', {},
       h('span', { class: 'mover-what' }, m.added ? 'Added ' + itemName(spine, m.path) : labelFor(spine, m.path) + ', ' + valWords(m.from) + ' to ' + valWords(m.to)),

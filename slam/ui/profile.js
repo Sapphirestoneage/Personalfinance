@@ -195,7 +195,7 @@ function reviewScreen({ spine, rules }) {
   const keep = (ids, words) => change((s) => ids.reduce((x, id) => putFact(x, 'expenses.' + id + '.reviewed', today, 'known', today), s), words);
   return [
     h('ul', { class: 'review-list' }, subs.items.map((i) => h('li', { class: 'review-row' + (i.due ? ' is-due' : '') },
-      h('p', { class: 'review-what' }, h('strong', {}, i.label), h('span', { class: 'muted' }, i.yearly === null ? 'cost not given' : [h('span', { class: 'num' }, money(i.yearly)), ' a year'], ' · ' + (i.reviewed ? 'looked at ' + shortDate(i.reviewed) : 'never looked at'))),
+      h('p', { class: 'review-what' }, h('strong', {}, i.label), h('span', { class: 'muted' }, i.yearly === null ? 'cost not given yet' : [h('span', { class: 'num' }, money(i.yearly)), ' a year'], ' · ' + (i.reviewed ? 'looked at ' + shortDate(i.reviewed) : 'never looked at'))),
       h('div', { class: 'confirm-acts' },
         h('button', { type: 'button', class: 'btn small', onclick: () => keep([i.id], i.label + ': kept, reviewed today') }, 'Keep it'),
         h('a', { class: 'btn small', href: 'ledger.html#expenses.' + i.id + '.amount' }, 'Open the bill'))))),

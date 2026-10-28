@@ -38,7 +38,9 @@ import { maxItCard, maxItFor } from './maxit-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
-import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue, metric } from './view.js';
+import { h, chip, money, pct, shortDate, monthWords, ledgerHref, showValue, metric, MISSING_WORDS } from './view.js';
+import { whose } from './household.js';
+import { slugOf } from '../engine/blank.js';
 import { typeFor, cardRateRow } from '../engine/ledger.js';
 import { readScenarios, keepScenarios, targetId, keepTarget, saveScenario } from './scenarios-store.js';
 
@@ -208,7 +210,7 @@ function top(m) {
       fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'nothing saved yet',
         h('ul', { class: 'go-list' },
           goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
-          goRow('#/file', SCREENS.file, 'Download a backup, or import one'))))
+          goRow('#/file', SCREENS.file, 'Download a backup, or open a backup file'))))
   ];
 }
 // ---------------------------------------------------------------- the second-level tabs (S-280)
@@ -264,7 +266,7 @@ function plannerViews(m) {
       h('div', {},
         h('p', {}, al.stocks + al.bonds === 0 && al.unknown > 0 ? 'No mix given yet for ' + money(al.unknown) + '; ' + money(al.cash) + ' is cash.' : 'Across everything: ' + money(al.stocks) + ' in stocks, ' + money(al.bonds) + ' in bonds, ' + money(al.cash) + ' in cash' + (al.unknown ? ', and ' + money(al.unknown) + ' where the mix is not given yet.' : '.')),
         h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Account'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Stocks'), h('th', { class: 'num' }, 'Bonds'), h('th', { class: 'num' }, 'Cash'))),
-          h('tbody', {}, al.rows.map((r) => h('tr', {}, h('td', {}, r.mix === null ? h('a', { href: ledgerHref(r.path) }, r.name + ' (add its mix)') : r.name), h('td', { class: 'num' }, money(r.amount)), h('td', { class: 'num' }, r.stocks === null ? 'not given' : money(r.stocks)), h('td', { class: 'num' }, r.bonds === null ? 'not given' : money(r.bonds)), h('td', { class: 'num' }, r.mix === null ? 'not given' : money(r.cash))))))),
+          h('tbody', {}, al.rows.map((r) => h('tr', {}, h('td', {}, r.mix === null ? h('a', { href: ledgerHref(r.path) }, r.name + ' (add its mix)') : r.name), h('td', { class: 'num' }, money(r.amount)), h('td', { class: 'num' }, r.stocks === null ? MISSING_WORDS : money(r.stocks)), h('td', { class: 'num' }, r.bonds === null ? MISSING_WORDS : money(r.bonds)), h('td', { class: 'num' }, r.mix === null ? MISSING_WORDS : money(r.cash))))))),
         math('stocks', ['plan:stocks'], mathCtx(m)))),
     fold('fees', 'Fees in dollars', fe.rows.length ? [h('span', { class: 'go-total' }, money(fe.yearly)), ' a year'] : 'Fees not given yet',
       h('div', {},
@@ -636,13 +638,15 @@ function housingOver(d) {
   if (!a || a.overReference === undefined) return null;
   return h('p', { class: 'tile-sub' }, a.overReference > 0 ? 'Housing is ' + money(a.overReference) + ' a month above the ' + pct(d.housingReference) + ' line.' : 'Housing is at or below the ' + pct(d.housingReference) + ' line.');
 }
+// Each bar is named in words, as the sentence above names them (plan-18): housing, not "A" or "Accommodation".
+const DRAFTT_WORDS = { accommodation: 'Housing' };
 function drafttScreen(m) {
   const d = draftt(m.spine, m.rules, m.s);
   if (d.base.amount === null) return h('section', { class: 'card', 'aria-label': SCREENS.draftt }, h('p', { class: 'muted missing-row' }, 'Missing: take-home pay.'));
   const max = Math.max(0.01, ...d.rows.map((r) => r.share));
   return h('section', { class: 'card', 'aria-label': SCREENS.draftt },
     h('p', { class: 'muted' }, 'Debt, retirement, housing, food' + (d.rows.some((r) => r.key === 'therapy') ? ', transportation and therapy' : ' and transportation') + ' as shares of your take-home (retirement of gross). The mark on housing is ' + pct(d.housingReference) + ' of take-home, for reference, not a target.'),
-    h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, r.letter), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, r.reference / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
+    h('ul', { class: 'letters' }, d.rows.map((r) => h('li', {}, h('span', { class: 'letter' }, DRAFTT_WORDS[r.key] || r.label), h('span', { class: 'lbar', role: 'img', 'aria-label': r.label + ' ' + pct(r.share, 1) }, h('span', { class: 'lfill', style: 'width:' + pc(Math.min(1, r.share / max)) }), r.reference ? h('span', { class: 'lref', style: 'left:' + pc(Math.min(1, r.reference / max)), title: 'reference ' + pct(r.reference) }) : null), h('span', { class: 'lamt' }, money(r.amount) + ' (' + pct(r.share, 1) + ')')))),
     housingOver(d),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' These ' + (NUM[d.rows.length] || d.rows.length) + ' together are ' + pct(d.totalShare, 1) + ' of ' + money(d.base.takeHome) + ' take-home; everything else ' + money(d.everythingElse) + '; left over ' + (d.leftOver === null ? 'unknown' : money(d.leftOver)) + '.'),
     math('draftt', d.rows.map((r) => 'plan:draftt:' + r.key), mathCtx(m)));
@@ -762,9 +766,9 @@ function fileScreen(m) {
   const stamp = todayIso();
   const preview = pending ? (() => { try { const r = importJson(pending.text); return { ok: true, r, diff: diffSpines(m.base, r.spine) }; } catch (err) { return { ok: false, message: err.message }; } })() : null;
   return h('section', { class: 'card', 'aria-label': SCREENS.file },
-    h('p', { class: 'muted' }, 'Download a backup of your numbers, or import one. You see what changes before anything is saved.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: preview ? 'btn' : 'btn primary', onclick: () => download(exportJson(m.base, { exportedAt: stamp }), 'slam-household-' + stamp + '.json', 'application/json') }, 'Download a backup'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'log'), 'slam-log-' + stamp + '.csv', 'text/csv') }, 'Download the spending log as a spreadsheet'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'lines'), 'slam-lines-' + stamp + '.csv', 'text/csv') }, 'Download every line as a spreadsheet')),
-    h('div', { class: 'file-row' }, h('label', { for: 'import-file', class: 'edit-label' }, 'Import a backup'), file, h('button', { type: 'button', class: 'btn', onclick: () => { const f = file.files && file.files[0]; if (!f) { msg.textContent = 'Pick a file first'; return; } f.text().then((t) => { pending = { text: t, name: f.name }; refresh(); }); } }, 'Open it')), msg,
+    h('p', { class: 'muted' }, 'Download a backup of your numbers, or open a backup file. You see what changes before anything is saved.'),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: preview ? 'btn' : 'btn primary', onclick: () => download(exportJson(m.base, { exportedAt: stamp }), slugOf(whose(m.base).name) + '-' + stamp + '.json', 'application/json') }, 'Download a backup'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'log'), 'slam-log-' + stamp + '.csv', 'text/csv') }, 'Download the spending log as a spreadsheet'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'lines'), 'slam-lines-' + stamp + '.csv', 'text/csv') }, 'Download every line as a spreadsheet')),
+    h('div', { class: 'file-row' }, h('label', { for: 'import-file', class: 'edit-label' }, 'Open a backup file'), file, h('button', { type: 'button', class: 'btn', onclick: () => { const f = file.files && file.files[0]; if (!f) { msg.textContent = 'Pick a file first'; return; } f.text().then((t) => { pending = { text: t, name: f.name }; refresh(); }); } }, 'Open it')), msg,
     preview ? (preview.ok ? [h('p', { class: 'tile-sub' }, pending.name + ': a backup file' + (preview.r.migrated ? ', brought up to date' : '') + (preview.r.exportedAt ? ', downloaded ' + shortDate(preview.r.exportedAt.slice(0, 10)) : '') + '. ' + plural(preview.diff.length, 'change') + ' against today.'),
       preview.diff.length ? diffList(m.base, preview.r.spine, preview.diff, 40) : null,
       // A file with nothing different has nothing to apply, so it records no step to undo.

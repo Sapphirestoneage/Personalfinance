@@ -2347,7 +2347,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="r
    row's day box with its label above (calendar-17); the key's tint swatches (calendar-26); the change card's buttons do
    not float over their own boxes on a phone (calendar-33); the drag hint only where there is a grip (calendar-v01). */
 .week-col { position: relative; }
-@media (min-width: 900px) { .cell.low.topped .cell-cash::after { content: " lowest, after the move from savings"; } }
+/* (the topped lowest cell: see the fix pass at the end) */
 .cal-filter .seg-btn { flex: 1 1 auto; }
 .cal-filter-body { width: 100%; }
 button.go-row { width: 100%; font: inherit; text-align: left; cursor: pointer; }
@@ -2393,3 +2393,29 @@ button.go-row { width: 100%; font: inherit; text-align: left; cursor: pointer; }
   .import-queue td:nth-child(5) { grid-area: line; color: var(--text-muted); }
   .import-queue td:nth-child(6) { grid-area: status; }
 }
+/* Fix pass (2026-10-28). The client menu spans the header on a phone, as the Coach menu does, so its list never opens
+   past an edge now that the client's name shows (x-discoverability-05). */
+@media (max-width: 639px) {
+  .site-head .whose-menu { position: static; }
+  .site-head .whose-menu .whose-items { left: var(--space-2); right: var(--space-2); min-width: 0; max-width: none; }
+}
+/* A fold line's fact wraps on a phone instead of losing its end to an ellipsis (the October total's "from Oct 22",
+   Plan's payoff date). */
+@media (max-width: 639px) {
+  .fold-fact { white-space: normal; overflow: visible; text-overflow: clip; }
+  .fold-row > .fold-line { padding-top: var(--space-1); padding-bottom: var(--space-1); }
+}
+/* Plan's folds on a phone: the fact wraps under the title, so the chevron stays at the right end of every row
+   (x-consistency-25); the 55% pill cap is for wider screens. */
+@media (max-width: 479px) {
+  details.done-group.plan-fold > summary .count { max-width: none; white-space: normal; overflow: visible; }
+}
+/* The lowest cell says it is the run after a move from savings at every width (calendar-02), not only on a computer;
+   a phone cell is narrow, so it says it in short words. */
+.cell.low.topped .cell-cash::after { content: " low after a move"; }
+@media (min-width: 900px) { .cell.low.topped .cell-cash::after { content: " lowest, after the move from savings"; } }
+/* Where your take-home goes: each bar is named in words (plan-18), so the name column fits the longest word. */
+.letters li { grid-template-columns: minmax(0, 7.5rem) 1fr auto; }
+.letters .letter { font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; overflow-wrap: anywhere; }
+/* The Design kit's sample tab bars fit a phone card: smaller words, so Calendar and Spending never touch. */
+@media (max-width: 639px) { .tabbar.is-sample .tab { font-size: var(--text-xs); } }
