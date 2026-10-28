@@ -56,12 +56,12 @@ function methodsCard(spine, rules, d, extra) {
   // Round 1: when every order ends the same month at the same interest and clears the same debt first, there is
   // nothing to choose; one sentence says so instead of identical cards.
   const tie = new Set(m.map((x) => [x.debtFreeYm, Math.round(x.interest ?? -1), x.first ? x.first.name + x.first.ym : ''].join('|'))).size === 1;
-  if (tie) return h('section', { class: 'card', 'aria-labelledby': 'methods-h' }, h('h2', { id: 'methods-h' }, 'Which order?'),
+  if (tie) return h('section', { class: 'card', 'aria-labelledby': 'methods-h' }, h('h2', { id: 'methods-h' }, 'Which debt first?'),
     h('p', {}, 'Every order ends ' + (m[0].neverPaysOff ? 'never, at this pace' : monthWords(m[0].debtFreeYm)) + ' with ' + money(m[0].interest) + ' of interest and clears ' + (m[0].first ? m[0].first.name + ' first' : 'nothing first') + ', so there is nothing to choose on your plan. The plan uses ' + METHOD_WORDS[d.order.strategy].toLowerCase() + '.'));
   const now = d.order.strategy;
   const use = (id) => change((s) => putFact(s, 'debtPlan.strategy', id, 'known', todayIso()), said.changed('Payoff order', METHOD_WORDS[id].toLowerCase()));
   return h('section', { class: 'card', 'aria-labelledby': 'methods-h' },
-    h('h2', { id: 'methods-h' }, 'Which order?'),
+    h('h2', { id: 'methods-h' }, 'Which debt first?'),
     pick ? h('p', { class: 'tile-sub' }, h('strong', {}, 'Recommended: ' + METHOD_WORDS[pick.id].toLowerCase() + '. '), pick.words) : null,
     h('div', { class: 'method-grid' }, m.map((x) => h('div', { class: 'method-col' + (pick && pick.id === x.id ? ' is-pick' : ''), role: 'group', 'aria-label': x.words },
       h('p', { class: 'method-name' }, x.words, pick && pick.id === x.id ? [' ', h('span', { class: 'pill' }, 'Recommended')] : null),
@@ -70,7 +70,7 @@ function methodsCard(spine, rules, d, extra) {
         h('dt', {}, 'Interest in all'), h('dd', {}, x.interest === null ? 'missing' : money(x.interest)),
         h('dt', {}, 'First cleared'), h('dd', {}, x.first ? x.first.name + ', ' + monthWords(x.first.ym) : 'none')),
       x.id === 'stress' ? h('p', { class: 'muted' }, 'To compare: the plan runs the other two.')
-        : x.id === now ? h('button', { type: 'button', class: 'btn small', disabled: true, title: 'This is the order the plan uses now' }, 'In use now')
+        : x.id === now ? h('span', { class: 'in-use' }, h('button', { type: 'button', class: 'btn small', disabled: true }, 'In use now'), h('span', { class: 'muted in-use-why' }, 'the order the plan uses'))
           : h('button', { type: 'button', class: 'btn small' + (pick && pick.id === x.id ? ' primary' : ''), onclick: () => use(x.id) }, 'Use this order')))),
     h('p', { class: 'tile-note' }, 'Each on your plan: the extra goes to the debt while the Plan\'s debt steps are being filled.'));
 }
@@ -173,7 +173,7 @@ function utilCard(d, ctx) {
   if (!u.items.length) return null;
   const words = (r, what) => (r.value === null ? h('span', { class: 'missing-row' }, what + ': missing ' + (r.missing.length ? r.missing.map((p) => p.split('.').slice(1).join(' ')).join(', ') : 'a limit')) : what + ': ' + pc(r.value) + ' (' + money(r.peak) + ' of ' + money(r.limit) + ')' + (r.value > u.warn ? ', over the ' + pctWords(u.warn) + ' line' : ''));
   return h('section', { class: 'card', 'aria-labelledby': 'util-h' },
-    h('h2', { id: 'util-h' }, 'Utilization as the bureaus will see it'),
+    h('h2', { id: 'util-h' }, 'How full my cards look to the credit bureaus'),
     h('p', { class: 'muted' }, 'The peak balance before each card reports, not the balance today. Personal counts the cards that report to personal credit; overall counts every card.'),
     h('p', { class: 'tile-sub' }, kindChip(u.personal.kind), ' ', words(u.personal, 'Personal')),
     h('p', { class: 'tile-sub' }, kindChip(u.overall.kind), ' ', words(u.overall, 'Overall')),
@@ -215,7 +215,7 @@ function btCard(c, spine, rules, ctx, save) {
   const f = num(form.btFee, 'rate'), m = num(form.btMonths, 'int'), p = num(form.btPost, 'rate');
   const b = f.ok && m.ok && p.ok ? balanceTransfer(spine, rules, { cardId: pick.value, feeShare: f.value, promoMonths: m.value, postApr: p.value }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'bt-h' },
-    h('h2', { id: 'bt-h' }, 'A balance transfer'),
+    h('h2', { id: 'bt-h' }, 'Is a balance transfer worth it?'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); for (const [el, type, what] of [[fee, 'rate', 'The fee'], [months, 'int', 'The months'], [post, 'rate', 'The rate after']]) { const r = num(el.value, type); if (!r.ok) { msg.textContent = what + ': ' + r.message; return; } } form.btCard = pick.value; form.btFee = fee.value; form.btMonths = months.value; form.btPost = post.value; save(); } },
       h('label', { for: 'bt-card', class: 'edit-label' }, 'Move the balance of'), pick,
       h('label', { for: 'bt-fee', class: 'edit-label' }, 'Transfer fee, as a percent'), fee,
@@ -236,7 +236,7 @@ function solveCard(c, spine, rules, ctx, save, plan = null) {
   const by = h('input', { id: 'solve-by', type: 'date' }); by.value = form.solveBy;
   const x = form.solveBy ? solvePayoff(spine, rules, c.sim, { target: pick.value, byDate: form.solveBy, planExtra: plan && plan.extraFn ? plan.extraFn(1) : null }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'solve-h' },
-    h('h2', { id: 'solve-h' }, 'Paid off by a date'),
+    h('h2', { id: 'solve-h' }, 'Clear it by a date'),
     h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, with your cash day by day, and whether that extra pushes checking under the floor.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; save(); } },
       h('label', { for: 'solve-target', class: 'edit-label' }, 'Clear'), pick,
@@ -253,7 +253,7 @@ function solveCard(c, spine, rules, ctx, save, plan = null) {
 function loansCard(d, ctx) {
   if (!d.loans.length) return null;
   return h('section', { class: 'card', 'aria-labelledby': 'loans-h' },
-    h('h2', { id: 'loans-h' }, 'Student loans: income-driven repayment and forgiveness'),
+    h('h2', { id: 'loans-h' }, 'Student loans: a payment tied to my income, and forgiveness'),
     h('p', { class: 'muted' }, 'Your payment is based on your income and household size.'),
     // The whole card opens the loan in My numbers, with a chevron.
     d.loans.map((l) => h('section', { class: 'card card-tile' + (l.path ? ' has-target' : ''), 'aria-label': l.name },

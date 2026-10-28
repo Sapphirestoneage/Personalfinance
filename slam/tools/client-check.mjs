@@ -123,7 +123,7 @@ const dre = async (k) => {
   const today = await k.read();
   k.check(/Monthly surplus/.test(today), 'Today shows his numbers');
   await k.go('spending.html');
-  k.check(/Import a statement/.test(await k.read()), 'Spending opens on importing a statement (he uses statements)');
+  k.check(/Add a bank statement/.test(await k.read()), 'Spending opens on importing a statement (he uses statements)');
 };
 
 // Four levels down in My numbers, the phone's back to the top, then three undos in a row.

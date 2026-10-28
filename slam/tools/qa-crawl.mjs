@@ -50,7 +50,8 @@ function inspect({ builder }) {
   const top = !location.hash || location.hash === '#' || location.hash === '#/';
   const out = [];
   const add = (kind, what) => out.push({ kind, what });
-  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+  // Visible and in the accessibility tree: an aria-hidden element (the picker's native list, S-284) is not a target or a field.
+  const visible = (el) => { if (el.closest && el.closest('[aria-hidden="true"]')) return false; const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
   const where = (el) => { const t = (el.getAttribute('aria-label') || el.textContent || el.getAttribute('placeholder') || '').trim().replace(/\s+/g, ' ').slice(0, 50); return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '') + (t ? ' "' + t + '"' : ''); };
   const W = document.documentElement.clientWidth;
   // Overflow: anything past the right edge, unless a scrolling box (a table wrap, a chart marked to scroll) holds it.
@@ -91,7 +92,8 @@ function inspect({ builder }) {
     const named = (el.labels && el.labels.length) || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title');
     if (!named) add('no label', where(el));
   }
-  const taps = [...document.querySelectorAll('button, [role=button], a.btn, summary, select, input:not([type=hidden]), .go-row, .tabbar a')].filter(visible);
+  // A file input hidden behind its button (sr-only) is not a tap target: the button is.
+  const taps = [...document.querySelectorAll('button, [role=button], a.btn, summary, select, input:not([type=hidden]):not([type=file]), .go-row, .tabbar a')].filter(visible);
   for (const el of taps) {
     if (el.matches('button, [role=button]') && !(el.textContent.trim() || el.getAttribute('aria-label') || el.getAttribute('title') || el.getAttribute('aria-labelledby'))) add('no name', where(el));
     // A checkbox or radio is tapped by its label.

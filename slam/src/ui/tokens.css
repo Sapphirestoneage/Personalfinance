@@ -4,7 +4,8 @@
 :root {
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-num: var(--font-ui); /* numbers in the body font, with tabular figures (bug sweep): no monospace on client screens */
-  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.25rem; --text-xl: 1.6rem; --text-xxl: 2.2rem;
+  /* The floor (S-287): no client-facing text under --text-xs (13px); chart axis and chip labels never under --text-min (12px). */
+  --text-min: 0.75rem; --text-xs: 0.8125rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.25rem; --text-xl: 1.6rem; --text-xxl: 2.2rem;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
   --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-pill: 999px;
   --tap: 44px;

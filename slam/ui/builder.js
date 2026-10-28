@@ -39,7 +39,7 @@ function openCard() {
 const rows = (list) => h('ul', { class: 'go-list' }, list.map(([name, href, sub]) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, sub)))));
 
 startPage({
-  tab: null, title: 'Builder', household: false,
+  tab: null, title: 'Builder',
   render: () => [
     h('p', { class: 'lede' }, 'How the app is built: what it assumes, its formulas and its rules.'),
     h('section', { class: 'card', 'aria-labelledby': 'b-top' }, h('h2', { id: 'b-top' }, 'Start here'), rows(TOP)),

@@ -234,7 +234,7 @@ function fixedVarCard(m) {
   const row = (l, now, extra) => h('li', { class: 'fv-line' }, h('a', { class: 'fv-name', href: ledgerHref(l.path) }, l.label), h('span', { class: 'fv-amt' }, amt(l.amount)), extra, fixedSwitch(l, now));
   const head = (words, g) => h('h3', { class: 'fv-h' }, words, ' ', h('span', { class: 'fv-total' }, g.total === null ? 'some amounts missing' : money(g.total) + ' a month'));
   return h('section', { class: 'card', 'aria-labelledby': 'fv-h' },
-    h('h2', { id: 'fv-h' }, 'Fixed and variable'),
+    h('h2', { id: 'fv-h' }, 'Fixed bills and the rest'),
     h('p', { class: 'muted' }, 'Fixed is the same each time, like rent. Variable moves, like utilities and food; its trend comes from what you log.'),
     fv.fixed.items.length ? [head('Fixed', fv.fixed), h('ul', { class: 'fv-list' }, fv.fixed.items.map((l) => row(l, true)))] : null,
     fv.variable.items.length ? [head('Variable', fv.variable), h('ul', { class: 'fv-list' }, fv.variable.items.map((l) => row(l, false, trend(l))))] : null,
@@ -305,7 +305,7 @@ function autopsyCard(m) {
 
 function askCard(m, state) {
   const spine = m.spine;
-  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I spend this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
+  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I afford this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const asked = state.ask || '', askWith = state.askWith || 'cash';
   const amount = h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' }); amount.value = asked;
@@ -314,7 +314,7 @@ function askCard(m, state) {
   const parsed = asked.trim() === '' ? null : parseInput('money', asked);
   const ask = parsed && parsed.ok ? canISpend(spine, rules, m.sim, { amount: parsed.value, paidWith: askWith }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'ask-h' },
-    h('h2', { id: 'ask-h' }, 'Can I spend this?'),
+    h('h2', { id: 'ask-h' }, 'Can I afford this?'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ ask: amount.value, askWith: paid.value }); refresh(); } },
       h('label', { for: 'ask-amount', class: 'edit-label' }, 'How much, today'), amount,
       h('label', { for: 'ask-paid', class: 'edit-label' }, 'Paid with'), paid, msg,
@@ -346,7 +346,7 @@ function checkinCard(m) {
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-labelledby': 'ci-h' },
-    h('h2', { id: 'ci-h' }, 'Check in balances'),
+    h('h2', { id: 'ci-h' }, 'Update my balances'),
     h('p', { class: 'muted' }, 'Type what each account holds today. The grey number, when there is one, is what we expected.'),
     h('form', { class: 'checkin-grid', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
@@ -381,7 +381,7 @@ function sweepCard(m) {
     change((s) => setSweep(s, { on: on.checked, to: to.value || null, keep: k.value }), said.changed('The month-end sweep', on.checked ? 'on, to ' + where + (k.value ? ', keeping ' + cents(k.value) : '') : 'off'));
   };
   return h('section', { class: 'card', 'aria-labelledby': 'sweep-h' },
-    h('h2', { id: 'sweep-h' }, 'Month-end sweep'),
+    h('h2', { id: 'sweep-h' }, 'Move what is left at month end'),
     h('p', { class: 'muted' }, 'At month end, extra cash in checking moves to the account you pick.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: submit },
       h('label', { class: 'check-row', for: 'sweep-on' }, on, h('span', {}, h('strong', {}, 'Sweep at month end'))),
@@ -455,7 +455,7 @@ function importCard(m) {
     if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in, or not spending).' : ''; refresh(); }
   };
   return h('section', { class: 'card', id: 'import', 'aria-labelledby': 'imp-h' },
-    h('h2', { id: 'imp-h' }, 'Import a statement'),
+    h('h2', { id: 'imp-h' }, 'Add a bank statement'),
     h('p', { class: 'muted' }, 'Paste a download from your bank or card. You check each line before anything is added, and nothing is added twice.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); form.csv = text.value; form.csvFormat = fmt.value; form.csvWith = paid.value; try { form.proposals = proposeCsv(spine, rules, text.value, { format: fmt.value, paidWith: paid.value, merchantRules }); form.picks = null; form.importWords = ''; } catch (err) { msg.textContent = err.message; return; } refresh(); } },
       h('label', { for: 'csv-text', class: 'edit-label' }, 'A statement'), text,
@@ -465,7 +465,7 @@ function importCard(m) {
     form.importWords ? h('p', { class: 'tool-result' }, form.importWords) : null,
     p ? [h('p', { class: 'tile-sub' }, (p.label ? p.label + ': ' : '') + p.words + (p.skippedRows && p.skippedRows.length ? ' Rows skipped (no date, amount or words): ' + p.skippedRows.join(', ') + '.' : '')),
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
-        h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } })), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
+        h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('label', { class: 'take' }, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } }))), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Add the ticked lines'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; refresh(); } }, 'Discard'))] : null);
 }
 
@@ -496,7 +496,7 @@ function categoryScreen(m, cat) {
   // Its lines first (what the slice was opened for), then the cut, the month's budget and the plan against the log.
   return [
     h('section', { class: 'card', 'aria-labelledby': 'cat-lines-h' },
-      h('h2', { id: 'cat-lines-h' }, 'Lines'),
+      h('h2', { id: 'cat-lines-h' }, 'Line by line'),
       share ? h('p', {}, share) : null,
       cat.id === 'minimums' ? null : h('p', { class: 'muted' }, 'Try cutting something. Nothing is saved until you choose.'),
       h('ul', { class: 'go-list line-list' }, cat.lines.map((l) => lineRow(m, cat, l)))),
@@ -564,7 +564,7 @@ function lineBudget(m, l) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const exp = (m.base.expenses || []).find((e) => e.id === l.id);
   return h('section', { class: 'card', 'aria-labelledby': 'line-b-h' },
-    h('h2', { id: 'line-b-h' }, 'On the Budget'),
+    h('h2', { id: 'line-b-h' }, 'On my budget'),
     exp && exp.cadence === 'monthly' ? h('form', { class: 'line-plan', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const p = parseInput('money', box.value);
@@ -623,14 +623,14 @@ try { const r = await fetch(new URL('../data/benchmarks.json', import.meta.url),
 const tabOf = (state) => (state.tab === 'see' || state.tab === 'do' ? state.tab : 'do');
 function tabsBar(tab) {
   return h('div', { class: 'segmented spend-tabs', role: 'group', 'aria-label': 'Spending' },
-    [['do', 'Do'], ['see', 'Budget']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
+    [['do', 'Log it'], ['see', 'My budget']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
 }
 function referenceCard(m) {
   const r = referenceBands(m.s, BENCH);
   if (!r) return null;
   const pc1 = (x) => (x === null ? 'missing' : Math.round(x * 1000) / 10 + '%');
   return h('section', { class: 'card', 'aria-labelledby': 'ref-h' },
-    h('h2', { id: 'ref-h' }, 'Beside a common reference'),
+    h('h2', { id: 'ref-h' }, 'How I compare to a common guide'),
     h('p', { class: 'muted' }, 'Shares of pay a month (take-home plus what your paycheck saves and the match), beside the 50/30/20 lines. A reference point, not a grade.'),
     r.unmarked ? h('p', { class: 'muted missing-row' }, money(r.unmarked) + ' a month is not marked need or want yet, so needs and wants read missing.') : null,
     h('ul', { class: 'sum-lines' }, r.rows.map((x) => h('li', { class: 'sum-line' }, h('span', {}, x.label), h('span', { class: 'num' }, pc1(x.share) + ' (line at ' + pc1(x.reference) + ')')))),
@@ -639,18 +639,18 @@ function referenceCard(m) {
 const rangeWords = (m) => h('p', { class: 'range-words', 'aria-live': 'polite' }, 'Showing ' + windowWords(m.compare) + '.');
 // Do's tools, each its own screen (spending.html#/import): [title, its row's line, the screen].
 const TOOLS = {
-  import: ['Import a statement', () => 'Paste a bank or card download; you check each line first', (m) => importCard(m)],
-  checkin: ['Check in balances', (m) => (m.vw.stale.stale ? 'Out of date: type what the accounts hold now' : 'Up to date'), (m) => checkinCard(m)],
-  ask: ['Can I spend this?', () => 'See what a purchase does to your lowest day', (m, state) => askCard(m, state)],
-  sweep: ['Month-end sweep', () => 'Move what is left at the end of the month', (m) => sweepCard(m)]
+  import: ['Add a bank statement', () => 'Paste a bank or card download; you check each line first', (m) => importCard(m)],
+  checkin: ['Update my balances', (m) => (m.vw.stale.stale ? 'Out of date: type what the accounts hold now' : 'Up to date'), (m) => checkinCard(m)],
+  ask: ['Can I afford this?', () => 'See what a purchase does to your lowest day', (m, state) => askCard(m, state)],
+  sweep: ['Move what is left at month end', () => 'Move what is left at the end of the month', (m) => sweepCard(m)]
 };
 const TOOL_IDS = ['import', 'checkin', 'ask', 'sweep'];
 // Budget's other views (Budget brief: nothing that worked is lost; each is one row under the table that opens it).
 Object.assign(TOOLS, {
   'by-category': ['Budgets with pace', (m) => (m.vw.tags.rows.filter((r) => r.hot).length ? m.vw.tags.rows.filter((r) => r.hot).length + ' past their pace' : 'Each category this month'), (m) => [controls(m, monthsOf({})), tagsCard(m)]],
-  'fixed-variable': ['Fixed and variable', () => 'What stays the same and what moves', (m) => fixedVarCard(m)],
+  'fixed-variable': ['Fixed bills and the rest', () => 'What stays the same and what moves', (m) => fixedVarCard(m)],
   'estimated': ['Estimated vs actual', (m) => windowWords(m.compare), (m) => [controls(m, monthsOf({})), rangeWords(m), compareCard(m)]],
-  'reference': ['Beside a common reference', () => 'The 50/30/20 lines, not a grade', (m) => referenceCard(m)],
+  'reference': ['How I compare to a common guide', () => 'The 50/30/20 lines, not a grade', (m) => referenceCard(m)],
   'where': ['Where it goes', (m) => (m.vw.donut.total === null ? 'Shares of the month' : money(m.vw.donut.total) + ' a month'), (m) => donutCard(m)],
   'layers': ['Layers of spending', () => 'How long cash lasts on each layer', (m) => tiersCard(m)],
   'outlook': ['How the month could end', () => 'So far and expected by month end', (m) => outlookCard(m)],

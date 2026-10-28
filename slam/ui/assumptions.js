@@ -129,7 +129,7 @@ function lawCard() {
 }
 function ownCard(ctx, g) {
   const A = (ctx.spine && ctx.spine.assumptions) || {};
-  return [h('h3', { class: 'fv-h' }, 'The client\'s own guesses'),
+  return [h('h2', { class: 'fv-h' }, 'The client\'s own guesses'),
     h('p', { class: 'muted' }, 'Typed with the client, so they are their numbers: changed on My numbers, never here.'),
     h('ul', { class: 'as-list' }, g.own.map(([k, w]) => h('li', { class: 'as-row as-line as-plain' }, h('a', { class: 'as-link', href: ledgerHref('assumptions.' + k) }, h('span', { class: 'as-name' }, w), h('span', { class: 'as-value' }, A[k] && v(A[k]) !== null ? valueWords(v(A[k]), k === 'lifeExpectancy' || k === 'coastAge' ? 'age' : 'rate') : 'not given yet')))))];
 }

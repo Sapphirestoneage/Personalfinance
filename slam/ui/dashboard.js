@@ -152,7 +152,7 @@ function runwayScreen({ s }) {
     h('section', { class: 'card nw-pair', 'aria-label': 'Cash runway' },
       h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'At today\'s spending'), h('p', { class: 'tile-value' }, months(em.tiers.full.runway.value) + ' months'), keptMath('screen-runway', ['runway'], mathCtx)),
       h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, 'On needs only'), h('p', { class: 'tile-value' }, em.tiers.needsOnly.runway.value === null ? 'missing' : months(em.tiers.needsOnly.runway.value) + ' months'), keptMath('screen-runway-needs', ['runwayNeeds'], mathCtx))),
-    h('section', { class: 'card', 'aria-labelledby': 'cushion-h' }, h('h2', { id: 'cushion-h' }, 'Your cushion, in three steps'),
+    h('section', { class: 'card', 'aria-labelledby': 'cushion-h' }, h('h2', { id: 'cushion-h' }, 'My safety cushion, in three steps'),
       h('ol', { class: 'cushion-steps' }, em.cushion.map((c) => h('li', { class: c.reached ? 'is-done' : '' }, h('span', {}, c.label), h('span', { class: 'num' }, c.target.value === null ? 'missing' : money(c.target.value)), h('span', { class: 'muted' }, c.reached === null ? '' : c.reached ? 'there' : money(c.toGo) + ' to go')))),
       sh.cash.value === null ? null : h('p', { class: 'tile-sub' }, money(sh.cash.value) + ' in cash.'), sh.setAsideNote ? h('p', { class: 'tile-sub' }, sh.setAsideNote) : null, sh.unvestedNote ? h('p', { class: 'tile-sub' }, sh.unvestedNote) : null,
       em.backstop.contributions.value ? h('p', { class: 'tile-sub' }, 'Also there in a pinch: ' + money(em.backstop.contributions.value) + ' of Roth contributions, no tax or penalty.') : null,
@@ -202,7 +202,7 @@ function render(ctx) {
     futureCard(base, rules, baseOf(base, rules).s, { onPreview: previewSentence }),
     beforeCard(base),
     h('details', { class: 'card done-group home-more', open: kept().all || null, ontoggle: (e) => { if (!!kept().all !== e.target.open) keep({ all: e.target.open }); } },
-      h('summary', {}, h('span', {}, 'Today\'s numbers in full'), h('span', { class: 'count' }, 'net worth, runway, cards, FI')),
+      h('summary', {}, h('span', {}, 'All my numbers today'), h('span', { class: 'count' }, 'net worth, runway, cards, FI')),
       tiles(m),
       nextCard(m.spine, rank),
       h('ul', { class: 'go-list' },
@@ -240,7 +240,7 @@ function agendaCard(spine, rules) {
   const tick = catalogNow() ? tickTodos(catalogNow(), spine) : [];
   const all = [...tick.map((t) => ({ words: t.words, href: ledgerHref(t.path), who: t.who })), ...todos.map((t) => ({ words: t.words, href: 'profile.html#/homework', who: 'client' }))];
   return h('section', { class: 'card agenda', 'aria-labelledby': 'agenda-h' },
-    h('h2', { id: 'agenda-h' }, 'Today\'s agenda'),
+    h('h2', { id: 'agenda-h' }, 'What we are doing today'),
     h('a', { class: 'go-row agenda-resume', href: 'ledger.html?guide=1' + (at ? '#/' + at[0] : '') },
       h('span', { class: 'go-name' }, at ? 'Pick up where we left off: ' + at[2] : 'Start the call: Guide me'),
       h('span', { class: 'go-sub' }, at ? 'Guide me, step ' + (GUIDE_STEPS.indexOf(at) + 1) + ' of ' + GUIDE_STEPS.length : 'Six steps, Needs first')),
@@ -312,7 +312,7 @@ function flagItem(spine, f) {
 function nextCard(spine, rank) {
   const step = rank && rank.first, ask = rank && rank.questions[0];
   if (!step && !ask) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.'));
-  return h('section', { class: 'card', 'aria-labelledby': 'next-h' }, h('h2', { id: 'next-h' }, 'Next step'), h('ul', { class: 'flags' }, step ? stepCard(step) : questionCard(ask)));
+  return h('section', { class: 'card', 'aria-labelledby': 'next-h' }, h('h2', { id: 'next-h' }, 'Do this next'), h('ul', { class: 'flags' }, step ? stepCard(step) : questionCard(ask)));
 }
 // What else is worth doing: the cards that are not the next step, card use only when the Profile says they will
 // apply for credit within a year (and once), and the questions not already shown.

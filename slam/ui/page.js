@@ -25,7 +25,7 @@ const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/
 // there, out of the tabs), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
-  if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
+  if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'), app);
   if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink(), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));

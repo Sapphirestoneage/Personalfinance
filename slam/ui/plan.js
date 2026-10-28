@@ -82,9 +82,9 @@ const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', h
 // A step's screen is its id in words (#/high-interest); every other screen has its own word.
 const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
-  surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
-  solve: 'What it takes to get there', whatif: 'What if', calls: 'Bills worth a call', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
-  outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import', sources: 'Where each number came from',
+  surplus: 'What is left after saving', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
+  solve: 'When can I stop working?', whatif: 'What if I changed something?', calls: 'Bills I could lower with a call', wage: 'What an hour of my work is worth', draftt: 'Where my take-home goes', floor: 'If my income stopped',
+  outlook: 'The next three months', events: 'A big change coming', scenarios: 'Saved what-ifs', file: 'Save or load my numbers', sources: 'Where each number came from',
   // The second-level tabs (S-280): the Plan's cards split by what the client wants to know; nothing removed.
   debt: 'Debt', retirement: 'Retirement and tax', protection: 'Protection'
 };
@@ -174,7 +174,7 @@ function top(m) {
         : [metric('leftAfterSaving', money(surplus)), ' a month left after saving goes to these steps, in order.']),
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
-      h('h2', { id: 'foo-h' }, 'Your steps, in order'),
+      h('h2', { id: 'foo-h' }, 'What to do next, in order'),
       h('ol', { class: 'go-list' }, (() => { const t = togetherOf(f.rungs); return f.rungs.map((r) => stepRow(r, f.current, t.get(r.id) || null)); })()),
       protectLine(m.rank),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
@@ -207,15 +207,15 @@ function top(m) {
 function stepsOf(m, ids) { const t = togetherOf(m.foo.rungs); return h('ol', { class: 'go-list' }, m.foo.rungs.filter((r) => ids.includes(r.id)).map((r) => stepRow(r, m.foo.current, t.get(r.id) || null))); }
 function debtPlan(m) {
   return [
-    h('section', { 'aria-labelledby': 'pd-h' }, h('h2', { id: 'pd-h' }, 'Your debt steps'), stepsOf(m, ['highInterest', 'lowInterest'])),
-    h('section', { class: 'card', 'aria-labelledby': 'pd-dates-h' }, h('h2', { id: 'pd-dates-h' }, 'When each debt is paid off'),
+    h('section', { 'aria-labelledby': 'pd-h' }, h('h2', { id: 'pd-h' }, 'Pay off my debt, in order'), stepsOf(m, ['highInterest', 'lowInterest'])),
+    h('section', { class: 'card', 'aria-labelledby': 'pd-dates-h' }, h('h2', { id: 'pd-dates-h' }, 'When each debt is gone'),
       debtTab({ c: { sim: forecast(m.spine, m.rules, 12).sim }, spine: m.spine, rules: m.rules, mathCtx: () => ({ spine: m.spine, rules: m.rules, s: m.s }), rerender: refresh }))
   ];
 }
 // Retirement and tax: the saving steps, how much to max each account, and the planner views.
 function retirementPlan(m) {
   return [
-    h('section', { 'aria-labelledby': 'pr-h' }, h('h2', { id: 'pr-h' }, 'Your saving steps'), stepsOf(m, ['employerMatch', 'rothHsa', 'maxRetirement', 'hyper'])),
+    h('section', { 'aria-labelledby': 'pr-h' }, h('h2', { id: 'pr-h' }, 'Save for later, in order'), stepsOf(m, ['employerMatch', 'rothHsa', 'maxRetirement', 'hyper'])),
     h('ul', { class: 'go-list' }, goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account')),
     // The planner views (S-274): each folded to its headline, each with Show the math.
     ...plannerViews(m)

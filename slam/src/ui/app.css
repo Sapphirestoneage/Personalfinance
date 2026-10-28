@@ -50,7 +50,7 @@ h3 { font-size: var(--text-md); margin: 0 0 var(--space-2); }
 .btn:disabled { opacity: 0.45; cursor: default; }
 .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--accent); }
-.btn.small { min-height: 32px; padding: 0 var(--space-3); font-size: var(--text-sm); }
+.btn.small { min-height: var(--tap); padding: 0 var(--space-3); font-size: var(--text-sm); } /* every tap at least 44px (S-287) */
 .btn.danger { color: var(--bad); }
 .icon-btn { min-width: var(--tap); justify-content: center; padding: 0 var(--space-2); }
 .row { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }

@@ -79,7 +79,8 @@ export function enhanceSelects(root) {
     if (opts.length <= 3 || sel.multiple || !sel.id) continue;
     sel.dataset.picked = '1';
     const now = sel.options[sel.selectedIndex];
-    const box = h('input', { type: 'text', id: sel.id + '-pick', class: 'picker-box', placeholder: 'Type to pick', 'aria-label': sel.getAttribute('aria-label') || null });
+    const wrapLabel = sel.labels && [...sel.labels].find((l) => !l.htmlFor || l.htmlFor === sel.id);
+    const box = h('input', { type: 'text', id: sel.id + '-pick', class: 'picker-box', placeholder: 'Type to pick', 'aria-label': sel.getAttribute('aria-label') || (wrapLabel && !wrapLabel.htmlFor ? wrapLabel.textContent.trim() : null) || null, 'aria-labelledby': !sel.getAttribute('aria-label') && sel.getAttribute('aria-labelledby') ? sel.getAttribute('aria-labelledby') : null });
     box.value = now && now.value !== '' ? now.textContent : '';
     const group = (o) => (o.parentElement && o.parentElement.tagName === 'OPTGROUP' ? o.parentElement.label : null);
     const entries = () => opts.map((o) => ({ words: o.textContent, aliases: ALIASES[o.value] || [], hint: group(o), value: o.value, from: 'library' }));

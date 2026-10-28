@@ -14,6 +14,10 @@ import { parseInput, inputText } from '../engine/edits.js';
 
 const KEY = 'slam-before:v1';
 const app = document.getElementById('app');
+// The site ID top left (to Home) and the skip link first, as on every page (S-287); the rest of the coach's header
+// stays off this page, which the client opens alone.
+app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'), app);
+app.parentNode.insertBefore(h('header', { class: 'site-head' }, h('a', { class: 'site-id', href: 'dashboard.html', 'aria-label': 'Stress Less About Money: Home' }, h('span', {}, 'Stress Less'), ' ', h('span', {}, 'About Money'))), app);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function load() { try { const x = JSON.parse(localStorage.getItem(KEY) || 'null'); return x && typeof x === 'object' && x.answers && typeof x.answers === 'object' ? { answers: x.answers, gut: typeof x.gut === 'number' ? x.gut : null, step: Number.isInteger(x.step) ? x.step : 0 } : null; } catch { return null; } }
 let state = load() || { answers: {}, gut: null, step: 0 };

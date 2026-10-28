@@ -122,8 +122,7 @@ function ruleScreen(r) {
 // ---------------------------------------------------------------- the page
 const input = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'aria-label': 'A rules file', onchange: (e) => readFile(e.target) });
 startPage({
-  tab: null, title: ON_HOUSE ? 'House defaults' : 'Rules', parent: ['Builder', 'builder.html'], household: false,
-  name: (levels) => { const r = levels.length === 1 ? byId().get(levels[0]) : null; return r ? r.rule || r.id : null; },
+  tab: null, title: ON_HOUSE ? 'House defaults' : 'Rules', parent: ['Builder', 'builder.html'], name: (levels) => { const r = levels.length === 1 ? byId().get(levels[0]) : null; return r ? r.rule || r.id : null; },
   actions: ({ levels }) => (levels.length || !file ? null : [
     ON_HOUSE ? null : [h('button', { type: 'button', class: 'btn', onclick: () => input.click() }, 'Import a rules file'), input],
     Object.keys(mine()).length

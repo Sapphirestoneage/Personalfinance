@@ -868,6 +868,8 @@ const openRows = (rows) => rows.filter((r) => worthNow(umap(), r.path, r.fact.ki
 const toFill = (x) => openRows(x.allRows || x.rows || (x.node && (x.node.allRows || x.node.rows)) || []).length;
 function fillBar(n, metric = 'list:open') {
   const on = fillOn();
+  // Nothing to fill in and everything showing: the bar has nothing to offer (S-287, fewer things to look at).
+  if (!n && !on) return null;
   return h('div', { class: 'segmented fill-bar', role: 'group', 'aria-label': 'Show' },
     h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(!on), onclick: () => { if (on) setKinds([...KIND_ORDER]); } }, h('span', { class: 'seg-label' }, 'Everything')),
     h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(on), onclick: () => { if (!on) setKinds(['missing', 'rough']); } }, h('span', { class: 'seg-label' }, 'To fill in (', h('span', { 'data-metric': fresh() ? metric : null }, String(n)), ')')));
@@ -1688,6 +1690,7 @@ function render(ctx) {
   } else if (pending) pending = null; // it landed somewhere else (its screen was gone): it never opens later by surprise
   refreshGuess(spine);
   rememberPlans(spine);
+  document.body.classList.toggle('is-guide', guideOn());
   const sc = screensOf(spine);
   let body;
   if (levels[0] === 'still-guessing') body = guessList();
@@ -1760,7 +1763,7 @@ function actions(ctx) {
     // One filled button a screen: on the example, Open file is it.
     // Every change is kept in this browser as it is made (S-269); this is a copy to keep elsewhere.
     h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Download a backup'),
-    mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
+    mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Open my numbers from a file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
     h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add')
   ];

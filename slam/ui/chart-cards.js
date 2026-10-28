@@ -232,5 +232,5 @@ export function goalsCard(rows) {
 export function netWorthSpark(months) {
   const pts = (months || []).slice(0, 12).map((m) => m.netWorth).filter((x) => typeof x === 'number');
   if (pts.length < 2) return null;
-  return h('span', { class: 'tile-spark', title: 'Net worth over the next 12 months, projected: ' + money(pts[pts.length - 1]) + ' in a year' }, sparkline({ width: 120, height: 32, points: pts, rough: true, label: 'Net worth over the next 12 months, projected: about ' + money(pts[pts.length - 1]) + ' in a year' }));
+  return h('span', { class: 'tile-spark', 'aria-label': 'Net worth over the next 12 months, projected: ' + money(pts[pts.length - 1]) + ' in a year', role: 'img' }, h('span', { class: 'spark-words' }, money(pts[pts.length - 1]) + ' in a year'), sparkline({ width: 120, height: 32, points: pts, rough: true, label: 'Net worth over the next 12 months, projected: about ' + money(pts[pts.length - 1]) + ' in a year' }));
 }
