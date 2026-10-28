@@ -17,6 +17,7 @@ import { takeDeleted, restoreClient } from './clients.js';
 import { renameHousehold } from '../engine/blank.js';
 import { whose } from './household.js';
 import { searchButton } from './search.js';
+import { enhanceSelects } from './picker.js';
 import { installShortcuts } from './shortcuts.js';
 import { loadAll, openHistory, keepHistory, HISTORY_STEPS, HOUSEHOLD_KEYS, yours } from './household.js';
 import { applyDefaults } from '../engine/defaults.js';
@@ -398,6 +399,8 @@ function draw() {
     const own = opts.actions ? [].concat(opts.actions(ctx)).filter(Boolean) : [];
     headEl.replaceChildren(...(own.length ? [h('div', { class: 'page-actions' }, ...own)] : []));
     screenEl.replaceChildren(...[notice ? h('p', { class: 'card', role: 'alert' }, notice) : null, ...[].concat(opts.render(ctx))].flat(Infinity).filter((x) => x !== null && x !== undefined && x !== false));
+    // One picker (S-284): every choice list over three options types to pick.
+    enhanceSelects(screenEl);
     refocus(focus);
   }
   document.title = levels.length ? title + ' · ' + baseTitle : baseTitle;

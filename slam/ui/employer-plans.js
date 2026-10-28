@@ -15,3 +15,5 @@ export function rememberPlans(spine) {
 }
 // The template for an employer's name, or null.
 export function planFor(name) { const k = employerKey(name); if (!k) return null; memo = memo || read(); return memo[k] || null; }
+// The employers remembered, by the name they were last seen under (for the picker, S-284).
+export function knownEmployers() { memo = memo || read(); return Object.values(memo).map((t) => t && t.employer).filter(Boolean); }

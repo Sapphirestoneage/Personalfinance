@@ -6,6 +6,8 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { attachPicker } from './picker.js';
+import { fieldEntries } from './libraries.js';
 import { siblingStrip } from './siblings.js';
 import { guideOn, setGuide, guideStep, guideTop, GUIDE_IDS } from './guide.js';
 import { whoseControl } from './whose.js';
@@ -674,6 +676,9 @@ function editor(row) {
     input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
     input.value = inputText(row.type, f.value);
   }
+  // A field with a known set of answers types to pick (S-284): a bank, a servicer, an insurer, an employer.
+  const pickField = row.type === 'text' ? fieldEntries(cur(), row.path.split('.').pop()) : null;
+  const pickWrap = pickField ? attachPicker(input, { source: 'field:' + row.path.split('.').pop(), entries: () => fieldEntries(cur(), row.path.split('.').pop()) || [], onPick: () => {} }) : null;
   // A value a card on Today suggested (Update goal): in the box, ready to accept with Save.
   const suggested = takePrefill(row.path);
   if (suggested !== null) input.value = inputText(row.type, suggested);
@@ -683,11 +688,14 @@ function editor(row) {
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
     const p = row.type === 'list' || row.type === 'tiers' ? input.read() : parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
-    done(editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
+    let next = editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() });
+    // An employer seen before brings its plan details, as guesses, in the same change (S-284).
+    if (row.path.endsWith('.employerName')) { const tpl = planFor(p.value); if (tpl) next = applyTemplate(next, row.path.split('.').slice(0, 2).join('.'), tpl, today()); }
+    done(next, said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.field || row.label),
-    row.type === 'list' || row.type === 'tiers' ? input.el : input,
+    row.type === 'list' || row.type === 'tiers' ? input.el : pickWrap || input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     editActions(cancel, [

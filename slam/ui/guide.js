@@ -4,6 +4,9 @@
 // roam. Same screens, same data: every change goes through the shell's change() with words, so Undo takes it back.
 // Formatting only: the totals come from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
+import { attachPicker } from './picker.js';
+import { placeLibEntries, LIB } from './libraries.js';
+import { placeOf } from '../engine/library.js';
 import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
@@ -584,6 +587,16 @@ function income(ctx) {
   ]);
 }
 // ---------------------------------------------------------------- Taxes (its own step, DATING order, S-258)
+// The place picker: a city from the list, or any ZIP code typed (S-284).
+function placeBox(today) {
+  const box = h('input', { id: 't-place', type: 'text', placeholder: 'e.g. Brooklyn or 11215', 'aria-describedby': 't-place-hint' });
+  const apply = (pl) => {
+    if (!pl) { say('Not a place I know: pick Where you live below'); return; }
+    change((s) => { let x = putFact(s, 'household.state', pl.state, 'known', today); x = putFact(x, 'household.nycResident', pl.locality === 'nyc', 'known', today); return putFact(x, 'household.yonkersResident', pl.locality === 'yonkers', 'known', today); }, said.changed('Where you live', pl.words));
+  };
+  const wrap = attachPicker(box, { source: 'place', entries: placeLibEntries, onPick: (e) => apply(LIB.places ? placeOf(e.words, LIB.places) : null), onFree: (t) => apply(LIB.places ? placeOf(t, LIB.places) : null) });
+  return h('div', { class: 'place-pick' }, wrap, h('p', { class: 'edit-hint', id: 't-place-hint' }, 'Fills the state, and New York City or Yonkers tax.'));
+}
 function taxes(ctx) {
   const spine = ctx.spine, hh = spine.household, today = todayIso();
   const last = v(hh.lastRefund) ?? null;
@@ -600,6 +613,8 @@ function taxes(ctx) {
       h('ul', { class: 'srows' },
         lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
           pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
+        // City or ZIP (S-284): picks the state and whether New York City or Yonkers tax applies, in one change.
+        lineRow('', h('label', { class: 'srow-name', for: 't-place' }, 'City or ZIP'), placeBox(today)),
         // Where in New York (S-272): New York City and Yonkers add their own income tax.
         lineRow('', h('label', { class: 'srow-name', for: 't-where' }, 'Where you live'),
           pickBox('t-where', 'Where you live', [['', 'Pick one'], ['nyc', 'New York City'], ['yonkers', 'Yonkers'], ['ny', 'Elsewhere in New York'], ['other', 'Another state']],

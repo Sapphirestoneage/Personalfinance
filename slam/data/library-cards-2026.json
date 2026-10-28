@@ -1,0 +1,603 @@
+{
+ "year": 2026,
+ "note": "Typical values to start from, shown as guesses until the client confirms their own. Never the client's real number.",
+ "source": "Issuers' public card pages as of 2025 to 2026; annual fees and bonuses change often. The APR is a typical variable rate for the card, not any client's.",
+ "verified": "verify",
+ "cards": [
+  {
+   "id": "chase-sapphire-preferred",
+   "name": "Chase Sapphire Preferred",
+   "issuer": "Chase",
+   "aliases": [
+    "csp",
+    "sapphire preferred"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.0125,
+   "typicalApr": 0.24,
+   "signupBonus": "60,000 points after $4,000 in 3 months",
+   "signupBonusValue": 750
+  },
+  {
+   "id": "chase-sapphire-reserve",
+   "name": "Chase Sapphire Reserve",
+   "issuer": "Chase",
+   "aliases": [
+    "csr",
+    "sapphire reserve"
+   ],
+   "annualFee": 795,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.25,
+   "signupBonus": "125,000 points after $6,000 in 3 months",
+   "signupBonusValue": 1250
+  },
+  {
+   "id": "chase-freedom-unlimited",
+   "name": "Chase Freedom Unlimited",
+   "issuer": "Chase",
+   "aliases": [
+    "cfu",
+    "freedom unlimited"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $500 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "chase-freedom-flex",
+   "name": "Chase Freedom Flex",
+   "issuer": "Chase",
+   "aliases": [
+    "cff",
+    "freedom flex"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $500 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "chase-ink-business-cash",
+   "name": "Chase Ink Business Cash",
+   "issuer": "Chase",
+   "aliases": [
+    "ink cash"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.2,
+   "signupBonus": "$750 after $6,000 in 3 months",
+   "signupBonusValue": 750
+  },
+  {
+   "id": "chase-ink-business-unlimited",
+   "name": "Chase Ink Business Unlimited",
+   "issuer": "Chase",
+   "aliases": [
+    "ink unlimited"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.2,
+   "signupBonus": "$750 after $6,000 in 3 months",
+   "signupBonusValue": 750
+  },
+  {
+   "id": "chase-ink-business-preferred",
+   "name": "Chase Ink Business Preferred",
+   "issuer": "Chase",
+   "aliases": [
+    "ink preferred"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.22,
+   "signupBonus": "90,000 points after $8,000 in 3 months",
+   "signupBonusValue": 900
+  },
+  {
+   "id": "amazon-prime-visa",
+   "name": "Amazon Prime Visa",
+   "issuer": "Chase",
+   "aliases": [
+    "amazon card",
+    "prime visa"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "$150 gift card on approval",
+   "signupBonusValue": 150
+  },
+  {
+   "id": "united-explorer-card",
+   "name": "United Explorer Card",
+   "issuer": "Chase",
+   "aliases": [
+    "united card"
+   ],
+   "annualFee": 150,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.25,
+   "signupBonus": "60,000 miles after $3,000 in 3 months",
+   "signupBonusValue": 700
+  },
+  {
+   "id": "southwest-rapid-rewards-plus",
+   "name": "Southwest Rapid Rewards Plus",
+   "issuer": "Chase",
+   "aliases": [
+    "southwest card"
+   ],
+   "annualFee": 99,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.25,
+   "signupBonus": "50,000 points after $1,000 in 3 months",
+   "signupBonusValue": 650
+  },
+  {
+   "id": "marriott-bonvoy-boundless",
+   "name": "Marriott Bonvoy Boundless",
+   "issuer": "Chase",
+   "aliases": [
+    "marriott card",
+    "bonvoy"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.25,
+   "signupBonus": "3 free nights after $3,000 in 3 months",
+   "signupBonusValue": 500
+  },
+  {
+   "id": "american-express-gold-card",
+   "name": "American Express Gold Card",
+   "issuer": "American Express",
+   "aliases": [
+    "amex gold",
+    "gold card"
+   ],
+   "annualFee": 325,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "60,000 points after $6,000 in 6 months",
+   "signupBonusValue": 600
+  },
+  {
+   "id": "the-platinum-card-from-american-express",
+   "name": "The Platinum Card from American Express",
+   "issuer": "American Express",
+   "aliases": [
+    "amex platinum",
+    "amex plat",
+    "platinum card"
+   ],
+   "annualFee": 895,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "80,000 points after $8,000 in 6 months",
+   "signupBonusValue": 800
+  },
+  {
+   "id": "american-express-green-card",
+   "name": "American Express Green Card",
+   "issuer": "American Express",
+   "aliases": [
+    "amex green"
+   ],
+   "annualFee": 150,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "40,000 points after $3,000 in 6 months",
+   "signupBonusValue": 400
+  },
+  {
+   "id": "blue-cash-everyday",
+   "name": "Blue Cash Everyday",
+   "issuer": "American Express",
+   "aliases": [
+    "amex blue cash everyday",
+    "bce"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.21,
+   "signupBonus": "$200 after $2,000 in 6 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "blue-cash-preferred",
+   "name": "Blue Cash Preferred",
+   "issuer": "American Express",
+   "aliases": [
+    "amex blue cash preferred",
+    "bcp"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.21,
+   "signupBonus": "$250 after $3,000 in 6 months",
+   "signupBonusValue": 250
+  },
+  {
+   "id": "delta-skymiles-gold",
+   "name": "Delta SkyMiles Gold",
+   "issuer": "American Express",
+   "aliases": [
+    "delta card",
+    "amex delta"
+   ],
+   "annualFee": 150,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "50,000 miles after $2,000 in 6 months",
+   "signupBonusValue": 550
+  },
+  {
+   "id": "hilton-honors-card",
+   "name": "Hilton Honors Card",
+   "issuer": "American Express",
+   "aliases": [
+    "hilton card",
+    "amex hilton"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "80,000 points after $2,000 in 6 months",
+   "signupBonusValue": 400
+  },
+  {
+   "id": "capital-one-venture",
+   "name": "Capital One Venture",
+   "issuer": "Capital One",
+   "aliases": [
+    "venture"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.02,
+   "typicalApr": 0.24,
+   "signupBonus": "75,000 miles after $4,000 in 3 months",
+   "signupBonusValue": 750
+  },
+  {
+   "id": "capital-one-venture-x",
+   "name": "Capital One Venture X",
+   "issuer": "Capital One",
+   "aliases": [
+    "venture x"
+   ],
+   "annualFee": 395,
+   "rewardsRate": 0.02,
+   "typicalApr": 0.24,
+   "signupBonus": "75,000 miles after $4,000 in 3 months",
+   "signupBonusValue": 750
+  },
+  {
+   "id": "capital-one-quicksilver",
+   "name": "Capital One Quicksilver",
+   "issuer": "Capital One",
+   "aliases": [
+    "quicksilver"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $500 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "capital-one-quicksilverone",
+   "name": "Capital One QuicksilverOne",
+   "issuer": "Capital One",
+   "aliases": [
+    "quicksilver one"
+   ],
+   "annualFee": 39,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.3,
+   "signupBonus": "No signup bonus",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "capital-one-savor",
+   "name": "Capital One Savor",
+   "issuer": "Capital One",
+   "aliases": [
+    "savor",
+    "savorone"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $500 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "capital-one-platinum",
+   "name": "Capital One Platinum",
+   "issuer": "Capital One",
+   "aliases": [
+    "cap one platinum"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0,
+   "typicalApr": 0.3,
+   "signupBonus": "No signup bonus",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "citi-double-cash",
+   "name": "Citi Double Cash",
+   "issuer": "Citi",
+   "aliases": [
+    "double cash"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.02,
+   "typicalApr": 0.21,
+   "signupBonus": "$200 after $1,500 in 6 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "citi-custom-cash",
+   "name": "Citi Custom Cash",
+   "issuer": "Citi",
+   "aliases": [
+    "custom cash"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.21,
+   "signupBonus": "$200 after $1,500 in 6 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "citi-strata-premier",
+   "name": "Citi Strata Premier",
+   "issuer": "Citi",
+   "aliases": [
+    "strata premier",
+    "citi premier"
+   ],
+   "annualFee": 95,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "60,000 points after $4,000 in 3 months",
+   "signupBonusValue": 600
+  },
+  {
+   "id": "citi-simplicity",
+   "name": "Citi Simplicity",
+   "issuer": "Citi",
+   "aliases": [
+    "simplicity"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0,
+   "typicalApr": 0.21,
+   "signupBonus": "No signup bonus; 0% intro on balance transfers",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "citi-aadvantage-platinum-select",
+   "name": "Citi AAdvantage Platinum Select",
+   "issuer": "Citi",
+   "aliases": [
+    "aadvantage",
+    "american airlines card"
+   ],
+   "annualFee": 99,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.25,
+   "signupBonus": "50,000 miles after $2,500 in 3 months",
+   "signupBonusValue": 600
+  },
+  {
+   "id": "costco-anywhere-visa",
+   "name": "Costco Anywhere Visa",
+   "issuer": "Citi",
+   "aliases": [
+    "costco card"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.21,
+   "signupBonus": "No signup bonus",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "discover-it-cash-back",
+   "name": "Discover it Cash Back",
+   "issuer": "Discover",
+   "aliases": [
+    "discover it",
+    "discover"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.22,
+   "signupBonus": "Cash back matched at the end of the first year",
+   "signupBonusValue": 150
+  },
+  {
+   "id": "discover-it-miles",
+   "name": "Discover it Miles",
+   "issuer": "Discover",
+   "aliases": [
+    "discover miles"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.22,
+   "signupBonus": "Miles matched at the end of the first year",
+   "signupBonusValue": 150
+  },
+  {
+   "id": "wells-fargo-active-cash",
+   "name": "Wells Fargo Active Cash",
+   "issuer": "Wells Fargo",
+   "aliases": [
+    "active cash",
+    "wf active cash"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.02,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $500 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "wells-fargo-autograph",
+   "name": "Wells Fargo Autograph",
+   "issuer": "Wells Fargo",
+   "aliases": [
+    "autograph"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "20,000 points after $1,000 in 3 months",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "wells-fargo-reflect",
+   "name": "Wells Fargo Reflect",
+   "issuer": "Wells Fargo",
+   "aliases": [
+    "reflect"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0,
+   "typicalApr": 0.24,
+   "signupBonus": "No signup bonus; long 0% intro rate",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "bank-of-america-customized-cash-rewards",
+   "name": "Bank of America Customized Cash Rewards",
+   "issuer": "Bank of America",
+   "aliases": [
+    "boa customized cash",
+    "bofa cash"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $1,000 in 90 days",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "bank-of-america-unlimited-cash-rewards",
+   "name": "Bank of America Unlimited Cash Rewards",
+   "issuer": "Bank of America",
+   "aliases": [
+    "boa unlimited",
+    "bofa unlimited"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $1,000 in 90 days",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "bank-of-america-travel-rewards",
+   "name": "Bank of America Travel Rewards",
+   "issuer": "Bank of America",
+   "aliases": [
+    "boa travel",
+    "bofa travel"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.24,
+   "signupBonus": "25,000 points after $1,000 in 90 days",
+   "signupBonusValue": 250
+  },
+  {
+   "id": "apple-card",
+   "name": "Apple Card",
+   "issuer": "Apple",
+   "aliases": [
+    "apple card"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.25,
+   "signupBonus": "No signup bonus",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "us-bank-altitude-go",
+   "name": "U.S. Bank Altitude Go",
+   "issuer": "U.S. Bank",
+   "aliases": [
+    "altitude go"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "20,000 points after $1,000 in 90 days",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "us-bank-cashplus",
+   "name": "U.S. Bank Cash+",
+   "issuer": "U.S. Bank",
+   "aliases": [
+    "cash plus"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.01,
+   "typicalApr": 0.24,
+   "signupBonus": "$200 after $1,000 in 120 days",
+   "signupBonusValue": 200
+  },
+  {
+   "id": "paypal-cashback-mastercard",
+   "name": "PayPal Cashback Mastercard",
+   "issuer": "Synchrony",
+   "aliases": [
+    "paypal card"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.02,
+   "typicalApr": 0.3,
+   "signupBonus": "No signup bonus",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "target-circle-card",
+   "name": "Target Circle Card",
+   "issuer": "Target",
+   "aliases": [
+    "redcard",
+    "target card"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.05,
+   "typicalApr": 0.3,
+   "signupBonus": "No signup bonus; 5% off at Target",
+   "signupBonusValue": 0
+  },
+  {
+   "id": "navy-federal-cashrewards",
+   "name": "Navy Federal cashRewards",
+   "issuer": "Navy Federal",
+   "aliases": [
+    "navy federal card",
+    "nfcu"
+   ],
+   "annualFee": 0,
+   "rewardsRate": 0.015,
+   "typicalApr": 0.18,
+   "signupBonus": "$200 after $2,000 in 3 months",
+   "signupBonusValue": 200
+  }
+ ]
+}

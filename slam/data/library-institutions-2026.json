@@ -1,0 +1,490 @@
+{
+ "year": 2026,
+ "note": "Names to pick from, with the short forms people say (amex, boa). Names only: nothing here is a number.",
+ "source": "Public lists of federal student loan servicers (studentaid.gov, 2025), large insurers, auto lenders and banks.",
+ "verified": "house",
+ "institutions": [
+  {
+   "name": "MOHELA",
+   "kind": "servicer",
+   "aliases": [
+    "mohela"
+   ]
+  },
+  {
+   "name": "Nelnet",
+   "kind": "servicer",
+   "aliases": []
+  },
+  {
+   "name": "Aidvantage",
+   "kind": "servicer",
+   "aliases": [
+    "navient"
+   ]
+  },
+  {
+   "name": "EdFinancial",
+   "kind": "servicer",
+   "aliases": [
+    "edfinancial services"
+   ]
+  },
+  {
+   "name": "Central Research (CRI)",
+   "kind": "servicer",
+   "aliases": [
+    "cri"
+   ]
+  },
+  {
+   "name": "ECSI",
+   "kind": "servicer",
+   "aliases": []
+  },
+  {
+   "name": "Default Resolution Group",
+   "kind": "servicer",
+   "aliases": [
+    "drg"
+   ]
+  },
+  {
+   "name": "State Farm",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "GEICO",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Progressive",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Allstate",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "USAA",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Liberty Mutual",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Nationwide",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Farmers",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Travelers",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "American Family",
+   "kind": "insurer",
+   "aliases": [
+    "amfam"
+   ]
+  },
+  {
+   "name": "Lemonade",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Erie Insurance",
+   "kind": "insurer",
+   "aliases": [
+    "erie"
+   ]
+  },
+  {
+   "name": "Northwestern Mutual",
+   "kind": "insurer",
+   "aliases": [
+    "nm"
+   ]
+  },
+  {
+   "name": "New York Life",
+   "kind": "insurer",
+   "aliases": [
+    "nyl"
+   ]
+  },
+  {
+   "name": "MetLife",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Prudential",
+   "kind": "insurer",
+   "aliases": [
+    "pru"
+   ]
+  },
+  {
+   "name": "Haven Life",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Guardian Life",
+   "kind": "insurer",
+   "aliases": [
+    "guardian"
+   ]
+  },
+  {
+   "name": "Principal",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Lincoln Financial",
+   "kind": "insurer",
+   "aliases": [
+    "lincoln"
+   ]
+  },
+  {
+   "name": "Unum",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "The Hartford",
+   "kind": "insurer",
+   "aliases": [
+    "hartford"
+   ]
+  },
+  {
+   "name": "Mutual of Omaha",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Aflac",
+   "kind": "insurer",
+   "aliases": []
+  },
+  {
+   "name": "Ally Auto",
+   "kind": "lender",
+   "aliases": [
+    "ally"
+   ]
+  },
+  {
+   "name": "Capital One Auto Finance",
+   "kind": "lender",
+   "aliases": [
+    "cap one auto"
+   ]
+  },
+  {
+   "name": "Chase Auto",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "Wells Fargo Auto",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "Toyota Financial Services",
+   "kind": "lender",
+   "aliases": [
+    "toyota"
+   ]
+  },
+  {
+   "name": "American Honda Finance",
+   "kind": "lender",
+   "aliases": [
+    "honda"
+   ]
+  },
+  {
+   "name": "Ford Credit",
+   "kind": "lender",
+   "aliases": [
+    "ford"
+   ]
+  },
+  {
+   "name": "GM Financial",
+   "kind": "lender",
+   "aliases": [
+    "gm"
+   ]
+  },
+  {
+   "name": "Nissan Motor Acceptance",
+   "kind": "lender",
+   "aliases": [
+    "nissan"
+   ]
+  },
+  {
+   "name": "Hyundai Motor Finance",
+   "kind": "lender",
+   "aliases": [
+    "hyundai"
+   ]
+  },
+  {
+   "name": "Santander Consumer USA",
+   "kind": "lender",
+   "aliases": [
+    "santander"
+   ]
+  },
+  {
+   "name": "Carvana",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "CarMax Auto Finance",
+   "kind": "lender",
+   "aliases": [
+    "carmax"
+   ]
+  },
+  {
+   "name": "Tesla Finance",
+   "kind": "lender",
+   "aliases": [
+    "tesla"
+   ]
+  },
+  {
+   "name": "PenFed",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "SoFi",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "LightStream",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "Upstart",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "Discover Personal Loans",
+   "kind": "lender",
+   "aliases": []
+  },
+  {
+   "name": "Chase",
+   "kind": "bank",
+   "aliases": [
+    "jpmorgan",
+    "jpm"
+   ]
+  },
+  {
+   "name": "Bank of America",
+   "kind": "bank",
+   "aliases": [
+    "boa",
+    "bofa",
+    "b of a"
+   ]
+  },
+  {
+   "name": "Wells Fargo",
+   "kind": "bank",
+   "aliases": [
+    "wf",
+    "wells"
+   ]
+  },
+  {
+   "name": "Citi",
+   "kind": "bank",
+   "aliases": [
+    "citibank"
+   ]
+  },
+  {
+   "name": "Capital One",
+   "kind": "bank",
+   "aliases": [
+    "cap one",
+    "c1"
+   ]
+  },
+  {
+   "name": "U.S. Bank",
+   "kind": "bank",
+   "aliases": [
+    "us bank",
+    "usb"
+   ]
+  },
+  {
+   "name": "PNC",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "TD Bank",
+   "kind": "bank",
+   "aliases": [
+    "td"
+   ]
+  },
+  {
+   "name": "Truist",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Ally Bank",
+   "kind": "bank",
+   "aliases": [
+    "ally"
+   ]
+  },
+  {
+   "name": "Marcus by Goldman Sachs",
+   "kind": "bank",
+   "aliases": [
+    "marcus"
+   ]
+  },
+  {
+   "name": "American Express",
+   "kind": "bank",
+   "aliases": [
+    "amex"
+   ]
+  },
+  {
+   "name": "Discover",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "SoFi",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Chime",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Fidelity",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Vanguard",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Charles Schwab",
+   "kind": "bank",
+   "aliases": [
+    "schwab"
+   ]
+  },
+  {
+   "name": "E*TRADE",
+   "kind": "bank",
+   "aliases": [
+    "etrade"
+   ]
+  },
+  {
+   "name": "Robinhood",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Betterment",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Wealthfront",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Navy Federal",
+   "kind": "bank",
+   "aliases": [
+    "nfcu"
+   ]
+  },
+  {
+   "name": "USAA",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Synchrony",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Barclays",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Apple",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "Citizens",
+   "kind": "bank",
+   "aliases": []
+  },
+  {
+   "name": "KeyBank",
+   "kind": "bank",
+   "aliases": [
+    "key"
+   ]
+  },
+  {
+   "name": "Huntington",
+   "kind": "bank",
+   "aliases": []
+  }
+ ]
+}

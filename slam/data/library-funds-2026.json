@@ -1,0 +1,1310 @@
+{
+ "year": 2026,
+ "note": "Typical values to start from, shown as guesses until the client confirms their own. Never the client's real number. A target-date fund's mix follows its glide path from its year (glide: years to the target date and the stock share, straight lines between); the rest is bonds.",
+ "source": "Fund companies' public fund pages as of 2025 to 2026 (expense ratios); target-date mixes are a typical glide path, not any one company's exact schedule.",
+ "verified": "verify",
+ "glide": [
+  [
+   40,
+   0.9
+  ],
+  [
+   25,
+   0.9
+  ],
+  [
+   20,
+   0.82
+  ],
+  [
+   15,
+   0.74
+  ],
+  [
+   10,
+   0.66
+  ],
+  [
+   5,
+   0.58
+  ],
+  [
+   0,
+   0.5
+  ],
+  [
+   -7,
+   0.3
+  ]
+ ],
+ "funds": [
+  {
+   "ticker": "VTSAX",
+   "name": "Vanguard Total Stock Market Index Admiral",
+   "aliases": [
+    "total stock market",
+    "vanguard total"
+   ],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VTI",
+   "name": "Vanguard Total Stock Market ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VFIAX",
+   "name": "Vanguard 500 Index Admiral",
+   "aliases": [
+    "vanguard 500"
+   ],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VOO",
+   "name": "Vanguard S&P 500 ETF",
+   "aliases": [
+    "s&p 500"
+   ],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VTIAX",
+   "name": "Vanguard Total International Stock Index Admiral",
+   "aliases": [
+    "international"
+   ],
+   "expenseRatio": 0.0009,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VXUS",
+   "name": "Vanguard Total International Stock ETF",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VTWAX",
+   "name": "Vanguard Total World Stock Index Admiral",
+   "aliases": [
+    "total world"
+   ],
+   "expenseRatio": 0.001,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VT",
+   "name": "Vanguard Total World Stock ETF",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VBTLX",
+   "name": "Vanguard Total Bond Market Index Admiral",
+   "aliases": [
+    "total bond"
+   ],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "BND",
+   "name": "Vanguard Total Bond Market ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "BNDX",
+   "name": "Vanguard Total International Bond ETF",
+   "aliases": [],
+   "expenseRatio": 0.0007,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VBIAX",
+   "name": "Vanguard Balanced Index Admiral",
+   "aliases": [
+    "balanced"
+   ],
+   "expenseRatio": 0.0007,
+   "mix": {
+    "stocks": 0.6,
+    "bonds": 0.4,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VWELX",
+   "name": "Vanguard Wellington",
+   "aliases": [
+    "wellington"
+   ],
+   "expenseRatio": 0.0025,
+   "mix": {
+    "stocks": 0.65,
+    "bonds": 0.35,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VWINX",
+   "name": "Vanguard Wellesley Income",
+   "aliases": [
+    "wellesley"
+   ],
+   "expenseRatio": 0.0023,
+   "mix": {
+    "stocks": 0.38,
+    "bonds": 0.62,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VIGAX",
+   "name": "Vanguard Growth Index Admiral",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VVIAX",
+   "name": "Vanguard Value Index Admiral",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VIMAX",
+   "name": "Vanguard Mid-Cap Index Admiral",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VSMAX",
+   "name": "Vanguard Small-Cap Index Admiral",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VGSLX",
+   "name": "Vanguard Real Estate Index Admiral",
+   "aliases": [
+    "reit"
+   ],
+   "expenseRatio": 0.0013,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VNQ",
+   "name": "Vanguard Real Estate ETF",
+   "aliases": [],
+   "expenseRatio": 0.0013,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VGT",
+   "name": "Vanguard Information Technology ETF",
+   "aliases": [
+    "tech"
+   ],
+   "expenseRatio": 0.0009,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VYM",
+   "name": "Vanguard High Dividend Yield ETF",
+   "aliases": [
+    "dividend"
+   ],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VTEB",
+   "name": "Vanguard Tax-Exempt Bond ETF",
+   "aliases": [
+    "muni"
+   ],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VGSH",
+   "name": "Vanguard Short-Term Treasury ETF",
+   "aliases": [],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VMFXX",
+   "name": "Vanguard Federal Money Market",
+   "aliases": [
+    "money market",
+    "vanguard cash"
+   ],
+   "expenseRatio": 0.0011,
+   "mix": {
+    "stocks": 0,
+    "bonds": 0,
+    "cash": 1
+   }
+  },
+  {
+   "ticker": "FXAIX",
+   "name": "Fidelity 500 Index",
+   "aliases": [
+    "fidelity 500"
+   ],
+   "expenseRatio": 0.00015,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FSKAX",
+   "name": "Fidelity Total Market Index",
+   "aliases": [
+    "fidelity total market"
+   ],
+   "expenseRatio": 0.00015,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FZROX",
+   "name": "Fidelity ZERO Total Market Index",
+   "aliases": [
+    "zero total"
+   ],
+   "expenseRatio": 0,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FNILX",
+   "name": "Fidelity ZERO Large Cap Index",
+   "aliases": [
+    "zero large cap"
+   ],
+   "expenseRatio": 0,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FZILX",
+   "name": "Fidelity ZERO International Index",
+   "aliases": [
+    "zero international"
+   ],
+   "expenseRatio": 0,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FTIHX",
+   "name": "Fidelity Total International Index",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FSPSX",
+   "name": "Fidelity International Index",
+   "aliases": [],
+   "expenseRatio": 0.00035,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FXNAX",
+   "name": "Fidelity U.S. Bond Index",
+   "aliases": [
+    "fidelity bond"
+   ],
+   "expenseRatio": 0.00025,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FBALX",
+   "name": "Fidelity Balanced",
+   "aliases": [],
+   "expenseRatio": 0.0047,
+   "mix": {
+    "stocks": 0.65,
+    "bonds": 0.35,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "FCNTX",
+   "name": "Fidelity Contrafund",
+   "aliases": [
+    "contrafund"
+   ],
+   "expenseRatio": 0.0039,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SPAXX",
+   "name": "Fidelity Government Money Market",
+   "aliases": [
+    "fidelity cash",
+    "core position"
+   ],
+   "expenseRatio": 0.0042,
+   "mix": {
+    "stocks": 0,
+    "bonds": 0,
+    "cash": 1
+   }
+  },
+  {
+   "ticker": "SWPPX",
+   "name": "Schwab S&P 500 Index",
+   "aliases": [
+    "schwab 500"
+   ],
+   "expenseRatio": 0.0002,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SWTSX",
+   "name": "Schwab Total Stock Market Index",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SWISX",
+   "name": "Schwab International Index",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SWAGX",
+   "name": "Schwab U.S. Aggregate Bond Index",
+   "aliases": [],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHB",
+   "name": "Schwab U.S. Broad Market ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHX",
+   "name": "Schwab U.S. Large-Cap ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHF",
+   "name": "Schwab International Equity ETF",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHD",
+   "name": "Schwab U.S. Dividend Equity ETF",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHG",
+   "name": "Schwab U.S. Large-Cap Growth ETF",
+   "aliases": [],
+   "expenseRatio": 0.0004,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SCHZ",
+   "name": "Schwab U.S. Aggregate Bond ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SWVXX",
+   "name": "Schwab Value Advantage Money Fund",
+   "aliases": [
+    "schwab cash"
+   ],
+   "expenseRatio": 0.0034,
+   "mix": {
+    "stocks": 0,
+    "bonds": 0,
+    "cash": 1
+   }
+  },
+  {
+   "ticker": "IVV",
+   "name": "iShares Core S&P 500 ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "ITOT",
+   "name": "iShares Core S&P Total U.S. Stock Market ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "IXUS",
+   "name": "iShares Core MSCI Total International Stock ETF",
+   "aliases": [],
+   "expenseRatio": 0.0007,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "IEFA",
+   "name": "iShares Core MSCI EAFE ETF",
+   "aliases": [],
+   "expenseRatio": 0.0007,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "IEMG",
+   "name": "iShares Core MSCI Emerging Markets ETF",
+   "aliases": [
+    "emerging markets"
+   ],
+   "expenseRatio": 0.0009,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "IJH",
+   "name": "iShares Core S&P Mid-Cap ETF",
+   "aliases": [],
+   "expenseRatio": 0.0005,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "IJR",
+   "name": "iShares Core S&P Small-Cap ETF",
+   "aliases": [],
+   "expenseRatio": 0.0006,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "AGG",
+   "name": "iShares Core U.S. Aggregate Bond ETF",
+   "aliases": [],
+   "expenseRatio": 0.0003,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "TLT",
+   "name": "iShares 20+ Year Treasury Bond ETF",
+   "aliases": [],
+   "expenseRatio": 0.0015,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "TIP",
+   "name": "iShares TIPS Bond ETF",
+   "aliases": [
+    "tips"
+   ],
+   "expenseRatio": 0.0019,
+   "mix": {
+    "stocks": 0,
+    "bonds": 1,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SPY",
+   "name": "SPDR S&P 500 ETF Trust",
+   "aliases": [],
+   "expenseRatio": 0.000945,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "SPLG",
+   "name": "SPDR Portfolio S&P 500 ETF",
+   "aliases": [],
+   "expenseRatio": 0.0002,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "QQQ",
+   "name": "Invesco QQQ Trust",
+   "aliases": [
+    "nasdaq 100"
+   ],
+   "expenseRatio": 0.002,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "QQQM",
+   "name": "Invesco NASDAQ 100 ETF",
+   "aliases": [],
+   "expenseRatio": 0.0015,
+   "mix": {
+    "stocks": 1,
+    "bonds": 0,
+    "cash": 0
+   }
+  },
+  {
+   "ticker": "VTHRX",
+   "name": "Vanguard Target Retirement 2030",
+   "aliases": [
+    "vanguard target 2030",
+    "2030 fund",
+    "target date 2030"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2030,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VTTHX",
+   "name": "Vanguard Target Retirement 2035",
+   "aliases": [
+    "vanguard target 2035",
+    "2035 fund",
+    "target date 2035"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2035,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VFORX",
+   "name": "Vanguard Target Retirement 2040",
+   "aliases": [
+    "vanguard target 2040",
+    "2040 fund",
+    "target date 2040"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2040,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VTIVX",
+   "name": "Vanguard Target Retirement 2045",
+   "aliases": [
+    "vanguard target 2045",
+    "2045 fund",
+    "target date 2045"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2045,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VFIFX",
+   "name": "Vanguard Target Retirement 2050",
+   "aliases": [
+    "vanguard target 2050",
+    "2050 fund",
+    "target date 2050"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2050,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VFFVX",
+   "name": "Vanguard Target Retirement 2055",
+   "aliases": [
+    "vanguard target 2055",
+    "2055 fund",
+    "target date 2055"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2055,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VTTSX",
+   "name": "Vanguard Target Retirement 2060",
+   "aliases": [
+    "vanguard target 2060",
+    "2060 fund",
+    "target date 2060"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2060,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VLXVX",
+   "name": "Vanguard Target Retirement 2065",
+   "aliases": [
+    "vanguard target 2065",
+    "2065 fund",
+    "target date 2065"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2065,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": "VSVNX",
+   "name": "Vanguard Target Retirement 2070",
+   "aliases": [
+    "vanguard target 2070",
+    "2070 fund",
+    "target date 2070"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2070,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2030",
+   "aliases": [
+    "freedom index 2030",
+    "2030 fund",
+    "target date 2030"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2030,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2035",
+   "aliases": [
+    "freedom index 2035",
+    "2035 fund",
+    "target date 2035"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2035,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2040",
+   "aliases": [
+    "freedom index 2040",
+    "2040 fund",
+    "target date 2040"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2040,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2045",
+   "aliases": [
+    "freedom index 2045",
+    "2045 fund",
+    "target date 2045"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2045,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2050",
+   "aliases": [
+    "freedom index 2050",
+    "2050 fund",
+    "target date 2050"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2050,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2055",
+   "aliases": [
+    "freedom index 2055",
+    "2055 fund",
+    "target date 2055"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2055,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2060",
+   "aliases": [
+    "freedom index 2060",
+    "2060 fund",
+    "target date 2060"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2060,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2065",
+   "aliases": [
+    "freedom index 2065",
+    "2065 fund",
+    "target date 2065"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2065,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Fidelity Freedom Index 2070",
+   "aliases": [
+    "freedom index 2070",
+    "2070 fund",
+    "target date 2070"
+   ],
+   "expenseRatio": 0.0012,
+   "targetYear": 2070,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2030",
+   "aliases": [
+    "schwab target 2030",
+    "2030 fund",
+    "target date 2030"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2030,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2035",
+   "aliases": [
+    "schwab target 2035",
+    "2035 fund",
+    "target date 2035"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2035,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2040",
+   "aliases": [
+    "schwab target 2040",
+    "2040 fund",
+    "target date 2040"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2040,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2045",
+   "aliases": [
+    "schwab target 2045",
+    "2045 fund",
+    "target date 2045"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2045,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2050",
+   "aliases": [
+    "schwab target 2050",
+    "2050 fund",
+    "target date 2050"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2050,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2055",
+   "aliases": [
+    "schwab target 2055",
+    "2055 fund",
+    "target date 2055"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2055,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2060",
+   "aliases": [
+    "schwab target 2060",
+    "2060 fund",
+    "target date 2060"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2060,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2065",
+   "aliases": [
+    "schwab target 2065",
+    "2065 fund",
+    "target date 2065"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2065,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "Schwab Target Index 2070",
+   "aliases": [
+    "schwab target 2070",
+    "2070 fund",
+    "target date 2070"
+   ],
+   "expenseRatio": 0.0008,
+   "targetYear": 2070,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2030",
+   "aliases": [
+    "lifepath 2030",
+    "2030 fund",
+    "target date 2030"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2030,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2035",
+   "aliases": [
+    "lifepath 2035",
+    "2035 fund",
+    "target date 2035"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2035,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2040",
+   "aliases": [
+    "lifepath 2040",
+    "2040 fund",
+    "target date 2040"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2040,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2045",
+   "aliases": [
+    "lifepath 2045",
+    "2045 fund",
+    "target date 2045"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2045,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2050",
+   "aliases": [
+    "lifepath 2050",
+    "2050 fund",
+    "target date 2050"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2050,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2055",
+   "aliases": [
+    "lifepath 2055",
+    "2055 fund",
+    "target date 2055"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2055,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2060",
+   "aliases": [
+    "lifepath 2060",
+    "2060 fund",
+    "target date 2060"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2060,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2065",
+   "aliases": [
+    "lifepath 2065",
+    "2065 fund",
+    "target date 2065"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2065,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "BlackRock LifePath Index 2070",
+   "aliases": [
+    "lifepath 2070",
+    "2070 fund",
+    "target date 2070"
+   ],
+   "expenseRatio": 0.0009,
+   "targetYear": 2070,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2030",
+   "aliases": [
+    "t rowe retirement 2030",
+    "2030 fund",
+    "target date 2030"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2030,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2035",
+   "aliases": [
+    "t rowe retirement 2035",
+    "2035 fund",
+    "target date 2035"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2035,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2040",
+   "aliases": [
+    "t rowe retirement 2040",
+    "2040 fund",
+    "target date 2040"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2040,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2045",
+   "aliases": [
+    "t rowe retirement 2045",
+    "2045 fund",
+    "target date 2045"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2045,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2050",
+   "aliases": [
+    "t rowe retirement 2050",
+    "2050 fund",
+    "target date 2050"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2050,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2055",
+   "aliases": [
+    "t rowe retirement 2055",
+    "2055 fund",
+    "target date 2055"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2055,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2060",
+   "aliases": [
+    "t rowe retirement 2060",
+    "2060 fund",
+    "target date 2060"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2060,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2065",
+   "aliases": [
+    "t rowe retirement 2065",
+    "2065 fund",
+    "target date 2065"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2065,
+   "glide": "GLIDE"
+  },
+  {
+   "ticker": null,
+   "name": "T. Rowe Price Retirement 2070",
+   "aliases": [
+    "t rowe retirement 2070",
+    "2070 fund",
+    "target date 2070"
+   ],
+   "expenseRatio": 0.005,
+   "targetYear": 2070,
+   "glide": "GLIDE"
+  }
+ ]
+}

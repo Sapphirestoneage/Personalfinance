@@ -1,0 +1,558 @@
+{
+ "year": 2026,
+ "note": "Where someone lives, to fill the state and whether New York City or Yonkers tax applies. A ZIP code reads by its first three digits; New York City is ZIPs 100 to 104, 111 to 114 and 116, Yonkers 10701 to 10710.",
+ "source": "USPS ZIP code prefixes (first three digits by state).",
+ "verified": "house",
+ "zip3": [
+  [
+   5,
+   5,
+   "NY"
+  ],
+  [
+   6,
+   9,
+   "PR"
+  ],
+  [
+   10,
+   27,
+   "MA"
+  ],
+  [
+   28,
+   29,
+   "RI"
+  ],
+  [
+   30,
+   38,
+   "NH"
+  ],
+  [
+   39,
+   49,
+   "ME"
+  ],
+  [
+   50,
+   54,
+   "VT"
+  ],
+  [
+   55,
+   55,
+   "MA"
+  ],
+  [
+   56,
+   59,
+   "VT"
+  ],
+  [
+   60,
+   69,
+   "CT"
+  ],
+  [
+   70,
+   89,
+   "NJ"
+  ],
+  [
+   100,
+   149,
+   "NY"
+  ],
+  [
+   150,
+   196,
+   "PA"
+  ],
+  [
+   197,
+   199,
+   "DE"
+  ],
+  [
+   200,
+   200,
+   "DC"
+  ],
+  [
+   201,
+   201,
+   "VA"
+  ],
+  [
+   202,
+   205,
+   "DC"
+  ],
+  [
+   206,
+   219,
+   "MD"
+  ],
+  [
+   220,
+   246,
+   "VA"
+  ],
+  [
+   247,
+   268,
+   "WV"
+  ],
+  [
+   270,
+   289,
+   "NC"
+  ],
+  [
+   290,
+   299,
+   "SC"
+  ],
+  [
+   300,
+   319,
+   "GA"
+  ],
+  [
+   320,
+   349,
+   "FL"
+  ],
+  [
+   350,
+   369,
+   "AL"
+  ],
+  [
+   370,
+   385,
+   "TN"
+  ],
+  [
+   386,
+   397,
+   "MS"
+  ],
+  [
+   398,
+   399,
+   "GA"
+  ],
+  [
+   400,
+   427,
+   "KY"
+  ],
+  [
+   430,
+   458,
+   "OH"
+  ],
+  [
+   460,
+   479,
+   "IN"
+  ],
+  [
+   480,
+   499,
+   "MI"
+  ],
+  [
+   500,
+   528,
+   "IA"
+  ],
+  [
+   530,
+   549,
+   "WI"
+  ],
+  [
+   550,
+   567,
+   "MN"
+  ],
+  [
+   570,
+   577,
+   "SD"
+  ],
+  [
+   580,
+   588,
+   "ND"
+  ],
+  [
+   590,
+   599,
+   "MT"
+  ],
+  [
+   600,
+   629,
+   "IL"
+  ],
+  [
+   630,
+   658,
+   "MO"
+  ],
+  [
+   660,
+   679,
+   "KS"
+  ],
+  [
+   680,
+   693,
+   "NE"
+  ],
+  [
+   700,
+   714,
+   "LA"
+  ],
+  [
+   716,
+   729,
+   "AR"
+  ],
+  [
+   730,
+   749,
+   "OK"
+  ],
+  [
+   750,
+   799,
+   "TX"
+  ],
+  [
+   800,
+   816,
+   "CO"
+  ],
+  [
+   820,
+   831,
+   "WY"
+  ],
+  [
+   832,
+   838,
+   "ID"
+  ],
+  [
+   840,
+   847,
+   "UT"
+  ],
+  [
+   850,
+   865,
+   "AZ"
+  ],
+  [
+   870,
+   884,
+   "NM"
+  ],
+  [
+   885,
+   885,
+   "TX"
+  ],
+  [
+   889,
+   898,
+   "NV"
+  ],
+  [
+   900,
+   961,
+   "CA"
+  ],
+  [
+   967,
+   968,
+   "HI"
+  ],
+  [
+   970,
+   979,
+   "OR"
+  ],
+  [
+   980,
+   994,
+   "WA"
+  ],
+  [
+   995,
+   999,
+   "AK"
+  ]
+ ],
+ "nycZip3": [
+  100,
+  101,
+  102,
+  103,
+  104,
+  111,
+  112,
+  113,
+  114,
+  116
+ ],
+ "yonkersZip": [
+  10701,
+  10710
+ ],
+ "cities": [
+  {
+   "name": "New York City",
+   "state": "NY",
+   "locality": "nyc",
+   "aliases": [
+    "nyc",
+    "new york",
+    "manhattan"
+   ]
+  },
+  {
+   "name": "Brooklyn",
+   "state": "NY",
+   "locality": "nyc",
+   "aliases": []
+  },
+  {
+   "name": "Queens",
+   "state": "NY",
+   "locality": "nyc",
+   "aliases": [
+    "astoria",
+    "flushing",
+    "jamaica"
+   ]
+  },
+  {
+   "name": "Bronx",
+   "state": "NY",
+   "locality": "nyc",
+   "aliases": [
+    "the bronx"
+   ]
+  },
+  {
+   "name": "Staten Island",
+   "state": "NY",
+   "locality": "nyc",
+   "aliases": []
+  },
+  {
+   "name": "Yonkers",
+   "state": "NY",
+   "locality": "yonkers",
+   "aliases": []
+  },
+  {
+   "name": "Albany",
+   "state": "NY",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Buffalo",
+   "state": "NY",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Rochester",
+   "state": "NY",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Syracuse",
+   "state": "NY",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "White Plains",
+   "state": "NY",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Long Island",
+   "state": "NY",
+   "locality": null,
+   "aliases": [
+    "nassau",
+    "suffolk"
+   ]
+  },
+  {
+   "name": "Jersey City",
+   "state": "NJ",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Hoboken",
+   "state": "NJ",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Newark",
+   "state": "NJ",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Stamford",
+   "state": "CT",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Boston",
+   "state": "MA",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Philadelphia",
+   "state": "PA",
+   "locality": null,
+   "aliases": [
+    "philly"
+   ]
+  },
+  {
+   "name": "Washington",
+   "state": "DC",
+   "locality": null,
+   "aliases": [
+    "dc"
+   ]
+  },
+  {
+   "name": "Baltimore",
+   "state": "MD",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Chicago",
+   "state": "IL",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Los Angeles",
+   "state": "CA",
+   "locality": null,
+   "aliases": [
+    "la"
+   ]
+  },
+  {
+   "name": "San Francisco",
+   "state": "CA",
+   "locality": null,
+   "aliases": [
+    "sf"
+   ]
+  },
+  {
+   "name": "San Diego",
+   "state": "CA",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Seattle",
+   "state": "WA",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Portland",
+   "state": "OR",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Denver",
+   "state": "CO",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Austin",
+   "state": "TX",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Houston",
+   "state": "TX",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Dallas",
+   "state": "TX",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Miami",
+   "state": "FL",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Atlanta",
+   "state": "GA",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Phoenix",
+   "state": "AZ",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Nashville",
+   "state": "TN",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Minneapolis",
+   "state": "MN",
+   "locality": null,
+   "aliases": []
+  },
+  {
+   "name": "Detroit",
+   "state": "MI",
+   "locality": null,
+   "aliases": []
+  }
+ ]
+}

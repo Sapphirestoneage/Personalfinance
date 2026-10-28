@@ -11,7 +11,10 @@ import { tickFeature } from '../engine/features.js';
 import { applyTemplate } from '../engine/employer-plans.js';
 import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
 import { parseInput, addMaybe, putFact } from '../engine/edits.js';
-import { setAt } from '../engine/spine.js';
+import { setAt, getAt } from '../engine/spine.js';
+import { attachPicker } from './picker.js';
+import { nameEntries, LIB } from './libraries.js';
+import { cardFills, fundFills, LIBRARY_SOURCE } from '../engine/library.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS, POLICY_TYPES } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { h } from './view.js';
@@ -76,6 +79,25 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const kind = () => { const k = typeSel ? typeSel.value : first; return roth && roth.checked && ROTH_OF[k] ? ROTH_OF[k] : k; };
 
   const name = box('add-name');
+  // The picker on the name (S-284): what is picked fills what comes with it, as guesses, when Add is pressed (one
+  // change, so one Undo takes the whole pick back).
+  let pickFills = {}, pickedAmount = false;
+  const nameWrap = attachPicker(name, {
+    source: 'name:' + collection,
+    entries: () => nameEntries(now(), collection, (PRESETS[kind()] || {}).family, kind()),
+    onPick: (e) => {
+      pickFills = {};
+      const v = e.value || {};
+      if (e.source === 'card') Object.assign(pickFills, cardFills(v));
+      else if (e.source === 'fund') Object.assign(pickFills, fundFills(v, LIB.funds, +today.slice(0, 4)));
+      else if (e.source === 'institution') pickFills.institution = v.name;
+      if (collection === 'expenses') {
+        if (fatSel && v.fat) fatSel.value = v.fat;
+        if (v.amount !== null && v.amount !== undefined && amount.value.trim() === '') { amount.value = String(v.amount); pickedAmount = true; amount.dispatchEvent(new Event('input')); }
+        pickFills.need = v.need; if (v.subscription) pickFills.subscription = true;
+      }
+      if (collection === 'goals' && v.type && typeSel) { typeSel.value = v.type; typeSel.dispatchEvent(new Event('change')); }
+    } });
   const amount = box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' });
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
   const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
@@ -224,6 +246,19 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       if (tpl && tickColl === 'accounts') sp = applyTemplate(sp, base, tpl, today);
       made = { ...made, spine: sp };
     }
+    // What the pick brought (S-284): each as a guess from the library, never over a number typed here.
+    if (Object.keys(pickFills).length || pickedAmount) {
+      const base = made.firstPath.split('.').slice(0, 2).join('.');
+      let sp = made.spine;
+      for (const [k, x] of Object.entries(pickFills)) {
+        if (x === null || x === undefined) continue;
+        const was = getAt(sp, base + '.' + k);
+        if (was && was.kind === 'known' && was.value !== null) continue;
+        sp = k === 'need' || k === 'subscription' ? putFact(sp, base + '.' + k, x, 'known', today) : setAt(sp, base + '.' + k, { value: x, kind: 'rough', asOf: today, source: LIBRARY_SOURCE });
+      }
+      if (pickedAmount && made.firstPath) { const f = getAt(sp, made.firstPath); if (f && f.value !== null) sp = setAt(sp, made.firstPath, { ...f, kind: 'rough', source: LIBRARY_SOURCE }); }
+      made = { ...made, spine: sp };
+    }
     if (made.collection === 'goals' && ans.by) made = { ...made, spine: setAt(made.spine, 'goals.' + made.id + '.by', ans.by) };
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);
@@ -238,9 +273,9 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     typeSel ? field('add-type', income ? '1. What kind of income?' : '1. What kind?', typeSel) : null,
     rothRow,
     h('div', { class: 'add-grid' },
-      typeSel ? null : field('add-name', 'Name', name, null, null, true),
+      typeSel ? null : field('add-name', 'Name', nameWrap, null, null, true),
       h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint),
-      typeSel ? field('add-name', 'Name (optional)', name, null, null, true) : null),
+      typeSel ? field('add-name', 'Name (optional)', nameWrap, null, null, true) : null),
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
     maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),
