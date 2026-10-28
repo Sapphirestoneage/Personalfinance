@@ -11,7 +11,7 @@ export function echo(input, type) {
     const r = understood(type, input.value, localToday());
     line.replaceChildren();
     if (!r) { line.remove(); return; }
-    if (!line.isConnected) (input.closest('.picker-wrap') || input).after(line);
+    if (!line.isConnected) (input.closest('.affix') || input).after(line);
     if (!r.ok) { line.classList.add('is-unread'); line.append(r.message); return; }
     line.classList.remove('is-unread');
     line.append(h('span', { class: 'understood-tag' }, 'Reads as '), h('strong', {}, r.words));

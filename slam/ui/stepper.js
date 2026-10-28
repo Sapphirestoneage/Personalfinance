@@ -28,14 +28,15 @@ export function stepper(steps, at, { title = 'Step', nav = true, doneMeans = nul
       next ? h('a', { class: 'btn small', href: next.href }, next.label + ' ›') : null) : null);
 }
 
-// What a step is for (Batch 8, S-278): one collapsed line, "What this step is for  2 of 4", that opens to its purpose
-// and a live checkmark for each thing it needs. checks: [{ words, done }].
-export function purposeCard(purpose, checks) {
+// What a step is for (Batch 8, S-278): one collapsed line, "What this step is for  2 of 4 entered", that opens to its
+// purpose and a live checkmark for each thing it needs. checks: [{ words, done }]. A Numbers section, which is not a
+// step, names itself in the title ("What Debt is for").
+export function purposeCard(purpose, checks, { title = 'What this step is for' } = {}) {
   const n = checks.filter((c) => c.done).length;
   return h('details', { class: 'card done-group purpose-card' },
-    h('summary', {}, h('span', { class: 'purpose-title' }, 'What this step is for'), checks.length ? h('span', { class: 'purpose-count' }, n + ' of ' + checks.length + ' in') : null),
+    h('summary', {}, h('span', { class: 'purpose-title' }, title), checks.length ? h('span', { class: 'purpose-count' }, n + ' of ' + checks.length + ' entered') : null),
     h('p', { class: 'purpose-words' }, purpose),
-    checks.length ? h('ul', { class: 'purpose-checks' }, checks.map((c) => h('li', { class: c.done ? 'is-done' : null }, h('span', { class: 'purpose-mark', 'aria-hidden': 'true' }, c.done ? '✓' : '○'), h('span', {}, c.words), h('span', { class: 'sr-only' }, c.done ? ' (in)' : ' (not yet)')))) : null);
+    checks.length ? h('ul', { class: 'purpose-checks' }, checks.map((c) => h('li', { class: c.done ? 'is-done' : null }, h('span', { class: 'purpose-mark', 'aria-hidden': 'true' }, c.done ? '✓' : '○'), h('span', {}, c.words), h('span', { class: 'sr-only' }, c.done ? ' (entered)' : ' (not yet)')))) : null);
 }
 // The end of a step: what the client has now, and what the next step opens (a link).
 export function nowHave(have, unlocks, href) {

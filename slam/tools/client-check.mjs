@@ -64,7 +64,7 @@ async function addIncome(k, { type, basis, name, amount, often }) {
   await k.go('session.html#/income');
   await k.tap('#i-add');
   await k.pick('#add-type', type);
-  if (basis) { if (await k.has('#add-basis')) await k.pick('#add-basis', basis); else k.notes.push('Income: no pay question for ' + type); }
+  if (basis) { if (await k.has('#add-basis-' + basis)) await k.tap('#add-basis-' + basis); else k.notes.push('Income: no pay question for ' + type); }
   if (often && await k.has('#add-schedule')) await k.pick('#add-schedule', often);
   await k.type('#add-name', name);
   await k.type('#add-amount', amount);

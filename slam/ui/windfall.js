@@ -117,8 +117,8 @@ function stepScreen(m, st) {
   const once = (p) => (p && !seen.has(p) ? (seen.add(p), true) : false);
   const rows = [
     ...many.filter((x) => once(x.path)).map((x) => goRow(ledgerHref(x.path), x.name, money(x.pay) + ' from this money')),
-    ...(st.kind === 'missing' ? st.missing.slice(0, 3) : []).filter(once).map((p) => goRow(ledgerHref(p), labelFor(m.spine, p), 'Missing: fill it in My numbers')),
-    once(st.path) ? goRow(ledgerHref(st.path), labelFor(m.spine, st.path), 'Open it in My numbers') : null
+    ...(st.kind === 'missing' ? st.missing.slice(0, 3) : []).filter(once).map((p) => goRow(ledgerHref(p), labelFor(m.spine, p), 'Missing: fill it in Numbers')),
+    once(st.path) ? goRow(ledgerHref(st.path), labelFor(m.spine, st.path), 'Open it in Numbers') : null
   ].filter(Boolean);
   const plain = many.filter((x) => !x.path);
   return h('section', { class: 'card', 'aria-label': st.label },

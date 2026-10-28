@@ -44,7 +44,7 @@ test('the item shows its answers in one line, each phrase opening just its own q
 
 test('adding goes in small steps: what kind, then how much; the name is optional', () => {
   const src = read('ui/add-form.js');
-  assert.ok(src.indexOf("'1. What kind") < src.indexOf("amountLabel, h('div', { class: 'amount-row' }"), 'kind before amount');
+  assert.ok(src.indexOf("'1. What kind") < src.indexOf("h('div', { class: 'add-amt' }, amountLabel"), 'kind before amount');
   assert.match(src, /field\('add-name', 'Name \(optional\)'/);
   assert.doesNotMatch(src.slice(src.indexOf("return h('form', { class: 'editor add-form'")), /ticksBox/, 'the type questions are guessed on the item, not asked in the form');
 });

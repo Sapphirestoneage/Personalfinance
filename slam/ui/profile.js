@@ -204,7 +204,8 @@ function reviewScreen({ spine, rules }) {
 }
 
 startPage({
-  tab: 'home', title: 'Profile',
+  // Opened from the client menu, so no main tab is lit (as the Builder pages do): the trail reads client > Profile.
+  tab: null, title: 'Profile',
   // #/todo is the old address of the homework (Home's "All N to-dos" and the One-pager link to it): one list, one name.
   name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'On the call' : L2_AREAS[levels[1]] || null) : ({ todo: 'Homework', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'FI assumptions', prefs: 'Preferences', review: 'Quarterly review' })[levels[0]] || AREA_NAMES[levels[0]] || null),
   render: (ctx) => {

@@ -17,7 +17,7 @@ import { maxItFor } from './maxit-panel.js';
 import { h, chip, money, pct, ledgerHref, summaryMoney, stepHref, metric } from './view.js';
 import { toneOf, answersOf } from '../engine/profile.js';
 import { pref } from './prefs.js';
-import { forecast, fixButton, lowWords } from './forecast.js';
+import { cashCard } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
 import { guessesFor } from './urgency.js';
 import { openQuestions } from '../engine/questions.js';
@@ -220,7 +220,7 @@ function render(ctx) {
         h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
         // The One-pager opens from End call and from here (QUESTIONS.md 197).
         h('li', {}, h('a', { class: 'go-row plain', href: 'onepager.html' }, h('span', { class: 'go-name' }, 'One-pager (print or save)'))),
-        guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses: counting...' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' guesses worth checking']))) : null))
+        guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses: counting...' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' guesses to answer']))) : null))
   ];
 }
 
@@ -249,18 +249,6 @@ function beforeCard(spine) {
     h('h2', { id: 'before-h' }, 'Before our first call'),
     h('p', {}, open + ' of ' + l1.length + ' questions still open.'),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'before.html' }, 'Open the questions'), h('a', { class: 'btn', href: 'where.html' }, 'Where to find each number')));
-}
-
-// Cash ahead (audit, 2026-10-27): the one forecast every screen reads. Under the floor it is the first card, ending
-// with the fix as a button; above it, one line.
-function cashCard(spine, rules) {
-  const { story } = forecast(spine, rules);
-  if (!story) return null;
-  if (!story.under) return null;
-  return h('section', { class: 'card flag flag-red cash-first', id: 'cash-low', 'aria-labelledby': 'cash-low-h' },
-    h('h2', { id: 'cash-low-h', class: 'flag-title' }, 'Checking goes under your floor'),
-    h('p', { class: 'flag-line' }, lowWords(story) + '. Your floor is ' + money(story.floor) + '.'),
-    h('div', { class: 'flag-actions' }, fixButton(story, 'btn small')));
 }
 
 // The money flow (S-192). No Split here (audit 4): each section opens its screen in My numbers, where its lines are.

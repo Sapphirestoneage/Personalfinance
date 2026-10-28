@@ -17,8 +17,9 @@ export const INCOME_MORE = [['tips', 'Tips'], ['rental', 'Rental income'], ['pen
 export const INCOME_WORDS = Object.fromEntries([...INCOME_FIRST, ...INCOME_MORE]);
 // How often, in plain words. Paychecks only come on a pay schedule.
 export const OFTEN_WORDS = [['monthly', 'A month'], ['semimonthly', 'Twice a month'], ['biweekly', 'Every 2 weeks'], ['weekly', 'A week'], ['quarterly', 'A quarter'], ['yearly', 'A year']];
-export const PAY_SCHEDULE = [['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['weekly', 'Weekly'], ['monthly', 'Monthly']];
-export const W2_BASIS = [['salary', 'Salary'], ['hourly', 'By the hour'], ['both', 'Salary plus tips, overtime or commission']];
+export const PAY_SCHEDULE = OFTEN_WORDS.filter(([k]) => ['monthly', 'semimonthly', 'biweekly', 'weekly'].includes(k));
+// Tips, overtime or commission on top are a switch beside the pick (answers.extra), never a third way of being paid.
+export const W2_BASIS = [['salary', 'Salary'], ['hourly', 'By the hour']];
 export const SELF_BASIS = [['steady', 'About the same each month'], ['lumpy', 'In lumps']];
 
 // What goes in the name box, by what is being added.
@@ -73,7 +74,7 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
   if (type === 'w2') {
     const basis = a.payBasis === 'hourly' ? 'hourly' : 'salary';
     s = setPay(s, id, basis === 'hourly' ? { basis, hourlyRate: amount, hoursPerWeek: a.hoursPerWeek ?? null, cadence: often } : { basis, salary: amount, cadence: often }, today);
-    if (a.payBasis === 'both') s = addItem(s, { collection: 'income', type: 'tips', label: name + ': tips, overtime, commission' }, today).spine;
+    if (a.payBasis === 'both' || a.extra) s = addItem(s, { collection: 'income', type: 'tips', label: name + ': tips, overtime, commission' }, today).spine;
   } else if ((type === '1099' || type === 'side') && a.payBasis === 'lumpy') {
     s = setPay(s, id, { basis: 'lumpy', yearTotal: amount }, today);
   } else {

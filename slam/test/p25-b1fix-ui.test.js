@@ -93,8 +93,8 @@ test('nothing that takes the focus hides under the tab bar or Back; folds wear a
   assert.match(css, /\.builder-link \{ [^}]*min-width: var\(--tap\);/);
 });
 
-test('the Builder link is plain words on the Builder itself', () => {
-  assert.match(code('ui/page.js'), /\/\\\/builder\\\.html\$\/\.test\(location\.pathname\) \? h\('span', \{ class: 'builder-link', 'aria-current': 'page' \}, 'Builder'\)/);
+test('the footer carries no Builder link (the Coach gear is its one home, S-280)', () => {
+  assert.doesNotMatch(code('ui/page.js'), /builder-link|Builder/);
 });
 
 test('My numbers: Still guessing and Subscriptions open a row in place; a linked debt opens its line in place', () => {

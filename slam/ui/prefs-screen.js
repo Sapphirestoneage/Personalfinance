@@ -30,7 +30,7 @@ function tilesControl(p, value) {
   return h('ul', { class: 'pref-tiles', 'aria-labelledby': 'pref-' + p.id }, all.map((k) => {
     const on = order.includes(k), i = order.indexOf(k), w = optWords(p, k);
     return h('li', { class: 'pref-tile' },
-      h('label', { class: 'check-row', for: 'tile-' + k }, h('input', { type: 'checkbox', id: 'tile-' + k, checked: on, onchange: (e) => move(e.target.checked ? [...order, k] : order.filter((x) => x !== k), w + (e.target.checked ? ' shows on Today' : ' is off Today')) }), h('span', {}, w)),
+      h('label', { class: 'check-row', for: 'tile-' + k }, h('input', { type: 'checkbox', id: 'tile-' + k, checked: on, onchange: (e) => move(e.target.checked ? [...order, k] : order.filter((x) => x !== k), w + (e.target.checked ? ' shows on Home' : ' is off Home')) }), h('span', {}, w)),
       h('button', { type: 'button', class: 'btn small', disabled: !on || i === 0, 'aria-label': 'Move ' + w + ' up', title: !on ? 'Tick it to place it' : i === 0 ? 'Already first' : null, onclick: () => { const n = [...order]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; move(n, w + ' moved up'); } }, 'Up'),
       h('button', { type: 'button', class: 'btn small', disabled: !on || i === order.length - 1, 'aria-label': 'Move ' + w + ' down', title: !on ? 'Tick it to place it' : i === order.length - 1 ? 'Already last' : null, onclick: () => { const n = [...order]; [n[i + 1], n[i]] = [n[i], n[i + 1]]; move(n, w + ' moved down'); } }, 'Down'));
   }));

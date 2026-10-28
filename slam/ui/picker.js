@@ -19,7 +19,9 @@ let seq = 0;
 // attachPicker(input, { entries: () => [{ words, aliases, hint, from: 'mine' | 'library', value }], onPick(entry), onFree(text), source, all })
 // all: the box stands in for a list (enhanceSelects), so a focus, a click or arrow down opens the whole list, with the
 // box's words selected so typing narrows it; a free-text box (a place) opens on typing only.
-export function attachPicker(input, { entries, onPick, onFree = null, source = null, max = 5, all = false }) {
+// free: the last row is "Use what I typed" (a name, a place); a box that stands in for a list has no free row, and when
+// nothing matches it says so instead of a silent empty list.
+export function attachPicker(input, { entries, onPick, onFree = null, source = null, max = 5, all = false, free = true }) {
   const id = 'pick-' + (++seq);
   const list = h('ul', { class: 'picker-list', role: 'listbox', id, hidden: true });
   const wrap = h('div', { class: 'picker' });
@@ -38,6 +40,7 @@ export function attachPicker(input, { entries, onPick, onFree = null, source = n
     const e = shown[i];
     close();
     if (!e) return;
+    if (e.none) return;
     if (e.free) { if (onFree) onFree(input.value.trim()); return; }
     input.value = e.words;
     rememberPick(source, e.words);
@@ -47,10 +50,11 @@ export function attachPicker(input, { entries, onPick, onFree = null, source = n
     const q = whole ? '' : input.value.trim();
     const pool = [...entries(), ...(source ? recentOf(source) : [])];
     shown = q ? matchPicks(pool, q, max) : whole ? matchPicks(pool, '', pool.length) : [];
-    if (q) shown.push({ words: 'Use what I typed: "' + q + '"', free: true });
+    if (q && free) shown.push({ words: 'Use what I typed: "' + q + '"', free: true });
+    if (q && !free && !shown.length) shown.push({ words: 'Not one of the choices; keep typing', none: true });
     armed = !whole;
     at = whole ? Math.max(0, shown.findIndex((e) => e.words === input.value.trim())) : 0;
-    list.replaceChildren(...shown.map((e, i) => h('li', { role: 'option', id: id + '-' + i, class: 'picker-opt' + (e.free ? ' is-free' : ''), 'aria-selected': String(i === at),
+    list.replaceChildren(...shown.map((e, i) => h('li', { role: 'option', id: id + '-' + i, class: 'picker-opt' + (e.free ? ' is-free' : '') + (e.none ? ' is-none' : ''), 'aria-selected': String(i === at), 'aria-disabled': e.none ? 'true' : null,
       onpointerdown: (ev) => { ev.preventDefault(); take(i); } },
       h('span', { class: 'picker-words' }, e.words), e.hint ? h('span', { class: 'picker-hint' }, e.hint) : null, e.from === 'mine' ? h('span', { class: 'pill' }, 'yours') : e.from === 'recent' ? h('span', { class: 'pill' }, 'recent') : null)));
     list.hidden = !shown.length;
@@ -105,6 +109,8 @@ export function enhanceSelects(root) {
     box.hidden = sel.hidden;
     new MutationObserver(() => { box.hidden = sel.hidden; }).observe(sel, { attributes: true, attributeFilter: ['hidden'] });
     // The box reads as a list (a chevron, ui/spine.css): a focus or a click opens the whole list, filled or not.
-    attachPicker(box, { entries, max: 5, all: true, onPick: (e) => { sel.value = e.value; sel.dispatchEvent(new Event('change', { bubbles: true })); }, onFree: () => { box.value = now ? now.textContent : ''; } });
+    attachPicker(box, { entries, max: 5, all: true, free: false, onPick: (e) => { sel.value = e.value; sel.dispatchEvent(new Event('change', { bubbles: true })); } });
+    // Words that match no choice are said so in the list; once the box is left, the list's own choice comes back.
+    box.addEventListener('blur', () => setTimeout(() => { if (!opts.some((o) => o.textContent === box.value)) { const o = sel.options[sel.selectedIndex]; box.value = o && o.value !== '' ? o.textContent : ''; } }, 150));
   }
 }

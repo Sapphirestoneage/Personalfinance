@@ -21,7 +21,7 @@ export function endCallTodos(spine, ranking, catalog) {
   const out = [];
   for (const q of openQuestions(spine, ranking) || []) {
     const f = getAt(spine, q.path), by = whoSupplies(f);
-    out.push({ who: q.kind === 'missing' && by !== 'default' && by !== 'lookedUp' ? 'client' : 'coach', words: q.label + (q.kind === 'missing' ? ': not given yet' : ': a guess, worth checking'), path: q.row || q.path });
+    out.push({ who: q.kind === 'missing' && by !== 'default' && by !== 'lookedUp' ? 'client' : 'coach', words: q.label + (q.kind === 'missing' ? ': not given yet' : ': a guess to answer'), path: q.row || q.path });
   }
   for (const g of homeworkList(spine, spine.meta.asOf)) for (const x of g.items) out.push({ who: 'client', words: x + ' (' + g.where + ')', path: null });
   if (catalog) for (const t of tickTodos(catalog, spine)) if (!out.some((o) => o.path === t.path)) out.push(t);
@@ -37,7 +37,8 @@ export function downloadBackup(spine, today) {
 let savedFor = null;
 // The reveal (S-286): End call opens on the FI date, large, and the three changes made since the call started that
 // moved it most. The weighing runs after the screen is up (each change is put back alone and the date figured again).
-const yearsWords = (y) => { const n = Math.abs(y), r = n >= 1 ? Math.round(n * 10) / 10 + (Math.round(n * 10) / 10 === 1 ? ' year' : ' years') : Math.round(n * 12) + (Math.round(n * 12) === 1 ? ' month' : ' months'); return r; };
+// Whole years on screen, as the strip says them (the tenth lives in Show the math); under a year, months.
+const yearsWords = (y) => { const n = Math.abs(y), r = n >= 1 ? Math.round(n) + (Math.round(n) === 1 ? ' year' : ' years') : Math.round(n * 12) + (Math.round(n * 12) === 1 ? ' month' : ' months'); return r; };
 const valWords = (x) => (typeof x !== 'number' ? String(x) : Math.abs(x) < 1 && x !== 0 ? pct(x, 1) : money(x));
 const itemName = (spine, path) => { const [c, id] = path.split('.'), x = (spine[c] || []).find((i) => i.id === id) || {}; return (x.name && typeof x.name === 'object' ? x.name.value : x.name) || x.label || id; };
 export function fiReveal(spine, rules) {
@@ -73,7 +74,7 @@ export function endCallScreen(spine, ranking, catalog, today) {
         : h('p', {}, 'This window can\'t save files, so no backup was saved here. The numbers stay in this browser; open SLAM in its own tab to save a backup.'),
       h('div', { class: 'edit-actions' },
         h('a', { class: 'btn primary', id: 'ec-print', href: 'onepager.html' }, 'Print or save the one-pager'),
-        h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Save another backup'))),
+        h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Download a backup'))),
     h('section', { class: 'card', 'aria-labelledby': 'ec-you' }, h('h2', { id: 'ec-you' }, 'Your to-dos (' + theirs.length + ')'),
       h('p', { class: 'muted' }, 'Things to tell us or look up before we talk again.'), list(theirs, 'Nothing to look up.')),
     h('section', { class: 'card coach-only', 'aria-labelledby': 'ec-me' }, h('h2', { id: 'ec-me' }, 'Coach to-dos (' + mine.length + ')'),

@@ -32,6 +32,7 @@ import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
 import { echo, dateBox } from './understood.js';
+import { foldRow } from './rows.js';
 import { budgetView, startMonth, RANGES, realDifferences, closeMonth, reopenMonth, planSuggestions, keepPlan, sortEntry, setMerchantRule, merchantRules as learnedMerchants, OVER_CHOICES, UNDER_CHOICES } from '../engine/budget.js';
 import { editExpense } from '../engine/edits.js';
 
@@ -142,6 +143,8 @@ function logItem(spine, e) {
 }
 
 // The five-second logger: amount, a tag chip, paid with, a merchant (cleaned as you type), Add.
+// The logger is folded (DESIGN.md 21): one line with this month's count; "+ Add a purchase" opens the form.
+let logAdding = false;
 function loggerCard(m) {
   const spine = m.spine;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
@@ -162,7 +165,7 @@ function loggerCard(m) {
   let dayRead = true;
   const date = dateBox('log-date', '', (v) => { form.date = v; dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20', 'aria-label': 'Day' });
   const pressTag = (t) => { form.tag = t; for (const b of chips.children) b.setAttribute('aria-pressed', String(b.textContent === TAG_WORDS[t])); };
-  const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-label': 'Tag' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => pressTag(t) }, TAG_WORDS[t])));
+  const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-labelledby': 'log-kind-l' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => pressTag(t) }, TAG_WORDS[t])));
   const submit = (kind) => {
     const p = parseInput('money', amount.value);
     if (!p.ok) { msg.textContent = p.message; amount.focus(); return; }
@@ -178,18 +181,19 @@ function loggerCard(m) {
     if (!ok) { Object.assign(form, was); refresh(); }
   };
   const entries = m.vw.log;
-  return h('section', { class: 'card', id: 'log', 'aria-labelledby': 'log-h' },
-    h('h2', { id: 'log-h' }, 'Add a purchase ', h('span', { class: 'count' }, String(entries.length) + ' this month')),
-    h('form', { class: 'logger', novalidate: true, onsubmit: (e) => { e.preventDefault(); submit('spend'); } },
+  const logForm = h('form', { class: 'logger', 'aria-label': 'Add a purchase', novalidate: true, onsubmit: (e) => { e.preventDefault(); submit('spend'); } },
       h('label', { for: 'log-amount', class: 'edit-label' }, 'How much'), amount,
-      chips,
+      h('p', { class: 'edit-label', id: 'log-kind-l' }, 'Category'), chips,
       h('label', { for: 'log-line', class: 'edit-label' }, 'Which line (optional)'), line,
       h('label', { for: 'log-paid', class: 'edit-label' }, 'Paid with'), paid,
       h('label', { for: 'log-merchant', class: 'edit-label' }, 'Where (optional)'), merchant, hint,
       h('label', { for: 'log-date', class: 'edit-label' }, 'Day'), date,
       msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add it'), h('button', { type: 'button', class: 'btn', onclick: () => submit('refund') }, 'Add as a refund'))),
-    entries.length ? h('ul', { class: 'log-list', 'aria-label': 'This month\'s log' }, entries.map((e) => logItem(spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.'));
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'), h('button', { type: 'button', class: 'btn', onclick: () => submit('refund') }, 'Add as a refund')));
+  return foldRow('log', 'Purchases', String(entries.length) + ' this month', () => [
+    logAdding ? logForm : null,
+    entries.length ? h('ul', { class: 'log-list', 'aria-label': 'This month\'s log' }, entries.map((e) => logItem(spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.')],
+  { add: { label: 'Add', onOpen: () => { logAdding = true; } } });
 }
 
 // One tag's bar: spent against the budget, with a mark where the budget expects you to be today.
@@ -232,7 +236,7 @@ function fixedSwitch(l, now) {
 }
 function fixedVarCard(m) {
   const fv = m.fv;
-  const amt = (a) => (a === null ? h('span', { class: 'empty' }, 'no amount') : money(a));
+  const amt = (a) => (a === null ? h('span', { class: 'empty' }, MISSING_WORDS) : money(a));
   const trend = (l) => {
     if (!l.logged) return h('span', { class: 'fv-note' }, 'nothing logged yet');
     const avg = 'avg ' + money(l.average) + ' over ' + l.logged + (l.logged === 1 ? ' month' : ' months');
@@ -324,7 +328,7 @@ function askCard(m, state) {
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Tell me'))),
     ask && ask.verdict ? [
       h('p', {}, h('span', { class: 'verdict ' + ask.verdict }, ask.verdict === 'yes' ? 'Yes' : ask.verdict === 'tight' ? 'Tight' : 'No')),
-      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), ask.lowBefore.amount === 0 && ask.lowAfter.amount === 0 && !ask.shortfalls ? null : h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' would dip under the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
+      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), ask.lowBefore.amount === 0 && ask.lowAfter.amount === 0 && !ask.shortfalls ? null : h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' would dip under the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in Numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
       ask.hours === null ? null : h('p', { class: 'tile-note' }, kindChip(ask.kind)),
       mathButton(['spend:ask'], () => ({ ...m.ctx(), ask }))] : null);
 }
@@ -347,11 +351,11 @@ function checkinCard(m) {
   let dayRead = true;
   const date = dateBox('ci-date', '', (v) => { form.checkDate = v || todayIso(); dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20' });
   const f = checkInForecast(m.spine, m.sim, form.checkDate >= m.sim.start ? form.checkDate : m.sim.start);
-  const boxes = f.accounts.map((a) => ({ a, input: echo(h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? '' : 'expected ' + money(f.forecast[a.id]) }), 'money') }));
+  const boxes = f.accounts.map((a) => ({ a, input: echo(h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,745' }), 'money') }));
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-label': 'Check in balances' },
-    h('p', { class: 'muted' }, 'Type what each account holds today. The faint amount in a box is what we expected.'),
+    h('p', { class: 'muted' }, 'Type what each account holds today. Each label says what we expected.'),
     h('form', { class: 'checkin-grid', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const balances = {}, forecast = {};
@@ -363,8 +367,8 @@ function checkinCard(m) {
       if (!change((s) => checkIn(s, { date: on, balances, forecast }), said.added('Check-in for ' + shortDate(on)))) form.checkDate = on;
     } },
       h('label', { for: 'ci-date', class: 'edit-label' }, 'On'), date,
-      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
-      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save balances'))),
+      ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', now ' + (a.now === null ? 'missing' : money(a.now)) + (f.forecast[a.id] === null ? '' : ', expected ' + money(f.forecast[a.id]))), input]),
+      msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'))),
     h('h2', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
     h('h2', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
     math.length ? mathButton(math, m.ctx) : null);
@@ -375,8 +379,10 @@ function sweepCard(m) {
   const cal = (m.spine.calendar || {}).sweep || {};
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const on = h('input', { type: 'checkbox', id: 'sweep-on', checked: cal.on === true });
-  const to = h('select', { id: 'sweep-to' }, h('option', { value: '' }, 'Pick an account'), ...m.sim.model.accounts.filter((a) => !a.primary).map((a) => h('option', { value: a.id }, a.name)));
-  to.value = cal.to || '';
+  const opts = m.sim.model.accounts.filter((a) => !a.primary);
+  const to = h('select', { id: 'sweep-to' }, h('option', { value: '' }, 'Pick an account'), ...opts.map((a) => h('option', { value: a.id }, a.name)));
+  // One account to pick from is no choice: it is picked, and said as a line.
+  to.value = cal.to || (opts.length === 1 ? opts[0].id : '');
   // A keep of 0 is the same as none, so the box reads blank, not 0 (the saved number stays what it is).
   const keepBox = echo(h('input', { id: 'sweep-keep', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 200' }), 'money'); keepBox.value = cal.keep ? String(cal.keep) : '';
   const submit = (e) => {
@@ -391,8 +397,9 @@ function sweepCard(m) {
     h('p', { class: 'muted' }, 'At month end, extra cash in checking moves to the account you pick.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: submit },
       h('label', { class: 'check-row', for: 'sweep-on' }, on, h('span', {}, h('strong', {}, 'Sweep at month end'))),
-      h('label', { for: 'sweep-to', class: 'edit-label' }, 'To'), to,
-      h('label', { for: 'sweep-keep', class: 'edit-label' }, 'Keep above the floor'), keepBox, msg,
+      opts.length === 1 ? h('p', { class: 'edit-label' }, 'To ' + opts[0].name) : [h('label', { for: 'sweep-to', class: 'edit-label' }, 'To'), to],
+      h('label', { for: 'sweep-keep', class: 'edit-label' }, 'Also keep in checking (optional)'), keepBox,
+      h('p', { class: 'edit-hint' }, 'On top of the floor. Blank keeps nothing extra.'), msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'))),
     sw.on ? [h('p', { class: 'tile-sub' }, sw.moves.length ? 'Inside the window: ' + sw.moves.map((x) => money(x.amount) + ' on ' + shortDate(x.date) + (x.toName ? ' to ' + x.toName : '')).join('; ') + ' (' + money(sw.total) + ' in all).' : 'Nothing above the floor and the keep at a month end inside the window.'), mathButton(['spend:sweep'], m.ctx)] : h('p', { class: 'muted' }, 'Off.'));
 }
@@ -490,7 +497,7 @@ function lineRow(m, cat, l) {
   return h('li', { class: off ? 'dropped' : null },
     h('a', { class: 'go-row plain', href: at(cat.id, l.id) },
       h('span', { class: 'go-name' }, l.label),
-      h('span', { class: 'go-sub' }, l.amount === null ? [chip('missing'), h('span', { class: 'empty' }, 'No amount yet')] : [h('span', { class: 'go-total' }, money(l.amount)), ' a month'])),
+      h('span', { class: 'go-sub' }, l.amount === null ? [chip('missing'), h('span', { class: 'empty' }, MISSING_WORDS)] : [h('span', { class: 'go-total' }, money(l.amount)), ' a month'])),
     cuttable ? h('button', { type: 'button', class: 'btn small toggle', 'aria-pressed': String(off), 'aria-label': (off ? 'Put back ' : 'Try without ') + l.label, onclick: () => toggleCut(l.id) }, off ? 'Put back' : 'Try without') : null);
 }
 
@@ -529,8 +536,8 @@ function lineScreen(m, cat, l) {
   return [
     h('section', { class: 'card', 'aria-labelledby': 'line-h' },
       h('h2', { id: 'line-h' }, 'What it costs', a && a.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'subscription')] : null, a && a.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null),
-      l.amount === null ? h('p', { class: 'missing-row' }, chip('missing'), ' No amount yet.') : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(l.amount)), h('span', { class: 'muted' }, 'a month', a ? ', ' + money(a.yearly) + ' a year' : '')),
-      inPlace ? null : h('p', {}, h('a', { href: ledgerHref(l.path) }, 'Change it in My numbers')),
+      l.amount === null ? h('p', { class: 'missing-row' }, chip('missing'), ' ' + MISSING_WORDS + '.') : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(l.amount)), h('span', { class: 'muted' }, 'a month', a ? ', ' + money(a.yearly) + ' a year' : '')),
+      inPlace ? null : h('p', {}, h('a', { href: ledgerHref(l.path) }, 'Change it in Numbers')),
       a && a.subscription ? h('p', { class: 'tile-sub' }, 'Last looked at: ', a.reviewed ? shortDate(a.reviewed) : h('span', { class: 'missing-row' }, h('a', { href: ledgerHref('expenses.' + l.id + '.reviewed') }, 'never'))) : null,
       price ? h('p', { class: 'tile-sub' }, 'Price: ' + priceWords(price)) : null,
       trial ? h('p', { class: 'tile-sub' }, 'Free trial: ' + trialWords(trial)) : null,
@@ -585,7 +592,7 @@ function lineTarget(m, l) {
   const tv = te && te.amount ? te.amount.value : null, now = exp.amount ? exp.amount.value : null;
   const box = echo(h('input', { id: 'line-target', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 400' }), 'money');
   box.value = tv === null ? '' : String(tv);
-  const amt = echo(h('input', { id: 'step-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 25', 'aria-label': 'Step by this much' }), 'money');
+  const amt = echo(h('input', { id: 'step-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 25' }), 'money');
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const path = 'expenses.' + l.id + '.amount';
   const step = (how, words) => change((x) => stepToward(x, t.spine, path, how, todayIso()), said.changed(l.label, words));
@@ -606,6 +613,7 @@ function lineTarget(m, l) {
       h('div', { class: 'edit-actions' },
         h('button', { type: 'button', class: 'btn small primary', onclick: () => step('all', money(tv) + ' a month, the target') }, 'All the way'),
         h('button', { type: 'button', class: 'btn small', onclick: () => step('half', money(stepValue(now, tv, 'half')) + ' a month, halfway to the target') }, 'Halfway')),
+      h('label', { for: 'step-amt', class: 'edit-label' }, 'Step by'),
       h('div', { class: 'line-plan-row' }, amt, h('button', { type: 'button', class: 'btn small', onclick: () => { const p = parseInput('money', amt.value); if (!p.ok || !(p.value > 0)) { msg.textContent = 'Step by an amount above $0'; amt.focus(); return; } step(p.value, money(p.value) + ' toward the target'); } }, 'Step by this much'))) : null);
 }
 
@@ -795,7 +803,7 @@ function targetScreen(m) {
       pickT(entry.id, 'Target set: ' + n + ', a copy of today\'s plan to change line by line');
     } },
       h('label', { for: 'target-name', class: 'edit-label' }, 'Save today\'s plan as a target'), name, msg,
-      h('p', { class: 'edit-hint' }, 'Then change its lines on each line\'s screen; My numbers stay as they are.'),
+      h('p', { class: 'edit-hint' }, 'Then change its lines on each line\'s screen; your numbers stay as they are.'),
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as the target')))
   ];
 }
@@ -810,7 +818,7 @@ function sortScreen(m) {
       [...FAT, 'other'].map((tag) => h('optgroup', { label: TAG_WORDS[tag] }, (m.base.expenses || []).filter((x) => (x.fat || 'other') === tag).map((x) => h('option', { value: x.id }, x.label)))));
     return h('li', {}, h('div', { class: 'owed-head' }, h('span', {}, (e.merchant || 'Unnamed') + ', ' + shortDate(e.date)), h('span', { class: 'owed-amt' }, cents(e.amount))),
       h('label', { for: pickId, class: 'edit-label' }, 'Which line'), box,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small primary', onclick: () => { if (!box.value) return; const x = m.base.expenses.find((y) => y.id === box.value); change((s) => sortEntry(s, e.id, { expenseId: box.value }), said.changed((e.merchant || 'The purchase') + ' on ' + shortDate(e.date), x.label + (e.merchant ? ', and next time too' : ''))); } }, 'Sort it')));
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small', onclick: () => { if (!box.value) return; const x = m.base.expenses.find((y) => y.id === box.value); change((s) => sortEntry(s, e.id, { expenseId: box.value }), said.changed((e.merchant || 'The purchase') + ' on ' + shortDate(e.date), x.label + (e.merchant ? ', and next time too' : ''))); } }, 'Sort it')));
   })));
 }
 // Stores and their lines (the household's merchant memory): what each store is sorted to; change or remove one. data/merchant-rules.json is the starting set.

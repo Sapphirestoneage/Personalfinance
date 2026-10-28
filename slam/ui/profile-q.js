@@ -5,6 +5,7 @@
 // are engine/profile.js.
 
 import { h } from './view.js';
+import { dateBox } from './understood.js';
 import { NOT_SURE, STATES } from '../engine/profile.js';
 
 
@@ -33,7 +34,7 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
       q.max ? h('p', { class: 'edit-hint' }, picked + ' of ' + q.max + ' picked' + (picked >= q.max ? '; tap one to take it off before adding another.' : '.')) : null];
   } else if (q.kind === 'text') {
     // A long answer (Why now) is a few lines; a short one is a name.
-    const box = q.long ? h('textarea', { id, rows: '4', 'aria-labelledby': id + '-l', maxlength: '400' }) : h('input', { id, type: 'text', autocomplete: 'given-name', 'aria-labelledby': id + '-l', maxlength: '40' });
+    const box = q.long ? h('textarea', { id, rows: '4', 'aria-labelledby': id + '-l', maxlength: '400' }) : h('input', { id, type: 'text', autocomplete: q.id === 'firstName' ? 'given-name' : 'off', 'aria-labelledby': id + '-l', maxlength: '40' });
     box.value = typeof value === 'string' && value !== NOT_SURE ? value : '';
     box.addEventListener('change', () => onAnswer(box.value.trim() || null));
     body = h('div', { class: 'q-field' }, box);
@@ -59,9 +60,10 @@ export function questionEl(q, raw, onAnswer, { idPrefix = 'pq' } = {}) {
     if (opts) {
       input = h('select', { id, class: 'pick-box', 'aria-labelledby': id + '-l', onchange: () => onAnswer(input.value === '' ? null : input.value) }, h('option', { value: '' }, 'Pick one'), ...opts.map(([k, w]) => h('option', { value: k, selected: String(value) === k }, w)));
     } else {
-      input = h('input', { id, type: 'date', 'aria-labelledby': id + '-l' });
-      input.value = typeof value === 'string' && value !== NOT_SURE ? value : '';
-      input.addEventListener('change', () => onAnswer(input.value || null));
+      // The date box takes "dec 6" or "the 15th" (S-285); the day it read is saved when the box is left.
+      let iso = typeof value === 'string' && value !== NOT_SURE ? value : '';
+      input = dateBox(id, iso, (v) => { iso = v; }, { 'aria-labelledby': id + '-l' });
+      input.addEventListener('change', () => onAnswer(iso || null));
     }
     body = h('div', { class: 'q-field' }, input);
   }

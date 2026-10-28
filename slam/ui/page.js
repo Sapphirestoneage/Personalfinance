@@ -7,7 +7,6 @@ import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile } from './household.js';
 import { loadFailWords } from './profile-file.js';
-import { pref } from './prefs.js';
 
 let banner = null;
 function showError(text) {
@@ -16,19 +15,15 @@ function showError(text) {
   banner.querySelector('.error-text').textContent = String(text || 'an error with no message');
 }
 
-// The Builder link; on the Builder itself it is where you are, so it is plain words, not a link to the same screen.
-// Client view (Preferences) hides it.
-const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
-
 // Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
-// the app, the footer line and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
-// there, out of the tabs), and the catcher.
+// the app, the footer line after it (the Builder opens from the Coach gear, S-280, so the footer carries no second
+// link to it), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
   // First on every page (S-287), before the header, so one Tab and Enter goes straight to the screen.
   if (!app.parentNode.querySelector(':scope > .skip')) (app.parentNode === document.body ? document.body.prepend.bind(document.body) : (x) => app.parentNode.insertBefore(x, app))(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'));
   if (!app.hasAttribute('tabindex')) app.setAttribute('tabindex', '-1');
-  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink(), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };

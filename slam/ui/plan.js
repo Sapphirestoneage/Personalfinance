@@ -11,6 +11,7 @@ import { saveFile } from './save-file.js';
 import { taxBuckets, allocation, feesInDollars, bracketRoom, sources } from '../engine/planner.js';
 import { protectionChecks, protectionLine } from '../engine/protection.js';
 import { foldRow } from './rows.js';
+import { dateBox } from './understood.js';
 import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
 import { ssEstimates, SS_NOT_COUNTED } from '../engine/ss.js';
@@ -24,7 +25,7 @@ import { headlineStrip } from './strip.js';
 import { isCouple } from '../engine/couple.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
-import { forecast, fixButton, lowWords } from './forecast.js';
+import { forecast, cashCard, lowWords } from './forecast.js';
 import { rankSteps } from '../engine/next-step.js';
 import { fooLadder, surplusWaterfall, allocator, paycheckPlan, planPayoff, solvers, realHourlyWage, draftt, fixedFloor, outlook, goalsView, applyLifeEvent, removeLifeEvent, diffSpines, exportJson, importJson, exportCsv, starterBasisOf, STARTER_WORDS, stepPaces } from '../engine/plan.js';
 import { planClearDates } from '../engine/debtview.js';
@@ -150,13 +151,14 @@ function togetherOf(rungs) {
 // The outlook in one sentence (Batch 8); the runs are behind Show the math and on its own screen.
 // It leads with the one forecast every screen reads (ui/forecast.js), so the Plan names the same lowest day as Today,
 // the Calendar and Spending; the runs (good and bad months) are on the outlook's own screen.
+// Under the floor it is the one floor card Home draws (ui/forecast.js cashCard), with the runs link as its last row.
 function outlookLine(m) {
   const { story } = forecast(m.base, m.rules);
   if (!story) return null;
+  const runs = (lead) => h('p', { class: 'tile-sub outlook-line', id: story.under ? null : 'cash-low' }, lead, 'Good and bad months are in the ', h('a', { href: '#/outlook' }, SCREENS.outlook), '.');
+  if (story.under) return cashCard(m.base, m.rules, runs(''));
   const low = lowWords(story);
-  return [story.under ? h('p', { class: 'tile-sub outlook-line' }, h('strong', {}, 'Checking goes under your floor.')) : null,
-    h('p', { class: 'tile-sub outlook-line', id: 'cash-low' }, low + (low.endsWith('.') ? ' ' : '. ') + 'Good and bad months are in the ', h('a', { href: '#/outlook' }, SCREENS.outlook), '.'),
-    story.under ? h('div', { class: 'edit-actions' }, fixButton(story, 'btn small')) : null];
+  return runs(low + (low.endsWith('.') ? ' ' : '. '));
 }
 // Protection gaps rank with the steps (engine/next-step.js) but are not steps of the order: one line, each a link.
 function protectLine(rank) {
@@ -181,9 +183,10 @@ function top(m) {
     outlookLine(m),
     h('section', { 'aria-labelledby': 'foo-h' },
       h('h2', { id: 'foo-h' }, 'What do I do next?'),
-      h('ol', { class: 'go-list' }, (() => { const t = togetherOf(f.rungs); return f.rungs.map((r) => stepRow(r, f.current, t.get(r.id) || null)); })()),
-      protectLine(m.rank),
-      math('foo', f.rungs.filter((r) => r.need !== null && !r.done).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
+      // Show the math is the last item of the list it explains, as on every other card.
+      h('ol', { class: 'go-list' }, (() => { const t = togetherOf(f.rungs); return f.rungs.map((r) => stepRow(r, f.current, t.get(r.id) || null)); })(),
+        h('li', { class: 'math-row' }, math('foo', f.rungs.filter((r) => r.need !== null && !r.done).map((r) => 'plan:foo:' + r.id), mathCtx(m)))),
+      protectLine(m.rank)),
     // More about your plan (Krug pass): three rows that open, each saying its most useful fact on the closed line;
     // open or closed is kept with the screen.
     h('section', { 'aria-label': 'More about your plan' },
@@ -195,14 +198,14 @@ function top(m) {
           goRow('#/draftt', SCREENS.draftt, 'Your big costs as shares of take-home'),
           goRow('#/calls', SCREENS.calls, callsFact(m)),
           goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']))),
-      fold('future', 'Your future', g.rows.length ? plural(g.rows.length, 'goal') + (events.length ? ', ' + plural(events.length, 'event') : '') : events.length ? plural(events.length, 'event') : 'Goals and what-ifs',
+      fold('future', 'Your future', g.rows.length ? plural(g.rows.length, 'goal') + (events.length ? ', ' + plural(events.length, 'event') : '') : events.length ? plural(events.length, 'event') : 'goals and what-ifs',
         h('ul', { class: 'go-list' },
           goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
           goRow('#/whatif', SCREENS.whatif, 'Spend less, earn more, pay debt faster'),
           goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
           goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
           goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
-      fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'Nothing saved yet',
+      fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'nothing saved yet',
         h('ul', { class: 'go-list' },
           goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
           goRow('#/file', SCREENS.file, 'Download a backup, or import one'))))
@@ -225,7 +228,7 @@ function debtPlan(m) {
 function retirementPlan(m) {
   return [
     h('section', { 'aria-labelledby': 'pr-h' }, h('h2', { id: 'pr-h' }, 'When can I stop working?'),
-      h('p', { class: 'plan-answer' }, m.s.fi.yearsToFi.value === null ? 'Not at this pace yet. These steps bring it closer:' : 'At this pace, ' + (m.s.fi.yearsToFi.kind === 'rough' ? 'around ' : 'in ') + (+m.spine.meta.asOf.slice(0, 4) + Math.round(m.s.fi.yearsToFi.value)) + '. These steps bring it sooner:'),
+      h('p', { class: 'plan-answer' }, m.s.fi.yearsToFi.value === null ? 'Not at this pace yet. These steps bring it closer:' : 'At this pace, ' + (m.s.fi.yearsToFi.kind === 'rough' ? 'about ' : 'in ') + (+m.spine.meta.asOf.slice(0, 4) + Math.round(m.s.fi.yearsToFi.value)) + '. These steps bring it sooner:'),
       stepsOf(m, ['employerMatch', 'rothHsa', 'maxRetirement', 'hyper'])),
     h('ul', { class: 'go-list' }, goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'), goRow('#/sources', SCREENS.sources, sourcesFact(m))),
     // The planner views (S-274): each folded to its headline, each with Show the math.
@@ -238,7 +241,7 @@ function protectionPlan(m) {
     // No stage: the check is not needed now (no chip) or waits on a number (Missing).
     [c.stage ? h('span', { class: 'stage-chip stage-' + c.stage }, { green: 'Covered', yellow: 'Worth a look', red: 'Check this' }[c.stage]) : /^Not needed/.test(c.headline) ? null : chip('missing'), ' ' + c.headline],
     h('div', {}, c.lines.length ? h('ul', {}, c.lines.map((l) => h('li', {}, l))) : null, h('p', { class: 'tile-note' }, 'How: ' + c.method),
-      h('p', {}, h('a', { href: 'ledger.html#/protection' }, 'Your policies in My numbers')), math('protect-' + c.id, ['plan:protect:' + c.id], mathCtx(m))), ' fold-sentence'));
+      h('p', {}, h('a', { href: 'ledger.html#/protection' }, 'Your policies in Numbers')), math('protect-' + c.id, ['plan:protect:' + c.id], mathCtx(m))), ' fold-sentence'));
 }
 
 // ---------------------------------------------------------------- the planner views (S-274)
@@ -281,7 +284,7 @@ function sourcesScreen(m) {
   const by = (kept().srcSort || 'kind');
   const order = { missing: 0, guess: 1, rough: 2, known: 3, computed: 4, notForMe: 5 };
   const list = [...sources(m.spine, m.s)].sort((a, b) => (by === 'kind' ? order[a.kind] - order[b.kind] : by === 'date' ? String(a.asOf || '').localeCompare(String(b.asOf || '')) : a.label.localeCompare(b.label)) || a.label.localeCompare(b.label));
-  const KIND = { known: 'Known', rough: 'Rough', guess: 'A guess', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me' };
+  const KIND = { known: 'Known', rough: 'Rough', guess: 'Rough (house guess)', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me' };
   const sortBtn = (k, words) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(by === k), onclick: () => { keep({ srcSort: k }); refresh(); } }, h('span', { class: 'seg-label' }, words));
   return h('section', { class: 'card sources-card', 'aria-label': 'Where each number came from' },
     h('p', { class: 'muted' }, 'Every number your headline figures use: what it is, how sure it is, where it came from and when.'),
@@ -317,7 +320,7 @@ function deductibleForm(m) {
   } },
     h('label', { for: 'foo-ded', class: 'edit-label' }, 'The biggest insurance deductible (health, car or home)'), ded,
     h('p', { class: 'edit-hint', id: 'foo-ded-hint' }, 'In dollars, like 2,500.'), msg,
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the deductible')));
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save')));
 }
 
 // A step's screen leads with the progress tracker (S-265): where this step sits among all nine, each one a tap away.
@@ -331,10 +334,10 @@ function stepBody(m, r) {
   const big = r.need === null ? h('p', { class: 'max-big missing-text' }, 'Missing') : h('p', { class: 'max-big' }, r.done ? 'Done' : money(r.need) + (r.flow ? ' a month' : ''));
   const when = r.need === null || r.done ? null : r.completes ? (r.flow ? 'From about ' : 'Done about ') + monthWords(r.completes.slice(0, 7)) + '.' : r.months === null ? 'No surplus to fund it yet.' : null;
   const links = [
-    r.id === 'employerMatch' && !r.path ? goRow(numbersHref('assets'), 'Your accounts', 'Open them in My numbers') : null,
+    r.id === 'employerMatch' && !r.path ? goRow(numbersHref('assets'), 'Your accounts', 'Open them in Numbers') : null,
     r.id === 'rothHsa' || r.id === 'maxRetirement' ? goRow('#/max-it', SCREENS['max-it'], 'Each account\'s room and deadline') : null,
     r.id === 'prepaid' ? goRow('#/goals', SCREENS.goals, 'Each goal, its target and by when') : null,
-    r.path && r.id !== 'deductibles' ? goRow(ledgerHref(r.path), labelFor(m.spine, r.path), 'Open it in My numbers') : null
+    r.path && r.id !== 'deductibles' ? goRow(ledgerHref(r.path), labelFor(m.spine, r.path), 'Open it in Numbers') : null
   ].filter(Boolean);
   return h('section', { class: 'card', 'aria-label': r.label },
     r.id === f.current ? h('p', {}, h('span', { class: 'pill pill-locked' }, 'Your next step')) : null,
@@ -349,10 +352,10 @@ function stepBody(m, r) {
     r.flow && !r.done ? h('p', { class: 'tile-note' }, 'A monthly amount: once the surplus gets here, this much goes to it every month.') : null,
     r.id === 'deductibles' ? starterChoice(m) : null,
     r.id === 'deductibles' && starterBasisOf(m.base) === 'deductible' ? deductibleForm(m) : null,
-    r.id === 'deductibles' && ['housing', 'needs'].includes(starterBasisOf(m.base)) ? h('ul', { class: 'go-list' }, goRow(numbersHref('needs'), 'Needs', 'Where the month is figured from, in My numbers')) : null,
+    r.id === 'deductibles' && ['housing', 'needs'].includes(starterBasisOf(m.base)) ? h('ul', { class: 'go-list' }, goRow(numbersHref('needs'), 'Needs', 'Where the month is figured from, in Numbers')) : null,
     r.id === 'highInterest' ? hiDebts(m, r) : null,
     r.need === null && r.path && r.id !== 'deductibles' ? inlineFix(m, r) : null,
-    r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in My numbers (Assets, then the 401(k)).') : null,
+    r.id === 'employerMatch' ? h('p', { class: 'tile-sub' }, f.setup.match ? 'Your employer match is entered on your workplace account.' : 'Enter the match rate and cap on your workplace account in Numbers (Assets, then the 401(k)).') : null,
     r.id === 'reserves' ? h('p', { class: 'tile-sub' }, f.setup.reserveMonths === null ? 'The cushion target needs a birth date.' : 'Your target: ' + f.setup.reserveMonths.toFixed(1) + ' months of spending (a month for every five years of age).') : null,
     links.length ? h('ul', { class: 'go-list' }, links) : null,
     r.need !== null ? math('step', ['plan:foo:' + r.id], mathCtx(m)) : null);
@@ -366,13 +369,15 @@ function inlineFix(m, r) {
   try { type = typeFor(m.base, r.path); } catch { /* not a field this form can type */ }
   if (!FIX_TYPES.includes(type)) return null;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const box = h('input', { id: 'fix-' + r.id, type: type === 'date' ? 'date' : 'text', inputmode: type === 'date' ? null : 'decimal', autocomplete: 'off' });
+  // A date takes "dec 6" or "the 15th" (S-285); fixIso holds the day it read.
+  let fixIso = '';
+  const box = type === 'date' ? dateBox('fix-' + r.id, '', (v) => { fixIso = v; }) : h('input', { id: 'fix-' + r.id, type: 'text', inputmode: 'decimal', autocomplete: 'off' });
   return h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
-    const p = parseInput(type, box.value);
+    const p = type === 'date' ? (fixIso ? { ok: true, value: fixIso } : { ok: false, message: 'Type a day, like Dec 6' }) : parseInput(type, box.value);
     if (!box.value.trim() || !p.ok) { msg.textContent = p.ok ? 'Type it first' : p.message; box.focus(); return; }
     change((x) => putFact(x, r.path, p.value, 'known', todayIso()), said.changed(labelFor(m.base, r.path), showValue(p.value, type)));
-  } }, h('label', { for: 'fix-' + r.id, class: 'edit-label' }, labelFor(m.base, r.path)), box, msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save it')));
+  } }, h('label', { for: 'fix-' + r.id, class: 'edit-label' }, labelFor(m.base, r.path)), box, msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save')));
 }
 // A rate in words: a whole percent when it is one or a hair under it (29.99% reads 30%), else with its decimals.
 const rateWords = (r) => { const x = Math.round(r * 10000) / 100, f = x - Math.floor(x); return f < 0.005 || f > 0.985 ? Math.round(x) + '%' : x + '%'; };
@@ -398,7 +403,7 @@ function hiDebts(m, r) {
   };
   return h('div', {}, list.length ? h('ul', { class: 'hi-list' }, list.map(row)) : null,
     h('p', { class: 'edit-hint' }, 'Lowers the balance, and checking if its balance is entered. More than the balance pays it off.'),
-    h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: numbersHref('debt') }, 'Add a debt')));
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn add', href: numbersHref('debt') }, '+ Add a debt in Numbers')));
 }
 
 // ---------------------------------------------------------------- the rest of the plan, a screen each
@@ -463,7 +468,7 @@ function goalsScreen(m) {
     g.setAsideTotal ? h('p', { class: 'muted' }, money(g.setAsideTotal) + ' a month goes to goals.') : null,
     g.rows.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Goal'), h('th', { class: 'num' }, 'Target'), h('th', { class: 'num' }, 'There'), h('th', { class: 'num' }, 'To go'), h('th', {}, 'Reached'), h('th', {}, 'Costs the FI date'))),
       h('tbody', {}, g.rows.map((r) => h('tr', { class: r.onTime === false ? 'tight' : '' }, h('td', {}, h('a', { href: ledgerHref(r.path) }, r.label), r.sinking ? [' ', h('span', { class: 'pill' }, 'sinking fund')] : null, r.priority !== null ? [' ', h('span', { class: 'pill' }, 'priority ' + r.priority)] : null, r.repeat ? [' ', h('span', { class: 'pill' }, 'yearly')] : null), h('td', { class: 'num' }, r.target === null ? 'missing' : money(r.target)), h('td', { class: 'num' }, r.held === null ? 'none yet' : money(r.held)), h('td', { class: 'num' }, r.toGo === null ? 'missing' : money(r.toGo)), h('td', {}, r.toGo === 0 ? 'done' : r.reached ? monthWords(r.reached.slice(0, 7)) + (r.by ? (r.onTime ? ', in time for ' : ', after ') + shortDate(r.by) : '') + (r.neededMonthly && r.onTime === false ? '; ' + money(r.neededMonthly) + ' a month would make it' : '') : r.by ? 'no set-aside yet; ' + (r.neededMonthly === null ? '' : money(r.neededMonthly) + ' a month by ' + shortDate(r.by)) : 'no set-aside yet' + planDate(m, r)), h('td', {}, r.fiCostMonths === null ? 'not figured: no set-aside a month' : plural(r.fiCostMonths, 'month') + ' later')))))) : h('p', { class: 'muted' }, 'No goals beyond financial independence yet.'),
-    h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in My numbers', 'Add a goal or change one')),
+    h('ul', { class: 'go-list' }, goRow(numbersHref('goals'), 'Your goals in Numbers', 'Add a goal or change one')),
     g.rows.length ? math('goals', g.rows.filter((r) => r.toGo !== null).map((r) => 'plan:goal:' + r.id), mathCtx(m)) : null)];
 }
 
@@ -656,7 +661,7 @@ function floorScreen(m) {
       h('label', { for: 'shock-months', class: 'edit-label' }, 'If every paycheck stopped for this many months'), months, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Run it'))),
     f.shock ? h('div', { class: 'tool-result' + (f.shock.firstBad ? ' bad' : '') }, f.shock.firstBad ? 'With no income for ' + f.shock.months + ' months from ' + shortDate(f.shock.from) + ', checking goes under the floor on ' + shortDate(f.shock.firstBad) + ' (' + f.shock.runwayDays + ' days). At risk: ' + f.shock.atRisk.map((x) => x.label + ': ' + money(x.amount) + ' short on ' + shortDate(x.date)).join('; ') + '.' : 'With no income for ' + f.shock.months + ' months from ' + shortDate(f.shock.from) + ', checking stays above the floor (lowest ' + money(f.shock.low.amount) + ' on ' + shortDate(f.shock.low.date) + ').') : null,
-    h('p', { class: 'tile-note' }, 'A fixed cost is a line marked fixed in My numbers. This plays out your next months day by day with every paycheck taken away.'),
+    h('p', { class: 'tile-note' }, 'A fixed cost is a line marked fixed in Numbers. This plays out your next months day by day with every paycheck taken away.'),
     math('floor', ['plan:floor'], mathCtx(m)));
 }
 
@@ -683,26 +688,27 @@ function eventsScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pick = h('select', { id: 'event-pick' }, h('option', { value: '' }, 'Pick a life event'), ...templates.map((t) => h('option', { value: t.id }, t.label)));
   pick.value = k.event || '';
-  const date = h('input', { id: 'event-date', type: 'date' }); date.value = k.eventDate || todayIso();
+  // The date box takes "dec 6" or "the 15th" (S-285); from holds the day it read.
+  let from = k.eventDate || todayIso();
+  const date = dateBox('event-date', from, (iso) => { from = iso; if (iso) keep({ eventDate: iso }); });
   const applied = [...new Set([...(m.base.income || []), ...(m.base.expenses || [])].map((x) => x.lifeEvent).filter(Boolean))];
   const chosen = templates.find((t) => t.id === pick.value);
   const labelOf = (id) => (templates.find((t) => t.id === id) || { label: id }).label;
   pick.addEventListener('change', () => { keep({ event: pick.value }); refresh(); });
-  date.addEventListener('change', () => keep({ eventDate: date.value }));
   return h('section', { class: 'card', 'aria-label': SCREENS.events },
     h('p', { class: 'muted' }, 'Pick an event to see how it changes your plan.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const t = templates.find((x) => x.id === pick.value);
       if (!t) { msg.textContent = 'Pick an event'; pick.focus(); return; }
-      if (!date.value) { msg.textContent = 'Pick a date'; date.focus(); return; }
-      keep({ event: pick.value, eventDate: date.value });
-      change((s) => applyLifeEvent(s, t, date.value).spine, said.added(t.label + ' from ' + shortDate(date.value)));
+      if (!from) { msg.textContent = 'Type a date, like Dec 6'; date.focus(); return; }
+      keep({ event: pick.value, eventDate: from });
+      change((s) => applyLifeEvent(s, t, from).spine, said.added(t.label + ' from ' + shortDate(from)));
     } },
       h('label', { for: 'event-pick', class: 'edit-label' }, 'Event'), pick,
       chosen ? h('p', { class: 'edit-hint' }, chosen.summary + ' Lines: ' + chosen.items.map((i) => i.label + ' ' + (i.direction === 'in' ? '+' : '-') + money(i.cents / 100) + (EVENT_OFTEN[i.cadence] || '')).join('; ') + '.') : null,
       h('label', { for: 'event-date', class: 'edit-label' }, 'From'), date, msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add it to my numbers'))),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Add'))),
     applied.length ? [h('h3', { class: 'month-h' }, 'In your numbers now'), h('ul', { class: 'restore-list' }, applied.map((id) => h('li', {}, h('strong', {}, labelOf(id)),
       h('button', { type: 'button', class: 'btn danger small', onclick: () => change((s) => removeLifeEvent(s, id), said.deleted(labelOf(id))) }, 'Remove'))))] : null);
 }
@@ -714,7 +720,7 @@ function scenariosScreen(m) {
   const list = readScenarios();
   const k = kept();
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const nameBox = h('input', { id: 'scen-name', type: 'text', autocomplete: 'off', placeholder: 'Before the move' });
+  const nameBox = h('input', { id: 'scen-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Before the move' });
   const pick = h('select', { id: 'scen-pick' }, h('option', { value: '' }, 'Compare today with a saved one'), ...list.map((x) => h('option', { value: x.id }, x.name + ' (' + shortDate(x.savedAt.slice(0, 10)) + ')')));
   pick.value = list.some((x) => x.id === k.compareWith) ? k.compareWith : '';
   pick.addEventListener('change', () => { keep({ compareWith: pick.value }); refresh(); });
@@ -734,7 +740,7 @@ function scenariosScreen(m) {
       putBack(list, [...list, entry], said.added('Scenario ' + entry.name));
     } },
       h('label', { for: 'scen-name', class: 'edit-label' }, 'Save today as'), nameBox, msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save the scenario'))),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save'))),
     list.length ? [h('label', { for: 'scen-pick', class: 'edit-label' }, 'Compare'), pick,
       h('ul', { class: 'restore-list' }, list.map((x) => h('li', {}, h('strong', {}, x.name), x.id === targetId() ? h('span', { class: 'chip chip-default' }, 'Budget target') : null, h('span', { class: 'when' }, shortDate(x.savedAt.slice(0, 10))),
         h('button', { type: 'button', class: 'btn small', onclick: () => change(() => x.spine, said.changed('Your numbers', 'the scenario ' + x.name)) }, 'Load it'),
@@ -757,7 +763,7 @@ function fileScreen(m) {
   const preview = pending ? (() => { try { const r = importJson(pending.text); return { ok: true, r, diff: diffSpines(m.base, r.spine) }; } catch (err) { return { ok: false, message: err.message }; } })() : null;
   return h('section', { class: 'card', 'aria-label': SCREENS.file },
     h('p', { class: 'muted' }, 'Download a backup of your numbers, or import one. You see what changes before anything is saved.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => download(exportJson(m.base, { exportedAt: stamp }), 'slam-household-' + stamp + '.json', 'application/json') }, 'Download a backup'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'log'), 'slam-log-' + stamp + '.csv', 'text/csv') }, 'Download the spending log as a spreadsheet'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'lines'), 'slam-lines-' + stamp + '.csv', 'text/csv') }, 'Download every line as a spreadsheet')),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: preview ? 'btn' : 'btn primary', onclick: () => download(exportJson(m.base, { exportedAt: stamp }), 'slam-household-' + stamp + '.json', 'application/json') }, 'Download a backup'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'log'), 'slam-log-' + stamp + '.csv', 'text/csv') }, 'Download the spending log as a spreadsheet'), h('button', { type: 'button', class: 'btn', onclick: () => download(exportCsv(m.base, 'lines'), 'slam-lines-' + stamp + '.csv', 'text/csv') }, 'Download every line as a spreadsheet')),
     h('div', { class: 'file-row' }, h('label', { for: 'import-file', class: 'edit-label' }, 'Import a backup'), file, h('button', { type: 'button', class: 'btn', onclick: () => { const f = file.files && file.files[0]; if (!f) { msg.textContent = 'Pick a file first'; return; } f.text().then((t) => { pending = { text: t, name: f.name }; refresh(); }); } }, 'Open it')), msg,
     preview ? (preview.ok ? [h('p', { class: 'tile-sub' }, pending.name + ': a backup file' + (preview.r.migrated ? ', brought up to date' : '') + (preview.r.exportedAt ? ', downloaded ' + shortDate(preview.r.exportedAt.slice(0, 10)) : '') + '. ' + plural(preview.diff.length, 'change') + ' against today.'),
       preview.diff.length ? diffList(m.base, preview.r.spine, preview.diff, 40) : null,

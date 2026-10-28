@@ -43,7 +43,7 @@ test('the categories are their own screens, and their lines one more: Spending >
   assert.match(src, /h\('a', \{ class: 'go-row', href: at\(x\.id\) \}/, 'a slice with lines opens its category');
   assert.match(src, /h\('a', \{ class: 'go-row plain', href: at\(cat\.id, l\.id\) \}/, 'a line opens itself');
   assert.match(src, /h\('div', \{ class: 'go-still' \}/, 'a slice with no lines is plain text');
-  assert.match(src, /inPlace \? null : h\('p', \{\}, h\('a', \{ href: ledgerHref\(l\.path\) \}, 'Change it in My numbers'\)\)/, 'one way to change a line: My numbers only when its plan is not edited in place');
+  assert.match(src, /inPlace \? null : h\('p', \{\}, h\('a', \{ href: ledgerHref\(l\.path\) \}, 'Change it in Numbers'\)\)/, 'one way to change a line: Numbers only when its plan is not edited in place');
   // Every line in "where it goes" is in a category: a tag slice's lines are among its tag's lines, and the minimums keep theirs.
   const s0 = demo();
   const s = summarize(s0, R, { flags: false });
@@ -72,11 +72,11 @@ test('cutting the lines tried lands where the cut simulator said, and undoes exa
   assert.deepEqual(undo(hist).present, s0);
 });
 
-test('client words on Spending follow THE COPY RULE; "Ledger" is "My numbers"', () => {
+test('client words on Spending follow THE COPY RULE; "Ledger" is "Numbers"', () => {
   const said = strings(src);
   assert.ok(said.length > 20, 'found its words');
   for (const w of said) assert.doesNotMatch(w, JARGON, w);
-  assert.match(src, /'Change it in My numbers'/);
+  assert.match(src, /'Change it in Numbers'/);
   assert.match(src, /Try cutting something\. Nothing is saved until you choose\./);
 });
 

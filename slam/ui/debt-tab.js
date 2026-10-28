@@ -17,6 +17,7 @@ import { putFact } from '../engine/edits.js';
 import { valueOf } from '../engine/spine.js';
 import { change } from './shell.js';
 import { said, todayIso } from './view.js';
+import { dateBox } from './understood.js';
 
 const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const vizOf = (i) => VIZ[i % VIZ.length];
@@ -233,12 +234,14 @@ function solveCard(c, spine, rules, ctx, save, plan = null) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pick = h('select', { id: 'solve-target' }, targets.map((x) => h('option', { value: x.id }, x.name)));
   pick.value = form.solveTarget || targets[0].id;
-  const by = h('input', { id: 'solve-by', type: 'date' }); by.value = form.solveBy;
+  // The date box takes "dec 6" or "next june" (S-285); byIso holds the day it read.
+  let byIso = form.solveBy || '';
+  const by = dateBox('solve-by', form.solveBy || '', (v) => { byIso = v; });
   const x = form.solveBy ? solvePayoff(spine, rules, c.sim, { target: pick.value, byDate: form.solveBy, planExtra: plan && plan.extraFn ? plan.extraFn(1) : null }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'solve-h' },
     h('h2', { id: 'solve-h' }, 'Paid off by a date'),
     h('p', { class: 'muted' }, 'The smallest extra a month that clears one debt by a date, with your cash day by day, and whether that extra pushes checking under the floor.'),
-    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!by.value) { msg.textContent = 'Pick a date'; return; } form.solveTarget = pick.value; form.solveBy = by.value; save(); } },
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (!byIso) { msg.textContent = 'Type a date, like Dec 2027'; by.focus(); return; } form.solveTarget = pick.value; form.solveBy = byIso; save(); } },
       h('label', { for: 'solve-target', class: 'edit-label' }, 'Clear'), pick,
       h('label', { for: 'solve-by', class: 'edit-label' }, 'By'), by,
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Work it out'))),

@@ -182,7 +182,7 @@ async function run(browser, hh) {
     await r.type('#d-apr-' + id, d.apr, type + ' rate');
     await r.type('#d-min-' + id, d.min, type + ' payment');
     await r.type('#d-day-' + id, d.day, type + ' due day');
-    if (d.pay && (await r.has('#d-pay-' + id))) await r.pick('#d-pay-' + id, d.pay, 'paid in full?');
+    if (d.pay && (await r.has('#d-pay-' + id + '-' + d.pay))) await r.tap('#d-pay-' + id + '-' + d.pay, 'paid in full?');
     await whose(null, d.whose);
   }
   for (const t of ['credit_card', 'student_loan', 'auto_loan', 'family_iou']) if (await r.has('#dqn-' + t)) await r.tap('#dqn-' + t, 'No to ' + t);
@@ -226,7 +226,7 @@ async function run(browser, hh) {
     await r.type('#add-name', x.name, 'income name');
     await r.type('#add-amount', x.amount, 'income amount');
     if (await r.has('#add-type')) await r.pick('#add-type', x.type, 'kind of income');
-    if (x.basis && (await r.has('#add-basis'))) await r.pick('#add-basis', x.basis, 'how it is paid');
+    if (x.basis && (await r.has('#add-basis-' + x.basis))) await r.tap('#add-basis-' + x.basis, 'how it is paid');
     if (x.schedule && (await r.has('#add-schedule'))) await r.pick('#add-schedule', x.schedule, 'how often');
     await r.tap('form.add-form button[type=submit]', 'Add');
     await whose(null, x.whose);

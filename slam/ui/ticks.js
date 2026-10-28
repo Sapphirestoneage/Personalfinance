@@ -2,13 +2,14 @@
 // ("401(k)  4 of 12 answered, 3 details"): details as boxes, the yes / no questions as Yes / No / Not sure ticks. Yes opens the feature's fields, No hides them, Not sure leaves them
 // missing and makes a to-do. The answers are kept on the item (engine/features.js tickFeature); this only draws them.
 
-import { h, showValue } from './view.js';
+import { h, showValue, ordinal } from './view.js';
 import { parseInput, inputText } from '../engine/edits.js';
 import { featuresOf, featuresOfType, tickCount } from '../engine/features.js';
 import { getAt } from '../engine/spine.js';
 import { PRESETS, POLICY_TYPES } from '../engine/schema.js';
 import { INCOME_WORDS } from '../engine/add.js';
-import { choiceRow } from './choice.js';
+import { choiceRow, liveChoice } from './choice.js';
+import { dateBox } from './understood.js';
 
 // The catalog, read once (offline or missing: no ticks anywhere, nothing breaks).
 export let catalog = null;
@@ -78,8 +79,11 @@ export function itemTicks(spine, collection, id, { tier = null, onAnswer, onOpen
 // phrase opens just its own question in the list below; a guess is dashed and says so. Enter or Looks right keeps them.
 export function phraseOf(spine, base, item, f) {
   const ticks = item.ticks || {}, ans = ticks[f.id] || null;
-  const valueOf = (r) => { const x = getAt(spine, base + '.' + r.field); return x && x.value !== null && x.value !== undefined && x.kind !== 'notForMe' ? showValue(x.value, r.type) : null; };
-  if (f.kind === 'ask') { const vals = f.reveals.map(valueOf).filter(Boolean); return vals.length ? { words: (f.title || f.question) + ': ' + vals.join(', '), guess: false } : null; }
+  const factOf = (r) => { const x = getAt(spine, base + '.' + r.field); return x && x.value !== null && x.value !== undefined && x.kind !== 'notForMe' ? x : null; };
+  const valueOf = (r) => { const x = factOf(r); return x ? showValue(x.value, r.type) : null; };
+  // Several numbers in one phrase each say what they are: "22%, $90 a month, due the 12th", never "22%, $90, 12".
+  const worded = (r) => { const x = factOf(r); if (!x) return null; const s = showValue(x.value, r.type); return r.field === 'dueDay' ? 'due the ' + ordinal(x.value) : r.field === 'minimum' ? s + ' a month' : s; };
+  if (f.kind === 'ask') { const vals = f.reveals.map(f.reveals.length > 1 ? worded : valueOf).filter(Boolean); return vals.length ? { words: (f.title || f.question) + ': ' + vals.join(', '), guess: false } : null; }
   const a = ans || f.likely || null;
   if (!a) return null;
   const first = a === 'yes' ? f.reveals.map(valueOf).find(Boolean) : null;
@@ -125,10 +129,21 @@ export function fieldBox(r, value, onSet, id, title = null) {
   if (r.type === 'tiers') return tiersBox(r, value, onSet, id);
   if (r.type === 'bool' || r.type.startsWith('choice:')) {
     const opts = r.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : r.type.slice(7).split('|').map((x) => [x, showValue(x, r.type)]);
-    box = h('select', { id, onchange: () => onSet(box.value === '' ? null : r.type === 'bool' ? box.value === 'true' : box.value) }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: value !== null && value !== undefined && String(value) === v }, t)));
+    const read = (k) => (k === null ? null : r.type === 'bool' ? k === 'true' : k);
+    // Two or three answers are a row of buttons (S-282); a longer list stays a list, which the picker takes over (S-284).
+    if (opts.length <= 3) {
+      const row = liveChoice({ id, options: opts, value: value === null || value === undefined ? null : String(value), label: id + '-l', onPick: (k) => onSet(read(k)) });
+      return h('div', { class: 'tick-box choice-field' }, h('span', { class: 'mini-label', id: id + '-l', hidden: title === r.label || null }, r.label), row.el, msg);
+    }
+    box = h('select', { id, onchange: () => onSet(read(box.value === '' ? null : box.value)) }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: value !== null && value !== undefined && String(value) === v }, t)));
+  } else if (r.type === 'date') {
+    // A date box takes "dec 6" or "the 15th" (S-285); the day it read is saved when the box is left.
+    let iso = value === null || value === undefined ? '' : String(value);
+    box = dateBox(id, iso, (v) => { iso = v; }, { 'aria-label': title === r.label ? r.label : null });
+    box.addEventListener('change', () => { if (box.value.trim() && !iso) { msg.textContent = 'Not a date I can read; try Dec 6 or 12/6'; return; } msg.textContent = ''; onSet(iso || null); });
   } else {
-    box = h('input', { id, type: r.type === 'date' ? 'date' : 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null, 'aria-label': title === r.label ? r.label : null });
-    box.value = value === null || value === undefined ? '' : r.type === 'date' || r.type === 'text' ? String(value) : inputText(r.type, value);
+    box = h('input', { id, type: 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null, 'aria-label': title === r.label ? r.label : null });
+    box.value = value === null || value === undefined ? '' : r.type === 'text' ? String(value) : inputText(r.type, value);
     box.addEventListener('change', () => { const raw = box.value.trim(); if (!raw) { msg.textContent = ''; onSet(null); return; } const p = parse(raw); if (!p.ok) { msg.textContent = p.message; return; } msg.textContent = ''; onSet(p.value); });
   }
   return h('div', { class: 'tick-box' }, title === r.label ? null : h('label', { for: id, class: 'mini-label' }, r.label + (r.type === 'rate' ? ' (%)' : '')), box, msg);

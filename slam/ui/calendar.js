@@ -23,14 +23,15 @@ import { gapsCard } from './page.js';
 import { mathButton } from './math-panel.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
-import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf } from './view.js';
+import { h, chip, money, shortDate, monthWords, ledgerHref, ordinal, sentence, itemNote as noteOf, MISSING_WORDS } from './view.js';
+import { dateBox } from './understood.js';
 import { personSlug } from './owed.js';
 import { addForm } from './add-form.js';
 import { icsEvents, icsText } from '../engine/ics.js';
 import { addDays } from '../engine/spine.js';
 import { maxHref, maxItFor } from './maxit-panel.js';
 import { pref } from './prefs.js';
-import { forecast, fixButton } from './forecast.js';
+import { forecast, fixButton, floorWords } from './forecast.js';
 import { foldRow, isOpen } from './rows.js';
 import { fooGhosts } from '../engine/plan.js';
 
@@ -226,7 +227,7 @@ function itemScreen(v, date, id) {
   return [
     h('section', { class: 'card', 'aria-labelledby': 'item-h' },
       h('h2', { id: 'item-h' }, longDay(e.date)),
-      h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : 'No amount entered'),
+      h('p', { class: 'item-amt' }, amt(e) ? [e.direction === 'in' ? 'Comes in ' : e.direction === 'out' ? 'Goes out ' : 'Amount ', h('span', { class: 'num' }, exact(e.amount))] : MISSING_WORDS),
       tags.length || e.rough || (!e.counted && e.amount !== null && e.kind !== 'maybe') ? h('p', { class: 'ev-name' }, ...tags, e.rough ? h('span', { class: 'ev-tag' }, 'rough') : null, !e.counted && e.amount !== null && e.kind !== 'maybe' ? h('span', { class: 'ev-tag' }, 'not added to the total') : null) : null,
       note ? h('p', { class: 'tile-sub' }, sentence(cap(note))) : null,
       e.moved ? h('p', { class: 'tile-sub' }, 'Moved from ' + shortDate(e.origDate) + '. Other months stay put.') : null,
@@ -245,7 +246,7 @@ function happenedRow(e) {
   const day = shortDate(e.date);
   if (e.logged) return h('div', { class: 'happened' }, h('p', { class: 'tile-sub' }, h('span', { class: 'pill pill-logged' }, 'happened'), ' Logged ' + exact(e.logged.amount) + ' on ' + shortDate(e.logged.date) + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => change((s) => unconfirmOccurrence(s, e.key), e.label + ' on ' + day + ': not happened yet') }, 'Not yet')));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const other = h('input', { id: 'hap-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? 'e.g. 50' : 'e.g. ' + Math.round(e.amount) });
+  const other = h('input', { id: 'hap-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? 'e.g. 50' : 'e.g. ' + exact(e.amount).replace(/^\$/, '') });
   return h('div', { class: 'happened', role: 'group', 'aria-label': 'Did it happen?' },
     h('p', { class: 'edit-label' }, 'Did it happen?'),
     h('div', { class: 'edit-actions' },
@@ -266,12 +267,13 @@ function changeCard(e, asks = false) {
     h('p', { class: 'tile-sub' }, 'Unlock it to move or change it.'),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', 'aria-pressed': 'true', onclick: () => change((s) => lockOccurrence(s, e.key, false), e.label + ' on ' + day + ' unlocked') }, 'Unlock')));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const date = h('input', { id: 'mv-date', type: 'date' });
-  date.value = e.date || '';
+  // The date box takes "dec 6" or "next friday" (S-285); moveTo holds the day it read.
+  let moveTo = e.date || '';
+  const date = dateBox('mv-date', e.date || '', (iso) => { moveTo = iso; });
   const doMove = () => {
-    if (!date.value) { msg.textContent = 'Pick a day'; return; }
-    if (date.value === e.date) { msg.textContent = 'It is already on ' + day; return; }
-    change((s) => (isMaybe ? setMaybeDate(s, e.maybeId, date.value) : moveOccurrence(s, e.key, date.value)), said.moved(e.label, date.value));
+    if (!moveTo) { msg.textContent = 'Type a day, like Dec 6'; date.focus(); return; }
+    if (moveTo === e.date) { msg.textContent = 'It is already on ' + day; return; }
+    change((s) => (isMaybe ? setMaybeDate(s, e.maybeId, moveTo) : moveOccurrence(s, e.key, moveTo)), said.moved(e.label, moveTo));
   };
   const priceMsg = h('p', { class: 'edit-msg', role: 'alert' });
   // Blank keeps the usual amount, so the box holds a number only when this one was already changed (S-204).
@@ -325,10 +327,10 @@ function skippedList(m, spine, date = null) {
 const typedActual = new Map();
 function actualBox(e) {
   const id = 'act-' + e.key.replace(/[^a-z0-9]+/gi, '-');
-  const box = h('input', { id, class: 'wait-actual', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? '$' : exact(e.amount), 'aria-label': e.label + ', actual amount (blank uses the estimate)' });
+  const box = h('input', { id, class: 'wait-actual', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: e.amount === null ? 'e.g. 50' : 'e.g. ' + exact(e.amount).replace(/^\$/, ''), 'aria-label': e.label + ', actual amount (blank uses the estimate)' });
   box.value = typedActual.get(e.key) || '';
   box.addEventListener('input', () => typedActual.set(e.key, box.value));
-  return h('label', { class: 'wait-act', for: id }, h('span', { class: 'wait-act-l' }, 'Actual'), box);
+  return h('label', { class: 'wait-act', for: id }, h('span', { class: 'wait-act-l' }, 'Actual' + (e.amount === null ? '' : ' (estimate ' + exact(e.amount) + ')')), box);
 }
 
 // ---------------------------------------------------------------- maybe money: the list; the form opens from + Add only
@@ -341,14 +343,17 @@ function trayCard(c, st) {
     onDone: (made, label) => { trayAdding = false; change(made.spine, said.added(label) + (made.date ? ' on ' + shortDate(made.date) : ' to maybe money')); } }) : null;
   const item = (m) => {
     const id = 'maybe-day-' + m.id;
-    const d = h('input', { type: 'date', id });
+    let onDay = '';
+    const d = dateBox(id, '', (iso) => { onDay = iso; });
     return h('li', { class: 'tray-item', 'data-key': 'maybe:' + m.id, 'data-label': m.label, 'data-drag': 'maybe', 'data-maybe': m.id },
       h('span', { class: 'grip', title: 'Drag onto a day', 'aria-hidden': 'true' }, '⋮⋮'), h('span', {}, h('strong', {}, m.label), h('span', { class: 'choice-sub' }, ' Maybe (' + Math.round(m.likelihood * 100) + '%), money ' + (m.direction === 'out' ? 'out' : 'in'))), h('span', { class: 'tray-amt' }, money(m.amount)),
       h('span', { class: 'tray-day' }, h('label', { for: id, class: 'edit-label' }, 'Day'), d),
-      h('button', { type: 'button', class: 'btn small', onclick: () => { if (!d.value) { say('Pick a day for ' + m.label + ' first'); d.focus(); return; } change((s) => setMaybeDate(s, m.id, d.value), said.moved(m.label, d.value)); } }, 'Put it on this day'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => { if (!onDay) { say('Type a day for ' + m.label + ' first, like Dec 6'); d.focus(); return; } change((s) => setMaybeDate(s, m.id, onDay), said.moved(m.label, onDay)); } }, 'Put it on this day'),
       h('button', { type: 'button', class: 'btn ghost small', onclick: () => change((s) => removeMaybe(s, m.id), said.deleted(m.label)) }, 'Remove'));
   };
-  return h('section', { class: 'card tray', id: 'tray', 'aria-labelledby': 'tray-h' },
+  // "+ Add" is the first row of the fold's body, so the fold line keeps its fact and its chevron.
+  return h('section', { class: 'card tray', id: 'tray', 'aria-label': 'Maybe money' },
+    form ? null : h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { trayAdding = true; refresh(); } }, '+ Add maybe money')),
     c.tray.length ? h('ul', { class: 'tray-list' }, c.tray.map(item)) : null,
     form);
 }
@@ -442,7 +447,7 @@ function topCard(spine, rules, today) {
       h('p', { class: 'cal-low' }, h('span', { class: 'tile-label' }, 'Lowest'), ' ', h('span', { class: 'cal-low-num' + (story.under ? ' under' : '') }, money(story.low.amount)), ' on ' + shortDate(story.low.date)),
       // The dip as it would be before any move from savings (QUESTIONS.md 140); the grid and Bill timing read the run after it.
       h('p', { class: 'cal-low-words' }, story.under
-        ? (story.floor === 0 ? 'Below zero on ' : 'Under your floor of ' + money(story.floor) + ' on ') + shortDate(story.low.date) + (story.low.beforePayday ? ', the day before payday' : '') + (story.fix && story.fix.from ? ', before moving money from savings' : '') + (story.through ? '. Looking through ' + shortDate(story.through) + '.' : '.')
+        ? floorWords(story) + ' Under it on ' + shortDate(story.low.date) + (story.low.beforePayday ? ', the day before payday' : '') + (story.fix && story.fix.from ? ', before moving money from savings' : '') + (story.through ? '. Looking through ' + shortDate(story.through) + '.' : '.')
         : 'You stay above your floor through ' + shortDate(story.through) + '.'),
       story.under ? h('div', { class: 'edit-actions' }, fixButton(story, 'btn small')) : null),
     n ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/confirm', id: 'to-confirm' }, h('span', { class: 'go-name' }, n + ' to confirm'), h('span', { class: 'go-sub' }, 'Did these happen?')))) : null
@@ -567,7 +572,7 @@ function weekView(v, c, m, st, today) {
   ];
 }
 
-// "Add to my calendar": the bills, paydays and deadlines for the next 12 months as an .ics file (engine/ics.js).
+// "Download for your calendar app": the bills, paydays and deadlines for the next 12 months as an .ics file (engine/ics.js).
 function downloadIcs(spine, rules) {
   const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const text = icsText(icsEvents(spine, rules, { months: 12 }), { stamp: now, name: 'SLAM' + (((spine.household.people || [])[0] || {}).name ? ': ' + spine.household.people[0].name : '') });
@@ -626,7 +631,7 @@ function belowRows(v, c, m, st) {
       ...payLaterLines(c, m), skippedList(m, v.base),
       m.monthCash ? mathButton(['calendar:monthCash'], () => ({ spine: v.spine, rules: v.rules, s: sumOf(v), month: m })) : null]),
     sim ? foldRow('cal-timing', 'Bill timing', best ? best.label + ' to the ' + ordinal(best.to) + ': +' + money(best.gain) : 'the timing already works', () => timingBody(timing, !!sim.raidDate)) : null,
-    foldRow('cal-maybe', 'Maybe money', c.tray.length ? c.tray.length + ' without a day' : 'none yet', () => trayCard(c, st), { add: { label: 'Add', onOpen: () => { trayAdding = true; } } }),
+    foldRow('cal-maybe', 'Maybe money', c.tray.length ? c.tray.length + ' without a day' : 'none yet', () => trayCard(c, st)),
     alwaysRows(v)
   ];
 }
@@ -636,7 +641,7 @@ function alwaysRows(v) {
   const openPayoff = () => { try { const s = new Set(JSON.parse(localStorage.getItem('slam-open:v1') || '[]')); s.add('debt-payoff'); localStorage.setItem('slam-open:v1', JSON.stringify([...s])); } catch { /* lasts until the page closes */ } };
   return h('ul', { class: 'go-list' },
     h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt', onclick: openPayoff }, h('span', { class: 'go-name' }, 'Payoff dates'), h('span', { class: 'go-sub' }, 'Under Numbers > Debt'))),
-    h('li', {}, h('button', { type: 'button', class: 'go-row plain', onclick: () => downloadIcs(v.base, v.rules) }, h('span', { class: 'go-name' }, 'Add to my calendar'), h('span', { class: 'go-sub' }, 'Bills, paydays and deadlines for the next 12 months, as a file for your phone or Google Calendar'))));
+    h('li', {}, h('button', { type: 'button', class: 'go-row plain', onclick: () => downloadIcs(v.base, v.rules) }, h('span', { class: 'go-name' }, 'Download for your calendar app'), h('span', { class: 'go-sub' }, 'Bills, paydays and deadlines for the next 12 months, as a file for your phone or Google Calendar'))));
 }
 // topped: the run moved money from savings, so its lowest point is the one after that move.
 function timingBody(t, topped) {
@@ -722,7 +727,8 @@ function filterFold(c, st, on) {
   const list = h('ul', { class: 'flow-list', hidden: !st.q }, ...results(st.q, searchEvents(c.months, st.q)));
   box.addEventListener('input', () => { keep({ q: box.value }); list.hidden = !box.value; list.replaceChildren(...results(box.value, searchEvents(c.months, box.value))); });
   const d = h('details', { class: 'cal-filter-fold', open: isOpen('cal-filter') || null },
-    h('summary', { class: 'btn small' }, 'Filter' + (st.filter !== 'all' ? ': ' + FILTERS.find(([id]) => id === st.filter)[1] : '')),
+    // A fold line like every other fold (a title and a chevron), not a button.
+    h('summary', {}, h('span', { class: 'fold-title' }, 'Filter' + (st.filter !== 'all' ? ': ' + FILTERS.find(([id]) => id === st.filter)[1] : '')), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')),
     h('div', { class: 'cal-filter-body' }, box, list,
       h('div', { class: 'segmented cal-filter', role: 'group', 'aria-label': 'Show' }, FILTERS.map(([id, label]) => h('button', { type: 'button', class: 'seg-btn', id: 'filter-' + id, 'aria-pressed': String(st.filter === id), onclick: () => setRoot({ filter: id }) }, h('span', { class: 'seg-label' }, label))))));
   d.addEventListener('toggle', () => { try { const s = new Set(JSON.parse(localStorage.getItem('slam-open:v1') || '[]')); if (d.open) s.add('cal-filter'); else s.delete('cal-filter'); localStorage.setItem('slam-open:v1', JSON.stringify([...s])); } catch { /* lasts until the page closes */ } });

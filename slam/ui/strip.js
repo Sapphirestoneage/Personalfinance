@@ -41,7 +41,7 @@ export function headlineStrip(spine, rules, { timeSwitch: withSwitch = false } =
     ['netWorth', 'Net worth', nw === null ? 'Not yet' : metric('netWorth', summaryMoney(nw, true)), nw],
     ['surplus', 'Left a month', left === null ? 'Not yet' : metric('surplus', summaryMoney(left, true)), left],
     ['savingsRateNet', 'Savings rate', rate === null ? 'Not yet' : metric('savingsRateNet', pct(rate, 1)), rate],
-    ['yearsToFi', 'FI', years === null ? 'Not at this pace' : [metric('yearsToFi', years + ' years'), h('span', { class: 'strip-sub' }, ' (about ' + year + ')')], years]
+    ['yearsToFi', 'FI', years === null ? 'Not at this pace' : [metric('yearsToFi', Math.round(years) + ' years'), h('span', { class: 'strip-sub' }, ' (about ' + year + ')')], years]
   ];
   const before = last;
   last = Object.fromEntries(cells.map(([id, , , v]) => [id, v]));

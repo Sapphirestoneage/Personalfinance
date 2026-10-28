@@ -21,7 +21,7 @@ const SCREENS = [
   ['Rules', 'rules.html'], ['House defaults', 'house.html'], ['All formulas', 'math.html'], ['Where each number came from', 'plan.html#/sources']
 ];
 // Settings a person might look for by name.
-const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts on', 'profile.html#/prefs'], ['What Today shows', 'profile.html#/prefs'], ['Show money as hours of work', 'profile.html#/prefs'],
+const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts on', 'profile.html#/prefs'], ['What Home shows', 'profile.html#/prefs'], ['Show money as hours of work', 'profile.html#/prefs'],
   ['Too small to matter', 'assumptions.html#/APP_MATERIALITY'], ['Your floor', 'calendar.html'], ['FI assumptions', 'profile.html#/goals'], ['Where to find', 'where.html'], ['House defaults', 'house.html']];
 const nameOf = (x) => (x && x.name && typeof x.name === 'object' ? x.name.value : x && x.name) || (x && x.label) || null;
 
@@ -54,7 +54,10 @@ export function searchFind(index, q) {
   if (!t) return [];
   const starts = index.filter((x) => x.words.toLowerCase().startsWith(t));
   const has = index.filter((x) => !starts.includes(x) && x.words.toLowerCase().includes(t));
-  return [...starts, ...has];
+  // Then the words in any order ("visa rate" finds "Visa: interest rate").
+  const ws = t.split(/\s+/);
+  const every = ws.length > 1 ? index.filter((x) => !starts.includes(x) && !has.includes(x) && ws.every((w) => x.words.toLowerCase().includes(w))) : [];
+  return [...starts, ...has, ...every];
 }
 export const SHOWN = 8;
 // The two scopes, offered only when there are more than 8 matches: this client's own things, or this section.
@@ -93,6 +96,8 @@ let openNow = null;
 // run(cmd): the shell makes the command (a change in words, a screen, or undo). library: what quick add picks from.
 export function searchButton(spineOf, { rulesOf = () => null, run = () => {}, today = () => new Date().toISOString().slice(0, 10), clients = () => [], pickClient = () => {} } = {}) {
   const box = h('input', { type: 'search', id: 'top-search', autocomplete: 'off', placeholder: 'Search or add, e.g. rent 2400', 'aria-label': 'Search or add', role: 'combobox', 'aria-expanded': 'false', 'aria-controls': 'search-results' });
+  // On a phone the box is about 100px of text, so the placeholder is two short words (the example would be cut mid-word).
+  try { const mq = matchMedia('(max-width: 479px)'); const fit = () => { box.placeholder = mq.matches ? 'Find or add' : 'Search or add, e.g. rent 2400'; }; fit(); mq.addEventListener('change', fit); } catch { /* no matchMedia: the full placeholder stays */ }
   const list = h('ul', { class: 'search-results', id: 'search-results', role: 'listbox', 'aria-label': 'Matches' });
   const chips = h('div', { class: 'search-scope', role: 'group', 'aria-label': 'Search in' });
   const panel = h('div', { class: 'search-panel', hidden: true }, chips, list);

@@ -204,7 +204,7 @@ export function maxItCard(spine, rules) {
   const m = maxItFor(spine, rules);
   const rows = m.mx.rows;
   const T = m.mx.totals;
-  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' }, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open My numbers ›'));
+  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' }, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open Numbers ›'));
   const all = m.mx.pools.length && T.lump > 0 ? cashFor(m, 'all') : null;
   const firstMissing = rows.find((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const line = (r) => {
@@ -225,7 +225,7 @@ export function maxItCard(spine, rules) {
   const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);
   const steps = T.steps || [];
   return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' },
-    h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in My numbers.'),
+    h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in Numbers.'),
     m.mx.pools.length && steps.length ? h('p', { class: 'max-big' }, cash(steps[0].perMonth) + ' a month')
       : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel || firstMissing.blankLabel) : m.mx.pools.length && T.lump === 0 && !leftOut.length ? 'What already goes in fills it' : 'Nothing more can go in before the deadlines'),
     m.mx.pools.length && steps.length ? h('p', { class: 'tile-sub' }, 'to ' + shortDate(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + shortDate(s.until)).join('') + ' (' + cash(T.lump) + ' of new money in all; a limit two accounts share counts once)' + (leftOut.length ? '; not counted: ' + leftOut.join(' and ') : '') + '.')
