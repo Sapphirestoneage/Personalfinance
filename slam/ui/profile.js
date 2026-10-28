@@ -29,9 +29,14 @@ const answer = (q) => (x) => change((s) => applyAnswer(s, q.id, x, { today: toda
 // ---------------------------------------------------------------- the top: five groups, biggest first
 // No letter badges (Krug pass): those are only for the six DATING groups in My numbers.
 const goRow = (href, mark, name, total, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, total !== null ? h('span', { class: 'go-total' }, total) : null, total !== null ? ' ' : null, sub)));
+// What the session asks (owner, 2026-10-28): Why now and How should I talk to you are the client's pre-call page, so
+// they sit apart; how often pay comes and the take-home are not asked again once an income line answers them.
+const PRE_CALL = 'start';
+const answeredByIncome = (spine, q) => ['payOften', 'takeHome'].includes(q.id) && (spine.income || []).some((x) => v(x.amount) !== null);
+const sessionQs = (spine, a, area = null) => LEVEL1.filter((q) => asked(a, q) && (area ? q.area === area : q.area !== PRE_CALL) && !answeredByIncome(spine, q));
 function top({ spine, rules }) {
   const a = answersOf(spine), hw = homeworkList(spine, todayIso()), own = Object.keys(clientOverrides(spine)).length;
-  const l1 = LEVEL1.filter((q) => asked(a, q)), done = l1.filter((q) => a[q.id] !== undefined).length;
+  const l1 = sessionQs(spine, a), done = l1.filter((q) => a[q.id] !== undefined).length;
   const todo = hw.reduce((n, g) => n + g.items.length, 0);
   // The one list of open questions (morning answer 10): the same total as My numbers and Still guessing.
   const open = openQuestions(spine, guessesFor(spine, rules, () => refresh()));
@@ -88,9 +93,9 @@ function lifeScreen({ spine }) {
   const gut = spine.household.gutSpending ? v(spine.household.gutSpending) : null;
   return [
     gut !== null ? h('p', { class: 'muted' }, 'Their guess before we started: ' + money(gut) + ' a month.') : null,
-    h('h2', {}, 'Before the call'),
-    h('ul', { class: 'go-list' }, AREAS.map(([area, label]) => {
-      const qs = LEVEL1.filter((q) => q.area === area && asked(a, q)), done = qs.filter((q) => a[q.id] !== undefined).length;
+    h('h2', {}, 'Your life'),
+    h('ul', { class: 'go-list' }, [...AREAS.filter(([x]) => x !== PRE_CALL), ...AREAS.filter(([x]) => x === PRE_CALL).map(([x]) => [x, 'From the pre-call form: why now, how to talk'])].map(([area, label]) => {
+      const qs = sessionQs(spine, a, area), done = qs.filter((q) => a[q.id] !== undefined).length;
       return h('li', {}, h('a', { class: 'go-row plain', href: '#/' + area }, h('span', { class: 'go-name' }, label), h('span', { class: 'go-total' }, done + ' of ' + qs.length), h('span', { class: 'go-sub' }, f.setup[area] ? f.setup[area] + '.' : 'Not answered yet.')));
     })),
     h('h2', {}, 'In the session'),
@@ -120,7 +125,7 @@ function loadCard() {
 // ---------------------------------------------------------------- one area of Level 1
 function areaScreen({ spine }, area) {
   const a = answersOf(spine);
-  const qs = LEVEL1.filter((q) => q.area === area && asked(a, q));
+  const qs = sessionQs(spine, a, area);
   const line = fieldsFor(a).setup[area];
   return [
     h('section', { class: 'card qs' }, ...qs.map((q) => [questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)), h('p', { class: 'edit-hint' }, q.does)])),

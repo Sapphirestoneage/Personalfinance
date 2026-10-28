@@ -1,7 +1,7 @@
 // The Triple D set this viewer picked (S-183), kept in this browser only; the
 // Dashboard and the math page read it, so both show the same numbers.
 
-import { SCENARIOS, SCENARIO_DEFAULT, SCENARIO_WORDS, scenarioAssumptions, beyondOptimistic } from '../engine/scenarios.js';
+import { SCENARIOS, SCENARIO_DEFAULT, SCENARIO_WORDS, scenarioAssumptions } from '../engine/scenarios.js';
 import { h, showValue } from './view.js';
 
 const KEY = 'slam-scenario:v1';
@@ -28,6 +28,5 @@ export function scenarioBar(spine, rules, current, onPick) {
       SCENARIOS.map((id) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(id === current), onclick: () => { if (id === current) return; pick(id); onPick(id); } },
         h('span', { class: 'seg-label' }, SCENARIO_WORDS[id]),
         h('span', { class: 'seg-sub' }, scenarioText(spine, rules, id))))),
-    current === 'best' ? h('p', { class: 'muted scenario-note' }, 'Your own: the return and withdrawal rate in your numbers.') : null,
-    current === 'best' && beyondOptimistic(spine, rules) ? h('p', { class: 'scenario-note warn-note' }, beyondOptimistic(spine, rules)) : null);
+    current === 'best' ? h('p', { class: 'muted scenario-note' }, 'Your own: the return and withdrawal rate in your numbers.') : null);
 }

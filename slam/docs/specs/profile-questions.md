@@ -24,6 +24,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **How often are you paid?** (Every week / Every 2 weeks / Twice a month / Once a month / It varies, or Not sure). Puts paydays on the Calendar.
 - **About how much lands in your account a month?** (Under $2,000 / $2,000 to $4,000 / $4,000 to $6,000 / $6,000 to $8,000 / Over $8,000, or Not sure). A ballpark, so the first call starts in the right place.
 - **Anything else you would like me to know?** (text, or Not sure). Your own words, for the first call.
+- **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### You
 
@@ -34,7 +35,6 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **Who lives with you?** (I live alone / A partner / Kids / Roommates, or Not sure). Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.
 - **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
 - **How do the two of you handle money?** (All joint / All separate / Mixed: joint for shared bills, separate for the rest, or Not sure; asked only when it applies). Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.
-- **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### Home
 

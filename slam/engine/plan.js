@@ -445,7 +445,8 @@ export function goalsView(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
     const target = t.useFact(p + '.target', g.target);
     const monthly = g.monthly ? t.useFact(p + '.monthly', g.monthly) : null;
     const acct = g.linkedAccount ? t.useFact(p + '.linkedAccount', g.linkedAccount) : null;
-    const held = acct ? v(((spine.accounts || []).find((a) => a.id === acct) || {}).balance) : null;
+    // Held: the linked account's balance, else what was typed as saved so far (owner, 2026-10-28).
+    const held = acct ? v(((spine.accounts || []).find((a) => a.id === acct) || {}).balance) : g.saved ? t.useFact(p + '.saved', g.saved) : null;
     if (acct) t.useFact('accounts.' + acct + '.balance', ((spine.accounts || []).find((a) => a.id === acct) || {}).balance);
     const sinking = g.sinkingFund ? t.useFact(p + '.sinkingFund', g.sinkingFund) === true : false;
     const priority = g.priority ? t.useFact(p + '.priority', g.priority) : null;

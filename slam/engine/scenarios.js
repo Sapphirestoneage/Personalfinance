@@ -4,10 +4,11 @@
 
 import { fact } from './spine.js';
 
-// Batch 3: the sets read Conservative, Standard (the default) and Optimistic, then Your own (the household's own
+// Batch 3: the sets read Conservative, Standard and Optimistic (the default since 2026-10-28), then Your own (the household's own
 // assumptions, the old "best"). The stored ids stay, so a pick saved in a browser still reads.
 export const SCENARIOS = ['worst', 'likely', 'optimistic', 'best'];
-export const SCENARIO_DEFAULT = 'likely';
+// The default set is Optimistic (owner, 2026-10-28, from a live session).
+export const SCENARIO_DEFAULT = 'optimistic';
 export const SCENARIO_WORDS = { worst: 'Conservative', likely: 'Standard', optimistic: 'Optimistic', best: 'Your own' };
 const RULE_IDS = {
   likely: { realReturn: 'SCENARIO_LIKELY_RETURN', withdrawalRate: 'SCENARIO_LIKELY_WR' },
@@ -29,14 +30,6 @@ export function withScenario(spine, rules, id) {
   const a = scenarioAssumptions(spine, rules, id);
   if (a.id === 'best') return spine;
   return { ...spine, assumptions: { ...spine.assumptions, realReturn: a.realReturn, withdrawalRate: a.withdrawalRate } };
-}
-
-// Your own assumptions past the optimistic set: words for a small warning, or null.
-export function beyondOptimistic(spine, rules) {
-  const own = scenarioAssumptions(spine, rules, 'best'), opt = scenarioAssumptions(spine, rules, 'optimistic');
-  const r = own.realReturn && own.realReturn.value, w = own.withdrawalRate && own.withdrawalRate.value;
-  const over = [r !== null && r !== undefined && r > opt.realReturn.value ? 'a return above ' + Math.round(opt.realReturn.value * 1000) / 10 + '%' : null, w !== null && w !== undefined && w > opt.withdrawalRate.value ? 'a withdrawal rate above ' + Math.round(opt.withdrawalRate.value * 1000) / 10 + '%' : null].filter(Boolean);
-  return over.length ? 'Careful: ' + over.join(' and ') + ' is more hopeful than the optimistic set.' : null;
 }
 
 // The rule behind an assumption Fact when a set put it there, else null.

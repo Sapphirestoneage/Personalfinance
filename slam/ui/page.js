@@ -8,6 +8,12 @@ import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile } from './household.js';
 import { loadFailWords } from './profile-file.js';
 import { pref } from './prefs.js';
+import { questionEl } from './profile-q.js';
+import { questionById, applyAnswer } from '../engine/profile.js';
+import { addPartner } from '../engine/couple.js';
+import { putFact } from '../engine/edits.js';
+import { placeOf, placeFacts } from '../engine/library.js';
+import { LIB } from './libraries.js';
 
 let banner = null;
 function showError(text) {
@@ -62,6 +68,44 @@ const icon = () => {
   svg.append(el('circle', { cx: '12', cy: '8', r: '4' }), el('path', { d: 'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7' }));
   return h('span', { class: 'whose-icon' }, svg);
 };
+// The first questions for a new client (owner, 2026-10-28, from a live session): single or a couple, the birthday,
+// who lives with them (and how many roommates) and the ZIP, asked once here, so no step of the Session asks them.
+// The ZIP fills the state, the county and whether New York City or Yonkers tax applies. Nothing is required.
+// LIVE-FORM: built once. Taps redraw only the button rows; the typed boxes are never rebuilt.
+function newClientIntake() {
+  const today = new Date().toISOString().slice(0, 10);
+  const st = { couple: null, lives: null, roommates: null };
+  const partner = h('input', { type: 'text', id: 'nc-partner', autocomplete: 'off', placeholder: 'e.g. Sam' });
+  const partnerRow = h('div', { class: 'add-field', hidden: true }, h('label', { for: 'nc-partner', class: 'edit-label' }, 'Partner\'s name'), partner);
+  const birth = h('input', { type: 'date', id: 'nc-birth' });
+  const zip = h('input', { type: 'text', id: 'nc-zip', inputmode: 'numeric', autocomplete: 'postal-code', maxlength: '10', placeholder: 'e.g. 10977', 'aria-describedby': 'nc-zip-said' });
+  const zipSaid = h('p', { class: 'edit-hint', id: 'nc-zip-said' }, 'Fills the state and county.');
+  const place = () => (zip.value.trim() && LIB.places ? placeOf(zip.value.trim(), LIB.places) : null);
+  zip.addEventListener('input', () => { const pl = place(); zipSaid.textContent = !zip.value.trim() ? 'Fills the state and county.' : pl ? pl.words.replace(/^ZIP \d+ \((.*)\)$/, '$1') + (pl.locality === 'nyc' ? ', with New York City tax' : pl.locality === 'yonkers' ? ', with Yonkers tax' : '') : 'Not a ZIP code I know yet'; });
+  const who = h('div', { class: 'nc-who' }), lives = h('div', { class: 'nc-lives' });
+  const seg = (id, label, opts, val, on) => questionEl({ id, label, kind: 'one', options: opts }, val, on, { idPrefix: 'nc' });
+  const draw = () => {
+    who.replaceChildren(seg('couple', 'Single, or a couple?', [['single', 'Single'], ['couple', 'A couple']], st.couple, (x) => { st.couple = x; partnerRow.hidden = x !== 'couple'; draw(); }));
+    lives.replaceChildren(questionEl(questionById('livesWith'), st.lives, (x) => { st.lives = x; draw(); }, { idPrefix: 'nc' }),
+      Array.isArray(st.lives) && st.lives.includes('roommates') ? questionEl(questionById('roommates'), st.roommates, (x) => { st.roommates = x; draw(); }, { idPrefix: 'nc' }) : null);
+  };
+  draw();
+  const build = (s) => {
+    let x = s;
+    const p = x.household.people[0];
+    if (birth.value) x = putFact(x, 'household.people.' + p.id + '.birthDate', birth.value, 'known', today);
+    const pl = place();
+    if (pl) for (const [path, val] of placeFacts(pl)) x = putFact(x, path, val, 'known', today);
+    if (st.lives) x = applyAnswer(x, 'livesWith', st.lives, { today, by: 'coach' });
+    if (st.roommates && Array.isArray(st.lives) && st.lives.includes('roommates')) x = applyAnswer(x, 'roommates', st.roommates, { today, by: 'coach' });
+    if (st.couple === 'couple') x = addPartner(x, { name: partner.value.trim() || 'Partner' }, today);
+    return x;
+  };
+  return { build, el: h('div', { class: 'nc-intake' }, who, partnerRow,
+    h('div', { class: 'add-field' }, h('label', { for: 'nc-birth', class: 'edit-label' }, 'Birthday'), birth),
+    lives,
+    h('div', { class: 'add-field' }, h('label', { for: 'nc-zip', class: 'edit-label' }, 'ZIP code'), zip, zipSaid)) };
+}
 // The client switcher (practical run, S-269; was the name menu): the client's name always in the header; it opens the
 // list of clients to switch to, New client, Rename, Duplicate, Delete (asked first, with Undo), the example, Profile
 // and Open file. A switch reloads the page on the other household. rename(name) renames through the page's change().
@@ -78,9 +122,11 @@ export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.me
   });
   const reload = () => location.reload();
   const nameBox = h('input', { type: 'text', id: 'client-name', autocomplete: 'off', placeholder: 'e.g. Maya Lopez', 'aria-describedby': 'client-name-hint' });
-  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm); location.assign('ledger.html?guide=1'); };
+  const intake = newClientIntake();
+  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm, intake.build); location.assign('ledger.html?guide=1'); };
   const newForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: create },
     h('label', { for: 'client-name', class: 'edit-label' }, 'New client'), nameBox, h('p', { class: 'edit-hint', id: 'client-name-hint' }, 'Starts empty, kept only in this browser.'),
+    intake.el,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', id: 'client-create', class: 'btn primary small' }, 'Create'), h('button', { type: 'button', class: 'btn small', onclick: () => { newForm.hidden = true; } }, 'Cancel')));
   const renameBox = h('input', { type: 'text', id: 'client-rename', autocomplete: 'off', value: w.example ? '' : w.name, 'aria-label': 'New name' });
   const renameForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: (e) => { e.preventDefault(); const nm = renameBox.value.trim(); if (!nm || !at) return; renameClient(at.id, nm); if (rename) rename(nm); } },

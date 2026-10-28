@@ -306,7 +306,8 @@ test('plain words (owner, 2026-10-28): no "Just me" or "Just you"; Single or A c
   assert.ok(P.LEVEL2.find((q) => q.id === 'businessStructure').options.some(([k, w]) => k === 'sole' && w === 'Sole proprietor'));
   const guide = readFileSync(new URL('../ui/guide.js', import.meta.url), 'utf8');
   assert.doesNotMatch(guide, /'Just me'|'Just you'|The two of us/);
-  assert.match(guide, /'Single, or a couple\?'/);
-  assert.match(guide, /'Single'\)/);
-  assert.match(guide, /'A couple'\)/);
+  // Single or a couple is asked once, when the client is created (owner, 2026-10-28), not in the Debt step.
+  assert.doesNotMatch(guide, /Single, or a couple/);
+  const page = readFileSync(new URL('../ui/page.js', import.meta.url), 'utf8');
+  assert.match(page, /'Single, or a couple\?', \[\['single', 'Single'\], \['couple', 'A couple'\]\]/);
 });

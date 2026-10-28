@@ -2143,3 +2143,20 @@ input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]
 label:has(> input[type=checkbox]), label:has(> input[type=radio]) { min-height: var(--tap); display: inline-flex; align-items: center; gap: 8px; }
 summary { display: flex; align-items: center; }
 .tap-box { min-width: var(--tap); justify-content: center; }
+
+/* Onboarding fixes from a live session (owner, 2026-10-28). The Needs total rides in the sticky Back and Next bar; a
+   line's own how-paid chips sit beside its amount; the new client's first questions sit in the client menu. */
+.step-nav .step-sum { align-self: center; text-align: center; color: var(--text-muted, inherit); }
+.how-seg { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); flex: 0 1 auto; }
+.how-seg .seg-btn { flex: 0 0 auto; min-height: var(--tap); align-items: center; padding: var(--space-1) var(--space-3); }
+.nc-intake { display: grid; gap: var(--space-2); }
+/* The "$" never sits on the first digit (owner, 2026-10-28): the box keeps room for it whatever else styles the input. */
+.affix > input[type] { padding-left: 1.8em; }
+.affix-end > input[type] { padding-left: var(--space-2); padding-right: 1.8em; }
+.goal-new { display: grid; gap: 2px; flex: 1 1 16rem; }
+.reveal-left { text-align: center; font-size: var(--text-lg, 1.125rem); margin: var(--space-2) 0 0; }
+.reveal-fold { font-size: var(--text-sm); margin-top: var(--space-2); }
+.reveal-fold .reveal-movers { font-size: var(--text-sm); }
+.cover-q { padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.cover-q:first-child { border-top: 0; }
+.tick.kinds-wrap { display: flex; flex-wrap: wrap; gap: var(--space-1); min-width: 0; max-width: 100%; }

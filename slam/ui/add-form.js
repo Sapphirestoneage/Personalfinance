@@ -99,7 +99,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       }
       if (collection === 'goals' && v.type && typeSel) { typeSel.value = v.type; typeSel.dispatchEvent(new Event('change')); }
     } });
-  const amount = echo(box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' }), 'money');
+  const amount = echo(box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200' }), 'money');
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
   const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
   if (often) often.setAttribute('aria-label', 'How often');
@@ -171,7 +171,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     minimum: field('add-min', 'Minimum payment', dollars(more.minimum), null, null, true),
     dueDay: field('add-due', 'Due day of the month', more.dueDay, null, null, true),
     annualFee: field('add-fee', 'Annual fee', dollars(more.annualFee), null, null, true),
-    asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
+    asOf: field('add-asof', 'The date of this amount', more.asOf, null, null, true),
     note: field('add-note', 'Note', more.note)
   };
   // What does it have? (S-270, replacing the fixed details of S-264): the type's questions from data/type-features.json,

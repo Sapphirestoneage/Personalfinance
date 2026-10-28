@@ -1699,7 +1699,7 @@ function render(ctx) {
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = [owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) }), mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) }))];
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = [personScreen(cur(), levels[2]), (() => { const p = owedToYou(cur()).find((x) => personSlug(x.key) === levels[2]); return p ? mathButton(['list:owed:' + p.key], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null; })()];
   // Guide me (S-280): the same sections, one step at a time, screen one only.
-  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section) }) : guideTop(ctx);
+  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0]) : guideTop(ctx);
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
