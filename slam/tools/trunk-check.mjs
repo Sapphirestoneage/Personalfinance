@@ -1,4 +1,4 @@
-// The trunk test (Part 9, S-288; Krug's "trunk test"): dropped onto any screen, can a person tell where they are?
+// The trunk test (Part 9, S-288; Krug's "trunk test"; named trunk-check so node --test never runs it as a test): dropped onto any screen, can a person tell where they are?
 // Opens every page, every second-level tab, and one level-3 and one level-4 screen in each section of Numbers, at a
 // phone width and a computer width, on the made-up demo household, and passes or fails each on:
 //   site ID       "Stress Less About Money" top left, a link to Home
@@ -10,8 +10,8 @@
 //   first thing   the first thing to do (a row, a box, a button, a slider) in view without scrolling
 // and the accessibility basics (Part 8): one h1, headings in order (no level skipped), every field tied to a label,
 // a "Skip to main content" link first, no zoom lock, every tap target at least 44px tall.
-//   node tools/trunk-test.mjs            writes docs/TRUNK_TEST.md and prints the fails; exits 1 on any fail
-//   node tools/trunk-test.mjs --json FILE   also writes the raw results
+//   node tools/trunk-check.mjs            writes docs/TRUNK_TEST.md and prints the fails; exits 1 on any fail
+//   node tools/trunk-check.mjs --json FILE   also writes the raw results
 // It serves the slam folder itself on a free port (fresh browser storage: the demo household loads).
 
 import { createServer } from 'node:http';
@@ -154,7 +154,7 @@ await browser.close(); server.close();
 
 // The report.
 const fails = results.flatMap((r) => CHECKS.filter(([k]) => !r[k].ok).map(([k, label]) => ({ r, k, label })));
-const L = ['# Trunk test', '', 'Krug\'s trunk test, run by `node tools/trunk-test.mjs` on ' + new Date().toISOString().slice(0, 10) + ' on the made-up demo household: every page, every second-level tab, and one level-3 and one level-4 screen in each section of Numbers, at phone width (375px) and computer width (1280px). Each screen passes or fails on the site ID, the page name, the main sections, the options at this level, you are here (both levels marked, two cues), search, and whether the first thing to do is in view without scrolling; then the accessibility basics of Part 8 (one h1 and headings in order, every field labeled, the skip link first, zoom allowed, taps at least 44px).', '', 'Result: ' + (fails.length ? fails.length + ' fails' : 'every check passes') + ' across ' + results.length + ' screens.', ''];
+const L = ['# Trunk test', '', 'Krug\'s trunk test, run by `node tools/trunk-check.mjs` on ' + new Date().toISOString().slice(0, 10) + ' on the made-up demo household: every page, every second-level tab, and one level-3 and one level-4 screen in each section of Numbers, at phone width (375px) and computer width (1280px). Each screen passes or fails on the site ID, the page name, the main sections, the options at this level, you are here (both levels marked, two cues), search, and whether the first thing to do is in view without scrolling; then the accessibility basics of Part 8 (one h1 and headings in order, every field labeled, the skip link first, zoom allowed, taps at least 44px).', '', 'Result: ' + (fails.length ? fails.length + ' fails' : 'every check passes') + ' across ' + results.length + ' screens.', ''];
 for (const [wname] of WIDTHS) {
   L.push('## ' + wname[0].toUpperCase() + wname.slice(1) + ' width', '', '| Screen | Level | ' + CHECKS.map(([, l]) => l).join(' | ') + ' |', '|---|---|' + CHECKS.map(() => '---').join('|') + '|');
   for (const r of results.filter((x) => x.width === wname)) L.push('| ' + r.url + ' | ' + r.level + ' | ' + CHECKS.map(([k]) => (r[k].ok ? 'pass' : 'FAIL')).join(' | ') + ' |');

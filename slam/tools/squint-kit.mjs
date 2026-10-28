@@ -1,9 +1,9 @@
-// The squint test kit (Part 9, S-288): six screens chosen at random (at least two at level 3 or 4), captured on the
+// The squint test kit (Part 9, S-288; named squint-kit so node --test never runs it as a test): six screens chosen at random (at least two at level 3 or 4), captured on the
 // made-up demo household, blurred so they cannot be read closely, on one printable page with the instructions for the
 // coach's dry run: give a friend two minutes to circle the site ID, the page name, the sections, the local options,
 // "you are here" and search on each screen.
-//   node tools/squint-test.mjs            writes docs/squint/*.png and docs/squint-test.html
-//   node tools/squint-test.mjs --seed 7   the same six again (the seed is printed and written on the page)
+//   node tools/squint-kit.mjs            writes docs/squint/*.png and docs/squint-test.html
+//   node tools/squint-kit.mjs --seed 7   the same six again (the seed is printed and written on the page)
 // It serves the slam folder itself on a free port (fresh browser storage: the demo household loads).
 
 import { createServer } from 'node:http';
@@ -90,7 +90,7 @@ const page = `<!doctype html>
 <body>
 <h1>Squint test: can a friend tell where they are?</h1>
 <div class="how">
-  <p>Six screens of SLAM, chosen at random (at least two from the deep levels, where the real work happens), blurred so the words cannot be read closely. Made on ${new Date().toISOString().slice(0, 10)} with seed ${seed} (run <code>node tools/squint-test.mjs --seed ${seed}</code> to get the same six). The made-up demo household.</p>
+  <p>Six screens of SLAM, chosen at random (at least two from the deep levels, where the real work happens), blurred so the words cannot be read closely. Made on ${new Date().toISOString().slice(0, 10)} with seed ${seed} (run <code>node tools/squint-kit.mjs --seed ${seed}</code> to get the same six). The made-up demo household.</p>
   <h2>How to run it (two minutes a person)</h2>
   <ol>
     <li>Print this page (or hand over the screen) and give a friend a pen.</li>

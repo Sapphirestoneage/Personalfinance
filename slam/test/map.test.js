@@ -1,5 +1,5 @@
 // The map and "you are here" (S-280, S-281): the header, five tabs, second-level tabs, the trail from the client, the
-// siblings strip, covered today. Source checks; the pages themselves are walked by tools/trunk-test.mjs.
+// siblings strip, covered today. Source checks; the pages themselves are walked by tools/trunk-check.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
