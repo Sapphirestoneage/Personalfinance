@@ -6,8 +6,8 @@
 
 import { echo } from './understood.js';
 import { attachPicker } from './picker.js';
-import { placeLibEntries, LIB } from './libraries.js';
-import { placeOf } from '../engine/library.js';
+import { placeLibEntries, nameEntries, LIB } from './libraries.js';
+import { placeOf, cardFills, applyFills } from '../engine/library.js';
 import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
@@ -26,7 +26,7 @@ import { addNote, removeNote, setShared, sessionNotes } from '../engine/notes.js
 import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
-import { INCOME_FIRST } from '../engine/add.js';
+import { INCOME_FIRST, namePlaceholder } from '../engine/add.js';
 import { endCallScreen, fiReveal } from './end-call.js';
 import { headlineStrip } from './strip.js';
 import { catalog, inlineTicks, tickWords } from './ticks.js';
@@ -99,7 +99,7 @@ const pickBox = (id, label, options, value, onPick) => {
 };
 // A box with its own visible label above it (owner, 2026-10-28: boxes in a row never go unnamed). A row with one box
 // uses the row's name as its label; a row with more names each one. DESIGN.md "Fields never collide".
-const cell = (cap, box) => h('div', { class: 'field-cell' }, h('label', { class: 'field-cap', for: box.id }, cap), box);
+const cell = (cap, box, id = box.id) => h('div', { class: 'field-cell' }, h('label', { class: 'field-cap', for: id }, cap), box);
 // A guess says so on its row.
 // Only a guess worth checking now gets a chip (Rough now and later); one that is fine for now shows a small gray dot,
 // so a first session ends with a short list, not dozens of chips.
@@ -124,13 +124,13 @@ const delBtn = (collection, id, name) => h('button', { type: 'button', class: 'b
 // The rest of its ticks are on its screen in My numbers. Every answer and box goes through change(), so Undo works.
 const openTicks = new Set();
 const ON_ROW = { debts: ['balance', 'apr', 'minimum', 'dueDay'], income: ['amount', 'cadence', 'payDay'], accounts: ['balance'] };
-function coreTicks(spine, rules, coll, x) {
+function coreTicks(spine, rules, coll, x, called = null) {
   if (!catalog) return null;
   // A box the row already has (a card's rate and payment) is not asked again under it (owner, 2026-10-28).
   const onRow = ON_ROW[coll] || [];
   const features = featuresOf(catalog, x, coll).filter((f) => f.tier === 'core').map((f) => ({ ...f, reveals: f.reveals.filter((r) => !onRow.includes(r.field)) })).filter((f) => f.reveals.length);
   if (!features.length) return null;
-  const base = coll + '.' + x.id, name = coll === 'income' ? x.label : v(x.name) || x.id;
+  const base = coll + '.' + x.id, name = called || (coll === 'income' ? x.label : v(x.name) || x.id);
   return inlineTicks({ title: name, features, ticks: x.ticks || {}, idBase: 'tk-' + x.id, open: openTicks.has(base),
     ontoggle: (e) => { if (e.target.open) openTicks.add(base); else openTicks.delete(base); },
     onAnswer: (f, a) => { openTicks.add(base); change((s) => tickFeature(s, base, f, a, { rules, today: todayIso() }), tickWords(name, f, a)); },
@@ -430,13 +430,19 @@ function whoCard(ctx) {
 }
 
 // ---------------------------------------------------------------- Debt
-const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['mortgage', 'Mortgage'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
+// Each kind's words, one and many (S-292): the add buttons, the heading over a kind's rows and an unnamed row's words read from here.
+const DEBT_KINDS = { credit_card: ['Credit card', 'Credit cards'], student_loan: ['Student loan', 'Student loans'], private_student_loan: ['Private student loan', 'Private student loans'], auto_loan: ['Car loan', 'Car loans'], mortgage: ['Mortgage', 'Mortgages'], heloc: ['Home equity line', 'Home equity lines'], personal_loan: ['Personal loan', 'Personal loans'], medical: ['Medical bill', 'Medical bills'], family_iou: ['Money owed to a person', 'Money owed to people'] };
+const kindWords = (type, many = false) => (DEBT_KINDS[type] ? DEBT_KINDS[type][many ? 1 : 0] : (PRESETS[type] || {}).label || type);
+// A row still called by its kind: the Session's words, or a preset's label (a loan added in My numbers is "Federal student loan").
+const KIND_NAMES = new Set([...Object.values(DEBT_KINDS).map(([one]) => lower(one)), ...Object.values(PRESETS).filter((p) => p.family === 'debt').map((p) => lower(p.label))]);
+const isKindName = (t) => KIND_NAMES.has(lower(t));
+const DEBT_ADD = ['credit_card', 'student_loan', 'auto_loan', 'mortgage', 'personal_loan', 'medical', 'family_iou'].map((t) => [t, kindWords(t)]);
 const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card', true], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['mortgage', 'A mortgage?', 'Mortgage'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
 const putF = (path, value, words, kind = 'known') => change((s) => (value === null ? putFact(s, path, null, 'missing', todayIso()) : putFact(s, path, value, kind, todayIso())), words);
 function addDebt(type, label) {
   change((spine) => {
     const r = addItem(spine, { collection: 'debts', type, label }, todayIso());
-    later(() => document.getElementById('d-bal-' + r.id)?.focus());
+    later(() => document.getElementById('d-name-' + r.id)?.focus());
     let s = withWhose(r.spine, 'debts', r.id);
     // A car loan takes over a "Car payment" line in Needs, so the payment counts once.
     const pay = type === 'auto_loan' ? findExpense(s, 'Car payment') : null;
@@ -445,7 +451,7 @@ function addDebt(type, label) {
   }, said.added(label));
 }
 // Several at once (owner, 2026-10-28): on a kind that comes in handfuls (cards), "Add several" turns the question into "How many more
-// credit cards?" (2 to 6) and adds that many blank rows in one change, the first one's Owed box focused.
+// credit cards?" (2 to 6) and adds that many blank rows in one change, the first one's Name box focused.
 let severalOpen = null;
 const SEVERAL = [2, 3, 4, 5, 6];
 function addDebts(type, label, n) {
@@ -453,13 +459,59 @@ function addDebts(type, label, n) {
   change((spine) => {
     let s = spine, first = null;
     for (let i = 0; i < n; i++) { const r = addItem(s, { collection: 'debts', type, label }, todayIso()); s = withWhose(r.spine, 'debts', r.id); if (!first) first = r.id; }
-    later(() => document.getElementById('d-bal-' + first)?.focus());
+    later(() => document.getElementById('d-name-' + first)?.focus());
     return s;
   }, said.added(n + ' ' + label.toLowerCase() + 's'));
+}
+// A debt's name in its row (owner, 2026-10-28, S-292): a card's name, or a loan's servicer or lender, from the same picker
+// and libraries as the Add form. A row still called by its kind shows a blank box asking for the name; clearing the box
+// puts the kind's words back (a name is never blank). A card picked from the library brings its issuer, typical rate and
+// annual fee as guesses, never over a number already typed, in the same change as the name (one Undo).
+function debtNameBox(d, name, kind) {
+  const id = 'd-name-' + d.id, p = 'debts.' + d.id, today = todayIso();
+  const box = h('input', { id, class: 'name-box', type: 'text', autocomplete: 'off', placeholder: namePlaceholder('debts', d.type), 'aria-label': name + ': name' });
+  const shown = (stored) => (isKindName(stored) ? '' : stored);
+  box.value = shown(v(d.name) || '');
+  const setName = (text, fills = null) => {
+    const t = String(text || '').trim().slice(0, 80) || kind;
+    change((s) => applyFills(putFact(s, p + '.name', t, 'known', today), p, fills, today), said.changed(name, t));
+  };
+  // Typed and left (Tab, a tap elsewhere): saved unless it is what is there already (a pick has saved itself by then).
+  const liveName = () => { const x = (current().spine.debts || []).find((y) => y.id === d.id); return x ? v(x.name) || '' : null; };
+  box.addEventListener('change', () => { const t = box.value.trim(), now = liveName(); if (now === null || t === shown(now)) return; later(() => setName(t)); });
+  // The rows still called by their kind are not offered as names.
+  const wrap = attachPicker(box, { source: 'name:debts', entries: () => nameEntries(current().spine, 'debts', 'debt', d.type).filter((e) => e.from !== 'mine' || !isKindName(e.words)),
+    onPick: (e) => setName(e.words, e.source === 'card' ? cardFills(e.value) : e.source === 'institution' ? { institution: e.value.name } : null),
+    onFree: (t) => setName(t) });
+  const c = cell('Name', wrap, id);
+  c.classList.add('name-cell');
+  return c;
+}
+// One debt's row: its name first, then the four numbers, a card's paid-in-full choice, Delete, and its questions folded.
+// A row still called by its kind, among several, is "Credit card 2" wherever it is spoken of (its labels, the Undo bar).
+function debtRow(ctx, d, i, n) {
+  const spine = ctx.spine, kind = kindWords(d.type), p = 'debts.' + d.id, stored = v(d.name) || '';
+  const name = stored && !isKindName(stored) ? stored : n > 1 ? kind + ' ' + (i + 1) : kind;
+  return lineRow('debt', debtNameBox(d, name, kind),
+    whoseBox(spine, 'debts', d, name),
+    // The balance's guess chip sits on the Owed label, the number it is about.
+    cell(['Owed', ' ', guessChip(d.balance, p + '.balance')], moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200')),
+    cell('Rate (%)', rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2))))),
+    cell('Payment a month', moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'e.g. 120')),
+    cell('Due day', intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x))), { placeholder: 'e.g. 15' })),
+    // A card: paid in full every month, or carried? It decides whether the balance costs interest.
+    d.type === 'credit_card' ? cell('Paid in full each month?', pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Not set yet'], ['statement', 'Yes, in full'], ['minimum', 'No, I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank')))) : null,
+    delBtn('debts', d.id, name),
+    coreTicks(spine, ctx.rules, 'debts', d, name));
 }
 function debt(ctx) {
   const spine = ctx.spine;
   const list = spine.debts || [];
+  // The rows sit under their kind's heading, kinds in the order the questions ask (S-292).
+  const kinds = [];
+  for (const d of list) { let g = kinds.find((x) => x.type === d.type); if (!g) { g = { type: d.type, rows: [] }; kinds.push(g); } g.rows.push(d); }
+  const rank = (t) => { const i = DEBT_ADD.findIndex(([k]) => k === t); return i < 0 ? DEBT_ADD.length : i; };
+  kinds.sort((a, b) => rank(a.type) - rank(b.type));
   // One question per kind of debt: Yes adds one (and then offers another); a kind you have reads Yes.
   const asks = DEBT_QS.map(([type, q, label, several]) => {
     const have = list.filter((d) => d.type === type).length;
@@ -474,20 +526,11 @@ function debt(ctx) {
     whoCard(ctx),
     h('section', { class: 'card qs' }, ...asks),
     h('section', { class: 'card' },
-      list.length ? h('ul', { class: 'srows' }, list.map((d) => {
-        const name = v(d.name) || d.id, p = 'debts.' + d.id;
-        return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance, 'debts.' + d.id + '.balance')),
-          whoseBox(spine, 'debts', d, name),
-          cell('Owed', moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200')),
-          cell('Rate (%)', rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2))))),
-          cell('Payment a month', moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'e.g. 120')),
-          cell('Due day', intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x))), { placeholder: 'e.g. 15' })),
-          // A card: paid in full every month, or carried? It decides whether the balance costs interest.
-          d.type === 'credit_card' ? cell('Paid in full each month?', pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Not set yet'], ['statement', 'Yes, in full'], ['minimum', 'No, I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank')))) : null,
-          delBtn('debts', d.id, name),
-          coreTicks(spine, ctx.rules, 'debts', d));
-      })) : h('p', { class: 'muted' }, 'No debts yet.'),
-      list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
+      list.length ? h('ul', { class: 'srows' }, kinds.flatMap((g) => [
+        h('li', { class: 'srow kind-head' }, h('p', { class: 'kind-title', id: 'dk-' + g.type }, g.rows.length > 1 ? kindWords(g.type, true) + ' (' + g.rows.length + ')' : kindWords(g.type))),
+        ...g.rows.map((d, i) => debtRow(ctx, d, i, g.rows.length))
+      ])) : h('p', { class: 'muted' }, 'No debts yet.'),
+      list.length ? h('p', { class: 'edit-hint' }, 'A name for each one (the card, or who you pay), what is owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
   ]);
 }

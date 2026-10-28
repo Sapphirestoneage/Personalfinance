@@ -21,13 +21,15 @@ export const PAY_SCHEDULE = [['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twi
 export const W2_BASIS = [['salary', 'Salary'], ['hourly', 'By the hour'], ['both', 'Salary plus tips, overtime or commission']];
 export const SELF_BASIS = [['steady', 'About the same each month'], ['lumpy', 'In lumps']];
 
-// What goes in the name box, by what is being added.
+// What goes in the name box, by what is being added. A debt's name is the card, or who is paid: a student loan's
+// servicer, the rest's lender (S-292); the examples are names the picker's libraries know.
+const DEBT_NAME_HINTS = { credit_card: 'Card name, e.g. Chase Freedom', student_loan: 'Servicer, e.g. MOHELA', private_student_loan: 'Lender, e.g. SoFi', auto_loan: 'Lender, e.g. Toyota Financial', mortgage: 'Lender, e.g. Chase', personal_loan: 'Lender, e.g. SoFi', medical: 'Who you owe, e.g. the hospital', family_iou: 'Who you owe, e.g. Mom' };
 export function namePlaceholder(collection, type) {
   if (collection === 'income') return 'Where it comes from, e.g. Hudson Valley Health';
   if (collection === 'expenses') return 'What it\'s for, e.g. Rent';
   if (collection === 'goals') return 'Goal, e.g. Trip to Lisbon';
   if (collection === 'policies') return 'Insurer or name, e.g. Haven term life';
-  if (collection === 'debts') return type === 'credit_card' || !type ? 'Card name, e.g. Chase Freedom' : 'Loan, e.g. ' + (PRESETS[type] ? PRESETS[type].label : 'Car loan');
+  if (collection === 'debts') return DEBT_NAME_HINTS[type || 'credit_card'] || 'Lender, e.g. ' + (PRESETS[type] ? PRESETS[type].label : 'Car loan');
   return 'Account, e.g. Chase savings';
 }
 
