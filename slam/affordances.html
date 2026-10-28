@@ -22,10 +22,6 @@
 </head>
 <body>
 <main id="app">
-  <header class="top">
-    <div class="top-title"><h1>Design kit</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
-  </header>
-
   <section class="card" aria-labelledby="r-h">
     <h2 id="r-h">The rules</h2>
     <ol class="rules">
@@ -111,13 +107,13 @@
     <div class="segmented pref-seg" role="group" aria-labelledby="d-pref-tone"><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Gentle</span></button><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Straight</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Numbers only</span></button></div>
     <ul class="pref-tiles" aria-label="What Today shows"><li class="pref-tile"><label class="check-row" for="d-tile1"><input type="checkbox" id="d-tile1" checked><span>Net worth</span></label><button type="button" class="btn small" disabled title="Already first">Up</button><button type="button" class="btn small">Down</button></li><li class="pref-tile"><label class="check-row" for="d-tile2"><input type="checkbox" id="d-tile2"><span>Savings rate</span></label><button type="button" class="btn small" disabled title="Tick it to place it">Up</button><button type="button" class="btn small" disabled title="Tick it to place it">Down</button></li></ul>
     <!-- An assumption row (Assumptions page): name, value, meaning, Used by, Change and Reset. -->
-    <ul class="as-list"><li class="as-row"><div class="as-head"><span class="as-name">Card interest rate when unknown</span><span class="chip chip-rough">changed for this client</span><span class="as-value">20%</span></div><p class="as-means">A card with no rate typed uses this, marked as a guess. Your default: 25%.</p><p class="as-used">Used by: <a href="#">My numbers, Debt</a>, <a href="#">Plan</a></p><div class="as-btns"><a class="btn small" href="#">Change</a><button type="button" class="btn small danger">Reset to your default</button></div></li></ul>
+    <ul class="as-list"><li class="as-row"><div class="as-head"><span class="as-name">Card interest rate when unknown</span><span class="chip chip-rough">Changed for this client</span><span class="as-value">20%</span></div><p class="as-means">A card with no rate typed uses this, marked as a guess. Your default: 25%.</p><p class="as-used">Used by: <a href="#">Numbers, Debt</a>, <a href="#">Plan</a></p><div class="as-btns"><a class="btn small" href="#">Change</a><button type="button" class="btn small danger">Reset to your default</button></div></li></ul>
     <div class="tick-row"><label class="tick-chip" for="d-tick1"><input type="checkbox" id="d-tick1" checked><span>Shared</span></label><label class="tick-chip" for="d-tick2"><input type="checkbox" id="d-tick2"><span>Subscription</span></label></div>
     <div class="switch-row" style="margin-top: var(--space-3)"><span class="edit-label">Has an intro rate?</span><button type="button" class="switch" role="switch" aria-checked="true"><span class="switch-track"><span class="switch-knob"></span></span>Yes</button></div>
     <div class="segmented" role="group" aria-label="Assumption set" style="margin-top: var(--space-3)">
-      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Best</span><span class="seg-sub">8% real return, 5% withdrawal</span></button>
-      <button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Likely</span><span class="seg-sub">6% real return, 4% withdrawal</span></button>
-      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Worst</span><span class="seg-sub">4% real return, 3.5% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Conservative</span><span class="seg-sub">4% real return, 3.5% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Standard</span><span class="seg-sub">6% real return, 4% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Optimistic</span><span class="seg-sub">7% real return, 4.7% withdrawal</span></button>
     </div>
   </section>
 
@@ -302,11 +298,11 @@
 
   <section class="card" aria-labelledby="nav-h">
     <h2 id="nav-h">Getting around</h2>
-    <p class="muted">The tabs, the same six on every page: at the bottom on a phone, at the top on a computer. The current one is filled; a Builder page lights none. Rest, current, pressed and focus.</p>
-    <nav class="tabbar is-sample" aria-label="Sample tabs, Today current"><ul><li><a class="tab" href="dashboard.html" aria-current="page">Today</a></li><li><a class="tab is-pressed" href="session.html">Session</a></li><li><a class="tab is-focus" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
-    <span class="demo-cap">Today current, Session pressed, My numbers with the focus.</span>
-    <nav class="tabbar is-sample" aria-label="Sample tabs on a Builder page"><ul><li><a class="tab" href="dashboard.html">Today</a></li><li><a class="tab" href="session.html">Session</a></li><li><a class="tab" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
-    <span class="demo-cap">On a Builder page no tab is lit.</span>
+    <p class="muted">The tabs, the same five on every page: at the bottom on a phone, at the top on a computer. The current one is marked; a coach page lights none. Rest, current, pressed and focus.</p>
+    <nav class="tabbar is-sample" aria-label="Sample tabs, Home current"><ul class="tab-row"><li class="tab-item is-here"><a class="tab" href="dashboard.html" aria-current="page">Home</a></li><li class="tab-item"><a class="tab is-pressed" href="ledger.html">Numbers</a></li><li class="tab-item"><a class="tab is-focus" href="plan.html">Plan</a></li><li class="tab-item"><a class="tab" href="calendar.html">Calendar</a></li><li class="tab-item"><a class="tab" href="spending.html">Spending</a></li></ul></nav>
+    <span class="demo-cap">Home current, Numbers pressed, Plan with the focus.</span>
+    <nav class="tabbar is-sample" aria-label="Sample tabs on a coach page"><ul class="tab-row"><li class="tab-item"><a class="tab" href="dashboard.html">Home</a></li><li class="tab-item"><a class="tab" href="ledger.html">Numbers</a></li><li class="tab-item"><a class="tab" href="plan.html">Plan</a></li><li class="tab-item"><a class="tab" href="calendar.html">Calendar</a></li><li class="tab-item"><a class="tab" href="spending.html">Spending</a></li></ul></nav>
+    <span class="demo-cap">On a coach page no tab is lit.</span>
     <p class="muted">Screen by screen: every deeper level is its own screen with Back, top left, and the trail. Every step but this screen is a link; Back, the trail and the phone's back all go the same way.</p>
     <div class="screen-top is-sample"><button type="button" class="btn back-btn" aria-label="Back to Credit cards"><span aria-hidden="true">&#8249;</span>Back</button><nav class="trail" aria-label="Sample trail"><ol><li><a href="#nav-h">My numbers</a></li><li><a href="#nav-h">Debt</a></li><li><a href="#nav-h">Credit cards</a></li><li aria-current="page">Amex Blue</li></ol></nav></div>
     <div class="demo-row">
@@ -341,7 +337,7 @@
       <li><a class="go-row" href="#nav-h"><span class="wf-num viz-2" aria-hidden="true">6</span><span class="go-name">Cards charging interest now</span><span class="go-sub"><span class="go-total">$3,000</span></span></a></li>
       <li><a class="go-row zero" href="#nav-h"><span class="wf-num viz-3" aria-hidden="true">3</span><span class="go-name">Cash up to the stage 1 floor</span><span class="go-sub"><span class="go-total">Nothing needed</span></span></a></li>
     </ol>
-    <p class="muted">At the bottom of every page, one small link to the Builder (the Design kit, All formulas and Rules): see the footer sample under Plan page and shared pieces.</p>
+    <p class="muted">The gear in every header holds the coach pages: Rules, House defaults, Assumptions, All formulas, Where each number came from and the Builder.</p>
   </section>
 
   <section class="card" aria-labelledby="ov-h">
@@ -376,7 +372,7 @@
 
   <section class="card" aria-labelledby="sp-h">
     <h2 id="sp-h">Speed on a call</h2>
-    <p class="muted">The headline strip (pinned; the number that just moved flashes once), the Next card, a type's questions (Yes, No, Not sure; a Yes opens its boxes), the More drawer and the Keys hint. The More menu and the client switcher are in this page's own header and tabs.</p>
+    <p class="muted">The headline strip (pinned; the number that just moved flashes once), the Next card, a type's questions (Yes, No, Not sure; a Yes opens its boxes), the More drawer and the Keys hint. The client menu, the search box and the gear are in the header, the same on every page.</p>
     <section class="headline-strip" aria-label="Sample headline numbers"><dl>
       <div class="strip-cell"><dt>Net worth</dt><dd>$62,976</dd></div>
       <div class="strip-cell"><dt>Reachable</dt><dd>$4,800</dd></div>
@@ -410,7 +406,7 @@
 </main>
 <script type="module">
   import { startPage, say } from './ui/shell.js';
-  startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'], household: false });
+  startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'] });
   // The chart gallery: every form the app draws, in a normal and a rough state, and the empty state.
   const C = await import('./ui/chart.js');
   const yrs = (a, b, f) => Array.from({ length: b - a + 1 }, (_, i) => [a + i, f(i)]);

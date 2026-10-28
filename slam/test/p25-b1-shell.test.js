@@ -61,9 +61,9 @@ test('the Builder: one small link at the bottom of every page; the Design kit, A
   for (const f of ['ui/math-page.js', 'ui/rules-page.js']) { assert.match(read(f), /tab: null, title: (?:'[^']+'|ON_HOUSE \? 'House defaults' : 'Rules'), parent: \['Builder', 'builder\.html'\]/, f); assert.doesNotMatch(read(f), /page-links/, f); }
   const kit = read('affordances.html');
   assert.match(kit, /<title>SLAM Design kit<\/title>/);
-  assert.match(kit, /<h1>Design kit<\/h1>/);
+  assert.doesNotMatch(kit, /<h1>/, 'the shell draws the title from startPage, so the kit has no title of its own');
   assert.doesNotMatch(kit, /class="page-links"/);
-  assert.match(kit, /startPage\(\{ tab: null, title: 'Design kit', parent: \['Builder', 'builder\.html'\], household: false \}\)/);
+  assert.match(kit, /startPage\(\{ tab: null, title: 'Design kit', parent: \['Builder', 'builder\.html'\] \}\)/);
   for (const f of ['ledger.html', 'builder.html', 'rules.html']) assert.match(read(f), /<script type="module" src="ui\/[\w-]+\.js"><\/script>/, f);
 });
 

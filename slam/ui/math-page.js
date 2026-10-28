@@ -11,10 +11,16 @@ import { canMaxIt } from '../engine/maxit.js';
 import { withScenario, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, scenarioText } from './scenario.js';
 import { rowById } from '../engine/assumptions.js';
-import { h, chip, ledgerHref } from './view.js';
+import { h, chip, money, ledgerHref } from './view.js';
 
 const TILE_WORDS = { networth: 'net worth', runway: 'cash runway', surplus: 'monthly surplus', savings: 'savings rate', cards: 'credit cards', fi: 'financial independence', tax: 'tax' };
-const SCREEN_WORDS = (sc) => sc.startsWith('dashboard#') ? h('a', { href: 'dashboard.html#' + sc.slice(10) }, 'Today, ' + (TILE_WORDS[sc.slice(15)] || sc.slice(10))) : sc.startsWith('flag:') ? h('a', { href: 'dashboard.html#flag-' + sc.slice(5) }, 'Today, a flag') : sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'My numbers') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Windfall') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : sc === 'plan' ? h('a', { href: 'plan.html' }, 'Plan') : h('span', {}, 'this page');
+// A Home card that is its own screen (dashboard.html#/networth) links there; the rest of Home, and a flag, link to Home.
+const HOME_LEVELS = ['networth', 'surplus', 'savings', 'runway'];
+const SCREEN_WORDS = (sc) => {
+  if (sc.startsWith('dashboard#tile-')) { const id = sc.slice(15); return h('a', { href: 'dashboard.html' + (HOME_LEVELS.includes(id) ? '#/' + id : '') }, 'Home, ' + (TILE_WORDS[id] || id)); }
+  if (sc.startsWith('flag:')) return h('a', { href: 'dashboard.html' }, 'Home');
+  return sc === 'ledger' ? h('a', { href: 'ledger.html' }, 'Numbers') : sc === 'windfall' ? h('a', { href: 'windfall.html' }, 'Extra money') : sc === 'calendar' ? h('a', { href: 'calendar.html' }, 'Calendar') : sc === 'plan' ? h('a', { href: 'plan.html' }, 'Plan') : h('span', {}, 'this page');
+};
 
 // Units in words, not codes.
 const UNIT_WORDS = { usd: 'dollars', 'usd/month': 'dollars a month', 'usd/year': 'dollars a year', ratio: 'percent', months: 'months', years: 'years', age: 'age', count: 'count' };
@@ -42,7 +48,12 @@ function figure(base, rules) {
   return { spine, rules, s: summarize(spine, rules) };
 }
 
-// The top: one row per number, its value today, and a chevron that opens it.
+// The top: one row per number, its value today, and a chevron that opens it. A summary row shows whole dollars
+// (the cents are on the number's own screen); a number that is missing wears its chip alone.
+const DOLLAR_UNITS = ['usd', 'usd/month', 'usd/year'];
+const summaryWords = (e) => (e.kind !== 'notForMe' && DOLLAR_UNITS.includes(e.unit) && e.value !== null && e.value !== undefined ? money(e.value) : showNumber(e.value, e.unit, e.kind));
+const summarySub = (e) => (e.kind !== 'notForMe' && (e.value === null || e.value === undefined) ? chip(e.kind === 'incomplete' ? 'incomplete' : 'missing')
+  : [h('span', { class: 'go-total' }, summaryWords(e)), e.kind === 'rough' || e.kind === 'incomplete' ? chip(e.kind) : null]);
 function list(base, rules) {
   const set = pickedScenario();
   const ctx = figure(base, rules);
@@ -53,14 +64,13 @@ function list(base, rules) {
       const e = explainMetric(id, ctx);
       return h('li', {}, h('a', { class: 'go-row plain', href: '#/' + encodeURIComponent(level) },
         h('span', { class: 'go-name' }, e.label),
-        h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, showNumber(e.value, e.unit, e.kind)), e.kind === 'rough' || e.kind === 'missing' || e.kind === 'incomplete' ? chip(e.kind) : null)));
-    })),
-    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: 'rules.html' }, h('span', { class: 'go-name' }, 'Rules'), h('span', { class: 'go-sub' }, 'Every limit, rate and date the formulas use, with its source.'))))
+        h('span', { class: 'go-sub' }, summarySub(e))));
+    }))
   ];
 }
 
 // One number on its own screen. An input that is another number opens that number's screen; an input from your
-// numbers opens it in My numbers; a rule opens on the Rules page. An input with nowhere to go is plain text.
+// numbers opens it in Numbers; a rule opens on the Rules page. An input with nowhere to go is plain text.
 function one(level, base, rules) {
   const m = metricAt(level, base, rules);
   const ctx = figure(base, rules);
@@ -75,7 +85,8 @@ function one(level, base, rules) {
     h('p', { class: 'math-plugged' }, h('code', {}, e.plugged)),
     e.note ? h('p', { class: 'math-note' }, e.note) : null,
     e.roughBecause.length ? h('p', { class: 'math-why' }, 'Rough because: ' + e.roughBecause.join(', ') + '.') : null,
-    h('p', { class: 'muted' }, 'Shown on: ', ...m.screens.flatMap((sc, i) => [i ? ', ' : '', SCREEN_WORDS(sc)])),
+    // A flag sits on Home; when a Home card is already named, the flag adds nothing.
+    h('p', { class: 'muted' }, 'Shown on: ', ...m.screens.filter((sc) => !(sc.startsWith('flag:') && m.screens.some((x) => x.startsWith('dashboard#')))).flatMap((sc, i) => [i ? ', ' : '', SCREEN_WORDS(sc)])),
     h('h2', {}, 'Inputs (' + e.terms.length + ')'),
     e.terms.length ? h('ul', { class: 'math-terms' }, e.terms.map((t) => h('li', { class: 'math-term' }, chip(t.kind), ' ', input(t),
       ' ', h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind))))) : h('p', { class: 'muted' }, 'None.'),

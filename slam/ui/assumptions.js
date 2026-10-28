@@ -13,6 +13,7 @@ import { valueOf as v } from '../engine/spine.js';
 import { h, money, ledgerHref } from './view.js';
 import { prefs } from './prefs.js';
 import { pickedScenario } from './scenario.js';
+import { echo } from './understood.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const year = (spine) => +((spine && spine.meta && spine.meta.asOf) || today()).slice(0, 4);
@@ -21,7 +22,7 @@ const [law, presets, bench] = await Promise.all([rulesFile(2026), fetchJson('dat
 // ---------------------------------------------------------------- words for a value
 const PCT_UNITS = ['rate', 'ratio', 'likelihood'];
 const MONEY_UNITS = ['usd', '$', 'usd/month'];
-const camel = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).toLowerCase().replace(/^./, (c) => c.toUpperCase());
+const camel = (k) => String(k).replace(/[-_]+/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).toLowerCase().replace(/^./, (c) => c.toUpperCase());
 const pctWords = (x) => { const p = Math.round(x * 10000) / 100; return p + '%'; };
 export function valueWords(value, unit) {
   if (value === null || value === undefined) return 'not set';
@@ -89,9 +90,11 @@ function ruleRow(ctx, r, level) {
     ? () => change((s) => resetClientAssumption(s, r.id), r.name + ' is back to your default (' + valueWords(house, m.unit) + ')')
     : () => keepHouse((o) => { const n = { ...o }; delete n[r.id]; return n; }, r.name + ' is back to the file\'s value');
   // One line (Krug pass): the name, the value and Change; what it means, where it is used and Reset open inside.
-  return oneLine(r.name, valueWords(shown, m.unit), changedHere ? h('span', { class: 'chip chip-rough' }, level === 'client' ? 'changed for this client' : 'changed in this browser') : null,
-    list ? h('a', { class: 'btn small', href: 'house.html#/' + encodeURIComponent(r.id), 'aria-label': 'Change the order of ' + r.name }, 'Change')
-      : h('a', { class: 'btn small', href: '#/' + encodeURIComponent(r.id), 'aria-label': 'Change ' + r.name }, 'Change'),
+  // Client view hides the coach's editors (Preferences), as it hides the level switch.
+  const action = prefs().view === 'client' ? null
+    : list ? h('a', { class: 'btn small', href: 'house.html#/' + encodeURIComponent(r.id), 'aria-label': 'Change the order of ' + r.name }, 'Change')
+      : h('a', { class: 'btn small', href: '#/' + encodeURIComponent(r.id), 'aria-label': 'Change ' + r.name }, 'Change');
+  return oneLine(r.name, valueWords(shown, m.unit), changedHere ? h('span', { class: 'chip chip-rough' }, level === 'client' ? 'Changed for this client' : 'Changed in this browser') : null, action,
     [h('p', { class: 'as-means' }, r.means, level === 'client' && own ? ' Your default: ' + valueWords(house, m.unit) + '.' : ''),
       usedBy(ctx, r),
       changedHere ? h('div', { class: 'as-btns' }, h('button', { type: 'button', class: 'btn small danger', onclick: reset }, level === 'client' ? 'Reset to your default' : 'Use the file\'s value')) : null]);
@@ -106,7 +109,7 @@ const refRow = (r) => {
   const t = bench && bench.fiftyThirtyTwenty;
   return oneLine(r.name, t ? Math.round(t.needs * 100) + ' / ' + Math.round(t.wants * 100) + ' / ' + Math.round(t.savings * 100) : 'not set', null, null,
     [h('p', { class: 'as-means' }, r.means + (t ? ' Source: ' + t.source + '.' : '')), h('p', { class: 'as-used' }, 'Used by: ', r.screens.map((x) => h('a', { href: x.href }, x.label))),
-      h('p', { class: 'edit-hint' }, 'Reference data: changed in data/benchmarks.json, not per client.')]);
+      h('p', { class: 'edit-hint' }, 'A published reference, the same for every client; it does not change here.')]);
 };
 
 // ---------------------------------------------------------------- the groups
@@ -117,20 +120,20 @@ function typicalCard(g) {
   const src = t.sources || {};
   return h('ul', { class: 'as-list' }, keys.map((k) => {
     const s = src[k] || {};
-    return oneLine(camel(k), sets.map(([, x]) => x.label + ' ' + money(x.amounts[k])).join(' \u00b7 '), s.status === 'verify' ? h('span', { class: 'chip chip-rough' }, 'verify') : null, null,
-      [h('p', { class: 'as-means' }, 'A month. ' + (s.source || 'No source given') + (s.year ? ', ' + s.year : '') + '. ', s.url ? h('a', { href: s.url, rel: 'noopener', target: '_blank' }, 'The table') : null),
+    return oneLine(camel(k), sets.map(([, x], i) => (i ? x.label.charAt(0).toLowerCase() + x.label.slice(1) : x.label) + ' ' + money(x.amounts[k])).join('; '), s.status === 'verify' ? h('span', { class: 'chip chip-rough' }, 'Verify') : null, null,
+      [h('p', { class: 'as-means' }, 'A month. ' + (s.source || 'No source given') + (s.year ? ', ' + s.year : '') + '. ', s.url ? h('a', { href: s.url, rel: 'noopener', target: '_blank' }, 'Source table (opens their site)') : null),
         h('p', { class: 'as-used' }, 'Used by: ', g.screens.map((x) => h('a', { href: x.href }, x.label)))]);
   }));
 }
+// The law is listed once, on the Builder's Rules page; here only the way there (the group line carries the count).
 function lawCard() {
-  const list = (law && law.rules) || [];
-  return [h('ul', { class: 'as-list' }, list.map((r) => h('li', { class: 'as-row as-line as-plain' }, h('span', { class: 'as-name' }, r.rule || r.id), h('span', { class: 'as-value' }, valueWords(r.value, r.unit))))),
-    prefs().view === 'client' ? null : h('p', {}, h('a', { href: 'rules.html' }, 'Change a rule on the Builder\'s Rules page'))];
+  const n = ((law && law.rules) || []).length;
+  return prefs().view === 'client' ? h('p', { class: 'muted' }, 'The ' + n + ' limits, brackets and dates the law sets.') : h('p', {}, h('a', { href: 'rules.html' }, 'Read or change a rule on the Builder\'s Rules page'));
 }
 function ownCard(ctx, g) {
   const A = (ctx.spine && ctx.spine.assumptions) || {};
   return [h('h2', { class: 'fv-h' }, 'The client\'s own guesses'),
-    h('p', { class: 'muted' }, 'Typed with the client, so they are their numbers: changed on My numbers, never here.'),
+    h('p', { class: 'muted' }, 'Typed with the client, so they are their numbers: changed on Numbers, never here.'),
     h('ul', { class: 'as-list' }, g.own.map(([k, w]) => h('li', { class: 'as-row as-line as-plain' }, h('a', { class: 'as-link', href: ledgerHref('assumptions.' + k) }, h('span', { class: 'as-name' }, w), h('span', { class: 'as-value' }, A[k] && v(A[k]) !== null ? valueWords(v(A[k]), k === 'lifeExpectancy' || k === 'coastAge' ? 'age' : 'rate') : 'not given yet')))))];
 }
 
@@ -174,6 +177,8 @@ function rowScreen(ctx, r) {
   const now = level === 'client' && own ? own.value : m.value;
   const box = h('input', { id: 'as-value', type: 'text', inputmode: 'decimal', autocomplete: 'off', 'aria-describedby': 'as-hint' });
   box.value = PCT_UNITS.includes(m.unit) ? String(Math.round(now * 10000) / 100) : String(now);
+  // What the box understood (S-285), under it, as on Numbers.
+  if (PCT_UNITS.includes(m.unit) || MONEY_UNITS.includes(m.unit)) echo(box, PCT_UNITS.includes(m.unit) ? 'rate' : 'money');
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const preview = h('div', { class: 'as-preview', 'aria-live': 'polite' });
   const show = () => {
@@ -207,8 +212,7 @@ function rowScreen(ctx, r) {
       h('p', { class: 'edit-label' }, 'Before and after, on these numbers'), preview, msg,
       h('div', { class: 'edit-actions' },
         h('button', { type: 'submit', class: 'btn primary' }, 'Save'),
-        level === 'client' && own ? h('button', { type: 'button', class: 'btn danger', onclick: () => change((s) => resetClientAssumption(s, r.id), r.name + ' is back to your default') }, 'Reset to your default') : null,
-        h('a', { class: 'btn ghost', href: '#' }, 'Cancel')))
+        level === 'client' && own ? h('button', { type: 'button', class: 'btn danger', onclick: () => change((s) => resetClientAssumption(s, r.id), r.name + ' is back to your default') }, 'Reset to your default') : null))
   ];
 }
 function fmtMetric(x, unit) {
@@ -219,7 +223,7 @@ function fmtMetric(x, unit) {
 }
 
 startPage({
-  tab: null, title: 'Assumptions',
+  tab: null, title: 'Assumptions', parent: ['Builder', 'builder.html'],
   name: (levels) => { const r = levels.length === 1 ? rowById(levels[0]) : null; return r ? r.name : null; },
   render: (ctx) => (ctx.levels.length ? rowScreen(ctx, rowById(ctx.levels[0])) : listScreen(ctx))
 });
