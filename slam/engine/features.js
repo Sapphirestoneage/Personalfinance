@@ -27,13 +27,13 @@ export function tickCount(cat, item, collection, { tier = null } = {}) {
   return { checked: fs.filter((f) => ticks[f.id]).length, total: fs.length };
 }
 
-const stamp = (today) => ({ asOf: today, source: 'type default' });
 // The value a field starts with when its feature is ticked yes: a house default (a rule) or a guess, as rough.
 function startValue(r, rules, year) {
   if (!r.default) return undefined;
-  if ('value' in r.default) return { value: r.default.value, kind: 'known' };
+  // Every type default is a guess until the client says so (S-267): it fills as rough, labeled "(a guess)".
+  if ('value' in r.default) return { value: r.default.value, kind: 'rough' };
   if ('guess' in r.default) return { value: r.default.guess, kind: 'rough' };
-  if ('rule' in r.default && rules) { const x = rules.get(r.default.rule, year); return x === null || x === undefined ? undefined : { value: x, kind: 'rough' }; }
+  if ('rule' in r.default && rules) { let x; try { x = rules.get(r.default.rule, year); } catch { x = null; } return x === null || x === undefined ? undefined : { value: x, kind: 'rough' }; }
   return undefined;
 }
 
@@ -55,7 +55,7 @@ export function tickFeature(spine, base, feature, answer, { rules = null, today 
       if (typed) continue;
       const start = answer === 'yes' ? startValue(r, rules, year) : undefined;
       s = start ? putFact(s, path, start.value, start.kind, today) : putFact(s, path, null, 'missing', today);
-      if (start) s = setSource(s, path, start.kind === 'rough' ? 'type default (a guess)' : 'type default');
+      if (start) s = setSource(s, path, 'type default (a guess)');
     }
   }
   const it = getAt(s, base), ticks = { ...(it.ticks || {}) };
@@ -78,6 +78,14 @@ function setItem(s, base, item) {
 export function hiddenFields(cat, item, collection) {
   const ticks = item.ticks || {};
   return new Set(featuresOf(cat, item, collection).filter((f) => ticks[f.id] === 'no').flatMap((f) => f.reveals.map((r) => r.field)));
+}
+
+// The two-screen rule (S-270): a field only screen-two features reveal goes in the More drawer; a field a screen-one
+// feature reveals, or one the catalog does not list (name, balance, rate), stays on screen one.
+export function screenTwoFields(cat, item, collection) {
+  const fs = featuresOf(cat, item, collection), one = new Set(), two = new Set();
+  for (const f of fs) for (const r of f.reveals) (f.tier === 'core' ? one : two).add(r.field);
+  return new Set([...two].filter((x) => !one.has(x)));
 }
 
 // To-dos from "not sure" (S-266): each feature not sure on any item, for the client (a field the client knows) or for

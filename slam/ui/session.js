@@ -18,13 +18,16 @@ import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
 import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
-import { h, chip, money, pct, shortDate } from './view.js';
+import { h, chip, money, pct, shortDate, showValue } from './view.js';
 import { addNote, removeNote, setShared, sessionNotes } from '../engine/notes.js';
 import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
 import { endCallScreen } from './end-call.js';
+import { headlineStrip } from './strip.js';
+import { catalog, keysHint, inlineTicks, tickWords } from './ticks.js';
+import { featuresOf, tickFeature } from '../engine/features.js';
 import { rememberStep, currentClient } from './clients.js';
 import { ledgerHref } from './view.js';
 
@@ -102,6 +105,21 @@ function more(label, ...body) {
 const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...kids);
 // Every saved row can be deleted (owner's ask, 2026-10-27): a red-outline Delete, one change, so Undo brings it back.
 const delBtn = (collection, id, name) => h('button', { type: 'button', class: 'btn small danger srow-del', 'aria-label': 'Delete ' + name, onclick: () => change((s) => removeItem(s, collection, id), said.deleted(name)) }, 'Delete');
+
+// What it has (S-270): an item's screen-one ticks under its row, folded to one line; a Yes opens its boxes in place.
+// The rest of its ticks are on its screen in My numbers. Every answer and box goes through change(), so Undo works.
+const openTicks = new Set();
+function coreTicks(spine, rules, coll, x) {
+  if (!catalog) return null;
+  const features = featuresOf(catalog, x, coll).filter((f) => f.tier === 'core');
+  if (!features.length) return null;
+  const base = coll + '.' + x.id, name = coll === 'income' ? x.label : v(x.name) || x.id;
+  return inlineTicks({ title: name, features, ticks: x.ticks || {}, idBase: 'tk-' + x.id, open: openTicks.has(base),
+    ontoggle: (e) => { if (e.target.open) openTicks.add(base); else openTicks.delete(base); },
+    onAnswer: (f, a) => { openTicks.add(base); change((s) => tickFeature(s, base, f, a, { rules, today: todayIso() }), tickWords(name, f, a)); },
+    get: (field) => v(x[field]),
+    onSet: (field, val, r) => putF(base + '.' + field, val, said.changed(name + ': ' + r.label.toLowerCase(), val === null ? 'blank' : showValue(val, r.type))) });
+}
 
 // ---------------------------------------------------------------- the step frame
 // Each step's total, as its formula (Track L): the same registry ids My numbers' sections use.
@@ -339,7 +357,8 @@ function debt(ctx) {
           intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x)))),
           // A card: paid in full every month, or carried? It decides whether the balance costs interest.
           d.type === 'credit_card' ? pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Paid in full? Not set (counted as carried)'], ['statement', 'Paid in full each month'], ['minimum', 'I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank'))) : null,
-          delBtn('debts', d.id, name));
+          delBtn('debts', d.id, name),
+          coreTicks(spine, ctx.rules, 'debts', d));
       })) : h('p', { class: 'muted' }, 'No debts yet.'),
       list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
@@ -434,7 +453,7 @@ function unemploymentBits(x) {
     intBox('i-wk-' + x.id, weeksLeft, name + ': weeks left', (n) => setIncome(x, { end: n === null ? null : addDays(asOf, n * 7) }, said.changed(name + ' weeks left', n === null ? 'blank' : String(n))), { placeholder: 'weeks', min: 0, max: 99 }))];
 }
 const PER_YEAR_OK = (c) => ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(c);
-function incomeRows(spine) {
+function incomeRows(spine, rules) {
   return (spine.income || []).filter((x) => x.type !== 'maybeMoney').map((x) => {
     const asked = (x.type === 'w2' && v(x.payBasis)) || (isSelfEmployment(x) && v(x.payBasis) === 'lumpy');
     const amountBox = asked ? null : [
@@ -447,14 +466,15 @@ function incomeRows(spine) {
       x.type === 'w2' ? h('div', { class: 'srow-q' }, ...w2Bits(spine, x)) : null,
       isSelfEmployment(x) && x.type !== 'person' ? h('div', { class: 'srow-q' }, ...selfBits(x)) : null,
       x.type === 'unemployment' ? h('div', { class: 'srow-q' }, ...unemploymentBits(x)) : null,
-      x.type === 'person' && v(x.purpose) === null ? (openMore.add(x.label), more(x.label, ...personBits(spine, x))) : x.type === 'person' ? more(x.label, ...personBits(spine, x)) : null);
+      x.type === 'person' && v(x.purpose) === null ? (openMore.add(x.label), more(x.label, ...personBits(spine, x))) : x.type === 'person' ? more(x.label, ...personBits(spine, x)) : null,
+      coreTicks(spine, rules, 'income', x));
   });
 }
 function income(ctx) {
   const spine = ctx.spine, today = todayIso();
   return frame(ctx, 'income', () => [
     h('section', { class: 'card' },
-      (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine)) : h('p', { class: 'muted' }, 'No income yet.'),
+      (spine.income || []).length ? h('ul', { class: 'srows' }, incomeRows(spine, ctx.rules)) : h('p', { class: 'muted' }, 'No income yet.'),
       incomeAdd(spine, today))
   ]);
 }
@@ -510,7 +530,6 @@ function holdings(a) {
     }), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Remove holding ' + (i + 1), onclick: () => save(list.filter((_, j) => j !== i), name + ': holding ' + (i + 1) + ' removed') }, 'Remove')))),
     h('button', { type: 'button', class: 'btn small', onclick: () => save([...list, { ticker: null, share: null, expenseRatio: null, managedBy: null, advisoryFee: null }], name + ': a holding added') }, 'Add a holding'));
 }
-const lastMatch = {};
 function assets(ctx) {
   const spine = ctx.spine, today = todayIso();
   let iraPick = 'roth_ira';
@@ -530,13 +549,8 @@ function assets(ctx) {
           delBtn('accounts', a.id, name),
           h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => change((sp) => (!on === (s.sheet.liquid.defaults[a.id] !== 'none') ? setAt(sp, p, drop(getAt(sp, p), 'liquid')) : putFact(sp, p + '.liquid', !on, 'known', today)), said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
           a.family === 'taxable' ? holdings(a) : null,
-          // A plan at work: does the employer match, and up to what share of pay?
-          a.family === 'employerRetirement' ? h('div', { class: 'srow-q' },
-            question('m-' + a.id, 'Does your employer match?', [['yes', 'Yes'], ['no', 'No']], a.matchRate ? (v(a.matchRate) === 0 ? 'no' : 'yes') : null,
-              (k) => { if (k === 'no' && v(a.matchRate)) lastMatch[a.id] = v(a.matchRate); const back = k === 'yes' ? lastMatch[a.id] ?? null : 0; putF(p + '.matchRate', back, said.changed(name + ' match', k === 'no' ? 'none' : back ? pct(back) : 'yes, the rate to come')); }),
-            a.matchRate && v(a.matchRate) !== 0 ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'a-mr-' + a.id }, 'They match this share of what you put in, up to this share of pay'),
-              rateBox('a-mr-' + a.id, v(a.matchRate), name + ': match rate', (x) => putF(p + '.matchRate', x, said.changed(name + ' match', x === null ? 'blank' : pct(x)))),
-              rateBox('a-mc-' + a.id, v(a.matchCap), name + ': match up to', (x) => putF(p + '.matchCap', x, said.changed(name + ' match cap', x === null ? 'blank' : pct(x) + ' of pay')))) : null) : null);
+          // A plan at work: the match tier by tier, vesting and the rest of its screen-one questions (S-270).
+          coreTicks(spine, ctx.rules, 'accounts', a));
       })) : h('p', { class: 'muted' }, 'Nothing yet.'),
       h('p', { class: 'edit-hint' }, 'Liquid: money you can reach without a penalty or selling something you live with. Tap to change it.')),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Add one'),
@@ -643,9 +657,10 @@ function render(ctx) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
   const id = ctx.levels[0];
-  if (id === 'end') return [endCallScreen(ctx.spine, r, null, todayIso()), sessionNotesRow(ctx)];
+  if (id === 'end') return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
   if (id) rememberStep(id);
-  return id ? [nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
+  const strip = headlineStrip(ctx.spine, ctx.rules);
+  return id ? [strip, nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), keysHint(), sessionNotesRow(ctx)] : [strip, nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
 }
 const name = (levels) => (levels.length === 1 ? (levels[0] === 'end' ? 'End of the call' : (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null) : null);
 // End call (S-269): one button in the header, on every Session screen but its own.

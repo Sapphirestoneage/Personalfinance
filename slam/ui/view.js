@@ -86,6 +86,8 @@ export function showValue(value, type) {
   if (type === 'rate') { const p = Math.abs(value * 100 - Math.round(value * 100)) > 1e-9; return p ? pct(value, 2).replace(/(\.\d)0%$/, '$1%') : pct(value, 0); }
   if (type === 'bool') return value ? 'Yes' : 'No';
   if (type === 'date') return shortDate(value);
+  // Match tiers (S-266): "100% of the first 3%, then 50% of the next 2%".
+  if (type === 'tiers') return value.length ? value.map((t, i) => showValue(t.rate, 'rate') + ' of the ' + (i ? 'next ' : 'first ') + showValue(t.upTo, 'rate')).join(', then ') + ' of pay' : 'none';
   if (type === 'list') {
     if (!value.length) return 'none';
     // A contributions entry says what kind it was when it is not a plain contribution (S-211).

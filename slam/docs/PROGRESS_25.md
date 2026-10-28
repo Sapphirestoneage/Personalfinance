@@ -114,3 +114,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Type depth Batch 1 additions (2026-10-27): beneficiary and titling ticks on every account, a beneficiary flag, the Social Security estimate, coach notes, employer plan memory (S-267).
 - Friction audit, before (2026-10-27): tools/friction-audit.mjs and docs/FRICTION_BEFORE.md (S-268).
 - Practical to run (2026-10-27): four tabs and More, clients and the switcher, pick up where we left off, the Next card, End call, autosave, the audit's fixes (S-269).
+- Ticks and speed (2026-10-28): the type's questions on every item, the add form and the Session, the More drawer, the keys, the headline strip (S-270).

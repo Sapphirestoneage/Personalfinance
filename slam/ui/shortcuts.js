@@ -11,7 +11,8 @@ import { h } from './view.js';
 
 export const SHORTCUTS = [
   ['g t', 'Today'], ['g s', 'Session'], ['g m', 'My numbers'], ['g c', 'Calendar'], ['g b', 'Spending (the budget)'], ['g p', 'Plan'], ['g o', 'Profile'],
-  ['n', 'Add something on this screen'], ['/', 'Find, or type a change'], ['Ctrl K', 'Find, or type a change, even in a box'],
+  ['Enter', 'In a box: save it and move to the next box'], ['y n s', 'On a question in focus: Yes, No, Not sure'], ['m', 'Open or close More on this screen'],
+  ['n', 'Add something on this screen (when no question is in focus)'], ['/', 'Find, or type a change'], ['Ctrl K', 'Find, or type a change, even in a box'],
   ['z', 'Undo'], ['Shift Z', 'Redo'], ['?', 'This list'], ['Esc', 'Close a box or this list']
 ];
 const GO = { t: 'dashboard.html', s: 'session.html', m: 'ledger.html', c: 'calendar.html', b: 'spending.html', p: 'plan.html', o: 'profile.html' };
@@ -33,8 +34,32 @@ function addButton() {
   return all.find((b) => /^\+?\s*Add\b/i.test((b.textContent || '').trim()) && !b.disabled && b.offsetParent !== null) || null;
 }
 
+// Enter in a box (S-270): it saves (the box's change, as Tab) and the next box takes the focus. A box in a form keeps
+// Enter for the form's own Save.
+const BOXES = '#app input[type=text], #app input[type=date], #app input:not([type]), #app select';
+function enterMovesOn(e) {
+  const t = e.target;
+  if (e.key !== 'Enter' || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || !t || !t.matches || !t.matches(BOXES) || t.form) return;
+  const boxes = [...document.querySelectorAll(BOXES)].filter((b) => b.offsetParent !== null && !b.disabled && !b.form);
+  const next = boxes[boxes.indexOf(t) + 1];
+  e.preventDefault();
+  if (next) next.focus(); else t.blur();
+}
+// Y / N / S on a question in focus, and M for the screen's More (S-270).
+function tickKey(e, k) {
+  const row = document.activeElement && document.activeElement.closest ? document.activeElement.closest('.feature-row') : null;
+  if (row && /^[yns]$/i.test(k)) { const b = row.querySelectorAll('.tick-seg .seg-btn')['yns'.indexOf(k.toLowerCase())]; if (b) { e.preventDefault(); b.click(); return true; } }
+  if (k === 'm' || k === 'M') {
+    // The screen's More; on an item with nothing in More yet, its question list.
+    const d = document.querySelector('#app details.more-drawer') || document.querySelector('#app details.tick-list');
+    if (d) { e.preventDefault(); d.open = !d.open; d.querySelector('summary').focus(); return true; }
+  }
+  return false;
+}
+
 export function installShortcuts({ undo, redo, typing, say }) {
   let pendingG = 0;
+  document.addEventListener('keydown', enterMovesOn);
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
     if (dialog && dialog.open) return;
@@ -46,6 +71,7 @@ export function installShortcuts({ undo, redo, typing, say }) {
       return;
     }
     if (k === 'g') { pendingG = Date.now(); return; }
+    if (tickKey(e, k)) return;
     if (k === '?') { e.preventDefault(); showList(); return; }
     if (k === 'n') { const b = addButton(); e.preventDefault(); if (b) b.click(); else say('Nothing to add on this screen'); return; }
     if (k === 'z') { e.preventDefault(); undo(); return; }

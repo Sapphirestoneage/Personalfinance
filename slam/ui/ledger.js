@@ -11,9 +11,11 @@ import { startPage, change, said, go, keep, kept, refresh, say, current, reopen,
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
-import { beneficiaryFlag, BENEFICIARY_WORDS } from '../engine/features.js';
+import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
+import { catalog, itemTicks, tickWords, keysHint } from './ticks.js';
+import { headlineStrip } from './strip.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
@@ -659,7 +661,7 @@ function editor(row) {
   } else if (row.type.startsWith('choice:') || row.type === 'bool') {
     const opts = isNeedRow(row.path) ? [['true', 'Need'], ['false', 'Want']] : row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
     input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
-  } else if (row.type === 'list') {
+  } else if (row.type === 'list' || row.type === 'tiers') {
     // A list is a small table (owner's ask, 2026-10-27): a row per entry, boxes with their own labels, never raw code.
     input = listBoxes(row, f.value);
   } else {
@@ -673,13 +675,13 @@ function editor(row) {
   const doSet = (kind) => {
     const typed = row.type === 'bool' ? (input.value === '' ? '' : input.value === 'true' ? 'yes' : 'no') : input.value;
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
-    const p = row.type === 'list' ? input.read() : parseInput(row.type, typed);
+    const p = row.type === 'list' || row.type === 'tiers' ? input.read() : parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
     done(editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
     h('label', { for: 'edit-input', class: 'edit-label' }, row.field || row.label),
-    row.type === 'list' ? input.el : input,
+    row.type === 'list' || row.type === 'tiers' ? input.el : input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     editActions(cancel, [
@@ -692,7 +694,9 @@ function editor(row) {
 const LIST_COLS = {
   contributions: [['year', 'Year', 'int', 'e.g. 2026'], ['amount', 'Amount', 'money', 'e.g. 4,000']],
   conversions: [['year', 'Year', 'int', 'e.g. 2026'], ['amount', 'Amount', 'money', 'e.g. 4,000']],
-  holdings: [['ticker', 'Fund or ticker', 'text', 'e.g. VTI'], ['share', 'Share of the account (%)', 'rate', 'e.g. 60']]
+  holdings: [['ticker', 'Fund or ticker', 'text', 'e.g. VTI'], ['share', 'Share of the account (%)', 'rate', 'e.g. 60']],
+  // A match, tier by tier (S-267): 100% of the first 3% of pay is one line, 50% of the next 2% the next.
+  matchTiers: [['rate', 'Match this % of what you put in', 'rate', 'e.g. 100'], ['upTo', 'On the next % of your pay', 'rate', 'e.g. 3']]
 };
 // listBoxes(row, value) -> { el, read() -> { ok, value | message }, focus() }: a row of boxes per entry, + Add and Remove.
 // Fields a list keeps that are not shown here (an entry's kind, a fund's fees) ride along unchanged.
@@ -718,7 +722,7 @@ function listBoxes(row, value) {
   if (!list.length) addRow(null);
   body.style.setProperty('--list-cols', cols ? cols.length : 1);
   const head = cols ? h('div', { class: 'list-row list-head', 'aria-hidden': 'true', style: '--list-cols:' + cols.length }, ...cols.map(([, label]) => h('span', {}, label)), h('span', {})) : null;
-  const el = h('div', { class: 'list-edit' }, head, body, h('button', { type: 'button', class: 'btn add', onclick: () => { addRow(null); dirty = true; } }, cols && cols[0][0] === 'year' ? '+ Add a year' : '+ Add a line'));
+  const el = h('div', { class: 'list-edit' }, head, body, h('button', { type: 'button', class: 'btn add', onclick: () => { addRow(null); dirty = true; } }, cols && cols[0][0] === 'year' ? '+ Add a year' : key === 'matchTiers' ? '+ Add a tier' : '+ Add a line'));
   const read = () => {
     const out = [];
     for (const r of rowEls) {
@@ -733,6 +737,7 @@ function listBoxes(row, value) {
         if (k === 'year' && (p.value < 1900 || p.value > 2100)) return { ok: false, message: 'Year: a year like 2026' };
         it[k] = p.value;
       }
+      if (key === 'matchTiers' && (it.rate === null || it.upTo === null || it.rate > 2 || it.upTo <= 0 || it.upTo > 1)) return { ok: false, message: 'Each line needs both: the match % (e.g. 100) and the % of pay it covers (e.g. 3)' };
       out.push(it);
     }
     return { ok: true, value: out };
@@ -1527,6 +1532,25 @@ function memoryButton(a) {
   return h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (canLeave()) change((x) => applyTemplate(x, 'accounts.' + a.id, tpl, today()), 'Plan details filled ' + FROM_MEMORY + ' (guesses)'); } },
     'Fill ' + miss.length + ' plan details ' + FROM_MEMORY));
 }
+// The type ticks (S-267): on accounts, debts and income. A No hides its rows; the answer goes through change() (Undo).
+const TICKED = ['accounts', 'debts', 'income'];
+function hideTicked(it, rows) {
+  if (!TICKED.includes(it.collection) || !catalog) return rows;
+  const item = (cur()[it.collection] || []).find((x) => x.id === it.id);
+  const hide = item ? hiddenFields(catalog, item, it.collection) : new Set();
+  return hide.size ? rows.filter((r) => !(r.path.startsWith(it.collection + '.' + it.id + '.') && hide.has(r.path.split('.')[2]))) : rows;
+}
+// The paths of an item's screen-two rows.
+function screenTwo(it) {
+  if (!TICKED.includes(it.collection) || !catalog) return new Set();
+  const item = (cur()[it.collection] || []).find((x) => x.id === it.id);
+  return item ? new Set([...screenTwoFields(catalog, item, it.collection)].map((f) => it.collection + '.' + it.id + '.' + f)) : new Set();
+}
+function answerTick(base, f, answer) {
+  if (!canLeave()) return;
+  const item = getAt(cur(), base), name = base.startsWith('income.') ? item.label : valueOf(item.name) || item.id;
+  change((s) => tickFeature(s, base, f, answer, { rules, today: today() }), tickWords(name, f, answer));
+}
 function itemScreen(sec, g, it, st) {
   // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
   const acct = it.collection === 'accounts' ? (cur().accounts || []).find((x) => x.id === it.id) : null;
@@ -1539,14 +1563,22 @@ function itemScreen(sec, g, it, st) {
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
     fillBar(toFill(it), null),
-    (() => { const all = fillOn() ? openRows(it.rows) : it.rows;
+    (() => { const all = hideTicked(it, fillOn() ? openRows(it.rows) : it.rows);
       // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
       // numbers come first; it opens by itself when one of its rows is open.
-      const feel = (r) => /\.(stress|reasonsToKeep)$/.test(r.path), rows = all.filter((r) => !feel(r)), feels = all.filter(feel);
+      const feel = (r) => /\.(stress|reasonsToKeep)$/.test(r.path), two = screenTwo(it), rest = all.filter((r) => !feel(r)), feels = all.filter(feel);
+      // The two-screen rule (S-270): what only a screen-two question opens sits in More, folded; M opens it too.
+      const rows = rest.filter((r) => !two.has(r.path)), more = rest.filter((r) => two.has(r.path));
       return [h('section', { class: 'card', 'aria-label': it.label }, h('ul', { class: 'rows' }, rows.length ? rows.map((r) => rowEl(r, st.open || null)) : h('li', { class: 'muted' }, 'Nothing to fill in here.'))),
+        more.length ? h('details', { class: 'card done-group more-drawer', open: more.some((r) => r.path === st.open) || kept().more || null, ontoggle: (e) => { if (!!kept().more !== e.target.open) keep({ more: e.target.open }); } },
+          h('summary', {}, h('span', {}, 'More'), h('span', { class: 'count' }, more.length + (more.length === 1 ? ' detail' : ' details'))),
+          h('ul', { class: 'rows' }, more.map((r) => rowEl(r, st.open || null)))) : null,
         feels.length ? h('details', { class: 'card done-group feel-fold', open: feels.some((r) => r.path === st.open) || kept().feel || null, ontoggle: (e) => { if (!!kept().feel !== e.target.open) keep({ feel: e.target.open }); } },
           h('summary', {}, h('span', {}, 'How you feel about it'), h('span', { class: 'count' }, feels.filter((r) => /stress$/.test(r.path) && r.fact.value !== null).map((r) => 'stress ' + r.fact.value + ' of 10').join(''))),
           h('ul', { class: 'rows' }, feels.map((r) => rowEl(r, st.open || null)))) : null]; })(),
+    // What does it have? (S-267): the type's ticks, folded under one line; a Yes adds its rows above.
+    TICKED.includes(it.collection) && !selecting ? itemTicks(cur(), it.collection, it.id, { onAnswer: answerTick, onOpen: (p) => { if (canLeave()) setOpen(rowPathFor(cur(), p)); },
+      open: !!st.ticks, ontoggle: (e) => { if (!!kept().ticks !== e.target.open) keep({ ticks: e.target.open }); } }) : null,
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     // Contributions by year (owner's ask, 2026-10-27): an account that can hold them and has none offers to add them.
@@ -1558,6 +1590,7 @@ function itemScreen(sec, g, it, st) {
     acct && !selecting ? memoryButton(acct) : null,
     it.collection && !selecting && COACH_NOTED.includes(it.collection) ? coachNoteEl(it) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
+    TICKED.includes(it.collection) && !selecting ? keysHint() : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
   ];
 }
@@ -1610,7 +1643,8 @@ function render(ctx) {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
   }
-  return [body, bulkBar(sc)];
+  // The headline strip (S-270) on every screen of My numbers, so an answer typed anywhere is seen to land.
+  return [headlineStrip(spine, rules), body, bulkBar(sc)];
 }
 
 // ---------------------------------------------------------------- the profile file

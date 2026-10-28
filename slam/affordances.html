@@ -368,7 +368,29 @@
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>
-    <div class="file-banner" role="status"><span>You have unsaved changes.</span><button type="button" class="btn small">Save</button></div>
+    <p>The header's mark after every change: <span class="saved-mark" role="status">Saved</span></p>
+  </section>
+
+  <section class="card" aria-labelledby="sp-h">
+    <h2 id="sp-h">Speed on a call</h2>
+    <p class="muted">The headline strip (pinned; the number that just moved flashes once), the Next card, a type's questions (Yes, No, Not sure; a Yes opens its boxes), the More drawer and the Keys hint. The More menu and the client switcher are in this page's own header and tabs.</p>
+    <section class="headline-strip" aria-label="Sample headline numbers"><dl>
+      <div class="strip-cell"><dt>Net worth</dt><dd>$62,976</dd></div>
+      <div class="strip-cell"><dt>Reachable</dt><dd>$4,800</dd></div>
+      <div class="strip-cell is-moved"><dt>Left a month</dt><dd>$1,012</dd></div>
+      <div class="strip-cell"><dt>Savings rate</dt><dd>15.4%</dd></div>
+      <div class="strip-cell"><dt>FI</dt><dd>21.4 years <span class="strip-sub">(about 2047)</span></dd></div></dl></section>
+    <section class="card next-card" aria-label="Sample next card"><a class="next-one" href="#"><span class="next-kicker">Next: worth the most now</span><strong>Groceries, a guess worth checking</strong><span class="next-go" aria-hidden="true">&#8250;</span></a>
+      <ol class="next-more"><li><a href="#">Eating out, a guess worth checking</a></li><li><a href="#">Rent, not given yet</a></li></ol></section>
+    <details class="card done-group tick-list" open><summary><span>401(k) traditional: 2 of 15 checked</span></summary>
+      <p class="muted tick-lead">What does it have? Yes opens its numbers, No hides them, Not sure adds a to-do.</p>
+      <ul class="tick-rows">
+        <li class="feature-row"><p class="tick-q" id="kq1">Does your employer match?</p><div class="segmented tick-seg" role="group" aria-labelledby="kq1"><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Yes</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">No</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Not sure</span></button></div>
+          <div class="tick-fields"><div class="tick-box tiers-box"><p class="mini-label">The match, tier by tier</p><div class="tier-row"><input type="text" inputmode="decimal" aria-label="Tier 1: match %" placeholder="e.g. 100" value="100"><span>% of the first</span><input type="text" inputmode="decimal" aria-label="Tier 1: share of pay" placeholder="e.g. 3" value="3"><span>% of pay</span></div><button type="button" class="btn small add">+ Add a tier</button></div></div></li>
+        <li class="feature-row"><p class="tick-q" id="kq2">Does the employer money take time to become yours (vesting)?</p><div class="segmented tick-seg" role="group" aria-labelledby="kq2"><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Yes</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">No</span></button><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Not sure</span></button></div></li>
+      </ul></details>
+    <details class="card done-group more-drawer"><summary><span>More</span><span class="count">3 details</span></summary><p class="muted">Screen-two details: fund fees, the stocks and bonds mix, the beneficiary.</p></details>
+    <details class="keys-hint" open><summary>Keys</summary><dl><dt><kbd>Tab</kbd></dt><dd>Next box</dd><dt><kbd>Enter</kbd></dt><dd>Save the box and move on</dd><dt><kbd>Y  N  S</kbd></dt><dd>Answer the question in focus: Yes, No, Not sure</dd><dt><kbd>M</kbd></dt><dd>Open or close More</dd></dl></details>
   </section>
 </main>
 <script type="module">

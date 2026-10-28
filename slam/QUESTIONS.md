@@ -246,3 +246,5 @@ The Visa is marked as the everyday card, so the day-by-day run pays it last ("no
 - **171. Today's cards:** Today moved under More. Default used: its headline numbers come back as the pinned strip (next batch) and its cards stay on Today for now; nothing on Today was deleted. Say if Today should go entirely once the strip is in.
 - **172. Open a backup file:** default used: it loads into the client on screen (replacing their numbers), as Open file did. Say if it should always make a new client instead.
 - **173. Deleting a client:** default used: asked first, then Undo in the bar right after; once the browser tab closes, a deleted client is gone (its last backup file is the copy).
+- **174. The FI date in the strip:** default used: "21.4 years (about 2047)", the years to FI from the projection and the year it lands; Plan's FI date reads the same projection. Say if you want the month and year instead.
+- **175. Session match question:** default used: the Session's old "Does your employer match? / up to" boxes are gone; the 401(k)'s screen-one questions ask the match tier by tier instead. A household with only the old rate and cap still reads them (as one tier).

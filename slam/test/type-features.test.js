@@ -115,3 +115,17 @@ test('beneficiary, titling, employer memory, Social Security estimate', async ()
   assert.deepEqual(validate(demo).errors, []);
   assert.equal(ssEstimates(demo)[0].atFra, 2100);
 });
+
+// S-270: the two-screen rule on an item, a type default always a guess, and the keys on every page.
+test('screen two: fields only extra questions open go in More; defaults land as guesses; the keys are listed', async () => {
+  const { screenTwoFields } = await import('../engine/features.js');
+  const two = screenTwoFields(cat, { type: 'k401' }, 'accounts');
+  assert.ok(two.has('expenseRatio') && two.has('titling') && two.has('beneficiaryNamed'), 'fees, titling and the beneficiary are screen two');
+  assert.ok(!two.has('matchTiers') && !two.has('monthlyContribution'), 'the match and what you put in are screen one');
+  const src = readFileSync(new URL('../ui/shortcuts.js', import.meta.url), 'utf8');
+  for (const k of ["'Enter'", "'y n s'", "'m'"]) assert.ok(src.includes('[' + k), k + ' is in the keyboard list');
+  const kit = readFileSync(new URL('../affordances.html', import.meta.url), 'utf8');
+  for (const c of ['headline-strip', 'tick-list', 'more-drawer', 'keys-hint', 'next-card']) assert.ok(kit.includes(c), c + ' is in the Design kit');
+  const strip = readFileSync(new URL('../ui/strip.js', import.meta.url), 'utf8');
+  for (const id of ['netWorth', 'liquidNetWorth', 'surplus', 'savingsRateNet', 'yearsToFi']) assert.ok(strip.includes("metric('" + id + "'"), id + ' is tagged for the agree check');
+});

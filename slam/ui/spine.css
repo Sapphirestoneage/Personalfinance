@@ -1801,3 +1801,38 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 /* Back and Next stay in view at the bottom of a Session step (friction audit: Next sat below the fold). */
 .step-nav { position: sticky; bottom: var(--tabbar-h, 0px); z-index: 5; background: var(--bg, var(--surface)); padding: var(--space-2) 0; }
 @media (min-width: 640px) { .step-nav { bottom: 0; } }
+/* What does it have? (S-267): the type's ticks, one question per line, Yes / No / Not sure as a segmented control. */
+.tick-list .tick-lead { margin: var(--space-2) 0; font-size: var(--text-sm); }
+.tick-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.feature-row { border-top: 1px solid var(--border); padding-top: var(--space-3); }
+.tick-q { margin: 0 0 var(--space-2); font-weight: 600; }
+.tick-seg .seg-btn { flex: 1 1 5rem; align-items: center; text-align: center; }
+.tick-fields { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.tick-field { white-space: normal; text-align: left; }
+
+/* The headline strip (S-270): one slim row, pinned under the tabs; the number that just moved flashes once. On a phone
+   it scrolls sideways in one row rather than wrapping. */
+.headline-strip { position: sticky; top: var(--tabbar-h, 0px); z-index: 6; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 0 0 var(--space-2); padding: 2px var(--space-2); }
+@media (max-width: 639px) { .headline-strip { top: 0; } }
+.headline-strip dl { display: flex; gap: var(--space-4); margin: 0; overflow-x: auto; scrollbar-width: none; }
+.strip-cell { display: flex; flex-direction: column; min-width: max-content; padding: 2px var(--space-1); border-radius: var(--radius-sm); }
+.strip-cell dt { font-size: var(--text-xs); color: var(--text-muted); }
+.strip-cell dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.strip-sub { font-weight: 400; color: var(--text-muted); font-size: var(--text-xs); }
+.strip-cell.is-moved { animation: strip-flash 1.4s ease-out; }
+@keyframes strip-flash { 0% { background: var(--accent); color: var(--accent-text); } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .strip-cell.is-moved { animation: none; outline: 2px solid var(--accent); } }
+
+/* Ticks under a Session row (S-270): the fold takes the row's full width; a Yes opens its boxes in place. */
+.srow > .tick-list { flex-basis: 100%; margin: var(--space-1) 0 0; padding: var(--space-1) var(--space-3); }
+.tick-list > summary { font-weight: 600; }
+.tick-box { display: inline-flex; flex-direction: column; gap: 2px; margin-right: var(--space-3); }
+.tick-box input, .tick-box select { min-height: var(--btn-h, 40px); padding: 4px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+.tiers-box { display: grid; gap: var(--space-1); }
+.tier-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.tier-row input { width: 5rem; }
+.keys-hint { font-size: var(--text-sm); margin: var(--space-2) 0; }
+.keys-hint > summary { cursor: pointer; min-height: var(--tap); display: inline-flex; align-items: center; color: var(--text-muted); }
+.keys-hint dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-3); margin: 0; }
+.keys-hint dd { margin: 0; }
+kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: inherit; font-size: var(--text-xs); background: var(--surface-2, var(--surface)); }

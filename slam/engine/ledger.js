@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf, round2, tracker } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, SS_FIELDS } from './schema.js';
+import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, SS_FIELDS, INCOME_DEPTH } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -15,6 +15,7 @@ import { lineFor, paysDebtOf, linkNote, lineMonthly } from './debt.js';
 
 // The field type of a path, from the schema: money, rate, date, int, text, bool,
 // choice:a|b (pick one), suggest:a|b (pick one or type another), list.
+const LINK_TO = { loanDebt: 'debt', linkedDebt: 'debt', securedBy: 'asset', fromAccount: 'asset' };
 export function typeFor(spine, path) {
   const s = path.split('.');
   if (s[0] === 'household') {
@@ -35,6 +36,7 @@ export function typeFor(spine, path) {
   if (s[0] === 'income' && s[2] === 'payBasis') return 'choice:' + PAY_BASES.join('|');
   if (s[0] === 'income' && s[2] === 'hoursPerWeek') return 'int';
   if (s[0] === 'income' && s[2] === 'decreeYear') return 'int';
+  if (s[0] === 'income' && INCOME_DEPTH[s[2]]) return INCOME_DEPTH[s[2]];
   if (s[0] === 'income') return s[2] === 'likelihood' ? 'rate' : s[2] === 'depositTo' ? 'link:cash' : s[2] === 'payDay' || s[2] === 'payDay2' ? 'int' : 'money';
   if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'paysDebt' ? 'link:debt' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
@@ -48,6 +50,8 @@ export function typeFor(spine, path) {
     if (s[2] === 'fundedFrom') return 'link:cash|paycheck';
     // The job a plan from pay is paid through (S-227).
     if (s[2] === 'paidThrough') return 'link:job';
+    // The type catalog's links (S-267): a plan loan or a mortgage points at a debt; a debt at what secures it.
+    if (LINK_TO[s[2]]) return 'link:' + LINK_TO[s[2]];
     return (item && fieldsFor(item.family)[s[2]]) || 'text';
   }
   if (s[0] === 'goals') return 'money';
@@ -188,6 +192,8 @@ export function linkOptions(spine, type) {
   if (want.includes('card')) for (const d of spine.debts || []) if (d.type === 'credit_card') money.push({ value: d.id, label: valueOf(d.name) || d.id, group: bank(d, 'Cards') });
   const order = [...new Set(money.map((o) => o.group))];
   out.push(...order.flatMap((g) => money.filter((o) => o.group === g)));
+  if (want.includes('debt')) for (const d of spine.debts || []) out.push({ value: d.id, label: valueOf(d.name) || d.id, group: 'Debts' });
+  if (want.includes('asset')) for (const a of spine.accounts || []) if (a.family !== 'cash') out.push({ value: a.id, label: valueOf(a.name) || a.id, group: 'Assets' });
   if (want.includes('paycheck')) out.push({ value: 'paycheck', label: 'Taken from my paycheck', group: 'Paycheck' });
   if (want.includes('job')) for (const s of spine.income || []) if (s.type === 'w2' && s.cadence !== 'once') out.push({ value: s.id, label: s.label, group: 'Jobs' });
   return out;

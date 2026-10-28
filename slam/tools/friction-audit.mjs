@@ -21,6 +21,8 @@ const BASE = (process.env.SLAM_URL || 'http://localhost:8765/').replace(/\/?$/, 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const PACE = { tap: 5, typed: 45, result: 60 };
 const VIEW = { width: 1280, height: 800 };
+// The before run used Tab between boxes (Enter did nothing then); --tab-only repeats it.
+const KEYS_FIRST = !process.argv.includes('--tab-only');
 
 // ---------------------------------------------------------------- the two households (made up)
 const HOUSEHOLDS = [
@@ -60,7 +62,9 @@ function recorder(page) {
     if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
     const focused = await loc.evaluate((el) => el === document.activeElement);
     if (!focused) { await loc.click(); bump('taps'); if (r.lastTyped) r.lose(PACE.tap, 'Tab does not reach the next box: a tap into each one'); }
-    await loc.fill(''); await page.keyboard.type(text); await page.keyboard.press('Tab');
+    await loc.fill(''); await page.keyboard.type(text);
+    // Keyboard first: Enter saves a box and moves on where the app has it (outside a form); in a form, Tab.
+    await page.keyboard.press((await loc.evaluate((el) => !!el.form)) || !KEYS_FIRST ? 'Tab' : 'Enter');
     r.keys += text.length + 1; bump('typed'); r.log.push('type ' + why + ': ' + text); r.lastTyped = true;
     await page.waitForTimeout(150);
   };
@@ -164,6 +168,12 @@ async function run(browser, hh) {
       if (await r.has('#q-m-' + id + '-yes')) {
         await r.tap('#q-m-' + id + '-yes', 'Yes, a match');
         if (await r.has('#a-mr-' + id)) { await r.type('#a-mr-' + id, more.match[0], 'match rate'); await r.type('#a-mc-' + id, more.match[1], 'match up to'); }
+      } else if (await page.locator('#tk-' + id + '-match-yes').count()) {
+        // The type's questions (S-270): open the fold, Yes to the match, then the first tier.
+        if (!(await page.locator('#tk-' + id + '-match-yes').isVisible())) await r.tap('#tk-' + id + '-match-yes >> xpath=ancestor::details[1]/summary', 'the plan\'s questions');
+        await r.tap('#tk-' + id + '-match-yes', 'Yes, a match');
+        await r.type('#tk-' + id + '-matchTiers', more.match[0], 'match %');
+        await r.type('#tk-' + id + '-matchTiers >> xpath=ancestor::div[contains(@class,"tier-row")]/input[2]', more.match[1], 'of the first % of pay');
       }
     }
   }

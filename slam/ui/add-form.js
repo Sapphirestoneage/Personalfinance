@@ -6,9 +6,11 @@
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
 import { planFor } from './employer-plans.js';
+import { inlineTicks, featuresForType, typeName } from './ticks.js';
+import { tickFeature } from '../engine/features.js';
 import { applyTemplate } from '../engine/employer-plans.js';
-import { addWithAnswers, addMore, addDetails, accountDetails, ACCOUNT_DETAILS, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
-import { parseInput, addMaybe } from '../engine/edits.js';
+import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
+import { parseInput, addMaybe, putFact } from '../engine/edits.js';
 import { setAt } from '../engine/spine.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
@@ -148,18 +150,23 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
     note: field('add-note', 'Note', more.note)
   };
-  // An account's details (S-264): the fields its family has (engine/add.js ACCOUNT_DETAILS), built once, shown by kind.
-  const allDetails = accounts ? [...new Map(Object.values(ACCOUNT_DETAILS).flat().map((d) => [d[0] + ':' + d[2], d])).values()] : [];
-  const detailEl = {}, detailBox = {};
-  for (const [k, label, type, hint] of allDetails) {
-    const id = 'add-d-' + k + '-' + type;
-    const el = type === 'choice' ? select(id, [['', 'Pick one'], ...hint], '') : type === 'bool' ? select(id, [['', 'Pick one'], ['yes', 'Yes'], ['no', 'No']], '')
-      : type === 'date' ? h('input', { type: 'date', id }) : box(id, { inputmode: type === 'text' ? null : type === 'int' ? 'numeric' : 'decimal', placeholder: hint || null });
-    detailEl[k + ':' + type] = el;
-    detailBox[k + ':' + type] = field(id, label, type === 'money' ? dollars(el) : type === 'rate' ? percent(el) : el, null, null, true);
-  }
-  const details = accounts ? h('fieldset', { class: 'add-details' }, h('legend', { class: 'edit-label' }, 'Details (all optional)'), ...Object.values(detailBox)) : null;
-  const showDetails = () => { if (!details) return; const want = new Set(accountDetails(kind()).map((d) => d[0] + ':' + d[2])); for (const [k, el] of Object.entries(detailBox)) el.hidden = !want.has(k); details.hidden = !want.size; };
+  // What does it have? (S-270, replacing the fixed details of S-264): the type's questions from data/type-features.json,
+  // folded to one line; a Yes opens its boxes in place. Answers and boxes are kept here until Add, then put on the new
+  // item as a tick (Yes, No, Not sure) and a known number each. LIVE-FORM: only the ticks' own box is drawn again, on a
+  // kind change or an answer; what was typed is kept in tickState first (each box saves on change).
+  const tickState = { answers: {}, values: {}, open: false };
+  const ticksBox = h('div', { class: 'add-ticks' });
+  const tickColl = accounts ? 'accounts' : collection === 'debts' ? 'debts' : income ? 'income' : null;
+  const drawTicks = () => {
+    if (!tickColl) return;
+    const t = kind(), features = featuresForType(t, tickColl);
+    ticksBox.replaceChildren(features.length ? inlineTicks({ title: typeName(t, tickColl), features, ticks: tickState.answers, idBase: 'add-tk', open: tickState.open,
+      ontoggle: (e) => { tickState.open = e.target.open; },
+      onAnswer: (f, a) => { if (a === null) delete tickState.answers[f.id]; else tickState.answers[f.id] = a; tickState.open = true; drawTicks(); },
+      get: (field) => (field in tickState.values ? tickState.values[field] : null),
+      onSet: (field, x) => { tickState.values[field] = x; } }) : '');
+  };
+  const showDetails = drawTicks;
   const showMore = () => { const on = moreFields(collection, kind()); for (const [k, el] of Object.entries(moreBox)) el.hidden = !on.includes(k); showDetails(); };
   if (roth) roth.addEventListener('change', showDetails);
   if (typeSel) typeSel.addEventListener('change', showMore);
@@ -203,21 +210,18 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
     if (more.asOf.value) extra.asOf = more.asOf.value;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
-    // The account's details, each checked like any typed number.
-    const typed = {};
-    for (const [k, label, type] of accounts ? accountDetails(t) : []) {
-      const el = detailEl[k + ':' + type], raw = el.value.trim();
-      if (!raw) continue;
-      if (type === 'choice' || type === 'date' || type === 'text') { typed[k] = raw; continue; }
-      if (type === 'bool') { typed[k] = raw === 'yes'; continue; }
-      const r = parseInput(type, raw);
-      if (!r.ok || (type === 'rate' && (r.value < 0 || r.value > 1)) || ((type === 'money' || type === 'int') && r.value < 0)) { msg.textContent = label + ': ' + (r.ok ? 'check the number' : r.message); el.focus(); return; }
-      typed[k] = r.value;
+    made = addMore(made, extra, today);
+    // The ticks answered and the boxes typed (S-270): each answer as the item's tick, each number as known.
+    if (tickColl && made.collection === tickColl) {
+      const base = made.firstPath.split('.').slice(0, 2).join('.');
+      let sp = made.spine;
+      for (const f of featuresForType(t, tickColl)) if (tickState.answers[f.id]) sp = tickFeature(sp, base, f, tickState.answers[f.id], { rules: null, today });
+      for (const [k, x] of Object.entries(tickState.values)) if (x !== null && x !== undefined) sp = putFact(sp, base + '.' + k, x, 'known', today);
+      // A plan seen before at this employer (S-267) fills the rest of its details, as guesses.
+      const tpl = tickState.values.employerName ? planFor(tickState.values.employerName) : null;
+      if (tpl && tickColl === 'accounts') sp = applyTemplate(sp, base, tpl, today);
+      made = { ...made, spine: sp };
     }
-    made = addDetails(addMore(made, extra, today), typed, today);
-    // A plan seen before at this employer (S-267) fills the rest of its rules, as guesses.
-    const tpl = typed.employerName ? planFor(typed.employerName) : null;
-    if (tpl && made.collection === 'accounts') made = { ...made, spine: applyTemplate(made.spine, made.firstPath.split('.').slice(0, 2).join('.'), tpl, today) };
     if (made.collection === 'goals' && ans.by) made = { ...made, spine: setAt(made.spine, 'goals.' + made.id + '.by', ans.by) };
     const label = name.value.trim() || (typeList.find(([k]) => k === t) || [t, t])[1];
     onDone(made, label);
@@ -231,7 +235,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint)),
     typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
     rothRow,
-    details,
+    ticksBox,
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
     maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),
