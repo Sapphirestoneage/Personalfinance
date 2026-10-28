@@ -67,7 +67,8 @@ export function itemTicks(spine, collection, id, { tier = null, onAnswer, onOpen
     const shown = fact && fact.value !== null && fact.value !== undefined ? showValue(fact.value, r.type) + (fact.kind === 'rough' ? ' (a guess)' : '') : 'Not given yet';
     return h('button', { type: 'button', class: 'btn small tick-field', onclick: () => onOpen(base + '.' + r.field) }, h('span', { class: 'tick-field-l' }, r.label), h('span', { class: 'tick-field-v' }, shown));
   }));
-  return tickList({ title: typeName(item.type, collection), features, ticks: item.ticks || {}, onAnswer: (f, a) => onAnswer(base, f, a), open, ontoggle, idBase: 'tk-' + id,
+  // On the item's own screen its name is already the title: the fold says what it holds.
+  return tickList({ title: 'Details and questions', features, ticks: item.ticks || {}, onAnswer: (f, a) => onAnswer(base, f, a), open, ontoggle, idBase: 'tk-' + id,
     below: (f, ans) => (ans === 'yes' && onOpen ? buttons(f) : null), details: (f) => (onOpen ? buttons(f) : null) });
 }
 

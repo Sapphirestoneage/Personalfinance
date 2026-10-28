@@ -16,7 +16,7 @@ import { mathButton } from './math-panel.js';
 import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields, linkPlanLoan } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
-import { catalog, itemTicks, tickWords, keysHint } from './ticks.js';
+import { catalog, itemTicks, tickWords } from './ticks.js';
 import { headlineStrip } from './strip.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
@@ -1522,15 +1522,19 @@ function groupScreen(sec, g, st = {}) {
 // The coach's note on an item (S-267): one line, for the coach only. It is not a row to fill in, and it never prints
 // (the one-pager and every client print leave it out; .coach-only hides on paper).
 const COACH_NOTED = ['accounts', 'debts', 'income', 'expenses', 'goals', 'policies'];
+let coachOpen = false;
 function coachNoteEl(it) {
   const path = it.collection + '.' + it.id + '.coachNote', f = getAt(cur(), path), now = f && f.value ? String(f.value) : '';
   const box = h('input', { type: 'text', id: 'coach-note', autocomplete: 'off', placeholder: 'e.g. Wants to keep this card for the miles', 'aria-describedby': 'coach-note-hint' });
   box.value = now;
   const save = (e) => { e.preventDefault(); const t = box.value.trim(); if (t === now) return; change((x) => (t ? putFact(x, path, t, 'known', today()) : { ...x, [it.collection]: x[it.collection].map((i) => (i.id === it.id ? (({ coachNote, ...rest }) => rest)(i) : i)) }), t ? said.changed('Coach note', t) : said.deleted('The coach note')); };
-  return h('form', { class: 'coach-only coach-note', novalidate: true, onsubmit: save },
-    h('label', { for: 'coach-note', class: 'edit-label' }, 'Coach note'), box,
-    h('p', { class: 'edit-hint', id: 'coach-note-hint' }, 'For the coach only. Never on the one-pager or any print.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Save the note')));
+  // Folded to one line (owner, 2026-10-28: the open box made the screen messy): the note itself, or "None yet".
+  return h('details', { class: 'card done-group coach-only coach-note', open: coachOpen || null, ontoggle: (e) => { coachOpen = e.target.open; } },
+    h('summary', {}, h('span', { class: 'coach-title' }, 'Coach note'), h('span', { class: 'coach-preview' }, now || 'None yet')),
+    h('form', { novalidate: true, onsubmit: save },
+      h('label', { for: 'coach-note', class: 'mini-label' }, 'What to remember about it'), box,
+      h('p', { class: 'edit-hint', id: 'coach-note-hint' }, 'For the coach only. Never on the one-pager or any print.'),
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Save the note'))));
 }
 // Employer plan memory (S-267): a plan seen at the same employer fills what this one is missing, as guesses.
 function memoryButton(a) {
@@ -1599,7 +1603,6 @@ function itemScreen(sec, g, it, st) {
     acct && !selecting && acct.ticks && acct.ticks.loan === 'yes' && !(acct.loanDebt && valueOf(acct.loanDebt)) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (canLeave()) change((x) => linkPlanLoan(x, acct.id, today()), 'The loan from ' + (valueOf(acct.name) || 'this plan') + ' added to Debt'); } }, '+ Add the loan to Debt')) : null,
     it.collection && !selecting && COACH_NOTED.includes(it.collection) ? coachNoteEl(it) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
-    TICKED.includes(it.collection) && !selecting ? keysHint() : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
   ];
 }

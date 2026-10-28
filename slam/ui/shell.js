@@ -218,7 +218,7 @@ export function tabBar(lit) {
   return h('nav', { class: 'tabbar', 'aria-label': 'Pages' },
     h('ul', {}, TABS.map(([id, words, href]) => h('li', {}, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tap(href) }, words))),
       h('li', {}, h('details', { class: 'more-menu' },
-        h('summary', { class: 'tab', 'aria-current': here || (lit && !TABS.some(([id]) => id === lit)) ? 'page' : null }, here ? 'More: ' + here[1] : 'More'),
+        h('summary', { class: 'tab', 'aria-current': here || (lit && !TABS.some(([id]) => id === lit)) ? 'page' : null }, 'More', here ? h('span', { class: 'more-here' }, ': ' + here[1]) : null),
         h('ul', { class: 'more-list' }, MORE.map(([, words, href]) => h('li', {}, h('a', { class: 'more-link', href, 'aria-current': samePage(href) ? 'page' : null, onclick: tap(href) }, words))))))));
 }
 // The tab bar's own height, as --tabbar-h: the page's bottom padding on a phone (so nothing hides behind the bar) and

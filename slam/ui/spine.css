@@ -1767,9 +1767,13 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .stepper-nav .btn { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The coach's note (S-267): on screen for the coach, never on paper. A missing beneficiary on a retirement account. */
-.coach-note { border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: var(--space-3); margin: var(--space-3) 0; display: grid; gap: var(--space-1); }
-.coach-note > * { position: static; margin: 0; min-width: 0; max-width: 100%; }
-.coach-note input, .coach-note textarea { width: 100%; box-sizing: border-box; }
+.coach-note { border-style: dashed; margin: var(--space-3) 0; }
+.coach-note > summary { flex-wrap: wrap; gap: var(--space-1) var(--space-3); }
+.coach-note .coach-title { font-weight: 600; }
+.coach-note .coach-preview { font-weight: 400; color: var(--text-muted); font-size: var(--text-sm); overflow-wrap: anywhere; min-width: 0; }
+.coach-note form { display: grid; gap: var(--space-1); margin-top: var(--space-2); }
+.coach-note input { width: 100%; box-sizing: border-box; }
+.tick-list:not([open]), .coach-note:not([open]) { padding-top: var(--space-1); padding-bottom: var(--space-1); }
 .flag-line { border-left: 4px solid var(--warn, #b45309); padding: var(--space-2) var(--space-3); background: var(--surface); }
 @media print { .coach-only { display: none !important; } }
 
@@ -1783,6 +1787,12 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .more-link { display: flex; align-items: center; min-height: var(--tap); padding: 0 var(--space-3); border-radius: var(--radius-sm); color: var(--link, var(--accent)); text-decoration: underline; }
 .more-link[aria-current="page"] { font-weight: 700; text-decoration: none; color: var(--text); }
 @media (min-width: 640px) { .tabbar .more-list { top: calc(100% + 6px); bottom: auto; } }
+/* On a phone the bar has room for "More" only; the page's name is in the trail below. */
+@media (max-width: 639px) { .more-here { display: none; } }
+.tick-field { max-width: 100%; }
+.tick-field .tick-field-l, .tick-field .tick-field-v { white-space: normal; overflow-wrap: anywhere; }
+/* Closed means closed: the list's own display must not show it while More is shut. */
+.more-menu:not([open]) > .more-list, .more-menu:not([open]) > .more-items { display: none; }
 
 /* The client switcher (S-269): the name always shows; the list, New client and the rest open under it. */
 .whose-items { min-width: 16rem; }
@@ -1810,7 +1820,7 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 @media (min-width: 640px) { .step-nav { bottom: 0; } }
 /* What does it have? (S-267, S-276): Details (boxes under a short title, nothing to tick), then Questions (one line
    each: the question on the left, a small Yes / No / Not sure on the right, the numbers a Yes opens just under it). */
-.tick-list > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.tick-list > summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
 .tick-list .tick-title { font-weight: 600; }
 .tick-list .tick-count { font-size: var(--text-sm); color: var(--text-muted); font-weight: 400; }
 .tick-part { margin-top: var(--space-3); }

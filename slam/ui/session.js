@@ -27,7 +27,7 @@ import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST } from '../engine/add.js';
 import { endCallScreen } from './end-call.js';
 import { headlineStrip } from './strip.js';
-import { catalog, keysHint, inlineTicks, tickWords } from './ticks.js';
+import { catalog, inlineTicks, tickWords } from './ticks.js';
 import { featuresOf, tickFeature } from '../engine/features.js';
 import { rememberStep, currentClient } from './clients.js';
 import { ledgerHref } from './view.js';
@@ -737,7 +737,7 @@ function render(ctx) {
   if (id === 'end') return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
   if (id) rememberStep(id);
   const strip = headlineStrip(ctx.spine, ctx.rules);
-  return id ? [strip, nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), keysHint(), sessionNotesRow(ctx)] : [strip, nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
+  return id ? [strip, nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [strip, nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
 }
 const name = (levels) => (levels.length === 1 ? (levels[0] === 'end' ? 'End of the call' : (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null) : null);
 // End call (S-269): one button in the header, on every Session screen but its own.
