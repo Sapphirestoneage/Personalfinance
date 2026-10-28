@@ -428,7 +428,7 @@ function whoCard(ctx) {
 
 // ---------------------------------------------------------------- Debt
 const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['mortgage', 'Mortgage'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
-const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card'], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['mortgage', 'A mortgage?', 'Mortgage'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
+const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card', true], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['mortgage', 'A mortgage?', 'Mortgage'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
 const putF = (path, value, words, kind = 'known') => change((s) => (value === null ? putFact(s, path, null, 'missing', todayIso()) : putFact(s, path, value, kind, todayIso())), words);
 function addDebt(type, label) {
   change((spine) => {
@@ -441,14 +441,29 @@ function addDebt(type, label) {
     return s;
   }, said.added(label));
 }
+// Several at once (owner, 2026-10-28): on a kind that comes in handfuls (cards), "Add several" turns the question into "How many more
+// credit cards?" (2 to 6) and adds that many blank rows in one change, the first one's Owed box focused.
+let severalOpen = null;
+const SEVERAL = [2, 3, 4, 5, 6];
+function addDebts(type, label, n) {
+  severalOpen = null;
+  change((spine) => {
+    let s = spine, first = null;
+    for (let i = 0; i < n; i++) { const r = addItem(s, { collection: 'debts', type, label }, todayIso()); s = withWhose(r.spine, 'debts', r.id); if (!first) first = r.id; }
+    later(() => document.getElementById('d-bal-' + first)?.focus());
+    return s;
+  }, said.added(n + ' ' + label.toLowerCase() + 's'));
+}
 function debt(ctx) {
   const spine = ctx.spine;
   const list = spine.debts || [];
   // One question per kind of debt: Yes adds one (and then offers another); a kind you have reads Yes.
-  const asks = DEBT_QS.map(([type, q, label]) => {
+  const asks = DEBT_QS.map(([type, q, label, several]) => {
     const have = list.filter((d) => d.type === type).length;
-    return h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, q),
-      have ? h('span', { class: 'q-have' }, 'Yes, ' + have, ' ', h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, 'Add another'))
+    const open = have && severalOpen === type;
+    return h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, open ? 'How many more ' + label.toLowerCase() + 's?' : q),
+      open ? h('span', { class: 'tick' }, ...SEVERAL.map((n) => h('button', { type: 'button', class: 'btn small', id: 'dqs-' + type + '-' + n, onclick: () => addDebts(type, label, n) }, String(n))), h('button', { type: 'button', class: 'btn small', onclick: () => { severalOpen = null; refresh(); } }, 'Cancel'))
+        : have ? h('span', { class: 'q-have' }, 'Yes, ' + have, ' ', h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, 'Add another'), several ? h('button', { type: 'button', class: 'btn small', id: 'dqs-' + type, onclick: () => { severalOpen = type; refresh(); later(() => document.getElementById('dqs-' + type + '-2')?.focus()); } }, 'Add several') : null)
         : noList().includes('debt-' + type) ? h('span', { class: 'q-have' }, 'No', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('debt-' + type, false) }, 'Change'))
         : h('span', { class: 'tick' }, h('button', { type: 'button', class: 'btn small', id: 'dq-' + type, onclick: () => addDebt(type, label) }, 'Yes'), h('button', { type: 'button', class: 'btn small', id: 'dqn-' + type, onclick: () => setNo('debt-' + type, true) }, 'No')));
   });
