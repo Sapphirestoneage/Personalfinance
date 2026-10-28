@@ -385,7 +385,7 @@ function needs(ctx) {
 }
 
 // ---------------------------------------------------------------- the two of you (Batch 7, S-277)
-// The first step asks "Just you, or the two of you?"; two adds the partner (name, birth date, filing). Then every debt,
+// The first step asks "Single, or a couple?" (plain words, owner 2026-10-28); a couple adds the partner (name, birth date, filing). Then every debt,
 // account and income has a Whose box (names, and Joint but for income), and a new one starts as whoever was picked
 // last, else as the money style says, else the first person. Shared bills split half each unless set otherwise, for
 // the household and on a line; the split only divides each person's own numbers, never the household's.
@@ -410,10 +410,10 @@ function whoCard(ctx) {
       q('Who this is for', h('span', { class: 'q-have' }, ps.map(firstName).join(' and ') + ', ' + ((FILINGS.find(([k]) => k === fs) || [fs, 'filing not set'])[1]).toLowerCase())),
       q('Shared bills split', pickBox('split-all', 'Shared bills split', splitOptions(spine), splitOf(spine, null), (x) => change((sp) => putFact(sp, 'household.coupleSplit', x, 'known', today), said.changed('Shared bills split', splitWords(spine, x))))));
   }
-  if (noList().includes('just-me')) return h('section', { class: 'card qs who-card' }, q('Just you, or the two of you?', h('span', { class: 'q-have' }, 'Just you', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('just-me', false) }, 'Change'))));
-  if (!partnerOpen) return h('section', { class: 'card qs who-card' }, q('Just you, or the two of you?', h('span', { class: 'tick' },
-    h('button', { type: 'button', class: 'btn small', id: 'who-me', onclick: () => setNo('just-me', true) }, 'Just me'),
-    h('button', { type: 'button', class: 'btn small', id: 'who-two', onclick: () => { partnerOpen = true; refresh(); later(() => document.getElementById('p-name')?.focus()); } }, 'The two of us'))));
+  if (noList().includes('just-me')) return h('section', { class: 'card qs who-card' }, q('Single, or a couple?', h('span', { class: 'q-have' }, 'Single', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('just-me', false) }, 'Change'))));
+  if (!partnerOpen) return h('section', { class: 'card qs who-card' }, q('Single, or a couple?', h('span', { class: 'tick' },
+    h('button', { type: 'button', class: 'btn small', id: 'who-me', onclick: () => setNo('just-me', true) }, 'Single'),
+    h('button', { type: 'button', class: 'btn small', id: 'who-two', onclick: () => { partnerOpen = true; refresh(); later(() => document.getElementById('p-name')?.focus()); } }, 'A couple'))));
   const nm = h('input', { id: 'p-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Sam' });
   const bd = h('input', { id: 'p-birth', type: 'date' });
   const fl = pickBox('p-filing', 'How you file', FILINGS, 'mfj', () => {});

@@ -42,7 +42,7 @@ export const LEVEL1 = [
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
   { id: 'county', area: 'you', label: 'Your county', kind: 'text', does: 'Picks a local tax where there is one.' },
-  { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['roommates', 'Roommates']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.' },
+  { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'I live alone'], ['partner', 'A partner'], ['kids', 'Kids'], ['roommates', 'Roommates']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.' },
   // Roommates (owner, 2026-10-28): ticked under Who lives with you, then how many, right there. It replaced "Other adults"
   // here and "With roommates" under Where do you live; older answers read over (migrateAnswers).
   { id: 'roommates', area: 'you', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => has(a, 'livesWith', 'roommates'), does: 'Rent and the bills read as your share.' },
@@ -465,7 +465,7 @@ export const LEVEL2 = [
   { id: 'incomeSecurity', area: 'work', label: 'How secure is your income?', kind: 'one', options: [['solid', 'Solid'], ['okay', 'Okay'], ['shaky', 'Shaky']], opens: (a) => W2(a) || SELF(a), does: 'Okay adds a month to the cushion; shaky adds three.' },
   { id: 'payChange', area: 'work', label: 'Pay changes coming?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], opens: (a) => W2(a) || SELF(a), does: 'Yes puts the change on the Calendar with its date.' },
   { id: 'payRate', area: 'work', label: 'Your pay rate (yearly salary, or hourly rate and usual hours)', kind: 'field', where: 'paystub', opens: W2 },
-  { id: 'businessStructure', area: 'work', label: 'Business structure', kind: 'one', options: [['sole', 'Just me (sole)'], ['llc', 'LLC'], ['scorp', 'S corp']], opens: SELF, does: 'An S corp pays you a wage; the rest stays 1099.' },
+  { id: 'businessStructure', area: 'work', label: 'Business structure', kind: 'one', options: [['sole', 'Sole proprietor'], ['llc', 'LLC'], ['scorp', 'S corp']], opens: SELF, does: 'An S corp pays you a wage; the rest stays 1099.' },
   { id: 'businessAccount', area: 'work', label: 'A separate business account?', kind: 'one', options: YES_NO, opens: SELF, does: 'No adds "open a business account" to the to-dos.' },
   { id: 'businessRetirement', area: 'work', label: 'Retirement through the business', kind: 'one', options: [['none', 'None'], ['sep', 'SEP IRA'], ['solo', 'Solo 401(k)']], opens: SELF, does: 'Opens that account.' },
   { id: 'k401Type', area: 'k401', label: '401(k): traditional, Roth or both?', kind: 'one', options: [['traditional', 'Traditional'], ['roth', 'Roth'], ['both', 'Both']], opens: (a) => has(a, 'accounts', 'k401') || has(a, 'offers', 'k401'), does: 'Sets whether it lowers your tax now.' },

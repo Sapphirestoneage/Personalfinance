@@ -299,3 +299,14 @@ test('roommates: ticked under Who lives with you, then how many, right there; ol
   assert.deepEqual(file.problems, []);
   assert.deepEqual(file.answers, { home: 'rent', livesWith: ['roommates'], roommates: '2' });
 });
+
+test('plain words (owner, 2026-10-28): no "Just me" or "Just you"; Single or A couple; Sole proprietor (S-289)', () => {
+  for (const q of [...P.LEVEL1, ...P.LEVEL2]) for (const [, w] of q.options || []) assert.doesNotMatch(w, /^just (me|you)/i, q.id + ': ' + w);
+  assert.ok(P.LEVEL1.find((q) => q.id === 'livesWith').options.some(([k, w]) => k === 'alone' && w === 'I live alone'));
+  assert.ok(P.LEVEL2.find((q) => q.id === 'businessStructure').options.some(([k, w]) => k === 'sole' && w === 'Sole proprietor'));
+  const guide = readFileSync(new URL('../ui/guide.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(guide, /'Just me'|'Just you'|The two of us/);
+  assert.match(guide, /'Single, or a couple\?'/);
+  assert.match(guide, /'Single'\)/);
+  assert.match(guide, /'A couple'\)/);
+});
