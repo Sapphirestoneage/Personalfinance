@@ -377,6 +377,9 @@ function needs(ctx) {
         // A line named like the category with lines of its own beside it (round 2: the demo's Miscellaneous $300 was in
         // the total and on no row): it shows as its own row, so the lines add up to the total.
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), catOn && anyLine ? needRow(spine, { label: cat.label }, cat.fat, 'rest-' + cat.id) : null, oneNumber));
+      // Kept on the tap itself, not on toggle: a redraw that lands between the tap and its toggle event (a number just
+      // typed) would otherwise close the group again. Housing, open by default, stays open when another opens.
+      d.querySelector('summary').addEventListener('click', () => { if (!openCats.size) openCats.add(DATA.needs[0].id); if (d.open) openCats.delete(cat.id); else openCats.add(cat.id); });
       d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openCats.add(cat.id); else openCats.delete(cat.id); });
       return d;
     }),
@@ -427,7 +430,7 @@ function whoCard(ctx) {
 }
 
 // ---------------------------------------------------------------- Debt
-// Each kind's words, one and many (S-291): the add buttons, the heading over a kind's rows and an unnamed row's words read from here.
+// Each kind's words, one and many (S-292): the add buttons, the heading over a kind's rows and an unnamed row's words read from here.
 const DEBT_KINDS = { credit_card: ['Credit card', 'Credit cards'], student_loan: ['Student loan', 'Student loans'], private_student_loan: ['Private student loan', 'Private student loans'], auto_loan: ['Car loan', 'Car loans'], mortgage: ['Mortgage', 'Mortgages'], heloc: ['Home equity line', 'Home equity lines'], personal_loan: ['Personal loan', 'Personal loans'], medical: ['Medical bill', 'Medical bills'], family_iou: ['Money owed to a person', 'Money owed to people'] };
 const kindWords = (type, many = false) => (DEBT_KINDS[type] ? DEBT_KINDS[type][many ? 1 : 0] : (PRESETS[type] || {}).label || type);
 // A row still called by its kind: the Session's words, or a preset's label (a loan added in My numbers is "Federal student loan").
@@ -460,7 +463,7 @@ function addDebts(type, label, n) {
     return s;
   }, said.added(n + ' ' + label.toLowerCase() + 's'));
 }
-// A debt's name in its row (owner, 2026-10-28, S-291): a card's name, or a loan's servicer or lender, from the same picker
+// A debt's name in its row (owner, 2026-10-28, S-292): a card's name, or a loan's servicer or lender, from the same picker
 // and libraries as the Add form. A row still called by its kind shows a blank box asking for the name; clearing the box
 // puts the kind's words back (a name is never blank). A card picked from the library brings its issuer, typical rate and
 // annual fee as guesses, never over a number already typed, in the same change as the name (one Undo).
@@ -504,7 +507,7 @@ function debtRow(ctx, d, i, n) {
 function debt(ctx) {
   const spine = ctx.spine;
   const list = spine.debts || [];
-  // The rows sit under their kind's heading, kinds in the order the questions ask (S-291).
+  // The rows sit under their kind's heading, kinds in the order the questions ask (S-292).
   const kinds = [];
   for (const d of list) { let g = kinds.find((x) => x.type === d.type); if (!g) { g = { type: d.type, rows: [] }; kinds.push(g); } g.rows.push(d); }
   const rank = (t) => { const i = DEBT_ADD.findIndex(([k]) => k === t); return i < 0 ? DEBT_ADD.length : i; };

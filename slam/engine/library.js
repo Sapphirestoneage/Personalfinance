@@ -63,7 +63,7 @@ export function fundFills(fund, lib, year) {
 // What picking a card fills: its fee, its everyday rewards and a typical rate.
 export const cardFills = (card) => ({ annualFee: card.annualFee, rewardsRate: card.rewardsRate, apr: card.typicalApr, institution: card.issuer });
 export const LIBRARY_SOURCE = 'library (a typical guess)';
-// What a pick brought (S-284; the Add form and the Session's name box share it, S-291): each as a guess from the
+// What a pick brought (S-284; the Add form and the Session's name box share it, S-292): each as a guess from the
 // library, never over a number already typed; a tag (need, subscription) as known.
 export function applyFills(spine, base, fills, today) {
   let s = spine;

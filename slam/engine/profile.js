@@ -162,7 +162,7 @@ export const asked = (a, q) => !q.when || q.when(a);
 // Roommates are ticked under Who lives with you; the count is its own question (1, 2, 3, 4 or more).
 export const withRoommates = (a) => has(a, 'livesWith', 'roommates');
 const roommateWords = (a) => { const n = ans(a, 'roommates'); return n === null || n === NOT_SURE ? 'roommates' : n === '4' ? '4 or more roommates' : n + (n === '1' ? ' roommate' : ' roommates'); };
-// Older answers (before S-288), read over and never written back: "Other adults" under Who lives with you is Roommates,
+// Older answers (before S-289), read over and never written back: "Other adults" under Who lives with you is Roommates,
 // and "With roommates" under Where do you live is I rent with Roommates ticked.
 export function migrateAnswers(a) {
   if (!a || typeof a !== 'object') return a;

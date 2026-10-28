@@ -267,7 +267,7 @@ test('Part C review: a deleted goal is not put back; a goal id already taken get
   assert.equal(valueOf(getAt(paid, 'accounts.chk.balance')), 3000 - 3000, 'checking pays only what was owed');
 });
 
-test('roommates: ticked under Who lives with you, then how many, right there; older answers read over (S-288)', () => {
+test('roommates: ticked under Who lives with you, then how many, right there; older answers read over (S-289)', () => {
   const you = P.LEVEL1.filter((q) => q.area === 'you').map((q) => q.id);
   assert.equal(you[you.indexOf('livesWith') + 1], 'roommates', 'the count follows the question');
   assert.ok(!P.LEVEL1.find((q) => q.id === 'home').options.some(([k]) => k === 'roommates'), 'Where do you live? no longer asks it');
@@ -300,7 +300,7 @@ test('roommates: ticked under Who lives with you, then how many, right there; ol
   assert.deepEqual(file.answers, { home: 'rent', livesWith: ['roommates'], roommates: '2' });
 });
 
-test('plain words (owner, 2026-10-28): no "Just me" or "Just you"; Single or A couple; Sole proprietor (S-289)', () => {
+test('plain words (owner, 2026-10-28): no "Just me" or "Just you"; Single or A couple; Sole proprietor (S-290)', () => {
   for (const q of [...P.LEVEL1, ...P.LEVEL2]) for (const [, w] of q.options || []) assert.doesNotMatch(w, /^just (me|you)/i, q.id + ': ' + w);
   assert.ok(P.LEVEL1.find((q) => q.id === 'livesWith').options.some(([k, w]) => k === 'alone' && w === 'I live alone'));
   assert.ok(P.LEVEL2.find((q) => q.id === 'businessStructure').options.some(([k, w]) => k === 'sole' && w === 'Sole proprietor'));

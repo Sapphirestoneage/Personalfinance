@@ -1,4 +1,4 @@
-// A name for each card and loan in the Session's Debt step (owner, 2026-10-28, S-291): every debt row starts with a Name
+// A name for each card and loan in the Session's Debt step (owner, 2026-10-28, S-292): every debt row starts with a Name
 // box on the picker, the rows sit under their kind's heading, and a row still called by its kind among several is
 // "Credit card 2" wherever it is spoken of. Engine side: a pick's fills never cover a typed number.
 import { test } from 'node:test';

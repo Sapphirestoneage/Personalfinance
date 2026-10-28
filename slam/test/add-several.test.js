@@ -1,4 +1,4 @@
-// Several credit cards at once (owner, 2026-10-28, S-290): the Session's card row offers "Add several", which asks how
+// Several credit cards at once (owner, 2026-10-28, S-291): the Session's card row offers "Add several", which asks how
 // many more (2 to 6) and adds that many blank rows in one change. Engine side: N added cards are N distinct rows.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

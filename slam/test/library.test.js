@@ -54,7 +54,7 @@ test('the picker is one component: on the add form\'s name, item fields with a k
   assert.match(read('ui/ledger.js'), /const pickWrap = pickField \? attachPicker\(input,/);
   assert.match(read('ui/guide.js'), /const wrap = attachPicker\(box, \{ source: 'place'/);
   // A pick's numbers land as guesses from the library, never as known: applyFills, shared by the add form and the
-  // Session's name box (S-291).
+  // Session's name box (S-292).
   assert.match(read('engine/library.js'), /setAt\(s, base \+ '\.' \+ k, \{ value: x, kind: 'rough', asOf: today, source: LIBRARY_SOURCE \}\)/);
   assert.match(read('ui/add-form.js'), /applyFills\(made\.spine, base, pickFills, today\)/);
   assert.match(read('ui/guide.js'), /const wrap = attachPicker\(box, \{ source: 'name:debts'/);
