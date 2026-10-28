@@ -5,9 +5,10 @@
 import { h } from './view.js';
 
 // list: [{ words, href, here }]; label: what they are ("Credit cards").
+let made = 0;
 export function siblingStrip(label, list, { onPick = null } = {}) {
   if (!list || list.length < 2) return null;
-  const id = 'sib-' + String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const id = 'sib-' + String(label).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + (++made);
   const pick = h('select', { id, class: 'pick-box', onchange: (e) => { const to = list[+e.target.value]; if (to && !to.here) { if (onPick) onPick(to); else location.href = to.href; } } },
     list.map((x, i) => h('option', { value: String(i), selected: x.here || null }, x.words + (x.here ? ' (you are here)' : ''))));
   return h('nav', { class: 'siblings', 'aria-label': label },

@@ -17,7 +17,7 @@ test('the header holds the site ID, the client, search, Undo, Redo, End call and
 test('second-level tabs: Numbers and Plan, as the brief names them, marked with two cues', () => {
   const src = read('ui/shell.js');
   assert.match(src, /numbers: \[\['needs', 'Needs'[^\n]*\['debt', 'Debt'[^\n]*\['income', 'Income'[^\n]*\['assets', 'Assets'[^\n]*\['goals', 'Goals'[^\n]*\['protection', 'Protection'/);
-  assert.match(src, /plan: \[\['overview', 'Overview'[^\n]*\['debt', 'Debt'[^\n]*\['retirement', 'Retirement and tax'[^\n]*\['protection', 'Protection'[^\n]*\['extra', 'Extra money', 'windfall\.html'\]/);
+  assert.match(src, /plan: \[\['overview', 'Overview'[^\n]*\['debt', 'Debt'[^\n]*\['retirement', 'Retirement'[^\n]*\['protection', 'Protection'[^\n]*\['extra', 'Extra money', 'windfall\.html'\]/);
   const css = read('ui/spine.css');
   // The tab you are on: the page's own color (joined to it), bold, and a colored edge.
   assert.match(css, /\.tabbar \.tab-item\.is-here \.tab, \.subtabs \.tab-item\.is-here \.tab \{ background: var\(--bg\);[^}]*font-weight: 800;/);

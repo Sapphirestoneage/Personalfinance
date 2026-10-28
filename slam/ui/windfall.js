@@ -129,7 +129,7 @@ function render({ spine, rules, levels }) {
   const m = model(spine, rules);
   if (levels.length) return stepScreen(m, m.w.steps[indexOf(m, levels[0])]);
   return [
-    h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'A lump sum is coming in'), form()),
+    h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'What do I do with extra money?'), form()),
     result(m)
   ];
 }

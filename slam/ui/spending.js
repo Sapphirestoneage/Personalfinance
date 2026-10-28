@@ -305,7 +305,7 @@ function autopsyCard(m) {
 
 function askCard(m, state) {
   const spine = m.spine;
-  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I spend this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
+  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I afford this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const asked = state.ask || '', askWith = state.askWith || 'cash';
   const amount = h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' }); amount.value = asked;
@@ -314,7 +314,7 @@ function askCard(m, state) {
   const parsed = asked.trim() === '' ? null : parseInput('money', asked);
   const ask = parsed && parsed.ok ? canISpend(spine, rules, m.sim, { amount: parsed.value, paidWith: askWith }) : null;
   return h('section', { class: 'card', 'aria-labelledby': 'ask-h' },
-    h('h2', { id: 'ask-h' }, 'Can I spend this?'),
+    h('h2', { id: 'ask-h' }, 'Can I afford this?'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ ask: amount.value, askWith: paid.value }); refresh(); } },
       h('label', { for: 'ask-amount', class: 'edit-label' }, 'How much, today'), amount,
       h('label', { for: 'ask-paid', class: 'edit-label' }, 'Paid with'), paid, msg,
@@ -465,7 +465,7 @@ function importCard(m) {
     form.importWords ? h('p', { class: 'tool-result' }, form.importWords) : null,
     p ? [h('p', { class: 'tile-sub' }, (p.label ? p.label + ': ' : '') + p.words + (p.skippedRows && p.skippedRows.length ? ' Rows skipped (no date, amount or words): ' + p.skippedRows.join(', ') + '.' : '')),
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
-        h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } })), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
+        h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('label', { class: 'tap-box' }, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } }))), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Add the ticked lines'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; refresh(); } }, 'Discard'))] : null);
 }
 
@@ -641,7 +641,7 @@ const rangeWords = (m) => h('p', { class: 'range-words', 'aria-live': 'polite' }
 const TOOLS = {
   import: ['Import a statement', () => 'Paste a bank or card download; you check each line first', (m) => importCard(m)],
   checkin: ['Check in balances', (m) => (m.vw.stale.stale ? 'Out of date: type what the accounts hold now' : 'Up to date'), (m) => checkinCard(m)],
-  ask: ['Can I spend this?', () => 'See what a purchase does to your lowest day', (m, state) => askCard(m, state)],
+  ask: ['Can I afford this?', () => 'See what a purchase does to your lowest day', (m, state) => askCard(m, state)],
   sweep: ['Month-end sweep', () => 'Move what is left at the end of the month', (m) => sweepCard(m)]
 };
 const TOOL_IDS = ['import', 'checkin', 'ask', 'sweep'];

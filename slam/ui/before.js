@@ -14,6 +14,9 @@ import { parseInput, inputText } from '../engine/edits.js';
 
 const KEY = 'slam-before:v1';
 const app = document.getElementById('app');
+// Skip to main content, first on the page like every other (S-287).
+document.body.prepend(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'));
+app.setAttribute('tabindex', '-1');
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function load() { try { const x = JSON.parse(localStorage.getItem(KEY) || 'null'); return x && typeof x === 'object' && x.answers && typeof x.answers === 'object' ? { answers: x.answers, gut: typeof x.gut === 'number' ? x.gut : null, step: Number.isInteger(x.step) ? x.step : 0 } : null; } catch { return null; } }
 let state = load() || { answers: {}, gut: null, step: 0 };

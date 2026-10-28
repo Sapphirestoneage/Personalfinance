@@ -25,7 +25,9 @@ const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/
 // there, out of the tabs), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
-  if (!app.parentNode.querySelector(':scope > .skip')) app.parentNode.insertBefore(h('a', { class: 'skip', href: '#app' }, 'Skip to the content'), app);
+  // First on every page (S-287), before the header, so one Tab and Enter goes straight to the screen.
+  if (!app.parentNode.querySelector(':scope > .skip')) (app.parentNode === document.body ? document.body.prepend.bind(document.body) : (x) => app.parentNode.insertBefore(x, app))(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'));
+  if (!app.hasAttribute('tabindex')) app.setAttribute('tabindex', '-1');
   if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink(), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));

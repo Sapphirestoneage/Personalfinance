@@ -17,7 +17,7 @@ const SCREENS = [
   ['Debt', 'ledger.html#/debt'], ['Assets', 'ledger.html#/assets'], ['Taxes', 'ledger.html#/taxes'], ['Income', 'ledger.html#/income'],
   ['Needs', 'ledger.html#/needs'], ['Goals', 'ledger.html#/goals'], ['Subscriptions', 'ledger.html#/needs/subscriptions'],
   ['Still guessing', 'ledger.html#/still-guessing'], ['Extra money', 'windfall.html'], ['Builder', 'builder.html'],
-  ['Protection', 'ledger.html#/protection'], ['Plan: Debt', 'plan.html#/debt'], ['Plan: Retirement and tax', 'plan.html#/retirement'], ['Plan: Protection', 'plan.html#/protection'], ['End call', 'dashboard.html#/end'],
+  ['Protection', 'ledger.html#/protection'], ['Plan: Debt', 'plan.html#/debt'], ['Plan: Retirement', 'plan.html#/retirement'], ['When can I stop working?', 'plan.html#/retirement'], ['Pay off my debt', 'plan.html#/debt'], ['Can I afford this?', 'spending.html#/ask'], ['Plan: Protection', 'plan.html#/protection'], ['End call', 'dashboard.html#/end'],
   ['Rules', 'rules.html'], ['House defaults', 'house.html'], ['All formulas', 'math.html'], ['Where each number came from', 'plan.html#/sources']
 ];
 // Settings a person might look for by name.

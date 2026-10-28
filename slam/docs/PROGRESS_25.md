@@ -133,3 +133,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 5 (2026-10-28): one picker everywhere, card / fund / institution / place libraries (S-284).
 - Part 6 (2026-10-28): money and dates as people say them with the reading under the box; the header search finds and adds; scope chips past 8 (S-285).
 - Part 7 (2026-10-28): the sentence on Home, What if? sliders with Keep this, Money as time in the strip, End call opens on the FI year with what moved it, calm milestone checks (S-286).
+- Part 8 (2026-10-28): task-word renames, one primary per screen, guess vs known boxes, 12px floor, every tap 44px (485 notes to 0), skip link first, headings in order (S-287).

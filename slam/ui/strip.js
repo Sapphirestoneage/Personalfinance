@@ -27,7 +27,7 @@ function personStrip(spine, s) {
 }
 
 let last = null;
-export function headlineStrip(spine, rules) {
+export function headlineStrip(spine, rules, { timeSwitch: withSwitch = false } = {}) {
   const s = summarize(spine, rules, { flags: false }), sh = s.sheet, cf = s.cashflow, years = s.fi.yearsToFi.value;
   const two = isCouple(spine);
   if (!two) stripWho = 0;
@@ -44,7 +44,7 @@ export function headlineStrip(spine, rules) {
   return h('section', { class: 'headline-strip', 'aria-label': 'Your headline numbers' }, two ? whoToggle(spine) : null,
     h('dl', {}, cells.map(([id, label, shown, v]) => h('div', { class: 'strip-cell' + (before && id in before && before[id] !== v ? ' is-moved' : '') },
       h('dt', {}, label), h('dd', {}, shown)))),
-    timeSwitch());
+    withSwitch ? timeSwitch() : null);
 }
 // Money as time (S-286): one switch; on, every amount on every screen also says how much later it makes freedom.
 function timeSwitch() {

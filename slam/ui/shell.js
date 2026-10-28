@@ -42,7 +42,7 @@ export const TABS = [
 // Second-level tabs, always visible on their main tab: [id, words, href].
 export const SUBTABS = {
   numbers: [['needs', 'Needs', 'ledger.html#/needs'], ['debt', 'Debt', 'ledger.html#/debt'], ['income', 'Income', 'ledger.html#/income'], ['assets', 'Assets', 'ledger.html#/assets'], ['goals', 'Goals', 'ledger.html#/goals'], ['protection', 'Protection', 'ledger.html#/protection']],
-  plan: [['overview', 'Overview', 'plan.html'], ['debt', 'Debt', 'plan.html#/debt'], ['retirement', 'Retirement and tax', 'plan.html#/retirement'], ['protection', 'Protection', 'plan.html#/protection'], ['extra', 'Extra money', 'windfall.html']]
+  plan: [['overview', 'Overview', 'plan.html'], ['debt', 'Debt', 'plan.html#/debt'], ['retirement', 'Retirement', 'plan.html#/retirement'], ['protection', 'Protection', 'plan.html#/protection'], ['extra', 'Extra money', 'windfall.html']]
 };
 // The gear (Coach): every coach-only page, never on a client print or in Guide me. [id, words, href].
 export const COACH = [

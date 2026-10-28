@@ -79,11 +79,14 @@ export function enhanceSelects(root) {
     if (opts.length <= 3 || sel.multiple || !sel.id) continue;
     sel.dataset.picked = '1';
     const now = sel.options[sel.selectedIndex];
-    const box = h('input', { type: 'text', id: sel.id + '-pick', class: 'picker-box', placeholder: 'Type to pick', 'aria-label': sel.getAttribute('aria-label') || null });
+    // The box takes the list's name: its own, or its label's words (a wrapping label holds both, so name both).
+    const named = sel.getAttribute('aria-label') || (sel.labels && sel.labels[0] ? sel.labels[0].textContent.trim() : '') || (sel.getAttribute('aria-labelledby') ? (document.getElementById(sel.getAttribute('aria-labelledby')) || {}).textContent : '') || null;
+    if (named && !sel.getAttribute('aria-label')) sel.setAttribute('aria-label', named);
+    const box = h('input', { type: 'text', id: sel.id + '-pick', class: 'picker-box', placeholder: 'Type to pick', 'aria-label': named });
     box.value = now && now.value !== '' ? now.textContent : '';
     const group = (o) => (o.parentElement && o.parentElement.tagName === 'OPTGROUP' ? o.parentElement.label : null);
     const entries = () => opts.map((o) => ({ words: o.textContent, aliases: ALIASES[o.value] || [], hint: group(o), value: o.value, from: 'library' }));
-    for (const l of root.querySelectorAll('label[for="' + CSS.escape(sel.id) + '"]')) l.htmlFor = box.id;
+    for (const l of root.querySelectorAll('label[for="' + CSS.escape(sel.id) + '"]')) { if (!sel.getAttribute('aria-label')) sel.setAttribute('aria-label', l.textContent.trim()); l.htmlFor = box.id; }
     sel.classList.add('picked-select');
     sel.tabIndex = -1;
     sel.setAttribute('aria-hidden', 'true');

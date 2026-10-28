@@ -91,12 +91,19 @@ function inspect({ builder }) {
     const named = (el.labels && el.labels.length) || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title');
     if (!named) add('no label', where(el));
   }
-  const taps = [...document.querySelectorAll('button, [role=button], a.btn, summary, select, input:not([type=hidden]), .go-row, .tabbar a')].filter(visible);
+  // A control hidden from everyone but the page (a list box a picker stands in for) is not a tap target.
+  const taps = [...document.querySelectorAll('button, [role=button], a.btn, summary, select, input:not([type=hidden]), .go-row, .tabbar a')].filter(visible).filter((el) => !el.closest('[aria-hidden="true"]'));
   for (const el of taps) {
     if (el.matches('button, [role=button]') && !(el.textContent.trim() || el.getAttribute('aria-label') || el.getAttribute('title') || el.getAttribute('aria-labelledby'))) add('no name', where(el));
     // A checkbox or radio is tapped by its label.
-    const target = el.matches('input[type=checkbox], input[type=radio]') ? el.closest('label') || (el.labels && el.labels[0]) || el : el;
-    if (target.getBoundingClientRect().height < 43.5) add('small tap', where(el) + ' is ' + Math.round(target.getBoundingClientRect().height) + 'px tall');
+    // A control whose ::after covers its box (a calendar day) is tapped anywhere in that box.
+    const after = getComputedStyle(el, '::after');
+    const target = el.matches('input[type=checkbox], input[type=radio], input.sr-only') ? el.closest('label') || (el.labels && el.labels[0]) || el
+      : after.content !== 'none' && after.position === 'absolute' && after.top === '0px' && after.bottom === '0px' && el.offsetParent ? el.offsetParent : el;
+    // Layout height, so a pressed sample drawn a little smaller (a transform) is measured as laid out.
+    // A ::after that reaches past the control (inset: -11px) widens its tap area by that much.
+    const grow = target === el && after.content !== 'none' && after.position === 'absolute' && parseFloat(after.top) < 0 ? -parseFloat(after.top) - parseFloat(after.bottom) : 0;
+    if ((target.offsetHeight || target.getBoundingClientRect().height) + grow < 43.5) add('small tap', where(el) + ' is ' + Math.round(target.offsetHeight || target.getBoundingClientRect().height) + 'px tall');
   }
   if (!builder) {
     const mono = new Set();
