@@ -1,15 +1,16 @@
 // Session (S-230, Batch 3): a first session in under an hour. Five steps in call order, each its own screen
 // (session.html#/needs): Needs, Debt, Income (with the two tax questions), Assets, Goals (with the assumptions). Each
 // step shows its DATING letter and its running total, Back and Next, and the shell's trail. Every step can be skipped.
-// Type a number and it is saved (monthly unless changed); who pays, sharing, a cover and dates sit in a small closed
-// "More" on the right. Needs starts from tick lists (Yes, No, Skip) and three presets whose amounts land as guesses.
+// Type a number and it is saved (monthly unless changed). Needs (S-243): every line is the same shape, the name, the
+// amount a month, Need | Want | No and Details; Details opens the day paid, who pays and how sure under the line, and
+// each part says what it adds up to. The other steps keep who pays, a cover and dates in a small closed "More".
 // Every change goes through the shell's change() with words, so Undo takes it back. Formatting only: the totals come
 // from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
-import { setAt, getAt, valueOf as v, addDays, whoSupplies } from '../engine/spine.js';
+import { setAt, getAt, valueOf as v, addDays, whoSupplies, round2 } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
@@ -115,7 +116,8 @@ function totalWords(step) {
 // ---------------------------------------------------------------- Needs
 const NO_KEY = 'slam-session-no:v1';
 const noList = () => { try { return JSON.parse(localStorage.getItem(NO_KEY) || '[]'); } catch { return []; } };
-function setNo(key, on) { try { const l = new Set(noList()); if (on) l.add(key); else l.delete(key); localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } refresh(); }
+function markNo(key, on) { try { const l = new Set(noList()); if (on) l.add(key); else l.delete(key); localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } }
+function setNo(key, on) { markNo(key, on); refresh(); }
 const findExpense = (spine, label) => (spine.expenses || []).find((e) => lower(e.label) === lower(label)) || null;
 
 // A starter line added: its tag, need or want, and a subscription mark from the list.
@@ -148,35 +150,63 @@ function whoPays(spine, e) {
   const set = (how, name = cover) => change((s) => editExpense(s, e.id, how === 'covered' ? { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: name } : { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: null, sharing: { shared: how === 'shared', sharedWith: 2, whoPays: 'part' } }, today),
     said.changed(e.label + ': who pays', how === 'covered' ? name : how === 'shared' ? 'shared, half each' : 'me'));
   return [
-    h('label', { class: 'mini-label', for: 'who-' + e.id }, 'Who pays'),
-    pickBox('who-' + e.id, 'Who pays ' + e.label, [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], now, (x) => set(x)),
-    now === 'covered' ? [h('label', { class: 'mini-label', for: 'by-' + e.id }, 'Covered by'), pickBox('by-' + e.id, e.label + ' covered by', names.map((n) => [n, n]), cover, (x) => set('covered', x))] : null,
-    h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in My numbers'))
+    field('who-' + e.id, 'Who pays', pickBox('who-' + e.id, 'Who pays ' + e.label, [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], now, (x) => set(x))),
+    now === 'covered' ? field('by-' + e.id, 'Covered by', pickBox('by-' + e.id, e.label + ' covered by', names.map((n) => [n, n]), cover, (x) => set('covered', x))) : null
   ];
 }
-// One line: its name, the amount, a day, More; a line not in your numbers yet also offers Yes, No and Skip.
+// A small labelled control in a line's details (the label above, rule 3).
+const field = (id, label, control) => h('div', { class: 'nrow-field' }, h('label', { class: 'mini-label', for: id }, label), control);
+// One line, the same shape whether it is in your numbers or not (S-243): the name, the amount a month, Need | Want | No,
+// and Details. Details opens the rest under the line: the day paid, who pays, and how sure the amount is.
 function needRow(spine, item, fat, key, sub = false) {
   const e = findExpense(spine, item.label);
-  const no = !e && noList().includes(key);
-  if (no) return null;
+  if (!e && noList().includes(key)) return null;
+  const mark = 'need:' + key, open = openMore.has(mark);
   const by = e && e.covered && v(e.covered) ? v(e.coveredBy) : null;
   const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount) : null, by ? h('span', { class: 'chip chip-notForMe' }, 'covered by ' + by) : null);
-  const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x));
-  // Not in your numbers yet: Need or Want adds it as that, No hides it.
-  if (!e) return lineRow(sub ? 'sub' : '', name, amt,
-    h('span', { class: 'tick', role: 'group', 'aria-label': item.label + ': do you have it?' },
-      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: true }, fat, todayIso()).spine, said.added(item.label + ', a need')) }, 'Need'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: false }, fat, todayIso()).spine, said.added(item.label + ', a want')) }, 'Want'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
-  return lineRow(sub ? 'sub' : '', name, amt, intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d)), needWant(e), more(item.label, ...whoPays(spine, e)));
+  const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x), 'a month');
+  const toggle = h('button', { type: 'button', id: 'more-' + key, class: 'btn nrow-toggle', 'aria-expanded': String(open), 'aria-controls': 'nd-' + key,
+    onclick: () => { if (open) openMore.delete(mark); else openMore.add(mark); refresh(); later(() => document.getElementById('more-' + key)?.focus()); } },
+    'Details', h('span', { class: 'chev', 'aria-hidden': 'true' }, '\u203a'));
+  return h('li', { class: 'srow nrow' + (sub ? ' sub' : '') },
+    h('div', { class: 'nrow-main' }, name, amt, needWantNo(e, item, fat, key), toggle),
+    open ? h('div', { class: 'nrow-detail', id: 'nd-' + key, role: 'group', 'aria-label': item.label + ': details' },
+      ...(e ? lineDetails(spine, e, key) : [h('p', { class: 'muted nrow-note' }, 'Not in your numbers yet. Type an amount, or press Need or Want.')])) : null);
 }
-// Need or want, on every line in plain sight (S-231): two pressed-or-not buttons.
-function needWant(e) {
-  const need = v(e.need) !== false;
-  const set = (x) => { if (x !== need) change((s) => putFact(s, 'expenses.' + e.id + '.need', x, 'known', todayIso()), said.changed(e.label, x ? 'a need' : 'a want')); };
-  return h('span', { class: 'segmented nw-seg', role: 'group', 'aria-label': e.label + ': need or want' },
-    h('button', { type: 'button', id: 'nw-' + e.id, class: 'seg-btn', 'aria-pressed': String(need), onclick: () => set(true) }, h('span', { class: 'seg-label' }, 'Need')),
-    h('button', { type: 'button', id: 'nw-' + e.id + '-want', class: 'seg-btn', 'aria-pressed': String(!need), onclick: () => set(false) }, h('span', { class: 'seg-label' }, 'Want')));
+// Need, Want or No on every line. A line not in your numbers yet: Need or Want adds it as that, No hides it. A line
+// in your numbers: Need or Want says which it is, No takes it out (Undo brings it back).
+function needWantNo(e, item, fat, key) {
+  const need = e ? v(e.need) !== false : null, today = todayIso();
+  const pick = (x) => {
+    if (!e) change((s) => addLine(s, { ...item, need: x }, fat, today).spine, said.added(item.label + ', a ' + (x ? 'need' : 'want')));
+    else if (x !== need) change((s) => putFact(s, 'expenses.' + e.id + '.need', x, 'known', today), said.changed(e.label, x ? 'a need' : 'a want'));
+  };
+  const no = () => { if (item.key) markNo(item.key, true); if (e) change((s) => removeItem(s, 'expenses', e.id), item.label + ' taken out: not for you'); else refresh(); };
+  const seg = (id, pressed, words, onclick) => h('button', { type: 'button', id, class: 'seg-btn', 'aria-pressed': String(pressed), onclick }, h('span', { class: 'seg-label' }, words));
+  return h('span', { class: 'segmented nw-seg', role: 'group', 'aria-label': item.label + ': need, want or no' },
+    seg('nw-' + key, need === true, 'Need', () => pick(true)),
+    seg('nw-' + key + '-want', need === false, 'Want', () => pick(false)),
+    seg('nw-' + key + '-no', false, 'No', no));
+}
+// Under a line in your numbers: the day paid, who pays, how sure the amount is, and the way to the rest.
+function lineDetails(spine, e, key) {
+  const amount = v(e.amount), kind = e.amount ? e.amount.kind : 'missing';
+  const sure = amount === null ? null : h('div', { class: 'nrow-field' }, h('span', { class: 'mini-label', id: 'sure-' + key }, 'How sure'),
+    h('span', { class: 'segmented nw-seg', role: 'group', 'aria-labelledby': 'sure-' + key }, [['known', 'Known'], ['rough', 'A rough guess']].map(([k, w]) =>
+      h('button', { type: 'button', id: 'sure-' + key + '-' + k, class: 'seg-btn', 'aria-pressed': String(kind === k), onclick: () => { if (kind !== k) change((s) => editExpense(s, e.id, { amount, kind: k }, todayIso()), said.changed(e.label, k === 'rough' ? 'a rough guess' : 'known')); } }, h('span', { class: 'seg-label' }, w)))));
+  return [
+    field('nday-' + key, 'Day paid', intBox('nday-' + key, v(e.payDay), e.label + ': day of the month', (d) => setLineDay(e, d), { placeholder: '1 to 31' })),
+    ...whoPays(spine, e),
+    sure,
+    h('p', { class: 'edit-hint nrow-note' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in My numbers'))
+  ];
+}
+// What a part adds up to, from the same monthly figures as the step total; rough when any line in it is a guess.
+function partTotal(s, spine, ids) {
+  const lines = (spine.expenses || []).filter((e) => ids.has(e.id));
+  const sum = s.cashflow.expenses.items.filter((x) => ids.has(x.id) && typeof x.amount === 'number').reduce((a, x) => (a ?? 0) + x.amount, null);
+  if (sum === null) return h('span', { class: 'cat-sum empty' }, 'Nothing yet');
+  return h('span', { class: 'cat-sum' }, h('strong', {}, money(round2(sum))), ' a month', lines.some((e) => e.amount && e.amount.kind === 'rough') ? [' ', chip('rough')] : null);
 }
 // A question as a row of buttons; the answer is pressed. Answering changes which lines show and what they mean.
 function question(id, label, options, value, onPick) {
@@ -224,10 +254,11 @@ function needs(ctx) {
   const spine = ctx.spine, hh = spine.household;
   const known = new Set(allItems().map((x) => lower(x.label)));
   const extra = (fat) => (spine.expenses || []).filter((e) => !known.has(lower(e.label)) && !DATA.needs.some((c) => lower(c.label) === lower(e.label)) && (fat === 'other' ? !['food', 'accommodation', 'transportation'].includes(e.fat) : e.fat === fat));
-  const hidden = noList().filter((k) => allItems().some((x) => x.key === k));
+  // Marked No and not in your numbers (a line Undo brought back shows, whatever its mark).
+  const hidden = noList().filter((k) => allItems().some((x) => x.key === k && !findExpense(spine, x.label)));
   const a = answersOf(spine);
   const said1 = (id) => { const q = questionById(id), x = a[id]; return x === undefined ? 'not answered yet' : x === 'notSure' ? 'not sure' : (q.options.find(([k]) => k === x) || [x, x])[1]; };
-  return frame(ctx, 'needs', () => [
+  return frame(ctx, 'needs', (s) => [
     h('section', { class: 'card qs' },
       // Where you live and how you get around are Profile answers (Phase 2.5 B3): shown here, changed there.
       h('p', { class: 'q-said' }, 'Where you live: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
@@ -241,9 +272,10 @@ function needs(ctx) {
       const anyLine = cat.items.some((item) => [item, ...(item.subs || [])].some((x) => { const e = findExpense(spine, x.label); return e && v(e.amount) !== null; }));
       const lines = catOn ? [] : cat.items.filter((item) => applies(spine, item) || ((e) => e && !hiddenLine(spine, e))(findExpense(spine, item.label))).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
       const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
+      const ids = new Set([catLine, ...cat.items.flatMap((item) => [item, ...(item.subs || [])]).map((x) => findExpense(spine, x.label)), ...others].filter(Boolean).map((e) => e.id));
       const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in My numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
       return h('section', { class: 'card', 'aria-labelledby': 'cat-' + cat.id },
-        h('h2', { id: 'cat-' + cat.id }, cat.label),
+        h('h2', { id: 'cat-' + cat.id, class: 'cat-h' }, cat.label, partTotal(s, spine, ids)),
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), oneNumber));
     }),
     hidden.length ? h('p', { class: 'muted' }, hidden.length + ' marked No. ', h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of hidden) setNo(k, false); } }, 'Show them again')) : null
