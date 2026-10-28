@@ -6,6 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { echo } from './understood.js';
 import { attachPicker } from './picker.js';
 import { fieldEntries } from './libraries.js';
 import { siblingStrip } from './siblings.js';
@@ -673,8 +674,11 @@ function editor(row) {
     // A list is a small table (owner's ask, 2026-10-27): a row per entry, boxes with their own labels, never raw code.
     input = listBoxes(row, f.value);
   } else {
-    input = h('input', { id: 'edit-input', type: row.type === 'date' ? 'date' : 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off' });
+    input = h('input', { id: 'edit-input', type: 'text', inputmode: ['money', 'rate', 'int'].includes(row.type) ? 'decimal' : null, autocomplete: 'off', placeholder: row.type === 'date' ? 'e.g. Dec 6 or the 15th' : null });
     input.value = inputText(row.type, f.value);
+    // Typed any way (S-285): the reading shows under the box.
+    const reads = row.type === 'int' && /Day$/.test(row.path) ? 'day' : ['money', 'rate', 'date'].includes(row.type) ? row.type : null;
+    if (reads) echo(input, reads);
   }
   // A field with a known set of answers types to pick (S-284): a bank, a servicer, an insurer, an employer.
   const pickField = row.type === 'text' ? fieldEntries(cur(), row.path.split('.').pop()) : null;

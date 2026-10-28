@@ -5,6 +5,7 @@
 // cancels. The answers go to engine/add.js addWithAnswers and addMore, so every screen saves the same thing.
 // LIVE-FORM: built once. Picking a kind or an answer redraws only the questions under it, never the name or amount.
 
+import { echo, dateBox } from './understood.js';
 import { planFor } from './employer-plans.js';
 import { inlineTicks, featuresForType, typeName } from './ticks.js';
 import { tickFeature } from '../engine/features.js';
@@ -98,7 +99,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       }
       if (collection === 'goals' && v.type && typeSel) { typeSel.value = v.type; typeSel.dispatchEvent(new Event('change')); }
     } });
-  const amount = box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' });
+  const amount = echo(box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' }), 'money');
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
   const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
   if (often) often.setAttribute('aria-label', 'How often');
@@ -133,7 +134,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     }
     if (income && t === 'unemployment') {
       out.push(text('add-weeks', 'Weeks of benefits left', 'weeks', { inputmode: 'numeric', placeholder: 'weeks' }, 'Or give the end date below.'));
-      out.push(field('add-end', 'Last week paid (optional)', (() => { const d = h('input', { id: 'add-end', type: 'date' }); d.value = ans.endDate; d.addEventListener('input', () => { ans.endDate = d.value; }); return d; })()));
+      out.push(field('add-end', 'Last week paid (optional)', dateBox('add-end', ans.endDate, (v) => { ans.endDate = v; })));
       showOften = false;
     }
     if (income && t === 'person') {
@@ -146,10 +147,10 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     if (maybe) {
       const seg = (opts, key, label) => { const btns = opts.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(ans[key] === k), onclick: () => { ans[key] = k; for (const [i, b] of btns.entries()) b.setAttribute('aria-pressed', String(opts[i][0] === k)); } }, h('span', { class: 'seg-label' }, w))); return h('div', { class: 'add-field' }, h('p', { class: 'edit-label' }, label), h('div', { class: 'segmented', role: 'group', 'aria-label': label }, btns)); };
       out.push(seg([['in', 'Money in'], ['out', 'Money out']], 'dir', 'In or out'), seg([[0.75, 'Likely'], [0.5, 'Maybe'], [0.25, 'Unlikely']], 'likely', 'How likely?'));
-      out.push(field('add-date', 'When, if you know', (() => { const d = h('input', { id: 'add-date', type: 'date' }); d.value = ans.date; d.addEventListener('input', () => { ans.date = d.value; }); return d; })(), null, null, true));
+      out.push(field('add-date', 'When, if you know', dateBox('add-date', ans.date, (v) => { ans.date = v; }), null, null, true));
     }
     // A goal: by when, if there is a date.
-    if (collection === 'goals') out.push(field('add-by', 'By when (optional)', (() => { const d = h('input', { id: 'add-by', type: 'date' }); d.value = ans.by; d.addEventListener('input', () => { ans.by = d.value; }); return d; })(), null, null, true));
+    if (collection === 'goals') out.push(field('add-by', 'By when (optional)', dateBox('add-by', ans.by, (v) => { ans.by = v; }), null, null, true));
     if (often) often.hidden = !showOften;
     if (ans.payBasis && income && !((t === 'w2' && W2_BASIS.some(([k]) => k === ans.payBasis)) || ((t === '1099' || t === 'side') && SELF_BASIS.some(([k]) => k === ans.payBasis)))) ans.payBasis = null;
     qs.replaceChildren(...out);
@@ -159,8 +160,8 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
 
   // More options: built once; which boxes show follows the kind.
   const more = {
-    institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }),
-    minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: box('add-due', { inputmode: 'numeric', placeholder: '1 to 31' }),
+    institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: echo(box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }), 'rate'),
+    minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: echo(box('add-due', { inputmode: 'numeric', placeholder: 'e.g. 15 or the 15th' }), 'day'),
     asOf: h('input', { type: 'date', id: 'add-asof', value: today }), note: box('add-note', { maxlength: '200' })
   };
   const moreBox = {

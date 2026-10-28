@@ -3,6 +3,7 @@
 
 import { getAt, setAt, isFact, valueOf, fact } from './spine.js';
 import { mainChecking } from './defaults.js';
+import { readMoney, readDay, readDate, localToday } from './natural.js';
 import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES, POLICY_TYPES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
@@ -10,6 +11,9 @@ import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES, POLICY_TYPES } from './sche
 export function parseInput(type, text) {
   const raw = String(text ?? '').trim();
   if (raw === '') return { ok: false, message: 'Type a value, or use Not for me' };
+  // Type it any way (S-285): "2k", "500 a week" (a month's worth), "the 15th", "dec 6".
+  if (type === 'money') { const r = readMoney(raw); return r.ok ? { ok: true, value: r.value } : { ok: false, message: r.message }; }
+  if (type === 'int' && /^(on\s+)?(the\s+)?\d{1,2}(st|nd|rd|th)$/i.test(raw)) { const r = readDay(raw); return r.ok ? { ok: true, value: r.value } : { ok: false, message: r.message }; }
   if (type === 'money' || type === 'int' || type === 'rate') {
     // "1k" and "$1.5K" are thousands, for money only (slim by default): 1k is 1000.
     const k = type === 'money' && /^\$?\s*[\d,.]+\s*k$/i.test(raw);
@@ -21,7 +25,7 @@ export function parseInput(type, text) {
   }
   // The last four digits only (S-283): typed whole or in part, only the last four are ever kept.
   if (type === 'last4') { const d = raw.replace(/\D/g, ''); return d.length >= 4 ? { ok: true, value: d.slice(-4) } : { ok: false, message: 'The last 4 digits' }; }
-  if (type === 'date') return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? { ok: true, value: raw } : { ok: false, message: 'Use YYYY-MM-DD' };
+  if (type === 'date') { if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return { ok: true, value: raw }; const r = readDate(raw, localToday()); return r.ok ? { ok: true, value: r.value } : { ok: false, message: r.message }; }
   if (type === 'bool') return /^(yes|true)$/i.test(raw) ? { ok: true, value: true } : /^(no|false)$/i.test(raw) ? { ok: true, value: false } : { ok: false, message: 'Yes or no' };
   if (type.startsWith('choice:')) return type.slice(7).split('|').includes(raw) ? { ok: true, value: raw } : { ok: false, message: 'Pick one of the choices' };
   if (type === 'list') { try { const v = JSON.parse(raw); return Array.isArray(v) ? { ok: true, value: v } : { ok: false, message: 'A list in [ ]' }; } catch { return { ok: false, message: 'A list in [ ]' }; } }

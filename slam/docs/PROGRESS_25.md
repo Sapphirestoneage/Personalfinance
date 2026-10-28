@@ -131,3 +131,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 3 (2026-10-28): pre-answered questions, one-line answers, Looks right and Enter, Recommended choices, add in small steps (S-282).
 - Part 4 (2026-10-28): seven Needs groups, four numbers in the strip, $20,000 / Dec 6 / Chase ••4417 (S-283).
 - Part 5 (2026-10-28): one picker everywhere, card / fund / institution / place libraries (S-284).
+- Part 6 (2026-10-28): money and dates as people say them with the reading under the box; the header search finds and adds; scope chips past 8 (S-285).

@@ -1,12 +1,13 @@
 // The command bar (Krug pass search, then overnight Track B): finds any account, debt, bill, income, goal, person,
 // setting or screen by name and opens it; a line in plain words ("visa 2700", "add netflix 15.99 on the 12th", "go to
-// plan", "mark rent happened", "undo") is read by engine/command.js and said before Enter makes it, through change(),
-// so Undo takes it back. The magnifier or Ctrl/Cmd+K opens it under the header; Esc closes.
+// plan", "mark rent happened", "undo", "amex gold 2000 24%") is read by engine/command.js and said before Enter makes
+// it, through change(), so Undo takes it back. A box in the header (S-285); "/" or Ctrl/Cmd+K puts the cursor in it.
 // Formatting only: the names come from the household as it stands.
 
 import { h, ledgerHref } from './view.js';
 import { parseCommand } from '../engine/command.js';
 import { sharerNames } from '../engine/owed.js';
+import { ledgerRows } from '../engine/ledger.js';
 
 // The screens a person might look for by name, with where each opens.
 const SCREENS = [
@@ -24,27 +25,43 @@ const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts o
   ['Too small to matter', 'assumptions.html#/APP_MATERIALITY'], ['Your floor', 'calendar.html'], ['FI assumptions', 'profile.html#/goals'], ['Where to find', 'where.html'], ['House defaults', 'house.html']];
 const nameOf = (x) => (x && x.name && typeof x.name === 'object' ? x.name.value : x && x.name) || (x && x.label) || null;
 
-// Everything findable: [{ words, kind, href }].
-export function searchIndex(spine) {
-  const out = SCREENS.map(([words, href]) => ({ words, kind: 'Screen', href }));
-  const add = (list, kind, field) => { for (const x of list || []) { const n = nameOf(x); if (n) out.push({ words: n, kind, href: ledgerHref(field(x)) }); } };
-  add(spine.accounts, 'Account', (a) => 'accounts.' + a.id + '.balance');
-  add(spine.debts, 'Debt', (d) => 'debts.' + d.id + '.balance');
-  add(spine.expenses, 'Bill', (e) => 'expenses.' + e.id + '.amount');
-  add(spine.income, 'Income', (i) => 'income.' + i.id + '.amount');
-  add(spine.goals, 'Goal', (g) => 'goals.' + g.id + '.' + (g.target ? 'target' : 'annualSpending'));
+// The section of Numbers a household path sits in, for the "This section" chip.
+const SECTION_OF = { debts: 'debt', accounts: 'assets', expenses: 'needs', income: 'income', goals: 'goals', policies: 'protection', household: 'profile', taxYears: 'income' };
+const sectionOfHref = (href) => { const m = href.match(/^ledger\.html#\/([\w-]+)/); return m ? m[1] : null; };
+// Everything findable (S-285: clients and every field too): [{ words, kind, href | pick, section, mine }].
+export function searchIndex(spine, { clients = [] } = {}) {
+  const out = SCREENS.map(([words, href]) => ({ words, kind: 'Screen', href, page: href.split('#')[0], section: sectionOfHref(href) }));
+  const item = (kind, coll, path) => ({ kind, href: ledgerHref(path), page: 'ledger.html', section: SECTION_OF[coll], mine: true });
+  const add = (list, kind, coll, field) => { for (const x of list || []) { const n = nameOf(x); if (n) out.push({ words: n, ...item(kind, coll, coll + '.' + x.id + '.' + field(x)) }); } };
+  add(spine.accounts, 'Account', 'accounts', () => 'balance');
+  add(spine.debts, 'Debt', 'debts', () => 'balance');
+  add(spine.expenses, 'Bill', 'expenses', () => 'amount');
+  add(spine.income, 'Income', 'income', () => 'amount');
+  add(spine.goals, 'Goal', 'goals', (g) => (g.target ? 'target' : 'annualSpending'));
+  // Every field on every item ("Visa: interest rate"), so a field opens its own screen with its box open.
+  for (const r of ledgerRows(spine).flatMap((g) => g.rows)) if (r.label && r.label.includes(': ')) out.push({ words: r.label, ...item('Field', r.path.split('.')[0], r.path) });
   // People: the household's own (their Profile) and anyone who owes them (Owed to you).
-  for (const p of (spine.household && spine.household.people) || []) if (p.name) out.push({ words: p.name, kind: 'Person', href: 'profile.html' });
-  for (const n of sharerNames(spine)) out.push({ words: n, kind: 'Shares bills', href: 'ledger.html#/assets/owed-to-you' });
-  for (const [words, href] of SETTINGS) out.push({ words, kind: 'Setting', href });
+  for (const p of (spine.household && spine.household.people) || []) if (p.name) out.push({ words: p.name, kind: 'Person', href: 'profile.html', page: 'profile.html', mine: true });
+  for (const n of sharerNames(spine)) out.push({ words: n, kind: 'Shares bills', href: 'ledger.html#/assets/owed-to-you', page: 'ledger.html', section: 'assets', mine: true });
+  for (const [words, href] of SETTINGS) out.push({ words, kind: 'Setting', href, page: href.split('#')[0] });
+  // Other clients: picking one switches to them.
+  for (const c of clients) out.push({ words: c.name, kind: 'Client', pick: c.id });
   return out;
 }
+// Every match, names that start with the words first. The box shows 8; past 8, the scope chips appear.
 export function searchFind(index, q) {
   const t = q.trim().toLowerCase();
   if (!t) return [];
   const starts = index.filter((x) => x.words.toLowerCase().startsWith(t));
   const has = index.filter((x) => !starts.includes(x) && x.words.toLowerCase().includes(t));
-  return [...starts, ...has].slice(0, 8);
+  return [...starts, ...has];
+}
+export const SHOWN = 8;
+// The two scopes, offered only when there are more than 8 matches: this client's own things, or this section.
+export function scoped(hits, scope, here) {
+  if (scope === 'client') return hits.filter((x) => x.mine);
+  if (scope === 'section') return hits.filter((x) => x.page === here.page && (!here.section || x.section === here.section));
+  return hits;
 }
 
 // A magnifier, drawn as an outline in the text color.
@@ -54,44 +71,67 @@ function magnifier() {
   svg.append(el('circle', { cx: '11', cy: '11', r: '6' }), el('line', { x1: '16', y1: '16', x2: '21', y2: '21' }));
   return svg;
 }
-// "/" opens the header search on any page with one (S-168, now in the header).
-// Ctrl/Cmd+K opens it from anywhere, even inside a box.
+// "/" puts the cursor in the header search on any page with one; Ctrl/Cmd+K too, even from inside a box.
 if (typeof document !== 'undefined') document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') { const b = document.querySelector('.search-wrap > button'); if (b) { e.preventDefault(); if (b.getAttribute('aria-expanded') !== 'true') b.click(); else document.getElementById('top-search')?.focus(); } return; }
+  const box = document.getElementById('top-search');
+  if (!box) return;
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); box.focus(); box.select(); return; }
   if (e.key !== '/' || (e.target && /input|textarea|select/i.test(e.target.tagName))) return;
-  const b = document.querySelector('.search-wrap > button');
-  if (b) { e.preventDefault(); b.click(); }
+  e.preventDefault(); box.focus();
 });
-// What the open box holds, kept across a header redraw (null when closed).
+// Clicking anywhere else closes the list (what was typed stays).
+if (typeof document !== 'undefined') document.addEventListener('pointerdown', (e) => {
+  const wrap = document.querySelector('.site-head .search-wrap');
+  if (wrap && !wrap.contains(e.target)) { const p = wrap.querySelector('.search-panel'); if (p) p.hidden = true; document.getElementById('top-search')?.setAttribute('aria-expanded', 'false'); }
+});
+// The libraries quick add picks from (cards, funds, bills people have), loaded the first time the box is used.
+let lib = null;
+const loadLibrary = (spine) => import('./libraries.js').then((m) => { lib = { cards: m.LIB.cards && m.LIB.cards.cards, funds: m.LIB.funds, expenses: m.expenseEntries(spine).filter((e) => e.from === 'library') }; }).catch(() => {});
+// What the box holds, kept across a header redraw (null when closed).
 let openNow = null;
-// The magnifier button and its box. spineOf() reads the household when the box opens.
-// run(cmd): the shell makes the command (a change in words, a screen, or undo).
-export function searchButton(spineOf, { rulesOf = () => null, run = () => {}, today = () => new Date().toISOString().slice(0, 10) } = {}) {
-  const box = h('input', { type: 'search', id: 'top-search', autocomplete: 'off', placeholder: 'Find, or type "visa 2700"', 'aria-label': 'Find or do something' });
-  const list = h('ul', { class: 'search-results', role: 'listbox', 'aria-label': 'Matches' });
-  const panel = h('div', { class: 'search-panel', hidden: true }, box, list);
-  let index = [];
-  const close = () => { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); openNow = null; };
-  let cmd = null;
+// The search box (S-285): always there, its label the icon. spineOf() reads the household when typing starts.
+// run(cmd): the shell makes the command (a change in words, a screen, or undo). library: what quick add picks from.
+export function searchButton(spineOf, { rulesOf = () => null, run = () => {}, today = () => new Date().toISOString().slice(0, 10), clients = () => [], pickClient = () => {} } = {}) {
+  const box = h('input', { type: 'search', id: 'top-search', autocomplete: 'off', placeholder: 'Search or add, e.g. rent 2400', 'aria-label': 'Search or add', role: 'combobox', 'aria-expanded': 'false', 'aria-controls': 'search-results' });
+  const list = h('ul', { class: 'search-results', id: 'search-results', role: 'listbox', 'aria-label': 'Matches' });
+  const chips = h('div', { class: 'search-scope', role: 'group', 'aria-label': 'Search in' });
+  const panel = h('div', { class: 'search-panel', hidden: true }, chips, list);
+  let index = [], scope = 'all', cmd = null, shown = [];
+  const here = () => ({ page: location.pathname.split('/').pop() || 'dashboard.html', section: sectionOfHref('ledger.html' + location.hash) });
+  const close = () => { panel.hidden = true; box.setAttribute('aria-expanded', 'false'); openNow = null; };
   const doIt = () => { const c = cmd; close(); box.value = ''; if (c && c.kind !== 'none') run(c); };
+  const follow = (x) => { close(); box.value = ''; if (x.pick) pickClient(x.pick); else location.href = x.href; };
+  const chip = (id, words) => h('button', { type: 'button', class: 'btn small chip-btn', 'aria-pressed': scope === id ? 'true' : 'false', onclick: () => { scope = scope === id ? 'all' : id; show(); box.focus(); } }, words);
   const show = () => {
-    const hits = searchFind(index, box.value);
-    try { cmd = parseCommand(spineOf(), rulesOf(), box.value, { today: today(), screens: SCREENS }); } catch { cmd = null; }
-    // What Enter will do, said first (a command), then what matches by name.
+    if (!box.value.trim()) { close(); return; }
+    panel.hidden = false; box.setAttribute('aria-expanded', 'true');
+    const all = searchFind(index, box.value);
+    const hits = scoped(all, scope, here());
+    shown = hits.slice(0, SHOWN);
+    try { cmd = parseCommand(spineOf(), rulesOf(), box.value, { today: today(), screens: SCREENS, library: lib }); } catch { cmd = null; }
+    chips.replaceChildren(...(all.length > SHOWN ? [chip('client', 'This client'), chip('section', 'This section')] : []));
+    // What Enter will do, said first (a command or a new item), then what matches by name.
     const top = cmd ? [h('li', {}, h('button', { type: 'button', class: 'search-hit search-cmd', disabled: cmd.kind === 'none', onclick: doIt }, h('span', {}, cmd.words), h('span', { class: 'search-kind' }, cmd.kind === 'none' ? '' : 'Enter')))] : [];
-    list.replaceChildren(...top, ...(box.value.trim() && !hits.length && !cmd ? [h('li', { class: 'muted' }, 'Nothing by that name. Try "go to plan" or "rent 1950".')] : hits.map((x) => h('li', {}, h('a', { class: 'search-hit', href: x.href, onclick: close }, h('span', {}, x.words), h('span', { class: 'search-kind' }, x.kind))))));
+    list.replaceChildren(...top, ...(!shown.length && !cmd ? [h('li', { class: 'muted' }, 'Nothing by that name. Try "rent 2400" or "go to plan".')] : shown.map((x) => h('li', {}, x.pick
+      ? h('button', { type: 'button', class: 'search-hit', onclick: () => follow(x) }, h('span', {}, x.words), h('span', { class: 'search-kind' }, x.kind))
+      : h('a', { class: 'search-hit', href: x.href, onclick: close }, h('span', {}, x.words), h('span', { class: 'search-kind' }, x.kind))))),
+      ...(hits.length > SHOWN ? [h('li', { class: 'muted search-more' }, (hits.length - SHOWN) + ' more: type more of the name' + (all.length > SHOWN && scope === 'all' ? ', or pick where to look' : ''))] : []));
   };
-  box.addEventListener('input', () => { if (openNow) openNow.value = box.value; show(); });
+  box.addEventListener('focus', () => { index = searchIndex(spineOf(), { clients: clients() }); if (!lib) loadLibrary(spineOf()).then(() => { if (box.value.trim()) show(); }); });
+  box.addEventListener('input', () => { openNow = { value: box.value }; show(); });
   box.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); btn.focus(); }
-    if (e.key === 'Enter') { if (cmd && cmd.kind !== 'none') { e.preventDefault(); doIt(); return; } const first = list.querySelector('a'); if (first) { e.preventDefault(); close(); location.href = first.href; } }
+    if (e.key === 'Escape') { e.preventDefault(); close(); box.value = ''; box.blur(); }
+    if (e.key === 'ArrowDown') { const f = list.querySelector('a, button:not([disabled])'); if (f) { e.preventDefault(); f.focus(); } }
+    if (e.key === 'Enter') { if (cmd && cmd.kind !== 'none') { e.preventDefault(); doIt(); return; } if (shown[0]) { e.preventDefault(); follow(shown[0]); } }
   });
-  const btn = h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Search', 'aria-expanded': 'false', title: 'Search', onclick: () => {
-    if (!panel.hidden) { close(); return; }
-    open('');
-  } }, magnifier());
-  const open = (value) => { index = searchIndex(spineOf()); panel.hidden = false; btn.setAttribute('aria-expanded', 'true'); box.value = value; openNow = { value }; show(); box.focus({ preventScroll: true }); };
-  // A page redraw (a late number arriving, a change) builds a new header: an open box stays open with what was typed.
-  if (openNow) queueMicrotask(() => { if (box.isConnected) open(openNow.value); });
-  return h('div', { class: 'search-wrap' }, btn, panel);
+  list.addEventListener('keydown', (e) => {
+    const items = [...list.querySelectorAll('a, button:not([disabled])')], i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown' && i < items.length - 1) { e.preventDefault(); items[i + 1].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? items[i - 1] : box).focus(); }
+    if (e.key === 'Escape') { e.preventDefault(); close(); box.focus(); }
+  });
+  const wrap = h('div', { class: 'search-wrap' }, h('label', { class: 'search-box' }, h('span', { class: 'search-icon' }, magnifier()), box), panel);
+  // A page redraw (a late number arriving, a change) builds a new header: what was typed stays, the list open.
+  if (openNow) queueMicrotask(() => { if (box.isConnected && openNow) { box.value = openNow.value; index = searchIndex(spineOf(), { clients: clients() }); show(); box.focus({ preventScroll: true }); } });
+  return wrap;
 }

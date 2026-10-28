@@ -101,7 +101,7 @@ Then, one line per item, in the order a client meets them:
 - [x] **3b In the call**: client list and switching (pulled forward, S-269)
 - [ ] **3b In the call**: coach mode
 - [ ] **3b In the call**: statement and CSV import with categorization and recurring detection (import before the call is the main path)
-- [ ] **3b In the call**: coach quick-entry shorthand ("amex 2000 25% due 1" makes the row; house defaults fill the rest as rough)
+- [x] **3b In the call**: coach quick-entry shorthand (done S-285: the header search box; "amex gold 2000 24%", "vtsax 18k roth", "rent 2400") ("amex 2000 25% due 1" makes the row; house defaults fill the rest as rough)
 - [x] **3b In the call**: next-question card with materiality (pulled forward, S-270)
 - [ ] **3b In the call**: session timer by DATING step
 - [ ] **3c After the call**: end-of-session one-pager (pulled forward, S-269) plus auto recap

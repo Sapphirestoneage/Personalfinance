@@ -2065,3 +2065,27 @@ a.sib { color: var(--link, var(--accent)); text-decoration: underline; backgroun
 .picker-hint { font-size: 0.9rem; color: var(--text); opacity: 0.85; }
 .picker-opt.is-free .picker-words { font-weight: 500; font-style: italic; }
 .picked-select { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 0 !important; padding: 0 !important; margin: -1px !important; overflow: hidden; clip: rect(0 0 0 0); border: 0 !important; }
+
+/* What a box understood (S-285): under the box, full-contrast text; the other reading is a button. */
+.understood { margin: 4px 0 0; flex-basis: 100%; font-size: 0.95rem; color: var(--text); line-height: 1.4; }
+.understood strong { font-weight: 650; }
+.understood .understood-tag { color: var(--text); }
+.understood.is-unread { color: var(--bad); font-weight: 600; }
+.understood .btn.small { margin-left: 6px; }
+
+/* The search box (S-285): always there in the header, its icon the only label inside a box; matches drop below it. */
+.site-head .search-wrap { position: relative; }
+.search-box { display: flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--text-muted); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: text; }
+.search-box:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; }
+.search-box .search-icon { display: inline-flex; color: var(--text-muted); }
+.search-box input { flex: 1; min-width: 0; min-height: calc(var(--tap) - 2px); border: 0; background: transparent; color: var(--text); font: inherit; outline: none; }
+.site-head .search-panel { position: absolute; left: 0; right: 0; top: calc(100% + 4px); min-width: min(26rem, 92vw); max-height: 70vh; overflow: auto; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.search-scope { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); }
+.search-scope:empty { display: none; }
+.search-scope .chip-btn[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); }
+.search-results .search-more { padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+@media (max-width: 639px) {
+  .site-head { position: relative; }
+  .site-head .search-wrap { position: static; }
+  .site-head .search-panel { left: var(--space-2); right: var(--space-2); top: 100%; min-width: 0; }
+}

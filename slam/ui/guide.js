@@ -4,6 +4,7 @@
 // roam. Same screens, same data: every change goes through the shell's change() with words, so Undo takes it back.
 // Formatting only: the totals come from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
+import { echo } from './understood.js';
 import { attachPicker } from './picker.js';
 import { placeLibEntries, LIB } from './libraries.js';
 import { placeOf } from '../engine/library.js';
@@ -56,6 +57,7 @@ const later = (fn) => setTimeout(fn, 0);
 function moneyBox(id, value, label, onSet, placeholder = 'Amount') {
   const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = inputText('money', value);
+  echo(box, 'money');
   box.addEventListener('change', () => {
     const t = box.value.trim();
     if (t === '') { later(() => onSet(null)); return; }
