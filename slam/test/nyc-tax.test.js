@@ -35,3 +35,10 @@ test('a Yonkers resident pays 16.75% of the state tax on top', () => {
   near(x.lines.localTax.value, x.lines.nysTax.value * 0.1675);
   near(x.lines.stateTax.value, x.lines.nysTax.value * 1.1675);
 });
+
+// The owner's check sheet (S-279) is the rules as the engine reads them, never a copy that drifts.
+import { nycRatesDoc } from '../tools/nyc-rates-doc.mjs';
+import { readFileSync as rf } from 'node:fs';
+test('docs/NYC_RATES_TO_CHECK.md is up to date (node tools/nyc-rates-doc.mjs)', () => {
+  assert.equal(rf(new URL('../docs/NYC_RATES_TO_CHECK.md', import.meta.url), 'utf8'), nycRatesDoc());
+});

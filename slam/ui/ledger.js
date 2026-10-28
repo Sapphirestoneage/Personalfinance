@@ -6,6 +6,8 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { whoseControl } from './whose.js';
+import { setWhose } from '../engine/couple.js';
 import { purposeCard } from './stepper.js';
 import { STEP_MAP, stepChecks } from '../engine/step-map.js';
 import { HOUSEHOLD_ANSWERS, addLookups } from '../engine/profile.js';
@@ -1574,6 +1576,8 @@ function itemScreen(sec, g, it, st) {
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
     fillBar(toFill(it), null),
+    // Whose it is (S-279): on screen one of every income, account and debt, for a couple.
+    ['income', 'accounts', 'debts'].includes(it.collection) && !selecting ? (() => { const x = (cur()[it.collection] || []).find((i) => i.id === it.id); return x ? whoseControl(cur(), it.collection, x, (w, words) => change(setWhose(cur(), it.collection, it.id, w, today()), said.changed(it.label + ': whose', words))) : null; })() : null,
     (() => { const all = hideTicked(it, fillOn() ? openRows(it.rows) : it.rows);
       // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
       // numbers come first; it opens by itself when one of its rows is open.

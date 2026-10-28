@@ -372,6 +372,7 @@ function missingWords(year, miss) {
 // not a number: owed and balanceDue are null and missingText names what is
 // needed. `partial` is the tax on the income that is known, a floor.
 export function taxForYear(spine, R, year, { asOf = spine.meta.asOf, mode = 'committed' } = {}) {
+  if (separateReturns(spine)) return twoReturns(spine, R, year, { asOf, mode });
   const { inputs, tracker: t, missing, notModeled, notes } = taxInputs(spine, R, year, mode);
   const snap = t.snapshot();
   const incomeMissing = missing.wages.length + missing.income.length + missing.other.length + missing.person.length > 0;
@@ -408,6 +409,56 @@ export function taxForYear(spine, R, year, { asOf = spine.meta.asOf, mode = 'com
     // Tax on the known income only: a floor while something is missing.
     partial: partial && { federalIncomeTax: partial.lines.federalIncomeTax, federalTotal: partial.lines.federalTotal, stateTax: partial.lines.stateTax, total: partial.lines.total, marginalFederal: partial.lines.marginalFederal, marginalState: partial.lines.marginalState, marginalSe: partial.lines.marginalSe },
     nextEstimated: nextEstimatedDate(asOf, R)
+  };
+}
+
+// ---------------------------------------------------------------- two people, not married (S-279)
+// Two people who are not married each file their own return, as single, on their own income with their own
+// deduction; the household's tax is the two added together. A married couple never files single, so two people with
+// a single (or head of household) status are taken as not married. Each person's return reads their own income lines
+// and the accounts they own; a joint account and the tax year's household entries (estimated payments, gains,
+// dividends) go on the first person's return.
+export function separateReturns(spine) {
+  const ps = (spine.household && spine.household.people) || [];
+  const st = valueOf(spine.household && spine.household.filingStatus);
+  return ps.length >= 2 && (st === 'single' || st === 'hoh');
+}
+export function personSpine(spine, i) {
+  const ps = spine.household.people, me = ps[i];
+  const mine = (owner) => owner === me.id;
+  const income = (spine.income || []).filter((s) => mine(incomeOwner(spine, s)));
+  const accounts = (spine.accounts || []).filter((a) => { const o = a.owner ? valueOf(a.owner) : null; return o === 'joint' ? i === 0 : mine((accountOwner(spine, a) || {}).id); });
+  const own = { ...spine, household: { ...spine.household, people: [me], filingStatus: { ...spine.household.filingStatus, value: i === 0 ? valueOf(spine.household.filingStatus) : 'single' } }, income, accounts, taxYears: i === 0 ? spine.taxYears : [] };
+  return own;
+}
+const RATE_LINES = ['marginalFederal', 'marginalState', 'marginalSe', 'marginal', 'effective'];
+function twoReturns(spine, R, year, opts) {
+  const each = spine.household.people.slice(0, 2).map((_, i) => taxForYear(personSpine(spine, i), R, year, opts));
+  const uniq = (xs) => [...new Set(xs)];
+  // A line is the two added together; missing on either return, missing for both.
+  const sum = (a, b) => {
+    if (!a || !b) return a || b;
+    const value = a.value === null || b.value === null ? null : round2(a.value + b.value);
+    const kind = value === null ? 'missing' : [a.kind, b.kind].includes('rough') ? 'rough' : a.kind;
+    return { ...a, value, kind, from: uniq([...(a.from || []), ...(b.from || [])]), rough: uniq([...(a.rough || []), ...(b.rough || [])]), missing: uniq([...(a.missing || []), ...(b.missing || [])]), rules: uniq([...(a.rules || []), ...(b.rules || [])]) };
+  };
+  const [x, y] = each;
+  // The rates are the higher earner's (the next dollar is most likely theirs); effective is the total over income.
+  const gx = x.lines.grossIncome ? x.lines.grossIncome.value || 0 : 0, gy = y.lines.grossIncome ? y.lines.grossIncome.value || 0 : 0;
+  const top = gx >= gy ? x : y;
+  const lines = {};
+  for (const k of uniq([...Object.keys(x.lines), ...Object.keys(y.lines)])) lines[k] = RATE_LINES.includes(k) ? top.lines[k] : sum(x.lines[k], y.lines[k]);
+  const total = lines.total, gross = lines.grossIncome;
+  if (lines.effective && total && gross) lines.effective = { ...lines.effective, value: total.value === null || !gross.value ? null : total.value / gross.value };
+  const inputs = { ...x.inputs };
+  for (const k of Object.keys(y.inputs)) if (typeof y.inputs[k] === 'number') inputs[k] = round2((x.inputs[k] || 0) + y.inputs[k]);
+  const partial = x.partial && y.partial ? Object.fromEntries(Object.keys(x.partial).map((k) => [k, RATE_LINES.includes(k) ? top.partial[k] : sum(x.partial[k], y.partial[k])])) : null;
+  return {
+    year, owed: lines.total, withheld: lines.withheld, balanceDue: lines.balanceDue, marginal: lines.marginal, effective: lines.effective, lines, inputs,
+    missingText: x.missingText || y.missingText,
+    missingPaths: Object.fromEntries(Object.keys(x.missingPaths).map((k) => [k, uniq([...x.missingPaths[k], ...y.missingPaths[k]])])),
+    notModeled: uniq([...x.notModeled, ...y.notModeled]), notes: uniq([...x.notes, ...y.notes]), partial, nextEstimated: x.nextEstimated,
+    returns: each.map((r, i) => ({ personId: spine.household.people[i].id, name: spine.household.people[i].name, owed: r.owed, balanceDue: r.balanceDue }))
   };
 }
 

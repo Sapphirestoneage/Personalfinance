@@ -75,3 +75,26 @@ test('adding a partner: a second person, the filing status, whose', () => {
   const notMarried = addPartner(single(), { name: 'Kit', filing: 'single' }, '2026-10-26');
   assert.equal(v(notMarried.household.filingStatus), 'single', 'not married: each files on their own');
 });
+
+// Not married (S-279): each files single on their own pay, with their own deduction; the household pays the two added
+// together, which is less than one single return on the combined pay would be (the brackets and the deduction count twice).
+import { taxForYear, computeTax, separateReturns, personSpine } from '../engine/tax.js';
+test('an unmarried NYC couple with unequal pay files two single returns, less than one combined', () => {
+  const sp0 = couple();
+  const sp = { ...sp0, household: { ...sp0.household, filingStatus: { ...sp0.household.filingStatus, value: 'single' } } };
+  assert.ok(separateReturns(sp));
+  const t = taxForYear(sp, R, 2026);
+  assert.equal(t.returns.length, 2);
+  const [a, b] = t.returns.map((r) => r.owed.value);
+  assert.equal(Math.round((a + b) * 100) / 100, t.owed.value, 'the household owes the two added together');
+  assert.ok(a > b, 'Jordan earns more and owes more');
+  // One combined single return on the same inputs, for comparison.
+  const one = computeTax({ ...t.inputs, filingStatus: 'single' }, R, 2026).lines.total.value;
+  assert.ok(t.owed.value < one, 'two returns ' + t.owed.value + ' < one combined ' + one);
+  // Golden: the two returns 15,471.65 + 9,298.38 = 24,770.03, against 34,477.69 on one combined single return.
+  assert.deepEqual([a, b], [15471.65, 9298.38]);
+  assert.equal(one, 34477.69);
+  // Jordan's federal by hand: 90,000 - 9,000 to the 401(k) = 81,000, less the 16,100 deduction = 64,900 taxable;
+  // 10% of 12,400 + 12% of 38,000 + 22% of 14,500 = 1,240 + 4,560 + 3,190 = 8,990.
+  assert.equal(taxForYear(personSpine(sp, 0), R, 2026).lines.federalIncomeTax.value, 8990);
+});

@@ -1906,3 +1906,7 @@ kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 
 .purpose-mark { width: 1.2em; flex: none; text-align: center; font-weight: 700; }
 .purpose-checks li.is-done .purpose-mark { color: var(--good); }
 .now-have { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--accent); background: var(--surface); }
+
+/* Whose (S-279): a label and up to three buttons, on an item's screen one. */
+.whose-pick { display: grid; gap: var(--space-1); margin: 0 0 var(--space-3); }
+.whose-seg .seg-btn { flex: 0 1 8rem; align-items: center; }
