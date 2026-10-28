@@ -1881,6 +1881,12 @@ kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 
 .field-cap { font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); white-space: nowrap; }
 .srow > .field-cell, .srow > .btn, .srow > .tick, .srow > .row-more, .srow > .toggle { flex: 0 0 auto; align-self: flex-end; }
 .srow .rate-box { width: 4.5rem; } .srow .day-box { width: 4rem; } .srow .amt { width: 7rem; }
+/* A debt's name in its row (S-291): the Name box keeps at least 10rem and takes the room left; its kind is a small
+   heading over its rows. */
+.srow > .name-cell { flex: 1 1 10rem; min-width: 10rem; max-width: 26rem; }
+.name-cell .picker { width: 100%; }
+.srow.kind-head { padding: var(--space-3) 0 2px; }
+.kind-title { margin: 0; font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
 /* Under a Session row, the questions' fold is a quiet line, not a second card. */
 .srow > .tick-list { border: 0; border-top: 1px dashed var(--border); border-radius: 0; box-shadow: none; background: transparent; padding: 0; margin: 0; }
 .srow > .tick-list > summary { min-height: var(--tap); font-weight: 500; font-size: var(--text-sm); color: var(--text-muted); }

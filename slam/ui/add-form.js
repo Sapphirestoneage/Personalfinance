@@ -15,7 +15,7 @@ import { parseInput, addMaybe, putFact } from '../engine/edits.js';
 import { setAt, getAt } from '../engine/spine.js';
 import { attachPicker } from './picker.js';
 import { nameEntries, LIB } from './libraries.js';
-import { cardFills, fundFills, LIBRARY_SOURCE } from '../engine/library.js';
+import { cardFills, fundFills, applyFills, LIBRARY_SOURCE } from '../engine/library.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS, POLICY_TYPES } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { h } from './view.js';
@@ -250,13 +250,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     // What the pick brought (S-284): each as a guess from the library, never over a number typed here.
     if (Object.keys(pickFills).length || pickedAmount) {
       const base = made.firstPath.split('.').slice(0, 2).join('.');
-      let sp = made.spine;
-      for (const [k, x] of Object.entries(pickFills)) {
-        if (x === null || x === undefined) continue;
-        const was = getAt(sp, base + '.' + k);
-        if (was && was.kind === 'known' && was.value !== null) continue;
-        sp = k === 'need' || k === 'subscription' ? putFact(sp, base + '.' + k, x, 'known', today) : setAt(sp, base + '.' + k, { value: x, kind: 'rough', asOf: today, source: LIBRARY_SOURCE });
-      }
+      let sp = applyFills(made.spine, base, pickFills, today);
       if (pickedAmount && made.firstPath) { const f = getAt(sp, made.firstPath); if (f && f.value !== null) sp = setAt(sp, made.firstPath, { ...f, kind: 'rough', source: LIBRARY_SOURCE }); }
       made = { ...made, spine: sp };
     }

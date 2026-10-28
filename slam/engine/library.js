@@ -1,6 +1,9 @@
 // The picker's libraries and matching (S-284). Pure: the libraries are passed in (data/library-*.json, fetched by the
 // page). Every value a library fills is a typical guess, stored rough with its source, never the client's own number.
 
+import { getAt, setAt } from './spine.js';
+import { putFact } from './edits.js';
+
 const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9&+ ]+/g, ' ').replace(/\s+/g, ' ').trim();
 const GROUP_ORDER = { mine: 0, recent: 1, library: 2 };
 
@@ -60,6 +63,18 @@ export function fundFills(fund, lib, year) {
 // What picking a card fills: its fee, its everyday rewards and a typical rate.
 export const cardFills = (card) => ({ annualFee: card.annualFee, rewardsRate: card.rewardsRate, apr: card.typicalApr, institution: card.issuer });
 export const LIBRARY_SOURCE = 'library (a typical guess)';
+// What a pick brought (S-284; the Add form and the Session's name box share it, S-291): each as a guess from the
+// library, never over a number already typed; a tag (need, subscription) as known.
+export function applyFills(spine, base, fills, today) {
+  let s = spine;
+  for (const [k, x] of Object.entries(fills || {})) {
+    if (x === null || x === undefined) continue;
+    const was = getAt(s, base + '.' + k);
+    if (was && was.kind === 'known' && was.value !== null) continue;
+    s = k === 'need' || k === 'subscription' ? putFact(s, base + '.' + k, x, 'known', today) : setAt(s, base + '.' + k, { value: x, kind: 'rough', asOf: today, source: LIBRARY_SOURCE });
+  }
+  return s;
+}
 
 // Entries for the picker from each library.
 export const cardEntries = (lib) => lib.cards.map((c) => ({ words: c.name, aliases: [...c.aliases, c.issuer], hint: c.issuer + (c.annualFee ? ', $' + c.annualFee + ' a year' : ', no annual fee'), value: c, source: 'card' }));
