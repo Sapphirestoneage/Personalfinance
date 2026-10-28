@@ -1269,8 +1269,10 @@ a.fb-link .fb-more { justify-self: end; }
 .add-form .add-grid > .add-field:not(.short) { grid-column: 1 / -1; }
 @media (max-width: 600px) { .add-form .add-grid { grid-template-columns: 1fr; } }
 .affix { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
-.affix input { width: 100%; padding-left: 1.6em; }
-.affix-end input { padding-left: var(--space-2); padding-right: 1.8em; }
+/* div.affix, not .affix (S-289): a tag and a class outrank the one-class field rules (the app-wide field reset further
+   down, .list-row input) whatever their order, so the box keeps its room and the symbol never sits on a digit (rule 26). */
+div.affix input { width: 100%; padding-left: 1.6em; }
+div.affix-end input { padding-left: var(--space-2); padding-right: 1.8em; }
 .affix-sym { position: absolute; left: 0.6em; color: var(--text-muted); pointer-events: none; }
 .affix-end .affix-sym { left: auto; right: 0.6em; }
 .add-more > summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--accent); font-weight: 600; }
@@ -1399,7 +1401,6 @@ body { font-variant-numeric: tabular-nums; }
 .list-row input { min-height: var(--tap); padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; width: 100%; }
 .list-row { grid-template-columns: 6rem minmax(0, 1fr) var(--tap); }
 .list-rows .list-row:has(> :nth-child(2):last-child), .list-row.list-head:has(> :nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) var(--tap); }
-.list-row .affix input { padding-left: 1.6em; }
 .list-row .icon-btn { font-size: 1.2rem; }
 /* A Session row's More opens as a small panel under its button (owner's ask): the row never changes shape. */
 .srow { position: relative; }
