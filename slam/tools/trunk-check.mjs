@@ -2,7 +2,7 @@
 // screen in each section, at phone and computer width. Each screen passes or fails on: the site ID, the page name,
 // the main sections, the options at this level, you are here (both tab levels marked with two cues: the fill and
 // bold), search, and the first thing to do visible without scrolling. Writes docs/TRUNK_TEST.md.
-//   cd slam && python3 -m http.server 8766 &   then   SLAM_URL=http://localhost:8766/ node tools/trunk-test.mjs
+//   cd slam && python3 -m http.server 8766 &   then   SLAM_URL=http://localhost:8766/ node tools/trunk-check.mjs
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 const { chromium } = createRequire(import.meta.url)('playwright');
@@ -54,7 +54,7 @@ for (const [w, hgt, wname] of WIDTHS) {
 }
 await browser.close();
 const fails = rows.filter((r) => CHECKS.some((c) => !r[c]));
-const md = ['# Trunk test', '', 'Krug\'s trunk test, run by `tools/trunk-test.mjs` on the made-up example household: every main tab, every second-level tab, and a level-3 (group) and level-4 (item) screen in each section, at phone (390px) and computer (1280px) width. Pass is a check mark.', '',
+const md = ['# Trunk test', '', 'Krug\'s trunk test, run by `tools/trunk-check.mjs` on the made-up example household: every main tab, every second-level tab, and a level-3 (group) and level-4 (item) screen in each section, at phone (390px) and computer (1280px) width. Pass is a check mark.', '',
   '- Site ID: "Stress Less About Money" shows top left.', '- Page name: the page title shows.', '- Sections: the five main tabs show.', '- Local options: the second-level tabs, the siblings strip or the screen\'s own choices show.',
   '- You are here: the current main tab (and second-level tab, where there is one) is marked with two cues at once, a fill and bold.', '- Search: the search box shows.', '- First action: the first thing to do is on screen without scrolling.', '',
   `Result: ${rows.length - fails.length} of ${rows.length} screens pass every check.`, '',
