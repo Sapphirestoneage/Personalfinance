@@ -9,7 +9,8 @@
 
 import { valueOf } from './spine.js';
 import { hiddenLine } from './profile.js';
-import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked, SECTION_WORDS } from './schema.js';
+import { CATEGORIES, estimateOf, linesOf, isEstimate, shadowedEstimate } from './needs.js';
+import { PRESETS, FAMILIES, INCOME_TYPES, isEarmarked } from './schema.js';
 import { setAsideFor, setAsideWords } from './networth.js';
 import { ledgerRows, rowPathFor } from './ledger.js';
 import { UNNAMED } from './labels.js';
@@ -17,7 +18,6 @@ import { UNNAMED } from './labels.js';
 const v = valueOf;
 const PLURAL = { 'Credit card': 'Credit cards', 'Federal student loan': 'Federal student loans', 'Private student loan': 'Private student loans', 'Auto loan': 'Auto loans', 'Personal loan': 'Personal loans', Mortgage: 'Mortgages', 'Medical debt': 'Medical debt', 'Family IOU': 'Family IOUs' };
 const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', unemployment: 'Unemployment', tips: 'Tips', rental: 'Rental income', pension: 'Pension', ss: 'Social Security', maybeMoney: 'Maybe money', other: 'Other income', side: 'Side money (not 1099)', person: 'Money from a person' };
-const FAT_LABEL = SECTION_WORDS;
 
 // The institution a name starts with, from data/institutions.json (display only).
 export function institutionOf(item, inst) {
@@ -108,11 +108,13 @@ export function ledgerTree(spine, inst) {
   const years = (spine.taxYears || []).map((y) => item('taxYears.' + y.id, y.year + ' tax year', take(byPrefix('taxYears.' + y.id))));
   if (years.length) taxSections.push(node('T:years', 'Tax years', years));
 
-  // Expenses: FAT tag > each expense (one row each); health coverage
-  const expSections = [...FAT, 'other'].map((tag) => {
-    const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag && !hiddenLine(spine, e));
-    return list.length ? node('N:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
-  }).filter(Boolean);
+  // Needs (2026-10-28): the seven categories of the first pass, each with its estimate (first) and its lines, every
+  // category there even when empty, so a screen can offer it. An estimate its lines shadow says so.
+  const expSections = CATEGORIES.map((cat) => {
+    const est = estimateOf(spine, cat.id);
+    const list = [...(est ? [est] : []), ...linesOf(spine, cat.id)];
+    return node('N:' + cat.id, cat.label, list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null, estimate: isEstimate(e) ? e.estimate : null, note: isEstimate(e) && shadowedEstimate(spine, e) ? 'Not counted: this category has lines now, so they count instead.' : null }); }), { add: { collection: 'expenses', fat: cat.fat, category: cat.id }, category: cat.id });
+  });
   // Lines the Profile hides (renting, then living with family): kept with what was typed, not counted, shown apart.
   const kept = (spine.expenses || []).filter((e) => hiddenLine(spine, e));
   if (kept.length) expSections.push(node('N:hidden', 'Kept, not counted (hidden by the Profile)', kept.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', note: 'Hidden by the Profile. It comes back, with what was typed, if the answer changes back.' }); })));

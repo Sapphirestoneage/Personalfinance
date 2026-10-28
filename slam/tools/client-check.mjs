@@ -132,7 +132,8 @@ async function navigation(browser) {
   const page = await ctx.newPage();
   await page.goto(BASE + 'ledger.html', { waitUntil: 'networkidle' });
   const start = page.url();
-  for (const sel of ['a.go-row[href*="debt"]', '.go-list a.go-row >> nth=0', '.go-list a.go-row >> nth=0', '.row-main >> nth=0']) { await page.locator(sel).first().click(); await page.waitForTimeout(250); }
+  // Goals keeps the three levels (section, group, item); Debt, Assets and Income open count first (S-243).
+  for (const sel of ['a.go-row[href*="goals"]', '.go-list a.go-row >> nth=0', '.go-list a.go-row >> nth=0', '.row-main >> nth=0']) { await page.locator(sel).first().click(); await page.waitForTimeout(250); }
   const deep = page.url();
   for (let i = 0; i < 3; i++) { await page.goBack(); await page.waitForTimeout(250); }
   check(page.url() === start || page.url() === start.replace(/#.*$/, ''), 'navigation: back reaches the top (' + deep + ' to ' + page.url() + ')');

@@ -17,6 +17,7 @@ import { pickedScenario, pick, scenarioBar } from './scenario.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
 import { h, chip, money, pct } from './view.js';
 import { addForm } from './add-form.js';
+import { moneyBox, intBox, rateBox, pickBox, later } from './boxes.js';
 import { INCOME_FIRST } from '../engine/add.js';
 
 // The tick lists, the presets and the withdrawal rates with their sources (data/session-presets.json).
@@ -29,51 +30,6 @@ const lower = (x) => String(x || '').trim().toLowerCase();
 const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
 
 // ---------------------------------------------------------------- a row's pieces
-// A box saves after the browser has moved the focus on (Tab), so the redraw keeps it on the next box.
-const later = (fn) => setTimeout(fn, 0);
-// A money box: blank is missing (never $0); a typed value is saved when the box is left.
-function moneyBox(id, value, label, onSet, placeholder = '$') {
-  const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
-  box.value = inputText('money', value);
-  box.addEventListener('change', () => {
-    const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
-    const p = parseInput('money', t);
-    if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    later(() => onSet(p.value));
-  });
-  return box;
-}
-// A small whole-number box (a day of the month, a year).
-function intBox(id, value, label, onSet, { placeholder = 'day', min = 1, max = 31 } = {}) {
-  const box = h('input', { id, class: 'day-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder, 'aria-label': label });
-  box.value = value === null || value === undefined ? '' : String(value);
-  box.addEventListener('change', () => {
-    const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
-    const p = parseInput('int', t);
-    if (!p.ok || p.value < min || p.value > max) { say(label + ': a whole number from ' + min + ' to ' + max); box.focus(); return; }
-    later(() => onSet(p.value));
-  });
-  return box;
-}
-// A rate box: 25 means 25%.
-function rateBox(id, value, label, onSet) {
-  const box = h('input', { id, class: 'rate-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '%', 'aria-label': label });
-  box.value = inputText('rate', value);
-  box.addEventListener('change', () => {
-    const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
-    const p = parseInput('rate', t);
-    if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    later(() => onSet(p.value));
-  });
-  return box;
-}
-const pickBox = (id, label, options, value, onPick) => {
-  const s = h('select', { id, class: 'pick-box', 'aria-label': label, onchange: () => onPick(s.value) }, options.map(([val, words]) => h('option', { value: val, selected: val === value }, words)));
-  return s;
-};
 // A guess says so on its row.
 const guessChip = (f) => (f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, whoSupplies(f) === 'default' ? 'Eli\'s default' : 'guess') : f && f.kind === 'missing' ? chip('missing') : null);
 // A small closed fold on the right of a row: who pays, sharing, a cover, dates.

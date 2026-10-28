@@ -16,6 +16,7 @@ import { cashflow } from './cashflow.js';
 import { debtSchedule } from './debt.js';
 import { yearTax } from './tax.js';
 import { hiddenLine } from './profile.js';
+import { shadowedEstimate } from './needs.js';
 
 const v = valueOf;
 
@@ -129,7 +130,7 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
     if (inHorizon(s.end)) events.push({ ym: monthKey(s.end), date: s.end, kind: 'incomeEnds', label: s.label + ' ends', path: 'income.' + s.id + '.amount' });
   }
   for (const e of spine.expenses || []) {
-    if (hiddenLine(spine, e)) continue;
+    if (hiddenLine(spine, e) || shadowedEstimate(spine, e)) continue;
     if (inHorizon(e.start)) events.push({ ym: monthKey(e.start), date: e.start, kind: 'expenseStarts', label: e.label + ' starts', path: 'expenses.' + e.id + '.amount' });
     if (inHorizon(e.end)) events.push({ ym: monthKey(e.end), date: e.end, kind: 'expenseEnds', label: e.label + ' ends', path: 'expenses.' + e.id + '.amount' });
   }

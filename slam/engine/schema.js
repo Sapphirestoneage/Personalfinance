@@ -4,6 +4,7 @@
 
 import { KINDS, isFact, isDay } from './spine.js';
 import { questionById, cleanAnswer, STATUS } from './profile.js';
+import { CATEGORY_IDS } from './needs.js';
 
 export const SCHEMA_ID = 'slam-spine/1';
 
@@ -345,6 +346,10 @@ export function validate(spine) {
     optDate(p + '.start', e.start); optDate(p + '.end', e.end);
     if (e.fat !== null && !FAT.includes(e.fat)) err(p + '.fat', 'food, accommodation, transportation or null');
     if (e.fixed !== null && e.fixed !== undefined && typeof e.fixed !== 'boolean') err(p + '.fixed', 'true, false or null');
+    // Needs in two passes (2026-10-28): a line may name its category; an estimate line is a category's first-pass number.
+    if (e.category !== undefined && !CATEGORY_IDS.includes(e.category)) err(p + '.category', 'not one of ' + CATEGORY_IDS.join('|'));
+    if (e.estimate !== undefined && !CATEGORY_IDS.includes(e.estimate)) err(p + '.estimate', 'not one of ' + CATEGORY_IDS.join('|'));
+    if (e.estimate !== undefined && e.cadence !== 'monthly') err(p + '.cadence', 'an estimate is a month');
     // Need or want, and paid by someone else, are Facts (S-171): a missing tag shows in the Ledger.
     checkFact(p + '.need', e.need, 'bool', false);
     checkFact(p + '.covered', e.covered, 'bool', false);
@@ -512,6 +517,13 @@ export function validate(spine) {
   if (hw !== undefined) {
     if (!Array.isArray(hw)) err('coaching.homework', 'a list');
     else { uniqueIds('coaching.homework', hw); for (const x of hw) if (!STATUS.includes(x.status)) err('coaching.homework.' + x.id + '.status', 'not one of ' + STATUS.join('|')); }
+  }
+
+  // Onboarding (2026-10-28): whether the first pass is done, and when.
+  const ob = spine.onboarding;
+  if (ob !== undefined) {
+    if (!ob || typeof ob !== 'object' || Array.isArray(ob)) err('onboarding', 'a record');
+    else { if (typeof ob.complete !== 'boolean') err('onboarding.complete', 'true or false'); if (ob.completedOn !== undefined && ob.completedOn !== null && !isDate(ob.completedOn)) err('onboarding.completedOn', 'not a date'); }
   }
 
   // assumptions

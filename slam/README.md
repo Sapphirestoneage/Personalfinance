@@ -303,6 +303,38 @@ is.
 reads its expected values from `fixtures/eli.golden.local.json` (also
 gitignored) and skips itself when either file is not there.
 
+## Onboarding, the first pass (2026-10-28)
+
+Needs and the other sections grew detailed enough that a first session felt clunky, so the work is
+split in two passes. **Pass 1** is onboarding: Home shows "Start onboarding" to any client whose first
+pass is not done (the gear menu on every header has "Run onboarding again" after that). It is a guided
+flow with a slim step bar across the top, Profile, Income, Debt, Assets, Needs, Goals, Finish, any step
+a tap away, Back and Next on every step. Enter moves on: to the next box, then to Next. The suggested
+answer is already pressed on the Profile, so Next keeps it. Every number takes one of four answers: the
+number, Rough (the number plus a flag), Not now (parked for a later session) or Not for me (counts as
+done), four plain buttons beside the box. The finish screen lists monthly take-home, total owed, net
+worth liquid and total, monthly needs, the FI number and date, then the rough and not-now items grouped
+by section, and "Done, go to Home".
+
+**Count first**: Debt, Assets and Income open on a short list of types, each with a count stepper
+(- 0 +). A count of 0 means not for me; a plus makes a named item at once, one slim row with only the
+first-pass answers (a debt: name, owed, rate, a month; an account: name and what is in it; a pay line:
+name, the amount as take-home or before tax with the other figured, how often). Every row has
+Duplicate, Delete and More detail, which opens the item's full rows right there. The header reads
+"Debt: 3 cards, 1 car loan, $14,200 total". The same rows stay on the normal section screens of My
+numbers, so **pass 2** happens on them.
+
+**Needs in two passes**: pass 1 is seven totals, one number each (Housing, Food, Getting around, Bills
+and subscriptions, Health, Fun, Other; Fun is a want, the rest needs). On My numbers' Needs each
+category is one closed row with the estimate and the lines' total side by side and the gap between
+them ("Estimate $600 | Lines $460 | $140 not in lines yet"); open, the lines with every feature. One
+rule everywhere: a category counts its lines once one of them has an amount, else its estimate; a
+small pill says which.
+
+`node tools/onboard-check.mjs` (with the folder served on 8765) runs three mock first passes at phone
+width, Maya, Dre, and Jordan and Sam, counts the taps and keys, estimates the live length at a coach's
+pace, and checks the finish numbers against Today and My numbers. Screenshots: `docs/signoff/onboarding/`.
+
 ## Folder layout
 
 | Folder | What lives there |

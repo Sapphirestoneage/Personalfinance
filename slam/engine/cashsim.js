@@ -28,6 +28,7 @@ import { TAG_WORDS } from './spending.js';
 import { payDay2Of } from './contrib.js';
 import { fromPaycheck, isEarmarked } from './schema.js';
 import { hiddenLine } from './profile.js';
+import { shadowedEstimate } from './needs.js';
 
 const cents = (x) => (x === null || x === undefined ? null : Math.round(x * 100));
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
@@ -201,8 +202,8 @@ export function cashModel(spine, rules, { asOf = spine.meta.asOf, months = 1, da
   const cardIds = new Set((spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => d.id));
   const reimbDays = R('APP_REIMBURSE_DAYS');
   for (const e of spine.expenses || []) {
-    // A line the Profile hides is kept, not paid (the same rule as the cash flow).
-    if (hiddenLine(spine, e)) continue;
+    // A line the Profile hides is kept, not paid; an estimate its lines shadow is not paid either (the same rules as the cash flow).
+    if (hiddenLine(spine, e) || shadowedEstimate(spine, e)) continue;
     const base = 'expenses.' + e.id, path = base + '.amount';
     // A line that pays a debt (S-226, answer 35) is that debt's payment below, paid once on the debt's due day.
     if (paysDebtOf(spine, e)) { t.useFact(base + '.paysDebt', e.paysDebt); continue; }
