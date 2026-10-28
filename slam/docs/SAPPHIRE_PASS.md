@@ -63,7 +63,7 @@ pass was built on the lane, in four commits (one per part of the brief) plus one
   the FI card, the FI date reveal) with `--shadow-2` and `--radius-lg`; the interaction rule; the three button kinds;
   the five tabs, the sub-tabs and every segmented pick as a strip with the chosen one as a pill; inputs with the strong
   line and ink labels; chips tinted by their own hue; 36px letter badges; big numbers at 800.
-- Nothing taller or wider: the strips take the padding the folder tabs' joins had; a tab's face is 36px with the 44px
+- Nothing wider, and only a strip is 4px taller: a tab's or a segment's face keeps the full 44px the tester measures, inside a 2px strip; it no longer leans on the 44px
   invisible margin; the sub-tabs' strip still scrolls sideways on a phone; the Session row's two-button picks keep a
   2px strip.
 

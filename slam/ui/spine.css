@@ -2199,25 +2199,25 @@ a.sib { color: var(--accent); }
    two cues. The bar keeps its height: the strip's padding replaces the folder tabs' joins. On a phone the bar stays
    fixed at the bottom with the same strip inside it. */
 .tabbar { background: var(--bg); border-bottom: 0; padding: var(--space-1) var(--space-4); }
-.tabbar .tab-row { width: fit-content; max-width: 100%; padding: var(--space-1); gap: var(--space-1); align-items: stretch; background: var(--surface-2); border-radius: var(--radius-md); }
+.tabbar .tab-row { width: fit-content; max-width: 100%; padding: 2px var(--space-1); gap: var(--space-1); align-items: stretch; background: var(--surface-2); border-radius: var(--radius-md); }
 .tabbar .tab-item { margin: 0; }
-.tabbar .tab { position: relative; min-height: calc(var(--tap) - 2 * var(--space-1)); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-weight: 600; box-shadow: none; }
+.tabbar .tab { position: relative; min-height: var(--tap); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-weight: 600; box-shadow: none; }
 .tabbar .tab-item.is-here .tab { background: var(--surface); border: 0; padding-bottom: 0; color: var(--accent); font-weight: 700; box-shadow: var(--shadow-1); }
 .tabbar .tab::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--tap); transform: translateY(-50%); }
 @media (hover: hover) { .tabbar .tab-item:not(.is-here) .tab:hover { background: color-mix(in srgb, var(--surface) 60%, transparent); transform: translateY(-1px); box-shadow: var(--shadow-lift); } }
 .tabbar .tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 0; }
 @media (max-width: 639px) {
   .tabbar { background: var(--surface); border-top: 1px solid var(--border); padding: 0 var(--space-1) env(safe-area-inset-bottom, 0px); box-shadow: var(--shadow-bar); }
-  .tabbar .tab-row { width: auto; padding: var(--space-1); gap: 2px; }
+  .tabbar .tab-row { width: auto; padding: 2px var(--space-1); gap: 2px; }
   .tabbar .tab { min-height: var(--tap); border: 0; border-radius: var(--radius-sm); padding: 0 2px; }
   .tabbar .tab-item.is-here .tab { border: 0; padding-bottom: 0; }
 }
 .tabbar.is-sample { padding: var(--space-1); }
-/* The second-level tabs under Numbers and Plan: the same strip one size smaller (a 36px face, the 44px target). */
+/* The second-level tabs under Numbers and Plan: the same strip one size smaller in its words, the same 44px face. */
 .subtabs { background: transparent; border-bottom: 0; padding-top: 0; }
-.subtabs .tab-row { width: fit-content; max-width: 100%; padding: var(--space-1); gap: var(--space-1); align-items: stretch; background: var(--surface-2); border-radius: var(--radius-md); }
+.subtabs .tab-row { width: fit-content; max-width: 100%; padding: 2px var(--space-1); gap: var(--space-1); align-items: stretch; background: var(--surface-2); border-radius: var(--radius-md); }
 .subtabs .tab-item { margin: 0; }
-.subtabs .tab { position: relative; min-height: calc(var(--tap) - 2 * var(--space-1)); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-weight: 600; box-shadow: none; }
+.subtabs .tab { position: relative; min-height: var(--tap); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-weight: 600; box-shadow: none; }
 .subtabs .tab-item.is-here .tab { background: var(--surface); border: 0; padding-bottom: 0; color: var(--accent); font-weight: 700; box-shadow: var(--shadow-1); }
 .subtabs .tab::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--tap); transform: translateY(-50%); }
 @media (hover: hover) { .subtabs .tab-item:not(.is-here) .tab:hover { background: color-mix(in srgb, var(--surface) 60%, transparent); transform: translateY(-1px); box-shadow: var(--shadow-lift); } }
@@ -2225,9 +2225,9 @@ a.sib { color: var(--accent); }
 
 /* Every segmented pick (the calendar's views and filters, Do and See, the time selector, the assumption sets, a
    question's answers, Yes / No / Not sure, Need or Want, whose): the same strip; the chosen one is the pill. The face
-   is 36px in a 44px strip; the 44px target is the invisible margin every segment already has. A guess stays dashed. */
-.tabs, .segmented, .tag-chips, .tick-seg, .strip-who, .cal-views { padding: var(--space-1); gap: var(--space-1); background: var(--surface-2); border-radius: var(--radius-md); }
-.tabs .tab-btn, .segmented .seg-btn, .tag-chips .tag-chip, .tick-seg .seg-btn, .strip-who .seg-btn, .cal-views .seg-btn { position: relative; border: 0; background: transparent; box-shadow: none; border-radius: var(--radius-sm); min-height: calc(var(--tap) - 2 * var(--space-1)); color: var(--text); font-weight: 600; }
+   is the full 44px in a 48px strip (the tester measures the face). A guess stays dashed. */
+.tabs, .segmented, .tag-chips, .tick-seg, .strip-who, .cal-views { padding: 2px var(--space-1); gap: var(--space-1); background: var(--surface-2); border-radius: var(--radius-md); }
+.tabs .tab-btn, .segmented .seg-btn, .tag-chips .tag-chip, .tick-seg .seg-btn, .strip-who .seg-btn, .cal-views .seg-btn { position: relative; border: 0; background: transparent; box-shadow: none; border-radius: var(--radius-sm); min-height: var(--tap); color: var(--text); font-weight: 600; }
 .segmented .seg-btn, .tick-seg .seg-btn, .cal-views .seg-btn { padding: 4px 10px; }
 .tabs .tab-btn[aria-pressed="true"], .segmented .seg-btn[aria-pressed="true"], .tag-chips .tag-chip[aria-pressed="true"], .tick-seg .seg-btn[aria-pressed="true"], .strip-who .seg-btn[aria-pressed="true"], .cal-views .seg-btn[aria-pressed="true"] { background: var(--surface); border: 0; color: var(--accent); font-weight: 700; box-shadow: var(--shadow-1); }
 .tab-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--tap)); transform: translateY(-50%); }
