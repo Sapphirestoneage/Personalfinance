@@ -137,12 +137,13 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
 
   // More options: built once; which boxes show follows the kind.
   const more = {
-    institution: box('add-inst', { placeholder: 'e.g. Chase' }), rate: box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }),
+    institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }),
     minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: box('add-due', { inputmode: 'numeric', placeholder: '1 to 31' }),
     asOf: h('input', { type: 'date', id: 'add-asof', value: today }), note: box('add-note', { maxlength: '200' })
   };
   const moreBox = {
     institution: field('add-inst', 'Bank or lender', more.institution, null, null, true),
+    last4: field('add-last4', 'Last 4 digits (optional)', more.last4, 'Only the last four, never the whole number.', null, true),
     rate: field('add-rate', collection === 'debts' ? 'APR' : 'Rate', percent(more.rate), null, null, true),
     minimum: field('add-min', 'Minimum payment', dollars(more.minimum), null, null, true),
     dueDay: field('add-due', 'Due day of the month', more.dueDay, null, null, true),
@@ -208,6 +209,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     };
     if (!read('rate', 'rate', 'Rate', (x) => x >= 0 && x <= 1) || !read('minimum', 'money', 'Minimum', (x) => x >= 0) || !read('annualFee', 'money', 'Annual fee', (x) => x >= 0) || !read('dueDay', 'int', 'Due day', (x) => x >= 1 && x <= 31)) return;
     if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
+    if (on.includes('last4') && more.last4.value.trim()) { const l4 = parseInput('last4', more.last4.value); if (!l4.ok) { msg.textContent = 'Last 4 digits: ' + l4.message; more.last4.focus(); return; } extra.last4 = l4.value; }
     if (more.asOf.value) extra.asOf = more.asOf.value;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
     made = addMore(made, extra, today);

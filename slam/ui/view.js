@@ -41,7 +41,8 @@ export const shortDate = (iso) => {
   if (!iso) return '';
   if (display.dateStyle === 'iso') return iso.slice(0, 10);
   if (display.dateStyle === 'us') return +iso.slice(5, 7) + '/' + +iso.slice(8, 10) + '/' + iso.slice(0, 4);
-  return MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4);
+  // Easy to hold (S-283): a date this year reads "Dec 6"; another year keeps its year.
+  return MONTHS[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + (iso.slice(0, 4) === String(new Date().getFullYear()) ? '' : ', ' + iso.slice(0, 4));
 };
 // Where a ranked next step opens: its Plan screen, else the number it needs.
 export const stepHref = (step) => (step && step.href ? step.href : step && step.rung ? 'plan.html#/' + step.rung.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) : step && step.path ? ledgerHref(step.path) : 'plan.html');
@@ -57,6 +58,7 @@ export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what
 const FILING_WORDS = { single: 'Single', mfj: 'Married filing jointly', mfs: 'Married filing separately', hoh: 'Head of household' };
 export function showValue(value, type) {
   if (value === null || value === undefined) return '';
+  if (type === 'last4') return '\u2022\u2022' + value;
   // An expense: how much, how often, and who pays (S-175, S-176).
   if (type === 'expense') {
     const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';

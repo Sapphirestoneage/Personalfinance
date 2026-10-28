@@ -168,7 +168,8 @@ test('the words for a change', () => {
   assert.equal(said.changed('Rent', '$1,000'), 'Rent changed to $1,000');
   assert.equal(said.added('Amex Blue'), 'Amex Blue added');
   assert.equal(said.deleted('Gym'), 'Gym deleted');
-  assert.equal(said.moved('Rent', '2026-11-03'), 'Rent moved to Nov 3, 2026');
+  // A date this year drops its year (S-283).
+  assert.equal(said.moved('Rent', '2026-11-03'), 'Rent moved to Nov 3' + (new Date().getFullYear() === 2026 ? '' : ', 2026'));
   assert.equal(said.moved('Rent', 'next week'), 'Rent moved to next week');
   assert.equal(said.happened('Rent'), 'Rent marked as happened');
 });

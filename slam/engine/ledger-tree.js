@@ -19,6 +19,25 @@ const PLURAL = { 'Credit card': 'Credit cards', 'Federal student loan': 'Federal
 const INCOME_LABEL = { w2: 'Paychecks (W-2)', '1099': 'Self-employed (1099)', unemployment: 'Unemployment', tips: 'Tips', rental: 'Rental income', pension: 'Pension', ss: 'Social Security', maybeMoney: 'Maybe money', other: 'Other income', side: 'Side money (not 1099)', person: 'Money from a person' };
 const FAT_LABEL = SECTION_WORDS;
 
+// Needs in seven small groups (S-283), by what a line is for: its tag first (housing, food, getting around), then its
+// words (a bill or subscription, health), then need or want. The key keeps the tag, so a group's sharing default is
+// its tag's (N:other:bills shares the "other" default).
+export const NEEDS_GROUPS = [['N:accommodation', 'Housing'], ['N:food', 'Food'], ['N:transportation', 'Getting around'], ['N:other:bills', 'Bills and subscriptions'], ['N:other:health', 'Health'], ['N:other:fun', 'Fun'], ['N:other', 'Other']];
+const BILL_WORDS = /phone|internet|wi-?fi|electric|utilit|power|water|sewer|trash|cable|stream|netflix|spotify|hulu|subscription|insurance|membership|software|cloud/i;
+const HEALTH_WORDS = /health|medical|doctor|dental|dentist|therap|counsel|pharm|prescription|copay|vision|glasses|fitness|gym/i;
+export function needsGroupOf(e) {
+  const tag = e.fat || 'other';
+  if (tag !== 'other') return 'N:' + tag;
+  const words = String(e.label || '');
+  if (HEALTH_WORDS.test(words)) return 'N:other:health';
+  if ((e.subscription && v(e.subscription) === true) || BILL_WORDS.test(words)) return 'N:other:bills';
+  if (e.need && v(e.need) === false) return 'N:other:fun';
+  return 'N:other';
+}
+
+// "Chase ••4417" (S-283): a name and the last four digits, when they are given.
+export const nameWithLast4 = (x) => (v(x.name) || x.id) + (x.last4 && v(x.last4) ? ' \u2022\u2022' + v(x.last4) : '');
+
 // The institution a name starts with, from data/institutions.json (display only).
 const SS = /^household\.people\.[^.]+\.ss/;
 export function institutionOf(item, inst) {
@@ -64,7 +83,7 @@ export function ledgerTree(spine, inst) {
   const debtSections = debtTypes.map((t) => {
     const label = PLURAL[PRESETS[t].label] || PRESETS[t].label + 's';
     const ds = spine.debts.filter((d) => d.type === t);
-    const itemOf = (d) => { const r = take(byPrefix('debts.' + d.id)); return item('debts.' + d.id, v(d.name) || d.id, r, { collection: 'debts', id: d.id, summary: summaryOf(spine, 'debts.' + d.id, r) }); };
+    const itemOf = (d) => { const r = take(byPrefix('debts.' + d.id)); return item('debts.' + d.id, nameWithLast4(d), r, { collection: 'debts', id: d.id, summary: summaryOf(spine, 'debts.' + d.id, r) }); };
     let children;
     if (t === 'credit_card') {
       // By bank, and under each bank its business cards as a sub-group (owner's ask, 2026-10-27).
@@ -88,7 +107,7 @@ export function ledgerTree(spine, inst) {
   const assetSections = families.map((f) => {
     const types = [...new Set(spine.accounts.filter((a) => a.family === f).map((a) => a.type))];
     const typeNodes = types.map((t) => node('A:' + f + ':' + t, PRESETS[t] ? PRESETS[t].label : t,
-      spine.accounts.filter((a) => a.type === t).map((a) => { const r = take(byPrefix('accounts.' + a.id)); return item('accounts.' + a.id, v(a.name) || a.id, r, { collection: 'accounts', id: a.id, summary: summaryOf(spine, '', r), note: isEarmarked(a) ? capital(setAsideWords(setAsideFor(spine, a))) + ', so it is not counted as cash.' : null }); }),
+      spine.accounts.filter((a) => a.type === t).map((a) => { const r = take(byPrefix('accounts.' + a.id)); return item('accounts.' + a.id, nameWithLast4(a), r, { collection: 'accounts', id: a.id, summary: summaryOf(spine, '', r), note: isEarmarked(a) ? capital(setAsideWords(setAsideFor(spine, a))) + ', so it is not counted as cash.' : null }); }),
       { add: { collection: 'accounts', types: [t] } }));
     return node('A:' + f, FAMILIES[f] ? FAMILIES[f].label : f, typeNodes, { add: { collection: 'accounts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family === f) } });
   });
@@ -113,10 +132,10 @@ export function ledgerTree(spine, inst) {
   const years = (spine.taxYears || []).map((y) => item('taxYears.' + y.id, y.year + ' tax year', take(byPrefix('taxYears.' + y.id))));
   if (years.length) taxSections.push(node('T:years', 'Tax years', years));
 
-  // Expenses: FAT tag > each expense (one row each); health coverage
-  const expSections = [...FAT, 'other'].map((tag) => {
-    const list = (spine.expenses || []).filter((e) => (e.fat || 'other') === tag && !hiddenLine(spine, e));
-    return list.length ? node('N:' + tag, FAT_LABEL[tag], list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null }); }), { add: { collection: 'expenses', fat: tag === 'other' ? null : tag } }) : null;
+  // Expenses in seven small groups (S-283): Housing, Food, Getting around, Bills and subscriptions, Health, Fun, Other.
+  const expSections = NEEDS_GROUPS.map(([key, words]) => {
+    const list = (spine.expenses || []).filter((e) => needsGroupOf(e) === key && !hiddenLine(spine, e));
+    return list.length ? node(key, words, list.map((e) => { const r = take(byPrefix('expenses.' + e.id)); return item('expenses.' + e.id, e.label || UNNAMED, r, { collection: 'expenses', id: e.id, summary: 'expenses.' + e.id + '.amount', need: e.need ? v(e.need) : null }); }), { add: { collection: 'expenses', fat: key.split(':')[1] === 'other' ? null : key.split(':')[1] } }) : null;
   }).filter(Boolean);
   // Lines the Profile hides (renting, then living with family): kept with what was typed, not counted, shown apart.
   const kept = (spine.expenses || []).filter((e) => hiddenLine(spine, e));

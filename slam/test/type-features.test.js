@@ -127,7 +127,7 @@ test('screen two: fields only extra questions open go in More; defaults land as 
   const kit = readFileSync(new URL('../affordances.html', import.meta.url), 'utf8');
   for (const c of ['headline-strip', 'tick-list', 'more-drawer', 'keys-hint', 'next-card']) assert.ok(kit.includes(c), c + ' is in the Design kit');
   const strip = readFileSync(new URL('../ui/strip.js', import.meta.url), 'utf8');
-  for (const id of ['netWorth', 'liquidNetWorth', 'surplus', 'savingsRateNet', 'yearsToFi']) assert.ok(strip.includes("metric('" + id + "'"), id + ' is tagged for the agree check');
+  for (const id of ['netWorth', 'surplus', 'savingsRateNet', 'yearsToFi']) assert.ok(strip.includes("metric('" + id + "'"), id + ' is tagged for the agree check');
 });
 
 // S-272: unvested employer money is its own line, out of net worth until it vests.

@@ -338,6 +338,9 @@ function fillTypical(t) {
     return syncProfile(s, { today });
   }, 'Typical amounts for ' + t.label.toLowerCase() + ' added as guesses');
 }
+// The Needs groups by their names on screen (S-283); the stored category names stay (a line can be named like one).
+const CAT_TITLE = { Accommodation: 'Housing', Transportation: 'Getting around', 'Health and fitness': 'Health', Subscriptions: 'Bills and subscriptions', Miscellaneous: 'Other' };
+const openCats = new Set();
 function needs(ctx) {
   const spine = ctx.spine, hh = spine.household;
   const known = new Set(allItems().map((x) => lower(x.label)));
@@ -361,11 +364,16 @@ function needs(ctx) {
       const lines = catOn ? [] : cat.items.filter((item) => applies(spine, item) || ((e) => e && !hiddenLine(spine, e))(findExpense(spine, item.label))).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
       const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
       const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in My numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
-      return h('section', { class: 'card', 'aria-labelledby': 'cat-' + cat.id },
-        h('h2', { id: 'cat-' + cat.id }, cat.label),
+      // Chunked (S-283): each group folds to its name and total, and opens on tap; what is open stays open.
+      const total = [cat, ...cat.items.flatMap((item) => [item, ...(item.subs || [])])].reduce((n, x) => { const e = findExpense(spine, x.label); return n + (e && !hiddenLine(spine, e) ? v(e.amount) || 0 : 0); }, 0) + others.reduce((n, e) => n + (v(e.amount) || 0), 0);
+      const isOpen = openCats.has(cat.id) || (!openCats.size && cat === DATA.needs[0]);
+      const d = h('details', { class: 'card done-group need-group', open: isOpen || null, 'aria-labelledby': 'cat-' + cat.id },
+        h('summary', {}, h('h2', { id: 'cat-' + cat.id, class: 'group-h' }, CAT_TITLE[cat.label] || cat.label), h('span', { class: 'go-total' }, total ? money(total) + ' a month' : 'Nothing yet')),
         // A line named like the category with lines of its own beside it (round 2: the demo's Miscellaneous $300 was in
         // the total and on no row): it shows as its own row, so the lines add up to the total.
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), catOn && anyLine ? needRow(spine, { label: cat.label }, cat.fat, 'rest-' + cat.id) : null, oneNumber));
+      d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openCats.add(cat.id); else openCats.delete(cat.id); });
+      return d;
     }),
     hidden.length ? h('p', { class: 'muted' }, hidden.length + ' marked No. ', h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of hidden) setNo(k, false); } }, 'Show them again')) : null
   ]);

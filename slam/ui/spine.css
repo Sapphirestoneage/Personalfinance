@@ -2044,3 +2044,13 @@ a.sib { color: var(--link, var(--accent)); text-decoration: underline; backgroun
 /* What sticks sits under the sticky header (S-280): the header's own height, measured. */
 .headline-strip { top: var(--head-h, 0px); }
 @media (max-width: 639px) { .headline-strip { top: 0; } }
+
+/* Chunks (S-283): groups read as groups at a glance, by space and a heading, not just lines. */
+.part-h { margin: var(--space-5, 24px) 0 var(--space-2); }
+.part-h:first-child { margin-top: 0; }
+.go-list + .part-h, .go-list + h2, .go-list + h3 { margin-top: var(--space-5, 24px); }
+.need-group > summary { display: flex; align-items: center; gap: var(--space-3); }
+.need-group > summary .group-h { margin: 0; font-size: 1.1rem; }
+.need-group { margin-bottom: var(--space-3); }
+/* The strip: four numbers that always fit on a phone, two by two. */
+@media (max-width: 479px) { .headline-strip dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1) var(--space-3); overflow: visible; } .strip-cell { min-width: 0; } }

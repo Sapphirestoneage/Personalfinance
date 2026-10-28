@@ -19,6 +19,8 @@ export function parseInput(type, text) {
     if (type === 'int' && !Number.isInteger(n)) return { ok: false, message: 'Type a whole number' };
     return { ok: true, value: type === 'rate' ? Math.round(n * 1e6) / 1e8 : n };
   }
+  // The last four digits only (S-283): typed whole or in part, only the last four are ever kept.
+  if (type === 'last4') { const d = raw.replace(/\D/g, ''); return d.length >= 4 ? { ok: true, value: d.slice(-4) } : { ok: false, message: 'The last 4 digits' }; }
   if (type === 'date') return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? { ok: true, value: raw } : { ok: false, message: 'Use YYYY-MM-DD' };
   if (type === 'bool') return /^(yes|true)$/i.test(raw) ? { ok: true, value: true } : /^(no|false)$/i.test(raw) ? { ok: true, value: false } : { ok: false, message: 'Yes or no' };
   if (type.startsWith('choice:')) return type.slice(7).split('|').includes(raw) ? { ok: true, value: raw } : { ok: false, message: 'Pick one of the choices' };
@@ -31,6 +33,8 @@ export function inputText(type, value) {
   if (value === null || value === undefined) return '';
   if (type === 'rate') return String(Math.round(value * 1e8) / 1e6);
   if (type === 'list') return JSON.stringify(value);
+  // Easy to hold (S-283): money with its commas ("20,000"), which reads back the same.
+  if (type === 'money' && typeof value === 'number') return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
   return String(value);
 }
 

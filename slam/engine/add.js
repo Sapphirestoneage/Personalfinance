@@ -98,8 +98,8 @@ export function addWithAnswers(spine, { collection, type, label, amount = null, 
 // An account's details (S-264) are the type's questions now (data/type-features.json, ui/ticks.js; S-270).
 export function moreFields(collection, type) {
   const fam = (PRESETS[type] || {}).family;
-  if (collection === 'debts') return ['institution', 'rate', 'minimum', 'dueDay', ...(type === 'credit_card' ? ['annualFee'] : []), 'asOf', 'note'];
-  if (collection === 'accounts') return ['institution', ...(fam === 'cash' || fam === 'fixedTerm' ? ['rate'] : []), 'asOf', 'note'];
+  if (collection === 'debts') return ['institution', 'last4', 'rate', 'minimum', 'dueDay', ...(type === 'credit_card' ? ['annualFee'] : []), 'asOf', 'note'];
+  if (collection === 'accounts') return ['institution', 'last4', ...(fam === 'cash' || fam === 'fixedTerm' ? ['rate'] : []), 'asOf', 'note'];
   return ['asOf', 'note'];
 }
 export function addMore(made, more = {}, today) {
@@ -108,7 +108,7 @@ export function addMore(made, more = {}, today) {
   const fam = (PRESETS[item.type] || {}).family;
   const rateField = made.collection === 'debts' ? 'apr' : fam === 'cash' ? 'apy' : 'rate';
   let s = made.spine;
-  for (const k of ['institution', 'rate', 'minimum', 'dueDay', 'annualFee']) if (more[k] !== null && more[k] !== undefined && more[k] !== '') s = putFact(s, base + '.' + (k === 'rate' ? rateField : k), more[k], 'known', today);
+  for (const k of ['institution', 'last4', 'rate', 'minimum', 'dueDay', 'annualFee']) if (more[k] !== null && more[k] !== undefined && more[k] !== '') s = putFact(s, base + '.' + (k === 'rate' ? rateField : k), more[k], 'known', today);
   const f = getAt(s, made.firstPath);
   if (f && f.value !== null && f.value !== undefined && ((more.asOf && more.asOf !== f.asOf) || more.note)) s = setAt(s, made.firstPath, { ...f, ...(more.asOf ? { asOf: more.asOf } : {}), ...(more.note ? { note: String(more.note).trim().slice(0, 200) } : {}) });
   return { ...made, spine: s };

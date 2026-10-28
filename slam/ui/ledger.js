@@ -512,7 +512,7 @@ function incomeEditor(row) {
 // A section's sharing default (S-175): "Bills here are just mine" or "shared",
 // with the details new and untouched expenses here follow.
 function sectionSharing(n) {
-  const tag = n.key.startsWith('N:') ? n.key.slice(2) : null;
+  const tag = n.key.startsWith('N:') ? n.key.split(':')[1] : null;
   if (!tag || tag === 'health' || selecting) return null;
   const d = (cur().household.expenseDefaults || {})[tag];
   const on = !!d && d.shared && d.shared.value === true;

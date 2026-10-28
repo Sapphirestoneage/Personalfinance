@@ -70,6 +70,8 @@ export const FAMILIES = {
   base: {
     label: 'Base', fields: {
       name: 'text', institution: 'text', owner: 'choice:me|partner|joint|child', balance: 'money',
+      // The last four digits of the account number (S-283), shown as "Chase ••4417"; a full number is never kept.
+      last4: 'last4',
       taxTreatment: 'choice:pretax|roth|taxable|tripleTaxFree|na', liquidity: 'choice:instant|days|penalty|locked|na',
       monthlyContribution: 'money', linkedGoal: 'text', fundedFrom: 'link',
       // Counted in liquid net worth (Batch 3): set only to override the default by type (liquidDefault in networth.js).
@@ -263,6 +265,7 @@ export function validate(spine) {
     else if (type === 'int') { if (!Number.isInteger(v)) err(path, 'must be a whole number'); }
     else if (type === 'date') { if (!isDate(v)) err(path, 'not a date'); }
     else if (type === 'bool') { if (typeof v !== 'boolean') err(path, 'must be true or false'); }
+    else if (type === 'last4') { if (typeof v !== 'string' || !/^\d{4}$/.test(v)) err(path, 'four digits'); }
     else if (type === 'text') { if (typeof v !== 'string') err(path, 'must be text'); }
     // A link names an account or card by id, or "paycheck" (S-189).
     else if (type === 'link') { if (typeof v !== 'string' || !v) err(path, 'must name an account'); }

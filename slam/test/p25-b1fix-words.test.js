@@ -105,7 +105,7 @@ test('Spending\'s check-in line says "checked in", not "anchored"', () => {
 
 test('a moved item\'s note reads its day in words, and its own screen leaves that part out', () => {
   const e = { moved: true, note: 'moved from 2026-11-01; counted as its monthly share' };
-  assert.equal(itemNote(e), 'moved from Nov 1, 2026; counted as its monthly share');
+  assert.equal(itemNote(e), 'moved from Nov 1' + (new Date().getFullYear() === 2026 ? '' : ', 2026') + '; counted as its monthly share');
   assert.equal(itemNote(e, { moved: false }), 'counted as its monthly share');
   assert.equal(itemNote({ moved: true, note: 'moved from 2026-11-01' }, { moved: false }), null);
   assert.equal(itemNote({ note: 'due day is a guess' }), 'due day is a guess');

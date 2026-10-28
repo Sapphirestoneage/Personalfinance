@@ -129,3 +129,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 1 (2026-10-28): the map: header, five tabs, second-level tabs, Home agenda, Guide me, the gear (S-280).
 - Part 2 (2026-10-28): folder tabs, the trail from the client, siblings, covered today, titles word for word (S-281).
 - Part 3 (2026-10-28): pre-answered questions, one-line answers, Looks right and Enter, Recommended choices, add in small steps (S-282).
+- Part 4 (2026-10-28): seven Needs groups, four numbers in the strip, $20,000 / Dec 6 / Chase ••4417 (S-283).
