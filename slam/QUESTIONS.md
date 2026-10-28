@@ -254,3 +254,5 @@ The Visa is marked as the everyday card, so the day-by-day run pays it last ("no
 - **179. NYC part-year residents:** default used: anyone marked as living in New York City (or Yonkers) is taxed as a full-year resident. Say if you want part-year months asked.
 - **180. NYC and Yonkers figures:** the schedule (3.078% to $12,000 single, $21,600 joint; 3.762%; 3.819%; 3.876%) and the 16.75% Yonkers surcharge are marked verify: this session could not open tax.ny.gov. Please check them once against the IT-201 instructions.
 - **181. A pension's COLA:** default used: a pension that starts by your FI age counts in full against spending, with or without a cost-of-living raise. Say if one without a COLA should count for less.
+- **182. Fees by the FI date:** default used: today's invested money grown at the assumption's real return for the years to FI, with and without the fee rate; new saving is left out, so it understates the cost. Say if you want it run through the full projection.
+- **183. Where each number came from:** default used: a "guess" is a rough number whose source is a house default, a typical amount or a guess; other rough numbers read "Rough".

@@ -118,3 +118,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Fix (2026-10-28): downloads inside the app preview say they can't save and offer the words to copy (S-271).
 - Wiring and NYC tax (2026-10-28): match tiers everywhere, unvested line, mix and fees in the projection, plan loan link, rule of 55 and 457(b) backstop, PSLF count, PMI line, pension in FI, NYC and Yonkers tax (S-272).
 - Fix (2026-10-28): fields never collide: rules 23 to 27, labeled Session boxes, tools/collide-check.mjs (S-273).
+- Planner views (2026-10-28): tax buckets, allocation, fees in dollars, bracket room, where each number came from (S-274).

@@ -8,6 +8,7 @@
 // Every number comes from engine/plan.js and the engines under it, with Show the math. Formatting only.
 
 import { saveFile } from './save-file.js';
+import { taxBuckets, allocation, feesInDollars, bracketRoom, sources } from '../engine/planner.js';
 import { foldRow } from './rows.js';
 import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
@@ -79,7 +80,7 @@ const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
   surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
   solve: 'What it takes to get there', whatif: 'What if', calls: 'Bills worth a call', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
-  outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import'
+  outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import', sources: 'Where each number came from'
 };
 const payId = (p) => p.date + '-' + p.streamId;
 const stepOf = (m, level) => m.foo.rungs.find((r) => slug(r.id) === level) || null;
@@ -99,7 +100,7 @@ function render({ spine: base, rules, levels }) {
   const [a, b] = levels;
   if (!a) return top(m);
   if (a === 'paychecks') return b ? paycheckScreen(m, paycheckOf(m, b)) : paychecksScreen(m);
-  const screen = { surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, calls: callsScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
+  const screen = { sources: sourcesScreen, surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, calls: callsScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
   return screen ? screen(m) : stepScreen(m, stepOf(m, a));
 }
 
@@ -185,11 +186,64 @@ function top(m) {
           goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
           goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
           goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
+      // The planner views (S-274): each folded to its headline, each with Show the math.
+      ...plannerViews(m),
       fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'Download or read in a file',
         h('ul', { class: 'go-list' },
           goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
           goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file'))))
   ];
+}
+// ---------------------------------------------------------------- the planner views (S-274)
+const pctW = (x) => (x === null || x === undefined ? 'not known' : Math.round(x * 100) + '%');
+function plannerViews(m) {
+  const b = taxBuckets(m.spine), al = allocation(m.spine), fe = feesInDollars(m.spine, m.s, m.rules), room = bracketRoom(m.spine, m.rules), src = sources(m.spine, m.s);
+  const top = [...b.buckets].sort((x, y) => y.amount - x.amount)[0];
+  const known = src.filter((x) => x.kind === 'known').length, guesses = src.filter((x) => x.kind !== 'known').length;
+  return [
+    fold('buckets', 'Your tax buckets', b.total ? [h('span', { class: 'go-total' }, pctW(top.share)), ' ' + top.words.split(' (')[0].toLowerCase()] : 'No invested money yet',
+      h('div', {}, b.total ? [
+        h('div', { class: 'bucket-bar', role: 'img', 'aria-label': b.buckets.filter((x) => x.amount).map((x) => x.words.split(' (')[0] + ' ' + pctW(x.share)).join(', ') },
+          b.buckets.filter((x) => x.amount).map((x) => h('span', { class: 'bucket bucket-' + x.id, style: 'width:' + (x.share * 100).toFixed(2) + '%' }))),
+        h('ul', { class: 'bucket-key' }, b.buckets.map((x) => h('li', {}, h('span', { class: 'sw bucket-' + x.id, 'aria-hidden': 'true' }), x.words + ': ' + money(x.amount) + ' (' + pctW(x.share) + ')'))),
+        h('p', { class: 'tile-sub' }, 'Money in more than one bucket gives you choices about which tax you pay, and when, once you draw on it.')] : h('p', { class: 'muted' }, 'Add an account with money invested to see it here.'),
+        b.missing.length ? h('p', { class: 'missing-row' }, 'Missing: ' + b.missing.length + ' balance' + (b.missing.length === 1 ? '' : 's')) : null,
+        math('buckets', ['plan:buckets'], mathCtx(m)))),
+    fold('alloc', 'Stocks, bonds and cash', al.total ? (al.unknown ? [h('span', { class: 'go-total' }, money(al.unknown)), ' with no mix given'] : [h('span', { class: 'go-total' }, pctW(al.stocks / al.total)), ' in stocks']) : 'Nothing invested yet',
+      h('div', {},
+        h('p', {}, 'Across everything: ' + money(al.stocks) + ' in stocks, ' + money(al.bonds) + ' in bonds, ' + money(al.cash) + ' in cash' + (al.unknown ? ', and ' + money(al.unknown) + ' where the mix is not given yet.' : '.')),
+        h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Account'), h('th', { class: 'num' }, 'Balance'), h('th', { class: 'num' }, 'Stocks'), h('th', { class: 'num' }, 'Bonds'), h('th', { class: 'num' }, 'Cash'))),
+          h('tbody', {}, al.rows.map((r) => h('tr', {}, h('td', {}, r.mix === null ? h('a', { href: ledgerHref(r.path) }, r.name + ' (add its mix)') : r.name), h('td', { class: 'num' }, money(r.amount)), h('td', { class: 'num' }, r.stocks === null ? 'not given' : money(r.stocks)), h('td', { class: 'num' }, r.bonds === null ? 'not given' : money(r.bonds)), h('td', { class: 'num' }, money(r.cash))))))),
+        math('stocks', ['plan:stocks'], mathCtx(m)))),
+    fold('fees', 'Fees in dollars', fe.rows.length ? [h('span', { class: 'go-total' }, money(fe.yearly)), ' a year'] : 'Fees not given yet',
+      h('div', {},
+        fe.rows.length ? h('p', { class: 'tile-value-line' }, 'You pay ' + money(fe.yearly) + ' a year in fees.' + (fe.byFi ? ' By the time you reach FI (about ' + Math.round(fe.byFi.years) + ' years), they cost about ' + money(fe.byFi.cost) + ' of growth, in today\'s dollars.' : '')) : null,
+        fe.rows.length ? h('ul', {}, fe.rows.map((r) => h('li', {}, r.name + ': ' + money(r.yearly) + ' a year (' + (Math.round(r.rate * 10000) / 100) + '% of ' + money(r.amount) + ')'))) : null,
+        fe.missing.length ? h('p', { class: 'muted' }, 'Fees not given for ' + fe.missing.length + ' account' + (fe.missing.length === 1 ? '' : 's') + ': add the fund fee (expense ratio) on each.') : null,
+        math('fees', ['plan:fees'], mathCtx(m)))),
+    fold('room', 'Room in your tax bracket', room && room.room !== null ? [h('span', { class: 'go-total' }, money(room.room)), ' at ' + pctW(room.rate)] : 'Needs your filing status and income',
+      h('div', {}, room ? [
+        h('p', {}, room.room === null ? 'You are in the top federal bracket (' + pctW(room.rate) + ').' : 'This year you can add about ' + money(room.room) + ' more taxable income (a Roth conversion, a bonus) and it is taxed at ' + pctW(room.rate) + '; past that, at ' + pctW(room.nextRate) + '.'),
+        math('room', ['plan:room'], mathCtx(m))] : h('p', { class: 'muted' }, 'Add your filing status and income to see it.'))),
+    fold('sources', 'Where each number came from', [h('span', { class: 'go-total' }, String(src.length)), ' numbers: ' + known + ' known, ' + guesses + ' rough, guessed or missing'],
+      h('ul', { class: 'go-list' }, goRow('#/sources', 'Where each number came from', 'Every number behind the headlines, sortable and printable')))
+  ];
+}
+// Where each number came from (S-274): every input to the headline numbers with its kind, source and date; sortable;
+// printable as an audit trail. Coach notes are never in it.
+function sourcesScreen(m) {
+  const by = (kept().srcSort || 'kind');
+  const order = { missing: 0, guess: 1, rough: 2, known: 3, computed: 4, notForMe: 5 };
+  const list = [...sources(m.spine, m.s)].sort((a, b) => (by === 'kind' ? order[a.kind] - order[b.kind] : by === 'date' ? String(a.asOf || '').localeCompare(String(b.asOf || '')) : a.label.localeCompare(b.label)) || a.label.localeCompare(b.label));
+  const KIND = { known: 'Known', rough: 'Rough', guess: 'A guess', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me' };
+  const sortBtn = (k, words) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(by === k), onclick: () => { keep({ srcSort: k }); refresh(); } }, h('span', { class: 'seg-label' }, words));
+  return h('section', { class: 'card sources-card', 'aria-label': 'Where each number came from' },
+    h('p', { class: 'muted' }, 'Every number your headline figures use: what it is, how sure it is, where it came from and when.'),
+    h('div', { class: 'segmented', role: 'group', 'aria-label': 'Sort by' }, sortBtn('kind', 'Least sure first'), sortBtn('name', 'By name'), sortBtn('date', 'Oldest first')),
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
+      h('thead', {}, h('tr', {}, h('th', {}, 'Number'), h('th', {}, 'How sure'), h('th', {}, 'Where from'), h('th', {}, 'As of'), h('th', {}, 'Used in'))),
+      h('tbody', {}, list.map((x) => h('tr', {}, h('td', {}, h('a', { href: ledgerHref(x.path) }, x.label)), h('td', {}, KIND[x.kind] || x.kind), h('td', {}, x.source || ''), h('td', {}, x.asOf ? shortDate(x.asOf) : ''), h('td', {}, x.uses.join(', '))))))),
+    h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn', onclick: () => window.print() }, 'Print this list')));
 }
 // A row that opens in place: its title and one fact on the closed line.
 const fold = (key, title, fact, body) => h('details', { class: 'card done-group plan-fold', open: (kept().folds || {})[key] || null, ontoggle: (e) => { const f = { ...(kept().folds || {}) }; if (!!f[key] === e.target.open) return; f[key] = e.target.open; keep({ folds: f }); } },
