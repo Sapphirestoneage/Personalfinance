@@ -32,6 +32,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **The state you live in** (state, or Not sure). Picks the state tax.
 - **Your county** (text, or Not sure). Picks a local tax where there is one.
 - **Who lives with you?** (Just me / A partner / Kids / Other adults, or Not sure). Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.
+- **How do the two of you handle money?** (All joint / All separate / Mixed: joint for shared bills, separate for the rest, or Not sure; asked only when it applies). Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.
 - **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### Home

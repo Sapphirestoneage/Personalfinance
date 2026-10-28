@@ -150,8 +150,9 @@ export async function loadMyFile(file, rules) {
 // The person's name comes first, then the file's own name for the household.
 export function whose(spine) {
   if (spine.meta && spine.meta.demo === true) return { example: true, name: 'Example household' };
-  const person = ((spine.household && spine.household.people) || [])[0];
-  const named = person && typeof person.name === 'string' && person.name.trim() ? person.name.trim() : null;
+  const ps = ((spine.household && spine.household.people) || []).filter((p) => typeof p.name === 'string' && p.name.trim());
+  // A couple (S-277): both first names, "Jordan and Sam".
+  const named = ps.length >= 2 ? ps.slice(0, 2).map((p) => p.name.trim().split(/\s+/)[0]).join(' and ') : ps.length ? ps[0].name.trim() : null;
   const own = spine.meta && typeof spine.meta.name === 'string' && spine.meta.name.trim() && spine.meta.name !== 'Household' ? spine.meta.name.trim() : null;
   return { example: false, name: named || own || 'Your household' };
 }

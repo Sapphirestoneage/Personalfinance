@@ -19,6 +19,8 @@ import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
 import { stepper } from './stepper.js';
+import { headlineStrip } from './strip.js';
+import { isCouple } from '../engine/couple.js';
 import { summarize } from '../engine/summary.js';
 import { cashsim } from '../engine/cashsim.js';
 import { forecast, fixButton, lowWords } from './forecast.js';
@@ -99,7 +101,8 @@ function name(levels, { spine, rules }) {
 function render({ spine: base, rules, levels }) {
   const m = model(base, rules);
   const [a, b] = levels;
-  if (!a) return top(m);
+  // A couple (Batch 7, S-277): the headline numbers with the Together / each person toggle above the Plan's cards.
+  if (!a) return isCouple(base) ? [headlineStrip(base, rules), top(m)] : top(m);
   if (a === 'paychecks') return b ? paycheckScreen(m, paycheckOf(m, b)) : paychecksScreen(m);
   const screen = { sources: sourcesScreen, surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, calls: callsScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
   return screen ? screen(m) : stepScreen(m, stepOf(m, a));
@@ -581,7 +584,7 @@ function wageScreen(m) {
     w.wage !== null ? math('wage', ['plan:wage'], mathCtx(m)) : null);
 }
 
-// Housing beside the 35% line, in dollars (Batch 8): a reference, never a verdict.
+// Housing beside the housing line (30% with a car, 35% without), in dollars (Batch 8): a reference, never a verdict.
 function housingOver(d) {
   const a = d.rows.find((r) => r.key === 'accommodation');
   if (!a || a.overReference === undefined) return null;

@@ -1747,9 +1747,14 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .stepper-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin-bottom: 6px; }
 .stepper-at { font-weight: 700; color: var(--text); }
 .stepper-done { color: var(--text-muted); font-size: var(--text-sm); }
-.stepper-bar { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; }
+.stepper-bar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 4px; }
 .stepper-seg { flex: 1 1 0; min-width: 0; }
-.stepper-seg a { display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); text-decoration: none; font-weight: 700; font-size: var(--text-sm); position: relative; }
+.stepper-seg a { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'mark name' 'mark sub'; align-items: center; column-gap: 6px; min-height: 44px; padding: 4px 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); text-decoration: none; text-align: left; line-height: 1.2; }
+.stepper-mark { grid-area: mark; font-weight: 700; font-size: 1.05em; min-width: 1.1em; text-align: center; }
+.stepper-name { grid-area: name; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.stepper-sub { grid-area: sub; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.stepper-seg.is-at .stepper-name, .stepper-seg.is-at .stepper-sub { color: inherit; }
+.stepper-means { margin: 6px 0 0; font-size: var(--text-sm); color: var(--text-muted); }
 .stepper-seg a::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: 5px; height: 4px; border-radius: 2px; background: var(--border); }
 .stepper-seg.is-done a { background: var(--good-soft); border-color: var(--good); color: var(--good); }
 .stepper-seg.is-done a::after { background: var(--good); }
@@ -1762,7 +1767,9 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .stepper-nav .btn { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The coach's note (S-267): on screen for the coach, never on paper. A missing beneficiary on a retirement account. */
-.coach-note { border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: var(--space-3); margin: var(--space-3) 0; }
+.coach-note { border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: var(--space-3); margin: var(--space-3) 0; display: grid; gap: var(--space-1); }
+.coach-note > * { position: static; margin: 0; min-width: 0; max-width: 100%; }
+.coach-note input, .coach-note textarea { width: 100%; box-sizing: border-box; }
 .flag-line { border-left: 4px solid var(--warn, #b45309); padding: var(--space-2) var(--space-3); background: var(--surface); }
 @media print { .coach-only { display: none !important; } }
 
@@ -1801,19 +1808,38 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 /* Back and Next stay in view at the bottom of a Session step (friction audit: Next sat below the fold). */
 .step-nav { position: sticky; bottom: var(--tabbar-h, 0px); z-index: 5; background: var(--bg, var(--surface)); padding: var(--space-2) 0; }
 @media (min-width: 640px) { .step-nav { bottom: 0; } }
-/* What does it have? (S-267): the type's ticks, one question per line, Yes / No / Not sure as a segmented control. */
-.tick-list .tick-lead { margin: var(--space-2) 0; font-size: var(--text-sm); }
-.tick-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
-.feature-row { border-top: 1px solid var(--border); padding-top: var(--space-3); }
-.tick-q { margin: 0 0 var(--space-2); font-weight: 600; }
-.tick-seg .seg-btn { flex: 1 1 5rem; align-items: center; text-align: center; }
+/* What does it have? (S-267, S-276): Details (boxes under a short title, nothing to tick), then Questions (one line
+   each: the question on the left, a small Yes / No / Not sure on the right, the numbers a Yes opens just under it). */
+.tick-list > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.tick-list .tick-title { font-weight: 600; }
+.tick-list .tick-count { font-size: var(--text-sm); color: var(--text-muted); font-weight: 400; }
+.tick-part { margin-top: var(--space-3); }
+.tick-part-h { margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+.tick-details { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: var(--space-3); }
+.detail-block { min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2, transparent); }
+.detail-title { margin: 0 0 var(--space-1); font-weight: 600; overflow-wrap: anywhere; }
+.detail-block .tick-fields { margin-top: 0; }
+.tick-list .tick-lead { margin: 0 0 var(--space-2); font-size: var(--text-sm); }
+.tick-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.feature-row { border-top: 1px solid var(--border); padding: var(--space-2) 0; }
+.feature-row:first-child { border-top: 0; }
+.tick-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.tick-q { margin: 0; flex: 1 1 16rem; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.tick-seg { flex: 0 0 auto; display: inline-flex; }
+.tick-seg .seg-btn { flex: 0 0 auto; min-width: 4.25rem; min-height: var(--tap); padding: 0 var(--space-3); align-items: center; justify-content: center; text-align: center; font-weight: 500; }
 .tick-fields { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
-.tick-field { white-space: normal; text-align: left; }
+.tick-field { white-space: normal; text-align: left; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.25; }
+.tick-field .tick-field-l { font-size: var(--text-sm); color: var(--text-muted); font-weight: 400; }
+.tick-field .tick-field-v { font-weight: 600; }
+@media (max-width: 520px) { .tick-seg { width: 100%; } .tick-seg .seg-btn { flex: 1 1 0; min-width: 0; } }
 
 /* The headline strip (S-270): one slim row, pinned under the tabs; the number that just moved flashes once. On a phone
    it scrolls sideways in one row rather than wrapping. */
 .headline-strip { position: sticky; top: var(--tabbar-h, 0px); z-index: 6; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 0 0 var(--space-2); padding: 2px var(--space-2); }
 @media (max-width: 639px) { .headline-strip { top: 0; } }
+.headline-strip:has(.strip-who) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.strip-who { flex: 0 0 auto; flex-wrap: nowrap; gap: 4px; }
+.strip-who .seg-btn { flex: 0 0 auto; width: auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 var(--space-3); font-size: var(--text-sm); }
 .headline-strip dl { display: flex; gap: var(--space-4); margin: 0; overflow-x: auto; scrollbar-width: none; }
 .strip-cell { display: flex; flex-direction: column; min-width: max-content; padding: 2px var(--space-1); border-radius: var(--radius-sm); }
 .strip-cell dt { font-size: var(--text-xs); color: var(--text-muted); }
@@ -1825,7 +1851,6 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 
 /* Ticks under a Session row (S-270): the fold takes the row's full width; a Yes opens its boxes in place. */
 .srow > .tick-list { flex: 1 0 100%; width: 100%; margin: var(--space-1) 0 0; padding: var(--space-1) var(--space-3); }
-.tick-list > summary { font-weight: 600; }
 .tick-box { display: inline-flex; flex-direction: column; gap: 2px; margin-right: var(--space-3); }
 .tick-box input, .tick-box select { min-height: var(--btn-h, 40px); padding: 4px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
 .tiers-box { display: grid; gap: var(--space-1); }
@@ -1859,3 +1884,15 @@ kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 
 .bucket-pretax { background: var(--viz-1, #2563eb); } .bucket-roth { background: var(--viz-2, #16a34a); }
 .bucket-taxable { background: var(--viz-3, #d97706); } .bucket-hsa { background: var(--viz-4, #7c3aed); }
 @media print { body:has(.sources-card) .screen > :not(.sources-card) { display: none; } .sources-card .segmented, .sources-card .edit-actions { display: none; } }
+
+/* What a step is for (S-278): one folded line with its count, then the purpose and a live checkmark per need. */
+.purpose-card > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); min-height: var(--tap); align-content: center; }
+.purpose-title { font-weight: 600; }
+.purpose-count { font-size: var(--text-sm); color: var(--text-muted); }
+.purpose-words { margin: var(--space-2) 0; }
+.purpose-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.purpose-checks li { display: flex; gap: var(--space-2); align-items: baseline; color: var(--text-muted); }
+.purpose-checks li.is-done { color: var(--text); }
+.purpose-mark { width: 1.2em; flex: none; text-align: center; font-weight: 700; }
+.purpose-checks li.is-done .purpose-mark { color: var(--good); }
+.now-have { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--accent); background: var(--surface); }

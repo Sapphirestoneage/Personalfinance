@@ -19,6 +19,7 @@ import { paysAfter } from './contrib.js';
 import { paychecks } from './calendar-views.js';
 import { FAT, PRESETS, isSelfEmployment } from './schema.js';
 import { upgradeSpine } from './normalize.js';
+import { housingRefRule } from './profile.js';
 import { validate } from './schema.js';
 import { cashsim } from './cashsim.js';
 import * as C from './vendor/cashcal.js';
@@ -358,13 +359,13 @@ export { hoursOf } from './money-as.js';
 
 // ---------------------------------------------------------------- DRAFTT (L002)
 // Debt, Retirement, Accommodation, Food, Transportation, Therapy (B2): each letter as a share of take-home, and
-// Retirement as a share of gross. The housing letter gets a reference line at APP_HOUSING_REF of take-home and the
+// Retirement as a share of gross. The housing letter gets a reference line at APP_HOUSING_REF (APP_HOUSING_REF_CAR with a car) of take-home and the
 // dollars over it. Shares only, never a verdict.
 export function draftt(spine, rules, s, { asOf = spine.meta.asOf } = {}) {
   const year = +asOf.slice(0, 4);
   const t = tracker();
   const cf = s.cashflow;
-  const ref = t.rule(rules, 'APP_HOUSING_REF', year);
+  const ref = t.rule(rules, housingRefRule(spine), year);
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.saving.payroll, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined });
   const takeHome = cf.income.takeHome.value, pretax = cf.saving.payroll.value ?? 0, gross = cf.income.gross.value;
   t.absorb({ ...cf.income.gross, value: undefined });

@@ -64,26 +64,47 @@ runway), and the 1099 contract's amount and likelihood (next year's outlook).
 
 ## Phase 3: run the program (in client-stage order)
 
-Not started. Phase 3 starts only when the Phase 2.5 gate passes:
+Not started. Phase 3 starts only when the Phase 2.5 gate passes. Where the gate stands (2026-10-28):
 
-- [ ] Gate: no crashes on Eli's real profile (on Eli's machine; the profile never enters git)
-- [ ] Gate: Eli's five headline numbers match Eli's own math to the cent
-- [ ] Gate: a first session takes under an hour (`CLIENT_TEST.md`, not written yet)
-- [ ] Gate: nothing on a client screen needs explaining
-- [ ] Gate: the one-pager prints with the client's name
+- [x] Gate: a first session takes under an hour: about 32 minutes for one person (Maya), 41 for a homeowner with side work (Dre), about 35 for a couple (Jordan and Sam), timed by `tools/friction-audit.mjs` (`docs/FRICTION_AFTER.md`, `docs/CLIENT_TEST.md`)
+- [x] Gate: the one-pager prints with the client's name (both names for a couple), the tax buckets bar and the protection line
+- [x] Gate (built, needs your eye): nothing on a client screen needs explaining: every question fits its answers (S-276), the step bar names its steps, fields never collide (`tools/collide-check.mjs`: 0 problems), the copy test passes
+- [ ] Waiting on you: no crashes on your real profile (on your machine; the profile never enters git)
+- [ ] Waiting on you: five headline numbers checked by hand against your own math, to the cent
+- [ ] Waiting on you: your answers in `docs/MY_METHOD_REVIEW.md` (the defaults that move a headline number most)
+- [ ] Waiting on you: one live dry run on a call, start to the one-pager
+
+### This run (Phase 2.5, practical): done
+
+- [x] Friction audit before and after (`docs/FRICTION_BEFORE.md`, `docs/FRICTION_AFTER.md`)
+- [x] Practical: four tabs and More, the client switcher, pick up where you left off, End call, autosave (S-269)
+- [x] Type depth: 67 types, each with its own questions; details asked outright, yes / no questions ticked (S-266, S-267, S-276)
+- [x] Ticks and speed: the headline strip, the Next card, keys, the More drawer (S-270)
+- [x] Wiring and New York City and Yonkers tax (S-272)
+- [x] Planner views: tax buckets, allocation, fees in dollars, bracket room, where each number came from (S-274)
+- [x] Insurance and protection (S-275)
+- [x] Couples on screen (S-277)
+- [x] The step map and planning dates (S-278)
+- [x] Housing line: 30% with a car, 35% without (S-276)
+
+### Pulled forward from Phase 3
+
+- [x] **3b In the call**: client list and switching (S-269)
+- [x] **3b In the call**: next-question card with materiality (the Next card, S-270)
+- [x] **3c After the call**: end-of-session one-pager (End call, S-269)
 
 Then, one line per item, in the order a client meets them:
 
 - [ ] **3a Before the call**: pre-call homework checklist (last 2 statements as CSV, one paystub, loan logins, account list); uploads land as guesses
 - [ ] **3a Before the call**: discovery call intake (gut number, preset); saves straight into the client's file
 - [ ] **3a Before the call**: onboarding openings
-- [ ] **3b In the call**: client list and switching
+- [x] **3b In the call**: client list and switching (pulled forward, S-269)
 - [ ] **3b In the call**: coach mode
 - [ ] **3b In the call**: statement and CSV import with categorization and recurring detection (import before the call is the main path)
 - [ ] **3b In the call**: coach quick-entry shorthand ("amex 2000 25% due 1" makes the row; house defaults fill the rest as rough)
-- [ ] **3b In the call**: next-question card with materiality
+- [x] **3b In the call**: next-question card with materiality (pulled forward, S-270)
 - [ ] **3b In the call**: session timer by DATING step
-- [ ] **3c After the call**: end-of-session one-pager plus auto recap
+- [ ] **3c After the call**: end-of-session one-pager (pulled forward, S-269) plus auto recap
 - [ ] **3c After the call**: "will email" items become client to-dos; "look up" items become coach to-dos
 - [ ] **3c After the call**: report output (plan PDF)
 - [ ] **3d Between sessions and the money date**: pre-session prep sheet (what changed, what's stale, biggest variance, next step)

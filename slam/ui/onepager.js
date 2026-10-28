@@ -24,6 +24,8 @@ import { money as dollars } from '../src/ui/format.js';
 import { h, pct, monthWords, shortDate, stepHref, todayIso } from './view.js';
 import { homeworkList } from '../engine/profile.js';
 import { moneyFlow, flowTable } from '../engine/flow.js';
+import { isCouple, peopleOf, splitTotals } from '../engine/couple.js';
+import { taxBuckets } from '../engine/planner.js';
 
 const cell = (k, v, sub = null, id = null) => h('div', { class: 'op-cell' }, h('span', { class: 'op-v', 'data-metric': id }, v), h('span', { class: 'op-k' }, k), sub ? h('span', { class: 'tile-note' }, sub) : null);
 // Plain dollars on the handout: no hours or days tags, whatever the screen shows.
@@ -67,6 +69,8 @@ function render({ spine: base, rules }) {
         sh.unvestedNote ? h('p', { class: 'tile-note' }, sh.unvestedNote) : null,
         // Protection (S-275): one line, covered and gaps.
         h('p', { class: 'tile-note op-protect' }, protectionLine(protectionChecks(spine, rules, s)))),
+      bucketsCard(spine),
+      coupleCard(base),
       flow,
       goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions)),
         // Round 4: the most urgent thing on Today goes on the handout too, in one calm line.
@@ -77,8 +81,29 @@ function render({ spine: base, rules }) {
       h('footer', { class: 'op-foot' }, 'For education and planning. Not investment, tax or legal advice.'));
 }
 
-// The client's name on the handout: the first person's, else the household's.
-const clientName = (spine) => { const p = ((spine.household && spine.household.people) || [])[0]; return p && typeof p.name === 'string' && p.name.trim() ? p.name.trim() : whose(spine).name; };
+// The client's name on the handout: the first person's (both, for a couple), else the household's.
+const clientName = (spine) => { const ps = ((spine.household && spine.household.people) || []).slice(0, 2).map((p) => (typeof p.name === 'string' ? p.name.trim() : '')).filter(Boolean); return ps.length ? ps.join(' and ') : whose(spine).name; };
+// How the savings are taxed (B9): the Plan's bucket bar and its key, on paper.
+function bucketsCard(spine) {
+  const b = taxBuckets(spine);
+  if (!b.total) return null;
+  const share = (x) => Math.round(x.share * 100) + '%';
+  const on = b.buckets.filter((x) => x.amount);
+  return h('section', { class: 'card op-buckets' }, h('h2', {}, 'How your savings are taxed'),
+    h('div', { class: 'bucket-bar', role: 'img', 'aria-label': on.map((x) => x.words.split(' (')[0] + ' ' + share(x)).join(', ') }, on.map((x) => h('span', { class: 'bucket bucket-' + x.id, style: 'width:' + (x.share * 100).toFixed(2) + '%' }))),
+    h('ul', { class: 'bucket-key' }, on.map((x) => h('li', {}, h('span', { class: 'sw bucket-' + x.id, 'aria-hidden': 'true' }), x.words + ': ' + m(x.amount) + ' (' + share(x) + ')'))));
+}
+// A couple (Batch 7, S-277): yours, theirs and joint, for net worth, retirement accounts and debts.
+function coupleCard(spine) {
+  if (!isCouple(spine)) return null;
+  const t = splitTotals(spine), [a, b] = peopleOf(spine);
+  const first = (p) => String(p.name || '').trim().split(/\s+/)[0] || p.id;
+  const cols = [['me', first(a)], ['partner', first(b)], ['joint', 'Joint']];
+  const row = (label, k) => h('tr', {}, h('th', { scope: 'row' }, label), cols.map(([w]) => h('td', { class: 'num' }, m(t[w][k]))));
+  return h('section', { class: 'card op-couple' }, h('h2', {}, 'Yours, theirs and joint'),
+    h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, ''), cols.map(([, n]) => h('th', { scope: 'col', class: 'num' }, n)))),
+      h('tbody', {}, row('Net worth', 'netWorth'), row('Retirement accounts', 'retirement'), row('Debts', 'debts'))));
+}
 // The next step to the client, in their words: what to do and why, never a screen name.
 function nextWords(step, questions) {
   if (step) return step.label + '. ' + (step.why || '');

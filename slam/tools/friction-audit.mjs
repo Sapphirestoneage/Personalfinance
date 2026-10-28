@@ -37,7 +37,14 @@ const HOUSEHOLDS = [
     accounts: [['checking', '5200'], ['hysa', '22000'], ['k401', '64000', { match: ['50', '6'] }], ['hsa', '3800'], ['brokerage', '15000'], ['home', '420000']],
     income: [{ type: 'w2', name: 'Salary at Larkspur Labs', amount: '8000', basis: 'salary', schedule: 'semimonthly' }, { type: '1099', name: 'Design work', amount: '1500' }],
     needs: { 'property-tax': '400', 'home-insurance': '120', electric: '140', internet: '75', phone: '110', groceries: '900', 'eating-out': '300', 'car-insurance': '160', 'car-gas': '180', subscriptions: '60', miscellaneous: '200' },
-    goals: [['Kitchen', '25000', '2028-06-30']] }
+    goals: [['Kitchen', '25000', '2028-06-30']] },
+  // The couple (Batch 9): two W-2s in New York City, joint and separate accounts, one student loan, a 401(k) with a match.
+  { name: 'Jordan', partner: 'Sam', filing: 'married', where: 'nyc', rent: true, couple: true,
+    debts: [['student_loan', { bal: '28000', apr: '5.5', min: '300', day: '5', whose: 'partner' }], ['credit_card', { bal: '1800', apr: '24', min: '60', day: '22', pay: 'minimum', whose: 'joint' }]],
+    accounts: [['checking', '6000', { whose: 'joint' }], ['savings', '18000', { whose: 'joint' }], ['k401', '62000', { match: ['100', '4'], whose: 'me' }], ['k401', '24000', { whose: 'partner' }]],
+    income: [{ type: 'w2', name: 'Salary at Harbor Design', amount: '7500', basis: 'salary', schedule: 'monthly', whose: 'me' }, { type: 'w2', name: 'Salary at Northside Schools', amount: '5200', basis: 'salary', schedule: 'monthly', whose: 'partner' }],
+    needs: { rent: '3400', electric: '180', internet: '70', phone: '120', groceries: '900', 'eating-out': '500', transit: '264' },
+    goals: [['Emergency fund', '30000', '2027-12-31']] }
 ];
 
 // ---------------------------------------------------------------- the recorder
@@ -136,6 +143,15 @@ async function run(browser, hh) {
   r.step = 'debt';
   const doneEmpty = await page.evaluate(() => document.querySelectorAll('.stepper-seg.is-done').length);
   if (doneEmpty) r.lose(PACE.result, 'The progress tracker says ' + doneEmpty + ' steps are done on an empty household');
+  if (hh.couple) {
+    if (await r.has('#who-two')) {
+      await r.tap('#who-two', 'The two of us');
+      await r.type('#p-name', hh.partner, 'partner\'s name');
+      await r.tap('form.who-card button[type=submit]', 'Add partner');
+    } else r.lose(180, 'No way to add a partner in the Session');
+  }
+  // Whose an item is (a couple): the last Whose box on screen, when it is not already right.
+  const whose = async (prefix, w) => { if (!hh.couple || !w) return; const sel = await page.evaluate((p) => { const x = [...document.querySelectorAll('select[id^="w-"]')].filter((b) => !p || b.closest(p)); return x.length ? '#' + CSS.escape(x[x.length - 1].id) : null; }, prefix); if (!sel) { r.lose(30, 'No Whose box'); return; } if ((await page.locator(sel).inputValue()) !== w) await r.pick(sel, w, 'whose'); };
   const seen = new Set();
   for (const [type, d] of hh.debts) {
     if (await r.has('#dq-' + type) ) await r.tap('#dq-' + type, 'Yes to ' + type);
@@ -151,6 +167,7 @@ async function run(browser, hh) {
     await r.type('#d-min-' + id, d.min, type + ' payment');
     await r.type('#d-day-' + id, d.day, type + ' due day');
     if (d.pay && (await r.has('#d-pay-' + id))) await r.pick('#d-pay-' + id, d.pay, 'paid in full?');
+    await whose(null, d.whose);
   }
   for (const t of ['credit_card', 'student_loan', 'auto_loan', 'family_iou']) if (await r.has('#dqn-' + t)) await r.tap('#dqn-' + t, 'No to ' + t);
   r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
@@ -164,6 +181,7 @@ async function run(browser, hh) {
     else await r.tap('.edit-actions button:text-is("' + LABEL[type] + '")', 'Add ' + LABEL[type]);
     const id = await page.evaluate(() => { const x = [...document.querySelectorAll('input[id^="a-bal-"]')]; return x[x.length - 1].id.slice(6); });
     await r.type('#a-bal-' + id, bal, LABEL[type] + ' balance');
+    if (more && more.whose && hh.couple && (await r.has('#w-' + id))) { if ((await page.locator('#w-' + id).inputValue()) !== more.whose) await r.pick('#w-' + id, more.whose, 'whose'); }
     if (more && more.match) {
       if (await r.has('#q-m-' + id + '-yes')) {
         await r.tap('#q-m-' + id + '-yes', 'Yes, a match');
@@ -181,7 +199,8 @@ async function run(browser, hh) {
 
   // T: taxes.
   r.step = 'taxes';
-  if (await r.has('#t-filing')) await r.pick('#t-filing', hh.filing === 'married' ? 'mfj' : 'single', 'filing status').catch(async () => r.pick('#t-filing', { index: 1 }, 'filing status'));
+  if (await r.has('#t-filing') && !hh.couple) await r.pick('#t-filing', hh.filing === 'married' ? 'mfj' : 'single', 'filing status').catch(async () => r.pick('#t-filing', { index: 1 }, 'filing status'));
+  if (hh.where && (await r.has('#t-where'))) await r.pick('#t-where', hh.where, 'where you live');
   r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // I: income.
@@ -194,13 +213,14 @@ async function run(browser, hh) {
     if (x.basis && (await r.has('#add-basis'))) await r.pick('#add-basis', x.basis, 'how it is paid');
     if (x.schedule && (await r.has('#add-schedule'))) await r.pick('#add-schedule', x.schedule, 'how often');
     await r.tap('form.add-form button[type=submit]', 'Add');
+    await whose(null, x.whose);
   }
   r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // N: needs.
   r.step = 'needs';
   for (const [k, amt] of Object.entries(hh.needs)) if (await r.has('#n-' + k)) await r.type('#n-' + k, amt, k); else r.lose(60, 'No box for ' + k + ' in the Session');
-  if (hh.rent && (await r.has('#n-rent'))) await r.type('#n-rent', '1650', 'rent');
+  if (hh.rent && hh.needs.rent === undefined && (await r.has('#n-rent'))) await r.type('#n-rent', '1650', 'rent');
   r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // G: goals.
@@ -249,7 +269,7 @@ function report(runs, before) {
   const L = [];
   L.push('# Friction audit, ' + (before ? 'after' : 'before'), '');
   L.push('Minutes are taps, typed answers and results at the pace, plus the time each friction below loses.', '');
-  L.push('Made by `node slam/tools/friction-audit.mjs` on ' + new Date().toISOString().slice(0, 10) + '. Two made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: ' + PACE.tap + ' s a tap, ' + PACE.typed + ' s a typed answer, ' + PACE.result + ' s a result talked through.', '');
+  L.push('Made by `node slam/tools/friction-audit.mjs` on ' + new Date().toISOString().slice(0, 10) + '. Made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage' + (runs.some((x) => x.name === 'Jordan') ? '; Jordan and Sam: a couple in New York City, two W-2s' : '') + '), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: ' + PACE.tap + ' s a tap, ' + PACE.typed + ' s a typed answer, ' + PACE.result + ' s a result talked through.', '');
   L.push('| Household | Numbers typed | Taps | Taps per number | Keys | Scrolls | Page loads | Screen changes | Dead ends | Next below the fold | Results talked | Minutes |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const x of runs) L.push('| ' + [x.name, x.typed, x.taps, (x.taps / x.typed).toFixed(2), x.keys, x.scrolls, x.pages, x.screens, x.dead.length, x.below.length, x.results, minutes(x)].join(' | ') + ' |');
   if (before) {
@@ -260,7 +280,7 @@ function report(runs, before) {
   for (const x of runs) L.push('- ' + x.name + ': ' + Object.entries(x.perStep).map(([k, v]) => k + ' ' + v.taps + '/' + v.typed + '/' + v.scrolls).join('; '));
   const lost = runs.flatMap((x) => x.lost.map((l) => ({ ...l, name: x.name })));
   const byWords = new Map();
-  for (const l of lost) { const k = l.words.replace(/ (Maya|Dre)\b/, ''); const e = byWords.get(k) || { words: k, secs: 0, n: 0 }; e.secs += l.secs; e.n += 1; byWords.set(k, e); }
+  for (const l of lost) { const k = l.words.replace(/ (Maya|Dre|Jordan)\b/, ''); const e = byWords.get(k) || { words: k, secs: 0, n: 0 }; e.secs += l.secs; e.n += 1; byWords.set(k, e); }
   const ranked = [...byWords.values()].sort((a, b) => b.secs - a.secs);
   L.push('', '## The worst frictions, by time lost', '');
   ranked.slice(0, 10).forEach((e, i) => L.push((i + 1) + '. ' + e.words + ' (' + e.n + 'x, about ' + Math.round(e.secs / 6) / 10 + ' min)'));

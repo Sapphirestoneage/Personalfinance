@@ -298,6 +298,8 @@ export function validate(spine) {
   checkFact('household.nycResident', h.nycResident, 'bool');
   // Lives in Yonkers (S-272): the city's surcharge on the state tax. Optional; older files have none.
   checkFact('household.yonkersResident', h.yonkersResident, 'bool', false);
+  // How a couple splits shared bills (S-277): for each person's own numbers only, never the household's.
+  checkFact('household.coupleSplit', h.coupleSplit, 'choice:half|income|me|partner', false);
   // People in the household for the poverty line (S-205): adults and dependents together.
   checkFact('household.householdSize', h.householdSize, 'int', false);
   // Hours worked a week, for hours of life (S-206).
@@ -410,6 +412,7 @@ export function validate(spine) {
     }
     checkFact(p + '.payDay', e.payDay, 'int', false);
     checkFact(p + '.coachNote', e.coachNote, 'text', false);
+    checkFact(p + '.coupleSplit', e.coupleSplit, 'choice:half|income|me|partner', false);
     // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
     checkFact(p + '.subscription', e.subscription, 'bool', false);
     checkFact(p + '.renews', e.renews, 'date', false);

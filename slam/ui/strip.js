@@ -5,10 +5,31 @@
 
 import { h, metric, summaryMoney, pct } from './view.js';
 import { summarize } from '../engine/summary.js';
+import { isCouple, peopleOf, personView } from '../engine/couple.js';
+import { refresh } from './shell.js';
+
+// A couple (Batch 7, S-277): a small toggle, Together (the household, as always) or one person's own numbers: their
+// share of what is owned and owed (half of anything joint), their take-home, their share of the bills and what is
+// left. The household's numbers never change; this only divides them.
+export let stripWho = 0;
+const first = (p) => String(p.name || '').trim().split(/\s+/)[0] || p.id;
+function whoToggle(spine) {
+  const opts = [[0, 'Together'], ...peopleOf(spine).slice(0, 2).map((p, i) => [i + 1, first(p)])];
+  return h('div', { class: 'segmented strip-who', role: 'group', 'aria-label': 'Whose numbers' }, opts.map(([k, t]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(stripWho === k), onclick: () => { stripWho = k; last = null; refresh(); } }, t)));
+}
+function personStrip(spine, s) {
+  const p = personView(spine, s, stripWho - 1);
+  const cells = [['Net worth (their share)', p.netWorth], ['Take-home a month', p.takeHome], ['Their share of bills', p.spending + p.minimums], ['Left a month', p.left]];
+  return h('section', { class: 'headline-strip', 'aria-label': p.name + '\'s own numbers' }, whoToggle(spine),
+    h('dl', {}, cells.map(([label, x]) => h('div', { class: 'strip-cell' }, h('dt', {}, label), h('dd', {}, summaryMoney(x))))));
+}
 
 let last = null;
 export function headlineStrip(spine, rules) {
   const s = summarize(spine, rules, { flags: false }), sh = s.sheet, cf = s.cashflow, years = s.fi.yearsToFi.value;
+  const two = isCouple(spine);
+  if (!two) stripWho = 0;
+  if (two && stripWho) return personStrip(spine, s);
   const year = years === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(years);
   const cells = [
     ['netWorth', 'Net worth', sh.netWorth.value === null ? 'Not yet' : metric('netWorth', summaryMoney(sh.netWorth.value)), sh.netWorth.value],
@@ -19,7 +40,7 @@ export function headlineStrip(spine, rules) {
   ];
   const before = last;
   last = Object.fromEntries(cells.map(([id, , , v]) => [id, v]));
-  return h('section', { class: 'headline-strip', 'aria-label': 'Your headline numbers' },
+  return h('section', { class: 'headline-strip', 'aria-label': 'Your headline numbers' }, two ? whoToggle(spine) : null,
     h('dl', {}, cells.map(([id, label, shown, v]) => h('div', { class: 'strip-cell' + (before && id in before && before[id] !== v ? ' is-moved' : '') },
       h('dt', {}, label), h('dd', {}, shown)))));
 }

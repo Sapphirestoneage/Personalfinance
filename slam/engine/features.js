@@ -20,9 +20,9 @@ export function featuresOf(cat, item, collection) {
 // The features for a type before the item exists (the add form).
 export function featuresOfType(cat, type, collection) { return featuresOf(cat, { type }, collection); }
 
-// "4 of 9 checked": how many have an answer.
+// "4 of 9 answered": how many yes / no questions have an answer (a detail asked outright is not a tick; S-276).
 export function tickCount(cat, item, collection, { tier = null } = {}) {
-  const fs = featuresOf(cat, item, collection).filter((f) => !tier || f.tier === tier);
+  const fs = featuresOf(cat, item, collection).filter((f) => (!tier || f.tier === tier) && f.kind !== 'ask');
   const ticks = item.ticks || {};
   return { checked: fs.filter((f) => ticks[f.id]).length, total: fs.length };
 }
@@ -95,7 +95,7 @@ export function tickTodos(cat, spine) {
   for (const coll of ['accounts', 'debts', 'income']) for (const item of spine[coll] || []) {
     const ticks = item.ticks || {};
     for (const f of featuresOf(cat, item, coll)) {
-      if (ticks[f.id] !== 'notSure') continue;
+      if (f.kind === 'ask' || ticks[f.id] !== 'notSure') continue;
       const open = f.reveals.filter((r) => { const x = item[r.field]; return !x || x.value === null || x.value === undefined; });
       if (!open.length) continue;
       const who = open.some((r) => r.supplier === 'client') ? 'client' : 'coach';

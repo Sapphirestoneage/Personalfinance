@@ -17,6 +17,7 @@
 //   bonusBy, maybe, maxDeadline (S-211, an account's last day for a tax year), ask (when to ask someone to pay you
 //   back, shared bills brief), and foo (added by the page).
 
+import { planningDates } from './planning-dates.js';
 import { valueOf as v, tracker, round2, monthKey, monthStart, monthEnd, addMonths, addDays, toDay, fromDay, dayIn, daysInMonth, isFact } from './spine.js';
 import { cashflow, streamWeight, payrollShares } from './cashflow.js';
 import { cashsim } from './cashsim.js';
@@ -223,6 +224,8 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
     if (inMonth(e.start) && e.start > asOf) add({ id: 'estarts:' + e.id, kind: 'expenseStarts', label: e.label + ' starts', date: e.start, path: 'expenses.' + e.id + '.amount' });
     if (inMonth(e.end)) add({ id: 'eends:' + e.id, kind: 'expenseEnds', label: e.label + ' ends', date: e.end, path: 'expenses.' + e.id + '.amount' });
   }
+  // Planning dates (S-278): dates worth knowing ahead, never cash.
+  for (const e of planningDates(spine, first, last)) add({ ...e, counted: false });
   for (const [k, word] of [['healthCoverage', 'Health coverage becomes '], ['situation', 'Situation becomes ']]) for (const e of spine.household[k] || []) if (inMonth(e.from)) add({ id: k + ':' + e.id, kind: k === 'situation' ? 'situation' : 'coverage', label: word + String(v(e.value)).replace(/_/g, ' '), date: e.from, path: 'household.' + k + '.' + e.id + '.value' });
 
   t.absorb({ ...cf.income.takeHome, value: undefined }); t.absorb({ ...cf.expenses.total, value: undefined }); t.absorb({ ...cf.debtMinimums.total, value: undefined });

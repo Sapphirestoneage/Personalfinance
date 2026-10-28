@@ -6,6 +6,8 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { purposeCard } from './stepper.js';
+import { STEP_MAP, stepChecks } from '../engine/step-map.js';
 import { HOUSEHOLD_ANSWERS, addLookups } from '../engine/profile.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current, reopen, restoreScroll } from './shell.js';
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
@@ -1471,6 +1473,8 @@ function sectionScreen(sec) {
   const groups = fillOn() ? sec.groups.filter((g) => toFill(g)) : sec.groups;
   return [
     fillBar(toFill(sec), 'list:open:' + sec.slug),
+    // What this section is for, with live checkmarks (S-278), folded.
+    STEP_MAP[sec.slug] ? purposeCard(STEP_MAP[sec.slug].purpose, stepChecks(cur(), summaryOf(cur()), sec.slug)) : null,
     sectionTop(sec),
     // Protection (S-275): health coverage lives in the Profile; this links there rather than asking it twice.
     sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Premiums here count once, in Needs, marked "from Protection".') : null,

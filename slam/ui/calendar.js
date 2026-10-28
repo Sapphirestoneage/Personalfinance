@@ -9,6 +9,7 @@
 // with its history entry, so Back, the trail and coming back from another page land where it was.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
+import { PLANNING_KINDS } from '../engine/planning-dates.js';
 import { saveFile } from './save-file.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current } from './shell.js';
 import { calendar, weekdayOf } from '../engine/calendar.js';
@@ -44,14 +45,14 @@ const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 
 
 // Data colors by what moves (DESIGN.md 8): one per category, named in a legend.
-const CAT = { ask: 'viz-4', foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
+const CAT = { planning: 'viz-4', ask: 'viz-4', foo: 'viz-0', pay: 'viz-3', bill: 'viz-1', subscription: 'viz-1', debt: 'viz-2', interest: 'viz-2', saving: 'viz-3', setAside: 'viz-4', taxReturn: 'viz-4', estimatedTax: 'viz-4', maxDeadline: 'viz-4', promoEnds: 'viz-2', incomeStarts: 'viz-0', incomeEnds: 'viz-0', expenseStarts: 'viz-0', expenseEnds: 'viz-0', coverage: 'viz-0', situation: 'viz-0', maybe: 'viz-5' };
 const PILL_WORDS = { sub: 'sub', plan: 'plan', repeat: 'repeat', locked: 'locked', done: 'done', logged: 'happened', waiting: 'not marked yet', maybe: 'maybe', yearly: 'yearly' };
 // The view toggles (Batch 6): filters on the one list of events. A rough or missing item is a guess or has no amount.
 const FILTERS = [['all', 'All'], ['in', 'Money in'], ['bills', 'Bills'], ['debt', 'Debt'], ['rough', 'Rough or missing']];
 const DEBT_KINDS = ['debt', 'interest', 'promoEnds'];
 const BILL_KINDS = ['bill', 'subscription', 'estimatedTax'];
 // Dates that carry no amount by design (a start, an end, a deadline): never read as missing.
-const MARKER_KINDS = ['incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'promoEnds', 'bonusBy', 'maxDeadline', 'coverage', 'situation', 'foo', 'ask'];
+const MARKER_KINDS = ['planning', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'promoEnds', 'bonusBy', 'maxDeadline', 'coverage', 'situation', 'foo', 'ask'];
 const FILTER_OF = {
   all: () => true,
   in: (e) => e.direction === 'in',
@@ -59,7 +60,13 @@ const FILTER_OF = {
   debt: (e) => DEBT_KINDS.includes(e.kind),
   rough: (e) => !!e.rough || e.kind === 'missing' || (e.amount === null && !MARKER_KINDS.includes(e.kind))
 };
-const filtered = (m, f) => (f === 'all' ? m : { ...m, events: m.events.filter(FILTER_OF[f]), undated: m.undated.filter(FILTER_OF[f]), days: m.days.map((d) => ({ ...d, events: d.events.filter(FILTER_OF[f]) })) });
+// Planning dates (S-278): one layer, on by default, kept in this browser.
+const PLAN_KEY = 'slam-planning-dates:v1';
+const planningOn = () => { try { return localStorage.getItem(PLAN_KEY) !== '0'; } catch { return true; } };
+const setPlanning = (on) => { try { localStorage.setItem(PLAN_KEY, on ? '1' : '0'); } catch { /* lasts until the page closes */ } refresh(); };
+const withLayer = (m) => (planningOn() ? m : { ...m, events: m.events.filter((e) => !PLANNING_KINDS.includes(e.kind)), undated: m.undated.filter((e) => !PLANNING_KINDS.includes(e.kind)), days: m.days.map((d) => ({ ...d, events: d.events.filter((e) => !PLANNING_KINDS.includes(e.kind)) })) });
+const filtered = (m0, f) => { const m = withLayer(m0); return filteredBy(m, f); };
+const filteredBy = (m, f) => (f === 'all' ? m : { ...m, events: m.events.filter(FILTER_OF[f]), undated: m.undated.filter(FILTER_OF[f]), days: m.days.map((d) => ({ ...d, events: d.events.filter(FILTER_OF[f]) })) });
 const VIEWS = [['month', 'Month'], ['week', 'Week'], ['list', 'List'], ['year', 'Year']];
 
 // Why an item that cannot move stays on its day, in words (tapping it opens its screen, which says this).
@@ -71,6 +78,7 @@ const FIXED = {
   maxDeadline: 'Set by the account\'s deadline for the year.',
   promoEnds: 'Set by the date the card\'s intro rate ends.',
   bonusBy: 'Set by the card\'s signup bonus deadline.',
+  planning: 'A date worth knowing ahead. Change it on the item in My numbers.',
   foo: 'A suggestion from your plan for the end of the month. It is not counted, and it follows the plan.'
 };
 const fixedWords = (e) => FIXED[e.kind] || 'Change its date in My numbers.';
@@ -668,6 +676,7 @@ function monthScreen(v, ctx) {
     h('div', { class: 'cal-bar' },
       h('div', { class: 'segmented cal-views', role: 'group', 'aria-label': 'Views' }, VIEW_WORDS.map(([id, w]) => h('button', { type: 'button', class: 'seg-btn', id: 'view-' + id, 'aria-pressed': String(st.view === id), onclick: () => setRoot({ view: id }) }, h('span', { class: 'seg-label' }, w)))),
       st.view === 'list' ? h('label', { class: 'check-row cal-bypay', for: 'by-pay' }, h('input', { type: 'checkbox', id: 'by-pay', checked: st.byPay, onchange: (e) => setRoot({ byPay: e.target.checked }) }), h('span', {}, 'Group by paycheck')) : null,
+      st.view === 'year' ? null : h('button', { type: 'button', class: 'btn small toggle', id: 'planning-dates', 'aria-pressed': String(planningOn()), onclick: () => setPlanning(!planningOn()) }, 'Planning dates: ' + (planningOn() ? 'shown' : 'hidden')),
       st.view === 'year' ? null : filterFold(c, st, filterOn)),
     known ? body : [],
     st.view === 'year' ? null : belowRows(v, c, c.months[0], st)

@@ -117,7 +117,7 @@ export function milestones(spine, rules, sim, months = []) {
   // No payoff milestones from the day-by-day run (morning answer 1, review): a card cleared, a loan paid off, every card
   // clear, high-interest free and debt free are the Plan's months, on the Debt screen.
   if (sim.dryDate && sim.checking.known) add(sim.dryDate, 'Cash under the floor', 'dry', null, 'every cash account added up' + (sim.model.accounts.some((a) => a.earmarked) ? ', less money set aside for a goal,' : '') + ' falls under the floor');
-  for (const m of months) for (const e of m.events) if (['promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn', 'maxDeadline'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path, e.kind === 'maxDeadline' ? e.note : null, e.accountId || null);
+  for (const m of months) for (const e of m.events) if (['planning', 'promoEnds', 'bonusBy', 'incomeStarts', 'incomeEnds', 'expenseStarts', 'expenseEnds', 'coverage', 'situation', 'taxReturn', 'maxDeadline'].includes(e.kind) && e.date) add(e.date, e.label, e.kind, e.path, e.kind === 'maxDeadline' || e.kind === 'planning' ? e.note : null, e.accountId || null);
   const seen = new Set();
   return out.filter((m) => { const k = m.date + '|' + m.label; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }

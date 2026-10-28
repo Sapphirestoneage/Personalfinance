@@ -95,6 +95,19 @@ export function restoreClient(kept) {
   if (kept.was) { stash(reg); bring(reg, kept.client.id); }
   return true;
 }
+// The example couple (Batch 7, S-277): a made-up household (fixtures/demo-couple.json) added as its own client, so it can
+// be edited and switched to like any other; adding it again just switches to it.
+export function addClientFrom(name, spine) {
+  const reg = clients(), have = reg.list.find((c) => c.name === name);
+  if (have) return switchTo(have.id);
+  stash(reg);
+  const id = freshId(reg, name);
+  reg.list.push({ id, name });
+  // Its own copy is a client's household, not the example: it keeps its name and can be edited and kept.
+  put(slot(id), JSON.stringify({ ...spine, meta: { ...spine.meta, demo: false, name } }));
+  bring(reg, id);
+  return true;
+}
 export function showExample() { const reg = clients(); stash(reg); bring(reg, null); }
 
 // Pick up where we left off: the Session step each client was last on.

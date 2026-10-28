@@ -1,7 +1,7 @@
 // What every page shares (S-208): a skip link to the content, an error catcher
 // that shows a banner instead of a silent failure, a one-line footer, and a polite live region for the page's headline. Formatting only.
 
-import { clients, adopt, newClient, switchTo, renameClient, syncName, duplicateClient, deleteClient, showExample } from './clients.js';
+import { clients, adopt, newClient, switchTo, renameClient, syncName, duplicateClient, deleteClient, showExample, addClientFrom } from './clients.js';
 import { showList } from './shortcuts.js';
 import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
@@ -97,6 +97,7 @@ export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.me
         h('button', { type: 'button', class: 'btn small danger', onclick: () => { if (confirm('Delete ' + at.name + ' from this browser? You can undo it right after.')) { deleteClient(at.id); reload(); } } }, 'Delete')) : null,
       renameForm,
       reg.current ? h('button', { type: 'button', class: 'btn small', onclick: () => { showExample(); reload(); } }, 'Show the example household') : null,
+      h('button', { type: 'button', class: 'btn small', id: 'client-couple', onclick: async () => { try { const r = await fetch(new URL('../fixtures/demo-couple.json', import.meta.url), { cache: 'no-store' }); if (!r.ok) throw new Error('missing'); if (addClientFrom('Jordan and Sam (example couple, made up)', await r.json())) reload(); } catch { msg.textContent = 'The example couple could not be opened here.'; } } }, 'Show the example couple'),
       h('a', { class: 'btn small', href: 'profile.html' }, 'Profile'),
       h('button', { type: 'button', class: 'btn small', onclick: () => input.click() }, 'Open a backup file'), input, msg));
 }

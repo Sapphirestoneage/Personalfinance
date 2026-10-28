@@ -1,0 +1,666 @@
+{
+ "schema": "slam-spine/1",
+ "meta": {
+  "name": "Jordan and Sam Lee (demo couple)",
+  "asOf": "2026-10-22",
+  "demo": true,
+  "from": "fixtures/demo-couple.json"
+ },
+ "household": {
+  "people": [
+   {
+    "id": "jordan",
+    "name": "Jordan Lee",
+    "birthDate": {
+     "value": "1991-06-02",
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   },
+   {
+    "id": "sam",
+    "name": "Sam Lee",
+    "birthDate": {
+     "value": "1993-01-19",
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   }
+  ],
+  "filingStatus": {
+   "value": "mfj",
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "state": {
+   "value": "NY",
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "county": {
+   "value": "New York",
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "nycResident": {
+   "value": true,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "coupleSplit": {
+   "value": "half",
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "situation": [
+   {
+    "id": "now",
+    "from": null,
+    "value": {
+     "value": "employed",
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   }
+  ],
+  "healthCoverage": [
+   {
+    "id": "now",
+    "from": null,
+    "personId": "jordan",
+    "value": {
+     "value": "employer",
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    },
+    "planType": {
+     "value": "other",
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   }
+  ]
+ },
+ "income": [
+  {
+   "id": "jordan-pay",
+   "type": "w2",
+   "label": "Jordan's salary at Harbor Design",
+   "personId": "jordan",
+   "amount": {
+    "value": 7500,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": "2022-03-01",
+   "end": null,
+   "withholding": {
+    "federal": {
+     "value": 800,
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    },
+    "state": {
+     "value": 570,
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   },
+   "payDay": {
+    "value": 1,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "sam-pay",
+   "type": "w2",
+   "label": "Sam's salary at Northside Schools",
+   "personId": "sam",
+   "amount": {
+    "value": 5200,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": "2019-09-01",
+   "end": null,
+   "withholding": {
+    "federal": {
+     "value": 480,
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    },
+    "state": {
+     "value": 380,
+     "asOf": "2026-10-01",
+     "source": "demo (made up)",
+     "kind": "known"
+    }
+   },
+   "payDay": {
+    "value": 15,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  }
+ ],
+ "expenses": [
+  {
+   "id": "rent",
+   "label": "Rent",
+   "amount": {
+    "value": 3400,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": true,
+   "need": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": "accommodation",
+   "payDay": {
+    "value": 1,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "utilities",
+   "label": "Utilities",
+   "amount": {
+    "value": 180,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": false,
+   "need": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": "accommodation",
+   "payDay": {
+    "value": 10,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "groceries",
+   "label": "Groceries",
+   "amount": {
+    "value": 900,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": false,
+   "need": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": "food"
+  },
+  {
+   "id": "metro",
+   "label": "MetroCards",
+   "amount": {
+    "value": 264,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": true,
+   "need": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": "transportation"
+  },
+  {
+   "id": "phones",
+   "label": "Phones",
+   "amount": {
+    "value": 120,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": true,
+   "need": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "payDay": {
+    "value": 20,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": null
+  },
+  {
+   "id": "eating",
+   "label": "Eating out",
+   "amount": {
+    "value": 500,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": false,
+   "need": {
+    "value": false,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": "food"
+  },
+  {
+   "id": "gym",
+   "label": "Sam's gym",
+   "amount": {
+    "value": 60,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "cadence": "monthly",
+   "start": null,
+   "end": null,
+   "fixed": true,
+   "need": {
+    "value": false,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "coupleSplit": {
+    "value": "partner",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "fat": null
+  }
+ ],
+ "accounts": [
+  {
+   "id": "joint-chk",
+   "family": "cash",
+   "type": "checking",
+   "name": {
+    "value": "Joint checking",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "joint",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 6000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "joint-hysa",
+   "family": "cash",
+   "type": "hysa",
+   "name": {
+    "value": "Joint savings",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "joint",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 18000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "jordan-401k",
+   "family": "employerRetirement",
+   "type": "k401",
+   "name": {
+    "value": "Jordan's 401(k)",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "me",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 62000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "monthlyContribution": {
+    "value": 750,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "matchFormula": {
+    "value": "100% of first 4%",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "matchTiers": {
+    "value": [
+     {
+      "rate": 1,
+      "upTo": 0.04
+     }
+    ],
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "sam-403b",
+   "family": "employerRetirement",
+   "type": "k403b",
+   "name": {
+    "value": "Sam's 403(b)",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "partner",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 24000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "monthlyContribution": {
+    "value": 300,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "sam-roth",
+   "family": "ira",
+   "type": "roth_ira",
+   "name": {
+    "value": "Sam's Roth IRA",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "partner",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 9000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  }
+ ],
+ "debts": [
+  {
+   "id": "sam-loan",
+   "family": "debt",
+   "type": "student_loan",
+   "name": {
+    "value": "Sam's federal student loan",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "partner",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 28000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "apr": {
+    "value": 0.055,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "minimum": {
+    "value": 300,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "federal": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "plan": {
+    "value": "standard",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "dueDay": {
+    "value": 5,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  },
+  {
+   "id": "joint-card",
+   "family": "debt",
+   "type": "credit_card",
+   "name": {
+    "value": "Joint card",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "owner": {
+    "value": "joint",
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "balance": {
+    "value": 1800,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "apr": {
+    "value": 0.24,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "minimum": {
+    "value": 60,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "limit": {
+    "value": 10000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "dueDay": {
+    "value": 22,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "business": {
+    "value": false,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "reportsToPersonalCredit": {
+    "value": true,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  }
+ ],
+ "goals": [
+  {
+   "id": "fi",
+   "type": "fi",
+   "label": "Financial independence",
+   "annualSpending": {
+    "value": 70000,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  }
+ ],
+ "assumptions": {
+  "inflation": {
+   "value": 0.03,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "rough"
+  },
+  "realReturn": {
+   "value": 0.05,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "rough"
+  },
+  "withdrawalRate": {
+   "value": 0.04,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  },
+  "lifeExpectancy": {
+   "value": 92,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "rough"
+  },
+  "coastAge": {
+   "value": 65,
+   "asOf": "2026-10-01",
+   "source": "demo (made up)",
+   "kind": "known"
+  }
+ },
+ "taxYears": [
+  {
+   "id": "2026",
+   "year": 2026,
+   "estimatedPaidFederal": {
+    "value": 0,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   },
+   "estimatedPaidState": {
+    "value": 0,
+    "asOf": "2026-10-01",
+    "source": "demo (made up)",
+    "kind": "known"
+   }
+  }
+ ],
+ "profile": {},
+ "lent": [],
+ "log": [],
+ "feed": []
+}

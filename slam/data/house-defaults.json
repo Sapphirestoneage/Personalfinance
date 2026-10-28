@@ -83,8 +83,18 @@
       "verified": "house"
     },
     {
+      "id": "APP_HOUSING_REF_CAR",
+      "rule": "Housing reference line as a share of take-home when the household has a car (no verdict)",
+      "value": 0.3,
+      "unit": "rate",
+      "appliesTo": "Plan page: DRAFTT scorecard",
+      "notes": "Owner, 2026-10-28: 30% with a car, 35% without (the car's costs come out of the same take-home)",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
       "id": "APP_HOUSING_REF",
-      "rule": "Housing reference line as a share of take-home, shown beside the DRAFTT housing letter (no verdict)",
+      "rule": "Housing reference line as a share of take-home when the household has no car, shown beside the DRAFTT housing letter (no verdict)",
       "value": 0.35,
       "unit": "rate",
       "appliesTo": "Plan page: DRAFTT scorecard",

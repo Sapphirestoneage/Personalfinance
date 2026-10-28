@@ -16,7 +16,7 @@ let playwright;
 try { playwright = require('playwright'); } catch { playwright = require(execSync('npm root -g').toString().trim() + '/playwright'); }
 const BASE = (process.env.SLAM_URL || 'http://localhost:8765/').replace(/\/?$/, '/');
 const SIZES = [['laptop', { width: 1280, height: 800 }], ['phone', { width: 390, height: 844 }]];
-const SCREENS = ['session.html#/debt', 'session.html#/assets', 'session.html#/taxes', 'session.html#/income', 'session.html#/needs', 'session.html#/goals', 'ledger.html#/debt', 'ledger.html#/protection', 'plan.html'];
+const SCREENS = ['session.html#/debt', 'session.html#/assets', 'session.html#/taxes', 'session.html#/income', 'session.html#/needs', 'session.html#/goals', 'ledger.html#/debt', 'ledger.html#/protection', 'plan.html', 'ledger.html#debts.sl.balance', 'ledger.html#accounts.k401.balance'];
 
 // The demo with nine long-named cards added (made up), as in the owner's screenshot.
 function household() {

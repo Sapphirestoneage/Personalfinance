@@ -120,3 +120,7 @@ One line per batch: what is done, the commit, and anything skipped.
 - Fix (2026-10-28): fields never collide: rules 23 to 27, labeled Session boxes, tools/collide-check.mjs (S-273).
 - Planner views (2026-10-28): tax buckets, allocation, fees in dollars, bracket room, where each number came from (S-274).
 - Protection (2026-10-28): policies, premiums once in Needs, four checks on Plan, the backstop and the one-pager line (S-275).
+- Fix (2026-10-28): every field fits its question (details vs yes / no), a cleaner question list, named steps, housing line 30% with a car (S-276).
+- Couples (2026-10-28): the two of you, Whose on every item, shared-bill splits, each person's own numbers, the one-pager's yours / theirs / joint, the example couple (S-277).
+- Map and planning dates (2026-10-28): purpose cards with live checkmarks, You now have / Next this unlocks, the Planning dates layer (S-278).
+- B9 (2026-10-28): friction audit after on three households, CLIENT_TEST.md, MY_METHOD_REVIEW.md, the Phase 3 gate on BOARD.md, the one-pager's tax buckets bar.

@@ -19,6 +19,7 @@ import { project } from './projection.js';
 import { money } from '../src/ui/format.js';
 import { expenseRow, coveredByOthers } from './ledger.js';
 import { owedToYou } from './owed.js';
+import { housingRefRule } from './profile.js';
 import { monthlyAmount } from './cashflow.js';
 import { minimumTrap, solvePayoff } from './debtview.js';
 import { canISpend } from './spending.js';
@@ -134,11 +135,11 @@ def({ id: 'overallUtil', label: 'All-card utilization', unit: 'ratio', op: 'rati
   explain: ({ spine, s }) => { const items = s.debt.utilization.items; return out(s.debt.utilization.overall, [...items.map((c) => field(spine, 'debts.' + c.id + '.balance', c.balance, 'usd', 'num', c.name + ' balance')), ...items.map((c) => field(spine, 'debts.' + c.id + '.limit', c.limit, 'usd', 'den', c.name + ' limit'))]); } });
 
 // Housing against the reference (B2): housing lines a month (a mortgage or a car-style line that pays a debt counted
-// in its category) over take-home, beside Eli's 35% reference. A reference, not a target.
+// in its category) over take-home, beside Eli's reference (30% with a car, 35% without). A reference, not a target.
 const housingLines = (c) => [...c.expenses.items, ...(c.expenses.linked || [])].filter((i) => i.fat === 'accommodation' && !i.covered);
-def({ id: 'housingShare', label: 'Housing as a share of take-home', unit: 'ratio', op: 'ratio', screens: ['plan'], formula: 'Housing reference = housing a month / take-home, beside 35% (a reference, not a target)',
-  plain: 'What housing takes out of take-home pay, shown beside Eli\'s 35% reference line. It is a reference point, never a grade.',
-  explain: ({ spine, s }) => out((() => { const c = s.cashflow, list = housingLines(c), th = c.income.takeHome; const sum = list.reduce((a, i) => a + (i.amount ?? 0), 0); return { ...th, value: th.value ? Math.round(sum / th.value * 1e6) / 1e6 : null, missing: [...(th.missing || []), ...list.filter((i) => i.amount === null).map((i) => 'expenses.' + i.id + '.amount')] }; })(), [...housingLines(s.cashflow).map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'num', i.label)), metric('takeHome', 'Take-home', s.cashflow.income.takeHome, 'usd/month', 'den')], ['APP_HOUSING_REF']) });
+def({ id: 'housingShare', label: 'Housing as a share of take-home', unit: 'ratio', op: 'ratio', screens: ['plan'], formula: 'Housing reference = housing a month / take-home, beside 30% with a car or 35% without (a reference, not a target)',
+  plain: 'What housing takes out of take-home pay, shown beside Eli\'s reference line: 30% with a car, 35% without. It is a reference point, never a grade.',
+  explain: ({ spine, s }) => out((() => { const c = s.cashflow, list = housingLines(c), th = c.income.takeHome; const sum = list.reduce((a, i) => a + (i.amount ?? 0), 0); return { ...th, value: th.value ? Math.round(sum / th.value * 1e6) / 1e6 : null, missing: [...(th.missing || []), ...list.filter((i) => i.amount === null).map((i) => 'expenses.' + i.id + '.amount')] }; })(), [...housingLines(s.cashflow).map((i) => field(spine, 'expenses.' + i.id + '.amount', i.amount, 'usd/month', 'num', i.label)), metric('takeHome', 'Take-home', s.cashflow.income.takeHome, 'usd/month', 'den')], [housingRefRule(spine)]) });
 def({ id: 'fiToday', label: 'FI number from today\'s spending', unit: 'usd', op: 'ratio', factor: 12, screens: ['dashboard#tile-fi'], formula: 'FI number (today) = today\'s yearly spending, debt payments included / withdrawal rate',
   plain: 'What you would need invested to live as you do now, debt payments and all, from the withdrawal rate alone.',
   explain: ({ spine, s }) => out(s.fi.today, [metric('expenses', 'Spending a month', s.cashflow.expenses.total, 'usd/month', 'num'), metric('minimums', 'Debt minimums a month', s.cashflow.debtMinimums.total, 'usd/month', 'num'), field(spine, 'assumptions.withdrawalRate', v(spine.assumptions.withdrawalRate), 'ratio', 'den', 'Withdrawal rate')]) });

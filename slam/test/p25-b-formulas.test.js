@@ -137,10 +137,10 @@ test('DRAFTT: each letter / take-home, Retirement / gross; no bands', () => {
   assert.ok(d.rows.every((r) => !('band' in r) && !('verdict' in r)));
 });
 
-test('housing reference = 1,500 / 3,017.50 = 49.71% against 35%; 443.87 over the line', () => {
+test('housing reference = 1,500 / 3,017.50 = 49.71% against 30% (it has a car); 594.75 over the line', () => {
   near(explainMetric('housingShare', { spine: pat(), rules: R, s: S }).value, 1500 / 3017.5, 0.00001, 'housing share');
   const a = draftt(pat(), R, S).rows.find((r) => r.key === 'accommodation');
-  near(a.overReference, 1500 - 3017.5 * 0.35, 0.011, 'over the reference');
+  near(a.overReference, 1500 - 3017.5 * 0.3, 0.011, 'over the reference');
 });
 
 test('card use: personal cards 1,000 / 5,000 = 20%, all cards the same here', () => {

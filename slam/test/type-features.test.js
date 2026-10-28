@@ -57,7 +57,7 @@ test('yes opens the fields (a default as a guess), no sets them not for me and k
   const todo = tickTodos(cat, s).find((x) => x.path.startsWith(base));
   assert.equal(todo.who, 'client');
   assert.match(todo.words, /Acme 401\(k\): Does your employer match\?/);
-  assert.deepEqual(tickCount(cat, s.accounts.find((x) => x.id === id), 'accounts'), { checked: 2, total: 14 });
+  assert.deepEqual(tickCount(cat, s.accounts.find((x) => x.id === id), 'accounts'), { checked: 2, total: 10 }, '10 yes / no questions; 4 more are details asked outright (S-276)');
   assert.ok(validate(s).ok, validate(s).errors.map((e) => e.path + ' ' + e.message).join('; '));
 });
 

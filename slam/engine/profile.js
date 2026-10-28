@@ -43,6 +43,8 @@ export const LEVEL1 = [
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
   { id: 'county', area: 'you', label: 'Your county', kind: 'text', does: 'Picks a local tax where there is one.' },
   { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['adults', 'Other adults']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.' },
+  // A couple's money style (S-277): sets whose a new item starts as and how shared bills split; never the math.
+  { id: 'moneyStyle', area: 'you', label: 'How do the two of you handle money?', kind: 'one', options: [['joint', 'All joint'], ['separate', 'All separate'], ['mixed', 'Mixed: joint for shared bills, separate for the rest']], when: (a) => has(a, 'livesWith', 'partner'), does: 'Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.' },
   { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },
   { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['roommates', 'With roommates'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
   { id: 'roommates', area: 'home', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => ans(a, 'home') === 'roommates', does: 'Rent and the bills read as your share.' },
@@ -141,6 +143,14 @@ export const answersOf = (spine) => {
   if (spine && spine.household) for (const id of Object.keys(HOUSEHOLD_ANSWERS)) { const x = fromHousehold(spine, id); if (x !== null) out[id] = x; }
   return out;
 };
+// Has a car (owner, 2026-10-28: the housing line is 30% with a car, 35% without): a car in Assets, a car loan or lease,
+// or a Profile answer that gets around by car. Nothing known reads as no car.
+export function hasCar(spine) {
+  if ((spine.accounts || []).some((x) => x.type === 'car') || (spine.debts || []).some((x) => ['auto_loan', 'car_lease', 'lease'].includes(x.type))) return true;
+  const g = ans(answersOf(spine), 'getAround');
+  return ['car', 'carLoan', 'lease'].includes(g);
+}
+export const housingRefRule = (spine) => (hasCar(spine) ? 'APP_HOUSING_REF_CAR' : 'APP_HOUSING_REF');
 export function ans(a, id) { const x = a ? a[id] : null; return x === undefined ? null : x; }
 export function has(a, id, val) { const x = ans(a, id); return Array.isArray(x) ? x.includes(val) : x === val; }
 // Open: not answered, not sure, or one of vals. A field shows while its question is open, so nothing is hidden before
