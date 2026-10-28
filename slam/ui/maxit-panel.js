@@ -228,7 +228,8 @@ export function maxItCard(spine, rules) {
     h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in Numbers.'),
     m.mx.pools.length && steps.length ? h('p', { class: 'max-big' }, cash(steps[0].perMonth) + ' a month')
       : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel || firstMissing.blankLabel) : m.mx.pools.length && T.lump === 0 && !leftOut.length ? 'What already goes in fills it' : 'Nothing more can go in before the deadlines'),
-    m.mx.pools.length && steps.length ? h('p', { class: 'tile-sub' }, 'to ' + shortDate(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + shortDate(s.until)).join('') + ' (' + cash(T.lump) + ' of new money in all; a limit two accounts share counts once)' + (leftOut.length ? '; not counted: ' + leftOut.join(' and ') : '') + '.')
+    m.mx.pools.length && steps.length ? [h('p', { class: 'tile-sub' }, 'to ' + shortDate(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + shortDate(s.until)).join('') + '.'),
+      h('p', { class: 'tile-sub' }, cash(T.lump) + ' of new money in all; a limit two accounts share counts once' + (leftOut.length ? '. Not counted: ' + leftOut.join(' and ') : '') + '.')]
       : leftOut.length && !firstMissing ? h('p', { class: 'tile-sub' }, 'Not counted: ' + leftOut.join(' and ') + '.') : null,
     m.mx.window.words ? h('p', { class: 'max-window' }, m.mx.window.words) : null,
     h('ul', { class: 'max-list' }, rows.map(line)),

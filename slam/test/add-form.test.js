@@ -34,7 +34,7 @@ test('1099 steady or in lumps', () => {
 });
 test('unemployment: a week, and weeks left or an end date', () => {
   const a = add({ collection: 'income', type: 'unemployment', label: '', amount: 504, answers: { weeksLeft: 10 } }).x;
-  assert.equal(a.label, 'Unemployment'); assert.equal(a.cadence, 'weekly'); assert.equal(val(a.amount), 504); assert.equal(a.end, '2027-01-04');
+  assert.equal(a.label, 'Unemployment benefit'); assert.equal(a.cadence, 'weekly'); assert.equal(val(a.amount), 504); assert.equal(a.end, '2027-01-04');
   assert.equal(add({ collection: 'income', type: 'unemployment', amount: 504, answers: { endDate: '2027-02-01' } }).x.end, '2027-02-01');
 });
 test('money from a person: who and what for; a loan is a debt', () => {

@@ -30,6 +30,7 @@ export function applyPrefs(doc = typeof document !== 'undefined' ? document : nu
   if (p.theme === 'light' || p.theme === 'dark') root.dataset.theme = p.theme; else delete root.dataset.theme;
   root.classList.toggle('text-larger', p.textSize === 'larger');
   root.classList.toggle('discreet', p.hide === 'on');
+  root.classList.toggle('client-view', p.view === 'client');
   // Hidden numbers: a tap shows that one amount until the next tap elsewhere.
   if (!tapWired) {
     tapWired = true;

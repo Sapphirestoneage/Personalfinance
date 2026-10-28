@@ -172,7 +172,7 @@ function monthEvents(spine, rules, ym, { mode, asOf, taxCache, schedule, claims 
       if (!now.askOn || !inMonth(now.askOn)) continue;
       const then = personStatus(spine, e, arr, p, now.askOn > asOf ? now.askOn : asOf);
       const span = then.charges.length ? MONTH_SHORT[+then.charges[0].date.slice(5, 7) - 1] + (then.charges.length > 1 ? ' to ' + MONTH_SHORT[+then.charges[then.charges.length - 1].date.slice(5, 7) - 1] : '') : null;
-      add({ id: 'ask:' + e.id + ':' + p.id, sourceId: e.id, personId: p.id, person: p.name, kind: 'ask', label: 'Ask ' + p.name + ': ' + money(then.owed || then.each || 0) + (span ? ' for ' + span : '') + ' (' + e.label + ')', date: now.askOn, amount: null, direction: null, counted: false, path: 'expenses.' + e.id + '.amount', note: askMessage(e, p, then) });
+      add({ id: 'ask:' + e.id + ':' + p.id, sourceId: e.id, personId: p.id, person: p.name, kind: 'ask', label: 'Ask ' + p.name + ': ' + money(then.owed || then.each || 0) + ' for ' + e.label + (span ? ', ' + span : ''), date: now.askOn, amount: null, direction: null, counted: false, path: 'expenses.' + e.id + '.amount', note: askMessage(e, p, then) });
     }
   }
 

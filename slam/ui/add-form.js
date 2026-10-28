@@ -22,7 +22,7 @@ import { h } from './view.js';
 import { choiceRow } from './choice.js';
 
 const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
-const FAT_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation' };
+const FAT_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Getting around' };
 
 // A labeled box; its hint shows only while the box (input) is empty. short: half width on a computer.
 const field = (id, label, control, hint, input = null, short = false) => {
@@ -105,7 +105,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
   // Its own label above it (DESIGN.md 24); the picker box takes the label's words. Hidden with the list under a salary.
   const oftenBox = often ? h('div', { class: 'add-often' }, h('label', { for: 'add-often', class: 'edit-label' }, 'How often'), often) : null;
-  const fatSel = collection === 'expenses' && fat === null ? select('add-fat', [['', 'Something else (not food, housing or transportation)'], ...FAT.map((t) => [t, FAT_WORDS[t] || t])], '') : null;
+  const fatSel = collection === 'expenses' && fat === null ? select('add-fat', [['', 'Something else (bills, health, fun or other)'], ...FAT.map((t) => [t, FAT_WORDS[t] || t])], '') : null;
   const qs = h('div', { class: 'add-questions' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   // The answers, kept while the kind changes so switching back finds them.

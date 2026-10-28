@@ -84,11 +84,13 @@ export function phraseOf(spine, base, item, f) {
   // Several numbers in one phrase each say what they are: "22%, $90 a month, due the 12th", never "22%, $90, 12".
   const worded = (r) => { const x = factOf(r); if (!x) return null; const s = showValue(x.value, r.type); return r.field === 'dueDay' ? 'due the ' + ordinal(x.value) : r.field === 'minimum' ? s + ' a month' : s; };
   if (f.kind === 'ask') { const vals = f.reveals.map(f.reveals.length > 1 ? worded : valueOf).filter(Boolean); return vals.length ? { words: (f.title || f.question) + ': ' + vals.join(', '), guess: false } : null; }
-  const a = ans || f.likely || null;
+  // A known yes or no under it answers the question itself (a card filed as business is 'yes', never the guess).
+  const knownBool = f.reveals.map((r) => getAt(spine, base + '.' + r.field)).find((x) => x && x.kind === 'known' && typeof x.value === 'boolean');
+  const a = ans || (knownBool ? (knownBool.value ? 'yes' : 'no') : null) || f.likely || null;
   if (!a) return null;
-  const first = a === 'yes' ? f.reveals.map(valueOf).find(Boolean) : null;
+  const first = a === 'yes' && !knownBool ? f.reveals.map(valueOf).find(Boolean) : null;
   // A known number under it answers the question: not a guess.
-  const known = f.reveals.some((r) => { const x = getAt(spine, base + '.' + r.field); return x && x.kind === 'known' && x.value !== null && x.value !== false; });
+  const known = !!knownBool || f.reveals.some((r) => { const x = getAt(spine, base + '.' + r.field); return x && x.kind === 'known' && x.value !== null && x.value !== false; });
   return { words: f.short + ': ' + (first || ANSWER_WORDS[a].toLowerCase()), guess: !ans && !known };
 }
 function answerLine(spine, collection, item, features, idBase) {

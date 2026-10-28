@@ -98,7 +98,7 @@ export function quickAdd(spine, text, { library = {}, today }) {
   const bill = !wrap && rate === null && library.expenses ? best(library.expenses, (e) => e) : null;
   if (bill) {
     const v = bill.value || {};
-    return { kind: 'change', words: 'Add ' + bill.words + ': ' + amount.words + (day ? ', charged on the ' + ORD(day) : ''),
+    return { kind: 'change', words: 'Add ' + bill.words + ': ' + amount.words + ' a month' + (day ? ', charged on the ' + ORD(day) : ''),
       run: (s) => {
         const made = addWithAnswers(s, { collection: 'expenses', type: null, label: bill.words, amount: amount.value, cadence: 'monthly', fat: v.fat || null }, today);
         let n = made.spine;

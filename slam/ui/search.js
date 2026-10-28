@@ -8,6 +8,7 @@ import { h, ledgerHref } from './view.js';
 import { parseCommand } from '../engine/command.js';
 import { sharerNames } from '../engine/owed.js';
 import { ledgerRows } from '../engine/ledger.js';
+import { pref } from './prefs.js';
 
 // The screens a person might look for by name, with where each opens.
 const SCREENS = [
@@ -18,11 +19,19 @@ const SCREENS = [
   ['Needs', 'ledger.html#/needs'], ['Goals', 'ledger.html#/goals'], ['Subscriptions', 'ledger.html#/needs/subscriptions'],
   ['Still guessing', 'ledger.html#/still-guessing'], ['Extra money', 'windfall.html'], ['Builder', 'builder.html'],
   ['Protection', 'ledger.html#/protection'], ['Plan: Debt', 'plan.html#/debt'], ['Plan: Retirement', 'plan.html#/retirement'], ['When can I stop working?', 'plan.html#/retirement'], ['Pay off my debt', 'plan.html#/debt'], ['Can I afford this?', 'spending.html#/ask'], ['Plan: Protection', 'plan.html#/protection'], ['End call', 'dashboard.html#/end'],
-  ['Rules', 'rules.html'], ['House defaults', 'house.html'], ['All formulas', 'math.html'], ['Where each number came from', 'plan.html#/sources']
+  ['Rules', 'rules.html'], ['House defaults', 'house.html'], ['All formulas', 'math.html'], ['Where each number came from', 'plan.html#/sources'], ['Where to find each number', 'where.html'],
+  // The screens one or two taps down, so a plain spelling finds them too.
+  ['Import a statement', 'spending.html#/import'], ['Check in balances', 'spending.html#/checkin'], ['Month-end sweep', 'spending.html#/sweep'],
+  ['Price changes', 'spending.html#/prices'], ['Each line, a year', 'spending.html#/autopsy'],
+  ['What if: watch the dates move', 'plan.html#/whatif'], ['Saved scenarios', 'plan.html#/scenarios'], ['How much to max it', 'plan.html#/max-it'],
+  ['Download a backup', 'plan.html#/file'], ['Open a backup file', 'plan.html#/file'], ['Backup', 'plan.html#/file'],
+  ['Homework and to-dos', 'profile.html#/homework'], ['Quarterly review', 'profile.html#/review'], ['Did these happen?', 'calendar.html#/confirm'],
+  ['Design kit', 'affordances.html'], ['Windfall', 'windfall.html'], ['One pager', 'onepager.html'], ['Print the one-pager', 'onepager.html']
 ];
 // Settings a person might look for by name.
-const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts on', 'profile.html#/prefs'], ['What Home shows', 'profile.html#/prefs'], ['Show money as hours of work', 'profile.html#/prefs'],
-  ['Too small to matter', 'assumptions.html#/APP_MATERIALITY'], ['Your floor', 'calendar.html'], ['FI assumptions', 'profile.html#/goals'], ['Where to find', 'where.html'], ['House defaults', 'house.html']];
+const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts on', 'profile.html#/prefs'], ['What Home shows', 'profile.html#/prefs'], ['Show money as hours of work', 'profile.html#/prefs'], ['Money as time', 'profile.html#/prefs'],
+  ['Hide numbers', 'profile.html#/prefs'], ['Client view', 'profile.html#/prefs'], ['Text size', 'profile.html#/prefs'],
+  ['Too small to matter', 'assumptions.html#/APP_MATERIALITY'], ['Your floor', 'calendar.html'], ['FI assumptions', 'profile.html#/goals'], ['House defaults', 'house.html']];
 const nameOf = (x) => (x && x.name && typeof x.name === 'object' ? x.name.value : x && x.name) || (x && x.label) || null;
 
 // The section of Numbers a household path sits in, for the "This section" chip.
@@ -30,7 +39,9 @@ const SECTION_OF = { debts: 'debt', accounts: 'assets', expenses: 'needs', incom
 const sectionOfHref = (href) => { const m = href.match(/^ledger\.html#\/([\w-]+)/); return m ? m[1] : null; };
 // Everything findable (S-285: clients and every field too): [{ words, kind, href | pick, section, mine }].
 export function searchIndex(spine, { clients = [] } = {}) {
-  const out = SCREENS.map(([words, href]) => ({ words, kind: 'Screen', href, page: href.split('#')[0], section: sectionOfHref(href) }));
+  // Client view hides the coach's own pages here too, as it hides the gear.
+  const coachOnly = pref('view') === 'client' ? ['Rules', 'House defaults', 'All formulas', 'Builder', 'Where each number came from'] : [];
+  const out = SCREENS.filter(([words]) => !coachOnly.includes(words)).map(([words, href]) => ({ words, kind: 'Screen', href, page: href.split('#')[0], section: sectionOfHref(href) }));
   const item = (kind, coll, path) => ({ kind, href: ledgerHref(path), page: 'ledger.html', section: SECTION_OF[coll], mine: true });
   const add = (list, kind, coll, field) => { for (const x of list || []) { const n = nameOf(x); if (n) out.push({ words: n, ...item(kind, coll, coll + '.' + x.id + '.' + field(x)) }); } };
   add(spine.accounts, 'Account', 'accounts', () => 'balance');
@@ -43,7 +54,7 @@ export function searchIndex(spine, { clients = [] } = {}) {
   // People: the household's own (their Profile) and anyone who owes them (Owed to you).
   for (const p of (spine.household && spine.household.people) || []) if (p.name) out.push({ words: p.name, kind: 'Person', href: 'profile.html', page: 'profile.html', mine: true });
   for (const n of sharerNames(spine)) out.push({ words: n, kind: 'Shares bills', href: 'ledger.html#/assets/owed-to-you', page: 'ledger.html', section: 'assets', mine: true });
-  for (const [words, href] of SETTINGS) out.push({ words, kind: 'Setting', href, page: href.split('#')[0] });
+  for (const [words, href] of SETTINGS) if (!coachOnly.includes(words)) out.push({ words, kind: 'Setting', href, page: href.split('#')[0] });
   // Other clients: picking one switches to them.
   for (const c of clients) out.push({ words: c.name, kind: 'Client', pick: c.id });
   return out;
@@ -96,8 +107,8 @@ let openNow = null;
 // run(cmd): the shell makes the command (a change in words, a screen, or undo). library: what quick add picks from.
 export function searchButton(spineOf, { rulesOf = () => null, run = () => {}, today = () => new Date().toISOString().slice(0, 10), clients = () => [], pickClient = () => {} } = {}) {
   const box = h('input', { type: 'search', id: 'top-search', autocomplete: 'off', placeholder: 'Search or add, e.g. rent 2400', 'aria-label': 'Search or add', role: 'combobox', 'aria-expanded': 'false', 'aria-controls': 'search-results' });
-  // On a phone the box is about 100px of text, so the placeholder is two short words (the example would be cut mid-word).
-  try { const mq = matchMedia('(max-width: 479px)'); const fit = () => { box.placeholder = mq.matches ? 'Find or add' : 'Search or add, e.g. rent 2400'; }; fit(); mq.addEventListener('change', fit); } catch { /* no matchMedia: the full placeholder stays */ }
+  // On a phone the box is about 100px of text, so the placeholder is three short words (the example, even "Search or add", would be cut mid-word).
+  try { const mq = matchMedia('(max-width: 639px)'); const fit = () => { box.placeholder = mq.matches ? 'Find or add' : 'Search or add, e.g. rent 2400'; }; fit(); mq.addEventListener('change', fit); } catch { /* no matchMedia: the full placeholder stays */ }
   const list = h('ul', { class: 'search-results', id: 'search-results', role: 'listbox', 'aria-label': 'Matches' });
   const chips = h('div', { class: 'search-scope', role: 'group', 'aria-label': 'Search in' });
   const panel = h('div', { class: 'search-panel', hidden: true }, chips, list);
@@ -114,10 +125,12 @@ export function searchButton(spineOf, { rulesOf = () => null, run = () => {}, to
     const hits = scoped(all, scope, here());
     shown = hits.slice(0, SHOWN);
     try { cmd = parseCommand(spineOf(), rulesOf(), box.value, { today: today(), screens: SCREENS, library: lib }); } catch { cmd = null; }
+    // "rent 2400" with nothing by that name adds it, as the example says (the same as "add rent 2400").
+    if ((!cmd || cmd.kind === 'none') && /^[a-z][\w' ]*\s+\$?[\d.,]+k?(\s+(a|per|each)\s+(month|week|year))?$/i.test(box.value.trim())) { try { cmd = parseCommand(spineOf(), rulesOf(), 'add ' + box.value.trim(), { today: today(), screens: SCREENS, library: lib }); } catch { cmd = null; } }
     chips.replaceChildren(...(all.length > SHOWN ? [chip('client', 'This client'), chip('section', 'This section')] : []));
     // What Enter will do, said first (a command or a new item), then what matches by name.
     const top = cmd ? [h('li', {}, h('button', { type: 'button', class: 'search-hit search-cmd', disabled: cmd.kind === 'none', onclick: doIt }, h('span', {}, cmd.words), h('span', { class: 'search-kind' }, cmd.kind === 'none' ? '' : 'Enter')))] : [];
-    list.replaceChildren(...top, ...(!shown.length && !cmd ? [h('li', { class: 'muted' }, 'Nothing by that name. Try "rent 2400" or "go to plan".')] : shown.map((x) => h('li', {}, x.pick
+    list.replaceChildren(...top, ...(!shown.length && !cmd ? [h('li', { class: 'muted' }, 'Nothing by that name. Try "add rent 2400" or "go to plan".')] : shown.map((x) => h('li', {}, x.pick
       ? h('button', { type: 'button', class: 'search-hit', onclick: () => follow(x) }, h('span', {}, x.words), h('span', { class: 'search-kind' }, x.kind))
       : h('a', { class: 'search-hit', href: x.href, onclick: close }, h('span', {}, x.words), h('span', { class: 'search-kind' }, x.kind))))),
       ...(hits.length > SHOWN ? [h('li', { class: 'muted search-more' }, (hits.length - SHOWN) + ' more: type more of the name' + (all.length > SHOWN && scope === 'all' ? ', or pick where to look' : ''))] : []));

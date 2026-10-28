@@ -59,6 +59,6 @@ test('quick add from the search box: a card, a fund in a Roth, a bill people hav
   assert.deepEqual([a.type, a.balance.value, a.expenseRatio.kind], ['roth_ira', 18000, 'rough']);
   assert.match(go('rent 2400').words, /^Set Rent amount to \$2,400/, 'a name the household has: set, not add');
   const gym = go('gym 45 the 3rd');
-  assert.match(gym.words, /^Add Gym: \$45, charged on the 3rd/);
+  assert.match(gym.words, /^Add Gym: \$45 a month, charged on the 3rd/);
   assert.equal(go('zzz 45'), null, 'nothing by that name: the box searches instead');
 });

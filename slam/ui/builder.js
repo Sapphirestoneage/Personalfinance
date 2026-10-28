@@ -13,7 +13,7 @@ const PAGES = [
   ['All formulas', 'math.html', 'How every number is figured, with today\'s numbers plugged in, and the assumptions each one reads.'],
   ['Where each number came from', 'plan.html#/sources', 'Every number behind the headlines, sortable and printable.'],
   ['Design kit', 'affordances.html', 'Every button, row, bar and chart piece in every state.'],
-  ['Where to find', 'where.html', 'Where each kind of number is found and about how long it takes; Still guessing sorts by it.'],
+  ['Where to find each number', 'where.html', 'Where each kind of number is found and about how long it takes; Still guessing sorts by it.'],
   ['Client list (old)', 'clients.html', 'The old Budget app and its client list, until Phase 3 replaces it.']
 ];
 const rows = (list) => h('ul', { class: 'go-list' }, list.map(([name, href, sub]) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, sub)))));

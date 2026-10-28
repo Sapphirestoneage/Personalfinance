@@ -33,7 +33,8 @@ import { maxHref, maxItFor } from './maxit-panel.js';
 import { pref } from './prefs.js';
 import { forecast, fixButton, floorWords } from './forecast.js';
 import { foldRow, isOpen } from './rows.js';
-import { fooGhosts } from '../engine/plan.js';
+import { fooGhosts, planPayoff } from '../engine/plan.js';
+import { planClearDates } from '../engine/debtview.js';
 
 const app = document.getElementById('app');
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -637,10 +638,19 @@ function belowRows(v, c, m, st) {
 }
 // The rows that do not depend on the month, so the Year view has them too: the payoff dates (a fold under Numbers,
 // Debt, opened on the way there) and the file for a phone's calendar.
+// The Debt screen's own lead for the payoff row: the Plan's month all debt is gone (the same call Numbers makes).
+function payoffWords(v) {
+  if (v.payoff === undefined) {
+    const s = v.base === v.spine ? sumOf(v) : summarize(v.base, v.rules, { flags: false });
+    const cd = planClearDates(planPayoff(v.base, v.rules, s, { sim: forecast(v.base, v.rules, 12).sim }));
+    v.payoff = cd.none ? 'No debt on your plan' : cd.allYm ? 'All debt gone ' + monthWords(cd.allYm) + ' on your plan' : 'Not yet on your plan';
+  }
+  return v.payoff;
+}
 function alwaysRows(v) {
   const openPayoff = () => { try { const s = new Set(JSON.parse(localStorage.getItem('slam-open:v1') || '[]')); s.add('debt-payoff'); localStorage.setItem('slam-open:v1', JSON.stringify([...s])); } catch { /* lasts until the page closes */ } };
   return h('ul', { class: 'go-list' },
-    h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt', onclick: openPayoff }, h('span', { class: 'go-name' }, 'Payoff dates'), h('span', { class: 'go-sub' }, 'Under Numbers > Debt'))),
+    h('li', {}, h('a', { class: 'go-row plain', href: 'ledger.html#/debt', onclick: openPayoff }, h('span', { class: 'go-name' }, 'Payoff dates'), h('span', { class: 'go-sub' }, payoffWords(v)))),
     h('li', {}, h('button', { type: 'button', class: 'go-row plain', onclick: () => downloadIcs(v.base, v.rules) }, h('span', { class: 'go-name' }, 'Download for your calendar app'), h('span', { class: 'go-sub' }, 'Bills, paydays and deadlines for the next 12 months, as a file for your phone or Google Calendar'))));
 }
 // topped: the run moved money from savings, so its lowest point is the one after that move.

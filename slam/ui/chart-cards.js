@@ -4,6 +4,7 @@
 import { h, money, monthWords, shortDate } from './view.js';
 import { chartCard, lines, bars, columns, waterfall, treemap, heatmap, sparkline, rangeSwitch, axisMoney, exactMoney } from './chart.js';
 import * as C from '../engine/charts.js';
+import { nothingEntered } from '../engine/blank.js';
 
 const pct = (x) => Math.round(x * 1000) / 10 + '%';
 const pct0 = (x) => Math.round(x * 100) + '%';
@@ -32,6 +33,8 @@ export function keepPoint(spine, date, value) {
   try { const all = JSON.parse(localStorage.getItem(NW_KEY) || '{}'); all[pointsKey(spine)] = C.addNetWorthPoint(all[pointsKey(spine)] || [], date, value); localStorage.setItem(NW_KEY, JSON.stringify(all)); return all[pointsKey(spine)]; } catch { return readPoints(spine); }
 }
 export function netWorthTimeCard(spine, sheet, months, { range = '1y', onRange = () => {}, asOf }) {
+  // A blank client's net worth is not $0: nothing is recorded and nothing is drawn (empty is not zero).
+  if (sheet.netWorth.value === null || nothingEntered(spine)) return chartCard({ id: 'nw-time', question: 'How is your net worth changing?', summary: '', controls: null, empty: 'A line starts once an account or a debt is entered and seen on two different days.' });
   const points = keepPoint(spine, asOf, sheet.netWorth.value);
   const p = C.netWorthPath(points, months, { asOf, range });
   const controls = rangeSwitch([['1y', '1 year'], ['5y', '5 years'], ['all', 'All']], range, onRange, 'How far');

@@ -596,7 +596,7 @@ export function fooGhosts(spine, rules, s, months, { sim = null } = {}) {
   if (!cur || !(f.surplus > 0)) return [];
   // A debt step shows the one extra-at-the-debt number (planDebtExtra), the same as the Debt screen.
   const amt = ['highInterest', 'lowInterest'].includes(cur.id) ? planDebtExtra(spine, rules, s, { sim, ladder: f }).amount : Math.min(f.surplus, cur.need);
-  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(amt) + ' to ' + cur.label.toLowerCase() + ' (a suggestion, not in the cash line: check the lowest day first)', date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(amt), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
+  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(amt) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(amt), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes: a suggestion, not in the cash line, so check the lowest day first', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
 }
 
 // The spine's FAT tags, for the pages that need them.

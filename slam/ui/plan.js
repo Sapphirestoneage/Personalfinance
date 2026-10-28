@@ -288,7 +288,7 @@ function sourcesScreen(m) {
   const sortBtn = (k, words) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(by === k), onclick: () => { keep({ srcSort: k }); refresh(); } }, h('span', { class: 'seg-label' }, words));
   return h('section', { class: 'card sources-card', 'aria-label': 'Where each number came from' },
     h('p', { class: 'muted' }, 'Every number your headline figures use: what it is, how sure it is, where it came from and when.'),
-    h('div', { class: 'segmented', role: 'group', 'aria-label': 'Sort by' }, sortBtn('kind', 'Least sure first'), sortBtn('name', 'By name'), sortBtn('date', 'Oldest first')),
+    h('div', { class: 'segmented', role: 'group', 'aria-label': 'Sort by' }, sortBtn('kind', 'Least sure'), sortBtn('name', 'Name'), sortBtn('date', 'Oldest')),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Number'), h('th', {}, 'How sure'), h('th', {}, 'Where from'), h('th', {}, 'As of'), h('th', {}, 'Used in'))),
       h('tbody', {}, list.map((x) => h('tr', {}, h('td', {}, h('a', { href: ledgerHref(x.path) }, x.label)), h('td', {}, KIND[x.kind] || x.kind), h('td', {}, x.source || ''), h('td', {}, x.asOf ? shortDate(x.asOf) : ''), h('td', {}, x.uses.join(', '))))))),

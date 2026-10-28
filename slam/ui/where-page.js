@@ -31,7 +31,7 @@ function download() {
   if (saveFile('where-to-find.json', JSON.stringify(whereTable(), null, 2) + '\n') !== 'saved') say('This window can\'t save files; open SLAM in its own tab to download it');
 }
 startPage({
-  tab: null, title: 'Where to find', parent: ['Builder', 'builder.html'],
+  tab: null, title: 'Where to find each number', parent: ['Builder', 'builder.html'],
   actions: () => [
     h('button', { type: 'button', class: 'btn', onclick: download }, 'Download this table'),
     Object.keys(whereChanges()).length ? h('button', { type: 'button', class: 'btn danger', onclick: () => { const was = whereChanges(); keepWhereChanges({}); say('Back to the file\'s table', () => { keepWhereChanges(was); refresh(); }); refresh(); } }, 'Use the file\'s table') : null

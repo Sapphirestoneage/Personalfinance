@@ -55,7 +55,7 @@ export function firstIncomeType(spine, today) {
 }
 
 export function addWithAnswers(spine, { collection, type, label, amount = null, cadence = 'monthly', fat = null, answers = {} }, today) {
-  const name = String(label || '').trim() || (collection === 'income' ? INCOME_WORDS[type] || 'Income' : collection === 'expenses' ? 'New expense' : collection === 'goals' ? 'New goal' : collection === 'policies' ? POLICY_TYPES[type] : (PRESETS[type] || {}).label);
+  const name = String(label || '').trim() || (collection === 'income' ? (type === 'unemployment' ? 'Unemployment benefit' : INCOME_WORDS[type]) || 'Income' : collection === 'expenses' ? 'New expense' : collection === 'goals' ? 'New goal' : collection === 'policies' ? POLICY_TYPES[type] : (PRESETS[type] || {}).label);
   if (collection !== 'income') {
     const made = addItem(spine, { collection, type, label: name, cadence, fat }, today);
     if (amount === null) return { ...made, collection };

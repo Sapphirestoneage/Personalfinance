@@ -3,7 +3,7 @@
 
 import { money as dollars, pct } from '../src/ui/format.js';
 import { hoursOf, fiDaysOf } from '../engine/money-as.js';
-import { FILING_STATUSES, LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
+import { FILING_STATUSES, LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES, SITUATIONS } from '../engine/schema.js';
 
 export { pct };
 
@@ -62,6 +62,8 @@ export const FILING_WORDS = { single: 'Single', mfj: 'Married filing jointly', m
 // Every other choice list in the catalog (data/type-features.json), in a client's words: the list, the answer line and
 // Undo's words all read this one map, so no code word (ffel, arm, forfeit) reaches a screen.
 const CHOICE_WORDS = {
+  // Your situation (the Income list and an item's Situation row): 'mixed' is a paycheck plus side income.
+  ['choice:' + SITUATIONS.join('|')]: { employed: 'Paycheck', self_employed: 'Self-employed', mixed: 'Paycheck plus side income', between_jobs: 'Between jobs', student: 'Student', retired: 'Retired' },
   'choice:direct|ffel|perkins|parentPlus': { direct: 'Direct', ffel: 'FFEL (an older federal loan)', perkins: 'Perkins', parentPlus: 'Parent PLUS' },
   'choice:immediate|cliff|graded': { immediate: 'Right away', cliff: 'All at once after a wait (cliff)', graded: 'A share each year (graded)' },
   'choice:self|family': { self: 'Just you', family: 'Family' },

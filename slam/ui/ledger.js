@@ -47,7 +47,8 @@ import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { unemploymentView, tenPercentOf } from '../engine/unemployment.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
-import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
+import { matchesFile, setBaseline, loadFailWords } from './profile-file.js';
+import { downloadBackup } from './end-call.js';
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
@@ -1085,8 +1086,8 @@ function pickerCard() {
     const n = have.get(x.key) || 0;
     return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
   };
-  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Quick add' },
-    h('p', { class: 'muted' }, 'Tick what you have. Fill in the details after.'),
+  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Tick what you have' },
+    h('p', { class: 'muted' }, 'Fill in the details after.'),
     ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
     h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; go([]); } }, 'Cancel')));
   sync();
@@ -1521,17 +1522,18 @@ function unemploymentCard() {
     mathButton(['runway', 'runwayNeeds', 'taxSetAside'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })));
 }
 
-function sectionScreen(sec) {
+function sectionScreen(sec, { guided = false } = {}) {
   const groups = fillOn() ? sec.groups.filter((g) => toFill(g)) : sec.groups;
   return [
-    fillBar(toFill(sec), 'list:open:' + sec.slug),
+    // In Guide me (Protection comes through here) the step frame draws its own fill bar and Looks right.
+    guided ? null : fillBar(toFill(sec), 'list:open:' + sec.slug),
     // What this section is for, with live checkmarks (S-278), folded, above Looks right as Guide me's step frame
     // orders them; with Guide me on the frame draws it, so it is not drawn twice (Protection comes through here).
     STEP_MAP[sec.slug] && !guideOn() ? purposeCard(STEP_MAP[sec.slug].purpose, stepChecks(cur(), summaryOf(cur()), sec.slug), { title: 'What ' + sec.label + ' is for' }) : null,
-    looksRight(sec.allRows),
+    guided ? null : looksRight(sec.allRows),
     sectionTop(sec),
     // Protection (S-275): health coverage lives in the Profile; this links there rather than asking it twice.
-    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Add life, disability, renters or car insurance here.') : null,
+    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Add life, disability, renters or car insurance here; each premium counts once, in Needs, marked "from Protection". Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '.') : null,
     selectAll(sec.allRows, 'Select all here'),
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
@@ -1713,7 +1715,7 @@ function itemScreen(sec, g, it, st) {
 function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
-  if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
+  if (levels[0] === 'pick') return levels.length === 1 ? 'Tick what you have' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : levels.length === 3 && levels[2] === 'audit' ? 'Subscription audit' : null;
   if (levels[0] === 'needs' && levels[1] === 'covered') return levels.length === 2 ? 'Covered by others' : null;
   if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) { const p = owedToYou(ctx.spine).find((x) => personSlug(x.key) === levels[2]); return levels.length === 3 && p ? p.name : null; }
@@ -1765,22 +1767,24 @@ function render(ctx) {
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]), math: mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) });
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = [personScreen(cur(), levels[2]), (() => { const p = owedToYou(cur()).find((x) => personSlug(x.key) === levels[2]); return p ? mathButton(['list:owed:' + p.key], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null; })()];
   // Guide me (S-280): the same sections, one step at a time, screen one only.
-  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section) }) : guideTop(ctx);
+  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section, { guided: true }) }) : guideTop(ctx);
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
   }
   // The headline strip (S-270) on every screen of My numbers, so an answer typed anywhere is seen to land.
-  return [headlineStrip(spine, rules), body, bulkBar(sc)];
+  return [headlineStrip(withScenario(spine, rules, pickedScenario()), rules), body, bulkBar(sc)];
 }
 
 // ---------------------------------------------------------------- the profile file
 // The profile file (S-195): save downloads it; load reads one back. Loading a different household starts its own
 // history, as Open file does.
 function saveFile() {
-  const ok = downloadProfile(cur());
+  // One filename for every backup (the client's name and the date), as End call writes it.
+  const name = downloadBackup(cur(), today());
+  if (name) setBaseline(cur());
   refresh();
-  say(ok ? 'Saved ' + FILE_NAME + ' to your downloads.' : 'This window can\'t save files. Your numbers stay in this browser; open SLAM in its own tab to download a backup.');
+  say(name ? 'Saved ' + name + ' to your downloads.' : 'This window can\'t save files. Your numbers stay in this browser; open SLAM in its own tab to download a backup.');
 }
 // Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
 // at the top of My numbers, never a reason to refuse the file.
@@ -1828,7 +1832,7 @@ function actions(ctx) {
     h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Download a backup'),
     mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Open a backup file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
-    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add'),
+    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Tick what you have'),
     // Select several is a page action, not a filter, so it sits here and not in the Filter fold.
     selectToggle()
   ];

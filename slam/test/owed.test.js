@@ -125,7 +125,7 @@ test('the Calendar dates the ask: "Ask Theo: $39 for Sep to Nov", a dated item, 
   const dec = calendar(s, R, { from: '2026-12', months: 1 }).months[0];
   const ask = dec.events.find((e) => e.kind === 'ask');
   assert.equal(ask.date, '2026-12-01');
-  assert.equal(ask.label, 'Ask Theo: $39 for Sep to Nov (Streaming (family plan))');
+  assert.equal(ask.label, 'Ask Theo: $39 for Streaming (family plan), Sep to Nov');
   assert.equal(ask.amount, null);
   assert.equal(ask.note, 'Hey! Your share of Streaming (family plan) for Sep to Nov is $39.');
   // The bill itself (a subscription in the demo, morning answer 6) leaves whole on its day.

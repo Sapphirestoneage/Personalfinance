@@ -221,10 +221,11 @@ function stepSub(spine, id) {
 function nextCard(ctx) {
   const g = guessesFor(ctx.spine, ctx.rules, whenRanked(ctx.spine));
   const top = (openQuestions(ctx.spine, g) || []).slice(0, 3);
-  if (!top.length) return null;
+  // Until the ranking lands the box holds its place (the ready refresh redraws it); a finished ranking with nothing open draws nothing.
+  if (!top.length) return g ? null : h('section', { class: 'card next-card', 'aria-label': 'Next to fill' }, h('p', { class: 'muted' }, 'Working out what to fill first...'));
   const words = (q) => q.label + (q.kind === 'missing' ? ', not given yet' : ', a guess to answer');
   return h('section', { class: 'card next-card', 'aria-label': 'Next to fill' },
-    h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
+    h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next to fill in: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
     top.length > 1 ? h('ol', { class: 'next-more', start: 2 }, top.slice(1).map((q) => h('li', {}, h('a', { href: ledgerHref(q.row || q.path) }, words(q))))) : null);
 }
 // Looks right in a step (S-282): every guess on the screen kept at once (Enter does it too): each rough number in a box

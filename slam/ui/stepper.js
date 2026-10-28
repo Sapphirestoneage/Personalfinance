@@ -16,7 +16,7 @@ export function stepper(steps, at, { title = 'Step', nav = true, doneMeans = nul
   return h('nav', { class: 'stepper', 'aria-label': 'Progress' },
     h('div', { class: 'stepper-head' },
       h('span', { class: 'stepper-at' }, title + ' ' + (at + 1) + ' of ' + steps.length),
-      h('span', { class: 'stepper-done' }, done + ' of ' + steps.length + ' ' + doneWord)),
+      h('span', { class: 'stepper-done' }, done + ' ' + doneWord)),
     h('ol', { class: 'stepper-bar' }, steps.map((x, i) => h('li', { class: 'stepper-seg is-' + x.state + (i === at ? ' is-at' : '') },
       h('a', { href: x.href, 'aria-current': i === at ? 'step' : null, 'aria-label': (i + 1) + '. ' + x.label + ', ' + STATE_WORDS[x.state] + (x.sub ? ', ' + x.sub : '') },
         h('span', { class: 'stepper-mark', 'aria-hidden': 'true' }, x.state === 'done' ? '✓' : x.state === 'question' ? '?' : String(i + 1)),

@@ -26,7 +26,7 @@ import { netWorthAhead } from '../engine/charts.js';
 import { headlineStrip } from './strip.js';
 import { endCall, nextCard as guideNext, STEPS as GUIDE_STEPS } from './guide.js';
 import { lastStep } from './clients.js';
-import { LEVEL1, asked } from '../engine/profile.js';
+import { LEVEL1, NOT_SURE, asked } from '../engine/profile.js';
 import { endCallTodos } from './end-call.js';
 import { nothingEntered } from '../engine/blank.js';
 import { money as dollars } from '../src/ui/format.js';
@@ -204,12 +204,13 @@ function render(ctx) {
   const others = alsoWorth(m.spine, m.s.flags, rank, new Set((open || []).map((q) => q.path)));
   const guesses = open ? open.length : null;
   return [
-    sentenceCard(base, rules),
-    headlineStrip(base, rules, { timeSwitch: true }),
+    // The sentence, the strip and What if? read the picked set (only assumptions change; Keep this still writes the household).
+    sentenceCard(m.spine, rules),
+    headlineStrip(m.spine, rules, { timeSwitch: true }),
     cashCard(base, rules),
     agendaCard(base, g),
     nextFill(ctx),
-    tryItCard(base, rules, todayIso()),
+    tryItCard(m.spine, rules, todayIso()),
     beforeCard(base),
     h('details', { class: 'card done-group home-more', open: kept().all || null, ontoggle: (e) => { if (!!kept().all !== e.target.open) keep({ all: e.target.open }); } },
       h('summary', {}, h('span', {}, 'Today\'s numbers in full'), h('span', { class: 'count' }, 'net worth, surplus, savings rate, runway, next step')),
@@ -237,13 +238,13 @@ function agendaCard(spine, g) {
     all.length ? h('div', { class: 'agenda-todos' },
       h('h3', {}, 'Open to-dos from last time (' + all.length + ')'),
       h('ul', { class: 'todo-list' }, all.slice(0, 3).map((t) => h('li', {}, h('a', { href: t.href }, t.words), t.who === 'coach' ? h('span', { class: 'pill' }, 'for the coach') : null))),
-      all.length > 3 ? h('p', {}, h('a', { href: 'profile.html#/todo' }, 'All ' + all.length + ' to-dos')) : null) : null);
+      all.length > 3 ? h('p', {}, h('a', { href: 'profile.html#/homework' }, 'All ' + all.length + ' to-dos')) : null) : null);
 }
 // The next three things to fill, ranked by how much each moves the headline numbers (Guide me's Next card).
 const nextFill = (ctx) => guideNext(ctx);
 // Before our first call (S-280): a card on Home while the client's first questions have open items.
 function beforeCard(spine) {
-  const a = answersOf(spine), l1 = LEVEL1.filter((q) => asked(a, q)), open = l1.filter((q) => a[q.id] === undefined).length;
+  const a = answersOf(spine), l1 = LEVEL1.filter((q) => asked(a, q)), open = l1.filter((q) => a[q.id] === undefined || a[q.id] === NOT_SURE).length;
   if (!open) return null;
   return h('section', { class: 'card before-card', 'aria-labelledby': 'before-h' },
     h('h2', { id: 'before-h' }, 'Before our first call'),
@@ -290,7 +291,7 @@ function flagItem(spine, f) {
 function nextCard(spine, rank) {
   const step = rank && rank.first, ask = rank && rank.questions[0];
   if (!step && !ask) return h('section', { class: 'card' }, h('p', { class: 'muted' }, 'Nothing to work on right now.'));
-  return h('section', { class: 'card', 'aria-labelledby': 'next-h' }, h('h2', { id: 'next-h' }, 'Next step'), h('ul', { class: 'flags' }, step ? stepCard(step, true) : questionCard(ask)));
+  return h('section', { class: 'card', 'aria-labelledby': 'next-h' }, h('h2', { id: 'next-h' }, 'Next step in the plan'), h('ul', { class: 'flags' }, step ? stepCard(step, true) : questionCard(ask)));
 }
 // What else is worth doing: the cards that are not the next step, card use only when the Profile says they will
 // apply for credit within a year (and once), and the questions not already shown. A number the Next card already asks

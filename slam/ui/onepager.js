@@ -134,7 +134,7 @@ function todoCard(spine, rules) {
   const groups = homeworkList(spine, todayIso());
   const asks = endCallTodos(spine, guessesFor(spine, rules, () => refresh()), catalog).filter((t) => t.who === 'client' && t.path);
   if (!groups.length && !asks.length) return null;
-  return goCard('Your to-dos', 'profile.html#/todo', ...groups.map((g) => [h('h3', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x)))]),
+  return goCard('Your to-dos', 'profile.html#/homework', ...groups.map((g) => [h('h3', {}, g.where), h('ul', {}, g.items.map((x) => h('li', {}, x)))]),
     asks.length ? [h('h3', {}, 'Things to tell us or look up'), h('ul', {}, asks.map((t) => h('li', {}, t.words)))] : null);
 }
 
