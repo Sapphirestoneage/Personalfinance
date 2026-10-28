@@ -1651,9 +1651,9 @@ function render(ctx) {
 // The profile file (S-195): save downloads it; load reads one back. Loading a different household starts its own
 // history, as Open file does.
 function saveFile() {
-  downloadProfile(cur());
+  const ok = downloadProfile(cur());
   refresh();
-  say('Saved ' + FILE_NAME + ' to your downloads.');
+  say(ok ? 'Saved ' + FILE_NAME + ' to your downloads.' : 'This window can\'t save files. Your numbers stay in this browser; open SLAM in its own tab to download a backup.');
 }
 // Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
 // at the top of My numbers, never a reason to refuse the file.

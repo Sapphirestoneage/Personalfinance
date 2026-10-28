@@ -3,6 +3,7 @@
 // client's to-dos and the coach's.
 
 import { h, ledgerHref } from './view.js';
+import { saveFile } from './save-file.js';
 import { whose } from './household.js';
 import { slugOf } from '../engine/blank.js';
 import { openQuestions } from '../engine/questions.js';
@@ -23,15 +24,10 @@ export function endCallTodos(spine, ranking, catalog) {
   return out;
 }
 
-// The backup: "maya-lopez-2026-10-27.json", the whole household as it stands.
+// The backup: "maya-lopez-2026-10-27.json", the whole household as it stands; null where this window can't save files.
 export function downloadBackup(spine, today) {
   const name = slugOf(whose(spine).name) + '-' + today + '.json';
-  const blob = new Blob([JSON.stringify(spine, null, 2) + '\n'], { type: 'application/json' });
-  const url = URL.createObjectURL(blob), a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  return name;
+  return saveFile(name, JSON.stringify(spine, null, 2) + '\n') === 'saved' ? name : null;
 }
 
 let savedFor = null;
@@ -43,7 +39,8 @@ export function endCallScreen(spine, ranking, catalog, today) {
   const list = (xs, none) => (xs.length ? h('ul', { class: 'todo-list' }, xs.map((t) => h('li', {}, t.path ? h('a', { href: ledgerHref(t.path) }, t.words) : t.words))) : h('p', { class: 'muted' }, none));
   return [
     h('section', { class: 'card', 'aria-labelledby': 'ec-h' }, h('h2', { id: 'ec-h' }, 'End of the call'),
-      h('p', {}, 'A backup of ' + whose(spine).name + '\'s numbers was saved to your downloads as ', h('strong', {}, file), '.'),
+      file ? h('p', {}, 'A backup of ' + whose(spine).name + '\'s numbers was saved to your downloads as ', h('strong', {}, file), '.')
+        : h('p', {}, 'This window can\'t save files, so no backup was saved here. The numbers stay in this browser; open SLAM in its own tab to save a backup.'),
       h('div', { class: 'edit-actions' },
         h('a', { class: 'btn primary', id: 'ec-print', href: 'onepager.html' }, 'Print or save the one-pager'),
         h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Save another backup'))),

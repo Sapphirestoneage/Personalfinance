@@ -7,6 +7,7 @@
 // open (Show the math, a solve age, a picked event) is kept with its history entry, so coming back restores it.
 // Every number comes from engine/plan.js and the engines under it, with Show the math. Formatting only.
 
+import { saveFile } from './save-file.js';
 import { foldRow } from './rows.js';
 import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
@@ -642,7 +643,7 @@ const diffList = (a, b, diff, n) => h('ul', { class: 'diff-list' }, diff.slice(0
 function fileScreen(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const file = h('input', { id: 'import-file', type: 'file', accept: '.json,application/json', 'aria-label': 'A household file' });
-  const download = (text, fileName, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = fileName; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  const download = (text, fileName, type) => { if (saveFile(fileName, text, type) !== 'saved') say('This window can\'t save files; open SLAM in its own tab to download it'); };
   const stamp = todayIso();
   const preview = pending ? (() => { try { const r = importJson(pending.text); return { ok: true, r, diff: diffSpines(m.base, r.spine) }; } catch (err) { return { ok: false, message: err.message }; } })() : null;
   return h('section', { class: 'card', 'aria-label': SCREENS.file },

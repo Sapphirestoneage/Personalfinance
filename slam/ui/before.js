@@ -3,6 +3,7 @@
 // phone until "Send my answers" saves a file to email or text to Eli. Never asks for account numbers or logins.
 // Formatting only: the questions and the file are engine/profile.js.
 
+import { saveFile, framed } from './save-file.js';
 import { h } from './view.js';
 import { applyPrefs } from './prefs.js';
 
@@ -65,17 +66,24 @@ async function send() {
     const f = new File([text], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'My answers for Eli' }); note = 'Sent ' + name + '.'; draw(); return; }
   } catch (err) { if (err && err.name === 'AbortError') return; }
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const a = h('a', { href: url, download: name });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  note = 'Saved ' + name + '. Email or text this file to Eli.';
+  // Where downloads are blocked (this page inside another one), say so and show the answers to copy, never "Saved".
+  if (saveFile(name, text) === 'blocked') { note = ''; showWords = true; draw(); return; }
+  note = 'Saved ' + name + ' to your downloads. Email or text this file to Eli.';
   draw();
 }
 const answerWords = () => [...LEVEL1.filter((q) => state.answers[q.id] !== undefined).map((q) => { const x = state.answers[q.id]; const w = (k) => ((q.options || []).find(([o]) => o === k) || [k, k])[1]; return q.label + ' ' + (Array.isArray(x) ? x.map(w).join(', ') : x === 'notSure' ? 'Not sure' : w(x)); }), state.gut !== null ? 'About how much I spend a month: $' + state.gut.toLocaleString('en-US') : null].filter(Boolean).join('\n');
 async function copyAnswers() {
-  try { await navigator.clipboard.writeText(answerWords()); note = 'Copied. Paste it into a message to Eli.'; } catch { note = 'This browser would not copy. Use Send my answers instead.'; }
+  try { await navigator.clipboard.writeText(answerWords()); note = 'Copied. Paste it into a message to Eli.'; } catch { note = ''; showWords = true; }
   draw();
+}
+// The answers in words, selected, for when neither a file nor the clipboard works here: copy them by hand.
+let showWords = false;
+function wordsBox() {
+  const box = h('textarea', { id: 'b-words', rows: 8, readonly: true, 'aria-describedby': 'b-words-hint' });
+  box.value = answerWords();
+  requestAnimationFrame(() => { box.focus(); box.select(); });
+  return h('div', { class: 'words-box' },
+    h('p', { id: 'b-words-hint' }, 'This window can\'t save a file. Your answers are below and already selected: copy them (Ctrl+C, or Copy on a phone) and paste them into an email or text to Eli.'), box);
 }
 
 function sendCard() {
@@ -83,11 +91,13 @@ function sendCard() {
     h('h2', { id: 'send-h' }, 'Send your answers to Eli'),
     h('p', { id: 'b-count' }, countWords()),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: send }, 'Send my answers'), h('button', { type: 'button', class: 'btn', onclick: copyAnswers }, 'Copy my answers')),
-    h('p', { class: 'edit-msg', role: 'status' }, note || 'On a phone this opens the share sheet; else it saves a file to email or text to Eli.'));
+    // Good news reads as a plain line; red is only for something that went wrong (owner's ask, 2026-10-28).
+    h('p', { class: 'edit-hint', role: 'status' }, note || (framed() ? 'In this window, Send shows your answers ready to copy into an email or text to Eli.' : 'On a phone this opens the share sheet; on a computer it saves a file to email or text to Eli.')),
+    showWords ? wordsBox() : null);
 }
 function draw() {
   const steps = STEPS(), at = Math.min(Math.max(state.step || 0, 0), steps.length - 1), [id, label] = steps[at];
-  const goTo = (n) => { state = { ...state, step: n }; keep(); note = ''; draw(); window.scrollTo(0, 0); };
+  const goTo = (n) => { state = { ...state, step: n }; keep(); note = ''; showWords = false; draw(); window.scrollTo(0, 0); };
   app.replaceChildren(...[
     h('header', { class: 'top' }, h('h1', {}, 'Before our first call')),
     h('div', { class: 'before-progress' },

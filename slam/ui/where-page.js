@@ -2,6 +2,7 @@
 // sorts and groups by these. A change is kept in this browser; "Download" saves the table as a file to keep.
 // LIVE-FORM: built once per screen; Save writes the change, then the shell redraws.
 
+import { saveFile } from './save-file.js';
 import { startPage, refresh, say } from './shell.js';
 import { whereTable, whereFile, whereChanges, keepWhereChanges } from './where-data.js';
 import { h } from './view.js';
@@ -27,9 +28,7 @@ function kindRow(k, file) {
 }
 const KIND_WORDS = { choice: 'Choices only you know', dueDay: 'Due days', cardRate: 'Card rates and minimums', loan: 'Loans', value: 'A car or home value', balance: 'Balances', k401: '401(k) match and contribution', pay: 'Pay and withholding', insurance: 'Insurance', tax: 'Last year\'s tax numbers', subscription: 'Subscriptions', housing: 'Rent and utilities', spending: 'Spending by category', other: 'Anything else' };
 function download() {
-  const blob = new Blob([JSON.stringify(whereTable(), null, 2) + '\n'], { type: 'application/json' });
-  const a = h('a', { href: URL.createObjectURL(blob), download: 'where-to-find.json' });
-  document.body.append(a); a.click(); a.remove();
+  if (saveFile('where-to-find.json', JSON.stringify(whereTable(), null, 2) + '\n') !== 'saved') say('This window can\'t save files; open SLAM in its own tab to download it');
 }
 startPage({
   tab: null, title: 'Where to find', parent: ['Builder', 'builder.html'], household: false,

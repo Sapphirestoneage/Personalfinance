@@ -115,3 +115,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Friction audit, before (2026-10-27): tools/friction-audit.mjs and docs/FRICTION_BEFORE.md (S-268).
 - Practical to run (2026-10-27): four tabs and More, clients and the switcher, pick up where we left off, the Next card, End call, autosave, the audit's fixes (S-269).
 - Ticks and speed (2026-10-28): the type's questions on every item, the add form and the Session, the More drawer, the keys, the headline strip (S-270).
+- Fix (2026-10-28): downloads inside the app preview say they can't save and offer the words to copy (S-271).

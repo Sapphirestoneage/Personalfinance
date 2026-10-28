@@ -4,6 +4,7 @@
 // date and source), which the loader reads like a profile, so it can replace
 // fixtures/eli.local.json. Never sent anywhere: the browser saves it to disk.
 
+import { saveFile } from './save-file.js';
 import { readHousehold } from '../engine/normalize.js';
 
 const KEY = 'slam-profile-baseline:v1';
@@ -21,14 +22,11 @@ export function setBaseline(spine) { try { localStorage.setItem(KEY, fingerprint
 export const matchesFile = (spine) => baseline() === fingerprint(spine);
 
 // The browser saves the file to the person's downloads folder.
+// False where this window can't save files (the page inside another page), so the caller never says it was saved.
 export function downloadProfile(spine) {
-  const blob = new Blob([JSON.stringify(spine, null, 2) + '\n'], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = FILE_NAME;
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (saveFile(FILE_NAME, JSON.stringify(spine, null, 2) + '\n') !== 'saved') return false;
   setBaseline(spine);
+  return true;
 }
 
 // A chosen file read in this browser as a household (a saved spine, an export or a profile of any version, S-228):

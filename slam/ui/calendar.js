@@ -9,6 +9,7 @@
 // with its history entry, so Back, the trail and coming back from another page land where it was.
 // Formatting only: engine/calendar.js, engine/calendar-views.js, engine/cashsim.js.
 
+import { saveFile } from './save-file.js';
 import { startPage, change, said, go, keep, kept, refresh, say, current } from './shell.js';
 import { calendar, weekdayOf } from '../engine/calendar.js';
 import { yearStrip, paychecks, milestones, searchEvents, payLaterFlags, billTiming, cashLine, cashRange, waiting, itemId, itemDay } from '../engine/calendar-views.js';
@@ -548,8 +549,7 @@ function weekView(v, c, m, st, today) {
 function downloadIcs(spine, rules) {
   const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const text = icsText(icsEvents(spine, rules, { months: 12 }), { stamp: now, name: 'SLAM' + (((spine.household.people || [])[0] || {}).name ? ': ' + spine.household.people[0].name : '') });
-  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/calendar' })), download: 'slam-calendar.ics' });
-  document.body.append(a); a.click(); a.remove();
+  if (saveFile('slam-calendar.ics', text, 'text/calendar') !== 'saved') { say('This window can\'t save files; open SLAM in its own tab to download it'); return; }
   say('Saved slam-calendar.ics: open it to add the bills, paydays and deadlines to your calendar');
 }
 
