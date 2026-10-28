@@ -1187,3 +1187,18 @@ a.fb-link .fb-more { justify-self: end; }
 .detail-body { max-width: none; }
 .detail-body .rows { margin-bottom: var(--space-2); }
 @media (max-width: 639px) { .irow-cells { gap: var(--space-1) var(--space-2); } .cell .text-box { width: 100%; } }
+
+/* ---------------------------------------------------------------- Needs in two passes (2026-10-28, S-244)
+   A category a fold, closed, its two numbers and the gap on the summary. */
+.cat-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: 6px; }
+.cat-fold { border: 1.5px solid var(--btn-line); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--btn-shadow); }
+.cat-fold > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--space-2); align-items: center; min-height: var(--tap); padding: 6px 10px; }
+.cat-fold > summary::-webkit-details-marker { display: none; }
+.cat-fold > summary::after { content: "\203A"; grid-column: 2; grid-row: 1 / span 2; font-size: 1.4rem; line-height: 1; color: var(--text-muted); transition: transform 0.15s ease; }
+.cat-fold[open] > summary::after { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .cat-fold > summary::after { transition: none; } }
+.cat-name { font-weight: 600; display: inline-flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.cat-nums { grid-column: 1; display: flex; flex-wrap: wrap; gap: 2px var(--space-3); font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cat-nums strong { color: var(--text); }
+.cat-gap { color: var(--watch-ink); font-weight: 600; }
+.cat-body { padding: 4px 10px 10px; border-top: 1px solid var(--border); display: grid; gap: var(--space-2); }

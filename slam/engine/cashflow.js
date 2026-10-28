@@ -8,6 +8,7 @@ import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
 import { taxSetAside } from './tax.js';
 import { shareOf } from './sharing.js';
 import { hiddenLine } from './profile.js';
+import { shadowedEstimate, isEstimate } from './needs.js';
 
 const v = valueOf;
 
@@ -206,7 +207,8 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   const items = [];
   for (const e of spine.expenses || []) {
     // A line the profile hides (Phase 2.5 B3: renting, then living with family) is kept, not counted.
-    if (!isActive(e, ym) || hiddenLine(spine, e)) continue;
+    // A first-pass estimate is counted only until its category has lines (engine/needs.js).
+    if (!isActive(e, ym) || hiddenLine(spine, e) || shadowedEstimate(spine, e)) continue;
     const base = 'expenses.' + e.id, path = base + '.amount';
     // A line that pays a debt (S-226, answer 35) is counted once, under debt payments below, never also here.
     if (paysDebtOf(spine, e)) { ex.useFact(base + '.paysDebt', e.paysDebt); continue; }
@@ -226,7 +228,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     if (isNeed === true) { anyNeed = true; need.useFact(path, e.amount); need.useFact(base + '.need', e.need); if (m !== null) needSum += m; }
     else if (isNeed === null) need.addMissing(base + '.need');
     if (e.fat && isNeed !== false) { lean.useFact(path, e.amount); if (isNeed === null) lean.addMissing(base + '.need'); if (m !== null) leanSum += m; }
-    items.push({ id: e.id, label: e.label, amount: round2(m), full: round2(full), shared: sh.shared, share: sh.share, people: sh.people, whoPays: sh.whoPays, fat: e.fat, need: isNeed, fixed: e.fixed });
+    items.push({ id: e.id, label: e.label, amount: round2(m), full: round2(full), shared: sh.shared, share: sh.share, people: sh.people, whoPays: sh.whoPays, fat: e.fat, need: isNeed, fixed: e.fixed, estimate: isEstimate(e) ? e.estimate : null });
   }
 
   // Minimums: this month from today's balances; a later month from the debt

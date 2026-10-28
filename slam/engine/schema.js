@@ -4,6 +4,7 @@
 
 import { KINDS, isFact, isDay } from './spine.js';
 import { questionById, cleanAnswer, STATUS } from './profile.js';
+import { CATEGORY_IDS } from './needs.js';
 
 export const SCHEMA_ID = 'slam-spine/1';
 
@@ -345,6 +346,10 @@ export function validate(spine) {
     optDate(p + '.start', e.start); optDate(p + '.end', e.end);
     if (e.fat !== null && !FAT.includes(e.fat)) err(p + '.fat', 'food, accommodation, transportation or null');
     if (e.fixed !== null && e.fixed !== undefined && typeof e.fixed !== 'boolean') err(p + '.fixed', 'true, false or null');
+    // Needs in two passes (2026-10-28): a line may name its category; an estimate line is a category's first-pass number.
+    if (e.category !== undefined && !CATEGORY_IDS.includes(e.category)) err(p + '.category', 'not one of ' + CATEGORY_IDS.join('|'));
+    if (e.estimate !== undefined && !CATEGORY_IDS.includes(e.estimate)) err(p + '.estimate', 'not one of ' + CATEGORY_IDS.join('|'));
+    if (e.estimate !== undefined && e.cadence !== 'monthly') err(p + '.cadence', 'an estimate is a month');
     // Need or want, and paid by someone else, are Facts (S-171): a missing tag shows in the Ledger.
     checkFact(p + '.need', e.need, 'bool', false);
     checkFact(p + '.covered', e.covered, 'bool', false);

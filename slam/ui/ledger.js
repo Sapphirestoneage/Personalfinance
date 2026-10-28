@@ -28,10 +28,12 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref } from './view.js';
-import { countHead, countList, itemList, rid } from './items.js';
+import { countHead, countList, itemList, expenseRows, rid } from './items.js';
+import { answerField } from './answers.js';
 import { laterDate, setLaterPath, isLaterPath } from './later.js';
 import { later as soon } from './boxes.js';
 import { COLLECTION_OF } from '../engine/count.js';
+import { needsView, setEstimate, setCategory, inUseWords, gapWords } from '../engine/needs.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -919,14 +921,15 @@ function subsScreen() {
 const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
 
 // The add form (S-237): the same one the Session uses (ui/add-form.js), asking first, then the name and the amount.
-// The add form for a list: n.add from the tree, or a spec of its own ({ key, collection, types, fat, stay }).
-// stay keeps the screen and lands on the new row.
+// The add form for a list: n.add from the tree, or a spec of its own ({ key, collection, types, fat, category, stay }).
+// A line added from a category keeps that category (2026-10-28); stay keeps the screen and lands on the new row.
 function addFormFor(spec) {
-  const { collection, types = [], fat = null, stay = false } = spec;
+  const { collection, types = [], fat = null, category = null, stay = false } = spec;
   return newAddForm({ spine: cur, collection, types, fat, today: today(),
     onDone: (made, label) => {
       adding = null;
-      if (!change(made.spine, said.added(label))) return;
+      const next = category && made.collection === 'expenses' ? setCategory(made.spine, made.id, category) : made.spine;
+      if (!change(next, said.added(label))) return;
       if (stay) soon(() => document.getElementById(rid(made.collection, made.id, 'name'))?.select()); else openField(made.firstPath);
     },
     onCancel: () => { adding = null; refresh(); } });
@@ -1171,6 +1174,7 @@ function unemploymentCard() {
 
 function sectionScreen(sec) {
   if (COLLECTION_OF[sec.slug]) return countSection(sec);
+  if (sec.slug === 'needs') return needsSection(sec);
   return [
     sectionTop(sec),
     selectAll(sec.allRows, 'Select all here'),
@@ -1256,6 +1260,41 @@ function countSection(sec, { lean = false } = {}) {
     itemList({ spine, rules, collection, detail, today: today() }),
     lean ? null : [sectionTop(sec), extras.length ? h('ul', { class: 'go-list' }, extras.map((it) => goRow(hashFor(screensOf(spine).itemLevels.get(it.key) || [sec.slug]), { name: it.label, sub: [headline(it), dots(it.counts)] }))) : null]
   ];
+}
+
+// Needs in two passes (2026-10-28, engine/needs.js): one row per category, closed, with the first-pass estimate and
+// the lines' total side by side and the gap between them; open, the estimate with its four answers, the lines as
+// slim rows, and Add a line. lean: the onboarding step, the seven estimates only.
+const catOpen = new Set();
+function needsSection(sec, { lean = false } = {}) {
+  const spine = cur(), s = summaryOf(spine), view = needsView(spine, s.cashflow), st = kept(), total = s.cashflow.expenses.total;
+  const head = h('p', { class: 'count-head', role: 'status' }, h('strong', {}, 'Needs: '), total.value === null ? 'nothing yet' : money(total.value) + ' a month', total.kind === 'incomplete' ? [' ', chip('incomplete')] : null,
+    view.fromLines || view.fromEstimates ? ' \u00b7 ' + view.fromLines + ' from lines, ' + view.fromEstimates + ' from estimates' : null);
+  const estimateField = (c) => answerField({ id: 'est-' + c.id, label: lean ? c.label : 'Estimate, a month', path: c.estimate ? c.estimate.path : 'expenses.est-' + c.id + '.amount', fact: c.estimate ? { value: c.estimate.value, kind: c.estimate.kind } : null,
+    onSet: (val, kind) => change((sp) => setEstimate(sp, c.id, val, kind, today()), said.changed(c.label + ' estimate', val === null ? (kind === 'notForMe' ? 'not for me' : 'blank') : money(val) + ' a month' + (kind === 'rough' ? ' (rough)' : ''))),
+    hint: c.inUse === 'lines' ? 'Its lines add up to ' + money(c.linesTotal) + (c.linesIncomplete ? ' so far' : '') + ', so they count instead.' : null });
+  if (lean) return [head, h('p', { class: 'muted' }, 'One number for each, a month. Rough is fine; the lines come later in My numbers.'), h('section', { class: 'card' }, h('div', { class: 'onb-grid est-grid' }, ...view.categories.map(estimateField)))];
+  const itemsByKey = new Map(sec.groups.flatMap((g) => g.items).map((it) => [it.key, it]));
+  const detail = (x) => { const it = itemsByKey.get('expenses.' + x.id); return it ? h('ul', { class: 'rows' }, it.rows.map((r) => rowEl(r, st.open || null))) : null; };
+  const fold = (c) => {
+    const open = catOpen.has(c.id), key = 'cat:' + c.id;
+    const d = h('details', { class: 'cat-fold', open: open || null, id: 'cat-' + c.id },
+      h('summary', {},
+        h('span', { class: 'cat-name' }, c.label, h('span', { class: 'pill' }, inUseWords(c))),
+        h('span', { class: 'cat-nums' },
+          h('span', {}, 'Estimate ', h('strong', {}, c.estimate && c.estimate.value !== null ? money(c.estimate.value) : 'none')),
+          h('span', {}, 'Lines ', h('strong', {}, c.linesTotal === null ? 'none' : money(c.linesTotal)), c.linesIncomplete && c.linesTotal !== null ? [' ', chip('incomplete')] : null),
+          gapWords(c, money) ? h('span', { class: 'cat-gap' }, gapWords(c, money)) : null)),
+      open ? h('div', { class: 'cat-body' },
+        estimateField(c),
+        c.lines.length ? expenseRows({ spine, rules, lines: c.lines.map((l) => spine.expenses.find((e) => e.id === l.id)), detail, today: today() }) : h('p', { class: 'muted' }, 'No lines yet.'),
+        adding && adding.key === key ? addFormFor(adding) : h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = { key, collection: 'expenses', fat: c.fat, category: c.id, stay: true }; refresh(); document.getElementById('add-name')?.focus(); } }, '+ Add a line')) : null);
+    d.addEventListener('toggle', () => { if (!d.isConnected || d.open === catOpen.has(c.id)) return; if (d.open) catOpen.add(c.id); else catOpen.delete(c.id); refresh(); });
+    return h('li', {}, d);
+  };
+  const extras = sec.groups.filter((g) => !(g.node && g.node.category));
+  return [head, h('ul', { class: 'cat-list' }, ...view.categories.map(fold)),
+    h('ul', { class: 'go-list' }, subsRow(), ...extras.map((g) => goRow(hashFor([sec.slug, g.slug]), { name: g.label, sub: [groupTotal(sec, g), dots(g.counts)] })))];
 }
 
 // A level's words for the trail and the title; null when that level is not there any more.
