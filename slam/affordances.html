@@ -332,6 +332,35 @@
     <p class="muted">At the bottom of every page, one small link to the Builder (the Design kit, All formulas and Rules): see the footer sample under Plan page and shared pieces.</p>
   </section>
 
+  <section class="card" aria-labelledby="onb-h">
+    <h2 id="onb-h">Onboarding and count first (2026-10-28)</h2>
+    <p class="muted">The step bar: one pill a step, the current one filled; any step opens on a tap. Back and Next sit under every step; Enter moves to the next box, then to Next.</p>
+    <nav class="steps" aria-label="Onboarding steps (sample)"><ol><li><a class="step-link" href="#onb-h"><span class="step-n" aria-hidden="true">1</span><span class="step-w">Profile</span></a></li><li><a class="step-link" href="#onb-h" aria-current="step"><span class="step-n" aria-hidden="true">2</span><span class="step-w">Income</span></a></li><li><a class="step-link" href="#onb-h"><span class="step-n" aria-hidden="true">3</span><span class="step-w">Debt</span></a></li><li><a class="step-link" href="#onb-h"><span class="step-n" aria-hidden="true">4</span><span class="step-w">Assets</span></a></li></ol></nav>
+    <p class="muted">Count first: a type a row with its stepper; 0 reads "not for me" and counts as done.</p>
+    <p class="count-head"><strong>Debt: </strong>1 card, 1 car loan, $7,200 total</p>
+    <ul class="count-list" aria-label="How many of each (sample)">
+      <li class="count-row has-some"><span class="count-label">Credit cards</span><span class="stepper" role="group" aria-label="Credit cards: how many"><button type="button" class="btn small" aria-label="One fewer: Credit cards">&minus;</button><span class="count-n">1</span><button type="button" class="btn small" aria-label="One more: Credit cards">+</button></span></li>
+      <li class="count-row"><span class="count-label">Student loans<span class="count-none">not for me</span></span><span class="stepper" role="group" aria-label="Student loans: how many"><button type="button" class="btn small" aria-label="One fewer: Student loans" disabled title="None to take away">&minus;</button><span class="count-n">0</span><button type="button" class="btn small" aria-label="One more: Student loans">+</button></span></li>
+    </ul>
+    <p class="muted">A slim row: a label over each box; the three other answers beside a number (the one in force pressed); Duplicate, Delete and More detail under.</p>
+    <ul class="irows">
+      <li class="irow irow-debts">
+        <div class="irow-cells">
+          <div class="cell"><label class="mini-label" for="k-name">Name</label><input id="k-name" class="text-box" type="text" value="Chase Freedom"></div>
+          <div class="af"><label class="mini-label" for="k-owed">Owed</label><div class="af-row"><input id="k-owed" class="amt" type="text" value="4200"><span class="ans" role="group" aria-label="Owed: rough, not now or not for me"><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Rough</button><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Not now</button><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Not for me</button></span></div></div>
+          <div class="af"><label class="mini-label" for="k-rate">Rate</label><div class="af-row"><input id="k-rate" class="rate-box" type="text" value="24.99"><span class="ans" role="group" aria-label="Rate: rough, not now or not for me"><button type="button" class="btn small toggle ans-btn" aria-pressed="true">Rough</button><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Not now</button><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Not for me</button></span></div></div>
+          <div class="af af-notme"><label class="mini-label" for="k-min">A month</label><div class="af-row"><input id="k-min" class="amt" type="text" placeholder="Not for me"><span class="ans" role="group" aria-label="A month: rough, not now or not for me"><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Rough</button><button type="button" class="btn small toggle ans-btn" aria-pressed="false">Not now</button><button type="button" class="btn small toggle ans-btn" aria-pressed="true">Not for me</button></span></div></div>
+        </div>
+        <div class="irow-btns"><button type="button" class="btn small">Duplicate</button><button type="button" class="btn danger small">Delete</button><details class="row-more detail"><summary>More detail</summary><div class="row-more-body detail-body"><p class="muted">The item's full rows open here.</p></div></details></div>
+      </li>
+    </ul>
+    <p class="muted">Needs, pass 2: a category a fold, closed, with the first-pass estimate, the lines' total and the gap; the pill says which one counts.</p>
+    <ul class="cat-list"><li><details class="cat-fold"><summary><span class="cat-name">Housing <span class="pill">using the lines</span></span><span class="cat-nums"><span>Estimate <strong>$600</strong></span><span>Lines <strong>$460</strong></span><span class="cat-gap">$140 not in lines yet</span></span></summary><div class="cat-body"><p class="muted">The estimate with its four answers, the lines as slim rows, and Add a line.</p></div></details></li></ul>
+    <p class="muted">The gear menu, on every header: what is not on the main screens (Run onboarding again lives only here).</p>
+    <div class="demo-row"><details class="gear" open><summary class="btn gear-btn" aria-label="Menu"><span class="gear-ico" aria-hidden="true"></span>Menu</summary><ul class="gear-menu" style="position: static; margin-top: 4px"><li><a href="#onb-h">Run onboarding again</a></li><li><a href="#onb-h">Profile</a></li></ul></details></div>
+    <section class="card onb-card" aria-labelledby="onb-card-h"><h2 id="onb-card-h">Start here</h2><p class="muted">On Home until the first pass is done.</p><div class="edit-actions"><a class="btn primary" href="#onb-h">Start onboarding</a></div></section>
+  </section>
+
   <section class="card" aria-labelledby="n-h">
     <h2 id="n-h">Notices</h2>
     <p class="saved-line">Saved in this browser: Utilities is $40.</p>

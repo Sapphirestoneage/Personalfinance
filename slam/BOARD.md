@@ -47,6 +47,13 @@
 - [x] How much to max it? (S-211): a panel on every tax-advantaged account in the Ledger, one Plan card, deadline chips on the calendar, the FOO rungs and the Windfall Roth step on the same rows, the cash check on the day-by-day run
 - [x] Batch G, the retirement: the patch is now applied (answer 39, S-226); what is left is listed as known differences in `docs/PHASE2_REPORT.md`
 
+## Done: onboarding, count first, Needs in two passes (2026-10-28)
+
+- [x] Count first (S-243): Debt, Assets and Income open on their types with a count stepper each, then one slim row an item (first-pass answers only, four answers a number, Duplicate, Delete, More detail), the same rows on the normal section screens
+- [x] Needs in two passes (S-244): seven first-pass estimates, lines sharpen them by category, one rule for which counts, everywhere
+- [x] Onboarding (S-245): Start onboarding on Home, the gear menu's Run onboarding again, seven steps with a step bar, Enter moves on, the finish screen with the headline numbers and the rough and not-now lists
+- [x] The onboarding check (S-246): `node tools/onboard-check.mjs`, three clients under 10 minutes each at a coach's pace, finish numbers equal to Today's and My numbers'
+
 ## Next: Eli's answers to questions 29 on, then the retirement patch
 
 ## Earlier plan (superseded by the batches above)
