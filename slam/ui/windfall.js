@@ -13,12 +13,13 @@ import { parseInput } from '../engine/edits.js';
 import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
+import { choiceRow } from './choice.js';
 import { h, chip, money, ledgerHref } from './view.js';
 
 const KEY = 'slam-windfall:v1';
 // One data color per step, in the fixed order (DESIGN.md 8); the tax steps share one, the cash steps share one.
 const COLOR = { taxOnIt: 'viz-4', taxBill: 'viz-4', cashFloor: 'viz-3', promos: 'viz-2', cards: 'viz-2', cushion: 'viz-3', roth: 'viz-5', left: 'viz-0' };
-const LEGEND = [['viz-4', 'Tax'], ['viz-3', 'Cash'], ['viz-2', 'Debt'], ['viz-5', 'Roth IRA'], ['viz-0', 'Not assigned yet']];
+const LEGEND_WORDS = { 'viz-4': 'Tax', 'viz-3': 'Cash', 'viz-2': 'Debt', 'viz-5': 'Roth IRA', 'viz-0': 'Not assigned yet' };
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 
 // What is asked (morning answer 9): how much, and where it came from; the tax follows from where (WINDFALL_FROM). An
@@ -51,38 +52,48 @@ function math(key, ids, ctx) {
 // A row that opens My numbers: the whole row is the target, with a chevron.
 const goRow = (href, name, sub) => h('li', {}, h('a', { class: 'go-row plain', href }, h('span', { class: 'go-name' }, name), h('span', { class: 'go-sub' }, sub)));
 
-function form() {
+// A source picked before the amount is typed, kept until Show where it goes saves it with the amount.
+let chosen = null;
+function form(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const amount = h('input', { id: 'wf-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 5,000' });
   amount.value = ask.amount === null ? '' : String(ask.amount);
-  // One question (morning answer 9): where it came from sets the tax; the step says which rule applied.
-  const src = (val) => h('label', { class: 'choice-card' }, h('input', { type: 'radio', name: 'wf-from', value: val, checked: ask.from === val }), h('span', { class: 'choice-text' }, h('strong', {}, WINDFALL_FROM[val].words)));
-  const srcBox = h('fieldset', { class: 'choice-group' }, h('legend', { class: 'edit-label' }, 'Where did it come from?'), ...Object.keys(WINDFALL_FROM).map(src));
+  // One question (morning answer 9): where it came from sets the tax; the step says which rule applied. A bonus is
+  // the likely answer, shown as a guess until it is picked or saved with the amount (S-282, ui/choice.js). A pick
+  // redraws only this row and the result below, never the amount box (D-034).
+  const from = () => chosen ?? (ask.amount === null ? null : ask.from);
+  let srcRow;
+  const drawSrc = () => choiceRow({ id: 'wf-from', options: Object.entries(WINDFALL_FROM).map(([k, x]) => [k, x.words]), value: from(), recommended: 'bonus', label: 'wf-from-l', clear: false, onPick: (k) => {
+    chosen = k;
+    if (ask.amount !== null) { ask = { ...ask, from: k }; remember(); document.getElementById('wf-result')?.replaceWith(result(model(m.base, m.rules))); }
+    const next = drawSrc(); srcRow.replaceWith(next); srcRow = next;
+  } });
+  srcRow = drawSrc();
   // The screen's one job is this question, so the form is its main action (the tester allows a main form open).
   return h('form', { class: 'editor windfall-form', 'data-main-form': '', novalidate: true, onsubmit: (e) => {
     e.preventDefault();
     const p = parseInput('money', amount.value);
     if (!p.ok || p.value <= 0) { msg.textContent = 'How much: ' + (p.ok ? 'more than $0' : p.message); amount.focus(); return; }
-    ask = { amount: p.value, from: srcBox.querySelector('input:checked').value };
+    ask = { amount: p.value, from: from() || ask.from };
     remember();
     refresh();
     document.getElementById('wf-result')?.scrollIntoView({ block: 'start' });
   } },
     h('label', { for: 'wf-amount', class: 'edit-label' }, 'How much is coming in?'),
     h('div', { class: 'amount-row' }, h('span', { class: 'unit', 'aria-hidden': 'true' }, '$'), amount),
-    srcBox, msg,
+    h('p', { class: 'edit-label', id: 'wf-from-l' }, 'Where did it come from?'), srcRow, msg,
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Show where it goes')));
 }
 
 // Nothing here: the step needs nothing, or the money ran out before it.
-const amountWords = (st) => (st.amount === null ? 'Cannot figure yet' : st.amount === 0 ? (st.need > 0 ? 'Nothing left for it' : 'Nothing needed') : money(st.amount, !Number.isInteger(st.amount)));
+const amountWords = (st) => (st.amount === null ? 'Cannot figure yet' : st.amount === 0 ? (st.need > 0 ? 'Nothing left for it' : 'Nothing needed') : money(st.amount));
 
 function stepRow(st, i) {
   const zero = !st.amount;
   return h('li', {}, h('a', { class: 'go-row' + (zero ? ' zero' : ''), href: '#/' + slug(st.id) },
     h('span', { class: 'wf-num ' + COLOR[st.id], 'aria-hidden': 'true' }, String(i + 1)),
     h('span', { class: 'go-name' }, st.label),
-    h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, amountWords(st)), st.short > 0 ? 'short by ' + money(st.short) : null, ['rough', 'incomplete', 'missing'].includes(st.kind) ? kindChip(st.kind) : null)));
+    h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, amountWords(st)), st.short > 0 ? 'short by ' + money(st.short) : null, (st.amount === null || st.amount > 0 || st.short > 0) && ['rough', 'incomplete', 'missing'].includes(st.kind) ? kindChip(st.kind) : null)));
 }
 
 function result(m) {
@@ -92,10 +103,11 @@ function result(m) {
   const used = new Set(segs.map((x) => COLOR[x.id]));
   return h('section', { class: 'card', id: 'wf-result', 'aria-labelledby': 'wf-h' },
     h('h2', { id: 'wf-h' }, 'Where ' + money(w.amount) + ' goes'),
-    h('p', { class: 'tile-sub' }, (w.fromWords ? w.fromWords + ': ' + (w.taxed ? 'no tax held back. ' : 'tax held back first. ') : w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' has a job' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give one.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: open it to see what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
+    h('p', { class: 'tile-sub' }, (w.fromWords ? w.fromWords + ': ' + (w.taxed ? 'nothing more is owed on it. ' : 'tax on it is held back first. ') : w.taxed ? 'Tax already taken out. ' : 'Tax still owed on it. ') + money(w.assigned) + ' has a job' + (w.left > 0 ? ' and ' + money(w.left) + ' is left to give one.' : '.') + (w.kind === 'incomplete' ? ' A step could not be figured: open it to see what it needs.' : w.kind === 'rough' ? ' Some steps rest on rough numbers.' : '')),
     h('div', { class: 'wf-bar', role: 'img', 'aria-label': 'The money split by step; the same amounts are listed below' }, segs.map((x) => h('span', { class: 'wf-seg ' + COLOR[x.id], style: 'width:' + (x.amount / w.amount * 100) + '%', title: x.label + ': ' + money(x.amount) }))),
-    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, LEGEND.filter(([c]) => used.has(c)).map(([c, t]) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), t))),
-    h('ol', { class: 'go-list' }, w.steps.map(stepRow)),
+    h('ul', { class: 'flow-legend', 'aria-label': 'What the colors mean' }, [...used].map((c) => h('li', {}, h('span', { class: 'sw ' + c, 'aria-hidden': 'true' }), LEGEND_WORDS[c]))),
+    h('ol', { class: 'go-list' }, w.steps.filter((x) => x.id !== 'left').map(stepRow)),
+    h('p', { class: 'tile-sub' }, w.left > 0 ? money(w.left) + ' is not assigned yet; it stays as cash until you give it a job.' : 'Every dollar has a job.'),
     h('p', { class: 'tile-note' }, 'The order: tax first, then the floor under your cash, then the debt that costs the most, then the cushion and the Roth. This shows where the money goes in that order; it is not advice about your situation.'));
 }
 
@@ -129,7 +141,7 @@ function render({ spine, rules, levels }) {
   const m = model(spine, rules);
   if (levels.length) return stepScreen(m, m.w.steps[indexOf(m, levels[0])]);
   return [
-    h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'What do I do with extra money?'), form()),
+    h('section', { class: 'card', 'aria-labelledby': 'wf-ask' }, h('h2', { id: 'wf-ask' }, 'What do I do with extra money?'), form(m)),
     result(m)
   ];
 }
