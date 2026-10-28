@@ -33,7 +33,7 @@ const FIELD = {
   coverageLevel: 'coverage (self or family)', throughPayroll: 'through payroll', paidThrough: 'paid through (the job)', monthsEligible: 'months eligible this year', employerSeed: 'employer money in a year', planEligible: 'HSA-eligible plan'
 };
 const ASSUME = { inflation: 'Inflation', realReturn: 'Real return', withdrawalRate: 'Withdrawal rate', lifeExpectancy: 'Life expectancy', coastAge: 'Coast FI age' };
-const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded', gutSpending: 'Your guess: spending a month' };
+const HOUSE = { filingStatus: 'Filing status', state: 'State', county: 'County', nycResident: 'Lives in New York City', yonkersResident: 'Lives in Yonkers', cardPayPolicy: 'How every card is paid', householdSize: 'People in the household', workHoursPerWeek: 'Hours worked a week', deductible: 'Biggest insurance deductible', commuteHoursPerWeek: 'Commute hours a week', lastRefund: 'Last tax refund (owed is negative)', goalOrder: 'How goals are funded', gutSpending: 'Your guess: spending a month' };
 const words = (k) => FIELD[k] || String(k ?? '').replace(/([A-Z])/g, ' $1').toLowerCase();
 // On a credit card the three rate fields read as one interest rate (S-161).
 const CARD_FIELD = { apr: 'interest rate', promoApr: 'intro rate', promoEnds: 'intro ends' };

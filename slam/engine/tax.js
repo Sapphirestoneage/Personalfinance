@@ -78,11 +78,18 @@ export function computeTax(inp, R, year) {
 
   // New York State: NY AGI taken as federal AGI (no NY subtractions modeled).
   let stateTax = null, stateTaxable = null, stateMarginal = null, stateRules = [];
+  // New York City and Yonkers (S-272): a full-year NYC resident pays the city's tax on New York taxable income; a
+  // Yonkers resident pays a surcharge on the state tax. Both are added to the state line (withheld with it, set aside
+  // with it), and each is its own line too.
+  let nysTax = null, localTax = null;
   if (inp.state === 'NY') {
     stateRules = [id('NY_BRK'), id('NY_STD')];
     stateTaxable = Math.max(0, agi - g(id('NY_STD')));
-    stateTax = bracketTax(stateTaxable, g(id('NY_BRK')));
+    nysTax = bracketTax(stateTaxable, g(id('NY_BRK')));
     stateMarginal = marginalRate(stateTaxable, g(id('NY_BRK')));
+    if (inp.locality === 'nyc') { localTax = bracketTax(stateTaxable, g(id('NYC_BRK'))); stateMarginal += marginalRate(stateTaxable, g(id('NYC_BRK'))); stateRules.push(id('NYC_BRK')); }
+    else if (inp.locality === 'yonkers') { localTax = nysTax * g('YONKERS_SURCHARGE'); stateMarginal *= 1 + g('YONKERS_SURCHARGE'); stateRules.push('YONKERS_SURCHARGE'); }
+    stateTax = nysTax + (localTax || 0);
   }
   const total = stateTax === null ? null : federalTotal + stateTax;
   const withheld = n(inp.withheldFederal) + n(inp.withheldState);
@@ -105,6 +112,8 @@ export function computeTax(inp, R, year) {
       federalTotal: line(federalTotal, [id('FED_BRK'), 'SE_FACTOR', 'ADD_MED_RATE']),
       stateTaxable: line(stateTaxable, stateRules),
       stateTax: line(stateTax, stateRules),
+      nysTax: line(nysTax, stateRules.slice(0, 2)),
+      localTax: line(localTax, stateRules.slice(2)),
       total: line(total, [id('FED_BRK'), ...stateRules]),
       withheld: line(withheld),
       estimatedPaid: line(paid),
@@ -145,8 +154,9 @@ export function taxInputs(spine, R, year, mode = 'committed') {
   const state = t.read(spine, 'household.state');
   if (state !== null && state !== 'NY') notModeled.push('State tax for ' + state);
   if (state === null) miss.other.push('household.state');
-  if (v(spine.household.nycResident) === true) notModeled.push('New York City income tax');
-  t.read(spine, 'household.nycResident');
+  // Where in New York (S-272): New York City, Yonkers, or neither. Part of a year in the city counts as all of it.
+  const nyc = t.read(spine, 'household.nycResident'), yonkers = spine.household.yonkersResident ? t.read(spine, 'household.yonkersResident') : null;
+  const locality = state === 'NY' ? (nyc === true ? 'nyc' : yonkers === true ? 'yonkers' : null) : null;
 
   let w2Months = 0;
   // Each person's months of pay, wages, FICA wages and self-employment profit (S-213, S-214).
@@ -342,7 +352,7 @@ export function taxInputs(spine, R, year, mode = 'committed') {
       else known[key] += x;
     }
   }
-  return { inputs: { filingStatus: status, state, ...known }, tracker: t, missing: miss, notModeled, notes, earned };
+  return { inputs: { filingStatus: status, state, locality, ...known }, tracker: t, missing: miss, notModeled, notes, earned };
 }
 
 // Words for what is missing: "2026 W-2 wages and withholding".

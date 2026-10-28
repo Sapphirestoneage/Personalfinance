@@ -33,6 +33,7 @@
 // maxIt(spine, rules, { asOf, sim, years }) -> { asOf, rows, accounts, pools, window, totals, kind, from, rough, missing, rules }
 // maxItCash(spine, rules, mx, { rows, sim }) -> { floor, before, after, breaks, payoff, words, ... }
 
+import { matchTiersOf, fullMatchShare, hasTrueUp } from './match.js';
 import { valueOf as v, tracker, round2, ageOn, addMonths, monthKey, daysBetween, dayIn, monthStart, monthEnd, accountOwner, incomeOwner } from './spine.js';
 import { PRESETS, PER_YEAR, isEarmarked, throughPayroll } from './schema.js';
 import { earnedIncome, yearTax } from './tax.js';
@@ -816,13 +817,14 @@ function coupleCuts(P, n, U, I, ids, se = [0, 0], past = [0, 0]) {
 // It comes first, before any IRA money, and is never cut for one.
 function matchPartOf(spine, q, asOf) {
   const a = (spine.accounts || []).find((x) => x.id === q.row.accountId);
-  const rate = a && a.matchRate ? v(a.matchRate) : null, share = a && a.matchCap ? v(a.matchCap) : null;
-  if (!rate || !share) return 0;
-  // Only pay still to come can be matched (no year-end true-up is asked about): the paychecks of the lines it is paid
-  // through from asOf on (a payday on asOf is still to come), each its line's amount (a quarterly or yearly line spread
-  // over monthly dates, as payDatesOf has it), less what is already set to go in from them (answer 63).
+  const tiers = matchTiersOf(a), share = fullMatchShare(tiers);
+  if (!tiers.length || !share) return 0;
+  // Only pay still to come can be matched: the paychecks of the lines it is paid through from asOf on (a payday on asOf
+  // is still to come), each its line's amount (a quarterly or yearly line spread over monthly dates, as payDatesOf has
+  // it), less what is already set to go in from them (answer 63). With a year-end true-up (S-272) the plan figures the
+  // match on the whole year's pay, so the year's pay counts from January.
   const from = q.year + '-01-01', to = q.year + '-12-31';
-  const start = asOf > from ? asOf : from;
+  const start = hasTrueUp(a) ? from : asOf > from ? asOf : from;
   if (start > to) return 0;
   const left = (s) => {
     const amt = v(s.amount);

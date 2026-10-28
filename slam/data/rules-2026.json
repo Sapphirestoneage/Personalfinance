@@ -1257,6 +1257,124 @@
       "verified": "law"
     },
     {
+      "id": "NYC_BRK_S",
+      "rule": "New York City resident income tax brackets, single",
+      "value": [
+        [
+          12000,
+          0.03078
+        ],
+        [
+          25000,
+          0.03762
+        ],
+        [
+          50000,
+          0.03819
+        ],
+        [
+          null,
+          0.03876
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NYC residents): on New York State taxable income (S-272)",
+      "notes": "Full-year residents; a part-year resident is taken as full-year until asked",
+      "source": "NYS Form IT-201-I (2025), New York City tax rate schedule; NYC Admin Code 11-1701 (rates unchanged since 2017). Entered from the published schedule as known; tax.ny.gov could not be opened from this session, so check it there before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "NYC_BRK_MFS",
+      "rule": "New York City resident income tax brackets, married filing separately",
+      "value": [
+        [
+          12000,
+          0.03078
+        ],
+        [
+          25000,
+          0.03762
+        ],
+        [
+          50000,
+          0.03819
+        ],
+        [
+          null,
+          0.03876
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NYC residents): on New York State taxable income (S-272)",
+      "notes": "Full-year residents; a part-year resident is taken as full-year until asked",
+      "source": "NYS Form IT-201-I (2025), New York City tax rate schedule; NYC Admin Code 11-1701 (rates unchanged since 2017). Entered from the published schedule as known; tax.ny.gov could not be opened from this session, so check it there before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "NYC_BRK_J",
+      "rule": "New York City resident income tax brackets, married filing jointly (and qualifying surviving spouse)",
+      "value": [
+        [
+          21600,
+          0.03078
+        ],
+        [
+          45000,
+          0.03762
+        ],
+        [
+          90000,
+          0.03819
+        ],
+        [
+          null,
+          0.03876
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NYC residents): on New York State taxable income (S-272)",
+      "notes": "Full-year residents; a part-year resident is taken as full-year until asked",
+      "source": "NYS Form IT-201-I (2025), New York City tax rate schedule; NYC Admin Code 11-1701 (rates unchanged since 2017). Entered from the published schedule as known; tax.ny.gov could not be opened from this session, so check it there before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "NYC_BRK_H",
+      "rule": "New York City resident income tax brackets, head of household",
+      "value": [
+        [
+          14400,
+          0.03078
+        ],
+        [
+          30000,
+          0.03762
+        ],
+        [
+          60000,
+          0.03819
+        ],
+        [
+          null,
+          0.03876
+        ]
+      ],
+      "unit": "brackets",
+      "appliesTo": "Tax engine (NYC residents): on New York State taxable income (S-272)",
+      "notes": "Full-year residents; a part-year resident is taken as full-year until asked",
+      "source": "NYS Form IT-201-I (2025), New York City tax rate schedule; NYC Admin Code 11-1701 (rates unchanged since 2017). Entered from the published schedule as known; tax.ny.gov could not be opened from this session, so check it there before quoting",
+      "verified": "verify"
+    },
+    {
+      "id": "YONKERS_SURCHARGE",
+      "rule": "Yonkers resident income tax surcharge, a share of the net New York State tax",
+      "value": 0.1675,
+      "unit": "rate",
+      "appliesTo": "Tax engine (Yonkers residents) (S-272)",
+      "notes": "Full-year residents; on the New York State tax after credits (credits are not modeled)",
+      "source": "NYS Form IT-201-I (2025), Yonkers resident income tax surcharge worksheet. Entered as known; tax.ny.gov could not be opened from this session, so check it there before quoting",
+      "verified": "verify"
+    },
+    {
       "id": "NY_BRK_MFS",
       "rule": "New York State income tax brackets, married filing separately",
       "value": [

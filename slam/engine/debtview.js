@@ -246,16 +246,21 @@ export function idr(spine, rules, d, s = null, asOf = spine.meta.asOf) {
   const hasYears = rules.has('IDR_FORGIVENESS_YEARS', year);
   const years = hasYears ? t.rule(rules, 'IDR_FORGIVENESS_YEARS', year) : null;
   if (!hasYears) missingRules.push('IDR_FORGIVENESS_YEARS');
-  const pslfOn = d.pslf ? t.useFact(P(d, 'pslf'), d.pslf) === true : false;
+  // Public service forgiveness: on when asked yes, or when a count of qualifying payments is typed (S-272). The count
+  // made so far shortens the wait; a typed forgiveness date wins over the one figured.
+  const made = d.pslfPayments ? t.useFact(P(d, 'pslfPayments'), d.pslfPayments) : null;
+  const pslfOn = (d.pslf ? t.useFact(P(d, 'pslf'), d.pslf) === true : false) || (d.ticks && d.ticks.pslf === 'yes') || made !== null;
   const hasPslf = rules.has('PSLF_PAYMENTS', year);
   const pslfPayments = pslfOn && hasPslf ? t.rule(rules, 'PSLF_PAYMENTS', year) : null;
   if (pslfOn && !hasPslf) missingRules.push('PSLF_PAYMENTS');
+  const pslfLeft = pslfPayments === null ? null : Math.max(0, pslfPayments - (made || 0));
+  const pslfTyped = d.forgivenessDate ? t.useFact(P(d, 'forgivenessDate'), d.forgivenessDate) : null;
   const out = t.out(payment);
   return {
     ...base, federal: true, agi, agiSource, householdSize: size, povertyLine: poverty, discretionary, payment, rap,
     lower: payment !== null && base.standardPayment !== null ? payment < base.standardPayment : null,
     forgivenessYears: years, forgivenessDate: years === null ? null : sameDayLater(asOf, years * 12),
-    pslf: pslfOn ? { payments: pslfPayments, date: pslfPayments === null ? null : sameDayLater(asOf, pslfPayments) } : null,
+    pslf: pslfOn ? { payments: pslfPayments, made, left: pslfLeft, date: pslfTyped || (pslfLeft === null ? null : sameDayLater(asOf, pslfLeft)), typed: !!pslfTyped } : null,
     missingRules, kind: missingRules.length ? 'missing' : out.kind, from: out.from, rough: out.rough, missing: [...out.missing, ...missingRules.map((id) => 'rule:' + id)], rules: out.rules
   };
 }

@@ -21,7 +21,7 @@ export function typeFor(spine, path) {
   if (s[0] === 'household') {
     if (s[1] === 'people') return SS_FIELDS[s[3]] || 'date';
     if (s[1] === 'filingStatus') return 'choice:' + FILING_STATUSES.join('|');
-    if (s[1] === 'nycResident') return 'bool';
+    if (s[1] === 'nycResident' || s[1] === 'yonkersResident') return 'bool';
     if (s[1] === 'cardPayPolicy') return 'choice:' + PAY_POLICIES.join('|');
     if (s[1] === 'situation') return 'choice:' + SITUATIONS.join('|');
     if (s[1] === 'lastRefund') return 'money';

@@ -11,6 +11,7 @@
 // deductibles rung): ahead of the dollars-lost steps once that fund is there, else just after it.
 
 import { valueOf as v, round2 } from './spine.js';
+import { matchTiersOf, blendedRate } from './match.js';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // A date in words for a sentence ("Feb 28, 2027"), never the stored form.
@@ -45,7 +46,8 @@ export function rankSteps(spine, rules, s, { asOf = spine.meta.asOf, sim = null,
   // The employer match not taken: the contribution short a month, times the match rate.
   const em = ladder.rungs.find((r) => r.id === 'employerMatch');
   if (em && em.need && em.need > 0) {
-    const rate = Math.max(0, ...(spine.accounts || []).filter((a) => a.matchRate && v(a.matchRate)).map((a) => v(a.matchRate)));
+    // The match a dollar short earns, tier by tier (S-272): the blended rate over the full match.
+    const rate = Math.max(0, ...(spine.accounts || []).map((a) => blendedRate(matchTiersOf(a))));
     if (rate > 0) losing.push({ id: 'match', rung: 'employerMatch', label: 'Take the full employer match', loss: round2(em.need * rate), path: em.path, why: em.why });
   }
   losing.sort((a, b) => b.loss - a.loss);

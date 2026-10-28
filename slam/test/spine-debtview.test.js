@@ -144,7 +144,14 @@ test('income-driven repayment from the rules registry; a missing household size 
   // Public service: 120 payments from today.
   const ps = putFact(sized, 'debts.sl.pslf', true, 'known', T);
   const r2 = idr(ps, R, ps.debts.find((d) => d.id === 'sl'), sum, T);
-  assert.deepEqual(r2.pslf, { payments: 120, date: '2036-10-22' });
+  assert.deepEqual(r2.pslf, { payments: 120, made: null, left: 120, date: '2036-10-22', typed: false });
+  // S-272: 64 qualifying payments made leaves 56 (about June 2031); a typed forgiveness date wins.
+  const made = putFact(ps, 'debts.sl.pslfPayments', 64, 'known', T);
+  const p3 = idr(made, R, made.debts.find((d) => d.id === 'sl'), sum, T).pslf;
+  assert.deepEqual([p3.made, p3.left, p3.date], [64, 56, '2031-06-22']);
+  const dated = putFact(made, 'debts.sl.forgivenessDate', '2031-03-01', 'known', T);
+  const p4 = idr(dated, R, dated.debts.find((d) => d.id === 'sl'), sum, T).pslf;
+  assert.deepEqual([p4.date, p4.typed], ['2031-03-01', true]);
   // A registry without the poverty line: a missing row that names the rule.
   const reg = readJson('data/rules-2026.json');
   const thin = makeRules({ ...reg, rules: reg.rules.filter((x) => x.id !== 'POVERTY_LINE_1') });

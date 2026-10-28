@@ -18,6 +18,19 @@ export function yearsToTarget(P, C, F, r) {
   return n >= 0 ? n : null;
 }
 
+// Pensions that start at or before the FI age: { yearly, items: [{ id, name, monthly, startAge, cola }] }.
+export function pensionAtFi(spine, rules, t, year) {
+  const fiAge = (spine.assumptions && v(spine.assumptions.coastAge)) || rules.get('APP_COAST_AGE', year);
+  const items = [];
+  for (const a of spine.accounts || []) {
+    if (a.type !== 'pension' || !a.pensionMonthly) continue;
+    const p = 'accounts.' + a.id, monthly = t.useFact(p + '.pensionMonthly', a.pensionMonthly), start = a.pensionStartAge ? t.useFact(p + '.pensionStartAge', a.pensionStartAge) : null;
+    if (monthly === null || (start !== null && start > fiAge)) continue;
+    items.push({ id: a.id, name: v(a.name) || a.id, monthly, startAge: start, cola: a.cola ? v(a.cola) : null });
+  }
+  return { yearly: round2(items.reduce((x, i) => x + i.monthly * 12, 0)), items, fiAge };
+}
+
 // fromProjection: years to FI from the month-by-month projection (income
 // ending and starting, debts paid off, tax set aside), with positive surplus
 // invested (S-173). Off, it uses this month's saving a year (the still-guessing
@@ -37,12 +50,15 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
   const td = tracker();
   td.absorb(cf.expenses.total); td.absorb(cf.debtMinimums.total); td.read(spine, 'assumptions.withdrawalRate');
   const yearlyToday = cf.expenses.total.value === null ? null : round2((cf.expenses.total.value + (cf.debtMinimums.total.value ?? 0)) * 12);
-  const today = td.out(wr && yearlyToday !== null ? round2(yearlyToday / wr) : null);
+  // A pension that starts by the FI age (S-272): its yearly amount is spending the invested money does not have to cover,
+  // so it comes off before the withdrawal rate. The FI age is the FI assumptions' age, else APP_COAST_AGE.
+  const pension = pensionAtFi(spine, rules, td, year);
+  const today = td.out(wr && yearlyToday !== null ? round2(Math.max(0, yearlyToday - pension.yearly) / wr) : null);
 
   // The goal: a direct FI number wins, else goal spending / rate.
   const goalRec = (spine.goals || []).find((g) => g.type === 'fi');
   const gt = tracker();
-  let goal = null, goalSource = null;
+  let goal = null, goalSource = null, goalSpend = null;
   if (goalRec) {
     const p = 'goals.' + goalRec.id;
     const direct = goalRec.fiNumber ? gt.useFact(p + '.fiNumber', goalRec.fiNumber) : null;
@@ -50,7 +66,7 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
     else if (goalRec.annualSpending) {
       const s = gt.useFact(p + '.annualSpending', goalRec.annualSpending);
       gt.read(spine, 'assumptions.withdrawalRate');
-      if (s !== null && wr) { goal = s / wr; goalSource = 'spending'; }
+      if (s !== null && wr) { goal = Math.max(0, s - pension.yearly) / wr; goalSource = 'spending'; goalSpend = s; }
     }
   }
   const goalR = gt.out(goal === null ? null : round2(goal));
@@ -116,9 +132,10 @@ export function fiReport(spine, rules, cf, sheet, asOf = spine.meta.asOf, { from
   const mis = tracker();
   mis.absorb(goalR); mis.absorb(implied);
   return {
+    pension,
     // Yearly spending the FI number rests on (Batch 3): the goal's own when it has one, else today's spending.
     // A direct FI number rests on no spending, so there is none to show.
-    yearlySpending: goalSource === 'direct' ? { value: null, kind: 'notForMe' } : goalSource === 'spending' ? { value: round2(goal * wr), kind: goalR.kind } : { value: cf.expenses.total.value === null ? null : round2(cf.expenses.total.value * 12), kind: cf.expenses.total.kind },
+    yearlySpending: goalSource === 'direct' ? { value: null, kind: 'notForMe' } : goalSource === 'spending' ? { value: round2(goalSpend), kind: goalR.kind } : { value: cf.expenses.total.value === null ? null : round2(cf.expenses.total.value * 12), kind: cf.expenses.total.kind },
     fiNumber, goal: goalR, goalSource, implied, today, yearlyToday, fatFi, baristaFi,
     dream, dreamDefault: !(goalRec && typed(goalRec.dreamSpending)), partTime, partTimeDefault: !(goalRec && typed(goalRec.partTimeIncome)),
     // The three FI numbers side by side (B2): today's spending, the goal's, and today's without debt payments.

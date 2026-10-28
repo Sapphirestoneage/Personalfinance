@@ -62,7 +62,8 @@ function render({ spine: base, rules }) {
         cell('Savings rate', cf.savingsRate.net.value === null ? 'missing' : pct(cf.savingsRate.net.value, 1), 'of pay after tax, with what goes from pay to saving', 'savingsRateNet'),
         cell('Cash runway', em.tiers.full.runway.value === null ? 'missing' : em.tiers.full.runway.value.toFixed(1) + ' months', m(sh.cash.value) + ' in cash', 'runway'),
         cell('Financial independence', s.fi.fiPercent.value === null ? 'missing' : pct(s.fi.fiPercent.value, 1), ['of ', h('span', { 'data-metric': 'fiToday' }, m(s.fi.today.value)), ' at today\'s spending'], 'fiPercent')),
-        sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null),
+        sh.setAsideNote ? h('p', { class: 'tile-note' }, sh.setAsideNote) : null,
+        sh.unvestedNote ? h('p', { class: 'tile-note' }, sh.unvestedNote) : null),
       flow,
       goCard('Your next step', stepHref(step), h('p', {}, nextWords(step, rank.questions)),
         // Round 4: the most urgent thing on Today goes on the handout too, in one calm line.

@@ -21,7 +21,8 @@ const T = '2026-10-22';
 const S = (s) => summarize(s, R, { flags: false });
 
 test('answer 23: the employer match step sits before the cards, is skipped and says so with no match, and counts the match lost', () => {
-  let s = demo();
+  // The demo's match words read as tiers (S-266); this starts from no match at all.
+  let s = demo(); s = { ...s, accounts: s.accounts.map((a) => (a.id === 'k401' ? { ...a, matchTiers: undefined } : a)) };
   const w0 = windfall(s, R, S(s), { amount: 5000 });
   const ids = w0.steps.map((x) => x.id);
   assert.ok(ids.indexOf('employerMatch') < ids.indexOf('cards') && ids.indexOf('employerMatch') > ids.indexOf('promos'));
@@ -278,4 +279,17 @@ test('each saving step says when its gap is done at 3, 6 and 12 months, and at t
   assert.deepEqual(stepPaces(r, 100, '2026-10-27').find((x) => x.label).months, 5);
   assert.deepEqual(stepPaces({ need: 300, flow: true }, 100, '2026-10-27'), [], 'a monthly step has no gap');
   assert.deepEqual(stepPaces({ need: 0, done: true }, 100, '2026-10-27'), []);
+});
+
+// S-272: a two-tier match (100% of the first 3%, then 50% of the next 2%) on $6,000 a month: $300 a month in for the full
+// match ($240 matched); $100 in gets $100.
+test('match tiers: the windfall step counts the match lost tier by tier', () => {
+  let s = demo();
+  s = putFact(s, 'accounts.k401.matchTiers', [{ rate: 1, upTo: 0.03 }, { rate: 0.5, upTo: 0.02 }], 'known', T);
+  s = putFact(s, 'accounts.k401.monthlyContribution', 100, 'known', T);
+  const sw = surplusWaterfall(s, R, S(s));
+  const m = sw.steps.find((x) => x.id === 'employerMatch');
+  const gross = S(s).cashflow.income.streams.filter((x) => x.type === 'w2').reduce((a, x) => a + x.gross, 0);
+  assert.equal(m.need, Math.round((0.05 * gross - 100) * 100) / 100);
+  assert.match(m.why, /of match lost/);
 });

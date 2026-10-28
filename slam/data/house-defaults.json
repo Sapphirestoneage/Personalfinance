@@ -343,6 +343,26 @@
       "verified": "house"
     },
     {
+      "id": "APP_STOCK_REAL_RETURN",
+      "rule": "Real return on the stock part of an account whose mix is known",
+      "value": 0.07,
+      "unit": "rate",
+      "appliesTo": "Projection: an account's own return from its stocks and bonds mix (S-272)",
+      "notes": "Only for an account whose share in stocks is typed; every other account grows at the assumption set's return",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_BOND_REAL_RETURN",
+      "rule": "Real return on the bond and cash part of an account whose mix is known",
+      "value": 0.02,
+      "unit": "rate",
+      "appliesTo": "Projection: an account's own return from its stocks and bonds mix (S-272)",
+      "notes": "The rest of the account after its share in stocks",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
       "id": "SCENARIO_LIKELY_WR",
       "rule": "Withdrawal rate in the likely assumption set",
       "value": 0.04,

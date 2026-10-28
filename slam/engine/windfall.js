@@ -15,6 +15,7 @@
 // on the lump sum is already taken out (or none is owed).
 
 import { valueOf as v, tracker, round2, monthKey } from './spine.js';
+import { matchTiersOf, matchOn, fullMatchShare, matchPaths } from './match.js';
 import { rateOn } from './debt.js';
 import { money } from '../src/ui/format.js';
 import { longDate } from './flags.js';
@@ -135,7 +136,7 @@ export function windfall(spine, rules, s, { amount, from = null, taxed: taxedIn 
       return { need, items: out, why: 'Clearing them takes ' + money(Math.round(pr.monthly.value)) + ' a month and the monthly surplus is ' + (surplus === null ? 'not known yet' : money(surplus)) + '. Paying ' + out.map((x) => money(x.pay) + ' off ' + x.name + (x.deferredInterest === true ? ' (deferred interest)' : '')).join(' and ') + ' now brings that to ' + money(Math.round(Math.max(0, after))) + ' a month, which the surplus covers.', path: out[0].path };
     });
     else if (id === 'employerMatch') run(id, (t) => {
-      const accts = (spine.accounts || []).filter((a) => a.family === 'employerRetirement' && a.matchRate && a.matchRate.kind !== 'notForMe');
+      const accts = (spine.accounts || []).filter((a) => a.family === 'employerRetirement' && ((a.matchTiers && a.matchTiers.kind !== 'notForMe') || (a.matchRate && a.matchRate.kind !== 'notForMe')));
       if (!accts.length) return { need: 0, why: 'No workplace account has an employer match entered, so this step is skipped.' };
       const w2 = s.cashflow.income.streams.filter((x) => x.type === 'w2' && x.included !== false);
       t.absorb({ ...s.cashflow.income.gross, value: undefined });
@@ -145,13 +146,16 @@ export function windfall(spine, rules, s, { amount, from = null, taxed: taxedIn 
       let gap = 0, left = 0, miss = null; const parts = [];
       for (const a of accts) {
         const base = 'accounts.' + a.id;
-        const rateM = t.useFact(base + '.matchRate', a.matchRate), cap = t.useFact(base + '.matchCap', a.matchCap), c = t.useFact(base + '.monthlyContribution', a.monthlyContribution);
-        if (rateM === null || cap === null || c === null) { miss = miss || base + (cap === null ? '.matchCap' : c === null ? '.monthlyContribution' : '.matchRate'); continue; }
-        const short = Math.max(0, cap * grossYear / 12 - c);
-        gap += short; left += short * rateM;
-        parts.push((v(a.name) || a.id) + ': ' + money(c) + ' a month in against ' + money(cap * grossYear / 12) + ' to capture the full match' + (short > 0 ? ' (' + money(short) + ' a month short, ' + money(short * rateM) + ' of match lost)' : ''));
+        // The match tier by tier (S-272); the old rate and cap read as one tier.
+        const paths = matchPaths(a), got = paths.map((k) => t.useFact(base + '.' + k, a[k])), c = t.useFact(base + '.monthlyContribution', a.monthlyContribution);
+        const tiers = matchTiersOf(a);
+        if (got.some((x) => x === null) || !tiers.length || c === null) { miss = miss || base + '.' + (c === null ? 'monthlyContribution' : paths[got.findIndex((x) => x === null)] || paths[0]); continue; }
+        const wage = grossYear / 12, full = fullMatchShare(tiers) * wage;
+        const short = Math.max(0, full - c), lost = matchOn(tiers, full, wage) - matchOn(tiers, c, wage);
+        gap += short; left += lost;
+        parts.push((v(a.name) || a.id) + ': ' + money(c) + ' a month in against ' + money(full) + ' to capture the full match' + (short > 0 ? ' (' + money(short) + ' a month short, ' + money(lost) + ' of match lost)' : ''));
       }
-      if (miss) return { need: null, why: 'Needs the match rate, the cap and the monthly contribution on the account.', path: miss };
+      if (miss) return { need: null, why: 'Needs the match (tier by tier) and the monthly contribution on the account.', path: miss };
       const need = monthly ? gap : gap * monthsLeft;
       return { need, why: (gap > 0 ? money(need) + (monthly ? ' a month' : ' for the rest of the year') + ' raised in pre-tax deferral captures ' + money(left * (monthly ? 1 : monthsLeft)) + ' of match that is otherwise lost. ' : 'The full match is captured. ') + parts.join('; ') + '.', path: 'accounts.' + accts[0].id + '.monthlyContribution', items: parts.map((x) => ({ label: x })) };
     });

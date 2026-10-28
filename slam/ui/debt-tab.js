@@ -14,6 +14,7 @@ import { debtCharts } from './chart-cards.js';
 import { leadLines } from './debt-lead.js';
 import { methodPaths, recommendOrder, METHOD_WORDS } from '../engine/charts.js';
 import { putFact } from '../engine/edits.js';
+import { valueOf } from '../engine/spine.js';
 import { change } from './shell.js';
 import { said, todayIso } from './view.js';
 
@@ -108,7 +109,13 @@ function orderCard(d, ctx) {
         h('td', { class: 'num' }, money(r.interestInWindow))))))),
     h('p', { class: 'tile-note' }, 'The interest column is the next 12 months day by day at today\'s payments (the minimums and any extra you set, not the Plan\'s extra), with new charges on the cards; the total below is the Plan\'s to the end, so the two are not meant to add up.'),
     h('p', { class: 'tile-sub' }, o.neverPaysOff ? 'At this pace the Plan does not pay everything off.' : o.debtFreeYm ? ['All debt gone ' + monthWords(o.debtFreeYm) + ' on your plan, ', o.totalInterest.value === null ? 'interest unknown' : h('span', { 'data-metric': 'plan:debtInterest' }, money(o.totalInterest.value)), ' of interest in all.'] : ''),
+    pmiLines(ctx().spine),
     mathButton(['debt:interestWindow'], ctx));
+}
+// PMI on a mortgage (S-272): what it adds a month and when it ends; the payment drops by that much then.
+function pmiLines(spine) {
+  const list = (spine.debts || []).filter((x) => x.type === 'mortgage' && x.pmiMonthly && valueOf(x.pmiMonthly));
+  return list.length ? list.map((x) => h('p', { class: 'tile-sub' }, (valueOf(x.name) || 'Mortgage') + ': the payment includes ' + money(valueOf(x.pmiMonthly)) + ' a month of mortgage insurance (PMI)' + (valueOf(x.pmiEnds) ? ' until about ' + shortDate(valueOf(x.pmiEnds)) + ', when you owe about 78% of the original price; the payment drops by that much then.' : '; it ends when you owe about 78% of the original price (add the date on the mortgage).'))) : null;
 }
 
 function interestCard(d, ctx) {
@@ -260,7 +267,7 @@ function loansCard(d, ctx) {
         if (l.payment !== null) row('How', 'income ' + money(l.agi) + (l.agiSource === 'cashflow' ? ' (a year of this month\'s gross, rough)' : ' (this year\'s AGI)') + ', poverty line ' + money(l.povertyLine) + ' for ' + l.householdSize + (l.householdSize === 1 ? ' person' : ' people') + ', discretionary ' + money(l.discretionary), 'words');
         row('Forgiveness', l.forgivenessYears === null ? h('span', { class: 'missing-row' }, 'Missing: when this plan forgives what is left') : 'whatever is left after ' + l.forgivenessYears + ' years of payments, about ' + shortDate(l.forgivenessDate), 'words');
         if (l.rap) row('Repayment Assistance Plan', money(l.rap.payment) + ' a month (' + Math.round(l.rap.share * 100) + '% of income, less ' + (l.householdSize > 1 ? 'a credit for each dependent' : 'no dependents') + '); what is left is forgiven after ' + l.rap.payments / 12 + ' years, about ' + shortDate(l.rap.date), 'words');
-        if (l.pslf) row('Public service', l.pslf.payments === null ? h('span', { class: 'missing-row' }, 'Missing: how many payments public service forgiveness takes') : l.pslf.payments + ' qualifying payments, about ' + shortDate(l.pslf.date), 'words');
+        if (l.pslf) row('Public service', l.pslf.payments === null ? h('span', { class: 'missing-row' }, 'Missing: how many payments public service forgiveness takes') : (l.pslf.made !== null ? l.pslf.made + ' of ' + l.pslf.payments + ' qualifying payments made, ' + l.pslf.left + ' to go' : l.pslf.payments + ' qualifying payments') + '; forgiven ' + (l.pslf.typed ? 'on ' : 'about ') + shortDate(l.pslf.date), 'words');
         return [h('dl', { class: 'kv' }, kv), h('p', { class: 'tile-note' }, kindChip(l.kind), ' Not included: tax on a forgiven amount, and the Repayment Assistance Plan\'s interest waiver and principal match. Both plans\' figures are marked verify.'), mathButton(['debt:idr:' + l.id], ctx)];
       })())));
 }

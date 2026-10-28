@@ -6,6 +6,7 @@
 // the monthly plan (engine/debt.js), the FI engine or the waterfall
 // (engine/windfall.js). Views only format what comes back.
 
+import { matchTiersOf } from './match.js';
 import { valueOf as v, tracker, round2, monthKey, addMonths, addDays, daysBetween, fact, ageOn } from './spine.js';
 // Rounded up to the cent (a month that fills a limit by its deadline).
 const c2 = (x) => Math.ceil(Math.round(x * 1000) / 10) / 100;
@@ -192,7 +193,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
   }
   const current = rungs.find((r) => r.done === false) || null;
   const out = all.out(surplus);
-  return { rungs, current: current ? current.id : null, surplus, debtRun: { strategy, typed, windows }, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => (v(a.matchRate) ?? 0) > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
+  return { rungs, current: current ? current.id : null, surplus, debtRun: { strategy, typed, windows }, setup: { deductible: spine.household.deductible ? v(spine.household.deductible) : null, match: (spine.accounts || []).some((a) => matchTiersOf(a).length > 0), reserveMonths: s.emergency.targetMonths.value }, allDated: afterAll, kind: out.kind, from: out.from, rough: out.rough, missing: out.missing, rules: out.rules };
 }
 const money = (x) => (x === null || x === undefined ? 'missing' : '$' + Math.round(x).toLocaleString('en-US'));
 

@@ -2,6 +2,7 @@
 // expenses, debt minimums, saving, surplus and savings rates. Dated income and
 // expense changes are handled month by month.
 
+import { matchTiersOf, matchOn } from './match.js';
 import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey, accountOwner, incomeOwner } from './spine.js';
 import { PER_YEAR, fromPaycheck, isEarmarked } from './schema.js';
 import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
@@ -176,14 +177,16 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
       if (!(lines.has(who) ? paid.has(who) : w2Active)) continue;
       const x = pay.useFact(path, a.monthlyContribution);
       if (x !== null) payroll += x;
-      // The match: the match rate times what goes in, up to the cap (a share of the W-2 pay it is paid through).
-      const rate = a.matchRate ? mt.useFact('accounts.' + a.id + '.matchRate', a.matchRate) : null;
-      if (rate) {
-        const cap = mt.useFact('accounts.' + a.id + '.matchCap', a.matchCap);
+      // The match, tier by tier (S-272): each tier matches its share of what goes in, up to its share of the W-2 pay it
+      // is paid through. An account with only the old rate and cap reads them as one tier.
+      const typed = a.matchTiers ? mt.useFact('accounts.' + a.id + '.matchTiers', a.matchTiers) : a.matchRate ? mt.useFact('accounts.' + a.id + '.matchRate', a.matchRate) : null;
+      if (typed && (!Array.isArray(typed) || typed.length)) {
+        if (!a.matchTiers) mt.useFact('accounts.' + a.id + '.matchCap', a.matchCap);
+        const tiers = matchTiersOf(a);
         const job = new Set(payLinesFor(spine, a).map((l) => l.id));
         const wage = streams.filter((x) => job.has(x.id) && x.gross !== null).reduce((sum, x) => sum + x.gross, 0);
         mt.useFact(path, a.monthlyContribution);
-        if (cap !== null && x !== null) match += rate * Math.min(x, cap * wage);
+        if (tiers.length && x !== null) match += matchOn(tiers, x, wage);
       }
     } else if (a.family !== 'cash') {
       const x = after.useFact(path, a.monthlyContribution);

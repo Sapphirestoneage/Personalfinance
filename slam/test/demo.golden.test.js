@@ -33,11 +33,11 @@ test('demo golden values as of 2026-10-22', async (t) => {
     near(cf.surplus.value, surplus);
     // Monthly surplus (B2): take-home - spending - minimums - the set-aside, before any saving: 957.35.
     near(cf.monthlySurplus.value, 4711 - 3204 - 342 - setAside);
-    // Savings rate (B2): what is set to be saved (300 to the Roth + 500 to the 401(k); no match, no cash saving, no
-    // extra at the debt; the 657.35 left unassigned is not counted) over take-home + pre-tax: 800 / 5,211 = 15.35%.
-    near(cf.savingsRate.net.value, 800 / (4711 + 500), 0.0001);
-    // Of gross: 800 / 6,500 = 12.31%.
-    near(cf.savingsRate.gross.value, 800 / 6500, 0.0001);
+    // Savings rate (B2): what is set to be saved (300 to the Roth + 500 to the 401(k), plus the match: its words "100% of
+    // first 4%" read as one tier since S-266 and count since S-272, 100% of $500 up to 4% of the $6,000 salary = $240; no
+    // cash saving, no extra at the debt; the 657.35 left unassigned is not counted) over take-home + pre-tax + the match:
+    // 1,040 / 5,451 = 19.08%.
+    near(cf.savingsRate.net.value, (800 + 240) / (4711 + 500 + 240), 0.0001);
     assert.equal(cf.expenses.need.value, 1800 + 150 + 500 + 130 + 60); // tagged needs; "Everything else" is not tagged yet
     assert.equal(cf.expenses.lean.value, 1800 + 150 + 500 + 130); // food, housing, transportation that are not wants
     assert.equal(cf.surplus.kind, 'rough');

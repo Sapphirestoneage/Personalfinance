@@ -495,6 +495,11 @@ function taxes(ctx) {
       h('ul', { class: 'srows' },
         lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
           pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
+        // Where in New York (S-272): New York City and Yonkers add their own income tax.
+        lineRow('', h('label', { class: 'srow-name', for: 't-where' }, 'Where you live'),
+          pickBox('t-where', 'Where you live', [['', 'Pick one'], ['nyc', 'New York City'], ['yonkers', 'Yonkers'], ['ny', 'Elsewhere in New York'], ['other', 'Another state']],
+            v(hh.nycResident) === true ? 'nyc' : v(hh.yonkersResident) === true ? 'yonkers' : v(hh.state) === 'NY' && v(hh.nycResident) === false ? 'ny' : v(hh.state) && v(hh.state) !== 'NY' ? 'other' : '',
+            (w) => change((s) => { if (!w) return s; let x = putFact(s, 'household.nycResident', w === 'nyc', 'known', today); x = putFact(x, 'household.yonkersResident', w === 'yonkers', 'known', today); return w === 'other' ? x : putFact(x, 'household.state', 'NY', 'known', today); }, said.changed('Where you live', { nyc: 'New York City', yonkers: 'Yonkers', ny: 'elsewhere in New York', other: 'another state' }[w] || 'not set')))),
         lineRow('', h('label', { class: 'srow-name', for: 't-last' }, 'Last year'),
           pickBox('t-last', 'Last year\'s tax', [['', 'Pick one'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
           lastHow === 'refund' || lastHow === 'owed' ? moneyBox('t-last-amt', last === null ? null : Math.abs(last), 'How much', (a) => setLast(lastHow, a)) : null)),

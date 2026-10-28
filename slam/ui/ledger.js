@@ -11,7 +11,7 @@ import { startPage, change, said, go, keep, kept, refresh, say, current, reopen,
 import { rowPathFor, previewCost, linkOptions, linkName, coveredByOthers, basisFromYears } from '../engine/ledger.js';
 import { payersOf, shareOf } from '../engine/sharing.js';
 import { mathButton } from './math-panel.js';
-import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields } from '../engine/features.js';
+import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields, linkPlanLoan } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
 import { catalog, itemTicks, tickWords, keysHint } from './ticks.js';
@@ -1588,6 +1588,8 @@ function itemScreen(sec, g, it, st) {
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card' && !d.annualFee) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; if (change(addFee(cur(), it.id, today()), 'Annual fee added to ' + it.label)) openField('debts.' + it.id + '.annualFee'); } }, '+ Add an annual fee')) : null,
     acct && beneficiaryFlag(acct) ? h('p', { class: 'flag-line' }, BENEFICIARY_WORDS) : null,
     acct && !selecting ? memoryButton(acct) : null,
+    // A 401(k) loan said yes and not in Debt yet (S-272): one tap adds it there, linked both ways.
+    acct && !selecting && acct.ticks && acct.ticks.loan === 'yes' && !(acct.loanDebt && valueOf(acct.loanDebt)) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (canLeave()) change((x) => linkPlanLoan(x, acct.id, today()), 'The loan from ' + (valueOf(acct.name) || 'this plan') + ' added to Debt'); } }, '+ Add the loan to Debt')) : null,
     it.collection && !selecting && COACH_NOTED.includes(it.collection) ? coachNoteEl(it) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
     TICKED.includes(it.collection) && !selecting ? keysHint() : null,

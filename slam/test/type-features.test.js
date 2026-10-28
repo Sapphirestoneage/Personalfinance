@@ -129,3 +129,46 @@ test('screen two: fields only extra questions open go in More; defaults land as 
   const strip = readFileSync(new URL('../ui/strip.js', import.meta.url), 'utf8');
   for (const id of ['netWorth', 'liquidNetWorth', 'surplus', 'savingsRateNet', 'yearsToFi']) assert.ok(strip.includes("metric('" + id + "'"), id + ' is tagged for the agree check');
 });
+
+// S-272: unvested employer money is its own line, out of net worth until it vests.
+test('unvested: a cliff and a graded schedule, out of total assets and net worth, with the date it vests', async () => {
+  const { balanceSheet, unvestedOf } = await import('../engine/networth.js');
+  const F = (value) => ({ value, kind: 'known', asOf: '2026-10-27', source: 'ledger' });
+  const k = (extra) => ({ id: 'k', family: 'employerRetirement', type: 'k401', name: F('Work 401(k)'), balance: F(10000), employerBalance: F(4000), vestingYears: F(3), yearsOfService: F(1), ...extra });
+  assert.deepEqual(unvestedOf(k({ vestingType: F('cliff') }), '2026-10-27'), { id: 'k', name: 'Work 401(k)', amount: 4000, share: 1, vestsOn: '2028-10-27', path: 'accounts.k.employerBalance' });
+  assert.equal(unvestedOf(k({ vestingType: F('graded') }), '2026-10-27').amount, 2666.67);
+  assert.equal(unvestedOf(k({ vestingType: F('cliff'), yearsOfService: F(3) }), '2026-10-27'), null, 'vested');
+  const spine = { meta: { asOf: '2026-10-27' }, household: { people: [] }, accounts: [k({ vestingType: F('cliff') })], debts: [] };
+  const sh = balanceSheet(spine);
+  assert.equal(sh.assets.value, 6000);
+  assert.equal(sh.netWorth.value, 6000);
+  assert.match(sh.unvestedNote, /Not yours yet: Work 401\(k\), \$4,000 of your employer's money until Oct 2028/);
+});
+
+// S-272: a pension that starts by the FI age comes off the spending the FI number covers; the backstop lists a plan
+// from a job left at 55 or later.
+test('pension in the FI number; the rule of 55 in the backstop', async () => {
+  const { pensionAtFi } = await import('../engine/fi.js');
+  const { rothBackstop } = await import('../engine/emergency.js');
+  const { tracker } = await import('../engine/spine.js');
+  const R = loadRules();
+  const F = (value) => ({ value, kind: 'known', asOf: '2026-10-27', source: 'ledger' });
+  const spine = { meta: { asOf: '2026-10-27' }, assumptions: { coastAge: F(60) }, household: { people: [{ id: 'p', name: 'P', birthDate: F('1968-05-01') }] },
+    accounts: [{ id: 'pen', family: 'otherAssets', type: 'pension', name: F('Teachers pension'), balance: F(0), pensionMonthly: F(1500), pensionStartAge: F(55) },
+      { id: 'late', family: 'otherAssets', type: 'pension', name: F('Late'), balance: F(0), pensionMonthly: F(900), pensionStartAge: F(67) },
+      { id: 'old', family: 'employerRetirement', type: 'k401', name: F('Old 401(k)'), balance: F(80000), separatedFromEmployer: F(true), separationYear: F(2024) }] };
+  const p = pensionAtFi(spine, R, tracker(), 2026);
+  assert.deepEqual([p.yearly, p.items.map((i) => i.id)], [18000, ['pen']]);
+  const b = rothBackstop(spine, R, '2026-10-27', 58);
+  assert.deepEqual(b.plans.map((x) => [x.id, x.amount]), [['old', 80000]], 'left in 2024 at 55 or 56');
+});
+
+test('a 401(k) loan links the plan and the debt both ways', async () => {
+  const { linkPlanLoan } = await import('../engine/features.js');
+  const s0 = loadHousehold(readJson('fixtures/demo.json'));
+  const s1 = { ...s0, accounts: s0.accounts.map((a) => (a.id === 'k401' ? { ...a, loanBalance: { value: 3000, kind: 'known', asOf: '2026-10-27', source: 'ledger' } } : a)) };
+  const s = linkPlanLoan(s1, 'k401', '2026-10-27');
+  const k = s.accounts.find((a) => a.id === 'k401'), d = s.debts.find((x) => x.id === k.loanDebt.value);
+  assert.equal(d.type, 'k401_loan'); assert.equal(d.balance.value, 3000); assert.equal(d.fromAccount.value, 'k401');
+  assert.deepEqual(validate(s).errors, []);
+});

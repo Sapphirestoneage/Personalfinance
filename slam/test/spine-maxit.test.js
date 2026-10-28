@@ -671,7 +671,7 @@ test('the Money Guy order (answer 63): the 401(k) up to the match, then the IRA,
   // $500 a month ($6,000) with a 50% match on up to 6% of pay: only the pay still to come can be matched (11 paychecks
   // from February 15, $5,500), so the 401(k)'s $330 that gets the match comes first, the Roth gets the $5,670 of pay
   // left, the rest of the 401(k) nothing. With no match, the Roth takes all $6,000.
-  const small = { ...s, income: [{ ...s.income[0], amount: F(500), withholding: { federal: F(0), state: F(0) } }, ...s.income.slice(1)], accounts: s.accounts.map((a) => (a.id === 'k401' ? { ...a, matchRate: F(0.5), matchCap: F(0.06) } : a)) };
+  const small = { ...s, income: [{ ...s.income[0], amount: F(500), withholding: { federal: F(0), state: F(0) } }, ...s.income.slice(1)], accounts: s.accounts.map((a) => (a.id === 'k401' ? { ...a, matchTiers: undefined, matchRate: F(0.5), matchCap: F(0.06) } : a)) };
   assert.deepEqual(plan(small), [['deferral:casey', 330], ['ira:casey', 5670], ['k401:2026', 'preIra'], ['roth:2026', 'match']]);
   const noMatch = { ...small, accounts: small.accounts.map((a) => (a.id === 'k401' ? { ...a, matchRate: undefined, matchCap: undefined } : a)) };
   assert.deepEqual(plan(noMatch), [['deferral:casey', 0], ['ira:casey', 6000], ['k401:2026', 'preIra']]);
@@ -721,7 +721,8 @@ test('round 15 (S-225): a Solo 401(k) counts once, a couple never depends on the
   // Married filing separately, Casey's $3,000 of pay and $1,500 in a Roth: the Roth limit is reduced ($0 to $10,000
   // phase-out at $3,000 of modified AGI, 70%) to $2,100, so $600 more fits, and it comes first (answer 63): the $2,100
   // needs $2,985.72 of pay (70% of it, rounded up to $10, is $2,100); the 401(k) takes the other $14.28.
-  let m = { ...couple(demo()) };
+  // The demo's match words read as one tier (S-266, counted since S-272); this case is about the Roth limit, with no match.
+  let m = { ...couple(demo()) }; m = { ...m, accounts: m.accounts.map((a) => (a.id === 'k401' ? { ...a, matchTiers: undefined } : a)) };
   m = at({ ...m, household: { ...m.household, filingStatus: F('mfs') }, income: [w2('cj', 'casey', 250), w2('sj', 'sam', 4000)], accounts: [...m.accounts.filter((a) => a.id !== 'roth').map((a) => (a.id === 'k401' ? { ...a, monthlyContribution: F(0) } : a)), acct('cr', 'roth_ira', 'ira', { contributions: F([{ year: 2026, amount: 1500 }]) })] }, '2026-02-01');
   const mfs = run(m).mx;
   assert.deepEqual([fills(mfs)['k401:2026'], fills(mfs)['cr:2026'], mfs.totals.over], [14.28, 600, []]);

@@ -100,10 +100,25 @@ export function rothBackstop(spine, rules, asOf, age) {
     }
   }
   const sumConv = conversions.reduce((s, c) => s + c.amount, 0);
+  // Workplace plans that open without the 10% penalty (S-272): a plan from a job left in or after the year you turned
+  // RULE_55 (the rule of 55), and a governmental 457(b) from a job left at any age. Income tax still applies to pre-tax
+  // money; never counted as cash. [{ id, name, amount, why, path }].
+  const plans = [];
+  const pt = tracker();
+  const born = (spine.household.people || [])[0] && valueOf(spine.household.people[0].birthDate);
+  for (const a of spine.accounts || []) {
+    if (a.family !== 'employerRetirement' || valueOf(a.separatedFromEmployer) !== true) continue;
+    const p = 'accounts.' + a.id, bal = pt.useFact(p + '.balance', a.balance);
+    const gov457 = a.type === 'k457b' && ['government', null].includes(valueOf(a.employerType));
+    const left = valueOf(a.separationYear), at55 = born && left ? left - +born.slice(0, 4) >= pt.rule(rules, 'RULE_55', year) : false;
+    if (!gov457 && !at55) continue;
+    plans.push({ id: a.id, name: valueOf(a.name) || a.id, amount: bal, path: p + '.balance', why: gov457 ? 'a governmental 457(b) opens without the 10% penalty once you leave the job' : 'you left this job in or after the year you turned ' + rules.get('RULE_55', year) + ' (the rule of 55)' });
+  }
   return {
     contributions: basis.out(round2(contributions)),
     conversions,
     conversionsTotal: conv.out(round2(sumConv)),
+    plans, plansTotal: pt.out(round2(plans.reduce((x, q) => x + (q.amount || 0), 0))),
     countedAsCash: false
   };
 }

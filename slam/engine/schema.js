@@ -291,6 +291,8 @@ export function validate(spine) {
   checkFact('household.state', h.state, 'text');
   checkFact('household.county', h.county, 'text');
   checkFact('household.nycResident', h.nycResident, 'bool');
+  // Lives in Yonkers (S-272): the city's surcharge on the state tax. Optional; older files have none.
+  checkFact('household.yonkersResident', h.yonkersResident, 'bool', false);
   // People in the household for the poverty line (S-205): adults and dependents together.
   checkFact('household.householdSize', h.householdSize, 'int', false);
   // Hours worked a week, for hours of life (S-206).

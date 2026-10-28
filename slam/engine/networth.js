@@ -72,14 +72,41 @@ export function liquidAssets(spine) {
   return { ...t.out(round2(sum)), items, defaults };
 }
 
+// Unvested employer money (S-272): the part of a workplace plan's employer money that is not yours yet, on its own line
+// with the date it vests, and out of total and invested assets (so out of net worth) until then. A cliff vests all at
+// once after the years; graded vests evenly over them (the house's simple reading; a plan's own table may differ).
+// { id, name, amount (null when the employer part is not given), vestsOn, path } or null when nothing is unvested.
+const addYears = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + Math.round(n * 12)); return d.toISOString().slice(0, 10); };
+export function unvestedOf(a, asOf) {
+  if (!a || a.family !== 'employerRetirement' || (a.ticks && a.ticks.vesting === 'no')) return null;
+  const type = valueOf(a.vestingType), years = valueOf(a.vestingYears), served = valueOf(a.yearsOfService) ?? 0;
+  if (!type || type === 'immediate' || typeof years !== 'number' || years <= 0 || served >= years) return null;
+  const share = type === 'cliff' ? 1 : Math.max(0, 1 - served / years), emp = valueOf(a.employerBalance);
+  return { id: a.id, name: valueOf(a.name) || a.id, amount: emp === null ? null : round2(emp * share), share, vestsOn: addYears(asOf, years - served), path: 'accounts.' + a.id + '.employerBalance' };
+}
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// The one sentence every page uses: "Not yours yet: Work 401(k), $2,000 of your employer's money until Mar 2028. Not
+// counted in net worth until then." Null when nothing is unvested.
+export function unvestedNote(u) {
+  if (!u || !u.items.length) return null;
+  return 'Not yours yet: ' + u.items.map((i) => i.name + ', ' + (i.amount === null ? 'the employer\'s part (amount not given)' : money(i.amount) + ' of your employer\'s money') + ' until ' + MON[+i.vestsOn.slice(5, 7) - 1] + ' ' + i.vestsOn.slice(0, 4)).join('; ') + '. Not counted in net worth until then.';
+}
+export function unvestedTotal(spine) {
+  const items = (spine.accounts || []).map((a) => unvestedOf(a, spine.meta.asOf)).filter(Boolean);
+  return { value: round2(items.reduce((x, i) => x + (i.amount || 0), 0)), items, missing: items.filter((i) => i.amount === null).map((i) => i.path) };
+}
+
 export function balanceSheet(spine) {
   const acc = spine.accounts || [];
   // Cash is money the household can fall back on: an account set aside for a goal is not (S-228); it is still an asset.
   const cash = sumBalances(acc, (a) => a.family === 'cash' && !isEarmarked(a));
   const setAside = sumBalances(acc, isEarmarked);
   const list = earmarks(spine);
-  const invested = sumBalances(acc, (a) => INVESTED_FAMILIES.includes(a.family));
-  const assets = sumBalances(acc, () => true);
+  // Unvested employer money is not counted until it vests (S-272): out of invested and total assets, on its own line.
+  const unvested = unvestedTotal(spine);
+  const less = (r) => (unvested.value && r.value !== null ? { ...r, value: round2(r.value - unvested.value) } : r);
+  const invested = less(sumBalances(acc, (a) => INVESTED_FAMILIES.includes(a.family)));
+  const assets = less(sumBalances(acc, () => true));
   const { total: debts, cards } = debtTotals(spine);
   // Owed to you (shared bills, money lent): part of net worth, never cash, so not in the liquid figure, the runway or
   // safe to spend until it is marked paid and lands in an account.
@@ -91,7 +118,7 @@ export function balanceSheet(spine) {
   lt.absorb(liquid); lt.absorb(debts);
   return {
     liquid, liquidNetWorth: lt.out(round2(liquid.value - debts.value)),
-    cash, setAside, earmarks: list, setAsideNote: setAsideNote(list), invested, assets, debts, cards,
+    cash, setAside, earmarks: list, setAsideNote: setAsideNote(list), invested, assets, unvested, unvestedNote: unvestedNote(unvested), debts, cards,
     owed, netWorth: t.out(round2(assets.value - debts.value + owed)),
     byFamily: Object.fromEntries([...new Set(acc.map((a) => a.family))].map((f) => [f, sumBalances(acc, (a) => a.family === f)]))
   };

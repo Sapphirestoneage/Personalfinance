@@ -6,7 +6,7 @@
 // Compatibility: items gain an optional `ticks` map { featureId: 'yes' | 'no' | 'notSure' }; older files have none.
 
 import { getAt, valueOf as v } from './spine.js';
-import { putFact } from './edits.js';
+import { putFact, addItem } from './edits.js';
 
 // The features of one item, in the catalog's order: [{ id, question, tier, engines, reveals, note }].
 export function featuresOf(cat, item, collection) {
@@ -114,22 +114,7 @@ export function beneficiaryFlag(a) {
 }
 export const BENEFICIARY_WORDS = 'No beneficiary named. Name one with the plan, so this money goes where you want without probate.';
 
-// Match tiers (S-266): what a plan matches, as [{ rate, upTo }] (upTo: the width of pay this tier covers). From
-// matchTiers when there, else the one tier of matchRate and matchCap, else none.
-export function matchTiersOf(a) {
-  const t = a && a.matchTiers && Array.isArray(v(a.matchTiers)) ? v(a.matchTiers) : null;
-  if (t && t.length) return t;
-  const rate = a && a.matchRate ? v(a.matchRate) : null, cap = a && a.matchCap ? v(a.matchCap) : null;
-  return typeof rate === 'number' && rate > 0 && typeof cap === 'number' && cap > 0 ? [{ rate, upTo: cap }] : [];
-}
-// The employer's match a month on `put` a month in, at `wage` a month of pay: each tier matches its share of what goes in.
-export function matchOn(tiers, put, wage) {
-  let from = 0, out = 0;
-  for (const t of tiers) { const band = Math.max(0, Math.min(put, (from + t.upTo) * wage) - from * wage); out += t.rate * band; from += t.upTo; }
-  return out;
-}
-// The share of pay that gets the full match.
-export const fullMatchShare = (tiers) => tiers.reduce((a, t) => a + t.upTo, 0);
+export { matchTiersOf, matchOn, fullMatchShare } from './match.js';
 
 // Reads old match words ("100% of the first 3%, 50% of the next 2%", "50% up to 6%", "dollar for dollar up to 4%") as
 // tiers; null when it cannot.
@@ -140,4 +125,18 @@ export function parseMatchText(text) {
   const out = [];
   for (let m = re.exec(t); m; m = re.exec(t)) out.push({ rate: +m[1] / 100, upTo: +m[2] / 100 });
   return out.length && out.every((x) => x.rate >= 0 && x.rate <= 2 && x.upTo > 0 && x.upTo <= 1) ? out : null;
+}
+
+// A 401(k) loan, linked both ways (S-272): a k401_loan debt for what the plan's loan owes, its fromAccount the plan and
+// the plan's loanDebt the debt, so the loan shows once (in Debt) and each side names the other. Returns the spine.
+export function linkPlanLoan(spine, accountId, today) {
+  const a = (spine.accounts || []).find((x) => x.id === accountId);
+  if (!a) return spine;
+  const name = (v(a.name) || accountId);
+  const made = addItem(spine, { collection: 'debts', type: 'k401_loan', label: 'Loan from ' + name }, today);
+  let s = made.spine;
+  const owed = a.loanBalance ? v(a.loanBalance) : null;
+  if (owed !== null) s = putFact(s, 'debts.' + made.id + '.balance', owed, 'known', today);
+  s = putFact(s, 'debts.' + made.id + '.fromAccount', accountId, 'known', today);
+  return putFact(s, 'accounts.' + accountId + '.loanDebt', made.id, 'known', today);
 }

@@ -30,14 +30,20 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
   const life = t.read(spine, 'assumptions.lifeExpectancy');
   const r = t.read(spine, 'assumptions.realReturn');
   const last = endYm || (birth && life ? (+birth.slice(0, 4) + life) + '-12' : addMonths(monthKey(asOf), monthsShown));
-  const growth = r === null ? 0 : Math.pow(1 + r, 1 / 12) - 1;
-
   let cash = 0, invested = 0;
   const others = [];
+  // Each invested account's own real return (S-272): its stocks and bonds mix when typed (the house's stock and bond
+  // returns), else the assumption; less its fund fees when typed. The invested money grows at the balance-weighted mix.
+  let weighted = 0, weight = 0;
   for (const a of spine.accounts || []) {
     const b = t.useFact('accounts.' + a.id + '.balance', a.balance) ?? 0;
     if (a.family === 'cash') cash += b;
-    else if (INVESTED_FAMILIES.includes(a.family)) invested += b;
+    else if (INVESTED_FAMILIES.includes(a.family)) {
+      invested += b;
+      const mix = a.stockShare ? t.useFact('accounts.' + a.id + '.stockShare', a.stockShare) : null, fee = a.expenseRatio ? t.useFact('accounts.' + a.id + '.expenseRatio', a.expenseRatio) : null;
+      const own = mix !== null ? mix * t.rule(rules, 'APP_STOCK_REAL_RETURN', year0) + (1 - mix) * t.rule(rules, 'APP_BOND_REAL_RETURN', year0) : r;
+      if (own !== null && b > 0) { weighted += b * (own - (fee || 0)); weight += b; }
+    }
     else {
       // Read as a Fact, so a rough rate (the house car default) makes the projection rough.
       const rate = a.appreciationRate ? t.useFact('accounts.' + a.id + '.appreciationRate', a.appreciationRate) : null;
@@ -45,6 +51,8 @@ export function project(spine, rules, { asOf = spine.meta.asOf, mode = 'expected
       others.push({ id: a.id, value: b, monthly: rate === null ? 0 : Math.pow(1 + rate, 1 / 12) - 1 });
     }
   }
+  const rate = weight > 0 ? weighted / weight : r;
+  const growth = rate === null ? 0 : Math.pow(1 + rate, 1 / 12) - 1;
   // One debt schedule for the whole run (S-170), shared with cash flow.
   const schedule = debtSchedule(spine, rules, asOf, last);
   t.absorb({ value: 0, from: schedule.from, rough: schedule.rough, missing: schedule.missing, rules: schedule.rules });
