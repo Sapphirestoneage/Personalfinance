@@ -31,14 +31,14 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **The year you were born** (year, or Not sure). Sets your age for the cushion target, Coast FI and the turning-26 switch.
 - **The state you live in** (state, or Not sure). Picks the state tax.
 - **Your county** (text, or Not sure). Picks a local tax where there is one.
-- **Who lives with you?** (Just me / A partner / Kids / Other adults, or Not sure). Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.
+- **Who lives with you?** (Just me / A partner / Kids / Roommates, or Not sure). Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.
+- **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
 - **How do the two of you handle money?** (All joint / All separate / Mixed: joint for shared bills, separate for the rest, or Not sure; asked only when it applies). Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.
 - **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### Home
 
-- **Where do you live?** (I rent / I own / With roommates / With family, or Not sure). Shows rent or a mortgage and the bills that go with it.
-- **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
+- **Where do you live?** (I rent / I own / With family, or Not sure). Shows rent or a mortgage and the bills that go with it.
 - **Whose family?** (My parents / A partner's family / Other family, or Not sure; asked only when it applies). Names who covers the bills they pay for you.
 - **What do you pay your family?** (Rent / Some bills / Nothing, or Not sure; asked only when it applies). Rent becomes "paid to family"; utilities are covered unless you pay bills.
 - **Is there a mortgage?** (A mortgage / Paid off, or Not sure; asked only when it applies). Shows the mortgage, or only the property tax and insurance.
