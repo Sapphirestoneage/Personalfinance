@@ -23,7 +23,7 @@ import { mathButton } from './math-panel.js';
 import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields, linkPlanLoan } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
-import { catalog, itemTicks, tickWords, guessedTicks } from './ticks.js';
+import { catalog, itemTicks, tickWords, guessedTicks, checkNowChip } from './ticks.js';
 import { liveChoice } from './choice.js';
 import { headlineStrip } from './strip.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
@@ -66,7 +66,7 @@ import { setSharers, owedToYou } from '../engine/owed.js';
 import { owedScreen, personScreen, owedFigure, personSlug, resetOwedForms } from './owed.js';
 import { whereTable } from './where-data.js';
 import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
-import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
+import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso, MISSING_WORDS } from './view.js';
 
 const MOVE_WORDS = { surplus: 'money left each month', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -188,7 +188,8 @@ function editorForm(onSubmit, ...kids) {
 // Need or want (S-231): two plain tags on every line in Needs. The stored answer stays a yes or no (expenses.<id>.need).
 const isNeedRow = (path) => /^expenses\.[^.]+\.need$/.test(path);
 const needWords = (v) => (v === true ? 'Need' : v === false ? 'Want' : null);
-const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : showValue(value, row.type));
+// A link (paid from, paid with) reads as the account's name, never its id.
+const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : String(row.type).startsWith('link:') && value ? linkName(cur(), value) : showValue(value, row.type));
 
 // Check later and check now (rough now and rough later, replacing Not now): stored on the number's Fact with its date
 // (engine/edits.js setCheck), so it lasts across browsers and reloads and Undo takes it back. A later date that passes
@@ -202,12 +203,15 @@ function laterBtn(row) {
   // Typed any way (S-285): "dec 6", "the 15th", "next friday"; held as a date once it reads.
   let onDay = '';
   const when = dateBox('later-on', '', (v) => { onDay = v; }, { 'aria-label': 'Check again on' });
+  // Enter in this box sets the day (Check on that day), never the row editor's Save around it.
+  const setDay = h('button', { type: 'button', class: 'btn', onclick: () => { if (!onDay) { say(when.value.trim() ? 'That day could not be read. Try one like Dec 6' : 'Pick a day first'); when.focus(); return; } if (onDay <= today()) { say('Pick a day after today'); when.focus(); return; } put('later', onDay, row.label + ': check again ' + shortDate(onDay)); } }, 'Check on that day');
+  when.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); setDay.click(); } });
   return [
     c && c.mode === 'later' ? h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': check again now') }, 'Check now') : null,
     !c || c.mode !== 'now' ? h('button', { type: 'button', class: 'btn', onclick: () => put('now', null, row.label + ': worth checking now') }, 'Mark check now') : h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': mark taken off') }, 'Clear the mark'),
     h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 1), row.label + ': check again next month') }, 'Check next month'),
     h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 3), row.label + ': check again in 3 months') }, 'Check in 3 months'),
-    h('div', { class: 'later-pick' }, when, h('button', { type: 'button', class: 'btn', onclick: () => { if (!onDay) { say(when.value.trim() ? 'That day could not be read. Try one like Dec 6' : 'Pick a day first'); when.focus(); return; } if (onDay <= today()) { say('Pick a day after today'); when.focus(); return; } put('later', onDay, row.label + ': check again ' + shortDate(onDay)); } }, 'Check on that day'))
+    h('div', { class: 'later-pick' }, when, setDay)
   ];
 }
 
@@ -707,6 +711,12 @@ function editor(row) {
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
     const p = row.type === 'list' || row.type === 'tiers' ? input.read() : parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
+    // Saved as it was (the same value, already known or already a guess): nothing changes, and the bar says so.
+    // The same value saved as known keeps the guess: it says so, never "changed to" what it already was.
+    if (f && JSON.stringify(f.value) === JSON.stringify(p.value)) {
+      if (f.kind === kind) { closeEditor(); refresh(); say(row.label + ': nothing changed'); return; }
+      if (kind === 'known') { done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)); return; }
+    }
     let next = editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() });
     // An employer seen before brings its plan details, as guesses, in the same change (S-284).
     if (row.path.endsWith('.employerName')) { const tpl = planFor(p.value); if (tpl) next = applyTemplate(next, row.path.split('.').slice(0, 2).join('.'), tpl, today()); }
@@ -965,7 +975,10 @@ function sectionList(sc) {
   const owed = summaryOf(cur()).sheet.owed;
   return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
     // Taxes has its total on its own screen (balance due), not on this list.
-    const r = sec.slug === 'taxes' ? null : steps[sec.slug], due = sec.slug === 'taxes' ? taxDue() : null;
+    // A step total with no value (Goals holding only the FI number, which the step leaves out) is not "Nothing yet":
+    // the section then says how much is entered, as one with no step total does.
+    const r0 = sec.slug === 'taxes' ? null : steps[sec.slug], due = sec.slug === 'taxes' ? taxDue() : null;
+    const r = r0 && r0.value !== null && r0.value !== undefined ? r0 : null;
     // How many lines are rough or missing shows beside the total. A section with no step total says how much is
     // entered, or, while it has open questions, only those (never "7 of 7" next to "3 to fill in"); nothing asked yet
     // says so, never "0 of 0".
@@ -993,7 +1006,10 @@ const umap = () => (guess ? mapOf(guess, cur()) : null);
 // A row's mark: the red Missing chip when it is worth checking now; nothing for a guess (its dashed box and "guess"
 // tag already say what it is, once is enough), nothing when it is fine for now or set for later, and nothing for a
 // known number.
+// A guess worth checking now says so in words ("Check now"), so it never looks like one that is fine for now; that
+// one keeps only its dashed box and tag. Before the ranking is in, no guess is called worth checking.
 function kindMark(path, kind) {
+  if (kind === 'rough') return umap() && worthNow(umap(), path, kind, guessFor === cur()) ? checkNowChip() : null;
   if (kind !== 'missing' || !worthNow(umap(), path, kind, guessFor === cur())) return null;
   return chip(kind);
 }
@@ -1108,7 +1124,7 @@ function coveredScreen() {
   return h('section', { class: 'card', 'aria-label': 'Covered by others' },
     h('p', { class: 'muted' }, money(c.monthly) + ' a month that someone else pays, $0 to you.'),
     mathButton(['list:covered'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })),
-    h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? 'cost not given' : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
+    h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? MISSING_WORDS : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
 }
 // The year's tax still owed (the Taxes screen's own number), as a list figure; null until it can be figured.
 const taxDue = () => { const t = summaryOf(cur()).tax.balanceDue; return t.value === null || t.value === undefined ? null : h('span', {}, h('span', { class: 'go-total' }, money(t.value)), ' still owed (estimate)'); };
@@ -1144,7 +1160,7 @@ function subsScreen() {
   subsPicked = new Set([...subsPicked].filter((id) => sub.items.some((i) => i.id === id)));
   const exp = (id) => getAt(cur(), 'expenses.' + id);
   const dayOf = (i) => (i.renews ? 'on the ' + ordinal(+i.renews.slice(8, 10)) + (roughFact(exp(i.id).renews) ? ' (a guess)' : '') : 'no day yet');
-  const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with not given'; };
+  const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with ' + MISSING_WORDS.toLowerCase(); };
   // Tapped, a line opens its editor in place under it (the list stays the screen Back comes back to).
   const openOf = (i) => open === rowPathFor(cur(), 'expenses.' + i.id + '.amount');
   const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : null; };
@@ -1179,7 +1195,7 @@ function subsScreen() {
       h('label', { class: 'sub-tick', for: 'sub-pick-' + i.id }, tick(i)),
       h('button', { type: 'button', class: 'sub-go', 'aria-expanded': String(openOf(i)), onclick: () => { if (!canLeave()) return; setOpen(openOf(i) ? null : rowPathFor(cur(), 'expenses.' + i.id + '.amount')); } },
         h('span', { class: 'sub-name' }, i.label),
-        h('span', { class: 'sub-meta' }, [i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month', dayOf(i), withWhat(i)].join(' · ')),
+        h('span', { class: 'sub-meta' }, [i.monthly === null ? MISSING_WORDS : money(i.monthly) + ' a month', dayOf(i), withWhat(i)].join(' · ')),
         i.soon ? h('span', { class: 'chip chip-soon' }, 'Charging soon') : null,
         h('span', { class: 'chev', 'aria-hidden': 'true' }, openOf(i) ? '\u2304' : '\u203A')),
       openOf(i) ? h('div', { class: 'sub-open' }, line(i)) : null))),
@@ -1197,7 +1213,7 @@ function auditScreen() {
     b.value = r.uses === null ? '' : String(r.uses);
     b.addEventListener('change', () => {
       const t = b.value.trim();
-      if (!t) return later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', null, 'missing', today()), said.changed(r.label + ': uses a month', 'not given')));
+      if (!t) return later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', null, 'missing', today()), said.changed(r.label + ': uses a month', MISSING_WORDS.toLowerCase())));
       const p = parseInput('int', t);
       if (!p.ok || p.value < 0) { say('Uses a month: a whole number, like 4'); return; }
       later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', p.value, 'known', today()), said.changed(r.label + ': uses a month', String(p.value))));
@@ -1209,7 +1225,7 @@ function auditScreen() {
     h('section', { class: 'card', 'aria-label': 'Subscription audit' },
       h('p', { class: 'subs-total' }, au.candidates ? [h('strong', {}, money(au.freedYearly) + ' a year'), ' freed by cancelling the ' + au.candidates + ' marked (' + money(au.freedMonthly) + ' a month).'] : 'Mark the ones you would cancel to see what it frees.'),
       h('ol', { class: 'audit-list' }, au.rows.map((r) => h('li', { class: 'audit-row' + (r.candidate ? ' is-candidate' : '') },
-        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(r.path) }, r.label), h('span', { class: 'audit-cost' }, r.yearly === null ? 'amount not given' : money(r.yearly) + ' a year')),
+        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(r.path) }, r.label), h('span', { class: 'audit-cost' }, r.yearly === null ? MISSING_WORDS : money(r.yearly) + ' a year')),
         h('p', { class: 'tile-sub' }, (r.monthly === null ? '' : money(r.monthly) + ' a month') + (r.perUse !== null ? ' · ' + money(r.perUse, true) + ' a use' : r.uses === 0 ? ' · not used' : '')),
         h('div', { class: 'audit-actions' }, usesBox(r), mark(r)))))),
     h('section', { class: 'card' }, chartCard({ id: 'sub-audit', question: 'Which subscriptions cost the most a year?',
@@ -1408,7 +1424,7 @@ function sectionTop(sec) {
         figure('FI number: without debt payments', fi.implied, null, ['impliedFi'], true)),
       fiChartsRow(),
       // The other five FI numbers fold behind one line (slim by default), so the goals themselves come next.
-      foldRow('fi-more', 'Other FI numbers', (fi.fiPercent.value === null || fi.fiPercent.value === undefined ? 'How far along' : 'How far along: ' + pctOf(fi.fiPercent.value) + ' of the way') + '; Lean, Fat, Barista and Coast FI', () => h('div', { class: 'nw-pair', role: 'group', 'aria-label': 'How far along, and other FI numbers' },
+      foldRow('fi-more', 'Other FI numbers', fi.fiPercent.value === null || fi.fiPercent.value === undefined ? 'Lean, Fat, Barista, Coast' : pctOf(fi.fiPercent.value) + ' of the way', () => h('div', { class: 'nw-pair', role: 'group', 'aria-label': 'How far along, and other FI numbers' },
         figure('How far along', fi.fiPercent, (x) => pctOf(x) + ' of the way', ['fiPercent'], true),
         figure('Lean FI', fi.leanFi, null, ['leanFi'], true), figure('Fat FI', fi.fatFi, null, ['fatFi'], true),
         figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true)))
@@ -1533,7 +1549,7 @@ function sectionScreen(sec, { guided = false } = {}) {
     guided ? null : looksRight(sec.allRows),
     sectionTop(sec),
     // Protection (S-275): health coverage lives in the Profile; this links there rather than asking it twice.
-    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Add life, disability, renters or car insurance here; each premium counts once, in Needs, marked "from Protection". Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '.') : null,
+    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Add life, disability, renters or car insurance here.') : null,
     selectAll(sec.allRows, 'Select all here'),
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
@@ -1647,7 +1663,7 @@ function looksRight(rows, item = null, coll = null) {
   const formOpen = !!adding || !!kept().open;
   return h('div', { class: 'looks-right-bar' },
     h('button', { type: 'button', class: formOpen ? 'btn' : 'btn primary', id: 'looks-right', onclick: run }, 'Looks right'),
-    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' here, ' + (open ? (open === 1 ? '1' : open) + ' to answer. Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them all') + '; fix any that are wrong first.' : 'none to answer now. Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them') + ' as known.')));
+    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' here, ' + (open ? open + ' to fill in (marked Check now). Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them all') + '; fix any that are wrong first.' : (n === 1 ? 'fine for now' : 'all fine for now') + '. Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them') + ' as known.')));
 }
 // Covered with this client today (S-281): anything on the item confirmed or changed today gets a small check.
 const coveredToday = (it) => (it.rows || []).some((r) => r.fact && r.fact.asOf === today() && r.fact.kind !== 'missing' && !/default|guess|typical|house/i.test(String(r.fact.source || '')));
@@ -1665,7 +1681,7 @@ function itemScreen(sec, g, it, st) {
   const maxRow = () => {
     const acc = maxItFor(cur(), rules).mx.accounts.find((x) => x.id === it.id);
     const r = acc && acc.rows.find((x) => x.applies && !x.passed && x.room !== null);
-    return foldRow('max-' + it.id, 'How much to max it?', r ? money(r.room, !Number.isInteger(r.room)) + ' of room left for ' + r.year : 'Room, deadline and amounts', () => maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }));
+    return foldRow('max-' + it.id, 'How much to max it?', r ? money(r.room, !Number.isInteger(r.room)) + ' left for ' + r.year : 'Room, deadline and amounts', () => maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }));
   };
   return [
     g.items ? itemSiblings(sec, g, it) : null,

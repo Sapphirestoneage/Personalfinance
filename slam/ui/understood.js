@@ -2,13 +2,13 @@
 // $2,166.67 a month", "Dec 6, 2026"), in full-contrast text. When it could mean two things, the other reading is a
 // button beside it. One component for every box that reads how people talk.
 import { h } from './view.js';
-import { understood, localToday } from '../engine/natural.js';
+import { understood, localToday, dateWords } from '../engine/natural.js';
 import { inputText } from '../engine/edits.js';
 
-export function echo(input, type) {
+export function echo(input, type, opts = {}) {
   const line = h('p', { class: 'understood', 'aria-live': 'polite' });
   const show = () => {
-    const r = understood(type, input.value, localToday());
+    const r = understood(type, input.value, localToday(), opts);
     line.replaceChildren();
     if (!r) { line.remove(); return; }
     if (!line.isConnected) (input.closest('.affix') || input).after(line);
@@ -25,9 +25,13 @@ export function echo(input, type) {
   return input;
 }
 // A date box that takes "dec 6", "the 15th" or "next friday" (never the browser's own picker, which takes none).
-export function dateBox(id, value, onValue, attrs = {}) {
-  const box = h('input', { id, type: 'text', autocomplete: 'off', placeholder: 'e.g. Dec 6 or the 15th', ...attrs });
-  box.value = value || '';
-  box.addEventListener('input', () => { const r = understood('date', box.value, localToday()); onValue(r && r.ok ? r.value : ''); });
-  return echo(box, 'date');
+// A stored date shows in words ("Jan 1, 2024"), never as 2024-01-01; the words read back as the same day.
+// past: true for a day that already happened (a purchase, a check-in, money lent): "Oct 20" typed after Oct 20 is this
+// year's, never next year's (engine/natural.js readDate).
+export const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+export function dateBox(id, value, onValue, attrs = {}, { past = false } = {}) {
+  const box = h('input', { id, type: 'text', autocomplete: 'off', placeholder: past ? 'e.g. Oct 20 or yesterday' : 'e.g. Dec 6 or the 15th', ...attrs });
+  box.value = value && ISO_DAY.test(String(value)) ? dateWords(String(value)) : value || '';
+  box.addEventListener('input', () => { const r = understood('date', box.value, localToday(), { past }); onValue(r && r.ok ? r.value : ''); });
+  return echo(box, 'date', { past });
 }

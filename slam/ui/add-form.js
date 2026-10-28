@@ -171,7 +171,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const more = {
     institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: echo(box('add-rate', { inputmode: 'decimal', placeholder: collection === 'debts' ? 'e.g. 22.9' : 'e.g. 4.2' }), 'rate'),
     minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: echo(box('add-due', { inputmode: 'numeric', placeholder: 'e.g. 15 or the 15th' }), 'day'),
-    asOf: dateBox('add-asof', today, (v) => { asOfIso = v; }), note: box('add-note', { maxlength: '200' })
+    asOf: dateBox('add-asof', today, (v) => { asOfIso = v; }, {}, { past: true }), note: box('add-note', { maxlength: '200' })
   };
   const moreBox = {
     institution: field('add-inst', 'Bank or lender', more.institution, null, null, true),

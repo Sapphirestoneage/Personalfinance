@@ -114,6 +114,10 @@ export function guessedTicks(item, collection) {
   return featuresOf(catalog, item, collection).filter((f) => f.kind === 'has' && f.likely && !ticks[f.id]).map((f) => ({ f, answer: f.likely }));
 }
 
+// A guess worth checking now (Rough now and later) says so in words on its row, Guide me's and Numbers' alike, so it
+// never looks like a guess that is fine for now (that one keeps only its dashed box and "guess" tag).
+export const checkNowChip = () => h('span', { class: 'chip chip-rough chip-now' }, 'Check now');
+
 // The count for one slim line elsewhere ("4 of 12 checked").
 export const tickCountOf = (item, collection, tier = null) => (catalog ? tickCount(catalog, item, collection, { tier }) : { checked: 0, total: 0 });
 export const featuresForType = (type, collection) => (catalog ? featuresOfType(catalog, type, collection) : []);
@@ -123,35 +127,41 @@ export const featuresForType = (type, collection) => (catalog ? featuresOfType(c
 // "e.g." inside. A link or a list is set on the item's screen in Numbers.
 // Under a detail titled with the same words the box has no second label (the title is its name).
 const BOXED = /^(money|rate|int|text|date|bool|tiers)$|^choice:/;
-export function fieldBox(r, value, onSet, id, title = null) {
+// Whether a field of this type is drawn as a box here (the rest are set on the item's screen in Numbers).
+export const boxedType = (type) => BOXED.test(String(type || ''));
+// guess: the value is a rough one, so its box is dashed and its label says "guess", as every guessed box is (S-287).
+export function fieldBox(r, value, onSet, id, title = null, guess = false) {
   const msg = h('span', { class: 'edit-msg', role: 'alert' });
+  guess = guess && value !== null && value !== undefined;
+  const tag = () => (guess ? h('span', { class: 'guess-tag' }, 'guess') : null);
   const parse = (raw) => (r.type === 'text' ? { ok: true, value: raw } : parseInput(r.type, raw));
   let box;
   if (!BOXED.test(r.type)) return h('p', { class: 'muted tick-later' }, r.label + ': set it on this item in Numbers.');
-  if (r.type === 'tiers') return tiersBox(r, value, onSet, id);
+  if (r.type === 'tiers') return tiersBox(r, value, onSet, id, tag());
   if (r.type === 'bool' || r.type.startsWith('choice:')) {
     const opts = r.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : r.type.slice(7).split('|').map((x) => [x, showValue(x, r.type)]);
     const read = (k) => (k === null ? null : r.type === 'bool' ? k === 'true' : k);
     // Two or three answers are a row of buttons (S-282); a longer list stays a list, which the picker takes over (S-284).
     if (opts.length <= 3) {
       const row = liveChoice({ id, options: opts, value: value === null || value === undefined ? null : String(value), label: id + '-l', onPick: (k) => onSet(read(k)) });
-      return h('div', { class: 'tick-box choice-field' }, h('span', { class: 'mini-label', id: id + '-l', hidden: title === r.label || null }, r.label), row.el, msg);
+      return h('div', { class: 'tick-box choice-field' }, h('span', { class: 'mini-label', id: id + '-l', hidden: title === r.label && !guess || null }, title === r.label ? null : r.label, tag()), row.el, msg);
     }
-    box = h('select', { id, onchange: () => onSet(read(box.value === '' ? null : box.value)) }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: value !== null && value !== undefined && String(value) === v }, t)));
+    box = h('select', { id, class: guess ? 'is-guess' : null, onchange: () => onSet(read(box.value === '' ? null : box.value)) }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: value !== null && value !== undefined && String(value) === v }, t)));
   } else if (r.type === 'date') {
     // A date box takes "dec 6" or "the 15th" (S-285); the day it read is saved when the box is left.
     let iso = value === null || value === undefined ? '' : String(value);
-    box = dateBox(id, iso, (v) => { iso = v; }, { 'aria-label': title === r.label ? r.label : null });
+    box = dateBox(id, iso, (v) => { iso = v; }, { 'aria-label': title === r.label ? r.label : null, class: guess ? 'is-guess' : null });
     box.addEventListener('change', () => { if (box.value.trim() && !iso) { msg.textContent = 'Not a date I can read; try Dec 6 or 12/6'; return; } msg.textContent = ''; onSet(iso || null); });
   } else {
-    box = h('input', { id, type: 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null, 'aria-label': title === r.label ? r.label : null });
+    box = h('input', { id, class: guess ? 'is-guess' : null, type: 'text', autocomplete: 'off', inputmode: ['money', 'rate', 'int'].includes(r.type) ? 'decimal' : null, placeholder: r.hint || null, 'aria-label': title === r.label ? r.label : null });
     box.value = value === null || value === undefined ? '' : r.type === 'text' ? String(value) : inputText(r.type, value);
     box.addEventListener('change', () => { const raw = box.value.trim(); if (!raw) { msg.textContent = ''; onSet(null); return; } const p = parse(raw); if (!p.ok) { msg.textContent = p.message; return; } msg.textContent = ''; onSet(p.value); });
   }
-  return h('div', { class: 'tick-box' }, title === r.label ? null : h('label', { for: id, class: 'mini-label' }, r.label + (r.type === 'rate' ? ' (%)' : '')), box, msg);
+  // Under a detail titled with the box's own name, a guess still says so, in a tag above the box.
+  return h('div', { class: 'tick-box' }, title === r.label ? (guess ? h('span', { class: 'mini-label' }, tag()) : null) : h('label', { for: id, class: 'mini-label' }, r.label + (r.type === 'rate' ? ' (%)' : ''), tag()), box, msg);
 }
 // A match, tier by tier: a pair of boxes a tier, and + Add a tier. Saved once every pair is whole.
-function tiersBox(r, value, onSet, id) {
+function tiersBox(r, value, onSet, id, tag = null) {
   const tiers = Array.isArray(value) && value.length ? value.map((t) => ({ ...t })) : [{ rate: null, upTo: null }];
   const wrap = h('div', { class: 'tick-box tiers-box' });
   const msg = h('span', { class: 'edit-msg', role: 'alert' });
@@ -161,7 +171,7 @@ function tiersBox(r, value, onSet, id) {
     if (out.some((t) => t.upTo <= 0 || t.upTo > 1 || t.rate < 0 || t.rate > 2)) { msg.textContent = 'A match like 100, on the first 3 (% of pay)'; return; }
     msg.textContent = ''; onSet(out.length ? out : null);
   };
-  const draw = () => wrap.replaceChildren(h('p', { class: 'mini-label' }, r.label), ...tiers.map((t, i) => {
+  const draw = () => wrap.replaceChildren(h('p', { class: 'mini-label' }, r.label, tag), ...tiers.map((t, i) => {
     const one = (k, words) => { const b = h('input', { type: 'text', inputmode: 'decimal', autocomplete: 'off', id: i === 0 && k === 'rate' ? id : null, 'aria-label': 'Tier ' + (i + 1) + ': ' + words, placeholder: k === 'rate' ? 'e.g. 100' : 'e.g. 3' });
       b.value = t[k] === null ? '' : inputText('rate', t[k]);
       b.addEventListener('change', () => { const raw = b.value.trim(); const p = raw ? parseInput('rate', raw) : { ok: true, value: null }; if (!p.ok) { msg.textContent = p.message; return; } t[k] = p.value; save(); });
@@ -174,8 +184,9 @@ function tiersBox(r, value, onSet, id) {
 
 // The ticks with their fields in place under a Yes: the Session (screen-one ticks only) and the add form.
 // get(field) -> value; onSet(field, value, reveal); onAnswer(feature, answer | null).
-export function inlineTicks({ title, features, ticks = {}, onAnswer, get, onSet, open = false, ontoggle = null, idBase }) {
-  const boxes = (f) => h('div', { class: 'tick-fields' }, f.reveals.map((r) => fieldBox(r, get(r.field), (x) => onSet(r.field, x, r), idBase + '-' + r.field, f.kind === 'ask' ? f.title || f.question : null)));
+// rough(field) -> true when the field's value is a guess (its box is then marked as one).
+export function inlineTicks({ title, features, ticks = {}, onAnswer, get, onSet, rough = () => false, open = false, ontoggle = null, idBase }) {
+  const boxes = (f) => h('div', { class: 'tick-fields' }, f.reveals.map((r) => fieldBox(r, get(r.field), (x) => onSet(r.field, x, r), idBase + '-' + r.field, f.kind === 'ask' ? f.title || f.question : null, rough(r.field))));
   return tickList({ title, features, ticks, onAnswer, open, ontoggle, idBase, below: (f, ans) => (ans === 'yes' ? boxes(f) : null), details: boxes });
 }
 

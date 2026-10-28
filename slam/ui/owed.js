@@ -98,8 +98,8 @@ function lentForm(spine) {
   const who = h('input', { id: 'lent-who', type: 'text', list: 'lent-names', autocomplete: 'off', maxlength: '40', placeholder: 'e.g. Jordan' });
   const amt = h('input', { id: 'lent-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 150' });
   let dateIso = todayIso(), dueIso = '';
-  const date = dateBox('lent-date', dateIso, (v) => { dateIso = v; });
-  const due = dateBox('lent-due', '', (v) => { dueIso = v; });
+  const date = dateBox('lent-date', dateIso, (v) => { dateIso = v; }, {}, { past: true });
+  const due = dateBox('lent-due', '', (v) => { dueIso = v; }, { placeholder: 'e.g. Dec 6' });
   const gift = h('input', { type: 'checkbox', id: 'lent-gift' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const field = (label, input, hint) => h('div', { class: 'share-field' }, h('label', { for: input.id, class: 'edit-label' }, label), input, hint ? h('p', { class: 'edit-hint' }, hint) : null);

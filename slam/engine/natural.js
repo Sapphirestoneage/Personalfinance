@@ -55,7 +55,9 @@ export function readRate(text) {
   return { ok: true, value, words: w(value), alt };
 }
 // A date. A month and day with no year: the next one on or after today, with the one before it offered too.
-export function readDate(text, today) {
+// past: the box is for something that already happened (a purchase, a check-in): a month and day, "the 15th" or a
+// weekday reads as the last one on or before today, with the next one offered too.
+export function readDate(text, today, { past = false } = {}) {
   const t = String(text ?? '').trim().toLowerCase().replace(/,/g, ' ').replace(/\s+/g, ' ');
   const [ty, tm, td] = today.split('-').map(Number);
   const done = (s, alt = null) => ({ ok: true, value: s, words: dateWords(s), alt: alt ? { value: alt, words: dateWords(alt) } : null });
@@ -65,14 +67,24 @@ export function readDate(text, today) {
   if (m) return real(+m[1], +m[2], +m[3]) ? done(iso(+m[1], +m[2], +m[3])) : { ok: false, message: 'That day is not on the calendar' };
   if (t === 'today') return done(today);
   if (t === 'tomorrow') return done(at(1));
-  m = t.match(/^(next |this )?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/);
-  if (m) { const want = DAYS.findIndex((d) => d.startsWith(m[2])); const now = new Date(Date.UTC(ty, tm - 1, td)).getUTCDay(); const k = (want - now + 7) % 7 || 7; return done(at(k)); }
+  if (past && t === 'yesterday') return done(at(-1));
+  m = t.match(/^(next |this |last )?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/);
+  if (m) {
+    const want = DAYS.findIndex((d) => d.startsWith(m[2])); const now = new Date(Date.UTC(ty, tm - 1, td)).getUTCDay();
+    if (m[1] === 'last ' || (past && m[1] !== 'next ')) return done(at(-((now - want + 7) % 7 || 7)));
+    const k = (want - now + 7) % 7 || 7; return done(at(k));
+  }
   m = t.match(/^(?:on )?the (\d{1,2})(?:st|nd|rd|th)?$/);
-  if (m) { const d = +m[1]; let y = ty, mo = tm; if (d < td) { mo += 1; if (mo > 12) { mo = 1; y += 1; } } return real(y, mo, d) ? done(iso(y, mo, d)) : { ok: false, message: 'That day is not in that month' }; }
+  if (m) {
+    const d = +m[1]; let y = ty, mo = tm;
+    if (past && d > td) { mo -= 1; if (mo < 1) { mo = 12; y -= 1; } } else if (!past && d < td) { mo += 1; if (mo > 12) { mo = 1; y += 1; } }
+    return real(y, mo, d) ? done(iso(y, mo, d)) : { ok: false, message: 'That day is not in that month' };
+  }
   const withYear = (mo, d, y) => {
     if (y) { const yy = y < 100 ? 2000 + y : y; return real(yy, mo, d) ? done(iso(yy, mo, d)) : { ok: false, message: 'That day is not on the calendar' }; }
     if (!real(ty, mo, d) && !real(ty + 1, mo, d)) return { ok: false, message: 'That day is not on the calendar' };
     const thisYear = iso(ty, mo, d);
+    if (past) return thisYear <= today ? done(thisYear, iso(ty + 1, mo, d)) : done(iso(ty - 1, mo, d), thisYear);
     return thisYear >= today ? done(thisYear, iso(ty - 1, mo, d)) : done(iso(ty + 1, mo, d), thisYear);
   };
   m = t.match(/^([a-z]{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?(?: (\d{2,4}))?$/);
@@ -84,11 +96,11 @@ export function readDate(text, today) {
   return { ok: false, message: 'A date, like Dec 6, the 15th or next Friday' };
 }
 // What a box understood, in words, for the line under it: { ok, words, alt? } or { ok: false, message }.
-export function understood(type, text, today) {
+export function understood(type, text, today, opts = {}) {
   if (!String(text ?? '').trim()) return null;
   if (type === 'money') return readMoney(text);
   if (type === 'rate') return readRate(text);
-  if (type === 'date') return readDate(text, today);
+  if (type === 'date') return readDate(text, today, opts);
   if (type === 'day') return readDay(text);
   return null;
 }

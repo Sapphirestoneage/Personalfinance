@@ -32,6 +32,7 @@ import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref, MISSING_WORDS } from './view.js';
 import { echo, dateBox } from './understood.js';
+import { dateWords } from '../engine/natural.js';
 import { foldRow } from './rows.js';
 import { budgetView, startMonth, RANGES, realDifferences, closeMonth, reopenMonth, planSuggestions, keepPlan, sortEntry, setMerchantRule, merchantRules as learnedMerchants, OVER_CHOICES, UNDER_CHOICES } from '../engine/budget.js';
 import { editExpense } from '../engine/edits.js';
@@ -40,6 +41,9 @@ const VIZ = ['viz-1', 'viz-2', 'viz-3', 'viz-4', 'viz-5'];
 const TAGS = [...FAT, 'other'];
 const kindChip = (k) => chip(k === 'computed' ? 'known' : k);
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+// A purchase or a check-in already happened: a day ahead of today (a no-year "Oct 20" typed after Oct 20 reads as next
+// year's) is refused with words, and the box's "I meant" button offers the one before it.
+const aheadWords = (label, day) => (day && day > todayIso() ? label + ': ' + dateWords(day) + ' has not come yet. Tap "I meant" under the box, or leave it blank for today' : null);
 const pc = (f) => Math.round(f * 1000) / 10 + '%';
 // Cents only in the log and what is typed into it (audit 3): every summary amount is whole dollars.
 const cents = (x) => money(x, !Number.isInteger(x));
@@ -163,13 +167,14 @@ function loggerCard(m) {
   // The day as people say it ("today", "oct 20", "the 15th"); blank is today. dayRead is false while the box holds
   // words no day was read from, so a typo never lands on today without a word.
   let dayRead = true;
-  const date = dateBox('log-date', '', (v) => { form.date = v; dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20', 'aria-label': 'Day' });
+  const date = dateBox('log-date', '', (v) => { form.date = v; dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20', 'aria-label': 'Day' }, { past: true });
   const pressTag = (t) => { form.tag = t; for (const b of chips.children) b.setAttribute('aria-pressed', String(b.textContent === TAG_WORDS[t])); };
   const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-labelledby': 'log-kind-l' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => pressTag(t) }, TAG_WORDS[t])));
   const submit = (kind) => {
     const p = parseInput('money', amount.value);
     if (!p.ok) { msg.textContent = p.message; amount.focus(); return; }
     if (!dayRead) { msg.textContent = 'Day: not read. Try "Oct 20", or leave it blank for today'; date.focus(); return; }
+    if (aheadWords('Day', form.date)) { msg.textContent = aheadWords('Day', form.date); date.focus(); return; }
     const was = { amount: form.amount, merchant: form.merchant, expenseId: form.expenseId, date: form.date };
     const day = form.date || todayIso();
     // After Add the amount, the store, the line and the day clear; the category and paid-with stay for the next one.
@@ -193,7 +198,7 @@ function loggerCard(m) {
   return foldRow('log', 'Purchases', String(entries.length) + ' this month', () => [
     logAdding ? logForm : null,
     entries.length ? h('ul', { class: 'log-list', 'aria-label': 'This month\'s log' }, entries.map((e) => logItem(spine, e))) : h('p', { class: 'muted' }, 'Nothing added this month.')],
-  { add: { label: 'Add', onOpen: () => { logAdding = true; } } });
+  { add: { label: 'Add a purchase', onOpen: () => { logAdding = true; } } });
 }
 
 // One tag's bar: spent against the budget, with a mark where the budget expects you to be today.
@@ -349,9 +354,9 @@ function checkinCard(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   // The day as people say it; blank is today. dayRead is false while the box holds words no day was read from.
   let dayRead = true;
-  const date = dateBox('ci-date', '', (v) => { form.checkDate = v || todayIso(); dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20' });
+  const date = dateBox('ci-date', '', (v) => { form.checkDate = v || todayIso(); dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20' }, { past: true });
   const f = checkInForecast(m.spine, m.sim, form.checkDate >= m.sim.start ? form.checkDate : m.sim.start);
-  const boxes = f.accounts.map((a) => ({ a, input: echo(h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,745' }), 'money') }));
+  const boxes = f.accounts.map((a) => ({ a, input: echo(h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? 'e.g. 1,200' : 'e.g. ' + money(f.forecast[a.id]).replace('$', '') }), 'money') }));
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
   return h('section', { class: 'card', id: 'checkin', 'aria-label': 'Check in balances' },
@@ -362,6 +367,7 @@ function checkinCard(m) {
       for (const { a, input } of boxes) { if (input.value.trim() === '') continue; const p = parseInput('money', input.value); if (!p.ok) { msg.textContent = a.name + ': ' + p.message; input.focus(); return; } balances[a.id] = p.value; forecast[a.id] = f.forecast[a.id]; }
       if (!Object.keys(balances).length) { msg.textContent = 'Type at least one balance'; return; }
       if (!dayRead) { msg.textContent = 'On: not read. Try "Oct 20", or leave it blank for today'; date.focus(); return; }
+      if (aheadWords('On', form.checkDate)) { msg.textContent = aheadWords('On', form.checkDate); date.focus(); return; }
       const on = form.checkDate || todayIso();
       form.checkDate = todayIso();
       if (!change((s) => checkIn(s, { date: on, balances, forecast }), said.added('Check-in for ' + shortDate(on)))) form.checkDate = on;

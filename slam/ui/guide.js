@@ -31,7 +31,7 @@ import { addForm, focusAdd } from './add-form.js';
 import { INCOME_FIRST, OFTEN_WORDS, PAY_SCHEDULE } from '../engine/add.js';
 import { endCallScreen, fiReveal } from './end-call.js';
 import { headlineStrip } from './strip.js';
-import { catalog, inlineTicks, tickWords, guessedTicks } from './ticks.js';
+import { catalog, inlineTicks, tickWords, guessedTicks, checkNowChip, boxedType } from './ticks.js';
 import { featuresOf, tickFeature } from '../engine/features.js';
 import { rememberStep, currentClient } from './clients.js';
 import { ledgerHref } from './view.js';
@@ -136,10 +136,12 @@ const cell = (cap, box) => {
   box.setAttribute('aria-labelledby', capId);
   return h('div', { class: 'field-cell' }, h('span', { class: 'field-cap', id: capId }, cap, tag), box);
 };
-// A missing number worth checking now gets a chip on the row's name (Rough now and later). A guess gets none: its own
-// box (dashed, tagged) already says what it is, and one mark on a line is enough.
+// A missing number worth checking now gets a chip on the row's name (Rough now and later); so does a guess worth
+// checking now ("Check now"), so it never looks like a guess that is fine for now, whose dashed, tagged box is its
+// only mark. Before the ranking is in, no guess is called worth checking.
 let marks = null, marksFresh = false;
 const guessChip = (f, path) => {
+  if (f && f.kind === 'rough' && f.value !== null && f.value !== undefined) return marks && worthNow(marks, path, f.kind, marksFresh) ? checkNowChip() : null;
   if (!f || f.kind !== 'missing' || !worthNow(marks, path, f.kind, marksFresh)) return null;
   return chip('missing');
 };
@@ -185,6 +187,7 @@ function coreTicks(spine, rules, coll, x) {
     ontoggle: (e) => { if (e.target.open) openTicks.add(base); else openTicks.delete(base); },
     onAnswer: (f, a) => { openTicks.add(base); change((s) => tickFeature(s, base, f, a, { rules, today: todayIso() }), tickWords(name, f, a)); },
     get: (field) => v(x[field]),
+    rough: (field) => !!x[field] && x[field].kind === 'rough',
     onSet: (field, val, r) => putF(base + '.' + field, val, said.changed(name + ': ' + r.label.toLowerCase(), val === null ? 'blank' : showValue(val, r.type))) });
 }
 
@@ -233,9 +236,25 @@ function nextCard(ctx) {
 // looksRight does. A guess in a box the step does not show (who pays, a renewal) waits for its own screen. Next stays
 // the one filled button.
 const STEP_LISTS = { needs: ['expenses'], debt: ['debts'], income: ['income', 'household'], assets: ['accounts'], goals: ['goals'], protection: ['policies'] };
-const STEP_FIELDS = { expenses: ['amount', 'payDay'], debts: [...ON_ROW.debts, 'payPolicy'], income: [...ON_ROW.income, 'salary', 'hourlyRate', 'hoursPerWeek', 'yearTotal', 'businessExpenses'], accounts: ['balance', 'liquid'], goals: ['target'], household: ['filingStatus', 'state', 'nycResident', 'yonkersResident', 'lastRefund'] };
+// Only the boxes a step draws marked as a guess (dashed, tagged) count: a choice or a pick list here shows no guess,
+// so it waits for its own screen in Numbers, as a box the step does not show does.
+const STEP_FIELDS = { expenses: ['amount', 'payDay'], debts: [...ON_ROW.debts], accounts: ['balance'], goals: ['target'], household: ['lastRefund'] };
+// An income line's boxes depend on how it is paid (incomeRows, w2Bits, selfBits); a maybe (a possible bonus) is not
+// drawn here at all.
+function incomeFields(x) {
+  if (x.type === 'maybeMoney') return [];
+  const basis = v(x.payBasis), self = isSelfEmployment(x) && x.type !== 'person';
+  const asked = (x.type === 'w2' && basis) || (isSelfEmployment(x) && basis === 'lumpy');
+  return [asked ? null : 'amount', x.cadence === 'monthly' || x.cadence === 'semimonthly' ? 'payDay' : null,
+    x.type === 'w2' && basis === 'salary' ? 'salary' : null, ...(x.type === 'w2' && basis === 'hourly' ? ['hourlyRate', 'hoursPerWeek'] : []),
+    self && basis === 'lumpy' ? 'yearTotal' : null, self ? 'businessExpenses' : null].filter(Boolean);
+}
+// How an income line is paid, shown chosen as a guess until someone picks (w2Bits, selfBits): Looks right keeps it.
+const payGuess = (x) => (x.type === 'maybeMoney' || v(x.payBasis) ? null : x.type === 'w2' ? 'salary' : isSelfEmployment(x) && x.type !== 'person' ? 'steady' : null);
 // The boxes a step draws for an item: its row's, and under its ticks a detail's box always, a question's under a Yes.
-const drawnFields = (coll, x) => (STEP_FIELDS[coll] || []).concat(coreFeatures(coll, x).filter((f) => f.kind === 'ask' || (x.ticks || {})[f.id] === 'yes').flatMap((f) => f.reveals.map((r) => r.field)));
+const drawnFields = (coll, x) => (coll === 'income' ? incomeFields(x) : STEP_FIELDS[coll] || []).concat(coreFeatures(coll, x).filter((f) => f.kind === 'ask' || (x.ticks || {})[f.id] === 'yes').flatMap((f) => f.reveals.filter((r) => boxedType(r.type)).map((r) => r.field)));
+// An item the step draws a row for: not a goal's FI number, not a line the Profile hides.
+const drawnItem = (spine, coll, x) => !!x && !(coll === 'goals' && x.type === 'fi') && !(coll === 'expenses' && hiddenLine(spine, x));
 function stepLooksRight(spine, id) {
   const lists = STEP_LISTS[id] || [];
   const rough = listFacts(spine).filter(({ path, fact }) => {
@@ -246,15 +265,18 @@ function stepLooksRight(spine, id) {
     if (coll === 'policies') return true;
     if (coll === 'household') return !rest.length && STEP_FIELDS.household.includes(itemId);
     const x = (spine[coll] || []).find((i) => i.id === itemId);
-    return !!x && rest.length === 1 && drawnFields(coll, x).includes(rest[0]);
+    return drawnItem(spine, coll, x) && rest.length === 1 && drawnFields(coll, x).includes(rest[0]);
   });
+  // How each income line is paid, where the step shows its likely answer as a guess.
+  const pays = lists.includes('income') ? (spine.income || []).map((x) => ({ x, basis: payGuess(x) })).filter((p) => p.basis) : [];
   // The pre-answered questions on screen: each takes its likely answer, and the numbers a Yes fills are kept too.
   const ticks = lists.filter((coll) => ON_ROW[coll]).flatMap((coll) => (spine[coll] || []).flatMap((x) => { const shown = new Set(coreFeatures(coll, x).map((f) => f.id)); return guessedTicks(x, coll).filter(({ f }) => shown.has(f.id)).map((t) => ({ ...t, base: coll + '.' + x.id })); }));
-  const n = rough.length + ticks.length;
+  const n = rough.length + ticks.length + pays.length;
   if (!n) return null;
   const run = () => change((s0) => {
     let s = s0;
     const today = todayIso(), rules = current().rules;
+    for (const { x, basis } of pays) s = setPay(s, x.id, basis === 'salary' ? { basis, cadence: PER_YEAR_OK(x.cadence) ? x.cadence : 'biweekly' } : { basis }, today);
     for (const { base, f, answer } of ticks) s = tickFeature(s, base, f, answer, { rules, today });
     const filled = ticks.flatMap(({ base, f }) => f.reveals.map((r) => ({ path: base + '.' + r.field })));
     return bulkEdit(s, [...rough.map((r) => ({ path: r.path })), ...filled], 'confirm', today);
@@ -475,10 +497,14 @@ function needs(ctx) {
       const others = members.filter((e) => !drawn.has(e) && e !== catLine);
       const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in Numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x), 'e.g. 1,200', catLine ? catLine.amount : null)) : null;
       // Chunked (S-283): each group folds to its name and total, and opens on tap; what is open stays open.
-      const total = members.reduce((n, e) => n + (v(e.amount) || 0), 0);
+      // A shared bill counts the household's part, the number Numbers' group adds (engine/cashflow.js), so the groups
+      // add up to the step total. Nothing typed in a group is "Nothing yet", never $0.
+      const part = new Map(sum.cashflow.expenses.items.map((i) => [i.id, i.amount]));
+      const counted = members.filter((e) => v(e.amount) !== null && typeof part.get(e.id) === 'number');
+      const total = counted.length ? Math.round(counted.reduce((n, e) => n + part.get(e.id), 0) * 100) / 100 : null;
       const isOpen = openCats.has(cat.id) || (!openCats.size && cat === DATA.needs[0]);
       const d = h('details', { class: 'card done-group need-group', open: isOpen || null, 'aria-labelledby': 'cat-' + cat.id },
-        h('summary', {}, h('h2', { id: 'cat-' + cat.id, class: 'group-h' }, CAT_TITLE[cat.label] || cat.label), h('span', { class: 'go-total' }, total ? money(total) + ' a month' : 'Nothing yet')),
+        h('summary', {}, h('h2', { id: 'cat-' + cat.id, class: 'group-h' }, CAT_TITLE[cat.label] || cat.label), h('span', { class: 'go-total' }, total !== null ? money(total) + ' a month' : 'Nothing yet')),
         // A line named like the category with lines of its own beside it (round 2: the demo's Miscellaneous $300 was in
         // the total and on no row): it shows as its own row, so the lines add up to the total.
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), catOn && anyLine ? needRow(spine, { label: cat.label }, cat.fat, 'rest-' + cat.id) : null, oneNumber));
@@ -526,7 +552,7 @@ function whoCard(ctx) {
   const nm = keepTyping(h('input', { id: 'p-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Sam' }));
   // The birth date takes words ("dec 6 1990"), as every other date box does (S-285).
   let birth = '';
-  const bd = dateBox('p-birth', null, (x) => { birth = x; });
+  const bd = dateBox('p-birth', null, (x) => { birth = x; }, { placeholder: 'e.g. Dec 6 1990' }, { past: true });
   const fl = pickBox('p-filing', 'How you file', FILINGS, 'mfj', () => {});
   const msg = h('span', { class: 'edit-msg', role: 'alert' });
   const add = (e) => { e.preventDefault(); const name = nm.value.trim(); if (!name) { msg.textContent = 'Type a name first'; nm.focus(); return; } partnerOpen = false; change((sp) => addPartner(sp, { name, birthDate: birth || null, filing: fl.value }, today), said.added(name)); };
@@ -854,7 +880,7 @@ function goals(ctx) {
           lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, (cards.missing || []).length ? 'missing a balance' : cards.value ? money(cards.value) + ' to go' : 'Done')),
           ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target, 'goals.' + g.id + '.target')),
             cell('How much', moneyBox('g-t-' + g.id, v(g.target), g.label + ': how much', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x))), 'e.g. 2,000', g.target)),
-            // By when takes words ("dec 6", "next june"; S-285) and saves when the box is left, never under the typing.
+            // By when takes words ("dec 6", "the 15th", "next friday"; S-285) and saves when the box is left, never under the typing.
             (() => {
               let by = g.by || '';
               const d = keepTyping(dateBox('g-by-' + g.id, g.by, (x) => { by = x; }, { 'aria-label': g.label + ': by when' }));

@@ -2419,3 +2419,8 @@ button.go-row { width: 100%; font: inherit; text-align: left; cursor: pointer; }
 .letters .letter { font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 700; overflow-wrap: anywhere; }
 /* The Design kit's sample tab bars fit a phone card: smaller words, so Calendar and Spending never touch. */
 @media (max-width: 639px) { .tabbar.is-sample .tab { font-size: var(--text-xs); } }
+/* liveChoice inside an open row: the track must not match li.row.open, and unpressed choices must look like buttons (rule 1). */
+li.row.open .choice-live .segmented, li.row.open .segmented.choice-row { background: var(--surface); border: 1px solid var(--border); }
+li.row.open .choice-row .seg-btn:not([aria-pressed="true"]) { background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-1); }
+/* 'Plus tips or overtime' switch: space from the 'How are you paid?' row above (rule 7). */
+.srow-q .switch-btn, .add-form .switch-btn, #add-extra { margin-top: var(--space-3); }
