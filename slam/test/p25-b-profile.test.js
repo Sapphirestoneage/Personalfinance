@@ -27,7 +27,7 @@ const label = (a, k) => (P.fieldsFor(a).shown.find((f) => f.key === k) || {}).la
 const answer = (s, a) => P.applyAnswers(s, a, { today: TODAY });
 
 // The three answer sets of the brief.
-const RENTER = { home: 'roommates', roommates: '2', work: 'w2', payType: 'salary', payOften: 'biweekly', getAround: 'transit' };
+const RENTER = { home: 'rent', livesWith: ['roommates'], roommates: '2', work: 'w2', payType: 'salary', payOften: 'biweekly', getAround: 'transit' };
 const FAMILY = { home: 'family', familyPay: 'nothing', work: 'w2', payType: 'hourly', payOften: 'weekly', getAround: 'rideshare' };
 const OWNER = { home: 'own', ownLoan: 'mortgage', work: 'self', quarterly: 'notSure', getAround: 'car' };
 
@@ -105,8 +105,8 @@ test('a balance never changes which fields show; a Profile answer does, and is l
   s = answer(s, { home: 'own', ownLoan: 'paidOff' });
   assert.notDeepEqual(P.fieldsFor(P.answersOf(s)), before);
   const last = s.lifeChanges.slice(-2);
-  assert.deepEqual(last.map((c) => [c.question, c.from, c.to, c.date]), [['home', 'roommates', 'own', TODAY], ['ownLoan', null, 'paidOff', TODAY]]);
-  assert.equal(P.changeWords(last[0]), 'Where do you live? With roommates to I own');
+  assert.deepEqual(last.map((c) => [c.question, c.from, c.to, c.date]), [['home', 'rent', 'own', TODAY], ['ownLoan', null, 'paidOff', TODAY]]);
+  assert.equal(P.changeWords(last[0]), 'Where do you live? I rent to I own');
   // Answering the same again is not a change.
   assert.equal(answer(s, { home: 'own' }), s);
 });
@@ -265,4 +265,37 @@ test('Part C review: a deleted goal is not put back; a goal id already taken get
   const paid = recordDebtPayment(demo(), 'visa', 5000, TODAY);
   assert.equal(valueOf(getAt(paid, 'debts.visa.balance')), 0);
   assert.equal(valueOf(getAt(paid, 'accounts.chk.balance')), 3000 - 3000, 'checking pays only what was owed');
+});
+
+test('roommates: ticked under Who lives with you, then how many, right there; older answers read over (S-288)', () => {
+  const you = P.LEVEL1.filter((q) => q.area === 'you').map((q) => q.id);
+  assert.equal(you[you.indexOf('livesWith') + 1], 'roommates', 'the count follows the question');
+  assert.ok(!P.LEVEL1.find((q) => q.id === 'home').options.some(([k]) => k === 'roommates'), 'Where do you live? no longer asks it');
+  assert.ok(!P.LEVEL1.find((q) => q.id === 'livesWith').options.some(([, w]) => w === 'Other adults'));
+  const count = P.LEVEL1.find((q) => q.id === 'roommates');
+  assert.equal(P.asked({ livesWith: ['roommates'] }, count), true);
+  assert.equal(P.asked({ livesWith: ['partner'] }, count), false);
+  assert.equal(P.asked({ home: 'rent' }, count), false);
+  // Rent and the bills read as your share from the Roommates tick alone; a partner shares a new line, roommates do not.
+  assert.equal(label({ home: 'rent', livesWith: ['roommates'] }, 'rent'), 'Rent, your share');
+  assert.equal(label({ home: 'rent', livesWith: ['roommates'] }, 'utilities'), 'Utilities, your share');
+  assert.equal(label({ home: 'rent', livesWith: ['partner'] }, 'rent'), 'Rent');
+  assert.equal(P.fieldsFor({ livesWith: ['roommates'], roommates: '2' }).setup.you, '2 roommates');
+  assert.equal(P.fieldsFor({ livesWith: ['roommates'], roommates: '4' }).setup.you, '4 or more roommates');
+  assert.equal(P.fieldsFor({ livesWith: ['roommates'] }).meaning.rent, 'your share of the rent, not the whole rent');
+  assert.equal(P.startsShared({ livesWith: ['partner'] }, 'food'), true);
+  assert.equal(P.startsShared({ livesWith: ['roommates'] }, 'food'), false);
+  // Older answers: "Other adults" reads as Roommates; "With roommates" reads as I rent with Roommates ticked.
+  assert.deepEqual(P.migrateAnswers({ livesWith: ['adults', 'kids'] }), { livesWith: ['kids', 'roommates'] });
+  assert.deepEqual(P.migrateAnswers({ home: 'roommates', livesWith: ['alone'] }), { home: 'rent', livesWith: ['roommates'] });
+  const same = { livesWith: ['partner'], home: 'rent' };
+  assert.equal(P.migrateAnswers(same), same, 'nothing old: the same map');
+  let s = demo();
+  s = { ...s, profile: { ...(s.profile || {}), home: { value: 'roommates', kind: 'known', asOf: TODAY, source: 'profile' }, livesWith: { value: ['adults'], kind: 'known', asOf: TODAY, source: 'profile' } } };
+  assert.deepEqual([P.answersOf(s).home, P.answersOf(s).livesWith], ['rent', ['roommates']]);
+  assert.equal(label(P.answersOf(s), 'rent'), 'Rent, your share');
+  assert.equal(P.fieldsFor({ home: 'roommates' }).shown.some((f) => f.key === 'rent'), true, 'a raw old map still shows the rent');
+  const file = P.readAnswersFile({ kind: P.ANSWERS_KIND, answers: { home: 'roommates', livesWith: ['adults'], roommates: '2' } });
+  assert.deepEqual(file.problems, []);
+  assert.deepEqual(file.answers, { home: 'rent', livesWith: ['roommates'], roommates: '2' });
 });
