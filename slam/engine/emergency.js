@@ -6,6 +6,16 @@
 import { valueOf, tracker, round2, ageOn } from './spine.js';
 import { cushionExtraMonths } from './profile.js';
 import { basisOf } from './networth.js';
+import { disabilityCover } from './protection.js';
+
+// If you cannot work (S-275): what disability insurance pays a month and after how many days, so the cushion's job is
+// to carry you through the wait. Null when no disability policy is on file.
+function disabilityBackstop(spine, cf) {
+  const w2 = cf.income.streams.filter((x) => (x.type === 'w2' || x.type === 'tips') && x.included !== false);
+  const gross = w2.length && w2.every((x) => x.gross !== null) ? w2.reduce((a, x) => a + x.gross, 0) : null;
+  const d = disabilityCover(spine, gross);
+  return d.policies.length ? d : null;
+}
 
 const v = valueOf;
 
@@ -75,7 +85,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
       needsOnly: { burn: needs, runway: runway(needs) }
     },
     monthlyNeed,
-    backstop: rothBackstop(spine, rules, asOf, years)
+    backstop: { ...rothBackstop(spine, rules, asOf, years), disability: disabilityBackstop(spine, cf) }
   };
 }
 

@@ -4526,6 +4526,985 @@
      ]
     }
    ]
+  },
+  "term_life": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "term",
+     "question": "When does the term end?",
+     "tier": "core",
+     "engines": [
+      "protection",
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "termEnds",
+       "type": "date",
+       "label": "Term ends",
+       "supplier": "client"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "beneficiary",
+     "question": "Is a beneficiary named?",
+     "tier": "extra",
+     "engines": [
+      "estate"
+     ],
+     "reveals": [
+      {
+       "field": "beneficiaryNamed",
+       "type": "bool",
+       "label": "Beneficiary named",
+       "supplier": "client"
+      }
+     ]
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "whole_life": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "cashValue",
+     "question": "Does it build cash value (in Assets)?",
+     "tier": "extra",
+     "engines": [
+      "networth"
+     ],
+     "reveals": [
+      {
+       "field": "linkedAccount",
+       "type": "link",
+       "label": "The cash value (in Assets)",
+       "supplier": "client"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "beneficiary",
+     "question": "Is a beneficiary named?",
+     "tier": "extra",
+     "engines": [
+      "estate"
+     ],
+     "reveals": [
+      {
+       "field": "beneficiaryNamed",
+       "type": "bool",
+       "label": "Beneficiary named",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "group_life": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "work",
+     "question": "Is it through work?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "throughWork",
+       "type": "bool",
+       "label": "Through work",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      },
+      {
+       "field": "endsWithJob",
+       "type": "bool",
+       "label": "Ends if you leave the job",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "beneficiary",
+     "question": "Is a beneficiary named?",
+     "tier": "extra",
+     "engines": [
+      "estate"
+     ],
+     "reveals": [
+      {
+       "field": "beneficiaryNamed",
+       "type": "bool",
+       "label": "Beneficiary named",
+       "supplier": "client"
+      }
+     ]
+    }
+   ]
+  },
+  "std": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "work",
+     "question": "Is it through work?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "throughWork",
+       "type": "bool",
+       "label": "Through work",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      },
+      {
+       "field": "endsWithJob",
+       "type": "bool",
+       "label": "Ends if you leave the job",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "disability",
+     "question": "What does it pay if you cannot work, and after how long?",
+     "tier": "core",
+     "engines": [
+      "protection",
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "benefitPct",
+       "type": "rate",
+       "label": "Pays this share of your pay",
+       "supplier": "coach",
+       "default": {
+        "guess": 0.6
+       }
+      },
+      {
+       "field": "eliminationDays",
+       "type": "int",
+       "label": "Starts after this many days",
+       "supplier": "coach",
+       "default": {
+        "guess": 14
+       }
+      },
+      {
+       "field": "benefitYears",
+       "type": "int",
+       "label": "Pays for up to this many weeks, as years (e.g. 0.5)",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "ltd": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "work",
+     "question": "Is it through work?",
+     "tier": "core",
+     "engines": [
+      "cashflow",
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "throughWork",
+       "type": "bool",
+       "label": "Through work",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      },
+      {
+       "field": "endsWithJob",
+       "type": "bool",
+       "label": "Ends if you leave the job",
+       "supplier": "client",
+       "default": {
+        "guess": true
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "disability",
+     "question": "What does it pay if you cannot work, and after how long?",
+     "tier": "core",
+     "engines": [
+      "protection",
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "benefitPct",
+       "type": "rate",
+       "label": "Pays this share of your pay",
+       "supplier": "coach",
+       "default": {
+        "guess": 0.6
+       }
+      },
+      {
+       "field": "eliminationDays",
+       "type": "int",
+       "label": "Starts after this many days",
+       "supplier": "coach",
+       "default": {
+        "guess": 90
+       }
+      },
+      {
+       "field": "benefitYears",
+       "type": "int",
+       "label": "Pays for up to this many years (blank: to 65)",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "renters": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "liability",
+     "question": "How much liability does it cover?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "liabilityLimit",
+       "type": "money",
+       "label": "Liability covered",
+       "supplier": "coach",
+       "hint": "e.g. 300,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "deductible",
+     "question": "What is the deductible?",
+     "tier": "extra",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "deductible",
+       "type": "money",
+       "label": "Deductible",
+       "supplier": "coach",
+       "hint": "e.g. 500"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "homeowners": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "liability",
+     "question": "How much liability does it cover?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "liabilityLimit",
+       "type": "money",
+       "label": "Liability covered",
+       "supplier": "coach",
+       "hint": "e.g. 300,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "deductible",
+     "question": "What is the deductible?",
+     "tier": "extra",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "deductible",
+       "type": "money",
+       "label": "Deductible",
+       "supplier": "coach",
+       "hint": "e.g. 500"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "auto": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "liability",
+     "question": "How much liability does it cover?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "liabilityLimit",
+       "type": "money",
+       "label": "Liability covered",
+       "supplier": "coach",
+       "hint": "e.g. 300,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "deductible",
+     "question": "What is the deductible?",
+     "tier": "extra",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "deductible",
+       "type": "money",
+       "label": "Deductible",
+       "supplier": "coach",
+       "hint": "e.g. 500"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "umbrella": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "liability",
+     "question": "How much liability does it cover?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "liabilityLimit",
+       "type": "money",
+       "label": "Liability covered",
+       "supplier": "coach",
+       "hint": "e.g. 300,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "pet": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "deductible",
+     "question": "What is the deductible?",
+     "tier": "extra",
+     "engines": [
+      "emergency"
+     ],
+     "reveals": [
+      {
+       "field": "deductible",
+       "type": "money",
+       "label": "Deductible",
+       "supplier": "coach",
+       "hint": "e.g. 500"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
+  },
+  "other_policy": {
+   "family": "policy",
+   "uses": [],
+   "own": [
+    {
+     "id": "premium",
+     "question": "What does it cost?",
+     "tier": "core",
+     "engines": [
+      "cashflow"
+     ],
+     "reveals": [
+      {
+       "field": "premium",
+       "type": "money",
+       "label": "Premium",
+       "supplier": "client",
+       "hint": "e.g. 25"
+      },
+      {
+       "field": "premiumCadence",
+       "type": "choice:monthly|yearly",
+       "label": "Paid",
+       "supplier": "client",
+       "default": {
+        "guess": "monthly"
+       }
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "coverage",
+     "question": "How much does it pay out?",
+     "tier": "core",
+     "engines": [
+      "protection"
+     ],
+     "reveals": [
+      {
+       "field": "coverage",
+       "type": "money",
+       "label": "Pays out",
+       "supplier": "client",
+       "hint": "e.g. 500,000"
+      }
+     ],
+     "added": true
+    },
+    {
+     "id": "renewal",
+     "question": "When does it renew?",
+     "tier": "extra",
+     "engines": [
+      "calendar"
+     ],
+     "reveals": [
+      {
+       "field": "renewal",
+       "type": "date",
+       "label": "Renews on",
+       "supplier": "coach"
+      }
+     ],
+     "added": true
+    }
+   ]
   }
  },
  "income": {

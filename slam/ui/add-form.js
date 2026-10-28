@@ -12,7 +12,7 @@ import { applyTemplate } from '../engine/employer-plans.js';
 import { addWithAnswers, addMore, moreFields, INCOME_FIRST, INCOME_MORE, OFTEN_WORDS, PAY_SCHEDULE, W2_BASIS, SELF_BASIS, namePlaceholder, amountWords, firstIncomeType } from '../engine/add.js';
 import { parseInput, addMaybe, putFact } from '../engine/edits.js';
 import { setAt } from '../engine/spine.js';
-import { PRESETS, FAT, PERSON_PURPOSE_WORDS } from '../engine/schema.js';
+import { PRESETS, FAT, PERSON_PURPOSE_WORDS, POLICY_TYPES } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { h } from './view.js';
 
@@ -63,7 +63,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const income = collection === 'income';
   const typeList = income
     ? [...INCOME_FIRST, ...INCOME_MORE].filter(([k]) => !types.length || types.includes(k))
-    : types.map((t) => [t, collection === 'goals' ? GOAL_WORDS[t] : PRESETS[t] ? PRESETS[t].label : t]);
+    : types.map((t) => [t, collection === 'goals' ? GOAL_WORDS[t] : collection === 'policies' ? POLICY_TYPES[t] : PRESETS[t] ? PRESETS[t].label : t]);
   const first = income && typeList.some(([k]) => k === firstIncomeType(spine, today)) ? firstIncomeType(spine, today) : (typeList[0] || [null])[0];
   // Accounts (owner's ask, 2026-10-27, S-262): grouped by kind (all the 401(k)s together, all the IRAs together), and
   // Roth is a tick box, not its own line: a 401(k) or an IRA with Roth ticked is the Roth version.
@@ -156,7 +156,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   // kind change or an answer; what was typed is kept in tickState first (each box saves on change).
   const tickState = { answers: {}, values: {}, open: false };
   const ticksBox = h('div', { class: 'add-ticks' });
-  const tickColl = accounts ? 'accounts' : collection === 'debts' ? 'debts' : income ? 'income' : null;
+  const tickColl = accounts ? 'accounts' : collection === 'debts' ? 'debts' : income ? 'income' : collection === 'policies' ? 'policies' : null;
   const drawTicks = () => {
     if (!tickColl) return;
     const t = kind(), features = featuresForType(t, tickColl);

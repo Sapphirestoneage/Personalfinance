@@ -27,7 +27,7 @@ test('every preset and income type is in the catalog, each feature well formed, 
   };
   for (const [t, x] of Object.entries(cat.types)) {
     const fields = { ...FAMILIES.base.fields, ...FAMILIES[x.family].fields };
-    const fs = featuresOf(cat, { type: t }, x.family === 'debt' ? 'debts' : 'accounts');
+    const fs = featuresOf(cat, { type: t }, x.family === 'debt' ? 'debts' : x.family === 'policy' ? 'policies' : 'accounts');
     assert.ok(fs.length, t + ' has features');
     assert.equal(new Set(fs.map((f) => f.id)).size, fs.length, t + ': ids unique');
     for (const f of fs) check(f, fields, t);
@@ -88,7 +88,7 @@ test('beneficiary, titling, employer memory, Social Security estimate', async ()
   const { ssEstimates } = await import('../engine/ss.js');
   const { validate } = await import('../engine/schema.js');
   for (const [name, t] of Object.entries(cat.types)) {
-    if (t.family === 'debt') continue;
+    if (t.family === 'debt' || t.family === 'policy') continue;
     const ids = featuresOf(cat, { type: name }, 'accounts').map((f) => f.id);
     assert.ok(ids.includes('titling'), name + ' has titling');
     assert.ok(ids.includes('beneficiary') || ids.includes('successor'), name + ' has a beneficiary tick');

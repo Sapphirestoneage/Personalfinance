@@ -9,7 +9,7 @@
 
 import { valueOf } from './spine.js';
 import { hiddenLine } from './profile.js';
-import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked, SECTION_WORDS } from './schema.js';
+import { PRESETS, FAMILIES, INCOME_TYPES, FAT, isEarmarked, SECTION_WORDS, POLICY_TYPES } from './schema.js';
 import { setAsideFor, setAsideWords } from './networth.js';
 import { ledgerRows, rowPathFor } from './ledger.js';
 import { UNNAMED } from './labels.js';
@@ -127,6 +127,12 @@ export function ledgerTree(spine, inst) {
   const gut = take(byPrefix('household.gutSpending'));
   const health = take(byPrefix('household.healthCoverage'));
 
+  // Protection (S-275): each kind of policy a group, each policy an item.
+  const policySections = Object.keys(POLICY_TYPES).map((t) => {
+    const list = (spine.policies || []).filter((x) => x.type === t);
+    return list.length ? node('P2:' + t, POLICY_TYPES[t], list.map((x) => item('policies.' + x.id, v(x.name) || x.id, take(byPrefix('policies.' + x.id)), { collection: 'policies', id: x.id })), { add: { collection: 'policies', types: [t] } }) : null;
+  }).filter(Boolean);
+
   // Goals and assumptions
   const goalItems = (spine.goals || []).map((g) => { const r = take(byPrefix('goals.' + g.id)); return item('goals.' + g.id, g.label || UNNAMED, r, { collection: 'goals', id: g.id }); });
   // Goals is goals only (owner's ask): the assumptions and the debt plan live under Profile, at the end.
@@ -147,6 +153,8 @@ export function ledgerTree(spine, inst) {
   const tree = [
     node('D', 'Debt', debtSections, { slug: 'debt', letter: 'D', add: { collection: 'debts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family === 'debt') } }),
     node('A', 'Assets', assetSections, { slug: 'assets', letter: 'A', add: { collection: 'accounts', types: Object.keys(PRESETS).filter((k) => PRESETS[k].family !== 'debt') } }),
+    // Protection (S-275): its own section after Assets, no DATING letter. Health coverage is in the Profile.
+    node('P2', 'Protection', policySections, { slug: 'protection', add: { collection: 'policies', types: Object.keys(POLICY_TYPES) } }),
     node('T', 'Taxes', taxSections, { slug: 'taxes', letter: 'T' }),
     node('I', 'Income', incomeSections, { slug: 'income', letter: 'I', add: { collection: 'income', types: INCOME_TYPES } }),
     node('N', 'Needs', expSections, { slug: 'needs', letter: 'N', add: { collection: 'expenses', fat: null } }),

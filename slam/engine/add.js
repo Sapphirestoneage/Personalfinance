@@ -9,7 +9,7 @@
 import { addItem, putFact, setPay, editIncome } from './edits.js';
 import { getAt, setAt } from './spine.js';
 import { inForce, addDays } from './spine.js';
-import { PRESETS } from './schema.js';
+import { PRESETS, POLICY_TYPES } from './schema.js';
 
 // The income kinds the form offers first, in plain words, then the rest.
 export const INCOME_FIRST = [['w2', 'Paycheck (W-2)'], ['1099', '1099 work'], ['unemployment', 'Unemployment'], ['side', 'Side money (not 1099)'], ['person', 'Money from a person']];
@@ -26,6 +26,7 @@ export function namePlaceholder(collection, type) {
   if (collection === 'income') return 'Where it comes from, e.g. Hudson Valley Health';
   if (collection === 'expenses') return 'What it\'s for, e.g. Rent';
   if (collection === 'goals') return 'Goal, e.g. Trip to Lisbon';
+  if (collection === 'policies') return 'Insurer or name, e.g. Haven term life';
   if (collection === 'debts') return type === 'credit_card' || !type ? 'Card name, e.g. Chase Freedom' : 'Loan, e.g. ' + (PRESETS[type] ? PRESETS[type].label : 'Car loan');
   return 'Account, e.g. Chase savings';
 }
@@ -41,6 +42,7 @@ export function amountWords(collection, type, answers = {}) {
   if (collection === 'debts') return 'How much you owe';
   if (collection === 'accounts') return 'How much is in it';
   if (collection === 'goals') return 'How much you need';
+  if (collection === 'policies') return 'What it costs a month';
   return 'How much';
 }
 
@@ -52,7 +54,7 @@ export function firstIncomeType(spine, today) {
 }
 
 export function addWithAnswers(spine, { collection, type, label, amount = null, cadence = 'monthly', fat = null, answers = {} }, today) {
-  const name = String(label || '').trim() || (collection === 'income' ? INCOME_WORDS[type] || 'Income' : collection === 'expenses' ? 'New expense' : collection === 'goals' ? 'New goal' : (PRESETS[type] || {}).label);
+  const name = String(label || '').trim() || (collection === 'income' ? INCOME_WORDS[type] || 'Income' : collection === 'expenses' ? 'New expense' : collection === 'goals' ? 'New goal' : collection === 'policies' ? POLICY_TYPES[type] : (PRESETS[type] || {}).label);
   if (collection !== 'income') {
     const made = addItem(spine, { collection, type, label: name, cadence, fat }, today);
     if (amount === null) return { ...made, collection };

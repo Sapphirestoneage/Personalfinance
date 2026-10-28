@@ -343,6 +343,26 @@
       "verified": "house"
     },
     {
+      "id": "APP_LIFE_YEARS_LOW",
+      "rule": "Life insurance need, low end: years of pay to replace (plus debts to clear)",
+      "value": 5,
+      "unit": "years",
+      "appliesTo": "Protection: the life check's range (S-275)",
+      "notes": "Income replacement method; the range's high end is APP_LIFE_YEARS_HIGH",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
+      "id": "APP_LIFE_YEARS_HIGH",
+      "rule": "Life insurance need, high end: years of pay to replace (plus debts to clear)",
+      "value": 10,
+      "unit": "years",
+      "appliesTo": "Protection: the life check's range (S-275)",
+      "notes": "Income replacement method",
+      "source": "Eli's default",
+      "verified": "house"
+    },
+    {
       "id": "APP_STOCK_REAL_RETURN",
       "rule": "Real return on the stock part of an account whose mix is known",
       "value": 0.07,

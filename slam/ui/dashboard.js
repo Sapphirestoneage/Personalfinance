@@ -147,6 +147,7 @@ function runwayScreen({ s }) {
       h('ol', { class: 'cushion-steps' }, em.cushion.map((c) => h('li', { class: c.reached ? 'is-done' : '' }, h('span', {}, c.label), h('span', { class: 'num' }, c.target.value === null ? 'missing' : money(c.target.value)), h('span', { class: 'muted' }, c.reached === null ? '' : c.reached ? 'there' : money(c.toGo) + ' to go')))),
       sh.cash.value === null ? null : h('p', { class: 'tile-sub' }, money(sh.cash.value) + ' in cash.'), sh.setAsideNote ? h('p', { class: 'tile-sub' }, sh.setAsideNote) : null, sh.unvestedNote ? h('p', { class: 'tile-sub' }, sh.unvestedNote) : null,
       em.backstop.contributions.value ? h('p', { class: 'tile-sub' }, 'Also there in a pinch: ' + money(em.backstop.contributions.value) + ' of Roth contributions, no tax or penalty.') : null,
+      em.backstop.disability && em.backstop.disability.monthly ? h('p', { class: 'tile-sub' }, 'If you cannot work: disability insurance pays about ' + money(em.backstop.disability.monthly) + ' a month' + (em.backstop.disability.waitDays !== null ? ' after ' + em.backstop.disability.waitDays + ' days; the cushion carries you until then.' : '.')) : null,
       em.backstop.plans.length ? h('p', { class: 'tile-sub' }, 'Also without the 10% penalty (income tax still applies): ' + em.backstop.plans.map((q) => q.name + (q.amount === null ? '' : ', ' + money(q.amount)) + ', because ' + q.why).join('; ') + '.') : null,
       keptMath('screen-cushion', ['cushionNeeds', 'cushionMonth', 'ruleOf5Dollars'], mathCtx))
   ];

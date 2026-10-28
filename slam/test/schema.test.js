@@ -77,7 +77,7 @@ test('every preset belongs to a family and names real rules', () => {
     assert.ok(FAMILIES[p.family], id + ' family');
     for (const k of ['limitRule', 'catchUpRule']) if (p[k]) assert.ok(R.has(p[k]), id + ' ' + p[k]);
   }
-  assert.equal(Object.keys(FAMILIES).length, 10, 'ten families including base');
+  assert.equal(Object.keys(FAMILIES).length, 11, 'eleven families including base and policy (S-275)');
 });
 
 test('fact: missing carries null and kind defaults from the value', () => {

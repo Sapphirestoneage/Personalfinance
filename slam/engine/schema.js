@@ -144,6 +144,11 @@ export const TITLINGS = ['individual', 'joint', 'tod', 'trust'];
 for (const f of ['employerRetirement', 'ira', 'hsaFsa', 'cash', 'fixedTerm', 'taxable', 'education', 'otherAssets']) Object.assign(FAMILIES[f].fields, { beneficiaryNamed: 'bool', titling: 'choice:' + TITLINGS.join('|') });
 FAMILIES.base.fields.coachNote = 'text';
 FAMILIES.employerRetirement.fields.employerName = 'text';
+// Protection (S-275): insurance policies, their own list (spine.policies), never accounts. Each a type below and the
+// fields its questions open (data/type-features.json, family policy). A premium counts once, as its own Needs line
+// (or out of pay before take-home when it is through work). Compatibility: optional; older files have none.
+export const POLICY_TYPES = { term_life: 'Term life', whole_life: 'Whole or cash-value life', group_life: 'Group life through work', std: 'Short-term disability', ltd: 'Long-term disability', renters: 'Renters', homeowners: 'Homeowners', auto: 'Auto', umbrella: 'Umbrella', pet: 'Pet', other_policy: 'Other policy' };
+FAMILIES.policy = { label: 'Policy', fields: { name: 'text', insurer: 'text', owner: 'choice:me|partner|joint|child', premium: 'money', premiumCadence: 'choice:monthly|yearly', throughWork: 'bool', endsWithJob: 'bool', coverage: 'money', termEnds: 'date', beneficiaryNamed: 'bool', benefitPct: 'rate', eliminationDays: 'int', benefitYears: 'int', deductible: 'money', liabilityLimit: 'money', renewal: 'date', linkedAccount: 'link', coachNote: 'text' } };
 // A Social Security estimate per person (S-267), from their SSA statement: a month at 62, at full retirement age and at
 // 70, and the statement's date. Recorded only; the FI math does not count it yet.
 export const SS_FIELDS = { ssAt62: 'money', ssAtFra: 'money', ssAt70: 'money', ssAsOf: 'date' };
@@ -471,6 +476,23 @@ export function validate(spine) {
   }
 
   // goals
+  // Policies (S-275): a type, a name, and the policy fields only.
+  const pols = spine.policies || [];
+  if (!Array.isArray(pols)) err('policies', 'a list');
+  else {
+    uniqueIds('policies', pols);
+    for (const x of pols) {
+      const p = 'policies.' + x.id;
+      if (!POLICY_TYPES[x.type]) { err(p + '.type', 'unknown policy type ' + x.type); continue; }
+      checkFact(p + '.name', x.name, 'text');
+      for (const k of Object.keys(x)) {
+        if (['id', 'type', 'name'].includes(k)) continue;
+        if (k === 'ticks') { checkTicks(p, x.ticks); continue; }
+        if (!(k in FAMILIES.policy.fields)) { err(p + '.' + k, 'not a policy field'); continue; }
+        checkFact(p + '.' + k, x[k], FAMILIES.policy.fields[k], false);
+      }
+    }
+  }
   const goals = spine.goals || [];
   uniqueIds('goals', goals);
   for (const g of goals) {

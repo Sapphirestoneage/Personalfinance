@@ -9,6 +9,7 @@
 
 import { saveFile } from './save-file.js';
 import { taxBuckets, allocation, feesInDollars, bracketRoom, sources } from '../engine/planner.js';
+import { protectionChecks, protectionLine } from '../engine/protection.js';
 import { foldRow } from './rows.js';
 import { whatIf, movedSpine } from '../engine/whatif.js';
 import { negotiationList, recordCall } from '../engine/negotiate.js';
@@ -188,6 +189,12 @@ function top(m) {
           goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
       // The planner views (S-274): each folded to its headline, each with Show the math.
       ...plannerViews(m),
+      // Protection (S-275): the four checks, each folded to its headline, with its method and Show the math.
+      h('h2', { class: 'section-h' }, 'Protection'),
+      ...protectionChecks(m.spine, m.rules, m.s).map((c) => fold('protect-' + c.id, { life: 'Life insurance', disability: 'If you cannot work', liability: 'If someone sues', gaps: 'Gaps' }[c.id],
+        [c.stage ? h('span', { class: 'stage-chip stage-' + c.stage }, { green: 'Covered', yellow: 'Worth a look', red: 'Check this' }[c.stage]) : null, ' ' + c.headline],
+        h('div', {}, h('p', {}, c.headline + '.'), c.lines.length ? h('ul', {}, c.lines.map((l) => h('li', {}, l))) : null, h('p', { class: 'tile-note' }, 'How: ' + c.method),
+          h('p', {}, h('a', { href: 'ledger.html#/protection' }, 'Your policies in My numbers')), math('protect-' + c.id, ['plan:protect:' + c.id], mathCtx(m))))),
       fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'Download or read in a file',
         h('ul', { class: 'go-list' },
           goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),

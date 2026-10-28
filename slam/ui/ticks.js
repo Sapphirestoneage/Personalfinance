@@ -6,7 +6,7 @@ import { h, showValue } from './view.js';
 import { parseInput, inputText } from '../engine/edits.js';
 import { featuresOf, featuresOfType, tickCount } from '../engine/features.js';
 import { getAt } from '../engine/spine.js';
-import { PRESETS } from '../engine/schema.js';
+import { PRESETS, POLICY_TYPES } from '../engine/schema.js';
 import { INCOME_WORDS } from '../engine/add.js';
 
 // The catalog, read once (offline or missing: no ticks anywhere, nothing breaks).
@@ -16,7 +16,7 @@ export const setCatalog = (c) => { catalog = c; };
 
 export const ANSWERS = [['yes', 'Yes'], ['no', 'No'], ['notSure', 'Not sure']];
 export const ANSWER_WORDS = Object.fromEntries(ANSWERS);
-export const typeName = (type, collection) => (collection === 'income' ? INCOME_WORDS[type] : (PRESETS[type] || {}).label) || type;
+export const typeName = (type, collection) => (collection === 'income' ? INCOME_WORDS[type] : collection === 'policies' ? POLICY_TYPES[type] : (PRESETS[type] || {}).label) || type;
 
 // The words for an answer on the shell's bar, so Undo says what it undoes: "401(k): Does your employer match? Yes".
 export const tickWords = (name, f, answer) => name + ': ' + f.question + ' ' + (answer ? ANSWER_WORDS[answer] : 'answer cleared');

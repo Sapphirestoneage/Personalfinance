@@ -41,7 +41,7 @@ import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } f
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
-import { PRESETS, CADENCES, FAT, PER_YEAR } from '../engine/schema.js';
+import { PRESETS, CADENCES, FAT, PER_YEAR, POLICY_TYPES } from '../engine/schema.js';
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription, addFee, setCheck } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
@@ -1173,7 +1173,7 @@ function auditScreen() {
 }
 
 // ---------------------------------------------------------------- adding, copying, deleting
-const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
+const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal', policies: 'a policy' };
 
 // The add form (S-237): the same one the Session uses (ui/add-form.js), asking first, then the name and the amount.
 function addForm(n) {
@@ -1201,7 +1201,8 @@ function addButton(n) {
   // Spelled-out letters that start with a vowel sound take "an" (an HSA, an IRA).
   const acronym = noun && /^[A-Z]{2}/.test(noun);
   const an = noun && (acronym ? 'AEFHILMNORSX'.includes(noun[0]) : /^[aeiou]/i.test(noun) && !/^(Roth|Uni)/.test(noun));
-  const what = noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
+  const one = n.add.collection === 'policies' && n.add.types && n.add.types.length === 1 ? POLICY_TYPES[n.add.types[0]].toLowerCase() + ' policy' : null;
+  const what = one ? (/^[aeiou]/.test(one) ? 'an ' : 'a ') + one : noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
   return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; refresh(); focusAdd(); } }, added === n.key ? '+ Add another' : '+ Add ' + what);
 }
 
@@ -1471,6 +1472,8 @@ function sectionScreen(sec) {
   return [
     fillBar(toFill(sec), 'list:open:' + sec.slug),
     sectionTop(sec),
+    // Protection (S-275): health coverage lives in the Profile; this links there rather than asking it twice.
+    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Premiums here count once, in Needs, marked "from Protection".') : null,
     selectAll(sec.allRows, 'Select all here'),
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
@@ -1514,7 +1517,7 @@ function groupScreen(sec, g, st = {}) {
 
 // The coach's note on an item (S-267): one line, for the coach only. It is not a row to fill in, and it never prints
 // (the one-pager and every client print leave it out; .coach-only hides on paper).
-const COACH_NOTED = ['accounts', 'debts', 'income', 'expenses', 'goals'];
+const COACH_NOTED = ['accounts', 'debts', 'income', 'expenses', 'goals', 'policies'];
 function coachNoteEl(it) {
   const path = it.collection + '.' + it.id + '.coachNote', f = getAt(cur(), path), now = f && f.value ? String(f.value) : '';
   const box = h('input', { type: 'text', id: 'coach-note', autocomplete: 'off', placeholder: 'e.g. Wants to keep this card for the miles', 'aria-describedby': 'coach-note-hint' });
@@ -1533,7 +1536,7 @@ function memoryButton(a) {
     'Fill ' + miss.length + ' plan details ' + FROM_MEMORY));
 }
 // The type ticks (S-267): on accounts, debts and income. A No hides its rows; the answer goes through change() (Undo).
-const TICKED = ['accounts', 'debts', 'income'];
+const TICKED = ['accounts', 'debts', 'income', 'policies'];
 function hideTicked(it, rows) {
   if (!TICKED.includes(it.collection) || !catalog) return rows;
   const item = (cur()[it.collection] || []).find((x) => x.id === it.id);

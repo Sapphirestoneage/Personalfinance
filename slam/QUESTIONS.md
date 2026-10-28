@@ -256,3 +256,7 @@ The Visa is marked as the everyday card, so the day-by-day run pays it last ("no
 - **181. A pension's COLA:** default used: a pension that starts by your FI age counts in full against spending, with or without a cost-of-living raise. Say if one without a COLA should count for less.
 - **182. Fees by the FI date:** default used: today's invested money grown at the assumption's real return for the years to FI, with and without the fee rate; new saving is left out, so it understates the cost. Say if you want it run through the full projection.
 - **183. Where each number came from:** default used: a "guess" is a rough number whose source is a house default, a typical amount or a guess; other rough numbers read "Rough".
+- **184. Life need range:** default used: 5 to 10 years of your pay plus every debt cleared (house defaults, changeable). Say if you prefer another method (DIME, or a needs-based count).
+- **185. Disability, "worth a look":** default used: yellow below 50% of take-home replaced. A benefit from a policy your employer pays for is taxed; the share does not take that tax out yet.
+- **186. Liability:** default used: umbrella plus the larger of auto and home or renters liability, against total net worth (home included).
+- **187. A premium and a Needs line for the same bill:** default used: the policy's premium wins and the line (matched by its name: renter's, home, car, pet, life, umbrella or disability insurance) is not counted while the policy has a premium. Say if you would rather the coach merge them by hand.

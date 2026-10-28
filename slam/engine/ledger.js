@@ -3,7 +3,7 @@
 // they change the results). No DOM here.
 
 import { listFacts, getAt, setAt, addMonths, result, valueOf, round2, tracker } from './spine.js';
-import { fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, SS_FIELDS, INCOME_DEPTH } from './schema.js';
+import { FAMILIES, fieldsFor, FILING_STATUSES, SITUATIONS, COVERAGES, PLAN_TYPES, LOAN_PLANS, PAY_POLICIES, PERSON_PURPOSES, ALLOWANCE_MODES, PAY_BASES, SS_FIELDS, INCOME_DEPTH } from './schema.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { summarize } from './summary.js';
 import { project } from './projection.js';
@@ -41,6 +41,8 @@ export function typeFor(spine, path) {
   if (s[0] === 'expenses') return s[2] === 'need' || s[2] === 'covered' || s[2] === 'subscription' ? 'bool' : s[2] === 'payDay' ? 'int' : s[2] === 'paidFrom' ? 'link:cash|card' : s[2] === 'paysDebt' ? 'link:debt' : s[2] === 'renews' || s[2] === 'reviewed' ? 'date' : 'money';
   if (s[0] === 'taxYears') return 'money';
   if (s[0] === 'lent') return s[2] === 'due' ? 'date' : 'money';
+  // A policy's field (S-275): its type from the policy fields; linkedAccount points at an asset (the cash value).
+  if (s[0] === 'policies') return s[2] === 'linkedAccount' ? 'link:asset' : FAMILIES.policy.fields[s[2]] || 'text';
   if (s[0] === 'accounts' || s[0] === 'debts') {
     const item = getAt(spine, s[0] + '.' + s[1]);
     // A federal loan's plan: pick from the plans, or type another (S-181).

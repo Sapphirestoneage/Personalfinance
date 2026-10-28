@@ -3,7 +3,7 @@
 
 import { getAt, setAt, isFact, valueOf, fact } from './spine.js';
 import { mainChecking } from './defaults.js';
-import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES } from './schema.js';
+import { PRESETS, INCOME_TYPES, PER_YEAR, PAY_BASES, POLICY_TYPES } from './schema.js';
 
 // Text typed in the Ledger to a stored value. Rates are typed as percents
 // ("25" or "25%" is 0.25). Returns { ok, value } or { ok: false, message }.
@@ -384,6 +384,11 @@ export function addItem(spine, { collection, type, label, cadence = 'monthly', f
   } else if (collection === 'expenses') {
     item = { id, label: label || 'New expense', amount: M(), cadence, start: null, end: null, fixed: null, need: M(), fat };
     first = 'expenses.' + id + '.amount';
+  } else if (collection === 'policies') {
+    // A policy (S-275): its type, a name and the premium to start; the rest comes from its questions.
+    if (!POLICY_TYPES[type]) throw new Error('Not a policy type: ' + type);
+    item = { id, type, name: K(label || POLICY_TYPES[type]), premium: M() };
+    first = 'policies.' + id + '.premium';
   } else if (collection === 'goals') {
     item = { id, type: type || 'savings', label: label || 'New goal' };
     if (item.type === 'fi') item.fiNumber = M(); else item.target = M();

@@ -3,6 +3,7 @@
 // expense changes are handled month by month.
 
 import { matchTiersOf, matchOn } from './match.js';
+import { premiumMonthly, premiumCovers, policyName } from './protection.js';
 import { valueOf, tracker, round2, toDay, daysInMonth, monthStart, monthEnd, addDays, monthKey, accountOwner, incomeOwner } from './spine.js';
 import { PER_YEAR, fromPaycheck, isEarmarked } from './schema.js';
 import { minimumsTotal, debtSchedule, paysDebtOf } from './debt.js';
@@ -213,6 +214,8 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     const base = 'expenses.' + e.id, path = base + '.amount';
     // A line that pays a debt (S-226, answer 35) is counted once, under debt payments below, never also here.
     if (paysDebtOf(spine, e)) { ex.useFact(base + '.paysDebt', e.paysDebt); continue; }
+    // A bill a policy's premium already pays (S-275) is counted once, as the policy's own line below.
+    if (premiumCovers(spine, e)) continue;
     const covered = !!e.covered && v(e.covered) === true;
     if (covered) { ex.useFact(base + '.covered', e.covered); items.push({ id: e.id, label: e.label, amount: 0, covered: true, fat: e.fat, need: v(e.need), fixed: e.fixed }); continue; }
     const amt = ex.useFact(path, e.amount);
@@ -230,6 +233,18 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
     else if (isNeed === null) need.addMissing(base + '.need');
     if (e.fat && isNeed !== false) { lean.useFact(path, e.amount); if (isNeed === null) lean.addMissing(base + '.need'); if (m !== null) leanSum += m; }
     items.push({ id: e.id, label: e.label, amount: round2(m), full: round2(full), shared: sh.shared, share: sh.share, people: sh.people, whoPays: sh.whoPays, fat: e.fat, need: isNeed, fixed: e.fixed });
+  }
+
+  // Premiums (S-275): each policy's premium is its own Needs line, marked as from Protection; one through work comes out
+  // of pay before take-home, like the payroll items.
+  let workPremiums = 0;
+  for (const x of spine.policies || []) {
+    const path = 'policies.' + x.id + '.premium', m = premiumMonthly(x);
+    if (m === null) { if (x.premium) ex.addMissing(path); continue; }
+    if (x.throughWork && v(x.throughWork) === true) { th.useFact(path, x.premium); workPremiums += m; continue; }
+    ex.useFact(path, x.premium); need.useFact(path, x.premium);
+    total += m; needSum += m; anyNeed = true;
+    items.push({ id: 'policy:' + x.id, label: policyName(x) + ' (from Protection)', amount: m, full: m, fat: null, need: true, fixed: true, fromProtection: true, path });
   }
 
   // Minimums: this month from today's balances; a later month from the debt
@@ -264,11 +279,11 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   // federal plus state rate (plus self-employment tax on 1099 income).
   const setAside = taxSetAside(spine, rules, ym, { mode, streams, cache: taxCache });
 
-  const takeHome = th.out(round2(gross - withheld - fica - payroll));
+  const takeHome = th.out(round2(gross - withheld - fica - payroll - workPremiums));
   const sur = tracker();
   sur.absorb(takeHome); sur.absorb(ex.out(0)); sur.absorb(mins.total); sur.absorb(after.out(0)); sur.absorb(setAside.total);
   // Surplus = take-home - expenses - minimum payments - after-tax saving - tax set-aside.
-  const surplus = round2(gross - withheld - fica - payroll - total - mins.total.value - afterTax - (setAside.total.value ?? 0));
+  const surplus = round2(gross - withheld - fica - payroll - workPremiums - total - mins.total.value - afterTax - (setAside.total.value ?? 0));
   const surplusR = sur.out(surplus);
   // Monthly surplus (B2) = take-home - spending - debt minimums - the tax set-aside on 1099 income: what is free to
   // save, before any saving. `surplus` above is what is left after the saving that is set up.
@@ -277,7 +292,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   // What goes out (Today's surplus screen): spending + debt minimums + the tax set-aside.
   const go = tracker(); go.absorb(ex.out(0)); go.absorb(mins.total); go.absorb(setAside.total);
   const goesOut = go.out(round2(total + mins.total.value + (setAside.total.value ?? 0)));
-  const monthly = ms.out(round2(gross - withheld - fica - payroll - total - mins.total.value - (setAside.total.value ?? 0)));
+  const monthly = ms.out(round2(gross - withheld - fica - payroll - workPremiums - total - mins.total.value - (setAside.total.value ?? 0)));
   const rate = (num, den, ...parts) => { const t = tracker(); for (const p of parts) t.absorb(p); return t.out(den > 0 ? round2(num / den * 1e6) / 1e6 : null); };
   const grossR = g.out(round2(gross));
   // Saving for the savings rate: from take-home (after-tax accounts and cash savings), pre-tax and Roth from the
@@ -287,7 +302,7 @@ export function cashflow(spine, rules, ym, { mode = 'committed', schedule = null
   const savedParts = [after.out(0), cashSave.out(0), pay.out(0), mt.out(0), xt.out(0)];
   return {
     ym, mode,
-    income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams },
+    income: { gross: grossR, withheld: wh.out(round2(withheld)), fica: fi.out(round2(fica)), takeHome, unwithheld: uw.out(round2(unwithheld)), streams, workPremiums: round2(workPremiums) },
     saving: { payroll: pay.out(round2(payroll)), afterTax: after.out(round2(afterTax)), cash: cashSave.out(round2(cashSaving)), fromTakeHome, match: mt.out(round2(match)), extraDebt: xt.out(round2(extraDebt)), total: saved },
     expenses: { total: ex.out(round2(total)), fat: fat.out(round2(fatSum)), need: need.out(anyNeed ? round2(needSum) : null), lean: lean.out(round2(leanSum)), items, linked },
     debtMinimums: mins,

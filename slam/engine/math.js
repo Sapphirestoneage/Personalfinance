@@ -26,6 +26,7 @@ import { solvers as solveAgain, outlook as outlookAgain } from './plan.js';
 import { earnedIncome } from './tax.js';
 import { maxItRow, canMaxIt, ownerOf } from './maxit.js';
 import { taxBuckets, allocation, feesInDollars, bracketRoom } from './planner.js';
+import { protectionChecks } from './protection.js';
 
 const v = valueOf;
 export const UNITS = ['usd', 'usd/month', 'usd/year', 'months', 'years', 'ratio', 'age', 'count'];
@@ -694,6 +695,16 @@ function planMetric(id) {
   if (what === 'room') return { id, label: 'Room left in this year\'s federal bracket', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Room = the top of the bracket your taxable income is in - your taxable income. A Roth conversion or extra pre-tax income up to this much is taxed at this rate; past it, at the next',
     explain: ({ spine, rules }) => { const b = bracketRoom(spine, rules); return b ? out({ value: b.room, kind: 'computed', from: [], rough: [], missing: [], rules: [b.rule] }, [term('Top of the ' + Math.round(b.rate * 100) + '% bracket (rule ' + b.rule + ')', b.top, 'usd', 'known', 'arg', { rule: b.rule }), term('Taxable income this year', b.taxable, 'usd', 'computed', 'arg')]) : out(null, []); },
     recompute: (t) => (t.length < 2 || t[0].value === null || t[1].value === null ? null : Math.round((t[0].value - t[1].value) * 100) / 100) };
+  // The protection checks (S-275), each with its method named (engine/protection.js).
+  if (what === 'protect') {
+    const UNIT = { life: 'usd', disability: 'ratio', liability: 'usd', gaps: 'count' };
+    const valueOfCheck = (c) => (!c ? null : key === 'life' ? c.cover ?? null : key === 'disability' ? c.share : key === 'gaps' ? c.gaps.length : null);
+    const find = (ctx) => protectionChecks(ctx.spine, ctx.rules, ctx.s).find((x) => x.id === key);
+    return { id, label: 'Protection: ' + ({ life: 'life insurance against the need', disability: 'take-home replaced if you cannot work', liability: 'liability against net worth', gaps: 'gaps' }[key] || key), unit: UNIT[key] || 'count', op: 'custom', screens: PLAN_SCREENS,
+      formula: ({ life: 'Life need = 5 to 10 years of pay (house defaults APP_LIFE_YEARS_LOW and APP_LIFE_YEARS_HIGH) + every debt cleared; covered = each life policy\'s payout added up', disability: 'Share replaced = long-term disability benefit a month (its share of W-2 pay) / take-home', liability: 'Liability covered = umbrella + the larger of auto and home or renters liability, against total net worth', gaps: 'Gaps = renting with no renters policy, owning with no homeowners policy, a car with no auto policy, life only through work that ends with the job' }[key]) || key,
+      explain: (ctx) => { const c = find(ctx); return out({ value: valueOfCheck(c), kind: 'computed', from: [], rough: [], missing: [], rules: key === 'life' ? ['APP_LIFE_YEARS_LOW', 'APP_LIFE_YEARS_HIGH'] : [] }, c ? [term(c.method, null, 'count', 'computed', 'arg'), ...c.lines.map((l) => term(l, null, 'count', 'computed', 'arg'))] : []); },
+      recompute: (t, ctx) => valueOfCheck(find(ctx)) };
+  }
   if (what === 'outlook') return { id, label: 'Outlook: the typical lowest day', unit: 'usd', op: 'custom', screens: PLAN_SCREENS, formula: 'Typical lowest day = the median of the lowest day over every run, each run the same window with every amount wobbled and days shifted (a fixed seed, so it repeats)',
     explain: ({ outlook: o }) => (o ? out({ value: o.low.typical, kind: o.kind, from: [], rough: [], missing: [], rules: o.rules }, [term('Runs', o.runs, 'count', 'known', 'arg', { rule: 'APP_OUTLOOK_RUNS' }), term('Wobble on every amount', o.wobble, 'ratio', 'known', 'arg', { rule: 'APP_OUTLOOK_WOBBLE' }), term('Lowest day in a bad run (tenth percentile)', o.low.bad, 'usd', 'computed', 'arg'), term('Lowest day in a good run (ninetieth)', o.low.good, 'usd', 'computed', 'arg')]) : out(null, [])),
     recompute: (t, ctx) => (ctx.outlook && ctx.sim ? outlookAgain(ctx.spine, ctx.rules, ctx.sim, { runs: ctx.outlook.runs, wobble: ctx.outlook.wobble }).low.typical : null) };
