@@ -117,3 +117,65 @@ left are geometry (bar widths, a drag ghost's position, the tab bar's measured h
    the trunk test passes 60 of 60. Say if the folder look should return.
 4. **`--good` and `--warn` fail 4.5:1 as text** and were left as line colors. If a word must wear them somewhere
    new, use `--st-known` and `--st-roughly`.
+
+# The UX pass (2026-10-28, S-290)
+
+The owner asked for every feature to be clean, logical, consistent and easy to find, with sleeker screens and
+boxes that fit their questions. Eleven auditors walked the app (eight page groups and three views across it:
+consistency, discoverability, controls), each with a skeptic who reproduced every finding on the live app and
+dropped what was not real, out of scope (a new feature, a formula, navigation, a stored shape) or against an
+owner decision.
+
+## Findings
+
+| Group | Found | Kept | Applied |
+| --- | --- | --- | --- |
+| Home and the header | 33 | 26 | 26 (19 in the page pass, the rest as shared handoffs) |
+| Guide me | 35 | 32 | 29 |
+| Numbers | 36 | 33 | 33 (28 in the page pass, 5 as handoffs) |
+| Calendar | 36 | 35 | 35 |
+| Spending | 35 | 32 | 32 |
+| Plan and Extra money | 34 | 32 | 31 |
+| Profile and Before our first call | 32 | 29 | 26 |
+| The Coach pages | 29 | 26 | 23 |
+| Consistency, across the app | 33 | 32 | 28 (4 already done by a page pass) |
+| Controls, across the app | 32 | 32 | 32 |
+| Discoverability, across the app | 28 | 22 | 14 (8 already done by a page pass) |
+
+Then a checker per group re-walked every applied fix on the live app and found 14 that had not fully landed and
+25 regressions the fixes had introduced (one a crash: Spending's category screens threw). All 39 were fixed
+and the suite re-run.
+
+## What changed, in a line each
+
+- **Home**: the sentence says what its number is ("after bills and debt payments"); a blank client reads "Not yet",
+  never $0; the agenda lists the same to-dos End call hands out, and the handout prints them; one primary.
+- **Guide me**: Looks right keeps only the guesses on the screen; a guess is dashed, a known number solid; one way
+  to say No, and it is undoable; the Needs groups match Numbers and add to the step total.
+- **Numbers**: one Net worth tile (the strip shows the other); one count ("to fill in") on every list; Income ends
+  with a Taxes row; every date box takes words; How much to max it? is a folded row with its room.
+- **Calendar**: one skip per item; one low on the card, the chart and Show the math; the payoff row and Add to my
+  calendar under every view; the plan suggestion and an ask to pay you back on their day.
+- **Spending**: no row opens an empty screen; one way to change a line's amount; a screen's title said once; the
+  Budget says which month it shows.
+- **Plan**: steps say "step"; Show the math sits with the card it explains; DRAFTT bars named; one word for
+  opening a backup file.
+- **Profile, Coach pages**: labels above every box; nothing coach-only on a client screen or print.
+- **Across the app**: "My numbers", "Today" and "the Session" are gone from every screen (and banned by the copy
+  check); a dashed border means a guess and nothing else; the floor warning is one card; missing is "not given
+  yet" for an input and "Not yet" for a result.
+
+## Held back, with the reason
+
+- Guide me's FI percent against the goal (it would change what the engine's FI percent means); skipping Guide
+  me's overview (a navigation change); the hyper-saving mark's "(how this rule is defined)" (QUESTIONS 126).
+- Rounding the runway in the engine (an engine number; the screen already rounds).
+- Shortening every long date across the engines (25 call sites and 12 tests for a wording nit).
+- Nine Profile and Coach findings the verifier itself marked not worth their code.
+
+## Questions from the UX pass
+
+5. **The One-pager on Home** (QUESTIONS 197): the One-pager now has an entry under Today's numbers in full
+   and still opens from End call. Say if it should leave End call.
+6. **A date with no year** reads as the latest one for something that happened (a purchase, a check-in, a loan)
+   and the next one for something planned. Say if a box reads the wrong way.
