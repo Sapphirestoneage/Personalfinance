@@ -127,3 +127,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Fix (2026-10-28): the More menu closes, the coach note folds, no stray Keys line, the qa crawler passes (S-278).
 - Part 0 (2026-10-28): unmarried couples file two single returns, Whose on every item screen, NYC_RATES_TO_CHECK.md (S-279).
 - Part 1 (2026-10-28): the map: header, five tabs, second-level tabs, Home agenda, Guide me, the gear (S-280).
+- Part 2 (2026-10-28): folder tabs, the trail from the client, siblings, covered today, titles word for word (S-281).

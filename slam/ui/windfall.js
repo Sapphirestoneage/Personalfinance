@@ -122,7 +122,7 @@ function stepScreen(m, st) {
 function name(levels, { spine, rules }) {
   if (levels.length !== 1) return null;
   const m = model(spine, rules), i = indexOf(m, levels[0]);
-  return i < 0 ? null : (i + 1) + '. ' + m.w.steps[i].label;
+  return i < 0 ? null : m.w.steps[i].label;
 }
 
 function render({ spine, rules, levels }) {

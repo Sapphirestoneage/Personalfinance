@@ -44,20 +44,20 @@ test('Extra money is a second-level tab of Plan (S-280)', () => {
   assert.doesNotMatch(src, /page-links|View in the Ledger|loadAll\(|mountPage\(|whoseLine\(|WINDFALL_ORDER'\)/);
   assert.match(read('windfall.html'), /<title>SLAM Extra money<\/title>/);
   // Each step opens its own screen, numbered in the order; a step with no amount yet is not there (the shell goes up).
-  assert.match(src, /return i < 0 \? null : \(i \+ 1\) \+ '\. ' \+ m\.w\.steps\[i\]\.label;/);
+  assert.match(src, /return i < 0 \? null : m\.w\.steps\[i\]\.label;/);
 });
 
-test('each step of the order of operations is its own numbered screen: Plan › 3. High-interest debt', () => {
+test('each step of the order of operations is its own screen, titled as its row: Plan > High-interest debt', () => {
   const s = demo();
   const sum = summarize(s, R, { flags: false });
   const f = fooLadder(s, R, sum, { sim: maxItSim(s, R) });
   assert.deepEqual(f.rungs.map((r) => r.rung), f.rungs.map((_, i) => i + 1));
   const hi = f.rungs.find((r) => r.id === 'highInterest');
   assert.equal(hi.rung + '. ' + hi.label, '3. High-interest debt');
-  // The screen's address is the step in words, and its name is its number and label.
+  // The screen's address is the step in words; its title is the label clicked, word for word (S-281).
   const src = read('ui/plan.js');
   assert.match(src, /const slug = \(id\) => id\.replace\(\/\[A-Z\]\/g, \(c\) => '-' \+ c\.toLowerCase\(\)\);/);
-  assert.match(src, /return r \? r\.rung \+ '\. ' \+ r\.label : null;/);
+  assert.match(src, /return r \? r\.label : null;/);
   assert.match(src, /href: '#\/' \+ slug\(r\.id\)/);
   // No step says where a number lives in words a client would not use.
   for (const r of f.rungs) assert.doesNotMatch(r.why, JARGON, r.id + ': ' + r.why);

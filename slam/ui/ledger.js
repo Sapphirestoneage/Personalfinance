@@ -6,6 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { siblingStrip } from './siblings.js';
 import { guideOn, setGuide, guideStep, guideTop, GUIDE_IDS } from './guide.js';
 import { whoseControl } from './whose.js';
 import { setWhose } from '../engine/couple.js';
@@ -1504,9 +1505,10 @@ function groupScreen(sec, g, st = {}) {
   const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
-    sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, dots(it)]
+    sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, coveredMark(coveredToday(it)), dots(it)]
   });
   return [
+    groupSiblings(sec, g),
     fillBar(toFill(g.node), null),
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
@@ -1565,6 +1567,12 @@ function answerTick(base, f, answer) {
   const item = getAt(cur(), base), name = base.startsWith('income.') ? item.label : valueOf(item.name) || item.id;
   change((s) => tickFeature(s, base, f, answer, { rules, today: today() }), tickWords(name, f, answer));
 }
+// Covered with this client today (S-281): anything on the item confirmed or changed today gets a small check.
+const coveredToday = (it) => (it.rows || []).some((r) => r.fact && r.fact.asOf === today() && r.fact.kind !== 'missing' && !/default|guess|typical|house/i.test(String(r.fact.source || '')));
+const coveredMark = (on) => (on ? h('span', { class: 'covered-mark', title: 'Covered today' }, h('span', { 'aria-hidden': 'true' }, '\u2713 '), 'covered today') : null);
+// The other items of the group, and the other groups of the section, to hop sideways (S-281).
+const itemSiblings = (sec, g, it) => siblingStrip(g.label, g.items.map((x, i) => ({ words: x.label, href: hashFor([sec.slug, g.slug, g.slugs[i]]), here: x === it })));
+const groupSiblings = (sec, g) => siblingStrip(sec.label, sec.groups.map((x) => ({ words: x.label, href: hashFor([sec.slug, x.slug]), here: x === g })));
 function itemScreen(sec, g, it, st) {
   // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
   const acct = it.collection === 'accounts' ? (cur().accounts || []).find((x) => x.id === it.id) : null;
@@ -1572,6 +1580,7 @@ function itemScreen(sec, g, it, st) {
   const maxShown = maxable && !!st.max;
   const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; keep({ max: !maxShown }); refresh(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
   return [
+    g.items ? itemSiblings(sec, g, it) : null,
     it.key === 'household.situation' ? unemploymentCard() : null,
     g.item && it.label !== g.label ? h('p', { class: 'muted' }, it.label) : null,
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,

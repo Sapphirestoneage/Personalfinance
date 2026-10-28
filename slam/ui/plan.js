@@ -99,7 +99,7 @@ const paycheckOf = (m, level) => allocOf(m).paychecks.find((p) => payId(p) === l
 function name(levels, { spine, rules }) {
   const m = model(spine, rules);
   const [a, b] = levels;
-  if (levels.length === 1) { if (SCREENS[a]) return SCREENS[a]; const r = stepOf(m, a); return r ? r.rung + '. ' + r.label : null; }
+  if (levels.length === 1) { if (SCREENS[a]) return SCREENS[a]; const r = stepOf(m, a); return r ? r.label : null; }
   if (levels.length === 2 && a === 'paychecks') { const p = paycheckOf(m, b); return p ? shortDate(p.date) + ': ' + p.label : null; }
   return null;
 }

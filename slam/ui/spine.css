@@ -2008,3 +2008,20 @@ body.has-tabs { padding-bottom: 0; }
   .screen-top .back-btn { padding: 0 var(--space-2); font-size: var(--text-sm); }
   .tabbar .tab { font-size: 0.9rem; min-height: 52px; padding: 0 2px; }
 }
+
+/* Siblings (S-281): hop sideways. Links on a computer, a short Jump to list on a phone. */
+.siblings { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); margin: 0 0 var(--space-3); }
+.sib-label { font-weight: 700; font-size: 0.95rem; }
+.sib-row { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.sib { display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-pill); font-size: 0.95rem; }
+a.sib { color: var(--link, var(--accent)); text-decoration: underline; background: var(--surface); }
+.sib.is-here { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 800; }
+.sib-pick { display: none; }
+@media (max-width: 639px) {
+  .siblings .sib-row, .siblings .sib-label { display: none; }
+  .sib-pick { display: grid; gap: 2px; width: 100%; }
+  .sib-pick select { width: 100%; }
+}
+/* Covered with this client today: a small check on the row. */
+.covered-mark { display: inline-flex; align-items: center; gap: 2px; padding: 0 var(--space-2); border-radius: var(--radius-pill); background: var(--good-soft); color: var(--text); font-size: 0.85rem; font-weight: 700; }
+.covered-mark span { color: var(--good); }
