@@ -1155,3 +1155,35 @@ a.fb-link .fb-more { justify-self: end; }
 .fv-seg .seg-btn { flex: none; justify-content: center; align-items: center; min-height: var(--btn-h, var(--tap)); padding: 4px var(--space-3); font-size: var(--text-sm); font-weight: 600; border-radius: 0; }
 .fv-seg .seg-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
 .fv-seg .seg-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-left: -2px; }
+
+/* ---------------------------------------------------------------- Count first (2026-10-28, S-243)
+   A type a row with its stepper; then slim rows, each cell a label over its box, the three other answers beside a
+   number, Duplicate, Delete and More detail under. */
+.count-head { margin: 0 0 var(--space-2); font-size: var(--text-md); }
+.count-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: 2px; }
+.count-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 2px 0; border-top: 1px solid var(--border); }
+.count-row:first-child { border-top: 0; }
+.count-row.has-some .count-label { font-weight: 600; }
+.count-none { margin-left: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); font-weight: 400; }
+.stepper { display: inline-flex; align-items: center; gap: var(--space-1); }
+.stepper .btn { min-width: var(--tap); padding: 0; font-size: var(--text-md); }
+.count-n { min-width: 1.6rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.irows { list-style: none; margin: 0 0 var(--space-2); padding: 0; }
+.irow { padding: 6px 0; border-top: 1px solid var(--border); display: grid; gap: var(--space-1); }
+.irow:first-child { border-top: 0; }
+.irow-cells { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); align-items: flex-end; }
+.cell { display: grid; gap: 2px; min-width: 0; }
+.cell .text-box { width: 11rem; max-width: 100%; }
+.irow .text-box, .irow .pick-box, .af .amt, .af .rate-box, .af .day-box, .onb-grid .text-box, .onb-grid .day-box, .onb-grid .pick-box, .irow input[type="date"] { min-height: var(--btn-h); padding: 4px var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); }
+.af { display: grid; gap: 2px; }
+.af-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.af .amt { width: 7rem; font-variant-numeric: tabular-nums; }
+.af .rate-box { width: 4.5rem; }
+.af-notme .amt, .af-notme .rate-box { border-style: dashed; }
+.ans { display: inline-flex; gap: 2px; }
+.ans-btn { padding: 0 8px; font-size: var(--text-xs); }
+.irow-btns { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-1) var(--space-2); }
+.row-more.detail[open] { flex-basis: 100%; width: 100%; }
+.detail-body { max-width: none; }
+.detail-body .rows { margin-bottom: var(--space-2); }
+@media (max-width: 639px) { .irow-cells { gap: var(--space-1) var(--space-2); } .cell .text-box { width: 100%; } }

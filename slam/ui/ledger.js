@@ -28,6 +28,10 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref } from './view.js';
+import { countHead, countList, itemList, rid } from './items.js';
+import { laterDate, setLaterPath, isLaterPath } from './later.js';
+import { later as soon } from './boxes.js';
+import { COLLECTION_OF } from '../engine/count.js';
 
 const MOVE_WORDS = { surplus: 'left after saving', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number from spending', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
@@ -142,24 +146,15 @@ const isNeedRow = (path) => /^expenses\.[^.]+\.need$/.test(path);
 const needWords = (v) => (v === true ? 'Need' : v === false ? 'Want' : null);
 const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : showValue(value, row.type));
 
-// Not now (S-194): a field you will come back to. It stays missing or rough
-// (the numbers stay honest), but Still guessing stops asking until Ask me
-// again. Kept per viewer in this browser, with the day it was set aside.
-const LATER_KEY = 'slam-ledger-later:v1';
-let later = (() => { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || {}; } catch { return {}; } })();
-const keepLater = () => { try { localStorage.setItem(LATER_KEY, JSON.stringify(later)); } catch { /* storage blocked: lasts until the page closes */ } };
-function setLater(path, on) {
-  const before = later[path];
-  if (on) later[path] = today(); else delete later[path];
-  keepLater();
-  return () => { if (before) later[path] = before; else delete later[path]; keepLater(); refresh(); };
-}
+// Not now (S-194): a field you will come back to. It stays missing or rough (the numbers stay honest), but Still
+// guessing stops asking until Ask me again, and onboarding's finish screen lists it (ui/later.js, shared).
+function setLater(path, on) { const back = setLaterPath(path, on); return () => { back(); refresh(); }; }
 function laterBtn(row) {
-  if (later[row.path]) return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, false); refresh(); say('Asking again: ' + row.label, back); } }, 'Ask me again');
+  if (laterDate(row.path)) return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, false); refresh(); say('Asking again: ' + row.label, back); } }, 'Ask me again');
   if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
   return h('button', { type: 'button', class: 'btn', onclick: () => { const back = setLater(row.path, true); closeEditor(); refresh(); say('Not now: ' + row.label + '. Still guessing will skip it', back); } }, 'Not now');
 }
-const isLater = (path) => !!later[rowPathFor(cur(), path)];
+const isLater = (path) => isLaterPath(rowPathFor(cur(), path));
 
 // One panel for a card's interest rate (S-161): the APR, a switch for an intro
 // rate, and when it is on, the intro rate and its end date; the APR then reads
@@ -684,7 +679,7 @@ function flaggedRows(spine) {
   return flagMemo.set;
 }
 const tags = (row) => [
-  later[row.path] ? h('span', { class: 'later-tag' }, 'Not now') : null,
+  laterDate(row.path) ? h('span', { class: 'later-tag' }, 'Not now') : null,
   flaggedRows(cur()).has(row.path) ? h('span', { class: 'later-tag' }, 'From your file: enter it again') : null
 ];
 
@@ -924,16 +919,23 @@ function subsScreen() {
 const ADD_WORDS = { debts: 'a debt', accounts: 'an account', income: 'income', expenses: 'an expense', goals: 'a goal' };
 
 // The add form (S-237): the same one the Session uses (ui/add-form.js), asking first, then the name and the amount.
-function addForm(n) {
-  const { collection, types = [], fat } = n.add;
-  return newAddForm({ spine: cur, collection, types, fat: fat ?? null, today: today(),
-    onDone: (made, label) => { adding = null; if (change(made.spine, said.added(label))) openField(made.firstPath); },
+// The add form for a list: n.add from the tree, or a spec of its own ({ key, collection, types, fat, stay }).
+// stay keeps the screen and lands on the new row.
+function addFormFor(spec) {
+  const { collection, types = [], fat = null, stay = false } = spec;
+  return newAddForm({ spine: cur, collection, types, fat, today: today(),
+    onDone: (made, label) => {
+      adding = null;
+      if (!change(made.spine, said.added(label))) return;
+      if (stay) soon(() => document.getElementById(rid(made.collection, made.id, 'name'))?.select()); else openField(made.firstPath);
+    },
     onCancel: () => { adding = null; refresh(); } });
 }
+const addForm = (n) => addFormFor({ key: n.key, ...n.add });
 
 function addButton(n) {
   if (!n || !n.add || selecting) return null;
-  if (adding === n.key) return addForm(n);
+  if (adding && adding.key === n.key) return addForm(n);
   // "an auto loan", "a Roth IRA": the article by sound, names keep their capitals.
   const name = n.add.types && n.add.types.length === 1 && PRESETS[n.add.types[0]] ? PRESETS[n.add.types[0]].label : null;
   const lower = name && !/^[A-Z0-9]{2}|^[A-Z][a-z]*\b [A-Z]/.test(name) && !/\b(IRA|HSA|FSA|ABLE|ESPP|RSU|CD|TSP|SEP|SIMPLE|HELOC|BNPL|IOU|401|403|457|529)\b/.test(name) ? name.toLowerCase() : name;
@@ -942,7 +944,7 @@ function addButton(n) {
   const acronym = noun && /^[A-Z]{2}/.test(noun);
   const an = noun && (acronym ? 'AEFHILMNORSX'.includes(noun[0]) : /^[aeiou]/i.test(noun) && !/^(Roth|Uni)/.test(noun));
   const what = noun ? (an ? 'an ' : 'a ') + noun : ADD_WORDS[n.add.collection];
-  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = n.key; refresh(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
+  return h('button', { type: 'button', class: 'btn add', onclick: () => { if (!canLeave()) return; adding = { key: n.key, ...n.add }; refresh(); document.getElementById('add-name')?.focus(); } }, '+ Add ' + what);
 }
 
 // Duplicate (S-190): the copy keeps everything but its name and amount, and opens on its own screen.
@@ -1168,6 +1170,7 @@ function unemploymentCard() {
 }
 
 function sectionScreen(sec) {
+  if (COLLECTION_OF[sec.slug]) return countSection(sec);
   return [
     sectionTop(sec),
     selectAll(sec.allRows, 'Select all here'),
@@ -1223,6 +1226,35 @@ function itemScreen(sec, g, it, st) {
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
     maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
+  ];
+}
+
+// ---------------------------------------------------------------- count first (2026-10-28)
+// Debt, Assets and Income open on their types with a count each, then one slim row per item (ui/items.js); More
+// detail opens the item's full rows right there, so the second pass happens on the same rows. The section's own
+// figures (the cards, unemployment) and the rows that are not items (Every card, Your situation) follow. lean: the
+// onboarding step, which shows the list and the rows only.
+const sectionBySlug = (slug) => screensOf(cur()).sections.find((x) => x.slug === slug) || null;
+function countSection(sec, { lean = false } = {}) {
+  const collection = COLLECTION_OF[sec.slug], spine = cur(), st = kept();
+  const steps = Object.fromEntries(sessionSteps(spine, summaryOf(spine)).map((x) => [x.id, x.result]));
+  const itemsByKey = new Map(sec.groups.flatMap((g) => g.items).map((it) => [it.key, it]));
+  const detail = (x) => {
+    const it = itemsByKey.get(collection + '.' + x.id);
+    if (!it) return null;
+    const lv = screensOf(spine).itemLevels.get(it.key);
+    return [h('ul', { class: 'rows' }, it.rows.map((r) => rowEl(r, st.open || null))),
+      collection === 'debts' && x.type === 'credit_card' ? chargesCard(spine, x.id) : null,
+      lv ? h('p', { class: 'edit-hint' }, h('a', { href: hashFor(lv) }, 'Open on its own screen')) : null];
+  };
+  const extras = sec.groups.flatMap((g) => g.items).filter((it) => !it.collection);
+  const key = 'other:' + collection;
+  return [
+    countHead(spine, collection, sec.label, steps[sec.slug], sec.slug === 'income' ? ' a month before tax' : ' total'),
+    countList({ spine, collection, today: today(), onAddOther: (g) => { if (!canLeave()) return; adding = { key, collection, types: g.types, stay: true }; refresh(); document.getElementById('add-type')?.focus(); } }),
+    adding && adding.key === key ? addFormFor(adding) : null,
+    itemList({ spine, rules, collection, detail, today: today() }),
+    lean ? null : [sectionTop(sec), extras.length ? h('ul', { class: 'go-list' }, extras.map((it) => goRow(hashFor(screensOf(spine).itemLevels.get(it.key) || [sec.slug]), { name: it.label, sub: [headline(it), dots(it.counts)] }))) : null]
   ];
 }
 
