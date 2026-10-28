@@ -53,7 +53,8 @@ for (const [size, viewport] of SIZES) {
       // A picker narrower than the choice it shows.
       const ctx = document.createElement('canvas').getContext('2d');
       for (const s of document.querySelectorAll('#app select')) {
-        if (!visible(s) || s.selectedIndex < 0) continue;
+        // A list a type-to-pick box stands in for (S-284) is hidden from everyone but the page: the box is checked instead.
+        if (!visible(s) || s.selectedIndex < 0 || s.closest('[aria-hidden="true"]')) continue;
         const cs = getComputedStyle(s);
         ctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
         const need = ctx.measureText(s.options[s.selectedIndex].text).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 16;
@@ -61,13 +62,13 @@ for (const [size, viewport] of SIZES) {
       }
       // A box with no visible label.
       for (const b of document.querySelectorAll('#app input:not([type=checkbox]):not([type=radio]):not([type=file]), #app select, #app textarea')) {
-        if (!visible(b) || b.closest('.headline-strip') || b.closest('header')) continue;
+        if (!visible(b) || b.closest('.headline-strip') || b.closest('header') || b.closest('[aria-hidden="true"]')) continue;
         const lab = b.id && document.querySelector('label[for="' + CSS.escape(b.id) + '"]');
         if ((lab && visible(lab)) || (b.closest('label') && b.closest('label').textContent.trim())) continue;
         const by = b.getAttribute('aria-labelledby'); if (by && document.getElementById(by.split(' ')[0])) continue;
         const row = b.closest('.srow, .list-row, .tier-row, .tick-box');
         if (row && row.matches('.list-row, .tier-row')) continue; // a table of boxes under its own column heads
-        if (row && row.matches('.srow') && row.querySelectorAll('input, select').length === 1 && row.querySelector('.srow-name')) continue;
+        if (row && row.matches('.srow') && [...row.querySelectorAll('input, select')].filter((x) => !x.closest('[aria-hidden="true"]')).length === 1 && row.querySelector('.srow-name')) continue;
         say('no label', b, name(b));
       }
       // Two pieces of one row overlapping.

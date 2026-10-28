@@ -281,12 +281,17 @@ function trailSteps(levels, names) {
   if (tab && !samePage(tab[2])) steps.push([tab[1], tab[2], null]);
   if (opts.parent) steps.push([opts.parent[0], opts.parent[1], () => toParent(levels.length)]);
   steps.push([opts.title, rootUrl(), levels.length ? () => go([]) : null]);
+  // A screen that sits under a second-level tab of another name (How much to max it, under Retirement; Taxes, under
+  // Income) shows that tab in its trail too, so every level is named (S-288).
+  const lit = SUBTABS[opts.tab] && !opts.noSubtabs && levels.length && opts.subtab ? opts.subtab(levels) : null;
+  const litTab = lit && lit !== levels[0] && (SUBTABS[opts.tab].find((x) => x[0] === lit) || null);
+  if (litTab) steps.push([litTab[1], litTab[2], samePage(litTab[2].split('#')[0]) && litTab[2].includes('#') ? () => go(litTab[2].split('#/')[1] || []) : null]);
   levels.forEach((_, i) => steps.push([names[i], hashOf(levels.slice(0, i + 1)), () => go(levels.slice(0, i + 1))]));
   return steps;
 }
 function screenTop(levels, names) {
   const steps = trailSteps(levels, names);
-  const deep = SUBTABS[opts.tab] && !opts.noSubtabs ? levels.length >= 2 || (levels.length === 1 && !opts.subtab(levels)) : levels.length >= 1 || !!opts.parent || (TABS.find((t) => t[0] === opts.tab) && !samePage(TABS.find((t) => t[0] === opts.tab)[2]));
+  const deep = SUBTABS[opts.tab] && !opts.noSubtabs ? levels.length >= 2 || (levels.length === 1 && opts.subtab(levels) !== levels[0]) : levels.length >= 1 || !!opts.parent || (TABS.find((t) => t[0] === opts.tab) && !samePage(TABS.find((t) => t[0] === opts.tab)[2]));
   if (!deep || steps.length < 2) return [];
   const up = steps[steps.length - 2];
   const link = ([words, href, fn]) => h('a', { href, onclick: fn ? (e) => { e.preventDefault(); fn(); } : null }, words);

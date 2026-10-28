@@ -73,6 +73,8 @@ Not started. Phase 3 starts only when the Phase 2.5 gate passes. Where the gate 
 - [ ] Waiting on you: five headline numbers checked by hand against your own math, to the cent
 - [ ] Waiting on you: your answers in `docs/MY_METHOD_REVIEW.md` (the defaults that move a headline number most)
 - [ ] Waiting on you: one live dry run on a call, start to the one-pager
+- [ ] Waiting on you, part of the dry run: the squint test (`docs/squint-test.html`): a friend circles the site ID, page name, sections, local options, you are here and search on six blurred screens in two minutes
+- [x] Gate (built): the trunk test passes on every page, every second-level tab and a level-3 and level-4 screen in each section, at phone and computer width (`docs/TRUNK_TEST.md`, `tools/trunk-test.mjs`)
 
 ### This run (Phase 2.5, practical): done
 

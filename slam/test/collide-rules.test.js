@@ -17,7 +17,7 @@ test('the collide rules, the check, and the Session rows that follow them', () =
   assert.doesNotMatch(s, /Paid in full\? Not set \(counted as carried\)/, 'the question is in the label, not the choice');
 });
 
-// The "$" drawn inside a money box and the "%" inside a rate box never sit on a digit (rule 26, S-288): the box pads
+// The "$" drawn inside a money box and the "%" inside a rate box never sit on a digit (rule 26, S-289): the box pads
 // that side past the symbol, and the rule carries a tag so it outranks the app-wide field reset, which comes later in
 // the file with one class of weight and would otherwise take the padding back (30000 read as $0000 on Goals).
 test('a money or rate box keeps room for its symbol', () => {

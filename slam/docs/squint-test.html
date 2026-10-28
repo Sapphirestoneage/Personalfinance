@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLAM squint test</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; color: #182134; background: #fff; max-width: 60rem; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.6rem; } ol li { margin-bottom: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr)); gap: 16px; }
+  figure { margin: 0; border: 1px solid #c9d2e3; border-radius: 8px; padding: 8px; break-inside: avoid; }
+  img { width: 100%; filter: blur(2.5px); display: block; }
+  figcaption { font-weight: 600; margin-top: 6px; }
+  @media print { .grid { grid-template-columns: 1fr 1fr; } figure { page-break-inside: avoid; } }
+</style></head><body>
+<h1>Squint test: can a stranger find their way?</h1>
+<p>Six SLAM screens, picked at random (at least two deep inside), blurred so the words cannot be read closely. Every number on them is made up.</p>
+<ol>
+  <li>Print this page, or show it on a screen.</li>
+  <li>Give a friend two minutes. On each screen, ask them to circle and label: <strong>site ID</strong> (the name of the site), <strong>page name</strong>, <strong>sections</strong> (the main tabs), <strong>local options</strong> (the choices on this page), <strong>you are here</strong> (which tab is chosen), and <strong>search</strong>.</li>
+  <li>Anything they cannot find, or circle in the wrong place, is a fix. Note it on BOARD.md.</li>
+</ol>
+<p>Made by <code>tools/squint-kit.mjs</code>; run it again for six new screens.</p>
+<div class="grid">
+<figure><img src="squint/screen-1.jpg" alt="Screen 1, blurred"><figcaption>Screen 1 (level 1)</figcaption></figure>
+<figure><img src="squint/screen-2.jpg" alt="Screen 2, blurred"><figcaption>Screen 2 (level 4)</figcaption></figure>
+<figure><img src="squint/screen-3.jpg" alt="Screen 3, blurred"><figcaption>Screen 3 (level 4)</figcaption></figure>
+<figure><img src="squint/screen-4.jpg" alt="Screen 4, blurred"><figcaption>Screen 4 (level 3)</figcaption></figure>
+<figure><img src="squint/screen-5.jpg" alt="Screen 5, blurred"><figcaption>Screen 5 (level 4)</figcaption></figure>
+<figure><img src="squint/screen-6.jpg" alt="Screen 6, blurred"><figcaption>Screen 6 (level 3)</figcaption></figure>
+</div>
+</body></html>

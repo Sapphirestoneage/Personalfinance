@@ -134,4 +134,5 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 6 (2026-10-28): money and dates as people say them with the reading under the box; the header search finds and adds; scope chips past 8 (S-285).
 - Part 7 (2026-10-28): the sentence on Home, What if? sliders with Keep this, Money as time in the strip, End call opens on the FI year with what moved it, calm milestone checks (S-286).
 - Part 8 (2026-10-28): task-word renames, one primary per screen, guess vs known boxes, 12px floor, every tap 44px (485 notes to 0), skip link first, headings in order (S-287).
-- Fix (2026-10-28): the "$" inside a money box no longer covers the first digit (30000 read as $0000 on Goals); the affix padding outranks the field reset (S-288).
+- Part 9 (2026-10-28): trunk test 60/60, squint kit, friction audit with the three new columns, Needs group fold fix, trail under a renamed tab (S-288).
+- Fix (2026-10-28): the "$" inside a money box no longer covers the first digit (30000 read as $0000 on Goals); the affix padding outranks the field reset (S-289).

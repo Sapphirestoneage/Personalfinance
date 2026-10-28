@@ -3,7 +3,7 @@
 Written by `node tools/qa-crawl.mjs` on the demo household (made up).
 
 ```
-SLAM tester: 128 screens x 3 looks, 0 taps, 250s.
+SLAM tester: 159 screens x 3 looks, 367 taps, 742s.
 PASS: no errors, crashes, overflow, null/undefined/NaN text or tab bar wrap.
   raw date: 3
 ```

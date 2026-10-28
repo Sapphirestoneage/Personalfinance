@@ -1269,7 +1269,7 @@ a.fb-link .fb-more { justify-self: end; }
 .add-form .add-grid > .add-field:not(.short) { grid-column: 1 / -1; }
 @media (max-width: 600px) { .add-form .add-grid { grid-template-columns: 1fr; } }
 .affix { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
-/* div.affix, not .affix (S-288): a tag and a class outrank the one-class field rules (the app-wide field reset further
+/* div.affix, not .affix (S-289): a tag and a class outrank the one-class field rules (the app-wide field reset further
    down, .list-row input) whatever their order, so the box keeps its room and the symbol never sits on a digit (rule 26). */
 div.affix input { width: 100%; padding-left: 1.6em; }
 div.affix-end input { padding-left: var(--space-2); padding-right: 1.8em; }
