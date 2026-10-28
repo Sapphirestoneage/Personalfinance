@@ -309,7 +309,9 @@ export const paysDebtOf = (spine, e) => {
   const id = e && e.paysDebt ? v(e.paysDebt) : null;
   if (!id || !PER_YEAR[e.cadence]) return null;
   const d = (spine.debts || []).find((x) => x.id === id);
-  if (!d || v(d.balance) === null) return null;
+  // A debt at $0 (or less) takes no payment, so the line counts as a bill (owner's live session, 2026-10-28: a car
+  // payment of $500 on a car loan typed as $0 dropped out of the month entirely).
+  if (!d || v(d.balance) === null || v(d.balance) <= 0) return null;
   const first = (spine.expenses || []).find((x) => x.paysDebt && v(x.paysDebt) === id);
   return first && first.id === e.id ? id : null;
 };
@@ -320,6 +322,7 @@ export function linkNote(spine, e) {
   if (!d || paysDebtOf(spine, e)) return null;
   if (!PER_YEAR[e.cadence]) return 'it does not repeat, so it counts as a bill';
   if (v(d.balance) === null) return 'counted as a bill until the debt has a balance';
+  if (v(d.balance) <= 0) return 'the debt shows nothing owed, so this counts as a bill';
   return 'another line pays this debt, so this one counts as a bill';
 }
 // What a line puts toward its debt a month: its amount at its cadence; null when not entered (or a one-time line).

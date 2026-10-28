@@ -298,6 +298,8 @@ export function validate(spine) {
   checkFact('household.filingStatus', h.filingStatus, FILING_STATUSES);
   checkFact('household.state', h.state, 'text');
   checkFact('household.county', h.county, 'text');
+  // The ZIP code (owner, 2026-10-28): fills the state and county; kept so the screens can show it. Optional.
+  checkFact('household.zip', h.zip, 'text', false);
   checkFact('household.nycResident', h.nycResident, 'bool');
   // Lives in Yonkers (S-272): the city's surcharge on the state tax. Optional; older files have none.
   checkFact('household.yonkersResident', h.yonkersResident, 'bool', false);
@@ -309,6 +311,8 @@ export function validate(spine) {
   checkFact('household.workHoursPerWeek', h.workHoursPerWeek, 'int', false);
   // Batch F (S-208): the biggest insurance deductible (FOO rung 1), the commute (real hourly wage).
   checkFact('household.deductible', h.deductible, 'money', false);
+  // The health plan's out-of-pocket maximum (owner, 2026-10-28), asked behind Protection's caret. Optional.
+  checkFact('household.healthOopMax', h.healthOopMax, 'money', false);
   checkFact('household.commuteHoursPerWeek', h.commuteHoursPerWeek, 'int', false);
   // Batch 3: last year's tax result (a refund is positive, an amount owed negative), and how goals are funded.
   checkFact('household.lastRefund', h.lastRefund, 'money', false);
@@ -415,6 +419,9 @@ export function validate(spine) {
     }
     checkFact(p + '.payDay', e.payDay, 'int', false);
     checkFact(p + '.coachNote', e.coachNote, 'text', false);
+    // How a line is paid, as the Session's chips said it (owner, 2026-10-28): pay it, included in rent, split (the amount
+    // is your share), covered by someone, or plan to get. Optional; the amount and covered say what counts.
+    checkFact(p + '.howPaid', e.howPaid, 'choice:pay|included|split|covered|plan', false);
     checkFact(p + '.coupleSplit', e.coupleSplit, 'choice:half|income|me|partner', false);
     // A subscription renews on its own (S-191): when it next charges, when it was last reviewed.
     checkFact(p + '.subscription', e.subscription, 'bool', false);
@@ -504,7 +511,8 @@ export function validate(spine) {
   for (const g of goals) {
     const p = 'goals.' + g.id;
     if (!['fi', 'savings', 'emergency', 'payoff', 'other'].includes(g.type)) err(p + '.type', 'fi, savings, emergency, payoff or other');
-    for (const k of ['target', 'annualSpending', 'fiNumber', 'dreamSpending', 'partTimeIncome']) if (k in g) checkFact(p + '.' + k, g[k], 'money');
+    // saved (owner, 2026-10-28): what is saved toward it so far, when no account is linked. Optional; older files have none.
+    for (const k of ['target', 'annualSpending', 'fiNumber', 'dreamSpending', 'partTimeIncome', 'saved']) if (k in g) checkFact(p + '.' + k, g[k], 'money');
     optDate(p + '.by', g.by);
     // F009 (S-208): priority, the account it lives in, a sinking fund with a monthly set-aside, spent on a date, repeating yearly.
     checkFact(p + '.priority', g.priority, 'int', false);

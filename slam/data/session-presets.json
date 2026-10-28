@@ -1,6 +1,6 @@
 {
   "year": 2026,
-  "note": "Starter lists and typical amounts for the Session (Phase 2.5, Batch 3). Which lines show follows the Profile's answers (engine/profile.js fieldsFor), not this file. Typical amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers.",
+  "note": "Starter lists and typical amounts for the Session (Phase 2.5, Batch 3). Which lines show follows the Profile's answers (engine/profile.js fieldsFor), not this file. Typical amounts are rough monthly guesses for a single adult in 2026, marked as guesses wherever they land; the client types over them. Made up, not anyone's real numbers. withdrawalChips: the withdrawal rates offered as one-tap chips on Goals (owner, 2026-10-28).",
   "needs": [
     {
       "id": "accommodation",
@@ -360,5 +360,11 @@
         "status": "verify"
       }
     }
-  }
+  },
+  "withdrawalChips": [
+    0.03,
+    0.04,
+    0.047,
+    0.052
+  ]
 }

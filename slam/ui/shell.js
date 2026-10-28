@@ -313,6 +313,8 @@ function siteHead() {
   return [
     h('a', { class: 'site-id', href: HOME_HREF, 'aria-label': 'Stress Less About Money: Home' }, h('span', {}, 'Stress Less'), ' ', h('span', {}, 'About Money')),
     withHousehold ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); }, rename: (nm) => change((x) => renameHousehold(x, nm, whose(x).name), 'Client renamed to ' + nm) }) : null,
+    // The Profile, one tap from every page (owner, 2026-10-28).
+    withHousehold ? h('a', { class: 'btn small profile-link', id: 'profile-link', href: 'profile.html', 'aria-current': samePage('profile.html') ? 'page' : null }, 'Profile') : null,
     withHousehold ? searchButton(() => hist.present, { rulesOf: () => rulesFor(hist.present), run: runCommand, clients: () => { const reg = clients(); return reg.list.filter((c) => c.id !== reg.current); }, pickClient: (id) => { if (switchTo(id)) location.reload(); } }) : null,
     h('div', { class: 'head-tools' },
       h('button', { type: 'button', class: 'btn small icon-btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : 'Undo (nothing to undo)', title: u ? 'Undo: ' + u : 'Nothing to undo', onclick: doUndo }, h('span', { 'aria-hidden': 'true' }, '\u21B6'), h('span', { class: 'tool-word' }, 'Undo')),

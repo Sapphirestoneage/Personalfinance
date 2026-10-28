@@ -49,12 +49,13 @@ function bring(reg, id) {
 
 // Each of these changes what is on screen; the caller reloads the page.
 export function switchTo(id) { const reg = clients(); if (reg.current === id) return false; stash(reg); bring(reg, id); return true; }
-export function newClient(name) {
+// build(spine): what the New client form asked (who, birthday, who lives there, ZIP), laid on the empty household.
+export function newClient(name, build = (s) => s) {
   const reg = clients(), nm = String(name || '').trim() || 'New client';
   stash(reg);
   const id = freshId(reg, nm);
   reg.list.push({ id, name: nm });
-  put(slot(id), JSON.stringify(blankHousehold(nm, todayIso())));
+  put(slot(id), JSON.stringify(build(blankHousehold(nm, todayIso()))));
   bring(reg, id);
   return id;
 }

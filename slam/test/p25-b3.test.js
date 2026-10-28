@@ -11,7 +11,7 @@ import { summarize } from '../engine/summary.js';
 import { personTax, isSelfEmployment, validate, INCOME_TYPES } from '../engine/schema.js';
 import { liquidAssets, balanceSheet } from '../engine/networth.js';
 import { goalsView } from '../engine/plan.js';
-import { SCENARIOS, SCENARIO_WORDS, scenarioAssumptions, beyondOptimistic } from '../engine/scenarios.js';
+import { SCENARIOS, SCENARIO_WORDS, SCENARIO_DEFAULT, scenarioAssumptions } from '../engine/scenarios.js';
 import { addItem } from '../engine/edits.js';
 
 const R = loadRules();
@@ -74,12 +74,12 @@ test('goals fund one at a time by priority, or by deadline when chosen', () => {
   assert.deepEqual(order({ ...s, household: { ...s.household, goalOrder: K('byDeadline') } }), ['car', 'trip']);
 });
 
-test('assumption sets: Conservative, Standard (default), Optimistic, Your own; a warning past Optimistic', () => {
+test('assumption sets: Conservative, Standard, Optimistic (the default), Your own; no warning past Optimistic', () => {
   assert.deepEqual(SCENARIOS.map((x) => SCENARIO_WORDS[x]), ['Conservative', 'Standard', 'Optimistic', 'Your own']);
   const s = mini({ assumptions: { inflation: K(0.03), realReturn: K(0.08), withdrawalRate: K(0.04), lifeExpectancy: K(90) } });
   assert.equal(scenarioAssumptions(s, R, 'optimistic').realReturn.value, R.get('SCENARIO_OPT_RETURN', 2026));
-  assert.match(beyondOptimistic(s, R), /a return above 7%/);
-  assert.equal(beyondOptimistic({ ...s, assumptions: { ...s.assumptions, realReturn: K(0.05) } }, R), null);
+  assert.equal(SCENARIO_DEFAULT, 'optimistic', 'owner, 2026-10-28');
+  assert.doesNotMatch(readFileSync(new URL('../ui/scenario.js', import.meta.url), 'utf8'), /more hopeful/);
 });
 
 test('the Session: five steps with letters, tick lists and presets from data, Back and Next, and no Other income to pick', () => {

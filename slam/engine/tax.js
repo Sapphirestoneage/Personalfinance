@@ -581,6 +581,9 @@ export function taxSetAside(spine, R, ym, { mode = 'committed', streams = [], ca
       if (!st.included || !st.gross) continue;
       const src = (spine.income || []).find((x) => x.id === st.id);
       if (!src || src.type === 'w2' || src.type === 'tips' || valueOf(src.withholding && src.withholding.federal) !== 0) continue;
+      // Money from a person that is not taxed (a gift, child support) has nothing to set aside (owner's live session,
+      // 2026-10-28: a $250 gift from parents set aside $43.50 a month).
+      if (src.type === 'person' && personTax(src) === 'none') continue;
       if (!r) { t.addMissing('household.filingStatus'); continue; }
       t.useFact('income.' + st.id + '.amount', src.amount);
       t.useFact('income.' + st.id + '.withholding.federal', src.withholding.federal);

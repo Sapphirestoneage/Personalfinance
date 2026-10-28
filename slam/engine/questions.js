@@ -24,6 +24,18 @@ export function openQuestions(spine, guess) {
   }));
 }
 
+// This session or next (owner, 2026-10-28): the first session is a rough full picture, so only the numbers that make it
+// are this session's: each amount, balance, rate and payment, a goal's amount, the birth date, filing status, where
+// they live and their health cover. The rest (a Roth's basis, a card's bank, whether it reports to credit, a limit,
+// withholding, a plan type) is next session's.
+const THIS_FIELDS = new Set(['amount', 'balance', 'apr', 'minimum', 'target', 'birthDate']);
+const THIS_PATHS = new Set(['household.filingStatus', 'household.state', 'household.healthCoverage.now.value']);
+export function sessionOf(path) {
+  const p = String(path || ''), last = p.split('.').pop();
+  if (p.startsWith('income.') && p.includes('.withholding.')) return 'next';
+  return THIS_PATHS.has(p) || THIS_FIELDS.has(last) ? 'this' : 'next';
+}
+
 // How many in all and in each section: { total, debt, assets, taxes, income, needs, goals, profile }.
 export function openCounts(list) {
   if (!list) return null;

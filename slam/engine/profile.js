@@ -42,12 +42,15 @@ export const LEVEL1 = [
   { id: 'birthYear', area: 'you', label: 'The year you were born', kind: 'year', does: 'Sets your age for the cushion target, Coast FI and the turning-26 switch.' },
   { id: 'state', area: 'you', label: 'The state you live in', kind: 'state', does: 'Picks the state tax.' },
   { id: 'county', area: 'you', label: 'Your county', kind: 'text', does: 'Picks a local tax where there is one.' },
-  { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'Just me'], ['partner', 'A partner'], ['kids', 'Kids'], ['adults', 'Other adults']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.' },
+  { id: 'livesWith', area: 'you', label: 'Who lives with you?', kind: 'many', options: [['alone', 'I live alone'], ['partner', 'A partner'], ['kids', 'Kids'], ['roommates', 'Roommates']], exclusive: ['alone'], does: 'Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.' },
+  // Roommates (owner, 2026-10-28): ticked under Who lives with you, then how many, right there. It replaced "Other adults"
+  // here and "With roommates" under Where do you live; older answers read over (migrateAnswers).
+  { id: 'roommates', area: 'you', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => has(a, 'livesWith', 'roommates'), does: 'Rent and the bills read as your share.' },
   // A couple's money style (S-277): sets whose a new item starts as and how shared bills split; never the math.
   { id: 'moneyStyle', area: 'you', label: 'How do the two of you handle money?', kind: 'one', options: [['joint', 'All joint'], ['separate', 'All separate'], ['mixed', 'Mixed: joint for shared bills, separate for the rest']], when: (a) => has(a, 'livesWith', 'partner'), does: 'Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.' },
-  { id: 'tone', area: 'you', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },
-  { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['roommates', 'With roommates'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
-  { id: 'roommates', area: 'home', label: 'How many roommates?', kind: 'one', options: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4 or more']], when: (a) => ans(a, 'home') === 'roommates', does: 'Rent and the bills read as your share.' },
+  // Asked on the client's page before the call, with Why now, not in the first session (owner, 2026-10-28).
+  { id: 'tone', area: 'start', label: 'How should I talk to you?', kind: 'one', options: [['gentle', 'Gently'], ['straight', 'Straight to it'], ['numbers', 'Numbers only']], does: 'Sets how Today words the next step; it never changes a number.' },
+  { id: 'home', area: 'home', label: 'Where do you live?', kind: 'one', options: [['rent', 'I rent'], ['own', 'I own'], ['family', 'With family']], does: 'Shows rent or a mortgage and the bills that go with it.' },
   { id: 'whoseFamily', area: 'home', label: 'Whose family?', kind: 'one', options: [['parents', 'My parents'], ['partner', 'A partner\'s family'], ['other', 'Other family']], when: (a) => ans(a, 'home') === 'family', does: 'Names who covers the bills they pay for you.' },
   { id: 'familyPay', area: 'home', label: 'What do you pay your family?', kind: 'one', options: [['rent', 'Rent'], ['bills', 'Some bills'], ['nothing', 'Nothing']], when: (a) => ans(a, 'home') === 'family', does: 'Rent becomes "paid to family"; utilities are covered unless you pay bills.' },
   { id: 'ownLoan', area: 'home', label: 'Is there a mortgage?', kind: 'one', options: [['mortgage', 'A mortgage'], ['paidOff', 'Paid off']], when: (a) => ans(a, 'home') === 'own', does: 'Shows the mortgage, or only the property tax and insurance.' },
@@ -141,7 +144,7 @@ const fromHousehold = (spine, id) => {
 export const answersOf = (spine) => {
   const out = Object.fromEntries(Object.entries((spine && spine.profile) || {}).map(([k, f]) => [k, v(f)]).filter(([, x]) => x !== null && x !== undefined));
   if (spine && spine.household) for (const id of Object.keys(HOUSEHOLD_ANSWERS)) { const x = fromHousehold(spine, id); if (x !== null) out[id] = x; }
-  return out;
+  return migrateAnswers(out);
 };
 // Has a car (owner, 2026-10-28: the housing line is 30% with a car, 35% without): a car in Assets, a car loan or lease,
 // or a Profile answer that gets around by car. Nothing known reads as no car.
@@ -157,17 +160,32 @@ export function has(a, id, val) { const x = ans(a, id); return Array.isArray(x) 
 // the client says so.
 const open = (a, id, vals) => { const x = ans(a, id); if (x === null || x === NOT_SURE) return true; return Array.isArray(x) ? vals.some((y) => x.includes(y)) : vals.includes(x); };
 export const asked = (a, q) => !q.when || q.when(a);
+// Roommates are ticked under Who lives with you; the count is its own question (1, 2, 3, 4 or more).
+export const withRoommates = (a) => has(a, 'livesWith', 'roommates');
+const roommateWords = (a) => { const n = ans(a, 'roommates'); return n === null || n === NOT_SURE ? 'roommates' : n === '4' ? '4 or more roommates' : n + (n === '1' ? ' roommate' : ' roommates'); };
+// Older answers (before S-289), read over and never written back: "Other adults" under Who lives with you is Roommates,
+// and "With roommates" under Where do you live is I rent with Roommates ticked.
+export function migrateAnswers(a) {
+  if (!a || typeof a !== 'object') return a;
+  const lw = Array.isArray(a.livesWith) ? a.livesWith : null, oldHome = a.home === 'roommates', oldAdults = !!lw && lw.includes('adults');
+  if (!oldHome && !oldAdults) return a;
+  const out = { ...a };
+  if (oldHome) out.home = 'rent';
+  const list = (lw || []).filter((x) => x !== 'adults' && x !== 'alone');
+  out.livesWith = list.includes('roommates') ? list : [...list, 'roommates'];
+  return out;
+}
 
 // ---------------------------------------------------------------- what the answers set up
 // The fields a profile can show or hide, with their section (the DATING letter), their words, and when they show.
 // Expense keys match the Session's starter lines (data/session-presets.json) and a line's own key or id.
 const FIELDS = [
-  ['rent', 'N', (a) => (ans(a, 'home') === 'roommates' ? 'Rent, your share' : 'Rent'), (a) => open(a, 'home', ['rent', 'roommates', 'other'])],
-  ['renters-insurance', 'N', 'Renter\'s insurance', (a) => open(a, 'home', ['rent', 'roommates', 'other'])],
+  ['rent', 'N', (a) => (withRoommates(a) ? 'Rent, your share' : 'Rent'), (a) => open(a, 'home', ['rent', 'other'])],
+  ['renters-insurance', 'N', 'Renter\'s insurance', (a) => open(a, 'home', ['rent', 'other'])],
   ['mortgage', 'N', 'Mortgage payment', (a) => ans(a, 'home') === null || ans(a, 'home') === NOT_SURE || (ans(a, 'home') === 'own' && open(a, 'ownLoan', ['mortgage']))],
   ['property-tax', 'N', 'Property tax', (a) => open(a, 'home', ['own'])],
   ['home-insurance', 'N', 'Home insurance', (a) => open(a, 'home', ['own'])],
-  ['utilities', 'N', (a) => (ans(a, 'home') === 'roommates' ? 'Utilities, your share' : 'Utilities'), () => true],
+  ['utilities', 'N', (a) => (withRoommates(a) ? 'Utilities, your share' : 'Utilities'), () => true],
   ['internet', 'N', 'Internet', () => true],
   ['pay-family', 'N', 'Rent paid to family', (a) => ans(a, 'home') === 'family' && open(a, 'familyPay', ['rent'])],
   ['car-payment', 'N', 'Car payment', (a) => open(a, 'getAround', ['carLoan', 'mix'])],
@@ -228,6 +246,7 @@ const word = (w, a) => (typeof w === 'function' ? w(a) : w);
 // does: [what the app does], setup: { area: line } }. Depends on the answers only; the order they were given in does
 // not matter.
 export function fieldsFor(a = {}) {
+  a = migrateAnswers(a);
   const shown = [], hidden = [];
   for (const [key, section, label, when] of FIELDS) if (when(a)) shown.push({ key, section, label: word(label, a) }); else hidden.push(key);
   const covered = {};
@@ -240,7 +259,7 @@ export function fieldsFor(a = {}) {
   if (W2(a) && ans(a, 'payType') === 'hourly') meaning.pay = 'hourly rate x usual hours a week x 52 / 12, a month';
   else if (W2(a) && ans(a, 'payType') === 'salary') meaning.pay = 'yearly salary / 12, a month';
   else if (W2(a) && ans(a, 'payType') === 'mix') meaning.pay = 'yearly salary / 12, plus hourly rate x hours';
-  if (ans(a, 'home') === 'roommates') meaning.rent = 'your share of the rent, not the whole rent';
+  if (withRoommates(a)) meaning.rent = 'your share of the rent, not the whole rent';
   if (ans(a, 'home') === 'family') meaning.rent = 'what you pay your family';
   const does = [];
   if (ans(a, 'behind') === 'yes') does.push({ id: 'behindFirst', words: 'Plan opens on "When it won\'t all get paid" first.' });
@@ -264,7 +283,7 @@ function setupLines(a, shown, covered) {
   const list = (xs) => (xs.length ? xs.join(', ') : 'nothing yet');
   const out = {};
   const answered = (area) => LEVEL1.some((q) => q.area === area && ans(a, q.id) !== null);
-  if (answered('you')) out.you = [ans(a, 'firstName'), ans(a, 'birthYear') ? 'born ' + ans(a, 'birthYear') : null, ans(a, 'state') && ans(a, 'state') !== NOT_SURE ? ans(a, 'state') + ' tax' : null, has(a, 'livesWith', 'kids') ? 'childcare shown' : null].filter(Boolean).join('; ') || 'Nothing yet';
+  if (answered('you')) out.you = [ans(a, 'firstName'), ans(a, 'birthYear') ? 'born ' + ans(a, 'birthYear') : null, ans(a, 'state') && ans(a, 'state') !== NOT_SURE ? ans(a, 'state') + ' tax' : null, has(a, 'livesWith', 'kids') ? 'childcare shown' : null, withRoommates(a) ? roommateWords(a) : null].filter(Boolean).join('; ') || 'Nothing yet';
   if (answered('home')) out.home = 'Shows ' + list(by('N', ['rent', 'pay-family', 'renters-insurance', 'mortgage', 'property-tax', 'home-insurance', 'utilities', 'internet'])) + (ans(a, 'home') === 'family' ? '; ' + (['utilities', 'internet'].filter((k) => covered[k]).join(' and ') || 'no bills') + ' covered by family' : '');
   if (answered('around')) out.around = 'Shows ' + list(by('N', ['car-payment', 'lease', 'car-insurance', 'car-gas', 'car-upkeep', 'transit', 'rides']));
   if (answered('work')) out.work = 'Shows ' + list(by('I').concat(by('T', ['set-aside', 'estimated-payments'])));
@@ -421,7 +440,7 @@ export function answersFile(answers, gut, savedAt) {
 export function readAnswersFile(x) {
   if (!x || typeof x !== 'object' || x.kind !== ANSWERS_KIND || !x.answers || typeof x.answers !== 'object') throw new Error('This is not a "Before our first call" answers file.');
   const answers = {}, problems = [];
-  for (const [id, val] of Object.entries(x.answers)) {
+  for (const [id, val] of Object.entries(migrateAnswers(x.answers))) {
     const c = L1.has(id) ? cleanAnswer(id, val) : undefined;
     if (c === undefined) problems.push(L1.has(id) ? (L1.get(id).label + ': could not be read') : 'An answer this app does not ask (' + id + ')'); else answers[id] = c;
   }
@@ -447,7 +466,7 @@ export const LEVEL2 = [
   { id: 'incomeSecurity', area: 'work', label: 'How secure is your income?', kind: 'one', options: [['solid', 'Solid'], ['okay', 'Okay'], ['shaky', 'Shaky']], opens: (a) => W2(a) || SELF(a), does: 'Okay adds a month to the cushion; shaky adds three.' },
   { id: 'payChange', area: 'work', label: 'Pay changes coming?', kind: 'one', options: [['yes', 'Yes'], ['no', 'No']], opens: (a) => W2(a) || SELF(a), does: 'Yes puts the change on the Calendar with its date.' },
   { id: 'payRate', area: 'work', label: 'Your pay rate (yearly salary, or hourly rate and usual hours)', kind: 'field', where: 'paystub', opens: W2 },
-  { id: 'businessStructure', area: 'work', label: 'Business structure', kind: 'one', options: [['sole', 'Just me (sole)'], ['llc', 'LLC'], ['scorp', 'S corp']], opens: SELF, does: 'An S corp pays you a wage; the rest stays 1099.' },
+  { id: 'businessStructure', area: 'work', label: 'Business structure', kind: 'one', options: [['sole', 'Sole proprietor'], ['llc', 'LLC'], ['scorp', 'S corp']], opens: SELF, does: 'An S corp pays you a wage; the rest stays 1099.' },
   { id: 'businessAccount', area: 'work', label: 'A separate business account?', kind: 'one', options: YES_NO, opens: SELF, does: 'No adds "open a business account" to the to-dos.' },
   { id: 'businessRetirement', area: 'work', label: 'Retirement through the business', kind: 'one', options: [['none', 'None'], ['sep', 'SEP IRA'], ['solo', 'Solo 401(k)']], opens: SELF, does: 'Opens that account.' },
   { id: 'k401Type', area: 'k401', label: '401(k): traditional, Roth or both?', kind: 'one', options: [['traditional', 'Traditional'], ['roth', 'Roth'], ['both', 'Both']], opens: (a) => has(a, 'accounts', 'k401') || has(a, 'offers', 'k401'), does: 'Sets whether it lowers your tax now.' },
@@ -537,7 +556,7 @@ export function cushionExtraMonths(spine, rules, year) {
 
 // The tone answer, for the words on Today.
 // A new housing or food line starts shared, half each, with a partner or other adults at home (Level 1).
-export const startsShared = (a, fat) => (has(a, 'livesWith', 'partner') || has(a, 'livesWith', 'adults')) && (fat === 'accommodation' || fat === 'food');
+export const startsShared = (a, fat) => has(a, 'livesWith', 'partner') && (fat === 'accommodation' || fat === 'food');
 export const toneOf = (spine) => (spine.profile && spine.profile.tone ? v(spine.profile.tone) : null);
 // Where Spending opens: adding a purchase when they do not keep track, else importing a statement.
 export const spendingStart = (spine) => { const t = spine.profile && spine.profile.tracking ? v(spine.profile.tracking) : null; return t === null || t === NOT_SURE ? null : t === 'none' ? 'add' : 'import'; };

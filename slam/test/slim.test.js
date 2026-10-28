@@ -17,11 +17,11 @@ test('no placeholder reads 0 or a number that looks typed (use "e.g. 400")', () 
   assert.deepEqual(bad, []);
 });
 
-test('maybe money and the Session goals use the one shared add form, behind "+ Add"', () => {
+test('maybe money uses the shared add form; the Session goals save as they are typed (owner, 2026-10-28)', () => {
   assert.match(code('ui/calendar.js'), /addForm\(\{ spine: \(\) => current\(\)\.spine, collection: 'maybe'/);
-  assert.match(code('ui/guide.js'), /addForm\(\{ spine: \(\) => current\(\)\.spine, collection: 'goals'/);
-  assert.match(code('ui/guide.js'), /'\+ Add a goal'/);
-  assert.doesNotMatch(code('ui/guide.js'), /class: 'goal-form'/, 'no goal form sits open');
+  assert.doesNotMatch(code('ui/guide.js'), /'\+ Add a goal'/);
+  assert.match(code('ui/guide.js'), /'Suggests as you type\. Enter or Tab keeps it\.'/);
+  assert.match(code('ui/guide.js'), /cell\('Saved so far'/);
 });
 
 test('an Add from a group starts on that group\'s kind; only a general Add asks what kind', () => {

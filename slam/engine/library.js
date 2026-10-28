@@ -28,6 +28,19 @@ export function matchPicks(entries, q, max = 5) {
 }
 
 // A city or ZIP code: { state, locality: 'nyc' | 'yonkers' | null, words } or null.
+// A New York ZIP's county from the ranges (first ZIP, last ZIP, county), or null. A ZIP between two ranges takes their
+// county when both sides agree; otherwise it is left for the coach to type.
+export function nyCountyOf(z, ranges) {
+  if (!Array.isArray(ranges) || !ranges.length) return null;
+  let lo = 0, hi = ranges.length - 1, at = -1;
+  while (lo <= hi) { const mid = (lo + hi) >> 1; if (ranges[mid][0] <= z) { at = mid; lo = mid + 1; } else hi = mid - 1; }
+  if (at < 0) return null;
+  if (z <= ranges[at][1]) return ranges[at][2];
+  return ranges[at + 1] && ranges[at + 1][2] === ranges[at][2] ? ranges[at][2] : null;
+}
+// What a place fills in the household: [path, value] pairs, so the ZIP answers the state, the county and whether New
+// York City or Yonkers tax applies in one change. A county is written only when the ZIP names one.
+export const placeFacts = (pl) => [['household.state', pl.state], ...(pl.zip ? [['household.zip', pl.zip]] : []), ...(pl.county ? [['household.county', pl.county]] : []), ['household.nycResident', pl.locality === 'nyc'], ['household.yonkersResident', pl.locality === 'yonkers']];
 export function placeOf(text, places) {
   const t = String(text || '').trim();
   const zip = t.match(/^(\d{5})(?:-\d{4})?$/);
@@ -35,8 +48,12 @@ export function placeOf(text, places) {
     const z = +zip[1], z3 = Math.floor(z / 100);
     const row = places.zip3.find(([a, b]) => z3 >= a && z3 <= b);
     if (!row) return null;
-    const locality = z >= places.yonkersZip[0] && z <= places.yonkersZip[1] ? 'yonkers' : places.nycZip3.includes(z3) ? 'nyc' : null;
-    return { state: row[2], locality, words: 'ZIP ' + zip[1] + ' (' + row[2] + (locality === 'nyc' ? ', New York City' : locality === 'yonkers' ? ', Yonkers' : '') + ')' };
+    const county = row[2] === 'NY' ? nyCountyOf(z, places.nyZipCounty) : null;
+    // New York City is its five counties when the county is known, else the ZIP's first three digits.
+    const nyc = county ? (places.nycCounties || []).includes(county) : places.nycZip3.includes(z3);
+    const locality = z >= places.yonkersZip[0] && z <= places.yonkersZip[1] ? 'yonkers' : nyc ? 'nyc' : null;
+    const where = locality === 'nyc' ? 'New York City' : locality === 'yonkers' ? 'Yonkers' : county ? county + ' County' : null;
+    return { state: row[2], county, locality, zip: zip[1], words: 'ZIP ' + zip[1] + ' (' + (where ? where + ', ' : '') + row[2] + ')' };
   }
   const c = places.cities.find((x) => matchScore({ words: x.name, aliases: x.aliases }, t) === 0 && norm(t).length >= 2);
   return c ? { state: c.state, locality: c.locality || null, words: c.name + ', ' + c.state } : null;

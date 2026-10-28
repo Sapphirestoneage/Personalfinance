@@ -25,7 +25,7 @@ export const SELF_BASIS = [['steady', 'About the same each month'], ['lumpy', 'I
 export function namePlaceholder(collection, type) {
   if (collection === 'income') return 'Where it comes from, e.g. Hudson Valley Health';
   if (collection === 'expenses') return 'What it\'s for, e.g. Rent';
-  if (collection === 'goals') return 'Goal, e.g. Trip to Lisbon';
+  if (collection === 'goals') return 'Goal, e.g. Start a business';
   if (collection === 'policies') return 'Insurer or name, e.g. Haven term life';
   if (collection === 'debts') return type === 'credit_card' || !type ? 'Card name, e.g. Chase Freedom' : 'Loan, e.g. ' + (PRESETS[type] ? PRESETS[type].label : 'Car loan');
   return 'Account, e.g. Chase savings';

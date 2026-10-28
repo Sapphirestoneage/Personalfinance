@@ -63,12 +63,13 @@ test('placeholders match the item; no raw codes in what the form shows', () => {
   const src = readFileSync(new URL('../ui/add-form.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /words\(t\)/);
 });
-test('the Session and My numbers both use the one form', () => {
-  for (const f of ['guide', 'ledger']) {
-    const src = readFileSync(new URL('../ui/' + f + '.js', import.meta.url), 'utf8');
-    assert.match(src, /from '\.\/add-form\.js'/, f);
-    assert.doesNotMatch(src, /Name, for example Chase Freedom/, f);
-  }
+test('My numbers uses the one form; the Session saves as it is typed, with no Add form (owner, 2026-10-28)', () => {
+  const ledger = readFileSync(new URL('../ui/ledger.js', import.meta.url), 'utf8');
+  assert.match(ledger, /from '\.\/add-form\.js'/);
+  const guide = readFileSync(new URL('../ui/guide.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(guide, /from '\.\/add-form\.js'/);
+  assert.doesNotMatch(guide, /'\+ Add (income|a goal)'/);
+  for (const f of [ledger, guide]) assert.doesNotMatch(f, /Name, for example Chase Freedom/);
 });
 
 test('the account picker: grouped, the 401(k)s together and the IRAs together, Roth a tick box (S-262)', () => {

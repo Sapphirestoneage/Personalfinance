@@ -24,6 +24,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **How often are you paid?** (Every week / Every 2 weeks / Twice a month / Once a month / It varies, or Not sure). Puts paydays on the Calendar.
 - **About how much lands in your account a month?** (Under $2,000 / $2,000 to $4,000 / $4,000 to $6,000 / $6,000 to $8,000 / Over $8,000, or Not sure). A ballpark, so the first call starts in the right place.
 - **Anything else you would like me to know?** (text, or Not sure). Your own words, for the first call.
+- **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### You
 
@@ -31,14 +32,13 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **The year you were born** (year, or Not sure). Sets your age for the cushion target, Coast FI and the turning-26 switch.
 - **The state you live in** (state, or Not sure). Picks the state tax.
 - **Your county** (text, or Not sure). Picks a local tax where there is one.
-- **Who lives with you?** (Just me / A partner / Kids / Other adults, or Not sure). Kids shows childcare; with a partner or other adults, a new housing or food line starts shared, half each.
+- **Who lives with you?** (I live alone / A partner / Kids / Roommates, or Not sure). Kids shows childcare; with a partner, a new housing or food line starts shared, half each; with roommates, rent and the bills read as your share.
+- **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
 - **How do the two of you handle money?** (All joint / All separate / Mixed: joint for shared bills, separate for the rest, or Not sure; asked only when it applies). Sets whose a new account or debt starts as, and how shared bills split between you. Your totals stay the same.
-- **How should I talk to you?** (Gently / Straight to it / Numbers only, or Not sure). Sets how Today words the next step; it never changes a number.
 
 ### Home
 
-- **Where do you live?** (I rent / I own / With roommates / With family, or Not sure). Shows rent or a mortgage and the bills that go with it.
-- **How many roommates?** (1 / 2 / 3 / 4 or more, or Not sure; asked only when it applies). Rent and the bills read as your share.
+- **Where do you live?** (I rent / I own / With family, or Not sure). Shows rent or a mortgage and the bills that go with it.
 - **Whose family?** (My parents / A partner's family / Other family, or Not sure; asked only when it applies). Names who covers the bills they pay for you.
 - **What do you pay your family?** (Rent / Some bills / Nothing, or Not sure; asked only when it applies). Rent becomes "paid to family"; utilities are covered unless you pay bills.
 - **Is there a mortgage?** (A mortgage / Paid off, or Not sure; asked only when it applies). Shows the mortgage, or only the property tax and insurance.
@@ -109,7 +109,7 @@ Coach-guided. Opens only for what Level 1 ticked; listed on the Session's first 
 - **How secure is your income?** (Solid / Okay / Shaky). Okay adds a month to the cushion; shaky adds three.
 - **Pay changes coming?** (Yes / No). Yes puts the change on the Calendar with its date.
 - **Your pay rate (yearly salary, or hourly rate and usual hours)** (a number in My numbers; find it in your paystub).
-- **Business structure** (Just me (sole) / LLC / S corp). An S corp pays you a wage; the rest stays 1099.
+- **Business structure** (Sole proprietor / LLC / S corp). An S corp pays you a wage; the rest stays 1099.
 - **A separate business account?** (Yes / No). No adds "open a business account" to the to-dos.
 - **Retirement through the business** (None / SEP IRA / Solo 401(k)). Opens that account.
 

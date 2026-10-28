@@ -1,5 +1,6 @@
 // A new client (practical run, S-269): an empty household with only a name. Every number starts missing (empty is not
-// zero); the assumptions start from the house's standard set as guesses, so the FI math has something to read.
+// zero); the assumptions start as guesses (8% real return, 4% withdrawal: owner, 2026-10-28), so the FI math has
+// something to read.
 
 const F = (value, kind, today) => ({ value, kind, asOf: today, source: 'new client' });
 export const slugOf = (name) => String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'client';
@@ -16,7 +17,7 @@ export function blankHousehold(name, today) {
       healthCoverage: [{ id: 'now', from: null, personId: id, value: F(null, 'missing', today), planType: F(null, 'missing', today) }]
     },
     income: [], expenses: [], accounts: [], debts: [], goals: [], taxYears: [], lent: [], log: [], feed: [], profile: {},
-    assumptions: { inflation: F(0.03, 'rough', today), realReturn: F(0.06, 'rough', today), withdrawalRate: F(0.04, 'rough', today), lifeExpectancy: F(92, 'rough', today), coastAge: F(65, 'rough', today) }
+    assumptions: { inflation: F(0.03, 'rough', today), realReturn: F(0.08, 'rough', today), withdrawalRate: F(0.04, 'rough', today), lifeExpectancy: F(92, 'rough', today), coastAge: F(65, 'rough', today) }
   };
 }
 
