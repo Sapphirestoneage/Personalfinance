@@ -45,8 +45,20 @@ function enterMovesOn(e) {
     if (b) { e.preventDefault(); b.click(); return; }
   }
   if (e.key !== 'Enter' || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || !t || !t.matches || !t.matches(BOXES) || t.form) return;
-  const boxes = [...document.querySelectorAll(BOXES)].filter((b) => b.offsetParent !== null && !b.disabled && !b.form);
-  const next = boxes[boxes.indexOf(t) + 1];
+  // A group's "one number for all of it" box is left out of the run: it goes away once a line is typed, so landing on
+  // it after the group's last line lost the focus (friction audit: a tap into each box).
+  const all = [...document.querySelectorAll(BOXES)].filter((b) => !b.disabled && !b.form && !(/^c-/.test(b.id) && b.closest('.need-group')));
+  if (!all.includes(t)) { e.preventDefault(); t.blur(); return; }
+  // In view: not display none, and not inside a folded group (a box there keeps a layout box in Chromium, but cannot take focus).
+  const boxes = all.filter((b) => b.offsetParent !== null && !b.closest('details:not([open])'));
+  let next = boxes[boxes.indexOf(t) + 1];
+  // Past the last box of a Needs group (S-283), the next box sits in the next, folded group: open it on the way, by its
+  // heading (so the group's open state is recorded on the tap, S-288), and land in its first box.
+  if (!next) {
+    const after = all.slice(all.indexOf(t) + 1).find((b) => b.closest('details.need-group:not([open])'));
+    const d = after && after.closest('details.need-group:not([open])');
+    if (d) { const sum = d.querySelector('summary'); if (sum) sum.click(); else d.open = true; next = after; }
+  }
   e.preventDefault();
   if (next) next.focus(); else t.blur();
 }

@@ -72,7 +72,7 @@ Not started. Phase 3 starts only when the Phase 2.5 gate passes. Where the gate 
 - [ ] Waiting on you: no crashes on your real profile (on your machine; the profile never enters git)
 - [ ] Waiting on you: five headline numbers checked by hand against your own math, to the cent
 - [ ] Waiting on you: your answers in `docs/MY_METHOD_REVIEW.md` (the defaults that move a headline number most)
-- [ ] Waiting on you: one live dry run on a call, start to the one-pager
+- [ ] Waiting on you: one live dry run on a call, start to the one-pager, with the squint test first: `docs/squint-test.html` (six blurred screens, two minutes with a friend; `node tools/squint-test.mjs` makes a fresh set) and the trunk test green (`node tools/trunk-test.mjs`, `docs/TRUNK_TEST.md`)
 
 ### This run (Phase 2.5, practical): done
 

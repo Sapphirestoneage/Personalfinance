@@ -3,8 +3,16 @@
 Coach-operated financial planning software. A coach runs it live on a call with a
 client, one household at a time, on a laptop or a phone.
 
-The app opens on **Today** (index.html goes to dashboard.html). The tabs are Today,
-Calendar, Spending, Plan and My numbers; the Session and the Builder hang off them.
+The app opens on **Home** (index.html goes to dashboard.html): their money in one
+sentence, today's agenda and the next three things to fill. Five tabs on every page,
+in this order: Home, Numbers (Needs, Debt, Income, Assets, Goals, Protection), Plan
+(Overview, Debt, Retirement and tax, Protection, Extra money), Calendar, Spending.
+The header is the same everywhere: the site ID, the client, the search box (it finds
+anything and adds a line like "rent 2400"), Undo, Redo, End call, and the Coach gear
+with the coach-only pages. Guide me is a switch on Numbers that walks the six sections
+in order (the old Session); End call opens on the FI date and prints the one-pager.
+The map, level by level, is in `docs/MAP.md`; the trunk test that checks every screen
+says where you are is `docs/TRUNK_TEST.md`.
 
 The older first tool is the **Budget** (now clients.html, linked from the Builder as
 "Client list (old)" until Phase 3 replaces it). It holds a client to their own words: they guess

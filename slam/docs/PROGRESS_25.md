@@ -134,3 +134,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 6 (2026-10-28): money and dates as people say them with the reading under the box; the header search finds and adds; scope chips past 8 (S-285).
 - Part 7 (2026-10-28): the one-sentence summary, Drag to see the future, Money as time in the strip, the End call reveal, calm celebrations (S-286).
 - Part 8 (2026-10-28): words in the client's own (36 renames), no hover-only cue, dashed guesses on rows, a 13px type floor, every tap 44px, skip link, headings, labels and zoom on every page; the trunk test tool passes 70 screens (S-287).
+- Part 9 (2026-10-28): the trunk test tool and its report, the squint test kit on the Phase 3 gate, the friction audit with three new columns before and after this run, the phone version republished (S-288).

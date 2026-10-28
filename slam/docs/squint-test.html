@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squint test</title>
+<style>
+  body { margin: 0; padding: 24px; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #182134; background: #fff; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  h2 { font-size: 1.1rem; margin: 0 0 6px; }
+  .how { max-width: 72ch; margin: 0 0 20px; }
+  .how ol { padding-left: 1.3em; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  figure { margin: 0; break-inside: avoid; }
+  .shot { display: block; width: 100%; height: 300px; object-fit: cover; object-position: top; filter: blur(5px); border: 1px solid #d9dfeb; border-radius: 8px; background: #f5f7fb; }
+  figcaption { margin-top: 6px; font-size: 0.9rem; }
+  .answers { margin-top: 24px; break-before: page; }
+  .answers li { margin: 4px 0; }
+  .key { font-size: 0.85rem; color: #5a6478; }
+  button { font: inherit; padding: 8px 14px; border: 1px solid #0f52ba; border-radius: 6px; background: #0f52ba; color: #fff; cursor: pointer; }
+  @media print { button { display: none; } body { padding: 0; } .grid { gap: 12px; } .shot { height: 240px; } }
+</style>
+</head>
+<body>
+<h1>Squint test: can a friend tell where they are?</h1>
+<div class="how">
+  <p>Six screens of SLAM, chosen at random (at least two from the deep levels, where the real work happens), blurred so the words cannot be read closely. Made on 2026-10-28 with seed 10045 (run <code>node tools/squint-test.mjs --seed 10045</code> to get the same six). The made-up demo household.</p>
+  <h2>How to run it (two minutes a person)</h2>
+  <ol>
+    <li>Print this page (or hand over the screen) and give a friend a pen.</li>
+    <li>On each screen, ask them to circle six things: <strong>the site ID</strong>, <strong>the page name</strong>, <strong>the main sections</strong>, <strong>the options at this level</strong>, <strong>where "you are here" is marked</strong>, and <strong>search</strong>.</li>
+    <li>Two minutes for all six screens. No zooming in, no reading closely: a squint is the point.</li>
+    <li>Count the circles that landed. The answer key on the last page says what is where. Anything missed on two screens or more is a fail for the Phase 3 gate (BOARD.md).</li>
+  </ol>
+  <button type="button" onclick="print()">Print this page</button>
+</div>
+<div class="grid">
+  <figure><img class="shot" src="squint/screen-1.png" alt="Screen 1, blurred"><figcaption><strong>Screen 1</strong> (phone)</figcaption></figure>
+  <figure><img class="shot" src="squint/screen-2.png" alt="Screen 2, blurred"><figcaption><strong>Screen 2</strong> (computer)</figcaption></figure>
+  <figure><img class="shot" src="squint/screen-3.png" alt="Screen 3, blurred"><figcaption><strong>Screen 3</strong> (phone)</figcaption></figure>
+  <figure><img class="shot" src="squint/screen-4.png" alt="Screen 4, blurred"><figcaption><strong>Screen 4</strong> (computer)</figcaption></figure>
+  <figure><img class="shot" src="squint/screen-5.png" alt="Screen 5, blurred"><figcaption><strong>Screen 5</strong> (phone)</figcaption></figure>
+  <figure><img class="shot" src="squint/screen-6.png" alt="Screen 6, blurred"><figcaption><strong>Screen 6</strong> (phone)</figcaption></figure>
+</div>
+<section class="answers">
+  <h2>Answer key (for the coach, after the two minutes)</h2>
+  <ol>
+    <li><strong>Screen 1</strong>: Numbers > Assets > Cash (level 3, phone width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+    <li><strong>Screen 2</strong>: Numbers > Goals (level 2, computer width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+    <li><strong>Screen 3</strong>: Numbers > Needs > Housing > Rent (level 4, phone width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+    <li><strong>Screen 4</strong>: Numbers > Assets > Employer retirement (level 3, computer width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+    <li><strong>Screen 5</strong>: Profile (level 1, phone width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+    <li><strong>Screen 6</strong>: Numbers > Assets (level 2, phone width). <span class="key">Site ID top left; page name as the heading under the tabs (and the last, bold step of the trail below level 2); sections as the five tabs (bottom on a phone, top on a computer); options as the second-level tabs, the siblings row or the rows; you are here as the filled, bold tab and second-level tab; search as the box in the header.</span></li>
+  </ol>
+</section>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// The friction audit (Batch 0 of the practical run): plays the coach running a full first session on two made-up
+// The friction audit (Batch 0 of the practical run; Part 9, S-288: three more columns and the Guide me order): plays the coach running a full first session on two made-up
 // households (Maya and Dre, no real data), from opening the app to printing the one-pager, typing every number through
 // the screens as on a call. It logs every tap, key, scroll, page change and dead end (a tap that changed nothing), and
 // every screen where the next step sits below the fold. Time is at the CLIENT_TEST pace: 5 s a tap, 45 s a typed
@@ -63,7 +63,15 @@ function recorder(page) {
     await page.waitForTimeout(250);
     if (expectChange && before === (await snap())) { r.dead.push({ step: r.step, what: why }); r.lose(PACE.tap, 'A tap that changed nothing: ' + why); }
   };
+  // A box inside a folded group (the seven Needs groups, S-283) needs the group opened first: one tap, counted.
+  r.unfold = async (sel, why) => {
+    const loc = page.locator(sel).first();
+    if (!(await loc.count()) || (await loc.isVisible())) return;
+    const summary = loc.locator('xpath=ancestor::details[not(@open)][1]/summary');
+    if (await summary.count()) { await summary.first().click(); bump('taps'); r.log.push('open the group for ' + why); await page.waitForTimeout(200); }
+  };
   r.type = async (sel, text, why) => {
+    await r.unfold(sel, why);
     const loc = page.locator(sel).first();
     await loc.waitFor({ state: 'visible', timeout: 8000 });
     if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
@@ -80,13 +88,23 @@ function recorder(page) {
     if (!(await inView(loc))) { bump('scrolls'); r.log.push('scroll to ' + why); }
     await loc.selectOption(value); bump('taps', 2); r.log.push('pick ' + why + ': ' + value); await page.waitForTimeout(200);
   };
-  r.has = async (sel) => (await page.locator(sel).count()) > 0 && page.locator(sel).first().isVisible();
+  // A box that is there, folded or not.
+  r.has = async (sel) => (await page.locator(sel).count()) > 0 && ((await page.locator(sel).first().isVisible()) || (await page.locator(sel).first().locator('xpath=ancestor::details[not(@open)][1]').count()) > 0);
   r.nextVisible = async () => {
     const loc = page.locator('.step-nav .btn.primary').first();
     if (!(await loc.count())) return;
     if (!(await inView(loc))) { r.below.push(r.step); r.lose(PACE.tap, 'Next step below the fold on ' + r.step); }
   };
   r.talk = () => { r.results += 1; };
+  // Looks right (S-282): one tap keeps every guess on the screen; each counts as a field confirmed, not typed.
+  r.confirmed = 0;
+  r.looksRight = async () => {
+    const b = page.locator('#looks-right').first();
+    if (!(await b.count()) || !(await b.isVisible())) return;
+    const words = await page.locator('.looks-right-bar .muted').first().textContent().catch(() => '');
+    const m = /(\d+) guess/.exec(words || '');
+    await r.tap('#looks-right', 'Looks right'); r.confirmed += m ? +m[1] : 1; r.log.push('confirm ' + (m ? m[1] : 1) + ' guesses');
+  };
   return r;
 }
 
@@ -135,14 +153,23 @@ async function run(browser, hh) {
     await (await chooser).setFiles(file); r.taps += 1; r.log.push('pick the blank file');
     await page.waitForTimeout(1200);
   }
-  if (!(await page.url()).includes('session.html')) await nav('header a[href="session.html"], nav a[href="session.html"]', 'the Session tab');
-  if (await r.has('.step-nav .btn.primary:has-text("Start")')) await nav('.step-nav .btn.primary', 'Start');
-  else if (await r.has('a[href="#/debt"]')) await nav('a[href="#/debt"]', 'Debt');
+  // Guide me (S-280): a new client lands on Numbers with Guide me on; "Start with Needs" opens the first step, and the
+  // steps run Needs, Debt, Income (with the two tax questions), Assets, Goals (question 195).
+  if (!/ledger\.html/.test(await page.url())) await go('ledger.html?guide=1');
+  if (await r.has('.step-nav .btn.primary:has-text("Start")')) await nav('.step-nav .btn.primary', 'Start with Needs');
+  else if (await r.has('a[href="#/needs"]')) await nav('a[href="#/needs"]', 'Needs');
+
+  // N: needs.
+  r.step = 'needs';
+  // Nothing typed yet: no step may read done (friction audit, Batch 0).
+  const doneEmpty = await page.evaluate(() => document.querySelectorAll('.stepper-seg.is-done').length);
+  if (doneEmpty) r.lose(PACE.result, 'The progress tracker says ' + doneEmpty + ' steps are done on an empty household');
+  for (const [k, amt] of Object.entries(hh.needs)) if (await r.has('#n-' + k)) await r.type('#n-' + k, amt, k); else r.lose(60, 'No box for ' + k + ' in the Session');
+  if (hh.rent && hh.needs.rent === undefined && (await r.has('#n-rent'))) await r.type('#n-rent', '1650', 'rent');
+  await r.looksRight(); r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // D: debts.
   r.step = 'debt';
-  const doneEmpty = await page.evaluate(() => document.querySelectorAll('.stepper-seg.is-done').length);
-  if (doneEmpty) r.lose(PACE.result, 'The progress tracker says ' + doneEmpty + ' steps are done on an empty household');
   if (hh.couple) {
     if (await r.has('#who-two')) {
       await r.tap('#who-two', 'The two of us');
@@ -170,7 +197,26 @@ async function run(browser, hh) {
     await whose(null, d.whose);
   }
   for (const t of ['credit_card', 'student_loan', 'auto_loan', 'family_iou']) if (await r.has('#dqn-' + t)) await r.tap('#dqn-' + t, 'No to ' + t);
-  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+  await r.looksRight(); r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+
+  // I: income.
+  r.step = 'income';
+  for (const x of hh.income) {
+    await r.tap('#i-add, button:has-text("+ Add income")', '+ Add income');
+    await r.type('#add-name', x.name, 'income name');
+    await r.type('#add-amount', x.amount, 'income amount');
+    if (await r.has('#add-type')) await r.pick('#add-type', x.type, 'kind of income');
+    if (x.basis && (await r.has('#add-basis'))) await r.pick('#add-basis', x.basis, 'how it is paid');
+    if (x.schedule && (await r.has('#add-schedule'))) await r.pick('#add-schedule', x.schedule, 'how often');
+    await r.tap('form.add-form button[type=submit]', 'Add');
+    await whose(null, x.whose);
+  }
+  // The two tax questions sit at the top of this step now (question 196).
+  // T: taxes (inside Income).
+  r.step = 'taxes';
+  if (await r.has('#t-filing') && !hh.couple) await r.pick('#t-filing', hh.filing === 'married' ? 'mfj' : 'single', 'filing status').catch(async () => r.pick('#t-filing', { index: 1 }, 'filing status'));
+  if (hh.where && (await r.has('#t-where'))) await r.pick('#t-where', hh.where, 'where you live');
+  await r.looksRight(); r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // A: assets.
   r.step = 'assets';
@@ -195,33 +241,7 @@ async function run(browser, hh) {
       }
     }
   }
-  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
-
-  // T: taxes.
-  r.step = 'taxes';
-  if (await r.has('#t-filing') && !hh.couple) await r.pick('#t-filing', hh.filing === 'married' ? 'mfj' : 'single', 'filing status').catch(async () => r.pick('#t-filing', { index: 1 }, 'filing status'));
-  if (hh.where && (await r.has('#t-where'))) await r.pick('#t-where', hh.where, 'where you live');
-  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
-
-  // I: income.
-  r.step = 'income';
-  for (const x of hh.income) {
-    await r.tap('#i-add, button:has-text("+ Add income")', '+ Add income');
-    await r.type('#add-name', x.name, 'income name');
-    await r.type('#add-amount', x.amount, 'income amount');
-    if (await r.has('#add-type')) await r.pick('#add-type', x.type, 'kind of income');
-    if (x.basis && (await r.has('#add-basis'))) await r.pick('#add-basis', x.basis, 'how it is paid');
-    if (x.schedule && (await r.has('#add-schedule'))) await r.pick('#add-schedule', x.schedule, 'how often');
-    await r.tap('form.add-form button[type=submit]', 'Add');
-    await whose(null, x.whose);
-  }
-  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
-
-  // N: needs.
-  r.step = 'needs';
-  for (const [k, amt] of Object.entries(hh.needs)) if (await r.has('#n-' + k)) await r.type('#n-' + k, amt, k); else r.lose(60, 'No box for ' + k + ' in the Session');
-  if (hh.rent && hh.needs.rent === undefined && (await r.has('#n-rent'))) await r.type('#n-rent', '1650', 'rent');
-  r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
+  await r.looksRight(); r.talk(); await r.nextVisible(); await nav('.step-nav .btn.primary', 'Next');
 
   // G: goals.
   r.step = 'goals';
@@ -232,7 +252,7 @@ async function run(browser, hh) {
     if (await r.has('#add-by')) { await page.locator('#add-by').fill(by); r.typed += 1; r.taps += 1; }
     await r.tap('form.add-form button[type=submit]', 'Add');
   }
-  r.talk();
+  await r.looksRight(); r.talk();
 
   // What the Session could not take: My numbers.
   if (hh.later && hh.later.length) {
@@ -270,11 +290,11 @@ function report(runs, before) {
   L.push('# Friction audit, ' + (before ? 'after' : 'before'), '');
   L.push('Minutes are taps, typed answers and results at the pace, plus the time each friction below loses.', '');
   L.push('Made by `node slam/tools/friction-audit.mjs` on ' + new Date().toISOString().slice(0, 10) + '. Made-up households (Maya: renter, one W-2; Dre: homeowner, a W-2 and 1099 work, a mortgage' + (runs.some((x) => x.name === 'Jordan') ? '; Jordan and Sam: a couple in New York City, two W-2s' : '') + '), a full first session from opening the app to printing the one-pager, on a 1280 x 800 laptop screen. Time at the CLIENT_TEST pace: ' + PACE.tap + ' s a tap, ' + PACE.typed + ' s a typed answer, ' + PACE.result + ' s a result talked through.', '');
-  L.push('| Household | Numbers typed | Taps | Taps per number | Keys | Scrolls | Page loads | Screen changes | Dead ends | Next below the fold | Results talked | Minutes |', '|---|---|---|---|---|---|---|---|---|---|---|---|');
-  for (const x of runs) L.push('| ' + [x.name, x.typed, x.taps, (x.taps / x.typed).toFixed(2), x.keys, x.scrolls, x.pages, x.screens, x.dead.length, x.below.length, x.results, minutes(x)].join(' | ') + ' |');
+  L.push('| Household | Numbers typed | Taps | Taps per number | Keys | Keys per number | Scrolls | Page loads | Screen changes | Page changes | Dead ends | Next below the fold | Fields typed / confirmed | Results talked | Minutes |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const x of runs) L.push('| ' + [x.name, x.typed, x.taps, (x.taps / x.typed).toFixed(2), x.keys, (x.keys / x.typed).toFixed(1), x.scrolls, x.pages, x.screens, x.pages + x.screens, x.dead.length, x.below.length, x.typed + ' / ' + (x.confirmed || 0), x.results, minutes(x)].join(' | ') + ' |');
   if (before) {
-    L.push('', '## Before and after', '', '| Household | Taps per number, before | after | Page loads + screen changes, before | after | Minutes, before | after |', '|---|---|---|---|---|---|---|');
-    for (const x of runs) { const b = before.find((y) => y.name === x.name); if (b) L.push('| ' + [x.name, (b.taps / b.typed).toFixed(2), (x.taps / x.typed).toFixed(2), b.pages + b.screens, x.pages + x.screens, minutes(b), minutes(x)].join(' | ') + ' |'); }
+    L.push('', '## Before and after', '', '| Household | Taps per number, before | after | Keys per number, before | after | Page changes a session, before | after | Fields typed / confirmed, before | after | Minutes, before | after |', '|---|---|---|---|---|---|---|---|---|---|---|');
+    for (const x of runs) { const b = before.find((y) => y.name === x.name); if (b) L.push('| ' + [x.name, (b.taps / b.typed).toFixed(2), (x.taps / x.typed).toFixed(2), (b.keys / b.typed).toFixed(1), (x.keys / x.typed).toFixed(1), b.pages + b.screens, x.pages + x.screens, b.typed + ' / ' + (b.confirmed || 0), x.typed + ' / ' + (x.confirmed || 0), minutes(b), minutes(x)].join(' | ') + ' |'); }
   }
   L.push('', '## Per step (taps, typed answers, scrolls)', '');
   for (const x of runs) L.push('- ' + x.name + ': ' + Object.entries(x.perStep).map(([k, v]) => k + ' ' + v.taps + '/' + v.typed + '/' + v.scrolls).join('; '));
@@ -305,5 +325,5 @@ const beforeFile = arg('--before');
 const before = beforeFile && existsSync(beforeFile) ? JSON.parse(readFileSync(beforeFile, 'utf8')) : null;
 const md = report(runs, before);
 if (arg('--out')) writeFileSync(arg('--out'), md);
-if (arg('--json')) writeFileSync(arg('--json'), JSON.stringify(runs.map(({ name, taps, keys, typed, scrolls, pages, screens, results, dead, below, lost, perStep, printed }) => ({ name, taps, keys, typed, scrolls, pages, screens, results, dead, below, lost, perStep, printed })), null, 1));
+if (arg('--json')) writeFileSync(arg('--json'), JSON.stringify(runs.map(({ name, taps, keys, typed, confirmed, scrolls, pages, screens, results, dead, below, lost, perStep, printed }) => ({ name, taps, keys, typed, confirmed: confirmed || 0, scrolls, pages, screens, results, dead, below, lost, perStep, printed })), null, 1));
 console.log(md.split('\n').slice(0, 30).join('\n'));

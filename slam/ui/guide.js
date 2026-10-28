@@ -377,6 +377,9 @@ function needs(ctx) {
         // A line named like the category with lines of its own beside it (round 2: the demo's Miscellaneous $300 was in
         // the total and on no row): it shows as its own row, so the lines add up to the total.
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), catOn && anyLine ? needRow(spine, { label: cat.label }, cat.fat, 'rest-' + cat.id) : null, oneNumber));
+      // Recorded on the tap itself, not the toggle event (S-288): a tap on a heading right after typing a number blurs the
+      // box, whose save redraws the step before the (queued) toggle event fires, and the group came back closed.
+      d.querySelector('summary').addEventListener('click', () => { if (d.open) openCats.delete(cat.id); else openCats.add(cat.id); });
       d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openCats.add(cat.id); else openCats.delete(cat.id); });
       return d;
     }),
