@@ -22,8 +22,8 @@ test('living with family asks whose family, and the cover names them (question 9
   assert.equal(by(s), null, 'moving out takes the cover the profile set away');
 });
 
-test('Profile is a main tab with five groups that open their own screens', () => {
+test('Profile (under Home, from the client menu) has five groups that open their own screens', () => {
   const src = readFileSync(SLAM + 'ui/profile.js', 'utf8');
   for (const [href, name] of [['#/life', 'Your life'], ['#/homework', 'Homework'], ['assumptions.html', 'Your assumptions'], ['#/goals', 'FI assumptions'], ['#/prefs', 'Preferences']]) assert.ok(src.includes("goRow('" + href + "'") && src.includes("'" + name + "'"), name);
-  assert.match(src, /tab: 'profile', title: 'Profile'/);
+  assert.match(src, /tab: 'home', title: 'Profile'/);
 });

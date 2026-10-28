@@ -19,6 +19,7 @@ import { chartCard, bars } from './chart.js';
 import { goalBars, savingsCurve, fiPath, scenarioLines } from '../engine/charts.js';
 import { startPage, change, said, keep, kept, refresh, say, numbersHref } from './shell.js';
 import { stepper } from './stepper.js';
+import { debtTab } from './debt-tab.js';
 import { headlineStrip } from './strip.js';
 import { isCouple } from '../engine/couple.js';
 import { summarize } from '../engine/summary.js';
@@ -83,8 +84,13 @@ const slug = (id) => id.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
 const SCREENS = {
   surplus: 'Left after saving, step by step', paychecks: 'Paychecks', 'max-it': 'How much to max it', goals: 'Goals',
   solve: 'What it takes to get there', whatif: 'What if', calls: 'Bills worth a call', wage: 'Real hourly wage', draftt: 'Where your take-home goes', floor: 'If income stopped',
-  outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import', sources: 'Where each number came from'
+  outlook: 'Outlook', events: 'Life events', scenarios: 'Saved scenarios', file: 'Download or import', sources: 'Where each number came from',
+  // The second-level tabs (S-280): the Plan's cards split by what the client wants to know; nothing removed.
+  debt: 'Debt', retirement: 'Retirement and tax', protection: 'Protection'
 };
+// Which second-level tab a Plan screen sits under.
+const TAB_OF_STEP = { highInterest: 'debt', lowInterest: 'debt', employerMatch: 'retirement', rothHsa: 'retirement', maxRetirement: 'retirement', hyper: 'retirement' };
+const subtabOf = (levels) => { const a = levels[0]; if (!a) return 'overview'; if (['debt', 'retirement', 'protection'].includes(a)) return a; if (a === 'max-it') return 'retirement'; if (a === 'sources') return null; const id = Object.keys(TAB_OF_STEP).find((k) => slug(k) === a); return id ? TAB_OF_STEP[id] : 'overview'; };
 const payId = (p) => p.date + '-' + p.streamId;
 const stepOf = (m, level) => m.foo.rungs.find((r) => slug(r.id) === level) || null;
 const paycheckOf = (m, level) => allocOf(m).paychecks.find((p) => payId(p) === level) || null;
@@ -104,6 +110,9 @@ function render({ spine: base, rules, levels }) {
   // A couple (Batch 7, S-277): the headline numbers with the Together / each person toggle above the Plan's cards.
   if (!a) return isCouple(base) ? [headlineStrip(base, rules), top(m)] : top(m);
   if (a === 'paychecks') return b ? paycheckScreen(m, paycheckOf(m, b)) : paychecksScreen(m);
+  if (a === 'debt') return debtPlan(m);
+  if (a === 'retirement') return retirementPlan(m);
+  if (a === 'protection') return protectionPlan(m);
   const screen = { sources: sourcesScreen, surplus: surplusScreen, 'max-it': (x) => maxItCard(x.spine, x.rules), goals: goalsScreen, solve: solveScreen, whatif: whatIfScreen, calls: callsScreen, wage: wageScreen, draftt: drafttScreen, floor: floorScreen, outlook: outlookScreen, events: eventsScreen, scenarios: scenariosScreen, file: fileScreen }[a];
   return screen ? screen(m) : stepScreen(m, stepOf(m, a));
 }
@@ -169,8 +178,6 @@ function top(m) {
       h('ol', { class: 'go-list' }, (() => { const t = togetherOf(f.rungs); return f.rungs.map((r) => stepRow(r, f.current, t.get(r.id) || null)); })()),
       protectLine(m.rank),
       math('foo', f.rungs.filter((r) => r.need !== null).map((r) => 'plan:foo:' + r.id), mathCtx(m))),
-    // The Windfall page sits under Plan: the whole card is the way in.
-    h('ul', { class: 'go-list' }, goRow('windfall.html', 'Got extra money?', 'Bonus, gift or refund')),
     // More about your plan (Krug pass): three rows that open, each saying its most useful fact on the closed line;
     // open or closed is kept with the screen.
     h('section', { 'aria-label': 'More about your plan' },
@@ -184,26 +191,44 @@ function top(m) {
           goRow('#/floor', SCREENS.floor, fl.floor === null ? [chip('missing'), 'Needs the amount of a fixed cost'] : [h('span', { class: 'go-total' }, money(fl.floor)), 'a month of fixed costs']))),
       fold('future', 'Your future', g.rows.length ? plural(g.rows.length, 'goal') + (events.length ? ', ' + plural(events.length, 'event') : '') : events.length ? plural(events.length, 'event') : 'Goals, retirement room, what-ifs',
         h('ul', { class: 'go-list' },
-          goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account'),
           goRow('#/goals', SCREENS.goals, g.rows.length ? [h('span', { class: 'go-total' }, plural(g.rows.length, 'goal')), g.setAsideTotal ? money(g.setAsideTotal) + ' a month set aside' : null] : 'No goals beyond financial independence yet'),
           goRow('#/whatif', SCREENS.whatif, 'Spend less, earn more, pay debt faster: watch the dates move'),
           goRow('#/solve', SCREENS.solve, 'Pick an age, see what it takes'),
           goRow('#/outlook', SCREENS.outlook, 'How the next three months could go'),
           goRow('#/events', SCREENS.events, events.length ? plural(events.length, 'event') + ' in your numbers' : 'A new job, a move, a baby'))),
-      // The planner views (S-274): each folded to its headline, each with Show the math.
-      ...plannerViews(m),
-      // Protection (S-275): the four checks, each folded to its headline, with its method and Show the math.
-      h('h2', { class: 'section-h' }, 'Protection'),
-      ...protectionChecks(m.spine, m.rules, m.s).map((c) => fold('protect-' + c.id, { life: 'Life insurance', disability: 'If you cannot work', liability: 'If someone sues', gaps: 'Gaps' }[c.id],
-        [c.stage ? h('span', { class: 'stage-chip stage-' + c.stage }, { green: 'Covered', yellow: 'Worth a look', red: 'Check this' }[c.stage]) : null, ' ' + c.headline],
-        h('div', {}, h('p', {}, c.headline + '.'), c.lines.length ? h('ul', {}, c.lines.map((l) => h('li', {}, l))) : null, h('p', { class: 'tile-note' }, 'How: ' + c.method),
-          h('p', {}, h('a', { href: 'ledger.html#/protection' }, 'Your policies in My numbers')), math('protect-' + c.id, ['plan:protect:' + c.id], mathCtx(m))))),
       fold('files', 'Saved and files', saved.length ? plural(saved.length, 'scenario') + ' saved' : 'Download or read in a file',
         h('ul', { class: 'go-list' },
           goRow('#/scenarios', SCREENS.scenarios, saved.length ? plural(saved.length, 'scenario') + ' saved in this browser' : 'Save today to compare later'),
           goRow('#/file', SCREENS.file, 'Download your numbers, or read in a file'))))
   ];
 }
+// ---------------------------------------------------------------- the second-level tabs (S-280)
+// Debt: the payoff steps and the payoff dates (the same Debt tab My numbers folds, engine/debtview.js).
+function stepsOf(m, ids) { const t = togetherOf(m.foo.rungs); return h('ol', { class: 'go-list' }, m.foo.rungs.filter((r) => ids.includes(r.id)).map((r) => stepRow(r, m.foo.current, t.get(r.id) || null))); }
+function debtPlan(m) {
+  return [
+    h('section', { 'aria-labelledby': 'pd-h' }, h('h2', { id: 'pd-h' }, 'Your debt steps'), stepsOf(m, ['highInterest', 'lowInterest'])),
+    h('section', { class: 'card', 'aria-labelledby': 'pd-dates-h' }, h('h2', { id: 'pd-dates-h' }, 'When each debt is paid off'),
+      debtTab({ c: { sim: forecast(m.spine, m.rules, 12).sim }, spine: m.spine, rules: m.rules, mathCtx: () => ({ spine: m.spine, rules: m.rules, s: m.s }), rerender: refresh }))
+  ];
+}
+// Retirement and tax: the saving steps, how much to max each account, and the planner views.
+function retirementPlan(m) {
+  return [
+    h('section', { 'aria-labelledby': 'pr-h' }, h('h2', { id: 'pr-h' }, 'Your saving steps'), stepsOf(m, ['employerMatch', 'rothHsa', 'maxRetirement', 'hyper'])),
+    h('ul', { class: 'go-list' }, goRow('#/max-it', SCREENS['max-it'], 'Room left in each retirement account')),
+    // The planner views (S-274): each folded to its headline, each with Show the math.
+    ...plannerViews(m)
+  ];
+}
+// Protection (S-275): the four checks, each folded to its headline, with its method and Show the math.
+function protectionPlan(m) {
+  return protectionChecks(m.spine, m.rules, m.s).map((c) => fold('protect-' + c.id, { life: 'Life insurance', disability: 'If you cannot work', liability: 'If someone sues', gaps: 'Gaps' }[c.id],
+    [c.stage ? h('span', { class: 'stage-chip stage-' + c.stage }, { green: 'Covered', yellow: 'Worth a look', red: 'Check this' }[c.stage]) : null, ' ' + c.headline],
+    h('div', {}, h('p', {}, c.headline + '.'), c.lines.length ? h('ul', {}, c.lines.map((l) => h('li', {}, l))) : null, h('p', { class: 'tile-note' }, 'How: ' + c.method),
+      h('p', {}, h('a', { href: 'ledger.html#/protection' }, 'Your policies in Numbers')), math('protect-' + c.id, ['plan:protect:' + c.id], mathCtx(m)))));
+}
+
 // ---------------------------------------------------------------- the planner views (S-274)
 const pctW = (x) => (x === null || x === undefined ? 'not known' : Math.round(x * 100) + '%');
 function plannerViews(m) {
@@ -720,4 +745,4 @@ function fileScreen(m) {
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', disabled: !preview.diff.length, onclick: () => { const r = preview.r, fileName = pending.name; pending = null; change(() => r.spine, said.changed('Your numbers', 'the file ' + fileName)); } }, preview.diff.length ? 'Apply the file' : 'Nothing to apply'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { pending = null; refresh(); } }, 'Discard'))] : h('p', { class: 'edit-msg', role: 'alert' }, pending.name + ': ' + preview.message)) : null);
 }
 
-startPage({ tab: 'plan', title: 'Plan', name, render });
+startPage({ tab: 'plan', title: 'Plan', subtab: subtabOf, name, render });

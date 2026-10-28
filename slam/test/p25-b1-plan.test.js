@@ -24,7 +24,7 @@ const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'
 
 test('Plan is on the shell: no page-links row, no header or undo of its own, every change through change() in words', () => {
   const src = read('ui/plan.js');
-  assert.match(src, /startPage\(\{ tab: 'plan', title: 'Plan', name, render \}\)/);
+  assert.match(src, /startPage\(\{ tab: 'plan', title: 'Plan', subtab: subtabOf, name, render \}\)/);
   assert.doesNotMatch(src, /page-links|View in the Ledger|loadAll\(|mountPage\(|whoseLine\(|createHistory|commit\(|undoLabel|saved-line|lastSaved|keydown/);
   const code = src.replace(/^\s*\/\/.*$/gm, '');
   const calls = [...code.matchAll(/\bchange\(/g)];
@@ -33,16 +33,16 @@ test('Plan is on the shell: no page-links row, no header or undo of its own, eve
   // Deleting never asks; saved scenarios (outside the household) offer Undo in the bar.
   assert.doesNotMatch(src, /confirm\(/);
   assert.match(src, /const putBack = \(was, now, words\) => say\(words, \(\) => \{ keepScenarios\(was\); refresh\(\); \}, \(\) => \{ keepScenarios\(now\); refresh\(\); \}\)/);
-  // The Windfall is reached from Plan as a card whose whole area is the target, with a chevron.
-  assert.match(src, /goRow\('windfall\.html', 'Got extra money\?'/);
+  // The Windfall is Plan's Extra money tab (S-280).
+  assert.match(read('ui/shell.js'), /\['extra', 'Extra money', 'windfall\.html'\]/);
   assert.match(read('plan.html'), /<script type="module" src="ui\/plan\.js"><\/script>/);
 });
 
-test('Got extra money? sits under Plan: its trail reads Plan › Got extra money?, and its Back returns to Plan', () => {
+test('Extra money is a second-level tab of Plan (S-280)', () => {
   const src = read('ui/windfall.js');
-  assert.match(src, /startPage\(\{ tab: 'plan', title: 'Got extra money\?', parent: \['Plan', 'plan\.html'\], name, render \}\)/);
+  assert.match(src, /startPage\(\{ tab: 'plan', title: 'Extra money', subtab: \(\) => 'extra', name, render \}\)/);
   assert.doesNotMatch(src, /page-links|View in the Ledger|loadAll\(|mountPage\(|whoseLine\(|WINDFALL_ORDER'\)/);
-  assert.match(read('windfall.html'), /<title>SLAM Got extra money\?<\/title>/);
+  assert.match(read('windfall.html'), /<title>SLAM Extra money<\/title>/);
   // Each step opens its own screen, numbered in the order; a step with no amount yet is not there (the shell goes up).
   assert.match(src, /return i < 0 \? null : \(i \+ 1\) \+ '\. ' \+ m\.w\.steps\[i\]\.label;/);
 });

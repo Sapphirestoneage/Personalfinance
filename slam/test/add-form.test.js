@@ -64,7 +64,7 @@ test('placeholders match the item; no raw codes in what the form shows', () => {
   assert.doesNotMatch(src, /words\(t\)/);
 });
 test('the Session and My numbers both use the one form', () => {
-  for (const f of ['session', 'ledger']) {
+  for (const f of ['guide', 'ledger']) {
     const src = readFileSync(new URL('../ui/' + f + '.js', import.meta.url), 'utf8');
     assert.match(src, /from '\.\/add-form\.js'/, f);
     assert.doesNotMatch(src, /Name, for example Chase Freedom/, f);

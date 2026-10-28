@@ -23,6 +23,13 @@ import { guessesFor } from './urgency.js';
 import { openQuestions } from '../engine/questions.js';
 import { netWorthWaterfallCard, netWorthTimeCard, netWorthSpark } from './chart-cards.js';
 import { netWorthAhead } from '../engine/charts.js';
+import { headlineStrip } from './strip.js';
+import { endCall, nextCard as guideNext, STEPS as GUIDE_STEPS } from './guide.js';
+import { lastStep } from './clients.js';
+import { homeworkList, LEVEL1, asked } from '../engine/profile.js';
+import { tickTodos } from '../engine/features.js';
+import { catalog } from './ticks.js';
+const catalogNow = () => catalog;
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -171,26 +178,60 @@ function flowScreen({ spine, rules, s }) { return [flowPart(spine, rules, s), ke
 function moreScreen(m) { return flagsSection(m.spine, m.s.flags, rankOf(m.spine, m.rules, m.s)); }
 const SCREENS = { surplus: surplusScreen, savings: savingsScreen, runway: runwayScreen, networth: networthScreen, flow: flowScreen, more: moreScreen };
 
-function render({ spine: base, rules, levels }) {
+function render(ctx) {
+  const { spine: base, rules, levels } = ctx;
+  if (levels[0] === 'end') return endCall(ctx);
   const m = model(base, rules);
   if (levels.length && SCREENS[levels[0]]) return SCREENS[levels[0]](m);
-  // Krug pass: the warning (if any), the four tiles, one Next step card, then rows that open the rest.
+  // Home (S-280): today's agenda first (where we left off, the next three things to fill, the open to-dos), then
+  // Before our first call while it has open items; Today's cards stay, folded, under them. The numbers are the strip.
   const rank = rankOf(m.spine, rules, m.s);
   const others = alsoWorth(m.spine, m.s.flags, rank);
-  // Guesses worth checking now (Rough now and later): the shared ranking, worked out after the page draws.
   const g = guessesFor(base, rules, () => refresh());
-  // The one list of open questions (morning answer 10): the total My numbers, Still guessing and the Profile show.
   const guesses = g ? openQuestions(base, g).length : null;
   return [
+    headlineStrip(base, rules),
     cashCard(base, rules),
-    tiles(m),
-    nextCard(m.spine, rank),
-    h('ul', { class: 'go-list' },
-      others.length ? h('li', {}, h('a', { class: 'go-row plain', href: '#/more' }, h('span', { class: 'go-name' }, 'Also worth doing (' + others.length + ')'))) : null,
-      h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
-      guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' open: missing or worth checking now']), guesses === null ? h('span', { class: 'go-sub' }, 'Working out which matter...') : null)) : null,
-      h('li', {}, h('a', { class: 'go-row plain', href: 'onepager.html' }, h('span', { class: 'go-name' }, 'One-pager to print'))))
+    agendaCard(base, rules),
+    nextFill(ctx),
+    beforeCard(base),
+    h('details', { class: 'card done-group home-more', open: kept().all || null, ontoggle: (e) => { if (!!kept().all !== e.target.open) keep({ all: e.target.open }); } },
+      h('summary', {}, h('span', {}, 'Today\'s numbers in full'), h('span', { class: 'count' }, 'net worth, runway, cards, FI')),
+      tiles(m),
+      nextCard(m.spine, rank),
+      h('ul', { class: 'go-list' },
+        others.length ? h('li', {}, h('a', { class: 'go-row plain', href: '#/more' }, h('span', { class: 'go-name' }, 'Also worth doing (' + others.length + ')'))) : null,
+        h('li', {}, h('a', { class: 'go-row plain', href: '#/flow' }, h('span', { class: 'go-name' }, 'Where the money goes'))),
+        guesses !== 0 ? h('li', {}, h('a', { class: 'go-row plain', href: numbersHref('still-guessing') }, h('span', { class: 'go-name' }, guesses === null ? 'Guesses' : [h('span', { 'data-metric': 'list:open' }, String(guesses)), ' guesses worth checking']))) : null))
   ];
+}
+
+// The agenda (S-280): where the call stopped (Guide me, at that step), and the open to-dos from last time.
+function agendaCard(spine, rules) {
+  const step = lastStep(), at = step ? (GUIDE_STEPS.find((x) => x[0] === (step === 'taxes' ? 'income' : step)) || null) : null;
+  const todos = homeworkList(spine, spine.meta.asOf).flatMap((g) => g.items.map((x) => ({ words: x, where: g.where })));
+  const tick = catalogNow() ? tickTodos(catalogNow(), spine) : [];
+  const all = [...tick.map((t) => ({ words: t.words, href: ledgerHref(t.path), who: t.who })), ...todos.map((t) => ({ words: t.words, href: 'profile.html#/homework', who: 'client' }))];
+  return h('section', { class: 'card agenda', 'aria-labelledby': 'agenda-h' },
+    h('h2', { id: 'agenda-h' }, 'Today\'s agenda'),
+    h('a', { class: 'go-row agenda-resume', href: 'ledger.html?guide=1' + (at ? '#/' + at[0] : '') },
+      h('span', { class: 'go-name' }, at ? 'Pick up where we left off: ' + at[2] : 'Start the call: Guide me'),
+      h('span', { class: 'go-sub' }, at ? 'Guide me, step ' + (GUIDE_STEPS.indexOf(at) + 1) + ' of ' + GUIDE_STEPS.length : 'Six steps, Needs first')),
+    all.length ? h('div', { class: 'agenda-todos' },
+      h('h3', {}, 'Open to-dos from last time (' + all.length + ')'),
+      h('ul', { class: 'todo-list' }, all.slice(0, 3).map((t) => h('li', {}, h('a', { href: t.href }, t.words), t.who === 'coach' ? h('span', { class: 'pill' }, 'for the coach') : null))),
+      all.length > 3 ? h('p', {}, h('a', { href: 'profile.html#/todo' }, 'All ' + all.length + ' to-dos')) : null) : null);
+}
+// The next three things to fill, ranked by how much each moves the headline numbers (Guide me's Next card).
+const nextFill = (ctx) => guideNext(ctx);
+// Before our first call (S-280): a card on Home while the client's first questions have open items.
+function beforeCard(spine) {
+  const a = answersOf(spine), l1 = LEVEL1.filter((q) => asked(a, q)), open = l1.filter((q) => a[q.id] === undefined).length;
+  if (!open) return null;
+  return h('section', { class: 'card before-card', 'aria-labelledby': 'before-h' },
+    h('h2', { id: 'before-h' }, 'Before our first call'),
+    h('p', {}, open + ' of ' + l1.length + ' questions still open.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'before.html' }, 'Open the questions'), h('a', { class: 'btn', href: 'where.html' }, 'Where to find each number')));
 }
 
 // Cash ahead (audit, 2026-10-27): the one forecast every screen reads. Under the floor it is the first card, ending
@@ -268,4 +309,4 @@ function flagsSection(spine, flags, rank) {
 }
 
 // The One-pager is a button here; its Back comes back to Today.
-startPage({ tab: 'today', title: 'Today', render, name: (levels) => ({ surplus: 'Monthly surplus', savings: 'Savings rate', runway: 'Cash runway', networth: 'Net worth', flow: 'Where the money goes', more: 'Also worth doing' }[levels[0]] || null) });
+startPage({ tab: 'home', title: 'Home', render, name: (levels) => ({ end: 'End of the call', surplus: 'Monthly surplus', savings: 'Savings rate', runway: 'Cash runway', networth: 'Net worth', flow: 'Where the money goes', more: 'Also worth doing' }[levels[0]] || null) });

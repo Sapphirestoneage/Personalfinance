@@ -134,4 +134,4 @@ function render({ spine, rules, levels }) {
   ];
 }
 
-startPage({ tab: 'plan', title: 'Got extra money?', parent: ['Plan', 'plan.html'], name, render });
+startPage({ tab: 'plan', title: 'Extra money', subtab: () => 'extra', name, render });

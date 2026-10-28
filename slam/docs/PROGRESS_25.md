@@ -126,3 +126,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - B9 (2026-10-28): friction audit after on three households, CLIENT_TEST.md, MY_METHOD_REVIEW.md, the Phase 3 gate on BOARD.md, the one-pager's tax buckets bar.
 - Fix (2026-10-28): the More menu closes, the coach note folds, no stray Keys line, the qa crawler passes (S-278).
 - Part 0 (2026-10-28): unmarried couples file two single returns, Whose on every item screen, NYC_RATES_TO_CHECK.md (S-279).
+- Part 1 (2026-10-28): the map: header, five tabs, second-level tabs, Home agenda, Guide me, the gear (S-280).

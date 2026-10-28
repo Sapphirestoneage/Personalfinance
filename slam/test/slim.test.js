@@ -19,9 +19,9 @@ test('no placeholder reads 0 or a number that looks typed (use "e.g. 400")', () 
 
 test('maybe money and the Session goals use the one shared add form, behind "+ Add"', () => {
   assert.match(code('ui/calendar.js'), /addForm\(\{ spine: \(\) => current\(\)\.spine, collection: 'maybe'/);
-  assert.match(code('ui/session.js'), /addForm\(\{ spine: \(\) => current\(\)\.spine, collection: 'goals'/);
-  assert.match(code('ui/session.js'), /'\+ Add a goal'/);
-  assert.doesNotMatch(code('ui/session.js'), /class: 'goal-form'/, 'no goal form sits open');
+  assert.match(code('ui/guide.js'), /addForm\(\{ spine: \(\) => current\(\)\.spine, collection: 'goals'/);
+  assert.match(code('ui/guide.js'), /'\+ Add a goal'/);
+  assert.doesNotMatch(code('ui/guide.js'), /class: 'goal-form'/, 'no goal form sits open');
 });
 
 test('an Add from a group starts on that group\'s kind; only a general Add asks what kind', () => {

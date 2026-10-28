@@ -219,7 +219,7 @@ function fmtMetric(x, unit) {
 }
 
 startPage({
-  tab: 'profile', title: 'Assumptions', parent: ['Profile', 'profile.html'],
+  tab: null, title: 'Assumptions',
   name: (levels) => { const r = levels.length === 1 ? rowById(levels[0]) : null; return r ? r.name : null; },
   render: (ctx) => (ctx.levels.length ? rowScreen(ctx, rowById(ctx.levels[0])) : listScreen(ctx))
 });

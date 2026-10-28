@@ -18,18 +18,18 @@ const demo = () => applyDefaults(loadHousehold(readJson('fixtures/demo.json')), 
 const JARGON = /\b(engine|registry|rules|spine|kind|path|field|stored|simulation|template|schema|computed|derived)\b|S-\d{3}|the Ledger/i;
 const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).filter((x) => /\s/.test(x) && /^[A-Z ]/.test(x));
 
-test('four tabs and a More menu, the same on every page, in order; Profile is in the client menu (S-269)', () => {
+test('five main tabs in order, the same on every page; coach pages in the gear; Profile in the client menu (S-280)', () => {
   const src = read('ui/shell.js');
   const tabs = [...src.slice(src.indexOf('export const TABS'), src.indexOf('];', src.indexOf('export const TABS'))).matchAll(/\['(\w+)', '([^']+)', '([\w.]+)'\]/g)].map((m) => [m[2], m[3]]);
-  assert.deepEqual(tabs, [['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Plan', 'plan.html'], ['Calendar', 'calendar.html']]);
-  const more = [...src.slice(src.indexOf('export const MORE'), src.indexOf('];', src.indexOf('export const MORE'))).matchAll(/\['(\w+)', '([^']+)', '([\w.]+)'\]/g)].map((m) => m[3]);
-  for (const page of ['dashboard.html', 'spending.html', 'windfall.html', 'math.html', 'rules.html', 'house.html', 'builder.html', 'before.html', 'profile.html', 'onepager.html']) assert.ok(more.includes(page), page + ' is in More');
+  assert.deepEqual(tabs, [['Home', 'dashboard.html'], ['Numbers', 'ledger.html'], ['Plan', 'plan.html'], ['Calendar', 'calendar.html'], ['Spending', 'spending.html']]);
+  const coach = [...src.slice(src.indexOf('export const COACH'), src.indexOf('];', src.indexOf('export const COACH'))).matchAll(/\['(\w+)', '([^']+)', '([\w.#/]+)'\]/g)].map((m) => m[2]);
+  assert.deepEqual(coach, ['Rules', 'House defaults', 'Assumptions', 'All formulas', 'Where each number came from', 'Builder']);
   assert.match(read('ui/page.js'), /h\('a', \{ class: 'btn small', href: 'profile\.html' \}, 'Profile'\)/);
-  for (const page of [...tabs.map((t) => t[1]), ...more]) assert.ok(existsSync(SLAM + page), page + ' exists, so no tab is a dead click');
+  for (const page of tabs.map((t) => t[1])) assert.ok(existsSync(SLAM + page), page + ' exists, so no tab is a dead click');
   assert.match(src, /'aria-current': id === lit \? 'page' : null/);
+  assert.doesNotMatch(src, /more-menu/, 'the More menu is gone');
   const css = read('ui/spine.css');
-  assert.match(css, /\.tabbar \{ position: fixed; left: 0; right: 0; bottom: 0;/, 'at the bottom on a phone');
-  assert.match(css, /@media \(min-width: 640px\) \{\n {2}\.tabbar \{ position: sticky; top: 0; bottom: auto;/, 'at the top on a computer');
+  assert.match(css, /\.tabbar \{ position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;/, 'at the bottom on a phone');
 });
 
 test('levels are real history entries: pushed, never replaced over the trail', () => {
@@ -43,14 +43,13 @@ test('levels are real history entries: pushed, never replaced over the trail', (
 
 test('Today is on the shell: no page-links row, no "View in the Ledger", the whole card the target, the One-pager a row', () => {
   const src = read('ui/dashboard.js');
-  assert.match(src, /startPage\(\{ tab: 'today', title: 'Today'/);
+  assert.match(src, /startPage\(\{ tab: 'home', title: 'Home'/);
   assert.doesNotMatch(src, /page-links|View in the Ledger|windfall\.html|loadAll\(|mountPage\(/);
   assert.match(src, /class: 'tile' \+ \(first \? ' has-target' : ''\)/);
   assert.match(src, /h\('a', \{ class: 'card-link', href: first \}/);
-  assert.match(src, /h\('a', \{ class: 'go-row plain', href: 'onepager\.html' \}, h\('span', \{ class: 'go-name' \}, 'One-pager to print'\)\)/);
-  assert.match(read('dashboard.html'), /<title>SLAM Today<\/title>/);
-  // The One-pager sits under Today: its Back returns there.
-  assert.match(read('ui/onepager.js'), /startPage\(\{\n {2}tab: 'today', title: 'One-pager', parent: \['Today', 'dashboard\.html'\]/);
+  assert.match(read('dashboard.html'), /<title>SLAM Home<\/title>/);
+  // The One-pager is an action (End call, Print one-pager); its print view sits under Home.
+  assert.match(read('ui/onepager.js'), /startPage\(\{\n {2}tab: 'home', title: 'One-pager'/);
   assert.doesNotMatch(read('ui/onepager.js'), /page-links/);
 });
 
@@ -65,7 +64,7 @@ test('the Builder: one small link at the bottom of every page; the Design kit, A
   assert.match(kit, /<h1>Design kit<\/h1>/);
   assert.doesNotMatch(kit, /class="page-links"/);
   assert.match(kit, /startPage\(\{ tab: null, title: 'Design kit', parent: \['Builder', 'builder\.html'\], household: false \}\)/);
-  for (const f of ['session.html', 'builder.html', 'rules.html']) assert.match(read(f), /<script type="module" src="ui\/[\w-]+\.js"><\/script>/, f);
+  for (const f of ['ledger.html', 'builder.html', 'rules.html']) assert.match(read(f), /<script type="module" src="ui\/[\w-]+\.js"><\/script>/, f);
 });
 
 test('Session: the six steps in DATING order, as My numbers, each with its letter and one total from the engine, missing never $0', () => {
@@ -89,14 +88,15 @@ test('Session: the six steps in DATING order, as My numbers, each with its lette
   assert.deepEqual([g.value, g.kind, g.count], [null, 'missing', 1]);
   const none = { ...s0, goals: s0.goals.filter((x) => x.type === 'fi') };
   assert.deepEqual([sessionSteps(none, summarize(none, R, { flags: false })).find((x) => x.id === 'goals').result.value, sessionSteps(none, summarize(none, R, { flags: false })).find((x) => x.id === 'goals').result.count], [null, 0]);
-  const src = read('ui/session.js');
-  // Batch 3: each row opens its own guided step (session.html#/needs), not My numbers.
+  const src = read('ui/guide.js');
+  // Batch 3: each row opens its own guided step; S-280: Guide me is a mode of Numbers, session.html redirects there.
   assert.match(src, /h\('a', \{ class: 'go-row', href: '#\/' \+ st\.id \}/, 'each row opens its step');
-  assert.match(src, /startPage\(\{ tab: 'session', title: 'Session', render, name, actions \}\)/);
+  assert.doesNotMatch(src, /startPage\(/);
+  assert.match(read('session.html'), /location\.replace\('ledger\.html\?guide=1'/);
 });
 
 test('client words on the new screens follow THE COPY RULE', () => {
-  for (const f of ['ui/session.js', 'ui/shell.js', 'ui/dashboard.js']) {
+  for (const f of ['ui/guide.js', 'ui/shell.js', 'ui/dashboard.js']) {
     const said = strings(read(f));
     assert.ok(said.length > 5, f + ': found its words');
     for (const w of said) assert.doesNotMatch(w, JARGON, f + ': ' + w);

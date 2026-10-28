@@ -6,7 +6,7 @@ const src = (f) => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 
 test('the Plan\'s step screens and the Session\'s steps lead with the stepper', () => {
   assert.match(src('ui/plan.js'), /return \[stepper\(steps, f\.rungs\.indexOf\(r\)\), stepBody\(m, r\)\];/);
-  assert.match(src('ui/session.js'), /stepper\(STEPS\.map\(/);
+  assert.match(src('ui/guide.js'), /stepper\(STEPS\.map\(/);
   const s = src('ui/stepper.js');
   assert.match(s, /'aria-current': i === at \? 'step' : null/);
   assert.match(s, /done: 'done', current: 'you are here', question: 'waiting on an answer', todo: 'not started'/, 'each state in words, not only color');

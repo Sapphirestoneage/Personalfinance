@@ -1,0 +1,233 @@
+[
+ {
+  "name": "Maya",
+  "taps": 46,
+  "keys": 139,
+  "typed": 28,
+  "scrolls": 14,
+  "pages": 3,
+  "screens": 28,
+  "results": 7,
+  "dead": [],
+  "below": [],
+  "lost": [
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   }
+  ],
+  "perStep": {
+   "new client": {
+    "taps": 4,
+    "typed": 1,
+    "scrolls": 0
+   },
+   "debt": {
+    "taps": 7,
+    "typed": 8,
+    "scrolls": 4
+   },
+   "assets": {
+    "taps": 10,
+    "typed": 5,
+    "scrolls": 2
+   },
+   "taxes": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "income": {
+    "taps": 9,
+    "typed": 2,
+    "scrolls": 3
+   },
+   "needs": {
+    "taps": 7,
+    "typed": 9,
+    "scrolls": 3
+   },
+   "goals": {
+    "taps": 2,
+    "typed": 2,
+    "scrolls": 1
+   },
+   "one-pager": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 1
+   }
+  },
+  "printed": true
+ },
+ {
+  "name": "Dre",
+  "taps": 56,
+  "keys": 195,
+  "typed": 39,
+  "scrolls": 19,
+  "pages": 3,
+  "screens": 28,
+  "results": 7,
+  "dead": [],
+  "below": [],
+  "lost": [
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   }
+  ],
+  "perStep": {
+   "new client": {
+    "taps": 4,
+    "typed": 1,
+    "scrolls": 0
+   },
+   "debt": {
+    "taps": 8,
+    "typed": 12,
+    "scrolls": 7
+   },
+   "assets": {
+    "taps": 16,
+    "typed": 8,
+    "scrolls": 3
+   },
+   "taxes": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "income": {
+    "taps": 13,
+    "typed": 4,
+    "scrolls": 4
+   },
+   "needs": {
+    "taps": 6,
+    "typed": 11,
+    "scrolls": 3
+   },
+   "goals": {
+    "taps": 2,
+    "typed": 2,
+    "scrolls": 1
+   },
+   "one-pager": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 1
+   }
+  },
+  "printed": true
+ },
+ {
+  "name": "Jordan",
+  "taps": 68,
+  "keys": 181,
+  "typed": 30,
+  "scrolls": 14,
+  "pages": 3,
+  "screens": 28,
+  "results": 7,
+  "dead": [],
+  "below": [],
+  "lost": [
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   },
+   {
+    "step": "needs",
+    "secs": 5,
+    "words": "Tab does not reach the next box: a tap into each one"
+   }
+  ],
+  "perStep": {
+   "new client": {
+    "taps": 4,
+    "typed": 1,
+    "scrolls": 0
+   },
+   "debt": {
+    "taps": 13,
+    "typed": 9,
+    "scrolls": 2
+   },
+   "assets": {
+    "taps": 16,
+    "typed": 6,
+    "scrolls": 3
+   },
+   "taxes": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 0
+   },
+   "income": {
+    "taps": 21,
+    "typed": 4,
+    "scrolls": 5
+   },
+   "needs": {
+    "taps": 5,
+    "typed": 7,
+    "scrolls": 2
+   },
+   "goals": {
+    "taps": 2,
+    "typed": 2,
+    "scrolls": 1
+   },
+   "one-pager": {
+    "taps": 3,
+    "typed": 0,
+    "scrolls": 1
+   }
+  },
+  "printed": true
+ }
+]

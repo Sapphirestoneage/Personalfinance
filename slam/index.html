@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- SLAM: the front door opens the last client's Session where the call stopped (S-269). The old client list lives at clients.html, linked from the Builder only; an old
+<!-- SLAM: the front door opens Home (S-280). The old client list lives at clients.html, linked from the Builder only; an old
      Budget link (index.html#setup, #clients) still goes there. -->
 <html lang="en">
 <head>
@@ -7,16 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>SLAM</title>
-  <meta http-equiv="refresh" content="0; url=session.html">
+  <meta http-equiv="refresh" content="0; url=dashboard.html">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f52ba'/%3E%3C/svg%3E">
   <script>
-    // Pick up where we left off (S-269): the last client's Session, at the step where the call stopped.
+    // The front door is Home (S-280): today's agenda, with where the call stopped first.
     (function () {
       if (location.hash && !location.hash.startsWith('#/')) { location.replace('clients.html' + location.search + location.hash); return; }
-      if (location.hash) { location.replace('dashboard.html' + location.search + location.hash); return; }
-      var step = null;
-      try { var reg = JSON.parse(localStorage.getItem('slam-clients:v1') || 'null'); var last = JSON.parse(localStorage.getItem('slam-last-step:v1') || '{}'); step = last[(reg && reg.current) || 'example'] || null; } catch (e) { step = null; }
-      location.replace('session.html' + location.search + (step ? '#/' + step : ''));
+      location.replace('dashboard.html' + location.search + location.hash);
     })();
   </script>
 </head>

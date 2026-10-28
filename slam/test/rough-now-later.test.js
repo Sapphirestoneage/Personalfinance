@@ -71,7 +71,7 @@ test('a first session full of typical amounts ends with a short check-now list, 
   assert.ok(rough.length >= 10, 'many guesses: ' + rough.length);
   assert.ok(now.length <= rough.length / 2, now.length + ' of ' + rough.length + ' worth checking now');
   assert.ok(now.some((x) => x.path === 'expenses.rent.amount'), 'rent is one of them');
-  // The Session marks a guess with the same rule (ui/session.js guessChip reads ui/urgency.js).
+  // The Session marks a guess with the same rule (ui/guide.js guessChip reads ui/urgency.js).
   const { readFileSync } = await import('node:fs');
-  assert.match(readFileSync(new URL('../ui/session.js', import.meta.url), 'utf8'), /worthNow\(marks, path, f\.kind, marksFresh\)/);
+  assert.match(readFileSync(new URL('../ui/guide.js', import.meta.url), 'utf8'), /worthNow\(marks, path, f\.kind, marksFresh\)/);
 });

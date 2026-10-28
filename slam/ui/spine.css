@@ -1910,3 +1910,101 @@ kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 
 /* Whose (S-279): a label and up to three buttons, on an item's screen one. */
 .whose-pick { display: grid; gap: var(--space-1); margin: 0 0 var(--space-3); }
 .whose-seg .seg-btn { flex: 0 1 8rem; align-items: center; }
+
+/* ===================================================================== The map (S-280, "make it effortless")
+   One header everywhere (site ID, client, search, Undo, Redo, End call, Coach), five main tabs that look like real
+   folder tabs, second-level tabs under Numbers and Plan, and a trail that starts with the client. The tab you are on
+   is the same color as the page below it, with no line between, bold, with a colored edge: three cues at once. */
+:root { --tab-back: color-mix(in srgb, var(--surface-2) 70%, var(--border)); --tab-off-text: var(--text); }
+.site-head { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); }
+.site-id { flex: none; display: inline-flex; flex-direction: column; justify-content: center; min-height: var(--tap); font-weight: 800; line-height: 1.1; font-size: 0.95rem; color: var(--accent); text-decoration: none; }
+.site-id:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.site-head .whose-menu { flex: none; position: relative; }
+.site-head .search-wrap { flex: 1 1 14rem; min-width: 0; }
+.site-head .head-tools { flex: none; display: flex; align-items: center; gap: var(--space-1); margin-left: auto; }
+.site-head .icon-btn { min-width: var(--tap); min-height: var(--tap); gap: 4px; }
+.site-head .tool-word { font-size: var(--text-sm); }
+.site-head .end-call { min-height: var(--tap); }
+.site-head .saved-mark { flex: none; }
+.coach-menu { position: relative; }
+.coach-menu > summary { list-style: none; cursor: pointer; }
+.coach-menu > summary::-webkit-details-marker { display: none; }
+.coach-menu > summary[aria-current="page"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
+.coach-menu:not([open]) > .coach-list { display: none; }
+.coach-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; list-style: none; margin: 0; padding: var(--space-2); min-width: 15rem; max-width: 90vw; display: grid; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 8px 24px rgb(16 24 40 / 0.18); }
+
+/* Tabs, both levels: lighter and behind when not chosen; the chosen one in front, joined to the page. */
+.tabbar, .subtabs { background: var(--tab-back); }
+.tabbar { position: static; box-shadow: none; border-top: 0; border-bottom: 1px solid var(--border); padding: var(--space-2) var(--space-4) 0; }
+.tabbar .tab-row, .subtabs .tab-row { list-style: none; margin: 0 auto; padding: 0; max-width: 880px; display: flex; gap: 4px; align-items: flex-end; }
+.tabbar .tab-item, .subtabs .tab-item { flex: 0 1 auto; min-width: 0; margin-bottom: -1px; }
+.tabbar .tab, .subtabs .tab { min-height: var(--tap); display: flex; align-items: center; justify-content: center; padding: 0 var(--space-4); border: 1px solid var(--border); border-bottom: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: color-mix(in srgb, var(--surface) 55%, var(--tab-back)); color: var(--tab-off-text); font-weight: 500; text-decoration: none; box-shadow: none; transform: none; white-space: nowrap; }
+.tabbar .tab-item.is-here .tab, .subtabs .tab-item.is-here .tab { background: var(--bg); border-color: var(--border); border-top: 4px solid var(--accent); font-weight: 800; color: var(--text); padding-bottom: 1px; position: relative; z-index: 1; }
+.tabbar .tab:focus-visible, .subtabs .tab:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+@media (hover: hover) { .tabbar .tab-item:not(.is-here) .tab:hover, .subtabs .tab-item:not(.is-here) .tab:hover { background: var(--surface); transform: none; box-shadow: none; } }
+.subtabs { margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) var(--space-3); padding: var(--space-2) var(--space-4) 0; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: thin; }
+.subtabs .tab { padding: 0 var(--space-3); font-size: 0.97rem; }
+.subtabs .tab-row { max-width: none; }
+body.has-tabs { padding-bottom: 0; }
+
+/* Under the tabs: the trail (deep levels) with Back, then the page title. Nothing sticks but the header. */
+.screen-top { position: static; display: block; margin: 0 0 var(--space-3); padding: 0; background: none; border: 0; }
+.screen-top:empty { display: none; }
+.trail-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin: 0 0 var(--space-1); }
+.trail-row .back-btn { display: inline-flex; flex: none; }
+.trail-row .trail { flex: 1 1 auto; min-width: 0; }
+.trail ol { font-size: 0.97rem; }
+.trail li + li::before { content: ">"; margin: 0 var(--space-2); color: var(--text); font-weight: 700; font-size: 1rem; }
+.trail li[aria-current] { display: inline-flex !important; color: var(--text); }
+.trail li[aria-current] strong { font-weight: 800; }
+.page-h1 { margin: var(--space-1) 0 var(--space-2); font-size: 1.55rem; line-height: 1.2; font-weight: 800; }
+.page-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-3); }
+
+/* Guide me: a switch that reads as one. */
+.guide-switch { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 700; }
+.guide-switch .switch-knob { width: 34px; height: 20px; border-radius: 999px; background: var(--border); position: relative; flex: none; }
+.guide-switch .switch-knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / 0.3); }
+.guide-switch[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.guide-switch[aria-pressed="true"] .switch-knob { background: var(--accent); }
+.guide-switch[aria-pressed="true"] .switch-knob::after { left: 16px; }
+
+/* Home: the agenda leads. */
+.agenda .agenda-resume { margin: var(--space-2) 0; }
+.agenda h3 { margin: var(--space-3) 0 var(--space-1); font-size: 1rem; }
+.todo-list { margin: 0; padding-left: 1.2em; display: grid; gap: var(--space-1); }
+
+/* Phone: the header in two short rows (who and where; then the tools), icons only; the main tabs at the bottom,
+   the chosen one joined to the page above it. Calm on purpose (owner, 2026-10-28: "way too noisy for mobile"). */
+@media (max-width: 639px) {
+  .site-head { position: static; flex-wrap: wrap; padding: var(--space-1) var(--space-3); gap: var(--space-1) var(--space-2); }
+  .site-id { flex: 1 1 auto; font-size: 0.9rem; }
+  .site-head .whose-menu { order: 2; }
+  .site-head .search-wrap { order: 3; flex: 1 1 8rem; }
+  .site-head .head-tools { order: 4; margin-left: 0; }
+  .site-head .tool-word { display: none; }
+  .site-head .end-call { padding: 0 var(--space-2); }
+  .site-head .saved-mark { display: none; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 0 var(--space-1) env(safe-area-inset-bottom, 0px); border-bottom: 0; border-top: 1px solid var(--border); }
+  .tabbar .tab-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; align-items: start; }
+  .tabbar .tab-item { margin: -1px 0 0; }
+  .tabbar .tab { padding: 0 2px; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius-sm) var(--radius-sm); font-size: 0.9rem; min-height: 52px; }
+  .tabbar .tab-item.is-here .tab { border-top: 0; border-bottom: 4px solid var(--accent); padding-bottom: 0; }
+  body.has-tabs { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+  .subtabs { margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) var(--space-3); padding: var(--space-2) var(--space-3) 0; }
+  .subtabs .tab-row { flex-wrap: nowrap; }
+  .subtabs .tab { padding: 0 var(--space-2); font-size: 0.95rem; }
+  .page-h1 { font-size: 1.3rem; }
+  .trail ol { font-size: 0.92rem; }
+}
+@media print { .site-head, .subtabs, .trail-row { display: none !important; } }
+/* The old one-line header's leftovers, undone (S-280). */
+.screen-top .trail { display: block; }
+.screen-top .trail li:has(+ li[aria-current])::after { content: none; }
+.screen-top .back-btn { padding: 0 var(--space-3); min-width: var(--tap); font-size: var(--text-sm); }
+.screen-top .back-btn span { font-size: inherit; }
+.tabbar .tab { font-size: 1rem; min-height: 48px; padding: 0 var(--space-5, 24px); }
+@media (max-width: 639px) {
+  .screen-top .trail { display: block !important; }
+  .screen-top .back-btn { padding: 0 var(--space-2); font-size: var(--text-sm); }
+  .tabbar .tab { font-size: 0.9rem; min-height: 52px; padding: 0 2px; }
+}

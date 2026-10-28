@@ -10,12 +10,14 @@ import { sharerNames } from '../engine/owed.js';
 
 // The screens a person might look for by name, with where each opens.
 const SCREENS = [
-  ['Today', 'dashboard.html'], ['Session', 'session.html'], ['My numbers', 'ledger.html'], ['Calendar', 'calendar.html'],
+  ['Home', 'dashboard.html'], ['Guide me', 'ledger.html?guide=1'], ['Numbers', 'ledger.html'], ['Calendar', 'calendar.html'],
   ['Spending', 'spending.html'], ['Plan', 'plan.html'], ['Profile', 'profile.html'], ['Preferences', 'profile.html#/prefs'],
   ['Assumptions', 'assumptions.html'], ['One-pager', 'onepager.html'], ['Before our first call', 'before.html'],
   ['Debt', 'ledger.html#/debt'], ['Assets', 'ledger.html#/assets'], ['Taxes', 'ledger.html#/taxes'], ['Income', 'ledger.html#/income'],
   ['Needs', 'ledger.html#/needs'], ['Goals', 'ledger.html#/goals'], ['Subscriptions', 'ledger.html#/needs/subscriptions'],
-  ['Still guessing', 'ledger.html#/still-guessing'], ['Got extra money?', 'windfall.html'], ['Builder', 'builder.html']
+  ['Still guessing', 'ledger.html#/still-guessing'], ['Extra money', 'windfall.html'], ['Builder', 'builder.html'],
+  ['Protection', 'ledger.html#/protection'], ['Plan: Debt', 'plan.html#/debt'], ['Plan: Retirement and tax', 'plan.html#/retirement'], ['Plan: Protection', 'plan.html#/protection'], ['End call', 'dashboard.html#/end'],
+  ['Rules', 'rules.html'], ['House defaults', 'house.html'], ['All formulas', 'math.html'], ['Where each number came from', 'plan.html#/sources']
 ];
 // Settings a person might look for by name.
 const SETTINGS = [['Dark mode or light', 'profile.html#/prefs'], ['Week starts on', 'profile.html#/prefs'], ['What Today shows', 'profile.html#/prefs'], ['Show money as hours of work', 'profile.html#/prefs'],

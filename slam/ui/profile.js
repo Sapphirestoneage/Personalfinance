@@ -142,7 +142,7 @@ function askScreen({ spine }, area) {
     return h('section', { class: 'card qs' },
       q.kind === 'one' ? questionEl(choicesFor(q, a), a[q.id] ?? null, answer(q)) : h('p', { class: 'q-label' }, q.label),
       trio,
-      q.kind === 'field' && st && st.status === 'known' ? h('p', { class: 'edit-hint' }, h('a', { href: 'session.html' }, 'Type it in the Session'), ' or ', h('a', { href: 'ledger.html' }, 'in My numbers'), '.') : null,
+      q.kind === 'field' && st && st.status === 'known' ? h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html?guide=1' }, 'Type it in the Session'), ' or ', h('a', { href: 'ledger.html' }, 'in My numbers'), '.') : null,
       q.where ? h('p', { class: 'edit-hint' }, 'Where to find it: ' + whereWords(q) + '.') : null,
       q.does ? h('p', { class: 'edit-hint' }, q.does) : null);
   });
@@ -183,7 +183,7 @@ function reviewScreen({ spine, rules }) {
 }
 
 startPage({
-  tab: 'profile', title: 'Profile',
+  tab: 'home', title: 'Profile',
   name: (levels) => (levels[0] === 'ask' ? (levels.length === 1 ? 'In the session' : L2_AREAS[levels[1]] || null) : ({ todo: 'To-dos', changes: 'Life changes', life: 'Your life', homework: 'Homework', goals: 'FI assumptions', prefs: 'Preferences', review: 'Quarterly review' })[levels[0]] || AREA_NAMES[levels[0]] || null),
   render: (ctx) => {
     const [l0, l1] = ctx.levels;

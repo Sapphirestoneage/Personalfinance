@@ -83,9 +83,9 @@ test('assumption sets: Conservative, Standard (default), Optimistic, Your own; a
 });
 
 test('the Session: five steps with letters, tick lists and presets from data, Back and Next, and no Other income to pick', () => {
-  const src = readFileSync(new URL('../ui/session.js', import.meta.url), 'utf8');
-  // The steps are the engine's SESSION_ORDER, DATING as My numbers (S-258).
-  assert.match(src, /const STEPS = SESSION_ORDER;/);
+  const src = readFileSync(new URL('../ui/guide.js', import.meta.url), 'utf8');
+  // Guide me (S-280) walks Numbers' six sections in the order of its tabs.
+  assert.match(src, /export const STEPS = \[\['needs', 'N', 'Needs'\], \['debt', 'D', 'Debt'\], \['income', 'I', 'Income'\], \['assets', 'A', 'Assets'\], \['goals', 'G', 'Goals'\], \['protection', 'P', 'Protection'\]\];/);
   assert.match(src, /'Next: ' \+ next\[2\]/);
   const data = JSON.parse(readFileSync(new URL('../data/session-presets.json', import.meta.url), 'utf8'));
   assert.deepEqual(data.needs.map((c) => c.label), ['Accommodation', 'Food', 'Transportation', 'Health and fitness', 'Subscriptions', 'Miscellaneous']);

@@ -18,7 +18,7 @@ test('a step outside the household is the latest step: the header\'s Undo and Ct
   assert.match(src, /export function say\(text, undoFn = null, redoFn = null\)/);
   assert.match(src, /side = \{ words: end\(text\), undo: undoFn, redo: redoFn, done: true \}/);
   // The header draws Undo and Redo on a Builder page too while there is such a step.
-  assert.match(src, /const undoing = opts\.household \|\| side \?/);
+  assert.match(src, /disabled: !u, 'aria-label': u \? 'Undo: ' \+ u/);
   assert.match(src, /if \(side && side\.done\) \{/, 'Undo runs the side step first');
   assert.match(src, /if \(!\(hist \|\| side\) \|\| !\(e\.ctrlKey \|\| e\.metaKey\)/, 'Ctrl/Cmd+Z works with no household (the Rules page)');
   assert.match(src, /notice = null; side = null;/, 'the next household change ends it');
@@ -31,7 +31,7 @@ test('a tab reopens its page where it was left; the lit tab goes to its top; a p
   const src = code('ui/shell.js');
   assert.match(src, /sessionStorage\.setItem\(RETURN_KEY, new URL\(href, location\.href\)\.pathname\)/, 'a tab tap marks the page it opens');
   assert.match(src, /const left = !location\.hash \? tabReturn\(\) : null;/, 'only a tab tap (no address of its own) reopens the screens');
-  assert.match(src, /if \(opts && samePage\(href\)\) \{ e\.preventDefault\(\); if \(levelsNow\(\)\.length\) go\(\[\]\); else window\.scrollTo\(0, 0\); return; \}/);
+  assert.match(src, /if \(opts && samePage\(href\) && !href\.includes\('#'\)\) \{ e\.preventDefault\(\); if \(levelsNow\(\)\.length\) go\(\[\]\); else window\.scrollTo\(0, 0\); return; \}/);
   assert.match(src, /function remember\(\)/);
   assert.match(src, /export function keep\(patch\) \{ const e = entry\(\); if \(e\) \{ history\.replaceState\(stateWith\(\{ \.\.\.e, page: \{ \.\.\.e\.page, \.\.\.patch \} \}\), ''\); remember\(\); \} \}/);
   // Content figured after the first draw (Still guessing) gets the scroll it was left at.
@@ -41,8 +41,9 @@ test('a tab reopens its page where it was left; the lit tab goes to its top; a p
 
 test('Back at the top of a page opened from another page of the app goes back there, as the browser\'s back does', () => {
   const src = code('ui/shell.js');
-  assert.match(src, /const browserBack = levels\.length \|\| \(!fromParent\(\) && fromApp\(\)\);/);
-  assert.match(src, /onclick: \(\) => \(browserBack \? \(saveScroll\(\), history\.back\(\)\) : toParent\(0\)\)/);
+  // Back goes up one level (S-280); at a page's top, back to the app page it came from.
+  assert.match(src, /const browserBack = !levels\.length && !fromParent\(\) && fromApp\(\);/);
+  assert.match(src, /onclick: \(\) => \(levels\.length \? go\(levels\.slice\(0, -1\)\) : browserBack \? \(saveScroll\(\), history\.back\(\)\)/);
 });
 
 test('Show the math names no rule by its id; it ends with See the formula, hidden in client view', () => {

@@ -13,7 +13,7 @@ import { summarize } from './summary.js';
 import { withScenario } from './scenarios.js';
 import { applyDefaults } from './defaults.js';
 
-const T = 'dashboard.html', P = 'plan.html', N = 'ledger.html', C = 'calendar.html', S = 'spending.html', W = 'windfall.html', SE = 'session.html', PR = 'profile.html';
+const T = 'dashboard.html', P = 'plan.html', N = 'ledger.html', C = 'calendar.html', S = 'spending.html', W = 'windfall.html', SE = 'ledger.html?guide=1', PR = 'profile.html';
 const used = (...xs) => xs.map(([label, href]) => ({ label, href }));
 // A row: the rule id, a plain name, one line on what it means, and the screens that read it.
 const row = (id, name, means, screens) => ({ id, name, means, screens: used(...screens) });

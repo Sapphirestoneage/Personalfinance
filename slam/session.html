@@ -1,18 +1,25 @@
 <!doctype html>
-<!-- SLAM: Session, the first call step by step. Static page, no build step. View in ui/session.js, the shell in ui/shell.js. -->
+<!-- SLAM: the Session is a mode of Numbers now (Guide me, S-280). Old links land on Numbers with Guide me on, at the
+     step where the call stopped. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>SLAM Session</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f52ba'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="src/ui/tokens.css">
-  <link rel="stylesheet" href="ui/spine.css">
+  <title>Guide me</title>
+  <meta http-equiv="refresh" content="0; url=ledger.html?guide=1">
+  <script>
+    (function () {
+      var map = { taxes: 'income' }, step = null;
+      var h = location.hash.replace(/^#\/?/, '').split('/')[0];
+      if (h === 'end') { location.replace('dashboard.html#/end'); return; }
+      try { var reg = JSON.parse(localStorage.getItem('slam-clients:v1') || 'null'); var last = JSON.parse(localStorage.getItem('slam-last-step:v1') || '{}'); step = h || last[(reg && reg.current) || 'example'] || null; } catch (e) { step = h || null; }
+      if (step) step = map[step] || step;
+      location.replace('ledger.html?guide=1' + (step ? '#/' + step : ''));
+    })();
+  </script>
 </head>
 <body>
-  <main id="app"><p>Loading...</p></main>
-  <noscript>SLAM needs JavaScript.</noscript>
-  <script type="module" src="ui/session.js"></script>
+  <p><a href="ledger.html?guide=1">Open Guide me</a></p>
 </body>
 </html>

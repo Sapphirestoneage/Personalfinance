@@ -1,15 +1,13 @@
-// Session (S-230, Batch 3): a first session in under an hour. Five steps in call order, each its own screen
-// (session.html#/needs): Needs, Debt, Income (with the two tax questions), Assets, Goals (with the assumptions). Each
-// step shows its DATING letter and its running total, Back and Next, and the shell's trail. Every step can be skipped.
-// Type a number and it is saved (monthly unless changed); who pays, sharing, a cover and dates sit in a small closed
-// "More" on the right. Needs starts from tick lists (Yes, No, Skip) and three presets whose amounts land as guesses.
-// Every change goes through the shell's change() with words, so Undo takes it back. Formatting only: the totals come
-// from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
+// Guide me (S-280; was the Session page, S-230): a mode of Numbers, not a page. On, Numbers walks its six sections in
+// order (Needs, Debt, Income with the two tax questions, Assets, Goals, Protection) with Back and Next, each step
+// showing only its screen-one boxes, what it is for, and "You now have / Next this unlocks". Off, Numbers is free to
+// roam. Same screens, same data: every change goes through the shell's change() with words, so Undo takes it back.
+// Formatting only: the totals come from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
 import { foldRow } from './rows.js';
 import { mathButton } from './math-panel.js';
 import { startPage, change, said, say, refresh, go, current } from './shell.js';
-import { summarize, sessionSteps, SESSION_ORDER } from '../engine/summary.js';
+import { summarize, sessionSteps } from '../engine/summary.js';
 import { stepper, purposeCard, nowHave } from './stepper.js';
 import { STEP_MAP, stepChecks } from '../engine/step-map.js';
 import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
@@ -37,7 +35,13 @@ import { isCouple, peopleOf, FILINGS, SPLITS, addPartner, whoseOf, setWhose, sty
 let DATA = { needs: [], presets: [], withdrawal: [] };
 try { const r = await fetch(new URL('../data/session-presets.json', import.meta.url), { cache: 'no-store' }); if (r.ok) DATA = await r.json(); } catch { /* the steps still list what is in your numbers */ }
 
-const STEPS = SESSION_ORDER;
+// The steps, in the order of Numbers' second-level tabs: [id, letter, words].
+export const STEPS = [['needs', 'N', 'Needs'], ['debt', 'D', 'Debt'], ['income', 'I', 'Income'], ['assets', 'A', 'Assets'], ['goals', 'G', 'Goals'], ['protection', 'P', 'Protection']];
+export const GUIDE_IDS = STEPS.map((x) => x[0]);
+// Guide me on or off, kept in this browser; ?guide=1 on the address turns it on (the old Session links).
+const GUIDE_KEY = 'slam-guide:v1';
+export const guideOn = () => { try { if (/[?&]guide=1\b/.test(location.search)) localStorage.setItem(GUIDE_KEY, '1'); return localStorage.getItem(GUIDE_KEY) === '1'; } catch { return false; } };
+export const setGuide = (on) => { try { localStorage.setItem(GUIDE_KEY, on ? '1' : '0'); if (/[?&]guide=1\b/.test(location.search)) history.replaceState(history.state, '', location.pathname + location.hash); } catch { /* lasts until the page closes */ } };
 const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const lower = (x) => String(x || '').trim().toLowerCase();
 const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
@@ -141,6 +145,7 @@ function entered(spine, id) {
   if (id === 'income') return (spine.income || []).length > 0;
   if (id === 'needs') return (spine.expenses || []).some((e) => v(e.amount) !== null);
   if (id === 'goals') return (spine.goals || []).some((g) => g.type !== 'fi');
+  if (id === 'protection') return (spine.policies || []).length > 0;
   return false;
 }
 // What is in a step, under its name on the bar (owner, 2026-10-28: say what the checkmark means).
@@ -153,6 +158,7 @@ function stepSub(spine, id) {
   if (id === 'income') return count(spine.income.length, 'income', 'incomes');
   if (id === 'needs') { const all = spine.expenses || [], n = all.filter((e) => v(e.amount) !== null).length; return n + ' of ' + all.length + ' bills'; }
   if (id === 'goals') return count(spine.goals.filter((g) => g.type !== 'fi').length, 'goal', 'goals');
+  if (id === 'protection') return count((spine.policies || []).length, 'policy', 'policies');
   return '';
 }
 // The Next card (practical run, S-269): the numbers worth filling now, ranked by how much each moves the headline
@@ -166,9 +172,16 @@ function nextCard(ctx) {
     h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
     top.length > 1 ? h('ol', { class: 'next-more', start: 2 }, top.slice(1).map((q) => h('li', {}, h('a', { href: ledgerHref(q.row || q.path) }, words(q))))) : null);
 }
+// The six steps' totals: the summary's (sessionSteps) in Guide me's order, and Protection's monthly premiums.
+function guideSteps(spine, s) {
+  const all = sessionSteps(spine, s);
+  return STEPS.map(([id, letter, label]) => all.find((x) => x.id === id) || { id, letter, label, result: { value: (spine.policies || []).length ? (spine.policies || []).length : null, kind: 'known', count: true } });
+}
 function frame(ctx, id, body) {
   const s = summarize(ctx.spine, ctx.rules, { flags: false });
-  const steps = sessionSteps(ctx.spine, s);
+  // Inside another step (Income holds the two tax questions): its body only.
+  if (ctx.bare) return [].concat(body(s));
+  const steps = guideSteps(ctx.spine, s);
   const i = STEPS.findIndex((x) => x[0] === id), step = steps.find((x) => x.id === id);
   const prev = STEPS[i - 1], next = STEPS[i + 1];
   return [
@@ -186,7 +199,7 @@ function frame(ctx, id, body) {
     h('div', { class: 'step-nav' },
       h('button', { type: 'button', class: 'btn', onclick: () => go(prev ? [prev[0]] : []) }, '‹ Back'),
       next ? h('button', { type: 'button', class: 'btn primary', onclick: () => go([next[0]]) }, 'Next: ' + next[2] + ' ›')
-        : h('button', { type: 'button', class: 'btn primary', onclick: () => go(['end']) }, 'End the call ›')),
+        : h('a', { class: 'btn primary', href: 'dashboard.html#/end' }, 'End the call ›')),
     h('p', { class: 'muted step-skip' }, 'Nothing here is required. Next skips ahead.')
   ];
 }
@@ -195,6 +208,7 @@ const WORDS = { needs: ' a month', debt: ' owed', taxes: ' due at tax time', inc
 function totalWords(step, owed = 0) {
   const r = step.result;
   if (r.value === null) return h('span', { class: 'empty' }, 'Nothing yet');
+  if (step.id === 'protection') return h('span', {}, h('strong', {}, String(r.value)), r.value === 1 ? ' policy' : ' policies');
   // Taxes below zero is money back (a refund), said so.
   if (step.id === 'taxes' && r.value < 0) return h('span', {}, h('strong', {}, money(-r.value)), ' back at tax time', r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
   return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], step.id === 'assets' && owed ? ', plus ' + money(owed) + ' owed to you' : null, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
@@ -684,7 +698,7 @@ function goals(ctx) {
 // ---------------------------------------------------------------- the top screen
 // Krug pass: one list, the five steps, each with how many of the Profile's open questions belong to it; the questions
 // themselves sit at the top of each step. "Start with Needs" leads.
-const STEP_AREAS = { needs: ['health', 'statements'], taxes: [], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
+const STEP_AREAS = { protection: [], needs: ['health', 'statements'], taxes: [], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
 const openAreas = (spine, step) => { const a = answersOf(spine); return Object.keys(a).length ? level2(a).filter((x) => STEP_AREAS[step].includes(x.area)) : []; };
 function stepQuestions(spine, step) {
   const areas = openAreas(spine, step);
@@ -693,7 +707,7 @@ function stepQuestions(spine, step) {
 }
 
 function overview(ctx) {
-  const sum = summarize(ctx.spine, ctx.rules, { flags: false }), steps = sessionSteps(ctx.spine, sum);
+  const sum = summarize(ctx.spine, ctx.rules, { flags: false }), steps = guideSteps(ctx.spine, sum);
   // Each step's open questions (morning answer 10): the one list My numbers counts, once the ranking is in.
   const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   const open = openCounts(openQuestions(ctx.spine, g));
@@ -727,20 +741,23 @@ function sessionNotesRow(ctx) {
     h('p', { class: 'muted' }, h('a', { href: 'onepager.html' }, 'See the One-pager'))]);
 }
 
-const SCREENS = { debt, assets, taxes, income, needs, goals };
+// Income holds the two tax questions first (how you file, where you live), then the paychecks.
+const incomeStep = (ctx) => frame(ctx, 'income', () => [...taxes({ ...ctx, bare: true }), ...income({ ...ctx, bare: true })]);
+const SCREENS = { debt, assets, income: incomeStep, needs, goals };
 let goalAdding = false;
-function render(ctx) {
-  // The shared ranking (ui/urgency.js): the last answer stands until the new one lands, then one redraw.
+// One step of Guide me: its screen-one boxes inside the step frame. protection(): Numbers' own Protection screen.
+export function guideStep(ctx, id, { protection = () => [] } = {}) {
   const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
   if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
-  const id = ctx.levels[0];
-  if (id === 'end') return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
-  if (id) rememberStep(id);
-  const strip = headlineStrip(ctx.spine, ctx.rules);
-  return id ? [strip, nextCard(ctx), stepQuestions(ctx.spine, id), SCREENS[id](ctx), sessionNotesRow(ctx)] : [strip, nextCard(ctx), overview(ctx), sessionNotesRow(ctx)];
+  rememberStep(id);
+  const body = id === 'protection' ? frame(ctx, 'protection', () => [].concat(protection())) : SCREENS[id](ctx);
+  return [stepQuestions(ctx.spine, id), body, sessionNotesRow(ctx)];
 }
-const name = (levels) => (levels.length === 1 ? (levels[0] === 'end' ? 'End of the call' : (STEPS.find((x) => x[0] === levels[0]) || [])[2] || null) : null);
-// End call (S-269): one button in the header, on every Session screen but its own.
-const actions = (ctx) => (ctx.levels[0] === 'end' ? [] : [h('button', { type: 'button', id: 'end-call', class: 'btn small', onclick: () => go(['end']) }, 'End call')]);
-
-startPage({ tab: 'session', title: 'Session', render, name, actions });
+// The top of Guide me: the steps in order, Start with the first.
+export function guideTop(ctx) { return [overview(ctx), sessionNotesRow(ctx)]; }
+export { nextCard, sessionNotesRow };
+// End call (on Home, S-280): the end-of-call screen, with the session notes.
+export function endCall(ctx) {
+  const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  return [endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
+}

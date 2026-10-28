@@ -29,28 +29,27 @@ import { savedPerDay } from '../engine/money-as.js';
 import { commit, undo, redo, canUndo, canRedo, undoLabel, redoLabel } from '../engine/edits.js';
 import { h, said, sentence as end } from './view.js';
 
-// The four tabs, in order (practical run, S-269): [id, words, page]. Everything else is one tap away in More.
+// The map (S-280, "make it effortless"): five main tabs, the same on every page, in this order. [id, words, page].
 export const TABS = [
-  ['session', 'Session', 'session.html'],
-  ['numbers', 'My numbers', 'ledger.html'],
+  ['home', 'Home', 'dashboard.html'],
+  ['numbers', 'Numbers', 'ledger.html'],
   ['plan', 'Plan', 'plan.html'],
-  ['calendar', 'Calendar', 'calendar.html']
+  ['calendar', 'Calendar', 'calendar.html'],
+  ['spending', 'Spending', 'spending.html']
 ];
-// The More menu: every other page, in the order a call reaches for them. Old links to any of them keep working.
-export const MORE = [
-  ['today', 'Today', 'dashboard.html'],
-  ['onepager', 'One-pager', 'onepager.html'],
-  ['profile', 'Profile', 'profile.html'],
-  ['before', 'Before our first call', 'before.html'],
-  ['spending', 'Spending', 'spending.html'],
-  ['windfall', 'Got extra money?', 'windfall.html'],
-  ['where', 'Where to find each number', 'where.html'],
-  ['assumptions', 'Assumptions', 'assumptions.html'],
-  ['math', 'All formulas', 'math.html'],
-  ['rules', 'Rules', 'rules.html'],
-  ['house', 'House defaults', 'house.html'],
-  ['builder', 'Builder', 'builder.html']
+// Second-level tabs, always visible on their main tab: [id, words, href].
+export const SUBTABS = {
+  numbers: [['needs', 'Needs', 'ledger.html#/needs'], ['debt', 'Debt', 'ledger.html#/debt'], ['income', 'Income', 'ledger.html#/income'], ['assets', 'Assets', 'ledger.html#/assets'], ['goals', 'Goals', 'ledger.html#/goals'], ['protection', 'Protection', 'ledger.html#/protection']],
+  plan: [['overview', 'Overview', 'plan.html'], ['debt', 'Debt', 'plan.html#/debt'], ['retirement', 'Retirement and tax', 'plan.html#/retirement'], ['protection', 'Protection', 'plan.html#/protection'], ['extra', 'Extra money', 'windfall.html']]
+};
+// The gear (Coach): every coach-only page, never on a client print or in Guide me. [id, words, href].
+export const COACH = [
+  ['rules', 'Rules', 'rules.html'], ['house', 'House defaults', 'house.html'], ['assumptions', 'Assumptions', 'assumptions.html'],
+  ['math', 'All formulas', 'math.html'], ['sources', 'Where each number came from', 'plan.html#/sources'], ['builder', 'Builder', 'builder.html']
 ];
+// Old name kept for the pages that still read it: every page the tabs do not hold.
+export const MORE = COACH;
+export const HOME_HREF = 'dashboard.html';
 // Profile is not a tab (bug sweep): it opens from the household name in every header, a person icon and the name.
 // My numbers opens at a section, and deeper, by these words: numbersHref('debt', 'credit-cards').
 export const SECTIONS = { needs: 'Needs', debt: 'Debt', assets: 'Assets', taxes: 'Taxes', income: 'Income', goals: 'Goals' };
@@ -84,6 +83,7 @@ let side = null;
 // landed (restoreScroll), or the person scrolls.
 let wantY = null;
 const topEl = h('div', { class: 'screen-top' });
+const headBar = h('header', { class: 'site-head' });
 const headEl = h('header', { class: 'top' });
 const screenEl = h('div', { class: 'screen' });
 const barText = h('span', { class: 'undo-text' });
@@ -106,12 +106,15 @@ const context = (levels) => ({ spine: hist ? hist.present : undefined, rules: ru
 export async function startPage(o) {
   opts = { household: true, ...o };
   if (opts.tab === undefined) opts.tab = (TABS.find((t) => location.pathname.endsWith('/' + t[2])) || [null])[0];
+  if (!opts.subtab) opts.subtab = () => null;
   baseTitle = document.title;
   applyPrefs();
   try { history.scrollRestoration = 'manual'; } catch { /* an old browser: it restores scroll itself */ }
   mountPage({ app });
   const tabs = tabBar(opts.tab);
+  app.parentNode.insertBefore(headBar, app);
   app.parentNode.insertBefore(tabs, app);
+  headBar.replaceChildren(...siteHead().filter(Boolean));
   document.body.classList.add('has-tabs');
   measureTabs(tabs);
   document.body.append(barEl);
@@ -207,19 +210,24 @@ export function reopen(loaded, text) { take({ rules, institutions, ...loaded });
 
 // ---------------------------------------------------------------- the tab bar, the trail, the header, the bar
 // A tab opens its page as it was left in this browser tab; the lit tab, tapped, goes to its top.
+const tapTo = (href) => (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (opts && samePage(href) && !href.includes('#')) { e.preventDefault(); if (levelsNow().length) go([]); else window.scrollTo(0, 0); return; }
+  saveScroll();
+  try { sessionStorage.setItem(RETURN_KEY, new URL(href, location.href).pathname); } catch { /* storage blocked: the page opens at its top */ }
+};
+// The main tabs (S-280): real tabs, the one you are on joined to the page below it (same color, no line between),
+// bold and filled, the rest lighter and behind. Two cues at once: fill and weight (and aria-current).
 export function tabBar(lit) {
-  const tap = (href) => (e) => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (opts && samePage(href)) { e.preventDefault(); if (levelsNow().length) go([]); else window.scrollTo(0, 0); return; }
-    saveScroll();
-    try { sessionStorage.setItem(RETURN_KEY, new URL(href, location.href).pathname); } catch { /* storage blocked: the page opens at its top */ }
-  };
-  const here = MORE.find(([, , href]) => samePage(href));
-  return h('nav', { class: 'tabbar', 'aria-label': 'Pages' },
-    h('ul', {}, TABS.map(([id, words, href]) => h('li', {}, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tap(href) }, words))),
-      h('li', {}, h('details', { class: 'more-menu' },
-        h('summary', { class: 'tab', 'aria-current': here || (lit && !TABS.some(([id]) => id === lit)) ? 'page' : null }, 'More', here ? h('span', { class: 'more-here' }, ': ' + here[1]) : null),
-        h('ul', { class: 'more-list' }, MORE.map(([, words, href]) => h('li', {}, h('a', { class: 'more-link', href, 'aria-current': samePage(href) ? 'page' : null, onclick: tap(href) }, words))))))));
+  return h('nav', { class: 'tabbar', 'aria-label': 'Main sections' },
+    h('ul', { class: 'tab-row' }, TABS.map(([id, words, href]) => h('li', { class: 'tab-item' + (id === lit ? ' is-here' : '') }, h('a', { class: 'tab', href, 'aria-current': id === lit ? 'page' : null, onclick: tapTo(href) }, words)))));
+}
+// The second-level tabs of a main tab (Numbers, Plan), always visible on its pages, the one you are in marked the same way.
+function subtabBar(tab, lit) {
+  const list = SUBTABS[tab];
+  if (!list) return null;
+  return h('nav', { class: 'subtabs', 'aria-label': (TABS.find((t) => t[0] === tab) || [, tab])[1] + ' sections' },
+    h('ul', { class: 'tab-row' }, list.map(([id, words, href]) => h('li', { class: 'tab-item' + (id === lit ? ' is-here' : '') }, h('a', { class: 'tab subtab', href: samePage(href.split('#')[0]) && href.includes('#') ? '#' + href.split('#')[1] : href, 'aria-current': id === lit ? 'page' : null, onclick: href.includes('#') && samePage(href.split('#')[0]) ? null : tapTo(href) }, words)))));
 }
 // The tab bar's own height, as --tabbar-h: the page's bottom padding on a phone (so nothing hides behind the bar) and
 // where Back and the trail stick on a computer.
@@ -242,46 +250,58 @@ function fromApp() {
   try { return history.length > 1 && !!document.referrer && new URL(document.referrer).origin === location.origin && new URL(document.referrer).pathname !== location.pathname; } catch { return false; }
 }
 
-function screenTop(levels, names) {
+// You are here (S-280): the trail starts with the client, then the main tab, then each level down; every part is a
+// link but the last, which is bold. It shows below the second level (where the tabs alone no longer say where you are),
+// with Back (up one level) beside it.
+function trailSteps(levels, names) {
   const steps = [];
+  if (opts.household && hist) steps.push([whose(hist.present).name, HOME_HREF, null]);
+  const tab = TABS.find((t) => t[0] === opts.tab);
+  if (tab && !samePage(tab[2])) steps.push([tab[1], tab[2], null]);
   if (opts.parent) steps.push([opts.parent[0], opts.parent[1], () => toParent(levels.length)]);
-  if (levels.length || opts.parent) steps.push([opts.title, rootUrl(), () => go([])]);
+  steps.push([opts.title, rootUrl(), levels.length ? () => go([]) : null]);
   levels.forEach((_, i) => steps.push([names[i], hashOf(levels.slice(0, i + 1)), () => go(levels.slice(0, i + 1))]));
-  if (!steps.length) return [];
+  return steps;
+}
+function screenTop(levels, names) {
+  const steps = trailSteps(levels, names);
+  const deep = SUBTABS[opts.tab] && !opts.noSubtabs ? levels.length >= 2 || (levels.length === 1 && !opts.subtab(levels)) : levels.length >= 1 || !!opts.parent || (TABS.find((t) => t[0] === opts.tab) && !samePage(TABS.find((t) => t[0] === opts.tab)[2]));
+  if (!deep || steps.length < 2) return [];
   const up = steps[steps.length - 2];
-  const link = ([words, href, fn]) => h('a', { href, onclick: (e) => { e.preventDefault(); fn(); } }, words);
-  const browserBack = levels.length || (!fromParent() && fromApp());
-  return [
-    h('button', { type: 'button', class: 'btn back-btn', 'aria-label': levels.length || !browserBack ? 'Back to ' + up[0] : 'Back', onclick: () => (browserBack ? (saveScroll(), history.back()) : toParent(0)) }, h('span', { 'aria-hidden': 'true' }, '‹'), 'Back'),
-    h('nav', { class: 'trail', 'aria-label': 'Where you are' },
-      h('ol', {}, steps.map((s, i) => h('li', i === steps.length - 1 ? { 'aria-current': 'page' } : {}, i === steps.length - 1 ? s[0] : link(s)))))
-  ];
+  const link = ([words, href, fn]) => h('a', { href, onclick: fn ? (e) => { e.preventDefault(); fn(); } : null }, words);
+  const browserBack = !levels.length && !fromParent() && fromApp();
+  return [h('div', { class: 'trail-row' },
+    h('button', { type: 'button', class: 'btn small back-btn', 'aria-label': 'Back to ' + up[0], onclick: () => (levels.length ? go(levels.slice(0, -1)) : browserBack ? (saveScroll(), history.back()) : up[2] ? up[2]() : location.assign(up[1])) }, h('span', { 'aria-hidden': 'true' }, '\u2039 '), 'Back'),
+    h('nav', { class: 'trail', 'aria-label': 'You are here' },
+      h('ol', {}, steps.map((st, i) => h('li', i === steps.length - 1 ? { 'aria-current': 'page' } : {}, i === steps.length - 1 ? h('strong', {}, st[0]) : link(st))))))];
 }
 
 // What Undo and Redo would do now: the step outside the household first, then the household's own.
 const undoWords = () => (side && side.done ? side.words : hist && canUndo(hist) ? undoLabel(hist) : null);
 const redoWords = () => (side ? (side.done ? null : side.words) : hist && canRedo(hist) ? redoLabel(hist) : null);
-function header(ctx, title) {
-  const u = undoWords(), r = redoWords();
-  const undoing = opts.household || side ? [
-    // Small icons in the header (audit 4); the words are the button's name and its tooltip.
-    h('button', { type: 'button', class: 'btn small icon-btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : 'Undo', title: u ? 'Undo: ' + u : 'Nothing to undo', onclick: doUndo }, h('span', { 'aria-hidden': 'true' }, '\u21B6')),
-    h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'))
-  ] : [];
+// The header (S-280), identical on every page, left to right: the site ID (to Home), the client with the switcher,
+// the search box, Undo, Redo, End call, and the gear. Nothing else.
+function siteHead() {
+  const u = undoWords(), r = redoWords(), here = COACH.find(([, , href]) => samePage(href.split('#')[0]) && (!href.includes('#') || location.hash.startsWith('#' + href.split('#')[1])));
+  const withHousehold = opts.household && hist;
   return [
-    // Saved (S-269): every change is kept in this browser as it is made; nothing to press.
-    opts.household && hist && savedMark ? h('span', { class: 'saved-mark', role: 'status', title: savedMark === 'Saved' ? 'Kept in this browser' : 'This browser would not keep the change' }, savedMark) : null,
-    h('div', { class: 'top-actions' },
-      opts.household && hist ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); }, rename: (nm) => change((x) => renameHousehold(x, nm, whose(x).name), 'Client renamed to ' + nm) }) : null,
-      opts.household && hist ? searchButton(() => hist.present, { rulesOf: () => rulesFor(hist.present), run: runCommand }) : null,
-      ...undoing)
+    h('a', { class: 'site-id', href: HOME_HREF, 'aria-label': 'Stress Less About Money: Home' }, h('span', {}, 'Stress Less'), ' ', h('span', {}, 'About Money')),
+    withHousehold ? whoseMenu(hist.present, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); }, rename: (nm) => change((x) => renameHousehold(x, nm, whose(x).name), 'Client renamed to ' + nm) }) : null,
+    withHousehold ? searchButton(() => hist.present, { rulesOf: () => rulesFor(hist.present), run: runCommand }) : null,
+    h('div', { class: 'head-tools' },
+      h('button', { type: 'button', class: 'btn small icon-btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : 'Undo (nothing to undo)', title: u ? 'Undo: ' + u : 'Nothing to undo', onclick: doUndo }, h('span', { 'aria-hidden': 'true' }, '\u21B6'), h('span', { class: 'tool-word' }, 'Undo')),
+      h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo (nothing to redo)', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'), h('span', { class: 'tool-word' }, 'Redo')),
+      withHousehold ? h('a', { class: 'btn small end-call', id: 'end-call', href: HOME_HREF + '#/end', onclick: (e) => { if (samePage(HOME_HREF)) { e.preventDefault(); go(['end']); } } }, 'End call') : null,
+      h('details', { class: 'coach-menu' },
+        h('summary', { class: 'btn small icon-btn', 'aria-label': 'Coach pages', 'aria-current': here ? 'page' : null }, h('span', { 'aria-hidden': 'true' }, '\u2699'), h('span', { class: 'tool-word' }, 'Coach')),
+        h('ul', { class: 'coach-list' }, COACH.map(([, words, href]) => h('li', {}, h('a', { class: 'more-link', href, 'aria-current': here && here[2] === href ? 'page' : null }, words)))))),
+    withHousehold && savedMark ? h('span', { class: 'saved-mark', role: 'status' }, savedMark) : null
   ];
 }
-// One header line everywhere (Krug pass, 44px): the SLAM wordmark (to Today), Back on a phone or the trail on a
-// computer, the title; then whose numbers, search, Undo and Redo.
-const wordmark = () => h('a', { class: 'wordmark', href: 'session.html', 'aria-label': 'SLAM: Session' }, 'SLAM');
+// Under the header and the tabs: the second-level tabs, the trail (deep levels), the page title.
 function headLine(levels, names, ctx, title) {
-  return [wordmark(), ...screenTop(levels, names), h('h1', { class: 'top-h1' }, title), ...header(ctx, title)];
+  const sub = SUBTABS[opts.tab] && !opts.noSubtabs ? subtabBar(opts.tab, opts.subtab ? opts.subtab(levels, ctx) : null) : null;
+  return [sub, ...screenTop(levels, names), h('h1', { class: 'page-h1' }, title)];
 }
 
 function bar(text, action, fn) {
@@ -371,6 +391,7 @@ function draw() {
   drawn = JSON.stringify(levels);
   headTitle = title; headLevels = levels; headNames = names;
   topEl.replaceChildren(...headLine(levels, names, ctx, title).filter(Boolean));
+  headBar.replaceChildren(...siteHead().filter(Boolean));
   if (opts.render) {
     const focus = focused();
     // The page's own buttons (Save, Quick add, Print) sit on a row under the header line, so the title keeps its room.
@@ -387,6 +408,7 @@ function drawHead() {
   if (!opts || !opts.render || (opts.household && !hist) || !headEl.isConnected) return;
   const focus = focused();
   topEl.replaceChildren(...headLine(headLevels, headNames, context(levelsNow()), headTitle).filter(Boolean));
+  headBar.replaceChildren(...siteHead().filter(Boolean));
   refocus(focus);
 }
 

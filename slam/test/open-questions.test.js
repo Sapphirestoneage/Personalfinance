@@ -36,7 +36,7 @@ test('a row\'s mark and the counts use the same rule', () => {
 test('My numbers, Taxes, Session, Still guessing, Today and the Profile all count from the one list', () => {
   assert.match(SRC('ui/ledger.js'), /const toFill = \(x\) => openRows\(/);
   assert.match(SRC('ui/ledger.js'), /const nowCount = \(\) => \(guess \? openQuestions\(cur\(\), guess\)\.length : null\);/);
-  assert.match(SRC('ui/session.js'), /openCounts\(openQuestions\(ctx\.spine, g\)\)/);
+  assert.match(SRC('ui/guide.js'), /openCounts\(openQuestions\(ctx\.spine, g\)\)/);
   assert.match(SRC('ui/profile.js'), /openQuestions\(spine, guessesFor\(spine, rules/);
   assert.match(SRC('ui/dashboard.js'), /openQuestions\(base, g\)\.length/);
   assert.match(SRC('tools/agree-check.mjs'), /'ledger\.html#\/taxes', 'ledger\.html#\/profile', 'ledger\.html#\/still-guessing', 'profile\.html'/);

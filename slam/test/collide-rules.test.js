@@ -9,7 +9,7 @@ test('the collide rules, the check, and the Session rows that follow them', () =
   const design = read('DESIGN.md');
   for (const n of ['23.', '24.', '25.', '26.', '27.']) assert.ok(design.includes('\n' + n + ' '), 'DESIGN.md rule ' + n);
   assert.ok(existsSync(new URL('../tools/collide-check.mjs', import.meta.url)));
-  const css = read('ui/spine.css'), s = read('ui/session.js');
+  const css = read('ui/spine.css'), s = read('ui/guide.js');
   assert.doesNotMatch(css, /\.srow \{ flex-wrap: nowrap; \}/, 'a row wraps before it squeezes');
   assert.match(css, /\.srow-name \{ flex: 1 0 10rem;/, 'a name never shrinks below 10rem');
   assert.doesNotMatch(css, /\.srow \.pick-box \{ max-width: 12rem; \}/, 'a picker is as wide as its choice');

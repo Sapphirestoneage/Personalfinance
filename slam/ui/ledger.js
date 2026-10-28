@@ -6,6 +6,7 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
+import { guideOn, setGuide, guideStep, guideTop, GUIDE_IDS } from './guide.js';
 import { whoseControl } from './whose.js';
 import { setWhose } from '../engine/couple.js';
 import { purposeCard } from './stepper.js';
@@ -1655,6 +1656,8 @@ function render(ctx) {
   // Owed to you (shared bills brief): person by person; a loan's own fields still open as an item.
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = [owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) }), mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) }))];
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = [personScreen(cur(), levels[2]), (() => { const p = owedToYou(cur()).find((x) => personSlug(x.key) === levels[2]); return p ? mathButton(['list:owed:' + p.key], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null; })()];
+  // Guide me (S-280): the same sections, one step at a time, screen one only.
+  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section) }) : guideTop(ctx);
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
@@ -1705,10 +1708,13 @@ function problemsCard(spine) {
 }
 
 // The page's own buttons, on the top screen: save the file, load another (the example loads from its header), pick.
+// Guide me (S-280): one clearly labeled switch, on every screen of Numbers.
+const guideSwitch = () => h('button', { type: 'button', class: 'btn guide-switch', id: 'guide-me', 'aria-pressed': String(guideOn()), onclick: () => { setGuide(!guideOn()); refresh(); } }, h('span', { class: 'switch-knob', 'aria-hidden': 'true' }), 'Guide me: ' + (guideOn() ? 'on' : 'off'));
 function actions(ctx) {
-  if (ctx.levels.length) return [];
+  if (ctx.levels.length) return [guideSwitch()];
   const spine = ctx.spine, mine = !whose(spine).example;
   return [
+    guideSwitch(),
     // One filled button a screen: on the example, Open file is it.
     // Every change is kept in this browser as it is made (S-269); this is a copy to keep elsewhere.
     h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Download a backup'),
@@ -1733,4 +1739,6 @@ function oldLink() {
 window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('hashchange', oldLink);
 
-startPage({ tab: 'numbers', title: 'My numbers', name: nameOf, actions, render }).then(oldLink);
+// The second-level tab a screen sits under (S-280): its section; Taxes sits under Income.
+const subtabOf = (levels) => (levels[0] === 'taxes' ? 'income' : ['needs', 'debt', 'income', 'assets', 'goals', 'protection'].includes(levels[0]) ? levels[0] : null);
+startPage({ tab: 'numbers', title: 'Numbers', subtab: subtabOf, name: nameOf, actions, render }).then(oldLink);

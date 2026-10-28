@@ -129,6 +129,6 @@ function todoCard(spine) {
 }
 
 startPage({
-  tab: 'today', title: 'One-pager', parent: ['Today', 'dashboard.html'], render,
+  tab: 'home', title: 'One-pager', render,
   actions: ({ spine: base }) => h('button', { type: 'button', class: whose(base).example ? 'btn' : 'btn primary', onclick: () => window.print() }, 'Print')
 });

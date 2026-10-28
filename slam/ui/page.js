@@ -76,7 +76,7 @@ export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.me
   });
   const reload = () => location.reload();
   const nameBox = h('input', { type: 'text', id: 'client-name', autocomplete: 'off', placeholder: 'e.g. Maya Lopez', 'aria-describedby': 'client-name-hint' });
-  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm); location.assign('session.html'); };
+  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm); location.assign('ledger.html?guide=1'); };
   const newForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: create },
     h('label', { for: 'client-name', class: 'edit-label' }, 'New client'), nameBox, h('p', { class: 'edit-hint', id: 'client-name-hint' }, 'Starts empty, kept only in this browser.'),
     h('div', { class: 'edit-actions' }, h('button', { type: 'submit', id: 'client-create', class: 'btn primary small' }, 'Create'), h('button', { type: 'button', class: 'btn small', onclick: () => { newForm.hidden = true; } }, 'Cancel')));

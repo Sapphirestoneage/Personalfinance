@@ -96,11 +96,11 @@ test('Need or want: two plain tags on each line in Needs, never "a need, not a w
 
 test('My numbers is on the shell: one change function, no undo stack or page links of its own, deletes never ask', () => {
   const src = read('ui/ledger.js');
-  assert.match(src, /startPage\(\{ tab: 'numbers', title: 'My numbers', name: nameOf, actions, render \}\)/);
+  assert.match(src, /startPage\(\{ tab: 'numbers', title: 'Numbers', subtab: subtabOf, name: nameOf, actions, render \}\)/);
   assert.doesNotMatch(src, /page-links|createHistory|commit\(|\bundo\(|\bredo\(|loadAll\(\)\.then|mountPage\(|whoseLine|saved-line|lastSaved|View ›|'Remove '|confirm'\s*\}, 'Remove/);
   assert.doesNotMatch(src, /addEventListener\('keydown', \(e\) => \{\s*if \(!hist/, 'Ctrl+Z is the shell\'s');
   assert.match(src, /change\(\(s\) => removeItem\(s, it\.collection, it\.id\), said\.deleted\(it\.label\)\)/);
-  assert.match(read('ledger.html'), /<title>SLAM My numbers<\/title>/);
+  assert.match(read('ledger.html'), /<title>SLAM Numbers<\/title>/);
   // The rows that open a deeper screen are whole-row links with a chevron (go-row), one level per screen.
   assert.match(src, /h\('a', \{ class: mark \? 'go-row' : 'go-row plain', href, id \}/);
 });

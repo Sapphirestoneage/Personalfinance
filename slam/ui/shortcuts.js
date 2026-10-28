@@ -1,5 +1,5 @@
 // Keyboard shortcuts (overnight Track J), on every page with the shell. None fire while typing in a box.
-//   g then t, s, m, c, b or p   go to Today, Session, My numbers, Calendar, Spending (b for budget) or Plan
+//   g then h, m, p, c or b      go to Home, Numbers, Plan, Calendar or Spending (b for budget); g then g: Guide me
 //   g then o                    open the Profile
 //   n                           add (the screen's add button), if it has one
 //   / or Ctrl/Cmd+K             find, or type a change (ui/search.js)
@@ -10,12 +10,12 @@
 import { h } from './view.js';
 
 export const SHORTCUTS = [
-  ['g t', 'Today'], ['g s', 'Session'], ['g m', 'My numbers'], ['g c', 'Calendar'], ['g b', 'Spending (the budget)'], ['g p', 'Plan'], ['g o', 'Profile'],
+  ['g h', 'Home'], ['g m', 'Numbers'], ['g p', 'Plan'], ['g c', 'Calendar'], ['g b', 'Spending (the budget)'], ['g g', 'Guide me'], ['g o', 'Profile'],
   ['Enter', 'In a box: save it and move to the next box'], ['y n s', 'On a question in focus: Yes, No, Not sure'], ['m', 'Open or close More on this screen'],
   ['n', 'Add something on this screen (when no question is in focus)'], ['/', 'Find, or type a change'], ['Ctrl K', 'Find, or type a change, even in a box'],
   ['z', 'Undo'], ['Shift Z', 'Redo'], ['?', 'This list'], ['Esc', 'Close a box or this list']
 ];
-const GO = { t: 'dashboard.html', s: 'session.html', m: 'ledger.html', c: 'calendar.html', b: 'spending.html', p: 'plan.html', o: 'profile.html' };
+const GO = { h: 'dashboard.html', t: 'dashboard.html', g: 'ledger.html?guide=1', s: 'ledger.html?guide=1', m: 'ledger.html', c: 'calendar.html', b: 'spending.html', p: 'plan.html', o: 'profile.html' };
 
 let dialog = null;
 export function showList() {
