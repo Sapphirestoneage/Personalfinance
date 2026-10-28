@@ -27,6 +27,56 @@ there first.
    validator. Text never wears a data color.
 9. Light and dark are both designed. Check both before calling a screen done.
 
+### The palette (one family: ink and sapphire; no neutral grey anywhere)
+
+Every value lives in `src/ui/tokens.css`; nothing on screen uses a color,
+shadow, radius or font that is not a token there.
+
+| Token | Light | Dark | Used for |
+| --- | --- | --- | --- |
+| `--bg` | `#f3f6fc` (ice) | `#0a1024` | the page |
+| `--surface`, `--surface-2` | `#ffffff`, `#e9effa` | `#111a33`, `#16203c` | cards; strips and wells |
+| `--text`, `--text-muted` | `#0f1a33`, `#3d4a66` (navy, never grey) | `#eef2fb`, `#a9b4cc` | words; quieter words |
+| `--border`, `--border-strong` | sapphire at 14% and 32% | white at 10%, sky at 40% | lines; inputs and quiet buttons |
+| `--accent`, `--accent-2` | `#0f52ba`, `#1d6ae0` | `#5b8def`, `#22d3ee` | actions and links; the top of the primary gradient |
+| `--accent-soft`, `--accent-text` | `#e4ecfb`, `#ffffff` | `#142040`, `#061026` | tints behind a badge or a pressed toggle; words on the accent |
+| `--focus` | `#3b7bff` | `#8fb1ff` | the 3px focus ring |
+
+Status (`--good`, `--bad`, `--warn` and their `-soft` tints) and the status
+inks (`--st-*`) keep their hues; the quiet ones (`--st-not-for-me`,
+`--st-blank`, `--chart-other`) are navy, not grey. Every text color passes
+4.5:1 on every background it sits on, light and dark (`--good` and `--warn`
+are lines and borders only; the words next to them use `--st-known` and
+`--st-roughly`). Grid lines and axes in a chart are `--border` and
+`--text-muted`.
+
+Depth: `--shadow-1` (a card), `--shadow-2` (a hero tile: the statement tops,
+Today's tiles, the FI card), `--shadow-lift` (hover), `--shadow-press`
+(pressed), `--sheen` (the 1px highlight along a card's or a button's top edge),
+`--shadow-accent` (under a primary button). Radii: `--radius-sm` 10px (inputs,
+buttons, badges), `--radius-md` 14px (cards, strips), `--radius-lg` 18px (hero
+tiles), `--radius-pill`.
+
+Type: Plus Jakarta Sans (Google Fonts, 500 to 800, `display=swap`, system-ui
+behind it) for everything; big numbers at 800, letter-spacing -0.03em and
+tabular figures; `--font-num` only for columns that must line up.
+
+### The interaction rule
+
+Everything clickable with a box of its own (a button, a tab, a segment, a chip,
+a row card, a tile that links) lifts 1px with `--shadow-lift` on hover (only
+inside `@media (hover: hover)`) and presses 1px down at 98% with
+`--shadow-press`; transitions are 0.12s ease and off under
+`prefers-reduced-motion`. A row inside a card moves but casts no shadow, so it
+never floats over its neighbors. Tabs and every segmented pick sit in a strip
+(4px padding, `--surface-2`, `--radius-md`); the chosen one is a pill, white in
+light and the sapphire gradient in dark, with `--shadow-1`, and carries
+`aria-current` or `aria-pressed` as the second cue. Inputs wear a 1.5px
+`--border-strong` line on `--surface`; their labels are ink at 600, never
+muted. A status chip is a 12% tint of its own hue with a 40% line of it. No
+button is ever plain text. Letter badges (D A T I N G, the Plan's step numbers)
+are 36px squares, sapphire on its soft tint, at 800.
+
 ## Charts
 
 10. Pick the form by the question. A single number is a tile, not a chart.
