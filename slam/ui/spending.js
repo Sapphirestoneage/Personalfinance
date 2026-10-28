@@ -31,6 +31,7 @@ import { withScenario } from '../engine/scenarios.js';
 import { pickedScenario } from './scenario.js';
 import { pickedWindow, keepWindow, windowBar, WINDOWS } from './window.js';
 import { h, chip, money, shortDate, monthWords, ledgerHref } from './view.js';
+import { echo, dateBox } from './understood.js';
 import { budgetView, startMonth, RANGES, realDifferences, closeMonth, reopenMonth, planSuggestions, keepPlan, sortEntry, setMerchantRule, merchantRules as learnedMerchants, OVER_CHOICES, UNDER_CHOICES } from '../engine/budget.js';
 import { editExpense } from '../engine/edits.js';
 
@@ -56,7 +57,7 @@ let rules = null;
 // The real hourly wage, said beside the Preferences link (hours of work now follow Preferences on every screen).
 let wage = null;
 // What the page's forms hold between redraws.
-const form = { csv: '', csvFormat: 'auto', csvWith: 'cash', proposals: null, picks: null, importWords: '', amount: '', tag: 'other', paidWith: 'cash', merchant: '', expenseId: '', date: todayIso(), checkDate: todayIso() };
+const form = { csv: '', csvFormat: 'auto', csvWith: 'cash', proposals: null, picks: null, importWords: '', amount: '', tag: 'other', paidWith: 'cash', merchant: '', expenseId: '', date: '', checkDate: todayIso() };
 
 // The cut simulator's picks: the lines tried without, across every screen of this page and kept in this browser tab,
 // so drilling in and coming back keeps them. Nothing in the household changes until "Cut them from my plan".
@@ -106,7 +107,7 @@ function lineHref(m, id, minimum = false) {
   return c && c.lines.some((l) => l.id === id) ? at(c.id, id) : null;
 }
 // A line's name, linked to its screen (or to My numbers when it has none).
-const lineLink = (m, id, label, path, minimum = false) => { const href = lineHref(m, id, minimum); return href ? h('a', { href }, label, ' ', chev()) : h('a', { href: ledgerHref(path) }, label); };
+const lineLink = (m, id, label, path, minimum = false) => { const href = lineHref(m, id, minimum); return href ? h('a', { class: 'cell-link', href }, label, ' ', chev()) : h('a', { class: 'cell-link', href: ledgerHref(path) }, label); };
 
 // A fold this screen keeps open across Back and a reload; one open at a time (they share a name).
 function fold(id, cls, summary, ...body) {
@@ -135,7 +136,7 @@ function safeCard(m) {
 function logItem(spine, e) {
   const what = 'The ' + cents(e.amount) + (e.kind === 'refund' ? ' refund' : e.kind === 'income' ? ' income' : ' purchase') + (e.merchant ? ' at ' + e.merchant : '') + ' on ' + shortDate(e.date);
   return h('li', {},
-    h('span', {}, shortDate(e.date)), h('span', {}, h('strong', {}, e.merchant || (e.kind === 'refund' ? 'Refund' : e.kind === 'income' ? 'Income' : 'Spend')), e.expenseId ? ' (' + ((spine.expenses.find((x) => x.id === e.expenseId) || {}).label || e.expenseId) + ')' : e.tag ? ' (' + TAG_WORDS[e.tag].toLowerCase() + ')' : ''), e.paidWith && e.paidWith !== 'cash' ? h('span', { class: 'pill' }, ((spine.debts || []).find((d) => d.id === e.paidWith) || {}).name?.value || e.paidWith) : null, e.source === 'import' ? h('span', { class: 'pill' }, 'imported') : null,
+    h('span', {}, shortDate(e.date)), h('span', {}, h('strong', {}, e.merchant || (e.kind === 'refund' ? 'Refund' : e.kind === 'income' ? 'Income' : 'No store')), e.expenseId ? ' (' + ((spine.expenses.find((x) => x.id === e.expenseId) || {}).label || e.expenseId) + ')' : e.tag ? ' (' + TAG_WORDS[e.tag].toLowerCase() + ')' : ''), e.paidWith && e.paidWith !== 'cash' ? h('span', { class: 'pill' }, ((spine.debts || []).find((d) => d.id === e.paidWith) || {}).name?.value || e.paidWith) : null, e.source === 'import' ? h('span', { class: 'pill' }, 'imported') : null,
     h('span', { class: 'log-amt' }, (e.kind === 'refund' ? '+' : e.kind === 'income' ? '+' : '-') + cents(e.amount)),
     h('button', { type: 'button', class: 'btn ghost small', 'aria-label': 'Remove ' + what, onclick: () => change((s) => removeLog(s, e.id), said.deleted(what)) }, 'Remove'));
 }
@@ -144,7 +145,7 @@ function logItem(spine, e) {
 function loggerCard(m) {
   const spine = m.spine;
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const amount = h('input', { id: 'log-amount', class: 'amount-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45', 'aria-label': 'Amount' });
+  const amount = echo(h('input', { id: 'log-amount', class: 'amount-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45', 'aria-label': 'Amount' }), 'money');
   amount.value = form.amount;
   amount.addEventListener('input', () => { form.amount = amount.value; });
   const merchant = h('input', { id: 'log-merchant', type: 'text', autocomplete: 'off', placeholder: 'Store or website' });
@@ -153,18 +154,26 @@ function loggerCard(m) {
   merchant.addEventListener('input', () => { form.merchant = merchant.value; const c = cleanMerchant(merchant.value); hint.textContent = c && c !== merchant.value.trim() ? 'Reads as ' + c : ''; });
   const paid = h('select', { id: 'log-paid', 'aria-label': 'Paid with', onchange: () => { form.paidWith = paid.value; } }, h('option', { value: 'cash' }, 'Cash or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
   paid.value = form.paidWith;
-  const line = h('select', { id: 'log-line', 'aria-label': 'A line it belongs to', onchange: () => { form.expenseId = line.value; } }, h('option', { value: '' }, 'None'), ...(spine.expenses || []).map((e) => h('option', { value: e.id }, e.label)));
+  // Picking a line presses its category's chip, so the strip never says one category while the line says another.
+  const line = h('select', { id: 'log-line', 'aria-label': 'A line it belongs to', onchange: () => { form.expenseId = line.value; const e = line.value ? (spine.expenses || []).find((x) => x.id === line.value) : null; if (e) pressTag(e.fat || 'other'); } }, h('option', { value: '' }, 'None'), ...(spine.expenses || []).map((e) => h('option', { value: e.id }, e.label)));
   line.value = form.expenseId;
-  const date = h('input', { id: 'log-date', type: 'date', 'aria-label': 'Day', onchange: () => { form.date = date.value; } }); date.value = form.date;
-  const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-label': 'Tag' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => { form.tag = t; for (const b of chips.children) b.setAttribute('aria-pressed', String(b.textContent === TAG_WORDS[t])); } }, TAG_WORDS[t])));
+  // The day as people say it ("today", "oct 20", "the 15th"); blank is today. dayRead is false while the box holds
+  // words no day was read from, so a typo never lands on today without a word.
+  let dayRead = true;
+  const date = dateBox('log-date', '', (v) => { form.date = v; dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20', 'aria-label': 'Day' });
+  const pressTag = (t) => { form.tag = t; for (const b of chips.children) b.setAttribute('aria-pressed', String(b.textContent === TAG_WORDS[t])); };
+  const chips = h('div', { class: 'tag-chips', role: 'group', 'aria-label': 'Tag' }, TAGS.map((t) => h('button', { type: 'button', class: 'tag-chip', 'aria-pressed': String(form.tag === t), onclick: () => pressTag(t) }, TAG_WORDS[t])));
   const submit = (kind) => {
     const p = parseInput('money', amount.value);
     if (!p.ok) { msg.textContent = p.message; amount.focus(); return; }
-    const was = { amount: form.amount, merchant: form.merchant };
-    form.amount = ''; form.merchant = ''; form.paidWith = paid.value; form.expenseId = line.value; form.date = date.value || todayIso();
+    if (!dayRead) { msg.textContent = 'Day: not read. Try "Oct 20", or leave it blank for today'; date.focus(); return; }
+    const was = { amount: form.amount, merchant: form.merchant, expenseId: form.expenseId, date: form.date };
+    const day = form.date || todayIso();
+    // After Add the amount, the store, the line and the day clear; the category and paid-with stay for the next one.
+    form.amount = ''; form.merchant = ''; form.paidWith = paid.value; form.expenseId = ''; form.date = '';
     const exp = line.value ? spine.expenses.find((e) => e.id === line.value) : null;
     const on = exp ? exp.label : TAG_WORDS[form.tag].toLowerCase();
-    const ok = change((s) => logSpend(s, { amount: p.value, date: form.date, kind, tag: exp ? exp.fat || 'other' : form.tag, expenseId: line.value || null, merchant: cleanMerchant(merchant.value), note: merchant.value.trim() && cleanMerchant(merchant.value) !== merchant.value.trim() ? merchant.value.trim() : null, paidWith: paid.value }).spine,
+    const ok = change((s) => logSpend(s, { amount: p.value, date: day, kind, tag: exp ? exp.fat || 'other' : form.tag, expenseId: line.value || null, merchant: cleanMerchant(merchant.value), note: merchant.value.trim() && cleanMerchant(merchant.value) !== merchant.value.trim() ? merchant.value.trim() : null, paidWith: paid.value }).spine,
       said.added('A ' + cents(p.value) + (kind === 'refund' ? ' refund' : ' purchase') + ' on ' + on));
     if (!ok) { Object.assign(form, was); refresh(); }
   };
@@ -174,7 +183,7 @@ function loggerCard(m) {
     h('form', { class: 'logger', novalidate: true, onsubmit: (e) => { e.preventDefault(); submit('spend'); } },
       h('label', { for: 'log-amount', class: 'edit-label' }, 'How much'), amount,
       chips,
-      h('label', { for: 'log-line', class: 'edit-label' }, 'Which bill (optional)'), line,
+      h('label', { for: 'log-line', class: 'edit-label' }, 'Which line (optional)'), line,
       h('label', { for: 'log-paid', class: 'edit-label' }, 'Paid with'), paid,
       h('label', { for: 'log-merchant', class: 'edit-label' }, 'Where (optional)'), merchant, hint,
       h('label', { for: 'log-date', class: 'edit-label' }, 'Day'), date,
@@ -198,9 +207,8 @@ const tagMath = (r) => ['spend:tagBudget:' + r.tag, 'spend:tagSpent:' + r.tag, .
 
 function tagsCard(m) {
   const t = m.vw.tags;
-  return h('section', { class: 'card', 'aria-labelledby': 'tags-h' },
-    h('h2', { id: 'tags-h' }, 'Budgets, ' + monthWords(t.ym)),
-    h('p', { class: 'muted' }, t.day ? 'Day ' + t.day + ' of ' + t.daysInMonth + '. The line in each bar is where you would be today on pace.' : 'Spent against the budget.'),
+  return h('section', { class: 'card', 'aria-label': 'Budgets with pace' },
+    h('p', { class: 'muted' }, monthWords(t.ym) + (t.day ? ', day ' + t.day + ' of ' + t.daysInMonth + '. The line in each bar is where you would be today on pace.' : '. Spent against the budget.')),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' },
       h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', {}, 'Spent'), h('th', { class: 'num' }, 'Left'), h('th', { class: 'num' }, 'At this pace'), h('th', { class: 'num' }, 'Last month, same day'))),
       h('tbody', {}, t.rows.map((r) => h('tr', {},
@@ -231,20 +239,18 @@ function fixedVarCard(m) {
     if (!l.trend || !l.trend.direction) return h('span', { class: 'fv-note' }, avg);
     return h('span', { class: 'fv-note' }, avg + ', ', h('span', { class: 'fv-trend fv-' + l.trend.direction }, TREND_WORDS[l.trend.direction] + (l.trend.direction === 'steady' ? '' : ' ' + Math.abs(Math.round(l.trend.change * 100)) + '%')));
   };
-  const row = (l, now, extra) => h('li', { class: 'fv-line' }, h('a', { class: 'fv-name', href: ledgerHref(l.path) }, l.label), h('span', { class: 'fv-amt' }, amt(l.amount)), extra, fixedSwitch(l, now));
-  const head = (words, g) => h('h3', { class: 'fv-h' }, words, ' ', h('span', { class: 'fv-total' }, g.total === null ? 'some amounts missing' : money(g.total) + ' a month'));
-  return h('section', { class: 'card', 'aria-labelledby': 'fv-h' },
-    h('h2', { id: 'fv-h' }, 'Fixed and variable'),
+  const row = (l, now, extra) => h('li', { class: 'fv-line' }, h('a', { class: 'fv-name cell-link', href: ledgerHref(l.path) }, l.label), h('span', { class: 'fv-amt' }, amt(l.amount)), extra, fixedSwitch(l, now));
+  const head = (words, g) => h('h2', { class: 'fv-h' }, words, ' ', h('span', { class: 'fv-total' }, g.total === null ? 'some amounts missing' : money(g.total) + ' a month'));
+  return h('section', { class: 'card', 'aria-label': 'Fixed and variable' },
     h('p', { class: 'muted' }, 'Fixed is the same each time, like rent. Variable moves, like utilities and food; its trend comes from what you log.'),
     fv.fixed.items.length ? [head('Fixed', fv.fixed), h('ul', { class: 'fv-list' }, fv.fixed.items.map((l) => row(l, true)))] : null,
     fv.variable.items.length ? [head('Variable', fv.variable), h('ul', { class: 'fv-list' }, fv.variable.items.map((l) => row(l, false, trend(l))))] : null,
-    fv.unsorted.length ? [h('h3', { class: 'fv-h' }, 'Not sorted yet ', h('span', { class: 'count' }, String(fv.unsorted.length))), h('ul', { class: 'fv-list' }, fv.unsorted.map((l) => row(l, null)))] : null);
+    fv.unsorted.length ? [h('h2', { class: 'fv-h' }, 'Not marked fixed or varies yet ', h('span', { class: 'count' }, String(fv.unsorted.length))), h('ul', { class: 'fv-list' }, fv.unsorted.map((l) => row(l, null)))] : null);
 }
 
 function tiersCard(m) {
   const tiers = m.tiers;
-  return h('section', { class: 'card', 'aria-labelledby': 'tiers-h' },
-    h('h2', { id: 'tiers-h' }, 'What goes out, in four layers'),
+  return h('section', { class: 'card', 'aria-label': 'Layers of spending' },
     h('ol', { class: 'tiers' }, tiers.tiers.map((x) => h('li', {}, h('span', {}, x.label), h('span', { class: 'tier-amt' }, money(x.amount)), h('span', { class: 'tier-cum' }, 'so far ' + money(x.cumulative))))),
     h('p', { class: 'tile-sub' }, kindChip(tiers.kind), ' ', tiers.takeHome.value === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay') : 'Take-home ' + money(tiers.takeHome.value) + ' a month; ' + (tiers.unallocated.value === null ? 'unallocated unknown' : tiers.unallocated.value >= 0 ? money(tiers.unallocated.value) + ' not given a job yet' : money(-tiers.unallocated.value) + ' short of take-home') + '.'),
     fold('tiers', 'later-list', 'What the layers mean', h('ul', {}, h('li', {}, 'Core: food, housing and getting around.'), h('li', {}, 'Miscellaneous: everything else that is not debt.'), h('li', {}, 'Minimums: what your debts ask for each month.'), h('li', {}, 'Extra, saving and tax set aside.'))),
@@ -263,9 +269,8 @@ function donutCard(m) {
     const kids = [h('span', { class: 'sw ' + VIZ[i % VIZ.length], 'aria-hidden': 'true' }), h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, money(x.amount)), ' a month' + (x.share !== null ? ' (' + Math.round(x.share * 100) + '%)' : ''))];
     return h('li', {}, catOf(m, x.id) ? h('a', { class: 'go-row', href: at(x.id) }, ...kids) : h('div', { class: 'go-still' }, ...kids));
   };
-  return h('section', { class: 'card', 'aria-labelledby': 'donut-h' },
-    h('h2', { id: 'donut-h' }, 'Where the money goes'),
-    h('p', { class: 'muted' }, 'Try cutting something. Nothing is saved until you choose.'),
+  return h('section', { class: 'card', 'aria-label': 'Where the money goes' },
+    h('p', { class: 'muted' }, 'Open a category to see its lines and try one without.'),
     h('div', { class: 'donut-wrap' }, ring, h('ul', { class: 'go-list slice-list', 'aria-label': 'The slices' }, d.slices.map(row))),
     h('p', { class: 'tile-sub' }, kindChip(d.kind), ' ', d.total === null ? h('span', { class: 'missing-row' }, 'Missing: take-home pay.') : 'Of ' + money(d.total) + ' take-home a month.' + (d.short ? ' ' + money(d.short) + ' more leaves than comes in.' : '')));
 }
@@ -295,40 +300,38 @@ function cutCard(m) {
 
 function autopsyCard(m) {
   const a = m.vw.autopsy;
-  return h('section', { class: 'card', 'aria-labelledby': 'autopsy-h' },
-    h('h2', { id: 'autopsy-h' }, 'Bills by yearly cost ', h('span', { class: 'count' }, money(a.yearlyTotal) + ' a year')),
-    h('p', { class: 'muted' }, 'Biggest first. A subscription you have not looked at in a year is worth a look.'),
+  return h('section', { class: 'card', 'aria-label': 'Each line, a year' },
+    h('p', { class: 'muted' }, money(a.yearlyTotal) + ' a year in all, biggest first. A subscription you have not looked at in a year is worth a look.'),
     h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Item'), h('th', { class: 'num' }, 'A month'), h('th', { class: 'num' }, 'A year'), h('th', {}, 'Reviewed'))),
-      h('tbody', {}, a.rows.map((r) => { const min = r.id.startsWith('min:'); return h('tr', { class: r.stale && r.subscription ? 'tight' : '' }, h('td', {}, lineLink(m, min ? r.id.slice(4) : r.id, r.label, r.path, min), r.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, r.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null), h('td', { class: 'num' }, money(r.monthly)), h('td', { class: 'num' }, money(r.yearly)), h('td', {}, r.reviewed ? shortDate(r.reviewed) : r.subscription ? h('span', { class: 'missing-row' }, 'never') : '')); })))),
+      h('tbody', {}, a.rows.map((r) => { const min = r.id.startsWith('min:'); return h('tr', { class: r.stale && r.subscription ? 'tight' : '' }, h('td', {}, lineLink(m, min ? r.id.slice(4) : r.id, r.label, r.path, min), r.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'subscription')] : null, r.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null), h('td', { class: 'num' }, money(r.monthly)), h('td', { class: 'num' }, money(r.yearly)), h('td', {}, r.reviewed ? shortDate(r.reviewed) : r.subscription ? h('span', { class: 'missing-row' }, h('a', { href: ledgerHref('expenses.' + r.id + '.reviewed') }, 'never')) : '')); })))),
     mathButton(a.rows.slice(0, 5).map((r) => 'spend:autopsy:' + r.id), m.ctx, 0, 'Show the math for the top five'));
 }
 
 function askCard(m, state) {
   const spine = m.spine;
-  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-labelledby': 'ask-h' }, h('h2', { id: 'ask-h' }, 'Can I afford this?'), h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
+  if (m.sim && !m.sim.checking.known) return h('section', { class: 'card', 'aria-label': 'Can I afford this?' }, h('p', { class: 'muted missing-row' }, 'Missing: a checking balance.'));
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const asked = state.ask || '', askWith = state.askWith || 'cash';
-  const amount = h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off' }); amount.value = asked;
+  const amount = echo(h('input', { id: 'ask-amount', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 2,000 or 2k' }), 'money'); amount.value = asked;
   const paid = h('select', { id: 'ask-paid' }, h('option', { value: 'cash' }, 'Cash or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
   paid.value = askWith;
   const parsed = asked.trim() === '' ? null : parseInput('money', asked);
   const ask = parsed && parsed.ok ? canISpend(spine, rules, m.sim, { amount: parsed.value, paidWith: askWith }) : null;
-  return h('section', { class: 'card', 'aria-labelledby': 'ask-h' },
-    h('h2', { id: 'ask-h' }, 'Can I afford this?'),
-    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; return; } keep({ ask: amount.value, askWith: paid.value }); refresh(); } },
+  return h('section', { class: 'card', 'aria-label': 'Can I afford this?' },
+    h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); if (amount.value.trim() === '') { msg.textContent = 'Type an amount, like 2,000 or 2k'; amount.focus(); return; } const p = parseInput('money', amount.value); if (!p.ok) { msg.textContent = p.message; amount.focus(); return; } keep({ ask: amount.value, askWith: paid.value }); refresh(); } },
       h('label', { for: 'ask-amount', class: 'edit-label' }, 'How much, today'), amount,
       h('label', { for: 'ask-paid', class: 'edit-label' }, 'Paid with'), paid, msg,
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Tell me'))),
     ask && ask.verdict ? [
       h('p', {}, h('span', { class: 'verdict ' + ask.verdict }, ask.verdict === 'yes' ? 'Yes' : ask.verdict === 'tight' ? 'Tight' : 'No')),
-      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' would dip under the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
-      h('p', { class: 'tile-note' }, kindChip(ask.kind)),
+      h('ul', {}, h('li', {}, 'Safe to spend: ' + money(ask.safeBefore) + ' to ' + money(ask.safeAfter) + '.'), ask.lowBefore.amount === 0 && ask.lowAfter.amount === 0 && !ask.shortfalls ? null : h('li', {}, 'Lowest day: ' + money(ask.lowBefore.amount) + ' on ' + shortDate(ask.lowBefore.date) + ' to ' + money(ask.lowAfter.amount) + ' on ' + shortDate(ask.lowAfter.date) + (ask.shortfalls ? ', and ' + ask.shortfalls + ' payment' + (ask.shortfalls === 1 ? '' : 's') + ' would dip under the floor' : '') + '.'), ask.interest ? h('li', {}, money(ask.interest) + ' of interest ' + ask.interestNote + '.') : ask.interestNote ? h('li', {}, ask.interestNote + '.') : null, h('li', {}, ask.hours === null ? h('span', { class: 'missing-row' }, 'Hours of life: missing hours worked a week. ', h('a', { href: ledgerHref(HOURS_WORK) }, 'Add it in My numbers')) : 'Hours of life: ' + ask.hours + ' at ' + money(ask.hourlyWage) + ' of take-home an hour.'), ask.delayDays !== null ? h('li', {}, 'Your next goal moves about ' + ask.delayDays + ' days later.') : h('li', {}, 'It comes out of the cushion or goes on a card.')),
+      ask.hours === null ? null : h('p', { class: 'tile-note' }, kindChip(ask.kind)),
       mathButton(['spend:ask'], () => ({ ...m.ctx(), ask }))] : null);
 }
 
 function pricesCard(m) {
   const p = m.vw.prices, f = m.vw.trials;
-  if (!p.rows.length && !f.rows.length) return null;
+  if (!p.rows.length && !f.rows.length) return h('p', { class: 'muted' }, 'No price changes or free trials this month.');
   return h('section', { class: 'card', 'aria-labelledby': 'prices-h' },
     h('h2', { id: 'prices-h' }, 'Price increases and free trials'),
     p.rows.length ? h('ul', { class: 'flow-list' }, p.rows.map((r) => h('li', {}, lineLink(m, r.id, r.label, r.path), ': ' + priceWords(r)))) : null,
@@ -340,27 +343,30 @@ const trialWords = (r) => (r.converted ? 'the free trial ended ' + shortDate(r.t
 
 function checkinCard(m) {
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const date = h('input', { id: 'ci-date', type: 'date', onchange: () => { form.checkDate = date.value; } }); date.value = form.checkDate;
+  // The day as people say it; blank is today. dayRead is false while the box holds words no day was read from.
+  let dayRead = true;
+  const date = dateBox('ci-date', '', (v) => { form.checkDate = v || todayIso(); dayRead = !!v || !date.value.trim(); }, { placeholder: 'today, or e.g. Oct 20' });
   const f = checkInForecast(m.spine, m.sim, form.checkDate >= m.sim.start ? form.checkDate : m.sim.start);
-  const boxes = f.accounts.map((a) => ({ a, input: h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? '' : 'expected ' + money(f.forecast[a.id]) }) }));
+  const boxes = f.accounts.map((a) => ({ a, input: echo(h('input', { id: 'ci-' + a.id, type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: f.forecast[a.id] === null ? '' : 'expected ' + money(f.forecast[a.id]) }), 'money') }));
   const dr = m.vw.drift, mo = m.vw.momentum;
   const math = [...(dr.count ? ['spend:drift'] : []), ...(mo.perMonth !== null ? ['spend:momentum'] : [])];
-  return h('section', { class: 'card', id: 'checkin', 'aria-labelledby': 'ci-h' },
-    h('h2', { id: 'ci-h' }, 'Check in balances'),
-    h('p', { class: 'muted' }, 'Type what each account holds today. The grey number, when there is one, is what we expected.'),
+  return h('section', { class: 'card', id: 'checkin', 'aria-label': 'Check in balances' },
+    h('p', { class: 'muted' }, 'Type what each account holds today. The faint amount in a box is what we expected.'),
     h('form', { class: 'checkin-grid', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const balances = {}, forecast = {};
       for (const { a, input } of boxes) { if (input.value.trim() === '') continue; const p = parseInput('money', input.value); if (!p.ok) { msg.textContent = a.name + ': ' + p.message; input.focus(); return; } balances[a.id] = p.value; forecast[a.id] = f.forecast[a.id]; }
       if (!Object.keys(balances).length) { msg.textContent = 'Type at least one balance'; return; }
-      form.checkDate = date.value || todayIso();
-      change((s) => checkIn(s, { date: form.checkDate, balances, forecast }), said.added('Check-in for ' + shortDate(form.checkDate)));
+      if (!dayRead) { msg.textContent = 'On: not read. Try "Oct 20", or leave it blank for today'; date.focus(); return; }
+      const on = form.checkDate || todayIso();
+      form.checkDate = todayIso();
+      if (!change((s) => checkIn(s, { date: on, balances, forecast }), said.added('Check-in for ' + shortDate(on)))) form.checkDate = on;
     } },
       h('label', { for: 'ci-date', class: 'edit-label' }, 'On'), date,
       ...boxes.flatMap(({ a, input }) => [h('label', { for: 'ci-' + a.id, class: 'edit-label' }, a.name + (a.setAside ? ' (' + a.setAside + ', not spending money)' : a.cushion ? ' (cushion)' : '') + ', now ' + (a.now === null ? 'missing' : money(a.now))), input]),
       msg, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save balances'))),
-    h('h3', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
-    h('h3', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
+    h('h2', { class: 'month-h' }, 'Drift'), h('p', { class: 'tile-sub' }, dr.words),
+    h('h2', { class: 'month-h' }, 'Momentum'), h('p', { class: 'tile-sub' }, mo.words),
     math.length ? mathButton(math, m.ctx) : null);
 }
 
@@ -371,7 +377,8 @@ function sweepCard(m) {
   const on = h('input', { type: 'checkbox', id: 'sweep-on', checked: cal.on === true });
   const to = h('select', { id: 'sweep-to' }, h('option', { value: '' }, 'Pick an account'), ...m.sim.model.accounts.filter((a) => !a.primary).map((a) => h('option', { value: a.id }, a.name)));
   to.value = cal.to || '';
-  const keepBox = h('input', { id: 'sweep-keep', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' }); keepBox.value = cal.keep !== undefined ? String(cal.keep) : '';
+  // A keep of 0 is the same as none, so the box reads blank, not 0 (the saved number stays what it is).
+  const keepBox = echo(h('input', { id: 'sweep-keep', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 200' }), 'money'); keepBox.value = cal.keep ? String(cal.keep) : '';
   const submit = (e) => {
     e.preventDefault();
     const k = keepBox.value.trim() === '' ? { ok: true, value: 0 } : parseInput('money', keepBox.value);
@@ -380,8 +387,7 @@ function sweepCard(m) {
     const where = (to.options[to.selectedIndex] || {}).text;
     change((s) => setSweep(s, { on: on.checked, to: to.value || null, keep: k.value }), said.changed('The month-end sweep', on.checked ? 'on, to ' + where + (k.value ? ', keeping ' + cents(k.value) : '') : 'off'));
   };
-  return h('section', { class: 'card', 'aria-labelledby': 'sweep-h' },
-    h('h2', { id: 'sweep-h' }, 'Month-end sweep'),
+  return h('section', { class: 'card', 'aria-label': 'Month-end sweep' },
     h('p', { class: 'muted' }, 'At month end, extra cash in checking moves to the account you pick.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: submit },
       h('label', { class: 'check-row', for: 'sweep-on' }, on, h('span', {}, h('strong', {}, 'Sweep at month end'))),
@@ -395,11 +401,11 @@ function sweepCard(m) {
 function outlookCard(m) {
   const o = monthOutlook(m.spine, rules, m.sim, { today: todayIso(), waiting: waiting(m.spine, rules, { today: todayIso() }) });
   const sign = (x) => (x === null ? 'missing' : (x < 0 ? '-' : '+') + money(Math.abs(x)));
-  if (o.stale) return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' }, h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
-    h('p', { class: 'muted' }, 'Balances are from ' + shortDate(o.asOf) + '. Check in to see this month.'),
+  if (o.stale) return h('section', { class: 'card', 'aria-label': 'How the month could end' },
+    h('p', { class: 'muted' }, monthWords(o.ym) + '. Balances are from ' + shortDate(o.asOf) + '; check in to see this month.'),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/checkin' }, 'Check in')));
-  return h('section', { class: 'card', 'aria-labelledby': 'outlook-h' },
-    h('h2', { id: 'outlook-h' }, 'This month so far, ' + monthWords(o.ym)),
+  return h('section', { class: 'card', 'aria-label': 'How the month could end' },
+    h('p', { class: 'muted' }, monthWords(o.ym) + ' so far.'),
     h('div', { class: 'clear-grid' },
       h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.soFar)), h('span', { class: 'clear-label' }, 'So far'), h('span', { class: 'tile-note' }, money(o.incomeSoFar) + ' in, ' + money(o.spentSoFar) + ' out')),
       h('div', { class: 'clear-tile' }, h('span', { class: 'clear-date' }, sign(o.expected)), h('span', { class: 'clear-label' }, 'By month end'), h('span', { class: 'tile-note' }, o.expected === null ? 'Missing: ' + o.rest.filter((r) => r.left === null).map((r) => r.label).concat(o.missing.length && !o.rest.some((r) => r.left === null) ? ['a line left out'] : []).join(', ') : money(o.paychecks) + ' still to come in, ' + money(o.bills) + ' in bills, ' + money(o.planLeft) + ' left of the plan'))),
@@ -407,8 +413,8 @@ function outlookCard(m) {
     o.noPayDate.length ? h('p', { class: 'muted missing-row' }, 'Missing a pay date: ' + o.noPayDate.join(', ') + '.') : null,
     o.guessedPayDay.length ? h('p', { class: 'muted' }, 'Pay day is a guess: ' + o.guessedPayDay.join(', ') + '.') : null,
     fold('to-come', 'flow-list', 'Still to come (' + (o.items.length + o.rest.length) + ')',
-      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount), true) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet)' : ''))),
-        o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left, true) + ' left of ' + money(r.plan, true)))),
+      h('ul', {}, o.items.map((i) => h('li', {}, shortDate(i.date) + ': ' + i.label + ', ' + (i.amount > 0 ? 'in ' : 'out ') + money(Math.abs(i.amount)) + (i.card ? ' (on the card)' : '') + (i.waiting ? ' (not marked yet)' : ''))),
+        o.rest.map((r) => h('li', {}, r.label + ' (' + r.lines.join(', ') + '): ' + (r.left === null ? h('span', { class: 'missing-row' }, 'missing: a line has no amount') : money(r.left) + ' left of ' + money(r.plan)))),
         o.claimed.length ? o.claimed.map((i) => h('li', { class: 'muted' }, shortDate(i.date) + ': ' + i.label + ' already happened')) : null)),
     h('p', { class: 'tile-note' }, kindChip(o.kind)),
     mathButton(['compare:soFar', 'compare:expected'], () => ({ ...m.ctx(), monthOut: o })));
@@ -419,14 +425,13 @@ const windowWords = (c) => monthWords(c.from) + (c.from === c.to ? '' : ' to ' +
 const diffWords = (d) => (d === null ? 'missing' : d > 0 ? '+' + money(d) + ' over' : d < 0 ? money(-d) + ' under' : 'on the plan');
 function compareCard(m) {
   const c = m.compare;
-  return h('section', { class: 'card', 'aria-labelledby': 'cmp-h' },
-    h('h2', { id: 'cmp-h' }, 'Plan vs spent, ' + windowWords(c)),
+  return h('section', { class: 'card', 'aria-label': 'Estimated vs actual' },
     c.monthsSilent.length ? h('p', { class: 'muted' }, 'Nothing added in ' + c.monthsSilent.map(monthWords).join(', ') + '.') : null,
-    h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spent ' + money(c.spend.actual) + ' of ' + (c.spend.planned === null ? 'a plan with a missing line' : money(c.spend.planned) + ' planned') + ' (' + diffWords(c.spend.diff) + ').'),
-    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Spent'), h('th', { class: 'num' }, 'Difference'))),
+    h('p', { class: 'tile-sub' }, kindChip(c.kind), ' Spent ' + money(c.spend.actual) + ' of ' + (c.spend.planned === null ? 'a plan with a missing line' : 'a ' + money(c.spend.planned) + ' plan') + ' (' + diffWords(c.spend.diff) + ').'),
+    h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Category'), h('th', { class: 'num' }, 'Plan'), h('th', { class: 'num' }, 'Spent'), h('th', { class: 'num' }, 'Difference'))),
       h('tbody', {}, c.tags.map((r) => h('tr', {}, h('td', {}, tagName(m, r.tag, r.label), r.unassigned ? h('span', { class: 'choice-sub' }, ' (' + money(r.unassigned) + ' not on a line)') : null), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff))))))),
     fold('lines', 'flow-list', 'Every line (' + c.lines.length + ')',
-      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Line'), h('th', { class: 'num' }, 'Planned'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Line'), h('th', { class: 'num' }, 'Plan'), h('th', { class: 'num' }, 'Logged'), h('th', { class: 'num' }, 'Difference'))),
         h('tbody', {}, c.lines.map((r) => h('tr', {}, h('td', {}, lineLink(m, r.id, r.label, r.path), ' ', h('span', { class: 'choice-sub' }, r.entries + (r.entries === 1 ? ' entry' : ' entries'))), h('td', { class: 'num' }, r.missing ? 'missing' : money(r.planned)), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, diffWords(r.diff)))))))),
     mathButton(['compare:spend', 'compare:income', 'compare:savingsReal', ...c.tags.map((r) => 'compare:tag:' + r.tag)], m.ctx));
 }
@@ -440,7 +445,7 @@ function importCard(m) {
   text.addEventListener('input', () => { form.csv = text.value; });
   const fmt = h('select', { id: 'csv-format' }, h('option', { value: 'auto' }, 'Figure it out'), ...Object.entries(FORMATS).map(([k, f]) => h('option', { value: k }, f.label)));
   fmt.value = form.csvFormat;
-  const paid = h('select', { id: 'csv-with' }, h('option', { value: 'cash' }, 'Checking or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
+  const paid = h('select', { id: 'csv-with' }, h('option', { value: 'cash' }, 'Cash or debit'), ...(spine.debts || []).filter((d) => d.type === 'credit_card').map((d) => h('option', { value: d.id }, d.name && d.name.value ? d.name.value : d.id)));
   paid.value = form.csvWith;
   let docs = [];
   try { docs = budgetDocsFromStorage((k) => localStorage.getItem(k), Object.keys(localStorage)); } catch { docs = []; }
@@ -454,17 +459,17 @@ function importCard(m) {
     const ok = change((s) => { r = applyImport(s, p.proposals, { picks: picked }); return r.spine; }, said.added(picked.length + (picked.length === 1 ? ' entry' : ' entries') + ' from the statement'));
     if (ok) { form.proposals = null; form.picks = null; form.importWords = r ? 'Added ' + r.added + ', skipped ' + r.skipped + ' (already in, or not spending).' : ''; refresh(); }
   };
-  return h('section', { class: 'card', id: 'import', 'aria-labelledby': 'imp-h' },
-    h('h2', { id: 'imp-h' }, 'Import a statement'),
+  return h('section', { class: 'card', id: 'import', 'aria-label': 'Import a statement' },
     h('p', { class: 'muted' }, 'Paste a download from your bank or card. You check each line before anything is added, and nothing is added twice.'),
     h('form', { class: 'tool-form', novalidate: true, onsubmit: (e) => { e.preventDefault(); form.csv = text.value; form.csvFormat = fmt.value; form.csvWith = paid.value; try { form.proposals = proposeCsv(spine, rules, text.value, { format: fmt.value, paidWith: paid.value, merchantRules }); form.picks = null; form.importWords = ''; } catch (err) { msg.textContent = err.message; return; } refresh(); } },
       h('label', { for: 'csv-text', class: 'edit-label' }, 'A statement'), text,
       h('label', { for: 'csv-format', class: 'edit-label' }, 'Format'), fmt,
-      h('label', { for: 'csv-with', class: 'edit-label' }, 'Which account'), paid, msg,
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Read the statement'), ...docs.map((d) => h('button', { type: 'button', class: 'btn', onclick: () => { form.proposals = proposeBudget(spine, rules, d.doc, { merchantRules }); form.picks = null; form.importWords = ''; refresh(); } }, 'Read the Budget app: ' + d.name + ' (' + d.transactions + ')')))),
+      h('label', { for: 'csv-with', class: 'edit-label' }, 'Paid with'), paid, msg,
+      // One primary per screen: with a queue up, Add the ticked lines is the primary.
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: p ? 'btn' : 'btn primary' }, 'Read the statement'), ...docs.map((d) => h('button', { type: 'button', class: 'btn', onclick: () => { form.proposals = proposeBudget(spine, rules, d.doc, { merchantRules }); form.picks = null; form.importWords = ''; refresh(); } }, 'Read the Budget app: ' + d.name + ' (' + d.transactions + ')')))),
     form.importWords ? h('p', { class: 'tool-result' }, form.importWords) : null,
     p ? [h('p', { class: 'tile-sub' }, (p.label ? p.label + ': ' : '') + p.words + (p.skippedRows && p.skippedRows.length ? ' Rows skipped (no date, amount or words): ' + p.skippedRows.join(', ') + '.' : '')),
-      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data-table import-queue' }, h('thead', {}, h('tr', {}, h('th', {}, 'Take'), h('th', {}, 'Day'), h('th', {}, 'Where'), h('th', { class: 'num' }, 'Amount'), h('th', {}, 'Line'), h('th', {}, 'Status'))),
         h('tbody', {}, p.proposals.map((x) => { const on = picks ? picks.includes(x.key) : x.include; return h('tr', { class: x.status === 'matched' ? '' : x.status === 'new' ? 'tight' : '' }, h('td', {}, h('label', { class: 'tap-box' }, h('input', { type: 'checkbox', 'aria-label': 'Take ' + (x.merchant || x.description), checked: on, disabled: x.status === 'skip' || x.status === 'same', onchange: (e) => { const set = new Set(form.picks || p.proposals.filter((y) => y.include).map((y) => y.key)); if (e.target.checked) set.add(x.key); else set.delete(x.key); form.picks = [...set]; } }))), h('td', {}, shortDate(x.date)), h('td', {}, x.merchant || x.description), h('td', { class: 'num' }, (x.kind === 'income' || x.kind === 'refund' ? '+' : '-') + cents(x.amount)), h('td', {}, x.expenseId ? ((spine.expenses || []).find((e) => e.id === x.expenseId) || {}).label || x.expenseId : x.kind === 'income' ? 'income' : x.tag ? TAG_WORDS[x.tag] : ''), h('td', {}, h('span', { class: 'pill' + (x.status === 'new' ? ' pill-maybe' : x.status === 'skip' || x.status === 'same' ? ' pill-done' : '') }, x.status === 'same' ? 'already in' : x.status), ' ', h('span', { class: 'choice-sub' }, x.why))); })))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Add the ticked lines'), h('button', { type: 'button', class: 'btn ghost', onclick: () => { form.proposals = null; form.picks = null; refresh(); } }, 'Discard'))] : null);
 }
@@ -491,9 +496,8 @@ function lineRow(m, cat, l) {
 
 function categoryScreen(m, cat) {
   const r = cat.tag, slice = cat.slice;
-  const ct = r ? m.compare.tags.find((x) => x.tag === r.tag) : null;
   const share = slice ? money(slice.amount) + ' a month' + (slice.share !== null ? ', ' + Math.round(slice.share * 100) + '% of ' + (m.vw.donut.total === null ? 'what is planned' : 'take-home') : '') + '.' : null;
-  // Its lines first (what the slice was opened for), then the cut, the month's budget and the plan against the log.
+  // Its lines first (what the slice was opened for), then the cut and the month's budget.
   return [
     h('section', { class: 'card', 'aria-labelledby': 'cat-lines-h' },
       h('h2', { id: 'cat-lines-h' }, 'Lines'),
@@ -508,11 +512,7 @@ function categoryScreen(m, cat) {
         h('li', {}, 'Left: ' + (r.left === null ? 'missing' : money(r.left))),
         r.pace !== null ? h('li', {}, 'At this pace: ' + money(r.pace) + ' by month end') : null,
         h('li', {}, 'Last month by today: ' + money(r.lastMonthSameDay))),
-      mathButton(tagMath(r), m.ctx)) : null,
-    ct ? h('section', { class: 'card', 'aria-labelledby': 'cat-cmp-h' },
-      h('h2', { id: 'cat-cmp-h' }, 'Plan vs spent, ' + windowWords(m.compare)),
-      h('p', {}, 'Planned ' + (ct.missing ? 'missing' : money(ct.planned)) + ', spent ' + money(ct.actual) + ' (' + diffWords(ct.diff) + ').'),
-      mathButton(['compare:tag:' + ct.tag], m.ctx)) : null
+      mathButton(tagMath(r), m.ctx)) : null
   ];
 }
 
@@ -520,29 +520,24 @@ function categoryScreen(m, cat) {
 function lineScreen(m, cat, l) {
   const min = cat.id === 'minimums';
   const a = m.vw.autopsy.rows.find((x) => x.id === (min ? 'min:' + l.id : l.id)) || null;
-  const cl = min ? null : m.compare.lines.find((x) => x.id === l.id) || null;
   const price = min ? null : m.vw.prices.rows.find((x) => x.id === l.id) || null;
   const trial = min ? null : m.vw.trials.rows.find((x) => x.id === l.id) || null;
   const logged = min ? [] : m.vw.log.filter((e) => e.expenseId === l.id);
   const cuttable = !min && m.canCut.has(l.id), off = cuttable && cutPick.dropped.includes(l.id);
+  // A monthly line's plan is edited in place (On the Budget); any other line changes in My numbers, said once.
+  const exp = (m.base.expenses || []).find((e) => e.id === l.id), inPlace = !min && !!exp && exp.cadence === 'monthly';
   return [
     h('section', { class: 'card', 'aria-labelledby': 'line-h' },
-      h('h2', { id: 'line-h' }, 'What it costs', a && a.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'sub')] : null, a && a.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null),
+      h('h2', { id: 'line-h' }, 'What it costs', a && a.subscription ? [' ', h('span', { class: 'pill pill-sub' }, 'subscription')] : null, a && a.need === false ? [' ', h('span', { class: 'pill' }, 'want')] : null),
       l.amount === null ? h('p', { class: 'missing-row' }, chip('missing'), ' No amount yet.') : h('div', { class: 'safe-row' }, h('p', { class: 'safe-big' }, money(l.amount)), h('span', { class: 'muted' }, 'a month', a ? ', ' + money(a.yearly) + ' a year' : '')),
-      a && a.subscription ? h('p', { class: 'tile-sub' }, 'Last looked at: ', a.reviewed ? shortDate(a.reviewed) : h('span', { class: 'missing-row' }, 'never')) : null,
+      inPlace ? null : h('p', {}, h('a', { href: ledgerHref(l.path) }, 'Change it in My numbers')),
+      a && a.subscription ? h('p', { class: 'tile-sub' }, 'Last looked at: ', a.reviewed ? shortDate(a.reviewed) : h('span', { class: 'missing-row' }, h('a', { href: ledgerHref('expenses.' + l.id + '.reviewed') }, 'never'))) : null,
       price ? h('p', { class: 'tile-sub' }, 'Price: ' + priceWords(price)) : null,
       trial ? h('p', { class: 'tile-sub' }, 'Free trial: ' + trialWords(trial)) : null,
       cuttable ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn toggle', 'aria-pressed': String(off), onclick: () => toggleCut(l.id) }, off ? 'Put it back' : 'Try without it')) : null,
       // Which account or card it goes on (owner's ask, 2026-10-27).
       min ? null : paidWithBox(m.spine, l.id),
       a || price ? mathButton([...(a ? ['spend:autopsy:' + a.id] : []), ...(price ? ['spend:priceChange:' + price.id] : [])], m.ctx) : null),
-    h('section', { class: 'card has-target', 'aria-labelledby': 'line-edit-h' },
-      h('h2', { id: 'line-edit-h' }, h('a', { class: 'card-link', href: ledgerHref(l.path) }, h('span', {}, 'Change it in My numbers'), chev())),
-      null),
-    cl ? h('section', { class: 'card', 'aria-labelledby': 'line-cmp-h' },
-      h('h2', { id: 'line-cmp-h' }, 'Plan vs spent, ' + windowWords(m.compare)),
-      h('p', {}, 'Planned ' + (cl.missing ? 'missing' : money(cl.planned)) + ', spent ' + money(cl.actual) + ' in ' + cl.entries + (cl.entries === 1 ? ' purchase' : ' purchases') + ' (' + diffWords(cl.diff) + ').'),
-      mathButton(['compare:line:' + cl.id], m.ctx)) : null,
     min ? null : lineBudget(m, l),
     min ? null : h('section', { class: 'card', 'aria-labelledby': 'line-log-h' },
       h('h2', { id: 'line-log-h' }, 'Added this month ', h('span', { class: 'count' }, String(logged.length))),
@@ -559,7 +554,7 @@ function lineBudget(m, l) {
   const months = [shiftYm(ym, -2), shiftYm(ym, -1), ym];
   const rows = months.map((x) => { const vw = budgetOf(m, x, 'month'); const line = vw.cats.flatMap((c) => c.lines).find((y) => y.id === l.id); return { ym: x, line }; });
   const here = rows[2].line;
-  const box = h('input', { id: 'line-plan', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+  const box = echo(h('input', { id: 'line-plan', type: 'text', inputmode: 'decimal', autocomplete: 'off' }), 'money');
   box.value = l.amount === null ? '' : String(Math.round(l.amount * 100) / 100);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const exp = (m.base.expenses || []).find((e) => e.id === l.id);
@@ -588,9 +583,9 @@ function lineTarget(m, l) {
   if (!t || !exp) return null;
   const te = (t.spine.expenses || []).find((e) => e.id === l.id);
   const tv = te && te.amount ? te.amount.value : null, now = exp.amount ? exp.amount.value : null;
-  const box = h('input', { id: 'line-target', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 400' });
+  const box = echo(h('input', { id: 'line-target', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 400' }), 'money');
   box.value = tv === null ? '' : String(tv);
-  const amt = h('input', { id: 'step-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 25', 'aria-label': 'Step by this much' });
+  const amt = echo(h('input', { id: 'step-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 25', 'aria-label': 'Step by this much' }), 'money');
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const path = 'expenses.' + l.id + '.amount';
   const step = (how, words) => change((x) => stepToward(x, t.spine, path, how, todayIso()), said.changed(l.label, words));
@@ -625,14 +620,15 @@ function tabsBar(tab) {
   return h('div', { class: 'segmented spend-tabs', role: 'group', 'aria-label': 'Spending' },
     [['do', 'Do'], ['see', 'Budget']].map(([id, words]) => h('button', { type: 'button', class: 'seg-btn', id: 'tab-' + id, 'aria-pressed': String(tab === id), onclick: () => { if (tab !== id) { keep({ tab: id }); refresh(); } } }, h('span', { class: 'seg-label' }, words))));
 }
+// The lines not marked need or want yet (the same lines the reference sums), each a link to its own question.
+const unmarkedLines = (m) => [...m.s.cashflow.expenses.items.filter((i) => !i.covered), ...(m.s.cashflow.expenses.linked || [])].filter((i) => i.need === null || i.need === undefined);
 function referenceCard(m) {
   const r = referenceBands(m.s, BENCH);
   if (!r) return null;
   const pc1 = (x) => (x === null ? 'missing' : Math.round(x * 1000) / 10 + '%');
-  return h('section', { class: 'card', 'aria-labelledby': 'ref-h' },
-    h('h2', { id: 'ref-h' }, 'Beside a common reference'),
+  return h('section', { class: 'card', 'aria-label': 'Beside a common reference' },
     h('p', { class: 'muted' }, 'Shares of pay a month (take-home plus what your paycheck saves and the match), beside the 50/30/20 lines. A reference point, not a grade.'),
-    r.unmarked ? h('p', { class: 'muted missing-row' }, money(r.unmarked) + ' a month is not marked need or want yet, so needs and wants read missing.') : null,
+    r.unmarked ? h('p', { class: 'muted missing-row' }, money(r.unmarked) + ' a month is not marked need or want yet, so needs and wants read missing: ', ...unmarkedLines(m).flatMap((i, k) => [k ? ', ' : '', h('a', { href: ledgerHref('expenses.' + i.id + '.need') }, i.label)]), '.') : null,
     h('ul', { class: 'sum-lines' }, r.rows.map((x) => h('li', { class: 'sum-line' }, h('span', {}, x.label), h('span', { class: 'num' }, pc1(x.share) + ' (line at ' + pc1(x.reference) + ')')))),
     h('p', { class: 'tile-note' }, 'Source: ' + r.source + '.'));
 }
@@ -647,28 +643,29 @@ const TOOLS = {
 const TOOL_IDS = ['import', 'checkin', 'ask', 'sweep'];
 // Budget's other views (Budget brief: nothing that worked is lost; each is one row under the table that opens it).
 Object.assign(TOOLS, {
-  'by-category': ['Budgets with pace', (m) => (m.vw.tags.rows.filter((r) => r.hot).length ? m.vw.tags.rows.filter((r) => r.hot).length + ' past their pace' : 'Each category this month'), (m) => [controls(m, monthsOf({})), tagsCard(m)]],
+  'by-category': ['Budgets with pace', (m) => (m.vw.tags.rows.filter((r) => r.hot).length ? m.vw.tags.rows.filter((r) => r.hot).length + ' past their pace' : 'Each category this month'), (m) => tagsCard(m)],
   'fixed-variable': ['Fixed and variable', () => 'What stays the same and what moves', (m) => fixedVarCard(m)],
   'estimated': ['Estimated vs actual', (m) => windowWords(m.compare), (m) => [controls(m, monthsOf({})), rangeWords(m), compareCard(m)]],
   'reference': ['Beside a common reference', () => 'The 50/30/20 lines, not a grade', (m) => referenceCard(m)],
   'where': ['Where it goes', (m) => (m.vw.donut.total === null ? 'Shares of the month' : money(m.vw.donut.total) + ' a month'), (m) => donutCard(m)],
   'layers': ['Layers of spending', () => 'How long cash lasts on each layer', (m) => tiersCard(m)],
   'outlook': ['How the month could end', () => 'So far and expected by month end', (m) => outlookCard(m)],
-  'cut': ['Try cutting something', () => 'See what a line is worth', (m) => cutCard(m)],
-  'autopsy': ['Each bill, a year', () => 'What each bill costs a year', (m) => autopsyCard(m)],
+  'autopsy': ['Each line, a year', () => 'What each line costs a year', (m) => autopsyCard(m)],
   'prices': ['Price changes', (m) => (m.vw.prices.rows.length ? m.vw.prices.rows.length + ' changed' : 'None this month'), (m) => pricesCard(m)],
   'merchants': ['Stores and their lines', (m) => learnedMerchants(m.base).length + ' learned', (m) => merchantsScreen(m)],
   'not-sorted': ['Not sorted yet', () => '', (m) => sortScreen(m)],
   'close': ['Close the month', () => '', (m, state) => closeScreen(m, state)],
   'target': ['Set a target', () => '', (m) => targetScreen(m)]
 });
-const SEE_ROWS = ['by-category', 'estimated', 'where', 'fixed-variable', 'reference', 'layers', 'outlook', 'cut', 'autopsy', 'prices', 'merchants'];
+const SEE_ROWS = ['by-category', 'estimated', 'where', 'fixed-variable', 'reference', 'layers', 'outlook', 'autopsy', 'prices', 'merchants'];
 
 function topScreen(m, months, state) {
   const tab = /^#(checkin|log)$/.test(location.hash) ? 'do' : tabOf(state);
   const addFirst = spendingStart(m.base || m.spine) === 'add';
   return [
     tabsBar(tab),
+    // Something tried without follows to the top screen (it is kept in this browser tab); null when nothing is.
+    cutCard(m),
     ...(tab === 'do' ? [
       safeCard(m),
       loggerCard(m),
@@ -696,12 +693,16 @@ function budgetOf(m, ym, range) {
 }
 const markOf = (r) => (r.mark ? h('span', { class: 'pill pill-' + r.mark }, r.mark) : null);
 // tg: the row's target column ({ target, words }) when the table shows the target instead of the actual.
-function budgetRow(r, href, tg = null) {
-  return h('tr', { class: r.mark && !tg ? 'b-marked' : null },
+// A category with nothing logged to any of its lines reads "none, nothing logged yet" like the income row (empty is
+// not zero) and carries no pill; the income row never carries one (it is not a spending difference).
+function budgetRow(r, href, tg = null, { pill = true } = {}) {
+  const quiet = !!r.lines && r.lines.every((l) => !l.entries.length) && !(r.unassignedEntries || []).length;
+  const actual = quiet ? null : r.actual, words = quiet ? 'nothing logged yet' : r.words, mark = quiet || !pill ? null : markOf(r);
+  return h('tr', { class: mark && !tg ? 'b-marked' : null },
     h('th', { scope: 'row' }, href ? h('a', { class: 'cell-link', href }, r.label, chev()) : r.label),
     h('td', { class: 'num' }, r.plan === null ? h('span', { class: 'missing-text' }, 'missing') : money(r.plan)),
-    tg ? h('td', { class: 'num' }, tg.target === null ? h('span', { class: 'missing-text' }, 'missing') : money(tg.target)) : h('td', { class: 'num' }, r.actual === null ? h('span', { class: 'muted' }, 'none') : money(r.actual)),
-    tg ? h('td', { class: 'b-words' }, tg.words) : h('td', { class: 'b-words' }, r.words, ' ', markOf(r)));
+    tg ? h('td', { class: 'num' }, tg.target === null ? h('span', { class: 'missing-text' }, 'missing') : money(tg.target)) : h('td', { class: 'num' }, actual === null ? h('span', { class: 'muted' }, 'none') : money(actual)),
+    tg ? h('td', { class: 'b-words' }, tg.words) : h('td', { class: 'b-words' }, words, ' ', mark));
 }
 // A target's name with "Target:" said once, whatever it was saved as.
 const targetName = (n) => 'Target: ' + String(n).replace(/^target:\s*/i, '');
@@ -719,6 +720,8 @@ function budgetTab(m, state) {
   const ym = budgetMonth(m, state), range = budgetRange(state), vw = budgetOf(m, ym, range);
   m.budget = vw; lastYm = ym;
   const now = todayIso().slice(0, 7);
+  // No month picked and nothing added this month: the latest month with entries is shown, and the screen says so.
+  const fellBack = ym !== now && !/^\d{4}-\d{2}$/.test(state.bym || '');
   const sug = planSuggestions(m.base, rules, { asOf: todayIso() });
   const closes = (m.base.closes || []).slice().reverse();
   const pick = h('div', { class: 'b-picker' },
@@ -727,6 +730,10 @@ function budgetTab(m, state) {
     h('button', { type: 'button', class: 'btn small icon-btn', 'aria-label': 'Month after', disabled: ym >= now, title: ym >= now ? 'This is the latest month' : null, onclick: () => { keep({ bym: shiftYm(ym, 1) }); refresh(); } }, '›'));
   const ranges = h('div', { class: 'segmented b-range', role: 'group', 'aria-label': 'Range' }, RANGES.map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(range === k), onclick: () => { keep({ brange: k }); refresh(); } }, h('span', { class: 'seg-label' }, w))));
   const canClose = range === 'month' && ym < now && !vw.closed && vw.anyLogged;
+  const closeLink = () => (canClose ? h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/close' }, 'Close ' + MONTH_LONG[+ym.slice(5, 7) - 1])) : null);
+  // Over a range, how many of its months have anything logged (ten months of plan against three of entries).
+  const loggedYms = new Set((m.base.log || []).map((e) => e.date.slice(0, 7)));
+  const monthsIn = vw.months.filter((x) => loggedYms.has(x)).length;
   const tgt = targetOf(m, ym, range);
   const showTarget = !!tgt && state.bcols === 'target';
   const colsBar = tgt ? h('div', { class: 'segmented b-cols', role: 'group', 'aria-label': 'Show' }, [['actual', 'Actual'], ['target', 'Target']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String((showTarget ? 'target' : 'actual') === k), onclick: () => { keep({ bcols: k }); refresh(); } }, h('span', { class: 'seg-label' }, w)))) : null;
@@ -736,31 +743,34 @@ function budgetTab(m, state) {
   const charts = asCharts ? h('section', { class: 'card', 'aria-label': 'Budget charts, ' + ymWords(ym) }, budgetCharts(m.base, rules, vw, { weekStart: pref('weekStart') === 'monday' ? 1 : 0, months: range === 'month' ? monthsBack(ym, 6) : [] })) : null;
   return [
     h('div', { class: 'b-controls' }, pick, ranges),
-    // The target (target brief): one row that opens the picker; with one set, what it buys in one line.
-    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/target' }, h('span', { class: 'go-name' }, tgt ? targetName(tgt.scenario.name) : 'Set a target'), h('span', { class: 'go-sub' }, tgt ? tgt.buys.words : 'A saved scenario to aim at, beside the plan')))),
+    fellBack ? h('p', { class: 'muted' }, 'Nothing added in ' + ymWords(now) + ' yet, so ' + ymWords(ym) + ' is shown.') : null,
     vw.notSorted.length ? h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/not-sorted' }, h('span', { class: 'go-name' }, 'Not sorted yet (' + vw.notSorted.length + ')'), h('span', { class: 'go-sub' }, money(vw.notSorted.reduce((t, e) => t + e.amount, 0)) + ' to put on a line')))) : null,
     sug.length ? h('section', { class: 'card', 'aria-label': 'The plan could learn' }, h('ul', { class: 'sug-list' }, sug.map((x) => h('li', {},
       h('p', {}, x.words),
       h('div', { class: 'edit-actions' },
-        h('button', { type: 'button', class: 'btn small primary', onclick: () => change((s) => editExpense(s, x.id, { amount: x.to, kind: 'known' }, todayIso()), said.changed(x.label + '\'s plan', money(x.to) + ' a month')) }, 'Update'),
+        h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => editExpense(s, x.id, { amount: x.to, kind: 'known' }, todayIso()), said.changed(x.label + '\'s plan', money(x.to) + ' a month')) }, 'Update'),
         h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => keepPlan(s, x.id, x.to, todayIso()), said.changed(x.label + '\'s plan', 'kept at ' + money(x.plan))) }, 'Keep')))))) : null,
     vw.closed ? h('section', { class: 'card b-closed' }, h('p', {}, vw.closed.summary + '.'), h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => reopenMonth(s, ym), said.changed(ymWords(ym), 'open again')) }, 'Reopen month'))) : null,
     viewBar,
     charts,
+    asCharts ? closeLink() : null,
     asCharts ? null : h('section', { class: 'card', 'aria-label': 'Budget, ' + ymWords(ym) },
       vw.partial ? h('p', { class: 'muted' }, 'Held against what the plan expects by today.') : null,
+      range !== 'month' && monthsIn < vw.months.length ? h('p', { class: 'muted' }, monthsIn + ' of ' + vw.months.length + ' months have entries.') : null,
       colsBar,
       h('div', { class: 'tablewrap' }, h('table', { class: 'data-table budget-table' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Line')), h('th', { scope: 'col', class: 'num' }, 'Plan'), h('th', { scope: 'col', class: 'num' }, showTarget ? 'Target' : 'Actual'), h('th', { scope: 'col' }, showTarget ? 'To target' : 'Difference'))),
-        h('tbody', {}, budgetRow(vw.income, null, showTarget ? tgt.cols.income : null)),
+        h('tbody', {}, budgetRow(vw.income, null, showTarget ? tgt.cols.income : null, { pill: false })),
         h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'Needs')), vw.cats.map((c) => budgetRow(c, at(c.key), showTarget ? tgt.cols.cats.get(c.key) || { target: 0, words: 'same' } : null))),
         vw.cycles.length ? h('tbody', {}, h('tr', { class: 'b-group' }, h('th', { scope: 'rowgroup', colspan: '4' }, 'On their own cycle')), vw.cycles.map((c) => h('tr', {}, h('th', { scope: 'row' }, c.label), h('td', { class: 'b-words', colspan: '3' }, c.words)))) : null,
         h('tbody', {}, budgetRow(vw.saving, null, showTarget ? tgt.cols.saving : null)))),
       showTarget && tgt.buys.changes.length ? fold('target-lines', 'later-list', 'What the target changes (' + tgt.buys.changes.length + ')', h('ul', {}, tgt.buys.changes.map((c) => h('li', {}, c.label + ': ' + (c.now === null ? 'none' : money(c.now)) + ' now, ' + money(c.target) + ' at target')))) : null,
-      mathButton(['budget:income', ...vw.cats.map((c) => 'budget:cat:' + c.key)], m.ctx)),
-    canClose ? h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: '#/close' }, 'Close ' + MONTH_LONG[+ym.slice(5, 7) - 1])) : null,
+      mathButton(['budget:income', ...vw.cats.map((c) => 'budget:cat:' + c.key)], m.ctx),
+      closeLink()),
+    // The target (target brief): one row that opens the picker; with one set, what it buys in one line.
+    h('ul', { class: 'go-list' }, h('li', {}, h('a', { class: 'go-row plain', href: '#/target' }, h('span', { class: 'go-name' }, tgt ? targetName(tgt.scenario.name) : 'Set a target'), h('span', { class: 'go-sub' }, tgt ? tgt.buys.words : 'A saved scenario to aim at, beside the plan')))),
     closes.length ? fold('history', 'later-list', 'History (' + closes.length + ')', h('ul', {}, closes.map((c) => h('li', {}, c.summary + '. Closed ' + shortDate(c.date) + '.')))) : null,
-    h('ul', { class: 'go-list', 'aria-label': 'More views' }, SEE_ROWS.map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
+    h('ul', { class: 'go-list', 'aria-label': 'More views' }, SEE_ROWS.filter((id) => id !== 'prices' || m.vw.prices.rows.length || m.vw.trials.rows.length).map((id) => h('li', {}, h('a', { class: 'go-row plain', href: '#/' + id }, h('span', { class: 'go-name' }, TOOLS[id][0]), h('span', { class: 'go-sub' }, TOOLS[id][1](m))))))
   ];
 }
 
@@ -769,32 +779,31 @@ function budgetTab(m, state) {
 // browser; nothing here changes My numbers.
 function targetScreen(m) {
   const list = readScenarios(), cur = targetId();
-  const name = h('input', { id: 'target-name', type: 'text', autocomplete: 'off', maxlength: '60', placeholder: 'e.g. Target: Moving out' });
+  const name = h('input', { id: 'target-name', type: 'text', autocomplete: 'off', maxlength: '60', placeholder: 'e.g. Moving out' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const pickT = (id, words) => { const was = targetId(); keepTarget(id); refresh(); say(words, () => { keepTarget(was); refresh(); }, () => { keepTarget(id); refresh(); }); };
   return [
     list.length ? h('section', { class: 'card', 'aria-label': 'Saved scenarios' }, h('ul', { class: 'sort-list' }, list.map((x) => h('li', { class: 'target-pick' },
       h('span', {}, h('strong', {}, x.name), ' ', h('span', { class: 'muted' }, shortDate(x.savedAt.slice(0, 10)))),
-      x.id === cur ? h('span', { class: 'chip chip-default' }, 'the target') : h('button', { type: 'button', class: 'btn small', onclick: () => pickT(x.id, 'Target set: ' + x.name) }, 'Use as target'))))) : null,
+      x.id === cur ? h('span', { class: 'edit-actions' }, h('span', { class: 'chip chip-default' }, 'the target'), h('button', { type: 'button', class: 'btn small danger', onclick: () => pickT(null, 'Target cleared') }, 'Clear the target')) : h('button', { type: 'button', class: 'btn small', onclick: () => pickT(x.id, 'Target set: ' + x.name) }, 'Use as target'))))) : null,
     h('form', { class: 'card editor', novalidate: true, onsubmit: (e) => {
       e.preventDefault();
       const n = name.value.trim();
-      if (!n) { msg.textContent = 'Give it a name, like Target: FI by 40'; name.focus(); return; }
+      if (!n) { msg.textContent = 'Give it a name, like FI by 40'; name.focus(); return; }
       const entry = saveScenario(n, m.base);
       if (!entry) { msg.textContent = 'This browser will not keep it (storage is blocked)'; return; }
       pickT(entry.id, 'Target set: ' + n + ', a copy of today\'s plan to change line by line');
     } },
       h('label', { for: 'target-name', class: 'edit-label' }, 'Save today\'s plan as a target'), name, msg,
       h('p', { class: 'edit-hint' }, 'Then change its lines on each line\'s screen; My numbers stay as they are.'),
-      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as the target'))),
-    cur ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger', onclick: () => pickT(null, 'Target cleared') }, 'Clear the target')) : null
+      h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary' }, 'Save as the target')))
   ];
 }
 
 // Not sorted yet: each entry gets a line; the merchant is learned from the line, so the next one goes there too.
 function sortScreen(m) {
   const list = (m.base.log || []).filter((e) => e.kind !== 'income' && !e.expenseId && !e.tag).sort((a, b) => (a.date < b.date ? 1 : -1));
-  if (!list.length) return [h('p', { class: 'muted' }, 'Everything is sorted.'), h('a', { class: 'btn', href: '#' }, 'Back to Budget')];
+  if (!list.length) return h('p', { class: 'muted' }, 'Everything is sorted.');
   return h('section', { class: 'card' }, h('ul', { class: 'sort-list' }, list.map((e) => {
     const pickId = 'sort-' + e.id;
     const box = h('select', { id: pickId, class: 'pick-box' }, h('option', { value: '' }, 'Pick a line'),
@@ -823,7 +832,7 @@ const CHOICE_LABEL = { cover: 'Cover it from a category with money left', saving
 function closeScreen(m, state) {
   const ym = lastYm || budgetMonth(m, state), vw = budgetOf(m, ym, 'month');
   const name = MONTH_LONG[+ym.slice(5, 7) - 1];
-  if (vw.closed) return [h('p', {}, vw.closed.summary + '.'), h('a', { class: 'btn', href: '#' }, 'Back to Budget')];
+  if (vw.closed) return h('p', {}, vw.closed.summary + '.');
   const diffs = realDifferences(vw);
   const picks = state.closePicks || {};
   const i = diffs.findIndex((d) => !picks[d.key]);

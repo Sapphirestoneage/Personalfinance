@@ -215,7 +215,9 @@ export function treemap({ width = 600, height = 260, items = [], label: aria } =
       const r = wide ? { x, y: y + off, w: len, h: k } : { x: x + off, y, w: k, h: len };
       off += k;
       put(svg, tip(s('rect', { class: 'ch-cell viz-' + (n.c ?? 1) + (n.rough ? ' ch-rough' : ''), x: r.x + 1, y: r.y + 1, width: Math.max(1, r.w - 2), height: Math.max(1, r.h - 2), rx: 3 }), n.tip || n.label + ': ' + exactMoney(n.v)), n.rough, fill);
-      if (r.w > textWidth(n.label, 12) + 12 && r.h > 34) { svg.append(label(r.x + 7, r.y + 18, n.label, 'start', 'ch-cell-label')); svg.append(label(r.x + 7, r.y + 32, axisMoney(n.v) + ' · ' + Math.round((n.v / total) * 100) + '%', 'start', 'ch-cell-sub')); }
+      // Each label line only where it fits; the second can be the wider one ("$50 · 2%" under "Gym").
+      const sub = axisMoney(n.v) + ' · ' + Math.round((n.v / total) * 100) + '%';
+      if (r.w > textWidth(n.label, 12) + 12 && r.h > 34) { svg.append(label(r.x + 7, r.y + 18, n.label, 'start', 'ch-cell-label')); if (r.w > textWidth(sub, 12) + 12) svg.append(label(r.x + 7, r.y + 32, sub, 'start', 'ch-cell-sub')); }
     }
     const rest = nodes.slice(i);
     if (wide) place(rest, x + len, y, w - len, hgt); else place(rest, x, y + len, w, hgt - len);

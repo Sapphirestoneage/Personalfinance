@@ -28,7 +28,7 @@ import { SECTION_WORDS } from './schema.js';
 import { chargeDates } from './owed.js';
 import { shareOf } from './sharing.js';
 
-export const RANGES = [['month', 'This month'], ['3m', 'Last 3 months'], ['year', 'This year']];
+export const RANGES = [['month', 'Month'], ['3m', '3 months'], ['year', 'Year to date']];
 const CATS = ['accommodation', 'food', 'transportation', 'other'];
 const CAT_WORDS = { ...SECTION_WORDS };
 const CYCLE = { quarterly: 3, yearly: 12 };
@@ -241,7 +241,7 @@ export function planSuggestions(spine, rules, { asOf = spine.meta.asOf } = {}) {
       const last = a.entries.filter((x) => x.kind === 'spend').sort((x, y) => (x.date < y.date ? 1 : -1))[0];
       if (!last || Math.abs(last.amount - v(e.amount)) < 1) continue;
       out.push({ id: i.id, label: e.label, plan: v(e.amount), to: last.amount, kind: 'price', words: e.label + ' went ' + (last.amount > v(e.amount) ? 'up' : 'down') + ' to ' + dollars(last.amount) + '. Update?' });
-    } else out.push({ id: i.id, label: e.label, plan: i.amount, to: avg, avg, kind: 'average', words: 'Update plan to ' + dollars(avg) + ' (your 3-month average)?' });
+    } else out.push({ id: i.id, label: e.label, plan: i.amount, to: avg, avg, kind: 'average', words: e.label + ': update the plan to ' + dollars(avg) + ', your 3-month average?' });
   }
   return out;
 }

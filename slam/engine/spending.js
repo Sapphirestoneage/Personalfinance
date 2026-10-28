@@ -244,7 +244,9 @@ export function checkInForecast(spine, sim, date = sim.start) {
 export function drift(spine) {
   const list = (spine.checkins || []).filter((c) => c.forecast && Object.values(c.forecast).some((x) => x !== null));
   const r = C.drift(list.map((c) => ({ actual: Object.fromEntries(Object.entries(c.balances).map(([k, x]) => [k, cents(x)])), forecast: Object.fromEntries(Object.entries(c.forecast).map(([k, x]) => [k, x === null ? 0 : cents(x)])) })));
-  const words = r.kind === 'none' ? 'No check-in with a forecast yet.' : r.kind === 'first' ? 'One check-in: the plan was ' + (r.mean >= 0 ? 'under' : 'over') + ' by ' + Math.abs(dollars(r.mean)) + ' dollars. Two or more tell bias from noise.' : r.kind === 'bias' ? 'Bias: real balances run ' + (r.mean >= 0 ? 'above' : 'below') + ' the plan by about ' + Math.abs(dollars(r.mean)) + ' dollars each check-in. Something regular is missing from the plan.' : 'Noise: the misses go both ways (spread ' + dollars(r.sd) + ' dollars around a mean of ' + dollars(r.mean) + '). The plan is not leaning; days just vary.';
+  // Whole dollars in the words ($1,745), never "1744.85 dollars"; the numbers below keep their cents.
+  const said = (c) => '$' + Math.round(Math.abs(c) / 100).toLocaleString('en-US');
+  const words = r.kind === 'none' ? 'No check-in with a forecast yet.' : r.kind === 'first' ? 'One check-in: the plan was ' + (r.mean >= 0 ? 'under' : 'over') + ' by ' + said(r.mean) + '. Two or more tell bias from noise.' : r.kind === 'bias' ? 'Bias: real balances run ' + (r.mean >= 0 ? 'above' : 'below') + ' the plan by about ' + said(r.mean) + ' each check-in. Something regular is missing from the plan.' : 'Noise: the misses go both ways (spread ' + said(r.sd) + ' around a mean of ' + (r.mean < 0 ? '-' : '') + said(r.mean) + '). The plan is not leaning; days just vary.';
   return { count: r.count, mean: dollars(r.mean), sd: dollars(r.sd), kind: r.kind, words, checkins: list.map((c) => ({ id: c.id, date: c.date, miss: round2(Object.keys(c.balances).reduce((a, k) => a + (c.balances[k] - (c.forecast[k] ?? 0)), 0)) })) };
 }
 
@@ -267,7 +269,7 @@ export function momentum(spine, rules) {
   const days = Math.max(1, daysBetween(first.date, last.date));
   const perMonth = round2((last.cash - first.cash) / days * 30.44);
   const kind = Math.abs(perMonth) < flat ? 'flat' : perMonth > 0 ? 'building' : 'slipping';
-  return { points: list, perMonth, from: first.date, to: last.date, kind, words: kind === 'flat' ? 'Flat: cash is about where it was at the first check-in.' : kind === 'building' ? 'Building: cash is up about ' + perMonth + ' dollars a month across the check-ins.' : 'Slipping: cash is down about ' + Math.abs(perMonth) + ' dollars a month across the check-ins.', flat, rules: ['APP_MOMENTUM_FLAT'] };
+  return { points: list, perMonth, from: first.date, to: last.date, kind, words: kind === 'flat' ? 'Flat: cash is about where it was at the first check-in.' : kind === 'building' ? 'Building: cash is up about $' + Math.round(perMonth).toLocaleString('en-US') + ' a month across the check-ins.' : 'Slipping: cash is down about $' + Math.round(Math.abs(perMonth)).toLocaleString('en-US') + ' a month across the check-ins.', flat, rules: ['APP_MOMENTUM_FLAT'] };
 }
 
 // The month-end sweep as the run did it: what moved, when, where.

@@ -72,7 +72,7 @@ export function budgetCharts(spine, rules, view, { weekStart = 0, months = [] } 
   const { rows } = C.budgetRows(view);
   const over = rows.filter((r) => r.over).sort((a, b) => b.diff - a.diff);
   const out = [];
-  out.push(chartCard({ id: 'budget-bullets', question: 'Is each part on plan this ' + (view.range === 'month' ? 'month' : 'stretch') + '?',
+  out.push(chartCard({ id: 'budget-bullets', question: 'Is each part on plan ' + (view.range === 'month' ? 'in ' + monthWords(view.ym) : 'over these ' + view.months.length + ' months') + '?',
     summary: over.length ? over.map((r) => r.label + ' is ' + exactMoney(r.diff) + ' over').join('; ') + '.' : 'Every part is at or under plan.',
     draw: (w) => bars({ width: w, rows: rows.map((r) => ({ label: r.label, range: { v0: 0, v1: r.plan }, segs: [{ v: r.actual, c: r.over ? 2 : 1, tip: r.label + ': ' + exactMoney(r.actual) + ' spent of ' + exactMoney(r.plan) + ' planned' }], target: r.plan, targetTip: r.label + ': plan ' + exactMoney(r.plan), value: axisMoney(r.actual) + ' of ' + axisMoney(r.plan) })), label: 'Spent against plan' }),
     legend: [{ c: 1, words: 'Spent, at or under plan' }, { c: 2, words: 'Spent, over plan' }, { c: 0, words: 'Plan (the tick and pale bar)', cls: 'sw-band' }],
@@ -98,7 +98,7 @@ export function budgetCharts(spine, rules, view, { weekStart = 0, months = [] } 
   if (months.length > 1) {
     const all = C.monthlySpent(spine, rules, months), ms = all.filter((m, i) => m.logged || i === all.length - 1), keys = ms[ms.length - 1].cats.map((c) => c.key);
     out.push(chartCard({ id: 'budget-months', question: 'How has spending moved month to month?',
-      summary: ms.filter((m) => m.logged).length < 2 ? 'Only one month logged so far.' : monthWords(ms[0].ym) + ' to ' + monthWords(ms[ms.length - 1].ym) + ', each part stacked; the gray line is the plan.',
+      summary: ms.filter((m) => m.logged).length < 2 ? 'Only one month logged so far.' : monthWords(ms[0].ym) + ' to ' + monthWords(ms[ms.length - 1].ym) + ', each part stacked; the line is the plan.',
       draw: (w) => columns({ width: w, cols: ms.map((m) => ({ label: MON[+m.ym.slice(5, 7) - 1], segs: m.cats.map((c) => ({ v: c.v, c: 1 + (keys.indexOf(c.key) % 5), tip: monthWords(m.ym) + ', ' + c.label + ': ' + exactMoney(c.v) })) })), line: ms.map((m) => m.plan), label: 'Spending by month' }),
       legend: [...ms[ms.length - 1].cats.map((c, i) => ({ c: 1 + (i % 5), words: c.label })), { c: 0, words: 'Plan', cls: 'sw-line' }],
       table: { head: ['Month', ...ms[ms.length - 1].cats.map((c) => c.label), 'Plan'], rows: ms.map((m) => [monthWords(m.ym), ...keys.map((k) => exactMoney((m.cats.find((c) => c.key === k) || { v: 0 }).v)), exactMoney(m.plan)]) } }));

@@ -95,7 +95,7 @@ test('closing a month writes one History entry; Undo (reopen) takes it back; a c
 test('the plan learns, and never changes without Update', () => {
   const s = demo();
   const sug = B.planSuggestions(s, R);
-  assert.deepEqual(sug.map((x) => [x.id, x.to, x.words]), [['groceries', 648, 'Update plan to $648 (your 3-month average)?']]);
+  assert.deepEqual(sug.map((x) => [x.id, x.to, x.words]), [['groceries', 648, 'Groceries: update the plan to $648, your 3-month average?']]);
   assert.equal(valueOf(s.expenses.find((e) => e.id === 'groceries').amount), 500, 'nothing updated on its own');
   // Keep remembers that average; Update writes the plan (and the suggestion goes away).
   assert.deepEqual(B.planSuggestions(B.keepPlan(s, 'groceries', 648, T), R), []);
