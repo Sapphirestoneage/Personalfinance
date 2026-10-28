@@ -1319,7 +1319,9 @@ function actions(ctx) {
     h('button', { type: 'button', class: matchesFile(spine) || whose(spine).example ? 'btn' : 'btn primary', onclick: saveFile }, 'Save'),
     mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
-    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add')
+    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add'),
+    // Statements read on this device fill the accounts (S-243).
+    h('a', { class: 'btn', href: 'statements.html' }, 'Add statements')
   ];
 }
 

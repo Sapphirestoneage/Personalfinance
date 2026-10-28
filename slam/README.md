@@ -71,6 +71,28 @@ columns. Nothing leaves the browser. Each file goes into an account; its rows ar
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
 `node tools/riley.mjs` rebuilds Riley's year and files (fixed seed); `node tools/dana.mjs` rebuilds Dana's.
 
+## Statements in, numbers out
+
+**Add statements** (`statements.html`, from the button on My numbers) takes credit card,
+bank, CD, brokerage, IRA, 401(k)-type, HSA, 529 and loan statements as PDF, CSV or
+OFX/QFX files, as many at once as you like. Each file is read on your device (the PDF
+reader, pdf.js, is fetched once from cdnjs; the files themselves never leave the browser),
+the kind of account is guessed and can be corrected, and one review screen shows every
+account with its numbers, how sure each one is, what changed since last time, and the
+flags that matter (over the limit, a payment due, AutoPay on the minimum while carrying a
+balance, a fee on an unused card, an old statement, employer money not yet vested, cash
+sitting uninvested, contributions off pace against the year's limit). One button adds
+them all; Undo is in the bar. Transactions can go to the cash flow log at the same time,
+with transfers between your own accounts and card payments left out so nothing counts twice.
+Only the last four digits of an account number are ever kept.
+
+Readers: `engine/statements/` (text helpers, classifier, six readers, Chase and generic
+profiles, CSV and OFX, derived numbers, the merge and the write). Tests:
+`test/statements.test.js` on the synthetic statements in `test/fixtures/statements/`
+(`node tools/statement-fixtures.mjs` rewrites them); `node tools/statements-check.mjs`
+also reads anything in `tests/private-fixtures/` (git-ignored) against its own
+`expected.json`. Real PDFs in Node need `npm install pdfjs-dist`, a dev tool like Playwright.
+
 ## Phase 1: the household spine (My numbers and Today)
 
 Two pages beside the Budget, built on one household record (the spine) and
