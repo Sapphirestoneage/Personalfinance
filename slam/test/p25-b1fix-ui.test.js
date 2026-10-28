@@ -115,7 +115,7 @@ test('My numbers: Select several reads 0 selected after an action; the bar names
   assert.match(src, /return costMoved \|\| !other\.length \? \[cost, \.\.\.other\]\.join\('\. '\) : other\.join\('\. '\);/);
   assert.doesNotMatch(src, /ledger-search/, 'search is in the header now (Krug pass)');
   assert.match(read('ui/search.js'), /e\.key !== '\/'/);
-  assert.match(code('ui/calendar.js'), /'Find an item by name' \+ keyHint\('press \/'\)/);
+  assert.match(code('ui/calendar.js'), /placeholder: 'Find on this calendar'/, 'the header box is the one search with "/" (S-285)');
   assert.doesNotMatch(src, /house assumption/);
 });
 
@@ -125,7 +125,7 @@ test('the Calendar: the month is kept; a plan suggestion opens the plan; the deb
   assert.match(src, /: e\.kind === 'foo' \? \['plan\.html', 'See it in your plan'/);
   assert.match(src, /note \? h\('p', \{ class: 'tile-sub' \}, sentence\(cap\(note\)\)\) : null/);
   assert.doesNotMatch(src, /cap\(e\.note\) \+ '\.'/);
-  assert.match(src, /debt: 'Set by the lender\\'s due date\. Change it in My numbers\.'/);
+  assert.match(src, /debt: 'It comes from the lender\. Change it in Numbers\.'/);
   assert.match(src, /h\('button', \{ type: 'button', class: 'btn small', onclick: \(\) => \{ setRoot\(\{ ym: m\.ym, view: 'list' \}\)/);
   assert.doesNotMatch(src + code('ui/debt-tab.js') + code('ui/spending.js'), /house guess|house 1%|day-by-day run|Budget app\\'s|Tap a slice/);
 });

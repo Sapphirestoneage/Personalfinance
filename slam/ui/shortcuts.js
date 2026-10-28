@@ -10,7 +10,7 @@
 import { h } from './view.js';
 
 export const SHORTCUTS = [
-  ['g h', 'Home'], ['g m', 'Numbers'], ['g p', 'Plan'], ['g c', 'Calendar'], ['g b', 'Spending (the budget)'], ['g g', 'Guide me'], ['g o', 'Profile'],
+  ['g h', 'Home'], ['g m', 'Numbers'], ['g p', 'Plan'], ['g c', 'Calendar'], ['g b', 'Spending'], ['g g', 'Guide me'], ['g o', 'Profile'],
   ['Enter', 'In a box: save it and move to the next box. With nothing in focus: Looks right (keep every guess)'], ['y n s', 'On a question in focus: Yes, No, Not sure'], ['m', 'Open or close More on this screen'],
   ['n', 'Add something on this screen (when no question is in focus)'], ['/', 'Find, or type a change'], ['Ctrl K', 'Find, or type a change, even in a box'],
   ['z', 'Undo'], ['Shift Z', 'Redo'], ['?', 'This list'], ['Esc', 'Close a box or this list']
@@ -22,7 +22,7 @@ export function showList() {
   if (!dialog) {
     dialog = h('dialog', { class: 'keys-dialog', 'aria-labelledby': 'keys-h' },
       h('h2', { id: 'keys-h' }, 'Keyboard shortcuts'),
-      h('table', { class: 'data-table keys-table' }, h('tbody', {}, SHORTCUTS.map(([k, w]) => h('tr', {}, h('td', {}, k.split(' ').map((x, i) => [i ? (k.startsWith('g ') ? ' then ' : ' + ') : null, h('kbd', {}, x)])), h('td', {}, w))))),
+      h('table', { class: 'data-table keys-table' }, h('tbody', {}, SHORTCUTS.map(([k, w]) => h('tr', {}, h('td', {}, k.split(' ').map((x, i) => [i ? (k === 'y n s' ? ' or ' : k.startsWith('g ') ? ' then ' : ' + ') : null, h('kbd', {}, x)])), h('td', {}, w))))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => dialog.close() }, 'Close')));
     document.body.append(dialog);
   }

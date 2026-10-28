@@ -1,5 +1,5 @@
 // Cash by day (S-209, redrawn on the shared chart module in overnight Track C): checking every day as one line,
-// recorded before the as-of date (from check-ins and the log) and expected after it; savings as its own thinner line,
+// worked back before the as-of date (from check-ins and the log) and expected after it; savings as its own thinner line,
 // never added in; debt as a thin line; the floor as a band under it; paydays and big bills as dots. When maybe money
 // changes the days, a pale band runs from none of it to all of it (engine/calendar-views.js cashRange). Every day is in
 // the table ("Show as table"); tapping a day says its words.
@@ -14,7 +14,7 @@ const dayWords = (d) => {
   if (d.debt) bits.push('debt ' + money(d.debt));
   if (d.payday) bits.push('payday');
   if (d.big) bits.push(d.big.label + ' ' + money(d.big.amount));
-  if (d.under) bits.push('under the floor');
+  if (d.under && !d.past) bits.push('under the floor');
   return bits.join('; ');
 };
 
@@ -37,7 +37,7 @@ export function cashChartCard(line, opts = {}) {
   const series = [
     ...(others && save.length > 1 ? [{ label: 'Savings', c: 5, points: save, thin: true, endLabel: 'Savings, apart' }] : []),
     ...(others && debt.length > 1 ? [{ label: 'Debt', c: 2, points: debt, thin: true, endLabel: 'Debt' }] : []),
-    ...(past.length > 1 ? [{ label: 'Recorded', c: 0, points: past }] : []),
+    ...(past.length > 1 ? [{ label: 'Before ' + shortDate(line.asOf), c: 0, points: past }] : []),
     ...(ahead.length > 1 ? [{ label: 'Cash', c: 3, points: ahead, endLabel: 'Cash' }] : [])
   ];
   const byDate = new Map(line.days.map((d, i) => [d.date, i]));
@@ -54,20 +54,20 @@ export function cashChartCard(line, opts = {}) {
     save.length > 1 || debt.length > 1 ? h('label', { class: 'check-row' }, h('input', { type: 'checkbox', checked: others ? 'checked' : null, onchange: (e) => toggleOthers(e.target.checked) }), ' Show savings and debt') : null);
   card = h('section', { class: 'cash-chart', 'aria-label': 'Cash by day' },
     chartCard({ id: 'cash-line', level: 'h2', question: 'Will checking stay above your floor?',
-      summary: 'Lowest point: ' + money(low.amount) + ' on ' + shortDate(low.date) + (line.low.beforePayday ? ', the day before payday' : '') + '.' + (line.low.toppedFrom ? ' The cushion covers it from ' + shortDate(line.low.toppedFrom) + ', so the line below already has that money moved in and stays at the floor.' : '') + (rng ? ' The pale band runs from none of the maybe money to all of it.' : ''),
+      summary: 'Lowest point: ' + money(low.amount) + ' on ' + shortDate(low.date) + (line.low.beforePayday ? ', the day before payday' : '') + '.' + (line.low.toppedFrom ? ' The line below shows checking after the move from savings, so from ' + shortDate(line.low.toppedFrom) + ' it stays at the floor.' : '') + (rng ? ' The pale band runs from none of the maybe money to all of it.' : ''),
       controls,
       draw: (w) => lines({ width: w, height: 240, series, bands, range: rng, dots, xTicks: ticks, xFmt: (i) => { const d = line.days[Math.round(i)]; return d ? MONTHS[+d.date.slice(5, 7) - 1] : ''; },
         vmarks: firstAhead ? [{ x: firstAhead[0], label: 'As of ' + shortDate(line.asOf).replace(/, \d{4}$/, '') }] : [],
         tips: (i) => dayWords(line.days[i]), label: 'Checking every day from ' + shortDate(line.days[0].date) + ' to ' + shortDate(line.days[line.days.length - 1].date) }),
       legend: [
         { c: 3, words: 'Cash (checking), expected', cls: 'sw-line' },
-        { c: 0, words: 'Checking, recorded', cls: 'sw-line' },
+        { c: 0, words: 'Checking before ' + shortDate(line.asOf) + ', worked back from your check-ins and log', cls: 'sw-line' },
         ...(others && save.length > 1 ? [{ c: 5, words: 'Savings, shown apart (not added in)', cls: 'sw-line' }] : []),
         ...(others && debt.length > 1 ? [{ c: 2, words: 'Debt, all cards and loans', cls: 'sw-line' }] : []),
         ...(rng ? [{ c: 3, words: 'None to all of the maybe money', cls: 'sw-band' }] : []),
         ...(bands.length ? [{ c: 0, words: 'Under the floor of ' + money(line.floor), cls: 'cl-sw-under' }] : []),
         { c: 3, words: 'Payday (dot)' }, { c: 1, words: 'A bill of $100 or more (dot)' }],
       note: line.setAsideNote ? line.setAsideNote + ' It is not in the line.' : null,
-      table: { head: ['Day', 'Checking', 'Savings', 'Debt', ''], rows: line.days.map((d) => [shortDate(d.date), money(d.checking), d.savings === null ? '' : money(d.savings), d.debt ? money(d.debt) : '', [d.past ? 'recorded' : 'expected', d.payday ? 'payday' : null, d.big ? d.big.label + ' ' + money(d.big.amount) : null, d.under ? 'under the floor' : null].filter(Boolean).join(', ')]) } }));
+      table: { head: ['Day', 'Checking', 'Savings', 'Debt', ''], rows: line.days.map((d) => [shortDate(d.date), money(d.checking), d.savings === null ? '' : money(d.savings), d.debt ? money(d.debt) : '', [d.past ? 'worked back' : 'expected', d.payday ? 'payday' : null, d.big ? d.big.label + ' ' + money(d.big.amount) : null, d.under && !d.past ? 'under the floor' : null].filter(Boolean).join(', ')]) } }));
   return card;
 }
