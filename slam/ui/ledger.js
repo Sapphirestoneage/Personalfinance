@@ -28,6 +28,7 @@ import { isPhone } from '../engine/defaults.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { h, chip, showValue, money, words, shortDate, keyHint, ledgerHref } from './view.js';
+import { onboardScreen, stepName, bindKeys } from './onboard.js';
 import { countHead, countList, itemList, expenseRows, rid } from './items.js';
 import { answerField } from './answers.js';
 import { laterDate, setLaterPath, isLaterPath } from './later.js';
@@ -1297,9 +1298,13 @@ function needsSection(sec, { lean = false } = {}) {
     h('ul', { class: 'go-list' }, subsRow(), ...extras.map((g) => goRow(hashFor([sec.slug, g.slug]), { name: g.label, sub: [groupTotal(sec, g), dots(g.counts)] })))];
 }
 
+// What the onboarding steps borrow from this page (ui/onboard.js).
+const H = { cur, rules: () => rules, today, summaryOf, fieldLink, countSection: (collection) => countSection(sectionBySlug(Object.keys(COLLECTION_OF).find((k) => COLLECTION_OF[k] === collection)), { lean: true }), needsSection: () => needsSection(sectionBySlug('needs'), { lean: true }) };
+
 // A level's words for the trail and the title; null when that level is not there any more.
 function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
+  if (levels[0] === 'onboard') return stepName(levels);
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
   if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : null;
@@ -1333,6 +1338,7 @@ function render(ctx) {
   if (levels[0] === 'still-guessing') body = guessList();
   else if (levels[0] === 'pick') body = pickerCard();
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
+  else if (levels[0] === 'onboard') { bindKeys(); body = onboardScreen(ctx, H); }
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);

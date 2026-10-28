@@ -17,6 +17,7 @@ import { fooLadder } from '../engine/plan.js';
 import { maxItFor } from './maxit-panel.js';
 import { h, chip, money, pct, ledgerHref } from './view.js';
 import { toneOf } from '../engine/profile.js';
+import { isComplete } from '../engine/onboard.js';
 
 const months = (x) => (x === null ? '' : x.toFixed(1));
 
@@ -130,11 +131,21 @@ function render({ spine: base, rules, levels }) {
   const m = model(base, rules);
   if (levels.length && SCREENS[levels[0]]) return SCREENS[levels[0]](m);
   return [
+    onboardCard(base),
     tiles(m),
     flowPart(m.spine, rules, m.s),
     h('div', { class: 'edit-actions' }, h('a', { class: 'btn', href: 'onepager.html' }, 'One-pager')),
     flagsSection(m.spine, m.s.flags)
   ];
+}
+
+// Start onboarding (2026-10-28): on Home until the first pass is done; after that only the gear menu reopens it.
+function onboardCard(spine) {
+  if (isComplete(spine)) return null;
+  return h('section', { class: 'card onb-card', 'aria-labelledby': 'onb-h' },
+    h('h2', { id: 'onb-h' }, 'Start here'),
+    h('p', { class: 'muted' }, 'A quick first pass over the whole picture: who you are, what comes in, what you owe, what you own, what you need, and your goals. About 20 minutes.'),
+    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: 'ledger.html#/onboard' }, 'Start onboarding')));
 }
 
 // The money flow (S-192); a split or join redraws only this section.

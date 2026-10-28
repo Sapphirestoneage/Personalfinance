@@ -215,8 +215,18 @@ function header(ctx, title) {
   ] : [];
   return [
     h('div', { class: 'top-title' }, h('h1', {}, title), opts.household ? whoseLine(hist.present, source, { rules, reopen: (loaded) => { take({ institutions, ...loaded }); draw(); } }) : null),
-    own.length || undoing.length ? h('div', { class: 'top-actions' }, ...own, ...undoing) : null
+    own.length || undoing.length ? h('div', { class: 'top-actions' }, ...own, ...undoing, opts.household ? gearMenu() : null) : null
   ];
+}
+// The gear menu (2026-10-28): what is not on the main screens. Running onboarding again lives only here.
+function gearMenu() {
+  const menu = h('details', { class: 'gear' },
+    h('summary', { class: 'btn gear-btn', 'aria-label': 'Menu' }, h('span', { class: 'gear-ico', 'aria-hidden': 'true' }), 'Menu'),
+    h('ul', { class: 'gear-menu' },
+      h('li', {}, h('a', { href: 'ledger.html#/onboard' }, 'Run onboarding again')),
+      h('li', {}, h('a', { href: 'profile.html' }, 'Profile')),
+      h('li', {}, h('a', { href: 'builder.html' }, 'Builder'))));
+  return menu;
 }
 
 function bar(text, action, fn) {
@@ -415,6 +425,8 @@ function listen() {
   window.addEventListener('pagehide', saveScroll);
   window.addEventListener('pageshow', (ev) => { if (ev.persisted) reload(); });
   window.addEventListener('storage', (ev) => { if (ev.key === null || HOUSEHOLD_KEYS.includes(ev.key)) { clearTimeout(reloadTimer); reloadTimer = setTimeout(reload, 100); } });
+  // The gear menu closes on a tap anywhere else.
+  document.addEventListener('click', (e) => { for (const g of document.querySelectorAll('details.gear[open]')) if (!g.contains(e.target)) g.open = false; });
   // A link to a level on this page opens it as its own screen.
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

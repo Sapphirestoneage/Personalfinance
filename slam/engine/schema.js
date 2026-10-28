@@ -519,6 +519,13 @@ export function validate(spine) {
     else { uniqueIds('coaching.homework', hw); for (const x of hw) if (!STATUS.includes(x.status)) err('coaching.homework.' + x.id + '.status', 'not one of ' + STATUS.join('|')); }
   }
 
+  // Onboarding (2026-10-28): whether the first pass is done, and when.
+  const ob = spine.onboarding;
+  if (ob !== undefined) {
+    if (!ob || typeof ob !== 'object' || Array.isArray(ob)) err('onboarding', 'a record');
+    else { if (typeof ob.complete !== 'boolean') err('onboarding.complete', 'true or false'); if (ob.completedOn !== undefined && ob.completedOn !== null && !isDate(ob.completedOn)) err('onboarding.completedOn', 'not a date'); }
+  }
+
   // assumptions
   const as = spine.assumptions || {};
   for (const k of ['inflation', 'realReturn', 'withdrawalRate']) checkFact('assumptions.' + k, as[k], 'rate');
