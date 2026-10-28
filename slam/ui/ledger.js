@@ -20,7 +20,7 @@ import { mathButton } from './math-panel.js';
 import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields, linkPlanLoan } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
-import { catalog, itemTicks, tickWords } from './ticks.js';
+import { catalog, itemTicks, tickWords, guessedTicks } from './ticks.js';
 import { headlineStrip } from './strip.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
 import { maxItPanel } from './maxit-panel.js';
@@ -1477,6 +1477,7 @@ function sectionScreen(sec) {
   const groups = fillOn() ? sec.groups.filter((g) => toFill(g)) : sec.groups;
   return [
     fillBar(toFill(sec), 'list:open:' + sec.slug),
+    looksRight(sec.allRows),
     // What this section is for, with live checkmarks (S-278), folded.
     STEP_MAP[sec.slug] ? purposeCard(STEP_MAP[sec.slug].purpose, stepChecks(cur(), summaryOf(cur()), sec.slug)) : null,
     sectionTop(sec),
@@ -1509,6 +1510,7 @@ function groupScreen(sec, g, st = {}) {
   });
   return [
     groupSiblings(sec, g),
+    looksRight(g.node.allRows),
     fillBar(toFill(g.node), null),
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
@@ -1567,6 +1569,24 @@ function answerTick(base, f, answer) {
   const item = getAt(cur(), base), name = base.startsWith('income.') ? item.label : valueOf(item.name) || item.id;
   change((s) => tickFeature(s, base, f, answer, { rules, today: today() }), tickWords(name, f, answer));
 }
+// Looks right (S-282): one button (and Enter) keeps every guess on the screen at once: each rough number becomes
+// known, and each yes / no question nobody answered takes its likely answer. Guesses stay marked until then.
+function looksRight(rows, item = null, coll = null) {
+  const rough = (rows || []).filter((r) => r.fact && r.fact.value !== null && r.fact.kind === 'rough' && r.path);
+  const ticks = item ? guessedTicks(item, coll) : [];
+  const n = rough.length + ticks.length;
+  if (!n || selecting) return null;
+  const run = () => change((s0) => {
+    let s = s0;
+    const base = coll + '.' + (item && item.id);
+    for (const { f, answer } of ticks) s = tickFeature(s, base, f, answer, { rules, today: today() });
+    const filled = ticks.flatMap(({ f }) => f.reveals.map((r) => ({ path: base + '.' + r.field })));
+    return bulkEdit(s, [...rough, ...filled], 'confirm', today());
+  }, n === 1 ? 'One guess kept' : n + ' guesses kept');
+  return h('div', { class: 'looks-right-bar' },
+    h('button', { type: 'button', class: 'btn primary', id: 'looks-right', onclick: run }, 'Looks right'),
+    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' on this screen. Enter keeps them all; change any one first.'));
+}
 // Covered with this client today (S-281): anything on the item confirmed or changed today gets a small check.
 const coveredToday = (it) => (it.rows || []).some((r) => r.fact && r.fact.asOf === today() && r.fact.kind !== 'missing' && !/default|guess|typical|house/i.test(String(r.fact.source || '')));
 const coveredMark = (on) => (on ? h('span', { class: 'covered-mark', title: 'Covered today' }, h('span', { 'aria-hidden': 'true' }, '\u2713 '), 'covered today') : null);
@@ -1586,8 +1606,12 @@ function itemScreen(sec, g, it, st) {
     it.note ? h('p', { class: 'muted item-note' }, it.note) : null,
     selectAll(it.rows, 'Select these'),
     fillBar(toFill(it), null),
+    looksRight(it.rows, (cur()[it.collection] || []).find((x) => x.id === it.id) || null, it.collection),
     // Whose it is (S-279): on screen one of every income, account and debt, for a couple.
     ['income', 'accounts', 'debts'].includes(it.collection) && !selecting ? (() => { const x = (cur()[it.collection] || []).find((i) => i.id === it.id); return x ? whoseControl(cur(), it.collection, x, (w, words) => change(setWhose(cur(), it.collection, it.id, w, today()), said.changed(it.label + ': whose', words))) : null; })() : null,
+    // What it has (S-282): the guessed answers in one line, the full list folded under it.
+    TICKED.includes(it.collection) && !selecting ? itemTicks(cur(), it.collection, it.id, { onAnswer: answerTick, onOpen: (p) => { if (canLeave()) setOpen(rowPathFor(cur(), p)); },
+      open: !!st.ticks, ontoggle: (e) => { if (!!kept().ticks !== e.target.open) keep({ ticks: e.target.open }); } }) : null,
     (() => { const all = hideTicked(it, fillOn() ? openRows(it.rows) : it.rows);
       // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
       // numbers come first; it opens by itself when one of its rows is open.
@@ -1601,9 +1625,6 @@ function itemScreen(sec, g, it, st) {
         feels.length ? h('details', { class: 'card done-group feel-fold', open: feels.some((r) => r.path === st.open) || kept().feel || null, ontoggle: (e) => { if (!!kept().feel !== e.target.open) keep({ feel: e.target.open }); } },
           h('summary', {}, h('span', {}, 'How you feel about it'), h('span', { class: 'count' }, feels.filter((r) => /stress$/.test(r.path) && r.fact.value !== null).map((r) => 'stress ' + r.fact.value + ' of 10').join(''))),
           h('ul', { class: 'rows' }, feels.map((r) => rowEl(r, st.open || null)))) : null]; })(),
-    // What does it have? (S-267): the type's ticks, folded under one line; a Yes adds its rows above.
-    TICKED.includes(it.collection) && !selecting ? itemTicks(cur(), it.collection, it.id, { onAnswer: answerTick, onOpen: (p) => { if (canLeave()) setOpen(rowPathFor(cur(), p)); },
-      open: !!st.ticks, ontoggle: (e) => { if (!!kept().ticks !== e.target.open) keep({ ticks: e.target.open }); } }) : null,
     // What is charged to a card (owner's ask, 2026-10-27).
     it.collection === 'debts' && !selecting && (cur().debts || []).some((d) => d.id === it.id && d.type === 'credit_card') ? chargesCard(cur(), it.id) : null,
     // Contributions by year (owner's ask, 2026-10-27): an account that can hold them and has none offers to add them.

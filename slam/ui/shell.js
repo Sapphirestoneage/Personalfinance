@@ -232,9 +232,9 @@ function subtabBar(tab, lit) {
 // The tab bar's own height, as --tabbar-h: the page's bottom padding on a phone (so nothing hides behind the bar) and
 // where Back and the trail stick on a computer.
 function measureTabs(bar) {
-  const set = () => document.documentElement.style.setProperty('--tabbar-h', Math.ceil(bar.getBoundingClientRect().height) + 'px');
+  const set = () => { document.documentElement.style.setProperty('--tabbar-h', Math.ceil(bar.getBoundingClientRect().height) + 'px'); document.documentElement.style.setProperty('--head-h', (getComputedStyle(headBar).position === 'sticky' ? Math.ceil(headBar.getBoundingClientRect().height) : 0) + 'px'); };
   set();
-  if (typeof ResizeObserver === 'function') new ResizeObserver(set).observe(bar);
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(set); ro.observe(bar); ro.observe(headBar); }
 }
 const samePage = (href) => { try { return new URL(href, location.href).pathname === location.pathname; } catch { return false; } };
 

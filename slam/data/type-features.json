@@ -34,7 +34,9 @@
       "hint": "e.g. 250"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Puts money in from pay",
+    "likely": "yes"
    },
    "rothSplit": {
     "id": "rothSplit",
@@ -53,7 +55,9 @@
       "hint": "e.g. 50"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Roth part",
+    "likely": "no"
    },
    "match": {
     "id": "match",
@@ -83,7 +87,9 @@
       }
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Employer match",
+    "likely": "yes"
    },
    "employerExtra": {
     "id": "employerExtra",
@@ -108,7 +114,9 @@
       "hint": "e.g. 2,000"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Employer money without a match",
+    "likely": "no"
    },
    "vesting": {
     "id": "vesting",
@@ -148,7 +156,9 @@
       "hint": "e.g. 4,000"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Vesting",
+    "likely": "yes"
    },
    "ytd": {
     "id": "ytd",
@@ -186,7 +196,9 @@
       }
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Auto-increase",
+    "likely": "no"
    },
    "loan": {
     "id": "loan",
@@ -212,7 +224,9 @@
       "hint": "e.g. 3,000"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Plan loan",
+    "likely": "no"
    },
    "afterTax": {
     "id": "afterTax",
@@ -235,7 +249,9 @@
       "supplier": "coach"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Mega backdoor",
+    "likely": "no"
    },
    "funds": {
     "id": "funds",
@@ -276,7 +292,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Beneficiary named",
+    "likely": "yes"
    },
    "oldJob": {
     "id": "oldJob",
@@ -305,7 +323,9 @@
      }
     ],
     "note": "A plan from an old job is a rollover candidate; leaving in or after the year you turn 55 opens it without the 10% early-withdrawal penalty.",
-    "kind": "has"
+    "kind": "has",
+    "short": "From a past job",
+    "likely": "no"
    }
   },
   "ira": {
@@ -326,7 +346,9 @@
       "hint": "e.g. 300"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Puts money in regularly",
+    "likely": "yes"
    },
    "rothBasis": {
     "id": "rothBasis",
@@ -372,7 +394,9 @@
       "hint": "e.g. 6,500"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Money not deducted",
+    "likely": "no"
    },
    "backdoor": {
     "id": "backdoor",
@@ -395,7 +419,9 @@
       "supplier": "coach"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Backdoor Roth",
+    "likely": "no"
    },
    "coveredAtWork": {
     "id": "coveredAtWork",
@@ -413,7 +439,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Also a plan at work",
+    "likely": "yes"
    },
    "funds": {
     "id": "funds",
@@ -454,7 +482,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Beneficiary named",
+    "likely": "yes"
    }
   },
   "hsaFsa": {
@@ -502,7 +532,9 @@
       }
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Puts money in",
+    "likely": "yes"
    },
    "seed": {
     "id": "seed",
@@ -521,7 +553,9 @@
       "hint": "e.g. 500"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Employer puts money in",
+    "likely": "no"
    },
    "invested": {
     "id": "invested",
@@ -539,7 +573,9 @@
       "hint": "e.g. 2,000"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Partly invested",
+    "likely": "no"
    },
    "receipts": {
     "id": "receipts",
@@ -557,7 +593,9 @@
       "hint": "e.g. 900"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Saving receipts",
+    "likely": "no"
    }
   },
   "cash": {
@@ -578,7 +616,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Set aside for something",
+    "likely": "no"
    },
    "interest": {
     "id": "interest",
@@ -596,7 +636,9 @@
       "hint": "e.g. 4.2"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Pays interest",
+    "likely": "yes"
    },
    "fees": {
     "id": "fees",
@@ -621,7 +663,9 @@
       "hint": "e.g. 12"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Minimum or monthly fee",
+    "likely": "no"
    },
    "insured": {
     "id": "insured",
@@ -640,7 +684,9 @@
      }
     ],
     "added": true,
-    "kind": "has"
+    "kind": "has",
+    "short": "Insured",
+    "likely": "yes"
    },
    "bonus": {
     "id": "bonus",
@@ -664,7 +710,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Signup bonus",
+    "likely": "no"
    }
   },
   "fixedTerm": {
@@ -716,7 +764,9 @@
       "hint": "e.g. 3 months of interest"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Early withdrawal penalty",
+    "likely": "yes"
    }
   },
   "taxable": {
@@ -737,7 +787,9 @@
       "hint": "e.g. 200"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Adds money regularly",
+    "likely": "no"
    },
    "basis": {
     "id": "basis",
@@ -817,7 +869,9 @@
      }
     ],
     "added": true,
-    "kind": "has"
+    "kind": "has",
+    "short": "Dividends reinvested",
+    "likely": "yes"
    },
    "concentration": {
     "id": "concentration",
@@ -835,7 +889,9 @@
       "hint": "e.g. 30"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Big part in employer stock",
+    "likely": "no"
    }
   },
   "education": {
@@ -881,7 +937,9 @@
       "hint": "e.g. 100"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Puts money in regularly",
+    "likely": "yes"
    },
    "stateDeduction": {
     "id": "stateDeduction",
@@ -904,7 +962,9 @@
       "supplier": "coach"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "State tax break",
+    "likely": "yes"
    }
   }
  },
@@ -1171,7 +1231,9 @@
       }
      ],
      "note": "After you leave the job, a governmental 457(b) has no 10% early-withdrawal penalty.",
-     "kind": "has"
+     "kind": "has",
+     "short": "Governmental 457(b)",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -1361,7 +1423,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -1719,7 +1783,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -1801,7 +1867,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -1883,7 +1951,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -1965,7 +2035,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2016,7 +2088,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2067,7 +2141,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2118,7 +2194,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2169,7 +2247,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2217,7 +2297,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2264,7 +2346,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2328,7 +2412,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2379,7 +2465,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2430,7 +2518,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2478,7 +2568,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2561,7 +2653,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2643,7 +2737,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -2717,7 +2813,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -2767,7 +2865,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -2816,7 +2916,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -2865,7 +2967,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -2914,7 +3018,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -2963,7 +3069,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Successor owner named",
+     "likely": "no"
     },
     {
      "id": "titling",
@@ -3054,7 +3162,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Mortgage on it",
+     "likely": "yes"
     },
     {
      "id": "growth",
@@ -3074,7 +3184,9 @@
        }
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Grows in value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -3091,7 +3203,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3182,7 +3296,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Mortgage on it",
+     "likely": "yes"
     },
     {
      "id": "growth",
@@ -3202,7 +3318,9 @@
        }
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Grows in value",
+     "likely": "yes"
     },
     {
      "id": "rent",
@@ -3255,7 +3373,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3335,7 +3455,9 @@
        "supplier": "coach"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Lump-sum option",
+     "likely": "no"
     },
     {
      "id": "beneficiary",
@@ -3352,7 +3474,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3417,7 +3541,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Loan on it",
+     "likely": "no"
     },
     {
      "id": "growth",
@@ -3437,7 +3563,9 @@
        }
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Loses value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -3454,7 +3582,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3517,7 +3647,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Pays you",
+     "likely": "no"
     },
     {
      "id": "growth",
@@ -3534,7 +3666,9 @@
        "supplier": "guess"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Grows in value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -3551,7 +3685,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3614,7 +3750,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Pays you",
+     "likely": "no"
     },
     {
      "id": "growth",
@@ -3631,7 +3769,9 @@
        "supplier": "guess"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Grows in value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -3648,7 +3788,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3711,7 +3853,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Pays you",
+     "likely": "no"
     },
     {
      "id": "growth",
@@ -3728,7 +3872,9 @@
        "supplier": "guess"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Grows in value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -3745,7 +3891,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "titling",
@@ -3841,7 +3989,9 @@
        "supplier": "coach"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Intro rate",
+     "likely": "no"
     },
     {
      "id": "limit",
@@ -3885,7 +4035,9 @@
        "hint": "e.g. 300"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Annual fee",
+     "likely": "no"
     },
     {
      "id": "rewards",
@@ -3905,7 +4057,9 @@
        }
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Rewards",
+     "likely": "yes"
     },
     {
      "id": "business",
@@ -3928,7 +4082,9 @@
        "supplier": "coach"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Business card",
+     "likely": "no"
     }
    ]
   },
@@ -4014,7 +4170,9 @@
        "supplier": "coach"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Income-driven plan",
+     "likely": "no"
     },
     {
      "id": "pslf",
@@ -4045,7 +4203,9 @@
        "supplier": "guess"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Public service work",
+     "likely": "no"
     }
    ]
   },
@@ -4219,7 +4379,9 @@
        "supplier": "guess"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Mortgage insurance",
+     "likely": "no"
     },
     {
      "id": "escrow",
@@ -4237,7 +4399,9 @@
        "hint": "e.g. 650"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Escrow",
+     "likely": "yes"
     },
     {
      "id": "extra",
@@ -4255,7 +4419,9 @@
        "hint": "e.g. 100"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Extra principal",
+     "likely": "no"
     },
     {
      "id": "home",
@@ -4775,7 +4941,9 @@
        }
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Payback plan",
+     "likely": "yes"
     }
    ]
   },
@@ -4867,7 +5035,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     },
     {
      "id": "renewal",
@@ -4959,7 +5129,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Cash value",
+     "likely": "yes"
     },
     {
      "id": "beneficiary",
@@ -4976,7 +5148,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     }
    ]
   },
@@ -5013,7 +5187,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Through work",
+     "likely": "no"
     },
     {
      "id": "premium",
@@ -5079,7 +5255,9 @@
        "supplier": "client"
       }
      ],
-     "kind": "has"
+     "kind": "has",
+     "short": "Beneficiary named",
+     "likely": "yes"
     }
    ]
   },
@@ -5116,7 +5294,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Through work",
+     "likely": "no"
     },
     {
      "id": "premium",
@@ -5220,7 +5400,9 @@
       }
      ],
      "added": true,
-     "kind": "has"
+     "kind": "has",
+     "short": "Through work",
+     "likely": "no"
     },
     {
      "id": "premium",
@@ -5877,7 +6059,9 @@
       "hint": "e.g. 300"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Pre-tax deductions",
+    "likely": "yes"
    },
    {
     "id": "bonus",
@@ -5904,7 +6088,9 @@
       "hint": "e.g. 3"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Bonus",
+    "likely": "no"
    },
    {
     "id": "raise",
@@ -5930,7 +6116,9 @@
       }
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Raise coming",
+    "likely": "no"
    }
   ],
   "1099": [
@@ -5956,7 +6144,9 @@
       "supplier": "coach"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Quarterly estimates",
+    "likely": "no"
    },
    {
     "id": "expenses",
@@ -5974,7 +6164,9 @@
       "hint": "e.g. 200"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Business expenses",
+    "likely": "yes"
    }
   ],
   "side": [
@@ -5993,7 +6185,9 @@
       "supplier": "client"
      }
     ],
-    "kind": "has"
+    "kind": "has",
+    "short": "Business expenses",
+    "likely": "yes"
    }
   ],
   "tips": [
@@ -6016,7 +6210,9 @@
      }
     ],
     "added": true,
-    "kind": "has"
+    "kind": "has",
+    "short": "Mostly cash tips",
+    "likely": "no"
    }
   ],
   "rental": [
@@ -6058,7 +6254,9 @@
      }
     ],
     "added": true,
-    "kind": "has"
+    "kind": "has",
+    "short": "Cost-of-living raise",
+    "likely": "no"
    }
   ],
   "ss": [

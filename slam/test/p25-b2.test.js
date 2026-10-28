@@ -30,7 +30,7 @@ test('the page ends at the tab bar\'s own height, measured by the shell', () => 
   const shell = code('ui/shell.js');
   assert.match(shell, /measureTabs\(tabs\);/);
   assert.match(shell, /setProperty\('--tabbar-h', Math\.ceil\(bar\.getBoundingClientRect\(\)\.height\) \+ 'px'\)/);
-  assert.match(shell, /new ResizeObserver\(set\)\.observe\(bar\)/);
+  assert.match(shell, /const ro = new ResizeObserver\(set\); ro\.observe\(bar\); ro\.observe\(headBar\);/);
 });
 
 test('three meaning colors: a stage, running hot and a deadline are watch, not red; under zero stays red', () => {

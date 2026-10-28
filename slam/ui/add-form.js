@@ -30,7 +30,7 @@ const box = (id, attrs = {}) => h('input', { type: 'text', id, autocomplete: 'of
 const dollars = (input) => h('div', { class: 'affix' }, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '$'), input);
 const percent = (input) => h('div', { class: 'affix affix-end' }, input, h('span', { class: 'affix-sym', 'aria-hidden': 'true' }, '%'));
 // Opening a form never scrolls the page.
-export const focusAdd = () => document.getElementById('add-name')?.focus({ preventScroll: true });
+export const focusAdd = () => (document.getElementById('add-type') || document.getElementById('add-name'))?.focus({ preventScroll: true });
 const select = (id, options, value) => h('select', { id }, options.map(([k, w]) => h('option', { value: k, selected: k === value || null }, w)));
 // The account picker (S-262): groups in a set order, the 401(k)s together and the IRAs together; the Roth twins are
 // left out (the Roth box picks them); a few shorter names where Roth is the box.
@@ -94,7 +94,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     const t = kind();
     name.placeholder = maybe ? 'e.g. Tax refund' : namePlaceholder(collection, t);
     name.setAttribute('aria-label', 'Name');
-    amountLabel.textContent = maybe ? 'How much' : amountWords(collection, t, ans);
+    amountLabel.textContent = (typeSel ? '2. ' : '') + (maybe ? 'How much' : amountWords(collection, t, ans));
     const out = [];
     let showOften = !!often;
     if (income && t === 'w2') {
@@ -230,12 +230,15 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const amountHint = h('p', { class: 'edit-hint', hidden: maybe }, 'Blank is fine for now.');
   amount.addEventListener('input', () => { amountHint.hidden = amount.value.trim() !== ''; });
   return h('form', { class: 'editor add-form', onsubmit: submit, onkeydown: (e) => { if (e.key === 'Escape') { e.preventDefault(); onCancel(); } } },
-    h('div', { class: 'add-grid' },
-      field('add-name', 'Name', name, null, null, true),
-      h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint)),
-    typeSel ? field('add-type', income ? 'What kind of income?' : 'What kind?', typeSel) : null,
+    // Small steps (S-282): what kind first, then how much; the name is optional (the kind's name until one is typed),
+    // and everything else is guessed and shown on the item, ready for Looks right. A kind-less list (a bill, a goal)
+    // starts with its name.
+    typeSel ? field('add-type', income ? '1. What kind of income?' : '1. What kind?', typeSel) : null,
     rothRow,
-    ticksBox,
+    h('div', { class: 'add-grid' },
+      typeSel ? null : field('add-name', 'Name', name, null, null, true),
+      h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint),
+      typeSel ? field('add-name', 'Name (optional)', name, null, null, true) : null),
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,
     maybe ? null : h('details', { class: 'add-more' }, h('summary', {}, 'More options'), h('div', { class: 'add-grid' }, Object.values(moreBox))),

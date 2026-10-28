@@ -10,8 +10,8 @@ import { startPage, change, said, say, refresh, go, current } from './shell.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { stepper, purposeCard, nowHave } from './stepper.js';
 import { STEP_MAP, stepChecks } from '../engine/step-map.js';
-import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay } from '../engine/edits.js';
-import { setAt, getAt, valueOf as v, addDays, whoSupplies } from '../engine/spine.js';
+import { addItem, editExpense, editIncome, putFact, removeItem, parseInput, inputText, setPay, bulkEdit } from '../engine/edits.js';
+import { setAt, getAt, valueOf as v, addDays, whoSupplies, listFacts } from '../engine/spine.js';
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
@@ -172,6 +172,17 @@ function nextCard(ctx) {
     h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
     top.length > 1 ? h('ol', { class: 'next-more', start: 2 }, top.slice(1).map((q) => h('li', {}, h('a', { href: ledgerHref(q.row || q.path) }, words(q))))) : null);
 }
+// Looks right in a step (S-282): every guess in this step's lists kept at once (Enter does it too). Next stays the
+// one filled button.
+const STEP_LISTS = { needs: ['expenses'], debt: ['debts'], income: ['income', 'household'], assets: ['accounts'], goals: ['goals'], protection: ['policies'] };
+function stepLooksRight(spine, id) {
+  const rough = listFacts(spine).filter(({ path, fact }) => STEP_LISTS[id] && STEP_LISTS[id].includes(path.split('.')[0]) && fact.kind === 'rough' && fact.value !== null && fact.value !== undefined);
+  if (!rough.length) return null;
+  const n = rough.length;
+  return h('div', { class: 'looks-right-bar' },
+    h('button', { type: 'button', class: 'btn', id: 'looks-right', onclick: () => change((x) => bulkEdit(x, rough.map((r) => ({ path: r.path })), 'confirm', todayIso()), n === 1 ? 'One guess kept' : n + ' guesses kept') }, 'Looks right'),
+    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' in this step. Enter keeps them all; change any one first.'));
+}
 // The six steps' totals: the summary's (sessionSteps) in Guide me's order, and Protection's monthly premiums.
 function guideSteps(spine, s) {
   const all = sessionSteps(spine, s);
@@ -194,6 +205,7 @@ function frame(ctx, id, body) {
       STEP_METRIC[id] ? mathButton([STEP_METRIC[id]], () => ({ spine: ctx.spine, rules: ctx.rules, s })) : null),
     // What this step is for, with a live checkmark for each thing it needs (S-278), folded.
     STEP_MAP[id] ? purposeCard(STEP_MAP[id].purpose, stepChecks(ctx.spine, s, id)) : null,
+    stepLooksRight(ctx.spine, id),
     ...[].concat(body(s)),
     STEP_MAP[id] ? nowHave(STEP_MAP[id].have, STEP_MAP[id].unlocks[1], '#/' + STEP_MAP[id].unlocks[0]) : null,
     h('div', { class: 'step-nav' },

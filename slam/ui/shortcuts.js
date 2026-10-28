@@ -11,7 +11,7 @@ import { h } from './view.js';
 
 export const SHORTCUTS = [
   ['g h', 'Home'], ['g m', 'Numbers'], ['g p', 'Plan'], ['g c', 'Calendar'], ['g b', 'Spending (the budget)'], ['g g', 'Guide me'], ['g o', 'Profile'],
-  ['Enter', 'In a box: save it and move to the next box'], ['y n s', 'On a question in focus: Yes, No, Not sure'], ['m', 'Open or close More on this screen'],
+  ['Enter', 'In a box: save it and move to the next box. With nothing in focus: Looks right (keep every guess)'], ['y n s', 'On a question in focus: Yes, No, Not sure'], ['m', 'Open or close More on this screen'],
   ['n', 'Add something on this screen (when no question is in focus)'], ['/', 'Find, or type a change'], ['Ctrl K', 'Find, or type a change, even in a box'],
   ['z', 'Undo'], ['Shift Z', 'Redo'], ['?', 'This list'], ['Esc', 'Close a box or this list']
 ];
@@ -39,6 +39,11 @@ function addButton() {
 const BOXES = '#app input[type=text], #app input[type=date], #app input:not([type]), #app select';
 function enterMovesOn(e) {
   const t = e.target;
+  // Enter with nothing in focus keeps every guess on the screen (Looks right, S-282).
+  if (e.key === 'Enter' && !e.defaultPrevented && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && t && (t === document.body || t === document.documentElement || (t.matches && t.matches('main, #app, .screen')))) {
+    const b = document.getElementById('looks-right');
+    if (b) { e.preventDefault(); b.click(); return; }
+  }
   if (e.key !== 'Enter' || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || !t || !t.matches || !t.matches(BOXES) || t.form) return;
   const boxes = [...document.querySelectorAll(BOXES)].filter((b) => b.offsetParent !== null && !b.disabled && !b.form);
   const next = boxes[boxes.indexOf(t) + 1];

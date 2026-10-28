@@ -128,3 +128,4 @@ One line per batch: what is done, the commit, and anything skipped.
 - Part 0 (2026-10-28): unmarried couples file two single returns, Whose on every item screen, NYC_RATES_TO_CHECK.md (S-279).
 - Part 1 (2026-10-28): the map: header, five tabs, second-level tabs, Home agenda, Guide me, the gear (S-280).
 - Part 2 (2026-10-28): folder tabs, the trail from the client, siblings, covered today, titles word for word (S-281).
+- Part 3 (2026-10-28): pre-answered questions, one-line answers, Looks right and Enter, Recommended choices, add in small steps (S-282).

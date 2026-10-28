@@ -8,6 +8,7 @@ import { featuresOf, featuresOfType, tickCount } from '../engine/features.js';
 import { getAt } from '../engine/spine.js';
 import { PRESETS, POLICY_TYPES } from '../engine/schema.js';
 import { INCOME_WORDS } from '../engine/add.js';
+import { choiceRow } from './choice.js';
 
 // The catalog, read once (offline or missing: no ticks anywhere, nothing breaks).
 export let catalog = null;
@@ -47,8 +48,8 @@ export function tickList({ title, features, ticks = {}, onAnswer, below = () => 
         return h('li', { class: 'feature-row' + (ans ? ' is-answered' : '') },
           h('div', { class: 'tick-head' },
             h('p', { class: 'tick-q', id: idBase + '-q-' + f.id }, f.question),
-            h('div', { class: 'segmented tick-seg', role: 'group', 'aria-labelledby': idBase + '-q-' + f.id },
-              ANSWERS.map(([v, t]) => h('button', { type: 'button', class: 'seg-btn', id: idBase + '-' + f.id + '-' + v, 'aria-pressed': String(ans === v), onclick: () => onAnswer(f, ans === v ? null : v) }, h('span', { class: 'seg-label' }, t))))),
+            // Pre-answered (S-282): the most likely answer shows chosen, as a guess, until someone answers.
+            h('div', { class: 'tick-seg' }, choiceRow({ id: idBase + '-' + f.id, options: ANSWERS, value: ans, recommended: f.likely || null, label: idBase + '-q-' + f.id, onPick: (v) => onAnswer(f, v) }))),
           f.note ? h('p', { class: 'edit-hint' }, f.note) : null,
           below(f, ans));
       }))) : null);
@@ -68,8 +69,43 @@ export function itemTicks(spine, collection, id, { tier = null, onAnswer, onOpen
     return h('button', { type: 'button', class: 'btn small tick-field', onclick: () => onOpen(base + '.' + r.field) }, h('span', { class: 'tick-field-l' }, r.label), h('span', { class: 'tick-field-v' }, shown));
   }));
   // On the item's own screen its name is already the title: the fold says what it holds.
-  return tickList({ title: 'Details and questions', features, ticks: item.ticks || {}, onAnswer: (f, a) => onAnswer(base, f, a), open, ontoggle, idBase: 'tk-' + id,
+  const list = tickList({ title: 'Details and questions', features, ticks: item.ticks || {}, onAnswer: (f, a) => onAnswer(base, f, a), open, ontoggle, idBase: 'tk-' + id,
     below: (f, ans) => (ans === 'yes' && onOpen ? buttons(f) : null), details: (f) => (onOpen ? buttons(f) : null) });
+  return [answerLine(spine, collection, item, features, 'tk-' + id), list];
+}
+
+// The answers in one line (S-282): "Employer match: 100% of the first 4%, Vesting: yes (guess), Roth part: no". Each
+// phrase opens just its own question in the list below; a guess is dashed and says so. Enter or Looks right keeps them.
+export function phraseOf(spine, base, item, f) {
+  const ticks = item.ticks || {}, ans = ticks[f.id] || null;
+  const valueOf = (r) => { const x = getAt(spine, base + '.' + r.field); return x && x.value !== null && x.value !== undefined && x.kind !== 'notForMe' ? showValue(x.value, r.type) : null; };
+  if (f.kind === 'ask') { const vals = f.reveals.map(valueOf).filter(Boolean); return vals.length ? { words: (f.title || f.question) + ': ' + vals.join(', '), guess: false } : null; }
+  const a = ans || f.likely || null;
+  if (!a) return null;
+  const first = a === 'yes' ? f.reveals.map(valueOf).find(Boolean) : null;
+  // A known number under it answers the question: not a guess.
+  const known = f.reveals.some((r) => { const x = getAt(spine, base + '.' + r.field); return x && x.kind === 'known' && x.value !== null && x.value !== false; });
+  return { words: f.short + ': ' + (first || ANSWER_WORDS[a].toLowerCase()), guess: !ans && !known };
+}
+function answerLine(spine, collection, item, features, idBase) {
+  const base = collection + '.' + item.id;
+  const phrases = features.map((f) => ({ f, p: phraseOf(spine, base, item, f) })).filter((x) => x.p);
+  if (!phrases.length) return null;
+  const openOne = (e, f) => {
+    const card = e.target.closest('.item-answers'), list = card && card.nextElementSibling;
+    if (list && list.tagName === 'DETAILS') list.open = true;
+    const row = document.getElementById(idBase + '-q-' + f.id);
+    if (row) { row.scrollIntoView({ block: 'center' }); const b = row.parentElement && row.parentElement.querySelector('button, input, select'); if (b) b.focus({ preventScroll: true }); }
+  };
+  return h('section', { class: 'card item-answers', 'aria-labelledby': idBase + '-ans-h' },
+    h('h2', { class: 'tick-part-h', id: idBase + '-ans-h' }, 'What it has'),
+    h('ul', { class: 'answer-line' }, phrases.map(({ f, p }) => h('li', {}, h('button', { type: 'button', class: 'phrase' + (p.guess ? ' is-guess' : ''), onclick: (e) => openOne(e, f) }, p.words, p.guess ? h('span', { class: 'guess-tag' }, 'guess') : null)))));
+}
+// The guesses on an item: its yes / no questions nobody has answered, each with the answer it would take.
+export function guessedTicks(item, collection) {
+  if (!catalog || !item) return [];
+  const ticks = item.ticks || {};
+  return featuresOf(catalog, item, collection).filter((f) => f.kind === 'has' && f.likely && !ticks[f.id]).map((f) => ({ f, answer: f.likely }));
 }
 
 // The count for one slim line elsewhere ("4 of 12 checked").
