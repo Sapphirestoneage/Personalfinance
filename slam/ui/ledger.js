@@ -6,11 +6,11 @@
 // shell's change(), in words, so it can be undone; a delete never asks. Formatting only: the tree and its screens
 // come from engine/ledger-tree.js, the totals from engine/summary.js.
 
-import { echo } from './understood.js';
+import { echo, dateBox } from './understood.js';
 import { attachPicker } from './picker.js';
 import { fieldEntries } from './libraries.js';
 import { siblingStrip } from './siblings.js';
-import { guideOn, setGuide, guideStep, guideTop, GUIDE_IDS } from './guide.js';
+import { guideOn, setGuide, guideStep, guideTop, GUIDE_IDS, totalWords, TOTAL_WORDS } from './guide.js';
 import { whoseControl } from './whose.js';
 import { setWhose } from '../engine/couple.js';
 import { purposeCard } from './stepper.js';
@@ -23,12 +23,13 @@ import { mathButton } from './math-panel.js';
 import { beneficiaryFlag, BENEFICIARY_WORDS, tickFeature, hiddenFields, screenTwoFields, linkPlanLoan } from '../engine/features.js';
 import { rememberPlans, planFor } from './employer-plans.js';
 import { applyTemplate, wouldFill, FROM_MEMORY } from '../engine/employer-plans.js';
-import { catalog, itemTicks, tickWords, guessedTicks } from './ticks.js';
+import { catalog, itemTicks, tickWords, guessedTicks, checkNowChip } from './ticks.js';
+import { liveChoice } from './choice.js';
 import { headlineStrip } from './strip.js';
 import { addForm as newAddForm, focusAdd } from './add-form.js';
-import { maxItPanel } from './maxit-panel.js';
+import { maxItPanel, maxItFor } from './maxit-panel.js';
 import { chargesCard } from './card-charges.js';
-import { foldRow } from './rows.js';
+import { foldRow, rememberOpen } from './rows.js';
 import { addNote, removeNote, notesFor } from '../engine/notes.js';
 import { subscriptionAudit } from '../engine/subscriptions.js';
 import { chartCard, bars } from './chart.js';
@@ -46,7 +47,8 @@ import { canMaxIt } from '../engine/maxit.js';
 import { summarize, sessionSteps } from '../engine/summary.js';
 import { unemploymentView, tenPercentOf } from '../engine/unemployment.js';
 import { STARTER, haveCounts, addPicked } from '../engine/starter.js';
-import { downloadProfile, matchesFile, setBaseline, loadFailWords, FILE_NAME } from './profile-file.js';
+import { matchesFile, setBaseline, loadFailWords } from './profile-file.js';
+import { downloadBackup } from './end-call.js';
 import { fileProblems } from '../engine/normalize.js';
 import { isSubscription } from '../engine/subscriptions.js';
 import { ledgerTree, numbersScreens, screenAt, levelsFor, statementOrder } from '../engine/ledger-tree.js';
@@ -54,6 +56,7 @@ import { PRESETS, CADENCES, FAT, PER_YEAR, POLICY_TYPES } from '../engine/schema
 import { editPayment, duplicateItem, editIncome, recordContribution, setThroughPayroll, TOTAL_KINDS, setFixed, chargeTo, setChargeDay, markSubscription, addFee, setCheck } from '../engine/edits.js';
 import { parseInput, inputText, editFact, putFact, parseCardRate, editCardRate, editExpense, setSectionSharing, addItem, removeItem, bulkEdit } from '../engine/edits.js';
 import { isPhone } from '../engine/defaults.js';
+import { OFTEN_WORDS } from '../engine/add.js';
 import { getAt, setAt, valueOf, whoSupplies } from '../engine/spine.js';
 import { loadAll, forgetSaved, loadMyFile, whose } from './household.js';
 import { guessesFor, mapOf, worthNow, checkInWords } from './urgency.js';
@@ -63,12 +66,10 @@ import { setSharers, owedToYou } from '../engine/owed.js';
 import { owedScreen, personScreen, owedFigure, personSlug, resetOwedForms } from './owed.js';
 import { whereTable } from './where-data.js';
 import { withWhere, sortGuesses, groupGuesses, SORTS } from '../engine/where.js';
-import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso } from './view.js';
+import { h, chip, showValue, money, words, shortDate, ledgerHref, summaryMoney, todayIso, MISSING_WORDS } from './view.js';
 
 const MOVE_WORDS = { surplus: 'money left each month', netWorth: 'net worth', outlook: 'cash in 24 months', fiImplied: 'FI number', taxDue: 'tax due' };
 const BLOCK_WORDS = { surplus: 'surplus', runway: 'runway', yearsToFi: 'years to FI', taxDue: 'tax', outlook: '24-month outlook', utilization: 'utilization', netWorth: 'net worth', fiPercent: 'FI percent', fiNumber: 'FI number', fiImplied: 'FI from spending', promoMonthly: 'promo plan' };
-// What each section's one total means, in a client's words (the totals come from engine/summary.js sessionSteps).
-const TOTAL_WORDS = { needs: ' a month', debt: ' owed', income: ' a month before tax', assets: ' in what you own', goals: ' in goals' };
 
 // What the page holds between draws. rules, inst and source follow the shell (current()); the rest is this page's.
 let rules = null, inst = null, source = null, screenKey = null, based = false;
@@ -136,7 +137,7 @@ function openMax(id) {
   const levels = screensOf(cur()).itemLevels.get('accounts.' + id);
   if (!levels || !canLeave()) return;
   selecting = false;
-  land(levels, { max: true }, { id: 'max-' + id, block: 'start' });
+  land(levels, { max: true }, { id: 'row-max-' + id, block: 'start' });
 }
 function land(levels, patch, scroll) {
   const key = levels.join('/');
@@ -167,7 +168,7 @@ function canLeave() {
   if (ed) { ed.requestSubmit(); if (!dirty) return true; }
   const msg = edCache.el.querySelector('.edit-msg');
   if (msg && !msg.textContent) msg.textContent = 'Not saved yet: fix it, or choose Cancel.';
-  const i = document.getElementById('edit-input');
+  const i = document.getElementById('edit-input') || edCache.el.querySelector('.choice-live button');
   if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); }
   return false;
 }
@@ -187,7 +188,8 @@ function editorForm(onSubmit, ...kids) {
 // Need or want (S-231): two plain tags on every line in Needs. The stored answer stays a yes or no (expenses.<id>.need).
 const isNeedRow = (path) => /^expenses\.[^.]+\.need$/.test(path);
 const needWords = (v) => (v === true ? 'Need' : v === false ? 'Want' : null);
-const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : showValue(value, row.type));
+// A link (paid from, paid with) reads as the account's name, never its id.
+const shownAs = (row, value) => (isNeedRow(row.path) ? needWords(value) : String(row.type).startsWith('link:') && value ? linkName(cur(), value) : showValue(value, row.type));
 
 // Check later and check now (rough now and rough later, replacing Not now): stored on the number's Fact with its date
 // (engine/edits.js setCheck), so it lasts across browsers and reloads and Undo takes it back. A later date that passes
@@ -198,13 +200,18 @@ function laterBtn(row) {
   if (row.fact.kind !== 'missing' && row.fact.kind !== 'rough') return null;
   const c = checkOf(row.path);
   const put = (mode, until, words) => { closeEditor(); change((s) => setCheck(s, row.path, mode, until, today()), words); };
-  const when = h('input', { type: 'date', 'aria-label': 'Check again on', min: today() });
+  // Typed any way (S-285): "dec 6", "the 15th", "next friday"; held as a date once it reads.
+  let onDay = '';
+  const when = dateBox('later-on', '', (v) => { onDay = v; }, { 'aria-label': 'Check again on' });
+  // Enter in this box sets the day (Check on that day), never the row editor's Save around it.
+  const setDay = h('button', { type: 'button', class: 'btn', onclick: () => { if (!onDay) { say(when.value.trim() ? 'That day could not be read. Try one like Dec 6' : 'Pick a day first'); when.focus(); return; } if (onDay <= today()) { say('Pick a day after today'); when.focus(); return; } put('later', onDay, row.label + ': check again ' + shortDate(onDay)); } }, 'Check on that day');
+  when.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); setDay.click(); } });
   return [
     c && c.mode === 'later' ? h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': check again now') }, 'Check now') : null,
     !c || c.mode !== 'now' ? h('button', { type: 'button', class: 'btn', onclick: () => put('now', null, row.label + ': worth checking now') }, 'Mark check now') : h('button', { type: 'button', class: 'btn', onclick: () => put(null, null, row.label + ': mark taken off') }, 'Clear the mark'),
     h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 1), row.label + ': check again next month') }, 'Check next month'),
     h('button', { type: 'button', class: 'btn', onclick: () => put('later', addMonthsIso(today(), 3), row.label + ': check again in 3 months') }, 'Check in 3 months'),
-    h('div', { class: 'later-pick' }, when, h('button', { type: 'button', class: 'btn', onclick: () => { if (!when.value) { say('Pick a day first'); when.focus(); return; } put('later', when.value, row.label + ': check again ' + shortDate(when.value)); } }, 'Check on that day'))
+    h('div', { class: 'later-pick' }, when, setDay)
   ];
 }
 
@@ -215,7 +222,8 @@ function laterBtn(row) {
 function cardRateEditor(row) {
   const cardId = row.path.split('.')[1];
   const cur0 = row.fact.value || { apr: null, intro: null };
-  const startOn = !!cur0.intro;
+  // On with a stored intro, or when the card's own question (Is there an intro rate?) was answered Yes.
+  const startOn = !!cur0.intro || ((getAt(cur(), 'debts.' + cardId) || {}).ticks || {}).promo === 'yes';
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const fallback = showValue(rules.get('DEFAULT_CARD_APR', +cur().meta.asOf.slice(0, 4)), 'rate');
   const apr = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
@@ -223,21 +231,23 @@ function cardRateEditor(row) {
   const aprLabel = h('label', { for: 'edit-input', class: 'edit-label' }, startOn ? 'Rate after intro' : 'Interest rate (APR)');
   const afterNote = h('span', {}, startOn ? 'Starts the day after the intro ends. ' : '');
   const aprHint = h('p', { class: 'edit-hint' }, afterNote, '25 means 25%. Blank uses a typical ' + fallback + ', marked as a guess.');
-  const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
-  introRate.value = cur0.intro ? inputText('rate', cur0.intro.rate) : '0';
-  const introEnds = h('input', { id: 'intro-ends', type: 'date' });
-  introEnds.value = (cur0.intro && cur0.intro.ends) || '';
+  const introRate = h('input', { id: 'intro-rate', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 0' });
+  // Blank reads as 0% (engine/edits.js parseCardRate), so no 0 is pre-filled as if typed.
+  introRate.value = cur0.intro && cur0.intro.rate !== null ? inputText('rate', cur0.intro.rate) : '';
+  // Typed any way (S-285): held as a date once it reads.
+  let introEndsIso = (cur0.intro && cur0.intro.ends) || '';
+  const introEnds = dateBox('intro-ends', introEndsIso, (v) => { introEndsIso = v; });
   // Deferred interest (owner's ask, 2026-10-27): its own question in the intro, with "Not sure" as an answer. Not sure
   // is kept as not known (a thing to check on the statement), never as a no.
-  let deferredPick = cur0.intro && cur0.intro.deferred === true ? 'yes' : cur0.intro && cur0.intro.deferred === false ? 'no' : cur0.intro ? 'notSure' : 'no';
-  const defBtns = [['yes', 'Yes'], ['no', 'No'], ['notSure', 'Not sure']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(deferredPick === k), onclick: () => { deferredPick = k; for (const b of defBtns) b.setAttribute('aria-pressed', String(b.dataset.k === k)); dirty = true; } }, w));
-  defBtns.forEach((b, i) => { b.dataset.k = ['yes', 'no', 'notSure'][i]; });
-  const deferred = h('div', { class: 'deferred-q', role: 'group', 'aria-labelledby': 'deferred-h' },
+  // No stored answer shows No as a guess (dashed, S-282) until it is tapped; Not sure stays an answer of its own.
+  const deferredNow = cur0.intro && cur0.intro.deferred === true ? 'yes' : cur0.intro && cur0.intro.deferred === false ? 'no' : cur0.intro ? 'notSure' : null;
+  const deferredRow = liveChoice({ id: 'deferred', options: [['yes', 'Yes'], ['no', 'No'], ['notSure', 'Not sure']], value: deferredNow, recommended: 'no', clear: false, label: 'deferred-h', onPick: () => { dirty = true; } });
+  const deferred = h('div', { class: 'deferred-q choice-field' },
     h('p', { class: 'edit-label', id: 'deferred-h' }, 'Deferred interest?'),
     h('p', { class: 'edit-hint' }, 'If any balance is left when the intro ends, interest is charged back to the start. The card\'s terms say; store cards often have it.'),
-    h('div', { class: 'segmented' }, defBtns));
+    deferredRow.el);
   const introBox = h('div', { class: 'intro-fields', hidden: !startOn },
-    h('label', { for: 'intro-rate', class: 'edit-label' }, 'Intro rate'), introRate,
+    h('label', { for: 'intro-rate', class: 'edit-label' }, 'Intro rate'), introRate, h('p', { class: 'edit-hint' }, 'Blank means 0%.'),
     h('label', { for: 'intro-ends', class: 'edit-label' }, 'Intro ends'), introEnds,
     deferred);
   const state = h('span', { class: 'switch-state' }, startOn ? 'Yes' : 'No');
@@ -255,7 +265,10 @@ function cardRateEditor(row) {
     }
   }, h('span', { class: 'switch-track', 'aria-hidden': 'true' }, h('span', { class: 'switch-knob' })), state);
   const doSet = (kind) => {
-    const p = parseCardRate({ apr: apr.value, hasIntro: sw.getAttribute('aria-checked') === 'true', introRate: introRate.value, introEnds: introEnds.value, deferred: deferredPick === 'yes' ? true : deferredPick === 'no' ? false : 'notSure' });
+    const hasIntro = sw.getAttribute('aria-checked') === 'true';
+    if (hasIntro && introEnds.value.trim() && !introEndsIso) { msg.textContent = 'Intro ends: type a date like Dec 6 or Mar 1, 2027'; introEnds.focus(); return; }
+    const dp = deferredRow.value || 'no';
+    const p = parseCardRate({ apr: apr.value, hasIntro, introRate: introRate.value, introEnds: introEndsIso, deferred: dp === 'yes' ? true : dp === 'no' ? false : 'notSure' });
     if (!p.ok) { msg.textContent = p.message; return; }
     done(editCardRate(cur(), cardId, 'set', { value: p.value, kind, today: today() }), said.changed(row.label, showValue({ apr: p.value.apr ?? rules.get('DEFAULT_CARD_APR', +cur().meta.asOf.slice(0, 4)), intro: p.value.intro }, 'cardRate') + (kind === 'rough' ? ' (a guess)' : '')));
   };
@@ -277,23 +290,20 @@ function cardRateEditor(row) {
 // pays the bill); or someone else covers it (pick who, or add a name). A live
 // line says what it costs you a month. The switch between answers shows and
 // hides fields in place, so nothing typed is lost.
-const HOW_OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every two weeks'], ['semimonthly', 'twice a month'], ['quarterly', 'a quarter'], ['yearly', 'a year']];
+// The same words and order as the add form's "How often" (engine/add.js OFTEN_WORDS), lower-cased for a sentence.
+const HOW_OFTEN = OFTEN_WORDS.map(([k, w]) => [k, w.charAt(0).toLowerCase() + w.slice(1)]);
 function expenseEditor(row) {
   const id = row.path.split('.')[1];
   const e = getAt(cur(), 'expenses.' + id);
   const now = row.fact.value || {};
   const sh = shareOf(cur(), e);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 1,200 or 1.2k' });
   amount.value = inputText('money', valueOf(e.amount));
   const often = h('select', { id: 'exp-often', 'aria-label': 'How often' }, HOW_OFTEN.map(([k, w]) => h('option', { value: k, selected: e.cadence === k }, w)));
   const startMode = now.covered ? 'covered' : sh.shared ? 'shared' : 'me';
-  // Who pays (S-186), as two ticks on the folded row: shared, or someone else covers it (never both); neither is me.
-  const sharedTick = h('input', { type: 'checkbox', id: 'exp-shared', checked: startMode === 'shared' });
-  const coveredTick = h('input', { type: 'checkbox', id: 'exp-covered', checked: startMode === 'covered' });
-  sharedTick.addEventListener('change', () => { if (sharedTick.checked) coveredTick.checked = false; });
-  coveredTick.addEventListener('change', () => { if (coveredTick.checked) sharedTick.checked = false; });
-  const mode = { get value() { return coveredTick.checked ? 'covered' : sharedTick.checked ? 'shared' : 'me'; } };
+  // Who pays (S-186): one of three, as a row of buttons on the folded row (a checkbox would promise any mix).
+  const mode = liveChoice({ id: 'exp-who', options: [['me', 'Me'], ['shared', 'Shared'], ['covered', 'Someone else pays']], value: startMode, clear: false, label: 'exp-who-l', onPick: () => syncWho() });
   const name = h('input', { id: 'exp-name', type: 'text', autocomplete: 'off' });
   name.value = e.label;
   // A subscription (S-191): marked here; its next charge and last review are its own rows.
@@ -310,11 +320,12 @@ function expenseEditor(row) {
   // Covered by
   const payers = payersOf(cur());
   const by = h('select', { id: 'exp-by' }, payers.map((p) => h('option', { value: p, selected: now.coveredBy === p }, p)), h('option', { value: '__other' }, 'Other / add a name...'));
-  const other = h('input', { id: 'exp-other', type: 'text', autocomplete: 'off', placeholder: 'Who covers it?', hidden: true, 'aria-label': 'Who covers it' });
-  by.addEventListener('change', () => { other.hidden = by.value !== '__other'; if (!other.hidden) other.focus(); });
+  const other = h('input', { id: 'exp-other', type: 'text', autocomplete: 'off', placeholder: 'e.g. Mom' });
+  const otherBox = h('div', { hidden: true }, h('label', { for: 'exp-other', class: 'edit-label' }, 'Their name'), other);
+  by.addEventListener('change', () => { otherBox.hidden = by.value !== '__other'; if (!otherBox.hidden) other.focus(); });
   const coveredBox = h('fieldset', { class: 'sub-fields', hidden: startMode !== 'covered' },
     h('legend', {}, 'Covered'),
-    h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, other,
+    h('label', { for: 'exp-by', class: 'edit-label' }, 'Covered by'), by, otherBox,
     h('p', { class: 'edit-hint' }, 'A covered expense counts $0 toward your spending.'));
   // When it starts and ends (S-199): blank is open-ended; a past start is fine.
   const dates = dateFields(e.start, e.end, 'exp', { plain: true });
@@ -336,23 +347,24 @@ function expenseEditor(row) {
     yours.textContent = m === null ? '' : 'Costs you ' + showValue(m, 'money') + ' a month.';
     partNote.textContent = mode.value === 'shared' ? threeNumbers(x, (HOW_OFTEN.find(([k]) => k === often.value) || [null, ''])[1]) : '';
   };
-  // Fixed or varies (owner's ask, 2026-10-27): never both; neither is not sorted yet.
-  const fixedTick = h('input', { type: 'checkbox', id: 'exp-fixed', checked: e.fixed === true });
-  const variesTick = h('input', { type: 'checkbox', id: 'exp-varies', checked: e.fixed === false });
-  fixedTick.addEventListener('change', () => { if (fixedTick.checked) variesTick.checked = false; });
-  variesTick.addEventListener('change', () => { if (variesTick.checked) fixedTick.checked = false; });
-  const fixedNow = () => (fixedTick.checked ? true : variesTick.checked ? false : null);
+  // Fixed or varies (owner's ask, 2026-10-27): one of two, or neither (not sorted yet): tapping the pressed one clears it.
+  const fixed = liveChoice({ id: 'exp-fixed', options: [['fixed', 'Fixed'], ['varies', 'Varies']], value: e.fixed === true ? 'fixed' : e.fixed === false ? 'varies' : null, label: 'exp-fixed-l', onPick: () => showOn() });
+  const fixedNow = () => (fixed.value === 'fixed' ? true : fixed.value === 'varies' ? false : null);
   const tick = (box, words) => h('label', { class: 'tick-chip', for: box.id }, box, h('span', {}, words));
-  const tickRow = h('div', { class: 'tick-row' }, tick(sharedTick, 'Shared'), tick(coveredTick, 'Someone else pays'), tick(subBox, 'Subscription'), tick(datesTick, 'Start or end date'), tick(fixedTick, 'Fixed'), tick(variesTick, 'Varies'));
-  // The folded row (owner's ask, 2026-10-26): closed by default; its line names what is ticked, so nothing hides silently.
+  const tickRow = h('div', { class: 'tick-row' }, tick(subBox, 'Subscription'), tick(datesTick, 'Start or end date'));
+  const choiceField = (id, words, row) => h('div', { class: 'choice-field' }, h('p', { class: 'edit-label', id }, words), row);
+  const picks = h('div', { class: 'more-picks' }, choiceField('exp-who-l', 'Who pays', mode.el), choiceField('exp-fixed-l', 'Fixed or varies', fixed.el));
+  // The folded row (owner's ask, 2026-10-26): closed by default; its line names what is picked, so nothing hides silently.
   const onNow = h('span', { class: 'when-now' });
-  const showOn = () => { const on = [[sharedTick, 'Shared'], [coveredTick, 'Someone else pays'], [subBox, 'Subscription'], [datesTick, 'Has dates'], [fixedTick, 'Fixed'], [variesTick, 'Varies']].filter(([b]) => b.checked).map(([, w]) => w); onNow.textContent = on.join(', '); };
-  const more = h('details', { class: 'when more-opts' }, h('summary', {}, 'More options ', onNow), tickRow, sharedBox, coveredBox, dates.box);
-  tickRow.addEventListener('change', () => {
+  const WHO_WORDS = { shared: 'Shared', covered: 'Someone else pays' };
+  const showOn = () => { const on = [WHO_WORDS[mode.value] || null, subBox.checked ? 'Subscription' : null, datesTick.checked ? 'Has dates' : null, fixed.value === 'fixed' ? 'Fixed' : fixed.value === 'varies' ? 'Varies' : null].filter(Boolean); onNow.textContent = on.join(', '); };
+  const more = h('details', { class: 'when more-opts' }, h('summary', {}, 'More options ', onNow), picks, tickRow, sharedBox, coveredBox, dates.box);
+  function syncWho() {
     sharedBox.hidden = mode.value !== 'shared'; coveredBox.hidden = mode.value !== 'covered'; amountHint.hidden = mode.value !== 'covered';
     amountLabel.textContent = AMOUNT_Q[mode.value];
     showOn(); preview();
-  });
+  }
+  tickRow.addEventListener('change', () => { showOn(); preview(); });
   showOn();
   amount.addEventListener('input', () => { usedStd = false; });
   for (const el of [amount, often]) el.addEventListener('input', preview);
@@ -416,10 +428,10 @@ function expenseEditor(row) {
 // under "When does it run?" so an open-ended item asks nothing. Blank means
 // open-ended. read() gives { start, end, problem }.
 function dateFields(start, end, prefix, { label = 'When does it run?', startWords = 'Starts (optional)', endWords = 'Ends (optional)', plain = false } = {}) {
-  const from = h('input', { id: prefix + '-start', type: 'date' });
-  from.value = start || '';
-  const to = h('input', { id: prefix + '-end', type: 'date' });
-  to.value = end || '';
+  // Typed any way (S-285): each box holds its date once it reads; words that do not read are a problem, never blank.
+  let startIso = start || '', endIso = end || '';
+  const from = dateBox(prefix + '-start', startIso, (v) => { startIso = v; });
+  const to = dateBox(prefix + '-end', endIso, (v) => { endIso = v; });
   const fields = h('div', { class: 'sub-fields' },
     h('label', { for: prefix + '-start', class: 'edit-label' }, startWords), from,
     h('label', { for: prefix + '-end', class: 'edit-label' }, endWords), to,
@@ -431,7 +443,10 @@ function dateFields(start, end, prefix, { label = 'When does it run?', startWord
   return {
     box, from, to,
     read: () => {
-      const a = from.value || null, b = to.value || null;
+      const unread = (box, iso, words) => (box.value.trim() && !iso ? words.replace(/ \(optional\)$/, '') + ': type a date like Dec 6' : null);
+      const bad = unread(from, startIso, startWords) || unread(to, endIso, endWords);
+      if (bad) return { start: null, end: null, problem: bad };
+      const a = startIso || null, b = endIso || null;
       if (a && b && b < a) return { start: a, end: b, problem: 'It ends before it starts' };
       return { start: a, end: b, problem: null };
     }
@@ -442,7 +457,7 @@ function dateFields(start, end, prefix, { label = 'When does it run?', startWord
 // and ends, and for pay that comes monthly or less often, the day of the month
 // it lands. Weekly and biweekly pay dates follow the start date, so they ask
 // for the first pay date instead.
-const INCOME_OFTEN = [['monthly', 'a month'], ['semimonthly', 'twice a month'], ['biweekly', 'every two weeks'], ['weekly', 'a week'], ['quarterly', 'a quarter'], ['yearly', 'a year'], ['once', 'once'], ['total', 'in total, over a period']];
+const INCOME_OFTEN = [...HOW_OFTEN, ['once', 'once'], ['total', 'in total, over a period']];
 const BY_START = ['weekly', 'biweekly'];
 function incomeEditor(row) {
   const id = row.path.split('.')[1];
@@ -453,16 +468,16 @@ function incomeEditor(row) {
   // Whose pay it is, when two people share the household (S-211): it decides whose 401(k), IRA and HSA it counts for.
   const ps = cur().household.people || [];
   const whoseSel = ps.length > 1 ? h('select', { id: 'inc-whose' }, ps.map((p) => h('option', { value: p.id, selected: (x.personId || ps[0].id) === p.id }, p.name || p.id))) : null;
-  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 45' });
+  const amount = h('input', { id: 'edit-input', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 1,200 or 1.2k' });
   amount.value = inputText('money', valueOf(x.amount));
   const often = h('select', { id: 'inc-often', 'aria-label': 'How often' }, INCOME_OFTEN.map(([k, w]) => h('option', { value: k, selected: x.cadence === k }, w)));
   const day = h('input', { id: 'inc-day', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day.value = x.payDay && valueOf(x.payDay) ? String(valueOf(x.payDay)) : '';
-  const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day of the month it lands (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Leave blank if it varies.'));
+  const dayBox = h('div', { hidden: true }, h('label', { for: 'inc-day', class: 'edit-label' }, 'Day paid (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 15. Leave blank if it varies.'));
   // Twice a month, the second day (S-226): the 1st and the 15th. Blank keeps the usual rule (15 days after the first).
   const day2 = h('input', { id: 'inc-day2', type: 'text', inputmode: 'numeric', autocomplete: 'off' });
   day2.value = x.payDay2 && valueOf(x.payDay2) ? String(valueOf(x.payDay2)) : '';
-  const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day of the month it lands (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th.'));
+  const day2Box = h('div', { hidden: true }, h('label', { for: 'inc-day2', class: 'edit-label' }, 'Second day paid (optional)'), day2, h('p', { class: 'edit-hint' }, 'For example 15, for pay on the 1st and the 15th.'));
   const startWords = { monthly: 'Starts (optional)', once: 'The date it is paid', total: 'From' };
   const dates = dateFields(x.start, x.end, 'inc', { label: 'When does it run?' });
   const startLabel = dates.box.querySelector('label[for="inc-start"]'), endLabel = dates.box.querySelector('label[for="inc-end"]');
@@ -502,7 +517,9 @@ function incomeEditor(row) {
   return editorForm(() => doSet('known'),
     h('label', { for: 'inc-name', class: 'edit-label' }, 'Name'), name,
     whoseSel ? [h('label', { for: 'inc-whose', class: 'edit-label' }, 'Whose pay'), whoseSel, h('p', { class: 'edit-hint' }, 'It decides whose 401(k), IRA and HSA this pay counts for.')] : null,
-    h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), h('div', { class: 'amount-row' }, amount, often),
+    h('div', { class: 'slim-row two' },
+      h('div', { class: 'slim-amt' }, h('label', { for: 'edit-input', class: 'edit-label' }, 'How much, before tax?'), amount),
+      h('div', { class: 'slim-often' }, h('label', { for: 'inc-often', class: 'edit-label' }, 'How often'), often)),
     h('p', { class: 'edit-hint' }, 'Before anything is taken out.'),
     dayBox, day2Box, dates.box, msg,
     editActions(cancel, [
@@ -614,7 +631,7 @@ function paymentEditor(row) {
   // Paid with a card (owner's ask, 2026-10-27): no day is asked. The money leaves checking when the card is paid, on the
   // card's own due day, which the card already holds; the line's own day is cleared.
   const cardOf = () => (cur().debts || []).find((x) => x.id === from.value && x.type === 'credit_card') || null;
-  const dayBox = h('div', { class: 'pay-day-box' }, h('label', { for: 'pay-day', class: 'edit-label' }, 'Day of the month it is paid (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'));
+  const dayBox = h('div', { class: 'pay-day-box' }, h('label', { for: 'pay-day', class: 'edit-label' }, 'Day paid (optional)'), day, h('p', { class: 'edit-hint' }, 'For example 5. Leave blank if it varies.'));
   const cardNote = h('p', { class: 'edit-hint' });
   const showDay = () => {
     const c = cardOf();
@@ -652,8 +669,6 @@ const editActions = (cancel, more) => h('div', { class: 'edit-actions' },
 // Birth date, state and county are the Profile's answers (one stored answer, bug sweep): shown here, edited there.
 const fromProfile = (path) => Object.values(HOUSEHOLD_ANSWERS).some((at) => at(cur()) === path);
 function editor(row) {
-  if (fromProfile(row.path)) return h('div', { class: 'editor' }, h('p', { class: 'edit-hint' }, 'This comes from your Profile, so it is changed there.'),
-    h('div', { class: 'edit-actions' }, h('a', { class: 'btn primary', href: 'profile.html#/you' }, 'Change in Profile'), h('button', { type: 'button', class: 'btn', onclick: () => { closeEditor(); refresh(); } }, 'Cancel')));
   // A basis that comes from the contributions by year is changed there.
   if (basisAccount(row.path)) return h('div', { class: 'editor' }, h('p', { class: 'edit-hint' }, 'The total of the contributions by year.'),
     h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: () => setOpen(row.path.replace(/\.(basis|costBasis)$/, '.contributions')) }, 'Change the years'), h('button', { type: 'button', class: 'btn', onclick: () => { closeEditor(); refresh(); } }, 'Cancel')));
@@ -664,12 +679,16 @@ function editor(row) {
   const f = getAt(cur(), row.path);
   if (row.type.startsWith('suggest:')) return suggestEditor(row);
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
-  let input;
+  let input, pickRow = null;
   if (row.type.startsWith('link:')) {
     input = linkSelect(row.type, f.value, 'edit-input');
   } else if (row.type.startsWith('choice:') || row.type === 'bool') {
     const opts = isNeedRow(row.path) ? [['true', 'Need'], ['false', 'Want']] : row.type === 'bool' ? [['true', 'Yes'], ['false', 'No']] : row.type.slice(7).split('|').map((x) => [x, showValue(x, row.type)]);
-    input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
+    // Two or three answers are a row of buttons (S-282); a longer list stays a list, which the picker takes over (S-284).
+    if (opts.length <= 3) {
+      pickRow = liveChoice({ id: 'edit-input', options: opts, value: f.value === null || f.value === undefined ? null : String(f.value), label: 'edit-label-l', onPick: () => { dirty = true; } });
+      input = { get value() { return pickRow.value === null ? '' : pickRow.value; }, focus: () => pickRow.el.querySelector('button')?.focus() };
+    } else input = h('select', { id: 'edit-input' }, h('option', { value: '' }, 'Choose'), ...opts.map(([v, t]) => h('option', { value: v, selected: f.value !== null && String(f.value) === v }, t)));
   } else if (row.type === 'list' || row.type === 'tiers') {
     // A list is a small table (owner's ask, 2026-10-27): a row per entry, boxes with their own labels, never raw code.
     input = listBoxes(row, f.value);
@@ -692,14 +711,20 @@ function editor(row) {
     if (row.type.startsWith('link:') && !typed) { msg.textContent = 'Pick one, or use Not for me'; input.focus(); return; }
     const p = row.type === 'list' || row.type === 'tiers' ? input.read() : parseInput(row.type, typed);
     if (!p.ok) { msg.textContent = p.message; input.focus(); return; }
+    // Saved as it was (the same value, already known or already a guess): nothing changes, and the bar says so.
+    // The same value saved as known keeps the guess: it says so, never "changed to" what it already was.
+    if (f && JSON.stringify(f.value) === JSON.stringify(p.value)) {
+      if (f.kind === kind) { closeEditor(); refresh(); say(row.label + ': nothing changed'); return; }
+      if (kind === 'known') { done(editFact(cur(), row.path, 'confirm', { today: today() }), confirmed(row.label)); return; }
+    }
     let next = editFact(cur(), row.path, 'set', { value: p.value, kind, today: today() });
     // An employer seen before brings its plan details, as guesses, in the same change (S-284).
     if (row.path.endsWith('.employerName')) { const tpl = planFor(p.value); if (tpl) next = applyTemplate(next, row.path.split('.').slice(0, 2).join('.'), tpl, today()); }
     done(next, said.changed(row.label, shownAs(row, p.value) + (kind === 'rough' ? ' (a guess)' : '')));
   };
   return editorForm(() => doSet('known'),
-    h('label', { for: 'edit-input', class: 'edit-label' }, row.field || row.label),
-    row.type === 'list' || row.type === 'tiers' ? input.el : pickWrap || input,
+    h('label', { for: pickRow ? null : 'edit-input', id: 'edit-label-l', class: 'edit-label' }, row.field || row.label),
+    row.type === 'list' || row.type === 'tiers' ? input.el : pickRow ? pickRow.el : pickWrap || input,
     hint && h('p', { class: 'edit-hint' }, hint),
     msg,
     editActions(cancel, [
@@ -781,7 +806,7 @@ function notesBlock(row) {
     list.length ? h('ul', { class: 'note-list' }, list.map((n) => h('li', {}, h('span', { class: 'note-date' }, shortDate(n.date)), h('span', { class: 'note-text' }, n.text),
       h('button', { type: 'button', class: 'btn small danger', onclick: () => change((x) => removeNote(x, n.id), said.deleted('The note')) }, 'Delete')))) : null,
     h('form', { class: 'note-form', novalidate: true, onsubmit: add },
-      h('label', { for: 'note-box', class: 'edit-label' }, 'Add a note'), box, h('p', { class: 'edit-hint', id: 'note-hint' }, 'Dated today.'),
+      h('label', { for: 'note-box', class: 'edit-label' }, 'Note on this number'), box, h('p', { class: 'edit-hint', id: 'note-hint' }, 'Dated today, kept with this one number.'),
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Add the note'))));
 }
 const openNotes = () => { const d = document.getElementById('row-notes'); if (d) { d.open = true; document.getElementById('note-box')?.focus(); } };
@@ -797,6 +822,9 @@ function rowValue(row) {
   if (f.kind === 'notForMe') return 'Does not apply';
   if (row.linked) return row.display;
   if (f.value === null) return 'Not given yet';
+  // Tax withheld from pay is in the pay's own cadence (engine/cashflow.js), so the row says the period (DESIGN rule 15).
+  const w = /^income\.([^.]+)\.withholding\./.exec(row.path);
+  if (w && typeof f.value === 'number' && !row.display) { const stream = (cur().income || []).find((x) => x.id === w[1]); return shownAs(row, f.value) + ((stream && OFTEN[stream.cadence]) || ''); }
   return row.display || shownAs(row, f.value);
 }
 // The answers your file could not give (S-228): they stay flagged on their row until entered.
@@ -834,6 +862,9 @@ function rowEl(row, openPath, { full = false, note = null, sub = null } = {}) {
   // in place, and the screen stays where Back expects it.
   const line = row.linked ? rowByPath(row.linePath) : null;
   if (row.linked && !line) return h('li', { class: 'row kind-' + f.kind, id: 'f-' + row.path }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, label), h('span', { class: 'row-value' }, rowValue(row)), kindMark(row.path, f.kind)));
+  // The Profile's own answers (birth date, filing status, the situation) are read-only here: plain text and a link to
+  // where they are changed, never a box with a chevron (affordance 3).
+  if (fromProfile(row.path)) return h('li', { class: 'row kind-profile', id: 'f-' + row.path }, h('div', { class: 'row-main row-still' }, h('span', { class: 'row-label' }, label), h('span', { class: 'row-value' }, rowValue(row)), h('a', { class: 'row-profile', href: 'profile.html#/you' }, 'Change in Profile')));
   // A value worked out from others (an expense's cost to you) shows its math (S-177).
   const worked = row.type === 'expense' && f.value && (f.value.shared || f.value.covered);
   return h('li', { class: 'row kind-' + f.kind + (isOpen ? ' open' : ''), id: 'f-' + row.path },
@@ -855,7 +886,7 @@ const dots = (x, tagged = false) => {
   if (!rows) return null;
   const open = openRows(rows), n = open.length;
   return n ? h('span', { class: 'group-counts' }, h('span', { class: 'dot ' + (open.some((r) => r.fact.kind === 'missing') ? 'dot-missing' : 'dot-rough') },
-    h('span', { 'data-metric': fresh() && tagged ? 'list:open:' + x.slug : null }, String(n)), ' to answer')) : null;
+    h('span', { 'data-metric': fresh() && tagged ? 'list:open:' + x.slug : null }, String(n)), ' to fill in')) : null;
 };
 // To fill in (owner's ask, 2026-10-27): one switch at the top of every screen here shows only what is missing or a
 // guess, so filling in goes fast. It is the page's kind filter (Missing and Rough on, the rest off), kept in this browser.
@@ -913,17 +944,12 @@ function filterBar(sc, q) {
   // A chip shows only its kind; tapped again, it shows everything (S-182).
   const solo = (k) => kinds.length === 1 && kinds[0] === k;
   const pick = (k) => setKinds(solo(k) ? [...KIND_ORDER] : [k]);
-  // Search is in the header (Krug pass); this card only filters by kind.
+  // Search is in the header (Krug pass); this card only filters by kind. The chips are the whole filter: a second tap
+  // on a solo chip shows everything, so there is no Show everything button to go with them.
   return h('section', { class: 'card filters', 'aria-label': 'Show' },
     h('div', { class: 'filter-row' },
       h('span', { class: 'filter-label' }, 'Show:'),
-      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))),
-    null,
-    h('div', { class: 'filter-row' },
-      h('button', { type: 'button', class: 'btn', onclick: () => setKinds(KIND_ORDER.filter((k) => k !== 'known' && k !== 'computed')) }, 'Hide known'),
-      h('button', { type: 'button', class: 'btn', onclick: () => setKinds(['missing']) }, 'Only missing'),
-      h('button', { type: 'button', class: 'btn', disabled: !filtering(q), title: filtering(q) ? null : 'Everything is showing', onclick: () => setKinds([...KIND_ORDER], '') }, filtering(q) ? 'Show everything' : 'Showing everything'),
-      selectToggle()));
+      ...KIND_ORDER.filter((k) => n(k)).map((k) => h('button', { type: 'button', class: 'filter-chip chip-' + k + (kinds.includes(k) ? '' : ' off'), 'aria-pressed': String(solo(k)), onclick: () => pick(k) }, (solo(k) ? 'Only ' + KIND_LABEL[k].toLowerCase() : KIND_LABEL[k]) + ' ' + n(k)))));
 }
 
 // What the search and the filters find, one row each, every one opening its own screen with its editor open.
@@ -942,15 +968,24 @@ function results(sc, q) {
   ];
 }
 
-// The six sections in DATING order, each with one total where your numbers give one, else how much is filled in.
+// The six sections in DATING order, each with one total where your numbers give one, worded as Guide me's overview
+// words it (one function, ui/guide.js totalWords), else how much is entered.
 function sectionList(sc) {
   const steps = Object.fromEntries(sessionSteps(cur(), summaryOf(cur())).map((x) => [x.id, x.result]));
+  const owed = summaryOf(cur()).sheet.owed;
   return h('ul', { class: 'go-list', 'aria-label': 'Your numbers, by section' }, sc.sections.map((sec) => {
     // Taxes has its total on its own screen (balance due), not on this list.
-    const r = sec.slug === 'taxes' ? null : steps[sec.slug];
-    const total = r && r.value !== null ? h('span', {}, h('span', { class: 'go-total', 'data-metric': SECTION_METRIC[sec.slug] || null }, money(r.value)), TOTAL_WORDS[sec.slug], sec.slug === 'assets' && summaryOf(cur()).sheet.owed ? ', plus ' + money(summaryOf(cur()).sheet.owed) + ' owed to you' : null) : h('span', {}, filledWords(sec.counts));
-    // A total built on a missing line says so; how many lines are rough or missing shows beside it.
-    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, r && r.value !== null && r.kind === 'incomplete' ? chip(r.kind) : null, dots(sec, true)] });
+    // A step total with no value (Goals holding only the FI number, which the step leaves out) is not "Nothing yet":
+    // the section then says how much is entered, as one with no step total does.
+    const r0 = sec.slug === 'taxes' ? null : steps[sec.slug], due = sec.slug === 'taxes' ? taxDue() : null;
+    const r = r0 && r0.value !== null && r0.value !== undefined ? r0 : null;
+    // How many lines are rough or missing shows beside the total. A section with no step total says how much is
+    // entered, or, while it has open questions, only those (never "7 of 7" next to "3 to fill in"); nothing asked yet
+    // says so, never "0 of 0".
+    const open = dots(sec, true);
+    const total = r ? totalWords({ id: sec.slug, result: r }, sec.slug === 'assets' ? owed : 0, SECTION_METRIC[sec.slug] || null)
+      : due || (sec.counts.asked === 0 ? h('span', { class: 'empty' }, 'Nothing yet') : sec.slug === 'taxes' ? h('span', { class: 'empty' }, 'Not figured yet') : open ? null : h('span', {}, filledWords(sec.counts)));
+    return goRow(hashFor([sec.slug]), { mark: sec.letter, name: sec.label, sub: [total, open] });
   }));
 }
 
@@ -968,17 +1003,21 @@ const laterWords = (path) => { const c = checkOf(path); return c && c.mode === '
 const capitalize = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 // Which rows are worth checking now. The last answer stands while a new one is worked out, so marks never flicker.
 const umap = () => (guess ? mapOf(guess, cur()) : null);
-// A row's mark: the red Missing or amber Rough chip when it is worth checking now; a small gray dot when it is fine
-// for now or set for later; nothing for a known number.
+// A row's mark: the red Missing chip when it is worth checking now; nothing for a guess (its dashed box and "guess"
+// tag already say what it is, once is enough), nothing when it is fine for now or set for later, and nothing for a
+// known number.
+// A guess worth checking now says so in words ("Check now"), so it never looks like one that is fine for now; that
+// one keeps only its dashed box and tag. Before the ranking is in, no guess is called worth checking.
 function kindMark(path, kind) {
-  if ((kind === 'rough' || kind === 'missing') && !worthNow(umap(), path, kind, guessFor === cur())) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': kind === 'missing' ? 'Missing, fine for now' : 'A guess, fine for now', title: 'Fine for now' });
+  if (kind === 'rough') return umap() && worthNow(umap(), path, kind, guessFor === cur()) ? checkNowChip() : null;
+  if (kind !== 'missing' || !worthNow(umap(), path, kind, guessFor === cur())) return null;
   return chip(kind);
 }
 // Still guessing counts the one list of open questions (morning answer 10), the total every screen shows.
 const nowCount = () => (guess ? openQuestions(cur(), guess).length : null);
 function guessRow() {
   const n = nowCount();
-  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter...' : n ? [h('span', { 'data-metric': fresh() ? 'list:open' : null }, String(n)), ' open: missing or worth checking now'] : 'Nothing open' });
+  return goRow(hashFor(['still-guessing']), { id: 'guess-row', name: 'Still guessing', sub: n === null ? 'Working out which guesses matter...' : n ? [h('span', { 'data-metric': fresh() ? 'list:open' : null }, String(n)), ' to fill in'] : 'Nothing open' });
 }
 // Why a guess is listed, in plain words: what a 20% miss could move ("could move your FI number by $30,000").
 function whyOf(it) {
@@ -1063,8 +1102,8 @@ function pickerCard() {
     const n = have.get(x.key) || 0;
     return h('label', { class: 'choice-card pick' }, box, h('span', { class: 'choice-text' }, h('strong', {}, x.label), n ? h('span', { class: 'choice-sub' }, 'You have ' + n) : null), many);
   };
-  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Quick add' },
-    h('p', { class: 'muted' }, 'Tick what you have. Fill in the details after.'),
+  const card = h('section', { class: 'card picker', id: 'picker', 'aria-label': 'Tick what you have' },
+    h('p', { class: 'muted' }, 'Fill in the details after.'),
     ...STARTER.map((g) => h('fieldset', { class: 'pick-group' }, h('legend', {}, g.group), h('div', { class: 'pick-grid' }, g.items.map(pick)))),
     h('div', { class: 'edit-actions pick-actions' }, addBtn, h('button', { type: 'button', class: 'btn ghost', onclick: () => { picking = null; go([]); } }, 'Cancel')));
   sync();
@@ -1085,7 +1124,14 @@ function coveredScreen() {
   return h('section', { class: 'card', 'aria-label': 'Covered by others' },
     h('p', { class: 'muted' }, money(c.monthly) + ' a month that someone else pays, $0 to you.'),
     mathButton(['list:covered'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })),
-    h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? 'cost not given' : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
+    h('ul', { class: 'go-list' }, c.items.map((i) => goRow(ledgerHref(i.path), { name: i.label, sub: [i.monthly === null ? MISSING_WORDS : h('span', {}, h('span', { class: 'go-total' }, money(i.monthly)), ' a month'), ', covered by ' + (i.by || 'someone else')] }))));
+}
+// The year's tax still owed (the Taxes screen's own number), as a list figure; null until it can be figured.
+const taxDue = () => { const t = summaryOf(cur()).tax.balanceDue; return t.value === null || t.value === undefined ? null : h('span', {}, h('span', { class: 'go-total' }, money(t.value)), ' still owed (estimate)'); };
+// Taxes sits under Income (S-280): one row into it from the Income screen, the way Needs lists Subscriptions.
+function taxesRow() {
+  if (!screensOf(cur()).sections.some((x) => x.slug === 'taxes')) return null;
+  return goRow(hashFor(['taxes']), { name: 'Taxes', sub: taxDue() || h('span', { class: 'empty' }, 'Not figured yet') });
 }
 function subsRow() {
   if (!(cur().expenses || []).length) return null;
@@ -1114,14 +1160,14 @@ function subsScreen() {
   subsPicked = new Set([...subsPicked].filter((id) => sub.items.some((i) => i.id === id)));
   const exp = (id) => getAt(cur(), 'expenses.' + id);
   const dayOf = (i) => (i.renews ? 'on the ' + ordinal(+i.renews.slice(8, 10)) + (roughFact(exp(i.id).renews) ? ' (a guess)' : '') : 'no day yet');
-  const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with not given'; };
+  const withWhat = (i) => { const e = exp(i.id); return e.paidFrom && valueOf(e.paidFrom) ? linkName(cur(), valueOf(e.paidFrom)) : 'paid with ' + MISSING_WORDS.toLowerCase(); };
   // Tapped, a line opens its editor in place under it (the list stays the screen Back comes back to).
   const openOf = (i) => open === rowPathFor(cur(), 'expenses.' + i.id + '.amount');
   const line = (i) => { const r = rowByPath(rowPathFor(cur(), 'expenses.' + i.id + '.amount')); return r ? h('ul', { class: 'rows' }, rowEl(r, open, { full: true })) : null; };
   const tick = (i) => h('input', { type: 'checkbox', class: 'sub-check', id: 'sub-pick-' + i.id, 'aria-label': 'Tick ' + i.label, checked: subsPicked.has(i.id) || null, onchange: (ev) => { if (ev.target.checked) subsPicked.add(i.id); else subsPicked.delete(i.id); refresh(); } });
   const many = [...subsPicked];
   const card = linkSelect('link:cash|card', null, 'subs-card');
-  const day = h('input', { id: 'subs-day', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: '1 to 31' });
+  const day = h('input', { id: 'subs-day', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 15' });
   const apply = () => {
     const d = day.value.trim() ? parseInput('int', day.value) : null;
     if (d && (!d.ok || d.value < 1 || d.value > 31)) { say('Day: a number from 1 to 31'); return; }
@@ -1142,14 +1188,14 @@ function subsScreen() {
       h('p', { class: 'subs-bulk-h' }, many.length + ' ticked'),
       h('div', { class: 'add-form' }, h('div', { class: 'add-grid' },
         h('div', { class: 'add-field short' }, h('label', { for: 'subs-card', class: 'edit-label' }, 'Paid with'), card),
-        h('div', { class: 'add-field short' }, h('label', { for: 'subs-day', class: 'edit-label' }, 'Day of the month'), day))),
+        h('div', { class: 'add-field short' }, h('label', { for: 'subs-day', class: 'edit-label' }, 'Day paid'), day))),
       h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn primary', onclick: apply }, 'Set for ' + many.length),
         h('button', { type: 'button', class: 'btn', onclick: () => { subsPicked = new Set(); refresh(); } }, 'Clear'))) : null,
     h('ul', { class: 'subs-list' }, sub.items.map((i) => h('li', { class: 'sub-line' + (subsPicked.has(i.id) ? ' is-ticked' : '') },
       h('label', { class: 'sub-tick', for: 'sub-pick-' + i.id }, tick(i)),
       h('button', { type: 'button', class: 'sub-go', 'aria-expanded': String(openOf(i)), onclick: () => { if (!canLeave()) return; setOpen(openOf(i) ? null : rowPathFor(cur(), 'expenses.' + i.id + '.amount')); } },
         h('span', { class: 'sub-name' }, i.label),
-        h('span', { class: 'sub-meta' }, [i.monthly === null ? 'amount not given' : money(i.monthly) + ' a month', dayOf(i), withWhat(i)].join(' · ')),
+        h('span', { class: 'sub-meta' }, [i.monthly === null ? MISSING_WORDS : money(i.monthly) + ' a month', dayOf(i), withWhat(i)].join(' · ')),
         i.soon ? h('span', { class: 'chip chip-soon' }, 'Charging soon') : null,
         h('span', { class: 'chev', 'aria-hidden': 'true' }, openOf(i) ? '\u2304' : '\u203A')),
       openOf(i) ? h('div', { class: 'sub-open' }, line(i)) : null))),
@@ -1167,7 +1213,7 @@ function auditScreen() {
     b.value = r.uses === null ? '' : String(r.uses);
     b.addEventListener('change', () => {
       const t = b.value.trim();
-      if (!t) return later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', null, 'missing', today()), said.changed(r.label + ': uses a month', 'not given')));
+      if (!t) return later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', null, 'missing', today()), said.changed(r.label + ': uses a month', MISSING_WORDS.toLowerCase())));
       const p = parseInput('int', t);
       if (!p.ok || p.value < 0) { say('Uses a month: a whole number, like 4'); return; }
       later(() => change((x) => putFact(x, 'expenses.' + r.id + '.usesPerMonth', p.value, 'known', today()), said.changed(r.label + ': uses a month', String(p.value))));
@@ -1179,7 +1225,7 @@ function auditScreen() {
     h('section', { class: 'card', 'aria-label': 'Subscription audit' },
       h('p', { class: 'subs-total' }, au.candidates ? [h('strong', {}, money(au.freedYearly) + ' a year'), ' freed by cancelling the ' + au.candidates + ' marked (' + money(au.freedMonthly) + ' a month).'] : 'Mark the ones you would cancel to see what it frees.'),
       h('ol', { class: 'audit-list' }, au.rows.map((r) => h('li', { class: 'audit-row' + (r.candidate ? ' is-candidate' : '') },
-        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(r.path) }, r.label), h('span', { class: 'audit-cost' }, r.yearly === null ? 'amount not given' : money(r.yearly) + ' a year')),
+        h('div', { class: 'audit-head' }, h('a', { href: ledgerHref(r.path) }, r.label), h('span', { class: 'audit-cost' }, r.yearly === null ? MISSING_WORDS : money(r.yearly) + ' a year')),
         h('p', { class: 'tile-sub' }, (r.monthly === null ? '' : money(r.monthly) + ' a month') + (r.perUse !== null ? ' · ' + money(r.perUse, true) + ' a use' : r.uses === 0 ? ' · not used' : '')),
         h('div', { class: 'audit-actions' }, usesBox(r), mark(r)))))),
     h('section', { class: 'card' }, chartCard({ id: 'sub-audit', question: 'Which subscriptions cost the most a year?',
@@ -1321,8 +1367,8 @@ function topScreen(sc, st) {
   ];
 }
 
-// The top of the statement (Batch 4): liquid and total net worth side by side, each with Show the math that lists the
-// accounts and debts it counts.
+// The top of the statement (Batch 4): what is reachable after all debts, with Show the math that lists the accounts and
+// debts it counts (net worth itself is in the headline strip, S-283, so its math sits under the same button).
 function worthPair(spine) {
   const s = summaryOf(spine), ctx = () => ({ spine: cur(), rules, s: summaryOf(cur()) });
   const one = (id, label, r, sub, ids) => h('div', { class: 'nw-one' },
@@ -1330,10 +1376,9 @@ function worthPair(spine) {
     r.value === null ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, money(r.value)),
     r.kind === 'rough' || r.kind === 'incomplete' ? h('p', { class: 'tile-sub' }, chip(r.kind)) : null,
     mathButton(ids, ctx));
-  // Said once (Krug pass): the names alone; what each counts is in Show the math. Total first, as on Today.
-  return h('section', { class: 'card nw-pair', 'aria-label': 'Net worth' },
-    one('total', 'Net worth', s.sheet.netWorth, null, ['netWorth']),
-    one('liquid', 'Reachable after all debts', s.sheet.liquidNetWorth, null, ['liquidNetWorth']));
+  // Said once (Krug pass): the name alone; what it counts is in Show the math.
+  return h('section', { class: 'card nw-pair', 'aria-label': 'Reachable after all debts' },
+    one('liquid', 'Reachable after all debts', s.sheet.liquidNetWorth, null, ['liquidNetWorth', 'netWorth']));
 }
 // An item's figure on a group screen: a bill or a pay line shows what it counts a month (the figure it sorts and adds
 // by) when that differs from its own ("$200 a month, of $2,400 a year"); the FI goal says it is figured, not added.
@@ -1341,8 +1386,10 @@ function rowFigure(sec, it) {
   if (sec.slug === 'goals' && it.collection === 'goals' && it.amount === undefined) return h('span', { class: 'empty' }, 'Figured from your spending, not added in');
   const own = headline(it);
   if (!['expenses', 'income'].includes(it.collection) || typeof it.amount !== 'number') return own;
-  const words = money(it.amount) + ' a month';
-  return own.textContent.trim() === words ? own : h('span', {}, h('span', { class: 'go-total' }, words), ' (' + own.textContent.trim() + ')');
+  // Said once: the bracket only when the line's own words do not already carry the monthly figure ("$6,000 a month,
+  // since Jan 1" and "shared by 3: you pay $14 a month" do; "$2,400 a year" does not).
+  const words = money(it.amount) + ' a month', text = own.textContent.trim();
+  return text.includes(words) ? own : h('span', {}, h('span', { class: 'go-total' }, words), ' (' + text + ')');
 }
 // A group's total on its row: incomplete when a line in it has no amount yet.
 function groupTotal(sec, g) {
@@ -1370,16 +1417,17 @@ function sectionTop(sec) {
   if (sec.slug === 'goals') {
     const fi = fiCtx(cur()).s.fi, set = pickedScenario();
     return [
-      h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(cur(), rules, set) + '), the same as Today. ', h('a', { href: 'profile.html#/goals' }, 'Change it in Profile'), '.'),
+      h('p', { class: 'muted' }, 'FI numbers use the ' + SCENARIO_WORDS[set].toLowerCase() + ' assumption set (' + scenarioText(cur(), rules, set) + '), the same as Home. ', h('a', { href: 'profile.html#/goals' }, 'Change it in Profile'), '.'),
       h('section', { class: 'card nw-pair fi-three', 'aria-label': 'Financial independence, three ways' },
         figure('FI number: today\'s spending', fi.today, null, ['fiToday'], true),
         figure('FI number: your goal', fi.goal, null, ['fiNumber'], true),
         figure('FI number: without debt payments', fi.implied, null, ['impliedFi'], true)),
-      h('section', { class: 'card nw-pair', 'aria-label': 'How far along, and other FI numbers' },
-        figure('There so far', fi.fiPercent, (x) => pctOf(x) + ' of today\'s', ['fiPercent'], true),
+      fiChartsRow(),
+      // The other five FI numbers fold behind one line (slim by default), so the goals themselves come next.
+      foldRow('fi-more', 'Other FI numbers', fi.fiPercent.value === null || fi.fiPercent.value === undefined ? 'Lean, Fat, Barista, Coast' : pctOf(fi.fiPercent.value) + ' of the way', () => h('div', { class: 'nw-pair', role: 'group', 'aria-label': 'How far along, and other FI numbers' },
+        figure('How far along', fi.fiPercent, (x) => pctOf(x) + ' of the way', ['fiPercent'], true),
         figure('Lean FI', fi.leanFi, null, ['leanFi'], true), figure('Fat FI', fi.fatFi, null, ['fatFi'], true),
-        figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true)),
-      fiChartsRow()
+        figure('Barista FI', fi.baristaFi, null, ['baristaFi'], true), figure('Coast FI', fi.coastFi, null, ['coastFi'], true)))
     ];
   }
   if (sec.slug === 'taxes') {
@@ -1412,7 +1460,7 @@ function payChartsRow() {
 function fiChartsRow() {
   const c = fiCtx(cur());
   if (!c.s.fi.fiNumber.value) return null;
-  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + c.s.fi.yearsToFi.value + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard((() => { const x = savingsCurve(solvers(c.spine, rules, c.s)); return x ? { ...x, target: null } : null; })(), { yearsToFi: c.s.fi.yearsToFi.value })]);
+  return foldRow('fi-charts', 'When you reach FI', c.s.fi.yearsToFi.value === null ? 'Not at this pace' : 'About ' + Math.round(c.s.fi.yearsToFi.value) + ' years at this pace, as charts', () => [fiPathCard(fiPath(c.spine, rules, c.s)), savingsCurveCard((() => { const x = savingsCurve(solvers(c.spine, rules, c.s)); return x ? { ...x, target: null } : null; })(), { yearsToFi: c.s.fi.yearsToFi.value })]);
 }
 
 // Debt payoff dates (moved here from the Calendar): one line with the debt-free month, opening the clear dates, the
@@ -1442,9 +1490,12 @@ function unemploymentCard() {
   const add = () => change((x) => { const r = addItem(x, { collection: 'income', type: 'unemployment', label: 'Unemployment benefit' }, day); return setAt(r.spine, 'income.' + r.id + '.cadence', 'weekly'); }, said.added('Unemployment benefit'));
   // A bordered box, its label above and a hint under it (affordance 3).
   const box = (id, label, hint, value, type, onSet) => {
-    const b = h('input', { id, class: 'unemp-box', type: type === 'date' ? 'date' : 'text', inputmode: type === 'money' ? 'decimal' : null, autocomplete: 'off', placeholder: type === 'money' ? '$' : null, 'aria-describedby': id + '-hint' });
-    b.value = type === 'date' ? value || '' : inputText('money', value);
-    b.addEventListener('change', () => { const t = b.value.trim(); if (!t) return later(() => onSet(null)); if (type === 'date') return later(() => onSet(t)); const p = parseInput('money', t); if (!p.ok) { say(label + ': ' + p.message); return; } later(() => onSet(p.value)); });
+    // A date box reads "dec 28" or "the 15th" (S-285) and holds the date once it reads.
+    let held = type === 'date' ? value || '' : null;
+    const b = type === 'date' ? dateBox(id, held, (v) => { held = v; }, { class: 'unemp-box', 'aria-describedby': id + '-hint' })
+      : h('input', { id, class: 'unemp-box', type: 'text', inputmode: type === 'money' ? 'decimal' : null, autocomplete: 'off', placeholder: type === 'money' ? 'e.g. 450' : null, 'aria-describedby': id + '-hint' });
+    if (type !== 'date') b.value = inputText('money', value);
+    b.addEventListener('change', () => { const t = b.value.trim(); if (!t) return later(() => onSet(null)); if (type === 'date') { if (!held) { say(label + ': type a date like Dec 28'); return; } return later(() => onSet(held)); } const p = parseInput('money', t); if (!p.ok) { say(label + ': ' + p.message); return; } later(() => onSet(p.value)); });
     return h('div', { class: 'unemp-field' }, h('label', { for: id, class: 'edit-label' }, label), b, h('p', { class: 'edit-hint', id: id + '-hint' }, hint));
   };
   const fig = (label, value, sub) => h('div', { class: 'nw-one' }, h('p', { class: 'tile-label' }, label), value === null || value === undefined ? h('p', { class: 'tile-value missing-text' }, 'Missing') : h('p', { class: 'tile-value' }, value), sub ? h('p', { class: 'tile-sub muted' }, sub) : null);
@@ -1457,21 +1508,23 @@ function unemploymentCard() {
     const tax = h('div', { class: 'segmented', role: 'group', 'aria-label': x.label + ': federal tax taken out' },
       [['none', 'None taken out'], ['ten', '10% taken out']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(x.withholds === (k === 'ten')), disabled: k === 'ten' && x.weekly === null ? true : null,
         onclick: () => change((sp) => putFact(sp, x.paths.federal, k === 'ten' ? tenPercentOf(x.weekly) : 0, 'known', day), said.changed(x.label + ': federal tax', k === 'ten' ? '10% taken out' : 'none taken out')) }, h('span', { class: 'seg-label' }, w))));
+    // The card is headed Unemployment already: a benefit's own name shows only when it says more than that.
+    const named = !/^unemployment( benefits?)?$/i.test(String(x.label || '').trim());
     return h('section', { class: 'card', 'aria-label': x.label },
-      h('h3', {}, x.label, x.ended ? [' ', h('span', { class: 'pill' }, 'ended')] : null),
+      named ? h('h3', {}, x.label, x.ended ? [' ', h('span', { class: 'pill' }, 'ended')] : null) : null,
       h('p', { class: 'unemp-status' }, status(x)),
       h('div', { class: 'unemp-fields' },
         box('ui-amt-' + x.id, 'Benefit a week', 'Before any tax, as the state pays it.', x.weekly, 'money', (a) => change((sp) => { let n = putFact(sp, x.paths.amount, a, a === null ? 'missing' : 'known', day); if (x.withholds && a !== null) n = putFact(n, x.paths.federal, tenPercentOf(a), 'known', day); return n; }, said.changed(x.label + ' a week', a === null ? 'blank' : money(a)))),
         box('ui-end-' + x.id, 'Last payment', 'When it ends, or ended. A past date is fine.', x.end, 'date', (d) => change((sp) => setAt(sp, 'income.' + x.id + '.end', d), said.changed(x.label + ': last payment', d ? shortDate(d) : 'not known')))),
       h('p', { class: 'edit-label' }, 'Federal tax on it'), tax,
       h('p', { class: 'edit-hint' }, 'Unemployment is taxed. Have 10% taken out each week, or set it aside yourself.'),
-      // Delete (red outline, undoable): an old or duplicate benefit goes, and its numbers with it.
-      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger small', id: 'ui-del-' + x.id, onclick: () => change((sp) => removeItem(sp, 'income', x.id), said.deleted(x.label + (x.ended ? ' (ended ' + shortDate(x.end) + ')' : ''))) }, 'Delete this benefit')),
       x.ended ? null : h('div', { class: 'nw-pair fi-three' },
         fig('A month', x.monthly === null ? null : money(x.monthly), 'about 4.3 weeks'),
         fig('Payments left', x.weeksLeft === null ? null : String(x.weeksLeft), x.end ? 'through ' + shortDate(x.end) : 'needs the last payment'),
         fig('Still to come', x.stillToCome === null ? null : money(x.stillToCome), null),
-        fig('A month after tax', x.afterTaxMonthly === null ? null : money(x.afterTaxMonthly), x.withholds === false && x.setAsideMonthly ? money(x.setAsideMonthly) + ' a month to set aside for tax' : x.withholds ? '10% taken out each week' : null)));
+        fig('A month after tax', x.afterTaxMonthly === null ? null : money(x.afterTaxMonthly), x.withholds === false && x.setAsideMonthly ? money(x.setAsideMonthly) + ' a month to set aside for tax' : x.withholds ? '10% taken out each week' : null)),
+      // Delete (red outline, undoable), last on the card: an old or duplicate benefit goes, and its numbers with it.
+      h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn danger small', id: 'ui-del-' + x.id, onclick: () => change((sp) => removeItem(sp, 'income', x.id), said.deleted(x.label + (x.ended ? ' (ended ' + shortDate(x.end) + ')' : ''))) }, 'Delete this benefit')));
   };
   return h('section', { class: 'card unemp', 'aria-labelledby': 'unemp-h' },
     h('h2', { id: 'unemp-h' }, 'Unemployment'),
@@ -1485,16 +1538,18 @@ function unemploymentCard() {
     mathButton(['runway', 'runwayNeeds', 'taxSetAside'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })));
 }
 
-function sectionScreen(sec) {
+function sectionScreen(sec, { guided = false } = {}) {
   const groups = fillOn() ? sec.groups.filter((g) => toFill(g)) : sec.groups;
   return [
-    fillBar(toFill(sec), 'list:open:' + sec.slug),
-    looksRight(sec.allRows),
-    // What this section is for, with live checkmarks (S-278), folded.
-    STEP_MAP[sec.slug] ? purposeCard(STEP_MAP[sec.slug].purpose, stepChecks(cur(), summaryOf(cur()), sec.slug)) : null,
+    // In Guide me (Protection comes through here) the step frame draws its own fill bar and Looks right.
+    guided ? null : fillBar(toFill(sec), 'list:open:' + sec.slug),
+    // What this section is for, with live checkmarks (S-278), folded, above Looks right as Guide me's step frame
+    // orders them; with Guide me on the frame draws it, so it is not drawn twice (Protection comes through here).
+    STEP_MAP[sec.slug] && !guideOn() ? purposeCard(STEP_MAP[sec.slug].purpose, stepChecks(cur(), summaryOf(cur()), sec.slug), { title: 'What ' + sec.label + ' is for' }) : null,
+    guided ? null : looksRight(sec.allRows),
     sectionTop(sec),
     // Protection (S-275): health coverage lives in the Profile; this links there rather than asking it twice.
-    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Premiums here count once, in Needs, marked "from Protection".') : null,
+    sec.slug === 'protection' ? h('p', { class: 'muted' }, 'Health coverage is in your ', h('a', { href: 'profile.html#/health' }, 'Profile'), '. Add life, disability, renters or car insurance here.') : null,
     selectAll(sec.allRows, 'Select all here'),
     fillOn() && !groups.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
     groups.length ? h('ul', { class: 'go-list' }, groups.map((g) => goRow(hashFor([sec.slug, g.slug]), {
@@ -1502,6 +1557,7 @@ function sectionScreen(sec) {
       sub: [groupTotal(sec, g), dots(g)]
     }))) : fillOn() ? null : h('p', { class: 'muted' }, 'Nothing here yet.'),
     sec.slug === 'needs' && !fillOn() ? h('ul', { class: 'go-list' }, subsRow(), coveredRow()) : null,
+    sec.slug === 'income' && !fillOn() ? h('ul', { class: 'go-list' }, taxesRow()) : null,
     addButton(sec)
   ];
 }
@@ -1514,24 +1570,30 @@ function groupScreen(sec, g, st = {}) {
     [[false, 'All cards'], [true, 'Business only']].map(([on, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(bizOnly === on), onclick: () => { if (bizOnly !== on) { keep({ bizOnly: on }); refresh(); } } }, h('span', { class: 'seg-label' }, w)))) : null;
   // A bank's heading stays when only its business cards show; its business part reads "Business" under it.
   const parts0 = bizOnly ? g.parts.filter((p) => p.node && p.node.business) : g.parts;
-  const parts = fillOn() ? parts0.map((p) => ({ ...p, items: p.items.filter((it) => toFill(it)) })).filter((p) => p.items.length) : parts0;
-  const head = (p, i) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : null);
+  const parts1 = fillOn() ? parts0.map((p) => ({ ...p, items: p.items.filter((it) => toFill(it)) })).filter((p) => p.items.length) : parts0;
+  // A part with no heading of its own (how every card is paid, S-189) goes first among headed parts, under its own
+  // heading, so it never reads as the last bank's; the statement order ranks the banks after it.
+  const headed = parts1.some((p) => p.heading);
+  const parts = headed ? [...parts1.filter((p) => !p.heading), ...parts1.filter((p) => p.heading)] : parts1;
+  const plainWords = (p) => (p.items.length === 1 && p.items[0].key === 'household.cardPayPolicy' ? 'How every card is paid' : null);
+  const head = (p) => (bizOnly ? h('h2', { class: 'part-h' }, p.node.bank) : p.node && p.node.sub ? h('h3', { class: 'part-h part-sub' }, p.heading) : p.heading ? h('h2', { class: 'part-h' }, p.heading) : headed && plainWords(p) ? h('h2', { class: 'part-h' }, plainWords(p)) : null);
   const itemRow = (it, k) => goRow(hashFor([sec.slug, g.slug, g.slugs[g.items.indexOf(it)]]), {
     name: it.label,
     sub: [rowFigure(sec, it), needWords(it.need) ? h('span', { class: 'pill' }, needWords(it.need)) : null, coveredMark(coveredToday(it)), dots(it)]
   });
   return [
     groupSiblings(sec, g),
-    looksRight(g.node.allRows),
     fillBar(toFill(g.node), null),
+    looksRight(g.node.allRows),
     sectionSharing(g.node),
     selectAll(g.node.allRows, 'Select all here'),
     filter,
     fillOn() && !parts.length ? h('p', { class: 'muted' }, 'Nothing to fill in here.') : null,
-    ...parts.map((p, i) => [
-      head(p, i),
+    // One + Add a screen (its first step asks the kind): a part's own add only where the group has none.
+    ...parts.map((p) => [
+      head(p),
       p.items.length ? h('ul', { class: 'go-list' }, p.items.map(itemRow)) : null,
-      addButton(p.node)
+      g.node.add ? null : addButton(p.node)
     ]),
     bizOnly && !parts.length ? h('p', { class: 'muted' }, 'No business cards yet.') : null,
     addButton(g.node)
@@ -1549,9 +1611,9 @@ function coachNoteEl(it) {
   const save = (e) => { e.preventDefault(); const t = box.value.trim(); if (t === now) return; change((x) => (t ? putFact(x, path, t, 'known', today()) : { ...x, [it.collection]: x[it.collection].map((i) => (i.id === it.id ? (({ coachNote, ...rest }) => rest)(i) : i)) }), t ? said.changed('Coach note', t) : said.deleted('The coach note')); };
   // Folded to one line (owner, 2026-10-28: the open box made the screen messy): the note itself, or "None yet".
   return h('details', { class: 'card done-group coach-only coach-note', open: coachOpen || null, ontoggle: (e) => { coachOpen = e.target.open; } },
-    h('summary', {}, h('span', { class: 'coach-title' }, 'Coach note'), h('span', { class: 'coach-preview' }, now || 'None yet')),
+    h('summary', {}, h('span', { class: 'coach-title' }, 'Coach\'s note (never printed)'), h('span', { class: 'coach-preview' }, now || 'None yet')),
     h('form', { novalidate: true, onsubmit: save },
-      h('label', { for: 'coach-note', class: 'mini-label' }, 'What to remember about it'), box,
+      h('label', { for: 'coach-note', class: 'mini-label' }, 'What to remember about this item'), box,
       h('p', { class: 'edit-hint', id: 'coach-note-hint' }, 'For the coach only. Never on the one-pager or any print.'),
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Save the note'))));
 }
@@ -1588,6 +1650,8 @@ function looksRight(rows, item = null, coll = null) {
   const ticks = item ? guessedTicks(item, coll) : [];
   const n = rough.length + ticks.length;
   if (!n || selecting) return null;
+  // How many of them To fill in counts (worth checking now), so the two numbers on the screen read as one story.
+  const open = openRows(rough).length;
   const run = () => change((s0) => {
     let s = s0;
     const base = coll + '.' + (item && item.id);
@@ -1595,9 +1659,11 @@ function looksRight(rows, item = null, coll = null) {
     const filled = ticks.flatMap(({ f }) => f.reveals.map((r) => ({ path: base + '.' + r.field })));
     return bulkEdit(s, [...rough, ...filled], 'confirm', today());
   }, n === 1 ? 'One guess kept' : n + ' guesses kept');
+  // While a row's editor or an add form is open, its Save or Add is the screen's one filled button (S-287).
+  const formOpen = !!adding || !!kept().open;
   return h('div', { class: 'looks-right-bar' },
-    h('button', { type: 'button', class: 'btn primary', id: 'looks-right', onclick: run }, 'Looks right'),
-    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' on this screen. Enter keeps them all; change any one first.'));
+    h('button', { type: 'button', class: formOpen ? 'btn' : 'btn primary', id: 'looks-right', onclick: run }, 'Looks right'),
+    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' here, ' + (open ? open + ' to fill in (marked Check now). Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them all') + '; fix any that are wrong first.' : (n === 1 ? 'fine for now' : 'all fine for now') + '. Looks right (or Enter) keeps ' + (n === 1 ? 'it' : 'them') + ' as known.')));
 }
 // Covered with this client today (S-281): anything on the item confirmed or changed today gets a small check.
 const coveredToday = (it) => (it.rows || []).some((r) => r.fact && r.fact.asOf === today() && r.fact.kind !== 'missing' && !/default|guess|typical|house/i.test(String(r.fact.source || '')));
@@ -1609,8 +1675,14 @@ function itemScreen(sec, g, it, st) {
   // How much to max it? (S-211): every tax-advantaged account opens a panel of its room, deadline and amounts.
   const acct = it.collection === 'accounts' ? (cur().accounts || []).find((x) => x.id === it.id) : null;
   const maxable = acct && canMaxIt(rules, acct, +cur().meta.asOf.slice(0, 4));
-  const maxShown = maxable && !!st.max;
-  const maxBtn = maxable ? h('button', { type: 'button', class: 'btn small', 'aria-expanded': String(maxShown), 'aria-controls': 'max-' + it.id, onclick: () => { if (!canLeave()) return; keep({ max: !maxShown }); refresh(); } }, maxShown ? 'Hide how much to max it' : 'How much to max it?') : null;
+  // A link from Today, the Plan or Show the math (openMax) lands with the fold open; from then on the fold keeps its
+  // own open state, like every other fold on the screen.
+  if (maxable && st.max) { rememberOpen('max-' + it.id, true); keep({ max: null }); }
+  const maxRow = () => {
+    const acc = maxItFor(cur(), rules).mx.accounts.find((x) => x.id === it.id);
+    const r = acc && acc.rows.find((x) => x.applies && !x.passed && x.room !== null);
+    return foldRow('max-' + it.id, 'How much to max it?', r ? money(r.room, !Number.isInteger(r.room)) + ' left for ' + r.year : 'Room, deadline and amounts', () => maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }));
+  };
   return [
     g.items ? itemSiblings(sec, g, it) : null,
     it.key === 'household.situation' ? unemploymentCard() : null,
@@ -1624,6 +1696,8 @@ function itemScreen(sec, g, it, st) {
     // What it has (S-282): the guessed answers in one line, the full list folded under it.
     TICKED.includes(it.collection) && !selecting ? itemTicks(cur(), it.collection, it.id, { onAnswer: answerTick, onOpen: (p) => { if (canLeave()) setOpen(rowPathFor(cur(), p)); },
       open: !!st.ticks, ontoggle: (e) => { if (!!kept().ticks !== e.target.open) keep({ ticks: e.target.open }); } }) : null,
+    // How much to max it? (S-211): one fold, its room on the line, the panel inside.
+    maxable && !selecting ? maxRow() : null,
     (() => { const all = hideTicked(it, fillOn() ? openRows(it.rows) : it.rows);
       // How you feel about a debt (stress, reasons to keep it) folds under one line (Krug pass), so the card's own
       // numbers come first; it opens by itself when one of its rows is open.
@@ -1649,8 +1723,7 @@ function itemScreen(sec, g, it, st) {
     // A 401(k) loan said yes and not in Debt yet (S-272): one tap adds it there, linked both ways.
     acct && !selecting && acct.ticks && acct.ticks.loan === 'yes' && !(acct.loanDebt && valueOf(acct.loanDebt)) ? h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { if (canLeave()) change((x) => linkPlanLoan(x, acct.id, today()), 'The loan from ' + (valueOf(acct.name) || 'this plan') + ' added to Debt'); } }, '+ Add the loan to Debt')) : null,
     it.collection && !selecting && COACH_NOTED.includes(it.collection) ? coachNoteEl(it) : null,
-    it.collection && !selecting ? h('div', { class: 'item-actions' }, maxBtn, dupButton(it), deleteButton(it)) : null,
-    maxShown && !selecting ? maxItPanel(cur(), rules, it.id, { onRecord: saveContribution, onPayroll: savePayroll, onPaidThrough: savePaidThrough }) : null
+    it.collection && !selecting ? h('div', { class: 'item-actions' }, dupButton(it), deleteButton(it)) : null
   ];
 }
 
@@ -1658,7 +1731,7 @@ function itemScreen(sec, g, it, st) {
 function nameOf(levels, ctx) {
   inst = ctx.institutions || inst; rules = ctx.rules || rules;
   if (levels[0] === 'still-guessing') return levels.length === 1 ? 'Still guessing' : null;
-  if (levels[0] === 'pick') return levels.length === 1 ? 'Quick add' : null;
+  if (levels[0] === 'pick') return levels.length === 1 ? 'Tick what you have' : null;
   if (levels[0] === 'needs' && levels[1] === 'subscriptions') return levels.length === 2 ? 'Subscriptions' : levels.length === 3 && levels[2] === 'audit' ? 'Subscription audit' : null;
   if (levels[0] === 'needs' && levels[1] === 'covered') return levels.length === 2 ? 'Covered by others' : null;
   if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) { const p = owedToYou(ctx.spine).find((x) => personSlug(x.key) === levels[2]); return levels.length === 3 && p ? p.name : null; }
@@ -1674,7 +1747,18 @@ function render(ctx) {
   if (!based) { based = true; if (source !== 'saved') setBaseline(spine); }
   // A new screen: what was open on the last one closes; typing left there unsaved is said, never dropped silently.
   if (key !== screenKey) {
-    if (screenKey !== null && dirty && edCache) say('Not saved: ' + edCache.label);
+    // Leaving by Back, the trail or a plain link saves what was typed, as Enter would (S-269): the form is already off
+    // the page, so its submit runs after this draw and lands through change(). Only typing that cannot be read is said.
+    if (screenKey !== null && dirty && edCache) {
+      const ed = edCache.el.querySelector('form.editor'), label = edCache.label;
+      if (!ed) say('Not saved: ' + label);
+      else setTimeout(() => {
+        const msg = ed.querySelector('.edit-msg');
+        if (msg) msg.textContent = '';
+        ed.dispatchEvent(new Event('submit', { cancelable: true }));
+        if (msg && msg.textContent) say('Not saved: ' + label + '. ' + msg.textContent);
+      }, 0);
+    }
     dirty = false; edCache = null; adding = null; sharingOpen = null; resetOwedForms();
     screenKey = key;
   }
@@ -1696,25 +1780,27 @@ function render(ctx) {
   else if (levels[0] === 'needs' && levels[1] === 'subscriptions') body = subsScreen();
   else if (levels[0] === 'needs' && levels[1] === 'covered') body = coveredScreen();
   // Owed to you (shared bills brief): person by person; a loan's own fields still open as an item.
-  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = [owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]) }), mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) }))];
+  else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && levels.length === 2) body = owedScreen(cur(), { href: (slug) => hashFor(['assets', 'owed-to-you', slug]), math: mathButton(['list:owed'], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) });
   else if (levels[0] === 'assets' && levels[1] === 'owed-to-you' && /^p-/.test(levels[2] || '')) body = [personScreen(cur(), levels[2]), (() => { const p = owedToYou(cur()).find((x) => personSlug(x.key) === levels[2]); return p ? mathButton(['list:owed:' + p.key], () => ({ spine: cur(), rules, s: summaryOf(cur()) })) : null; })()];
   // Guide me (S-280): the same sections, one step at a time, screen one only.
-  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section) }) : guideTop(ctx);
+  else if (guideOn() && (!levels.length || (levels.length === 1 && GUIDE_IDS.includes(levels[0])))) body = levels.length ? guideStep(ctx, levels[0], { protection: () => sectionScreen((screenAt(sc, levels) || {}).section, { guided: true }) }) : guideTop(ctx);
   else {
     const at = screenAt(sc, levels) || {};
     body = !levels.length ? topScreen(sc, st) : levels.length === 1 ? sectionScreen(at.section) : at.item ? itemScreen(at.section, at.group, at.item, st) : groupScreen(at.section, at.group, st);
   }
   // The headline strip (S-270) on every screen of My numbers, so an answer typed anywhere is seen to land.
-  return [headlineStrip(spine, rules), body, bulkBar(sc)];
+  return [headlineStrip(withScenario(spine, rules, pickedScenario()), rules), body, bulkBar(sc)];
 }
 
 // ---------------------------------------------------------------- the profile file
 // The profile file (S-195): save downloads it; load reads one back. Loading a different household starts its own
 // history, as Open file does.
 function saveFile() {
-  const ok = downloadProfile(cur());
+  // One filename for every backup (the client's name and the date), as End call writes it.
+  const name = downloadBackup(cur(), today());
+  if (name) setBaseline(cur());
   refresh();
-  say(ok ? 'Saved ' + FILE_NAME + ' to your downloads.' : 'This window can\'t save files. Your numbers stay in this browser; open SLAM in its own tab to download a backup.');
+  say(name ? 'Saved ' + name + ' to your downloads.' : 'This window can\'t save files. Your numbers stay in this browser; open SLAM in its own tab to download a backup.');
 }
 // Both buttons read the file through the one loader (household.js loadMyFile, S-228): a line it cannot use is listed
 // at the top of My numbers, never a reason to refuse the file.
@@ -1760,9 +1846,11 @@ function actions(ctx) {
     // One filled button a screen: on the example, Open file is it.
     // Every change is kept in this browser as it is made (S-269); this is a copy to keep elsewhere.
     h('button', { type: 'button', class: 'btn', onclick: saveFile }, 'Download a backup'),
-    mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Load profile file') : null,
+    mine ? h('button', { type: 'button', class: 'btn', onclick: () => { if (canLeave()) document.getElementById('load-file').click(); } }, 'Open a backup file') : null,
     mine ? h('input', { type: 'file', id: 'load-file', accept: '.json,application/json', hidden: true, 'aria-label': 'Your profile file', onchange: loadFile }) : null,
-    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Quick add')
+    h('button', { type: 'button', class: 'btn', onclick: () => { if (!canLeave()) return; picking = picking || new Map(); go(['pick']); } }, 'Tick what you have'),
+    // Select several is a page action, not a filter, so it sits here and not in the Filter fold.
+    selectToggle()
   ];
 }
 

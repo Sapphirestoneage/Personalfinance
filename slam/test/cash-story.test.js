@@ -26,5 +26,5 @@ test('one cash story: the true lowest point in the window, before any move from 
 
 test('Today, the Calendar, Spending and the Plan read the one forecast', () => {
   for (const f of ['ui/dashboard.js', 'ui/calendar.js', 'ui/spending.js', 'ui/plan.js']) assert.match(readFileSync(SLAM + f, 'utf8'), /from '\.\/forecast\.js'/, f);
-  assert.match(readFileSync(SLAM + 'ui/dashboard.js', 'utf8'), /headlineStrip\(base, rules(?:, \{ timeSwitch: true \})?\),\n {4}cashCard\(base, rules\),\n {4}agendaCard/, 'under the floor, it is Home\'s first card after the numbers');
+  assert.match(readFileSync(SLAM + 'ui/dashboard.js', 'utf8'), /headlineStrip\(m\.spine, rules(?:, \{ timeSwitch: true \})?\),\n {4}cashCard\(base, rules\),\n {4}agendaCard/, 'under the floor, it is Home\'s first card after the numbers');
 });

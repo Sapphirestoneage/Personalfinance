@@ -35,7 +35,7 @@ test('every Calendar day route opens without an error', { skip: !chromium && 'Pl
     for (const day of days) {
       await page.evaluate((h) => { location.hash = h; }, '#/' + day);
       await page.waitForTimeout(60);
-      assert.ok(await page.locator('#day-h').count(), day + ' shows its day screen');
+      assert.ok(await page.locator('#day-card').count(), day + ' shows its day screen');
     }
     assert.deepEqual(errors, []);
   } finally { await browser.close(); server.close(); }

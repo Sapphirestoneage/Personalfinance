@@ -7,7 +7,6 @@ import { h, ledgerHref, shortDate } from './view.js';
 import { accountGaps } from '../engine/calendar-views.js';
 import { whose, loadMyFile } from './household.js';
 import { loadFailWords } from './profile-file.js';
-import { pref } from './prefs.js';
 
 let banner = null;
 function showError(text) {
@@ -16,19 +15,15 @@ function showError(text) {
   banner.querySelector('.error-text').textContent = String(text || 'an error with no message');
 }
 
-// The Builder link; on the Builder itself it is where you are, so it is plain words, not a link to the same screen.
-// Client view (Preferences) hides it.
-const builderLink = () => (pref('view') === 'client' ? null : /\/builder\.html$/.test(location.pathname) ? h('span', { class: 'builder-link', 'aria-current': 'page' }, 'Builder') : h('a', { class: 'builder-link', href: 'builder.html' }, 'Builder'));
-
 // Call once at the top of a page's script (the shell, ui/shell.js, calls it for its pages). Adds the skip link before
-// the app, the footer line and the one small Builder link after it (S-230: the Design kit, All formulas and Rules live
-// there, out of the tabs), and the catcher.
+// the app, the footer line after it (the Builder opens from the Coach gear, S-280, so the footer carries no second
+// link to it), and the catcher.
 export function mountPage({ app }) {
   // Looked for beside the app, not inside it: the Design kit shows samples of both.
   // First on every page (S-287), before the header, so one Tab and Enter goes straight to the screen.
   if (!app.parentNode.querySelector(':scope > .skip')) (app.parentNode === document.body ? document.body.prepend.bind(document.body) : (x) => app.parentNode.insertBefore(x, app))(h('a', { class: 'skip', href: '#app' }, 'Skip to main content'));
   if (!app.hasAttribute('tabindex')) app.setAttribute('tabindex', '-1');
-  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', builderLink(), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
+  if (!app.parentNode.querySelector(':scope > .build-stamp')) app.parentNode.appendChild(h('footer', { class: 'build-stamp' }, h('span', {}, 'Your numbers stay in this browser.'), ' ', h('button', { type: 'button', class: 'btn small ghost keys-btn', onclick: showList }, 'Keyboard shortcuts')));
   window.addEventListener('error', (e) => showError(e.message || (e.error && e.error.message)));
   window.addEventListener('unhandledrejection', (e) => showError(e.reason && e.reason.message ? e.reason.message : e.reason));
   return { showError };
@@ -78,10 +73,12 @@ export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.me
   });
   const reload = () => location.reload();
   const nameBox = h('input', { type: 'text', id: 'client-name', autocomplete: 'off', placeholder: 'e.g. Maya Lopez', 'aria-describedby': 'client-name-hint' });
-  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { msg.textContent = 'Type the client\'s name first'; nameBox.focus(); return; } newClient(nm); location.assign('ledger.html?guide=1'); };
+  const hint = h('p', { class: 'edit-hint', id: 'client-name-hint' }, 'Starts empty, kept only in this browser.');
+  const create = (e) => { e.preventDefault(); const nm = nameBox.value.trim(); if (!nm) { hint.textContent = 'Type the client\'s name first.'; nameBox.focus(); return; } newClient(nm); location.assign('ledger.html?guide=1'); };
   const newForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: create },
-    h('label', { for: 'client-name', class: 'edit-label' }, 'New client'), nameBox, h('p', { class: 'edit-hint', id: 'client-name-hint' }, 'Starts empty, kept only in this browser.'),
-    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', id: 'client-create', class: 'btn primary small' }, 'Create'), h('button', { type: 'button', class: 'btn small', onclick: () => { newForm.hidden = true; } }, 'Cancel')));
+    h('label', { for: 'client-name', class: 'edit-label' }, 'New client'), nameBox, hint,
+    h('div', { class: 'edit-actions' }, h('button', { type: 'submit', id: 'client-create', class: 'btn primary small' }, 'Create'), h('button', { type: 'button', class: 'btn small', onclick: () => { newForm.hidden = true; newBtn.hidden = false; hint.textContent = 'Starts empty, kept only in this browser.'; } }, 'Cancel')));
+  const newBtn = h('button', { type: 'button', id: 'client-new', class: 'btn small', onclick: () => { newForm.hidden = false; newBtn.hidden = true; nameBox.focus(); } }, '+ New client');
   const renameBox = h('input', { type: 'text', id: 'client-rename', autocomplete: 'off', value: w.example ? '' : w.name, 'aria-label': 'New name' });
   const renameForm = h('form', { class: 'client-new', hidden: true, novalidate: true, onsubmit: (e) => { e.preventDefault(); const nm = renameBox.value.trim(); if (!nm || !at) return; renameClient(at.id, nm); if (rename) rename(nm); } },
     h('label', { for: 'client-rename', class: 'edit-label' }, 'Rename'), renameBox, h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn primary small' }, 'Rename')));
@@ -92,7 +89,7 @@ export function whoseMenu(spine, { rules, reopen, rename = null, asOf = spine.me
       h('p', { class: 'whose-full' }, h('strong', {}, w.name)),
       h('p', { class: 'muted' }, (w.example ? 'Made up, to try the app. ' : '') + 'Numbers as of ' + shortDate(asOf) + '. Kept in this browser.'),
       others.length ? h('ul', { class: 'client-list', 'aria-label': 'Switch to' }, others.map((c) => h('li', {}, h('button', { type: 'button', class: 'btn small client-pick', onclick: () => { if (switchTo(c.id)) reload(); } }, c.name)))) : null,
-      h('button', { type: 'button', id: 'client-new', class: 'btn small', onclick: () => { newForm.hidden = false; nameBox.focus(); } }, '+ New client'), newForm,
+      newBtn, newForm,
       at ? h('div', { class: 'client-actions' },
         h('button', { type: 'button', class: 'btn small', onclick: () => { renameForm.hidden = false; renameBox.focus(); renameBox.select(); } }, 'Rename'),
         h('button', { type: 'button', class: 'btn small', onclick: () => { if (duplicateClient()) reload(); } }, 'Duplicate'),

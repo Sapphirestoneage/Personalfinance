@@ -34,6 +34,6 @@ test('the Calendar opens on the month grid: chips on a computer, dots on a phone
   // Tapping a day opens its own screen (owner's ask, 2026-10-27); no panel and no Open the day button.
   assert.match(src, /const open = \(\) => \{ setRoot\(\{ day: date \}\); location\.hash = dayHref\(date\); \};/);
   assert.doesNotMatch(src, /Open the day|function dayPanel/);
-  assert.match(src, /'Add to my calendar'/);
+  assert.match(src, /'Download for your calendar app'/);
   assert.match(src, /const grip = e\.target\.closest\('\.grip, \.chip-grip'\)/, 'a chip drags like a row\'s grip');
 });

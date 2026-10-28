@@ -27,6 +27,9 @@ import * as C from './vendor/cashcal.js';
 const dollars = (c) => (c === null || c === undefined ? null : round2(c / 100));
 const cents = (d) => Math.round(d * 100);
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// A projected month in words ("about August 2028"): a day would read as more certain than the projection is.
+const monthLong = (iso) => MONTH_LONG[+iso.slice(5, 7) - 1] + ' ' + iso.slice(0, 4);
 // A date in words for a step's sentence ("Feb 28, 2027").
 const dayWords = (iso) => (iso ? MONTH_SHORT[+iso.slice(5, 7) - 1] + ' ' + +iso.slice(8, 10) + ', ' + iso.slice(0, 4) : 'its end date');
 const sameDayLater = (iso, months) => { const ym = addMonths(monthKey(iso), months); const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return ym + '-' + String(Math.min(+iso.slice(8, 10), last)).padStart(2, '0'); };
@@ -171,7 +174,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
         // The Plan's count, with why it is less than the account alone could take (another limit or rung uses the pay first).
         const line = (p) => p.steady ? p.row.name + ': about ' + money(p.perMonth) + ' a month in a whole year at ' + p.year + ' limits, on top of what already goes in' : p.row.name + ' ' + p.year + ': ' + money(p.perMonth) + ' a month to ' + longDay(p.deadline) + (p.still ? ', on top of the ' + money(p.still) + ' already set to go in' : '') + (p.capFrom ? ' (only what its paychecks from ' + longDay(from) + ' hold)' : '') + (p.row.counted && !p.spill && !(p.capFrom && p.row.counted.why === 'paycheck') ? ' (less than the account alone could take: ' + p.row.counted.words + ')' : '');
         const need = round2([...open, ...later].reduce((x, p) => x + (p.perMonth || 0), 0));
-        const when = start ? 'before the surplus reaches this rung (about ' + longDay(start) + ')' : 'before the surplus reaches this rung';
+        const when = start ? 'before the surplus reaches this step (about ' + monthLong(start) + ')' : 'before the surplus reaches this step';
         // A payroll pool whose deadline is after the start closes on its last payday, not on the deadline.
         const lastPay = (p) => (p.row.deadline.payrollOnly && p.row.paychecks && p.deadline >= from ? p.row.paychecks.dates.filter((d) => d < from).pop() || null : null);
         const why = [
@@ -179,7 +182,7 @@ export function fooLadder(spine, rules, s, { asOf = spine.meta.asOf, sim = null 
           over.length ? over.map((r) => r.name + ' ' + r.year + ': ' + (r.over ? 'over the limit by ' + money(r.over) + (r.overByYearEnd ? ', ' + money(r.overByYearEnd) + ' by December 31 if nothing changes' : '') : 'set to go over the limit by ' + money(r.overSoon))).join('; ') + '.' : '',
           [...open, ...later].map(line).join('; ') + (open.length || later.length ? '.' : ''),
           closed.some((p) => !gone.includes(p)) ? closed.filter((p) => !gone.includes(p)).map((p) => p.row.name + ' ' + p.year + (!p.row.fillable ? ' has no paycheck left before ' + longDay(p.deadline) : lastPay(p) ? ': its last payday before ' + longDay(p.deadline) + ' is ' + longDay(lastPay(p)) + ', ' + when : ' closes on ' + longDay(p.deadline) + ', ' + when)).join('; ') + '.' : '',
-          gone.map((p) => p.row.name + ' ' + p.year + ': no paycheck after ' + longDay(payFrom(p.row)) + ', so nothing goes in once the surplus reaches this rung.').join(' '),
+          gone.map((p) => p.row.name + ' ' + p.year + ': no paycheck after ' + longDay(payFrom(p.row)) + ', so nothing goes in once the surplus reaches this step.').join(' '),
           shut.filter((r) => !paysOn(r)).map((r) => r.name + ' ' + r.year + ' cannot be filled: no paycheck before ' + longDay(r.deadline.date) + '.').join(' ')
         ].filter(Boolean).join(' ');
         const first = miss[0] || over[0] || (sized[0] && sized[0].row);
@@ -593,7 +596,7 @@ export function fooGhosts(spine, rules, s, months, { sim = null } = {}) {
   if (!cur || !(f.surplus > 0)) return [];
   // A debt step shows the one extra-at-the-debt number (planDebtExtra), the same as the Debt screen.
   const amt = ['highInterest', 'lowInterest'].includes(cur.id) ? planDebtExtra(spine, rules, s, { sim, ladder: f }).amount : Math.min(f.surplus, cur.need);
-  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(amt) + ' to ' + cur.label.toLowerCase() + ' (a suggestion, not in the cash line: check the lowest day first)', date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(amt), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes (a plan, not a bill)', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
+  return months.map((ym) => { const last = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).getUTCDate(); return { id: 'foo:' + ym, kind: 'foo', label: 'Plan: ' + money(amt) + ' to ' + cur.label.toLowerCase(), date: ym + '-' + String(last).padStart(2, '0'), amount: Math.round(amt), direction: 'out', counted: false, rough: true, note: 'where this month\'s surplus goes: a suggestion, not in the cash line, so check the lowest day first', path: cur.path, plan: true, pills: ['plan'], movable: false, repeats: true }; });
 }
 
 // The spine's FAT tags, for the pages that need them.

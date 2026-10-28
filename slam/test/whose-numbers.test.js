@@ -19,11 +19,13 @@ test('an edited example is not the example; it reads the person\'s name, or "You
   assert.equal(whose(nameless).name, 'Your household');
 });
 
-test('the shell makes the first edit theirs and says once to keep a copy; the example asks before it replaces', () => {
+test('the shell makes the first edit theirs and says once to keep a copy; the example and a backup file open from the client menu', () => {
   const shell = readFileSync(SLAM + 'ui/shell.js', 'utf8');
   assert.match(shell, /if \(mine\) doc = yours\(doc\);/);
   assert.match(shell, /'These are your numbers now\. Download a copy to keep them safe\.'/);
-  const builder = readFileSync(SLAM + 'ui/builder.js', 'utf8');
-  assert.match(builder, /if \(keptIsYours\(\) && !confirm\(/);
-  assert.match(builder, /'Try with example numbers'/);
+  // The example and Open file live in the client menu of every header (S-280); the Builder keeps no copy of them.
+  const menu = readFileSync(SLAM + 'ui/page.js', 'utf8');
+  assert.match(menu, /'Show the example household'/);
+  assert.match(menu, /'Open a backup file'/);
+  assert.doesNotMatch(readFileSync(SLAM + 'ui/builder.js', 'utf8'), /loadMyFile\(|useExample\(/);
 });

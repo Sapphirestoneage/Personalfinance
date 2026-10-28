@@ -31,7 +31,7 @@ export async function fetchJson(rel) {
 }
 
 // What the file held that could not be used, in one line for the page (the Ledger page lists each).
-const needWords = (spine) => { const n = fileProblems(spine).open.length; return n ? n + (n === 1 ? ' thing in your file could not be read, so it shows as missing. Fill it in' : ' things in your file could not be read, so they show as missing. Fill them in') + ' at the top of My numbers.' : null; };
+const needWords = (spine) => { const n = fileProblems(spine).open.length; return n ? n + (n === 1 ? ' thing in your file could not be read, so it shows as missing. Fill it in' : ' things in your file could not be read, so they show as missing. Fill them in') + ' at the top of Numbers.' : null; };
 
 // Rules changed in this browser on the Builder's Rules page (S-230): { <year>: { <id>: {...} } }, laid over the
 // rules files by the one loader every page calls (loadRules, through loadAll).

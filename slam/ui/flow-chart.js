@@ -143,7 +143,8 @@ function barList(flow, onToggle, open) {
 export function flowSection(flow, { open, onToggle, month, listOpen = false, onList = null }) {
   const wrap = h('section', { class: 'card flow', id: 'flow', 'aria-labelledby': 'flow-h' },
     h('h2', { id: 'flow-h' }, 'Where the money goes in ' + month));
-  if (flow.problem) { wrap.append(h('p', { class: 'muted' }, flow.problem)); return wrap; }
+  // The empty state ends with the way out of it, like the Calendar's.
+  if (flow.problem) { wrap.append(h('p', { class: 'muted' }, flow.problem), h('div', { class: 'edit-actions' }, h('a', { class: 'btn small', href: 'ledger.html#/assets' }, 'Add an account'))); return wrap; }
   const secs = [...new Set(flow.nodes.filter((n) => n.section).map((n) => n.section))];
   const used = new Set(flow.nodes.map((n) => CAT[n.kind]).filter(Boolean));
   const name = (id) => flow.nodes.find((n) => n.id === id);

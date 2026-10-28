@@ -71,7 +71,7 @@ export function emergency(spine, rules, cf, sheet, asOf = spine.meta.asOf) {
   const cushion = [
     stepOf('needs', 'A month of needs', needs),
     stepOf('month', 'A month of full spending', full),
-    stepOf('ruleOf5', goal ? 'Your cushion goal (' + (goal.label || 'emergency fund') + ')' : 'Age / 5 months of full spending', targetDollars)
+    stepOf('ruleOf5', goal ? 'Your cushion goal (' + (goal.label || 'emergency fund') + ')' : 'Your age divided by five, in months of full spending', targetDollars)
   ];
   return {
     age: years, cushion,

@@ -1,6 +1,6 @@
 // "Show the math" (S-177): a button that opens a panel with the formula in
 // words, the same formula with the numbers plugged in, every input (a number
-// of yours opens it in My numbers; a worked-out number opens its own math),
+// of yours opens it in Numbers; a worked-out number opens its own math),
 // the inputs grouped by DATING with subtotals, kind chips, and why the number
 // is rough. Everything shown comes from engine/math.js.
 // It never names a rule by its id: a rule is its words, plain text. Each number
@@ -17,7 +17,7 @@ const KIND_TEXT = { known: 'known', rough: 'rough', missing: 'missing', computed
 
 function termEl(t, ctx, depth) {
   const value = h('span', { class: 'math-value' }, (t.role === 'minus' ? '- ' : '') + showNumber(t.value, t.unit, t.kind));
-  const label = t.path ? h('a', { href: ledgerHref(t.path), title: 'Open it in My numbers' }, plainLabel(t.label)) : h('span', {}, plainLabel(t.label));
+  const label = t.path ? h('a', { href: ledgerHref(t.path), title: 'Open it in Numbers' }, plainLabel(t.label)) : h('span', {}, plainLabel(t.label));
   const li = h('li', { class: 'math-term' }, chip(t.kind), ' ', label, ' ', value);
   if (t.metric && depth < 6) li.append(mathButton([t.metric], ctx, depth + 1, 'Show the math for ' + plainLabel(t.label)));
   return li;

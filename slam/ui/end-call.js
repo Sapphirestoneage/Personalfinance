@@ -5,6 +5,8 @@
 import { h, ledgerHref, money, pct } from './view.js';
 import { summarize } from '../engine/summary.js';
 import { fiMovers } from '../engine/story.js';
+import { withScenario } from '../engine/scenarios.js';
+import { pickedScenario } from './scenario.js';
 import { labelFor } from '../engine/labels.js';
 import { callStart } from './clients.js';
 import { saveFile } from './save-file.js';
@@ -21,7 +23,7 @@ export function endCallTodos(spine, ranking, catalog) {
   const out = [];
   for (const q of openQuestions(spine, ranking) || []) {
     const f = getAt(spine, q.path), by = whoSupplies(f);
-    out.push({ who: q.kind === 'missing' && by !== 'default' && by !== 'lookedUp' ? 'client' : 'coach', words: q.label + (q.kind === 'missing' ? ': not given yet' : ': a guess, worth checking'), path: q.row || q.path });
+    out.push({ who: q.kind === 'missing' && by !== 'default' && by !== 'lookedUp' ? 'client' : 'coach', words: q.label + (q.kind === 'missing' ? ': not given yet' : ': a guess to answer'), path: q.row || q.path });
   }
   for (const g of homeworkList(spine, spine.meta.asOf)) for (const x of g.items) out.push({ who: 'client', words: x + ' (' + g.where + ')', path: null });
   if (catalog) for (const t of tickTodos(catalog, spine)) if (!out.some((o) => o.path === t.path)) out.push(t);
@@ -37,22 +39,25 @@ export function downloadBackup(spine, today) {
 let savedFor = null;
 // The reveal (S-286): End call opens on the FI date, large, and the three changes made since the call started that
 // moved it most. The weighing runs after the screen is up (each change is put back alone and the date figured again).
-const yearsWords = (y) => { const n = Math.abs(y), r = n >= 1 ? Math.round(n * 10) / 10 + (Math.round(n * 10) / 10 === 1 ? ' year' : ' years') : Math.round(n * 12) + (Math.round(n * 12) === 1 ? ' month' : ' months'); return r; };
+// Whole years on screen, as the strip says them (the tenth lives in Show the math); under a year, months.
+const yearsWords = (y) => { const n = Math.abs(y), r = n >= 1 ? Math.round(n) + (Math.round(n) === 1 ? ' year' : ' years') : Math.round(n * 12) + (Math.round(n * 12) === 1 ? ' month' : ' months'); return r; };
 const valWords = (x) => (typeof x !== 'number' ? String(x) : Math.abs(x) < 1 && x !== 0 ? pct(x, 1) : money(x));
 const itemName = (spine, path) => { const [c, id] = path.split('.'), x = (spine[c] || []).find((i) => i.id === id) || {}; return (x.name && typeof x.name === 'object' ? x.name.value : x.name) || x.label || id; };
-export function fiReveal(spine, rules) {
+// The picked assumption set, as the strip and the sentence on Home use it, so the FI year reads one way everywhere.
+export function fiReveal(base, rules) {
+  const scen = pickedScenario(), spine = withScenario(base, rules, scen);
   const s = summarize(spine, rules, { flags: false }), y = s.fi.yearsToFi.value;
   const year = y === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(y);
   const list = h('ol', { class: 'reveal-movers' }, h('li', { class: 'muted' }, 'Working out what moved it...'));
   const start = callStart();
   const card = h('section', { class: 'card reveal', 'aria-labelledby': 'rv-h' },
     h('h2', { id: 'rv-h', class: 'reveal-label' }, 'Free to stop working'),
-    h('p', { class: 'reveal-year' }, year === null ? 'Not at this pace yet' : String(year)),
+    h('p', { class: 'reveal-year' }, year === null ? 'Not at this pace' : String(year)),
     y !== null ? h('p', { class: 'reveal-sub' }, (s.fi.yearsToFi.kind === 'rough' ? 'About ' : '') + yearsWords(y) + ' from now') : null,
     start ? [h('h3', {}, 'What moved it most today'), list] : null);
   if (start) setTimeout(() => {
     let r;
-    try { r = fiMovers(start, spine, rules); } catch { list.replaceChildren(h('li', { class: 'muted' }, 'Could not work it out this time.')); return; }
+    try { r = fiMovers(withScenario(start, rules, scen), spine, rules); } catch { list.replaceChildren(h('li', { class: 'muted' }, 'Could not work it out this time.')); return; }
     if (!r.movers.length) { list.replaceChildren(h('li', { class: 'muted' }, 'Nothing changed today moved the date.')); return; }
     list.replaceChildren(...r.movers.map((m) => h('li', {},
       h('span', { class: 'mover-what' }, m.added ? 'Added ' + itemName(spine, m.path) : labelFor(spine, m.path) + ', ' + valWords(m.from) + ' to ' + valWords(m.to)),
@@ -73,9 +78,9 @@ export function endCallScreen(spine, ranking, catalog, today) {
         : h('p', {}, 'This window can\'t save files, so no backup was saved here. The numbers stay in this browser; open SLAM in its own tab to save a backup.'),
       h('div', { class: 'edit-actions' },
         h('a', { class: 'btn primary', id: 'ec-print', href: 'onepager.html' }, 'Print or save the one-pager'),
-        h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Save another backup'))),
+        h('button', { type: 'button', class: 'btn', onclick: () => { savedFor = { spine, file: downloadBackup(spine, today) }; } }, 'Download a backup'))),
     h('section', { class: 'card', 'aria-labelledby': 'ec-you' }, h('h2', { id: 'ec-you' }, 'Your to-dos (' + theirs.length + ')'),
-      h('p', { class: 'muted' }, 'Numbers to send or look up on a statement before we talk again.'), list(theirs, 'Nothing to look up.')),
+      h('p', { class: 'muted' }, 'Things to tell us or look up before we talk again.'), list(theirs, 'Nothing to look up.')),
     h('section', { class: 'card coach-only', 'aria-labelledby': 'ec-me' }, h('h2', { id: 'ec-me' }, 'Coach to-dos (' + mine.length + ')'),
       h('p', { class: 'muted' }, 'Guesses to look up or keep, and what you can find without the client.'), list(mine, 'Nothing left for you.'))
   ];

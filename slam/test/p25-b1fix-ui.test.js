@@ -93,8 +93,8 @@ test('nothing that takes the focus hides under the tab bar or Back; folds wear a
   assert.match(css, /\.builder-link \{ [^}]*min-width: var\(--tap\);/);
 });
 
-test('the Builder link is plain words on the Builder itself', () => {
-  assert.match(code('ui/page.js'), /\/\\\/builder\\\.html\$\/\.test\(location\.pathname\) \? h\('span', \{ class: 'builder-link', 'aria-current': 'page' \}, 'Builder'\)/);
+test('the footer carries no Builder link (the Coach gear is its one home, S-280)', () => {
+  assert.doesNotMatch(code('ui/page.js'), /builder-link|Builder/);
 });
 
 test('My numbers: Still guessing and Subscriptions open a row in place; a linked debt opens its line in place', () => {
@@ -115,7 +115,7 @@ test('My numbers: Select several reads 0 selected after an action; the bar names
   assert.match(src, /return costMoved \|\| !other\.length \? \[cost, \.\.\.other\]\.join\('\. '\) : other\.join\('\. '\);/);
   assert.doesNotMatch(src, /ledger-search/, 'search is in the header now (Krug pass)');
   assert.match(read('ui/search.js'), /e\.key !== '\/'/);
-  assert.match(code('ui/calendar.js'), /'Find an item by name' \+ keyHint\('press \/'\)/);
+  assert.match(code('ui/calendar.js'), /placeholder: 'Find on this calendar'/, 'the header box is the one search with "/" (S-285)');
   assert.doesNotMatch(src, /house assumption/);
 });
 
@@ -125,15 +125,16 @@ test('the Calendar: the month is kept; a plan suggestion opens the plan; the deb
   assert.match(src, /: e\.kind === 'foo' \? \['plan\.html', 'See it in your plan'/);
   assert.match(src, /note \? h\('p', \{ class: 'tile-sub' \}, sentence\(cap\(note\)\)\) : null/);
   assert.doesNotMatch(src, /cap\(e\.note\) \+ '\.'/);
-  assert.match(src, /debt: 'Set by the lender\\'s due date\. Change it in My numbers\.'/);
+  assert.match(src, /debt: 'It comes from the lender\. Change it in Numbers\.'/);
   assert.match(src, /h\('button', \{ type: 'button', class: 'btn small', onclick: \(\) => \{ setRoot\(\{ ym: m\.ym, view: 'list' \}\)/);
   assert.doesNotMatch(src + code('ui/debt-tab.js') + code('ui/spending.js'), /house guess|house 1%|day-by-day run|Budget app\\'s|Tap a slice/);
 });
 
 test('the Plan: the surplus intro, the deductible, life event words, money in a file\'s differences, nothing to apply', () => {
   const src = code('ui/plan.js');
-  // Batch 2's copy pass: the surplus screen says only what is not already on it (its note, when there is one).
-  assert.match(src, /w\.note \? h\('p', \{ class: 'muted' \}, w\.note\) : null,/);
+  // Batch 2's copy pass: the surplus screen says only what is not already on it (its note, when there is one; else
+  // whose order the list follows, which nothing else on it says).
+  assert.match(src, /h\('p', \{ class: 'muted' \}, w\.note \|\| 'Each month\\'s ' \+ money\(w\.surplus\) \+ ', sent in the same order Extra money uses\.'\),/);
   assert.match(src, /r\.id === 'deductibles' && r\.need === null && starterBasisOf\(m\.base\) === 'deductible' \? 'Type the biggest deductible below\.' : r\.why/);
   assert.match(src, /money\(i\.cents \/ 100\) \+ \(EVENT_OFTEN\[i\.cadence\] \|\| ''\)/);
   assert.match(src, /showValue\(x, type\)/, 'a value in a file\'s differences is worded by its type ($1,950)');

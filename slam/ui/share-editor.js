@@ -4,6 +4,7 @@
 // Formatting only.
 
 import { h, money } from './view.js';
+import { dateBox } from './understood.js';
 import { parseInput, inputText } from '../engine/edits.js';
 import { arrangementOf, personStatus, sharerNames, billNumbers, PAYBACK_WORDS } from '../engine/owed.js';
 
@@ -31,11 +32,13 @@ export function shareEditor(spine, e, { onChange = () => {} } = {}) {
     const valBox = h('div', { class: 'share-val', hidden: mode.value === 'even' }, h('label', { for: id('val'), class: 'edit-label' }, 'Their part'), val);
     const back = h('select', { id: id('back') }, Object.entries(PAYBACK_WORDS).map(([k, w]) => h('option', { value: k, selected: (p ? p.payBack : 'each') === k }, w)));
     // The details each way of paying back needs, shown only for it.
-    const through = h('input', { id: id('through'), type: 'date' }); through.value = p && p.paidThrough && p.payBack === 'ahead' ? p.paidThrough : '';
+    // The date boxes read a date typed any way (S-285), each held once it reads.
+    let throughIso = p && p.paidThrough && p.payBack === 'ahead' ? p.paidThrough : '', startIso = p && p.start ? p.start : '', askIso = p && p.askOn ? p.askOn : '';
+    const through = dateBox(id('through'), throughIso, (v) => { throughIso = v; });
     const every = h('input', { id: id('every'), type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'e.g. 3' }); every.value = p && p.payBack === 'every' ? String(p.every) : '';
-    const start = h('input', { id: id('start'), type: 'date' }); start.value = p && p.start ? p.start : '';
+    const start = dateBox(id('start'), startIso, (v) => { startIso = v; });
     const month = h('select', { id: id('month') }, MONTH_NAMES.map((m, i) => h('option', { value: String(i + 1), selected: p && p.month === i + 1 }, m)));
-    const askOn = h('input', { id: id('ask'), type: 'date' }); askOn.value = p && p.askOn ? p.askOn : '';
+    const askOn = dateBox(id('ask'), askIso, (v) => { askIso = v; });
     const field = (label, input) => h('div', { class: 'share-field' }, h('label', { for: input.id, class: 'edit-label' }, label), input);
     const ways = {
       ahead: field('Paid through', through),
@@ -68,10 +71,12 @@ export function shareEditor(spine, e, { onChange = () => {} } = {}) {
       if (mode.value === 'percent') { const r = parseInput('rate', val.value); if (!r.ok || r.value > 1) return { problem: nm + ': type their part as a percent, like 25' }; share.value = r.value; }
       if (mode.value === 'amount') { const r = parseInput('money', val.value); if (!r.ok) return { problem: nm + ': type their part in dollars' }; share.value = r.value; }
       const out = { ...(p || {}), name: nm, share, payBack: back.value };
-      if (back.value === 'ahead') out.paidThrough = through.value || null;
-      if (back.value === 'every') { const r = parseInput('int', every.value || '3'); if (!r.ok || r.value < 1) return { problem: nm + ': every how many months, 1 or more' }; out.every = r.value; out.start = start.value || null; }
+      const unread = (box, iso, words) => (box.value.trim() && !iso ? nm + ': ' + words + ', type a date like Dec 6' : null);
+      if (back.value === 'ahead') { const bad = unread(through, throughIso, 'paid through'); if (bad) return { problem: bad }; out.paidThrough = throughIso || null; }
+      if (back.value === 'every') { const r = parseInput('int', every.value || '3'); if (!r.ok || r.value < 1) return { problem: nm + ': every how many months, 1 or more' }; out.every = r.value; const bad = unread(start, startIso, 'starting'); if (bad) return { problem: bad }; out.start = startIso || null; }
       if (back.value === 'yearly') out.month = +month.value;
-      out.askOn = askOn.value || null;
+      if (back.value !== 'cover') { const bad = unread(askOn, askIso, 'ask on'); if (bad) return { problem: bad }; }
+      out.askOn = back.value === 'cover' ? null : askIso || null;
       return { person: out };
     };
     const row = { li, read, sync };

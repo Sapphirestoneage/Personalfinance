@@ -297,7 +297,7 @@ function screenTop(levels, names) {
   const link = ([words, href, fn]) => h('a', { href, onclick: fn ? (e) => { e.preventDefault(); fn(); } : null }, words);
   const browserBack = !levels.length && !fromParent() && fromApp();
   return [h('div', { class: 'trail-row' },
-    h('button', { type: 'button', class: 'btn small back-btn', 'aria-label': 'Back to ' + up[0], onclick: () => (levels.length ? go(levels.slice(0, -1)) : browserBack ? (saveScroll(), history.back()) : up[2] ? up[2]() : location.assign(up[1])) }, h('span', { 'aria-hidden': 'true' }, '\u2039 '), 'Back'),
+    h('button', { type: 'button', class: 'btn small back-btn', 'aria-label': browserBack ? 'Back to the last screen' : 'Back to ' + up[0], onclick: () => (levels.length ? go(levels.slice(0, -1)) : browserBack ? (saveScroll(), history.back()) : up[2] ? up[2]() : location.assign(up[1])) }, h('span', { 'aria-hidden': 'true' }, '\u2039 '), 'Back'),
     h('nav', { class: 'trail', 'aria-label': 'You are here' },
       h('ol', {}, steps.map((st, i) => h('li', i === steps.length - 1 ? { 'aria-current': 'page' } : {}, i === steps.length - 1 ? h('strong', {}, st[0]) : link(st))))))];
 }
@@ -317,8 +317,9 @@ function siteHead() {
     h('div', { class: 'head-tools' },
       h('button', { type: 'button', class: 'btn small icon-btn', disabled: !u, 'aria-label': u ? 'Undo: ' + u : 'Undo (nothing to undo)', title: u ? 'Undo: ' + u : 'Nothing to undo', onclick: doUndo }, h('span', { 'aria-hidden': 'true' }, '\u21B6'), h('span', { class: 'tool-word' }, 'Undo')),
       h('button', { type: 'button', class: 'btn small icon-btn', disabled: !r, 'aria-label': r ? 'Redo: ' + r : 'Redo (nothing to redo)', title: r ? 'Redo: ' + r : 'Nothing to redo', onclick: doRedo }, h('span', { 'aria-hidden': 'true' }, '\u21B7'), h('span', { class: 'tool-word' }, 'Redo')),
-      withHousehold ? h('a', { class: 'btn small end-call', id: 'end-call', href: HOME_HREF + '#/end', onclick: (e) => { if (samePage(HOME_HREF)) { e.preventDefault(); go(['end']); } } }, 'End call') : null,
-      h('details', { class: 'coach-menu' },
+      withHousehold ? h('a', { class: 'btn small end-call', id: 'end-call', href: HOME_HREF + '#/end', 'aria-current': samePage(HOME_HREF) && location.hash.startsWith('#/end') ? 'page' : null, onclick: (e) => { if (samePage(HOME_HREF)) { e.preventDefault(); go(['end']); } } }, 'End call') : null,
+      // Client view (Preferences) hides the coach's own tools, the gear first.
+      prefs().view === 'client' ? null : h('details', { class: 'coach-menu' },
         h('summary', { class: 'btn small icon-btn', 'aria-label': 'Coach pages', 'aria-current': here ? 'page' : null }, h('span', { 'aria-hidden': 'true' }, '\u2699'), h('span', { class: 'tool-word' }, 'Coach')),
         h('ul', { class: 'coach-list' }, COACH.map(([, words, href]) => h('li', {}, h('a', { class: 'more-link', href, 'aria-current': here && here[2] === href ? 'page' : null }, words)))))),
     withHousehold && savedMark ? h('span', { class: 'saved-mark', role: 'status' }, savedMark) : null
@@ -418,7 +419,8 @@ function draw() {
   drawn = JSON.stringify(levels);
   headTitle = title; headLevels = levels; headNames = names;
   topEl.replaceChildren(...headLine(levels, names, ctx, title).filter(Boolean));
-  headBar.replaceChildren(...siteHead().filter(Boolean));
+  litTabInView();
+  drawSiteHead();
   if (opts.render) {
     const focus = focused();
     // The page's own buttons (Save, Quick add, Print) sit on a row under the header line, so the title keeps its room.
@@ -432,12 +434,29 @@ function draw() {
   document.title = levels.length ? title + ' · ' + baseTitle : baseTitle;
 }
 
+// The header again: a menu that was open (the client menu, the gear) stays open when the guesses land or after an answer.
+function drawSiteHead() {
+  const open = ['.whose-menu', '.coach-menu'].filter((sel) => headBar.querySelector(sel)?.open);
+  headBar.replaceChildren(...siteHead().filter(Boolean));
+  for (const sel of open) { const d = headBar.querySelector(sel); if (d) d.open = true; }
+}
+// The lit sub-tab sits fully inside its strip when the strip scrolls sideways (scrollLeft only, so the page never moves).
+function litTabInView() {
+  const sub = topEl.querySelector('.subtabs');
+  if (!sub) return;
+  const strip = sub.scrollWidth > sub.clientWidth ? sub : sub.querySelector('.tab-row');
+  const lit = sub.querySelector('.is-here');
+  if (!strip || !lit) return;
+  const r = lit.getBoundingClientRect(), b = strip.getBoundingClientRect();
+  if (r.right > b.right) strip.scrollLeft += r.right - b.right + 16; else if (r.left < b.left) strip.scrollLeft -= b.left - r.left + 16;
+}
 // Only the header again (Undo and Redo after a step outside the household).
 function drawHead() {
   if (!opts || !opts.render || (opts.household && !hist) || !headEl.isConnected) return;
   const focus = focused();
   topEl.replaceChildren(...headLine(headLevels, headNames, context(levelsNow()), headTitle).filter(Boolean));
-  headBar.replaceChildren(...siteHead().filter(Boolean));
+  litTabInView();
+  drawSiteHead();
   refocus(focus);
 }
 
@@ -557,8 +576,12 @@ function listen() {
     e.preventDefault();
     go(levelsOf(a.getAttribute('href')));
   });
+  // The gear and the client menu close on a tap outside them or on Escape.
+  const openMenus = () => document.querySelectorAll('details.coach-menu[open], details.whose-menu[open]');
+  document.addEventListener('click', (e) => { for (const d of openMenus()) if (!d.contains(e.target)) d.open = false; });
   // Ctrl or Cmd+Z undoes, with Shift redoes, except while typing in a text box (it undoes the typing there).
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openMenus().length) { for (const d of openMenus()) d.open = false; return; }
     if (!(hist || side) || !(e.ctrlKey || e.metaKey) || e.altKey || String(e.key).toLowerCase() !== 'z' || typing(e.target)) return;
     e.preventDefault();
     if (e.shiftKey) doRedo(); else doUndo();

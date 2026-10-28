@@ -16,7 +16,7 @@ export function pick(id) {
 // "6% real return, 4% withdrawal" for a set.
 export function scenarioText(spine, rules, id) {
   const a = scenarioAssumptions(spine, rules, id);
-  const p = (f) => (f && f.value !== null && f.value !== undefined ? showValue(f.value, 'rate') : 'not given');
+  const p = (f) => (f && f.value !== null && f.value !== undefined ? showValue(f.value, 'rate') : 'not given yet');
   return p(a.realReturn) + ' real return, ' + p(a.withdrawalRate) + ' withdrawal';
 }
 

@@ -6,13 +6,13 @@
 // on every number. Recording what went in is a small form that adds one entry to
 // the account's contributions by year.
 
-import { maxIt, maxItSim, maxItCash, longDay, jobsOf, paidThroughOf, paidThroughGuess } from '../engine/maxit.js';
+import { maxIt, maxItSim, maxItCash, jobsOf, paidThroughOf, paidThroughGuess } from '../engine/maxit.js';
 import { FROM_PAY } from '../engine/contrib.js';
 import { throughPayroll } from '../engine/schema.js';
 import { labelFor } from '../engine/labels.js';
 import { parseInput } from '../engine/edits.js';
 import { mathButton } from './math-panel.js';
-import { h, chip, money, ledgerHref } from './view.js';
+import { h, chip, money, ledgerHref, shortDate } from './view.js';
 
 // One run and one result per household (the spine object), so a re-render costs nothing.
 let memo = { spine: null, rules: null };
@@ -29,7 +29,6 @@ const plural = (n, one, many = one + 's') => n + ' ' + (n === 1 ? one : many);
 const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // The Ledger link that opens an account's panel (the hash the Ledger reads).
 export const maxHref = (accountId) => 'ledger.html#' + encodeURIComponent('max:' + accountId);
-const VERIFY = 'This date has not been checked against the IRS yet.';
 // What a recorded amount can be, by account: rollovers and conversions never count against the limit.
 const KIND_CHOICES = (type) => [['contribution', type === 'solo_k401' ? 'Employee deferrals (the total)' : 'Contributions (the total)'], ...(type === 'solo_k401' ? [['employer', 'Employer part (the total)']] : []), ...(type === 'roth_ira' ? [['from529', 'Rolled in from a 529 (counts)']] : []), ['rollover', 'A rollover (does not count)'], ...(['traditional_ira', 'roth_ira', 'spousal_ira'].includes(type) ? [['conversion', 'A conversion (does not count)']] : [])];
 // "; the last one $483.30" when the last payment is what is left.
@@ -38,23 +37,25 @@ const lastWords = (last, per) => (last !== null && per !== null && Math.abs(last
 const canFill = (path) => path && !path.startsWith('rule:');
 
 // More than a paycheck holds (answer 53): the contribution to raise to, and what still cannot go in through payroll.
-const raiseWords = (r) => { const p = r.paychecks; return p.raiseTo !== null && p.raiseTo !== undefined ? 'More than a paycheck holds: raise your contribution to ' + Math.round(p.raiseTo * 100) + '% of pay (about ' + cash(p.holds) + ' of each ' + cash(p.gross) + ' paycheck, all it can hold). About ' + cash(p.gap) + ' of the room still cannot go in through payroll by ' + longDay(r.deadline.date) + '.' : 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + longDay(r.deadline.date) + '.'; };
+const raiseWords = (r) => { const p = r.paychecks; return p.raiseTo !== null && p.raiseTo !== undefined ? 'More than a paycheck holds: raise your contribution to ' + Math.round(p.raiseTo * 100) + '% of pay (about ' + cash(p.holds) + ' of each ' + cash(p.gross) + ' paycheck, all it can hold). About ' + cash(p.gap) + ' of the room still cannot go in through payroll by ' + shortDate(r.deadline.date) + '.' : 'More than a paycheck holds: about ' + cash(p.landed) + ' lands from each one, so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll by ' + shortDate(r.deadline.date) + '.'; };
 // A Roth and a pre-tax account that share a limit (answer 64): which one the Plan counts, and why.
 const pickWords = (r) => (r.pick.countedId === r.accountId ? 'The Plan counts this one. ' : 'The Plan counts ' + r.pick.counted + ' instead (one limit). ') + r.pick.words;
 // The main number first: for a payroll-only account the deferral to set a paycheck, for the rest the new money a month.
 function mainOf(r) {
   const p = r.paychecks;
-  if (!r.fillable) return { big: null, sub: 'Cannot be filled: no paycheck lands before ' + longDay(r.deadline.date) + ', and this account only takes money through payroll.' };
+  if (!r.fillable) return { big: null, sub: 'Cannot be filled: no paycheck lands before ' + shortDate(r.deadline.date) + ', and this account only takes money through payroll.' };
   if (r.toFill === 0 && r.main === 'paycheck' && (!p || !p.count)) return { big: null, sub: r.room > 0 ? 'What is set up already fills it: nothing more goes in.' : 'The ' + r.year + ' room is full: nothing more goes in.' };
   if (r.main === 'paycheck') {
-    if (p && p.blank) return { big: null, sub: 'Missing: ' + p.blank.label + ' ' + p.blank.what + ', so the paychecks before ' + longDay(r.deadline.date) + ' cannot be counted.', blank: p.blank };
-    if (p && p.multi && p.perLine) return { big: cash(p.perLine[0].per) + ' more a ' + p.perLine[0].line + ' paycheck', sub: p.perLine.map((l) => cash(l.per) + ' more on each of ' + plural(l.count, l.line + ' paycheck')).join(' and ') + ', to ' + longDay(r.deadline.date) + (p.tooBig ? ': all that lands from each, and still not all of it fits' : ': each in proportion to what lands from it, so none takes more than it holds') };
-    if (!p || p.perPaycheck === null) return { big: null, sub: 'No paycheck lands before ' + longDay(r.deadline.date) + '.' };
-    if (p.multi) return { big: cash(p.perPaycheck) + ' more a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + ': this much more on each paycheck than comes out of it now' + lastWords(p.last, p.perPaycheck) };
-    return { big: cash(p.perPaycheck) + ' a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + longDay(r.deadline.date) + (p.current ? ': set the deferral to this, ' + cash(p.extra) + ' more than the ' + cash(p.current) + ' that comes out now' : '') + lastWords(p.last, p.perPaycheck) };
+    if (p && p.blank) return { big: null, sub: 'Missing: ' + p.blank.label + ' ' + p.blank.what + ', so the paychecks before ' + shortDate(r.deadline.date) + ' cannot be counted.', blank: p.blank };
+    if (p && p.multi && p.perLine) return { big: cash(p.perLine[0].per) + ' more a ' + p.perLine[0].line + ' paycheck', sub: p.perLine.map((l) => cash(l.per) + ' more on each of ' + plural(l.count, l.line + ' paycheck')).join(' and ') + ', to ' + shortDate(r.deadline.date) + (p.tooBig ? ': all that lands from each, and still not all of it fits' : ': each in proportion to what lands from it, so none takes more than it holds') };
+    if (!p || p.perPaycheck === null) return { big: null, sub: 'No paycheck lands before ' + shortDate(r.deadline.date) + '.' };
+    if (p.multi) return { big: cash(p.perPaycheck) + ' more a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + shortDate(r.deadline.date) + ': this much more on each paycheck than comes out of it now' + lastWords(p.last, p.perPaycheck) };
+    // More than a paycheck holds (answer 53): the big number is the deferral a paycheck can take, never one it cannot.
+    if (p.tooBig && p.raiseTo !== null && p.raiseTo !== undefined) return { big: cash(p.holds) + ' a paycheck (all it can hold)', sub: raiseWords(r) };
+    return { big: cash(p.perPaycheck) + ' a paycheck', sub: plural(p.count, 'paycheck') + ' from ' + p.streams.join(' and ') + ', to ' + shortDate(r.deadline.date) + (p.current ? ': set the deferral to this, ' + cash(p.extra) + ' more than the ' + cash(p.current) + ' that comes out now' : '') + lastWords(p.last, p.perPaycheck) };
   }
   if (r.perMonth === null) return { big: null, sub: '' };
-  return { big: cash(r.perMonth) + ' a month', sub: plural(r.months.count, 'month') + ', one a month from today to ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', on top of what already goes in' : '') + lastWords(r.months.last, r.perMonth) };
+  return { big: cash(r.perMonth) + ' a month', sub: plural(r.months.count, 'month') + ', one a month from today to ' + shortDate(r.deadline.date) + (r.still.value > 0 ? ', on top of what already goes in' : '') + lastWords(r.months.last, r.perMonth) };
 }
 
 // The record form: the total that went in for a year so far (prefilled with what is counted now, the monthly guess
@@ -97,10 +98,17 @@ function recordButton(r, onRecord) {
   return btn;
 }
 
+// Against cash: what leaves and whether the floor holds (the first two sentences) on the line; the rest behind More.
+function cashLines(c) {
+  const sents = c.words.split(/(?<=\.)\s+(?=[A-Z$\d])/);
+  const lead = sents.slice(0, 2).join(' '), rest = sents.slice(2).join(' ');
+  return [h('p', { class: 'tool-result' + (c.breaks ? ' bad' : '') }, h('strong', {}, 'Against cash: '), lead),
+    rest ? h('details', { class: 'flow-list cash-more' }, h('summary', {}, 'More'), h('p', { class: 'tile-sub' }, rest)) : null];
+}
 // One tax year of one account.
 function yearBlock(m, r, { onRecord = null } = {}) {
   const key = 'maxit:' + r.accountId + ':' + r.year + ':';
-  const head = h('h3', {}, 'For ' + r.year + ', by ' + longDay(r.deadline.date), ' ', kindChip(r.kind));
+  const head = h('h3', {}, 'For ' + r.year + ', by ' + shortDate(r.deadline.date), ' ', kindChip(r.kind));
   if (!r.applies) return h('div', { class: 'max-year card-tile' }, head, h('p', { class: 'muted' }, r.why));
   const record = onRecord ? recordButton(r, onRecord) : h('a', { class: 'tile-view', href: maxHref(r.accountId) }, 'Record what went in for ' + r.year + ' ›');
   if (r.room === null) {
@@ -140,12 +148,12 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     ownShared.length ? ['Shares its limit with', ownShared.join(', ')] : null,
     r.couple ? ['Shares the couple\'s pay', r.couple.words] : null,
     r.counted ? ['Counted in the Plan', cash(r.counted.fill) + ' (' + r.counted.words + ')'] : null,
-    ['The deadline', r.deadline.when + '. ' + r.deadline.words + ' ' + VERIFY]
+    ['The deadline', r.deadline.when + '. ' + r.deadline.words]
   ].filter(Boolean);
   return h('div', { class: 'max-year card-tile' }, head,
     main.big ? h('p', { class: 'max-big' }, main.big) : h('p', { class: 'missing-row' }, main.sub, main.blank ? [' ', h('a', { href: ledgerHref(main.blank.path) }, 'Fill it in')] : null),
     main.big ? h('p', { class: 'tile-sub' }, main.sub) : null,
-    p && p.tooBig ? h('p', { class: 'tool-result bad' }, p.multi ? 'More than some paychecks hold: the ' + p.shortLines.join(' and ') + ' paychecks hold as little as about ' + cash(p.landed) + (p.holdsTotal !== null ? '; together the paychecks to ' + longDay(r.deadline.date) + ' hold about ' + cash(p.holdsTotal) : '') + ', so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll.' : raiseWords(r)) : null,
+    p && p.tooBig && (p.multi || p.raiseTo === null || p.raiseTo === undefined) ? h('p', { class: 'tool-result bad' }, p.multi ? 'More than some paychecks hold: the ' + p.shortLines.join(' and ') + ' paychecks hold as little as about ' + cash(p.landed) + (p.holdsTotal !== null ? '; together the paychecks to ' + shortDate(r.deadline.date) + ' hold about ' + cash(p.holdsTotal) : '') + ', so the ' + cash(p.extra) + ' more a paycheck cannot all go in through payroll.' : raiseWords(r)) : null,
     r.safe ? h('p', { class: 'tile-sub' }, r.safe) : null,
     r.employerOnly ? h('p', { class: 'tile-sub' }, r.employerOnly) : null,
     r.pick ? h('p', { class: 'tile-sub' }, pickWords(r)) : null,
@@ -154,7 +162,7 @@ function yearBlock(m, r, { onRecord = null } = {}) {
     r.aboveCap ? h('p', { class: 'tile-sub' }, cash(r.aboveCap) + ' is above the New York deduction cap: that part is not deductible (it can stay in the 529).') : null,
     h('dl', { class: 'kv' }, ...kv.flatMap(([k, val]) => [h('dt', {}, k), h('dd', { class: /^[$-]/.test(val) ? '' : 'words' }, val)])),
     h('div', { class: 'edit-actions' }, record),
-    c ? h('p', { class: 'tool-result' + (c.breaks ? ' bad' : '') }, h('strong', {}, 'Against cash: '), c.words) : null,
+    c ? cashLines(c) : null,
     mathButton([key + 'room', ...(r.lump !== null ? [key + 'lump'] : []), ...(r.perMonth !== null ? [key + 'month'] : []), ...(p && (p.perPaycheck !== null || p.perLine) && r.fillable ? [key + 'paycheck'] : []), ...(p && p.raiseTo !== null && p.raiseTo !== undefined ? [key + 'raise'] : []), ...(c ? [key + 'low', ...(c.measurable ? [key + 'payoff'] : [])] : [])], ctxFor(m)));
 }
 
@@ -196,7 +204,7 @@ export function maxItCard(spine, rules) {
   const m = maxItFor(spine, rules);
   const rows = m.mx.rows;
   const T = m.mx.totals;
-  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' }, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open My numbers ›'));
+  if (!rows.length) return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' }, h('p', { class: 'muted' }, 'No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.'), h('a', { class: 'tile-view', href: 'ledger.html' }, 'Open Numbers ›'));
   const all = m.mx.pools.length && T.lump > 0 ? cashFor(m, 'all') : null;
   const firstMissing = rows.find((r) => r.applies && !r.passed && (r.room === null || r.blankLabel));
   const line = (r) => {
@@ -209,7 +217,7 @@ export function maxItCard(spine, rules) {
         : r.room === null ? h('span', { class: 'missing-row' }, cap1(r.missingLabel))
           : main.big ? h('span', { class: 'max-main' }, main.big + last) : h('span', { class: 'missing-row' }, main.sub),
       r.couple || r.counted ? h('span', { class: 'tile-sub' }, [r.couple ? r.couple.words : null, r.counted ? 'Counted in the Plan: ' + cash(r.counted.fill) + ' (' + r.counted.words + ').' : null].filter(Boolean).join(' ')) : null,
-      r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + longDay(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
+      r.applies && r.room !== null ? h('span', { class: 'tile-sub' }, cash(r.room) + ' of room, by ' + shortDate(r.deadline.date) + (r.still.value > 0 ? ', ' + cash(r.still.value) + ' of it already set to go in' : '') + (r.sharedWith.length ? ', shared with ' + r.sharedWith.join(', ') : ''), ' ', kindChip(r.kind)) : null,
       r.paychecks && r.paychecks.tooBig ? h('span', { class: 'missing-row' }, r.paychecks.multi && r.paychecks.holdsTotal !== null ? 'More than the paychecks hold (about ' + cash(r.paychecks.holdsTotal) + ' lands from them together)' : r.paychecks.raiseTo !== null && r.paychecks.raiseTo !== undefined ? 'More than a paycheck holds: raise your contribution to ' + Math.round(r.paychecks.raiseTo * 100) + '% of pay' : 'More than a paycheck holds (about ' + cash(r.paychecks.landed) + ' lands)') : null,
       r.safe || r.employerOnly || r.pick ? h('span', { class: 'tile-sub' }, [r.safe ? 'Safe amount, could be higher.' : null, r.employerOnly, r.pick ? pickWords(r) : null].filter(Boolean).join(' ')) : null,
       r.over ? h('span', { class: 'missing-row' }, 'Over the limit by ' + cash(r.over) + (r.overByYearEnd ? ', ' + cash(r.overByYearEnd) + ' by December 31 if nothing changes' : '')) : r.overSoon ? h('span', { class: 'missing-row' }, 'Set to go over the limit by ' + cash(r.overSoon)) : null);
@@ -217,10 +225,11 @@ export function maxItCard(spine, rules) {
   const leftOut = [T.missing.length ? plural(T.missing.length, 'account year') + ' missing' : null, T.unfillable.length ? plural(T.unfillable.length, 'account year') + ' that cannot be filled' : null, T.short.length ? 'the part of ' + plural(T.short.length, 'payroll account') + ' more than a paycheck holds' : null, (T.noMonth || []).length ? plural(T.noMonth.length, 'account year') + ' with no dates to put it in' : null].filter(Boolean);
   const steps = T.steps || [];
   return h('section', { class: 'card', id: 'maxit', 'aria-label': 'How much to max it' },
-    h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in My numbers.'),
+    h('p', { class: 'muted' }, 'Each tax-advantaged account: the year\'s limit and catch-up, less what is in, is the room left, filled by its deadline with new money on top of what already goes in. A 401(k) fills through pay, so it reads a paycheck; the rest read a month. Tap one to open it in Numbers.'),
     m.mx.pools.length && steps.length ? h('p', { class: 'max-big' }, cash(steps[0].perMonth) + ' a month')
       : h('p', { class: 'max-big missing-text' }, firstMissing ? cap1(firstMissing.missingLabel || firstMissing.blankLabel) : m.mx.pools.length && T.lump === 0 && !leftOut.length ? 'What already goes in fills it' : 'Nothing more can go in before the deadlines'),
-    m.mx.pools.length && steps.length ? h('p', { class: 'tile-sub' }, 'to ' + longDay(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + longDay(s.until)).join('') + ' (' + cash(T.lump) + ' of new money in all; a limit two accounts share counts once)' + (leftOut.length ? '; not counted: ' + leftOut.join(' and ') : '') + '.')
+    m.mx.pools.length && steps.length ? [h('p', { class: 'tile-sub' }, 'to ' + shortDate(steps[0].until) + steps.slice(1).map((s) => ', then ' + cash(s.perMonth) + ' a month to ' + shortDate(s.until)).join('') + '.'),
+      h('p', { class: 'tile-sub' }, cash(T.lump) + ' of new money in all; a limit two accounts share counts once' + (leftOut.length ? '. Not counted: ' + leftOut.join(' and ') : '') + '.')]
       : leftOut.length && !firstMissing ? h('p', { class: 'tile-sub' }, 'Not counted: ' + leftOut.join(' and ') + '.') : null,
     m.mx.window.words ? h('p', { class: 'max-window' }, m.mx.window.words) : null,
     h('ul', { class: 'max-list' }, rows.map(line)),

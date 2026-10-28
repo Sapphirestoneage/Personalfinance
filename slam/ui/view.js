@@ -3,7 +3,7 @@
 
 import { money as dollars, pct } from '../src/ui/format.js';
 import { hoursOf, fiDaysOf } from '../engine/money-as.js';
-import { FILING_STATUSES, LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES } from '../engine/schema.js';
+import { FILING_STATUSES, LOAN_PLAN_WORDS, PAY_POLICIES, PERSON_PURPOSES, PERSON_PURPOSE_WORDS, ALLOWANCE_MODES, SITUATIONS } from '../engine/schema.js';
 
 export { pct };
 
@@ -58,14 +58,30 @@ export const ROLE_WORDS = { spending: 'Spending money', emergency: 'Emergency cu
 export const PAY_POLICY_WORDS = { minimum: 'New charges plus the minimum on what I carry', statement: 'The full statement balance' };
 
 // A stored value, worded by its field type.
-const FILING_WORDS = { single: 'Single', mfj: 'Married filing jointly', mfs: 'Married filing separately', hoh: 'Head of household' };
+export const FILING_WORDS = { single: 'Single', mfj: 'Married filing jointly', mfs: 'Married filing separately', hoh: 'Head of household' };
+// Every other choice list in the catalog (data/type-features.json), in a client's words: the list, the answer line and
+// Undo's words all read this one map, so no code word (ffel, arm, forfeit) reaches a screen.
+const CHOICE_WORDS = {
+  // Your situation (the Income list and an item's Situation row): 'mixed' is a paycheck plus side income.
+  ['choice:' + SITUATIONS.join('|')]: { employed: 'Paycheck', self_employed: 'Self-employed', mixed: 'Paycheck plus side income', between_jobs: 'Between jobs', student: 'Student', retired: 'Retired' },
+  'choice:direct|ffel|perkins|parentPlus': { direct: 'Direct', ffel: 'FFEL (an older federal loan)', perkins: 'Perkins', parentPlus: 'Parent PLUS' },
+  'choice:immediate|cliff|graded': { immediate: 'Right away', cliff: 'All at once after a wait (cliff)', graded: 'A share each year (graded)' },
+  'choice:self|family': { self: 'Just you', family: 'Family' },
+  'choice:fixed|arm': { fixed: 'Fixed', arm: 'Adjustable (ARM)' },
+  'choice:rolls|forfeit': { rolls: 'Rolls over', forfeit: 'Use it or lose it' },
+  'choice:monthly|yearly': { monthly: 'Monthly', yearly: 'Yearly' },
+  'choice:monthly|quarterly|yearly': { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' },
+  'choice:spouse|eligible|designated': { spouse: 'A spouse', eligible: 'An eligible person (a minor child, disabled or close in age)', designated: 'Someone else named' },
+  'choice:standard|graduated|extended|ibr|paye|icr|save|rap|paused': { standard: 'Standard', graduated: 'Graduated', extended: 'Extended', ibr: 'Income-based (IBR)', paye: 'Pay as you earn (PAYE)', icr: 'Income-contingent (ICR)', save: 'SAVE', rap: 'Repayment assistance (RAP)', paused: 'Paused' },
+  'choice:private|nonprofit|government|federal|self': { private: 'A private company', nonprofit: 'A nonprofit', government: 'State or local government', federal: 'The federal government', self: 'Self-employed' }
+};
 export function showValue(value, type) {
   if (value === null || value === undefined) return '';
   if (type === 'last4') return '\u2022\u2022' + value;
   // An expense: how much, how often, and who pays (S-175, S-176).
   if (type === 'expense') {
     const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';
-    const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
+    const base = value.amount === null ? MISSING_WORDS.toLowerCase() : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
     const sub = (value.subscription ? ' · subscription' : '') + (value.paysDebt ? ' · pays ' + value.paysDebt + ', counted once under debt payments' : '');
     if (value.covered) return base + ', covered by ' + (value.coveredBy || 'someone else') + ' ($0 to you)' + sub;
     if (value.shared) return base + ', shared by ' + (value.people || '?') + (value.yourMonthly !== null ? ': you pay ' + money(value.yourMonthly) + ' a month' : '') + sub;
@@ -74,7 +90,7 @@ export function showValue(value, type) {
   // An income stream: how much, how often, since when, until when, and the day paid (S-199).
   if (type === 'income') {
     const how = { weekly: 'a week', biweekly: 'every two weeks', semimonthly: 'twice a month', monthly: 'a month', quarterly: 'a quarter', yearly: 'a year', once: 'once', total: 'in total' }[value.cadence] || '';
-    const base = value.amount === null ? 'amount not given' : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
+    const base = value.amount === null ? MISSING_WORDS.toLowerCase() : money(value.amount, !Number.isInteger(value.amount)) + ' ' + how;
     const when = value.cadence === 'once' ? (value.start ? ' on ' + shortDate(value.start) : '')
       : (value.start ? (value.cadence === 'total' ? ' from ' : ', since ') + shortDate(value.start) : '') + (value.end ? (value.cadence === 'total' ? ' to ' : ', until ') + shortDate(value.end) : '');
     const day = value.payDay && !['weekly', 'biweekly', 'once', 'total'].includes(value.cadence) ? ', paid on the ' + ordinal(value.payDay) + (value.payDay2 && value.cadence === 'semimonthly' ? ' and the ' + ordinal(value.payDay2) : '') : '';
@@ -82,9 +98,9 @@ export function showValue(value, type) {
   }
   // A card's interest rate: "24%" or "0% until March 31, 2027, then 24%".
   if (type === 'cardRate') {
-    const after = value.apr === null ? 'not given' : showValue(value.apr, 'rate');
+    const after = value.apr === null ? MISSING_WORDS.toLowerCase() : showValue(value.apr, 'rate');
     if (!value.intro) return after;
-    return (value.intro.rate === null ? 'intro rate not given' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given)') + (value.intro.deferred === true ? ' (deferred interest)' : value.intro.deferred === null || value.intro.deferred === undefined ? ' (deferred interest: not sure)' : '') + ', then ' + after;
+    return (value.intro.rate === null ? 'intro rate not given yet' : showValue(value.intro.rate, 'rate')) + ' until ' + (value.intro.ends ? shortDate(value.intro.ends) : '(end date not given yet)') + (value.intro.deferred === true ? ' (deferred interest)' : value.intro.deferred === null || value.intro.deferred === undefined ? ' (deferred interest: not sure)' : '') + ', then ' + after;
   }
   if (type === 'money') return money(value, !Number.isInteger(value));
   // Whole percents plain, others to two places without a trailing zero (3.5%, 24.99%).
@@ -107,12 +123,15 @@ export function showValue(value, type) {
   if (type === 'choice:' + ALLOWANCE_MODES.join('|')) return value === 'time' ? 'Pay for my time' : 'A gift';
   if (type === 'choice:' + FILING_STATUSES.join('|')) return FILING_WORDS[value] || words(value);
   if (type === 'choice:oneAtATime|byDeadline') return value === 'byDeadline' ? 'By deadline' : 'One at a time';
-  if (type.startsWith('choice:')) return words(value);
+  if (type.startsWith('choice:')) return (CHOICE_WORDS[type] || {})[value] || words(value);
   if (type.startsWith('suggest:')) return LOAN_PLAN_WORDS[value] || String(value);
   return String(value);
 }
 
 // The kind chip: green known, yellow rough, red missing.
+// A number not entered yet, said one way on every row, cell and sum line (a result that cannot be figured yet says
+// "Not yet", as the strip and the tiles do).
+export const MISSING_WORDS = 'Not given yet';
 export const KIND_WORDS = { known: 'Known', rough: 'Rough', missing: 'Missing', computed: 'Worked out', notForMe: 'Not for me', incomplete: 'Incomplete' };
 // Known and worked-out numbers wear no chip (bug sweep): only what needs a look (Rough, Missing, Incomplete) is marked.
 // A screen that lists the kinds themselves (the Design kit, a filter) asks for the label with always.

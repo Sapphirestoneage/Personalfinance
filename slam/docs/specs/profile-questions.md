@@ -53,7 +53,7 @@ Profile page, "Import answers" fills the Profile and the gut number and shows wh
 - **What kind of work?** (A job (W-2) / Self-employed / Both / Between jobs / Student / Retired, or Not sure). Shows the pay fields that fit and the tax set-aside on self-employed pay.
 - **How are you paid?** (Salary / By the hour / Some of each, or Not sure; asked only when it applies). Salary is a yearly amount; by the hour is rate x hours.
 - **Any extras?** (Bonus / Overtime / Tips / Commission / None, or Not sure; asked only when it applies). Each extra gets its own line, so the steady part stays steady.
-- **What does work offer?** (401(k) or similar / Health insurance / HSA / FSA, or Not sure; asked only when it applies). Opens those accounts in the session.
+- **What does work offer?** (401(k) or similar / Health insurance / HSA / FSA / Nothing, or Not sure; asked only when it applies). Opens those accounts in the session.
 - **Paying quarterly taxes?** (Yes / No, or Not sure; asked only when it applies). No or not sure turns on a set-aside on every deposit.
 - **Getting unemployment?** (Yes / No, or Not sure; asked only when it applies). Shows the weekly benefit and its end date.
 - **When does it end? (if you know)** (date, or Not sure; asked only when it applies). Ends the benefit on the Calendar.

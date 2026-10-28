@@ -3,7 +3,7 @@
   "prefs": [
     { "id": "moneyAs", "label": "Show money as", "hint": "Dollars, or what each amount costs in hours of work or in days of FI pushed later. Every screen follows it.", "kind": "choice", "options": [["dollars", "Dollars"], ["hours", "Hours of work"], ["fiDays", "Days of FI later"]], "default": "dollars", "saved": "browser" },
     { "id": "hide", "label": "Hide numbers", "hint": "For screen sharing or in public: amounts blur until you tap them.", "kind": "choice", "options": [["off", "Show"], ["on", "Hide"]], "default": "off", "saved": "browser" },
-    { "id": "round", "label": "Round amounts", "hint": "On summary screens (Today, My numbers totals). Show the math and the log keep cents.", "kind": "choice", "options": [["1", "To the dollar"], ["10", "To $10"], ["100", "To $100"]], "default": "1", "saved": "browser" },
+    { "id": "round", "label": "Round amounts", "hint": "On summary screens (Home, Numbers totals). Show the math and the log keep cents.", "kind": "choice", "options": [["1", "To the dollar"], ["10", "To $10"], ["100", "To $100"]], "default": "1", "saved": "browser" },
     { "id": "theme", "label": "Theme", "hint": "Light, dark, or whatever this device is set to.", "kind": "choice", "options": [["device", "Match the device"], ["light", "Light"], ["dark", "Dark"]], "default": "device", "saved": "browser" },
     { "id": "textSize", "label": "Text size", "hint": "Larger makes every screen easier to read.", "kind": "choice", "options": [["normal", "Normal"], ["larger", "Larger"]], "default": "normal", "saved": "browser" },
     { "id": "weekStart", "label": "Week starts on", "hint": "For the Calendar's weeks.", "kind": "choice", "options": [["sunday", "Sunday"], ["monday", "Monday"]], "default": "sunday", "saved": "browser" },

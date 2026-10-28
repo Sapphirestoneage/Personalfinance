@@ -13,7 +13,7 @@ import { payrollShares } from './cashflow.js';
 
 export const isCouple = (spine) => ((spine.household && spine.household.people) || []).length >= 2;
 export const peopleOf = (spine) => (spine.household && spine.household.people) || [];
-export const FILINGS = [['mfj', 'Married, filing jointly'], ['mfs', 'Married, filing separately'], ['single', 'Not married (each files on their own)']];
+export const FILINGS = [['mfj', 'Married filing jointly'], ['mfs', 'Married filing separately'], ['single', 'Not married (each files on their own)']];
 export const SPLITS = [['half', 'Half each'], ['income', 'By take-home'], ['me', 'One pays: first'], ['partner', 'One pays: second']];
 export const STYLES = { joint: { whose: 'joint', split: 'half' }, separate: { whose: 'me', split: 'income' }, mixed: { whose: 'joint', split: 'half' } };
 

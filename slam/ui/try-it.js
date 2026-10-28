@@ -3,13 +3,16 @@
 // sliders back. The household itself only changes through change(), so one Undo takes a kept move back.
 
 import { h, money } from './view.js';
-import { change, kept, keep } from './shell.js';
+import { change, kept, keep, said } from './shell.js';
+import { nothingEntered } from '../engine/blank.js';
 import { summarize } from '../engine/summary.js';
 import { moneySentence, homeLevers, pullLevers } from '../engine/story.js';
 
 const fiYear = (spine, s) => { const y = s.fi.yearsToFi.value; return y === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(y); };
 
 export function sentenceCard(spine, rules) {
+  // Empty is not zero: with nothing entered yet there is no sentence to say.
+  if (nothingEntered(spine)) return null;
   const s = summarize(spine, rules, { flags: false });
   const said = moneySentence(spine, s);
   return said ? h('p', { class: 'money-sentence', id: 'money-sentence' }, said) : null;
@@ -26,7 +29,7 @@ export function tryItCard(spine, rules, today) {
   const keepBtn = h('button', { type: 'button', class: 'btn primary', disabled: true, onclick: () => {
     const moved = levers.filter((l) => values[l.id] !== l.now);
     if (!moved.length) return;
-    change((x) => pullLevers(x, levers, values, today, 'known'), moved.map((l) => l.label + ' ' + money(values[l.id])).join(', '));
+    change((x) => pullLevers(x, levers, values, today, 'known'), moved.map((l) => said.changed(l.label, money(values[l.id]))).join(', '));
   } }, 'Keep this');
   const backBtn = h('button', { type: 'button', class: 'btn', disabled: true, onclick: () => springBack() }, 'Put it back');
   let frame = 0;
@@ -52,7 +55,7 @@ export function tryItCard(spine, rules, today) {
     for (const { l, r, out } of rows) { values[l.id] = l.now; r.value = l.now; out.textContent = money(l.now); r.setAttribute('aria-valuetext', money(l.now)); r.classList.add('is-spring'); setTimeout(() => r.classList.remove('is-spring'), 400); }
     update();
   };
-  return h('details', { class: 'card try-it', open: kept().tryIt || null, ontoggle: (e) => { if (!!kept().tryIt !== e.target.open) keep({ tryIt: e.target.open }); if (!e.target.open) springBack(); } },
+  return h('details', { class: 'card done-group try-it', open: kept().tryIt || null, ontoggle: (e) => { if (!!kept().tryIt !== e.target.open) keep({ tryIt: e.target.open }); if (!e.target.open) springBack(); } },
     h('summary', {}, h('span', {}, 'What if?'), h('span', { class: 'count' }, 'rent, saving, pay')),
     h('div', { class: 'try-fi-box' }, h('span', { class: 'try-fi-label' }, 'Free to stop working'), big, sub),
     rows.map((x) => x.el),

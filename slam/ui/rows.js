@@ -7,7 +7,8 @@ import { h } from './view.js';
 
 const KEY = 'slam-open:v1';
 const openSet = () => { try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch { return new Set(); } };
-const remember = (id, on) => { try { const s = openSet(); if (on) s.add(id); else s.delete(id); localStorage.setItem(KEY, JSON.stringify([...s])); } catch { /* lasts until the page closes */ } };
+// rememberOpen(id, on): a page can open a fold for a link that lands on it (My numbers' How much to max it?).
+export const rememberOpen = (id, on) => { try { const s = openSet(); if (on) s.add(id); else s.delete(id); localStorage.setItem(KEY, JSON.stringify([...s])); } catch { /* lasts until the page closes */ } };
 export const isOpen = (id) => openSet().has(id);
 
 // foldRow(id, title, fact, body, { add }) -> a details row. body is a function, drawn only when open.
@@ -20,7 +21,7 @@ export function foldRow(id, title, fact, body, { add = null, cls = '' } = {}) {
     fact ? h('span', { class: 'fold-fact' }, fact) : null,
     add ? h('button', { type: 'button', class: 'btn small fold-add', onclick: (e) => { e.preventDefault(); e.stopPropagation(); if (add.onOpen) add.onOpen(); if (!d.open) d.open = true; else { delete d.dataset.drawn; d.querySelector('.fold-body')?.remove(); fill(); } } }, '+ ' + (add.label || 'Add')) : null,
     h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')));
-  d.addEventListener('toggle', () => { remember(id, d.open); fill(); });
+  d.addEventListener('toggle', () => { rememberOpen(id, d.open); fill(); });
   fill();
   return d;
 }

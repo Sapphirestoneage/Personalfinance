@@ -3943,7 +3943,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4112,7 +4112,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4140,7 +4140,7 @@
       {
        "field": "federalLoanType",
        "type": "choice:direct|ffel|perkins|parentPlus",
-       "label": "Loan kind",
+       "label": "Loan type",
        "supplier": "coach"
       },
       {
@@ -4152,7 +4152,7 @@
       }
      ],
      "kind": "ask",
-     "title": "Kind of federal loan and servicer"
+     "title": "Type of federal loan and servicer"
     },
     {
      "id": "plan",
@@ -4233,7 +4233,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4467,7 +4467,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4554,7 +4554,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4634,7 +4634,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4729,7 +4729,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4772,7 +4772,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },
@@ -4815,7 +4815,7 @@
       {
        "field": "minimum",
        "type": "money",
-       "label": "Monthly payment",
+       "label": "Minimum payment",
        "supplier": "client",
        "hint": "e.g. 250"
       },

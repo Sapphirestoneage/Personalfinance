@@ -8,6 +8,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>SLAM Design kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
   <link rel="stylesheet" href="src/ui/tokens.css">
   <link rel="stylesheet" href="ui/spine.css">
   <style>
@@ -19,10 +22,6 @@
 </head>
 <body>
 <main id="app">
-  <header class="top">
-    <div class="top-title"><h1>Design kit</h1><p class="muted">Every component in every state, with the app's own styles.</p></div>
-  </header>
-
   <section class="card" aria-labelledby="r-h">
     <h2 id="r-h">The rules</h2>
     <ol class="rules">
@@ -73,7 +72,7 @@
     </ul>
     <span class="demo-cap">A row is one big target with a chevron; an open one turns it down. A found row opens its own screen; in Select several a row is a tick box.</span>
     <h2 class="part-h">Other</h2>
-    <span class="demo-cap">A heading over the items it holds on a screen of My numbers (an issuer, an account type).</span>
+    <span class="demo-cap">A heading over the items it holds on a screen of Numbers (an issuer, an account type).</span>
   </section>
 
   <section class="card" aria-labelledby="f-h">
@@ -100,21 +99,21 @@
       <label class="choice-card"><input type="radio" name="d-who"><span class="choice-text"><strong>Someone else covers it</strong><span class="choice-sub">Parents, a partner, an employer: costs you $0</span></span></label>
     </fieldset>
     <label class="check-row" for="d-sub"><input type="checkbox" id="d-sub" checked><span><strong>This is a subscription</strong><span class="choice-sub">It renews on its own, so it gets a regular look</span></span></label>
-    <!-- Preferences (Profile): a choice is a row of buttons, the pressed one filled; Today's tiles are ticked and moved. -->
+    <!-- Preferences (Profile): a choice is a row of buttons, the pressed one filled; Home's tiles are ticked and moved. -->
     <p class="edit-label" id="d-pref-money">Show money as</p>
     <p class="as-means">Dollars, or what each amount costs in hours of work or in days of FI pushed later.</p>
     <div class="segmented pref-seg" role="group" aria-labelledby="d-pref-money"><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Dollars</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Hours of work</span><span class="choice-sub">needs your hours a week</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Days of FI later</span></button></div>
     <p class="edit-label" id="d-pref-tone">Tone <span class="chip chip-known">saved with the client</span></p>
     <div class="segmented pref-seg" role="group" aria-labelledby="d-pref-tone"><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Gentle</span></button><button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Straight</span></button><button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Numbers only</span></button></div>
-    <ul class="pref-tiles" aria-label="What Today shows"><li class="pref-tile"><label class="check-row" for="d-tile1"><input type="checkbox" id="d-tile1" checked><span>Net worth</span></label><button type="button" class="btn small" disabled title="Already first">Up</button><button type="button" class="btn small">Down</button></li><li class="pref-tile"><label class="check-row" for="d-tile2"><input type="checkbox" id="d-tile2"><span>Savings rate</span></label><button type="button" class="btn small" disabled title="Tick it to place it">Up</button><button type="button" class="btn small" disabled title="Tick it to place it">Down</button></li></ul>
+    <ul class="pref-tiles" aria-label="What Home shows"><li class="pref-tile"><label class="check-row" for="d-tile1"><input type="checkbox" id="d-tile1" checked><span>Net worth</span></label><button type="button" class="btn small" disabled title="Already first">Up</button><button type="button" class="btn small">Down</button></li><li class="pref-tile"><label class="check-row" for="d-tile2"><input type="checkbox" id="d-tile2"><span>Savings rate</span></label><button type="button" class="btn small" disabled title="Tick it to place it">Up</button><button type="button" class="btn small" disabled title="Tick it to place it">Down</button></li></ul>
     <!-- An assumption row (Assumptions page): name, value, meaning, Used by, Change and Reset. -->
-    <ul class="as-list"><li class="as-row"><div class="as-head"><span class="as-name">Card interest rate when unknown</span><span class="chip chip-rough">changed for this client</span><span class="as-value">20%</span></div><p class="as-means">A card with no rate typed uses this, marked as a guess. Your default: 25%.</p><p class="as-used">Used by: <a href="#">My numbers, Debt</a>, <a href="#">Plan</a></p><div class="as-btns"><a class="btn small" href="#">Change</a><button type="button" class="btn small danger">Reset to your default</button></div></li></ul>
+    <ul class="as-list"><li class="as-row"><div class="as-head"><span class="as-name">Card interest rate when unknown</span><span class="chip chip-rough">Changed for this client</span><span class="as-value">20%</span></div><p class="as-means">A card with no rate typed uses this, marked as a guess. Your default: 25%.</p><p class="as-used">Used by: <a href="#">Numbers, Debt</a>, <a href="#">Plan</a></p><div class="as-btns"><a class="btn small" href="#">Change</a><button type="button" class="btn small danger">Reset to your default</button></div></li></ul>
     <div class="tick-row"><label class="tick-chip" for="d-tick1"><input type="checkbox" id="d-tick1" checked><span>Shared</span></label><label class="tick-chip" for="d-tick2"><input type="checkbox" id="d-tick2"><span>Subscription</span></label></div>
     <div class="switch-row" style="margin-top: var(--space-3)"><span class="edit-label">Has an intro rate?</span><button type="button" class="switch" role="switch" aria-checked="true"><span class="switch-track"><span class="switch-knob"></span></span>Yes</button></div>
     <div class="segmented" role="group" aria-label="Assumption set" style="margin-top: var(--space-3)">
-      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Best</span><span class="seg-sub">8% real return, 5% withdrawal</span></button>
-      <button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Likely</span><span class="seg-sub">6% real return, 4% withdrawal</span></button>
-      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Worst</span><span class="seg-sub">4% real return, 3.5% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Conservative</span><span class="seg-sub">4% real return, 3.5% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="true"><span class="seg-label">Standard</span><span class="seg-sub">6% real return, 4% withdrawal</span></button>
+      <button type="button" class="seg-btn" aria-pressed="false"><span class="seg-label">Optimistic</span><span class="seg-sub">7% real return, 4.7% withdrawal</span></button>
     </div>
   </section>
 
@@ -137,9 +136,9 @@
       <li class="ev ev-pay"><span class="sw viz-3" aria-hidden="true"></span><span class="ev-name"><a href="ledger.html">Salary</a></span><span class="ev-amt">+$4,211</span><span class="ev-note">after tax, Social Security and Medicare, and $500 saved from pay</span></li>
       <li class="ev ev-debt ev-rough"><span class="sw viz-2" aria-hidden="true"></span><span class="ev-name"><a href="ledger.html">Federal student loan minimum</a><span class="ev-tag">rough</span></span><span class="ev-amt">-$212</span><span class="ev-note">due day is a house guess</span></li>
     </ul>
-    <p class="muted">A Windfall step: its number in the step's color, the amount, a kind chip, the reason, a My numbers link and Show the math. A step that takes nothing is flat.</p>
+    <p class="muted">A Windfall step: its number in the step's color, the amount, a kind chip, the reason, a Numbers link and Show the math. A step that takes nothing is flat.</p>
     <ol class="wf-steps">
-      <li class="wf-step viz-2"><span class="wf-num" aria-hidden="true">5</span><div class="wf-head"><span class="wf-label">Cards charging interest now</span><span class="wf-amt">$3,000</span></div><div class="wf-body"><p class="wf-why">Highest rate first (avalanche): Visa at 22%, $3,000.</p><div class="wf-links"><a href="ledger.html">View in My numbers &#8250;</a></div><div class="math"><button type="button" class="btn math-btn" aria-expanded="false"><span class="math-icon" aria-hidden="true">=</span> Show the math</button></div></div></li>
+      <li class="wf-step viz-2"><span class="wf-num" aria-hidden="true">5</span><div class="wf-head"><span class="wf-label">Cards charging interest now</span><span class="wf-amt">$3,000</span></div><div class="wf-body"><p class="wf-why">Highest rate first (avalanche): Visa at 22%, $3,000.</p><div class="wf-links"><a href="ledger.html">View in Numbers &#8250;</a></div><div class="math"><button type="button" class="btn math-btn" aria-expanded="false"><span class="math-icon" aria-hidden="true">=</span> Show the math</button></div></div></li>
       <li class="wf-step viz-3 zero"><span class="wf-num" aria-hidden="true">6</span><div class="wf-head"><span class="wf-label">Cash up to the Rule of 5 target</span><span class="wf-amt">Nothing left for it</span></div><div class="wf-body"><p class="wf-why"><span class="chip chip-rough">Rough</span> The Rule of 5 target is $22,861; cash is $12,000, so $10,861 to go.</p><p class="wf-short">Short by $10,861: the windfall runs out here.</p></div></li>
     </ol>
   </section>
@@ -156,7 +155,7 @@
       <li class="ev ev-maybe has-target" data-drag="maybe" style="background: var(--accent-soft);"><span class="grip" aria-hidden="true">&#8942;&#8942;</span><span class="sw viz-5" aria-hidden="true"></span><span class="ev-name"><a class="ev-go" href="#">Town contract</a><span class="pill pill-maybe">maybe</span></span><span class="ev-amt">+$1,200</span><span class="chev" aria-hidden="true">&#8250;</span><span class="ev-note">70% likely</span></li>
       <li class="ev ev-debt has-target"><span class="sw viz-2" aria-hidden="true"></span><span class="ev-name"><a class="ev-go" href="#">Visa minimum</a><span class="pill">repeat</span></span><span class="ev-amt">-$90</span><span class="chev" aria-hidden="true">&#8250;</span></li>
     </ul>
-    <p class="tile-sub why-fixed"><strong>Cannot move here. </strong>Set by the lender's due date. Change the due day in My numbers.</p>
+    <p class="tile-sub why-fixed"><strong>Cannot move here. </strong>Set by the lender's due date. Change the due day in Numbers.</p>
     <p class="muted">A day's number opens that day: <a class="day-go" href="#">Thu 1</a>. A month in the Year view is a small button: <button type="button" class="btn small">November 2026</button>.</p>
     <p class="muted">A tray item waits for a day; a milestone marker sits on its day and on the timeline; a bonus paycheck gets a chip.</p>
     <ul class="tray-list"><li class="tray-item"><span class="grip" aria-hidden="true">&#8942;&#8942;</span><span><strong>Tax refund</strong><span class="choice-sub"> 50% likely, in</span></span><span class="tray-amt">$900</span><input type="date" aria-label="Day for Tax refund"><button type="button" class="btn small">Put it on that day</button><button type="button" class="btn ghost small">Remove</button></li></ul>
@@ -193,7 +192,7 @@
     <p>Food <span class="hot-chip">running hot</span> &nbsp; Housing <span class="hot-chip fine">on track</span></p>
     <div class="budget-bar" role="img" aria-label="$600 of $700"><div class="fill hot" style="width: 86%"></div><span class="mark" style="left: 71%"></span></div>
     <ol class="tiers"><li><span>Core burn: food, housing, transportation</span><span class="tier-amt">$2,780</span><span class="tier-cum">so far $2,780</span></li><li><span>Plus everything else that is not debt</span><span class="tier-amt">$450</span><span class="tier-cum">so far $3,230</span></li></ol>
-    <div class="donut-wrap"><div class="donut" role="img" aria-label="Where the money goes" style="background: conic-gradient(var(--c-1, #2a78d6) 0% 40%, var(--c-2, #eb6834) 40% 65%, var(--c-3, #1baf7a) 65% 100%)"></div><ul class="donut-list"><li><span class="sw viz-1" aria-hidden="true"></span>Housing<span class="d-amt">$1,950 (40%)</span></li><li><span class="sw viz-2" aria-hidden="true"></span>Food<span class="d-amt">$700 (25%)</span></li></ul></div>
+    <div class="donut-wrap"><div class="donut" role="img" aria-label="Where the money goes" style="background: conic-gradient(var(--viz-1) 0% 40%, var(--viz-2) 40% 65%, var(--viz-3) 65% 100%)"></div><ul class="donut-list"><li><span class="sw viz-1" aria-hidden="true"></span>Housing<span class="d-amt">$1,950 (40%)</span></li><li><span class="sw viz-2" aria-hidden="true"></span>Food<span class="d-amt">$700 (25%)</span></li></ul></div>
     <div class="cut-row dropped"><button type="button" class="btn small" aria-pressed="true">Put back</button><span class="cut-name"><a href="ledger.html">Streaming</a></span><span class="cut-amt">$40 a month</span></div>
     <p class="muted">Spending screen by screen: a slice with lines opens its category (chevron); a slice with none is plain text. In a category, a line opens itself, and the switch beside it tries the month without it (rest, on). A tag in a table opens its category too.</p>
     <ul class="go-list slice-list"><li><a class="go-row" href="#nav-h"><span class="sw viz-2" aria-hidden="true"></span><span class="go-name">Housing</span><span class="go-sub"><span class="go-total">$1,950</span> a month (41%)</span></a></li><li><div class="go-still"><span class="sw viz-1" aria-hidden="true"></span><span class="go-name">Left over</span><span class="go-sub"><span class="go-total">$686</span> a month (15%)</span></div></li></ul>
@@ -241,7 +240,7 @@
     <ul class="waiting-list"><li class="happened"><p class="tile-sub"><strong>Rent</strong>, Oct 1, out $1,800</p><div class="edit-actions"><button type="button" class="btn">It happened</button><button type="button" class="btn">It did not happen</button><button type="button" class="btn ghost">Open it</button></div></li></ul>
     <p class="muted">A bill that lands before the paycheck that really covers it carries a pay-later line in the month summary.</p>
     <ul class="paylater" aria-label="Paid before the paycheck that covers it"><li><span class="pill">pay-later</span> Utilities ($180) lands Nov 10, 5 days before the paycheck on Nov 15 that covers it; checking that day $640.</li></ul>
-    <p class="muted">Bill timing waits behind a button, because it reruns the month once per tried day; each kept move links to the line in My numbers and gives a sentence to ask with.</p>
+    <p class="muted">Bill timing waits behind a button, because it reruns the month once per tried day; each kept move links to the line in Numbers and gives a sentence to ask with.</p>
     <div class="edit-actions"><button type="button" class="btn">Find better due days</button></div>
     <ul class="flow-list"><li><a href="#">Visa</a>: move the due day from the 12th to the 18th: the lowest point rises by $320, to $960. <span class="ev-note">To ask: "Could you move my due date to the 18th?"</span></li></ul>
     <p class="muted">Cash by day: checking as one line, grey where it was recorded and green where the run takes over, savings apart as a thinner line, a wash on days under the floor, dots for paydays and big bills, labels only in the gutters. A legend names the colors; the list twin has every day.</p>
@@ -256,7 +255,7 @@
 
   <section class="card" aria-labelledby="mx-h">
     <h2 id="mx-h">How much to max it? (S-211)</h2>
-    <p class="muted">Every tax-advantaged account in My numbers (401(k), 403(b), 457(b), TSP, SIMPLE, Solo 401(k), SEP, IRAs, HSA, 529) carries a secondary button among its actions. It opens a panel under the account and says so; pressed, it reads Hide.</p>
+    <p class="muted">Every tax-advantaged account in Numbers (401(k), 403(b), 457(b), TSP, SIMPLE, Solo 401(k), SEP, IRAs, HSA, 529) carries a secondary button among its actions. It opens a panel under the account and says so; pressed, it reads Hide.</p>
     <div class="item-actions" style="padding-left: 0"><button type="button" class="btn small" aria-expanded="false">How much to max it?</button><button type="button" class="btn small" aria-expanded="true">Hide how much to max it</button><button type="button" class="btn small">Duplicate</button><button type="button" class="btn ghost small">Remove</button></div>
     <p class="muted">The panel: one block per open tax year. The main number is the big one: a month for an IRA, HSA, SEP or 529, a paycheck for a payroll-only account. Under it, the lump sum, the other amount, the limit, what is in, the cap and the deadline in words (not checked against the IRS yet). The cash check is a result box, red-edged when it breaks the floor. From January 1 to April 15 two years sit side by side (stacked on a phone) with the note that money put in has to be assigned to a year.</p>
     <section class="max-panel" aria-label="Sample panel">
@@ -278,7 +277,7 @@
       <div class="max-year card-tile"><h3>For 2026, by December 31, 2026 <span class="chip chip-rough">Rough</span></h3><p class="missing-row">Cannot be filled: no paycheck lands before December 31, 2026, and this account only takes money through payroll.</p></div>
       <div class="max-year card-tile"><h3>For 2026, by April 15, 2027</h3><p class="muted">Not eligible: the health plan on this account is not HSA-eligible, so nothing can go in for 2026.</p></div>
     </div>
-    <p class="muted">The Plan page's card: one big number, the new money a month to the first deadline, then what it drops to as each deadline passes (a shared limit counted once), then one row per account and year, each a link that opens the account's panel in My numbers, and all of it against cash. Rows that are missing or cannot be filled, and the part of a payroll account more than a paycheck holds, say so and are left out of the total. With no such account yet, the card says how to add one.</p>
+    <p class="muted">The Plan page's card: one big number, the new money a month to the first deadline, then what it drops to as each deadline passes (a shared limit counted once), then one row per account and year, each a link that opens the account's panel in Numbers, and all of it against cash. Rows that are missing or cannot be filled, and the part of a payroll account more than a paycheck holds, say so and are left out of the total. With no such account yet, the card says how to add one.</p>
     <p class="max-big">$4,861 a month</p><p class="tile-sub">to December 31, 2026, then $650 a month to April 15, 2027 ($12,322 of new money in all; a limit two accounts share counts once); not counted: the part of 1 payroll account more than a paycheck holds.</p>
     <ul class="max-list"><li class="max-row"><a class="max-name" href="#">Work 401(k), 2026 ›</a><span class="max-main">$9,750 a paycheck</span><span class="tile-sub">$19,500 of room, by December 31, 2026 <span class="chip chip-rough">Rough</span></span><span class="missing-row">More than a paycheck holds (about $4,211 lands)</span></li><li class="max-row"><a class="max-name" href="#">Roth IRA, 2026 ›</a><span class="missing-row">Missing: 2026 earned income</span></li></ul>
     <p class="muted">No 401(k), IRA, HSA, SEP or 529 in your numbers yet. Add one under Assets to see how much room each has and by when.</p>
@@ -293,19 +292,19 @@
     <div class="whose whose-example"><p class="muted"><strong class="whose-name">Example household</strong> (made up) · numbers as of Oct 22, 2026</p><div class="whose-load"><button type="button" class="btn primary">Open file</button><span class="whose-note">Stays in this browser. Nothing is uploaded.</span></div><p class="edit-msg" role="alert">Could not load that file: notes.txt is not a JSON file.</p></div>
     <div class="whose whose-example"><p class="muted"><strong class="whose-name">Example household</strong> (made up) · numbers as of Oct 22, 2026</p><div class="whose-load"><button type="button" class="btn primary is-focus">Open file</button><span class="whose-note">Stays in this browser. Nothing is uploaded.</span></div></div>
     <p class="muted whose"><strong class="whose-name">Sam Example</strong> · numbers as of Oct 22, 2026 · Saved in this browser</p>
-    <p class="muted">On My numbers, a file with fields this app could not use lists them at the top; each link opens the field.</p>
+    <p class="muted">On Numbers, a file with fields this app could not use lists them at the top; each link opens the field.</p>
     <section class="card" aria-labelledby="problems-h-demo" role="alert"><h2 id="problems-h-demo">From your file: 1 field to look at</h2><p class="muted">These could not be used as the file had them, so each reads missing until you enter it. Nothing else in the file was changed.</p><ul class="flow-list"><li><a href="#">Rent</a>: money must be a number. The file held "1,200".</li></ul><details class="flow-list"><summary>Read another way or kept aside (1)</summary><ul><li><strong>An account (odd)</strong>: type "pillow" is not an account type this app knows; kept aside, not used.</li></ul></details></section>
   </section>
 
   <section class="card" aria-labelledby="nav-h">
     <h2 id="nav-h">Getting around</h2>
-    <p class="muted">The tabs, the same six on every page: at the bottom on a phone, at the top on a computer. The current one is filled; a Builder page lights none. Rest, current, pressed and focus.</p>
-    <nav class="tabbar is-sample" aria-label="Sample tabs, Today current"><ul><li><a class="tab" href="dashboard.html" aria-current="page">Today</a></li><li><a class="tab is-pressed" href="session.html">Session</a></li><li><a class="tab is-focus" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
-    <span class="demo-cap">Today current, Session pressed, My numbers with the focus.</span>
-    <nav class="tabbar is-sample" aria-label="Sample tabs on a Builder page"><ul><li><a class="tab" href="dashboard.html">Today</a></li><li><a class="tab" href="session.html">Session</a></li><li><a class="tab" href="ledger.html">My numbers</a></li><li><a class="tab" href="calendar.html">Calendar</a></li><li><a class="tab" href="spending.html">Spending</a></li><li><a class="tab" href="plan.html">Plan</a></li></ul></nav>
-    <span class="demo-cap">On a Builder page no tab is lit.</span>
+    <p class="muted">The tabs, the same five on every page: at the bottom on a phone, at the top on a computer. The current one is marked; a coach page lights none. Rest, current, pressed and focus.</p>
+    <nav class="tabbar is-sample" aria-label="Sample tabs, Home current"><ul class="tab-row"><li class="tab-item is-here"><a class="tab" href="dashboard.html" aria-current="page">Home</a></li><li class="tab-item"><a class="tab is-pressed" href="ledger.html">Numbers</a></li><li class="tab-item"><a class="tab is-focus" href="plan.html">Plan</a></li><li class="tab-item"><a class="tab" href="calendar.html">Calendar</a></li><li class="tab-item"><a class="tab" href="spending.html">Spending</a></li></ul></nav>
+    <span class="demo-cap">Home current, Numbers pressed, Plan with the focus.</span>
+    <nav class="tabbar is-sample" aria-label="Sample tabs on a coach page"><ul class="tab-row"><li class="tab-item"><a class="tab" href="dashboard.html">Home</a></li><li class="tab-item"><a class="tab" href="ledger.html">Numbers</a></li><li class="tab-item"><a class="tab" href="plan.html">Plan</a></li><li class="tab-item"><a class="tab" href="calendar.html">Calendar</a></li><li class="tab-item"><a class="tab" href="spending.html">Spending</a></li></ul></nav>
+    <span class="demo-cap">On a coach page no tab is lit.</span>
     <p class="muted">Screen by screen: every deeper level is its own screen with Back, top left, and the trail. Every step but this screen is a link; Back, the trail and the phone's back all go the same way.</p>
-    <div class="screen-top is-sample"><button type="button" class="btn back-btn" aria-label="Back to Credit cards"><span aria-hidden="true">&#8249;</span>Back</button><nav class="trail" aria-label="Sample trail"><ol><li><a href="#nav-h">My numbers</a></li><li><a href="#nav-h">Debt</a></li><li><a href="#nav-h">Credit cards</a></li><li aria-current="page">Amex Blue</li></ol></nav></div>
+    <div class="screen-top is-sample"><button type="button" class="btn back-btn" aria-label="Back to Credit cards"><span aria-hidden="true">&#8249;</span>Back</button><nav class="trail" aria-label="Sample trail"><ol><li><a href="#nav-h">Numbers</a></li><li><a href="#nav-h">Debt</a></li><li><a href="#nav-h">Credit cards</a></li><li aria-current="page">Amex Blue</li></ol></nav></div>
     <div class="demo-row">
       <span class="demo-cell"><button type="button" class="btn back-btn"><span aria-hidden="true">&#8249;</span>Back</button><span class="demo-cap">Back, rest</span></span>
       <span class="demo-cell"><button type="button" class="btn back-btn is-pressed"><span aria-hidden="true">&#8249;</span>Back</button><span class="demo-cap">Back, pressed</span></span>
@@ -324,7 +323,7 @@
     <div class="undo-bar is-sample"><span class="undo-text">This browser will not keep rule changes, so nothing changed.</span></div>
     <p class="muted">A tappable card: the whole card is the target, with a chevron; buttons inside it stay their own.</p>
     <div class="tiles"><section class="tile has-target" aria-labelledby="kit-tile"><h2 class="tile-label" id="kit-tile"><a class="card-link" href="#nav-h"><span>Net worth</span><span class="chev" aria-hidden="true">&#8250;</span></a></h2><p class="tile-value">$24,310</p><p class="tile-sub">Assets $40,000 less debts $15,690.</p><button type="button" class="btn small">Show the math</button></section></div>
-    <p class="muted">A list of places to go (Session, the Builder): each row is one link with a chevron. Rest, pressed, focus.</p>
+    <p class="muted">A list of places to go (Guide me, the Builder): each row is one link with a chevron. Rest, pressed, focus.</p>
     <ul class="go-list">
       <li><a class="go-row" href="#nav-h"><span class="go-mark" aria-hidden="true">N</span><span class="go-name">Needs</span><span class="go-sub"><span><span class="go-total">$3,215</span> a month</span></span></a></li>
       <li><a class="go-row is-pressed" href="#nav-h"><span class="go-mark" aria-hidden="true">D</span><span class="go-name">Debt</span><span class="go-sub"><span><span class="go-total">$15,690</span> owed</span><span class="chip chip-rough">Rough</span></span></a></li>
@@ -338,7 +337,7 @@
       <li><a class="go-row" href="#nav-h"><span class="wf-num viz-2" aria-hidden="true">6</span><span class="go-name">Cards charging interest now</span><span class="go-sub"><span class="go-total">$3,000</span></span></a></li>
       <li><a class="go-row zero" href="#nav-h"><span class="wf-num viz-3" aria-hidden="true">3</span><span class="go-name">Cash up to the stage 1 floor</span><span class="go-sub"><span class="go-total">Nothing needed</span></span></a></li>
     </ol>
-    <p class="muted">At the bottom of every page, one small link to the Builder (the Design kit, All formulas and Rules): see the footer sample under Plan page and shared pieces.</p>
+    <p class="muted">The gear in every header holds the coach pages: Rules, House defaults, Assumptions, All formulas, Where each number came from and the Builder.</p>
   </section>
 
   <section class="card" aria-labelledby="ov-h">
@@ -373,7 +372,7 @@
 
   <section class="card" aria-labelledby="sp-h">
     <h2 id="sp-h">Speed on a call</h2>
-    <p class="muted">The headline strip (pinned; the number that just moved flashes once), the Next card, a type's questions (Yes, No, Not sure; a Yes opens its boxes), the More drawer and the Keys hint. The More menu and the client switcher are in this page's own header and tabs.</p>
+    <p class="muted">The headline strip (pinned; the number that just moved flashes once), the Next card, a type's questions (Yes, No, Not sure; a Yes opens its boxes), the More drawer and the Keys hint. The client menu, the search box and the gear are in the header, the same on every page.</p>
     <section class="headline-strip" aria-label="Sample headline numbers"><dl>
       <div class="strip-cell"><dt>Net worth</dt><dd>$62,976</dd></div>
       <div class="strip-cell"><dt>Reachable</dt><dd>$4,800</dd></div>
@@ -407,7 +406,7 @@
 </main>
 <script type="module">
   import { startPage, say } from './ui/shell.js';
-  startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'], household: false });
+  startPage({ tab: null, title: 'Design kit', parent: ['Builder', 'builder.html'] });
   // The chart gallery: every form the app draws, in a normal and a rough state, and the empty state.
   const C = await import('./ui/chart.js');
   const yrs = (a, b, f) => Array.from({ length: b - a + 1 }, (_, i) => [a + i, f(i)]);
@@ -423,7 +422,7 @@
     C.chartCard({ id: 'k-heat', question: 'Which days did the money go out?', summary: 'Darker days spent more.', draw: (w) => C.heatmap({ width: w, ym: '2026-09', days: [{ date: '2026-09-01', v: 1850 }, { date: '2026-09-05', v: 80 }, { date: '2026-09-12', v: 140 }, { date: '2026-09-19', v: 60 }, { date: '2026-09-23', v: 42 }] }), table: T([['Sep 1', 1850]]) }),
     C.chartCard({ id: 'k-empty', question: 'How is your net worth changing?', summary: 'One point so far.', empty: 'A line starts once your net worth has been seen on two different days.' })
   ];
-  document.getElementById('charts-here').append(...cards, Object.assign(document.createElement('p'), { className: 'muted', textContent: 'A sparkline (Today): ' }), C.sparkline({ width: 120, height: 32, points: [62976, 63400, 63900, 64700, 65100, 66000], rough: true, label: 'Sample sparkline' }));
+  document.getElementById('charts-here').append(...cards, Object.assign(document.createElement('p'), { className: 'muted', textContent: 'A sparkline (Home): ' }), C.sparkline({ width: 120, height: 32, points: [62976, 63400, 63900, 64700, 65100, 66000], rough: true, label: 'Sample sparkline' }));
   // The look switch: light, dark or the device's, for this page only.
   for (const b of document.querySelectorAll('#look .seg-btn')) b.addEventListener('click', (e) => { e.stopPropagation(); const k = b.dataset.look; if (k) document.documentElement.dataset.theme = k; else delete document.documentElement.dataset.theme; for (const x of document.querySelectorAll('#look .seg-btn')) x.setAttribute('aria-pressed', String(x === b)); });
   // No dead clicks: a sample button, or a sample link to nowhere, says what it is when tapped. The page's own Back

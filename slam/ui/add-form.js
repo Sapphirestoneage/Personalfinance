@@ -19,9 +19,10 @@ import { cardFills, fundFills, LIBRARY_SOURCE } from '../engine/library.js';
 import { PRESETS, FAT, PERSON_PURPOSE_WORDS, POLICY_TYPES } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { h } from './view.js';
+import { choiceRow } from './choice.js';
 
 const GOAL_WORDS = { savings: 'Savings target', payoff: 'Pay something off', fi: 'Financial independence', other: 'Other goal' };
-const FAT_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Transportation' };
+const FAT_WORDS = { food: 'Food', accommodation: 'Housing', transportation: 'Getting around' };
 
 // A labeled box; its hint shows only while the box (input) is empty. short: half width on a computer.
 const field = (id, label, control, hint, input = null, short = false) => {
@@ -102,15 +103,20 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
   const amount = echo(box('add-amount', { inputmode: 'decimal', placeholder: 'e.g. 1,200 or 1.2k' }), 'money');
   const amountLabel = h('label', { for: 'add-amount', class: 'edit-label' });
   const often = (income || collection === 'expenses') && collection !== 'maybe' ? select('add-often', OFTEN_WORDS, 'monthly') : null;
-  if (often) often.setAttribute('aria-label', 'How often');
-  const fatSel = collection === 'expenses' && fat === null ? select('add-fat', [['', 'Something else (not food, housing or transportation)'], ...FAT.map((t) => [t, FAT_WORDS[t] || t])], '') : null;
+  // Its own label above it (DESIGN.md 24); the picker box takes the label's words. Hidden with the list under a salary.
+  const oftenBox = often ? h('div', { class: 'add-often' }, h('label', { for: 'add-often', class: 'edit-label' }, 'How often'), often) : null;
+  const fatSel = collection === 'expenses' && fat === null ? select('add-fat', [['', 'Something else (bills, health, fun or other)'], ...FAT.map((t) => [t, FAT_WORDS[t] || t])], '') : null;
   const qs = h('div', { class: 'add-questions' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   // The answers, kept while the kind changes so switching back finds them.
-  const ans = { payBasis: null, schedule: 'biweekly', hours: '', weeks: '', endDate: '', from: '', purpose: '', dir: 'in', likely: 0.5, date: '', by: '' };
+  const ans = { payBasis: null, extra: false, schedule: 'biweekly', hours: '', weeks: '', endDate: '', from: '', purpose: '', dir: 'in', likely: 0.5, date: '', by: '' };
   const maybe = collection === 'maybe';
 
-  const pick = (id, label, options, key) => { const s = select(id, [['', 'Pick one'], ...options], ans[key] || ''); s.addEventListener('change', () => { ans[key] = s.value || null; draw(); }); return field(id, label, s); };
+  // Two or three answers are a row of buttons (S-282), drawn again with the questions under them; a longer list stays a list.
+  const pick = (id, label, options, key) => {
+    if (options.length > 3) { const s = select(id, [['', 'Pick one'], ...options], ans[key] || ''); s.addEventListener('change', () => { ans[key] = s.value || null; draw(); }); return field(id, label, s); }
+    return h('div', { class: 'add-field' }, h('p', { class: 'edit-label', id: id + '-l' }, label), choiceRow({ id, options, value: ans[key] || null, label: id + '-l', onPick: (k) => { ans[key] = k; draw(); } }));
+  };
   const text = (id, label, key, attrs = {}, hint) => { const b = h('input', { id, type: 'text', autocomplete: 'off', ...attrs }); b.value = ans[key] || ''; b.addEventListener('input', () => { ans[key] = b.value; }); return field(id, label, b, hint); };
 
   function draw() {
@@ -122,7 +128,9 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     let showOften = !!often;
     if (income && t === 'w2') {
       out.push(pick('add-basis', 'How are you paid?', W2_BASIS, 'payBasis'));
-      if (ans.payBasis === 'hourly') out.push(text('add-hours', 'Hours a week', 'hours', { inputmode: 'numeric', placeholder: 'hours' }));
+      if (ans.payBasis === 'hourly') out.push(text('add-hours', 'Hours a week', 'hours', { inputmode: 'numeric', placeholder: 'e.g. 40' }));
+      // Tips, overtime or commission on top: the same switch as the Guide me row; a line of its own is added with the paycheck.
+      out.push(h('button', { type: 'button', id: 'add-extra', class: 'btn small switch-btn', role: 'switch', 'aria-checked': String(!!ans.extra), onclick: (ev) => { ans.extra = !ans.extra; ev.currentTarget.setAttribute('aria-checked', String(ans.extra)); } }, h('span', { class: 'switch-knob', 'aria-hidden': 'true' }), 'Plus tips or overtime'));
       const sched = select('add-schedule', PAY_SCHEDULE, ans.schedule);
       sched.addEventListener('change', () => { ans.schedule = sched.value; });
       out.push(field('add-schedule', 'Paid how often', sched));
@@ -133,7 +141,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
       if (ans.payBasis === 'lumpy') showOften = false;
     }
     if (income && t === 'unemployment') {
-      out.push(text('add-weeks', 'Weeks of benefits left', 'weeks', { inputmode: 'numeric', placeholder: 'weeks' }, 'Or give the end date below.'));
+      out.push(text('add-weeks', 'Weeks of benefits left', 'weeks', { inputmode: 'numeric', placeholder: 'e.g. 12' }, 'Or give the end date below.'));
       out.push(field('add-end', 'Last week paid (optional)', dateBox('add-end', ans.endDate, (v) => { ans.endDate = v; })));
       showOften = false;
     }
@@ -151,25 +159,26 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     }
     // A goal: by when, if there is a date.
     if (collection === 'goals') out.push(field('add-by', 'By when (optional)', dateBox('add-by', ans.by, (v) => { ans.by = v; }), null, null, true));
-    if (often) often.hidden = !showOften;
+    if (often) often.hidden = oftenBox.hidden = !showOften;
     if (ans.payBasis && income && !((t === 'w2' && W2_BASIS.some(([k]) => k === ans.payBasis)) || ((t === '1099' || t === 'side') && SELF_BASIS.some(([k]) => k === ans.payBasis)))) ans.payBasis = null;
     qs.replaceChildren(...out);
   }
   if (typeSel) typeSel.addEventListener('change', () => { ans.payBasis = null; draw(); });
   draw();
 
-  // More options: built once; which boxes show follows the kind.
+  // More options: built once; which boxes show follows the kind. asOfIso holds the day the date box read (S-285).
+  let asOfIso = today;
   const more = {
-    institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: echo(box('add-rate', { inputmode: 'decimal', placeholder: 'e.g. 22.9' }), 'rate'),
+    institution: box('add-inst', { placeholder: 'e.g. Chase' }), last4: box('add-last4', { inputmode: 'numeric', maxlength: '4', placeholder: 'e.g. 4417' }), rate: echo(box('add-rate', { inputmode: 'decimal', placeholder: collection === 'debts' ? 'e.g. 22.9' : 'e.g. 4.2' }), 'rate'),
     minimum: box('add-min', { inputmode: 'decimal', placeholder: 'e.g. 35' }), annualFee: box('add-fee', { inputmode: 'decimal', placeholder: 'e.g. 95' }), dueDay: echo(box('add-due', { inputmode: 'numeric', placeholder: 'e.g. 15 or the 15th' }), 'day'),
-    asOf: h('input', { type: 'date', id: 'add-asof', value: today }), note: box('add-note', { maxlength: '200' })
+    asOf: dateBox('add-asof', today, (v) => { asOfIso = v; }, {}, { past: true }), note: box('add-note', { maxlength: '200' })
   };
   const moreBox = {
     institution: field('add-inst', 'Bank or lender', more.institution, null, null, true),
     last4: field('add-last4', 'Last 4 digits (optional)', more.last4, 'Only the last four, never the whole number.', null, true),
     rate: field('add-rate', collection === 'debts' ? 'APR' : 'Rate', percent(more.rate), null, null, true),
     minimum: field('add-min', 'Minimum payment', dollars(more.minimum), null, null, true),
-    dueDay: field('add-due', 'Due day of the month', more.dueDay, null, null, true),
+    dueDay: field('add-due', 'Due day', more.dueDay, null, null, true),
     annualFee: field('add-fee', 'Annual fee', dollars(more.annualFee), null, null, true),
     asOf: field('add-asof', 'Amount as of', more.asOf, null, null, true),
     note: field('add-note', 'Note', more.note)
@@ -203,7 +212,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     const t = kind();
     const a = amount.value.trim() === '' ? { ok: true, value: null } : parseInput('money', amount.value);
     if (!a.ok) { msg.textContent = 'How much: ' + a.message; amount.focus(); return; }
-    const answers = { payBasis: ans.payBasis, from: ans.from, purpose: ans.purpose || null };
+    const answers = { payBasis: ans.payBasis, extra: t === 'w2' && !!ans.extra, from: ans.from, purpose: ans.purpose || null };
     if (t === 'w2' && ans.payBasis === 'hourly' && String(ans.hours).trim()) {
       const n = parseInput('int', ans.hours);
       if (!n.ok || n.value < 1 || n.value > 100) { msg.textContent = 'Hours a week: a number from 1 to 100'; return; }
@@ -233,7 +242,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     if (!read('rate', 'rate', 'Rate', (x) => x >= 0 && x <= 1) || !read('minimum', 'money', 'Minimum', (x) => x >= 0) || !read('annualFee', 'money', 'Annual fee', (x) => x >= 0) || !read('dueDay', 'int', 'Due day', (x) => x >= 1 && x <= 31)) return;
     if (on.includes('institution') && more.institution.value.trim()) extra.institution = more.institution.value.trim();
     if (on.includes('last4') && more.last4.value.trim()) { const l4 = parseInput('last4', more.last4.value); if (!l4.ok) { msg.textContent = 'Last 4 digits: ' + l4.message; more.last4.focus(); return; } extra.last4 = l4.value; }
-    if (more.asOf.value) extra.asOf = more.asOf.value;
+    if (asOfIso) extra.asOf = asOfIso;
     if (more.note.value.trim()) extra.note = more.note.value.trim();
     made = addMore(made, extra, today);
     // The ticks answered and the boxes typed (S-270): each answer as the item's tick, each number as known.
@@ -275,7 +284,7 @@ export function addForm({ spine: spineOf, collection, types = [], fat = null, to
     rothRow,
     h('div', { class: 'add-grid' },
       typeSel ? null : field('add-name', 'Name', nameWrap, null, null, true),
-      h('div', { class: 'add-field short' }, amountLabel, h('div', { class: 'amount-row' }, dollars(amount), often), amountHint),
+      h('div', { class: 'add-field short' }, h('div', { class: 'amount-row' }, h('div', { class: 'add-amt' }, amountLabel, dollars(amount)), oftenBox), amountHint),
       typeSel ? field('add-name', 'Name (optional)', nameWrap, null, null, true) : null),
     qs,
     fatSel ? field('add-fat', 'Type of spending', fatSel) : null,

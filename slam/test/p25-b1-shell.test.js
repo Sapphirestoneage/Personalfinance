@@ -53,17 +53,18 @@ test('Today is on the shell: no page-links row, no "View in the Ledger", the who
   assert.doesNotMatch(read('ui/onepager.js'), /page-links/);
 });
 
-test('the Builder: one small link at the bottom of every page; the Design kit, All formulas and Rules; no tab lit', () => {
-  assert.match(read('ui/page.js'), /h\('a', \{ class: 'builder-link', href: 'builder\.html' \}, 'Builder'\)/);
+test('the Builder: opened from the Coach gear, not a second link in the footer; the Design kit, All formulas and Rules; no tab lit', () => {
+  assert.doesNotMatch(read('ui/page.js'), /builder-link|builder\.html/);
+  assert.match(read('ui/shell.js'), /\['Builder', 'builder\.html'\]|'builder\.html'/);
   const b = read('ui/builder.js');
   for (const [name, href] of [['Design kit', 'affordances.html'], ['All formulas', 'math.html'], ['Rules', 'rules.html']]) assert.ok(b.includes("['" + name + "', '" + href + "'"), name);
   assert.match(b, /tab: null, title: 'Builder'/);
   for (const f of ['ui/math-page.js', 'ui/rules-page.js']) { assert.match(read(f), /tab: null, title: (?:'[^']+'|ON_HOUSE \? 'House defaults' : 'Rules'), parent: \['Builder', 'builder\.html'\]/, f); assert.doesNotMatch(read(f), /page-links/, f); }
   const kit = read('affordances.html');
   assert.match(kit, /<title>SLAM Design kit<\/title>/);
-  assert.match(kit, /<h1>Design kit<\/h1>/);
+  assert.doesNotMatch(kit, /<h1>/, 'the shell draws the title from startPage, so the kit has no title of its own');
   assert.doesNotMatch(kit, /class="page-links"/);
-  assert.match(kit, /startPage\(\{ tab: null, title: 'Design kit', parent: \['Builder', 'builder\.html'\], household: false \}\)/);
+  assert.match(kit, /startPage\(\{ tab: null, title: 'Design kit', parent: \['Builder', 'builder\.html'\] \}\)/);
   for (const f of ['ledger.html', 'builder.html', 'rules.html']) assert.match(read(f), /<script type="module" src="ui\/[\w-]+\.js"><\/script>/, f);
 });
 

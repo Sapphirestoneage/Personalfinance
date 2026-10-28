@@ -23,7 +23,7 @@ const strings = (src) => [...src.replace(/^\s*\/\/.*$/gm, '').matchAll(/'((?:[^'
 
 test('DATING: six sections in order, each with its letter and the address the shell links to', () => {
   const sc = screens(demo());
-  assert.deepEqual(sc.sections.map((x) => (x.letter || '-') + ' ' + x.label), ['D Debt', 'A Assets', '- Protection', 'T Taxes', 'I Income', 'N Needs', 'G Goals', '- Profile'], 'Protection after Assets, no letter (S-275)');
+  assert.deepEqual(sc.sections.map((x) => (x.letter || '-') + ' ' + x.label), ['D Debt', 'A Assets', '- Protection', 'T Taxes', 'I Income', 'N Needs', 'G Goals', '- FI assumptions and health coverage'], 'Protection after Assets, no letter (S-275)');
   // The shell's section words (numbersHref) open these screens; Session links to five of them.
   const shell = read('ui/shell.js');
   const ids = [...shell.slice(shell.indexOf('export const SECTIONS')).matchAll(/(\w+): '/g)].slice(0, 6).map((m) => m[1]);

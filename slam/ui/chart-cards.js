@@ -4,6 +4,7 @@
 import { h, money, monthWords, shortDate } from './view.js';
 import { chartCard, lines, bars, columns, waterfall, treemap, heatmap, sparkline, rangeSwitch, axisMoney, exactMoney } from './chart.js';
 import * as C from '../engine/charts.js';
+import { nothingEntered } from '../engine/blank.js';
 
 const pct = (x) => Math.round(x * 1000) / 10 + '%';
 const pct0 = (x) => Math.round(x * 100) + '%';
@@ -32,6 +33,8 @@ export function keepPoint(spine, date, value) {
   try { const all = JSON.parse(localStorage.getItem(NW_KEY) || '{}'); all[pointsKey(spine)] = C.addNetWorthPoint(all[pointsKey(spine)] || [], date, value); localStorage.setItem(NW_KEY, JSON.stringify(all)); return all[pointsKey(spine)]; } catch { return readPoints(spine); }
 }
 export function netWorthTimeCard(spine, sheet, months, { range = '1y', onRange = () => {}, asOf }) {
+  // A blank client's net worth is not $0: nothing is recorded and nothing is drawn (empty is not zero).
+  if (sheet.netWorth.value === null || nothingEntered(spine)) return chartCard({ id: 'nw-time', question: 'How is your net worth changing?', summary: '', controls: null, empty: 'A line starts once an account or a debt is entered and seen on two different days.' });
   const points = keepPoint(spine, asOf, sheet.netWorth.value);
   const p = C.netWorthPath(points, months, { asOf, range });
   const controls = rangeSwitch([['1y', '1 year'], ['5y', '5 years'], ['all', 'All']], range, onRange, 'How far');
@@ -72,7 +75,7 @@ export function budgetCharts(spine, rules, view, { weekStart = 0, months = [] } 
   const { rows } = C.budgetRows(view);
   const over = rows.filter((r) => r.over).sort((a, b) => b.diff - a.diff);
   const out = [];
-  out.push(chartCard({ id: 'budget-bullets', question: 'Is each part on plan this ' + (view.range === 'month' ? 'month' : 'stretch') + '?',
+  out.push(chartCard({ id: 'budget-bullets', question: 'Is each part on plan ' + (view.range === 'month' ? 'in ' + monthWords(view.ym) : 'over these ' + view.months.length + ' months') + '?',
     summary: over.length ? over.map((r) => r.label + ' is ' + exactMoney(r.diff) + ' over').join('; ') + '.' : 'Every part is at or under plan.',
     draw: (w) => bars({ width: w, rows: rows.map((r) => ({ label: r.label, range: { v0: 0, v1: r.plan }, segs: [{ v: r.actual, c: r.over ? 2 : 1, tip: r.label + ': ' + exactMoney(r.actual) + ' spent of ' + exactMoney(r.plan) + ' planned' }], target: r.plan, targetTip: r.label + ': plan ' + exactMoney(r.plan), value: axisMoney(r.actual) + ' of ' + axisMoney(r.plan) })), label: 'Spent against plan' }),
     legend: [{ c: 1, words: 'Spent, at or under plan' }, { c: 2, words: 'Spent, over plan' }, { c: 0, words: 'Plan (the tick and pale bar)', cls: 'sw-band' }],
@@ -98,7 +101,7 @@ export function budgetCharts(spine, rules, view, { weekStart = 0, months = [] } 
   if (months.length > 1) {
     const all = C.monthlySpent(spine, rules, months), ms = all.filter((m, i) => m.logged || i === all.length - 1), keys = ms[ms.length - 1].cats.map((c) => c.key);
     out.push(chartCard({ id: 'budget-months', question: 'How has spending moved month to month?',
-      summary: ms.filter((m) => m.logged).length < 2 ? 'Only one month logged so far.' : monthWords(ms[0].ym) + ' to ' + monthWords(ms[ms.length - 1].ym) + ', each part stacked; the gray line is the plan.',
+      summary: ms.filter((m) => m.logged).length < 2 ? 'Only one month logged so far.' : monthWords(ms[0].ym) + ' to ' + monthWords(ms[ms.length - 1].ym) + ', each part stacked; the line is the plan.',
       draw: (w) => columns({ width: w, cols: ms.map((m) => ({ label: MON[+m.ym.slice(5, 7) - 1], segs: m.cats.map((c) => ({ v: c.v, c: 1 + (keys.indexOf(c.key) % 5), tip: monthWords(m.ym) + ', ' + c.label + ': ' + exactMoney(c.v) })) })), line: ms.map((m) => m.plan), label: 'Spending by month' }),
       legend: [...ms[ms.length - 1].cats.map((c, i) => ({ c: 1 + (i % 5), words: c.label })), { c: 0, words: 'Plan', cls: 'sw-line' }],
       table: { head: ['Month', ...ms[ms.length - 1].cats.map((c) => c.label), 'Plan'], rows: ms.map((m) => [monthWords(m.ym), ...keys.map((k) => exactMoney((m.cats.find((c) => c.key === k) || { v: 0 }).v)), exactMoney(m.plan)]) } }));
@@ -184,7 +187,7 @@ export function savingsCurveCard(c, { yearsToFi = null } = {}) {
   const byR = new Map(c.points);
   return chartCard({ id: 'savings-curve', question: 'How much sooner does saving more get you there?',
     // The projection's FI year leads (the one every screen shows); the curve's own point is named as the simple math.
-    summary: (yearsToFi !== null ? 'About ' + yearsToFi + ' years to FI on the full projection. ' : '') + (c.here.rate !== null ? 'The curve is the simple math (steady saving of gross pay, one return). Its dot is your saving plus what is left over, ' + pct(c.here.rate) + ' of gross pay (not the savings rate on Today): about ' + c.here.years + ' years. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
+    summary: (yearsToFi !== null ? 'About ' + yearsToFi + ' years to FI on the full projection. ' : '') + (c.here.rate !== null ? 'The curve is the simple math (steady saving of gross pay, one return). Its dot is your saving plus what is left over, ' + pct(c.here.rate) + ' of gross pay (not the savings rate on Home): about ' + c.here.years + ' years. ' : '') + (c.target ? 'Saving ' + pct(c.target.rate) + ' gets there by age ' + c.target.age + '.' : ''),
     draw: (w) => lines({ width: w, series: [{ label: 'Years to FI', c: 1, points: c.points }], dots, xFmt: pct0, xTicks: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7], yFmt: (x) => Math.round(x) + ' y', yMin: 0, tips: (r) => pct(r) + ' saved: about ' + byR.get(r) + ' years', label: 'Savings rate against years to FI' }),
     legend: [{ c: 1, words: 'Years to FI at each savings rate; the dot is you' }, ...(c.target ? [{ c: 2, words: 'The rate your target age needs' }] : [])],
     note: 'Steady saving of gross pay and the real return assumed; the full projection (with pay changes and debt ending) can land a little earlier or later.',

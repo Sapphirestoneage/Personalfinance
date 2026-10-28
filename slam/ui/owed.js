@@ -9,6 +9,7 @@ import { owedToYou, owedTotal, owedLeft, markPaid, repayLent, settleUp, addLent,
 import { parseInput, inputText } from '../engine/edits.js';
 import { valueOf as v } from '../engine/spine.js';
 import { h, money, shortDate, todayIso } from './view.js';
+import { dateBox } from './understood.js';
 
 let openPay = null, adding = false;
 const cashAccounts = (spine) => (spine.accounts || []).filter((a) => a.family === 'cash');
@@ -22,14 +23,15 @@ export function owedFigure(spine) {
   return total ? h('span', {}, h('span', { class: 'go-total' }, money(total)), ' from ' + all.length + (all.length === 1 ? ' person' : ' people')) : h('span', { class: 'muted' }, 'none');
 }
 
-// The list: a row per person, then money lent that is paid back or a gift, then Add money I lent.
-export function owedScreen(spine, { href }) {
+// The list: a row per person, the page's Show the math (math), then Add money I lent.
+export function owedScreen(spine, { href, math = null }) {
   const all = owedToYou(spine);
   return [
     all.length ? h('ul', { class: 'go-list', 'aria-label': 'People who owe you' }, all.map((p) => h('li', {}, h('a', { class: 'go-row plain', href: href(personSlug(p.key)) },
       h('span', { class: 'go-name' }, p.name),
       h('span', { class: 'go-sub' }, h('span', { class: 'go-total' }, money(p.total)), ' since ' + since(p.lines[0].since)))))) : h('p', { class: 'muted' }, 'Nobody owes you anything right now.'),
     h('p', { class: 'muted owed-note' }, 'Counted in net worth, never as cash, until it is paid and lands in an account.'),
+    math,
     lentForm(spine)
   ];
 }
@@ -62,7 +64,7 @@ function lineEl(spine, p, l, today) {
     ask = h('button', { type: 'button', class: 'btn small', onclick: async (ev) => { try { await navigator.clipboard.writeText(msg); ev.target.textContent = 'Copied'; } catch { ev.target.textContent = 'Could not copy'; } } }, 'Copy message');
   }
   return h('li', { class: 'owed-line' },
-    h('div', { class: 'owed-head' }, h('span', { class: 'owed-what' }, l.label), h('span', { class: 'owed-amt' }, money(l.amount))),
+    h('div', { class: 'owed-head' }, h('span', { class: 'owed-what' }, l.kind === 'loan' ? 'Loan' : l.label), h('span', { class: 'owed-amt' }, money(l.amount))),
     h('p', { class: 'owed-sub' }, l.kind === 'bill' ? (l.status || 'Since ' + shortDate(l.since)) + (l.askOn ? '. Ask on ' + shortDate(l.askOn) : '') : 'Lent ' + shortDate(l.since) + (l.due ? '. Said they would pay by ' + shortDate(l.due) : '')),
     isOpen ? payForm(spine, l.amount, pay) : h('div', { class: 'owed-actions' },
       h('button', { type: 'button', class: 'btn small', onclick: () => { openPay = key; refresh(); } }, 'Mark paid'),
@@ -95,8 +97,9 @@ function lentForm(spine) {
   if (!adding) return h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { adding = true; refresh(); requestAnimationFrame(() => document.getElementById('lent-who')?.focus({ preventScroll: true })); } }, '+ Add money I lent'));
   const who = h('input', { id: 'lent-who', type: 'text', list: 'lent-names', autocomplete: 'off', maxlength: '40', placeholder: 'e.g. Jordan' });
   const amt = h('input', { id: 'lent-amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 150' });
-  const date = h('input', { id: 'lent-date', type: 'date' }); date.value = todayIso();
-  const due = h('input', { id: 'lent-due', type: 'date' });
+  let dateIso = todayIso(), dueIso = '';
+  const date = dateBox('lent-date', dateIso, (v) => { dateIso = v; }, {}, { past: true });
+  const due = dateBox('lent-due', '', (v) => { dueIso = v; }, { placeholder: 'e.g. Dec 6' });
   const gift = h('input', { type: 'checkbox', id: 'lent-gift' });
   const msg = h('p', { class: 'edit-msg', role: 'alert' });
   const field = (label, input, hint) => h('div', { class: 'share-field' }, h('label', { for: input.id, class: 'edit-label' }, label), input, hint ? h('p', { class: 'edit-hint' }, hint) : null);
@@ -106,9 +109,10 @@ function lentForm(spine) {
     if (!name) { msg.textContent = 'Who did you lend it to?'; who.focus(); return; }
     const p = parseInput('money', amt.value);
     if (!p.ok || !(p.value > 0)) { msg.textContent = 'How much: an amount above $0'; amt.focus(); return; }
-    if (!date.value) { msg.textContent = 'When: pick the day'; date.focus(); return; }
+    if (!dateIso) { msg.textContent = date.value.trim() ? 'When: type a date like Dec 6' : 'When: pick the day'; date.focus(); return; }
+    if (due.value.trim() && !dueIso) { msg.textContent = 'When they said they would pay: type a date like Dec 6'; due.focus(); return; }
     adding = false;
-    change((s) => addLent(s, { person: name, amount: p.value, date: date.value, due: due.value || null, kind: gift.checked ? 'gift' : 'loan' }, todayIso()), money(p.value) + (gift.checked ? ' given to ' : ' lent to ') + name);
+    change((s) => addLent(s, { person: name, amount: p.value, date: dateIso, due: dueIso || null, kind: gift.checked ? 'gift' : 'loan' }, todayIso()), money(p.value) + (gift.checked ? ' given to ' : ' lent to ') + name);
   } },
     h('h2', {}, 'Money I lent'),
     h('datalist', { id: 'lent-names' }, sharerNames(spine).map((n) => h('option', { value: n }))),

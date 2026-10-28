@@ -20,3 +20,12 @@ export function choiceRow({ id, options, value = null, recommended = null, onPic
   const extra = h('details', { class: 'more-choices', open: more || inRest || null }, h('summary', { class: 'btn small' }, 'More choices (' + rest.length + ')'), h('div', { class: 'segmented choice-row' }, rest.map(btn)));
   return h('div', { class: 'choice-wrap' }, row, extra);
 }
+// The same row inside a form that stays open (an editor, the add form): it keeps its own pick and draws itself again on
+// a tap, so the form reads .value when it saves. Guide me's rows need none of this: the page redraws on every change.
+export function liveChoice({ id, options, value = null, recommended = null, clear = true, label = null, onPick = () => {} }) {
+  const el = h('div', { class: 'choice-live' });
+  let now = value;
+  const draw = () => el.replaceChildren(choiceRow({ id, options, value: now, recommended, clear, label, onPick: (k) => { now = k; draw(); onPick(k); } }));
+  draw();
+  return { el, get value() { return now; } };
+}

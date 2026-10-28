@@ -288,7 +288,7 @@ test('the FOO rungs and the Windfall Roth step read the same rows', () => {
   assert.equal(foo.find((r) => r.id === 'rothHsa').need, 550);
   assert.equal(foo.find((r) => r.id === 'maxRetirement').need, 1634.61);
   assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\): about \$1,542 a month in a whole year at 2026 limits/);
-  assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\) 2026 closes on December 31, 2026, before the surplus reaches this rung/);
+  assert.match(foo.find((r) => r.id === 'maxRetirement').why, /Work 401\(k\) 2026 closes on December 31, 2026, before the surplus reaches this step/);
   // Open today: the rung reads the new money a month to each deadline.
   const now = fooLadder({ ...s, debts: [] }, R, summarize({ ...s, debts: [] }, R, { flags: false })).rungs.find((r) => r.id === 'rothHsa');
   assert.ok(now.need > 0);
@@ -1208,8 +1208,8 @@ test('the FOO rung for a payroll limit: its last payday names when it closes; ev
   const rung = (s) => fooLadder(s, R, summarize(s, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
   const hysa = (s, bal) => ({ ...s, accounts: s.accounts.map((a) => (a.id === 'hysa' ? { ...a, balance: F(bal) } : a)) });
   // Paid on the 15th; the surplus reaches the rung about December 22, after the last 2026 payday (December 15) but
-  // before December 31: the rung names that payday, not "closes on December 31 ... (about December 22)".
-  assert.match(rung(hysa(noCards, 17785)).why, /Work 401\(k\) 2026: its last payday before December 31, 2026 is December 15, 2026, before the surplus reaches this rung \(about December 22, 2026\)\./);
+  // before December 31: the rung names that payday, not "closes on December 31 ... (about December 2026)".
+  assert.match(rung(hysa(noCards, 17785)).why, /Work 401\(k\) 2026: its last payday before December 31, 2026 is December 15, 2026, before the surplus reaches this step \(about December 2026\)\./);
   // Every two weeks from January 9 (October 30, November 13 and 27, December 11 and 25): from about November 22 the
   // paydays fall in November and December, two months, about $18,500 / 2 a month; from about December 22, only
   // December 25 is left: one month, $18,500, still open (the first payday of December, the 11th, has passed).
@@ -1254,7 +1254,7 @@ test('round 4 (S-214): an ineligible HSA lowers nothing; a payroll plan with no 
   // nothing, so no steady month is asked for. Pay is tested from the day the surplus gets there (S-216).
   const e = { ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-12-31' } : x)) };
   const f = fooLadder(e, R, summarize(e, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
-  assert.deepEqual([f.need, f.done, f.why], [0, true, 'Work 401(k) 2026: no paycheck after August 22, 2028, so nothing goes in once the surplus reaches this rung.']);
+  assert.deepEqual([f.need, f.done, f.why], [0, true, 'Work 401(k) 2026: no paycheck after August 22, 2028, so nothing goes in once the surplus reaches this step.']);
   // MFJ: Casey earns $9,000 with $5,000 in a Roth and $400 a month (November, December); Sam earns $2,400 with $6,000 in
   // a traditional IRA and $300 a month. Casey's $5,800 is under Casey's own $7,500: not over. Sam may put in $11,400 -
   // $5,800 = $5,600: $400 over now, $1,000 by December 31.
@@ -1299,7 +1299,7 @@ test('round 5 (S-216): pay is tested when the surplus gets there; the couple\'s 
   const rung = (s) => fooLadder(s, R, summarize(s, R, { flags: false })).rungs.find((x) => x.id === 'maxRetirement');
   // The salary ends January 31, 2027 and the surplus reaches the rung about August 22, 2027: no pay then, nothing asked.
   const j = hysa({ ...d, income: d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2027-01-31' } : x)) }, 17000);
-  assert.deepEqual([rung(j).need, rung(j).why], [0, 'Work 401(k) 2026: no paycheck after August 22, 2027, so nothing goes in once the surplus reaches this rung.']);
+  assert.deepEqual([rung(j).need, rung(j).why], [0, 'Work 401(k) 2026: no paycheck after August 22, 2027, so nothing goes in once the surplus reaches this step.']);
   // The salary ends November 20 and a new job starts January 15, 2028, before the rung's start (about April 22, 2028):
   // there is pay then, so the steady month stands.
   const rv = { ...d, income: [...d.income.map((x) => (x.id === 'salary' ? { ...x, end: '2026-11-20' } : x)), { ...d.income[0], id: 'newjob', label: 'New job', start: '2028-01-15', end: null }] };

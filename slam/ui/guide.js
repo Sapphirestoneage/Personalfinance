@@ -4,7 +4,7 @@
 // roam. Same screens, same data: every change goes through the shell's change() with words, so Undo takes it back.
 // Formatting only: the totals come from the engines (summary.js sessionSteps, networth.js, fi.js, emergency.js).
 
-import { echo } from './understood.js';
+import { echo, dateBox } from './understood.js';
 import { attachPicker } from './picker.js';
 import { placeLibEntries, LIB } from './libraries.js';
 import { placeOf } from '../engine/library.js';
@@ -19,17 +19,19 @@ import { setAt, getAt, valueOf as v, addDays, whoSupplies, listFacts } from '../
 import { PRESETS, FILING_STATUSES, PERSON_PURPOSE_WORDS, isSelfEmployment } from '../engine/schema.js';
 import { payersOf } from '../engine/sharing.js';
 import { withScenario, scenarioAssumptions, SCENARIO_WORDS } from '../engine/scenarios.js';
-import { pickedScenario, pick, scenarioBar } from './scenario.js';
+import { pickedScenario, scenarioBar } from './scenario.js';
+import { choiceRow } from './choice.js';
 import { answersOf, showsKey, waitsOn, syncProfile, questionById, level2, startsShared, hiddenLine } from '../engine/profile.js';
-import { h, chip, money, pct, shortDate, showValue } from './view.js';
+import { needsGroupOf } from '../engine/ledger-tree.js';
+import { h, chip, money, pct, shortDate, showValue, FILING_WORDS } from './view.js';
 import { addNote, removeNote, setShared, sessionNotes } from '../engine/notes.js';
 import { guessesFor, mapOf, worthNow } from './urgency.js';
 import { openQuestions, openCounts } from '../engine/questions.js';
 import { addForm, focusAdd } from './add-form.js';
-import { INCOME_FIRST } from '../engine/add.js';
+import { INCOME_FIRST, OFTEN_WORDS, PAY_SCHEDULE } from '../engine/add.js';
 import { endCallScreen, fiReveal } from './end-call.js';
 import { headlineStrip } from './strip.js';
-import { catalog, inlineTicks, tickWords } from './ticks.js';
+import { catalog, inlineTicks, tickWords, guessedTicks, checkNowChip, boxedType } from './ticks.js';
 import { featuresOf, tickFeature } from '../engine/features.js';
 import { rememberStep, currentClient } from './clients.js';
 import { ledgerHref } from './view.js';
@@ -53,43 +55,68 @@ const drop = (obj, key) => { const n = { ...obj }; delete n[key]; return n; };
 // ---------------------------------------------------------------- a row's pieces
 // A box saves after the browser has moved the focus on (Tab), so the redraw keeps it on the next box.
 const later = (fn) => setTimeout(fn, 0);
+// Typing in flight (D-034): what is typed but not saved yet, by box id. A redraw that lands mid-word (the ranking a
+// second after the draw, another page's callback) fires change on the old box as it goes; the shell then puts the
+// focus on the new box of the same id. That is the sign: the box is gone and its id has the focus, so the typing is
+// not saved but drawn again in the new box, to go on with. Leaving a box (Tab, a tap elsewhere) saves as before.
+// Cleared on a step change.
+const typed = new Map();
+const redrawnUnder = (box) => !box.isConnected && !!document.activeElement && document.activeElement.id === box.id;
+// A box's save runs after the browser has moved on (Tab), and not at all when a redraw took the box mid-word.
+const saveFrom = (box, fn) => later(() => { if (!redrawnUnder(box)) fn(); });
+function keepTyping(box) {
+  const drawn = box.value;
+  let changed = false;
+  if (typed.has(box.id) && box.value !== typed.get(box.id)) { box.value = typed.get(box.id); box.dispatchEvent(new Event('input')); }
+  box.addEventListener('input', () => { changed = false; typed.set(box.id, box.value); });
+  box.addEventListener('change', () => { changed = true; saveFrom(box, () => typed.delete(box.id)); });
+  // A box drawn again with its typing got the text before the focus came back, so the browser fires no change when
+  // it is left; this fires it, once, when the text differs from what was drawn and no change came on its own.
+  box.addEventListener('blur', () => { if (!changed && box.value !== drawn) box.dispatchEvent(new Event('change')); });
+  return box;
+}
+// A guessed number reads as a guess (S-287): its box is dashed, and its label carries a guess tag (cell below).
+const guessClass = (f) => (f && f.kind === 'rough' && f.value !== null && f.value !== undefined ? ' is-guess' : '');
 // A money box: blank is missing (never $0); a typed value is saved when the box is left.
-function moneyBox(id, value, label, onSet, placeholder = 'Amount') {
-  const box = h('input', { id, class: 'amt', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
+function moneyBox(id, value, label, onSet, placeholder = 'e.g. 1,200', fact = null) {
+  const box = h('input', { id, class: 'amt' + guessClass(fact), type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = inputText('money', value);
   echo(box, 'money');
+  keepTyping(box);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
+    if (t === '') { saveFrom(box, () => onSet(null)); return; }
     const p = parseInput('money', t);
     if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    later(() => onSet(p.value));
+    saveFrom(box, () => onSet(p.value));
   });
   return box;
 }
 // A small whole-number box (a day of the month, a year).
-function intBox(id, value, label, onSet, { placeholder = 'Due day', min = 1, max = 31 } = {}) {
-  const box = h('input', { id, class: 'day-box', type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder, 'aria-label': label });
+function intBox(id, value, label, onSet, { placeholder = 'e.g. 15', min = 1, max = 31, fact = null } = {}) {
+  const box = h('input', { id, class: 'day-box' + guessClass(fact), type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder, 'aria-label': label });
   box.value = value === null || value === undefined ? '' : String(value);
+  keepTyping(box);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
+    if (t === '') { saveFrom(box, () => onSet(null)); return; }
     const p = parseInput('int', t);
     if (!p.ok || p.value < min || p.value > max) { say(label + ': a whole number from ' + min + ' to ' + max); box.focus(); return; }
-    later(() => onSet(p.value));
+    saveFrom(box, () => onSet(p.value));
   });
   return box;
 }
 // A rate box: 25 means 25%.
-function rateBox(id, value, label, onSet) {
-  const box = h('input', { id, class: 'rate-box', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '%', 'aria-label': label });
+function rateBox(id, value, label, onSet, fact = null) {
+  const box = h('input', { id, class: 'rate-box' + guessClass(fact), type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: 'e.g. 24', 'aria-label': label });
   box.value = inputText('rate', value);
+  keepTyping(box);
   box.addEventListener('change', () => {
     const t = box.value.trim();
-    if (t === '') { later(() => onSet(null)); return; }
+    if (t === '') { saveFrom(box, () => onSet(null)); return; }
     const p = parseInput('rate', t);
     if (!p.ok) { say(label + ': ' + p.message); box.focus(); return; }
-    later(() => onSet(p.value));
+    saveFrom(box, () => onSet(p.value));
   });
   return box;
 }
@@ -99,14 +126,34 @@ const pickBox = (id, label, options, value, onPick) => {
 };
 // A box with its own visible label above it (owner, 2026-10-28: boxes in a row never go unnamed). A row with one box
 // uses the row's name as its label; a row with more names each one. DESIGN.md "Fields never collide".
-const cell = (cap, box) => h('div', { class: 'field-cell' }, h('label', { class: 'field-cap', for: box.id }, cap), box);
-// A guess says so on its row.
-// Only a guess worth checking now gets a chip (Rough now and later); one that is fine for now shows a small gray dot,
-// so a first session ends with a short list, not dozens of chips.
+// A guessed box says so in its label (never a hover-only cue, affordance rule 6).
+let capSeq = 0;
+const cell = (cap, box) => {
+  const tag = box.classList && box.classList.contains('is-guess') ? h('span', { class: 'guess-tag' }, 'guess') : null;
+  if (box.id) return h('div', { class: 'field-cell' }, h('label', { class: 'field-cap', for: box.id }, cap, tag), box);
+  // A row of buttons (a choice) has no one box to point at: the caption names the group.
+  const capId = 'cap-' + (++capSeq);
+  box.setAttribute('aria-labelledby', capId);
+  return h('div', { class: 'field-cell' }, h('span', { class: 'field-cap', id: capId }, cap, tag), box);
+};
+// A missing number worth checking now gets a chip on the row's name (Rough now and later); so does a guess worth
+// checking now ("Check now"), so it never looks like a guess that is fine for now, whose dashed, tagged box is its
+// only mark. Before the ranking is in, no guess is called worth checking.
 let marks = null, marksFresh = false;
 const guessChip = (f, path) => {
-  if (f && (f.kind === 'rough' || f.kind === 'missing') && !worthNow(marks, path, f.kind, marksFresh)) return h('span', { class: 'dot-fine', role: 'img', 'aria-label': 'A guess, fine for now', title: 'Fine for now' });
-  return f && f.kind === 'rough' ? h('span', { class: 'chip chip-rough' }, whoSupplies(f) === 'default' ? 'Eli\'s default' : 'guess') : f && f.kind === 'missing' ? chip('missing') : null;
+  if (f && f.kind === 'rough' && f.value !== null && f.value !== undefined) return marks && worthNow(marks, path, f.kind, marksFresh) ? checkNowChip() : null;
+  if (!f || f.kind !== 'missing' || !worthNow(marks, path, f.kind, marksFresh)) return null;
+  return chip('missing');
+};
+// The ranking lands a second or so after the draw. A redraw then would commit or drop what is half typed (D-034), so
+// while a box on the screen has the focus it waits for that box to be left; any change redraws with the marks anyway.
+const typingNow = () => { const a = document.activeElement; return !!a && !!a.closest && !!a.closest('.screen') && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && (a.type || 'text') === 'text')); };
+const whenRanked = (spine) => () => {
+  if (current().spine !== spine) return;
+  if (!typingNow()) { refresh(); return; }
+  const box = document.activeElement;
+  const once = () => { box.removeEventListener('blur', once); later(() => { if (!marksFresh && current().spine === spine) refresh(); }); };
+  box.addEventListener('blur', once);
 };
 // A small closed fold on the right of a row: who pays, sharing, a cover, dates.
 // What is open stays open when a change redraws the screen.
@@ -121,20 +168,26 @@ const lineRow = (cls, ...kids) => h('li', { class: 'srow ' + (cls || '') }, ...k
 const delBtn = (collection, id, name) => h('button', { type: 'button', class: 'btn small danger srow-del', 'aria-label': 'Delete ' + name, onclick: () => change((s) => removeItem(s, collection, id), said.deleted(name)) }, 'Delete');
 
 // What it has (S-270): an item's screen-one ticks under its row, folded to one line; a Yes opens its boxes in place.
-// The rest of its ticks are on its screen in My numbers. Every answer and box goes through change(), so Undo works.
+// The rest of its ticks are on its screen in Numbers. Every answer and box goes through change(), so Undo works.
 const openTicks = new Set();
 const ON_ROW = { debts: ['balance', 'apr', 'minimum', 'dueDay'], income: ['amount', 'cadence', 'payDay'], accounts: ['balance'] };
-function coreTicks(spine, rules, coll, x) {
-  if (!catalog) return null;
-  // A box the row already has (a card's rate and payment) is not asked again under it (owner, 2026-10-28).
+// The screen-one ticks an item shows here: core tier, without a box the row already has (a card's rate and payment is
+// not asked again under it; owner, 2026-10-28).
+function coreFeatures(coll, x) {
+  if (!catalog) return [];
   const onRow = ON_ROW[coll] || [];
-  const features = featuresOf(catalog, x, coll).filter((f) => f.tier === 'core').map((f) => ({ ...f, reveals: f.reveals.filter((r) => !onRow.includes(r.field)) })).filter((f) => f.reveals.length);
+  return featuresOf(catalog, x, coll).filter((f) => f.tier === 'core').map((f) => ({ ...f, reveals: f.reveals.filter((r) => !onRow.includes(r.field)) })).filter((f) => f.reveals.length);
+}
+function coreTicks(spine, rules, coll, x) {
+  const features = coreFeatures(coll, x);
   if (!features.length) return null;
   const base = coll + '.' + x.id, name = coll === 'income' ? x.label : v(x.name) || x.id;
-  return inlineTicks({ title: name, features, ticks: x.ticks || {}, idBase: 'tk-' + x.id, open: openTicks.has(base),
+  // The fold sits right under the item's row, so it says what it holds, not the name again.
+  return inlineTicks({ title: 'Details and questions', features, ticks: x.ticks || {}, idBase: 'tk-' + x.id, open: openTicks.has(base),
     ontoggle: (e) => { if (e.target.open) openTicks.add(base); else openTicks.delete(base); },
     onAnswer: (f, a) => { openTicks.add(base); change((s) => tickFeature(s, base, f, a, { rules, today: todayIso() }), tickWords(name, f, a)); },
     get: (field) => v(x[field]),
+    rough: (field) => !!x[field] && x[field].kind === 'rough',
     onSet: (field, val, r) => putF(base + '.' + field, val, said.changed(name + ': ' + r.label.toLowerCase(), val === null ? 'blank' : showValue(val, r.type))) });
 }
 
@@ -169,24 +222,68 @@ function stepSub(spine, id) {
 // The Next card (practical run, S-269): the numbers worth filling now, ranked by how much each moves the headline
 // numbers (the shared ranking, ui/urgency.js). One big #1, then #2 and #3 smaller; each opens its number.
 function nextCard(ctx) {
-  const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  const g = guessesFor(ctx.spine, ctx.rules, whenRanked(ctx.spine));
   const top = (openQuestions(ctx.spine, g) || []).slice(0, 3);
-  if (!top.length) return null;
-  const words = (q) => q.label + (q.kind === 'missing' ? ', not given yet' : ', a guess worth checking');
+  // Until the ranking lands the box holds its place (the ready refresh redraws it); a finished ranking with nothing open draws nothing.
+  if (!top.length) return g ? null : h('section', { class: 'card next-card', 'aria-label': 'Next to fill' }, h('p', { class: 'muted' }, 'Working out what to fill first...'));
+  const words = (q) => q.label + (q.kind === 'missing' ? ', not given yet' : ', a guess to answer');
   return h('section', { class: 'card next-card', 'aria-label': 'Next to fill' },
-    h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
+    h('a', { class: 'next-one', href: ledgerHref(top[0].row || top[0].path) }, h('span', { class: 'next-kicker' }, 'Next to fill in: worth the most now'), h('strong', {}, words(top[0])), h('span', { class: 'next-go', 'aria-hidden': 'true' }, '\u203A')),
     top.length > 1 ? h('ol', { class: 'next-more', start: 2 }, top.slice(1).map((q) => h('li', {}, h('a', { href: ledgerHref(q.row || q.path) }, words(q))))) : null);
 }
-// Looks right in a step (S-282): every guess in this step's lists kept at once (Enter does it too). Next stays the
-// one filled button.
+// Looks right in a step (S-282): every guess on the screen kept at once (Enter does it too): each rough number in a box
+// this step draws becomes known, and each yes / no question nobody answered takes its likely answer, as ui/ledger.js
+// looksRight does. A guess in a box the step does not show (who pays, a renewal) waits for its own screen. Next stays
+// the one filled button.
 const STEP_LISTS = { needs: ['expenses'], debt: ['debts'], income: ['income', 'household'], assets: ['accounts'], goals: ['goals'], protection: ['policies'] };
+// Only the boxes a step draws marked as a guess (dashed, tagged) count: a choice or a pick list here shows no guess,
+// so it waits for its own screen in Numbers, as a box the step does not show does.
+const STEP_FIELDS = { expenses: ['amount', 'payDay'], debts: [...ON_ROW.debts], accounts: ['balance'], goals: ['target'], household: ['lastRefund'] };
+// An income line's boxes depend on how it is paid (incomeRows, w2Bits, selfBits); a maybe (a possible bonus) is not
+// drawn here at all.
+function incomeFields(x) {
+  if (x.type === 'maybeMoney') return [];
+  const basis = v(x.payBasis), self = isSelfEmployment(x) && x.type !== 'person';
+  const asked = (x.type === 'w2' && basis) || (isSelfEmployment(x) && basis === 'lumpy');
+  return [asked ? null : 'amount', x.cadence === 'monthly' || x.cadence === 'semimonthly' ? 'payDay' : null,
+    x.type === 'w2' && basis === 'salary' ? 'salary' : null, ...(x.type === 'w2' && basis === 'hourly' ? ['hourlyRate', 'hoursPerWeek'] : []),
+    self && basis === 'lumpy' ? 'yearTotal' : null, self ? 'businessExpenses' : null].filter(Boolean);
+}
+// How an income line is paid, shown chosen as a guess until someone picks (w2Bits, selfBits): Looks right keeps it.
+const payGuess = (x) => (x.type === 'maybeMoney' || v(x.payBasis) ? null : x.type === 'w2' ? 'salary' : isSelfEmployment(x) && x.type !== 'person' ? 'steady' : null);
+// The boxes a step draws for an item: its row's, and under its ticks a detail's box always, a question's under a Yes.
+const drawnFields = (coll, x) => (coll === 'income' ? incomeFields(x) : STEP_FIELDS[coll] || []).concat(coreFeatures(coll, x).filter((f) => f.kind === 'ask' || (x.ticks || {})[f.id] === 'yes').flatMap((f) => f.reveals.filter((r) => boxedType(r.type)).map((r) => r.field)));
+// An item the step draws a row for: not a goal's FI number, not a line the Profile hides.
+const drawnItem = (spine, coll, x) => !!x && !(coll === 'goals' && x.type === 'fi') && !(coll === 'expenses' && hiddenLine(spine, x));
 function stepLooksRight(spine, id) {
-  const rough = listFacts(spine).filter(({ path, fact }) => STEP_LISTS[id] && STEP_LISTS[id].includes(path.split('.')[0]) && fact.kind === 'rough' && fact.value !== null && fact.value !== undefined);
-  if (!rough.length) return null;
-  const n = rough.length;
+  const lists = STEP_LISTS[id] || [];
+  const rough = listFacts(spine).filter(({ path, fact }) => {
+    if (!(fact.kind === 'rough' && fact.value !== null && fact.value !== undefined)) return false;
+    const [coll, itemId, ...rest] = path.split('.');
+    if (!lists.includes(coll)) return false;
+    // The Protection step shows its whole section, as Numbers' section screen does.
+    if (coll === 'policies') return true;
+    if (coll === 'household') return !rest.length && STEP_FIELDS.household.includes(itemId);
+    const x = (spine[coll] || []).find((i) => i.id === itemId);
+    return drawnItem(spine, coll, x) && rest.length === 1 && drawnFields(coll, x).includes(rest[0]);
+  });
+  // How each income line is paid, where the step shows its likely answer as a guess.
+  const pays = lists.includes('income') ? (spine.income || []).map((x) => ({ x, basis: payGuess(x) })).filter((p) => p.basis) : [];
+  // The pre-answered questions on screen: each takes its likely answer, and the numbers a Yes fills are kept too.
+  const ticks = lists.filter((coll) => ON_ROW[coll]).flatMap((coll) => (spine[coll] || []).flatMap((x) => { const shown = new Set(coreFeatures(coll, x).map((f) => f.id)); return guessedTicks(x, coll).filter(({ f }) => shown.has(f.id)).map((t) => ({ ...t, base: coll + '.' + x.id })); }));
+  const n = rough.length + ticks.length + pays.length;
+  if (!n) return null;
+  const run = () => change((s0) => {
+    let s = s0;
+    const today = todayIso(), rules = current().rules;
+    for (const { x, basis } of pays) s = setPay(s, x.id, basis === 'salary' ? { basis, cadence: PER_YEAR_OK(x.cadence) ? x.cadence : 'biweekly' } : { basis }, today);
+    for (const { base, f, answer } of ticks) s = tickFeature(s, base, f, answer, { rules, today });
+    const filled = ticks.flatMap(({ base, f }) => f.reveals.map((r) => ({ path: base + '.' + r.field })));
+    return bulkEdit(s, [...rough.map((r) => ({ path: r.path })), ...filled], 'confirm', today);
+  }, n === 1 ? 'One guess kept' : n + ' guesses kept');
   return h('div', { class: 'looks-right-bar' },
-    h('button', { type: 'button', class: 'btn', id: 'looks-right', onclick: () => change((x) => bulkEdit(x, rough.map((r) => ({ path: r.path })), 'confirm', todayIso()), n === 1 ? 'One guess kept' : n + ' guesses kept') }, 'Looks right'),
-    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' in this step. Enter keeps them all; change any one first.'));
+    h('button', { type: 'button', class: 'btn', id: 'looks-right', onclick: run }, 'Looks right'),
+    h('span', { class: 'muted' }, (n === 1 ? '1 guess' : n + ' guesses') + ' on this screen. Enter keeps them all; change any one first.'));
 }
 // The six steps' totals: the summary's (sessionSteps) in Guide me's order, and Protection's monthly premiums.
 function guideSteps(spine, s) {
@@ -200,42 +297,54 @@ function frame(ctx, id, body) {
   const steps = guideSteps(ctx.spine, s);
   const i = STEPS.findIndex((x) => x[0] === id), step = steps.find((x) => x.id === id);
   const prev = STEPS[i - 1], next = STEPS[i + 1];
+  // An add form sitting open (Income's, Goals', Protection's) is the screen's one filled button; Next steps back
+  // until it is done (S-287). Protection's form comes bare from Numbers' section screen, so it gets its card here.
+  const nodes = [].concat(body(s)).map((n) => (n && n.matches && n.matches('form.add-form') ? h('section', { class: 'card' }, n) : n));
+  const formOpen = addingIncome || goalAdding || nodes.some((n) => n && n.querySelector && n.querySelector('form.add-form'));
+  const nextClass = formOpen ? 'btn' : 'btn primary';
+  // The Income step holds the two tax questions too, so its purpose and checks cover both (engine/step-map.js).
+  const map = STEP_MAP[id] && id === 'income' ? { ...STEP_MAP.income, purpose: STEP_MAP.taxes.purpose + ' ' + STEP_MAP.income.purpose } : STEP_MAP[id];
+  const checks = id === 'income' ? [...stepChecks(ctx.spine, s, 'taxes'), ...stepChecks(ctx.spine, s, 'income')] : stepChecks(ctx.spine, s, id);
   return [
-    // The progress tracker (S-265): every step, done when its total is in, each a tap away; Back and Next stay below.
-    stepper(STEPS.map(([sid, , label]) => { const st = steps.find((x) => x.id === sid); return { label, href: '#/' + sid, sub: stepSub(ctx.spine, sid), state: sid === id ? 'current' : entered(ctx.spine, sid) && st && st.result && st.result.value !== null ? 'done' : 'todo' }; }), i, { nav: false, doneWord: 'started', doneMeans: '\u2713 means something is in that step, not that it is finished. Tap any step to go there.' }),
+    // The progress tracker (S-265): every step with something in it is started, the current one included, so the
+    // count reads the same from every step; each a tap away. Back and Next stay below.
+    stepper(STEPS.map(([sid, , label]) => { const st = steps.find((x) => x.id === sid); return { label, href: '#/' + sid, sub: stepSub(ctx.spine, sid), state: entered(ctx.spine, sid) && st && st.result && st.result.value !== null ? 'done' : sid === id ? 'current' : 'todo' }; }), i, { nav: false, doneWord: 'started', doneMeans: i === 0 ? 'Nothing is required; Next skips ahead. A check means something is in that step.' : null }),
+    // The step's total under the bar (its name is already the tab, the title and the bar's segment).
     h('section', { class: 'card step-head', 'aria-label': STEPS[i][2] },
-      h('span', { class: 'go-mark', 'aria-hidden': 'true' }, STEPS[i][1]),
-      h('span', { class: 'step-name' }, STEPS[i][2]),
       h('span', { class: 'step-total' }, totalWords(step, s.sheet.owed)),
       STEP_METRIC[id] ? mathButton([STEP_METRIC[id]], () => ({ spine: ctx.spine, rules: ctx.rules, s })) : null),
     // What this step is for, with a live checkmark for each thing it needs (S-278), folded.
-    STEP_MAP[id] ? purposeCard(STEP_MAP[id].purpose, stepChecks(ctx.spine, s, id)) : null,
+    map ? purposeCard(map.purpose, checks) : null,
     stepLooksRight(ctx.spine, id),
-    ...[].concat(body(s)),
-    STEP_MAP[id] ? nowHave(STEP_MAP[id].have, STEP_MAP[id].unlocks[1], '#/' + STEP_MAP[id].unlocks[0]) : null,
+    ...nodes,
+    map ? nowHave(map.have, map.unlocks[1], map.unlocks[0] === 'end' ? 'dashboard.html#/end' : '#/' + map.unlocks[0]) : null,
     h('div', { class: 'step-nav' },
       h('button', { type: 'button', class: 'btn', onclick: () => go(prev ? [prev[0]] : []) }, '‹ Back'),
-      next ? h('button', { type: 'button', class: 'btn primary', onclick: () => go([next[0]]) }, 'Next: ' + next[2] + ' ›')
-        : h('a', { class: 'btn primary', href: 'dashboard.html#/end' }, 'End the call ›')),
-    h('p', { class: 'muted step-skip' }, 'Nothing here is required. Next skips ahead.')
+      next ? h('button', { type: 'button', class: nextClass, onclick: () => go([next[0]]) }, 'Next: ' + next[2] + ' ›')
+        : h('a', { class: nextClass, href: 'dashboard.html#/end' }, 'End call ›'))
   ];
 }
-const WORDS = { needs: ' a month', debt: ' owed', taxes: ' due at tax time', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
-// owed: what others owe the household (round 3: Assets less Debt visibly makes net worth, as in My numbers).
-function totalWords(step, owed = 0) {
+// What each section's one total means, in a client's words; Numbers reads the same map for its group totals.
+export const TOTAL_WORDS = { needs: ' a month', debt: ' owed', taxes: ' due at tax time', income: ' a month before tax', assets: ' owned', goals: ' in goals' };
+// owed: what others owe the household (round 3: Assets less Debt visibly makes net worth, as on Numbers). Numbers'
+// section list reads the same function (one wording, one tap apart); metric tags the amount for the agreement check.
+export function totalWords(step, owed = 0, metric = null) {
   const r = step.result;
   if (r.value === null) return h('span', { class: 'empty' }, 'Nothing yet');
   if (step.id === 'protection') return h('span', {}, h('strong', {}, String(r.value)), r.value === 1 ? ' policy' : ' policies');
   // Taxes below zero is money back (a refund), said so.
-  if (step.id === 'taxes' && r.value < 0) return h('span', {}, h('strong', {}, money(-r.value)), ' back at tax time', r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
-  return h('span', {}, h('strong', {}, money(r.value)), WORDS[step.id], step.id === 'assets' && owed ? ', plus ' + money(owed) + ' owed to you' : null, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
+  if (step.id === 'taxes' && r.value < 0) return h('span', {}, h('strong', { class: 'go-total', 'data-metric': metric }, money(-r.value)), ' back at tax time', r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
+  return h('span', {}, h('strong', { class: 'go-total', 'data-metric': metric }, money(r.value)), TOTAL_WORDS[step.id], step.id === 'assets' && owed ? ', plus ' + money(owed) + ' owed to you' : null, r.kind === 'rough' || r.kind === 'incomplete' ? [' ', chip(r.kind)] : null);
 }
 
 // ---------------------------------------------------------------- Needs
 // Per client (S-269): one client's No is not another's.
 const NO_KEY = 'slam-session-no:v1' + ((currentClient() || {}).id ? ':' + currentClient().id : '');
 const noList = () => { try { return JSON.parse(localStorage.getItem(NO_KEY) || '[]'); } catch { return []; } };
-function setNo(key, on) { try { const l = new Set(noList()); if (on) l.add(key); else l.delete(key); localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } refresh(); }
+const writeNos = (keys, on) => { try { const l = new Set(noList()); for (const k of keys) { if (on) l.add(k); else l.delete(k); } localStorage.setItem(NO_KEY, JSON.stringify([...l])); } catch { /* lasts until the page closes */ } };
+function setNos(keys, on) { writeNos(keys, on); refresh(); }
+// A No lives in this browser, not the household (QUESTIONS.md 88), so the bar offers its own Undo, as for any change.
+const sayNo = (keys, on, words) => { const list = [].concat(keys); setNos(list, on); say(words, () => setNos(list, !on)); };
 const findExpense = (spine, label) => (spine.expenses || []).find((e) => lower(e.label) === lower(label)) || null;
 
 // A starter line added: its tag, need or want, and a subscription mark from the list.
@@ -250,11 +359,13 @@ function addLine(spine, item, fat, today) {
 }
 function setLineAmount(item, fat, value, kind = 'known') {
   const today = todayIso();
+  // A number typed on a line not in your numbers yet adds it, as the list says (a need or a want): the bar says so.
+  const fresh = value !== null && !findExpense(current().spine, item.label);
   change((spine) => {
     let s = spine, e = findExpense(spine, item.label);
     if (!e) { if (value === null) return spine; const r = addLine(s, item, fat, today); s = r.spine; e = getAt(s, 'expenses.' + r.id); }
     return editExpense(s, e.id, { amount: value, kind }, today);
-  }, value === null ? item.label + ' cleared' : said.changed(item.label, money(value) + ' a month'));
+  }, value === null ? item.label + ' cleared' : fresh ? said.added(item.label + ' as a ' + (item.need !== false ? 'need' : 'want') + ', ' + money(value) + ' a month') : said.changed(item.label, money(value) + ' a month'));
 }
 function setLineDay(e, day) {
   change((spine) => (day === null ? setAt(spine, 'expenses.' + e.id, drop(getAt(spine, 'expenses.' + e.id), 'payDay')) : putFact(spine, 'expenses.' + e.id + '.payDay', day, 'known', todayIso())), day === null ? e.label + ': day cleared' : said.changed(e.label + ' day', 'the ' + day + suffix(day)));
@@ -268,30 +379,37 @@ function whoPays(spine, e) {
   const set = (how, name = cover) => change((s) => editExpense(s, e.id, how === 'covered' ? { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: name } : { amount, kind: kind === 'missing' ? 'known' : kind, coveredBy: null, sharing: { shared: how === 'shared', sharedWith: 2, whoPays: 'part' } }, today),
     said.changed(e.label + ': who pays', how === 'covered' ? name : how === 'shared' ? 'shared, half each' : 'me'));
   return [
-    h('label', { class: 'mini-label', for: 'who-' + e.id }, 'Who pays'),
-    pickBox('who-' + e.id, 'Who pays ' + e.label, [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], now, (x) => set(x)),
+    h('p', { class: 'mini-label', id: 'who-l-' + e.id }, 'Who pays'),
+    choiceRow({ id: 'who-' + e.id, options: [['me', 'Me'], ['shared', 'Shared, half each'], ['covered', 'Someone covers it']], value: now, clear: false, label: 'who-l-' + e.id, onPick: (x) => set(x) }),
     now === 'covered' ? [h('label', { class: 'mini-label', for: 'by-' + e.id }, 'Covered by'), pickBox('by-' + e.id, e.label + ' covered by', names.map((n) => [n, n]), cover, (x) => set('covered', x))] : null,
     isCouple(spine) ? [h('label', { class: 'mini-label', for: 'split-' + e.id }, 'Between the two of you'),
       pickBox('split-' + e.id, e.label + ': split between the two of you', [['', 'As the household: ' + splitWords(spine, splitOf(spine, null)).toLowerCase()], ...splitOptions(spine)], e.coupleSplit ? v(e.coupleSplit) : '',
         (x) => change((sp) => (x ? putFact(sp, 'expenses.' + e.id + '.coupleSplit', x, 'known', today) : { ...sp, expenses: sp.expenses.map((i) => (i.id === e.id ? drop(i, 'coupleSplit') : i)) }), said.changed(e.label + ': split', x ? splitWords(spine, x) : 'as the household')))] : null,
-    h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in My numbers'))
+    h('p', { class: 'edit-hint' }, h('a', { href: 'ledger.html#' + encodeURIComponent('expenses.' + e.id + '.amount') }, 'Dates and the rest in Numbers'))
   ];
 }
-// One line: its name, the amount, a day, More; a line not in your numbers yet also offers Yes, No and Skip.
+// One line: its name, the amount, a day, More; a line not in your numbers yet asks "Have it?" (Yes adds it, No hides it).
+const isStarter = (key) => allItems().some((x) => x.key === key);
 function needRow(spine, item, fat, key, sub = false) {
   const e = findExpense(spine, item.label);
   const no = !e && noList().includes(key);
   if (no) return null;
   const by = e && e.covered && v(e.covered) ? v(e.coveredBy) : null;
   const name = h('span', { class: 'srow-name' }, item.label, e ? guessChip(e.amount, 'expenses.' + e.id + '.amount') : null, by ? h('span', { class: 'chip chip-notForMe' }, 'covered by ' + by) : null);
-  const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x));
-  // Not in your numbers yet: Need or Want adds it as that, No hides it.
-  if (!e) return lineRow(sub ? 'sub' : '', name, amt,
-    h('span', { class: 'tick', role: 'group', 'aria-label': item.label + ': do you have it?' },
-      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: true }, fat, todayIso()).spine, said.added(item.label + ', a need')) }, 'Need'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => change((s) => addLine(s, { ...item, need: false }, fat, todayIso()).spine, said.added(item.label + ', a want')) }, 'Want'),
-      h('button', { type: 'button', class: 'btn small', onclick: () => setNo(key, true) }, 'No')));
-  return lineRow(sub ? 'sub' : '', name, cell('A month', amt), cell('Day paid', intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d), { placeholder: 'e.g. 5' })), needWant(e), more(item.label, ...whoPays(spine, e)), delBtn('expenses', e.id, e.label));
+  const amt = moneyBox('n-' + key, e ? v(e.amount) : null, item.label + ', a month', (x) => setLineAmount(item, fat, x), 'e.g. 1,200', e ? e.amount : null);
+  // Not in your numbers yet: a Yes adds it as a need or a want and puts the cursor in its amount; No hides it (undoable).
+  if (!e) {
+    const yes = (need) => change((s) => { later(() => document.getElementById('n-' + key)?.focus()); return addLine(s, { ...item, need }, fat, todayIso()).spine; }, said.added(item.label + (need ? ', a need' : ', a want')));
+    return lineRow(sub ? 'sub' : '', name, cell('A month', amt),
+      h('span', { class: 'field-cell' }, h('span', { class: 'field-cap' }, 'Have it?'),
+        h('span', { class: 'tick', role: 'group', 'aria-label': item.label + ': do you have it?' },
+          h('button', { type: 'button', class: 'btn small', onclick: () => yes(true) }, 'Yes, a need'),
+          h('button', { type: 'button', class: 'btn small', onclick: () => yes(false) }, 'Yes, a want'),
+          h('button', { type: 'button', class: 'btn small', onclick: () => sayNo(key, true, item.label + ' hidden') }, 'No'))));
+  }
+  // Delete on a starter line also marks it No, so one press takes the row away; Show them again brings the offer back.
+  const del = isStarter(key) ? h('button', { type: 'button', class: 'btn small danger srow-del', 'aria-label': 'Delete ' + e.label, onclick: () => { writeNos([key], true); change((s) => removeItem(s, 'expenses', e.id), said.deleted(e.label)); } }, 'Delete') : delBtn('expenses', e.id, e.label);
+  return lineRow(sub ? 'sub' : '', name, cell('A month', amt), cell('Day paid', intBox('nd-' + key, v(e.payDay), item.label + ': day of the month', (d) => setLineDay(e, d), { placeholder: 'e.g. 5', fact: e.payDay })), needWant(e), more(item.label, ...whoPays(spine, e)), del);
 }
 // Need or want, on every line in plain sight (S-231): two pressed-or-not buttons.
 function needWant(e) {
@@ -301,11 +419,12 @@ function needWant(e) {
     h('button', { type: 'button', id: 'nw-' + e.id, class: 'seg-btn', 'aria-pressed': String(need), onclick: () => set(true) }, h('span', { class: 'seg-label' }, 'Need')),
     h('button', { type: 'button', id: 'nw-' + e.id + '-want', class: 'seg-btn', 'aria-pressed': String(!need), onclick: () => set(false) }, h('span', { class: 'seg-label' }, 'Want')));
 }
-// A question as a row of buttons; the answer is pressed. Answering changes which lines show and what they mean.
-function question(id, label, options, value, onPick) {
-  return h('div', { class: 'q', role: 'group', 'aria-labelledby': 'q-' + id },
+// A question as a row of buttons, pre-answered (S-282): until someone answers, the likely answer shows chosen as a
+// guess (dashed, tagged), never pressed as known. Answering changes which boxes show and what the number means.
+function question(id, label, options, value, recommended, onPick) {
+  return h('div', { class: 'q' },
     h('p', { class: 'q-label', id: 'q-' + id }, label),
-    h('div', { class: 'segmented q-seg' }, options.map(([k, w]) => h('button', { type: 'button', id: 'q-' + id + '-' + k, class: 'seg-btn', 'aria-pressed': String(value === k), onclick: () => { if (value !== k) onPick(k); } }, h('span', { class: 'seg-label' }, w)))));
+    choiceRow({ id: 'q-' + id, options, value, recommended, label: 'q-' + id, clear: false, onPick: (k) => { if (value !== k) onPick(k); } }));
 }
 // A line shows unless the Profile hides it (engine/profile.js): with no answer yet, every line shows.
 // Before the Profile says where they live, a filled rent or mortgage line answers it for this list: renters do not
@@ -345,35 +464,47 @@ function fillTypical(t) {
 }
 // The Needs groups by their names on screen (S-283); the stored category names stay (a line can be named like one).
 const CAT_TITLE = { Accommodation: 'Housing', Transportation: 'Getting around', 'Health and fitness': 'Health', Subscriptions: 'Bills and subscriptions', Miscellaneous: 'Other' };
+// Each group holds the lines Numbers gives it (engine/ledger-tree.js needsGroupOf), so both screens carry the same
+// lines and totals under the same names; an offer not in your numbers yet stays with its own group.
+const CAT_KEYS = { accommodation: ['N:accommodation'], food: ['N:food'], transportation: ['N:transportation'], health: ['N:other:health'], subscriptions: ['N:other:bills'], misc: ['N:other', 'N:other:fun'] };
 const openCats = new Set();
 function needs(ctx) {
-  const spine = ctx.spine, hh = spine.household;
-  const known = new Set(allItems().map((x) => lower(x.label)));
-  const extra = (fat) => (spine.expenses || []).filter((e) => !known.has(lower(e.label)) && !DATA.needs.some((c) => lower(c.label) === lower(e.label)) && (fat === 'other' ? !['food', 'accommodation', 'transportation'].includes(e.fat) : e.fat === fat));
-  const hidden = noList().filter((k) => allItems().some((x) => x.key === k));
+  const spine = ctx.spine;
+  const hidden = noList().filter((k) => allItems().some((x) => x.key === k && !findExpense(spine, x.label)));
   const a = answersOf(spine);
   const said1 = (id) => { const q = questionById(id), x = a[id]; return x === undefined ? 'not answered yet' : x === 'notSure' ? 'not sure' : (q.options.find(([k]) => k === x) || [x, x])[1]; };
   return frame(ctx, 'needs', (sum) => [
+    // Just you, or the two of you? comes first: a housing or food line starts shared once a partner is in.
+    whoCard(ctx),
     // A shared bill counts the household's part in the total (round 3: the lines then add up to it).
     (() => { const sh = sum.cashflow.expenses.items.filter((i) => i.shared && i.full !== i.amount); return sh.length ? h('p', { class: 'muted' }, 'Shared bills count your part in the total: ' + sh.map((i) => i.label + ' ' + money(i.amount) + ' of ' + money(i.full)).join(', ') + '.') : null; })(),
     h('section', { class: 'card qs' },
       // Where you live and how you get around are Profile answers (Phase 2.5 B3): shown here, changed there.
-      h('p', { class: 'q-said' }, 'Where you live: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
+      h('p', { class: 'q-said' }, 'Your home: ', h('strong', {}, said1('home')), '. Getting around: ', h('strong', {}, said1('getAround')), '. ', h('a', { href: 'profile.html#/home' }, 'Change in Profile')),
       // Fill typical amounts (High-cost city, Elsewhere) is off for now (owner's ask, 2026-10-27); fillTypical stays.
       null),
     ...DATA.needs.map((cat) => {
+      const members = (spine.expenses || []).filter((e) => (CAT_KEYS[cat.id] || []).includes(needsGroupOf(e)) && !hiddenLine(spine, e));
       const catLine = findExpense(spine, cat.label);
       // One number for the whole category, or its lines: never both, so nothing counts twice.
       const catOn = !!catLine && v(catLine.amount) !== null;
-      const anyLine = cat.items.some((item) => [item, ...(item.subs || [])].some((x) => { const e = findExpense(spine, x.label); return e && v(e.amount) !== null; }));
-      const lines = catOn ? [] : cat.items.filter((item) => applies(spine, item) || ((e) => e && !hiddenLine(spine, e))(findExpense(spine, item.label))).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (findExpense(spine, item.label) && !findExpense(spine, x.label) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
-      const others = extra(cat.fat || 'other').filter(() => cat.id === (cat.fat ? cat.id : 'misc'));
-      const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in My numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x))) : null;
+      const presetLines = cat.items.flatMap((item) => [item, ...(item.subs || [])]);
+      const anyLine = presetLines.some((x) => { const e = findExpense(spine, x.label); return e && members.includes(e) && v(e.amount) !== null; });
+      // A line in your numbers shows here only when this is its group; an offer shows when it fits the answers.
+      const here = (x) => { const e = findExpense(spine, x.label); return e ? members.includes(e) : null; };
+      const lines = catOn ? [] : cat.items.filter((item) => here(item) ?? applies(spine, item)).flatMap((item) => [needRow(spine, item, cat.fat, item.key), ...(item.subs || []).map((x) => (here(x) === false || (here(x) === null && findExpense(spine, item.label)) ? null : needRow(spine, x, cat.fat, x.key, true)))]);
+      const drawn = new Set(presetLines.map((x) => findExpense(spine, x.label)).filter(Boolean));
+      const others = members.filter((e) => !drawn.has(e) && e !== catLine);
+      const oneNumber = cat.items.length > 1 && !anyLine ? lineRow('cat-one', h('span', { class: 'srow-name muted' }, catOn ? 'All of it, one number (split it later in Numbers)' : 'Or one number for all of it'), moneyBox('c-' + cat.id, catLine ? v(catLine.amount) : null, cat.label + ', one number a month', (x) => setLineAmount({ key: cat.id, label: cat.label }, cat.fat, x), 'e.g. 1,200', catLine ? catLine.amount : null)) : null;
       // Chunked (S-283): each group folds to its name and total, and opens on tap; what is open stays open.
-      const total = [cat, ...cat.items.flatMap((item) => [item, ...(item.subs || [])])].reduce((n, x) => { const e = findExpense(spine, x.label); return n + (e && !hiddenLine(spine, e) ? v(e.amount) || 0 : 0); }, 0) + others.reduce((n, e) => n + (v(e.amount) || 0), 0);
+      // A shared bill counts the household's part, the number Numbers' group adds (engine/cashflow.js), so the groups
+      // add up to the step total. Nothing typed in a group is "Nothing yet", never $0.
+      const part = new Map(sum.cashflow.expenses.items.map((i) => [i.id, i.amount]));
+      const counted = members.filter((e) => v(e.amount) !== null && typeof part.get(e.id) === 'number');
+      const total = counted.length ? Math.round(counted.reduce((n, e) => n + part.get(e.id), 0) * 100) / 100 : null;
       const isOpen = openCats.has(cat.id) || (!openCats.size && cat === DATA.needs[0]);
       const d = h('details', { class: 'card done-group need-group', open: isOpen || null, 'aria-labelledby': 'cat-' + cat.id },
-        h('summary', {}, h('h2', { id: 'cat-' + cat.id, class: 'group-h' }, CAT_TITLE[cat.label] || cat.label), h('span', { class: 'go-total' }, total ? money(total) + ' a month' : 'Nothing yet')),
+        h('summary', {}, h('h2', { id: 'cat-' + cat.id, class: 'group-h' }, CAT_TITLE[cat.label] || cat.label), h('span', { class: 'go-total' }, total !== null ? money(total) + ' a month' : 'Nothing yet')),
         // A line named like the category with lines of its own beside it (round 2: the demo's Miscellaneous $300 was in
         // the total and on no row): it shows as its own row, so the lines add up to the total.
         h('ul', { class: 'srows' }, ...lines, ...others.map((e) => needRow(spine, { label: e.label }, e.fat, 'x-' + e.id)), catOn && anyLine ? needRow(spine, { label: cat.label }, cat.fat, 'rest-' + cat.id) : null, oneNumber));
@@ -383,12 +514,13 @@ function needs(ctx) {
       d.addEventListener('toggle', () => { if (!d.isConnected) return; if (d.open) openCats.add(cat.id); else openCats.delete(cat.id); });
       return d;
     }),
-    hidden.length ? h('p', { class: 'muted' }, hidden.length + ' marked No. ', h('button', { type: 'button', class: 'btn small', onclick: () => { for (const k of hidden) setNo(k, false); } }, 'Show them again')) : null
+    hidden.length ? h('p', { class: 'muted' }, hidden.length + ' marked No. ', h('button', { type: 'button', class: 'btn small', onclick: () => sayNo(hidden, false, (hidden.length === 1 ? 'One line' : hidden.length + ' lines') + ' shown again') }, 'Show them again')) : null
   ]);
 }
 
 // ---------------------------------------------------------------- the two of you (Batch 7, S-277)
-// The first step asks "Just you, or the two of you?"; two adds the partner (name, birth date, filing). Then every debt,
+// Needs, the first step, asks "Just you, or the two of you?" before its lines (a housing or food line starts shared
+// with a partner in); two adds the partner (name, birth date, filing). Then every debt,
 // account and income has a Whose box (names, and Joint but for income), and a new one starts as whoever was picked
 // last, else as the money style says, else the first person. Shared bills split half each unless set otherwise, for
 // the household and on a line; the split only divides each person's own numbers, never the household's.
@@ -413,15 +545,17 @@ function whoCard(ctx) {
       q('Who this is for', h('span', { class: 'q-have' }, ps.map(firstName).join(' and ') + ', ' + ((FILINGS.find(([k]) => k === fs) || [fs, 'filing not set'])[1]).toLowerCase())),
       q('Shared bills split', pickBox('split-all', 'Shared bills split', splitOptions(spine), splitOf(spine, null), (x) => change((sp) => putFact(sp, 'household.coupleSplit', x, 'known', today), said.changed('Shared bills split', splitWords(spine, x))))));
   }
-  if (noList().includes('just-me')) return h('section', { class: 'card qs who-card' }, q('Just you, or the two of you?', h('span', { class: 'q-have' }, 'Just you', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('just-me', false) }, 'Change'))));
+  if (noList().includes('just-me')) return h('section', { class: 'card qs who-card' }, q('Just you, or the two of you?', h('span', { class: 'q-have' }, 'Just you', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => sayNo('just-me', false, 'Just you, or the two of you: asked again') }, 'Change'))));
   if (!partnerOpen) return h('section', { class: 'card qs who-card' }, q('Just you, or the two of you?', h('span', { class: 'tick' },
-    h('button', { type: 'button', class: 'btn small', id: 'who-me', onclick: () => setNo('just-me', true) }, 'Just me'),
+    h('button', { type: 'button', class: 'btn small', id: 'who-me', onclick: () => sayNo('just-me', true, 'Just you') }, 'Just me'),
     h('button', { type: 'button', class: 'btn small', id: 'who-two', onclick: () => { partnerOpen = true; refresh(); later(() => document.getElementById('p-name')?.focus()); } }, 'The two of us'))));
-  const nm = h('input', { id: 'p-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Sam' });
-  const bd = h('input', { id: 'p-birth', type: 'date' });
+  const nm = keepTyping(h('input', { id: 'p-name', type: 'text', autocomplete: 'off', placeholder: 'e.g. Sam' }));
+  // The birth date takes words ("dec 6 1990"), as every other date box does (S-285).
+  let birth = '';
+  const bd = dateBox('p-birth', null, (x) => { birth = x; }, { placeholder: 'e.g. Dec 6 1990' }, { past: true });
   const fl = pickBox('p-filing', 'How you file', FILINGS, 'mfj', () => {});
   const msg = h('span', { class: 'edit-msg', role: 'alert' });
-  const add = (e) => { e.preventDefault(); const name = nm.value.trim(); if (!name) { msg.textContent = 'Type a name first'; nm.focus(); return; } partnerOpen = false; change((sp) => addPartner(sp, { name, birthDate: bd.value || null, filing: fl.value }, today), said.added(name)); };
+  const add = (e) => { e.preventDefault(); const name = nm.value.trim(); if (!name) { msg.textContent = 'Type a name first'; nm.focus(); return; } partnerOpen = false; change((sp) => addPartner(sp, { name, birthDate: birth || null, filing: fl.value }, today), said.added(name)); };
   return h('form', { class: 'card who-card', novalidate: true, onsubmit: add },
     h('p', { class: 'edit-label' }, 'The two of you'),
     h('div', { class: 'srow' }, cell('Partner\'s name', nm), cell('Birth date', bd), cell('How you file', fl)),
@@ -430,7 +564,7 @@ function whoCard(ctx) {
 }
 
 // ---------------------------------------------------------------- Debt
-const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['mortgage', 'Mortgage'], ['personal_loan', 'Personal loan'], ['medical', 'Medical bill'], ['family_iou', 'Money owed to a person']];
+const DEBT_ADD = [['credit_card', 'Credit card'], ['student_loan', 'Student loan'], ['auto_loan', 'Car loan'], ['mortgage', 'Mortgage'], ['personal_loan', 'Personal loan', 'Add a personal loan'], ['medical', 'Medical bill', 'Add a medical bill'], ['family_iou', 'Money owed to a person']];
 const DEBT_QS = [['credit_card', 'Any credit cards?', 'Credit card'], ['student_loan', 'Student loans?', 'Student loan'], ['auto_loan', 'A car loan?', 'Car loan'], ['mortgage', 'A mortgage?', 'Mortgage'], ['family_iou', 'Owe money to a person?', 'Money owed to a person']];
 const putF = (path, value, words, kind = 'known') => change((s) => (value === null ? putFact(s, path, null, 'missing', todayIso()) : putFact(s, path, value, kind, todayIso())), words);
 function addDebt(type, label) {
@@ -452,28 +586,29 @@ function debt(ctx) {
     const have = list.filter((d) => d.type === type).length;
     return h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, q),
       have ? h('span', { class: 'q-have' }, 'Yes, ' + have, ' ', h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, 'Add another'))
-        : noList().includes('debt-' + type) ? h('span', { class: 'q-have' }, 'No', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => setNo('debt-' + type, false) }, 'Change'))
-        : h('span', { class: 'tick' }, h('button', { type: 'button', class: 'btn small', id: 'dq-' + type, onclick: () => addDebt(type, label) }, 'Yes'), h('button', { type: 'button', class: 'btn small', id: 'dqn-' + type, onclick: () => setNo('debt-' + type, true) }, 'No')));
+        : noList().includes('debt-' + type) ? h('span', { class: 'q-have' }, 'No', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => sayNo('debt-' + type, false, q + ' asked again') }, 'Change'))
+        : h('span', { class: 'tick' }, h('button', { type: 'button', class: 'btn small', id: 'dq-' + type, onclick: () => addDebt(type, label) }, 'Yes'), h('button', { type: 'button', class: 'btn small', id: 'dqn-' + type, onclick: () => sayNo('debt-' + type, true, q + ' No') }, 'No')));
   });
   return frame(ctx, 'debt', () => [
-    whoCard(ctx),
     h('section', { class: 'card qs' }, ...asks),
     h('section', { class: 'card' },
       list.length ? h('ul', { class: 'srows' }, list.map((d) => {
         const name = v(d.name) || d.id, p = 'debts.' + d.id;
         return lineRow('debt', h('span', { class: 'srow-name' }, name, guessChip(d.balance, 'debts.' + d.id + '.balance')),
           whoseBox(spine, 'debts', d, name),
-          cell('Owed', moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200')),
-          cell('Rate (%)', rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2))))),
-          cell('Payment a month', moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'e.g. 120')),
-          cell('Due day', intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x))), { placeholder: 'e.g. 15' })),
-          // A card: paid in full every month, or carried? It decides whether the balance costs interest.
-          d.type === 'credit_card' ? cell('Paid in full each month?', pickBox('d-pay-' + d.id, name + ': paid in full each month?', [['', 'Not set yet'], ['statement', 'Yes, in full'], ['minimum', 'No, I carry a balance']], v(d.payPolicy) || '', (k) => putF(p + '.payPolicy', k || null, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank')))) : null,
+          cell('Owed', moneyBox('d-bal-' + d.id, v(d.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200', d.balance)),
+          cell('Rate (%)', rateBox('d-apr-' + d.id, v(d.apr), name + ': interest rate', (x) => putF(p + '.apr', x, said.changed(name + ' rate', x === null ? 'blank' : pct(x, 2))), d.apr)),
+          cell('Payment a month', moneyBox('d-min-' + d.id, v(d.minimum), name + ': monthly payment', (x) => putF(p + '.minimum', x, said.changed(name + ' payment', x === null ? 'blank' : money(x))), 'e.g. 120', d.minimum)),
+          cell('Due day', intBox('d-day-' + d.id, v(d.dueDay), name + ': due day', (x) => putF(p + '.dueDay', x, said.changed(name + ' due day', x === null ? 'blank' : 'the ' + x + suffix(x))), { placeholder: 'e.g. 15', fact: d.dueDay })),
+          // A card: paid in full every month, or carried? It decides whether the balance costs interest. Two buttons
+          // (S-282), with no guess: Looks right keeps only the catalog's, so a dashed guess here would never be kept.
+          d.type === 'credit_card' ? cell('Paid in full each month?', choiceRow({ id: 'd-pay-' + d.id, options: [['statement', 'Yes, in full'], ['minimum', 'No, I carry a balance']], value: v(d.payPolicy) || null, onPick: (k) => putF(p + '.payPolicy', k, said.changed(name, k === 'statement' ? 'paid in full each month' : k === 'minimum' ? 'carries a balance' : 'blank')) })) : null,
           delBtn('debts', d.id, name),
           coreTicks(spine, ctx.rules, 'debts', d));
       })) : h('p', { class: 'muted' }, 'No debts yet.'),
       list.length ? h('p', { class: 'edit-hint' }, 'Owed, the rate, the monthly payment and the due day. Blank is fine for now.') : null),
-    h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, label))))
+    // Each button says what it does (affordance rule 1), and keeps its width on a phone (.kind-row).
+    h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Something else'), h('div', { class: 'edit-actions kind-row' }, DEBT_ADD.filter(([t]) => !DEBT_QS.some(([q]) => q === t)).map(([type, label, verb]) => h('button', { type: 'button', class: 'btn small', onclick: () => addDebt(type, label) }, verb))))
   ]);
 }
 
@@ -487,7 +622,9 @@ function incomeAdd(spine, today) {
     onCancel: () => { addingIncome = false; incomeFormEl = null; refresh(); } });
   return incomeFormEl;
 }
-const OFTEN = [['monthly', 'a month'], ['weekly', 'a week'], ['biweekly', 'every 2 weeks'], ['semimonthly', 'twice a month'], ['yearly', 'a year']];
+// How often, the one list every screen uses (engine/add.js OFTEN_WORDS), lower-cased for a sentence.
+const lowerFirst = ([k, w]) => [k, w.charAt(0).toLowerCase() + w.slice(1)];
+const OFTEN = OFTEN_WORDS.map(lowerFirst);
 function setIncome(x, patch, words) {
   change((s) => editIncome(s, x.id, { amount: v(x.amount), cadence: x.cadence, kind: x.amount && x.amount.kind !== 'missing' ? x.amount.kind : 'known', ...patch }, todayIso()), words);
 }
@@ -512,7 +649,7 @@ function personBits(spine, x) {
     pickBox('pf-' + x.id, name + ': who it is from', [['', 'Pick a name'], ...names.map((n) => [n, n])], who || '', (n) => putF(p + '.from', n || null, said.changed(name + ' from', n || 'blank'))),
     h('label', { class: 'mini-label', for: 'pp-' + x.id }, 'What it is for'),
     pickBox('pp-' + x.id, name + ': what it is for', [['', 'Pick one'], ...Object.entries(PERSON_PURPOSE_WORDS)], purpose || '', (k) => (k === 'loan' ? toLoan() : change((sp) => { let n = putFact(sp, p + '.purpose', k || null, k ? 'known' : 'missing', today); if (k === 'allowance' && !v(x.allowanceMode)) n = putFact(n, p + '.allowanceMode', 'gift', 'known', today); return n; }, said.changed(name, k ? PERSON_PURPOSE_WORDS[k].toLowerCase() : 'blank')))),
-    purpose === 'alimony' ? [h('label', { class: 'mini-label', for: 'py-' + x.id }, 'Year of the divorce decree'), intBox('py-' + x.id, v(x.decreeYear), name + ': year of the decree', (y) => putF(p + '.decreeYear', y, said.changed(name + ' decree year', y === null ? 'blank' : String(y))), { placeholder: 'year', min: 1950, max: 2100 })] : null,
+    purpose === 'alimony' ? [h('label', { class: 'mini-label', for: 'py-' + x.id }, 'Year of the divorce decree'), intBox('py-' + x.id, v(x.decreeYear), name + ': year of the decree', (y) => putF(p + '.decreeYear', y, said.changed(name + ' decree year', y === null ? 'blank' : String(y))), { placeholder: 'e.g. 2017', min: 1950, max: 2100 })] : null,
     purpose === 'allowance' ? [h('label', { class: 'mini-label', for: 'pa-' + x.id }, 'It is'), pickBox('pa-' + x.id, name + ': gift or pay', [['gift', 'A gift (not taxed)'], ['time', 'Pay for my time (taxed)']], v(x.allowanceMode) || 'gift', (m) => putF(p + '.allowanceMode', m, said.changed(name, m === 'time' ? 'pay for your time' : 'a gift')))] : null,
     h('p', { class: 'edit-hint' }, taxWords(x)),
     (spine.expenses || []).length ? [h('label', { class: 'mini-label', for: 'pb-' + x.id }, 'Paid straight to a bill (optional)'), pickBox('pb-' + x.id, name + ': paid straight to a bill', [['', 'No, it comes to me'], ...spine.expenses.map((e) => [e.id, e.label])], '', toBill)] : null
@@ -526,7 +663,7 @@ function taxWords(x) {
   return 'Not taxed.';
 }
 // How a line is paid, asked first, so the right boxes show and the number means the right thing.
-const PAY_OFTEN = [['weekly', 'Weekly'], ['biweekly', 'Every 2 weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']];
+const PAY_OFTEN = PAY_SCHEDULE.map(lowerFirst);
 const extraLabel = (x) => x.label + ': tips, overtime, commission';
 function payWith(x, patch, words) {
   const now = { basis: v(x.payBasis), cadence: x.cadence };
@@ -539,22 +676,24 @@ function w2Bits(spine, x) {
   const choose = (k) => change((s) => setPay(s, x.id, { basis: k, cadence: PER_YEAR_OK(x.cadence) ? x.cadence : 'biweekly' }, todayIso()), said.changed(name, k === 'hourly' ? 'paid by the hour' : 'a salary'));
   // Tips, overtime or commission on top: a line of its own, so the steady part stays steady.
   const toggleExtra = () => change((s) => (extra ? removeItem(s, 'income', extra.id) : addItem(s, { collection: 'income', type: 'tips', label: extraLabel(x) }, todayIso()).spine), extra ? extraLabel(x) + ' removed' : said.added(extraLabel(x)));
-  const often = pickBox('i-often-' + x.id, name + ': paid how often', PAY_OFTEN, x.cadence, (c) => payWith(x, { cadence: c }, said.changed(name + ' paid', PAY_OFTEN.find(([k]) => k === c)[1].toLowerCase())));
+  const often = pickBox('i-often-' + x.id, name + ': paid how often', PAY_OFTEN, x.cadence, (c) => payWith(x, { cadence: c }, said.changed(name + ' paid', PAY_OFTEN.find(([k]) => k === c)[1])));
   return [
-    question('pay-' + x.id, 'How is ' + name + ' paid?', [['salary', 'Salary'], ['hourly', 'By the hour']], pick, choose),
-    h('button', { type: 'button', id: 'i-extra-' + x.id, class: 'btn small toggle', 'aria-pressed': String(!!extra), onclick: toggleExtra }, extra ? 'Plus tips or overtime: on' : 'Plus tips or overtime'),
-    basis === 'salary' ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-sal-' + x.id }, 'Yearly salary, before tax'), moneyBox('i-sal-' + x.id, v(x.salary), name + ': yearly salary', (a) => payWith(x, { salary: a }, said.changed(name + ' salary', a === null ? 'blank' : money(a) + ' a year'))), often) : null,
-    basis === 'hourly' ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-rate-' + x.id }, 'Per hour, and hours a week'), moneyBox('i-rate-' + x.id, v(x.hourlyRate), name + ': per hour', (a) => payWith(x, { hourlyRate: a }, said.changed(name + ' hourly rate', a === null ? 'blank' : money(a, true) + ' an hour')), '$ an hour'), intBox('i-hrs-' + x.id, v(x.hoursPerWeek), name + ': hours a week', (n) => payWith(x, { hoursPerWeek: n }, said.changed(name + ' hours', n === null ? 'blank' : n + ' a week')), { placeholder: 'hours', min: 1, max: 100 }), often) : null,
+    question('pay-' + x.id, 'How is ' + name + ' paid?', [['salary', 'Salary'], ['hourly', 'By the hour']], pick, 'salary', choose),
+    // An on/off reads as the one knob switch every page uses (Guide me, Money as time).
+    h('button', { type: 'button', id: 'i-extra-' + x.id, class: 'btn small switch-btn', role: 'switch', 'aria-checked': String(!!extra), onclick: toggleExtra }, h('span', { class: 'switch-knob', 'aria-hidden': 'true' }), 'Plus tips or overtime'),
+    // Each box under its own label (DESIGN.md 23 to 27).
+    basis === 'salary' ? h('div', { class: 'srow-fields' }, cell('Yearly salary, before tax', moneyBox('i-sal-' + x.id, v(x.salary), name + ': yearly salary', (a) => payWith(x, { salary: a }, said.changed(name + ' salary', a === null ? 'blank' : money(a) + ' a year')), 'e.g. 65,000', x.salary)), cell('Paid how often', often)) : null,
+    basis === 'hourly' ? h('div', { class: 'srow-fields' }, cell('Per hour', moneyBox('i-rate-' + x.id, v(x.hourlyRate), name + ': per hour', (a) => payWith(x, { hourlyRate: a }, said.changed(name + ' hourly rate', a === null ? 'blank' : money(a, true) + ' an hour')), 'e.g. 22.50', x.hourlyRate)), cell('Hours a week', intBox('i-hrs-' + x.id, v(x.hoursPerWeek), name + ': hours a week', (n) => payWith(x, { hoursPerWeek: n }, said.changed(name + ' hours', n === null ? 'blank' : n + ' a week')), { placeholder: 'e.g. 40', min: 1, max: 100, fact: x.hoursPerWeek })), cell('Paid how often', often)) : null,
     basis ? h('p', { class: 'edit-hint' }, v(x.amount) === null ? 'Each paycheck: fill in the boxes above.' : 'Each paycheck before tax: ' + money(v(x.amount)) + '.') : null
   ];
 }
 function selfBits(x) {
   const lumpy = v(x.payBasis) === 'lumpy', name = x.label;
   return [
-    question('sp-' + x.id, 'Does ' + name + ' come in steady or in lumps?', [['steady', 'About the same each month'], ['lumpy', 'In lumps']], !x.payBasis && v(x.amount) === null ? null : lumpy ? 'lumpy' : 'steady',
+    question('sp-' + x.id, 'Does ' + name + ' come in steady or in lumps?', [['steady', 'About the same each month'], ['lumpy', 'In lumps']], lumpy ? 'lumpy' : v(x.payBasis) === 'steady' ? 'steady' : null, 'steady',
       (k) => change((s) => (k === 'lumpy' ? setPay(s, x.id, { basis: 'lumpy' }, todayIso()) : setPay(s, x.id, { basis: 'steady' }, todayIso())), (k === 'lumpy' ? name + ' comes in lumps now' : name + ' is about the same each month now'))),
-    lumpy ? h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-yr-' + x.id }, 'All of it over the last 12 months'), moneyBox('i-yr-' + x.id, v(x.yearTotal), name + ': last 12 months', (a) => payWith(x, { yearTotal: a }, said.changed(name + ' last 12 months', a === null ? 'blank' : money(a)))), h('p', { class: 'edit-hint' }, v(x.amount) === null ? 'Counted as a monthly average, a guess.' : 'Counted as ' + money(v(x.amount)) + ' a month on average, a guess.')) : null,
-    h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-be-' + x.id }, 'Business costs a month (optional)'), moneyBox('i-be-' + x.id, v(x.businessExpenses), name + ': business costs a month', (a) => putF('income.' + x.id + '.businessExpenses', a, said.changed(name + ' business costs', a === null ? 'blank' : money(a))))),
+    lumpy ? h('div', { class: 'srow-fields' }, cell('All of it over the last 12 months', moneyBox('i-yr-' + x.id, v(x.yearTotal), name + ': last 12 months', (a) => payWith(x, { yearTotal: a }, said.changed(name + ' last 12 months', a === null ? 'blank' : money(a))), 'e.g. 48,000', x.yearTotal)), h('p', { class: 'edit-hint' }, v(x.amount) === null ? 'Counted as a monthly average, a guess.' : 'Counted as ' + money(v(x.amount)) + ' a month on average, a guess.')) : null,
+    h('div', { class: 'srow-fields' }, cell('Business costs a month (optional)', moneyBox('i-be-' + x.id, v(x.businessExpenses), name + ': business costs a month', (a) => putF('income.' + x.id + '.businessExpenses', a, said.changed(name + ' business costs', a === null ? 'blank' : money(a))), 'e.g. 200', x.businessExpenses))),
     h('p', { class: 'muted mini-note' }, 'Nothing is withheld, so tax is set aside from each payment.')
   ];
 }
@@ -562,20 +701,21 @@ function unemploymentBits(x) {
   const name = x.label, asOf = todayIso();
   const weeksLeft = x.end ? Math.max(0, Math.round((Date.parse(x.end) - Date.parse(asOf)) / 6048e5)) : null;
   return [h('div', { class: 'srow-fields' }, h('label', { class: 'mini-label', for: 'i-wk-' + x.id }, 'Weeks of benefits left'),
-    intBox('i-wk-' + x.id, weeksLeft, name + ': weeks left', (n) => setIncome(x, { end: n === null ? null : addDays(asOf, n * 7) }, said.changed(name + ' weeks left', n === null ? 'blank' : String(n))), { placeholder: 'weeks', min: 0, max: 99 }))];
+    intBox('i-wk-' + x.id, weeksLeft, name + ': weeks left', (n) => setIncome(x, { end: n === null ? null : addDays(asOf, n * 7) }, said.changed(name + ' weeks left', n === null ? 'blank' : String(n))), { placeholder: 'e.g. 12', min: 0, max: 99 }))];
 }
 const PER_YEAR_OK = (c) => ['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(c);
 function incomeRows(spine, rules) {
   return (spine.income || []).filter((x) => x.type !== 'maybeMoney').map((x) => {
     const asked = (x.type === 'w2' && v(x.payBasis)) || (isSelfEmployment(x) && v(x.payBasis) === 'lumpy');
     const amountBox = asked ? null : [
-      cell('Before tax', moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a))), 'e.g. 2,600')),
+      cell('Before tax', moneyBox('i-amt-' + x.id, v(x.amount), x.label + ': how much, before tax', (a) => setIncome(x, { amount: a }, said.changed(x.label, a === null ? 'blank' : money(a))), 'e.g. 2,600', x.amount)),
       cell('How often', pickBox('i-often-' + x.id, x.label + ': how often', OFTEN.some(([k]) => k === x.cadence) ? OFTEN : [[x.cadence, x.cadence], ...OFTEN], x.cadence, (c) => setIncome(x, { cadence: c }, said.changed(x.label + ' how often', OFTEN.find(([k]) => k === c)[1]))))];
+    // Delete sits last on the row, after the boxes, as on every other row.
     return lineRow('income' + (x.type === 'w2' || isSelfEmployment(x) || x.type === 'unemployment' ? ' asks' : ''), h('span', { class: 'srow-name' }, x.label, guessChip(x.amount, 'income.' + x.id + '.amount')),
       whoseBox(spine, 'income', x, x.label),
       amountBox,
+      x.cadence === 'monthly' || x.cadence === 'semimonthly' ? cell('Day paid', intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d))), { placeholder: 'e.g. 15', fact: x.payDay })) : null,
       delBtn('income', x.id, x.label),
-      x.cadence === 'monthly' || x.cadence === 'semimonthly' ? cell('Day paid', intBox('i-day-' + x.id, v(x.payDay), x.label + ': day paid', (d) => setIncome(x, { payDay: d }, said.changed(x.label + ' day paid', d === null ? 'blank' : 'the ' + d + suffix(d))), { placeholder: 'e.g. 15' })) : null,
       x.type === 'w2' ? h('div', { class: 'srow-q' }, ...w2Bits(spine, x)) : null,
       isSelfEmployment(x) && x.type !== 'person' ? h('div', { class: 'srow-q' }, ...selfBits(x)) : null,
       x.type === 'unemployment' ? h('div', { class: 'srow-q' }, ...unemploymentBits(x)) : null,
@@ -592,23 +732,37 @@ function income(ctx) {
   ]);
 }
 // ---------------------------------------------------------------- Taxes (its own step, DATING order, S-258)
-// The place picker: a city from the list, or any ZIP code typed (S-284).
-function placeBox(today) {
+// The place picker: a city from the list, or any ZIP code typed (S-284). The box shows what the household knows and
+// says how it reads (S-285); the Where you live list below is the fallback when nothing is known or a place was not found.
+let placeMissed = false;
+const placeWords = (hh) => { const st = v(hh.state); return !st ? '' : st !== 'NY' ? st : v(hh.nycResident) === true ? 'New York City, NY' : v(hh.yonkersResident) === true ? 'Yonkers, NY' : 'New York'; };
+const placeReading = (hh) => { const st = v(hh.state); return !st ? '' : st !== 'NY' ? st + ' state tax' : 'New York state tax, ' + (v(hh.nycResident) === true ? 'plus New York City tax' : v(hh.yonkersResident) === true ? 'plus Yonkers tax' : 'no city tax'); };
+const askWhere = (hh) => placeMissed || !v(hh.state) || (v(hh.state) === 'NY' && v(hh.nycResident) === null && v(hh.yonkersResident) === null);
+function placeBox(hh, today) {
   const box = h('input', { id: 't-place', type: 'text', placeholder: 'e.g. Brooklyn or 11215', 'aria-describedby': 't-place-hint' });
+  box.value = placeWords(hh);
+  keepTyping(box);
   const apply = (pl) => {
-    if (!pl) { say('Not a place I know: pick Where you live below'); return; }
+    if (!pl) { placeMissed = true; say('Not a place I know: pick Where you live below'); refresh(); return; }
+    placeMissed = false;
+    typed.delete('t-place');
     change((s) => { let x = putFact(s, 'household.state', pl.state, 'known', today); x = putFact(x, 'household.nycResident', pl.locality === 'nyc', 'known', today); return putFact(x, 'household.yonkersResident', pl.locality === 'yonkers', 'known', today); }, said.changed('Where you live', pl.words));
   };
   const wrap = attachPicker(box, { source: 'place', entries: placeLibEntries, onPick: (e) => apply(LIB.places ? placeOf(e.words, LIB.places) : null), onFree: (t) => apply(LIB.places ? placeOf(t, LIB.places) : null) });
-  return h('div', { class: 'place-pick' }, wrap, h('p', { class: 'edit-hint', id: 't-place-hint' }, 'Fills the state, and New York City or Yonkers tax.'));
+  const reading = placeReading(hh);
+  return h('div', { class: 'place-pick' }, wrap,
+    reading ? h('p', { class: 'understood' }, h('span', { class: 'understood-tag' }, 'Reads as '), h('strong', {}, reading)) : null,
+    h('p', { class: 'edit-hint', id: 't-place-hint' }, 'Fills the state, and New York City or Yonkers tax.'));
 }
 function taxes(ctx) {
   const spine = ctx.spine, hh = spine.household, today = todayIso();
   const last = v(hh.lastRefund) ?? null;
   // A refund or an amount owed with no amount yet stays missing (never $0); the choice waits here for the amount.
   const lastHow = last === null ? (hh.lastRefund && hh.lastRefund.kind === 'notForMe' ? 'none' : lastPending) : last >= 0 ? 'refund' : 'owed';
-  const setLast = (how, amt) => {
-    lastPending = how === 'refund' || how === 'owed' ? how : '';
+  const setLast = (how0, amt) => {
+    // Not sure is kept as not known (never a no, never $0), and stays picked while the step is open.
+    const how = how0 === 'unsure' ? '' : how0;
+    lastPending = how0 === 'refund' || how0 === 'owed' || how0 === 'unsure' ? how0 : '';
     if ((how === 'refund' || how === 'owed') && amt === null) { if (last === null) { refresh(); return; } }
     change((s) => (how === 'none' ? putFact(s, 'household.lastRefund', null, 'notForMe', today) : how === '' || amt === null ? putFact(s, 'household.lastRefund', null, 'missing', today) : putFact(s, 'household.lastRefund', how === 'owed' ? -Math.abs(amt) : Math.abs(amt), 'known', today)),
       said.changed('Last year\'s tax', how === 'refund' ? 'a refund of ' + money(Math.abs(amt)) : how === 'owed' ? money(Math.abs(amt)) + ' owed' : how === 'none' ? 'did not file' : 'not sure'));
@@ -619,24 +773,24 @@ function taxes(ctx) {
         lineRow('', h('label', { class: 'srow-name', for: 't-filing' }, 'Filing status'),
           pickBox('t-filing', 'Filing status', [['', 'Pick one'], ...FILING_STATUSES.map((f) => [f, FILING_WORDS[f]])], v(hh.filingStatus) || '', (f) => putF('household.filingStatus', f || null, said.changed('Filing status', f ? FILING_WORDS[f] : 'blank')))),
         // City or ZIP (S-284): picks the state and whether New York City or Yonkers tax applies, in one change.
-        lineRow('', h('label', { class: 'srow-name', for: 't-place' }, 'City or ZIP'), placeBox(today)),
-        // Where in New York (S-272): New York City and Yonkers add their own income tax.
-        lineRow('', h('label', { class: 'srow-name', for: 't-where' }, 'Where you live'),
+        lineRow('', h('label', { class: 'srow-name', for: 't-place' }, 'City or ZIP'), placeBox(hh, today)),
+        // Where in New York (S-272): New York City and Yonkers add their own income tax. Only until the place is known.
+        !askWhere(hh) ? null : lineRow('', h('label', { class: 'srow-name', for: 't-where' }, 'Where you live'),
           pickBox('t-where', 'Where you live', [['', 'Pick one'], ['nyc', 'New York City'], ['yonkers', 'Yonkers'], ['ny', 'Elsewhere in New York'], ['other', 'Another state']],
             v(hh.nycResident) === true ? 'nyc' : v(hh.yonkersResident) === true ? 'yonkers' : v(hh.state) === 'NY' && v(hh.nycResident) === false ? 'ny' : v(hh.state) && v(hh.state) !== 'NY' ? 'other' : '',
             (w) => change((s) => { if (!w) return s; let x = putFact(s, 'household.nycResident', w === 'nyc', 'known', today); x = putFact(x, 'household.yonkersResident', w === 'yonkers', 'known', today); return w === 'other' ? x : putFact(x, 'household.state', 'NY', 'known', today); }, said.changed('Where you live', { nyc: 'New York City', yonkers: 'Yonkers', ny: 'elsewhere in New York', other: 'another state' }[w] || 'not set')))),
-        lineRow('', h('label', { class: 'srow-name', for: 't-last' }, 'Last year'),
-          pickBox('t-last', 'Last year\'s tax', [['', 'Pick one'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
-          lastHow === 'refund' || lastHow === 'owed' ? moneyBox('t-last-amt', last === null ? null : Math.abs(last), 'How much', (a) => setLast(lastHow, a)) : null)),
-      h('p', { class: 'edit-hint' }, 'The rest of taxes can wait for a later session.'))
+        lineRow('', h('label', { class: 'srow-name', for: 't-last' }, 'Last year\'s tax'),
+          pickBox('t-last', 'Last year\'s tax', [['', 'Pick one'], ['refund', 'Got a refund'], ['owed', 'Owed'], ['none', 'Did not file'], ['unsure', 'Not sure']], lastHow, (how) => setLast(how, last === null ? null : Math.abs(last))),
+          lastHow === 'refund' || lastHow === 'owed' ? cell('How much', moneyBox('t-last-amt', last === null ? null : Math.abs(last), 'How much', (a) => setLast(lastHow, a), 'e.g. 1,200', hh.lastRefund)) : null)),
+      h('p', { class: 'edit-hint' }, 'The rest of taxes can wait for a later call.'))
   ]);
 }
 let lastPending = '';
-const FILING_WORDS = { single: 'Single', mfj: 'Married, filing jointly', mfs: 'Married, filing separately', hoh: 'Head of household' };
 
 // ---------------------------------------------------------------- Assets
 const IRA_TYPES = [['roth_ira', 'Roth'], ['traditional_ira', 'Traditional'], ['sep_ira', 'SEP'], ['simple_ira', 'SIMPLE']];
-const ASSET_ADD = [['checking', 'Checking'], ['savings', 'Savings'], ['hysa', 'High-yield savings'], ['k401', '401(k)'], ['hsa', 'HSA'], ['brokerage', 'Brokerage'], ['car', 'Car'], ['home', 'Home']];
+// [type, the item's name, the button's words (a verb, affordance rule 1)].
+const ASSET_ADD = [['checking', 'Checking', 'Add checking'], ['savings', 'Savings', 'Add savings'], ['hysa', 'High-yield savings', 'Add high-yield savings'], ['k401', '401(k)', 'Add a 401(k)'], ['hsa', 'HSA', 'Add an HSA'], ['brokerage', 'Brokerage', 'Add a brokerage account'], ['car', 'Car', 'Add a car'], ['home', 'Home', 'Add a home']];
 // Liquid or not, as the balance sheet counts it (summary.js sheet.liquid).
 const liquidPart = (s, a) => { const it = s.sheet.liquid.items.find((x) => x.id === a.id); return it ? it.part : null; };
 const HOLD = [['ticker', 'Ticker', 'text'], ['share', 'Share of the account', 'rate'], ['expenseRatio', 'Expense ratio', 'rate'], ['managedBy', 'Managed by', 'text'], ['advisoryFee', 'Advisory fee', 'rate']];
@@ -650,11 +804,12 @@ function holdings(a) {
       const id = 'h-' + a.id + '-' + i + '-' + k;
       const box = h('input', { id, class: type === 'rate' ? 'rate-box' : 'text-box', type: 'text', autocomplete: 'off', placeholder: type === 'rate' ? label + ' %' : label, 'aria-label': name + ' holding ' + (i + 1) + ': ' + label });
       box.value = row[k] === null || row[k] === undefined ? '' : type === 'rate' ? inputText('rate', row[k]) : String(row[k]);
+      keepTyping(box);
       box.addEventListener('change', () => {
         const t = box.value.trim();
         let val = t === '' ? null : t;
         if (val !== null && type === 'rate') { const q = parseInput('rate', t); if (!q.ok) { say(label + ': ' + q.message); return; } val = q.value; }
-        later(() => save(list.map((r, j) => (j === i ? { ...r, [k]: k === 'ticker' && val ? val.toUpperCase() : val } : r)), said.changed(name + ' holding ' + (i + 1) + ' ' + label.toLowerCase(), val === null ? 'blank' : String(t))));
+        saveFrom(box, () => save(list.map((r, j) => (j === i ? { ...r, [k]: k === 'ticker' && val ? val.toUpperCase() : val } : r)), said.changed(name + ' holding ' + (i + 1) + ' ' + label.toLowerCase(), val === null ? 'blank' : String(t))));
       });
       return box;
     }), h('button', { type: 'button', class: 'btn small', 'aria-label': 'Remove holding ' + (i + 1), onclick: () => save(list.filter((_, j) => j !== i), name + ': holding ' + (i + 1) + ' removed') }, 'Remove')))),
@@ -667,16 +822,21 @@ function assets(ctx) {
   const accts = spine.accounts || [];
   const work = accts.filter((a) => a.family === 'employerRetirement');
   const saved = accts.filter((a) => a.family === 'cash' && a.type !== 'checking');
+  // One question per kind, as the Debt step asks: Yes adds one (and then offers another), No is remembered (undoable).
+  const ask = (id, q, have, type, label, addWords) => h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, q),
+    have ? h('span', { class: 'q-have' }, 'Yes, ' + have, ' ', h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(type, label) }, addWords))
+      : noList().includes('asset-' + id) ? h('span', { class: 'q-have' }, 'No', ' ', h('button', { type: 'button', class: 'btn small', onclick: () => sayNo('asset-' + id, false, q + ' asked again') }, 'Change'))
+      : h('span', { class: 'tick' }, h('button', { type: 'button', class: 'btn small', id: 'aq-' + id, onclick: () => addAcct(type, label) }, 'Yes'), h('button', { type: 'button', class: 'btn small', id: 'aqn-' + id, onclick: () => sayNo('asset-' + id, true, q + ' No') }, 'No')));
   return frame(ctx, 'assets', (s) => [
     h('section', { class: 'card qs' },
-      h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, 'A retirement plan at work?'), work.length ? h('span', { class: 'q-have' }, 'Yes, ' + work.length) : h('button', { type: 'button', class: 'btn small', id: 'aq-work', onclick: () => addAcct('k401', '401(k)') }, 'Yes')),
-      h('div', { class: 'q q-inline' }, h('p', { class: 'q-label' }, 'Savings outside checking?'), saved.length ? h('span', { class: 'q-have' }, 'Yes, ' + saved.length) : h('button', { type: 'button', class: 'btn small', id: 'aq-save', onclick: () => addAcct('savings', 'Savings') }, 'Yes'))),
+      ask('k401', 'A retirement plan at work?', work.length, 'k401', '401(k)', 'Add another'),
+      ask('savings', 'Savings outside checking?', saved.length, 'savings', 'Savings', 'Add another')),
     h('section', { class: 'card' },
       (spine.accounts || []).length ? h('ul', { class: 'srows' }, spine.accounts.map((a) => {
         const name = v(a.name) || a.id, p = 'accounts.' + a.id, part = liquidPart(s, a), on = part !== null;
         return lineRow('asset', h('span', { class: 'srow-name' }, name, guessChip(a.balance, 'accounts.' + a.id + '.balance')),
           whoseBox(spine, 'accounts', a, name),
-          cell('Balance', moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))))),
+          cell('Balance', moneyBox('a-bal-' + a.id, v(a.balance), name + ': balance', (x) => putF(p + '.balance', x, said.changed(name + ' balance', x === null ? 'blank' : money(x))), 'e.g. 4,200', a.balance)),
           delBtn('accounts', a.id, name),
           h('button', { type: 'button', class: 'btn small toggle liquid-tag', 'aria-pressed': String(on), title: on ? 'Counted in liquid net worth' : 'Not counted in liquid net worth', onclick: () => change((sp) => (!on === (s.sheet.liquid.defaults[a.id] !== 'none') ? setAt(sp, p, drop(getAt(sp, p), 'liquid')) : putFact(sp, p + '.liquid', !on, 'known', today)), said.changed(name, on ? 'not liquid' : 'liquid')) }, on ? (part === 'contributions' ? 'Liquid: contributions' : 'Liquid') : 'Not liquid'),
           a.family === 'taxable' ? holdings(a) : null,
@@ -685,7 +845,7 @@ function assets(ctx) {
       })) : h('p', { class: 'muted' }, 'Nothing yet.'),
       h('p', { class: 'edit-hint' }, 'Liquid: money you can reach without a penalty or selling something you live with. Tap to change it.')),
     h('section', { class: 'card' }, h('p', { class: 'edit-label' }, 'Add one'),
-      h('div', { class: 'edit-actions' }, ASSET_ADD.map(([type, label]) => h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(type, label) }, label))),
+      h('div', { class: 'edit-actions kind-row' }, ASSET_ADD.map(([type, label, verb]) => h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(type, label) }, verb))),
       h('div', { class: 'edit-actions' },
         cell('IRA type', pickBox('a-ira', 'IRA type', IRA_TYPES, iraPick, (x) => { iraPick = x; })),
         h('button', { type: 'button', class: 'btn small', onclick: () => addAcct(iraPick, PRESETS[iraPick].label) }, 'Add an IRA')))
@@ -719,18 +879,32 @@ function goals(ctx) {
           lineRow('', h('span', { class: 'srow-name' }, 'The cushion'), h('span', { class: 'srow-val' }, em.targetDollars.value === null ? 'missing a birth date' : money(s.sheet.cash.value) + ' of ' + money(em.targetDollars.value))),
           lineRow('', h('span', { class: 'srow-name' }, 'Cards paid off'), h('span', { class: 'srow-val' }, (cards.missing || []).length ? 'missing a balance' : cards.value ? money(cards.value) + ' to go' : 'Done')),
           ...list.map((g) => lineRow('', h('span', { class: 'srow-name' }, g.label, guessChip(g.target, 'goals.' + g.id + '.target')),
-            moneyBox('g-t-' + g.id, v(g.target), g.label + ': amount', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x)))),
-            delBtn('goals', g.id, 'Goal ' + g.label),
-            (() => { const d = h('input', { id: 'g-by-' + g.id, type: 'date', 'aria-label': g.label + ': by when' }); d.value = g.by || ''; d.addEventListener('change', () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', d.value || null), said.changed('Goal ' + g.label + ' by', d.value || 'no date'))); return d; })()))),
+            cell('How much', moneyBox('g-t-' + g.id, v(g.target), g.label + ': how much', (x) => putF('goals.' + g.id + '.target', x, said.changed('Goal ' + g.label, x === null ? 'blank' : money(x))), 'e.g. 2,000', g.target)),
+            // By when takes words ("dec 6", "the 15th", "next friday"; S-285) and saves when the box is left, never under the typing.
+            (() => {
+              let by = g.by || '';
+              const d = keepTyping(dateBox('g-by-' + g.id, g.by, (x) => { by = x; }, { 'aria-label': g.label + ': by when' }));
+              d.addEventListener('change', () => {
+                if (d.value.trim() && !by) { say('By when: not a date I can read'); return; }
+                if ((by || null) === (g.by || null)) return;
+                saveFrom(d, () => change((sp) => setAt(sp, 'goals.' + g.id + '.by', by || null), said.changed('Goal ' + g.label + ' by', by ? shortDate(by) : 'no date')));
+              });
+              return cell('By when', d);
+            })(),
+            delBtn('goals', g.id, 'Goal ' + g.label)))),
         goalForm || h('div', { class: 'edit-actions' }, h('button', { type: 'button', class: 'btn add', onclick: () => { goalAdding = true; refresh(); requestAnimationFrame(focusAdd); } }, '+ Add a goal')),
-        h('p', { class: 'edit-label' }, 'Fund goals'),
-        h('div', { class: 'segmented', role: 'group', 'aria-label': 'Fund goals' }, [['oneAtATime', 'One at a time'], ['byDeadline', 'By deadline']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(order === k), onclick: () => { if (order !== k) putF('household.goalOrder', k, said.changed('Goals', w.toLowerCase())); } }, h('span', { class: 'seg-label' }, w))))),
-      scenarioBar(spine, rules, pickedScenario(), () => refresh()),
-      h('section', { class: 'card', 'aria-labelledby': 'wr-h' },
-        h('h2', { id: 'wr-h' }, 'Withdrawal rate'),
-        // Only Your own takes a withdrawal rate of its own; the other sets each have theirs.
-        own ? h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: wr === w.rate, onchange: () => change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)) }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source), w.note ? h('span', { class: 'choice-sub' }, w.note) : null)))))
-          : [h('p', {}, 'The ' + SCENARIO_WORDS[pickedScenario()].toLowerCase() + ' set uses ' + pct(scenarioAssumptions(spine, rules, pickedScenario()).withdrawalRate.value, 1) + '.'), h('button', { type: 'button', class: 'btn small', onclick: () => { pick('best'); refresh(); } }, 'Choose my own')])
+        // The order matters once there are two goals to order.
+        list.length > 1 ? [h('p', { class: 'edit-label' }, 'Fund goals'),
+          h('div', { class: 'segmented', role: 'group', 'aria-label': 'Fund goals' }, [['oneAtATime', 'One at a time'], ['byDeadline', 'By deadline']].map(([k, w]) => h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(order === k), onclick: () => { if (order !== k) putF('household.goalOrder', k, said.changed('Goals', w.toLowerCase())); } }, h('span', { class: 'seg-label' }, w))))] : null),
+      // The coach's assumptions, folded to one line (slim by default, DESIGN.md 20 to 22): the set and its withdrawal rate.
+      (() => { const r = scenarioAssumptions(spine, rules, pickedScenario()).withdrawalRate; const rate = r && r.value !== null && r.value !== undefined ? pct(r.value, 1) : 'no'; return h('details', { class: 'card done-group' },
+        h('summary', {}, h('span', { class: 'purpose-title' }, 'Assumptions: ' + SCENARIO_WORDS[pickedScenario()] + ', ' + rate + ' withdrawal')),
+        scenarioBar(spine, rules, pickedScenario(), () => refresh()),
+        h('section', { class: 'card', 'aria-labelledby': 'wr-h' },
+          h('h2', { id: 'wr-h' }, 'Withdrawal rate'),
+          // Only Your own takes a withdrawal rate of its own; the other sets each have theirs (Your own, above, switches).
+          own ? h('ul', { class: 'srows' }, DATA.withdrawal.map((w) => lineRow('', h('label', { class: 'check-row wr-pick' }, h('input', { type: 'radio', name: 'wr', checked: wr === w.rate, onchange: () => change((sp) => putFact(sp, 'assumptions.withdrawalRate', w.rate, 'known', today), said.changed('Withdrawal rate', w.label)) }), h('span', {}, h('strong', {}, w.label + (w.default ? ' (standard)' : '')), h('span', { class: 'choice-sub' }, w.source), w.note ? h('span', { class: 'choice-sub' }, w.note) : null)))))
+            : h('p', {}, 'The ' + SCENARIO_WORDS[pickedScenario()].toLowerCase() + ' set uses ' + rate + '. Pick Your own above to choose a rate.'))); })()
     ];
   });
 }
@@ -740,16 +914,19 @@ function goals(ctx) {
 // themselves sit at the top of each step. "Start with Needs" leads.
 const STEP_AREAS = { protection: [], needs: ['health', 'statements'], taxes: [], debt: ['cards', 'student', 'car', 'mortgage', 'debtAll'], income: ['work'], assets: ['k401', 'ira', 'hsa', 'brokerage'], goals: ['goalsAll'] };
 const openAreas = (spine, step) => { const a = answersOf(spine); return Object.keys(a).length ? level2(a).filter((x) => STEP_AREAS[step].includes(x.area)) : []; };
+// The Profile's open questions for this step, under the step's purpose: each row says it leaves Guide me.
 function stepQuestions(spine, step) {
   const areas = openAreas(spine, step);
   if (!areas.length) return null;
-  return h('ul', { class: 'go-list', 'aria-label': 'Questions for this step' }, areas.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions'))))));
+  return h('section', { class: 'card', 'aria-labelledby': 'step-qs-h' },
+    h('h2', { class: 'group-h', id: 'step-qs-h' }, 'In the Profile'),
+    h('ul', { class: 'go-list', 'aria-label': 'Questions for this step' }, areas.map((x) => h('li', {}, h('a', { class: 'go-row plain', href: 'profile.html#/ask/' + x.area }, h('span', { class: 'go-name' }, x.label), h('span', { class: 'go-sub' }, x.questions.length + (x.questions.length === 1 ? ' question' : ' questions') + '. Opens the Profile'))))));
 }
 
 function overview(ctx) {
   const sum = summarize(ctx.spine, ctx.rules, { flags: false }), steps = guideSteps(ctx.spine, sum);
   // Each step's open questions (morning answer 10): the one list My numbers counts, once the ranking is in.
-  const g = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  const g = guessesFor(ctx.spine, ctx.rules, whenRanked(ctx.spine));
   const open = openCounts(openQuestions(ctx.spine, g));
   return [
     h('div', { class: 'step-nav' }, h('button', { type: 'button', class: 'btn primary', onclick: () => go([STEPS[0][0]]) }, 'Start with ' + STEPS[0][2] + ' ›')),
@@ -768,9 +945,9 @@ const noteShare = h('input', { type: 'checkbox', id: 'session-note-share' });
 function sessionNotesRow(ctx) {
   const list = sessionNotes(ctx.spine), shared = list.filter((n) => n.shared).length;
   const add = (e) => { e.preventDefault(); const t = noteBox.value.trim(); if (!t) { say('Type the note first'); noteBox.focus(); return; } const sh = noteShare.checked; noteBox.value = ''; noteShare.checked = false; change((x) => addNote(x, { text: t, shared: sh }, todayIso()), said.added(sh ? 'A shared note' : 'A note')); };
-  return foldRow('session-notes', 'Session notes', list.length ? list.length + (list.length === 1 ? ' note' : ' notes') + (shared ? ', ' + shared + ' on the One-pager' : '') : 'What was said, dated', () => [
+  return foldRow('session-notes', 'Call notes', list.length ? list.length + (list.length === 1 ? ' note' : ' notes') + (shared ? ', ' + shared + ' on the One-pager' : '') : 'What was said, dated', () => [
     h('form', { class: 'note-form', novalidate: true, onsubmit: add },
-      h('label', { for: 'session-note', class: 'edit-label' }, 'A note from this session'), noteBox,
+      h('label', { for: 'session-note', class: 'edit-label' }, 'A note from this call'), noteBox,
       h('p', { class: 'edit-hint', id: 'session-note-hint' }, 'Dated today.'),
       h('label', { class: 'check-row' }, noteShare, ' Share with the client (prints on the One-pager)'),
       h('div', { class: 'edit-actions' }, h('button', { type: 'submit', class: 'btn small' }, 'Add the note'))),
@@ -784,20 +961,26 @@ function sessionNotesRow(ctx) {
 // Income holds the two tax questions first (how you file, where you live), then the paychecks.
 const incomeStep = (ctx) => frame(ctx, 'income', () => [...taxes({ ...ctx, bare: true }), ...income({ ...ctx, bare: true })]);
 const SCREENS = { debt, assets, income: incomeStep, needs, goals };
-let goalAdding = false;
+let goalAdding = false, typedStep = null;
 // One step of Guide me: its screen-one boxes inside the step frame. protection(): Numbers' own Protection screen.
 export function guideStep(ctx, id, { protection = () => [] } = {}) {
-  const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  const r = guessesFor(ctx.spine, ctx.rules, whenRanked(ctx.spine));
   if (r) { marks = mapOf(r, ctx.spine); marksFresh = true; } else marksFresh = false;
   rememberStep(id);
+  if (typedStep !== id) { typed.clear(); typedStep = id; }
   const body = id === 'protection' ? frame(ctx, 'protection', () => [].concat(protection())) : SCREENS[id](ctx);
-  return [stepQuestions(ctx.spine, id), body, sessionNotesRow(ctx)];
+  // The Profile's questions sit right under "What this step is for", inside the step, not above its bar.
+  const qs = stepQuestions(ctx.spine, id);
+  if (qs) { const at = body.findIndex((n) => n && n.classList && n.classList.contains('purpose-card')); body.splice(at >= 0 ? at + 1 : 2, 0, qs); }
+  return [body, sessionNotesRow(ctx)];
 }
 // The top of Guide me: the steps in order, Start with the first.
 export function guideTop(ctx) { return [overview(ctx), sessionNotesRow(ctx)]; }
 export { nextCard, sessionNotesRow };
 // End call (on Home, S-280): the end-of-call screen, with the session notes.
 export function endCall(ctx) {
-  const r = guessesFor(ctx.spine, ctx.rules, () => { if (current().spine === ctx.spine) refresh(); });
+  // The call is over: Home's agenda goes back to "Start the call", not "Pick up where we left off".
+  rememberStep(null);
+  const r = guessesFor(ctx.spine, ctx.rules, whenRanked(ctx.spine));
   return [fiReveal(ctx.spine, ctx.rules), endCallScreen(ctx.spine, r, catalog, todayIso()), sessionNotesRow(ctx)];
 }

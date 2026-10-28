@@ -7,14 +7,15 @@ import { valueOf as v } from './spine.js';
 const known = (f) => !!f && f.kind !== 'missing' && f.kind !== 'notForMe' && f.value !== null && f.value !== undefined;
 const all = (list, test) => list.length > 0 && list.every(test);
 
+// unlocks: the next step in Guide me's order (Needs, Debt, Income, Assets, Goals, Protection, then End call).
 export const STEP_MAP = {
-  debt: { purpose: 'Everything owed, so the plan knows what to pay first and what it costs.', have: 'the total owed and the payoff order', unlocks: ['assets', 'net worth'] },
-  assets: { purpose: 'What you own and where it sits, so we know your cushion and what can be reached.', have: 'net worth and your cash runway', unlocks: ['taxes', 'the tax at tax time'] },
+  debt: { purpose: 'Everything owed, so the plan knows what to pay first and what it costs.', have: 'the total owed and the payoff order', unlocks: ['income', 'take-home pay'] },
+  assets: { purpose: 'What you own and where it sits, so we know your cushion and what can be reached.', have: 'net worth and your cash runway', unlocks: ['goals', 'your FI date'] },
   taxes: { purpose: 'How you file and where you live, so take-home and the tax bill are right.', have: 'the tax due at tax time', unlocks: ['income', 'take-home pay'] },
-  income: { purpose: 'Every paycheck and other money in, before tax.', have: 'take-home a month', unlocks: ['needs', 'what is left a month'] },
-  needs: { purpose: 'What a month costs: bills, food, getting around.', have: 'what is left a month and the savings rate', unlocks: ['goals', 'your FI date'] },
-  goals: { purpose: 'What the money is for, with an amount and a date.', have: 'years to FI and the plan\'s steps', unlocks: ['end', 'the one-pager'] },
-  protection: { purpose: 'Insurance that keeps one bad event from undoing the plan.', have: 'the protection checks on the Plan', unlocks: ['plan', 'the Plan\'s protection line'] }
+  income: { purpose: 'Every paycheck and other money in, before tax.', have: 'take-home a month', unlocks: ['assets', 'net worth'] },
+  needs: { purpose: 'What a month costs: bills, food, getting around.', have: 'what is left a month and the savings rate', unlocks: ['debt', 'the total owed'] },
+  goals: { purpose: 'What the money is for, with an amount and a date.', have: 'years to FI and the plan\'s steps', unlocks: ['protection', 'the protection checks'] },
+  protection: { purpose: 'Insurance that keeps one bad event from undoing the plan.', have: 'the protection checks on the Plan', unlocks: ['end', 'the one-pager'] }
 };
 
 // The checkmarks: [{ words, done }]. Each reads the household as it is now.

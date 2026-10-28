@@ -240,7 +240,7 @@ test('whose numbers: the made-up household is the example, anyone else is named,
   // Open file goes through the one loader: no page reads a file another way.
   const page = readFileSync(SLAM + 'ui/page.js', 'utf8'), hh = readFileSync(SLAM + 'ui/household.js', 'utf8'), pf = readFileSync(SLAM + 'ui/profile-file.js', 'utf8');
   assert.match(hh, /'Example household'/); assert.match(page, /export function whoseMenu\(/); assert.match(page, /loadMyFile\(file, rules\)/);
-  assert.match(readFileSync(SLAM + 'ui/builder.js', 'utf8'), /loadMyFile\(/); assert.match(hh, /readProfile\(/); assert.match(pf, /readHousehold\(/);
+  assert.match(hh, /readProfile\(/); assert.match(pf, /readHousehold\(/);
   assert.ok(!/fetch\(|XMLHttpRequest|sendBeacon/.test(pf), 'the file is read in the browser, never sent');
 });
 

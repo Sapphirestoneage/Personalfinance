@@ -18,9 +18,9 @@ export function moneySentence(spine, s) {
   if (val(left) === null) return null;
   const about = [left, rate, years].some(rough) ? 'about ' : '';
   const year = val(years) === null ? null : +spine.meta.asOf.slice(0, 4) + Math.round(val(years));
-  const parts = [val(left) >= 0 ? 'You keep ' + about + dollars(val(left)) + ' a month after bills and saving' : 'You spend ' + about + dollars(val(left)) + ' a month more than comes in'];
+  const parts = [val(left) >= 0 ? 'You keep ' + about + dollars(val(left)) + ' a month after bills and debt payments' : 'You spend ' + about + dollars(val(left)) + ' a month more than comes in'];
   if (val(rate) !== null && val(rate) > 0) parts.push('you save ' + about + Math.round(val(rate) * 100) + '% of your pay');
-  parts.push(year === null ? 'at this pace work does not stop on its own yet' : 'at this pace you could stop working ' + (about ? 'around ' : 'in ') + year);
+  parts.push(year === null ? 'at this pace work does not stop on its own yet' : 'at this pace you could stop working ' + (about ? 'about ' : 'in ') + year);
   return parts.slice(0, -1).join(', ') + (parts.length > 1 ? ', and ' : '') + parts.at(-1) + '.';
 }
 

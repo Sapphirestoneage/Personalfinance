@@ -12,7 +12,7 @@
 // by DAITE with subtotals, why the number is rough, and a recompute from the terms.
 
 import { getAt, valueOf } from './spine.js';
-import { scenarioRule } from './scenarios.js';
+import { scenarioRule, SCENARIO_WORDS } from './scenarios.js';
 import { labelFor, groupFor, GROUPS } from './labels.js';
 import { INVESTED_FAMILIES, isEarmarked } from './schema.js';
 import { project } from './projection.js';
@@ -35,7 +35,7 @@ const kindOf = (spine, path) => { const f = getAt(spine, path); return f && f.ki
 // An assumption a Triple D set put in place links to its rule, not the Ledger field (S-183).
 const field = (spine, path, value, unit, role = 'plus', label = null) => {
   const rule = path.startsWith('assumptions.') ? scenarioRule(getAt(spine, path)) : null;
-  if (rule) return { label: (label || labelFor(spine, path)) + ' (' + (rule.includes('WORST') ? 'worst' : 'likely') + ' set)', value, unit, kind: 'known', role, rule, group: groupFor(path) };
+  if (rule) return { label: (label || labelFor(spine, path)) + ' (' + (rule.includes('WORST') ? SCENARIO_WORDS.worst : rule.includes('OPT') ? SCENARIO_WORDS.optimistic : SCENARIO_WORDS.likely) + ' set)', value, unit, kind: 'known', role, rule, group: groupFor(path) };
   return { label: label || labelFor(spine, path), value, unit, kind: kindOf(spine, path), role, path, group: groupFor(path) };
 };
 const metric = (id, label, r, unit, role = 'plus') => ({ label, value: r ? r.value : null, unit, kind: r ? r.kind : 'missing', role, metric: id, group: null });
@@ -114,7 +114,7 @@ def({ id: 'cushionMonth', label: 'Cushion step 2: a month of full spending', uni
   explain: ({ s }) => out(s.emergency.tiers.full.burn, [metric('expenses', 'Spending', s.cashflow.expenses.total, 'usd/month'), metric('minimums', 'Debt minimums', s.cashflow.debtMinimums.total, 'usd/month')]) });
 def({ id: 'ruleOf5Months', label: 'Cushion target (months)', unit: 'months', op: 'custom', screens: ['dashboard#tile-runway'], formula: 'Months to keep = age / 5',
   plain: 'The cushion target: one month of full spending for every five years of age.',
-  explain: ({ spine, rules, s }) => { const p = spine.household.people[0]; return out(s.emergency.targetMonths, [{ ...field(spine, 'household.people.' + p.id + '.birthDate', s.emergency.age, 'age', 'arg', 'Age today (from ' + labelFor(spine, 'household.people.' + p.id + '.birthDate') + ')') }, ruleTerm(rules, 'APP_RULE_OF_5', +s.asOf.slice(0, 4), 'arg', 'Divide by', 'count')], ['APP_RULE_OF_5']); },
+  explain: ({ spine, rules, s }) => { const p = spine.household.people[0]; return out(s.emergency.targetMonths, [{ ...field(spine, 'household.people.' + p.id + '.birthDate', s.emergency.age, 'age', 'arg', 'Age today (from ' + labelFor(spine, 'household.people.' + p.id + '.birthDate') + ')') }, ruleTerm(rules, 'APP_RULE_OF_5', +s.asOf.slice(0, 4), 'arg', 'Cushion: age divided by', 'count')], ['APP_RULE_OF_5']); },
   recompute: (t) => (t[0].value === null ? null : t[0].value / t[1].value) });
 def({ id: 'ruleOf5Dollars', label: 'Cushion step 3: the full cushion', unit: 'usd', op: 'custom', screens: ['dashboard#tile-runway', 'flag:runway'], formula: 'Step 3 = (age / 5) months x a month of full spending, rounded up to whole dollars',
   plain: 'The third and last step of the cushion: the full target in dollars.',

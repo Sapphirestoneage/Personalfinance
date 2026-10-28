@@ -179,7 +179,7 @@ export function ledgerTree(spine, inst) {
     node('N', 'Needs', expSections, { slug: 'needs', letter: 'N', add: { collection: 'expenses', fat: null } }),
     node('G', 'Goals', gSections, { slug: 'goals', letter: 'G' }),
     // Profile (owner's ask): the settings that shape every number, after the six DATING sections, with no letter.
-    node('P', 'Profile', pSections, { slug: 'profile' })
+    node('P', 'FI assumptions and health coverage', pSections, { slug: 'profile' })
   ];
   if (rest.length) tree.push(node('X', 'Other', [item('other', 'Other', rest)], { slug: 'other' }));
   return tree;
