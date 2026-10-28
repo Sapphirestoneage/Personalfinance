@@ -28,7 +28,7 @@ two is everything else, in each item's More drawer in My numbers (press M). What
 | Step | What you do | Minutes |
 |---|---|---|
 | Start | Client menu, + New client, type the name, Create | 1 |
-| Debt | "Just you, or the two of you?": Just me. Yes to each kind of debt; owed, rate, payment, due day on each row | 5 to 8 |
+| Debt | "Single, or a couple?": Single. Yes to each kind of debt; owed, rate, payment, due day on each row | 5 to 8 |
 | Assets | Yes to a plan at work and savings; a balance on each; the match, tier by tier | 4 to 7 |
 | Taxes | Filing status, where you live | 1 |
 | Income | + Add income: name, amount, how it is paid, how often | 3 to 5 |
